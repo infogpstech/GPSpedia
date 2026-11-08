@@ -2373,3 +2373,51 @@ No se ejecutaron Apps Script, HTTP, navegador, FileReader real, cargas Drive, Sp
 
 ### Siguiente iteración
 AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## 76. Revalidación de continuidad — AUD-T-011
+
+**Sesión:** AUD-20261108-S092  
+**Checkpoint:** AUD-CP-0091  
+**E1 original:** bba61f0cd16e5a35d6f709e048ebd31d8709a193 (AUD-20261108-S029 / AUD-CP-0029)  
+**Árbol E1:** b44d845fdd0cb485cdefc04752ebafd1c340f355  
+**HEAD revalidado:** 4a9acfc54850f182817287c1626dd65082891a68  
+**Árbol actual:** 72ad854ee609966f8bda0ddc1ba3d8df68c468b4  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-011-001 A 007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron sección PyS, tarjetas/orden cronológico, formulario de alta, validaciones, carga/persistencia de imágenes, hoja pys, identificadores, lectura/cache, modal de detalle, contenido enriquecido, solución, prevención y edición in-modal. Archivos: index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los ocho archivos de código/esquema mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+
+### Revalidación de hallazgos y tareas
+- H-AUD-011-001 a H-AUD-011-007 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- H-AUD-011-001 (ALTA): createPysCard/colaborador/fallback vídeo mantienen sinks HTML sin escape contextual; el valor Video se inserta en href/src sin validación de origen suficiente.
+- H-AUD-011-002 (ALTA): addProblem/addSolution/addPrevention no aplican contrato backend explícito de sesión/identidad; updatePysItem sigue protegido pero su consumidor omite credenciales.
+- H-AUD-011-003: alta puede confirmar success sin imagen; ubicación de carpeta no garantiza subcarpeta principal; MIME/extensión forzados JPEG; FileReader sin error/abort; sin compensación de huérfanos.
+- H-AUD-011-004: ID derivado de getLastRow, sin búsqueda del máximo libre; encabezados no se validan si la hoja ya existe; no hay opId de alta.
+- H-AUD-011-005: límites título/descripción distintos de Tarea 10; backend valida principalmente length, tipos y URL sin allowlist suficiente.
+- H-AUD-011-006: addSolution/addPrevention no revalidan destino vacío bajo lock ni controlan versión/estado.
+- H-AUD-011-007: navegación PyS vuelve a consultar FEEDBACK sin TTL, promesa compartida ni deduplicación.
+- AUG-082 a AUG-087 continúan pendientes. AUG-040/AUG-043/AUG-057 mantienen sus adendas; H-AUD-037-005 permanece separado del callsite de navegación de sección.
+- H-AUD-035-001/003/006 y H-AUD-037-005 se conservan como antecedentes; AUD-T-012 y AUD-T-013 mantienen sus alcances propios.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los ocho archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validar XSS, autenticación, cargas o concurrencia en ejecución.
+
+No se ejecutaron parseo E2, mocks E3, navegador, FileReader real, HTTP, Apps Script V8, Drive, Spreadsheet, cargas, concurrencia, XSS controlado ni deployments. No se inspeccionaron datos productivos. No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet ni datos productivos.
+
+### Siguiente iteración
+AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.

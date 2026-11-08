@@ -921,3 +921,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-075 a AUG-081 continúan pendientes. H-TR-01 a 07 y H-SUG-01 a 06 siguen corregidos estáticamente en los blobs revisados; no reabrirlos sin nueva evidencia.
 - Solo continuidad E1 y revisión documental. Sin Apps Script, HTTP, navegador, FileReader, Drive, Spreadsheet, concurrencia, XSS, sesión revocada ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## 65. AUD-T-011 — continuidad E1 y revalidación del módulo PyS
+- Sesión AUD-20261108-S092; checkpoint AUD-CP-0091; E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193; árbol E1 b44d845fdd0cb485cdefc04752ebafd1c340f355; HEAD 4a9acfc54850f182817287c1626dd65082891a68; árbol actual 72ad854ee609966f8bda0ddc1ba3d8df68c468b4; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los ocho archivos de código/esquema conservan SHA idénticos a E1.
+- H-AUD-011-001 a 007 permanecen abiertos: stored XSS; acciones sin sesión/actor; imagen puede fallar con success y ubicación/MIME no conformes; ID/esquema/opId; límites/tipos/URL; overwrite solución/prevención; lecturas PyS redundantes.
+- AUG-082 a AUG-087 pendientes. AUG-040/AUG-043/AUG-057 mantienen adendas; H-AUD-035-001/003/006 y H-AUD-037-005 son antecedentes relacionados, no hallazgos duplicados.
+- Solo continuidad E1 y revisión documental. Sin parseo E2, mocks E3, navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, cargas, concurrencia, XSS ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.

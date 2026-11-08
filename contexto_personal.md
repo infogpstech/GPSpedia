@@ -919,3 +919,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-075/AUG-076/AUG-077/AUG-078/AUG-079/AUG-080/AUG-081 pendientes. Antecedentes H-TR/H-SUG corregidos estáticamente no se reabren.
 - No se ejecutaron Apps Script, HTTP, navegador, FileReader real, Drive, Spreadsheet, concurrencia, XSS, sesión revocada ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## Continuidad AUD-T-011 — 2026-11-08 | AUD-20261108-S092
+- Revalidación AUD-20261108-S092/AUD-CP-0091; E1 histórica bba61f0cd16e5a35d6f709e048ebd31d8709a193 (AUD-20261108-S029/AUD-CP-0029); HEAD 4a9acfc54850f182817287c1626dd65082891a68; árbol actual 72ad854ee609966f8bda0ddc1ba3d8df68c468b4; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css conservan exactamente sus SHA E1.
+- H-AUD-011-001 a 007 permanecen abiertos: stored XSS, auth/actor, carga/ubicación/MIME de imagen, ID/esquema/opId, límites/tipos/URL, overwrite solución/prevención y lecturas PyS redundantes.
+- AUG-082/AUG-083/AUG-084/AUG-085/AUG-086/AUG-087 pendientes; AUG-040/AUG-043/AUG-057 con adendas. AUD-T-012/013 mantienen su alcance.
+- No se ejecutaron parseo/mocks, navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, cargas, concurrencia, XSS ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
