@@ -1791,3 +1791,34 @@ Sin cambios funcionales, endpoints, configuración, sesiones, datos productivos 
 Commit documental único: docs(audit): verify AUD-T-038 continuity; parent 8ea95b85ce27a99c278d4419ca96f7d7ae908a10; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0083
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S084
+Tarea: AUD-T-003 — revalidación de continuidad E1 de registro de vehículos/cortes, add_cortes, idempotencia y resiliencia de red.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8; árbol d077c9be4042c80c754a62d6a90deca60abd5dfb; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 06f18e42383f5be448c378bc09ab534731cfbd6b; árbol E1 df13476222de951f65c7d31559598d5fe12914a5; sesión original AUD-20261107-S021 / AUD-CP-0021.
+Alcance: add_cortes.html, Services/write.js, Services/admin.js, api-config.js y youtubeUpload.js como contraste auxiliar.
+Hallazgos conocidos: H-AUD-003-001 a 004. Tareas derivadas: AUG-055/AUG-056/AUG-057/AUG-058; dependencias AUG-043/AUG-039/AUG-034/AUG-053/AUG-054 y AUD-T-031.
+Estado observado: E1 estática y continuidad anterior completadas; nueva revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los cinco archivos conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: persistencia durable del snapshot/opId, asociación a payload, disponibilidad dinámica, errores FileReader y recuperación automática concurrente.
+Sin cambios de código, configuración, datos productivos, operaciones Drive/Spreadsheet, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0083
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S084
+Tarea: AUD-T-003 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-003-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+HEAD auditado: e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8; árbol d077c9be4042c80c754a62d6a90deca60abd5dfb; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 06f18e42383f5be448c378bc09ab534731cfbd6b; árbol E1 df13476222de951f65c7d31559598d5fe12914a5; 63 commits posteriores.
+Los cinco archivos del alcance conservan SHA E1: add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161.
+Hallazgos revalidados: H-AUD-003-001 a 004 permanecen sin cambios. AUG-055/AUG-056/AUG-057/AUG-058 pendientes; dependencias existentes AUG-043/AUG-039/AUG-034/AUG-053/AUG-054 y AUD-T-031. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de cinco archivos y revisión de consistencia documental. No ejecutadas: navegador, FileReader, storage bloqueado, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia ni pruebas multiusuario.
+Sin cambios funcionales, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-003 continuity; parent e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
+================================================================================

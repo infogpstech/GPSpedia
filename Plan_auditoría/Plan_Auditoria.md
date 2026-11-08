@@ -1997,3 +1997,46 @@ No se ejecutaron pruebas E2/E3, navegador, IndexedDB real, cuota, cambio de cuen
 
 ### Siguiente iteración
 AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red, según la secuencia vigente de cobertura.
+
+
+## 68. Revalidación de continuidad — AUD-T-003
+
+**Sesión:** AUD-20261108-S084  
+**Checkpoint:** AUD-CP-0083  
+**E1 original:** 06f18e42383f5be448c378bc09ab534731cfbd6b (AUD-20261107-S021 / AUD-CP-0021)  
+**Árbol E1:** df13476222de951f65c7d31559598d5fe12914a5  
+**HEAD revalidado:** e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8  
+**Árbol actual:** d077c9be4042c80c754a62d6a90deca60abd5dfb  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-003-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidó el formulario add_cortes, verificación de vehículo, registro nuevo/existente, cortes complementarios, segundo corte, vídeo guía, disponibilidad dinámica, «No recomendado», opId, persistencia/recuperación y resiliencia de red; servicios WRITE/ADMIN, asignación de identidad, locks locales, escritura Cortes/Drive, Idempotencia y respuestas. Contraste adicional con youtubeUpload.js y aprobación FEEDBACK.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los cinco archivos funcionales/auxiliares mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+
+### Revalidación de hallazgos y tareas
+- H-AUD-003-001 a H-AUD-003-004 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Persisten: envío aunque no se persista el snapshot/opId y recuperación sin comprobar vehículo/huella; interfaz que ofrece cortes/vídeo cuando los slots están ocupados; errores FileReader fuera de try/finally que pueden bloquear el formulario; disparadores de recuperación automática sin serialización.
+- AUG-055 continúa pendiente para ciclo durable y vinculación de opId en add_cortes.
+- AUG-056 continúa pendiente para disponibilidad dinámica real de cortes y vídeo.
+- AUG-057 continúa pendiente para restaurar estado del formulario ante fallos FileReader.
+- AUG-058 continúa pendiente para serializar recuperación automática.
+- Se mantienen las relaciones con H-AUD-038-001/AUG-053, H-AUD-038-005/AUG-054, H-AUD-035-002/AUG-043, H-AUD-032-001/AUG-039, H-AUD-033-001/AUG-034 y AUD-T-031. No duplicar tareas existentes.
+- Esta es una revalidación posterior a la continuidad previa de AUD-T-003 documentada en el plan; el HEAD actual se comparó de nuevo directamente con E1.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los cinco archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba funcional o de integración.
+
+No se ejecutaron navegador, FileReader real, localStorage con cuota bloqueada, pérdida de respuesta HTTP, Apps Script V8, Drive/Spreadsheet reales, concurrencia, pruebas de dos usuarios ni verificación de deployments. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.

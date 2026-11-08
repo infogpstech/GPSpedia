@@ -847,3 +847,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-053/AUG-054 pendientes; AUG-051/AUG-022 ampliadas. No duplicar tareas previas de caché, sesión, aceptación legal o eliminación IndexedDB.
 - No se ejecutaron pruebas de navegador, IndexedDB, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## Continuidad AUD-T-003 — 2026-11-08 | AUD-20261108-S084
+- Revalidación AUD-20261108-S084/AUD-CP-0083; E1 histórica 06f18e42383f5be448c378bc09ab534731cfbd6b (AUD-20261107-S021/AUD-CP-0021); HEAD e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8; árbol actual d077c9be4042c80c754a62d6a90deca60abd5dfb; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. add_cortes.html, Services/write.js, Services/admin.js, api-config.js y youtubeUpload.js conservan exactamente sus SHA E1.
+- H-AUD-003-001 a 004 permanecen abiertos: persistencia/opId, disponibilidad dinámica, FileReader y recuperación automática.
+- AUG-055/AUG-056/AUG-057/AUG-058 pendientes; dependencias AUG-043/AUG-039/AUG-034/AUG-053/AUG-054 y AUD-T-031. Esta revalidación sigue la continuidad previa y compara de nuevo con E1.
+- No se ejecutaron navegador, FileReader real, storage bloqueado, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni pruebas multiusuario. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.

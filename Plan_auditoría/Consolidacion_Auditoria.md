@@ -848,3 +848,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-053/AUG-054 pendientes; AUG-051/AUG-022 conservan adendas. No duplicar H-AUD-037-008/009, AUD-T-034/AUG-006/AUG-042, AUD-T-036/AUG-045 ni AUD-T-024/AUG-005/AUG-007/AUG-008.
 - Solo continuidad E1 y revisión documental. Sin pruebas navegador, IndexedDB, cuota, cambio de cuenta, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni deployments. Sin cambios funcionales, datos locales/productivos, merge o despliegue.
 - Siguiente: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## 57. AUD-T-003 — continuidad E1 y revalidación del formulario add_cortes
+- Sesión AUD-20261108-S084; checkpoint AUD-CP-0083; E1 06f18e42383f5be448c378bc09ab534731cfbd6b; árbol E1 df13476222de951f65c7d31559598d5fe12914a5; HEAD e3c5f36bdadd5d12cbf2d4d1af6a4a1d5ffbb7e8; árbol actual d077c9be4042c80c754a62d6a90deca60abd5dfb; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; add_cortes.html, Services/write.js, Services/admin.js, api-config.js y youtubeUpload.js conservan SHA idénticos a E1.
+- H-AUD-003-001 a 004 permanecen abiertos: snapshot/opId no durable ni ligado a payload; opciones de cortes/vídeo sin disponibilidad dinámica; FileReader puede dejar loading bloqueado; recuperación automática sin mutex.
+- AUG-055/AUG-056/AUG-057/AUG-058 continúan pendientes. Mantener relaciones con AUG-043/AUG-039/AUG-034/AUG-053/AUG-054 y AUD-T-031; no duplicar.
+- Es revalidación posterior a la continuidad anterior de AUD-T-003; se comparó directamente con E1. Solo revisión documental E1. Sin navegador, FileReader, storage bloqueado, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni pruebas de dos usuarios. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
