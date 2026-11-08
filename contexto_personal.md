@@ -793,3 +793,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-039 pendiente; AUD-T-035/AUG-024 y AUD-T-033/AUG-003/AUD-T-024/AUG-016 como dependencias. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive/Spreadsheet, sesiones revocadas ni concurrencia. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+
+
+## Continuidad AUD-T-033 — 2026-11-08 | AUD-20261108-S078
+- Revalidación AUD-20261108-S078/AUD-CP-0077; E1 histórica 32b4898e967aea45a9372aa127cb0735aed99fc5 (AUD-20261107-S014/AUD-CP-0014); HEAD 8156ba1c2f5d9ac3c824fd53af9fd5b93b5459b4; árbol actual b80cc472e64b833d8ea77c18eb46fd6a28211b25; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Services/write.js, Services/admin.js, Services/feedback.js, Services/Utilities.js, api-config.js y ui.js conservan exactamente sus SHA E1.
+- H-AUD-033-001 a 007 permanecen abiertos: falta coordinador común; assignCollaborator sin auth/lock; recordLike y suggestYear confían en identidad anónima/cliente; approveVideo sin coordinación; Utilities AUTH:NONE sin lock; migrateYearRanges no implementada.
+- AUG-034/AUG-040/AUG-041 pendientes; AUG-003 como antecedente. No hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive/Spreadsheet ni concurrencia interproyectos. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
