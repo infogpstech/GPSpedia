@@ -736,3 +736,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-024 y AUG-025 permanecen pendientes; sin nuevos hallazgos ni tareas. Auditoría.txt/Tareas.txt/Aug_Tareas.md no se modifican porque los hallazgos y criterios ya constan en el historial.
 - Validación estática de funciones de API/UI y comparación SHA; sin HTTP, navegador, Apps Script V8, concurrencia/latencia real, fuentes backend privadas ni deployments. Sin cambios funcionales ni productivos.
 - Siguiente: AUD-T-027.
+
+
+## 45. AUD-T-027 — continuidad E1 y revalidación del historial de imágenes
+- Sesión AUD-20261108-S072; checkpoint AUD-CP-0071; E1 6932cf19d77c9c020a02e3d766b937f3175b8985; árbol E1 eaaf93248d171c283ca59976579691e777361077; HEAD 51b7ff7c1cdb1592033c061419a55700edea9e05; árbol actual 18fc47073c06527a5a0a14761b557e698242fa48; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los ocho archivos de código/esquema de AUD-T-027 conservan SHA idénticos a E1.
+- H-AUD-027-001 a 006 permanecen confirmados por continuidad; H-AUD-027-007/008 siguen como decisiones pendientes. No se detectan hallazgos nuevos porque no hubo cambios en los archivos de alcance.
+- AUG-026 y AUG-027 continúan pendientes; AUG-021 conserva la adenda de trazabilidad; AUG-003/AUD-T-033 sigue siendo la referencia de coordinación entre servicios. No duplicar tareas.
+- AUD-IMG-01, 02, 04, 05, 06 y 07 mantienen su estado estático documentado; AUD-IMG-03 queda condicionado a la decisión H-AUD-027-007.
+- Solo continuidad E1 y revisión documental. Sin pruebas de navegador, HTTP, Apps Script V8, Drive, Spreadsheet, concurrencia, recuperación real ni deployments. Sin cambios funcionales, datos productivos, renombrados, merge o despliegue.
+- Siguiente: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.

@@ -738,3 +738,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-024 y AUG-025 siguen pendientes. No se crean hallazgos/tareas nuevas ni se modifican Auditoría.txt/Tareas.txt/Aug_Tareas.md.
 - No se ejecutaron HTTP, navegador, Apps Script V8, latencia/concurrencia real ni verificación de deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+
+
+## Continuidad AUD-T-027 — 2026-11-08 | AUD-20261108-S072
+- Revalidación AUD-20261108-S072/AUD-CP-0071; E1 histórica 6932cf19d77c9c020a02e3d766b937f3175b8985 (AUD-20261107-S008/AUD-CP-0008); HEAD 51b7ff7c1cdb1592033c061419a55700edea9e05; árbol actual 18fc47073c06527a5a0a14761b557e698242fa48; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Los ocho archivos del alcance (Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js y Spreadsheet/GPSpedia_DB_columnas.md) conservan exactamente sus SHA E1.
+- H-AUD-027-001 a 006 permanecen confirmados por continuidad; H-AUD-027-007/008 siguen pendientes de decisión. AUG-026/AUG-027 pendientes; AUG-021 ampliada; AUG-003/AUD-T-033 como dependencia de coordinación.
+- AUD-IMG-01/02/04/05/06/07 mantienen el estado estático documentado; AUD-IMG-03 no se declara resuelto globalmente.
+- No se ejecutaron pruebas reales de navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, recuperación ni deployments. Sin cambios funcionales ni operaciones productivas; no se realizaron renombrados en esta revalidación.
+- Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.

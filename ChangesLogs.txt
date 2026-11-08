@@ -4651,3 +4651,16 @@ Sesión AUD-20261108-S071 | Checkpoint AUD-CP-0070 | E1 eafb425abadc9ccda9964a5a
 - No se modificaron archivos funcionales, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los hallazgos y tareas ya constaban en esos registros.
 - No se ejecutaron pruebas HTTP/navegador/Apps Script ni se accedió a endpoints, Drive, Spreadsheet o deployments. No hubo merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-027 — revalidación de continuidad E1
+Sesión AUD-20261108-S072 | Checkpoint AUD-CP-0071 | E1 6932cf19d77c9c020a02e3d766b937f3175b8985 | HEAD 51b7ff7c1cdb1592033c061419a55700edea9e05 | árbol 18fc47073c06527a5a0a14761b557e698242fa48 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: sección 56 con comparación E1→HEAD, SHA de ocho archivos, hallazgos, tareas, límites y siguiente unidad.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 45 con continuidad de hallazgos H-AUD-027 y tareas AUG-026/AUG-027/AUG-021.
+- contexto_personal.md: estado de continuidad, SHA/HEAD, decisiones pendientes y siguiente unidad.
+- checkpoint.md: registros inicial y final AUD-CP-0071.
+- No se modificaron archivos de aplicación, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas HTTP/navegador/Apps Script/Drive/Spreadsheet ni se accedió a deployments o datos reales. Sin renombrados, merge ni despliegue.
+ALCANCE: documentación de continuidad solamente. Sin cambios funcionales, endpoints, configuración, hojas ni datos productivos.
+================================================================================

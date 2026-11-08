@@ -1441,3 +1441,47 @@ Comparación E1→HEAD; SHA de diez archivos de alcance; inspección estática d
 
 ### Siguiente iteración
 AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+
+
+## 56. Revalidación de continuidad — AUD-T-027
+
+**Sesión:** AUD-20261108-S072  
+**Checkpoint:** AUD-CP-0071  
+**E1 original:** 6932cf19d77c9c020a02e3d766b937f3175b8985 (AUD-20261107-S008 / AUD-CP-0008)  
+**Árbol E1:** eaaf93248d171c283ca59976579691e777361077  
+**HEAD revalidado:** 51b7ff7c1cdb1592033c061419a55700edea9e05  
+**Árbol actual:** 18fc47073c06527a5a0a14761b557e698242fa48  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-027-001 A 008 ABIERTOS O SUJETOS A DECISIÓN; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la continuidad de los ocho archivos de AUD-T-027 frente al HEAD actual: Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js y Spreadsheet/GPSpedia_DB_columnas.md.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ningún archivo de aplicación o esquema incluido en el alcance cambió.
+
+SHA idénticos entre E1 y HEAD:
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+### Revalidación de hallazgos y tareas
+- H-AUD-027-001 a H-AUD-027-006 permanecen confirmados por continuidad de los archivos sin cambios.
+- H-AUD-027-007 y H-AUD-027-008 permanecen como decisiones funcionales pendientes; no se infiere ni modifica el alcance de referencias o la separación de vistas.
+- AUG-026 continúa pendiente para integridad, recuperación y visibilidad de estados.
+- AUG-027 continúa pendiente de decisión sobre referencias y separación entre historial e inventario sin uso.
+- H-AUD-027-004 mantiene su relación con la adenda existente de AUG-021; la coordinación entre servicios permanece en AUG-003/AUD-T-033.
+- AUD-IMG-01, 02, 04, 05, 06 y 07 conservan el estado estático documentado; AUD-IMG-03 no se declara resuelto globalmente y sigue sujeto a la decisión H-AUD-027-007.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el árbol de ambas referencias, los SHA exactos de los ocho archivos de alcance y la permanencia de la rama base. La revisión es de continuidad estática E1, no una validación funcional.
+
+No se ejecutaron pruebas de navegador/PWA, HTTP, Apps Script V8, Drive, Spreadsheet, concurrencia, fallos de escritura/flush, recuperación de archivos en papelera ni validación de permisos/URLs. No se verificaron deployments ni datos reales. No se realizaron renombrados ni operaciones en Drive/Spreadsheet: quedan fuera del alcance de esta revalidación.
+
+### Siguiente iteración
+AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
