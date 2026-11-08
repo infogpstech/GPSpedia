@@ -11371,3 +11371,72 @@ MATRIZ AMPLIADA
 LÍMITES
 No se ejecutaron navegador, Playwright, capturas, medición de estilos computados, lectores de pantalla, pruebas Android/iOS, zoom real 200/400 %, PWA standalone, rotación, pruebas visuales ni E2/E3. No se modificaron archivos funcionales, configuración, assets, servicios, endpoints, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+REVALIDACIÓN AMPLIADA DE CONTINUIDAD — AUD-T-018
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S098 | Checkpoint: AUD-CP-0097
+E1 histórica: f9c47bad48fa8050a4acac33a4a45784fe433ef7 | Continuidad previa: df6a78e1fe29c6f29e864d5542cade12f8c6e7df | HEAD evaluado: 4e82cb75ec16abff180915efa8d3767099dc8147
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+1. CONTINUIDAD Y ALCANCE
+- Comparación E1→HEAD: 62 commits posteriores, sin divergencia; únicamente ocho documentos modificados.
+- Comparación continuidad S058→HEAD: 41 commits posteriores, sin divergencia; únicamente los mismos ocho documentos modificados.
+- Los 13 archivos funcionales del alcance conservan exactamente sus SHA históricos. No existe deriva de implementación desde E1 ni desde la continuidad previa.
+- Alcance funcional: index.html, ui.js, main.js, state.js, navigation.js, auth.js, users.html, api-config.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js y Services/Test/users.js.
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+
+2. REVALIDACIÓN DE HALLAZGOS EXISTENTES
+H-AUD-018-001 — ALTA — XSS almacenado en dashboard por identidad de actividad controlada desde el cliente.
+Confirmado estáticamente: actionPermissions no incluye recordLike; el router despacha recordLike sin assertFeedbackSession; handleRecordLike acepta userId/userName del payload y logUserActivity los persiste; ui.js inserta nombre, tipo y detalle en innerHTML sin escape. No se ejecutó payload real.
+
+H-AUD-018-002 — ALTA — XSS almacenado en Inbox por campos de formulario/metadatos.
+Confirmado estáticamente: el formulario persiste el nombre en el asunto; Inbox interpola item.subject/item.user y metadatos de vídeo en innerHTML; videoUrl se utiliza como href sin validación backend por allowlist visible en el flujo revisado. El contenido y respuesta pasan por sanitización, pero no todos los campos. No se ejecutó payload real.
+
+H-AUD-018-003 — MEDIA — propiedad de rol inconsistente.
+Confirmado: ui.js consulta currentUser.Rol; Services/Auth.js entrega Privilegios y no Rol. El backend conserva sus comprobaciones de rol. El problema afecta visibilidad del flujo de aprobación en la interfaz, no acredita bypass del backend.
+
+H-AUD-018-004 — MEDIA — caché de Inbox desconectada.
+Confirmado: openInbox consulta directamente getFeedbackItems; loadAndRenderInbox/inboxCacheData no se integra en el flujo habitual; la consulta backend carga el conjunto completo de filas. No se midió rendimiento real.
+
+H-AUD-018-005 — ALTA — eliminación/degradación del último Desarrollador y sesiones huérfanas.
+Confirmado: backend permite a Desarrollador eliminar o cambiar roles sin salvaguarda del último administrador; deleteUser elimina fila de Users sin limpiar ActiveSessions ni asegurar operación atómica. La UI muestra eliminar también para la cuenta actual. No se operó sobre datos reales.
+
+H-AUD-018-006 — MEDIA — perfil/rol local desactualizado.
+Confirmado: validateSession solo devuelve valid true/false; checkSession no reemplaza el perfil local desde el servidor. El backend sigue verificando permisos en operaciones protegidas.
+
+H-AUD-018-007 — MEDIA — mutaciones Inbox sin historial central uniforme.
+Confirmado: reply, resolve y delete actualizan/eliminan filas sin registrar evento inmutable con actor y timestamp en ActividadUsuario.
+
+H-AUD-018-008 — MEDIA — lectura no acotada del dashboard.
+Confirmado: getActivityLogs obtiene getDataRange().getValues() completo y después limita a 100 elementos. No hay paginación/cursor en el flujo revisado.
+
+H-AUD-018-009 — BAJA — éxito falso para itemType no soportado.
+Confirmado: replyToFeedback solo procesa problem_report/contact_form, pero devuelve success al salir de las ramas sin rechazar otros tipos.
+
+Resultado: H-AUD-018-001 a H-AUD-018-009 permanecen abiertos. AUG-113 a AUG-121 continúan pendientes. VAL-27 continúa planificada y no ejecutada. No se crean hallazgos ni tareas duplicados.
+
+3. MATRIZ AMPLIADA DE CALIDAD
+- Cumplimiento: parcial/no certificado. Persisten defectos en seguridad de renderizado, flujo de aprobación, administración del último Desarrollador, auditoría y consultas; B24 no define KPIs, métricas, filtros, periodos ni criterios de aceptación suficientes para certificar el dashboard analítico.
+- Calidad técnica: hay controles útiles (RBAC backend en operaciones protegidas, hash de contraseña, validación de contraseña actual y textContent en tabla de usuarios), pero coexisten con sinks innerHTML no seguros, identidad de actividad controlada por cliente, shape de rol inconsistente y éxito falso en un tipo inválido.
+- Seguridad: dos vectores de XSS almacenado de prioridad Alta siguen presentes; recordLike permite registrar identidad desde el payload sin guard de sesión; la eliminación de usuarios carece de salvaguarda del último Desarrollador y limpieza de sesiones. Los permisos backend de Inbox/usuarios sí están presentes en las acciones protegidas revisadas.
+- Rendimiento: Inbox descarga todas las filas al abrir; dashboard recorre todo el historial antes de conservar 100 registros. Sin mediciones de latencia, volumen o cuotas.
+- Mantenibilidad: caché sin integrar, duplicación de responsabilidad entre UI/backend, campo Rol vs Privilegios, falta de evento central para mutaciones y contratos de tipo itemType sin allowlist.
+- Mejoras recomendadas: construir DOM con textContent/atributos seguros; derivar actor solo de sesión autenticada o identidad anónima no ejecutable; validar URL de vídeo en backend; proteger último Desarrollador y limpiar sesiones bajo lock; cachear por identidad con invalidación; registrar eventos inmutables; paginar Inbox/dashboard; refrescar perfil desde sesión autenticada; definir B24 con indicadores y criterios verificables.
+
+4. VALIDACIÓN Y LÍMITES
+VAL-27 permanece pendiente. No se ejecutaron navegador, payloads XSS reales, Apps Script, HTTP, Spreadsheet/Drive productivo, YouTube API, sesiones concurrentes, carga de historial grande, pruebas de recuperación ni E2/E3. Los 13 SHA prueban identidad de archivos, no funcionamiento ni calidad integral.
+No se modificaron aplicación, servicios, endpoints, configuración, assets, tests, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+================================================================================

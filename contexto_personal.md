@@ -973,3 +973,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Cumplimiento parcial. La fragmentación de tokens y colores hardcodeados afecta calidad/mantenibilidad. No se identifica nueva vulnerabilidad de datos ni regresión estática de rendimiento. Bloqueos frontend no son controles de seguridad.
 - No se ejecutaron navegador, medición computada de contraste, zoom real, lector de pantalla, PWA, benchmarks ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente: AUD-T-017, revalidación de continuidad sin duplicar el registro previo.
+
+
+## Continuidad ampliada AUD-T-018 — AUD-20261108-S098
+- AUD-20261108-S098/AUD-CP-0097; E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7; continuidad previa S058 df6a78e1fe29c6f29e864d5542cade12f8c6e7df; HEAD 4e82cb75ec16abff180915efa8d3767099dc8147; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- 62 commits desde E1 y 41 desde S058; solo ocho documentos cambiaron. Los 13 archivos funcionales conservan SHA históricos.
+- H-AUD-018-001 a 009 siguen abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada. No se duplican hallazgos/tareas.
+- Cumplimiento parcial/no certificado. Persisten XSS almacenado en dashboard/Inbox, recordLike sin guard de sesión y con identidad cliente, desajuste Rol/Privilegios, caché desconectada, falta de protección último Desarrollador/limpieza sesiones, perfil cacheado, mutaciones sin auditoría, lecturas no acotadas y success para itemType inválido.
+- B24 no define KPIs/criterios de aceptación suficientes. RBAC sí está presente en acciones protegidas; no se presume que cubra acciones públicas ni renderizado.
+- Sin navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, carga ni E2/E3. Sin cambios funcionales/productivos.
+- Siguiente: AUD-T-019, revalidación ampliada de continuidad E1.

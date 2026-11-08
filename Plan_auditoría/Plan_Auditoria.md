@@ -2579,3 +2579,28 @@ Siguiente unidad secuencial: AUD-T-016 — Diseño visual global, modo oscuro, c
 - El footer dinámico conserva la estructura sentinel/IntersectionObserver; no se certifica su ejecución. No se ejecutaron navegador, mediciones WCAG computadas, lector de pantalla, zoom real, PWA, benchmarks ni E2/E3.
 - Sin cambios funcionales, configuración, assets, servicios, endpoints, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue. Base sin cambios; GitHub informa protected=false.
 - Siguiente: AUD-T-017 — revalidación de continuidad E1, sin duplicar el registro previo.
+
+
+## 42. AUD-T-018 — revalidación ampliada de continuidad y calidad
+- Sesión AUD-20261108-S098; checkpoint AUD-CP-0097; E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7; continuidad previa df6a78e1fe29c6f29e864d5542cade12f8c6e7df; HEAD evaluado 4e82cb75ec16abff180915efa8d3767099dc8147; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 62 commits; comparación continuidad S058→HEAD: 41 commits. Ambos diffs muestran únicamente ocho documentos modificados, sin divergencia.
+- Los 13 archivos del alcance conservan SHA E1:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- H-AUD-018-001 a 009 se revalidan y permanecen abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada. Sin nuevos hallazgos ni tareas duplicados.
+- Cumplimiento parcial/no certificado. Persisten dos riesgos de XSS almacenado, identidad de actividad controlada por payload, desajuste Rol/Privilegios, caché desconectada, falta de protección del último Desarrollador/limpieza de sesiones, perfil cacheado, ausencia de auditoría uniforme, lectura no acotada y éxito falso para itemType inválido.
+- Calidad: sinks HTML inseguros y contratos de identidad/rol/tipo inconsistentes. Seguridad: RBAC existe en acciones protegidas, pero no neutraliza recordLike ni los sinks de renderizado. Rendimiento: Inbox e historial cargan rangos completos. Mantenibilidad: caché desconectada y falta de evento central. Mejoras y criterios permanecen asociados a AUG-113–121.
+- B24 no contiene indicadores/KPIs ni criterios de aceptación suficientes; no se declara incumplimiento de analítica que no esté especificado.
+- Sin navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, carga ni E2/E3. Sin cambios funcionales/productivos, merge o despliegue. Base intacta.
+- Siguiente unidad: AUD-T-019 — revalidación ampliada de continuidad E1.

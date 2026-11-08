@@ -978,3 +978,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Resultado de la matriz ampliada: cumplimiento parcial; calidad/mantenibilidad afectadas por fragmentación de tokens; sin nueva vulnerabilidad de datos ni regresión estática de rendimiento identificada. Bloqueos frontend de zoom/contextmenu no se consideran controles de seguridad.
 - Footer estructuralmente presente mediante sentinel/IntersectionObserver; ejecución real no probada. Sin E2/E3, navegador, lectores de pantalla, zoom real, PWA, benchmarks ni operaciones productivas.
 - No se modificó código, configuración, assets, endpoints, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Base intacta.
+
+
+## 32. AUD-T-018 — revalidación ampliada
+- AUD-20261108-S098/AUD-CP-0097; E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7; continuidad S058 df6a78e1fe29c6f29e864d5542cade12f8c6e7df; HEAD 4e82cb75ec16abff180915efa8d3767099dc8147; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 62 commits; S058→HEAD: 41 commits. En ambos diffs solo cambian ocho documentos. Los 13 archivos funcionales conservan SHA E1.
+- H-AUD-018-001 a 009 continúan abiertos; AUG-113 a AUG-121 pendientes; VAL-27 pendiente. Sin hallazgos ni tareas nuevas.
+- Matriz ampliada: cumplimiento parcial/no certificado; dos XSS almacenados de prioridad Alta; recordLike confía en identidad cliente; backend sin protección del último Desarrollador ni limpieza de sesiones; UI Rol/Privilegios inconsistente; caché desconectada; mutaciones sin auditoría central; lectura no acotada; itemType inválido recibe success.
+- RBAC está presente en acciones protegidas; no debe confundirse con cobertura total. El dashboard B24 no define KPIs/criterios verificables.
+- No se ejecutaron pruebas dinámicas ni E2/E3. Sin cambios funcionales, operaciones productivas, merge ni despliegue.
