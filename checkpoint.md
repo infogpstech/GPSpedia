@@ -309,3 +309,38 @@ Cobertura de la auditoría original se conserva sin alteración. La revalidació
 Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (unidad histórica siguiente; continuar mediante revalidación de continuidad).
 Commit único esperado: docs(audit): verify AUD-T-007 continuity; parent 673114ee77c36d4bdc4ab3e67b1c31365b8f5ceb.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0047
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S048
+Tarea: continuidad de AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+E1 histórica: AUD-20261108-S026 / AUD-CP-0026; HEAD auditado f3d7558abeef482957582fea08f2041490b54f34.
+HEAD observado: e7ffbabed083bf12dd18092b0bea05acf70f3423; árbol 23fd37b766b3fcf9e29bf52520c18c99454a2be8. Rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-008-001 a H-AUD-008-004; tareas AUG-072/AUG-073; adendas AUG-049/AUG-052. VAL-12, VAL-14 y VAL-18 pendientes.
+Alcance funcional: ui.js, main.js, navigation.js, index.html, style.css y auth.js.
+Comparación Git: 21 commits posteriores al HEAD histórico; cambios exclusivamente documentales. Los seis archivos funcionales conservan sus SHA históricos.
+Sin cambios funcionales ni operaciones sobre servicios/datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0047
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S048
+Resultado: AUD-T-008 permanece E1 ESTÁTICA COMPLETADA y vigente; 21 commits posteriores al HEAD histórico contienen exclusivamente cambios documentales. Sin deriva funcional.
+HEAD padre de la tarea: e7ffbabed083bf12dd18092b0bea05acf70f3423; árbol: 23fd37b766b3fcf9e29bf52520c18c99454a2be8. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-008-001 a H-AUD-008-004. Tareas: AUG-072/AUG-073; adendas AUG-049/AUG-052. Sin hallazgos ni tareas nuevas.
+Archivos funcionales revalidados y SHA actuales:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+Revalidaciones: query compartido sin ID estable; fallback incompleto ante rechazo de Web Share y Clipboard no disponible; decodeURIComponent sin protección y polling infinito del catálogo; indicador 3px sin semántica accesible ni distinción entre conectividad del navegador y backend.
+Validaciones pendientes: VAL-12, VAL-14 y VAL-18. No se ejecutaron Web Share, Clipboard, navegador, móvil/PWA, lector de pantalla, URLs malformadas, dataset real con colisiones, HTTP/health check, Apps Script ni pruebas de red.
+No se modificaron código, HTML, CSS, endpoints, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md y checkpoint.md. Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md y ChangesLogs.txt no se modifican: no se agregaron hallazgos ni tareas nuevas.
+Cobertura: 38/38 E1 estáticas completadas; la continuidad no certifica validaciones funcionales E2/E3.
+Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+Commit único esperado: docs(audit): verify AUD-T-008 continuity; parent e7ffbabed083bf12dd18092b0bea05acf70f3423.
+================================================================================

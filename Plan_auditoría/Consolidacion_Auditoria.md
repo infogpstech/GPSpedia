@@ -489,3 +489,14 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - Cobertura global registrada previamente: 38 unidades; 21 E1 completadas, 1 parcial y 16 por auditar en el corte AUD-T-007. Esta revalidación de continuidad no altera el estado funcional de la auditoría.
 - Sin cambios funcionales, despliegue ni merge. La rama base permanece intacta.
 - Siguiente unidad histórica: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red; continuar mediante revalidación de continuidad.
+
+
+## 21. Continuidad verificada — AUD-T-008
+- E1 completada en AUD-20261108-S026 / AUD-CP-0026 sobre f3d7558abeef482957582fea08f2041490b54f34.
+- Comparación hasta e7ffbabed083bf12dd18092b0bea05acf70f3423: 21 commits posteriores; el diff contiene exclusivamente ocho archivos documentales. Los seis archivos funcionales de alcance conservan exactamente sus SHA: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86.
+- H-AUD-008-001 a 004 permanecen abiertos: enlace compartido sin ID estable; fallback incompleto de Web Share/Clipboard; decodeURIComponent sin protección y polling de catálogo sin límite/cancelación; indicador de red sin semántica accesible ni comprobación de backend.
+- AUG-072/AUG-073 continúan pendientes. AUG-049 y AUG-052 conservan sus adendas; H-AUD-037-003/006/010 se mantienen como referencias cruzadas. No se crean hallazgos ni tareas duplicadas.
+- VAL-12, VAL-14 y VAL-18 siguen pendientes de ejecución funcional/multiplataforma. No se ejecutaron Web Share, Clipboard, navegador, móvil/PWA, lector de pantalla, URLs malformadas, HTTP/health check, Apps Script ni pruebas de red.
+- Cobertura global registrada: 38/38 unidades con E1 estática completada; esta continuidad no altera el estado funcional ni certifica E2/E3.
+- Sin cambios de código, endpoints, configuración, assets o datos productivos. Sin despliegue ni merge; la rama base permanece intacta.
+- Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS; continuar mediante revalidación de continuidad.
