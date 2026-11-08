@@ -4090,3 +4090,14 @@ Fecha 2026-11-07 | Sesión AUD-20261107-S022 | Rama GPSpedia2.2.5_work
 - contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0022.
 Solo documentación. Sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas funcionales, migración VIN, HTTP, Apps Script, navegador, concurrencia ni verificación de deployments. Rama base sin cambios.
 ================================================================================
+
+2026-11-07 — AUD-T-005 — documentación de auditoría estática E1
+Auditoría.txt: líneas 9238–9327
+Tareas.txt: líneas 5818–5901
+Plan_auditoría/Plan_Auditoria.md: líneas 731–738
+Plan_auditoría/Aug_Tareas.md: líneas 820–892
+Plan_auditoría/Consolidacion_Auditoria.md: líneas 168–176
+contexto_personal.md: líneas 343–350
+checkpoint.md: se añadieron AUD-CP-0023 inicial y final con HEAD/base y referencias de respaldo exacto.
+ChangesLogs.txt: líneas 4094–4103 — se registra este conjunto documental en el único commit de AUD-T-005.
+No se modificaron archivos de aplicación, endpoints, configuración, Spreadsheet, Drive ni deployments.

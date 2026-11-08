@@ -1,12 +1,12 @@
 # Consolidación de auditoría y matriz de validación — GPSpedia
 
 **Plan:** AUD-PLAN-2026-001  
-**Sesión:** AUD-20261107-S019  
-**Checkpoint:** AUD-CP-0019  
+**Sesión:** AUD-20261107-S023  
+**Checkpoint:** AUD-CP-0023  
 **Fecha:** 2026-11-07  
 **Repositorio:** infogpstech/GPSpedia  
 **Rama de trabajo:** GPSpedia2.2.5_work  
-**HEAD de referencia al inicio:** eb3b72e205ad8d772a4bd5cdad94fb3e26533917  
+**HEAD de referencia al inicio:** c56c6f7e21a668774db726e2f14139588f1bc5c0  
 **Rama base:** GPSpedia2.2.5  
 **HEAD de la base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
 
@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 y AUD-T-023 a AUD-T-038 | 17 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-005 y AUD-T-023 a AUD-T-038 | 19 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 y AUD-T-004 a AUD-T-022 | 20 |
+| Por auditar | AUD-T-001 y AUD-T-006 a AUD-T-022 | 18 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-004 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-004 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-005 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **57 identificadores AUG únicos** dentro del rango AUG-001 a AUG-058. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **63 identificadores AUG únicos** dentro del rango AUG-001 a AUG-064. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -50,6 +50,7 @@ Algunos encabezados AUG se repiten en el archivo porque las auditorías posterio
 | Catálogo, búsqueda, VIN y PWA | AUG-048 a AUG-052, AUG-059/AUG-060 | Snapshot y sincronización, búsqueda, motor VIN, edición/validación de colecciones VIN, presentación posicional, IndexedDB/miniaturas/privacidad local y startup/deep links/Service Worker/backend |
 | Ciclo local de operaciones y seguridad de endpoints | AUG-053/AUG-054 | Aislamiento/retención de snapshots por cuenta; autenticación y minimización de checkOperation |
 | Registro, idempotencia y recuperación de add_cortes | AUG-055 a AUG-058 | Ciclo durable/vinculación de opId; disponibilidad dinámica; errores FileReader; recuperación automática serializada |
+| Modal de detalle y ampliaciones contextuales | AUG-061 a AUG-064 | Cupos suplementarios; refresh del detalle; selectores desde Sheets; sanitización de apertura/alimentación |
 
 El índice no reemplaza los criterios de aceptación detallados de Aug_Tareas.md. La implementación debe seguir consultando cada ficha completa, incluidas sus adendas, evidencias, decisiones y dependencias.
 
@@ -70,7 +71,8 @@ El siguiente orden es una secuencia de control y dependencias, no una modificaci
 3. **Identidad y autorización:** resolver las dependencias de sesión, rol y autorización que afectan AUTH/USERS/WRITE/ADMIN/FEEDBACK/UTILITIES (AUG-005 a AUG-017 y AUG-039 a AUG-042).
 4. **Integridad de datos y operaciones recuperables:** abordar restauraciones, idempotencia, registro durable, historial de imágenes, inventario, cargas y compensaciones (AUG-018, AUG-021, AUG-026, AUG-028 a AUG-038).
 5. **Contratos y observabilidad:** alinear rutas/dispatchers, YouTube y health check/telemetría (AUG-023 a AUG-025 y AUG-043/AUG-044).
-6. **Experiencia, legal y catálogo:** tratar las tareas legales (AUG-045 a AUG-047) y catálogo/búsqueda/VIN/PWA (AUG-048 a AUG-052), con sus pruebas de regresión y offline.
+6. **Experiencia, legal y catálogo:** tratar tareas legales (AUG-045 a AUG-047), catálogo/búsqueda/VIN/PWA (AUG-048 a AUG-052) y sincronización del detalle (AUG-062/AUG-063), con pruebas de regresión y offline.
+7. **Seguridad y ampliaciones contextuales:** resolver sanitización (AUG-064) y disponibilidad autoritativa de apertura/alimentación (AUG-061) antes de habilitar escrituras concurrentes desde el modal (+).
 
 Este orden no autoriza a ejecutar varias tareas en un solo commit. Cada tarea de implementación conserva su alcance, checkpoint, auditoría, respaldo, verificaciones, Code Review y único commit conforme al procedimiento obligatorio.
 
@@ -82,19 +84,20 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 |---|---|---|---|
 | VAL-01 | Identidad, sesiones y roles — AUG-005 a AUG-009, AUG-016, AUG-017, AUG-042, AUG-054 | Login/logout, revocación, cuenta eliminada, contraseña/caducidad según política aprobada, varias pestañas, cambio de cuenta/rol, modal privilegiado y navegación | Actor/rol efectivo, resultado del backend, estado cliente antes/después, sesiones invalidadas y ausencia de acceso residual |
 | VAL-02 | Seguridad y consistencia AUTH/USERS — AUG-010 a AUG-014 | Mutaciones simultáneas, intentos concurrentes, purga de Logs con inserciones, validación de usuario/contraseña, migración de credenciales | Resultado por operación, conteos antes/después, ausencia de pérdida/duplicación y evidencia de migración reversible o recuperable |
-| VAL-03 | WRITE/FEEDBACK/UTILITIES y contratos — AUG-003, AUG-034, AUG-039 a AUG-044 | Sesión ausente/expirada, rol insuficiente, payload incompleto o manipulado, acciones sin handler y handlers sin mapeo, escritura concurrente desde servicios distintos | Matriz acción→servicio→handler→consumidor, HTTP/JSON, actor autenticado, rechazo de operaciones no autorizadas y consistencia de registros |
+| VAL-03 | WRITE/FEEDBACK/UTILITIES y contratos — AUG-003, AUG-034, AUG-039 a AUG-044, AUG-061 | Sesión ausente/expirada, rol insuficiente, payload incompleto o manipulado, acciones sin handler y handlers sin mapeo, escritura concurrente desde servicios distintos | Matriz acción→servicio→handler→consumidor, HTTP/JSON, actor autenticado, rechazo de operaciones no autorizadas y consistencia de registros |
 | VAL-04 | Backup/restore y operaciones ADMIN — AUG-018 a AUG-023 | Backup completo/incompleto, manifiesto, restore con fallo inducido por etapa, rollback, terminal fuera de Cortes, logs grandes/fechas inválidas, acciones huérfanas, borrado IndexedDB bloqueado | Identificador y manifiesto de respaldo, comparación origen/destino, recuperación demostrada, límites de ruta y estados reales de cada operación |
 | VAL-05 | Health check y telemetría — AUG-024/AUG-025 | HTTP 2xx con JSON válido/inválido/vacío/HTML, 4xx/5xx, timeout, endpoint equivocado, servicio lento, muestra caducada, límite de eventos y solicitudes que cruzan intervalos | Estado clasificado, código HTTP/motivo seguro, timestamps coherentes, conteos y comportamiento aislado por servicio |
 | VAL-06 | Historial de imágenes y reemplazos — AUG-021, AUG-026, AUG-027, AUG-037, AUG-038 | Reemplazo, restauración, papelera, requiere_revision, cancelada, fila parcial/duplicada, ID/URL/MIME no coincidente, fallo de escritura y compensación | Estado histórico y archivo Drive reconciliados, actor, operationId, evidencia de rollback y filas no válidas visibles para revisión |
 | VAL-07 | Inventario y organización Drive — AUG-003, AUG-028 a AUG-033 | Escaneo completo/incompleto, cursor y reanudación, inventario parcial, archivo con nueva referencia durante el lote, movimiento manual, duplicados, snapshots expirados, límite temporal y cuota | auditId, inventoryOperationId, resultado por archivo, referencias revalidadas antes de mover, ubicación conservada y conteos reconciliados |
 | VAL-08 | Esquema, IDs e idempotencia — AUG-034 a AUG-036, AUG-055, AUG-059 | Migración en copia, encabezados ocupados, IDs duplicados, reintentos con mismo/diferente opId, recuperación de estado parcial, edición VIN dinámica, longitud máxima, rechazo explícito de valores cortos y parsers VIN/testigo | Snapshot antes/después, unicidad, estado de idempotencia, compatibilidad de lectores y ausencia de sobrescritura de datos |
-| VAL-09 | Cargas y ciclo de vídeo — AUG-037, AUG-038, AUG-043, AUG-056 | Carga interrumpida/reintentada, contenido distinto con mismo identificador, descarte de edición, aprobación/rechazo, videoId provisional y sincronización del destino | Hash/contenido, ledger, historial, estado de aprobación y destino final coherentes; operaciones repetidas idempotentes |
+| VAL-09 | Cargas y ciclo de vídeo — AUG-037, AUG-038, AUG-043, AUG-056, AUG-057, AUG-064 | Carga interrumpida/reintentada, contenido distinto con mismo identificador, descarte de edición, aprobación/rechazo, videoId provisional y sincronización del destino | Hash/contenido, ledger, historial, estado de aprobación y destino final coherentes; operaciones repetidas idempotentes |
 | VAL-10 | Términos y accesibilidad — AUG-045 a AUG-047 | Primera aceptación, nueva versión, cambio de cuenta/dispositivo, almacenamiento bloqueado, modal ausente, teclado, foco, lector de pantalla, History API y offline | Versión/identidad/fecha conforme a decisión aprobada, bloqueo seguro, foco y navegación correctos, revisión legal documentada |
 | VAL-11 | Catálogo, caché y sincronización — AUG-048/AUG-052 | Alta, edición y eliminación de registros; cambios con igual cardinalidad; reinicio offline; instantánea y delta; timeouts y respuestas inválidas | Comparación de datos de origen y caché, ausencia de registros retirados, sincronización recuperable y estado terminal visible |
 | VAL-12 | Búsqueda y VIN — AUG-036, AUG-049/AUG-050, AUG-060 | Acentos, mayúsculas, espacios, campos de cada sección, coincidencia exacta/parcial, años/modelos numéricos ambiguos, VIN completo/prefijo, variantes múltiples, rangos solapados/no solapados, umbral de muestras, slots vacíos y presentación de cuatro caracteres sin doble recorte | Conjunto de resultados esperado, ranking, sección/modal correcto, ambigüedades explícitas y variante identificada sin selección arbitraria |
 | VAL-13 | IndexedDB, miniaturas y privacidad local — AUG-022, AUG-031/AUG-032, AUG-051, AUG-053 | Transacción complete/abort/error, upgrade bloqueado, cuota/evicción, URLs de objeto, tamaños de miniatura, cuentas distintas, retención y limpieza | Confirmación de transacción, límites de almacenamiento, ausencia de datos cruzados entre cuentas y revocación/liberación de recursos |
 | VAL-14 | PWA, deep links y rendimiento — AUG-033, AUG-049, AUG-052, AUG-055, AUG-057, AUG-058 | Instalación limpia, precache del grafo requerido, runtime cache, offline, deep link sin catálogo, red lenta/interrumpida, catálogo grande | Recursos disponibles offline, reintentos acotados, cancelación/timeout, tiempos medidos y comportamiento sin espera infinita |
 | VAL-15 | Regresión integral y deployments — AUG-002 y todas las tareas afectadas | Repetir flujos críticos después de cada corrección; comparar HEAD con cada deployment autorizado; probar roles y navegadores/dispositivos soportados | SHA de código, URL/identidad del deployment, fecha, ambiente, navegador, pasos, resultado, logs sanitizados y aprobación |
+| VAL-16 | Modal de detalle y ampliaciones contextuales — AUG-043, AUG-050, AUG-057, AUG-061 a AUG-064 | Payloads XSS; apertura/alimentación con slots vacíos/ocupados e imágenes huérfanas; dos usuarios por último slot; payload vacío; refresh fallido tras guardar; re-render; dropdowns de Sheets; FileReader success/error/abort; vídeo existente y confirmación; contador VIN; navegación atrás | Evidencia de sanitización, respuesta backend/slot, datos antes/después, escritura separada de refresh, listas de Sheets, estado del formulario y cierre de overlays |
 
 ### 5.1. Reglas de ejecución de la matriz
 
@@ -121,16 +124,16 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 
 **Estado:** CONSOLIDACIÓN DOCUMENTAL COMPLETADA; MATRIZ DE VALIDACIÓN PREPARADA; EJECUCIÓN DE PRUEBAS PENDIENTE.
 
-- Catálogo AUD-T: 38 unidades; 18 con E1 completada, 1 parcial y 19 por auditar.
-- Catálogo AUG: 59 IDs únicos; AUG-015 ausente del registro actual y pendiente de investigación histórica.
+- Catálogo AUD-T: 38 unidades; 19 con E1 completada, 1 parcial y 18 por auditar.
+- Catálogo AUG: 63 IDs únicos; AUG-015 ausente del registro actual y pendiente de investigación histórica.
 - Repeticiones de encabezados AUG: se interpretan como adendas hasta comprobar lo contrario; no se eliminan ni renumeran.
-- La matriz VAL-01 a VAL-15 organiza los casos que deben ejecutarse; no acredita pruebas ya realizadas.
+- La matriz VAL-01 a VAL-16 organiza los casos que deben ejecutarse; no acredita pruebas ya realizadas.
 - No se ejecutaron pruebas funcionales, HTTP, navegador, Apps Script, Drive, Spreadsheet, concurrencia ni deployments.
 - No se modificó código, configuración, endpoints ni datos productivos.
 
 ## 8. Próxima acción
 
-Continuar con AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales. Mantener AUG-053 a AUG-060 y las adendas AUG-022/AUG-043/AUG-050/AUG-051 como pendientes; no tratarlos como implementados.
+Continuar con AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias. Mantener AUG-053 a AUG-064 y las adendas AUG-022/AUG-043/AUG-050/AUG-051/AUG-057 como pendientes; no tratarlos como implementados.
 
 ## 9. Actualización de cobertura — AUD-T-038
 Sesión AUD-20261107-S020 | Checkpoint AUD-CP-0020 | HEAD auditado bfcdf8e57d4e09c1c920cf904265301c4554b334.
@@ -161,3 +164,13 @@ Sesión AUD-20261107-S022 | Checkpoint AUD-CP-0022 | HEAD auditado 24f68780e6b7a
 - VAL-08 se amplía con edición y validación VIN (AUG-059); VAL-12 con VIN completo/prefijo, generaciones, muestras, slots vacíos y presentación (AUG-050/AUG-060).
 - La migración VIN/opId no se ejecutó; la documentación de esquema continúa distinguiendo estado observado y esquema objetivo.
 - No se ejecutaron pruebas E2/E3, navegador, dataset VIN, HTTP, Apps Script, Spreadsheet/Drive, concurrencia ni deployments. No se modificó código, configuración ni datos productivos.
+
+## 12. Actualización de cobertura — AUD-T-005
+Sesión AUD-20261107-S023 | Checkpoint AUD-CP-0023 | HEAD auditado c56c6f7e21a668774db726e2f14139588f1bc5c0 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-005 tiene E1 estática completada; H-AUD-005-001 a 008 abiertos; validación funcional, seguridad e integración pendiente.
+- Catálogo AUD-T: 38 unidades; 19 con E1 completada, 1 parcial y 18 por auditar.
+- Catálogo AUG: 63 IDs únicos dentro de AUG-001 a AUG-064; AUG-015 continúa ausente y no se infiere ni renumera.
+- AUG-061 a AUG-064 nuevas: cupos suplementarios, sincronización del modal, selectores desde Sheets y sanitización de contenido enriquecido. AUG-043/AUG-050/AUG-057 reciben adendas.
+- VAL-03 incluye disponibilidad/escritura suplementaria (AUG-061); VAL-09/VAL-14 incluyen adendas de vídeo/FileReader/sanitización; VAL-16 cubre modal contextual y riesgos.
+- La observación popstate se transfiere a AUD-T-007 para evitar duplicar auditoría global de History API/overlays.
+- No se ejecutaron pruebas E2/E3, navegador, XSS, FileReader real, concurrencia, HTTP, Apps Script, Spreadsheet/Drive ni deployments. No se modificó código, configuración, endpoints ni datos productivos.

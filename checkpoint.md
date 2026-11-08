@@ -553,3 +553,31 @@ Cambios de aplicación: ninguno. Datos productivos: sin cambios.
 Siguiente acción: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
 Este checkpoint final es la última actualización documental antes del único commit. parent_sha y expected_sha: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+CHECKPOINT INICIAL — AUD-CP-0023
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S023 | Tarea: AUD-T-005.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work.
+HEAD inicial: c56c6f7e21a668774db726e2f14139588f1bc5c0 | Árbol: 43e7a8f7c086a701f244c81a85053c766293883b.
+Base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado inicial: AUD-T-004 E1 completada; AUD-T-005 por auditar; siguiente unidad confirmada en Plan_Auditoria.md.
+El HEAD c56c6f7 es documental respecto de 24f68780; la implementación de aplicación no cambió en ese commit.
+Respaldo exacto previo (blob SHA):
+- Auditoría.txt: 27b3c0bb0081ec60b249b40ea2adcc432f3fff2d
+- Tareas.txt: 1d6f405872a0f63cb295b059aea1c67490265e81
+- Plan_auditoría/Plan_Auditoria.md: 615fe631d061fdbc8700875322f091e0818c4119
+- Plan_auditoría/Aug_Tareas.md: 6b55723a3b23cfd8207424086ab8747ab940dce6
+- Plan_auditoría/Consolidacion_Auditoria.md: a16276f5a4e6b76b472579480475ceeb8c176d35
+- ChangesLogs.txt: 2f493f0c25a5fef90033ac628f31141946ad64cb
+- contexto_personal.md: e3e2b5466820d50294e8768543dc39ad531cef98
+- checkpoint.md: f3a0a0f5ab638182d23d7620280699b57083dec8
+Límite: auditoría estática; sin escrituras de código, configuración, Spreadsheet, Drive ni deployments.
+
+CHECKPOINT FINAL — AUD-CP-0023
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S023 | Tarea: AUD-T-005.
+HEAD auditado: c56c6f7e21a668774db726e2f14139588f1bc5c0 | base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a 008 abiertos; pruebas funcionales/seguridad/integración pendientes.
+Tareas: AUG-061 a AUG-064 nuevas; AUG-043/AUG-050/AUG-057 ampliadas; popstate transferido a AUD-T-007.
+No se modificó código, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron pruebas E2/E3, navegador, XSS, FileReader real, concurrencia ni escrituras.
+Documentos: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Commit único previsto: docs(audit): auditar modal de detalle y ampliaciones dinámicas; publicación con expected_sha c56c6f7e21a668774db726e2f14139588f1bc5c0 y force:false.
+Siguiente acción: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.

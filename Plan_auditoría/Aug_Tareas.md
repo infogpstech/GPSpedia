@@ -816,3 +816,77 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
 - 2026-11-07 — AUD-T-004: AUG-050 ampliada con normalización de consulta, muestras/competidores, rangos, caracteres compartidos y cobertura por versión; nuevas AUG-059/AUG-060. Inventario: 59 IDs únicos dentro de AUG-001 a AUG-060; AUG-015 continúa ausente y no se infiere.
+
+### AUG-061 — Validar disponibilidad y evitar sobrescrituras en ampliaciones suplementarias del modal (+)
+- **Origen:** H-AUD-005-002. **Prioridad:** Alta.
+- **Problema:** los formularios deciden el slot con un objeto frontend que puede estar desactualizado. WRITE/ADMIN escriben sin comprobar que el espacio siga vacío; payload sin campos reconocidos puede devolver éxito sin persistir.
+- **Criterios de aceptación:**
+  1. Leer el registro actual en backend antes de decidir slot; validar vehicleId y payload reconocido/no vacío.
+  2. Para Apertura, considerar conjuntamente apertura e imgApertura. Si cualquiera está ocupado, rechazar sin sobrescritura silenciosa; reemplazo solo por flujo explícito y confirmado.
+  3. Para alimentación, calcular el siguiente slot en servidor usando cada par cableAlimenN/imgCableAlimenN; texto o imagen ocupan el slot. No confiar en slot elegido por navegador.
+  4. Si los tres slots están ocupados, devolver conflicto/error sin modificar datos. Nunca devolver success si no se escribió ningún campo.
+  5. Ejecutar lectura/decisión/escritura en sección crítica del servicio autoritativo; no asumir que ScriptLock de WRITE y ADMIN es compartido. Definir una autoridad o coordinación compatible con AUG-034.
+  6. Responder vehicleId y slot asignado; distinguir conflicto, payload vacío, vehículo inexistente y error de persistencia.
+  7. Mantener asociación texto/imagen; no asociar descripción nueva a imagen previa por omisión.
+  8. Probar slots vacíos/ocupados, imagen sin texto, texto sin imagen, ficha obsoleta, payload vacío, dos usuarios por último slot y fallo de escritura.
+- **Relación:** AUD-T-005; AUG-034, AUG-039 y AUD-T-031.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-062 — Sincronizar el modal de detalle después de una ampliación confirmada
+- **Origen:** H-AUD-005-003. **Prioridad:** Media.
+- **Problema:** actualizar catalogData no reconstruye el detalle activo; refresh posterior puede presentarse como fallo de escritura ya confirmada.
+- **Criterios de aceptación:**
+  1. Separar resultado de escritura y refresh; fallo de lectura posterior no debe presentarse como fallo de escritura.
+  2. Tras confirmar guardado, obtener registro vigente y reconstruir el detalle por ID, no desde item capturado.
+  3. Actualizar menú, acordeones y carrusel; evitar contadores/imágenes antiguos.
+  4. Conservar navegación y evitar entradas History API duplicadas.
+  5. Si refresh falla, informar que escritura fue confirmada y que la interfaz requiere sincronización.
+  6. Probar corte, apertura, tres cables, vídeo aprobado y fallos de refresh.
+- **Relación:** AUD-T-005; AUD-T-037 y AUD-T-007.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-063 — Obtener selectores del modal de corte desde las listas centralizadas de Google Sheets
+- **Origen:** H-AUD-005-004. **Prioridad:** Media.
+- **Problema:** openAddCutForModelModal mantiene tipos de corte escritos en frontend y fallback estático de relay; getDropdownData lee solo primeras columnas de corte/relay.
+- **Criterios de aceptación:**
+  1. Poblar tipo de corte y relay exclusivamente desde getDropdownData y listas/reglas vigentes de Sheets.
+  2. Eliminar opciones hardcodeadas y fallbacks que permitan valores no confirmados.
+  3. Completar handleGetDropdownData() para todas las posiciones pertinentes o usar reglas oficiales de validación.
+  4. Ante fallo/lista vacía, bloquear envío y mostrar error recuperable; no inventar opciones.
+  5. Mantener regla especial «No recomendado» sin exigir relay cuando corresponda.
+  6. Probar valores exclusivos de slots 1/2/3, listas vacías, cambios en Sheets, respuesta inválida y fallo de red.
+- **Relación:** AUD-T-005; AUD-T-003/AUG-056 sin duplicar add_cortes.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-064 — Sanitizar y presentar de forma segura el contenido enriquecido de apertura y alimentación
+- **Origen:** H-AUD-005-001. **Prioridad:** Alta.
+- **Problema:** apertura/cableAlimenN se persisten directamente y createAccordionSection() los introduce en innerHTML sin sanitización. sanitizeHtmlContent existe, pero no se aplica en ese sink.
+- **Criterios de aceptación:**
+  1. Definir allow-list de etiquetas, atributos, estilos y esquemas URL; eliminar scripts, handlers on*, srcdoc, javascript:, data: no autorizados y elementos activos.
+  2. Sanitizar en backend o almacenar texto plano si no se puede garantizar formato seguro; no confiar en editor cliente.
+  3. Sanitizar todos los sinks: detalle, impresión, exportación y vistas alternativas.
+  4. Revisar datos históricos/importados ya almacenados.
+  5. Mantener solo formato permitido por rich-text.js.
+  6. Probar script, img onerror, svg/onload, iframe, javascript:, srcdoc, estilos peligrosos, HTML malformado y texto normal con listas/saltos.
+- **Relación:** AUD-T-005; H-AUD-032-001/AUG-039 y AUD-T-014.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### Adendas derivadas de AUD-T-005
+**AUG-043 — Contratos protegidos y ciclo de aprobación de YouTube**
+- Incorporar openExpandMenuModal()/openAddVideoModal() como consumidores auditados.
+- Corregir disponibilidad usando propiedad normalizada Video; ocultar opción cuando ya existe vídeo.
+- Dar comportamiento real a btn-toggle-manual-link; validar/normalizar con utilidad compartida, no por subcadenas.
+- El flujo manual debe usar acción backend que procese el campo, valide sesión y confirme persistencia; no aceptar success si el payload fue ignorado.
+- Si ya existe vídeo, advertir y pedir confirmación antes de reemplazar.
+- Mantener criterios previos de autorización, aprobación, videoId, idempotencia y sincronización.
+
+**AUG-050 — Resolución diferencial y colección VIN**
+- Añadir criterio para que el contador de openExpandMenuModal() refleje capacidad real, incluida creación de trim hasta el máximo; no mostrar disponibilidad cero/negativa mientras la acción siga habilitada.
+- Probar 1–3 trims, colección parcial/completa, nuevo trim y rechazo autoritativo del backend.
+
+**AUG-057 — Restaurar el estado del formulario ante fallos de lectura de archivos**
+- Extender a openAddAperturaModal() y openAddFeedModal() en ui.js.
+- Configurar onerror/onabort, capturar lecturas dentro de try/catch/finally y restaurar botón/estado ante fallo.
+- Probar FileReader success/error/abort y reintento sin recargar.
+
+- 2026-11-07 — AUD-T-005: nuevas AUG-061 a AUG-064; adendas AUG-043/AUG-050/AUG-057. Inventario: 63 IDs únicos AUG-001 a AUG-064; AUG-015 continúa ausente.

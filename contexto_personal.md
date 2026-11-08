@@ -339,3 +339,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No duplicar H-AUD-037-007/AUG-050, H-AUD-037-009/AUG-051, H-AUD-030/AUG-036, H-AUD-033-001/AUG-034 ni H-AUD-038-001/AUG-053.
 - Sin cambios de código, configuración, endpoints, Spreadsheet, Drive, datos productivos o deployments. Solo E1 estática; no se ejecutaron pruebas funcionales ni migración VIN.
 - Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+## Continuidad — AUD-T-005 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S023 / AUD-CP-0023.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado c56c6f7e21a668774db726e2f14139588f1bc5c0; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales: auditoría estática E1 completada; H-AUD-005-001 a 008 abiertos. No se modificó código ni datos.
+- Hallazgos: stored XSS en apertura/alimentación; falta de guardas de cupo suplementario en WRITE/ADMIN; detalle sin refresh efectivo; selectores duplicados; FileReader sin error/abort; menú de vídeo consulta propiedad eliminada; contador VIN confuso; popstate no detecta submodales dinámicos.
+- Tareas nuevas: AUG-061 a AUG-064. Adendas: AUG-043, AUG-050 y AUG-057. No duplicar H-AUD-032-001/AUG-039, H-AUD-033-001/AUG-034, H-AUD-035-002/AUG-043, AUD-T-031 ni AUG-056.
+- Observación de cierre de overlays transferida a AUD-T-007.
+- Siguiente unidad: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.

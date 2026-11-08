@@ -9233,3 +9233,95 @@ AUD-T-004 queda con E1 estática completada y hallazgos abiertos. La persistenci
 Tareas nuevas: AUG-059 y AUG-060. AUG-050 se amplía; H-AUD-037-007 se conserva sin duplicación.
 Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-005: MODAL DE DETALLE, AMPLIACIÓN DINÁMICA Y ACCIONES CONTEXTUALES
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S023 | Checkpoint: AUD-CP-0023
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: c56c6f7e21a668774db726e2f14139588f1bc5c0 | Árbol: 43e7a8f7c086a701f244c81a85053c766293883b
+Base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a H-AUD-005-008 abiertos; validación funcional, seguridad e integración pendiente.
+
+1. ALCANCE Y FUENTES
+Revisión de TAREA 5 y especificaciones 3.1–3.5 en Tareas.txt; commits ancla d72a1e6156d6a4f72a8f399adda26aa42559fc5f y 183cff59340d6454288ccc37c334dbfdbe45a638; implementación vigente en HEAD c56c6f7e21a668774db726e2f14139588f1bc5c0. El commit c56c6f7 es documental respecto de su padre 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; no contiene cambios de código de aplicación.
+
+Archivos y funciones revisados:
+- ui.js: mostrarDetalleModal(), openExpandMenuModal(), openAddCutForModelModal(), openAddAperturaModal(), openAddFeedModal(), buildVehicleVideoMetadata(), openAddVideoModal(), createAccordionSection(), renderCutContent(), precargarDropdownOptions(), suscripción a state y actualización del modal.
+- Services/catalog.js: normalización videoGuiaDesarmeUrl a Video y handleGetDropdownData().
+- Services/write.js: doPost(), handleAddSupplementaryInfo(), handleAddSupplementaryInfoLocked(), handleAddOrUpdateCutLocked(), handleAddVinToVehicleLocked().
+- Services/admin.js: dispatcher y handlers suplementarios paralelos.
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction().
+- rich-text.js: createRichTextToolbar() y sanitizeHtmlContent().
+- state.js: getState(), setState() y subscribe().
+- main.js: listener popstate y cierre de overlays.
+- style.css e index.html: #modalDetalle, .info-modal, botón expand-plus y overlays.
+- offline.js: persistencia local de operaciones pendientes del corte agregado desde el modal.
+- Contraste documental: Tareas.txt, Auditoría.txt, AUD-T-003, AUD-T-004 y hallazgos anteriores AUD-T-031/032/033/035/038.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- El botón «+» se añade después de las secciones/acordeones del detalle cuando no está activo el modo de edición. style.css lo presenta como control sticky de 40×40 px, alineado al extremo derecho.
+- openExpandMenuModal() calcula cantidades a partir del objeto de vehículo recibido y oculta opciones de corte/alimentación cuando ese objeto indica que no quedan espacios. La fuente es el estado del catálogo, no una consulta de disponibilidad al servidor al abrir el menú.
+- openAddCutForModelModal() verifica sesión local, conserva una operación pendiente en IndexedDB, bloquea sus datos durante el reintento y exige status === success y vehicleId coincidente. WRITE obtiene el colaborador autenticado y selecciona el primer slot de corte vacío bajo ScriptLock; rechaza si no quedan slots.
+- El agregado de corte utiliza el flujo de imagen existente, guarda colaborador autenticado y actualiza timestamp. El refresh tiene catch separado que distingue el corte guardado de un catálogo no actualizado.
+- El catálogo transforma videoGuiaDesarmeUrl en Video; mostrarDetalleModal() consume activeItem.Video.
+- El carrusel filtra posiciones sin texto ni imagen; una posición se presenta individualmente y varias usan controles/gestos. La imagen se oculta si la posición no tiene imagen.
+- Existe sanitizeHtmlContent() en rich-text.js y se utiliza en otros campos del detalle, incluidos detalles de cortes y notaImportante. Apertura/alimentación no pasan por ese sanitizador en el sink revisado.
+- getDropdownData expone tipoDeCorte y configRelay; el modal usa la lista dinámica de relay si está disponible, pero mantiene fallback estático y no utiliza tipoDeCorte.
+- Se mantienen sin duplicar: H-AUD-032-001/AUG-039 (autorización), H-AUD-033-001/AUG-034 (locks entre proyectos), H-AUD-035-002/AUG-043 (enlace manual de vídeo) y controles de idempotencia/reconciliación de AUD-T-031/AUD-T-038.
+
+3. HALLAZGOS
+
+H-AUD-005-001 — ALTA — Contenido enriquecido de apertura/alimentación llega a un sink HTML sin sanitización.
+Evidencia: openAddAperturaModal() y openAddFeedModal() envían sus textareas a addSupplementaryInfo. WRITE persiste los valores directamente. createAccordionSection() asigna el contenido recuperado a contentP.innerHTML (ui.js:6003) sin sanitizeHtmlContent(). El helper existe en rich-text.js, pero no se aplica aquí. Los detalles de cortes y notaImportante sí se sanitizan.
+Impacto: markup persistido con atributos activos como onerror o enlaces javascript: puede ejecutarse al abrir la ficha; el contenido almacenado puede afectar a otros usuarios. La falta de autorización de addSupplementaryInfo ya está en H-AUD-032-001/AUG-039 y aumenta la exposición, pero no sustituye este hallazgo de salida HTML insegura.
+Acción: aplicar allow-list en escritura y/o salida; aceptar solo etiquetas, atributos y esquemas permitidos. No confiar solo en el editor cliente. Probar etiquetas activas, eventos, javascript:, srcdoc y estilos peligrosos.
+
+H-AUD-005-002 — ALTA — Apertura/alimentación no comprueban disponibilidad autoritativa y pueden sobrescribir o confirmar una operación vacía.
+Evidencia: openExpandMenuModal() cuenta desde el objeto item, potencialmente obsoleto. openAddFeedModal() selecciona el primer campo cableAlimen/cableAlimen2/cableAlimen3 vacío en ese objeto; si los tres aparecen ocupados, envía payload con solo vehicleId. En WRITE, handleAddSupplementaryInfoLocked() (Services/write.js:791–863) escribe apertura/alimentación sin comprobar que las celdas actuales sigan vacías. Para imágenes solo carga cuando la imagen actual no es válida; puede conservar una imagen anterior mientras escribe texto nuevo. Si no hay campos reconocidos, también devuelve status success. ADMIN tiene handler paralelo con la misma ausencia de guardas.
+Impacto: una ficha abierta antes de otra aportación puede sobrescribir apertura o alimentación; el texto nuevo puede quedar asociado a imagen anterior; una solicitud sin espacio puede no escribir nada y reportarse exitosa. ScriptLock serializa llamadas dentro del proyecto, pero no sustituye la validación de ocupación.
+Relación: H-AUD-032-001/AUG-039 por autorización; H-AUD-033-001/AUG-034 por coordinación; AUD-T-031 por cargas/idempotencia. No duplicar.
+
+H-AUD-005-003 — MEDIA — El detalle no se actualiza después de guardar y el fallo de refresh puede confundirse con fallo de escritura.
+Evidencia: los formularios consultan getCatalogData() y llaman setState({catalogData}); la suscripción de ui.js solo vuelve a renderizar #contenido cuando navigationState.level === 'categorias', no mostrarDetalleModal() para la ficha abierta. El botón «+» conserva el objeto item capturado. En apertura/alimentación, getCatalogData() está dentro del mismo try posterior a la escritura y después de mostrar éxito/cerrar submodal; si falla el refresh, el catch muestra error genérico aunque la escritura ya ocurrió. El flujo de corte separa el error de refresh, pero tampoco reconstruye el detalle abierto.
+Impacto: ficha y menú mantienen valores/cupos antiguos; un error posterior al guardado puede inducir a repetir una operación persistida.
+Acción: separar resultado de escritura y refresh; reconstruir la ficha activa usando el registro vigente por ID y conservar contexto. Si falla el refresh, informar que el guardado fue confirmado y que solo falló la actualización visual.
+
+H-AUD-005-004 — MEDIA — El formulario de nuevo corte duplica opciones que deben proceder de Google Sheets.
+Evidencia: openAddCutForModelModal() define directamente opciones de tipo de corte. No llena ese selector desde dropdownOptions.tipoDeCorte, aunque precargarDropdownOptions() obtiene getDropdownData(). Relay consulta dropdowns.configRelay, pero populateRelayOptions() introduce valores estáticos si no recibe opciones. handleGetDropdownData() lee únicamente tipoCorte1/configRelay1, no las posiciones 2 y 3.
+Impacto: opciones divergentes de la hoja; valores usados solo en slots 2/3 pueden no aparecer y un fallo de consulta habilita fallback no confirmado.
+Acción: consumir fuente centralizada para ambos selectores, eliminar listas fallback y recuperar valores válidos de todas las posiciones pertinentes. Ante fallo, no habilitar opciones inventadas.
+
+H-AUD-005-005 — MEDIA — Los formularios de apertura/alimentación no gestionan error/abort de FileReader.
+Evidencia: openAddAperturaModal() (ui.js:7765) y openAddFeedModal() (ui.js:7843) crean promesas que solo asignan onload; no configuran onerror/onabort y el await ocurre antes del try que captura el envío. Si la lectura falla o se aborta, la promesa queda pendiente y el botón permanece deshabilitado en «Guardando...».
+Relación: ampliar AUG-057, que ya cubre errores FileReader en add_cortes.html, sin duplicar.
+
+H-AUD-005-006 — MEDIA — El menú de vídeo usa una propiedad eliminada y el control manual no completa su acción.
+Evidencia: Services/catalog.js asigna normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl) a vehicle.Video y elimina videoGuiaDesarmeUrl (líneas 280–281); mostrarDetalleModal() consume activeItem.Video, pero openExpandMenuModal() comprueba item.videoGuiaDesarmeUrl (ui.js:7166). La opción puede mostrarse aunque ya exista vídeo. En openAddVideoModal(), btn-toggle-manual-link se crea sin listener; la validación busca subcadenas youtube.com/youtu.be. El submit envía fieldName/fieldValue, pero handleAddSupplementaryInfoLocked() no procesa esas propiedades y devuelve éxito si no hay otros campos. La no persistencia manual ya está registrada en H-AUD-035-002/AUG-043; no se crea tarea duplicada.
+Impacto: el menú no respeta el límite de un vídeo; el control parece operativo, pero no cambia la ficha y puede informar éxito sin persistencia. No se cumple la confirmación de reemplazo de la especificación 3.5.
+Acción: ampliar AUG-043 al callsite del modal (+), propiedad Video, botón sin acción, validación real y confirmación si ya existe vídeo.
+
+H-AUD-005-007 — BAJA — El contador VIN puede mostrar disponibilidad cero/negativa mientras el botón sigue visible.
+Evidencia: openExpandMenuModal() calcula canAddVin con registeredVins.length < maxVinAllowed || registeredVins.length < 3, mientras el texto calcula maxVinAllowed - registeredVins.length. La segunda condición permite abrir la creación de otro trim hasta el máximo de tres, pero el contador usa solo el número de versiones actuales y puede mostrar cero o negativo.
+Impacto: contador contradictorio. addVinToVehicleLocked() valida el máximo de tres versiones y la posición antes de escribir; no se concluye que el contador permita exceder el límite backend.
+Acción: reflejar capacidad real, incluida creación de trim, o retirar el contador ambiguo. Ampliar AUG-050.
+
+H-AUD-005-008 — MEDIA — El gesto atrás no reconoce submodales dinámicos del menú (+).
+Evidencia: los formularios crean className = "info-modal visible" sin style.display = "flex"; CSS establece la presentación mediante .info-modal.visible. main.js comprueba modal.style.display === 'flex' (línea 223), solo estilo inline; no reconoce esos overlays y continúa hasta cerrar #modalDetalle, dejando submodal visible.
+Impacto: el gesto atrás puede ocultar el detalle padre sin cerrar el formulario/menú. La auditoría global de History API/overlays pertenece a AUD-T-007; se transfiere allí.
+
+4. HALLAZGOS EXISTENTES RELACIONADOS — NO DUPLICAR
+- H-AUD-032-001/AUG-039: addSupplementaryInfo WRITE/ADMIN carece de autorización propia; conservar allí.
+- H-AUD-033-001/AUG-034: ScriptLock de proyectos Apps Script distintos no es compartido; AUG-061 no debe asumirlo.
+- H-AUD-035-002/AUG-043: enlace manual no persiste por contrato incompatible; AUG-043 recibe adenda para el modal (+).
+- H-AUD-003-002/AUG-056: disponibilidad de add_cortes.html es otro callsite; AUG-061 cubre exclusivamente las escrituras suplementarias del modal.
+- AUD-T-031: conservar reconciliación de imágenes, operationId y cargas pendientes.
+- AUD-T-004/AUG-050/AUG-060: H-AUD-005-007 solo documenta el contador contextual.
+
+5. LÍMITES
+E1 estática. No se ejecutaron navegador, payload XSS, FileReader real, dos usuarios concurrentes, HTTP, Apps Script V8, escrituras de prueba en Spreadsheet, operaciones reales de Drive, validación responsive/orientación, gesto atrás ni comparación con deployments. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+6. RESULTADO
+AUD-T-005 queda con E1 estática completada y ocho hallazgos abiertos. El botón y el agregado de cortes tienen controles positivos, pero las ampliaciones de apertura/alimentación carecen de guardas de cupo, el contenido enriquecido se presenta sin sanitización, los selectores no respetan íntegramente la fuente centralizada y los formularios no actualizan de forma confiable la ficha visible. La persistencia manual de vídeo y la autorización de addSupplementaryInfo permanecen en sus tareas históricas.
+Tareas nuevas: AUG-061 a AUG-064. Adendas: AUG-043, AUG-050 y AUG-057. Transferencia de navegación: AUD-T-007.
+Siguiente unidad: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+================================================================================
