@@ -459,3 +459,11 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - H-AUD-004-001 a 003 siguen abiertos; AUG-059/AUG-060 continúan pendientes; H-AUD-037-007/AUG-050 conserva su ampliación sin duplicación.
 - VAL-08, VAL-12 y VAL-15 siguen planificadas, no ejecutadas.
 - Cobertura global: 38/38 E1 completadas, 0 parciales y 0 pendientes.
+
+
+## 18. Continuidad verificada — AUD-T-005
+- E1 completada en AUD-20261107-S023 / AUD-CP-0023 sobre c56c6f7e21a668774db726e2f14139588f1bc5c0 (árbol 43e7a8f7c086a701f244c81a85053c766293883b).
+- Comparación hasta 548d6b380ad11bf6bd957fd250d4320f50fa00ec: 21 commits posteriores; todos los archivos cambiados son documentales. Los once archivos funcionales del alcance conservan sus SHA.
+- H-AUD-005-001 a 008 siguen abiertos; AUG-061 a AUG-064 y adendas AUG-043/AUG-050/AUG-057 permanecen pendientes. H-AUD-005-008 se transfiere a AUD-T-007.
+- VAL-03, VAL-09, VAL-14 y VAL-16 no ejecutadas; VAL-17 conserva las pruebas de navegación transferidas.
+- Cobertura global se mantiene en 38/38 E1 estáticas completadas, 0 parciales y 0 pendientes; esto no cierra las validaciones funcionales.

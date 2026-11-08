@@ -185,3 +185,47 @@ Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican.
 Cobertura: 38/38 E1 completadas, 0 parciales, 0 pendientes.
 Siguiente unidad: AUD-T-005 — continuar mediante revalidación de continuidad.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0044
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S045
+Tarea: continuidad de AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+E1 histórica: AUD-20261107-S023 / AUD-CP-0023; HEAD auditado c56c6f7e21a668774db726e2f14139588f1bc5c0; árbol 43e7a8f7c086a701f244c81a85053c766293883b.
+HEAD observado: 548d6b380ad11bf6bd957fd250d4320f50fa00ec; árbol 6b6a1a0102e419e2928f37f796b2f243e90c3e1. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Alcance funcional: ui.js, style.css, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js, rich-text.js, state.js, main.js, offline.js e index.html.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-005-001 a 008; tareas AUG-061 a AUG-064 y adendas AUG-043/AUG-050/AUG-057; navegación H-AUD-005-008 transferida a AUD-T-007.
+Respaldos exactos previos a documentación:
+- Auditoría.txt: 808d8e13aea4fd0b01b52c895b0d6dcfa9d7ce95
+- Plan_auditoría/Plan_Auditoria.md: 4b7b5da70edfea246281ce72adc49c2f2d877830
+- Plan_auditoría/Consolidacion_Auditoria.md: 6c54362d1c2c997fcd4a145fc1344580f82d655b
+- ChangesLogs.txt: 389d8ad8bb18f297afcfb7477430948ce1e5874e
+- checkpoint.md: fba2c82196c832040af630a71069e9a6a1113b51
+No se modificaron archivos funcionales ni se realizaron operaciones sobre datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0044
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S045
+Resultado: AUD-T-005 permanece E1 ESTÁTICA COMPLETADA y vigente; 21 commits posteriores al HEAD histórico contienen exclusivamente cambios documentales. Sin deriva funcional.
+HEAD padre de esta tarea: 548d6b380ad11bf6bd957fd250d4320f50fa00ec; árbol: 6b6a1a0102e419e2928f37f796b2f243e90c3e1. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-005-001 a H-AUD-005-008. Tareas: AUG-061 a AUG-064; adendas AUG-043/AUG-050/AUG-057. H-AUD-005-008 transferido a AUD-T-007. Sin hallazgos ni tareas nuevas.
+Archivos funcionales revalidados y SHA actuales:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+Validaciones pendientes: VAL-03, VAL-09, VAL-14, VAL-16 y VAL-17 (navegación transferida). No se ejecutaron navegador, XSS, FileReader, concurrencia, HTTP, Apps Script V8, Spreadsheet/Drive real, responsive/orientación ni deployments.
+No se modificaron código, endpoints, configuración, assets, permisos, Spreadsheet, Drive, datos productivos ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit: Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt y checkpoint.md (último blob documental). Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican.
+Cobertura: 38/38 E1 estáticas completadas, 0 parciales, 0 pendientes.
+Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+Commit único esperado: docs(audit): verify AUD-T-005 continuity; parent 548d6b380ad11bf6bd957fd250d4320f50fa00ec.
+================================================================================

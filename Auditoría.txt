@@ -11209,3 +11209,42 @@ Validación pendiente: VAL-08 (esquema, IDs, edición/validación VIN y migraci�
 Resultado: AUD-T-004 permanece E1 ESTÁTICA COMPLETADA y vigente por ausencia de deriva funcional. Hallazgos abiertos; sin cambios de código, endpoints, esquema, configuración, assets, permisos, Spreadsheet, Drive, datos productivos o deployments. Sin merge ni despliegue.
 Siguiente unidad secuencial: AUD-T-005, cuya E1 histórica también consta en el plan; continuar mediante revalidación de continuidad.
 ================================================================================
+
+
+================================================================================
+REVALIDACIÓN DE CONTINUIDAD — AUD-T-005
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S045 | Checkpoint: AUD-CP-0044
+HEAD E1 original: c56c6f7e21a668774db726e2f14139588f1bc5c0 | árbol: 43e7a8f7c086a701f244c81a85053c766293883b
+HEAD actual: 548d6b380ad11bf6bd957fd250d4320f50fa00ec | árbol: 6b6a1a0102e419e2928f37f796b2f243e90c3e1
+Rama: GPSpedia2.2.5_work | Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+La E1 de AUD-T-005 fue completada en AUD-20261107-S023 / AUD-CP-0023. La comparación del HEAD histórico con el actual muestra 21 commits posteriores. GitHub identifica cambios únicamente en documentación: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. No hay cambios posteriores en los archivos funcionales del alcance; sus SHA actuales coinciden con la implementación auditada:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+
+Hallazgos históricos conservados, sin duplicación:
+- H-AUD-005-001 (ALTA): apertura/alimentación se insertan en un sink HTML sin sanitización.
+- H-AUD-005-002 (ALTA): WRITE/ADMIN no verifican de forma autoritativa disponibilidad/cupos ni rechazan consistentemente payload vacío; riesgo de sobrescritura y éxito sin escritura.
+- H-AUD-005-003 (MEDIA): el detalle activo no se reconstruye tras guardar y el fallo de refresh puede confundirse con fallo de escritura.
+- H-AUD-005-004 (MEDIA): selectores de corte/relay duplican valores y no consumen íntegramente las listas centralizadas de Sheets.
+- H-AUD-005-005 (MEDIA): FileReader de apertura/alimentación no gestiona error/abort y puede dejar el formulario bloqueado.
+- H-AUD-005-006 (MEDIA): disponibilidad/acción manual del vídeo no coincide con la propiedad normalizada ni con el contrato backend.
+- H-AUD-005-007 (BAJA): contador VIN puede ser contradictorio con la disponibilidad del botón.
+- H-AUD-005-008 (MEDIA): popstate no reconoce submodales dinámicos; la transferencia de navegación permanece en AUD-T-007.
+
+Tareas relacionadas vigentes: AUG-061 a AUG-064; adendas a AUG-043, AUG-050 y AUG-057. Se mantienen las relaciones existentes con AUG-034, AUG-039, AUG-056 y AUD-T-031/AUD-T-038. No se crean hallazgos ni tareas duplicadas.
+
+Validación pendiente: VAL-03 (contratos/autorización y escrituras suplementarias), VAL-09 (cargas/FileReader/vídeo), VAL-14 (PWA/recursos y casos de carga relacionados), VAL-16 (modal y ampliaciones contextuales) y VAL-17 para el comportamiento de navegación transferido a AUD-T-007. No se ejecutaron navegador, payloads XSS, FileReader real, concurrencia de usuarios, HTTP, Apps Script V8, escrituras de prueba en Spreadsheet, operaciones Drive, pruebas responsive/orientación ni comparación con deployments.
+
+Resultado: AUD-T-005 permanece E1 ESTÁTICA COMPLETADA y vigente por ausencia de deriva funcional. Los ocho hallazgos y sus tareas permanecen abiertos; no se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+================================================================================

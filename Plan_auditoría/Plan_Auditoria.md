@@ -958,3 +958,11 @@ La E1 de AUD-T-004 fue completada en AUD-20261107-S022. La comparación del HEAD
 Se mantienen H-AUD-004-001 a 003, AUG-059/AUG-060 y la ampliación de H-AUD-037-007/AUG-050. No se crean hallazgos ni tareas duplicadas.
 VAL-08, VAL-12 y VAL-15 siguen pendientes de ejecución funcional/integración en entorno aislado. Sin cambios de código ni datos productivos.
 Siguiente unidad secuencial: AUD-T-005 (E1 histórica completada; requiere continuidad, no reinicio).
+
+
+## 48. Continuidad verificada — AUD-T-005
+Sesión AUD-20261108-S045 | Checkpoint AUD-CP-0044 | HEAD E1 c56c6f7e21a668774db726e2f14139588f1bc5c0 | HEAD actual 548d6b380ad11bf6bd957fd250d4320f50fa00ec | árbol actual 6b6a1a0102e419e2928f37f796b2f243e90c3e1 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 de AUD-T-005 fue completada en AUD-20261107-S023 / AUD-CP-0023. La comparación entre el HEAD histórico y el actual arroja 21 commits posteriores, con cambios exclusivamente documentales. Los once archivos funcionales revisados (ui.js, style.css, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js, rich-text.js, state.js, main.js, offline.js e index.html) no presentan deriva funcional.
+Se conservan H-AUD-005-001 a 008, AUG-061 a AUG-064 y las adendas a AUG-043/AUG-050/AUG-057. No se crean hallazgos ni tareas duplicadas; H-AUD-005-008 se mantiene transferido a AUD-T-007.
+VAL-03, VAL-09, VAL-14 y VAL-16 siguen pendientes; VAL-17 cubre la navegación transferida. Sin pruebas funcionales ni integración real. Sin cambios de aplicación ni datos productivos.
+Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
