@@ -840,3 +840,68 @@ CONTINUIDAD
 - parent_sha y expected_sha deberán ser 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; force:false. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - El SHA del commit que incorpora este checkpoint será identificable en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0029
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S029
+Tarea: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: bba61f0cd16e5a35d6f709e048ebd31d8709a193
+Árbol inicial: b44d845fdd0cb485cdefc04752ebafd1c340f355
+Rama base protegida por procedimiento: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado inicial: AUD-T-011 POR AUDITAR; AUD-T-010 ya documentada; hallazgos AUG-075 a AUG-081 abiertos.
+Alcance: TAREA 10 (5.1–5.5), navegación/sección PyS, tarjetas, formulario, validaciones, imágenes Drive, hoja pys, IDs, lectura/cache, modal de detalle, texto enriquecido, solución, prevención y edición in-modal. AUD-T-012 (asociación bidireccional) y AUD-T-013 (tutoriales/aprobación YouTube) se mantienen fuera del alcance funcional de esta unidad.
+Archivos candidatos revisados: index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md, style.css y navigation.js.
+Blobs de referencia en HEAD inicial verificados:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+Riesgos/dependencias: contratos de sesión/identidad FEEDBACK, edición protegida, ciclo YouTube y permisos Drive; referencias previas H-AUD-035-001/003/006, H-AUD-037-005, AUG-040/AUG-043/AUG-057.
+Restricciones: E1 estática; no modificar código, configuración, endpoints, Drive, Spreadsheet, datos productivos ni deployments. No ejecutar pruebas externas. Registrar hallazgos y tareas sin duplicar AUG existentes.
+Siguiente acción inicial: recuperar Tarea 10 completa, auditar handlers/consumidores/esquema y contrastar historial.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0029
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S029
+Tarea: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-011-001 a H-AUD-011-007 ABIERTOS; validación funcional/seguridad/integración pendiente.
+HEAD auditado y verificado antes de publicación: bba61f0cd16e5a35d6f709e048ebd31d8709a193
+Árbol base de trabajo: b44d845fdd0cb485cdefc04752ebafd1c340f355
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work.
+Resultado: siete hallazgos documentados: stored XSS; ausencia de sesión/identidad server-side en escrituras PyS; imagen Drive con fallos silenciados, carpeta/formatos y FileReader; integridad de esquema/IDs/idempotencia; límites/tipos/URL; sobrescritura concurrente de solución/prevención; consultas/cache redundantes.
+Tareas: nuevas AUG-082 a AUG-087; adendas a AUG-040 y AUG-057. Se mantienen H-AUD-035-001/003/006 y H-AUD-037-005 como antecedentes sin duplicar.
+Documentos actualizados (solo documentación):
+- Auditoría.txt — blob nuevo 0e1d88056a7c3b9b67d44f1494c09ba4797841c8.
+- Tareas.txt — blob nuevo 1981c0fd39f237758af7b998f5e0a352ef49b8f2.
+- Plan_auditoría/Plan_Auditoria.md — blob nuevo 1ab9a7a475f7c858c82f56ebc8cfbb0655695c5e.
+- Plan_auditoría/Aug_Tareas.md — blob nuevo 5f98e1fabd09921fc210bfa0cc36ce317999f699.
+- Plan_auditoría/Consolidacion_Auditoria.md — blob nuevo 72e90e89f8ff260812e4e9e86afdf23dbdac7a86.
+- ChangesLogs.txt — blob nuevo dda9009269568e9799efde854ba18557bfe9a770.
+- contexto_personal.md — blob nuevo d9d1a9e95dc08acd5feffa19e039cc0283a27a87.
+- checkpoint.md — este checkpoint final, incluido en el árbol del commit.
+Respaldos exactos (blob SHA original preservado):
+- Auditoría.txt: b0ee24b88f5f0785dd5f1e56a5ccb308f633d821.
+- Tareas.txt: 5661594035a694fdc4ae0235f139368a504a47c9.
+- Plan_auditoría/Plan_Auditoria.md: fa2d44e2f2cd885c9b1fc725e7ca1a50c99af03f.
+- Plan_auditoría/Aug_Tareas.md: d17dcabcb2f3429c83632598a572796e8d5a9661.
+- Plan_auditoría/Consolidacion_Auditoria.md: 725e14c4395cca2b03745ba0d2be2dd054032fec.
+- ChangesLogs.txt: af138133856d2b7ccc61815e38ba38b5ae3dbf9a.
+- contexto_personal.md: 2e5a8bbeb920e85c766bbe9449d51307bc23a697.
+- checkpoint.md: d03f4e5a49fab6bc0dfdfc49b2ef4cfa70023826.
+Validación documental: los siete blobs nuevos se recuperaron y comprobaron por contenido; se verificaron los refs de ambas ramas inmediatamente antes de este checkpoint. No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+Pruebas no ejecutadas: E2/E3, navegador, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, XSS controlado, concurrencia y deployments. No afirmar funcionalidad validada.
+Siguiente acción: publicar un único commit documental en GPSpedia2.2.5_work mediante create_tree sobre el árbol verificado, create_commit con padre bba61f0cd16e5a35d6f709e048ebd31d8709a193 y update_ref force:false/expected_sha igual a ese HEAD; después verificar commit, archivos exactos, nuevo HEAD y base intacta.
+================================================================================

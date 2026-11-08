@@ -403,3 +403,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas tareas AUG-075 a AUG-081. Inventario: 80 IDs AUG únicos dentro de AUG-001 a AUG-081; AUG-015 continúa ausente.
 - Límites: E1 estática; sin Apps Script, HTTP, navegador, FileReader real, XSS, Drive/Spreadsheet, concurrencia ni deployments. Sin cambios de código, assets, endpoints, configuración ni datos productivos.
 - Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## Continuidad — AUD-T-011 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S029 / AUD-CP-0029.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado bba61f0cd16e5a35d6f709e048ebd31d8709a193; árbol b44d845fdd0cb485cdefc04752ebafd1c340f355; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización: E1 estática completada; H-AUD-011-001 a H-AUD-011-007 abiertos; validación funcional/seguridad/integración pendiente.
+- Alcance: Tarea 10 (5.1–5.5), index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, esquema pys y style.css. Contraste con commits f93ad12f, 73d1fd91 y 0e93ec25.
+- Hallazgos: stored XSS en título/colaborador/vídeo; acciones PyS sin sesión/identidad backend; imagen puede fallar y confirmar éxito, carpeta en raíz/MIME fijo y FileReader sin error/abort; ID/esquema/idempotencia; límites y URL; sobrescritura de solución/prevención; consultas repetidas por navegación.
+- Nuevas AUG-082 a AUG-087; adendas a AUG-040/AUG-057. Se mantienen H-AUD-035-001/003/006 y H-AUD-037-005 sin duplicar.
+- Límites: solo E1 estática; sin navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments. Sin cambios de aplicación ni datos productivos.
+- Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.

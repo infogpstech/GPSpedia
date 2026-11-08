@@ -9723,3 +9723,76 @@ Auditoría E1 estática de archivos, handlers, helpers, consumidores, esquema do
 La TAREA 9 permanece marcada como implementación histórica completada en Tareas.txt; esta auditoría no cambia esa marca, pero documenta siete hallazgos abiertos que impiden considerar el flujo completamente validado.
 Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-011: MÓDULO PROBLEMAS Y SOLUCIONES (PYS), FORMULARIOS Y VISUALIZACIÓN
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S029 | Checkpoint: AUD-CP-0029
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: bba61f0cd16e5a35d6f709e048ebd31d8709a193 | Árbol: b44d845fdd0cb485cdefc04752ebafd1c340f355
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; H-AUD-011-001 A H-AUD-011-007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+1. OBJETIVO Y ALCANCE
+Auditar TAREA 10 (5.1–5.5): navegación y sección PyS, tarjetas y orden cronológico, tarjeta de creación, formulario, validaciones, carga y persistencia de imagen, esquema de hoja pys, identificadores, lectura/cache, modal de detalle, contenido enriquecido, solución, prevención y edición in-modal. Se distinguieron los alcances de AUD-T-012 (vinculación bidireccional PyS–vehículos) y AUD-T-013 (tutoriales y ciclo de aprobación YouTube); sus problemas previos se referencian sin duplicar su auditoría.
+
+2. ARCHIVOS, FUNCIONES Y CONTRATOS REVISADOS
+- index.html: #btn-pys y #contenido-pys.
+- main.js: navegación lateral de pys.
+- ui.js: mostrarSeccion() (6428–6463), createPysCard() (2606–2660), renderPysSection() (8074–8150), openAddProblemModal() (8154–8405), openPysDetailModal() (8631–9088), renderizado de título/imagen/descripcion/solución/prevención/vídeo/colaborador y callsites addSolution/addPrevention/updatePysItem.
+- api-config.js: ACTION_TO_SERVICE_MAP, routeAction() y ruteo de getPysData/addProblem/addSolution/addPrevention/updatePysItem a FEEDBACK.
+- Services/feedback.js: assertFeedbackSession() (42–74), doPost()/actionPermissions (295–405), handleGetPysData() (1365–1386), handleAddProblem() (1389–1455), handleAddSolution() (1457–1476), handleAddPrevention() (1478–1496), handleUpdatePysItem() (1957–1996).
+- rich-text.js: createRichTextToolbar() y sanitizeHtmlContent() (327 en adelante).
+- Spreadsheet/GPSpedia_DB_columnas.md: esquema de hoja pys (70–86).
+- style.css: .card-create-pys y variantes (1538–1598).
+- Historial contrastado: f93ad12f694b75d3a8b1764dc845dc82102c5f66 (Tarea 10); 73d1fd91387ab6424d6c7251c32a876f23520745 (Revisión IV); 0e93ec2538c7e3ce81b885bf80c60b58de394d26 (carrusel/ajustes).
+- Antecedentes revalidados: H-AUD-035-001, H-AUD-035-003, H-AUD-035-006, H-AUD-037-005; AUG-040, AUG-043, AUG-057.
+
+3. CONTROLES POSITIVOS CONFIRMADOS ESTÁTICAMENTE
+- La navegación principal incluye #btn-pys y #contenido-pys; mostrarSeccion('pys') invoca renderPysSection().
+- La tarjeta de creación se agrega antes de las tarjetas de registros; la lista se invierte para presentar primero los registros más recientes según el orden físico de la hoja.
+- renderPysSection() presenta datos locales/cache antes de la respuesta de red y actualiza el estado/caché al recibir getPysData.
+- getPysData está mapeada a FEEDBACK; handleGetPysData() devuelve las columnas esperadas y normaliza modelosAsociados como arreglo.
+- El formulario implementa la casilla Sin solución, deshabilita y limpia el campo de solución cuando está marcada, y el backend escribe la columna Se soluciono de acuerdo con ese indicador.
+- handleAddProblem() utiliza LockService durante la asignación del ID, carga y append de fila, por lo que serializa la sección crítica dentro del proyecto Apps Script.
+- El modal omite bloques de descripción/solución/prevención vacíos; el contenido enriquecido pasa por sanitizeHtmlContent(), que limita etiquetas/atributos y filtra URL no HTTP(S) para enlaces/imágenes.
+- La edición in-modal tiene una acción backend updatePysItem declarada como protegida para Desarrollador; sin embargo, su callsite no transmite las credenciales exigidas, conforme a H-AUD-035-001/AUG-043.
+
+4. HALLAZGOS
+
+H-AUD-011-001 — ALTA — datos PyS almacenados llegan a sinks HTML sin escape contextual.
+createPysCard() inserta item.Problema directamente en overlay.innerHTML (ui.js 2637–2639). En el modal, el nombre del colaborador se inserta en colDiv.innerHTML después de cleanColaboradorName(), función que únicamente retira el sufijo [OP-...] y no escapa HTML (ui.js 9039–9043). El fallback de vídeo inserta item.Video directamente en el atributo href mediante concatenación HTML; además, si el valor contiene la subcadena embed/ se acepta como src de iframe sin validar origen (ui.js 8901–8921). handleAddProblem() persiste título, userName y videoUrl sin sanitización contextual; la validación del vídeo solo busca las subcadenas youtube.com/youtu.be. Un registro creado mediante llamada directa puede provocar stored XSS al abrir la tarjeta/modal o activar un enlace malicioso. Los campos enriquecidos de descripción/solución/prevención sí pasan por sanitizeHtmlContent(); esa protección no cubre los otros sinks.
+
+H-AUD-011-002 — ALTA — las escrituras de alta y contribución PyS no aplican un contrato backend explícito de sesión/identidad.
+En doPost(), assertFeedbackSession() solo se ejecuta para acciones declaradas en actionPermissions. addProblem, addSolution y addPrevention no aparecen en esa lista, por lo que sus handlers se ejecutan sin validar ActiveSessions/Users. handleAddProblem() confía en userId/userName enviados por el cliente y los almacena como colaborador/actor; el formulario exige currentUser en frontend, pero envía ID y nombre sin SessionToken. Las acciones addSolution/addPrevention también son invocables directamente sin sesión. Debe definirse explícitamente si son acciones autenticadas de colaboración o públicas; si requieren login, el servidor debe validar la sesión y derivar identidad, sin imponer rol administrativo innecesario. Se amplía AUG-040. La edición updatePysItem sí está declarada protegida, pero el consumidor ui.js omite userId/sessionToken y queda bloqueado por assertFeedbackSession; es el antecedente ya documentado H-AUD-035-001/AUG-043, no una tarea nueva.
+
+H-AUD-011-003 — MEDIA/ALTA — el flujo de imagen PyS puede confirmar un registro sin evidencia y no respeta íntegramente la ubicación/validación solicitada.
+El formulario marca pys-img-file como required, pero el backend no exige imgBase64. El catch de DriveApp registra el error y continúa; la fila se guarda con Imagen vacía y se devuelve status success (handleAddProblem(), Services/feedback.js 1416–1425 y 1430–1451). Esto confirma H-AUD-035-006/AUG-040. La carpeta se busca globalmente por nombre con DriveApp.getFoldersByName() y, si no existe, se crea con DriveApp.createFolder(), que la coloca en la raíz; no se verifica que sea subcarpeta de la carpeta principal de GPSpedia como exige 5.4. Los bytes se declaran siempre image/jpeg y el nombre termina en .jpg sin convertir realmente el archivo; no hay allowlist MIME ni límite de tamaño en backend. Si Drive crea el archivo y appendRow falla, no se observa compensación/registro recuperable del archivo huérfano. En frontend, FileReader solo define onload; error/abort deja la promesa sin resolver y el botón Guardando... permanece deshabilitado. Se amplían AUG-040/AUG-057 y se crea AUG-083 para el pipeline Drive.
+
+H-AUD-011-004 — ALTA — la asignación de IDs y la inicialización de la hoja no garantizan unicidad/esquema ante datos históricos irregulares.
+handleAddProblem() calcula nextIdNum a partir de getLastRow() (lastRow > 1 ? lastRow : 1), no consulta el mayor sufijo existente ni verifica que el ID calculado esté libre. Si se elimina una fila final o existen huecos/IDs no alineados con el número físico de filas, puede reutilizar un ID ya presente. LockService reduce colisiones simultáneas, pero no corrige esa dependencia del número de fila. Además, solo escribe encabezados cuando sheet.getLastRow() === 0; si la hoja ya existe con encabezados incompatibles, no valida nombres/orden antes de leer o escribir por posiciones fijas. No se transmite opId de creación ni existe deduplicación backend: una respuesta perdida seguida de reenvío puede crear otro registro aunque el primer append se haya completado. Se crea AUG-084.
+
+H-AUD-011-005 — MEDIA — los límites y tipos de campos no coinciden completamente con Tarea 10 y sus revisiones posteriores.
+La especificación 5.3 fija título en 15 caracteres y descripción en 200. El formulario y handleAddProblem() aplican 30 al título y 700 a la descripción; no se encontró una revisión posterior que amplíe esos dos campos. La Revisión II sí amplía expresamente Solución y Prevención a 700, por lo que esos límites son válidos en el formulario de alta y backend; sin embargo, el botón «Agregar prevención» del modal sigue anunciando máximo 100 mientras el backend admite 700. El backend comprueba principalmente .length y no valida que los campos sean cadenas ni que sinSolucion sea booleano. La URL se valida por subcadena y no por esquema/host/ruta/ID de vídeo válidos; updatePysItem tampoco valida videoUrl. Se crea AUG-085.
+
+H-AUD-011-006 — MEDIA — agregar solución o prevención puede sobrescribir datos existentes bajo llamadas directas o concurrencia.
+La UI muestra los botones solo cuando item.Se_soluciono no es 'x' o item.Prevenir está vacío. Sin embargo, handleAddSolution() y handleAddPrevention() no vuelven a comprobar bajo lock que el campo de destino siga vacío; escriben directamente en la fila identificada. Dos usuarios con el modal abierto o una llamada directa pueden reemplazar una solución/prevención ya agregada. No existe control de versión/estado ni serialización de estas mutaciones. Se crea AUG-086; la política de sesión/actor se mantiene referenciada a AUG-040.
+
+H-AUD-011-007 — MEDIA — la sección PyS vuelve a consultar FEEDBACK en cada navegación aunque exista caché.
+mostrarSeccion() llama renderPysSection() cada vez que se abre la sección (ui.js 6449–6461). renderPysSection() dibuja primero el estado/cache, pero siempre ejecuta routeAction('getPysData') después (ui.js 8124–8138), sin TTL, marca de frescura, promesa compartida ni deduplicación de solicitudes en curso. Cambiar repetidamente de sección puede generar lecturas redundantes; con fallo de red y caché disponible, se conserva la vista local sin indicar que puede estar desactualizada. Es distinto del callsite de búsqueda global ya registrado en H-AUD-037-005. Se crea AUG-087.
+
+5. ANTECEDENTES, TAREAS DERIVADAS Y LÍMITES DE ALCANCE
+- H-AUD-035-001/AUG-043: se confirma que updatePysItem no recibe userId/sessionToken desde ui.js; mantener en AUG-043 y no duplicar.
+- H-AUD-035-003/AUG-043: el ciclo de aprobación YouTube para PyS/Tutorial permite publicar la URL antes de aprobar y no retirarla al rechazar; se mantiene para AUD-T-013/AUG-043, sin duplicar aquí.
+- H-AUD-035-006/AUG-040: se confirma que el alta puede devolver éxito sin imagen cuando falla Drive; ampliar la tarea existente.
+- H-AUD-037-005: ya registra solicitudes PyS redundantes disparadas por búsqueda global. H-AUD-011-007 cubre el callsite distinto de navegación de sección y se registra en AUG-087.
+- AUG-040 recibe adenda para addProblem/addSolution/addPrevention y la política explícita de sesión/identidad.
+- AUG-057 recibe adenda para FileReader de openAddProblemModal().
+- Nuevas tareas: AUG-082 a AUG-087. No renumerar ni inferir AUG-015.
+- AUD-T-012 conserva la auditoría de asociación bidireccional, buscador/carruseles y navegación anti-ciclo; AUD-T-013 conserva el ciclo completo de tutoriales/YouTube. No se modificaron esas funciones.
+
+6. VALIDACIÓN Y LIMITACIONES
+Evidencia E1: inspección estática de funciones, handlers, consumidores, contratos de acción/sesión, esquema documentado, estilos e historial de commits. No se ejecutaron pruebas sintácticas E2, mocks E3, navegador/Playwright, FileReader real, HTTP, Apps Script V8, Drive, Spreadsheet, cargas, concurrencia, XSS controlado ni deployments. No se verificó que los deployments publicados correspondan a los blobs de esta rama. No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments. La auditoría no declara Tarea 10 funcionalmente validada.
+
+Conclusión: el módulo tiene una estructura principal presente y controles visuales/funcionales parciales, pero conserva riesgos de seguridad, identidad, almacenamiento, unicidad, validación, concurrencia y rendimiento. H-AUD-011-001 a H-AUD-011-007 permanecen abiertos hasta implementar las tareas derivadas y ejecutar la matriz correspondiente.
+================================================================================

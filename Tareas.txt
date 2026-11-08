@@ -6079,3 +6079,56 @@ Tareas derivadas: AUG-075 a AUG-081. Sin duplicar H-TR/H-SUG históricos; se man
 Límites: no se ejecutaron E2/E3, Apps Script, HTTP, navegador, FileReader real, XSS, Drive, Spreadsheet, concurrencia ni deployments. No se modificó código, assets, configuración, endpoints ni datos productivos.
 Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-011: MÓDULO PROBLEMAS Y SOLUCIONES (PYS)
+Fecha: 2026-11-08 | Sesión AUD-20261108-S029 | Checkpoint AUD-CP-0029.
+HEAD auditado: bba61f0cd16e5a35d6f709e048ebd31d8709a193 | rama GPSpedia2.2.5_work | base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-011-001 a H-AUD-011-007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+Alcance: TAREA 10 (5.1–5.5), sección, tarjetas, formulario, lectura/cache, imagen Drive, esquema pys, IDs, modal, texto enriquecido, solución, prevención y edición. Archivos: index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css. Contraste histórico: f93ad12f, 73d1fd91 y 0e93ec25.
+
+Controles positivos: navegación y sección presentes; tarjeta + en primera posición; orden inverso de registros; lectura FEEDBACK y normalización de modelosAsociados; control Sin solución; lock en handleAddProblem; sanitización del contenido enriquecido y omisión de campos vacíos.
+
+Hallazgos:
+- H-AUD-011-001 (ALTA): stored XSS en título de tarjeta, colaborador y fallback de URL/iframe de vídeo por interpolación sin escape y validación de URL por subcadena.
+- H-AUD-011-002 (ALTA): addProblem/addSolution/addPrevention no pasan por assertFeedbackSession; addProblem confía en userId/userName del cliente. Definir política y derivar actor en servidor.
+- H-AUD-011-003 (MEDIA/ALTA): alta puede tener éxito sin imagen; FileReader no maneja error/abort; carpeta se crea en raíz y se busca globalmente; MIME forzado JPEG, sin límite/tipo y sin compensación de archivo huérfano.
+- H-AUD-011-004 (ALTA): ID derivado de getLastRow puede repetirse con filas eliminadas/huecos; no se valida encabezado de hoja existente ni existe idempotencia de alta.
+- H-AUD-011-005 (MEDIA): título 30 vs 15 y descripción 700 vs 200; prevención en prompt 100 vs 700; backend sin validación estricta de tipos y URL YouTube.
+- H-AUD-011-006 (MEDIA): addSolution/addPrevention no comprueban estado vacío bajo lock y pueden sobrescribir contribuciones concurrentes.
+- H-AUD-011-007 (MEDIA): cada navegación a PyS vuelve a consultar getPysData pese a caché, sin TTL/deduplicación y sin advertir datos potencialmente obsoletos.
+
+Tareas derivadas: nuevas AUG-082 a AUG-087; adendas a AUG-040 y AUG-057. Se mantienen H-AUD-035-001/AUG-043 (sesión de edición), H-AUD-035-003/AUG-043 (aprobación YouTube), H-AUD-035-006/AUG-040 (imagen) y H-AUD-037-005 (búsqueda) sin duplicar.
+
+Límites: solo E1 estática; sin E2/E3, navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments. No se modificó código, assets, endpoints, configuración ni datos productivos.
+Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+================================================================================
+
+================================================================================
+TAREAS CORRECTIVAS DERIVADAS — AUD-T-011 (PYs)
+Fecha: 2026-11-08 | Sesión AUD-20261108-S029
+- **AUG-082:** eliminar stored XSS en tarjetas y modal PyS (título, colaborador y vídeo).
+- **AUG-083:** completar almacenamiento de imágenes PyS, ubicación de carpeta, MIME/tamaño, permisos y compensación.
+- **AUG-084:** validar esquema pys, garantizar IDs únicos y hacer idempotente el alta.
+- **AUG-085:** unificar límites de caracteres, tipos y validación estricta de URL YouTube.
+- **AUG-086:** evitar sobrescrituras concurrentes en agregar solución y prevención.
+- **AUG-087:** evitar consultas PyS redundantes y gestionar frescura/deduplicación de caché.
+- **Adenda AUG-040:** clasificar acciones PyS y validar sesión/identidad server-side en las escrituras autenticadas; ampliar la integridad de imagen.
+- **Adenda AUG-057:** manejar error/abort de FileReader en openAddProblemModal().
+- Se mantienen H-AUD-035-001/AUG-043 (credenciales de edición in-modal), H-AUD-035-003/AUG-043 (aprobación YouTube) y H-AUD-035-006/AUG-040 (alta sin imagen) como antecedentes, sin duplicar.
+================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-011
+Fecha: 2026-11-08 | Sesión AUD-20261108-S029 | Checkpoint AUD-CP-0029
+- Auditoría.txt: nueva sección E1 con H-AUD-011-001 a H-AUD-011-007.
+- Tareas.txt: resultado de AUD-T-011 y tareas derivadas AUG-082 a AUG-087; adendas a AUG-040/AUG-057.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-011 y nueva iteración 34.
+- Plan_auditoría/Aug_Tareas.md: fichas AUG-082 a AUG-087, adendas e inventario actualizado.
+- Plan_auditoría/Consolidacion_Auditoria.md: estado AUD-T, inventario AUG, VAL-20 y cobertura AUD-T-011.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0029.
+- ChangesLogs.txt: registro del conjunto documental en el commit único.
+Solo documentación. No se modificaron archivos de aplicación, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni operaciones externas. La rama base permanece sin cambios.
+================================================================================

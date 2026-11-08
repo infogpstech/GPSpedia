@@ -1118,3 +1118,83 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 
 - 2026-11-08 — AUD-T-010: nuevas AUG-075 a AUG-081. Inventario: 80 IDs únicos dentro de AUG-001 a AUG-081; AUG-015 continúa ausente.
 ================================================================================
+
+
+================================================================================
+ADENDAS DERIVADAS DE AUD-T-011
+Fecha: 2026-11-08 | Sesión AUD-20261108-S029
+
+**AUG-040 — ampliar criterios de seguridad/identidad FEEDBACK:**
+- Declarar explícitamente la política para getPysData, addProblem, addSolution y addPrevention. Para las escrituras de colaboración autenticadas, exigir userId/sessionToken, verificar ActiveSessions/Users y reemplazar userId/userName/userRole del payload por los valores resueltos en servidor. Si alguna acción debe ser pública, documentar esa decisión y añadir límites/controles antiabuso; no dejarla pública por omisión del mapa actionPermissions.
+- Impedir que addProblem guarde como colaborador un nombre/ID suministrado por el navegador sin validación; derivar nombre e identidad desde Users y registrar la actividad con actor verificado.
+- Ampliar la integridad de alta PYS: imagen requerida según política del formulario, error Drive no puede producir success sin imagen; resolver escritura parcial/archivo huérfano.
+- Probar llamadas directas con sesión ausente, inválida, revocada, actor falsificado y cada rol colaborador permitido.
+
+**AUG-057 — ampliar lectura de archivos:**
+- Incluir FileReader de openAddProblemModal() (ui.js, formulario PyS).
+- Gestionar load/error/abort, captura de excepciones y restauración de botón/estado en try/catch/finally; conservar el formulario y permitir reintento sin recarga.
+- No iniciar addProblem con una imagen seleccionada cuya lectura falló; distinguir archivo ausente de error real.
+
+### AUG-082 — Eliminar stored XSS en tarjetas y modal PyS
+- **Origen:** H-AUD-011-001. **Prioridad:** Alta.
+- **Problema:** item.Problema, item.Colaborador y item.Video pueden alcanzar innerHTML/atributos href/src sin escape contextual. cleanColaboradorName() no es un sanitizador HTML y la validación de vídeo por subcadena permite valores que no son URLs YouTube seguras.
+- **Criterios de aceptación:**
+  1. Construir título y colaborador con textContent; no interpolar datos almacenados en HTML.
+  2. Validar y normalizar vídeos con URL parser y allowlist estricta de hosts/rutas/ID; construir iframe src únicamente desde ID verificado y no aceptar fallback embed/ arbitrario.
+  3. Si se muestra un enlace externo, asignar href mediante DOM y exigir https + host autorizado; nunca concatenar un valor externo en HTML.
+  4. Mantener sanitizeHtmlContent() solo para contenido enriquecido y revisar todos los sinks del módulo PyS.
+  5. Probar payloads HTML, SVG, comillas, onerror/onload, javascript:, data:, hosts falsos y URL embed manipulada; no debe ejecutarse código al renderizar tarjeta/modal ni al pulsar el vídeo.
+
+### AUG-083 — Completar el almacenamiento y la recuperación de imágenes PyS
+- **Origen:** H-AUD-011-003; relacionado con H-AUD-035-006/AUG-040 y AUG-057. **Prioridad:** Alta.
+- **Problema:** la carpeta se busca globalmente y se crea en la raíz, el MIME se fuerza a JPEG, no hay límites/allowlist backend y un fallo posterior en Sheets puede dejar archivos huérfanos.
+- **Criterios de aceptación:**
+  1. Resolver la carpeta principal autorizada de GPSpedia; localizar/crear la carpeta PyS como hija de esa raíz, sin seleccionar una carpeta homónima de otro lugar.
+  2. Validar Base64, MIME permitido, firma real y tamaño máximo en servidor; conservar el formato real o convertir efectivamente los bytes antes de declararlos JPEG.
+  3. Alinear el requisito de imagen del frontend y backend; si se selecciona una imagen y falla la carga, no guardar ni devolver éxito sin evidencia.
+  4. Si Drive crea el archivo y falla la escritura en pys, ejecutar compensación segura o registrar un estado recuperable; nunca borrar un archivo referenciado por otro registro.
+  5. Definir permisos de lectura de Drive de forma explícita y compatible con los usuarios autorizados; no ampliar el acceso global sin decisión documentada.
+  6. Probar carpeta ausente/existente/duplicada, raíz incorrecta, MIME falso, archivo sobredimensionado, fallo Drive, fallo Sheets posterior y recuperación.
+
+### AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS
+- **Origen:** H-AUD-011-004. **Prioridad:** Alta.
+- **Problema:** el ID depende del número de fila, no se comprueba que esté libre, una hoja existente no se valida y un reintento puede crear un segundo problema.
+- **Criterios de aceptación:**
+  1. Validar encabezados exactos/orden/columnas de pys antes de leer o escribir; si existe una estructura incompatible, detenerse sin sobrescribir ni desplazar datos.
+  2. Generar el siguiente ID desde una secuencia estable o máximo sufijo validado y comprobar unicidad; no depender de getLastRow como valor del ID.
+  3. Mantener LockService alrededor de asignación/append y liberar en finally.
+  4. Añadir opId estable por alta; mismo opId y mismo payload devuelve el resultado previo, mismo opId con payload distinto se rechaza.
+  5. Probar filas borradas, huecos, IDs desordenados/duplicados, hoja con encabezados incompatibles, concurrencia y respuesta perdida seguida de reintento.
+
+### AUG-085 — Unificar validación de campos y URL de vídeo PyS
+- **Origen:** H-AUD-011-005. **Prioridad:** Media.
+- **Problema:** título/descripcion superan los límites originales sin revisión explícita; el prompt de prevención conserva un límite anterior; el backend no valida estrictamente tipos ni URLs.
+- **Criterios de aceptación:**
+  1. Aplicar título máximo 15 y descripción máximo 200, conforme a Tarea 10; conservar solución y prevención en 700 conforme a Revisión II.
+  2. Cambiar el prompt «Agregar prevención» para que anuncie el mismo límite de 700 que acepta el backend y el formulario.
+  3. Validar en servidor que los campos sean cadenas, normalizar espacios, validar sinSolucion como booleano y aplicar límites incluso en llamadas directas.
+  4. Validar URL YouTube mediante host/ruta/ID permitidos tanto en alta como en edición; rechazar esquemas, hosts y formatos no válidos.
+  5. Probar límites exactos, límite +1, tipos incorrectos, HTML enriquecido vacío, checkbox y enlaces válidos/no válidos.
+
+### AUG-086 — Evitar sobrescrituras concurrentes de solución y prevención
+- **Origen:** H-AUD-011-006. **Prioridad:** Media.
+- **Problema:** addSolution/addPrevention escriben sin lock ni comprobación backend del valor actual; un modal obsoleto o llamada directa puede reemplazar una contribución existente.
+- **Criterios de aceptación:**
+  1. Volver a leer la fila objetivo dentro de una sección crítica y aceptar la operación solo si el campo sigue vacío o conforme a una política de edición aprobada.
+  2. Serializar la lectura/validación/escritura con LockService y liberar en finally.
+  3. Añadir clave de operación o condición de estado para que reintentos no creen sobrescrituras; devolver conflicto explícito cuando otro usuario ya actualizó.
+  4. Mantener coherencia entre columna Se soluciono, Solucion y Prevención.
+  5. Probar dos usuarios con modales abiertos, doble envío, respuesta perdida, registro ya actualizado y llamada directa.
+
+### AUG-087 — Evitar consultas PyS redundantes y gestionar frescura de caché
+- **Origen:** H-AUD-011-007. **Prioridad:** Media.
+- **Problema:** cada navegación llama getPysData aunque el estado/cache ya esté disponible; no hay TTL, deduplicación de promesas ni aviso cuando se conserva una vista potencialmente obsoleta.
+- **Criterios de aceptación:**
+  1. Definir una estrategia de frescura/invalidación para getPysData y reutilizar datos frescos al cambiar de sección.
+  2. Compartir una única promesa para solicitudes concurrentes y evitar peticiones duplicadas desde navegación y búsqueda.
+  3. Invalidar/actualizar cache y state después de alta, solución, prevención y edición.
+  4. Si falla la red y se muestra caché, comunicar que los datos pueden estar desactualizados sin ocultar el error.
+  5. Probar cambios repetidos de sección, navegación simultánea, búsqueda mientras carga, cache vacía/corrupta/antigua y API caída.
+
+- 2026-11-08 — AUD-T-011: nuevas AUG-082 a AUG-087; adendas a AUG-040 y AUG-057. Inventario: 86 IDs únicos dentro de AUG-001 a AUG-087; AUG-015 continúa ausente y no se infiere ni renumera.
+================================================================================

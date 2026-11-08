@@ -59,7 +59,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
 | AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
 | AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
-| AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | POR AUDITAR |
+| AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
 | AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | POR AUDITAR |
 | AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | POR AUDITAR |
 | AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | POR AUDITAR |
@@ -803,3 +803,14 @@ Hallazgos: reportProblem/suggestCutChange sin sesión/identidad de servidor; sto
 Tareas: nuevas AUG-075 a AUG-081. No duplicar H-TR-01 a 07 ni H-SUG-01 a 06, cuyas correcciones estáticas se revalidaron.
 Límites: E1 estática; sin Apps Script, HTTP, navegador, FileReader real, pruebas XSS, Drive/Spreadsheet, concurrencia ni deployments. Sin cambios de código/datos.
 Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## 34. Iteración técnica — AUD-T-011
+Sesión AUD-20261108-S029 | Checkpoint AUD-CP-0029 | HEAD auditado bba61f0cd16e5a35d6f709e048ebd31d8709a193 | árbol b44d845fdd0cb485cdefc04752ebafd1c340f355 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-011-001 a H-AUD-011-007 abiertos; validación funcional/seguridad/integración pendiente.
+Alcance: TAREA 10 (5.1–5.5), index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css. Contraste histórico f93ad12f, 73d1fd91 y 0e93ec25.
+Controles: sección y navegación; tarjeta + primero; orden inverso; lectura/cache FEEDBACK; casilla Sin solución; LockService en alta; sanitización de rich text y omisión de campos vacíos.
+Hallazgos: stored XSS en title/colaborador/vídeo; acciones de escritura sin sesión/identidad servidor; imagen puede fallar y confirmar éxito, carpeta fuera de raíz principal y MIME/lectura no robustos; ID/esquema/idempotencia; límites y URL sin validación estricta; solución/prevención sobrescribibles; consulta repetida al navegar.
+Tareas: nuevas AUG-082 a AUG-087; adendas a AUG-040/AUG-057. H-AUD-035-001/003/006 y H-AUD-037-005 se mantienen como antecedentes, sin duplicar.
+Límites: E1 estática; sin E2/E3, navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
