@@ -4385,3 +4385,15 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S042 | Checkpoint AUD-CP-0042
 - Tareas.txt no se modifica: la Tarea 2 conserva su estado histórico COMPLETADA y no se agregan tareas de implementación; las seis deudas técnicas ya están registradas en AUG-005 a AUG-010.
 No se modificaron Services/users.js, Services/Auth.js, auth.js, users.html ni api-config.js. Sin navegador, Node/lint, HTTP, Apps Script, Spreadsheet, concurrencia, multi-pestaña ni despliegues. Sin merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — CONTINUIDAD AUD-T-004
+Fecha: 2026-11-08 | Sesión AUD-20261108-S044 | Checkpoint AUD-CP-0043
+- Auditoría.txt: añadida revalidación de continuidad de AUD-T-004; H-AUD-004-001 a 003 y H-AUD-037-007/AUG-050 conservados sin duplicación.
+- Plan_auditoría/Plan_Auditoria.md: añadida iteración 47; E1 histórica confirmada sin deriva funcional.
+- Plan_auditoría/Consolidacion_Auditoria.md: corregida la cobertura a 38 E1 completadas, 0 parciales y 0 pendientes.
+- checkpoint.md: continuidad y siguiente unidad actualizadas.
+- Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: no se crean tareas ni se cambian criterios/estados AUG.
+No se modificaron archivos funcionales ni datos productivos. No se ejecutaron pruebas funcionales ni servicios/Drive/Spreadsheet/deployments. Sin merge ni despliegue.
+================================================================================

@@ -153,3 +153,35 @@ Tareas.txt no se modifica: la Tarea 2 conserva su estado histórico COMPLETADA; 
 Resultado: 7 archivos documentales, un único commit, sin cambios funcionales.
 Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0043
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S044
+Unidad: continuidad de AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
+E1 histórica: AUD-20261107-S022 / AUD-CP-0022; HEAD 24f68780e6b7ad5ad835ce76c1d6abda0a80a528.
+HEAD actual: 0c4c8e2f6dc816e13016932e2327b3ab60fb9945; árbol 991bf5ffe8a386bf28825b80430443aaf0c9bf15. Rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación: 21 commits posteriores, solo cambios documentales; nueve archivos funcionales conservan sus SHA históricos.
+Hallazgos: H-AUD-004-001 a 003; H-AUD-037-007 ampliado. Tareas: AUG-059/AUG-060 y ampliación AUG-050. No duplicar.
+Respaldos exactos:
+- Auditoría.txt: b434be45799cc4de4c13bacc691accda0b0e383e
+- Plan_auditoría/Plan_Auditoria.md: ec905d1822695c7826b705d49415ffd5f03a56c0
+- Plan_auditoría/Consolidacion_Auditoria.md: 8ef9341ffc84a909346743f3176064484a8cbcd0
+- ChangesLogs.txt: 2d6a13804cdc53dceae9aecb817f65399fb1ebb4
+- checkpoint.md: b9ce728a2cf0aab5d4c48c1b4a2def8b03596334
+Sin cambios funcionales ni operaciones sobre datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0043
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S044
+Resultado: AUD-T-004 permanece E1 ESTÁTICA COMPLETADA y vigente; no hubo deriva funcional desde el HEAD histórico 24f68780e6b7ad5ad835ce76c1d6abda0a80a528.
+HEAD padre: 0c4c8e2f6dc816e13016932e2327b3ab60fb9945; árbol 991bf5ffe8a386bf28825b80430443aaf0c9bf15; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Hallazgos abiertos: H-AUD-004-001 a 003. Tareas: AUG-059/AUG-060. H-AUD-037-007/AUG-050 conserva ampliación. Sin hallazgos ni tareas nuevas.
+Archivos funcionales revalidados: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md.
+Validación pendiente: VAL-08, VAL-12 y VAL-15. No se ejecutaron navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas con dos usuarios ni deployments.
+No se modificaron código, endpoints, esquema, configuración, assets, permisos, Spreadsheet, Drive, datos productivos ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit: Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt y checkpoint.md (último blob).
+Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican.
+Cobertura: 38/38 E1 completadas, 0 parciales, 0 pendientes.
+Siguiente unidad: AUD-T-005 — continuar mediante revalidación de continuidad.
+================================================================================

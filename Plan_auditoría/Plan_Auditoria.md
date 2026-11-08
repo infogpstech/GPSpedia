@@ -950,3 +950,11 @@ Hallazgos revalidados: eliminación de cuenta sin revocación completa y validac
 No se detectaron hallazgos nuevos que justifiquen otra AUG. Se conservan relaciones con AUD-T-023, AUD-T-024 y AUD-T-033; legal/consentimiento permanece en AUD-T-036.
 Límites: sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, pruebas reales de roles/sesiones, concurrencia, multi-pestaña ni despliegues. Sin cambios funcionales ni datos.
 Siguiente: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## 47. Continuidad verificada — AUD-T-004
+Sesión AUD-20261108-S044 | Checkpoint AUD-CP-0043 | HEAD E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | HEAD actual 0c4c8e2f6dc816e13016932e2327b3ab60fb9945 | árbol 991bf5ffe8a386bf28825b80430443aaf0c9bf15 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 de AUD-T-004 fue completada en AUD-20261107-S022. La comparación del HEAD histórico con el actual arroja 21 commits, todos con cambios documentales. Los nueve archivos funcionales de alcance conservan exactamente sus SHA originales.
+Se mantienen H-AUD-004-001 a 003, AUG-059/AUG-060 y la ampliación de H-AUD-037-007/AUG-050. No se crean hallazgos ni tareas duplicadas.
+VAL-08, VAL-12 y VAL-15 siguen pendientes de ejecución funcional/integración en entorno aislado. Sin cambios de código ni datos productivos.
+Siguiente unidad secuencial: AUD-T-005 (E1 histórica completada; requiere continuidad, no reinicio).

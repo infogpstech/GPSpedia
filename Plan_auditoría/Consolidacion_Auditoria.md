@@ -22,12 +22,12 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-001, AUD-T-003 a AUD-T-022 y AUD-T-023 a AUD-T-038 | 37 |
-| Auditada parcialmente | AUD-T-002 | 1 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-001 a AUD-T-038 | 38 |
+| Auditada parcialmente | Ninguna | 0 |
 | Por auditar | Ninguna | 0 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** AUD-T-001 y AUD-T-003 a AUD-T-022, AUD-T-023 a AUD-T-038 tienen E1 completada; AUD-T-002 permanece auditada parcialmente. Las auditorías estáticas conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad (AUD-CP-0043):** AUD-T-002 completó E1 en AUD-20261108-S042. AUD-T-003 y AUD-T-004 ya tenían E1 completada históricamente; se verificó que sus archivos funcionales no cambiaron desde sus HEAD auditados. Las 38 unidades tienen E1 estática completada; los hallazgos y validaciones funcionales siguen pendientes según cada ficha.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
@@ -450,3 +450,12 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - Validación funcional de roles, sesiones, revocación, expiración, concurrencia y deployments AUTH/USERS pendiente; E1 no equivale a certificación funcional.
 - No se modificó código ni datos productivos. Sin despliegue ni merge.
 ================================================================================
+
+
+## 17. Continuidad verificada — AUD-T-004
+- E1 completada en AUD-20261107-S022 / AUD-CP-0022 sobre 24f68780e6b7ad5ad835ce76c1d6abda0a80a528.
+- Comparación hasta 0c4c8e2f6dc816e13016932e2327b3ab60fb9945: 21 commits, cambios exclusivamente documentales.
+- Los nueve archivos funcionales del alcance conservan sus SHA históricos.
+- H-AUD-004-001 a 003 siguen abiertos; AUG-059/AUG-060 continúan pendientes; H-AUD-037-007/AUG-050 conserva su ampliación sin duplicación.
+- VAL-08, VAL-12 y VAL-15 siguen planificadas, no ejecutadas.
+- Cobertura global: 38/38 E1 completadas, 0 parciales y 0 pendientes.

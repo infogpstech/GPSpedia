@@ -11187,3 +11187,25 @@ No se ejecutaron pruebas reales de navegador, Apps Script V8, endpoints HTTP, Sp
 6. LÍMITES
 La auditoría es E1 estática. No se verificó el comportamiento de deployments activos ni el contenido histórico de Logs; tampoco se ejecutaron pruebas funcionales, de seguridad dinámica, accesibilidad o rendimiento. No se modificó código, HTML, CSS, endpoints, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+REVALIDACIÓN DE CONTINUIDAD — AUD-T-004
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S044 | Checkpoint: AUD-CP-0043
+HEAD E1 original: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | HEAD actual: 0c4c8e2f6dc816e13016932e2327b3ab60fb9945 | árbol actual: 991bf5ffe8a386bf28825b80430443aaf0c9bf15
+Rama: GPSpedia2.2.5_work | Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+La E1 de AUD-T-004 fue completada en AUD-20261107-S022 / AUD-CP-0022. La comparación entre el HEAD histórico y el actual muestra 21 commits de avance. GitHub informa cambios únicamente documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. La comparación individual confirma que los nueve archivos funcionales del alcance conservan sus SHA históricos: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md.
+
+Hallazgos/tareas vigentes, sin duplicación:
+- H-AUD-004-001 / AUG-060: se eliminan slots VIN vacíos y se desplaza la correspondencia VIN↔versión; se vuelve a recortar un prefijo ya normalizado.
+- H-AUD-004-002 / AUG-059: el editor envía fieldName='vin', pero handleUpdateVehicleField() solo resuelve COLS_CORTES y no usa getVinColumnIndex().
+- H-AUD-004-003 / AUG-059: WRITE/ADMIN no imponen maxlength VIN en backend y pueden descartar silenciosamente entradas cortas.
+- H-AUD-037-007 / AUG-050 conserva la ampliación sobre VIN completo/prefijo, ambigüedad, versión, competidores/umbral, rangos, caracteres compartidos y firmas por versión.
+No se crean hallazgos ni tareas AUG nuevas.
+
+Validación pendiente: VAL-08 (esquema, IDs, edición/validación VIN y migración en copia), VAL-12 (VIN completo/prefijo, ambigüedad, versiones, rangos, slots y muestras) y VAL-15 (regresión integral/deployments). No se ejecutaron navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas con dos usuarios ni verificación de deployments.
+
+Resultado: AUD-T-004 permanece E1 ESTÁTICA COMPLETADA y vigente por ausencia de deriva funcional. Hallazgos abiertos; sin cambios de código, endpoints, esquema, configuración, assets, permisos, Spreadsheet, Drive, datos productivos o deployments. Sin merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-005, cuya E1 histórica también consta en el plan; continuar mediante revalidación de continuidad.
+================================================================================
