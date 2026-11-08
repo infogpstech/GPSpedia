@@ -500,3 +500,14 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - Cobertura global registrada: 38/38 unidades con E1 estática completada; esta continuidad no altera el estado funcional ni certifica E2/E3.
 - Sin cambios de código, endpoints, configuración, assets o datos productivos. Sin despliegue ni merge; la rama base permanece intacta.
 - Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS; continuar mediante revalidación de continuidad.
+
+
+## 22. Continuidad verificada — AUD-T-009
+- E1 completada en AUD-20261108-S027 / AUD-CP-0027 sobre c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac.
+- Comparación hasta cdbcd6c10eee686e13213176b971681538ca7ef7: 21 commits posteriores; el diff contiene exclusivamente ocho archivos documentales. Los catorce archivos funcionales del alcance conservan exactamente sus SHA históricos.
+- H-AUD-009-001 a 003 permanecen abiertos: grafo ESM de precache incompleto (youtubeUpload.js); cache.addAll() puede abortar toda la instalación, registro del worker sin manejo de rechazo y cache.put() fuera de event.waitUntil(); detección iOS insuficiente para iPadOS con UA de escritorio y ausencia de metadatos Apple.
+- AUG-074 continúa pendiente; AUG-052 conserva su adenda sobre grafo ESM, atomicidad, recursos obligatorios/opcionales, errores de registro y primera recarga offline. H-AUD-037-011 y antecedentes H-AUD-038-003/004, AUG-022/AUG-051/AUG-065 siguen como referencias, sin duplicar.
+- VAL-13 y VAL-14 permanecen pendientes de ejecución real. No se ejecutaron CacheStorage, IndexedDB real, cuota, instalación/actualización PWA, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments.
+- Cobertura global histórica en el corte E1: 38 unidades; 23 E1 completadas, 1 parcial y 14 por auditar. Esta continuidad no modifica la certificación funcional ni cierra E2/E3.
+- Sin cambios de código, Service Worker, manifest, assets, configuración ni datos productivos. Sin despliegue ni merge; la rama base permanece intacta.
+- Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes; continuar mediante revalidación de continuidad.

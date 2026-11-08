@@ -344,3 +344,46 @@ Cobertura: 38/38 E1 estáticas completadas; la continuidad no certifica validaci
 Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
 Commit único esperado: docs(audit): verify AUD-T-008 continuity; parent e7ffbabed083bf12dd18092b0bea05acf70f3423.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0048
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S049
+Tarea: continuidad de AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.
+E1 histórica: AUD-20261108-S027 / AUD-CP-0027; HEAD auditado c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac.
+HEAD observado: cdbcd6c10eee686e13213176b971681538ca7ef7; árbol cdbcd6c10eee686e13213176b971681538ca7ef7. Rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-009-001 a 003; AUG-074; adenda AUG-052. VAL-13 y VAL-14 pendientes.
+Alcance funcional: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, add_cortes.html y users.html.
+Comparación Git: 21 commits posteriores al HEAD histórico; cambios exclusivamente documentales. Los catorce archivos funcionales conservan sus SHA históricos.
+Sin cambios funcionales ni operaciones sobre servicios/datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0048
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S049
+Resultado: AUD-T-009 permanece E1 ESTÁTICA COMPLETADA y vigente; 21 commits posteriores al HEAD histórico contienen exclusivamente cambios documentales. Sin deriva funcional.
+HEAD padre de la tarea: cdbcd6c10eee686e13213176b971681538ca7ef7; árbol: cdbcd6c10eee686e13213176b971681538ca7ef7. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-009-001 a H-AUD-009-003. Tareas: AUG-074 y adenda AUG-052. Sin hallazgos ni tareas nuevas.
+Archivos funcionales revalidados y SHA actuales:
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- manifest.json: 4634b82d1ad767a4fbd2d59a945eb33fb1b668b9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+Revalidaciones: módulo youtubeUpload.js importado por ui.js ausente del precache; cache.addAll() mantiene fallo conjunto; registro del worker sin catch; cache.put() sin event.waitUntil(); detección iOS solo por UA y faltan metadatos Apple.
+Validaciones pendientes: VAL-13 y VAL-14. No se ejecutaron CacheStorage, IndexedDB real, cuota, instalación/actualización PWA, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments.
+No se modificaron código, HTML, CSS, Service Worker, manifest, endpoints, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md y checkpoint.md. Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md y ChangesLogs.txt no se modifican: no se agregaron hallazgos ni tareas nuevas.
+La continuidad no equivale a certificación funcional E2/E3.
+Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+Commit único esperado: docs(audit): verify AUD-T-009 continuity; parent cdbcd6c10eee686e13213176b971681538ca7ef7.
+================================================================================
