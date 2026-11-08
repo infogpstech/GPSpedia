@@ -865,3 +865,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-059/AUG-060 pendientes; AUG-050 ampliada; AUG-051/AUG-036/AUG-034/AUG-053 conservan dependencias. Migración VIN no ejecutada.
 - No se ejecutaron pruebas VIN reales, navegador, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## Continuidad AUD-T-005 — 2026-11-08 | AUD-20261108-S086
+- Revalidación AUD-20261108-S086/AUD-CP-0085; E1 histórica c56c6f7e21a668774db726e2f14139588f1bc5c0 (AUD-20261107-S023/AUD-CP-0023); HEAD 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292; árbol actual d20c785de41dd39f0ecadaff1d33b676180e6c26; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. ui.js, Services/catalog.js, Services/write.js, Services/admin.js, api-config.js, rich-text.js, state.js, main.js, style.css, index.html y offline.js conservan exactamente sus SHA E1.
+- H-AUD-005-001 a 008 permanecen abiertos: contenido enriquecido sin sanitización; apertura/alimentación sin cupo autoritativo; ficha sin refresco; selectores/fallback; FileReader; vídeo manual; contador VIN; overlays y gesto atrás.
+- AUG-061/AUG-062/AUG-063/AUG-064 pendientes; AUG-043/AUG-050/AUG-057 con adendas; History API transferida a AUD-T-007.
+- No se ejecutaron navegador, XSS, FileReader real, concurrencia, HTTP, Apps Script, Spreadsheet/Drive, responsive, gesto atrás ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.

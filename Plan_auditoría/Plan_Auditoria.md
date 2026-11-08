@@ -2088,3 +2088,53 @@ No se ejecutaron pruebas E2/E3, dataset VIN real, navegador, PWA offline, localS
 
 ### Siguiente iteración
 AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## 70. Revalidación de continuidad — AUD-T-005
+
+**Sesión:** AUD-20261108-S086  
+**Checkpoint:** AUD-CP-0085  
+**E1 original:** c56c6f7e21a668774db726e2f14139588f1bc5c0 (AUD-20261107-S023 / AUD-CP-0023)  
+**Árbol E1:** 43e7a8f7c086a701f244c81a85053c766293883b  
+**HEAD revalidado:** 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292  
+**Árbol actual:** d20c785de41dd39f0ecadaff1d33b676180e6c26  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-005-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron modal de detalle, ampliación dinámica, acciones contextuales, agregado de corte, apertura/alimentación, vídeo, VIN, sanitización, selectores, actualización de ficha y navegación de overlays. Archivos: ui.js, Services/catalog.js, Services/write.js, Services/admin.js, api-config.js, rich-text.js, state.js, main.js, style.css, index.html y offline.js.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los once archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+
+### Revalidación de hallazgos y tareas
+- H-AUD-005-001 a H-AUD-005-008 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Persisten el sink HTML sin sanitización de apertura/alimentación; falta de disponibilidad autoritativa y posibilidad de éxito sin escritura; ficha abierta que no se reconstruye después de guardar; selectores con opciones estáticas/fallback y lectura incompleta de dropdowns; FileReader sin error/abort; propiedad Video eliminada y botón manual sin listener/contrato; contador VIN contradictorio; y gesto atrás que no reconoce overlays dinámicos.
+- AUG-061 continúa pendiente para guardas de disponibilidad y escritura suplementaria desde el modal (+), con separación de autorización y coordinación existentes.
+- AUG-062 continúa pendiente para validar/sanitizar contenido enriquecido en escritura y salida.
+- AUG-063 continúa pendiente para refrescar ficha activa y separar confirmación de escritura de fallo de refresh.
+- AUG-064 continúa pendiente para sanitización/contrato de contenido enriquecido; sus adendas existentes de salida HTML se conservan.
+- AUG-043 recibe adenda para el modal (+), propiedad Video, botón sin acción, validación y confirmación de reemplazo.
+- AUG-050 recibe adenda para el contador VIN; AUG-057 recibe adenda para FileReader.
+- La navegación global/History API se transfiere a AUD-T-007. Mantener las relaciones con AUG-039/AUG-034/AUG-056/AUD-T-031 y no duplicar.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los once archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba de XSS, concurrencia, FileReader o navegación.
+
+No se ejecutaron navegador, payload XSS, FileReader real, dos usuarios concurrentes, HTTP, Apps Script V8, escrituras de prueba en Spreadsheet, operaciones reales de Drive, validación responsive/orientación, gesto atrás ni comparación con deployments. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.

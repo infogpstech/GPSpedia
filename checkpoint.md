@@ -1853,3 +1853,34 @@ Sin cambios funcionales, endpoints, configuración, esquema, hojas, datos produc
 Commit documental único: docs(audit): verify AUD-T-004 continuity; parent 7364a4a40dd5754fb7b0f3dfe570209ca685f2fa; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0085
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S086
+Tarea: AUD-T-005 — revalidación de continuidad E1 de modal de detalle, ampliación dinámica y acciones contextuales.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292; árbol d20c785de41dd39f0ecadaff1d33b676180e6c26; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: c56c6f7e21a668774db726e2f14139588f1bc5c0; árbol E1 43e7a8f7c086a701f244c81a85053c766293883b; sesión original AUD-20261107-S023 / AUD-CP-0023.
+Alcance: ui.js, Services/catalog.js, Services/write.js, Services/admin.js, api-config.js, rich-text.js, state.js, main.js, style.css, index.html y offline.js.
+Hallazgos conocidos: H-AUD-005-001 a 008. Tareas derivadas: AUG-061/AUG-062/AUG-063/AUG-064; adendas AUG-043/AUG-050/AUG-057; transferencia AUD-T-007.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los once archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: salida HTML sin sanitización, cupos suplementarios, refresco de ficha, selectores/fallback, FileReader, vídeo manual, contador VIN y navegación de overlays.
+Sin cambios de código, configuración, Spreadsheet, Drive, datos productivos, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0085
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S086
+Tarea: AUD-T-005 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-005-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE.
+HEAD auditado: 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292; árbol d20c785de41dd39f0ecadaff1d33b676180e6c26; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: c56c6f7e21a668774db726e2f14139588f1bc5c0; árbol E1 43e7a8f7c086a701f244c81a85053c766293883b; 63 commits posteriores.
+Los once archivos del alcance conservan SHA E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; rich-text.js a7180766bb5097be510153edd851f4dfa939912c; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34.
+Hallazgos revalidados: H-AUD-005-001 a 008 permanecen sin cambios. AUG-061/AUG-062/AUG-063/AUG-064 pendientes; AUG-043/AUG-050/AUG-057 con adendas; navegación en AUD-T-007. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de once archivos y revisión de consistencia documental. No ejecutadas: navegador, XSS, FileReader, concurrencia, HTTP, Apps Script, Spreadsheet/Drive, responsive, gesto atrás ni deployments.
+Sin cambios funcionales, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-005 continuity; parent 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+================================================================================

@@ -867,3 +867,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-059/AUG-060 pendientes; AUG-050 ampliada. H-AUD-037-009/AUG-051, H-AUD-030/AUG-036, H-AUD-033-001/AUG-034 y H-AUD-038-001/AUG-053 mantienen sus tareas.
 - Solo continuidad E1 y revisión documental. Sin dataset VIN, navegador, PWA, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## 59. AUD-T-005 — continuidad E1 y revalidación del modal de detalle
+- Sesión AUD-20261108-S086; checkpoint AUD-CP-0085; E1 c56c6f7e21a668774db726e2f14139588f1bc5c0; árbol E1 43e7a8f7c086a701f244c81a85053c766293883b; HEAD 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292; árbol actual d20c785de41dd39f0ecadaff1d33b676180e6c26; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los once archivos de código del alcance conservan SHA idénticos a E1.
+- H-AUD-005-001 a 008 permanecen abiertos: sink HTML sin sanitizar; disponibilidad de apertura/alimentación no autoritativa; ficha no refrescada; selectores/fallback no centralizados; FileReader sin error/abort; menú de vídeo con propiedad eliminada y botón sin acción; contador VIN contradictorio; gesto atrás no reconoce submodales.
+- AUG-061/AUG-062/AUG-063/AUG-064 pendientes; AUG-043/AUG-050/AUG-057 con adendas; navegación transferida a AUD-T-007.
+- Solo continuidad E1 y revisión documental. Sin navegador, XSS, FileReader, concurrencia, HTTP, Apps Script, Spreadsheet/Drive, responsive, gesto atrás ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
