@@ -10364,3 +10364,173 @@ No se ejecutaron casos de VAL-26.
 E1 estática. No se ejecutaron navegador, IndexedDB real, Apps Script, FEEDBACK HTTP, Spreadsheet productivo, LockService concurrente, Drive, pruebas de identidad/abuso, visualización móvil ni E2/E3. No se verificó deployment. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; AUG-106 a AUG-112 nuevas; VAL-26 pendiente.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-018: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S036 | Checkpoint: AUD-CP-0036
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: f9c47bad48fa8050a4acac33a4a45784fe433ef7 | Árbol: c6d4d779c039378d351d66bdaa56104a49da4a5e
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+1. ALCANCE Y MÉTODO
+E1 estática de Tarea 18 y requisitos 8.1/B24/B25/B26: Inbox y formularios, perfil técnico, gestión de usuarios, RBAC, operaciones de respuesta/resolución/eliminación, aprobación de vídeo, caché de Inbox/perfil/usuarios, dashboard y registro de actividad.
+Se revisaron ui.js, main.js, users.html, auth.js, api-config.js, Services/Auth.js, Services/users.js, Services/feedback.js, index.html y Services/Test/README.md. Se comprobaron rutas de acciones, shape del usuario autenticado, sinks HTML, persistencia de datos y permisos de backend. No se ejecutaron servicios ni pruebas de navegador o Spreadsheet.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- getUsers exige sesión válida y limita la lista por rol (Services/users.js:178–209).
+- createUser valida el rol permitido, comprueba duplicados de nombre de usuario sin distinguir mayúsculas y utiliza ScriptLock (Services/users.js:269–340).
+- Las contraseñas nuevas se almacenan mediante createPasswordHash; el flujo de cambio verifica la contraseña actual (Services/users.js y Services/Auth.js).
+- updateUser vuelve a comprobar permisos sobre el rol objetivo y sobre el rol nuevo; no acepta cambiar Nombre_Usuario (Services/users.js:342–396).
+- updateProfile solo permite editar el perfil propio y changePassword verifica el actor autenticado (Services/users.js:428–480).
+- getFeedbackItems, replyToFeedback, markAsResolved y deleteFeedbackItem exigen sesión y roles permitidos desde doPost (Services/feedback.js:302–331).
+- Las respuestas del Inbox sustituyen responderName por el nombre derivado de la sesión; no se confía en el nombre enviado por el cliente.
+- approveVideo/rejectVideo tienen validación de rol en backend y el router inyecta el rol real de la sesión.
+- clearActivityLogs y clearSensitiveLogs están reservadas a Desarrollador.
+- La tabla de gestión de usuarios usa textContent para nombre, usuario y rol (users.html:379–395).
+- El detalle del Inbox aplica sanitizeHtmlContent a contenido y respuestas y a parte de los metadatos; no todos los campos interpolados reciben esa protección.
+
+3. HALLAZGOS NUEVOS
+
+H-AUD-018-001 — ALTA — XSS almacenado en el dashboard mediante identidad de actividad controlada por el cliente.
+Evidencia:
+- Services/feedback.js:302–318 no incluye recordLike en actionPermissions; por tanto, el router no ejecuta assertFeedbackSession para esa acción.
+- Services/feedback.js:928–962 acepta userId y userName del payload y los envía a logUserActivity().
+- Services/feedback.js:884–920 persiste userName, tipoActividad y detalle en ActividadUsuario.
+- ui.js:3221–3226 construye filas del dashboard con innerHTML e interpola log.nombreUsuario, log.tipoActividad y log.detalle sin escape.
+Impacto: un cliente no autenticado puede enviar un nombre con HTML/script mediante recordLike; el valor queda almacenado y se interpreta al abrir el dashboard de un usuario autorizado.
+Criterios:
+1. No usar innerHTML para campos de actividad; usar textContent/DOM seguro o escape contextual.
+2. No aceptar identidad de actividad desde payload público; derivarla de sesión o registrar explícitamente actor anónimo no ejecutable.
+3. Validar y normalizar datos persistidos antes de renderizar registros históricos.
+4. Probar payloads HTML/event-handler en userName, activityType y details desde una llamada directa al endpoint.
+Tarea derivada: AUG-113.
+
+H-AUD-018-002 — ALTA — XSS almacenado en Inbox por campos de formularios y metadatos no escapados.
+Evidencia:
+- Services/feedback.js:1044–1070 almacena name del formulario público en el asunto como "Contacto de " + name sin escape/normalización HTML.
+- Services/feedback.js:1161–1217 devuelve subject, user y metadatos de vídeo desde las hojas.
+- Services/feedback.js:1799–1821 acepta title y videoUrl no vacíos y los persiste como metadatos del vídeo.
+- ui.js:5534–5542 interpola item.subject en itemDiv.innerHTML.
+- ui.js:5612–5622 interpola item.subject, item.user, item.videoUrl, approvalStatus y contentType; item.content y item.reply sí pasan por sanitizeHtmlContent en líneas 5625–5632.
+Impacto: un remitente del formulario de contacto puede insertar HTML en name y provocar ejecución al abrir Inbox. Un colaborador autenticado también puede aportar title/videoUrl manipulados; videoUrl se inserta directamente en href.
+Criterios:
+1. Renderizar subject/user/contentType/status como texto seguro; no interpolar campos de usuario en HTML.
+2. Validar videoUrl en backend con allowlist de HTTPS y dominios de YouTube esperados; no confiar en validación del cliente.
+3. Sanitizar/normalizar datos al persistir y al renderizar; mantener compatibilidad con registros históricos.
+4. Probar formulario público, título de vídeo, URL con javascript:, comillas, etiquetas y atributos onerror/onload.
+Tarea derivada: AUG-114.
+
+H-AUD-018-003 — MEDIA — Los botones de aprobación/rechazo de vídeo no se muestran por leer una propiedad de rol inexistente.
+Evidencia:
+- ui.js:5578–5579 usa currentUser.Rol para calcular canApprove.
+- Services/Auth.js:355–363 construye el usuario de sesión con Privilegios y no incluye Rol.
+- main.js conserva el usuario devuelto por login; no se encontró un alias Rol en el objeto de sesión.
+Impacto: canApprove resulta false para Desarrollador, Gefe y Supervisor; el backend tiene permisos correctos, pero la interfaz oculta los botones y bloquea el flujo normal de aprobación.
+Criterios:
+1. Usar una única propiedad canónica (Privilegios) o normalizar el objeto de sesión al ingresar.
+2. Mantener la validación autoritativa de rol en backend.
+3. Probar los tres roles autorizados y roles no autorizados, confirmando visibilidad y rechazo backend.
+Tarea derivada: AUG-115.
+
+H-AUD-018-004 — MEDIA — La caché de Inbox no participa en el flujo que abre la bandeja.
+Evidencia:
+- main.js:585 llama ui.openInbox().
+- ui.js:3235–3260 openInbox limpia la lista y ejecuta getFeedbackItems() en cada apertura.
+- ui.js:10133–10155 define loadAndRenderInbox() con inboxCacheData, pero no se encontró ningún caller fuera de su propia definición.
+- handleGetFeedbackItems() lee todas las filas de Feedbacks y Contactanos (Services/feedback.js:1161–1217); no implementa paginación.
+Impacto: se vuelve a consultar y descargar el conjunto completo al abrir Inbox; el helper con caché queda desconectado. La variable inboxCacheData tampoco está asociada a una identidad de usuario/sesión.
+Criterios:
+1. Integrar el helper cacheado en la ruta real de apertura o eliminar el código muerto.
+2. Asociar caché a userId/rol/sesión y vaciarla al cerrar sesión o cambiar de cuenta.
+3. Invalidar después de responder, resolver, borrar, aprobar o rechazar.
+4. Mantener stale-while-revalidate y fallback de error sin mostrar datos de otra sesión.
+5. Añadir paginación o límite de consulta para Feedbacks y Contactanos.
+Tarea derivada: AUG-116.
+
+H-AUD-018-005 — ALTA — La gestión permite eliminar o degradar la última cuenta Desarrollador y no limpia sus sesiones.
+Evidencia:
+- users.html:406–410 muestra botón Eliminar para todas las filas, incluida la cuenta actual.
+- Services/users.js:357–389 permite a Desarrollador asignar cualquier rol permitido, sin comprobar que quede otro Desarrollador.
+- Services/users.js:398–425 permite a Desarrollador eliminar cualquier usuario; no protege autodestrucción ni último Desarrollador.
+- handleDeleteUser solo ejecuta userSheet.deleteRow(); no elimina filas de ActiveSessions ni registra cierre de sesiones.
+Impacto: una cuenta Desarrollador puede eliminarse a sí misma o eliminar/degradar la última cuenta con privilegios máximos. El borrado deja sesiones huérfanas en ActiveSessions y puede dejar el sistema sin administración recuperable desde la interfaz.
+Criterios:
+1. Impedir autodestrucción y eliminación/degradación de la última cuenta Desarrollador, salvo procedimiento de recuperación explícito.
+2. Ejecutar eliminación y limpieza de sesiones de forma atómica/bajo lock.
+3. Registrar actor, usuario afectado y operación antes de eliminar.
+4. Probar eliminación propia, último Desarrollador, varias cuentas Desarrollador, sesiones activas y concurrencia.
+Tarea derivada: AUG-117.
+
+H-AUD-018-006 — MEDIA — La sesión valida vigencia, pero no refresca el perfil/rol guardado en caché.
+Evidencia:
+- auth.js:181–208 rehidrata el usuario desde gpsepedia_session y llama validateSession en segundo plano; solo actúa sobre result.valid.
+- Services/Auth.js:377–395 devuelve valid true/false, no devuelve el perfil actualizado.
+- users.html:350–351 presenta Nombre_Completo y Privilegios desde currentUser; handleEditNameSubmit actualiza solo la copia local de la sesión cuando el propio usuario edita su nombre (653–673).
+Impacto: si otro administrador cambia nombre o rol, el navegador del usuario conserva valores antiguos hasta un nuevo login. Las operaciones protegidas siguen comprobándose en backend, por lo que no se observó bypass RBAC, pero la interfaz puede mostrar controles o datos desactualizados.
+Criterios:
+1. Refrescar los campos de perfil desde una fuente autenticada al validar/reanudar sesión o definir TTL explícito.
+2. Invalidar la copia local cuando se cierre sesión o cambie el actor.
+3. No confiar en el rol cacheado para autorizar operaciones.
+4. Probar cambios remotos de nombre/rol, reanudación offline/online y cambio de cuenta.
+Tarea derivada: AUG-118.
+
+H-AUD-018-007 — MEDIA — Las mutaciones de Inbox no dejan una traza uniforme en ActividadUsuario.
+Evidencia:
+- handleReplyToFeedback() (Services/feedback.js:1220–1248) actualiza respuesta y nombre de quien responde, sin registrar evento central.
+- handleMarkAsResolved() (1251–1265) solo cambia Se resolvio a true, sin actor ni timestamp de resolución.
+- handleDeleteFeedbackItem() (1529–1561) elimina físicamente la fila sin dejar evento de auditoría.
+- logUserActivity() escribe el historial (884–920), pero no se invoca desde esas tres mutaciones.
+Impacto: el dashboard no permite reconstruir quién resolvió o eliminó un mensaje; la eliminación borra la evidencia original y la respuesta no conserva fecha propia.
+Criterios:
+1. Registrar reply, resolve y delete con actor de sesión, tipo, ID del elemento y timestamp.
+2. Registrar el evento antes de borrar el registro fuente.
+3. Mantener historial inmutable separado de los mensajes operativos.
+4. Probar las tres acciones y verificar actor/fecha después de recargar el dashboard.
+Tarea derivada: AUG-119.
+
+H-AUD-018-008 — MEDIA — El dashboard lee todo el historial para devolver únicamente los últimos 100 registros.
+Evidencia:
+- Services/feedback.js:1268–1288 usa getDataRange().getValues(), transforma todas las filas y solo después aplica reverse().slice(0, 100).
+Impacto: el coste de lectura y transformación crece con todo el historial aunque el consumidor solo muestre 100 elementos; no hay cursor ni paginación.
+Criterios:
+1. Leer directamente las últimas N filas o implementar paginación por cursor.
+2. Mantener orden descendente y límites claros.
+3. Probar con historial grande y verificar que la consulta no recorra todas las filas.
+Tarea derivada: AUG-120.
+
+H-AUD-018-009 — BAJA — replyToFeedback devuelve éxito para un itemType no soportado.
+Evidencia:
+- Services/feedback.js:1226–1246 solo procesa problem_report y contact_form.
+- Services/feedback.js:1248 devuelve status success fuera de esas ramas; no hay else que rechace otros tipos.
+Impacto: una llamada autenticada con itemType inválido puede recibir confirmación de éxito sin que se haya actualizado ningún mensaje.
+Criterios:
+1. Validar itemType contra allowlist antes de acceder a la hoja.
+2. Devolver error explícito para tipos no soportados.
+3. Probar problem_report, contact_form, video_approval y valores arbitrarios.
+Tarea derivada: AUG-121.
+
+4. OBSERVACIONES DE ALCANCE
+- La sección B24 solo conserva el título “Dashboard de Desempeño para Supervisores”; no define indicadores, métricas, filtros, periodos ni criterios de aceptación. La interfaz revisada muestra una tabla de actividad reciente, no un panel con KPIs. No se declara fallo funcional por falta de especificación verificable; debe definirse el alcance antes de certificar analíticas.
+- users.html mantiene allUsers en memoria y vuelve a consultar tras operaciones CRUD; el perfil se presenta desde la sesión local. La auditoría no encontró un test de Feedback/Inbox en Services/Test; README describe proyectos aislados para AUTH/USERS, no una suite automatizada de FEEDBACK.
+- El backend aplica RBAC en getUsers y mutaciones del Inbox; las comprobaciones de servidor no dependen del botón visible en la interfaz.
+
+5. MATRIZ DE VALIDACIÓN — VAL-27
+Estado: PLANIFICADA; no ejecutada.
+1. Enviar name malicioso por formulario público y comprobar que Inbox lo muestra como texto.
+2. Enviar userName malicioso mediante recordLike directo y comprobar que el dashboard no interpreta HTML; verificar que el actor no sea falsificable.
+3. Enviar title/videoUrl maliciosos a submitVideoForApproval y comprobar allowlist y render seguro.
+4. Verificar visibilidad de aprobación/rechazo para Desarrollador, Gefe y Supervisor; confirmar bloqueo para otros roles.
+5. Abrir Inbox repetidamente; medir reutilización de caché, revalidación, invalidación tras mutaciones y aislamiento al cambiar de cuenta.
+6. Cambiar nombre/rol desde otra sesión; reanudar la sesión original y comprobar refresco del perfil y controles.
+7. Intentar eliminarse a sí mismo, eliminar/degradar al último Desarrollador y eliminar un usuario con sesiones activas.
+8. Responder, resolver y borrar mensajes; verificar actor, tipo, fecha e historial inmutable.
+9. Cargar historial de actividad grande y comprobar paginación/consulta acotada.
+10. Enviar replyToFeedback con tipos válidos e inválidos y verificar respuestas coherentes.
+11. Probar RBAC completo para listado, creación, edición, contraseña, perfil, reply, resolve, delete y limpieza de logs.
+12. Probar hojas vacías, registros históricos, errores de red y concurrencia.
+No se ejecutaron casos de VAL-27.
+
+6. LÍMITES
+E1 estática. No se ejecutaron navegador, payloads XSS reales, Apps Script, FEEDBACK HTTP, USERS/AUTH HTTP, Spreadsheet productivo, YouTube API, Drive, sesiones concurrentes ni pruebas de recuperación. No se verificó deployment. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; AUG-113 a AUG-121 nuevas; VAL-27 pendiente.
+================================================================================

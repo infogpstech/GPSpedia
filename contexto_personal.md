@@ -478,3 +478,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Hallazgos principales: colisión backend demasiado amplia; IndexedDB se marca antes de confirmar FEEDBACK; cache sin identidad de usuario; claves anónimas regenerables; banner dependiente de onload; esquema Feedbacks incompleto; falta registro AUD-T-016 en Auditoría.txt.
 - Nuevas tareas AUG-106 a AUG-112. Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
 - No se modificó código de aplicación, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. No hubo merge ni despliegue.
+
+## Continuidad de auditoría — AUD-T-018
+- Fecha: 2026-11-08. Sesión AUD-20261108-S036; checkpoint AUD-CP-0036.
+- Repositorio: infogpstech/GPSpedia. Rama de trabajo GPSpedia2.2.5_work; HEAD auditado f9c47bad48fa8050a4acac33a4a45784fe433ef7; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-018 — Gestión avanzada de usuarios, auditoría de Inbox y dashboard: E1 estática completada; Tarea 18 conserva su estado histórico COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; VAL-27 pendiente.
+- Hallazgos principales: XSS almacenado en dashboard e Inbox; mismatch currentUser.Rol/Privilegios oculta aprobación de vídeos; caché Inbox no integrada; autodegradación/autoborrado de último Desarrollador y sesiones huérfanas; perfil local no refrescado; mutaciones Inbox sin historial central; lectura completa del historial; respuesta success para itemType inválido.
+- Nuevas tareas AUG-113 a AUG-121. Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
+- No se modificó código de aplicación, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. No hubo merge ni despliegue.

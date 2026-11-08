@@ -66,7 +66,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-24 PENDIENTE |
 | AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-25 PENDIENTE |
 | AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-26 PENDIENTE |
-| AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | POR AUDITAR |
+| AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-27 PENDIENTE |
 | AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | POR AUDITAR |
 | AUD-T-020 | Saneamiento arquitectural, DRY, anti-debugging y auditorías globales | Tarea 21; 27c9311c — auditoría integral y navegación; d93b3a5e — consolidación global y DRY | POR AUDITAR |
 | AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | POR AUDITAR |
@@ -869,7 +869,7 @@ Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y
 - Hallazgos: selector data-theme no alineado con body.dark-mode y --text-primary sin definición; tokens/colores fragmentados entre páginas; zoom bloqueado en add_cortes; formulario de dos columnas y página de usuarios sin breakpoints dedicados.
 - Nuevas tareas AUG-102 a AUG-105; VAL-25 planificada.
 - Límites: sin navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA, rotación ni E2/E3. Sin cambios de aplicación/configuración/datos.
-- Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+- Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
 
 ## 39. Iteración técnica — AUD-T-017
 Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035 | HEAD auditado 11d617cbf6401748a017fbe69f89ab63fa08800e | árbol f2fb8eee6b69ad0542659f152aa484ada148d9dd | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
@@ -879,3 +879,12 @@ Hallazgos: condición de colisión backend no verifica límite inferior; Indexed
 Nuevas tareas AUG-106 a AUG-112. Tarea 17 conserva estado histórico COMPLETADA; E1 no equivale a validación funcional.
 Límites: sin navegador, IndexedDB, Apps Script, HTTP, Spreadsheet, Drive, concurrencia, despliegue ni pruebas E2/E3. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+
+## 40. Iteración técnica — AUD-T-018
+Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD auditado f9c47bad48fa8050a4acac33a4a45784fe433ef7 | árbol c6d4d779c039378d351d66bdaa56104a49da4a5e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; VAL-27 pendiente.
+Alcance: Tarea 18, 8.1/B24/B25/B26; Inbox, dashboard, perfil, gestión de usuarios, RBAC y backend de feedback.
+Hallazgos: XSS almacenado en dashboard e Inbox; mismatch Rol/Privilegios oculta aprobación de vídeo; caché Inbox no conectada; ausencia de protección de última cuenta Desarrollador y limpieza de sesiones; perfil local sin refresco; mutaciones Inbox sin auditoría central; lectura completa de historial; éxito falso para itemType inválido.
+Nuevas tareas AUG-113 a AUG-121. Tarea 18 conserva estado histórico COMPLETADA; E1 no equivale a validación funcional.
+Límites: sin navegador, XSS real, Apps Script, HTTP, Spreadsheet, YouTube, Drive, concurrencia, deployment ni E2/E3. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.

@@ -6368,3 +6368,15 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 
 - Solo auditoría estática; no se modificaron archivos de aplicación ni datos productivos.
 - Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
 ================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-018
+Fecha: 2026-11-08 | Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; VAL-27 planificada.
+- Tarea 18 conserva su estado histórico COMPLETADA; la auditoría estática no certifica validación funcional.
+- Controles confirmados: RBAC en backend para usuarios e Inbox, hash de contraseñas, verificación de contraseña actual, actualización de perfil propio y permisos de limpieza de logs.
+- Hallazgos: XSS almacenado en dashboard e Inbox; property Rol/Privilegios inconsistente; caché Inbox no integrada; riesgo de eliminar/degradar último Desarrollador; perfil local desactualizado; falta de auditoría de mutaciones Inbox; lectura completa de logs; éxito falso para itemType no soportado.
+- Nuevas tareas: AUG-113 a AUG-121. VAL-27 planificada, no ejecutada.
+- No se modificaron archivos de aplicación, servicios, endpoints ni datos productivos.
+- Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
+================================================================================

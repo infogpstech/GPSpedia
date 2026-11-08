@@ -1334,3 +1334,62 @@ Respaldos exactos: los SHA del checkpoint inicial; no se generaron archivos .bak
 Commit único: docs(audit): complete AUD-T-017 collaborative year validation review (SHA identificable en el historial de GPSpedia2.2.5_work; parent 11d617cbf6401748a017fbe69f89ab63fa08800e).
 Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
 No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0036
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S036
+Tarea: AUD-T-018 — Gestión avanzada de usuarios, auditoría de Inbox y dashboard.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: f9c47bad48fa8050a4acac33a4a45784fe433ef7
+Árbol inicial: c6d4d779c039378d351d66bdaa56104a49da4a5e
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: E1 estática de 8.1/B24/B25/B26; Inbox, dashboard, perfil, gestión de usuarios, RBAC, caché y backend FEEDBACK.
+Restricciones: no modificar código durante auditoría; no ejecutar escrituras en Spreadsheet/Drive ni deployments; no ejecutar payloads reales contra producción.
+Respaldos exactos (blob SHA):
+- Auditoría.txt: 4d71f00827f9d0631559430e9516e126aab65647
+- Tareas.txt: d0a4dac2830f8597be167f9cdeb790d68c26d436
+- Plan_auditoría/Plan_Auditoria.md: 0531aeb31a8f3e93f409b7afbc1034a6727c0d5d
+- Plan_auditoría/Aug_Tareas.md: 1b0778c6918728cfe1c709105c62eb58e9a7c0a5
+- Plan_auditoría/Consolidacion_Auditoria.md: 5b66d38db974c748f59af5c7ef63d47bb4d3c2ab
+- ChangesLogs.txt: 069e85492b64e9e8b7562610214f4b7d40b1b3d8
+- contexto_personal.md: 9c6b3a8e47ac3a308ed01779d4f27398cc09553c
+- checkpoint.md: ed66687d66f28c66a3495f1b895359263b4966d5
+Blobs de aplicación auditados:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- auth.js: revisado en HEAD inicial f9c47bad48fa8050a4acac33a4a45784fe433ef7
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+Fase inicial: HEAD/base y blobs verificados; E1 estática; sin cambios de código ni operaciones externas.
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0036
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S036
+Tarea: AUD-T-018 — Gestión avanzada de usuarios, auditoría de Inbox y dashboard.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; VAL-27 pendiente.
+HEAD padre de la tarea: f9c47bad48fa8050a4acac33a4a45784fe433ef7
+Árbol inicial: c6d4d779c039378d351d66bdaa56104a49da4a5e
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work
+Resultado: controles positivos confirmados; nueve hallazgos documentados; AUG-113 a AUG-121 registradas; VAL-27 planificada.
+Archivos documentales modificados:
+- Auditoría.txt: c4ab554813717beafdae100643855adf7eaf753d
+- Tareas.txt: 18fb5be22f8f6ec4fa93319d1fc1478933438994
+- Plan_auditoría/Plan_Auditoria.md: 5e80f8cffa80e96b670a31f6e805e970ef1d0909
+- Plan_auditoría/Aug_Tareas.md: f422deaa3fc96595c545a6073788609713c06978
+- Plan_auditoría/Consolidacion_Auditoria.md: 1ad86ff246c50e89f1e29de7b34f62247e628a67
+- ChangesLogs.txt: f56398f20a3bdb4c00e86cefc4768d169762e754
+- contexto_personal.md: e3356be90fb71d8e44645d09a0d414475831c65f
+- checkpoint.md: se crea como último blob documental de la tarea.
+Archivos de aplicación auditados sin modificación: ui.js, main.js, users.html, auth.js, api-config.js, Services/Auth.js, Services/users.js, Services/feedback.js e index.html.
+Validaciones: inspección estática de RBAC, contrato de sesión, formularios, sinks HTML, caché, handlers y esquema de actividad. No se ejecutaron navegador, payloads XSS, Apps Script, HTTP, Spreadsheet, YouTube, Drive, concurrencia, deployments ni E2/E3.
+Respaldos exactos: los SHA del checkpoint inicial; no se generaron .bak porque no se modificó código ni archivos de aplicación.
+Commit único: docs(audit): complete AUD-T-018 user inbox dashboard review (SHA identificable en el historial de GPSpedia2.2.5_work; parent f9c47bad48fa8050a4acac33a4a45784fe433ef7).
+Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
+No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.

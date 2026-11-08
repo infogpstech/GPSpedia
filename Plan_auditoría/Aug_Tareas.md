@@ -1488,3 +1488,68 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - Problema: los hallazgos de AUD-T-016 no aparecen en el registro principal obligatorio.
 - Criterios: reconstruir H-AUD-016-001 a 004 únicamente con los documentos existentes; preservar el historial; verificar referencias AUG-102 a AUG-105.
 - Estado: NUEVA; reconciliación documental pendiente.
+
+## Hallazgos derivados de AUD-T-018 — 2026-11-08
+
+### AUG-113 — Corregir XSS almacenado en el dashboard de actividad
+- Origen: H-AUD-018-001. Sesión/checkpoint: AUD-20261108-S036/AUD-CP-0036. Prioridad: Alta.
+- Evidencia: Services/feedback.js:302–318, 884–920 y 928–962; ui.js:3221–3226.
+- Problema: recordLike no exige sesión, acepta userName del cliente y lo registra; el dashboard lo inserta con innerHTML.
+- Criterios: derivar actor o clasificar anónimo en backend; renderizar actividad con textContent/DOM seguro; validar historial previo; probar payloads XSS directos.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-114 — Corregir XSS y validación de URL en Inbox
+- Origen: H-AUD-018-002. Prioridad: Alta.
+- Evidencia: Services/feedback.js:1044–1070, 1161–1217 y 1799–1821; ui.js:5534–5542 y 5612–5626.
+- Problema: campos de formulario y metadatos se guardan sin normalización y se interpolan como HTML; videoUrl se usa directamente en href.
+- Criterios: renderizar campos como texto; validar URL en backend con allowlist; sanear registros históricos; probar nombre, título, URL, comillas y atributos HTML.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-115 — Unificar el campo de rol utilizado por el Inbox
+- Origen: H-AUD-018-003. Prioridad: Media.
+- Evidencia: ui.js:5578–5579 usa currentUser.Rol; Services/Auth.js:355–363 entrega Privilegios.
+- Problema: los botones de aprobación/rechazo no se muestran para los roles permitidos.
+- Criterios: usar propiedad canónica; mantener RBAC backend; probar Desarrollador, Gefe, Supervisor y roles no autorizados.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-116 — Integrar la caché real de Inbox con identidad e invalidación
+- Origen: H-AUD-018-004. Prioridad: Media.
+- Evidencia: main.js:585 llama openInbox; ui.js:3235–3260 vuelve a consultar; loadAndRenderInbox en 10133–10155 no tiene caller.
+- Problema: la caché no participa en la ruta habitual y el backend devuelve todas las filas sin paginación.
+- Criterios: conectar cache helper; scope por userId/rol/sesión; invalidar tras reply/resolve/delete/approve/reject; limpiar al logout/cambio de cuenta; fallback seguro y paginación.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-117 — Proteger la última cuenta Desarrollador y limpiar sesiones al eliminar usuarios
+- Origen: H-AUD-018-005. Prioridad: Alta.
+- Evidencia: users.html:406–410; Services/users.js:357–389 y 398–425.
+- Problema: se puede autodegradar/autoborrar o eliminar/degradar al último Desarrollador; deleteUser deja filas en ActiveSessions.
+- Criterios: impedir operaciones destructivas sobre el último Desarrollador; confirmar actor y objetivo; lock/operación atómica; limpiar sesiones y registrar auditoría.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-118 — Refrescar perfil y rol cacheados desde sesión autenticada
+- Origen: H-AUD-018-006. Prioridad: Media.
+- Evidencia: auth.js:181–208; Services/Auth.js:377–395; users.html:350–351 y 653–673.
+- Problema: checkSession valida token pero no reemplaza el perfil/rol local tras cambios hechos desde otra sesión.
+- Criterios: endpoint de perfil autenticado o respuesta de validación con datos mínimos; TTL/invalidation; scope por actor; pruebas de cambios remotos y cambio de cuenta.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-119 — Registrar reply, resolve y delete del Inbox en historial inmutable
+- Origen: H-AUD-018-007. Prioridad: Media.
+- Evidencia: Services/feedback.js:1220–1265 y 1529–1561 no llaman logUserActivity.
+- Problema: no hay traza uniforme de quién respondió, resolvió o eliminó; delete borra el registro fuente.
+- Criterios: evento inmutable con actor, acción, tipo/ID y timestamp antes de mutar; no depender de la fila operativa; probar tras recarga.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-120 — Optimizar la lectura del dashboard de actividad
+- Origen: H-AUD-018-008. Prioridad: Media.
+- Evidencia: Services/feedback.js:1268–1288 carga todo el rango y luego conserva 100 registros.
+- Problema: el coste crece con el historial completo; no existe cursor ni paginación.
+- Criterios: lectura acotada de últimas N filas o cursor; orden descendente estable; prueba con historial grande.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-121 — Rechazar itemType no soportados al responder Inbox
+- Origen: H-AUD-018-009. Prioridad: Baja.
+- Evidencia: Services/feedback.js:1226–1248 procesa dos tipos y devuelve success fuera de las ramas.
+- Problema: un tipo inválido recibe éxito aunque no se haya actualizado ningún registro.
+- Criterios: allowlist estricta; error explícito; pruebas para problem_report, contact_form, video_approval y tipo arbitrario.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.

@@ -4285,3 +4285,17 @@ Archivos modificados:
 - contexto_personal.md: líneas 474–481. Añadida continuidad AUD-T-017.
 - checkpoint.md: líneas 1282–1337. Añadidos checkpoint inicial y final AUD-CP-0035 como último blob documental.
 No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-018
+Fecha: 2026-11-08 | Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036
+Archivos modificados:
+- Auditoría.txt: líneas 10368–10537. Añadida auditoría estática AUD-T-018, H-AUD-018-001 a 009 y VAL-27.
+- Tareas.txt: líneas 6372–6383. Añadido resultado de AUD-T-018, estado E1, hallazgos, VAL-27 y siguiente unidad.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-018 actualizada en línea 69; iteración 40 añadida en líneas 883–891 y continuidad hacia AUD-T-019.
+- Plan_auditoría/Aug_Tareas.md: líneas 1492–1556. Añadidas fichas AUG-113 a AUG-121.
+- Plan_auditoría/Consolidacion_Auditoria.md: conteos actualizados; sección AUD-T-018 añadida en líneas 372–384.
+- ChangesLogs.txt: líneas 4289–(fin). Añadido este registro documental.
+- contexto_personal.md: líneas 482–489. Añadida continuidad AUD-T-018.
+- checkpoint.md: líneas 1338–1396. Añadidos checkpoint inicial y final AUD-CP-0036 como último blob documental.
+No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
