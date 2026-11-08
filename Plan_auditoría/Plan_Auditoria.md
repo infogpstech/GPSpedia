@@ -2471,3 +2471,47 @@ No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, con
 
 ### Siguiente iteración
 AUD-T-013 — Tutoriales, reproducción, carga y ciclo de aprobación YouTube.
+
+
+## 78. Continuidad verificada — AUD-T-013 (tutoriales, multimedia y aprobación YouTube)
+**Sesión:** AUD-20261108-S094  
+**Checkpoint:** AUD-CP-0093  
+**E1 histórica:** d8a164c2974f4dc472f169442c2b7efb969bf350 (AUD-20261108-S031 / AUD-CP-0031)  
+**Árbol E1:** abce39b7f437ecd02647bebdf4252f47d4ed4ca2  
+**HEAD revalidado:** 35122f7fb8b41de7dd6900d5bd567b66ccc363a6  
+**Árbol actual:** 2a9621fa000a53dd4b46a49bcbbb2fdddc23feb0  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-013-001 A H-AUD-013-010 PERMANECEN ABIERTOS O VINCULADOS A TAREAS EXISTENTES; VALIDACIÓN FUNCIONAL, SEGURIDAD YOUTUBE/OAUTH PENDIENTE.
+
+### Alcance y comparación
+Se revalidó el alcance histórico de AUD-T-013: youtubeUpload.js, Services/feedback.js, Services/catalog.js, api-config.js, ui.js, main.js, navigation.js, index.html, style.css y Estudio_Factibilidad_YouTube.md.
+
+La comparación Git E1→HEAD confirma 63 commits posteriores, con E1 como ancestro directo y sin divergencia. El diff global contiene únicamente ocho archivos documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los diez archivos funcionales/estudio del alcance conservan exactamente sus SHA históricos:
+
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Estudio_Factibilidad_YouTube.md: f5b2774d0ddbfd9862f8c51cae5a31e1481825ee
+
+### Revalidación de hallazgos y tareas
+- H-AUD-013-001 a H-AUD-013-010 permanecen vigentes por continuidad de identidad exacta de los archivos; no se identifican cambios funcionales que permitan cerrar o alterar los hallazgos.
+- Se mantienen los riesgos documentados: omisión de sessionToken en uploader; posible persistencia de URL pending antes de aprobación; asociación backend limitada a Corte; incompatibilidad del esquema Tutorial; alta addTutorial sin autenticación/deduplicación; handlers approve/reject sin guardas suficientes de subType/status; uso provisional de opVideoId/videoId; ausencia de recuperación IndexedDB/308; sink HTML en Inbox; overlay uploader sin History API; discrepancias de metadatos y ausencia de suite YouTube reproducible.
+- AUG-092 a AUG-094 continúan pendientes; AUG-043 y AUG-068 conservan sus adendas; AUG-040 mantiene la coordinación del flujo approveVideo. VAL-22 continúa planificada, no ejecutada.
+- No se crean hallazgos ni tareas nuevos. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron HEAD de trabajo y base, ascendencia E1→HEAD, 63 commits posteriores, diff global, lista de archivos modificados y SHA exactos de los diez archivos del alcance. La identidad exacta confirma continuidad estática, no el comportamiento en ejecución.
+
+No se ejecutaron YouTube API, OAuth, XHR, navegador/Playwright, Apps Script V8, Spreadsheet/Drive real, concurrencia, cancelación o recuperación ante red interrumpida/308, pruebas XSS dinámicas, deployments ni E2/E3. No se inspeccionaron ni modificaron datos productivos.
+
+Sin cambios de aplicación, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue.
+
+### Siguiente iteración
+AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación de continuidad E1).

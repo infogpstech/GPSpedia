@@ -937,3 +937,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-088/AUG-089/AUG-090 pendientes; AUG-043/AUG-087/AUG-068 a 071 mantienen sus tareas. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet, concurrencia, permisos, gestos, modales ni pruebas multiusuario. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-013 — Tutoriales, reproducción, carga y ciclo de aprobación YouTube.
+
+
+## Continuidad AUD-T-013 — AUD-20261108-S094
+- Revalidación AUD-20261108-S094/AUD-CP-0093; E1 histórica d8a164c2974f4dc472f169442c2b7efb969bf350 (AUD-20261108-S031/AUD-CP-0031); HEAD 35122f7fb8b41de7dd6900d5bd567b66ccc363a6; árbol 2a9621fa000a53dd4b46a49bcbbb2fdddc23feb0; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia; el diff global contiene ocho archivos documentales. Los diez archivos funcionales/estudio del alcance mantienen SHA idénticos a E1.
+- H-AUD-013-001 a H-AUD-013-010 permanecen abiertos o relacionados. AUG-092/AUG-093/AUG-094 pendientes; AUG-043/AUG-068 con adendas; AUG-040 mantiene coordinación; VAL-22 planificada.
+- No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.

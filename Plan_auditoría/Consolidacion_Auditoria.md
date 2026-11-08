@@ -939,3 +939,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-088/AUG-089/AUG-090 pendientes; AUG-043/AUG-087/AUG-068 a 071 conservan sus ámbitos. No duplicar.
 - Solo continuidad E1 y revisión documental. Sin Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos/deployment, gestos, modales ni pruebas multiusuario. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-013 — Tutoriales, reproducción, carga y ciclo de aprobación YouTube.
+
+
+## 67. AUD-T-013 — continuidad E1 y revalidación de tutoriales/YouTube
+- Sesión AUD-20261108-S094; checkpoint AUD-CP-0093; E1 d8a164c2974f4dc472f169442c2b7efb969bf350; árbol E1 abce39b7f437ecd02647bebdf4252f47d4ed4ca2; HEAD 35122f7fb8b41de7dd6900d5bd567b66ccc363a6; árbol actual 2a9621fa000a53dd4b46a49bcbbb2fdddc23feb0; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los diez archivos funcionales/estudio del alcance conservan SHA idénticos a E1.
+- H-AUD-013-001 a H-AUD-013-010 permanecen abiertos o vinculados: sessionToken ausente en uploader; URL pending antes de aprobación; backend solo asocia Corte; esquema Tutorial incompatible; addTutorial sin auth/deduplicación; approve/reject sin guardas subType/status; ID provisional; recuperación IndexedDB/308 ausente; sink HTML; uploader sin History API y contrato/metadatos inconsistentes; falta suite YouTube reproducible.
+- AUG-092/AUG-093/AUG-094 continúan pendientes; AUG-043/AUG-068 mantienen adendas; AUG-040 conserva coordinación de approveVideo; VAL-22 planificada. No duplicar.
+- Solo continuidad E1 y revisión documental. Sin YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
