@@ -469,3 +469,50 @@ No se modificó código, servicios, endpoints, esquema productivo, configuració
 El checkpoint se incorpora en el commit único: docs(audit): verify AUD-T-011 continuity; parent 2a966d3fe9f56b24125c109f257959bceb8940e0.
 Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0051
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S052
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work | HEAD observado: 453e9f0a8d6ded97e91e7841ea1a39c697939e0d | árbol: 18ac8adf31b0564be76958b09ef895193bfd16bb.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificará.
+Tarea: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos; revalidación de continuidad de E1 histórica.
+E1 histórica: AUD-20261108-S030/AUD-CP-0030 | HEAD 2afdde923d14e4f3dd078d347007b15e5ab09b2b | árbol 06fc72da78912df18227e2f45ce0d33349fa7cc5.
+Estado inicial: E1 completada; continuidad pendiente de revalidación.
+Alcance: ui.js, Services/feedback.js, Services/catalog.js, api-config.js, main.js, navigation.js, index.html, style.css y Spreadsheet/GPSpedia_DB_columnas.md.
+Hallazgos existentes: H-AUD-012-001 a H-AUD-012-008. Tareas AUG-088 a AUG-091; adendas AUG-043/AUG-087. VAL-21, VAL-03, VAL-09 y AUG-002 pendientes.
+Respaldos previos:
+- Plan_auditoría/Plan_Auditoria.md: 6f9e61535fa5f344791bd7d977ae5797f4599f86
+- Plan_auditoría/Consolidacion_Auditoria.md: 056eaf23f34f72ce1c494b77ca76b9a9b4635258
+- ChangesLogs.txt: e436af3bacc8e1e9770b94cb95d6664e0a4e09ac
+- contexto_personal.md: 68a3b32d77645d0b44701a8192e2a32b2c785f7d
+- checkpoint.md: f18026795223e3ad4dab2d7a2cb45614b96bf457
+Comparación histórica inicial: 21 commits posteriores; ocho archivos documentales cambiados; nueve archivos del alcance funcional/esquema con SHA idénticos.
+No se realizarán cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0051
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S052
+Resultado: AUD-T-012 permanece E1 ESTÁTICA COMPLETADA y vigente por identidad exacta de los nueve archivos funcionales/esquema. Comparación histórica: 21 commits posteriores, solo ocho archivos documentales.
+HEAD padre: 453e9f0a8d6ded97e91e7841ea1a39c697939e0d; árbol inicial: 18ac8adf31b0564be76958b09ef895193bfd16bb. Rama: GPSpedia2.2.5_work.
+Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-012-001 a H-AUD-012-008. Tareas AUG-088 a AUG-091 pendientes; adendas AUG-043/AUG-087. Sin hallazgos ni tareas nuevas.
+SHA revalidados:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+VAL-21, VAL-03, VAL-09 y AUG-002 permanecen pendientes. No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: sin hallazgos ni tareas nuevas; E1 ya está documentada y las tareas existentes permanecen intactas.
+No se modificó código, servicios, endpoints, esquema productivo, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue.
+Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+Commit único esperado: docs(audit): verify AUD-T-012 continuity; parent 453e9f0a8d6ded97e91e7841ea1a39c697939e0d.
+================================================================================

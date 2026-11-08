@@ -535,3 +535,23 @@ Sesión AUD-20261108-S051 | Checkpoint AUD-CP-0050 | HEAD E1 bba61f0cd16e5a35d6f
 - No se recalcula la cobertura global ni se modifican estados de otras unidades. E1 no certifica E2/E3.
 - Sin cambios de código ni operaciones productivas. Sin merge ni despliegue; la base permanece intacta.
 - Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+
+
+## 25. Actualización de cobertura — continuidad AUD-T-012
+Sesión AUD-20261108-S052 | Checkpoint AUD-CP-0051 | HEAD E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b | HEAD actual 453e9f0a8d6ded97e91e7841ea1a39c697939e0d | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación histórica: 21 commits posteriores, solo ocho archivos documentales; los nueve archivos funcionales/esquema de alcance conservan sus SHA históricos. Sin deriva funcional.
+- H-AUD-012-001 a H-AUD-012-008 permanecen abiertos o vinculados a tareas existentes. Evidencia revalidada:
+  - pérdida de originModal/navOptions al refrescar acordeón tras asociación;
+  - pila modal duplicable o incompleta durante edición/reconstrucción;
+  - falta de restauración de scroll/carrusel/acordeón;
+  - callsites add/remove sin userId/sessionToken pese al guard backend;
+  - mutaciones modelos_asociados sin LockService ni verificación unívoca de vehicleId en Cortes;
+  - texto del acordeón distinto del requisito;
+  - getPysData repetido sin deduplicación/frescura compartida;
+  - suite Playwright PyS–vehículo no reproducible en el árbol actual.
+- AUG-088 a AUG-091 continúan pendientes; adendas AUG-043 y AUG-087 conservadas. H-004/H-007/H-008 se mantienen dentro de esas tareas y VAL-21/AUG-002; sin duplicados.
+- VAL-21, VAL-03, VAL-09 y AUG-002 siguen pendientes de ejecución real. No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet, concurrencia, deployment ni E2/E3.
+- Controles estáticos de asociación y renderizado siguen presentes, pero no certifican comportamiento en ejecución.
+- No se recalcula cobertura global ni se alteran estados de otras unidades. E1 no certifica E2/E3.
+- Sin cambios de código ni operaciones productivas. Sin merge ni despliegue; base intacta.
+- Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.

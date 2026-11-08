@@ -1053,3 +1053,31 @@ Controles positivos estáticos conservados: tarjeta + primera, orden inverso, le
 VAL-20, VAL-03, VAL-09, VAL-13 y VAL-14 permanecen pendientes de ejecución real; no se ejecutaron navegador/Playwright, XSS controlado, FileReader, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni deployments.
 Sin cambios funcionales ni operaciones sobre datos productivos. Sin merge ni despliegue; base intacta.
 Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+
+
+## 36. Continuidad verificada — AUD-T-012
+Sesión AUD-20261108-S052 | Checkpoint AUD-CP-0051 | HEAD E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b | árbol histórico 06fc72da78912df18227e2f45ce0d33349fa7cc5 | HEAD actual 453e9f0a8d6ded97e91e7841ea1a39c697939e0d | árbol actual 18ac8adf31b0564be76958b09ef895193bfd16bb | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-012 se completó en AUD-20261108-S030/AUD-CP-0030. La comparación hasta el HEAD actual contiene 21 commits posteriores; los únicos ocho archivos modificados son documentales. Los nueve archivos del alcance funcional/esquema conservan exactamente sus SHA históricos:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+No existe deriva funcional desde la E1. Revalidación de hallazgos:
+H-AUD-012-001: el origen anti-ciclo se pierde tras asociar/crear un problema desde un vehículo abierto desde PyS; los callbacks reconstruyen el acordeón sin reenviar navOptions/originModal. Evidencia actual en ui.js, flujo openAssociateExistingProblemModal y callback de asociación, que llama renderPosiblesProblemasAccordion(panel, vehicle) sin opciones de navegación.
+H-AUD-012-002: la pila modal puede duplicar o perder contexto durante re-renderizado/edición; openPysDetailModal y mostrarDetalleModal insertan fromOriginModal, mientras que rutas de edición/reconstrucción no conservan uniformemente navOptions y el contexto.
+H-AUD-012-003: la pila no guarda/restaura scrollLeft del carrusel, scrollTop del modal ni estado abierto del acordeón al regresar.
+H-AUD-012-004: los callsites de addVehicleToProblem/removeVehicleFromProblem no transmiten userId/sessionToken; assertFeedbackSession los exige y actionPermissions incluye ambos handlers. La eliminación además exige rol Desarrollador.
+H-AUD-012-005: handleAddVehicleToProblem y handleRemoveVehicleFromProblem leen-modifican-escriben modelos_asociados sin LockService; no comprueban que vehicleId exista exactamente una vez en Cortes. Riesgo de relaciones huérfanas y pérdida de cambios concurrentes.
+H-AUD-012-006: el requisito especifica «Problemas relacionados a este vehículo», pero renderPosiblesProblemasAccordion presenta «Posibles problemas».
+H-AUD-012-007: consumidores de PyS repiten getPysData aun cuando existe caché; renderPosiblesProblemsAccordion y openAssociateExistingProblemModal hacen nuevas consultas, sin deduplicación/TTL compartidos. Mantener dentro de AUG-087, sin duplicar.
+H-AUD-012-008: el commit histórico f6299fcf declara pruebas Playwright, pero el árbol actual no conserva suite PyS–vehículo reproducible. Mantener dentro de AUG-002 y VAL-21; no crear tarea duplicada.
+Se mantienen H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a correcciones existentes. AUG-088 a AUG-091 siguen pendientes; se conservan adendas AUG-043 (credenciales) y AUG-087 (lecturas redundantes). H-004 se atiende dentro de AUG-043; H-007/H-008 permanecen dentro de AUG-087/AUG-002 y VAL-21, sin duplicación. No se crean hallazgos ni tareas nuevas.
+Controles positivos estáticos históricos que permanecen: asociación desde PyS y desde vehículo, filtros anti-duplicado, confirmación visual, persistencia en modelos_asociados, renderizado de carrusel/acordeón y supresión contextual anti-ciclo en apertura inicial. Su presencia no certifica navegación real ni integridad transaccional.
+Validaciones pendientes: VAL-21 (recorridos bidireccionales, nuevas/existentes, anti-ciclos, retorno con estado/scroll, edición/popstate, sesión/rol, integridad referencial y concurrencia), VAL-03 (sesión/RBAC), VAL-09 (cargas si intervienen en el flujo) y AUG-002 (suite funcional reproducible). No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni E2/E3.
+Límites: solo E1 estática y continuidad Git. Sin cambios funcionales, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue; base intacta.
+Siguiente unidad secuencial: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.

@@ -552,3 +552,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUD-T-011 permanece E1 estática completada; H-AUD-011-001 a 007 abiertos; AUG-082 a 087 pendientes; adendas AUG-040/AUG-057. No hay nuevos hallazgos/tareas.
 - VAL-20, VAL-03, VAL-09, VAL-13 y VAL-14 continúan pendientes. No se ejecutaron pruebas E2/E3 ni servicios, Drive, Spreadsheet, navegador, XSS, FileReader, concurrencia o deployments.
 - No se modificó código ni datos productivos. Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+
+
+## Continuidad — AUD-T-012 (revalidación, 2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S052 / AUD-CP-0051.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD histórico 2afdde923d14e4f3dd078d347007b15e5ab09b2b, árbol 06fc72da78912df18227e2f45ce0d33349fa7cc5; HEAD previo actual 453e9f0a8d6ded97e91e7841ea1a39c697939e0d, árbol 18ac8adf31b0564be76958b09ef895193bfd16bb; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- Comparación: 21 commits posteriores al E1, solo ocho archivos documentales; nueve archivos del alcance PyS–vehículos conservan exactamente sus SHA históricos.
+- AUD-T-012 permanece E1 estática completada y vigente; H-AUD-012-001 a H-AUD-012-008 siguen abiertos o vinculados a correcciones existentes.
+- AUG-088 a AUG-091 pendientes; adendas AUG-043 y AUG-087; suite reproducible continúa dentro de AUG-002/VAL-21. Sin hallazgos ni tareas duplicadas.
+- Hallazgos revalidados: pérdida de contexto anti-ciclo tras asociación; pila modal duplicable/incompleta; retorno sin scroll/carrusel/acordeón; credenciales omitidas en add/remove; relaciones sin integridad referencial ni lock; texto del acordeón discrepante; consultas getPysData repetidas; suite de pruebas PyS–vehículo no reproducible.
+- VAL-21 y pruebas transversales VAL-03/VAL-09 pendientes. No se ejecutaron E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni deployments.
+- Sin cambios funcionales ni operaciones sobre datos productivos. Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
