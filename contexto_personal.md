@@ -784,3 +784,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-037/AUG-038 pendientes; AUG-034/AUD-T-033 y AUG-035 como dependencias; H-AUD-031-009 en la matriz de recuperación existente. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, Drive, Spreadsheet, fallos inducidos ni concurrencia. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+
+
+## Continuidad AUD-T-032 — 2026-11-08 | AUD-20261108-S077
+- Revalidación AUD-20261108-S077/AUD-CP-0076; E1 histórica ad13f5340152ff42b552f06184d2a2adb17117c9 (AUD-20261107-S013/AUD-CP-0013); HEAD 80bc51c1bff923ac497b453ecbe33ebf69af5fd8; árbol actual bf60e92eba10d8a7be73f0a5fdbf5097c03d5589; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Services/write.js, Services/admin.js, Services/Auth.js, Services/users.js, api-config.js, add_cortes.html, ui.js y Services/Test/README.md/Auth.js/users.js conservan exactamente sus SHA E1.
+- H-AUD-032-001 a 003 permanecen abiertos: addSupplementaryInfo sin sesión en WRITE, checkOperation sin autenticación con rowData completo y allocateVehicleId sin restricción de rol Desarrollador.
+- AUG-039 pendiente; AUD-T-035/AUG-024 y AUD-T-033/AUG-003/AUD-T-024/AUG-016 como dependencias. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive/Spreadsheet, sesiones revocadas ni concurrencia. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.

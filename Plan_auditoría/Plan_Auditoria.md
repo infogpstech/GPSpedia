@@ -1663,3 +1663,50 @@ No se ejecutaron pruebas E2 sintácticas, E3 aisladas, navegador/PWA, Apps Scrip
 
 ### Siguiente iteración
 AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+
+
+## 61. Revalidación de continuidad — AUD-T-032
+
+**Sesión:** AUD-20261108-S077  
+**Checkpoint:** AUD-CP-0076  
+**E1 original:** ad13f5340152ff42b552f06184d2a2adb17117c9 (AUD-20261107-S013 / AUD-CP-0013)  
+**Árbol E1:** 8e359fbf194440bcf5cc8ef65252a81033555c86  
+**HEAD revalidado:** 80bc51c1bff923ac497b453ecbe33ebf69af5fd8  
+**Árbol actual:** bf60e92eba10d8a7be73f0a5fdbf5097c03d5589  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-032-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE SEGURIDAD PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la autenticación y resolución de identidad desde Users/ActiveSessions, atribución del colaborador y autorización de rutas de escritura WRITE/ADMIN, junto con AUTH/USERS, consumidores frontend y pruebas aisladas. Archivos: Services/write.js, Services/admin.js, Services/Auth.js, Services/users.js, api-config.js, add_cortes.html, ui.js, Services/Test/README.md, Services/Test/Auth.js y Services/Test/users.js.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los diez archivos del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+
+### Revalidación de hallazgos y tareas
+- H-AUD-032-001 a H-AUD-032-003 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- H-AUD-032-001: addSupplementaryInfo mantiene la ruta WRITE sin validación de sesión en el router/handler y sus consumidores normales no transmiten credenciales.
+- H-AUD-032-002: checkOperation continúa sin exigir sesión en WRITE y devuelve rowData completo aunque el frontend solo consume campos limitados.
+- H-AUD-032-003: allocateVehicleId valida colaborador autenticado, pero no exige el rol Desarrollador previsto para el endpoint.
+- AUG-039 continúa pendiente para autorización de addSupplementaryInfo, protección de checkOperation y restricción de allocateVehicleId.
+- AUD-T-035 mantiene la revisión del consumidor de videoGuiaDesarmeUrl; AUG-024 mantiene la verificación/redacción de debug=true y metadatos sensibles.
+- AUD-T-033/AUG-003 y AUD-T-024/AUG-016 siguen como dependencias de coordinación interproyectos y ciclo de vida de sesiones; no duplicar tareas.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los diez archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validación de seguridad funcional.
+
+No se ejecutaron parseo E2, mocks E3, Apps Script V8, HTTP, navegador/PWA, operaciones Drive/Spreadsheet, pruebas de sesión revocada ni concurrencia. No se verificó el estado de deployments actuales. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
