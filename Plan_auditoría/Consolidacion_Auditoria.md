@@ -766,3 +766,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-028 y AUG-030 mantienen sus adendas; AUG-031/AUG-032/AUG-033 continúan pendientes. No se crean hallazgos ni tareas nuevas.
 - Solo continuidad E1 y revisión documental. Sin pruebas E2–E5, navegador, Apps Script, HTTP, Drive, Spreadsheet, concurrencia ni benchmarks reales. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+
+## 48. AUD-T-030 — continuidad E1 y revalidación de esquema/IDs/opId
+- Sesión AUD-20261108-S075; checkpoint AUD-CP-0074; E1 c8c971ed061f08fca212f6879b35c857d9a0192c; árbol E1 048e5fec1c0b03d08858c0669bbac8dcb3566049; HEAD 13e4822280f5991938e8cc6dc03844e4c08394ee; árbol actual 21490b32317cc91ac7d3cf57f9959bbba7be856b; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los seis archivos de código/esquema de AUD-T-030 conservan SHA idénticos a E1.
+- H-AUD-030-001 a 008 permanecen abiertos por continuidad: coordinación ADMIN/WRITE, validación de estado/unicidad de Idempotencia, encabezados con datos, duplicados opId, recuperación por ID de vehículo no único, ubicación de columnas testigo, VIN duplicado y delimitadores heredados.
+- La ausencia física de hojas/columnas de creación bajo demanda no se considera defecto por sí sola; la migración VIN continúa siendo explícita y requiere ventana segura.
+- AUG-034/AUG-035/AUG-036 continúan pendientes; AUD-T-033/AUG-003 conserva la dependencia de coordinación. Sin hallazgos ni tareas nuevas.
+- Solo continuidad E1 y revisión documental. Sin pruebas E2/E3, Apps Script, HTTP, navegador, Spreadsheet/Drive real, migración VIN ni concurrencia. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.

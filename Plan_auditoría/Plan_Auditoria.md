@@ -1577,3 +1577,46 @@ No se ejecutaron pruebas sintácticas E2, unitarias E3, navegador/PWA, Apps Scri
 
 ### Siguiente iteración
 AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+
+## 59. Revalidación de continuidad — AUD-T-030
+
+**Sesión:** AUD-20261108-S075  
+**Checkpoint:** AUD-CP-0074  
+**E1 original:** c8c971ed061f08fca212f6879b35c857d9a0192c (AUD-20261107-S011 / AUD-CP-0011)  
+**Árbol E1:** 048e5fec1c0b03d08858c0669bbac8dcb3566049  
+**HEAD revalidado:** 13e4822280f5991938e8cc6dc03844e4c08394ee  
+**Árbol actual:** 21490b32317cc91ac7d3cf57f9959bbba7be856b  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-030-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE MIGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la compatibilidad entre el esquema físico y objetivo de GPSpedia_DB_v2.0; creación/selección de Idempotencia; IDs heredados idOperacion1..3; migración hacia VIN; almacenamiento/recuperación de opId; asignación centralizada de IDs de Cortes y consumidores frontend/backend. Archivos: Spreadsheet/GPSpedia_DB_columnas.md, Services/write.js, Services/admin.js, ui.js, add_cortes.html y api-config.js.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los seis archivos del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+
+### Revalidación de hallazgos y tareas
+- H-AUD-030-001 a H-AUD-030-008 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Se mantienen los riesgos de coordinación de la migración ADMIN/WRITE; validación de estado y unicidad de filas Idempotencia; encabezados vacíos con datos; duplicados de opId; recuperación por vehicleId no única; ubicación dinámica de columnas testigo; encabezados VIN duplicados; y diferencia de delimitadores entre parsers.
+- La ausencia física de Idempotencia/Idempotencia_Cortes o de columnas de testigo en la copia original no se clasifica como defecto por sí sola: la implementación contempla creación bajo demanda. La migración VIN continúa siendo una acción administrativa explícita.
+- La asignación centralizada de IDs en WRITE permanece estáticamente presente; no se verificaron ScriptProperties, secuencia productiva ni concurrencia real.
+- AUG-034 continúa pendiente para coordinación compartida y ventana segura de migración.
+- AUG-035 continúa pendiente para validación estricta de esquema, unicidad, estado y reconciliación de Idempotencia; H-AUD-030-005 queda relacionado con esta tarea.
+- AUG-036 continúa pendiente para unicidad/ubicación contractual de VIN/testigo y compatibilidad de parsers.
+- La coordinación interproyectos sigue relacionada con AUD-T-033/AUG-003. No se identifican hallazgos ni tareas nuevas; no se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los seis archivos de alcance y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validación funcional o de migración.
+
+No se ejecutaron pruebas E2 sintácticas, E3 aisladas, navegador/PWA, Apps Script V8, HTTP, Spreadsheet/Drive reales, concurrencia, simulación/confirmación VIN ni migración. No se inspeccionaron fórmulas, ScriptProperties ni secuencia productiva. No se modificaron datos, endpoints, configuración ni deployments.
+
+### Siguiente iteración
+AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
