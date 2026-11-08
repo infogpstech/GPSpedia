@@ -672,3 +672,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La E1 estática no certifica roles, sesiones, revocación, expiración, cambios de contraseña, concurrencia ni multi-pestaña. Validación funcional/deployments pendiente.
 - Sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, pruebas reales, concurrencia, accesibilidad, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## Continuidad AUD-T-003 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S065/AUD-CP-0064; E1 06f18e42383f5be448c378bc09ab534731cfbd6b (árbol df13476222de951f65c7d31559598d5fe12914a5); HEAD previo 3e6ee89273e209bfdfea7e7e9517a14efa5a9096 (árbol e68f1ee24bcad2faf275f5dd53c9e95d409ad627); rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 44 commits posteriores; ocho archivos modificados, todos documentales. Los archivos funcionales/auxiliares del alcance mantienen SHA idénticos a E1. Sin deriva funcional.
+- H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; AUG-043 mantiene su adenda. No se crean hallazgos ni tareas duplicados. Se conservan relaciones con AUD-T-031/032/033/035/038 y AUG-039/AUG-043/AUG-053/AUG-054.
+- Hallazgos conservados: persistencia local/opId no estrictamente vinculados, disponibilidad de opciones de corte/vídeo, manejo de errores FileReader y serialización de recuperación online/visibilitychange/init.
+- E1 estática no certifica cuota localStorage, FileReader real, respuesta HTTP perdida, persistencia, recuperación concurrente ni integración/deployments. Validación funcional pendiente.
+- Sin navegador, Node/lint, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.

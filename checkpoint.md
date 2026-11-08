@@ -1084,3 +1084,50 @@ No se ejecutaron navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, roles/
 Commit documental único: docs(audit): verify AUD-T-002 continuity.
 Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0064
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S065
+Tarea: AUD-T-003 — revalidación de continuidad E1.
+HEAD inicial de GPSpedia2.2.5_work: 3e6ee89273e209bfdfea7e7e9517a14efa5a9096; árbol: e68f1ee24bcad2faf275f5dd53c9e95d409ad627.
+HEAD de GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+E1 histórica: 06f18e42383f5be448c378bc09ab534731cfbd6b; árbol E1: df13476222de951f65c7d31559598d5fe12914a5.
+Respaldos SHA de documentos antes de modificar:
+- Plan_auditoría/Plan_Auditoria.md: 46d4d556d1c40e90636ed3097796aecf01c80222
+- Plan_auditoría/Consolidacion_Auditoria.md: 5fd740bc259ac416cac8c1f2597fc3bff6ef1ad3
+- ChangesLogs.txt: cdcb10825ef832edf88948f96feb1609d6770717
+- contexto_personal.md: fcc488424a40892ee25719aa20f6d48f21a99bba
+- checkpoint.md: 48e4a495428b2fe88859a9665348bbfba8aa7c20
+Archivos funcionales/auxiliares del alcance (SHA esperados de E1):
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- youtubeUpload.js (contraste auxiliar): 01559b95d4fff7b03c7833d5903496ab41dbc161
+Checkpoint creado antes de cualquier modificación documental. Sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0064
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S065
+Tarea: AUD-T-003 — revalidación de continuidad E1.
+Estado final: continuidad E1 confirmada; H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; sin hallazgos ni tareas nuevas. Validación funcional e integración pendientes.
+HEAD padre: 3e6ee89273e209bfdfea7e7e9517a14efa5a9096; árbol inicial e68f1ee24bcad2faf275f5dd53c9e95d409ad627. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación E1 06f18e42383f5be448c378bc09ab534731cfbd6b → HEAD 3e6ee89273e209bfdfea7e7e9517a14efa5a9096: 44 commits posteriores; ocho archivos documentales en el diff y ningún archivo funcional del alcance. SHA funcionales/auxiliares idénticos a E1:
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- youtubeUpload.js (contraste auxiliar): 01559b95d4fff7b03c7833d5903496ab41dbc161
+Documentos modificados en este commit:
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Consolidacion_Auditoria.md
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md (último blob documental)
+No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: no hay hallazgos/tareas nuevos ni correcciones implementadas.
+No se ejecutaron navegador, Node/lint, cuota localStorage, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive ni Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-003 continuity (pendiente de publicación).
+Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+================================================================================
