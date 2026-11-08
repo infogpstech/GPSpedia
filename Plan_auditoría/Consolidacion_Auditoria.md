@@ -478,3 +478,14 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - Cobertura global: 38 unidades con E1 estática completada; esto no representa validación funcional E2–E5.
 - No se modificaron código, assets, configuración, endpoints ni datos productivos. Sin despliegue ni merge.
 - Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+
+
+## 20. Continuidad verificada — AUD-T-007
+- E1 completada en AUD-20261108-S025 / AUD-CP-0025 sobre 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e.
+- Comparación hasta 673114ee77c36d4bdc4ab3e67b1c31365b8f5ceb: 21 commits posteriores; el diff contiene exclusivamente ocho documentos. Los diez archivos funcionales de alcance conservan sus SHA históricos: main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; users.html e41f402675677a4d2783493614737021ec2eade5; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; lightbox.js 841f44a54fe12b867c0c58cc560ce4474cde3e03; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f.
+- H-AUD-007-001 a 005 permanecen abiertos: registro/detección de overlays dinámicos; botones internos Volver; cierre secuencial; reconciliación de entradas History API; precedencia terms-modal/terms-agreement-modal.
+- AUG-068 a AUG-071 y adenda AUG-047 permanecen pendientes. H-AUD-005-008 continúa ampliado a submodales dinámicos, sin duplicación.
+- No se detectaron hallazgos ni tareas nuevas. VAL-10 y VAL-17 siguen pendientes de ejecución real.
+- Cobertura global registrada previamente: 38 unidades; 21 E1 completadas, 1 parcial y 16 por auditar en el corte AUD-T-007. Esta revalidación de continuidad no altera el estado funcional de la auditoría.
+- Sin cambios funcionales, despliegue ni merge. La rama base permanece intacta.
+- Siguiente unidad histórica: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red; continuar mediante revalidación de continuidad.

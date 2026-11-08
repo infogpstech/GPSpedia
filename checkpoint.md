@@ -267,3 +267,45 @@ Cobertura: 38/38 E1 estáticas completadas; 0 parciales, 0 pendientes de auditor
 Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 Commit único esperado: docs(audit): verify AUD-T-006 continuity; parent 864086253babd5e54ea698312bbd3e984371566a.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0046
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S047
+Tarea: continuidad de AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+E1 histórica: AUD-20261108-S025 / AUD-CP-0025; HEAD auditado 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e.
+HEAD observado: 673114ee77c36d4bdc4ab3e67b1c31365b8f5ceb; árbol 662d6ba3f3f04f5693a0ef17861a32a408876ccb. Rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-007-001 a 005; tareas AUG-068 a AUG-071; adenda AUG-047; ampliación de H-AUD-005-008. VAL-10 y VAL-17 pendientes.
+Alcance funcional: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+Respaldos exactos previos a documentación:
+- Plan_auditoría/Plan_Auditoria.md: 554d95f027fe178ebe600d66f60a08ddc7d05d23
+- Plan_auditoría/Consolidacion_Auditoria.md: aa320ffde649ec1234aca88426cc1998c1881198
+- checkpoint.md: dda916cd0fd5669b6ddf974a1bbea61f2d3a540b
+No se modifican archivos funcionales ni se realizan operaciones sobre datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0046
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S047
+Resultado: AUD-T-007 permanece E1 ESTÁTICA COMPLETADA y vigente; 21 commits posteriores al HEAD histórico contienen exclusivamente cambios documentales. Sin deriva funcional.
+HEAD padre de la tarea: 673114ee77c36d4bdc4ab3e67b1c31365b8f5ceb; árbol: 662d6ba3f3f04f5693a0ef17861a32a408876ccb. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-007-001 a H-AUD-007-005. Tareas: AUG-068 a AUG-071; adenda AUG-047. H-AUD-005-008 conserva su ampliación. Sin hallazgos ni tareas nuevas.
+Archivos funcionales revalidados y SHA actuales:
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+Revalidaciones: overlays dinámicos con detección incompleta; Volver directo puede añadir entradas; listeners cierran múltiples modales; cierres manuales pueden dejar entradas residuales; terms-modal intercepta popstate antes del acuerdo superior.
+Validaciones pendientes: VAL-10 y VAL-17. No se ejecutaron navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits, deep links ejecutados ni medición de history.state.
+No se modificaron código, HTML, CSS, endpoints, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md y checkpoint.md. Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md y ChangesLogs.txt no se modifican: no se agregaron hallazgos ni tareas nuevas.
+Cobertura de la auditoría original se conserva sin alteración. La revalidación de continuidad no equivale a certificación funcional E2/E3.
+Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (unidad histórica siguiente; continuar mediante revalidación de continuidad).
+Commit único esperado: docs(audit): verify AUD-T-007 continuity; parent 673114ee77c36d4bdc4ab3e67b1c31365b8f5ceb.
+================================================================================
