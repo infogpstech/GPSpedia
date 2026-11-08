@@ -640,3 +640,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
 - No se crean hallazgos ni tareas duplicados; los registros existentes en Auditoría.txt, Tareas.txt y Aug_Tareas.md se conservan sin cambios.
 - Siguiente: AUD-T-022.
+
+
+## 35. Continuidad AUD-T-022 — verificación E1
+- Sesión AUD-20261108-S062; checkpoint AUD-CP-0061; E1 histórica 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b, árbol e0c80e7334378847c24e9ada5020248a539cb168; HEAD revalidado e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0, árbol a8759daf9e718625f76a73a9ddebb088faaa54bd; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 22 commits posteriores; exclusivamente ocho archivos documentales cambiados. Los nueve archivos funcionales del alcance conservan los SHA de E1; no hay deriva funcional.
+- H-AUD-022-001 a 004 continúan abiertos; AUG-147 a AUG-150 pendientes; VAL-31 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
+- Se conservan los cuatro hallazgos históricos sobre cierre/logout, estado de sesión, semántica/foco del diálogo, ARIA de pestañas y normalización de errores ADMIN.
+- No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación real, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. Sin cambios funcionales, operaciones productivas, merge ni despliegue.
+- Siguiente: AUD-T-001.

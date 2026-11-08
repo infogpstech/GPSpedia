@@ -646,3 +646,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La ficha imprimible no fue ejecutada ni probada en navegador/PDF; VAL-30 sigue pendiente.
 - No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
 - Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+
+
+## Continuidad AUD-T-022 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S062/AUD-CP-0061; E1 histórica 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b (árbol e0c80e7334378847c24e9ada5020248a539cb168); HEAD revalidado e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0 (árbol a8759daf9e718625f76a73a9ddebb088faaa54bd); rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 22 commits posteriores, únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance conservan sus SHA de E1; sin deriva funcional.
+- H-AUD-022-001 a 004 siguen abiertos; AUG-147 a AUG-150 pendientes; VAL-31 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
+- La E1 estática no certifica logout/revocación, foco/ARIA real, lector de pantalla ni respuestas HTTP. Sin navegador, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3.
+- Sin cambios funcionales ni operaciones productivas. Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.

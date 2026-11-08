@@ -1251,3 +1251,23 @@ La E1 histórica de AUD-T-021 ya estaba completada. La comparación E1→HEAD ac
 H-AUD-021-001 a H-AUD-021-009 permanecen registrados. Se conservan los nueve puntos: márgenes 5 mm frente a requisito 10 mm y contrato de paginación contradictorio; imagen/aviso Check Engine; espera incompleta de recursos; paginación sin medición real de altura; tarjetas sin imagen al final y pérdida de prioridad/orden; envío de URL de vídeo unlisted a api.qrserver.com; modo Vertical sin diferencia efectiva; interpolación HTML de datos de catálogo sin escape uniforme; y referencia histórica ajena a impresión en la fila del plan maestro. AUG-140 a AUG-145 siguen pendientes; AUG-146 continúa pendiente porque la fila maestra aún atribuye 6d7fbb9c a la ficha; AUG-096 permanece ampliada con sinks concretos de impresión. VAL-30 está planificada y no ejecutada. No se crean hallazgos ni tareas duplicados. La tarea histórica Bloque 7 conserva su estado COMPLETADA; la E1 estática no certifica impresión/PDF funcional.
 No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
 Siguiente unidad secuencial: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+
+
+## 46. Continuidad verificada — AUD-T-022
+Sesión AUD-20261108-S062 | Checkpoint AUD-CP-0061 | E1 histórica 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | árbol E1 e0c80e7334378847c24e9ada5020248a539cb168 | HEAD previo e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0 | árbol previo a8759daf9e718625f76a73a9ddebb088faaa54bd | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica de AUD-T-022 (panel de desarrollador, navegación por secciones y modal administrativo) completada en 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b, árbol e0c80e7334378847c24e9ada5020248a539cb168. La revalidación desde E1 hasta HEAD e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0 informa 22 commits posteriores; compare_commits enumera exclusivamente ocho documentos modificados (Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md). Ningún archivo funcional del alcance cambió; los nueve artefactos listados abajo conservan sus SHA históricos. No existe deriva funcional en el alcance de E1.
+H-AUD-022-001 a H-AUD-022-004 continúan abiertos; AUG-147 a AUG-150 permanecen pendientes; VAL-31 continúa planificada/no ejecutada. No se agregan hallazgos ni tareas duplicados. Los cuatro hallazgos históricos permanecen: logout sin revocación/limpieza completa de estado; modal que no se cierra al mostrar login; semántica/gestión de foco incompleta del diálogo; ARIA incoherente en pestañas y respuesta de errores ADMIN que normaliza a HTTP 500.
+La E1 estática no acredita comportamiento real de sesión, logout, teclado, lector de pantalla ni respuestas HTTP. No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, despliegues ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+Archivos funcionales comprobados:
+Alcance funcional histórico (SHA idénticos a E1):
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: H-AUD-022-001 a 004, AUG-147 a AUG-150 y VAL-31 ya están registrados; no hay novedades ni duplicados.
+Siguiente unidad secuencial: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
