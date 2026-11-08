@@ -99,3 +99,57 @@ Sin cambios de código, HTML, CSS, servicios, endpoints, contratos, configuraci�
 Commit único: docs(audit): complete AUD-T-001 app shell review; parent 35446ac7dd3697b4cd318895c9040e3bf239720c.
 Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0042
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S042
+Tarea: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+Continuidad: AUD-CP-0002; no reiniciar la auditoría parcial.
+HEAD observado: 1136f20ee25778cceac857b4a3145aa2f405ba54; árbol: 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Alcance: Services/users.js, Services/Auth.js, auth.js, users.html y api-config.js. Ámbitos especializados de credenciales/hash, ciclo avanzado de sesiones y legal se mantienen en AUD-T-023, AUD-T-024 y AUD-T-036.
+Hallazgos históricos a revalidar: H-AUD-001 a H-AUD-006; tareas AUG-005 a AUG-010. No duplicar.
+Sin cambios funcionales ni operaciones sobre servicios/datos productivos.
+Respaldos exactos previos:
+- Auditoría.txt: ec8afb4e385a7e09da5748ceb508dbb9f8319cc3
+- Plan_auditoría/Plan_Auditoria.md: 5e11b253a6403635761e940d7a8308392eea5d70
+- Plan_auditoría/Aug_Tareas.md: 9a58e0584de107db819e0eb1708330ca16e6529e
+- Plan_auditoría/Consolidacion_Auditoria.md: d91ac6aac154fa11b516954cf2bc9999142babf3
+- ChangesLogs.txt: de17633ef47c5b4493844381390c935a06216b20
+- contexto_personal.md: 59e88e6bab5d975d3612f395df88e16f3f7fcb4e
+- checkpoint.md: 0452b23d45b34da01de43fe92b3c7a70f9d806b7
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0042
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S042
+Tarea: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 revalidadas; sin hallazgos ni tareas nuevas.
+HEAD padre de la tarea: 1136f20ee25778cceac857b4a3145aa2f405ba54
+Árbol inicial: 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work.
+Archivos funcionales auditados sin modificación:
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+Hallazgos: H-AUD-001/AUG-005 revocación al eliminar; H-AUD-002/AUG-006 logout backend; H-AUD-003/AUG-007 expiración y cambio de contraseña; H-AUD-004/AUG-008 lock entre pestañas; H-AUD-005/AUG-009 validación de username; H-AUD-006/AUG-010 serialización de mutaciones.
+Validaciones ejecutadas: lectura estática de router, acciones AUTH/USERS, login, validación de sesión, matriz RBAC, perfil, cambio de contraseña, reset remoto, UI y mapeo de acciones; revisión de commits históricos 97eef18c, 414c4258 y 6a226c18.
+Validaciones no ejecutadas: navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, pruebas reales de roles/sesiones, concurrencia, multi-pestaña, accesibilidad, deployments y E2/E3.
+No se modificaron código, HTML, CSS, servicios, endpoints, contratos, configuración, permisos, credenciales, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit:
+- Auditoría.txt
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Aug_Tareas.md
+- Plan_auditoría/Consolidacion_Auditoria.md
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md (último blob documental)
+Tareas.txt no se modifica: la Tarea 2 conserva su estado histórico COMPLETADA; las deudas técnicas ya constan en AUG-005 a AUG-010.
+Resultado: 7 archivos documentales, un único commit, sin cambios funcionales.
+Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+================================================================================

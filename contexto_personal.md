@@ -533,3 +533,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nueva tarea AUG-151; adendas a AUG-008 y AUG-049. La Tarea 1 mantiene su estado histórico COMPLETADA; E1 no certifica pruebas funcionales.
 - No se modificó código, HTML, CSS, servicios, endpoints, contratos, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. No hubo ejecución funcional.
 - Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).
+
+
+## Continuidad de auditoría — AUD-T-002
+- Fecha: 2026-11-08. Sesión AUD-20261108-S042; checkpoint AUD-CP-0042.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 1136f20ee25778cceac857b4a3145aa2f405ba54; árbol 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario: E1 estática completada; H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 existentes y revalidados.
+- Archivos: Services/users.js (9b7ce20b40e5fdac1f1c106e769f9e539ad858b0), Services/Auth.js (fc69357b655c023b5ab3f7dd72cdab6fbb1787ed), auth.js (2dc65f2e5903fc208ca14505053e82203a9dbd86), users.html (e41f402675677a4d2783493614737021ec2eade5), api-config.js (a5c718d01b7da50b4b5e650c3bacd91456f4d670).
+- No se crearon hallazgos ni tareas nuevas. Se mantienen vínculos con AUD-T-023 (hashing/credenciales), AUD-T-024 (ciclo avanzado de sesiones y controles), AUD-T-033 (coordinación interservicios) y AUD-T-036 (legal/consentimiento).
+- E1 no incluye pruebas de navegador, Apps Script, HTTP, Spreadsheet, roles, sesiones, concurrencia, múltiples pestañas ni deployments. No se modificó código, configuración ni datos productivos.
+- Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.

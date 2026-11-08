@@ -1782,3 +1782,12 @@ ADENDA AUD-T-001 — REVALIDACIÓN DE TAREAS EXISTENTES
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
 - 2026-11-08 — AUD-T-001: AUG-151 nueva; adendas a AUG-008/AUG-049; H-AUD-015-002 se mantiene en AUG-099. Inventario: 150 IDs únicos dentro de AUG-001 a AUG-151; AUG-015 continúa ausente y no se infiere ni renumera.
+
+
+## Revalidación de AUD-T-002 — 2026-11-08
+Sesión: AUD-20261108-S042 | Checkpoint: AUD-CP-0042 | Estado: E1 estática completada.
+- Se revalidaron los seis hallazgos históricos H-AUD-001 a H-AUD-006 y las tareas existentes AUG-005 a AUG-010 contra Services/users.js, Services/Auth.js, auth.js, users.html y api-config.js vigentes.
+- Los seis hallazgos continúan abiertos; no se crea una tarea derivada nueva ni se duplica ninguna adenda.
+- AUG-005 conserva la adenda AUD-T-024 sobre autodeleción y revocación; AUG-006 mantiene logout remoto; AUG-007 sigue pendiente de decisión de política; AUG-008 conserva sus adendas de coordinación y respuestas obsoletas; AUG-009 requiere validación backend del nombre; AUG-010 conserva su dependencia con AUD-T-033 y la coordinación AUTH/USERS.
+- Los riesgos de concurrencia y consistencia de sesiones se relacionan con AUG-016; hashing y migración de credenciales se mantienen en AUD-T-023/AUG-011 a AUG-014, sin trasladar ni duplicar su alcance.
+- No se detectaron nuevos hallazgos que justifiquen una AUG adicional. Pruebas funcionales y verificación de deployments permanecen pendientes.

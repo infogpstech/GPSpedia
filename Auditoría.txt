@@ -11115,3 +11115,75 @@ No se ejecutó ningún caso de VAL-32.
 E1 estática completada. No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, pruebas multi-pestaña, accesibilidad, despliegues ni E2/E3. No se verificó el deployment actualmente activo ni se hicieron operaciones contra datos productivos.
 No se modificaron código, HTML, CSS, servicios, endpoints, contratos, configuración, assets, permisos, datos productivos, Drive ni Spreadsheet. Sin merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-002: RBAC, AUTH, USERS, ROLES Y AUTORIZACIÓN DE OPERACIONES DE USUARIO
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S042 | Checkpoint: AUD-CP-0042
+Plan: AUD-PLAN-2026-001
+Rama: GPSpedia2.2.5_work | HEAD auditado: 1136f20ee25778cceac857b4a3145aa2f405ba54 | Árbol: 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Continuidad: AUD-CP-0002; no se reinicia la auditoría histórica.
+Commits históricos revisados:
+- 97eef18cd5c07eabc1c9a1f68f6b5710f3a3b4bf — Implementar Tarea 2: RBAC, sesión y cumplimiento legal.
+- 414c42583293f660f65df412780ba1d31bde7c5f — Fix greeting name and implement History API in users profile.
+- 6a226c18 — ADMIN 0: retirar credenciales de logs de AUTH.
+Archivos funcionales inspeccionados sin modificación:
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+
+ESTADO
+E1 ESTÁTICA COMPLETADA para el alcance RBAC/AUTH/USERS de AUD-T-002. Se conservan abiertos los seis hallazgos históricos H-AUD-001 a H-AUD-006 y sus tareas AUG-005 a AUG-010. No se crean hallazgos ni tareas duplicadas.
+La Tarea 2 original continúa marcada COMPLETADA en Tareas.txt como registro histórico de implementación; el resultado de esta auditoría identifica deuda residual y no invalida ese registro.
+Los aspectos especializados de hashing/credenciales, ciclo avanzado de sesiones y términos/consentimiento se mantienen separados en AUD-T-023, AUD-T-024 y AUD-T-036.
+
+1. ALCANCE Y CONTROLES REVISADOS
+- Router doPost de AUTH y USERS; acciones expuestas y mapeo ACTION_TO_SERVICE_MAP.
+- Inicio de sesión, búsqueda de usuario, comparación de credenciales, límites de intentos, límites de sesiones por rol y creación de token.
+- Validación de sesión en AUTH y verificación de token/usuario/rol en USERS.
+- Matriz RBAC de lectura, alta, modificación, eliminación y cierre remoto de sesiones.
+- Edición de perfil y cambio de contraseña con comprobación de identidad propia.
+- Restricciones visuales de users.html frente a autorización efectiva en backend.
+- Evolución histórica de Tarea 2 y remediación de registros sensibles en AUTH.
+
+2. RESULTADOS CONFIRMADOS
+- USERS obtiene userId y role desde ActiveSessions + Users mediante getVerifiedSession(); no confía en un rol enviado por el cliente para las acciones protegidas.
+- handleGetUsers(), handleCreateUser(), handleUpdateUser() y handleDeleteUser() aplican matrices de roles en backend. users.html reproduce filtros para presentación, pero no sustituye la barrera del servidor.
+- handleUpdateProfile() y handleChangePassword() exigen que el userId solicitado coincida con el usuario autenticado. El cambio de contraseña comprueba la contraseña actual.
+- handleResetUserSessions() exige rol Desarrollador, rechaza el cierre remoto de la propia cuenta y opera sobre las hojas Users/ActiveSessions.
+- AUTH limita intentos y aplica límites de sesiones según el rol normalizado. El login genera token y registra la sesión.
+- api-config.js enruta las acciones de AUTH y USERS a sus servicios separados.
+- El commit 6a226c18 y el estado actual muestran que AUTH ya no registra el payload completo de login ni las contraseñas comparadas; la inspección de la hoja Logs desplegada no forma parte de esta auditoría.
+
+3. HALLAZGOS HISTÓRICOS REVALIDADOS — SIN DUPLICAR
+- H-AUD-001 / AUG-005: handleDeleteUser() elimina la fila Users, pero no elimina las filas de ActiveSessions; handleValidateSession() valida el par userId/token de ActiveSessions sin comprobar que el usuario siga existiendo. Se conserva también la adenda AUD-T-024 sobre autodeleción y revocación.
+- H-AUD-002 / AUG-006: logout() elimina la sesión local; AUTH no expone una acción de revocación de sesión en doPost ni existe mapeo de logout en api-config.js.
+- H-AUD-003 / AUG-007: ActiveSessions.date se escribe al iniciar sesión, pero handleValidateSession() y getVerifiedSession() no aplican expiración; cambio/reset administrativo de contraseña no revoca de forma general las demás sesiones. La política sigue pendiente de decisión.
+- H-AUD-004 / AUG-008: checkSession() usa localStorage como lock no atómico; libera el lock en el finally del flujo síncrono mientras validateSession continúa asíncronamente. Se conservan las adendas AUD-T-024 sobre respuestas obsoletas y estado visual entre pestañas.
+- H-AUD-005 / AUG-009: handleCreateUser() recorta el nombre y comprueba duplicados, pero no rechaza explícitamente newUsername vacío antes de continuar cuando se invoca directamente el endpoint.
+- H-AUD-006 / AUG-010: createUser() y resetUserSessions() adquieren ScriptLock en USERS; updateUser(), deleteUser(), updateProfile() y changePassword() no lo hacen. La migración de contraseña legacy en AUTH tampoco comparte lock con USERS. Los locks de proyectos Apps Script separados no se consideran compartidos; mantener la coordinación interservicios en AUD-T-033 y las adendas existentes a AUG-010/AUG-016.
+
+4. REVISIÓN RBAC Y LÍMITES
+- La matriz vigente permite a Desarrollador gestionar todos los roles; Gefe/Jefe gestionar Supervisor y Técnico; Supervisor gestionar Técnico. Los permisos se verifican en servidor.
+- users.html oculta la gestión a Técnico/Técnico exterior y limita selectores; un payload manipulado sigue dependiendo de la validación backend.
+- Se observan comparaciones de rol sensibles a la grafía exacta en varias acciones y normalización explícita solo en resetUserSessions(). No se registra un hallazgo nuevo sin evidencia de datos de rol incompatibles; mantener como caso de prueba de regresión para la matriz y alias históricos Gefe/Jefe.
+- El perfil se presenta inicialmente desde localStorage; esto no otorga por sí mismo acceso a operaciones protegidas, que vuelven a validar el token en USERS.
+- El cierre remoto y la eliminación de cuentas tienen riesgos de consistencia parcial/concurrencia ya enlazados a AUG-005, AUG-010, AUG-016 y AUD-T-033.
+
+5. VALIDACIONES FUNCIONALES PENDIENTES
+No se ejecutaron pruebas reales de navegador, Apps Script V8, endpoints HTTP, Spreadsheet, concurrencia, múltiples pestañas, expiración, revocación, ni cambios de contraseña con cuentas aisladas. Deben probarse:
+1. Matriz completa de roles y combinaciones actor/objetivo para get/create/update/delete, incluyendo payload directo que omita la UI.
+2. Sesiones huérfanas, eliminación de cuenta, autodeleción, revocación local/remota y token inválido.
+3. Expiración y cambio/reset de contraseña una vez aprobada la política.
+4. Login concurrente, cierre remoto concurrente, mutaciones USERS simultáneas y migración legacy AUTH frente a cambio de contraseña.
+5. Username vacío, duplicado por diferencias de mayúsculas/espacios y entradas fuera de política.
+6. Perfil propio frente a userId ajeno, contraseña actual incorrecta, límites de contraseña y errores de red.
+7. Cambio de cuenta/rol y coherencia de interfaz en página de perfil y pestañas.
+8. Confirmación de despliegues AUTH/USERS independientes y pruebas sobre copia aislada, sin utilizar cuentas ni datos productivos.
+
+6. LÍMITES
+La auditoría es E1 estática. No se verificó el comportamiento de deployments activos ni el contenido histórico de Logs; tampoco se ejecutaron pruebas funcionales, de seguridad dinámica, accesibilidad o rendimiento. No se modificó código, HTML, CSS, endpoints, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+================================================================================

@@ -4371,3 +4371,17 @@ Archivos documentales modificados:
 - checkpoint.md: checkpoints inicial y final AUD-CP-0041; el final se crea como último blob documental.
 No se modificaron main.js, auth.js, ui.js, state.js, index.html, style.css, api-config.js, Services/admin.js ni Services/Auth.js. Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, pruebas multi-pestaña, concurrencia ni despliegue. Sin merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-002
+Fecha: 2026-11-08 | Sesión AUD-20261108-S042 | Checkpoint AUD-CP-0042
+- Auditoría.txt: añadida la E1 estática de AUD-T-002 y revalidación de H-AUD-001 a H-AUD-006; sin hallazgos nuevos.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-002 actualizada a E1 estática completada; se añadió la iteración 46.
+- Plan_auditoría/Aug_Tareas.md: revalidación de AUG-005 a AUG-010; sin tareas nuevas ni duplicadas.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 38 E1 completadas, 0 parciales y 0 pendientes.
+- contexto_personal.md: continuidad actualizada a AUD-T-003.
+- checkpoint.md: checkpoints inicial y final AUD-CP-0042; el final se crea como último blob documental.
+- Tareas.txt no se modifica: la Tarea 2 conserva su estado histórico COMPLETADA y no se agregan tareas de implementación; las seis deudas técnicas ya están registradas en AUG-005 a AUG-010.
+No se modificaron Services/users.js, Services/Auth.js, auth.js, users.html ni api-config.js. Sin navegador, Node/lint, HTTP, Apps Script, Spreadsheet, concurrencia, multi-pestaña ni despliegues. Sin merge ni despliegue.
+================================================================================

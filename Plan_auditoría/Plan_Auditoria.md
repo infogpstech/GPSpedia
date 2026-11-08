@@ -50,7 +50,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | ID de auditoría | Tarea / funcionalidad histórica | Commits ancla conocidos (SHA corto y mensaje) | Estado inicial |
 |---|---|---|---|
 | AUD-T-001 | Recuperación del App Shell, arranque, inicialización y estabilización general | 2251d499 — Implementar Tarea 1 y router doGet en admin.js; 4445f2c7 — Mejoras de UI, corrección de sesiones y optimizaciones generales | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-32 PENDIENTE |
-| AUD-T-002 | RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (ciclo de sesiones en AUD-T-024; legal en AUD-T-036) | 97eef18c — Implementar Tarea 2: RBAC, sesión y cumplimiento legal; 414c4258 — Fix greeting name and implement History API in users profile; 6a226c18 — ADMIN 0: retirar credenciales de logs de AUTH | AUDITADO PARCIALMENTE; HALLAZGOS ABIERTOS (AUD-CP-0002) |
+| AUD-T-002 | RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (ciclo de sesiones en AUD-T-024; legal en AUD-T-036) | 97eef18c — Implementar Tarea 2: RBAC, sesión y cumplimiento legal; 414c4258 — Fix greeting name and implement History API in users profile; 6a226c18 — ADMIN 0: retirar credenciales de logs de AUTH | E1 ESTÁTICA COMPLETADA; H-AUD-001 a H-AUD-006 ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE (AUD-CP-0042) |
 | AUD-T-003 | Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red | 14bbd04f — Implementar Tarea 3: Formulario add_cortes, idempotencia y resiliencia; 77ea1d0b — registro sin cortes y recuperación de red; 2eaeb476 — make add-cut modal idempotent | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-005 | Modal de detalle, ampliación dinámica y acciones contextuales | d72a1e61 — Implementar Tarea 5: Ampliación dinámica en modal de detalle; 183cff59 — recuperación del botón expand plus | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
@@ -938,3 +938,15 @@ Revalidaciones: H-AUD-015-002/AUG-099 (filtros retirados); H-AUD-024-001/002/AUG
 Nueva tarea: AUG-151; adendas a AUG-008 y AUG-049. VAL-32 planificada, no ejecutada.
 Límites: sin navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, pruebas multi-pestaña, despliegues ni E2/E3. Sin cambios funcionales ni datos.
 Siguiente: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).
+
+
+## 46. Iteración técnica — AUD-T-002
+Sesión AUD-20261108-S042 | Checkpoint AUD-CP-0042 | HEAD auditado 1136f20ee25778cceac857b4a3145aa2f405ba54 | árbol 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA para RBAC/AUTH/USERS; H-AUD-001 a H-AUD-006 abiertos; validación funcional pendiente.
+Continuidad desde AUD-CP-0002: se revisaron las implementaciones vigentes y los commits históricos 97eef18c, 414c4258 y 6a226c18. No se reinició ni duplicó el análisis previo.
+Alcance: Services/users.js, Services/Auth.js, auth.js, users.html y api-config.js; matriz de roles, autorización backend, autenticación, sesión, perfil y cambio de contraseña.
+Controles confirmados: USERS obtiene identidad/rol desde la sesión validada; operaciones protegidas aplican RBAC en backend; perfil y cambio de contraseña se limitan al usuario autenticado; cambio de contraseña verifica la actual; AUTH aplica límites de intentos y sesiones por rol.
+Hallazgos revalidados: eliminación de cuenta sin revocación completa y validación de usuario en AUTH (AUG-005); logout local sin revocación backend (AUG-006); expiración y revocación tras cambio de contraseña sin política definida (AUG-007); lock de validación entre pestañas no atómico (AUG-008); username vacío no rechazado en backend (AUG-009); serialización incompleta de mutaciones USERS y coordinación AUTH/USERS (AUG-010).
+No se detectaron hallazgos nuevos que justifiquen otra AUG. Se conservan relaciones con AUD-T-023, AUD-T-024 y AUD-T-033; legal/consentimiento permanece en AUD-T-036.
+Límites: sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, pruebas reales de roles/sesiones, concurrencia, multi-pestaña ni despliegues. Sin cambios funcionales ni datos.
+Siguiente: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.

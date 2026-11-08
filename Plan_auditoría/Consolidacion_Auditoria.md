@@ -440,3 +440,13 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - VAL-32: inicialización, sesión, multi-pestaña, catálogo válido/vacío/malformado, caché/fallback, deep links, filtros retirados y health/operaciones ADMIN reales en entorno aislado.
 - No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, multi-pestaña ni deployments. No se modificó código ni datos productivos.
 ================================================================================
+
+
+## 16. Actualización de cobertura — AUD-T-002
+- AUD-T-002 completada en E1 estática, continuando desde AUD-CP-0002; H-AUD-001 a H-AUD-006 y AUG-005 a AUG-010 siguen abiertos.
+- Cobertura: 38 unidades; 38 E1 completadas, 0 parciales y 0 pendientes de auditoría estática.
+- Catálogo AUG sin cambios: 150 IDs únicos dentro de AUG-001 a AUG-151; AUG-015 continúa ausente y no se infiere ni renumera.
+- No se generaron hallazgos ni tareas duplicadas. Se conservan relaciones con AUD-T-023, AUD-T-024, AUD-T-033 y AUD-T-036.
+- Validación funcional de roles, sesiones, revocación, expiración, concurrencia y deployments AUTH/USERS pendiente; E1 no equivale a certificación funcional.
+- No se modificó código ni datos productivos. Sin despliegue ni merge.
+================================================================================
