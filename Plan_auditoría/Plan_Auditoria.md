@@ -63,7 +63,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE |
 | AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/YOUTUBE PENDIENTE |
 | AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
-| AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | POR AUDITAR; incluye cancelación |
+| AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-24 PENDIENTE |
 | AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | POR AUDITAR |
 | AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | POR AUDITAR |
 | AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | POR AUDITAR |
@@ -846,3 +846,15 @@ Hallazgos: backend persiste HTML sin saneamiento autoritativo; dos sinks de cont
 Tareas: nuevas AUG-095 a AUG-097; VAL-23 planificada. Hallazgos de render/sanitización no duplican AUG-039 ni AUG-094.
 Límites: E1 estática; sin navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, service worker en dispositivo ni E2/E3. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar cancelación de filtros rápidos documentada.
+
+
+## 38. Iteración técnica — AUD-T-015
+Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033 | HEAD c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | árbol adda8ff26199530c2ec30d739510128efa060cb3 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-015-001 a H-AUD-015-004 abiertos; H-AUD-037-003 a 006 revalidados; VAL-24 pendiente.
+Alcance: Tarea 14 búsqueda global multi-sección, búsqueda numérica y jerarquía; Tarea 15 filtros rápidos cancelados y estandarización de botones.
+Controles: búsqueda Cortes/Relay/Tutorial/PyS; _sectionType, badges y handlers específicos; agrupación de tarjetas; encodeURIComponent para deep link. Los filtros rápidos no están en HTML/CSS.
+Hallazgos nuevos: query reflejada en innerHTML; referencias a filtros retirados en blur; estilos de botones no unificados; marcadores sintéticos de sección usados como marcas.
+Adenda AUG-049: persisten autoapertura no-Corte, falta de acentos/ranking/campos, carga PyS redundante y ambigüedad año/modelo numérico.
+Nuevas tareas: AUG-098 a AUG-101; VAL-24 planificada.
+Límites: E1 estática; sin DOM/browser/XSS/Playwright, catálogo real, Apps Script/Spreadsheet, carga concurrente, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación.
+Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.

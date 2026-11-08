@@ -1089,3 +1089,50 @@ Archivos documentales actualizados: Auditoría.txt, Tareas.txt, Plan_auditoría/
 El commit documental se publicará con parent_sha/expected_sha deefa3a8ceca4aae892c61d0e99fec73c3e44837, force:false. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 deberá permanecer intacta.
 Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0033
+Fecha 2026-11-08 | Sesión AUD-20261108-S033
+Tarea AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos.
+Repositorio infogpstech/GPSpedia | Rama GPSpedia2.2.5_work.
+HEAD inicial c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | árbol adda8ff26199530c2ec30d739510128efa060cb3.
+Rama base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Alcance: Tarea 14 búsqueda global multi-sección; commits 7fae24ac y 2b2c5b57; Tarea 15 filtros rápidos cancelados y estandarización de botones.
+Procedimiento E1 estático; sin cambios de aplicación iniciados.
+
+BLOBS DE REFERENCIA
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- Tareas.txt 6c1cf8d81d8247d00717ecd8ba4ced62cd351910
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0033
+Fecha 2026-11-08 | Sesión AUD-20261108-S033
+Tarea AUD-T-015: E1 ESTÁTICA COMPLETADA; H-AUD-015-001 a H-AUD-015-004 abiertos; H-AUD-037-003 a 006 revalidados; VAL-24 pendiente.
+HEAD padre c4f61a1f8dc402c9fec6802032ca7d7f9c304695; árbol adda8ff26199530c2ec30d739510128efa060cb3; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta; rama GPSpedia2.2.5_work.
+
+RESULTADO
+- Nuevas AUG-098 a AUG-101; adenda AUG-049; VAL-24 planificada.
+- La búsqueda multi-sección, badges y handlers por sección están presentes.
+- Los filtros rápidos están retirados; main.js conserva referencias residuales que pueden lanzar ReferenceError.
+- La consulta se inserta sin escape en encabezado/estado vacío; hay clasificación errónea potencial de marcas sintéticas.
+- El auto-open no-Corte, falta de ranking/acentos/campos, PyS asíncrono y año/modelo numérico siguen abiertos en H-AUD-037-003 a 006.
+- La estandarización universal de botones no está consolidada entre páginas.
+- No se modificó código, HTML, CSS, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+- No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, carga concurrente, lectores de pantalla, pruebas móviles ni E2/E3.
+- Solo documentación; sin merge ni despliegue.
+
+Archivos documentales actualizados: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+El commit documental se publicará con parent_sha/expected_sha c4f61a1f8dc402c9fec6802032ca7d7f9c304695, force:false. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 deberá permanecer intacta.
+Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.
+================================================================================

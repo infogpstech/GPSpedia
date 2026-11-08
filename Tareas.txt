@@ -6194,3 +6194,34 @@ RESULTADO
 LÍMITES
 Solo documentación. No se modificaron archivos de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron navegador, DOMParser, XSS, Playwright, HTTP, Apps Script, pruebas de persistencia ni E2/E3. Sin merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-015
+Fecha 2026-11-08 | Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-015-001 a H-AUD-015-004 documentados; VAL-24 pendiente.
+
+ALCANCE
+Tarea 14: búsqueda global multi-sección, modelos numéricos y jerarquía de resultados.
+Tarea 15: filtros rápidos cancelados/retirados y estandarización universal de botones.
+Archivos principales: navigation.js, ui.js, main.js, style.css, index.html, users.html, add_cortes.html, Services/catalog.js y VinDifferentialEngine.js.
+
+RESULTADOS
+- Búsqueda multi-sección presente para Cortes, Relay, Tutoriales y PyS; tarjetas no-Corte conservan _sectionType y handlers específicos.
+- Agrupación de resultados y badges presentes, pero autoapertura aún puede enviar un resultado único no-Corte al modal de vehículo (H-AUD-037-003/AUG-049).
+- Revalidado H-AUD-037-004: faltan normalización de acentos, cobertura completa de campos y ranking explícito.
+- Revalidado H-AUD-037-005: getPysData puede solicitarse varias veces y no actualiza la búsqueda activa al terminar.
+- Revalidado H-AUD-037-006: ambigüedad de modelos numéricos de 4 dígitos entre 1900–2100.
+- Filtros rápidos confirmados como retirados del HTML/CSS; main.js conserva referencias a toggleFiltersBtn/filtersBar eliminados que pueden lanzar ReferenceError en blur.
+- El sistema universal de botones no está consolidado: style.css tiene estilos por componente; users.html y add_cortes.html mantienen reglas .btn locales distintas.
+- Hallazgos nuevos:
+  * H-AUD-015-001: consulta de búsqueda insertada sin escape en innerHTML del encabezado/estado vacío (AUG-098, Alta).
+  * H-AUD-015-002: referencias residuales a filtros cancelados en blur (AUG-099, Media).
+  * H-AUD-015-003: estandarización de botones incompleta y estilos duplicados por página (AUG-100, Media).
+  * H-AUD-015-004: marca sintética Relay/Tutorial/Problema puede disparar renderizado de marca/logo (AUG-101, Media).
+- AUG-049 recibe adenda con confirmación de defectos de ranking, campos, acentos, carga PyS, año/modelo, autoapertura y clasificación sintética.
+- VAL-24 agrega pruebas de búsqueda, secciones, XSS, filtros retirados, botones, accesibilidad y responsive.
+
+LÍMITES
+Solo E1 estática. No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, carga concurrente, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación/configuración/datos, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================

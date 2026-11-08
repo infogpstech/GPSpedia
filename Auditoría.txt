@@ -10094,3 +10094,135 @@ LÍMITES
 E1 estática. No se ejecutaron navegador, DOMParser real, pruebas XSS, Playwright, edición/guardado real, HTTP, Apps Script, Spreadsheet/Drive, service worker en dispositivo ni E2/E3. No se verificó deployment. No se modificaron código, assets, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 COMPLETADA; H-AUD-014-001 a H-AUD-014-003 abiertos; validación funcional/seguridad y matriz VAL-23 pendientes.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-015: BÚSQUEDA GLOBAL, FILTROS RÁPIDOS Y RESULTADOS JERÁRQUICOS
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S033 | Checkpoint: AUD-CP-0033
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | Árbol: adda8ff26199530c2ec30d739510128efa060cb3
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+1. ALCANCE Y MÉTODO
+E1 estática de Tarea 14 (motor de búsqueda global multi-sección), Tarea 15 (filtros rápidos cancelados/retirados y estandarización universal de botones), búsqueda de modelos numéricos y agrupación/jerarquía de resultados. Contraste con commits históricos 7fae24ac31310cb206a8966b80f5163545ebd638 y 2b2c5b57a7e07a2cdfc16df3f6adc30c0c95b57; hallazgos anteriores AUD-T-037/AUD-T-008 y AUG-049/AUG-052.
+Procedimiento E1: revisión estática de archivos, funciones, callsites, contratos de navegación, sinks HTML, reglas CSS, HTML de las tres páginas y cambios históricos. Sin ejecutar código ni modificar aplicación.
+
+2. ARCHIVOS Y BLOBS REVISADOS
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0.
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb.
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9.
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+- users.html e41f402675677a4d2783493614737021ec2eade5.
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af.
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4.
+- Tareas.txt 6c1cf8d81d8247d00717ecd8ba4ced62cd351910.
+- Plan_auditoría/Plan_Auditoria.md d105ebd7517cb152243b1588b00a9b390f951be2.
+- Plan_auditoría/Aug_Tareas.md 66f0a9ce649a467534ad0c1c1050cf8b61ae4258.
+- Se reconsultó Auditoría.txt y consolidación anterior para no duplicar H-AUD-037-003 a 006 ni AUG-049.
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+3.1. Búsqueda multi-sección
+- navigation.js:161–211 consulta Cortes, Relay, Tutoriales y PyS y agrega _sectionType.
+- Relay/Tutorial/PyS reciben identificadores sintéticos de sección en marca y títulos/nombres en modelo (197, 202, 207).
+- Se mantienen etiquetas de sección en tarjetas (ui.js:6154–6158) y handlers diferenciados para Relay, Tutorial y PyS (6168–6173).
+- El render agrupa Cortes por marca/modelo y conserva registros no-Corte separados por tipo/identificador (ui.js:1603–1614).
+- La escritura del deep link usa encodeURIComponent en main.js y navigation.js.
+3.2. Filtros rápidos
+- La decisión documentada de cancelar los filtros rápidos se refleja en index.html: no existe #btn-toggle-filters ni #catalog-filters-bar.
+- main.js contiene comentario explícito de retirada (línea 79). No se encontró markup ni estilos de esos controles en los archivos actuales revisados.
+- No se propone reintroducir filtros rápidos.
+3.3. Botones
+- Hay estilos especializados para botones de login, navegación, carruseles, modales, inbox, panel de desarrollador y otros controles concretos.
+- users.html y add_cortes.html definen clases .btn propias en sus estilos locales.
+- Se conservan algunos estados hover/active y estilos de carga de componentes específicos.
+
+4. HALLAZGOS NUEVOS
+
+H-AUD-015-001 — ALTA — La consulta de búsqueda se inserta como HTML sin escape en el encabezado y en el estado sin resultados.
+Evidencia:
+- ui.js mostrarResultadosDeBusqueda() línea 1576: cont.innerHTML inserta query en el encabezado mediante template literal.
+- ui.js showNoResultsMessage() línea 1638: innerHTML inserta textoBusqueda directamente en el mensaje sin resultados.
+- navigation.js líneas 256 y 260 entrega textoBusqueda original a ambas rutas.
+- main.js procesa enlaces #search= al restaurar búsqueda (aprox. líneas 845–871), por lo que el término también puede proceder de un enlace compartido.
+Impacto: una consulta manipulada puede introducir etiquetas/atributos HTML en el DOM. El mensaje sin resultados se alcanza precisamente cuando una consulta arbitraria no coincide; el encabezado también refleja el texto cuando sí hay resultados. No se ejecutaron payloads ni se afirma explotación confirmada en navegador.
+Criterio:
+1. Construir encabezado y mensaje con createElement/textContent, sin interpolar la consulta en innerHTML.
+2. Mantener comillas, acentos, saltos y símbolos de búsqueda como texto literal.
+3. Probar texto ordinario, etiquetas, atributos onerror/onload, SVG, comillas, ampersand y enlaces #search= codificados/malformados.
+4. Revisar que las vistas de error/estado vacío no compartan un sink equivalente.
+Tarea derivada: AUG-098.
+
+H-AUD-015-002 — MEDIA — Quedaron referencias a controles de filtros eliminados que pueden lanzar ReferenceError al perder el foco del buscador.
+Evidencia:
+- main.js línea 79 documenta que la barra de filtros rápidos fue retirada.
+- No hay declaraciones actuales de toggleFiltersBtn/filtersBar ni elementos con IDs btn-toggle-filters/catalog-filters-bar en index.html.
+- En el callback del evento blur, main.js líneas 123–125 todavía evalúa toggleFiltersBtn y filtersBar.
+Impacto: cuando el callback diferido se ejecuta sin modal visible, la evaluación del identificador no declarado toggleFiltersBtn puede lanzar ReferenceError. La condición no depende de que el usuario abra filtros; se ejecuta como parte del desenfoque del campo. El estado visual search-active se retira antes, pero el callback queda interrumpido por la referencia residual.
+Criterio:
+1. Eliminar toda referencia a los controles cancelados y conservar únicamente el comportamiento vigente del buscador.
+2. Buscar IDs, listeners, variables y estilos residuales en todo el grafo actual.
+3. Probar blur por toque fuera, apertura de tarjeta/modal, navegación atrás, limpiar consulta y cambio de sección.
+4. Confirmar que no se reintroduzca UI de filtros rápidos.
+Tarea derivada: AUG-099.
+
+H-AUD-015-003 — MEDIA — La estandarización universal de botones no está consolidada en un sistema compartido.
+Evidencia:
+- index.html contiene 48 botones estáticos; solo carga Font Awesome y style.css, no una hoja de Bootstrap ni otra biblioteca de estilos de botones.
+- style.css no define una base global .btn, .btn-primary, .btn-secondary, .btn-danger ni reglas universales de button; los estilos aparecen distribuidos en selectores específicos por componente/página.
+- users.html define su propio .btn/.btn-primary/.btn-warning/.btn-danger (líneas 104–119).
+- add_cortes.html define otro .btn/.btn-primary/.btn-secondary independiente (líneas 81–86).
+- ui.js crea además numerosos botones dinámicos, algunos con clases específicas y otros con estilo aplicado individualmente.
+- No se encontró un contrato común de estados focus-visible/disabled/loading que cubra todas las páginas y botones.
+Impacto: la apariencia, dimensiones, contraste, foco, disabled y respuesta hover/active dependen de cada página/componente. La duplicación local puede producir diferencias entre pantallas y dificultar la aplicación consistente del modo oscuro y accesibilidad. La revisión es estática; no se afirma que todos los botones carezcan de estilo.
+Criterio:
+1. Definir un sistema común de clases/variables y estados que pueda reutilizarse en index.html, users.html y add_cortes.html.
+2. Mantener jerarquía primaria/secundaria/destructiva/icono sin reglas globales que alteren inputs/selects.
+3. Cubrir focus-visible, disabled, loading, hover y active; contraste y objetivos táctiles en móvil.
+4. Migrar botones creados dinámicamente o documentar variantes específicas.
+5. Probar todas las páginas, modales, paneles y temas claro/oscuro.
+Tarea derivada: AUG-100.
+
+H-AUD-015-004 — MEDIA — Los marcadores sintéticos de sección pueden clasificarse como marcas y cambiar el tipo de renderizado.
+Evidencia:
+- navigation.js líneas 197, 202 y 207 asigna marca='Relay', 'Tutorial' o 'Problema' a resultados no-Corte.
+- líneas 249–256 construye uniqueMarcasEnResultados con todos los resultados, sin separar _sectionType, y clasifica como type='marca' cuando el único valor incluye el término de búsqueda.
+- ui.js mostrarResultadosDeBusqueda() (1572–1596) interpreta type='marca' como lista de logos de marcas, no como tarjetas de la sección.
+Impacto: consultas dirigidas a nombres de sección, como “Tutorial”, “Relay” o “Problema”, cuando solo devuelven registros de esa sección, pueden entrar en la rama de marca y renderizar un logo sintético en lugar de los resultados. Depende de los datos/término que coincidan; no se ejecutó búsqueda en catálogo real.
+Criterio:
+1. Clasificar marca únicamente a partir de resultados reales de Cortes o de una señal de tipo explícita.
+2. No usar el campo sintético marca de Relay/Tutorial/PyS para inferir navegación por marcas.
+3. Probar consultas por cada etiqueta de sección, nombre/título exacto y coincidencias mixtas.
+Tarea derivada: AUG-101.
+
+5. HALLAZGOS ANTERIORES REVALIDADOS — NO DUPLICAR
+- H-AUD-037-003/AUG-049 sigue presente: ui.js:1622–1631 activa autoapertura para cualquier type='modelo' y llama mostrarDetalleModal(results[0]) sin excluir _sectionType. Una única coincidencia Relay/Tutorial/PyS puede abrir modal Corte en lugar de su modal específico.
+- H-AUD-037-004/AUG-049 sigue presente: navigation.js:143 y 159 normaliza solo minúsculas y elimina tags con regex; no normaliza diacríticos ni decodifica entidades HTML. navigation.js:178 indexa solo los campos enumerados del primer slot de corte; no incluye los campos equivalentes de slots 2/3. No se implementa ranking explícito exacto > parcial > descriptivo.
+- H-AUD-037-005/AUG-049 sigue presente: navigation.js:149–155 solicita getPysData cuando pysData no está cargado, sin promesa compartida, deduplicación ni reejecución de la consulta al terminar. Pulsaciones sucesivas pueden originar solicitudes concurrentes y la primera búsqueda omitir PyS.
+- H-AUD-037-006/AUG-049 sigue presente: navigation.js:136–180 interpreta cualquier token de cuatro dígitos entre 1900 y 2100 como año; el commit 7fae24ac conserva modelos numéricos fuera de ese rango, pero no resuelve el conflicto entre año y nombre de modelo dentro del rango.
+- AUG-049 ya contempla clasificación de secciones, autoapertura, campos, ranking, carga PyS y desambiguación numérica. Se agrega evidencia de H-AUD-015-004 y se confirma que los hallazgos anteriores siguen abiertos.
+- H-AUD-011-001 se mantiene como antecedente de sinks de contenido almacenado; crearCardVehiculo() inserta marca/modelo de registros en overlay.innerHTML (ui.js:6213–6223). Para PyS, el título del problema ya está relacionado con el hallazgo previo de contenido almacenado; no se crea duplicado en esta unidad.
+
+6. MATRIZ DE VALIDACIÓN — VAL-24
+Estado: PLANIFICADA; no ejecutada.
+1. Buscar resultados en Cortes, Relay, Tutoriales y PyS, incluyendo consulta mixta.
+2. Verificar coincidencia exacta, parcial y descriptiva; ranking por título/nombre.
+3. Verificar acentos/diacríticos, espacios repetidos, mayúsculas, entidades HTML y contenido enriquecido.
+4. Buscar modelos numéricos de cuatro dígitos dentro/fuera de 1900–2100 y distinguirlos de años/rangos.
+5. Verificar campos de slots 1, 2 y 3, configuración Relay, texto Tutorial y Problema/Solución/Prevención.
+6. Una coincidencia única por cada sección: abrir modal correcto; nunca abrir modal Corte para Relay/Tutorial/PyS.
+7. Consultas “Relay”, “Tutorial”, “Problema” y resultados de una sola sección: no renderizar marca sintética/logo.
+8. Simular carga PyS lenta, error, varias pulsaciones y consulta activa; verificar deduplicación y actualización de resultados.
+9. Encabezado y estado vacío con payloads HTML, atributos/eventos, SVG, comillas, símbolos, acentos y enlaces #search=; comprobar que todo se presenta como texto.
+10. Confirmar que los filtros rápidos no existen en DOM/CSS/eventos y que blur del buscador no lanza errores.
+11. Recorrer los 48 botones estáticos de index.html, botones de users.html/add_cortes.html y botones dinámicos principales; revisar clases y estados.
+12. Probar foco teclado, focus-visible, disabled, loading, hover/active, contraste y tema claro/oscuro.
+13. Probar responsive móvil/escritorio, modales, panel de desarrollador, formularios y navegación.
+14. Confirmar que el sistema de botones no altera inputs, selects, menús, tarjetas ni controles no-botón.
+No se ejecutaron casos de VAL-24.
+
+7. LÍMITES
+E1 estática. No se ejecutaron navegador, DOM, XSS, Playwright, pruebas de catálogo real, Apps Script/Spreadsheet, carga concurrente, medición de rendimiento, lector de pantalla, pruebas móviles, modo oscuro real ni E2/E3. No se verificó deployment. No se modificaron código, estilos, HTML de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 COMPLETADA; H-AUD-015-001 a H-AUD-015-004 abiertos; H-AUD-037-003 a 006 revalidados; VAL-24 pendiente.
+================================================================================

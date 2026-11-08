@@ -317,3 +317,30 @@ Sesión AUD-20261108-S032 | Checkpoint AUD-CP-0032 | HEAD deefa3a8ceca4aae892c61
 11. Modo estricto por defecto, avanzado, persistencia y permisos.
 12. Service worker v14: instalación, actualización, caché y recuperación offline.
 - Estado VAL-23: PLANIFICADA; no ejecutada.
+
+
+## 22. Actualización de cobertura — AUD-T-015
+Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033 | HEAD c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | árbol adda8ff26199530c2ec30d739510128efa060cb3 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-015 E1 estática completada; H-AUD-015-001 a H-AUD-015-004 abiertos; H-AUD-037-003 a 006 revalidados; VAL-24 planificada.
+- Catálogo AUD-T: 38 unidades; 29 con E1 completada, 1 parcial y 8 por auditar.
+- Catálogo AUG: 100 IDs únicos dentro de AUG-001 a AUG-101; AUG-015 continúa ausente.
+- Nuevas AUG-098 a AUG-101: consulta de búsqueda segura; limpieza de referencias a filtros cancelados; sistema universal de botones; clasificación de secciones sintéticas.
+- AUG-049 recibe adenda de evidencia actual: defectos de búsqueda y autoapertura siguen presentes; no duplicar hallazgos H-AUD-037-003 a 006.
+- Filtros rápidos: cancelación confirmada en DOM/CSS; se detectan referencias residuales en main.js que pueden lanzar ReferenceError.
+- La búsqueda mantiene rutas multi-sección y badges, pero un único resultado no-Corte puede abrir modal Corte; la inferencia de marca puede clasificar una sección sintética como logo.
+- No se ejecutaron DOM/browser, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lectores de pantalla, móviles ni E2/E3.
+
+### VAL-24 — Matriz pendiente búsqueda global y botones
+1. Búsqueda de Cortes/Relay/Tutorial/PyS y mezcla de secciones.
+2. Coincidencia exacta/parcial/descriptiva, ranking y normalización de acentos/espacios.
+3. Modelos numéricos dentro/fuera de 1900–2100 frente a años.
+4. Slots 1/2/3 y campos textuales de todas las secciones.
+5. Una coincidencia única por sección; destino modal correcto.
+6. Consultas Relay/Tutorial/Problema sin renderizado de logo sintético.
+7. Carga PyS lenta/error, múltiples pulsaciones, deduplicación y actualización de consulta activa.
+8. XSS en encabezado/estado vacío mediante input y deep link; todo como texto.
+9. Filtros rápidos ausentes y blur sin ReferenceError.
+10. Botones de index/users/add_cortes y dinámicos; jerarquía y estilos.
+11. Focus-visible, disabled, loading, hover/active, contraste y modo claro/oscuro.
+12. Responsive móvil/escritorio; no alterar inputs/selects.
+- Estado VAL-24: PLANIFICADA; no ejecutada.

@@ -446,3 +446,15 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas AUG-095 a AUG-097; VAL-23 planificada.
 - Límites: E1 estática; sin navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, service worker en dispositivo ni E2/E3. Sin cambios de aplicación/configuración/datos.
 - Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.
+
+
+## Continuidad — AUD-T-015 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD c4f61a1f8dc402c9fec6802032ca7d7f9c304695; árbol adda8ff26199530c2ec30d739510128efa060cb3; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- AUD-T-015 Búsqueda global, filtros rápidos y resultados jerárquicos: E1 estática completada; H-AUD-015-001 a H-AUD-015-004 abiertos; H-AUD-037-003 a 006 revalidados; VAL-24 pendiente.
+- Hallazgos nuevos: query de búsqueda reflejada sin escape en innerHTML; referencias residuales a toggleFiltersBtn/filtersBar en blur; estandarización de botones no universal; marca sintética Relay/Tutorial/Problema puede disparar renderizado como logo.
+- AUG-098 a AUG-101 nuevas; AUG-049 recibe adenda; VAL-24 planificada.
+- La decisión de cancelar filtros rápidos se mantiene; no reintroducirlos.
+- Fuentes: navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; users.html e41f402675677a4d2783493614737021ec2eade5; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- Límites: E1 estática; sin navegador/DOM/XSS/Playwright, catálogo real, Apps Script/Spreadsheet, carga concurrente, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación/configuración/datos.
+- Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.

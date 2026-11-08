@@ -648,6 +648,27 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - Relación: Tarea 10.1; commits f1db85fe/7fae24ac; AUD-T-037.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
 
+### AUG-049 — Completar búsqueda global y navegación por sección
+- Origen: H-AUD-037-003 a H-AUD-037-006. Prioridad alta.
+- Criterios:
+  1. Normalizar texto de consulta y campos (mayúsculas, espacios y diacríticos) antes de comparar.
+  2. Incluir los campos relevantes de todos los slots de Cortes (tipo, ubicación, color, relay y detalles) además de marca/modelo/versión/años/VIN; conservar los campos textuales de Relay, Tutorial y PyS.
+  3. Implementar la prioridad requerida: coincidencia exacta de título/nombre, coincidencia parcial de título y después campos descriptivos; mantener etiquetas y destino de cada sección.
+  4. Limitar la autoapertura de detalle de vehículo a resultados Corte; Relay/Tutorial/PyS deben abrir su modal específico aunque sean el único resultado.
+  5. Evitar clasificación de resultados no-Corte como marca sintética Relay/Tutorial/Problema.
+  6. Compartir una sola promesa de carga getPysData; al completarse, reejecutar la consulta activa sin duplicar peticiones.
+  7. Desambiguar números de cuatro dígitos usados como año frente a nombre de modelo; no filtrar únicamente por rango cuando exista coincidencia literal.
+  8. Probar acentos, términos HTML, múltiples slots, año/modelo numérico, una coincidencia por cada sección, cero resultados y deep links.
+- Relación: Tarea 10.1; commits f1db85fe/7fae24ac; AUD-T-037.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+
+**Adenda AUD-T-015 — 2026-11-08 (AUD-20261108-S033/AUD-CP-0033)**
+- Revalidación: H-AUD-037-003 a H-AUD-037-006 siguen presentes en HEAD c4f61a1f8dc402c9fec6802032ca7d7f9c304695: autoapertura no-Corte; falta de diacríticos, campos completos y ranking; solicitudes getPysData no deduplicadas ni reejecución de consulta; ambigüedad de números 1900–2100.
+- Nueva evidencia H-AUD-015-004: navigation.js:197/202/207 asigna marcas sintéticas Relay/Tutorial/Problema y 249–256 puede clasificar el conjunto como type='marca', mostrando logos en vez de tarjetas de sección.
+- Criterios ampliados: la clasificación de marca debe depender de resultados Corte o tipo explícito; las etiquetas sintéticas no se deben usar como marca; probar búsqueda literal de cada nombre de sección y coincidencias de una sola sección.
+- H-AUD-015-001 (query reflejada en innerHTML) y H-AUD-015-002 (referencias residuales de filtros) se gestionan en AUG-098/AUG-099, no duplicar aquí.
+
 ### AUG-050 — Corregir resolución e integración del motor diferencial VIN
 - Origen: H-AUD-037-007; ampliación técnica AUD-T-004/H-AUD-004-001 a 003.
 - Prioridad: Alta por riesgo de identificar variante vehicular incorrecta.
@@ -1341,4 +1362,49 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - Evidencia: Tareas.txt define gpsepedia_rich_text_mode y dos allow-lists; api-config.js, ui.js, main.js, index.html y rich-text.js no contienen la clave ni una lectura de modo; rich-text.js:327–431 usa una allow-list fija ampliada y createRichTextToolbar:243–305 expone siempre controles ampliados.
 - Problema: el modo estricto predeterminado y la configuración avanzada descritos en el requisito no se pueden seleccionar ni aplicar en el código vigente revisado.
 - Criterios: fuente de configuración definida; modo estricto por defecto; sanitizer y toolbar cambian coherentemente por modo; persistencia y autorización del ajuste; compatibilidad con registros existentes; pruebas de valor ausente/inválido/estricto/avanzado y cambio de modo.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+
+### AUG-098 — Evitar inyección HTML desde la consulta de búsqueda
+- Origen: H-AUD-015-001. AUD-T-015/Tarea 14. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Alta.
+- Evidencia: ui.js mostrarResultadosDeBusqueda() línea 1576 y showNoResultsMessage() línea 1638 insertan query/textoBusqueda mediante innerHTML; navigation.js:256/260 pasa el texto original; main.js restaura consultas desde #search=.
+- Problema: texto de búsqueda controlado por el usuario/enlace se interpreta como HTML en el encabezado y estado vacío.
+- Criterios:
+  1. Renderizar consulta con textContent y nodos DOM; no concatenar texto dinámico en innerHTML.
+  2. Mantener el texto literal en resultados y estados vacíos.
+  3. Probar etiquetas, atributos/eventos, SVG, comillas, ampersand, Unicode y deep links codificados.
+  4. Revisar sinks equivalentes de error/estado de búsqueda.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-099 — Eliminar referencias residuales a filtros rápidos cancelados
+- Origen: H-AUD-015-002. AUD-T-015/Tarea 15. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
+- Evidencia: main.js:79 declara retirada; main.js:123–125 sigue usando toggleFiltersBtn y filtersBar no declarados; index.html ya no contiene los IDs.
+- Problema: el blur del buscador puede evaluar un identificador inexistente y lanzar ReferenceError.
+- Criterios:
+  1. Retirar todas las referencias/listeners/estilos de filtros rápidos cancelados.
+  2. Mantener la decisión de no incluir ni reactivar filtros rápidos.
+  3. Probar blur, limpiar búsqueda, abrir resultado, modal, navegación atrás y cambio de sección.
+  4. Verificar ausencia de errores y ausencia de DOM residual.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-100 — Consolidar un sistema universal de estilos y estados de botones
+- Origen: H-AUD-015-003. AUD-T-015/Tarea 15. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
+- Evidencia: index.html carga solo Font Awesome y style.css; style.css no define una base universal .btn/variantes; users.html:104–119 y add_cortes.html:81–86 definen sistemas .btn independientes; ui.js crea numerosos botones dinámicos.
+- Problema: los botones dependen de estilos locales/específicos y no existe un contrato común completo de estados/tema.
+- Criterios:
+  1. Definir clases/variables compartidas para primaria, secundaria, destructiva, advertencia, icono y acciones compactas.
+  2. Aplicarlas en index.html, users.html y add_cortes.html sin afectar inputs/selects.
+  3. Cubrir focus-visible, disabled, loading, hover y active, contraste y targets táctiles.
+  4. Migrar botones dinámicos o documentar excepciones.
+  5. Validar tema claro/oscuro, responsive y todos los modales/paneles.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-101 — Separar clasificación de marcas reales y tipos sintéticos de sección
+- Origen: H-AUD-015-004. AUD-T-015/Tarea 14. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
+- Evidencia: navigation.js:197/202/207 asigna marca='Relay'/'Tutorial'/'Problema'; 249–256 usa todos los valores marca para inferir type='marca'; ui.js:1572–1596 representa type='marca' como logos.
+- Problema: consultas de una sola sección pueden ser clasificadas como marca y no presentar los registros correctos.
+- Criterios:
+  1. Limitar inferencia de marcas a entidades Corte o a un tipo explícito.
+  2. No inferir marca desde valores sintéticos de Relay/Tutorial/PyS.
+  3. Probar consulta por sección, título exacto, nombre de marca y resultados mixtos.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
