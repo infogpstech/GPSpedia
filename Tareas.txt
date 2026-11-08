@@ -6451,3 +6451,30 @@ TAREAS DERIVADAS DE AUD-T-022 — DISEÑO/IMPLEMENTACIÓN/PRUEBAS PENDIENTES
 - AUG-149: unificar el patrón accesible de las cinco pestañas y sus paneles.
 - AUG-150: conservar el status HTTP real y distinguir errores de red, HTTP y aplicación en la consola.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-001
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S041 | Checkpoint: AUD-CP-0041
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-001-001 y H-AUD-001-002 abiertos; VAL-32 planificada, no ejecutada.
+- Alcance: Tarea 1, requisitos 1.1–1.8; App Shell, arranque, inicialización, sesión, catálogo/cache, deep links, API/ADMIN y regresiones.
+- Controles confirmados: inicialización compatible con DOMContentLoaded/documento ya cargado; viewport con requestAnimationFrame; carga cache-first y red; endpoint GET ADMIN y ping presentes; módulos principales separados.
+- Hallazgos nuevos: polling indefinido de deep link cuando catálogo vacío/no listo; procesamiento de catálogo absorbe excepciones y callers marcan carga como completada sin confirmar actualización.
+- Revalidaciones: H-AUD-015-002 se mantiene en AUG-099; H-AUD-024-001/002 se mantiene en AUG-008. No se duplican.
+- Tareas derivadas: AUG-151 nueva; adendas a AUG-008 y AUG-049. VAL-32 planificada, no ejecutada.
+- La Tarea 1 conserva su estado histórico COMPLETADA; la E1 identifica deuda residual y no certifica funcionamiento real.
+- No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, multi-pestaña, accesibilidad ni despliegues. Sin cambios funcionales ni datos productivos.
+- Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).
+================================================================================
+
+VALIDACIÓN VAL-32 — ARRANQUE, SESIÓN, CATÁLOGO, DEEP LINKS Y ADMIN
+Estado: PLANIFICADA; NO EJECUTADA.
+1. Arranque DOM loading/already-ready, listeners únicos y recuperación de error.
+2. Sesión ausente/válida/corrupta/expirada, localStorage bloqueado y transición visual terminal.
+3. Dos o más pestañas iniciando simultáneamente; bloqueo, respuesta obsoleta y pantalla splash/login/app.
+4. Catálogo válido/vacío/malformado, caché corrupta, red caída, fallback y recuperación.
+5. Deep links con catálogo lento/vacío/fallido, cancelación, límite de espera y hash mal codificado.
+6. Blur/limpieza de búsqueda, modal, back y ausencia de referencias residuales a filtros retirados (AUG-099).
+7. GET debug, ping y operaciones ADMIN reales de lectura/escritura en entorno aislado, con permisos y dependencias verificadas.
+8. Regresión coordinada con VAL-27 y VAL-31 sin duplicar sus pruebas.
+================================================================================

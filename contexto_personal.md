@@ -522,3 +522,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas tareas AUG-147 a AUG-150. Cobertura: 36 E1, 1 parcial y 1 pendiente (AUD-T-001). Inventario AUG: 149 IDs; AUG-015 sigue ausente.
 - No se modificó código, HTML, CSS, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin navegador, lector de pantalla, pruebas de logout, HTTP ni Apps Script.
 - Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+
+
+## Continuidad de auditoría — AUD-T-001
+- Fecha: 2026-11-08. Sesión AUD-20261108-S041; checkpoint AUD-CP-0041.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 35446ac7dd3697b4cd318895c9040e3bf239720c; árbol 0d9e88098c57b7550334e84bf74feecf6fef83ae; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general: E1 estática completada; H-AUD-001-001 y H-AUD-001-002 abiertos; VAL-32 pendiente.
+- Hallazgos: polling indefinido de deep link cuando catalogData.cortes permanece vacío/no listo; processCatalogData absorbe excepciones y los llamadores marcan catalogLoaded=true sin confirmar actualización.
+- Revalidaciones: H-AUD-015-002/AUG-099 para filtros retirados; H-AUD-024-001/002/AUG-008 para bloqueo entre pestañas. No duplicar.
+- Nueva tarea AUG-151; adendas a AUG-008 y AUG-049. La Tarea 1 mantiene su estado histórico COMPLETADA; E1 no certifica pruebas funcionales.
+- No se modificó código, HTML, CSS, servicios, endpoints, contratos, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. No hubo ejecución funcional.
+- Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).

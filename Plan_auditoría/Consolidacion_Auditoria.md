@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-022 y AUD-T-023 a AUD-T-038 | 36 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-001, AUD-T-003 a AUD-T-022 y AUD-T-023 a AUD-T-038 | 37 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 | 1 |
+| Por auditar | Ninguna | 0 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** AUD-T-001 sigue POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-022 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** AUD-T-001 y AUD-T-003 a AUD-T-022, AUD-T-023 a AUD-T-038 tienen E1 completada; AUD-T-002 permanece auditada parcialmente. Las auditorías estáticas conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **149 identificadores AUG únicos** dentro del rango AUG-001 a AUG-150. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **150 identificadores AUG únicos** dentro del rango AUG-001 a AUG-151. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -47,7 +47,7 @@ Algunos encabezados AUG se repiten en el archivo porque las auditorías posterio
 | Historial e inventario de imágenes / Drive | AUG-026 a AUG-033 | Integridad del historial, decisiones de alcance, auditoría del inventario, movimientos explícitos, deduplicación, persistencia, snapshots y rendimiento Drive |
 | Coordinación y contratos entre servicios | AUG-034 a AUG-044 | Locks compartidos, idempotencia, contrato VIN/testigo, reconciliación de cargas, compensaciones, seguridad WRITE/FEEDBACK/UTILITIES, rol cliente, YouTube y mapa de acciones |
 | Términos, privacidad y accesibilidad | AUG-045 a AUG-047 | Aceptación versionada, revisión legal y accesibilidad/navegación/offline de modales legales |
-| Catálogo, búsqueda, VIN y PWA | AUG-048 a AUG-052, AUG-059/AUG-060, AUG-074 | Snapshot y sincronización, búsqueda, motor VIN, edición/validación de colecciones VIN, presentación posicional, IndexedDB/miniaturas/privacidad local, startup/deep links/Service Worker/backend e instalación iOS/iPadOS |
+| Catálogo, búsqueda, VIN y PWA | AUG-048 a AUG-052, AUG-059/AUG-060, AUG-074 y AUG-151 | Snapshot y sincronización, búsqueda, motor VIN, edición/validación de colecciones VIN, presentación posicional, IndexedDB/miniaturas/privacidad local, startup/deep links/Service Worker/backend, instalación iOS/iPadOS y validación de disponibilidad del catálogo al arranque |
 | Ciclo local de operaciones y seguridad de endpoints | AUG-053/AUG-054 | Aislamiento/retención de snapshots por cuenta; autenticación y minimización de checkOperation |
 | Registro, idempotencia y recuperación de add_cortes | AUG-055 a AUG-058 | Ciclo durable/vinculación de opId; disponibilidad dinámica; errores FileReader; recuperación automática serializada |
 | Modal de detalle y ampliaciones contextuales | AUG-061 a AUG-064 | Cupos suplementarios; refresh del detalle; selectores desde Sheets; sanitización de apertura/alimentación |
@@ -428,4 +428,15 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - VAL-31: logout/revocación, expiración, cambio de cuenta, autorización de roles, pestañas/diálogo con teclado y lector de pantalla, History API, listeners, errores HTTP/red y responsive.
 - No se ejecutaron navegador, lector de pantalla, pruebas de sesión, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia ni despliegues. Sin cambios funcionales.
 - Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+================================================================================
+
+## 15. Actualización de cobertura — AUD-T-001
+- AUD-T-001 tiene E1 estática completada; H-AUD-001-001 y H-AUD-001-002 abiertos; VAL-32 planificada, no ejecutada.
+- Cobertura: 38 unidades; 37 E1 completadas, 1 parcial (AUD-T-002) y ninguna por auditar.
+- Catálogo AUG: 150 IDs únicos dentro de AUG-001 a AUG-151; AUG-015 continúa ausente y no se infiere ni renumera.
+- Hallazgos nuevos: espera recursiva sin límite para deep links cuando el catálogo no está disponible o está vacío; errores de processCatalogData absorbidos mientras los llamadores marcan catalogLoaded=true.
+- Revalidaciones sin duplicación: referencias residuales a filtros retirados H-AUD-015-002/AUG-099; bloqueo de sesión entre pestañas H-AUD-024-001/002/AUG-008.
+- Nueva tarea AUG-151; adendas a AUG-008 y AUG-049. La Tarea 1 conserva su estado histórico COMPLETADA.
+- VAL-32: inicialización, sesión, multi-pestaña, catálogo válido/vacío/malformado, caché/fallback, deep links, filtros retirados y health/operaciones ADMIN reales en entorno aislado.
+- No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, multi-pestaña ni deployments. No se modificó código ni datos productivos.
 ================================================================================

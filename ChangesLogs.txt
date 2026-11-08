@@ -4355,3 +4355,19 @@ Archivos documentales:
 - ChangesLogs.txt: este registro documental.
 - checkpoint.md: checkpoint inicial y final AUD-CP-0040; final como último blob documental.
 No se modificaron ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js ni Services/Auth.js. Sin navegador, lector de pantalla, logout/revocación funcional, HTTP, Apps Script, Drive, Spreadsheet, Node/lint ni despliegues. Sin merge ni despliegue.
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-001
+Fecha: 2026-11-08 | Sesión AUD-20261108-S041 | Checkpoint AUD-CP-0041
+Archivos documentales modificados:
+- Auditoría.txt: añadida E1 AUD-T-001, hallazgos H-AUD-001-001/002, revalidaciones H-AUD-015-002 y H-AUD-024-001/002, y VAL-32.
+- Tareas.txt: añadido registro AUD-T-001, VAL-32 y referencia a AUG-151/adendas existentes.
+- Plan_auditoría/Plan_Auditoria.md: estado de AUD-T-001 actualizado e iteración 45 añadida.
+- Plan_auditoría/Aug_Tareas.md: nueva AUG-151; adendas a AUG-008/AUG-049; referencia a AUG-099 conservada.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 37 E1, 1 parcial y 0 pendientes; inventario AUG actualizado y sección 15 añadida.
+- contexto_personal.md: continuidad AUD-T-001 añadida.
+- ChangesLogs.txt: este registro.
+- checkpoint.md: checkpoints inicial y final AUD-CP-0041; el final se crea como último blob documental.
+No se modificaron main.js, auth.js, ui.js, state.js, index.html, style.css, api-config.js, Services/admin.js ni Services/Auth.js. Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, pruebas multi-pestaña, concurrencia ni despliegue. Sin merge ni despliegue.
+================================================================================

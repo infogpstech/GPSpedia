@@ -11041,3 +11041,77 @@ No se ejecutó ningún caso de VAL-31.
 E1 estática completada. No se ejecutaron navegador, pruebas de teclado/lector de pantalla, pruebas de logout o revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni E2/E3. No se verificó el deployment actualmente activo.
 Resultado: H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 planificada; AUG-147 a AUG-150 nuevas. Sin cambios funcionales ni de datos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-001: RECUPERACIÓN DEL APP SHELL, ARRANQUE, INICIALIZACIÓN Y ESTABILIZACIÓN GENERAL
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S041 | Checkpoint: AUD-CP-0041
+Plan: AUD-PLAN-2026-001
+Rama: GPSpedia2.2.5_work | HEAD auditado: 35446ac7dd3697b4cd318895c9040e3bf239720c | Árbol: 0d9e88098c57b7550334e84bf74feecf6fef83ae
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Commits históricos revisados:
+- 2251d499f7343b9d11b26da5e55886a0d2d45af4 — Implementar Tarea 1 y router doGet en admin.js.
+- 4445f2c72825699e2d5d0555943191f02f0f0a12 — Mejoras de UI, corrección de sesiones y optimizaciones generales.
+Archivos funcionales inspeccionados sin modificación:
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+
+ESTADO
+E1 ESTÁTICA COMPLETADA. H-AUD-001-001 y H-AUD-001-002 abiertos. Revalidaciones sin duplicación: H-AUD-015-002/AUG-099 y H-AUD-024-001/002/AUG-008. VAL-32 planificada, no ejecutada.
+La Tarea 1 conserva su estado histórico COMPLETADA en Tareas.txt; esta auditoría identifica deuda residual y no revoca ni reescribe ese registro histórico.
+
+1. CONTROLES CONFIRMADOS
+- initializeApp() contempla DOMContentLoaded y el caso en que el documento ya dejó el estado loading.
+- El viewport móvil se actualiza mediante requestAnimationFrame con protección viewportTicking.
+- checkSession() restaura el usuario desde localStorage y dispara la carga de catálogo en segundo plano; loadInitialData() intenta caché y red.
+- El endpoint GET de ADMIN existe y api-config.js consulta ?debug=true; el POST incluye la acción ping.
+- La aplicación conserva módulos separados para autenticación, estado, interfaz y navegación.
+- El flujo de PyS/formulario, panel ADMIN y modal de detalle tienen auditorías específicas previas (AUD-T-011, AUD-T-022 y AUD-T-005); sus hallazgos no se duplican aquí.
+
+2. HALLAZGOS NUEVOS
+
+H-AUD-001-001 — MEDIA — La espera de catálogo para resolver un deep link puede reprogramarse indefinidamente.
+Evidencia:
+- main.js:860–868 define checkDataAndSearch() y, mientras catalogData.cortes.length no sea mayor que cero, vuelve a programarse con setTimeout(checkDataAndSearch, 100).
+- No existe límite de intentos, deadline, cancelación ni una condición explícita de catálogo listo/vacío.
+- auth.js:85–96, en el fallo de red sin catálogo disponible, establece colecciones vacías; por tanto, un deep link activo puede permanecer reintentando aun después de que el flujo de carga haya concluido con error.
+Impacto: un enlace de búsqueda con catálogo vacío, inválido o inaccesible mantiene timers repetidos cada 100 ms y nunca resuelve la navegación; además, length > 0 confunde “catálogo listo pero vacío” con “catálogo aún no cargado”.
+Criterios: utilizar un estado explícito de carga (loading/ready/error) compartido con el catálogo; resolver correctamente el catálogo vacío; limitar y cancelar la espera al cambiar hash/sección o desmontar el flujo; mostrar un resultado/error terminal sin polling infinito.
+Tarea relacionada: adenda a AUG-049. No duplicar el alcance de búsqueda global ya registrado.
+
+H-AUD-001-002 — MEDIA — processCatalogData() absorbe errores y sus llamadores marcan la carga como completada aunque no se haya actualizado el estado.
+Evidencia:
+- auth.js:102–120 captura cualquier excepción de catalogData.cortes.reduce()/procesamiento, registra console.error y no devuelve un resultado ni propaga el error.
+- auth.js:34–35, 54–56 y 79–80 asigna catalogLoaded = true después de llamar processCatalogData(), sin comprobar que el catálogo haya sido aceptado y aplicado.
+- En la ruta de red, si la estructura recibida no contiene cortes válido o el procesamiento falla, el flujo puede considerar la carga exitosa; si después falla otra operación, se omite la recuperación de caché y el error global.
+Impacto: estado de catálogo vacío o incompleto puede quedar presentado como carga completada; se pierde el fallback y el usuario no recibe necesariamente el estado de error correspondiente.
+Criterios: validar el contrato de catálogo antes de procesarlo; devolver resultado explícito o propagar errores; marcar catalogLoaded solo después de una actualización válida; distinguir catálogo vacío válido de payload inválido; conservar fallback y error visible cuando ninguna fuente sea válida.
+Tarea derivada: AUG-151.
+
+3. REVALIDACIONES SIN DUPLICAR TAREAS
+- Filtros rápidos retirados: main.js:123–125 conserva referencias a toggleFiltersBtn y filtersBar, sin declaraciones en el módulo ni elementos equivalentes en index.html. Su evaluación en el callback de blur puede producir ReferenceError. Ya está registrado como H-AUD-015-002/AUG-099; se referencia, no se crea otro hallazgo ni tarea.
+- Bloqueo entre pestañas: auth.js:160–178 retorna si encuentra session_validation_lock vigente, sin resolver la pantalla de esa pestaña; el lock se libera en el finally del flujo síncrono, mientras la validación remota continúa asíncronamente. Revalidación de H-AUD-024-001/002; mantener la corrección en AUG-008, sin duplicarla.
+- ADMIN GET: Services/admin.js:571–584 devuelve metadatos fijos service/version/status; api-config.js:198–235 interpreta la respuesta HTTP y status declarado. La inspección estática confirma el contrato de endpoint, pero no demuestra acceso real a Spreadsheet/Drive ni la ejecución de acciones administrativas. Se deja como validación funcional VAL-32, no como fallo de comunicación confirmado.
+
+4. VALIDACIÓN VAL-32 — PLANIFICADA, NO EJECUTADA
+1. Probar arranque con documento en loading y ya interactivo; comprobar que cada listener se registra una sola vez y que un error de inicialización no deja el splash permanentemente.
+2. Probar sin sesión, sesión local válida, JSON de sesión corrupto, storage bloqueado y sesión expirada/revocada; comprobar que siempre se presenta una pantalla terminal coherente.
+3. Abrir dos o más pestañas simultáneamente con y sin sesión; comprobar que ninguna quede detenida en splash y que las respuestas obsoletas no cierren otra cuenta.
+4. Probar catálogo válido, vacío, incompleto, malformado, caché corrupta, red caída y recuperación posterior; comprobar estado explícito, fallback y mensaje de error.
+5. Abrir deep links con catálogo lento, vacío, fallido y recuperado; comprobar ausencia de polling infinito, cancelación al cambiar navegación y manejo de hash percent-encoding inválido.
+6. Ejecutar blur, limpiar búsqueda, abrir resultado, abrir/cerrar modal y navegar atrás; confirmar ausencia de ReferenceError por referencias a filtros retirados (AUG-099).
+7. Verificar GET ?debug=true, POST ping y operaciones ADMIN reales de lectura/escritura en deployment y datos aislados; confirmar autenticación, respuesta, permisos, acceso a dependencias y diagnóstico sin falsos positivos.
+8. Ejecutar regresión de los flujos relacionados ya cubiertos por VAL-27 y VAL-31, sin duplicar sus casos ni utilizar datos productivos.
+No se ejecutó ningún caso de VAL-32.
+
+5. LÍMITES Y RESULTADO
+E1 estática completada. No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, pruebas multi-pestaña, accesibilidad, despliegues ni E2/E3. No se verificó el deployment actualmente activo ni se hicieron operaciones contra datos productivos.
+No se modificaron código, HTML, CSS, servicios, endpoints, contratos, configuración, assets, permisos, datos productivos, Drive ni Spreadsheet. Sin merge ni despliegue.
+================================================================================

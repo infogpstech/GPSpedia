@@ -49,7 +49,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 
 | ID de auditoría | Tarea / funcionalidad histórica | Commits ancla conocidos (SHA corto y mensaje) | Estado inicial |
 |---|---|---|---|
-| AUD-T-001 | Recuperación del App Shell, arranque, inicialización y estabilización general | 2251d499 — Implementar Tarea 1 y router doGet en admin.js; 4445f2c7 — Mejoras de UI, corrección de sesiones y optimizaciones generales | POR AUDITAR |
+| AUD-T-001 | Recuperación del App Shell, arranque, inicialización y estabilización general | 2251d499 — Implementar Tarea 1 y router doGet en admin.js; 4445f2c7 — Mejoras de UI, corrección de sesiones y optimizaciones generales | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-32 PENDIENTE |
 | AUD-T-002 | RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (ciclo de sesiones en AUD-T-024; legal en AUD-T-036) | 97eef18c — Implementar Tarea 2: RBAC, sesión y cumplimiento legal; 414c4258 — Fix greeting name and implement History API in users profile; 6a226c18 — ADMIN 0: retirar credenciales de logs de AUTH | AUDITADO PARCIALMENTE; HALLAZGOS ABIERTOS (AUD-CP-0002) |
 | AUD-T-003 | Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red | 14bbd04f — Implementar Tarea 3: Formulario add_cortes, idempotencia y resiliencia; 77ea1d0b — registro sin cortes y recuperación de red; 2eaeb476 — make add-cut modal idempotent | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
@@ -926,3 +926,15 @@ Hallazgos: logout no revoca token ni limpia currentUser; el modal no se cierra a
 Nuevas tareas: AUG-147 a AUG-150. VAL-31 planificada, no ejecutada.
 Límites: sin navegador, lector de pantalla, pruebas de sesión/logout, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni E2/E3. Sin cambios de aplicación.
 Siguiente: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+
+
+## 45. Iteración técnica — AUD-T-001
+Sesión AUD-20261108-S041 | Checkpoint AUD-CP-0041 | HEAD auditado 35446ac7dd3697b4cd318895c9040e3bf239720c | árbol 0d9e88098c57b7550334e84bf74feecf6fef83ae | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-001-001 y H-AUD-001-002 abiertos; VAL-32 pendiente.
+Alcance: Tarea 1 (requisitos 1.1–1.8), App Shell, initializeApp(), auth/checkSession(), carga de catálogo/cache, deep links, API/ADMIN y regresiones.
+Controles: DOMContentLoaded/already-ready; viewport requestAnimationFrame; caché y red; doGet/debug y ping; módulos separados. Las áreas PyS, panel ADMIN y modal de detalle se contrastaron con AUD-T-011, AUD-T-022 y AUD-T-005 para evitar duplicación.
+Hallazgos: polling sin límite/cancelación para deep link cuando cortes.length permanece 0; processCatalogData absorbe errores y los llamadores marcan catalogLoaded=true sin confirmar actualización.
+Revalidaciones: H-AUD-015-002/AUG-099 (filtros retirados); H-AUD-024-001/002/AUG-008 (bloqueo entre pestañas). No se crean duplicados.
+Nueva tarea: AUG-151; adendas a AUG-008 y AUG-049. VAL-32 planificada, no ejecutada.
+Límites: sin navegador, Node/lint, HTTP, Apps Script, Spreadsheet, Drive, concurrencia, pruebas multi-pestaña, despliegues ni E2/E3. Sin cambios funcionales ni datos.
+Siguiente: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).

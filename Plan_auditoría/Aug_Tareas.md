@@ -1759,3 +1759,26 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
 - 2026-11-08 — AUD-T-022: AUG-147 a AUG-150 nuevas. Inventario: 149 IDs únicos dentro de AUG-001 a AUG-150; AUG-015 continúa ausente y no se infiere ni renumera.
+
+
+================================================================================
+ADENDA AUD-T-001 — REVALIDACIÓN DE TAREAS EXISTENTES
+- AUG-008: se confirma en auth.js:160–178 que el retorno temprano ante lock vigente no resuelve el estado visual de la pestaña; la coordinación debe impedir que el splash quede sin transición y contemplar la validación asíncrona. Mantener la solución en esta tarea existente; no duplicar.
+- AUG-049: ampliar los criterios de deep linking para exigir un estado explícito loading/ready/error del catálogo, tratar catálogo vacío como estado terminal válido, cancelar la espera al cambiar navegación y evitar polling indefinido cada 100 ms. Manejar errores de decodeURIComponent en hashes mal codificados.
+- AUG-099: H-AUD-015-002 vuelve a observarse en main.js:123–125; conservar como referencia y no crear tarea duplicada.
+
+### AUG-151 — Validar el procesamiento y la disponibilidad del catálogo durante el arranque
+- **Origen:** H-AUD-001-002. **Prioridad:** Alta.
+- **Evidencia:** auth.js:34–35, 54–56 y 79–80 marcan catalogLoaded=true después de processCatalogData(); auth.js:102–120 absorbe excepciones sin propagar resultado.
+- **Problema:** un payload de catálogo inválido o un error de procesamiento puede tratarse como carga exitosa, impedir el fallback y dejar la interfaz sin datos ni error terminal.
+- **Criterios de aceptación:**
+  1. Validar explícitamente el objeto recibido y la estructura de sus colecciones antes de procesarlo.
+  2. Hacer que processCatalogData comunique éxito/fallo mediante resultado explícito o excepción; no absorber errores que deban activar recuperación.
+  3. Marcar catálogo como cargado solo después de actualizar correctamente el estado.
+  4. Diferenciar catálogo válido vacío, catálogo pendiente y catálogo inválido.
+  5. Si falla la red, intentar una caché que también haya pasado validación; si ninguna fuente es válida, mostrar error terminal y estado coherente.
+  6. Probar respuesta válida, vacía, parcial, malformada, elementos nulos, error durante normalización/procesamiento, caché corrupta y recuperación posterior.
+- **Relación:** AUD-T-001, AUD-T-009/AUG-048 y AUD-T-037; coordinar con AUG-049 para deep links sin duplicar su lógica.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+- 2026-11-08 — AUD-T-001: AUG-151 nueva; adendas a AUG-008/AUG-049; H-AUD-015-002 se mantiene en AUG-099. Inventario: 150 IDs únicos dentro de AUG-001 a AUG-151; AUG-015 continúa ausente y no se infiere ni renumera.
