@@ -890,3 +890,46 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - Probar FileReader success/error/abort y reintento sin recargar.
 
 - 2026-11-07 — AUD-T-005: nuevas AUG-061 a AUG-064; adendas AUG-043/AUG-050/AUG-057. Inventario: 63 IDs únicos AUG-001 a AUG-064; AUG-015 continúa ausente.
+
+
+### AUG-065 — Respetar variantes de resolución y separar cachés de imágenes por tamaño
+- **Origen:** H-AUD-006-001. **Prioridad:** Media.
+- **Problema:** getImageUrl() ignora el parámetro size; setOptimizedImage() y offline.getThumbnail() usan una sola clave por ID, aunque el consumidor solicite tamaños diferentes. La miniatura PNG de 400 px puede reutilizarse en un contexto que necesita mayor resolución.
+- **Criterios de aceptación:**
+  1. Definir variantes pequeña, media y grande compatibles con la transparencia PNG y documentar la URL real de cada variante.
+  2. Incluir ID normalizado y variante/tamaño en las claves de caché en memoria e IndexedDB, o garantizar explícitamente que el blob local solo se use para solicitudes compatibles.
+  3. No satisfacer solicitudes medias/grandes con una miniatura de 400 px; el lightbox debe conservar acceso a la fuente de alta resolución.
+  4. Mantener proporción, limitar dimensiones sin ampliar artificialmente imágenes pequeñas y tratar errores de CDN/cache sin bloquear el detalle.
+  5. Probar el mismo archivo solicitado en tres tamaños, orden de carga inverso, caché fría/caliente, online/offline, PNG transparente y JPEG; verificar dimensiones, bytes y calidad.
+- **Relación:** AUD-T-006; AUD-T-009/AUG-051 para ciclo general de caché, sin duplicarlo.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-066 — Restringir el modo de fusión a imágenes que requieren corrección de transparencia
+- **Origen:** H-AUD-006-002. **Prioridad:** Media.
+- **Problema:** mix-blend-mode: lighten se aplica a todas las imágenes de determinadas tarjetas en modo oscuro, no solo a PNG transparentes.
+- **Criterios de aceptación:**
+  1. Aplicar el efecto únicamente a assets transparentes identificados o a clases específicas de recursos que lo requieran.
+  2. Mantener intactos los colores de fotografías, JPEG, PNG opacos, diagramas y logos que no requieran mezcla.
+  3. No cambiar el tratamiento de .img-vehiculo-modal ni otros elementos fuera del alcance.
+  4. Probar imágenes con alfa, fondo opaco, bordes semitransparentes, colores oscuros y modo claro/oscuro.
+- **Relación:** AUD-T-006; conservar objetivo B33 de canal alfa sin degradar imágenes opacas.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-067 — Discriminar eje horizontal y vertical en gestos del carrusel de cables
+- **Origen:** H-AUD-006-003. **Prioridad:** Media.
+- **Problema:** el carrusel del modal solo mide screenX; un scroll vertical diagonal puede interpretarse como swipe horizontal.
+- **Criterios de aceptación:**
+  1. Registrar coordenadas iniciales/finales X/Y y exigir que el desplazamiento horizontal supere el umbral y domine el vertical.
+  2. Ignorar gestos multitáctiles, movimientos cortos y gestos iniciados sobre controles interactivos.
+  3. Restablecer el estado al recibir touchcancel y evitar más de un cambio por gesto.
+  4. Mantener el desplazamiento vertical normal de la página y la actualización de altura del acordeón.
+  5. Probar gestos verticales, horizontales, diagonales, cancelados, multitáctiles, móvil y PWA standalone.
+- **Relación:** AUD-T-006; no duplicar el swipe interno del lightbox que ya compara ambos ejes.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### Adenda derivada de AUD-T-006 — AUG-064
+- Incluir ui.js updateSlide(): slideText.innerHTML recibe activeCable.content y debe aplicar el mismo sanitizador/allow-list que el resto de los campos de apertura y alimentación.
+- Sanitizar tanto el carrusel multi-cable como la presentación de un solo cable y los demás sinks de detalle, impresión/exportación y vistas alternativas.
+- Probar payloads HTML activos en el segundo y tercer cable, no solo en el primer slot o en la presentación individual.
+
+- 2026-11-07 — AUD-T-006: nuevas AUG-065 a AUG-067; adenda AUG-064. Inventario: 66 IDs únicos dentro de AUG-001 a AUG-067; AUG-015 continúa ausente.

@@ -9325,3 +9325,63 @@ AUD-T-005 queda con E1 estática completada y ocho hallazgos abiertos. El botón
 Tareas nuevas: AUG-061 a AUG-064. Adendas: AUG-043, AUG-050 y AUG-057. Transferencia de navegación: AUD-T-007.
 Siguiente unidad: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-006: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX, CARRUSEL DE CABLES Y TRANSPARENCIAS
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S024 | Checkpoint: AUD-CP-0024
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 5ab07e75513b05a51a4c62fbc731e451105eb1a8 | Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validación visual, móvil y de rendimiento pendiente.
+
+1. ALCANCE Y FUENTES
+Revisión de TAREA 6 y especificaciones B32/B33 en Tareas.txt; contraste con los commits ancla 7f57e2fd, af9caed8 y 5ff81bde, la auditoría histórica de TAREA 6 y la implementación vigente en el HEAD indicado.
+
+Archivos, funciones y consumidores revisados:
+- lightbox.js: isLightboxZoomed(), actualizarBotonesLightbox(), navegarLightbox(), initLightboxEvents(), abrirLightbox() y cerrarLightbox().
+- ui.js: setOptimizedImage(), getImageUrl(), createAccordionSection()/updateSlide(), llamadas a getImageUrl() para IMG_SIZE_MEDIUM/IMG_SIZE_LARGE y construcción del contexto de cables.
+- offline.js: compressAndStoreThumbnail(), getThumbnail() y normalizeId().
+- style.css: reglas .card img, tratamiento dark-mode de PNG, .lightbox, botones de navegación y carrusel de cables.
+- index.html: estructura #lightbox, imagen y botones prev/next.
+- main.js: importación del módulo lightbox.js y exposición de módulos de interfaz.
+- Contraste documental: Tareas.txt, Auditoría.txt, ChangesLogs.txt, H-AUD-005-001/AUG-064 y auditorías de caché/PWA AUD-T-009/AUD-T-038.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- main.js importa lightbox.js como módulo; index.html contiene un visor único con imagen y controles de navegación.
+- abrirLightbox() recibe un contexto opcional de cables y un índice inicial; navegarLightbox() envuelve los índices y notifica onSlideChange para sincronizar el carrusel del detalle.
+- El visor ofrece botones de navegación en escritorio y gestos táctiles en el lightbox. El listener compara desplazamiento horizontal y vertical antes de cambiar de imagen.
+- isLightboxZoomed() considera visualViewport.scale y la transformación inline de la imagen; el listener bloquea el cambio de diapositiva si detecta zoom o multitáctil.
+- ignoreNextClick intenta impedir que el click sintético posterior al swipe cierre el visor.
+- getImageUrl() usa la CDN directa lh3 de Google para evitar la ruta de miniaturas que históricamente degradaba la transparencia PNG. compressAndStoreThumbnail() serializa miniaturas en PNG.
+- Las imágenes de alta resolución se solicitan al abrir el visor, no como precarga de todas las imágenes del detalle.
+
+3. HALLAZGOS NUEVOS
+
+H-AUD-006-001 — MEDIA — El tamaño solicitado no se aplica y las cachés de imagen no distinguen variantes.
+Evidencia: ui.js:533–579 setOptimizedImage(imgElement, fileId, size) recibe el tamaño, pero la caché en memoria usa solo cleanId y offline.getThumbnail(cleanId) recupera un único blob por ID. ui.js:592–625 getImageUrl(fileId, size) no utiliza size y devuelve siempre https://lh3.googleusercontent.com/d/{id}, sin el sufijo de variante descrito en TAREA 6/B33. offline.js:590–610 genera una miniatura de 400 px y la almacena bajo fileId, sin separar variantes.
+Impacto: los llamados para tamaño pequeño, medio o grande producen la misma URL remota; cuando setOptimizedImage() encuentra la miniatura local de 400 px, puede reutilizarla aunque el consumidor solicite una resolución mayor. Se pierde la separación entre miniatura y detalle, puede aparecer una imagen ampliada con baja definición y las tarjetas pueden descargar la imagen original completa. La ruta directa del lightbox evita la miniatura local, pero tampoco obtiene una variante remota específica por tamaño.
+Acción: definir variantes de imagen compatibles con el canal alfa; incorporar el tamaño/variante en la clave de caché en memoria e IndexedDB; impedir que un blob de 400 px satisfaga una solicitud de mayor resolución; conservar proporciones y evitar ampliaciones artificiales. Verificar dimensiones, bytes transferidos, transparencia y comportamiento online/offline por variante.
+
+H-AUD-006-002 — MEDIA — El modo de fusión del modo oscuro modifica imágenes que no son PNG transparentes.
+Evidencia: style.css:748–752 aplica mix-blend-mode: lighten a .dark-mode .card:not(.brand-logo-item) img, .dark-mode .card-img-top, .dark-mode .match-card-img y .dark-mode #imagenVehiculo_preview. Los selectores no distinguen PNG con canal alfa de fotografías, imágenes opacas u otros formatos.
+Impacto: lighten participa en la composición de todos los píxeles de esas imágenes, no solo en los bordes transparentes. Fotografías y diagramas opacos pueden perder tonos oscuros, contraste o fidelidad de color en modo oscuro aunque no tengan el artefacto que se quería corregir.
+Acción: limitar la mezcla a recursos identificados como transparentes o a clases explícitas de assets que la requieran; conservar la composición original de fotografías e imágenes opacas. Probar PNG con alfa, PNG opaco, JPEG, logos y fotografías en modo claro/oscuro.
+
+H-AUD-006-003 — MEDIA — El carrusel del modal puede interpretar un desplazamiento vertical diagonal como cambio de diapositiva.
+Evidencia: ui.js:5976–5994 registra touchstart/touchend del carrusel y compara únicamente screenX con un umbral de 50 px. No registra el desplazamiento vertical ni exige que el movimiento horizontal domine. A diferencia de este listener, lightbox.js:127–182 sí compara deltaX y deltaY.
+Impacto: al desplazarse verticalmente por el detalle en un dispositivo táctil, un movimiento diagonal con componente horizontal superior a 50 px puede cambiar la diapositiva de forma involuntaria e interrumpir la lectura.
+Acción: registrar coordenadas X/Y; exigir umbral horizontal y predominio claro de deltaX sobre deltaY; ignorar multitáctil y reiniciar el estado ante touchcancel. Probar desplazamiento vertical, horizontal, diagonal, gestos cortos, cambio de acordeón y PWA standalone.
+
+4. HALLAZGO PREVIO AMPLIADO — NO DUPLICAR
+- H-AUD-005-001/AUG-064: además del sink contentP.innerHTML ya documentado, ui.js:5905–5908 asigna activeCable.content a slideText.innerHTML dentro de updateSlide(). Ese contenido procede de las descripciones de cables de alimentación y se inserta sin sanitizeHtmlContent(). El carrusel multi-cable constituye otra ruta de renderizado del mismo contenido persistido; ampliar AUG-064 para incluir este sink, sin crear un segundo ID para la misma clase de vulnerabilidad.
+- AUD-T-009/AUG-051 y AUD-T-038: la caché local, IndexedDB, privacidad y ciclo de vida general permanecen en sus auditorías originales. H-AUD-006-001 se limita a la corrección de variantes/tamaños y a la correspondencia entre la resolución solicitada y el blob servido por la interfaz.
+- AUD-T-007 conserva la auditoría global de History API, popstate y cierre secuencial de overlays; esta iteración no duplica ese alcance.
+
+5. LÍMITES
+E1 estática. No se ejecutaron pruebas en navegador, dispositivos móviles, PWA standalone, gestos reales, pinch zoom, comparación visual de PNG/JPEG, CDN de Google, medición de bytes/latencia, IndexedDB real, canvas/toBlob, lector de pantalla ni pruebas de regresión. No se modificó código, endpoints, configuración, assets, Spreadsheet, Drive, datos productivos ni deployments.
+
+6. RESULTADO
+AUD-T-006 queda con E1 estática completada y tres hallazgos nuevos abiertos. La estructura del lightbox y la sincronización del carrusel están presentes, pero el contrato de resolución no se respeta en la función de URL/cachés, el tratamiento dark-mode es demasiado amplio y el gesto del carrusel del modal no discrimina el eje vertical. H-AUD-005-001 se amplía con el sink adicional de updateSlide().
+Tareas nuevas: AUG-065 a AUG-067. Adenda: AUG-064. No se modificó ningún archivo de aplicación ni dato productivo.
+Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+================================================================================

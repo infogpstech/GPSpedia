@@ -4101,3 +4101,16 @@ contexto_personal.md: líneas 343–350
 checkpoint.md: se añadieron AUD-CP-0023 inicial y final con HEAD/base y referencias de respaldo exacto.
 ChangesLogs.txt: líneas 4094–4103 — se registra este conjunto documental en el único commit de AUD-T-005.
 No se modificaron archivos de aplicación, endpoints, configuración, Spreadsheet, Drive ni deployments.
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-006
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S024
+- Auditoría.txt: agregado informe E1 y H-AUD-006-001 a H-AUD-006-003; ampliación del sink H-AUD-005-001/AUG-064.
+- Tareas.txt: agregado resultado AUD-T-006 y criterios AUG-065 a AUG-067; adenda AUG-064.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-006 actualizado a E1 completada; iteración 29 añadida; siguiente AUD-T-007.
+- Plan_auditoría/Aug_Tareas.md: nuevas AUG-065/AUG-066/AUG-067 y adenda a AUG-064; inventario 66 IDs únicos.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura 20 E1/1 parcial/17 pendientes; matriz VAL-13/VAL-14 ampliada.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0024.
+Solo documentación. Sin cambios de código, assets, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas E2/E3 ni operaciones reales. Rama base sin cambios.
+================================================================================

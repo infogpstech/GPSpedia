@@ -348,3 +348,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tareas nuevas: AUG-061 a AUG-064. Adendas: AUG-043, AUG-050 y AUG-057. No duplicar H-AUD-032-001/AUG-039, H-AUD-033-001/AUG-034, H-AUD-035-002/AUG-043, AUD-T-031 ni AUG-056.
 - Observación de cierre de overlays transferida a AUD-T-007.
 - Siguiente unidad: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+
+
+## Continuidad — AUD-T-006 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S024 / AUD-CP-0024.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 5ab07e75513b05a51a4c62fbc731e451105eb1a8; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- AUD-T-006 — Visualización técnica avanzada, lightbox, carrusel de cables y transparencias: E1 estática completada; H-AUD-006-001 a H-AUD-006-003 abiertos. Sin cambios de aplicación ni datos.
+- Hallazgos: getImageUrl() ignora size y la caché de imágenes no separa variantes; mix-blend-mode: lighten afecta también imágenes opacas; el swipe del carrusel del modal no compara el eje vertical.
+- H-AUD-005-001/AUG-064 se amplía: ui.js updateSlide() inserta activeCable.content en slideText.innerHTML sin sanitización. No duplicar el ID.
+- Tareas nuevas: AUG-065 a AUG-067; adenda a AUG-064. Inventario: 66 IDs únicos; AUG-015 continúa ausente.
+- No duplicar caché general de AUD-T-009/AUG-051 ni History API global de AUD-T-007. Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+- Límites: E1 estática; sin navegador, móviles/PWA, CDN, IndexedDB real, canvas, mediciones ni gestos reales. Sin cambios de código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos o deployments.

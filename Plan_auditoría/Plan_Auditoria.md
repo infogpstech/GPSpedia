@@ -54,7 +54,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-003 | Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red | 14bbd04f — Implementar Tarea 3: Formulario add_cortes, idempotencia y resiliencia; 77ea1d0b — registro sin cortes y recuperación de red; 2eaeb476 — make add-cut modal idempotent | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-005 | Modal de detalle, ampliación dinámica y acciones contextuales | d72a1e61 — Implementar Tarea 5: Ampliación dinámica en modal de detalle; 183cff59 — recuperación del botón expand plus | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
-| AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | POR AUDITAR |
+| AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE |
 | AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | POR AUDITAR |
 | AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | POR AUDITAR |
 | AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | POR AUDITAR |
@@ -736,3 +736,13 @@ Hallazgos: stored XSS en apertura/alimentación; ausencia de guardas de cupo y r
 Tareas: AUG-061 a AUG-064 nuevas; adendas a AUG-043/AUG-050/AUG-057. No duplicar H-AUD-032-001/AUG-039, H-AUD-033-001/AUG-034, H-AUD-035-002/AUG-043, AUD-T-031 ni H-AUD-003-002/AUG-056. La observación popstate se transfiere a AUD-T-007.
 Límites: E1 estática; sin navegador, XSS, FileReader real, concurrencia, HTTP, Apps Script, Drive/Spreadsheet ni deployments. Sin cambios de código/datos.
 Siguiente: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+
+
+## 29. Iteración técnica — AUD-T-006
+Sesión AUD-20261107-S024 | Checkpoint AUD-CP-0024 | HEAD auditado 5ab07e75513b05a51a4c62fbc731e451105eb1a8 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validación visual, móvil y rendimiento pendiente.
+Alcance: TAREA 6/B32/B33; lightbox.js, ui.js, offline.js, style.css, index.html y main.js. Contraste con commits 7f57e2fd/af9caed8/5ff81bde y auditorías AUD-T-005/009/038.
+Hallazgos: tamaño de imagen ignorado y cachés sin variante; mix-blend-mode generalizado a imágenes opacas; swipe del carrusel del modal sin discriminación vertical. H-AUD-005-001/AUG-064 se amplía con slideText.innerHTML en updateSlide() como sink adicional sin sanitización.
+Tareas: AUG-065 a AUG-067 nuevas; AUG-064 ampliada. No duplicar caché general AUD-T-009/AUG-051 ni navegación global AUD-T-007.
+Límites: E1 estática; sin navegador, móviles/PWA, CDN, IndexedDB real, pruebas visuales, medición de rendimiento ni gestos reales. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.

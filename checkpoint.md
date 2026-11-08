@@ -581,3 +581,36 @@ No se modificó código, endpoints, configuración, datos productivos, Drive, Sp
 Documentos: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
 Commit único previsto: docs(audit): auditar modal de detalle y ampliaciones dinámicas; publicación con expected_sha c56c6f7e21a668774db726e2f14139588f1bc5c0 y force:false.
 Siguiente acción: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0024
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S024 | Tarea: AUD-T-006.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work.
+HEAD inicial verificado: 5ab07e75513b05a51a4c62fbc731e451105eb1a8.
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado inicial: AUD-T-005 E1 completada; AUD-T-006 por auditar; siguiente unidad confirmada en Plan_Auditoria.md.
+Alcance: TAREA 6/B32/B33; lightbox, resolución y caché de imágenes, PNG transparente, carrusel de cables, zoom y gestos táctiles.
+Respaldo exacto previo (blob SHA):
+- Auditoría.txt: 6aeac062740ec3e7317530da1b60c6d0b3f960ed
+- Tareas.txt: d9923ef5f838fb38ad524d4a639ff64f564d3eee
+- Plan_auditoría/Plan_Auditoria.md: f870b5ab3de746877330dad95944a4a858c8fb73
+- Plan_auditoría/Aug_Tareas.md: 846526c6818a5d59a9bf540690432dbdcb65d4e2
+- Plan_auditoría/Consolidacion_Auditoria.md: 9abd0de3b8d8b26f852b22bd823ac57f97b82a1b
+- ChangesLogs.txt: e94afc5eca0490e2e9fddfc7dcc93d638fd8cc14
+- contexto_personal.md: b5b1a07d94db49eeeb6d62b95b92cdebf96870a8
+- checkpoint.md: 30a58110a08e43c12c8c9f6e39bf960a73b77d72
+Límite: auditoría E1 estática; sin cambios de código, assets, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+CHECKPOINT FINAL — AUD-CP-0024
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S024 | Tarea: AUD-T-006.
+HEAD auditado/padre previsto: 5ab07e75513b05a51a4c62fbc731e451105eb1a8 | base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validación visual/móvil/rendimiento pendiente.
+Resultado: variantes de resolución ignoradas y cachés sin distinción de tamaño; mezcla dark-mode aplicada a imágenes opacas; gesto del carrusel del modal sin discriminación vertical. H-AUD-005-001/AUG-064 ampliada por slideText.innerHTML en updateSlide().
+Tareas: AUG-065 a AUG-067 nuevas; AUG-064 ampliada. Inventario AUG: 66 IDs únicos; AUG-015 continúa ausente.
+Archivos documentales modificados: Auditoría.txt; Tareas.txt; Plan_auditoría/Plan_Auditoria.md; Plan_auditoría/Aug_Tareas.md; Plan_auditoría/Consolidacion_Auditoria.md; ChangesLogs.txt; contexto_personal.md; checkpoint.md.
+VERIFICACIÓN: revisión estática de funciones, consumidores, estilos, especificaciones e historial. No se ejecutaron pruebas E2/E3, navegador, móviles/PWA, CDN, IndexedDB real, canvas, gestos, medición de rendimiento ni pruebas de regresión.
+Cambios de aplicación/assets: ninguno. Datos productivos: sin cambios.
+Commit único previsto: docs(audit): auditar lightbox, resolución de imágenes y gestos de carrusel; parent_sha y expected_sha: 5ab07e75513b05a51a4c62fbc731e451105eb1a8; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente acción: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+================================================================================
