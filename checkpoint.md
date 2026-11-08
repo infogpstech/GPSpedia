@@ -798,3 +798,56 @@ No se modificaron archivos de aplicación, servicios, endpoints, configuración,
 Commit único esperado: docs(audit): verify AUD-T-018 continuity; parent df6a78e1fe29c6f29e864d5542cade12f8c6e7df.
 Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0058
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S059
+Tarea: AUD-T-019 — revalidación de continuidad E1 de integridad backend y pruebas automatizadas.
+Estado inicial observado: E1 histórica completada sobre el árbol de código 111dcd6270f62d5aaad6d5bfe34ebf47acafee82; pendiente confirmar ausencia de deriva funcional y registrar continuidad.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 7fc728ab34e55674f1826713a3f868d72b9f8830 | Árbol: 8f5e2bb234fe03d87d224ab27e147ae01fb1ad3c.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+HEAD funcional E1 de AUD-T-019: 6f0f901179c10833cbeedcb2767a25fcdd085b0d | árbol: 111dcd6270f62d5aaad6d5bfe34ebf47acafee82.
+Alcance funcional revalidado: Services/write.js, Services/catalog.js, Services/admin.js, Services/Utilities.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js, Services/Test/users.js, Services/Test/README.md, api-config.js, main.js, ui.js, index.html y README.md.
+Respaldos exactos (blob SHA antes de esta documentación):
+- Plan_auditoría/Plan_Auditoria.md: 05991e97a0f080f32b0bd03a628c8846da3daf19
+- Plan_auditoría/Consolidacion_Auditoria.md: 1e84ac6119c8600eed29338e1c50057b6936e616
+- ChangesLogs.txt: ca9ef572dfda36a2e44870078d2bdf3e61a958a4
+- contexto_personal.md: f08dd897f3a8e95844fd53231c14725986ef436f
+- checkpoint.md: 68219474443165a4781170c098307a94a36ab0d6
+Comparación Git: 21 commits posteriores al HEAD E1; únicamente ocho documentos cambiaron. Los 15 archivos funcionales/documentales de código del alcance conservan SHA idénticos.
+No se ejecutaron pruebas funcionales, Apps Script, servicios HTTP ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0058
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S059
+Tarea: AUD-T-019 — revalidación de continuidad E1.
+Estado final: continuidad E1 confirmada; H-AUD-019-001 a H-AUD-019-014 permanecen abiertos; AUG-122 a AUG-135 pendientes; VAL-28 pendiente. Sin hallazgos ni tareas nuevas.
+HEAD padre: 7fc728ab34e55674f1826713a3f868d72b9f8830; árbol inicial 8f5e2bb234fe03d87d224ab27e147ae01fb1ad3c. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación: E1 6f0f901179c10833cbeedcb2767a25fcdd085b0d → HEAD 7fc728ab34e55674f1826713a3f868d72b9f8830; 21 commits posteriores; únicamente ocho documentos modificados. Los 15 archivos funcionales del alcance mantienen SHA idénticos:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+Documentos modificados:
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Consolidacion_Auditoria.md
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md (este blob final documental).
+No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: H-AUD-019-001 a 014, AUG-122 a AUG-135 y VAL-28 ya están documentados; no hay hallazgos ni tareas nuevas.
+No se modificaron archivos de aplicación, servicios, contratos, endpoints, configuración, assets, pruebas, README, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner de pruebas ni E2/E3. Sin merge ni despliegue.
+Commit único esperado: docs(audit): verify AUD-T-019 continuity; parent 7fc728ab34e55674f1826713a3f868d72b9f8830.
+Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+================================================================================
