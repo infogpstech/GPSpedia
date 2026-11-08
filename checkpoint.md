@@ -516,3 +516,52 @@ No se modificó código, servicios, endpoints, esquema productivo, configuració
 Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
 Commit único esperado: docs(audit): verify AUD-T-012 continuity; parent 453e9f0a8d6ded97e91e7841ea1a39c697939e0d.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0052
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S053
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work | HEAD observado: f90be001f1c1bf23e67f144bc5a57d36d4cad58a | árbol: 81227c2a3ffbbfc97930a302f96b2c27d62c37bc.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificará.
+Tarea: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación; revalidación de continuidad de E1 histórica.
+E1 histórica: AUD-20261108-S031/AUD-CP-0031 | HEAD d8a164c2974f4dc472f169442c2b7efb969bf350 | árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2.
+Estado inicial: E1 estática completada; continuidad por revalidar.
+Alcance: youtubeUpload.js, Services/feedback.js, Services/catalog.js, api-config.js, ui.js, main.js, navigation.js, index.html, style.css y Estudio_Factibilidad_YouTube.md.
+Hallazgos existentes: H-AUD-013-001 a H-AUD-013-010. Tareas AUG-092 a AUG-094; adendas AUG-043/AUG-068; coordinación AUG-040; VAL-22 planificada.
+Comparación inicial: 21 commits posteriores a la E1; ocho archivos documentales modificados; los diez archivos funcionales/estudio del alcance conservan SHA históricos.
+Respaldos documentales previos:
+- Plan_auditoría/Plan_Auditoria.md: ad0698bc757eef67ce109b1a5f92e0cd67746066
+- Plan_auditoría/Consolidacion_Auditoria.md: d677d66a3b3413544a3c1db42d2642f57d82ee43
+- ChangesLogs.txt: e91faaf517018dcb9eacc0ab22685945cd91d025
+- contexto_personal.md: 41826f1bda3fe243a316c83353049cc2f24ed42f
+- checkpoint.md: 06dc3a470469087c010e87f8d6111706c7af663b
+No se realizarán cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0052
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S053
+Resultado: AUD-T-013 E1 ESTÁTICA COMPLETADA Y VIGENTE POR IDENTIDAD EXACTA DE LOS DIEZ ARCHIVOS FUNCIONALES/ESTUDIO. Comparación histórica: 21 commits posteriores, solo ocho archivos documentales.
+HEAD padre: f90be001f1c1bf23e67f144bc5a57d36d4cad58a; árbol inicial: 81227c2a3ffbbfc97930a302f96b2c27d62c37bc. Rama: GPSpedia2.2.5_work.
+Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-013-001 a H-AUD-013-010. Tareas AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068 y coordinación AUG-040; VAL-22 planificada. Sin hallazgos/tareas nuevos.
+Archivos de alcance y SHA históricos:
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Estudio_Factibilidad_YouTube.md: f5b2774d0ddbfd9862f8c51cae5a31e1481825ee
+Evidencia revalidada: sessionToken omitido en llamadas uploader; aprobación no restringe tipo/estado y solo asocia Corte; Tutorial schema/alta sin auth; IDs/URL provisionales; sin reanudación 308; sink HTML; sin History API; metadatos/contratos divergentes. Se mantienen los controles positivos descritos en sección 37 del plan.
+No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: hallazgos y tareas ya documentados; sin hallazgos/tareas nuevos.
+No se modificó código, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue.
+Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+Commit único esperado: docs(audit): verify AUD-T-013 continuity; parent f90be001f1c1bf23e67f144bc5a57d36d4cad58a.
+================================================================================

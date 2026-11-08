@@ -1081,3 +1081,36 @@ Controles positivos estáticos históricos que permanecen: asociación desde PyS
 Validaciones pendientes: VAL-21 (recorridos bidireccionales, nuevas/existentes, anti-ciclos, retorno con estado/scroll, edición/popstate, sesión/rol, integridad referencial y concurrencia), VAL-03 (sesión/RBAC), VAL-09 (cargas si intervienen en el flujo) y AUG-002 (suite funcional reproducible). No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni E2/E3.
 Límites: solo E1 estática y continuidad Git. Sin cambios funcionales, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue; base intacta.
 Siguiente unidad secuencial: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+
+
+## 37. Continuidad verificada — AUD-T-013
+Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f169442c2b7efb969bf350 | árbol histórico abce39b7f437ecd02647bebdf4252f47d4ed4ca2 | HEAD actual f90be001f1c1bf23e67f144bc5a57d36d4cad58a | árbol actual 81227c2a3ffbbfc97930a302f96b2c27d62c37bc | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica AUD-T-013 se completó en AUD-20261108-S031/AUD-CP-0031. La comparación histórica hasta el HEAD actual registra 21 commits posteriores y solo ocho archivos documentales modificados; los diez archivos de aplicación/estudio dentro del alcance conservan sus SHA históricos:
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Estudio_Factibilidad_YouTube.md: f5b2774d0ddbfd9862f8c51cae5a31e1481825ee
+No existe deriva funcional desde la E1. Revalidación:
+H-AUD-013-001 a H-AUD-013-010 se mantienen abiertos o vinculados a tareas existentes. La revalidación estática confirma, entre otros:
+- youtubeUpload.js construye initYouTubeUpload y submitVideoForApproval con userId/userName pero no sessionToken; el backend aplica assertFeedbackSession a ambas acciones (actionPermissions con allowedRoles null no omite la exigencia de sesión).
+- handleSubmitVideoForApproval persiste metadatos status=pending y videoUrl; la interfaz entrega esa URL a los formularios de Tutorial/PyS antes de aprobación, por lo que el enlace puede terminar persistido como contenido normal.
+- handleApproveVideo solo asocia la URL cuando contentType === 'corte'; no integra destino Tutorial ni PyS.
+- handleAddTutorial escribe en hoja Tutoriales con cinco columnas, valida por substring youtube.com/youtu.be y carece de autenticación/deduplicación; el esquema documentado de Tutorial conserva siete columnas.
+- approve/reject validan un rol enviado al handler, pero no verifican que el registro sea subType=video_approval ni que su estado actual sea pending antes de mutarlo.
+- handleInitYouTubeUpload devuelve opVideoId como videoId provisional si no obtiene el ID real; el cliente genera además yt_timestamp y URL pending_timestamp si no recibe un ID real.
+- XHR implementa transferencia simple, progreso y abort; no hay persistencia local de sesión, recuperación IndexedDB ni reanudación HTTP 308.
+- La lista Inbox interpola title/tipo en innerHTML; el uploader no gestiona su modal mediante History API/popstate.
+- Los metadatos de la solicitud, columnas y campos que esperan los consumidores no mantienen contrato uniforme.
+- No existe suite YouTube/OAuth/Inbox reproducible en el árbol actual; VAL-22 sigue planificada.
+
+Se conservan H-AUD-013-001 a H-AUD-013-010 sin duplicarlos. AUG-092 a AUG-094 siguen pendientes; se mantienen las adendas a AUG-043 (sesión/identidad y bypass de aprobación) y AUG-068 (History API), y AUG-040 conserva coordinación de approveVideo. VAL-22 permanece PLANIFICADA. La Tarea 12 conserva su estado histórico COMPLETADA; los hallazgos E1 no modifican ese estado ni certifican el funcionamiento.
+Controles positivos estáticos: módulo unificado youtubeUpload.js; formulario tutorial y entradas de vídeo desde Corte/PyS/Tutorial; bloqueo de cierre durante transferencia; cancelación mediante abort XHR; privacyStatus unlisted y selfDeclaredMadeForKids=false; registro estructurado video_approval; bandeja Inbox por rol; limpieza de iframe al cerrar detalle. Presencia estática no equivale a flujo operativo seguro.
+No se ejecutaron YouTube Data API, OAuth real, XHR contra YouTube, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, cancelación/red interrumpida, HTTP 308, XSS ni deployments. E2/E3 permanecen pendientes.
+Límites: continuidad E1 estática y comparación Git únicamente. Sin cambios de aplicación, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue; base intacta.
+Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.

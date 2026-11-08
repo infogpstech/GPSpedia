@@ -563,3 +563,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Hallazgos revalidados: pérdida de contexto anti-ciclo tras asociación; pila modal duplicable/incompleta; retorno sin scroll/carrusel/acordeón; credenciales omitidas en add/remove; relaciones sin integridad referencial ni lock; texto del acordeón discrepante; consultas getPysData repetidas; suite de pruebas PyS–vehículo no reproducible.
 - VAL-21 y pruebas transversales VAL-03/VAL-09 pendientes. No se ejecutaron E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni deployments.
 - Sin cambios funcionales ni operaciones sobre datos productivos. Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+
+
+## Continuidad — AUD-T-013 (revalidación, 2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S053 / AUD-CP-0052.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD E1 d8a164c2974f4dc472f169442c2b7efb969bf350, árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2; HEAD previo actual f90be001f1c1bf23e67f144bc5a57d36d4cad58a, árbol 81227c2a3ffbbfc97930a302f96b2c27d62c37bc; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, únicamente ocho archivos documentales; diez archivos de aplicación/estudio conservan sus SHA históricos.
+- AUD-T-013 mantiene E1 estática completada; H-AUD-013-001 a H-AUD-013-010 permanecen abiertos o vinculados.
+- Hallazgos revalidados: uploader omite sessionToken; URL pending puede persistirse antes de aprobación; approveVideo solo asocia Corte; esquema Tutorial 5/7 columnas; addTutorial sin auth/dedup; approve/reject sin guard de tipo/estado; ID/URL provisional; sin recuperación IndexedDB/308; sink HTML en Inbox; uploader sin History API y contrato/metadatos inconsistentes.
+- AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068; coordinación AUG-040; VAL-22 planificada. No se crean tareas duplicadas.
+- Tarea 12 permanece históricamente COMPLETADA. No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS, deployments ni E2/E3.
+- Sin cambios de aplicación, scopes OAuth, Google Cloud, endpoints, configuración, assets o datos productivos. Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.

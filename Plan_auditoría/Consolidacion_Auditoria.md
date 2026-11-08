@@ -555,3 +555,15 @@ Sesión AUD-20261108-S052 | Checkpoint AUD-CP-0051 | HEAD E1 2afdde923d14e4f3dd0
 - No se recalcula cobertura global ni se alteran estados de otras unidades. E1 no certifica E2/E3.
 - Sin cambios de código ni operaciones productivas. Sin merge ni despliegue; base intacta.
 - Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+
+
+## 26. Actualización de cobertura — continuidad AUD-T-013
+Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f169442c2b7efb969bf350 | HEAD actual f90be001f1c1bf23e67f144bc5a57d36d4cad58a | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-013 E1 estática permanece vigente: 21 commits posteriores y ocho archivos documentales modificados; los diez archivos funcionales/estudio de alcance conservan SHA históricos.
+- H-AUD-013-001 a H-AUD-013-010 continúan abiertos o vinculados a tareas existentes. Se revalidan omisión de sessionToken; URL pending que puede persistirse antes de aprobación; asociación backend limitada a Corte; esquema Tutorial de cinco frente a siete columnas; addTutorial sin auth/dedup; approve/reject sin guard subType/status; ID provisional y URL pending; falta de reanudación IndexedDB/308; sink HTML; ausencia de History API y desajustes de metadatos/contratos.
+- AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068 y coordinación AUG-040 conservadas. VAL-22 PLANIFICADA; sin tareas duplicadas.
+- Tarea 12 permanece históricamente COMPLETADA; E1 no certifica ejecución.
+- Controles positivos estáticos: uploader unificado, entradas desde Corte/PyS/Tutorial, privacidad unlisted, cancelación XHR, Inbox y limpieza de iframe. Sin pruebas operativas.
+- No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS, deployments ni E2/E3.
+- No se recalcula cobertura global ni se modifican estados de otras unidades. Sin cambios de código o datos productivos. Sin merge ni despliegue; base intacta.
+- Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
