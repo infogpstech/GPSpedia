@@ -518,3 +518,38 @@ Cambios de aplicación: ninguno. Datos productivos: sin cambios.
 Siguiente acción: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
 Este checkpoint final es la última actualización documental antes del único commit. parent_sha y expected_sha: 06f18e42383f5be448c378bc09ab534731cfbd6b; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0022
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S022 | Tarea: AUD-T-004.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial verificado antes de la auditoría: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | Árbol: 3ba54bd14d53dc1a0ffd9565f1ad1b536df3fed4.
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 | Árbol base: 56353d01cde57f57ab08135f5c49d91027a137c0.
+Estado inicial: AUD-T-004 POR AUDITAR; 38 unidades AUD-T (17 E1, 1 parcial, 20 pendientes); 57 IDs AUG únicos; AUG-015 ausente.
+Alcance: identificación VIN, colecciones/slots, almacenamiento, duplicados, búsqueda global, motor diferencial, edición administrativa, migración y documentación de esquema.
+Restricciones: auditoría E1; no modificar código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments; no ejecutar migración ni operaciones reales.
+Se verificó el HEAD de ambas ramas antes de iniciar la revisión. Este registro inicial y el checkpoint final forman parte del mismo commit documental único, conforme al procedimiento autorizado.
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0022
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S022 | Tarea: AUD-T-004.
+HEAD auditado/padre previsto: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-004-001 a 003 abiertos; H-AUD-037-007 ampliado; validación funcional/integración pendiente.
+Resultado: presentación VIN pierde slots y recorta dos veces el prefijo; editor administrativo VIN no puede persistir; backend no impone límite 18 ni rechaza explícitamente valores cortos. AUG-050 ampliada con riesgos algorítmicos de firmas, ambigüedad y rangos.
+Tareas: AUG-059 y AUG-060 nuevas; AUG-050 ampliada. Inventario AUG: 59 IDs únicos; AUG-015 continúa ausente.
+Archivos documentales modificados: Auditoría.txt; Tareas.txt; Plan_auditoría/Plan_Auditoria.md; Plan_auditoría/Aug_Tareas.md; Plan_auditoría/Consolidacion_Auditoria.md; ChangesLogs.txt; contexto_personal.md; checkpoint.md.
+RESPALDOS EXACTOS (blob SHA previo a cualquier edición):
+- Auditoría.txt: 89142b4e386c31bc0baf2fcc95567fa3e9b0988a
+- Tareas.txt: da1f9eb66c70810016fa80d1bd2f91d29a26c7dd
+- Plan_auditoría/Plan_Auditoria.md: eb123073c94ab9b954195d536c4087f12ea65929
+- Plan_auditoría/Aug_Tareas.md: 1aced3062b69ba4ab8458313a6725e80f5bc2d85
+- Plan_auditoría/Consolidacion_Auditoria.md: 47284329cb020b60863a70418f71609f871308e5
+- ChangesLogs.txt: cd55be278dd3b1ba86b7c6331d4148b40a4c60b5
+- contexto_personal.md: a786eff9282b540ada430ee3c30d7f5201334301
+- checkpoint.md: 2c180ccd2b3ba587e3fd6a6f5965843808c0438e
+VERIFICACIÓN: revisión estática de funciones, consumidores, rutas, esquema, documentación e historial. No se ejecutaron pruebas E2/E3, navegador, PWA offline, dataset VIN, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia ni deployments.
+Cambios de aplicación: ninguno. Datos productivos: sin cambios.
+Siguiente acción: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+Este checkpoint final es la última actualización documental antes del único commit. parent_sha y expected_sha: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

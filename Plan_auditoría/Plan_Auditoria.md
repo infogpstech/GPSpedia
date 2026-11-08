@@ -52,7 +52,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-001 | Recuperación del App Shell, arranque, inicialización y estabilización general | 2251d499 — Implementar Tarea 1 y router doGet en admin.js; 4445f2c7 — Mejoras de UI, corrección de sesiones y optimizaciones generales | POR AUDITAR |
 | AUD-T-002 | RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (ciclo de sesiones en AUD-T-024; legal en AUD-T-036) | 97eef18c — Implementar Tarea 2: RBAC, sesión y cumplimiento legal; 414c4258 — Fix greeting name and implement History API in users profile; 6a226c18 — ADMIN 0: retirar credenciales de logs de AUTH | AUDITADO PARCIALMENTE; HALLAZGOS ABIERTOS (AUD-CP-0002) |
 | AUD-T-003 | Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red | 14bbd04f — Implementar Tarea 3: Formulario add_cortes, idempotencia y resiliencia; 77ea1d0b — registro sin cortes y recuperación de red; 2eaeb476 — make add-cut modal idempotent | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | POR AUDITAR |
+| AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-005 | Modal de detalle, ampliación dinámica y acciones contextuales | d72a1e61 — Implementar Tarea 5: Ampliación dinámica en modal de detalle; 183cff59 — recuperación del botón expand plus | POR AUDITAR |
 | AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | POR AUDITAR |
 | AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | POR AUDITAR |
@@ -717,3 +717,13 @@ Hallazgos: persistencia local no obligatoria y opId sin vinculación al payload;
 Tareas: AUG-055 a AUG-058 nuevas; adenda a AUG-043. No duplicar AUG-039/AUG-043/AUG-053/AUG-054 ni H-AUD-033-001/H-AUD-035-002/H-AUD-038-001/005.
 Límites: E1 estática; sin navegador, cuota localStorage, FileReader real, pérdida de respuesta HTTP, Apps Script, Drive/Spreadsheet real, concurrencia ni deployments. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## 27. Iteración técnica — AUD-T-004
+Sesión AUD-20261107-S022 | Checkpoint AUD-CP-0022 | HEAD auditado 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-004-001 a 003 abiertos; H-AUD-037-007 ampliado; validación funcional e integración pendiente.
+Alcance: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md. Contraste TAREA 4.1/BLOQUE 5 y commits 5bab8779, aa4da8df, df8e5cf7, 94c2d04e, 6f81b489 y 8001b431.
+Hallazgos nuevos: la colección UI pierde índices y recorta el prefijo por segunda vez; el editor administrativo no puede persistir fieldName='vin'; backend no impone longitud máxima ni rechaza entradas demasiado cortas. H-AUD-037-007/AUG-050 se amplían con resolución de VIN completo/prefijo, ausencia de competidores, umbral no aplicado, rangos de años y caracteres compartidos.
+Tareas: AUG-059/AUG-060 nuevas; AUG-050 ampliada. No duplicar H-AUD-030/AUG-036, H-AUD-037-009/AUG-051 ni H-AUD-038-001/AUG-053.
+Límites: E1 estática; sin navegador, dataset VIN, HTTP, Apps Script, Spreadsheet/Drive real, migración, concurrencia ni deployments. Sin cambios de código o datos.
+Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

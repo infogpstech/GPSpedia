@@ -327,3 +327,15 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Controles positivos: backend valida sesión/rol y slot; segundo corte conserva vehicleId; «No recomendado» normaliza y omite campos; Idempotencia pending/completed y token de carga.
 - Sin cambios de aplicación, endpoints, configuración, Drive, Spreadsheet, datos productivos o deployments. Solo E1 estática; sin navegador, HTTP, Apps Script, FileReader real, cuota, concurrencia ni deployments.
 - Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## Continuidad — AUD-T-004 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S022 / AUD-CP-0022.
+- HEAD auditado: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 en GPSpedia2.2.5_work; árbol 3ba54bd14d53dc1a0ffd9565f1ad1b536df3fed4. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- E1 estática completada; H-AUD-004-001 a 003 abiertos; H-AUD-037-007/AUG-050 ampliados; validación funcional e integración pendientes.
+- Hallazgos nuevos: parseVinCollection() elimina slots vacíos y mapVersionsWithVins() vuelve a recortar cinco caracteres ya excluidos al almacenar; el editor administrativo VIN no puede persistir porque handleUpdateVehicleField() usa COLS_CORTES fijo sin vin; backend no valida longitud máxima 18 y puede descartar valores cortos sin error.
+- Tareas: AUG-059 edición/validación autoritativa; AUG-060 asociación posicional/presentación; AUG-050 ampliada con query VIN completo/prefijo, competidores, umbral de muestras, rangos, extractSharedChars y cobertura por versión.
+- Controles positivos: catálogo resuelve VIN dinámicamente; WRITE/ADMIN almacenan prefijos en JSON y verifican duplicados; alta específica de VIN valida sesión/lock/slot; migración exige sesión desarrollador y respaldo verificado, con simulación/confirmación.
+- No duplicar H-AUD-037-007/AUG-050, H-AUD-037-009/AUG-051, H-AUD-030/AUG-036, H-AUD-033-001/AUG-034 ni H-AUD-038-001/AUG-053.
+- Sin cambios de código, configuración, endpoints, Spreadsheet, Drive, datos productivos o deployments. Solo E1 estática; no se ejecutaron pruebas funcionales ni migración VIN.
+- Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

@@ -5778,3 +5778,38 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - Incorporar el campo #videoGuiaUrl y el flujo de add_cortes.html al criterio 6 de AUG-043: validar el enlace manual y persistirlo mediante acción/contrato backend explícito con sesión, o retirar la opción; no dejar un input visible sin efecto.
 - Corregir el control de visibilidad del acordeón de vídeo usando una fuente de registro que sí se cargue y pueda comprobar videoGuiaDesarmeUrl.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUD-T-004 — VIN, IDENTIFICACIÓN, COLECCIONES, ALMACENAMIENTO, BÚSQUEDA Y DIFERENCIAL
+Fecha: 2026-11-07 | Sesión AUD-20261107-S022 | Checkpoint AUD-CP-0022
+Estado: E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+- La implementación de TAREA 4.1 y BLOQUE 5 existe, pero la revisión estática no permite mantener una aceptación técnica completa: la presentación pierde posiciones/recorta dos veces el prefijo, el editor administrativo no persiste VIN y el backend no valida longitud autoritativa.
+- H-AUD-037-007 se amplía; AUG-050 incorpora pruebas/controles algorítmicos adicionales.
+- Nuevas tareas: AUG-059 y AUG-060.
+- No se ejecutó la migración VIN/opId ni se modificó la Spreadsheet productiva. No se modificó código ni deployments.
+
+### AUG-059 — Completar la edición y validación autoritativa de colecciones VIN
+- **Origen:** H-AUD-004-002 y H-AUD-004-003. **Prioridad:** Media.
+- **Tarea auditada:** AUD-T-004. **Sesión/checkpoint:** AUD-20261107-S022 / AUD-CP-0022.
+- **Problema:** el editor administrativo envía fieldName='vin', pero handleUpdateVehicleField() solo reconoce COLS_CORTES estático; además, los handlers de registro no imponen maxlength=18 en servidor y pueden ignorar silenciosamente valores demasiado cortos.
+- **Criterios de aceptación:**
+  1. Resolver VIN mediante el encabezado dinámico en el flujo de edición, o retirar el control si no se autoriza su edición directa; no presentar un campo sin persistencia.
+  2. Validar en backend la longitud normalizada máxima de 18 caracteres en todos los puntos de entrada VIN, sin depender de maxlength del navegador.
+  3. Rechazar valores no utilizables (incluido un valor que, tras normalización, no supere los cinco caracteres reservados) con un error explícito; no responder «sin duplicado» ni completar el registro descartando el VIN.
+  4. Mantener una única política de normalización/prefijo, colección JSON, duplicados y relación por versión; las ediciones no deben eludir reglas de slot ni sobrescribir identificadores.
+  5. Probar add_cortes, modal Agregar VIN, edición administrativa, vehículo nuevo/existente, payload directo manipulado, valores de 5/6/18/19 caracteres, duplicado y error de persistencia.
+- **Relación:** AUD-T-004; H-AUD-030/AUG-036 por contrato de esquema/parsers.
+
+### AUG-060 — Preservar posiciones y normalizar la presentación de VIN por versión
+- **Origen:** H-AUD-004-001. **Prioridad:** Media.
+- **Tarea auditada:** AUD-T-004. **Sesión/checkpoint:** AUD-20261107-S022 / AUD-CP-0022.
+- **Problema:** parseVinCollection() elimina slots vacíos antes de mapear VIN a versiones y mapVersionsWithVins() vuelve a recortar cinco caracteres que ya fueron eliminados al guardar.
+- **Criterios de aceptación:**
+  1. Preservar el índice original de cada elemento de la colección, incluidos slots vacíos, hasta completar la asociación con versionesAplicables.
+  2. Distinguir VIN completo de prefijo normalizado; no volver a eliminar los cinco caracteres seriales cuando el dato ya está almacenado como prefijo.
+  3. Mostrar únicamente los cuatro caracteres distintivos correctos y junto a la versión que corresponde; no mostrar «NULL», desplazar slots ni inferir un valor cuando falte.
+  4. Probar colecciones de una, dos y tres versiones, slot intermedio vacío, último slot vacío, prefijos con diferencia al final y datos heredados.
+- **Relación:** AUD-T-004; ampliar pruebas VAL-12 sin duplicar AUG-050.
+
+================================================================================

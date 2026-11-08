@@ -649,16 +649,20 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
 
 ### AUG-050 — Corregir resolución e integración del motor diferencial VIN
-- Origen: H-AUD-037-007. Prioridad alta por riesgo de identificar variante vehicular incorrecta.
+- Origen: H-AUD-037-007; ampliación técnica AUD-T-004/H-AUD-004-001 a 003.
+- Prioridad: Alta por riesgo de identificar variante vehicular incorrecta.
 - Criterios:
   1. Cargar firmas guardadas cuando sean compatibles con versión/huella del catálogo; recalcular e invalidar de forma controlada cuando los datos cambien.
   2. Resolver la firma por classKey o identidad completa (marca, modelo, rango y versión), no solo marca+modelo.
   3. Cuando queryVehicle devuelva estado ambiguo/matches, mostrar opciones o pedir más contexto; no conservar automáticamente el primer prefijo encontrado.
   4. Usar realmente la versión identificada en el resultado y no descartarla en el filtrado/renderizado.
-  5. Revisar umbral de muestras, coste de combinaciones y recalculado; medir con el catálogo real.
-  6. Probar VIN completo, prefijo único, prefijo ambiguo, varias generaciones del mismo modelo, varias versiones y firma obsoleta.
-- Relación: AUD-T-037; VIN y esquema de columnas AUD-T-030; migración VIN y freeze IDs.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+  5. Revisar umbral de muestras, coste de combinaciones y recálculo; medir con el catálogo real.
+  6. Normalizar la consulta al mismo contrato que el almacenamiento: si se recibe VIN completo, retirar exactamente los últimos cinco caracteres antes de consultar firmas de prefijos; conservar coincidencia exacta y no permitir coincidencias parciales arbitrarias.
+  7. No generar ni marcar como validada una firma si no hay competidores aplicables dentro del rango de años; aplicar minSamplesThreshold y hacer alcanzable el estado insuficiente.
+  8. Definir una única semántica para rangos abiertos/años ausentes y hacer que doYearRangesOverlap coincida con el significado real de anoHasta vacío; no tratar ausencia de años como solapamiento universal sin decisión explícita.
+  9. Corregir extractSharedChars para comprobar igualdad del valor en cada posición, no solo presencia de la posición; mostrar firmas de todas las versiones que correspondan, no únicamente la primera.
+  10. Probar VIN completo, prefijo único, prefijo ambiguo, varias generaciones del mismo modelo, rangos solapados/no solapados, años ausentes/abiertos, muestras 0/1/2+, firmas obsoletas, longitudes distintas y cambios de catálogo.
+- Relación: AUD-T-037 y AUD-T-004; VIN/esquema AUD-T-030; migración VIN y freeze IDs. No duplicar H-AUD-037-007.
 
 ### AUG-051 — Robustecer IndexedDB, miniaturas y privacidad del historial local
 - Origen: H-AUD-037-008/009. Prioridad media/alta.
@@ -785,3 +789,30 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - Incorporar #videoGuiaUrl y el flujo de add_cortes.html al criterio 6: validar el enlace manual y persistirlo mediante acción/contrato backend explícito con sesión, o retirar la opción; no dejar un input visible sin efecto.
 - Corregir el control de visibilidad del acordeón de vídeo usando una fuente de registro que sí se cargue y pueda comprobar videoGuiaDesarmeUrl.
 ================================================================================
+
+
+## Tareas derivadas de AUD-T-004 — 2026-11-07
+
+### AUG-059 — Completar la edición y validación autoritativa de colecciones VIN
+- **Hallazgos origen:** H-AUD-004-002 y H-AUD-004-003.
+- **Tarea auditada:** AUD-T-004.
+- **Sesión/checkpoint:** AUD-20261107-S022 / AUD-CP-0022.
+- **Prioridad:** Media.
+- **Evidencia:** ui.js mostrarDetalleModal()/saveFieldSilently(); Services/admin.js handleUpdateVehicleField(); Services/write.js extractVinPrefix()/handleCheckVinDuplicate()/handleAddOrUpdateCutLocked(); Services/admin.js extractVinPrefixForAdmin()/handleAddOrUpdateCut().
+- **Problema:** el editor envía fieldName='vin', pero el backend consulta un mapa fijo que no contiene esa columna dinámica. Los puntos de entrada no validan maxlength=18 en servidor y pueden descartar silenciosamente un valor corto.
+- **Criterios de aceptación:** resolver VIN dinámicamente o retirar el control no soportado; validar máximo 18 en backend; rechazar explícitamente valores normalizados de cinco caracteres o menos; mantener normalización, duplicados, slots y asociación de versiones en todos los puntos de entrada; probar edición, altas, vehículo nuevo/existente y payload directo manipulado.
+- **Relación:** AUD-T-004; AUD-T-030/AUG-036 para esquema/parsers.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-060 — Preservar posiciones y normalizar la presentación de VIN por versión
+- **Hallazgo origen:** H-AUD-004-001.
+- **Tarea auditada:** AUD-T-004.
+- **Sesión/checkpoint:** AUD-20261107-S022 / AUD-CP-0022.
+- **Prioridad:** Media.
+- **Evidencia:** ui.js parseVinCollection()/mapVersionsWithVins()/mostrarDetalleModal(); VinDifferentialEngine.js buildSampleMatrix().
+- **Problema:** la presentación elimina slots vacíos antes de asociar VIN a versiones y recorta cinco caracteres de un prefijo que ya fue normalizado por WRITE/ADMIN.
+- **Criterios de aceptación:** preservar índices/slots vacíos; no volver a recortar prefijos; mostrar cuatro caracteres distintivos correctos junto a la versión correspondiente; probar 1–3 versiones, huecos intermedios, prefijos con diferencias al final y datos heredados.
+- **Relación:** AUD-T-004; ampliar VAL-12 sin duplicar AUG-050.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+- 2026-11-07 — AUD-T-004: AUG-050 ampliada con normalización de consulta, muestras/competidores, rangos, caracteres compartidos y cobertura por versión; nuevas AUG-059/AUG-060. Inventario: 59 IDs únicos dentro de AUG-001 a AUG-060; AUG-015 continúa ausente y no se infiere.

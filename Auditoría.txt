@@ -9154,3 +9154,82 @@ Impacto: transiciones visuales/estado inconsistentes y recuperación concurrente
 5. LÍMITES DE LA AUDITORÍA
 E1 estática sobre los bloques y callsites del alcance, con revisión de sus dependencias y funciones auxiliares. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No se ejecutaron navegador, FileReader real, localStorage con cuota bloqueada, pérdida de respuesta HTTP, Apps Script V8, operaciones reales de Drive/Spreadsheet, concurrencia, pruebas de dos usuarios ni verificación de que los deployments publicados coincidan con estos blobs.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-004: VIN, IDENTIFICACIÓN, COLECCIONES, ALMACENAMIENTO, BÚSQUEDA Y DIFERENCIAL
+Fecha: 2026-11-07 | Sesión AUD-20261107-S022 | Checkpoint AUD-CP-0022
+Repositorio: infogpstech/GPSpedia | Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | Árbol: 3ba54bd14d53dc1a0ffd9565f1ad1b536df3fed4
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+
+1. ALCANCE Y FUENTES
+Revisión del requisito TAREA 4.1 y BLOQUE 5 de Tareas.txt; historial de commits 5bab8779, aa4da8df, 9e0aefed, df8e5cf7, 94c2d04e, 6f81b489 y 8001b431; documentación de esquema Spreadsheet/GPSpedia_DB_columnas.md; rutas de catálogo, registro, edición, búsqueda, presentación, persistencia de firmas y migración.
+
+Archivos y componentes revisados:
+- VinDifferentialEngine.js: normalizeVin, normalizeModelName, doYearRangesOverlap, parseVersionsList, getClassificationKey, buildSampleMatrix, analyzePositionStability, findMinimalCombination, getCombinations, comboDifferentiatesAll, calculateSignatures, queryVehicle, extractSharedChars, VinSignatureStore.saveSignatures/loadSignatures/getMetadata.
+- navigation.js: filtrarContenido(), parseVinCollectionNavigation() y resolución VIN dentro de la búsqueda global.
+- ui.js: parseEquipmentVersions(), parseVinCollection(), mapVersionsWithVins(), mostrarDetalleModal(), edición del campo VIN, navegación entre generaciones, insignia de firma, openAddVinModal(), administración de recálculo/diagnóstico y salida imprimible.
+- add_cortes.html: campo VIN, validación blur/submit, recuperación de operación pendiente y payload de registro.
+- Services/write.js: getVinColumnIndex(), doPost(), handleAddOrUpdateCutLocked(), parse/serialize de colección, extractVinPrefix(), checkVinDuplicateInSheet(), handleCheckVinDuplicate(), handleAddVinToVehicleLocked().
+- Services/admin.js: sesión/despacho, getVinColumnIndex(), parser de colección, helpers de slot/duplicados, handleUpdateVehicleField(), handleAddOrUpdateCut(), plan y ejecución de migración VIN/opId.
+- Services/catalog.js: getCortesColumnMap(), mapRowToObject() y handleGetCatalogData().
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction().
+- Spreadsheet/GPSpedia_DB_columnas.md: esquema físico observado y esquema objetivo.
+- Tareas.txt, Auditoría.txt, ChangesLogs.txt y hallazgos anteriores AUD-T-030/AUD-T-037/AUD-T-038.
+
+2. HALLAZGOS NUEVOS
+
+H-AUD-004-001 — MEDIA — La presentación de la colección VIN pierde la posición de los slots y vuelve a recortar el prefijo.
+En ui.js, parseVinCollection() filtra los valores vacíos de una colección JSON. El contrato de escritura conserva posiciones vacías para mantener la correspondencia VIN↔versión; al filtrar un slot vacío, los elementos posteriores se desplazan al índice anterior cuando mapVersionsWithVins() los relaciona por índice con parseEquipmentVersions(). Además, mapVersionsWithVins() elimina nuevamente los últimos cinco caracteres, aunque WRITE y ADMIN ya aplican extractVinPrefix()/extractVinPrefixForAdmin() antes de almacenar el prefijo. Por tanto, se puede mostrar una versión asociada al VIN de otro slot y extraer dígitos de una cadena ya truncada, produciendo dígitos distintivos incorrectos.
+Impacto: identificación visual equivocada de la versión de equipamiento, especialmente si existe un slot intermedio vacío o el carácter diferencial se encuentra en la parte final del prefijo almacenado.
+Relación: nueva AUG-060. No duplicar H-AUD-037-007, que cubre la resolución del buscador/motor diferencial.
+
+H-AUD-004-002 — MEDIA — El editor administrativo de VIN no puede persistir el campo que presenta.
+mostrarDetalleModal() construye un input «Colección de VINs / Chasis» y, al perder el foco, llama saveFieldSilently(activeItem.id, 'vin', ...), que enruta updateVehicleField. En Services/admin.js, handleUpdateVehicleField() resuelve la columna exclusivamente mediante COLS_CORTES[fieldName]. El mapa COLS_CORTES contiene las columnas fijas 1–42 y no define vin; el helper getVinColumnIndex() existe por separado, pero no se utiliza en esta acción. La petición para fieldName='vin' termina en «El campo 'vin' no existe en el esquema del catálogo» y el indicador local muestra error.
+Impacto: el editor ofrece una capacidad que no funciona; no puede corregirse una colección heredada desde ese control y el usuario puede creer que el campo es editable.
+Relación: nueva AUG-059.
+
+H-AUD-004-003 — MEDIA — Los servicios no imponen en backend el límite de longitud VIN y descartan silenciosamente entradas demasiado cortas en el registro de cortes.
+Los campos de add_cortes.html y openAddVinModal() aplican maxlength=18 en el navegador, pero extractVinPrefix() y extractVinPrefixForAdmin() no verifican una longitud máxima. Las funciones eliminan caracteres no alfanuméricos y recortan los últimos cinco sin rechazar una entrada normalizada superior a 18 caracteres. Si el valor normalizado tiene cinco caracteres o menos, retornan cadena vacía. handleCheckVinDuplicate() responde entonces status success/duplicate false, y los flujos addOrUpdateCut de WRITE/ADMIN no rechazan un campo VIN no vacío cuyo prefijo resultó vacío: omiten la escritura del VIN y pueden completar el registro sin informar que el valor introducido fue descartado. Una llamada directa al endpoint también puede eludir maxlength.
+Impacto: valores fuera del contrato de interfaz pueden persistirse como prefijos excesivos; valores cortos/invalidables pueden aparentar una validación satisfactoria y no quedar almacenados.
+Relación: nueva AUG-059.
+
+3. AMPLIACIÓN DE H-AUD-037-007 / AUG-050 — NO CREAR HALLAZGO DUPLICADO
+La revisión de AUD-T-004 confirma y amplía el hallazgo existente de resolución diferencial:
+- navigation.js compara la consulta global contra los prefijos almacenados mediante igualdad y startsWith en ambos sentidos; esto permite coincidencias parciales. Luego llama queryVehicle() con el VIN limpio completo, pero las firmas se calculan sobre el prefijo sin los últimos cinco caracteres y queryVehicle() exige igualdad de vinLength. Una consulta VIN completa no coincide por longitud con las firmas almacenadas.
+- Cuando queryVehicle() devuelve matches ambiguos, navigation.js solo procesa diffMatch.match. Si no hay match único, conserva la primera coincidencia directa de cortes.find(), por lo que no solicita desambiguación.
+- Tras una coincidencia única, la búsqueda vuelve a resolver por marca+modelo, sin restringir rango de años ni versión. _identifiedVersion se añade al objeto, pero no se consume en el filtrado/renderizado posterior.
+- VinSignatureStore.loadSignatures() solo está definido; no hay llamadas en los módulos revisados. El motor empieza vacío y recalcula firmas al primer uso. loadSignatures() tampoco verifica la versión/huella del catálogo antes de aceptar una lista guardada.
+- buildSampleMatrix() cuenta versiones distintas de toda la familia marca/modelo sin restringir ese conteo a generaciones con años solapados. calculateSignatures() puede terminar con cero competidores para una clase, pero findMinimalCombination() acepta cualquier posición estable cuando no hay competidores. minSamplesThreshold se define en el constructor, pero no se utiliza; la condición sampleCount < 1 es inalcanzable para grupos creados a partir de muestras VIN válidas. Una sola muestra puede producir estado «calculada» con certeza 75%, y dos o más «validada» con 100%, incluso sin competidores que la diferencien.
+- doYearRangesOverlap() devuelve true cuando faltan años y estima el final de un rango abierto como año inicial + 10, mientras la presentación del catálogo trata anoHasta vacío como «Presente». La comparación puede mezclar registros sin año o excluir generaciones que siguen vigentes.
+- extractSharedChars() comprueba que todas las firmas incluyan una posición, pero no comprueba que el valor de esa posición sea igual en todas; puede etiquetar como compartido un carácter que difiere.
+- mostrarDetalleModal() solo consulta y presenta la firma de itemVersions[0], aunque el registro puede contener más versiones.
+Estas observaciones se incorporan a AUG-050, que ya cubre la carga/invalidación de firmas, identidad completa, ambigüedad, uso de versión, umbrales y pruebas de generaciones. No se crea una segunda tarea para el mismo dominio.
+
+4. CONTROLES POSITIVOS CONFIRMADOS
+- Services/catalog.js resuelve la columna VIN dinámicamente desde el encabezado y devuelve el campo al catálogo; no depende de una posición fija para VIN.
+- WRITE y ADMIN disponen de getVinColumnIndex() dinámico; el almacenamiento de registro normaliza a mayúsculas, elimina los últimos cinco caracteres y serializa la colección en JSON dentro de una sola columna.
+- handleAddVinToVehicleLocked() valida sesión de colaborador, utiliza ScriptLock local de WRITE, comprueba duplicados exactos, relaciona el prefijo con el trim seleccionado, limita las versiones a tres y evita sobrescribir un slot ocupado.
+- WRITE y ADMIN vuelven a comprobar duplicados al registrar VIN desde addOrUpdateCut; el registro de vehículo nuevo guarda la colección JSON en el campo dinámico.
+- ADMIN exige sesión de desarrollador para migrateCortesOperationIds; verifyVinMigrationBackup() exige un respaldo de Spreadsheet verificado por la sesión. La interfaz separa simulación y confirmación; el servidor reconstruye el plan y verifica el destino antes de limpiar columnas de origen.
+- La migración documenta VIN en columna 43, reserva 44–45 y crea/usa Idempotencia según compatibilidad. Spreadsheet/GPSpedia_DB_columnas.md distingue la copia observada del esquema objetivo y no afirma que la migración productiva ya se ejecutó.
+- api-config.js enruta checkVinDuplicate y addVinToVehicle a WRITE, addOrUpdateCut a WRITE por defecto y migrateCortesOperationIds a ADMIN.
+- VinSignatureStore persiste firmas derivadas y metadatos, no el VIN completo introducido.
+
+5. HALLAZGOS EXISTENTES RELACIONADOS — NO DUPLICAR
+- H-AUD-037-007/AUG-050: selección de variante incorrecta, ambigüedad, descarte de versión y firmas persistidas no cargadas. Se amplía AUG-050 con las condiciones algorítmicas descritas.
+- H-AUD-037-009/AUG-051: el historial de búsqueda local puede contener VIN y se comparte entre cuentas; no recrear la tarea de privacidad/retención.
+- H-AUD-030/AUG-036: contrato de esquema, migración, parsers de versiones/VIN y diferencias entre consumidores; mantener la tarea existente y sus adendas.
+- H-AUD-033-001/AUG-034: ScriptLock local a proyectos distintos no proporciona exclusión compartida; no duplicar.
+- H-AUD-038-001/AUG-053: el snapshot pendiente de add_cortes puede contener VIN y datos Base64 sin owner/retención; no duplicar privacidad del snapshot.
+
+6. VALIDACIÓN Y LÍMITES
+E1 estática: revisión de funciones, consumidores, rutas, esquema, documentación y commits históricos; contraste entre el requisito original y el código actual. No se ejecutaron pruebas E2 sintácticas, E3 aisladas, dataset VIN real, navegador, PWA offline, localStorage real, HTTP, Apps Script V8, Spreadsheet/Drive, simulación/confirmación de migración, concurrencia ni pruebas de deployments. No se modificó código, configuración, endpoints, Spreadsheet, Drive, datos productivos ni deployments. La migración VIN no se ejecutó.
+
+7. CONCLUSIÓN
+AUD-T-004 queda con E1 estática completada y hallazgos abiertos. La persistencia dinámica de VIN y la migración cuentan con controles positivos, pero la presentación puede desplazar/truncar datos, el editor administrativo no puede guardar VIN y el backend no valida de forma autoritativa el tamaño del valor. El motor diferencial mantiene los riesgos registrados en H-AUD-037-007, ampliados con la generación de firmas sin competidores, umbral de muestras no aplicado y desambiguación incompleta.
+Tareas nuevas: AUG-059 y AUG-060. AUG-050 se amplía; H-AUD-037-007 se conserva sin duplicación.
+Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+================================================================================
