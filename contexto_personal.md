@@ -829,3 +829,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-045/AUG-046/AUG-047 pendientes. No se modifica texto legal ni política durante la revalidación.
 - No se ejecutaron pruebas de navegador, lector de pantalla, teclado, PWA offline, cambio de cuenta, storage bloqueado ni revisión jurídica externa. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
+
+
+## Continuidad AUD-T-037 — 2026-11-08 | AUD-20261108-S082
+- Revalidación AUD-20261108-S082/AUD-CP-0081; E1 histórica 513c9982407db2a1c9b357a418d0949786ec4141 (AUD-20261107-S018/AUD-CP-0018); HEAD 2bab8f39e5fa3c3baaffd19681f91ce93a2a8ebf; árbol actual 036aedb93bb198496d47b612b8781f0c7915b364; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Services/catalog.js, auth.js, offline.js, ui.js, navigation.js, VinDifferentialEngine.js, api-config.js, main.js, service-worker.js e index.html conservan exactamente sus SHA E1.
+- H-AUD-037-001 a 012 permanecen abiertos: caché conserva eliminados; sync parcial; modal sección incorrecta; búsqueda; PyS; año/modelo; VIN; IndexedDB/miniaturas; historial compartido; timeout; precache; lectura catálogo completa.
+- AUG-048/AUG-049/AUG-050/AUG-051/AUG-052 pendientes. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador, IndexedDB, PWA offline, cuota/evicción, búsqueda representativa, VIN, HTTP, Apps Script, Spreadsheet, concurrencia ni benchmarks. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, sujeto al orden vigente del plan.

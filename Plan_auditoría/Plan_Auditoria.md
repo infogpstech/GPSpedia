@@ -1897,3 +1897,50 @@ No se ejecutaron pruebas de navegador, lector de pantalla, teclado, PWA offline,
 
 ### Siguiente iteración
 AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
+
+
+## 66. Revalidación de continuidad — AUD-T-037
+
+**Sesión:** AUD-20261108-S082  
+**Checkpoint:** AUD-CP-0081  
+**E1 original:** 513c9982407db2a1c9b357a418d0949786ec4141 (AUD-20261107-S018 / AUD-CP-0018)  
+**Árbol E1:** 8b8fba9f8211dad51fd461d95b0a3e740c776940  
+**HEAD revalidado:** 2bab8f39e5fa3c3baaffd19681f91ce93a2a8ebf  
+**Árbol actual:** 036aedb93bb198496d47b612b8781f0c7915b364  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-037-001 A 012 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE RENDIMIENTO PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron catálogo, caché, sincronización incremental, búsqueda multi-sección, motor diferencial VIN, navegación/deep links, IndexedDB, miniaturas y Service Worker. Archivos: Services/catalog.js, auth.js, offline.js, ui.js, navigation.js, VinDifferentialEngine.js, api-config.js, main.js, service-worker.js e index.html.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los diez archivos del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+
+### Revalidación de hallazgos y tareas
+- H-AUD-037-001 a H-AUD-037-012 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Persisten los riesgos de caché incremental que conserva eliminados; sincronización que no detecta cambios de Tutorial/Relay con igual cardinalidad; autoapertura de modal Corte para resultados no-Corte; búsqueda sin normalización/ranking/cobertura completa; carga PyS concurrente sin promesa compartida; ambigüedad año/modelo; resolución VIN por primera coincidencia y firmas persistidas no consumidas; transacciones/evicción/URL de miniaturas; historial de búsqueda compartido entre cuentas; deep links/carga sin timeout; precache runtime incompleto; y backend que relee catálogo completo sin sincronización incremental.
+- AUG-048 continúa pendiente para snapshot autoritativo y sincronización silenciosa.
+- AUG-049 continúa pendiente para búsqueda global, normalización, ranking, filtros y rutas por sección.
+- AUG-050 continúa pendiente para resolución e integración segura del motor diferencial VIN.
+- AUG-051 continúa pendiente para IndexedDB, miniaturas y privacidad/retención del historial local.
+- AUG-052 continúa pendiente para startup/deep links, timeout, Service Worker y carga backend.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los diez archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba de búsqueda, sincronización ni rendimiento.
+
+No se ejecutaron pruebas de navegador, IndexedDB real, cuota/evicción, PWA offline, rendimiento con catálogo completo, búsquedas con dataset representativo, VIN ambiguos, sincronización concurrente, Apps Script/Spreadsheet real ni pruebas HTTP. No se verificaron deployments publicados. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, según la siguiente unidad del plan.
