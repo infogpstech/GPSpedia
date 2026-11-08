@@ -1186,3 +1186,13 @@ Archivos/artefactos con identidad SHA comprobada:
 - Spreadsheet/Text.txt: 8b137891791fe96927ad78e64b0aad7bded08bdc
 No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, despliegue ni E2/E3. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
 Siguiente unidad secuencial: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK; revalidar continuidad E1.
+
+
+## 42. Continuidad verificada — AUD-T-018
+Sesión AUD-20261108-S058 | Checkpoint AUD-CP-0057 | HEAD E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7 | árbol E1 c6d4d779c039378d351d66bdaa56104a49da4a5e | HEAD actual df6a78e1fe29c6f29e864d5542cade12f8c6e7df | árbol actual 58df063f947b9b357ad7f2c7d04443685b2cb06e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-018 ya estaba completada. La comparación Git confirma 21 commits posteriores, con cambios exclusivamente en ocho documentos. Los 13 archivos funcionales del alcance (frontend, autenticación, usuarios, Inbox/FEEDBACK y pruebas aisladas) conservan exactamente sus SHA históricos; no hay deriva funcional dentro del alcance de esta unidad.
+Se revalidan H-AUD-018-001 a H-AUD-018-009 sin evidencia de corrección en los artefactos auditados: XSS almacenado en dashboard e Inbox; discrepancia Rol/Privilegios que oculta acciones de aprobación; caché Inbox no integrada; riesgo sobre la última cuenta Desarrollador y sesiones huérfanas; perfil local desactualizado; mutaciones Inbox sin auditoría central; lectura completa del historial; y respuesta de éxito para itemType no soportado.
+AUG-113 a AUG-121 continúan pendientes; VAL-27 pendiente. No se crean hallazgos ni tareas duplicadas. La Tarea 18 conserva su estado histórico COMPLETADA; E1 estática no certifica validación funcional.
+Archivos funcionales con identidad SHA comprobada: index.html, ui.js, main.js, state.js, navigation.js, auth.js, users.html, api-config.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js y Services/Test/users.js. Todos mantienen los SHA listados en AUD-CP-0057.
+No se ejecutaron navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive real, YouTube, concurrencia, despliegue ni E2/E3. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.

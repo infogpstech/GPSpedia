@@ -604,3 +604,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - La omisión de AUD-T-016 en Auditoría.txt permanece como hallazgo H-AUD-017-007; no se corrige durante revalidación E1 ni se duplica.
 - Tarea 17 conserva su estado histórico COMPLETADA; E1 no certifica ejecución funcional ni datos reales.
 - Sin pruebas de navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, despliegue ni E2/E3. Sin cambios funcionales. Siguiente: AUD-T-018.
+
+
+## 31. Continuidad AUD-T-018 — verificación E1
+- Sesión AUD-20261108-S058; checkpoint AUD-CP-0057; E1 histórica f9c47bad48fa8050a4acac33a4a45784fe433ef7; HEAD actual df6a78e1fe29c6f29e864d5542cade12f8c6e7df; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores; únicamente ocho documentos modificados. Los 13 archivos funcionales del alcance mantienen SHA idénticos; sin deriva funcional.
+- H-AUD-018-001 a 009 permanecen abiertos; AUG-113 a AUG-121 pendientes; VAL-27 pendiente.
+- No hay hallazgos ni tareas nuevos; no se duplican registros existentes. Tarea 18 conserva su estado histórico COMPLETADA.
+- E1 no certifica XSS real, comportamiento de navegador, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia ni E2/E3.
+- Sin cambios funcionales, operaciones productivas, despliegue ni merge. Siguiente: AUD-T-019.

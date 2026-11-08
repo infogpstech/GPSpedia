@@ -608,3 +608,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-017-001 a 007 continúan abiertos; AUG-106 a AUG-112 pendientes; VAL-26 pendiente. Sin hallazgos/tareas duplicados.
 - La omisión de AUD-T-016 en Auditoría.txt sigue abierta como H-AUD-017-007; no se altera durante E1.
 - No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia ni E2/E3. Siguiente: AUD-T-018, continuidad E1.
+
+
+## Continuidad de auditoría — AUD-T-018 (revalidación)
+- Fecha: 2026-11-08. Sesión AUD-20261108-S058; checkpoint AUD-CP-0057.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7; HEAD revalidado df6a78e1fe29c6f29e864d5542cade12f8c6e7df; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, solo ocho documentos modificados. Los 13 archivos funcionales del alcance conservan exactamente sus SHA históricos.
+- H-AUD-018-001 a 009 continúan abiertos; AUG-113 a AUG-121 pendientes; VAL-27 pendiente. Sin hallazgos ni tareas duplicados.
+- La Tarea 18 conserva su estado histórico COMPLETADA; E1 no certifica pruebas funcionales ni seguridad dinámica.
+- Sin navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive real, YouTube, concurrencia, despliegue ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
