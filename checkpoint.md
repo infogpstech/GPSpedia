@@ -387,3 +387,40 @@ La continuidad no equivale a certificación funcional E2/E3.
 Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
 Commit único esperado: docs(audit): verify AUD-T-009 continuity; parent cdbcd6c10eee686e13213176b971681538ca7ef7.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0049
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S050
+Tarea: continuidad de AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+E1 histórica: AUD-20261108-S028 / AUD-CP-0028; HEAD auditado 9b1401d37ea8c7b78a7ae9117c90afc4deb68009.
+HEAD observado: a669f8a0a696a00da40f4013ae0a0d3dca604968; árbol 6ae13bbfbaa66dcaf246446a31b94c8920766675. Rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-010-001 a H-AUD-010-007; tareas AUG-075 a AUG-081. VAL-19, VAL-03 y VAL-09 pendientes.
+Alcance: TAREA 9 (2.1–2.3), ui.js (formularios de reporte/sugerencia e Inbox), api-config.js, Services/feedback.js y esquema documentado Feedbacks.
+Respaldos exactos previos a la actualización documental:
+- Plan_auditoría/Plan_Auditoria.md: 3623a1ef67fe9ba8db30763b19b44b55aa43e17a
+- Plan_auditoría/Consolidacion_Auditoria.md: 97e3d7eff3bb27f072a70090f6ced97a0f4dc0c4
+- checkpoint.md: ac442f32205ebb37a8c99458f11b2f76713cbcff
+Comparación histórica: 21 commits posteriores; solo ocho archivos documentales cambiaron. Los cuatro archivos del alcance funcional/esquema conservan sus SHA históricos.
+No se modifican archivos funcionales ni se realizan operaciones sobre servicios o datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0049
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S050
+Resultado: AUD-T-010 permanece E1 ESTÁTICA COMPLETADA y vigente. La comparación de 21 commits muestra únicamente cambios documentales; sin deriva funcional en el alcance.
+HEAD padre de esta tarea: a669f8a0a696a00da40f4013ae0a0d3dca604968; árbol: 6ae13bbfbaa66dcaf246446a31b94c8920766675. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-010-001 a H-AUD-010-007. Tareas pendientes: AUG-075 a AUG-081. Sin hallazgos ni tareas nuevas.
+Archivos funcionales/esquema revalidados:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+Revalidaciones: acciones reportProblem/suggestCutChange sin guard de sesión; item.subject y otros datos dinámicos en sinks innerHTML; archivo del reporte no se transmite; reportId/vehículo/corte no se validan en conjunto; FileReader y Drive con fallos silenciados/MIME y permisos débiles; sugerencias sin serialización/idempotencia; esquema proposedValues y detalles sin validación estricta.
+Validaciones pendientes: VAL-19, VAL-03 y VAL-09. No se ejecutaron E2/E3, navegador, XSS controlado, FileReader real, Apps Script, HTTP, Drive/Spreadsheet, concurrencia ni deployments.
+No se modificaron código, servicios, endpoints, esquema productivo, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Archivos documentales modificados en el commit único: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md y checkpoint.md. Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt y contexto_personal.md no se modifican: no hubo hallazgos ni tareas nuevas y la continuidad es solo documental.
+La continuidad no equivale a certificación funcional E2/E3.
+Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+Commit único esperado: docs(audit): verify AUD-T-010 continuity; parent a669f8a0a696a00da40f4013ae0a0d3dca604968.
+================================================================================
