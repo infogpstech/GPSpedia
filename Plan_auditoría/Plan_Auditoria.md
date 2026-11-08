@@ -67,7 +67,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-25 PENDIENTE |
 | AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-26 PENDIENTE |
 | AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-27 PENDIENTE |
-| AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | POR AUDITAR |
+| AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-28 PENDIENTE |
 | AUD-T-020 | Saneamiento arquitectural, DRY, anti-debugging y auditorías globales | Tarea 21; 27c9311c — auditoría integral y navegación; d93b3a5e — consolidación global y DRY | POR AUDITAR |
 | AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | POR AUDITAR |
 | AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | POR AUDITAR |
@@ -888,3 +888,12 @@ Hallazgos: XSS almacenado en dashboard e Inbox; mismatch Rol/Privilegios oculta 
 Nuevas tareas AUG-113 a AUG-121. Tarea 18 conserva estado histórico COMPLETADA; E1 no equivale a validación funcional.
 Límites: sin navegador, XSS real, Apps Script, HTTP, Spreadsheet, YouTube, Drive, concurrencia, deployment ni E2/E3. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
+
+## 41. Iteración técnica — AUD-T-019
+Sesión AUD-20261108-S037 | Checkpoint AUD-CP-0037 | HEAD auditado 6f0f901179c10833cbeedcb2767a25fcdd085b0d | árbol 111dcd6270f62d5aaad6d5bfe34ebf47acafee82 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; VAL-28 pendiente.
+Alcance: Tarea 19, requisitos 9.1/9.2 y pruebas 31–38; servicios WRITE, CATALOG, ADMIN, UTILITIES, AUTH, USERS y FEEDBACK, contratos API y cobertura de pruebas.
+Hallazgos: dos operaciones de escritura/migración sin autenticación; alta de Tutoriales desconectada de CATALOG y edición fallback con columnas incompatibles; restauraciones no transaccionales; validación tardía y escrituras parciales en corte; payload de vídeo suplementario ignorado con success; asociaciones PyS sin validar contra Cortes; updateVehicleField permite ID; updateUser parcial/sin lock; aprobación de vídeo sin verificar destino; VIN sin formato estricto; no existe runner general ni deployments aislados; mapa de acciones desincronizado; README afirma que microservicios fueron retirados aunque el árbol contiene sus fuentes.
+Nuevas tareas AUG-122 a AUG-135. VAL-28 planificada, no ejecutada. Tarea 19 conserva estado histórico COMPLETADA, pero E1 no certifica las pruebas funcionales 31–38.
+Límites: sin navegador, Apps Script, HTTP, Spreadsheet, Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, deployment ni E2/E3. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.

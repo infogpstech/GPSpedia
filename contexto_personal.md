@@ -486,3 +486,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Hallazgos principales: XSS almacenado en dashboard e Inbox; mismatch currentUser.Rol/Privilegios oculta aprobación de vídeos; caché Inbox no integrada; autodegradación/autoborrado de último Desarrollador y sesiones huérfanas; perfil local no refrescado; mutaciones Inbox sin historial central; lectura completa del historial; respuesta success para itemType inválido.
 - Nuevas tareas AUG-113 a AUG-121. Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
 - No se modificó código de aplicación, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. No hubo merge ni despliegue.
+
+## Continuidad de auditoría — AUD-T-019
+- Fecha: 2026-11-08. Sesión AUD-20261108-S037; checkpoint AUD-CP-0037.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 6f0f901179c10833cbeedcb2767a25fcdd085b0d; árbol 111dcd6270f62d5aaad6d5bfe34ebf47acafee82; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-019 — Validaciones de integridad backend y pruebas automatizadas: E1 estática completada; H-AUD-019-001 a H-AUD-019-014 abiertos; VAL-28 pendiente. Tarea 19 conserva estado histórico COMPLETADA, sin certificación funcional de pruebas 31–38.
+- Hallazgos principales: WRITE.addSupplementaryInfo y UTILITIES.migrateTimestamps sin auth; alta de Tutoriales desconectada de CATALOG y edición fallback con columnas incompatibles; restore DB/Drive sin rollback; payload de corte validado tarde; vídeo suplementario ignorado con success; PyS acepta referencias no verificadas; ADMIN puede editar ID; USERS puede escribir parcialmente; approveVideo no verifica destino; VIN sin formato estricto; falta suite automatizada; mapa API desincronizado; README contradice fuentes presentes en el árbol.
+- Nuevas tareas AUG-122 a AUG-135. Siguiente unidad AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+- No se modificó código de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.

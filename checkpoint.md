@@ -1393,3 +1393,71 @@ Respaldos exactos: los SHA del checkpoint inicial; no se generaron .bak porque n
 Commit único: docs(audit): complete AUD-T-018 user inbox dashboard review (SHA identificable en el historial de GPSpedia2.2.5_work; parent f9c47bad48fa8050a4acac33a4a45784fe433ef7).
 Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
 No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0037
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S037
+Tarea: AUD-T-019 — Validaciones de integridad backend y batería exhaustiva de pruebas automatizadas.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+HEAD inicial: 6f0f901179c10833cbeedcb2767a25fcdd085b0d
+Árbol inicial: 111dcd6270f62d5aaad6d5bfe34ebf47acafee82
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: E1 estática de requisitos 9.1/9.2 y pruebas 31–38; servicios WRITE, CATALOG, ADMIN, UTILITIES, AUTH, USERS y FEEDBACK; contratos API, integridad relacional, validación, persistencia parcial, restauración y cobertura de pruebas.
+Fase: auditoría diagnóstica; prohibido modificar código, endpoints, configuración o datos productivos.
+Archivos funcionales examinados:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+Respaldos documentales exactos (SHA de los blobs en HEAD inicial):
+- Auditoría.txt: c4ab554813717beafdae100643855adf7eaf753d
+- Tareas.txt: 18fb5be22f8f6ec4fa93319d1fc1478933438994
+- Plan_auditoría/Plan_Auditoria.md: 5e80f8cffa80e96b670a31f6e805e970ef1d0909
+- Plan_auditoría/Aug_Tareas.md: f422deaa3fc96595c545a6073788609713c06978
+- Plan_auditoría/Consolidacion_Auditoria.md: 1ad86ff246c50e89f1e29de7b34f62247e628a67
+- ChangesLogs.txt: f56398f20a3bdb4c00e86cefc4768d169762e754
+- contexto_personal.md: e3356be90fb71d8e44645d09a0d414475831c65f
+- checkpoint.md: 0e385a627de683da9a24bc28c23849f5b691bcc1
+Hallazgos/dependencias conocidas al inicio: resultados AUD-T-018 documentados; Tarea 19 figura históricamente COMPLETADA y agrupa requisitos 9.1/9.2; no se había confirmado ejecución de pruebas 31–38. Se mantuvo rama base intacta.
+Backups: los SHA anteriores preservan los ocho documentos antes de editar; no se modificaron archivos funcionales y no se generaron temporales.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0037
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S037
+Tarea: AUD-T-019 — Validaciones de integridad backend y batería exhaustiva de pruebas automatizadas.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; VAL-28 pendiente. Tarea 19 conserva estado histórico COMPLETADA; no se certifican pruebas funcionales 31–38.
+HEAD padre de la tarea: 6f0f901179c10833cbeedcb2767a25fcdd085b0d
+Árbol inicial: 111dcd6270f62d5aaad6d5bfe34ebf47acafee82
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work
+Resultado: 14 hallazgos documentados; AUG-122 a AUG-135 registradas; VAL-28 planificada; E1 estática completada.
+Archivos documentales modificados:
+- Auditoría.txt: 264ef882d919bb16b78afe7c62553a4445ed7dd4
+- Tareas.txt: 1bf856552ef55166ce3f36a66b0e8a8461234eb0
+- Plan_auditoría/Plan_Auditoria.md: 33ac2d99baee5fa5226c12fa90b65592aa336b7e
+- Plan_auditoría/Aug_Tareas.md: f5cff5352d1e4ecabfed8dbf25048e1e520c6275
+- Plan_auditoría/Consolidacion_Auditoria.md: 96b22597b4e12d07cb4b710e1599e06d19526408
+- ChangesLogs.txt: 4d001269cba1a2940b1b7233c1d46ffb76bbbd7a
+- contexto_personal.md: c87506d6aaba53995cf28910b12f78d2ec487961
+- checkpoint.md: este blob documental se crea como último paso antes del único commit.
+Archivos funcionales auditados sin modificación: Services/write.js, catalog.js, admin.js, Utilities.js, Auth.js, users.js, feedback.js, Services/Test/Auth.js, Services/Test/users.js, Services/Test/README.md, api-config.js, main.js, ui.js, index.html y README.md.
+Validaciones ejecutadas: revisión estática de rutas, autenticación, RBAC, contratos API, validación de payloads, locks, idempotencia, escrituras, rollback, relaciones PyS, esquema Tutorial, restauraciones y archivos de prueba. No se ejecutaron Apps Script, HTTP, navegador, Spreadsheet, Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, ACL de deployments ni pruebas E2/E3.
+Respaldos: SHA de los ocho documentos del checkpoint inicial. No se generaron .bak de archivos funcionales porque no se modificó código ni archivos funcionales.
+Commit único: docs(audit): complete AUD-T-019 backend integrity and test coverage review; parent 6f0f901179c10833cbeedcb2767a25fcdd085b0d. SHA verificable en el historial de GPSpedia2.2.5_work después de la actualización condicionada.
+Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+================================================================================

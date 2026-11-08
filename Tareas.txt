@@ -6380,3 +6380,15 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; VAL-27 
 - No se modificaron archivos de aplicación, servicios, endpoints ni datos productivos.
 - Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
 ================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-019
+Fecha: 2026-11-08 | Sesión AUD-20261108-S037 | Checkpoint AUD-CP-0037
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; VAL-28 planificada.
+- Tarea 19 conserva su estado histórico COMPLETADA; la auditoría no certifica ejecución funcional de pruebas 31–38.
+- Controles confirmados: autenticación WRITE para corte/VIN; lock e idempotencia en operaciones centrales; hash y bloqueo de intentos AUTH; RBAC USERS/ADMIN/FEEDBACK; validaciones básicas de PYS.
+- Hallazgos: escritura sin sesión en addSupplementaryInfo; migración UTILITIES sin sesión/lock; alta de Tutoriales desconectada de CATALOG y edición fallback con columnas incompatibles; restauraciones no transaccionales; payload de corte validado después de reservar fila/ID; falso éxito al agregar vídeo suplementario; asociaciones PyS huérfanas; edición administrativa de ID/campos sin validación; updateUser parcial y sin lock; aprobación de vídeo sin comprobar destino; VIN sin validación de longitud/formato; ausencia de suite automatizada; acciones API desincronizadas; README contradice fuentes presentes en el árbol.
+- Nuevas tareas: AUG-122 a AUG-135. VAL-28 planificada, no ejecutada.
+- No se modificaron archivos de aplicación, servicios, endpoints, configuración, assets ni datos productivos.
+- Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+================================================================================

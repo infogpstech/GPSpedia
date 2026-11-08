@@ -1553,3 +1553,90 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - Problema: un tipo inválido recibe éxito aunque no se haya actualizado ningún registro.
 - Criterios: allowlist estricta; error explícito; pruebas para problem_report, contact_form, video_approval y tipo arbitrario.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+## Hallazgos derivados de AUD-T-019 — 2026-11-08
+
+### AUG-122 — Exigir sesión y rol en WRITE.addSupplementaryInfo
+- Origen: H-AUD-019-001. Prioridad: Alta.
+- Evidencia: Services/write.js:169–205, 783–864; ui.js:7823–7828, 7915–7917 y 8053–8058.
+- Criterios: validar sesión activa en backend; derivar actor del servidor; definir roles permitidos; probar sin token, token inválido/revocado y roles no autorizados.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-123 — Proteger y serializar la migración UTILITIES
+- Origen: H-AUD-019-002. Prioridad: Alta.
+- Evidencia: api-config.js:7–15, 27; Services/Utilities.js:35–55, 62–96 y 138–141.
+- Criterios: autenticación Desarrollador; ScriptLock; snapshot y validación previa; ejecución recuperable; pruebas de fallo y concurrencia en copia.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-124 — Unificar esquema e identidad de Tutoriales entre FEEDBACK y CATALOG
+- Origen: H-AUD-019-003. Prioridad: Alta.
+- Evidencia: Services/catalog.js:61–69, 339–347; Services/feedback.js:23–30, 1498–1520 y 2000–2046.
+- Problema: addTutorial crea/usa «Tutoriales» con cinco columnas, pero CATALOG lee «Tutorial» con siete; la edición puede caer en «Tutorial» y sobrescribir ID/columnas.
+- Criterios: contrato único de hoja y encabezados; validar esquema antes de escribir; usar ID estable; migración compatible; probar hoja vacía, esquema actual, registros antiguos, duplicados de tema y lectura posterior por CATALOG.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-125 — Hacer recuperables las restauraciones de DB y Drive
+- Origen: H-AUD-019-004. Prioridad: Alta.
+- Evidencia: Services/admin.js:882–928 y 933–963.
+- Criterios: staging; validar backup completo y esquema; verificar conteos/recursos; swap solo tras validación; rollback probado ante fallos parciales.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-126 — Validar payload completo antes de reservar fila/ID en WRITE
+- Origen: H-AUD-019-005. Prioridad: Alta.
+- Evidencia: Services/write.js:420–427, 633–676, 684–692 y 696–729.
+- Criterios: validar tipos, requeridos, rango de años, enums, longitudes e imágenes antes de escribir; compensación completa; no dejar filas/opIds/archivos huérfanos.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-127 — Corregir el contrato de vídeo suplementario
+- Origen: H-AUD-019-006. Prioridad: Media.
+- Evidencia: ui.js:8053–8058; Services/write.js:791–863.
+- Criterios: alinear nombres de campos; allowlist de campo y URL; no devolver success sin escritura; comprobar catálogo tras recarga.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-128 — Validar referencias PyS–vehículos y serializar cambios
+- Origen: H-AUD-019-007. Prioridad: Media.
+- Evidencia: Services/feedback.js:1429–1444, 1565–1598 y 1601–1638.
+- Criterios: verificar vehicleId en Cortes; normalizar IDs y duplicados; lock común en altas/bajas; verificar integridad relacional y concurrencia.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-129 — Restringir campos editables por ADMIN y proteger ID
+- Origen: H-AUD-019-008. Prioridad: Media.
+- Evidencia: Services/admin.js:344–354 y 1798–1819.
+- Criterios: allowlist de campos; excluir ID/campos calculados; validación específica de tipo, longitud y dominio; pruebas de valores inválidos y duplicados.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-130 — Hacer atómicas las mutaciones de USERS
+- Origen: H-AUD-019-009. Prioridad: Media.
+- Evidencia: Services/users.js:342–425.
+- Criterios: validar todas las propiedades antes de escribir; actualización agrupada/rollback; lock común para create/update/delete/reset; verificar ID y fila bajo concurrencia.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-131 — Validar destino y transición de estado al aprobar vídeos
+- Origen: H-AUD-019-010. Prioridad: Media.
+- Evidencia: Services/feedback.js:1847–1906 y 1911–1955.
+- Criterios: allowlist contentType; existencia del destino; estado previo pending; lock; persistencia compensable en Feedbacks/Cortes.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-132 — Aplicar validación estricta al VIN
+- Origen: H-AUD-019-011. Prioridad: Baja.
+- Evidencia: Services/write.js:1720–1724 y 1788–1823.
+- Criterios: validar longitud/formato del VIN admitido; rechazar caracteres inválidos; normalizar después de validar; probar límites y colisiones.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-133 — Implementar suite automatizada reproducible para pruebas 31–38
+- Origen: H-AUD-019-012. Prioridad: Media.
+- Evidencia: Services/Test/README.md:1–41; Services/Test/Auth.js y users.js son copias de servicios, sin runner/asserts.
+- Criterios: runner por servicio; fixtures y Spreadsheet aislada; cobertura WRITE/ADMIN/FEEDBACK/CATALOG/UTILITIES/AUTH/USERS; límites, RBAC, integridad, concurrencia y regresión 31–38; resultados reproducibles sin producción.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores
+- Origen: H-AUD-019-013. Prioridad: Baja.
+- Evidencia: api-config.js:18–34; Services/write.js:169–205; Services/Utilities.js:35–45.
+- Criterios: contrato único; cada acción mapeada debe tener handler; cada handler público debe estar mapeado/documentado; prueba automática de paridad.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-135 — Reconciliar política de publicación de microservicios y README
+- Origen: H-AUD-019-014. Prioridad: Media.
+- Evidencia: README.md:102–105; árbol de GPSpedia2.2.5_work contiene Services/Auth.js, catalog.js, feedback.js, write.js, admin.js, users.js y Utilities.js.
+- Criterios: decidir visibilidad de fuentes; retirar fuentes y revisar historial si deben ser privadas, o documentar su publicación y separar configuración; verificar ACL de Spreadsheet/Drive y deployments.
+- Estado: NUEVA; decisión, implementación y revisión de exposición pendientes.

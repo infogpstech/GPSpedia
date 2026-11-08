@@ -10534,3 +10534,189 @@ No se ejecutaron casos de VAL-27.
 E1 estática. No se ejecutaron navegador, payloads XSS reales, Apps Script, FEEDBACK HTTP, USERS/AUTH HTTP, Spreadsheet productivo, YouTube API, Drive, sesiones concurrentes ni pruebas de recuperación. No se verificó deployment. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-018-001 a H-AUD-018-009 abiertos; AUG-113 a AUG-121 nuevas; VAL-27 pendiente.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-019: VALIDACIONES DE INTEGRIDAD BACKEND Y PRUEBAS AUTOMATIZADAS
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S037 | Checkpoint: AUD-CP-0037
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 6f0f901179c10833cbeedcb2767a25fcdd085b0d | Árbol: 111dcd6270f62d5aaad6d5bfe34ebf47acafee82
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+1. ALCANCE Y MÉTODO
+E1 estática de Tarea 19 y requisitos 9.1/9.2, pruebas 31–38: validación de payloads, campos, tipos, longitudes, IDs, disponibilidad, YouTube, imágenes, relaciones entre modelos/cortes/reportes, permisos, escrituras parciales, compatibilidad de registros previos, idempotencia y suite automatizada.
+Archivos revisados: Services/write.js, catalog.js, admin.js, Utilities.js, Auth.js, users.js, feedback.js; Services/Test/Auth.js, users.js, README.md; api-config.js, main.js, ui.js, index.html y README.md. Se revisaron rutas de acciones, funciones de persistencia, validaciones, locks, recuperación, relaciones y cobertura de pruebas.
+El checkpoint inicial conserva el estado de la rama y los SHA de respaldo documental y de código. No se ejecutaron Apps Script ni escrituras de datos.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- WRITE valida sesión activa y obtiene nombre desde Users para addOrUpdateCut y addVinToVehicle (Services/write.js:110–145, 420–427 y 1788–1795).
+- WRITE utiliza ScriptLock en addOrUpdateCut, addSupplementaryInfo y addVinToVehicle (Services/write.js:222–228, 783–788 y 1780–1787).
+- El asignador central de IDs de Cortes se ejecuta bajo lock; la hoja de idempotencia comprueba encabezados, estados y asociaciones y verifica persistencia (Services/write.js:231–289 y 1260–1543).
+- El registro de VIN verifica duplicados y revierte los dos campos si falla la comprobación posterior a la escritura (Services/write.js:1837–1865).
+- AUTH aplica hash con salt aleatorio, mínimo de ocho caracteres, comparación constante y bloqueo temporal tras intentos fallidos (Services/Auth.js:48–87 y 95–155).
+- AUTH limita sesiones y administra altas/bajas de sesiones bajo ScriptLock (Services/Auth.js:284–347).
+- USERS verifica sesiones desde ActiveSessions y aplica reglas de rol en lectura y mutaciones; createUser usa lock y detecta nombres duplicados (Services/users.js:135–172, 178–209 y 269–340).
+- ADMIN verifica sesión y privilegio Desarrollador antes de las acciones distintas de ping (Services/admin.js:73–103 y 586–610).
+- FEEDBACK deriva actor/rol desde sesión para acciones incluidas en actionPermissions y limita las acciones sensibles por rol (Services/feedback.js:42–74 y 302–334).
+- CATALOG se limita a lecturas del catálogo, navegación y sugerencias; no se observaron mutaciones en sus rutas públicas (Services/catalog.js:115–160).
+- addProblem valida longitudes de título/descripción/solución/prevención y usa ScriptLock para insertar (Services/feedback.js:1389–1454).
+
+3. HALLAZGOS NUEVOS
+
+H-AUD-019-001 — ALTA — addSupplementaryInfo modifica Cortes/Drive sin validar sesión en WRITE.
+Evidencia:
+- Services/write.js:169–205 enruta addSupplementaryInfo.
+- Services/write.js:783–864 ejecuta las escrituras y subidas de imágenes sin llamar getAuthenticatedCollaborator ni validar userId/sessionToken.
+- ui.js:7823–7828, 7915–7917 y 8053–8058 invoca la acción sin enviar token de sesión.
+Impacto: el handler no tiene autorización propia; cualquier consumidor que pueda alcanzar el deployment puede solicitar cambios en registros del catálogo y cargas a Drive. La política ACL del deployment no fue verificada.
+Criterios: exigir sesión activa en backend; derivar actor del servidor; aplicar rol permitido; probar llamada directa sin token, token inválido, sesión revocada y roles no autorizados.
+Tarea derivada: AUG-122.
+
+H-AUD-019-002 — ALTA — UTILITIES expone una migración destructiva sin autenticación ni lock.
+Evidencia:
+- api-config.js:7–15 y 27 publica el endpoint UTILITIES y mapea migrateTimestamps.
+- Services/Utilities.js:35–55 acepta la acción sin userId/sessionToken ni comprobación de rol.
+- Services/Utilities.js:62–96 ejecuta migración y Services/Utilities.js:138–141 llama clearContents() sobre Hoja 1 antes de reconstruirla.
+Impacto: la operación puede vaciar la hoja de destino y reconstruirla sin autorización a nivel de aplicación; ejecuciones simultáneas no están serializadas. La accesibilidad efectiva depende del deployment y no fue comprobada.
+Criterios: restringir a Desarrollador/sesión validada; bloquear concurrencia; generar snapshot/plan previo y verificar destino antes de limpiar; probar fallo antes/durante/después de escritura.
+Tarea derivada: AUG-123.
+
+H-AUD-019-003 — ALTA — FEEDBACK escribe Tutoriales con un esquema incompatible con CATALOG.
+Evidencia:
+- Services/catalog.js:61–69 define Tutorial con siete columnas: ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles y Video; CATALOG lee esa hoja en 339–347.
+- Services/feedback.js:23–30 intenta singularizar «Tutoriales» como «Tutoriale», por lo que no resuelve «Tutorial»; handleUpdateTutorialItem sí intenta «Tutorial» como fallback (2012).
+- Services/feedback.js:1498–1520 crea/usa esa hoja y agrega cinco valores en A:E con orden Tema, Imagen, Video, Descripción, Colaborador.
+- Services/feedback.js:2000–2046 edita A:D usando búsqueda por tema.
+Impacto: la creación escribe en «Tutoriales» (cinco columnas), mientras CATALOG lee «Tutorial» (siete columnas), por lo que el alta queda fuera del catálogo. Si no existe «Tutoriales», la edición puede caer en «Tutorial» y escribir tema en A (ID), vídeo en C y descripción en D, alterando el esquema. No se inspeccionó la Spreadsheet productiva.
+Criterios: definir un único contrato de esquema; validar encabezados antes de escribir; usar ID estable; migración compatible; probar hoja vacía, esquema actual, registros antiguos, duplicados de tema y lectura posterior por CATALOG.
+Tarea derivada: AUG-124.
+
+H-AUD-019-004 — ALTA — Restauración de Spreadsheet y Drive no es transaccional ni recuperable ante fallo intermedio.
+Evidencia:
+- Services/admin.js:882–928 crea TEMP_RESTORE_HOLDER, elimina las hojas existentes y después copia las hojas del backup; no existe rollback si copyTo/setName falla.
+- Services/admin.js:933–963 limpia primero el contenido de la carpeta productiva y después copia el backup; no existe staging ni restauración del estado anterior ante error.
+Impacto: una excepción o límite de tiempo durante la copia puede dejar base o carpeta incompletas. La sesión Desarrollador evita acceso no autorizado, pero no evita pérdida parcial de datos.
+Criterios: validar backup completo y esquema; restaurar en staging; verificar conteos/hojas/archivos; cambiar destino solo después de validar; rollback probado ante fallos inyectados.
+Tarea derivada: AUG-125.
+
+H-AUD-019-005 — ALTA — addOrUpdateCut valida payload incompleto después de reservar fila e ID.
+Evidencia:
+- Services/write.js:420–427 solo exige cutData antes de continuar.
+- Services/write.js:633–676 copia plantilla, crea fila, asigna ID y registra opId pending antes de validar tipos/campos de vehicleData.
+- Services/write.js:684–692 llama vehicleData.anoDesde.trim() y parsea el rango sin comprobar previamente tipo, presencia ni formato.
+- Services/write.js:696–729 continúa con cargas y múltiples setValue sin rollback general.
+Impacto: un payload con año ausente/no string o un fallo de Drive posterior puede dejar una fila parcial y/o una operación pendiente con ID asignado.
+Criterios: validar todo el payload antes de cualquier mutación; validar año/rango, enums, longitudes, imágenes y relaciones; usar plan/commit o compensación completa; verificar que error no deja fila, ID ni archivo huérfano.
+Tarea derivada: AUG-126.
+
+H-AUD-019-006 — MEDIA — El flujo de agregar vídeo envía campos que WRITE ignora y recibe éxito falso.
+Evidencia:
+- ui.js:8053–8058 envía vehicleId, fieldName="videoGuiaDesarmeUrl" y fieldValue.
+- Services/write.js:791–863 solo procesa apertura, imágenes de apertura/alimentación, notas y timestamp; no lee fieldName ni fieldValue, pero retorna status success.
+Impacto: la interfaz informa que el vídeo fue agregado aunque la URL no se guarda en Cortes.
+Criterios: alinear contrato cliente/servidor; validar el campo permitido y URL YouTube en backend; devolver error si no se actualiza nada; comprobar persistencia tras recargar CATALOG.
+Tarea derivada: AUG-127.
+
+H-AUD-019-007 — MEDIA — PyS permite asociaciones con vehículos inexistentes y actualizaciones concurrentes sin lock.
+Evidencia:
+- Services/feedback.js:1429–1444 acepta modelosAsociados como strings sin verificar cada ID en Cortes.
+- Services/feedback.js:1565–1598 verifica que exista el problema, pero no consulta Cortes para validar vehicleId antes de guardarlo en columna 10.
+- Services/feedback.js:1601–1638 elimina relaciones sin ScriptLock; addVehicleToProblem tampoco usa lock.
+Impacto: se pueden guardar referencias huérfanas; dos altas/bajas simultáneas pueden sobrescribir listas basadas en lecturas antiguas.
+Criterios: validar todos los IDs contra Cortes; normalizar/limitar arrays y duplicados; lock compartido para add/remove; verificar persistencia y consistencia bidireccional.
+Tarea derivada: AUG-128.
+
+H-AUD-019-008 — MEDIA — updateVehicleField permite modificar ID y campos del esquema sin validación específica.
+Evidencia:
+- Services/admin.js:344–354 incluye id y todos los campos de Cortes en COLS_CORTES.
+- Services/admin.js:1798–1819 acepta fieldName si existe en el mapa y escribe value directamente en esa columna.
+- El router ADMIN autentica Desarrollador (586–610), pero no aplica una allowlist de campos editables ni valida tipo/rango por campo.
+Impacto: una petición administrativa puede sobrescribir ID o introducir valores incompatibles, rompiendo referencias y la integridad del catálogo.
+Criterios: excluir ID y columnas calculadas/inmutables; allowlist explícita; validación por tipo, longitud y dominio; detectar duplicados; pruebas de campo no permitido y datos límite.
+Tarea derivada: AUG-129.
+
+H-AUD-019-009 — MEDIA — updateUser puede aplicar una modificación parcial antes de rechazar el payload y carece de lock.
+Evidencia:
+- Services/users.js:342–395 escribe Nombre_Completo en 371–372 antes de validar el nuevo Privilegios en 374–385.
+- Un Privilegios no permitido provoca error después de guardar el nombre; la operación no revierte la escritura anterior.
+- updateUser y deleteUser no adquieren ScriptLock (342–425), a diferencia de createUser/resetUserSessions.
+Impacto: una respuesta error no garantiza que no haya cambios; operaciones concurrentes pueden trabajar sobre índices de fila obsoletos.
+Criterios: validar todo antes de escribir; aplicar actualización agrupada/compensación; lock común para create/update/delete/session reset; releer y verificar fila/ID.
+Tarea derivada: AUG-130.
+
+H-AUD-019-010 — MEDIA — La aprobación de vídeo puede confirmar una solicitud sin asociar el recurso de destino.
+Evidencia:
+- Services/feedback.js:1847–1906 marca la solicitud approved en Feedbacks en 1880–1888 y luego busca referenceId en Cortes en 1891–1900.
+- Si no existe la fila Cortes, el flujo no genera error y devuelve success en 1904–1905.
+- approve/reject no usan lock ni verifican que el estado anterior sea pending.
+Impacto: puede quedar una solicitud aprobada sin vínculo al vehículo; acciones simultáneas o repetidas pueden producir estados inconsistentes.
+Criterios: validar contentType/referenceId y existencia del destino antes de cambiar estado; exigir transición pending; lock; escribir de forma compensable y verificar ambas hojas.
+Tarea derivada: AUG-131.
+
+H-AUD-019-011 — BAJA — La validación VIN acepta cadenas arbitrarias mayores de cinco caracteres.
+Evidencia:
+- Services/write.js:1720–1724 elimina caracteres no alfanuméricos y recorta los últimos cinco, sin exigir longitud VIN ni alfabeto válido.
+- Services/write.js:1788–1823 utiliza ese prefijo para guardar relación con versión.
+Impacto: datos malformados pueden almacenarse como prefijos VIN y generar colisiones o asociaciones incorrectas.
+Criterios: validar formato/longitud VIN aceptado por el negocio antes de normalizar; rechazar caracteres inválidos; probar longitud 5/6/16/17/18, I/O/Q y separadores.
+Tarea derivada: AUG-132.
+
+H-AUD-019-012 — MEDIA — No existe evidencia de una batería automatizada de pruebas 31–38.
+Evidencia:
+- El árbol del repositorio contiene Services/Test/Auth.js, Services/Test/users.js y README.md, pero no un runner ni pruebas para WRITE, ADMIN, FEEDBACK, CATALOG o UTILITIES.
+- Services/Test/Auth.js y Services/Test/users.js son copias de los servicios operativos con cambio de SPREADSHEET_ID, no suites con asserts/casos automatizados.
+- Services/Test/README.md:1–41 indica crear proyectos/deployments de Apps Script separados y declara que no se han creado ni desplegado.
+- Tareas.txt marca Tarea 19 y sus pruebas 31–38 como COMPLETADAS, pero el repositorio no aporta resultados verificables de ejecución.
+Impacto: no se puede certificar funcionalmente validación de payloads, compatibilidad, relaciones, regresiones ni estrés; el estado histórico COMPLETADA no demuestra ejecución.
+Criterios: crear runner reproducible por servicio; fixtures y Spreadsheet aislada; pruebas de límites, permisos, integridad, errores, concurrencia y regresión 31–38; conservar resultados reproducibles; nunca ejecutar contra producción.
+Tarea derivada: AUG-133.
+
+H-AUD-019-013 — BAJA — El mapa de acciones de API contiene rutas no soportadas por sus routers.
+Evidencia:
+- api-config.js:18–34 mapea addCorte a WRITE y migrateYearRanges a UTILITIES.
+- Services/write.js:169–205 no tiene case addCorte; expone addOrUpdateCut en su lugar.
+- Services/Utilities.js:35–45 solo acepta migrateTimestamps y rechaza migrateYearRanges.
+- WRITE incluye getHeaders en su switch, pero no aparece en ACTION_TO_SERVICE_MAP.
+- No se encontraron callers de estas acciones en ui.js, main.js o index.html durante la búsqueda estática.
+Impacto: una llamada a una acción obsoleta/referenciada incorrectamente falla en runtime; el contrato de API no está sincronizado.
+Criterios: generar/validar contrato único de acciones; prueba que cada acción mapeada tenga handler y cada handler público esté mapeado o documentado; eliminar aliases solo tras confirmar consumidores.
+Tarea derivada: AUG-134.
+
+H-AUD-019-014 — MEDIA — README contradice el contenido real del repositorio respecto a la exclusión de microservicios.
+Evidencia:
+- README.md:102–105 afirma que write.js, auth.js, catalog.js y feedback.js fueron retirados del repositorio público.
+- El árbol del HEAD auditado contiene Services/Auth.js, Services/catalog.js, Services/feedback.js, Services/write.js, Services/admin.js, Services/users.js y Services/Utilities.js.
+- Los servicios contienen identificadores de Spreadsheet/Drive y la configuración API contiene URLs de deployments.
+Impacto: la documentación de seguridad no refleja el contenido publicado y el código/identificadores internos están disponibles en el repositorio consultado. No se verificaron permisos de Spreadsheet/Drive ni ACL de deployments; los IDs no se consideran por sí solos credenciales.
+Criterios: decidir si los fuentes backend deben permanecer públicos; si no, retirarlos del repositorio y revisar historial/secretos expuestos; si sí, actualizar README y separar configuración sensible; verificar permisos reales de Drive/Spreadsheet y deployments.
+Tarea derivada: AUG-135.
+
+4. OBSERVACIONES DE ALCANCE
+- La auditoría estática confirma varios controles, pero no demuestra su comportamiento en Apps Script ni bajo concurrencia.
+- El esquema real de Spreadsheet, el contenido de registros anteriores, la existencia de la hoja Tutorial y la política ACL de deployments no se inspeccionaron; los hallazgos correspondientes son inferencias directas de los contratos de código y deben comprobarse en copia aislada.
+- La restauración de DB/Drive es un flujo de alto impacto; no se ejecutó para evitar riesgo productivo.
+- No se encontró suite de pruebas automatizadas general. Los archivos de AUTH/USERS son copias aisladas, y README indica que sus deployments aún no existen.
+- El README raíz declara exclusión de microservicios, pero el árbol de esta rama contiene sus fuentes; no se modificó README ni se retiró código durante la auditoría.
+
+5. MATRIZ DE VALIDACIÓN — VAL-28
+Estado: PLANIFICADA; no ejecutada.
+1. Llamar addSupplementaryInfo sin sesión, con sesión inválida, revocada y con roles distintos; verificar que no se escriba ni suba archivo cuando no corresponda.
+2. Probar migrateTimestamps sin sesión y con rol autorizado en Spreadsheet aislada; simular fallos y ejecuciones concurrentes; verificar que Hoja 1 no quede vacía/parcial.
+3. Crear y editar tutoriales con el esquema real de siete columnas; verificar ID, tema, imagen, detalles, vídeo y lectura CATALOG; probar hoja vacía y registros históricos.
+4. Simular fallos de copia en restoreDatabase/restoreDrive y verificar staging/rollback sin pérdida de destino.
+5. Enviar payloads addOrUpdateCut con vehicleData ausente, anoDesde numérico/vacío/malformado, campos requeridos omitidos e imagen inválida; comprobar ausencia de fila/ID/opId/archivo huérfano.
+6. Ejecutar flujo UI de vídeo suplementario y verificar que videoGuiaDesarmeUrl persista y se muestre después de recargar.
+7. Asociar PyS a IDs inexistentes, duplicados y válidos; probar operaciones concurrentes add/remove y validar integridad relacional.
+8. Intentar updateVehicleField sobre id, campos calculados, valores con tipo/longitud incorrectos y campos permitidos.
+9. Enviar updateUser con Nombre_Completo válido y Privilegios inválido; confirmar atomicidad; probar concurrencia update/delete/create.
+10. Aprobar/rechazar vídeos con referencia inexistente, tipo inválido, estado no pending y peticiones simultáneas; verificar ambas hojas.
+11. Probar VIN de 5, 6, 16, 17 y 18 caracteres, caracteres prohibidos y prefijos duplicados.
+12. Implementar/ejecutar suite en servicios de prueba aislados para pruebas 31–38; adjuntar resultados y no tocar endpoints productivos.
+13. Verificar exhaustivamente el mapa de acciones contra routers y consumidores; probar acciones válidas, obsoletas y desconocidas.
+14. Contrastar README con árbol de release; revisar visibilidad de fuentes, IDs, ACL de Spreadsheet/Drive y deployments.
+15. Ejecutar regresión integral: reportes/sugerencias, cortes, ampliación de detalles, add_corte, PyS, tutoriales, editor enriquecido, Inbox/perfil/usuarios, catálogo, modales, carruseles, cables, aperturas, autenticación, offline y móvil.
+No se ejecutaron casos de VAL-28.
+
+6. LÍMITES
+E1 estática. No se ejecutaron navegador, Apps Script, llamadas HTTP, Spreadsheet productiva o de pruebas, Drive, YouTube, restauraciones, migraciones, concurrencia, pruebas de estrés ni despliegues. No se verificó la ACL real de deployments, Spreadsheet o Drive. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; AUG-122 a AUG-135 nuevas; VAL-28 pendiente. Tarea 19 conserva estado histórico COMPLETADA, sin certificación funcional de las pruebas 31–38.
+================================================================================
