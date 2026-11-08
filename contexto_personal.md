@@ -945,3 +945,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-013-001 a H-AUD-013-010 permanecen abiertos o relacionados. AUG-092/AUG-093/AUG-094 pendientes; AUG-043/AUG-068 con adendas; AUG-040 mantiene coordinación; VAL-22 planificada.
 - No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## Continuidad AUD-T-014 — AUD-20261108-S095
+- Revalidación incremental AUD-20261108-S095/AUD-CP-0094; E1 histórica deefa3a8ceca4aae892c61d0e99fec73c3e44837 (AUD-20261108-S032/AUD-CP-0032); checkpoint anterior 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11 (AUD-20261108-S054/AUD-CP-0053); HEAD e8a533219006742d30cc7bddf506da777eb83319; árbol d0b135742067e354db9d8c4e80414738dfb7a189; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 63 commits posteriores; desde la continuidad anterior: 42 commits. Los diffs muestran únicamente ocho documentos de auditoría.
+- Los siete archivos funcionales del alcance conservan SHA E1: rich-text.js, ui.js, add_cortes.html, Services/write.js, Services/feedback.js, style.css y service-worker.js.
+- H-AUD-014-001 a 003 permanecen abiertos; AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin hallazgos ni tareas duplicadas.
+- No se ejecutaron pruebas dinámicas, navegador/DOMParser real, XSS, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-015; su continuidad ya está registrada, no duplicar.

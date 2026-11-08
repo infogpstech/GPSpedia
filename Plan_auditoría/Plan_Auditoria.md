@@ -2515,3 +2515,44 @@ Sin cambios de aplicación, OAuth scopes, Google Cloud, endpoints, configuració
 
 ### Siguiente iteración
 AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación de continuidad E1).
+
+
+## 79. Continuidad verificada — AUD-T-014 (revalidación incremental)
+**Sesión:** AUD-20261108-S095  
+**Checkpoint:** AUD-CP-0094  
+**E1 histórica:** deefa3a8ceca4aae892c61d0e99fec73c3e44837 (AUD-20261108-S032 / AUD-CP-0032)  
+**Checkpoint de continuidad anterior:** 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11 (AUD-20261108-S054 / AUD-CP-0053)  
+**HEAD revalidado:** e8a533219006742d30cc7bddf506da777eb83319  
+**Árbol actual:** d0b135742067e354db9d8c4e80414738dfb7a189  
+**Rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-014-001 A H-AUD-014-003 PERMANECEN ABIERTOS; VALIDACIÓN FUNCIONAL Y DE SEGURIDAD PENDIENTE.
+
+### Comparación Git
+La comparación E1→HEAD registra 63 commits posteriores, sin divergencia y con E1 como ancestro directo. La comparación desde el checkpoint anterior 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11 registra 42 commits adicionales. En ambas comparaciones, los cambios se limitan a los ocho documentos de auditoría: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md.
+
+Los siete archivos de aplicación del alcance conservan exactamente sus SHA E1 y los del checkpoint anterior:
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+
+No existe deriva funcional en los archivos del alcance desde la E1 ni desde la revalidación anterior.
+
+### Hallazgos revalidados
+- **H-AUD-014-001:** sigue vigente. Los handlers de WRITE/FEEDBACK almacenan contenido enriquecido recibido sin aplicar saneamiento HTML autoritativo antes de persistir. Se conserva la evidencia documentada en Services/write.js (handleAddSupplementaryInfoLocked: apertura, cableAlimen/cableAlimen2/cableAlimen3 y notaImportante) y Services/feedback.js (handleAddProblem, handleAddSolution, handleAddPrevention y handleUpdatePysItem). Relación: AUG-095.
+- **H-AUD-014-002:** sigue vigente. ui.js mantiene dos sinks descriptivos sin sanitizeHtmlContent: updateSlide() inserta activeCable.content en slideText.innerHTML y la vista sin carrusel inserta activeContent en contentP.innerHTML. Otros consumidores sí usan el sanitizador, por lo que la aplicación sigue siendo desigual. Relación: AUG-096.
+- **H-AUD-014-003:** sigue vigente. El ajuste gpsepedia_rich_text_mode estricto/avanzado descrito en el requisito no está conectado; rich-text.js mantiene allow-list fija ampliada y createRichTextToolbar expone controles ampliados sin leer el modo. Relación: AUG-097.
+
+Se conservan como controles positivos estáticos el editor compartido, toolbar de formato, listas UL/OL y marcadores, comportamiento de Enter en listas, DOMParser con allow-list, filtrado de atributos/URLs/estilos, normalización LF/CRLF y precache de rich-text.js en service worker. Su presencia no certifica seguridad ni comportamiento real del navegador.
+
+H-AUD-014-001 a H-AUD-014-003 permanecen abiertos. AUG-095 a AUG-097 continúan pendientes y VAL-23 permanece planificada. No se crean hallazgos ni tareas duplicadas; la Tarea 13 conserva su estado histórico COMPLETADA.
+
+### Límites
+Solo continuidad E1 y comparación documental/estática. No se ejecutaron navegador, DOMParser real, payloads XSS controlados, Playwright, HTTP, Apps Script, persistencia/concurrencia real, service worker en dispositivo ni E2/E3. No se modificaron código, servicios, contratos, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue; rama base intacta.
+
+### Siguiente unidad
+AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (continuidad ya registrada; continuar según orden vigente sin duplicar su registro).

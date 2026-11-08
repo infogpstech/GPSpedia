@@ -948,3 +948,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-092/AUG-093/AUG-094 continúan pendientes; AUG-043/AUG-068 mantienen adendas; AUG-040 conserva coordinación de approveVideo; VAL-22 planificada. No duplicar.
 - Solo continuidad E1 y revisión documental. Sin YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## 68. AUD-T-014 — revalidación incremental de continuidad E1
+- Sesión AUD-20261108-S095; checkpoint AUD-CP-0094; E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837; checkpoint previo 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11; HEAD actual e8a533219006742d30cc7bddf506da777eb83319; árbol d0b135742067e354db9d8c4e80414738dfb7a189; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia; comparación desde la continuidad anterior: 42 commits. En ambos casos el diff solo contiene ocho documentos de auditoría.
+- Los siete archivos funcionales de alcance conservan SHA exactos: rich-text.js a7180766bb5097be510153edd851f4dfa939912c; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5.
+- H-AUD-014-001 a 003 continúan abiertos: falta saneamiento autoritativo backend; dos sinks descriptivos en ui.js omiten sanitizeHtmlContent; gpsepedia_rich_text_mode estricto/avanzado no conectado. AUG-095 a AUG-097 pendientes; VAL-23 planificada.
+- Controles positivos presentes de forma estática; sin prueba dinámica. No se crean hallazgos ni tareas duplicadas.
+- No ejecutados: navegador/DOMParser real, XSS, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.

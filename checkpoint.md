@@ -2131,3 +2131,34 @@ Sin cambios funcionales, OAuth scopes, Google Cloud, endpoints, configuración, 
 Commit documental único: docs(audit): verify AUD-T-013 continuity; parent 35122f7fb8b41de7dd6900d5bd567b66ccc363a6; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación de continuidad E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0094
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S095
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work | HEAD inicial: e8a533219006742d30cc7bddf506da777eb83319 | árbol: d0b135742067e354db9d8c4e80414738dfb7a189.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificará.
+Tarea: AUD-T-014 — revalidación incremental de continuidad E1 de texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+E1 histórica: deefa3a8ceca4aae892c61d0e99fec73c3e44837; sesión original AUD-20261108-S032/AUD-CP-0032.
+Continuidad anterior: 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11; sesión AUD-20261108-S054/AUD-CP-0053.
+Alcance: rich-text.js, ui.js, add_cortes.html, Services/write.js, Services/feedback.js, style.css y service-worker.js.
+Hallazgos: H-AUD-014-001 a H-AUD-014-003. Tareas relacionadas: AUG-095/AUG-096/AUG-097. Validación planificada: VAL-23.
+Preflight: E1→HEAD 63 commits posteriores; continuidad anterior→HEAD 42 commits; los diffs contienen únicamente ocho documentos de auditoría. SHA de los siete archivos de aplicación verificados contra E1 y el checkpoint anterior. Base intacta.
+Sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0094
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S095
+Tarea: AUD-T-014 — revalidación incremental de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-014-001 A H-AUD-014-003 PERMANECEN ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE.
+HEAD auditado: e8a533219006742d30cc7bddf506da777eb83319; árbol d0b135742067e354db9d8c4e80414738dfb7a189; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: deefa3a8ceca4aae892c61d0e99fec73c3e44837; checkpoint previo 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11. Comparaciones: 63 commits E1→HEAD y 42 commits desde la continuidad anterior; sin divergencia.
+Los siete archivos de aplicación conservan SHA E1: rich-text.js a7180766bb5097be510153edd851f4dfa939912c; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5.
+Hallazgos: H-AUD-014-001 a 003 siguen abiertos. AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin nuevos hallazgos ni tareas duplicadas.
+Documentos actualizados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md al no existir hallazgos/tareas nuevos.
+No ejecutados: navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3.
+Sin cambios funcionales, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue.
+Commit documental único: docs(audit): verify AUD-T-014 continuity; parent e8a533219006742d30cc7bddf506da777eb83319.
+Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; su continuidad previa ya está registrada.
+================================================================================
