@@ -1041,3 +1041,51 @@ Archivos documentales actualizados: Auditoría.txt, Tareas.txt, Plan_auditoría/
 El commit documental se publicará con parent_sha/expected_sha d8a164c2974f4dc472f169442c2b7efb969bf350, force:false. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 deberá permanecer intacta.
 Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0032
+Fecha 2026-11-08 | Sesión AUD-20261108-S032
+Tarea AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+Repositorio infogpstech/GPSpedia | Rama GPSpedia2.2.5_work.
+HEAD inicial deefa3a8ceca4aae892c61d0e99fec73c3e44837 | árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38 | parent d8a164c2974f4dc472f169442c2b7efb969bf350.
+Rama base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Alcance: Tarea 13, requerimiento posterior de listas/saltos, rich-text.js, integraciones UI, sanitizador, backend WRITE/FEEDBACK, renderizado, CSS y service worker.
+Sin cambios de aplicación iniciados.
+
+BLOBS DE REFERENCIA
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- Tareas.txt 78c27dc95bba03bdf590eb39b83f7a7bcdcdbd89
+- Plan_auditoría/Plan_Auditoria.md ad8b44c5a1d7cad9a5573b663f811ab06338341d
+- Plan_auditoría/Aug_Tareas.md 26b2d4a23bbe80c3d649e2c13c1edb955cf12f5b
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0032
+Fecha 2026-11-08 | Sesión AUD-20261108-S032
+Tarea AUD-T-014: E1 ESTÁTICA COMPLETADA; H-AUD-014-001 a H-AUD-014-003 documentados; validación funcional/seguridad pendiente.
+HEAD padre deefa3a8ceca4aae892c61d0e99fec73c3e44837; árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta; rama GPSpedia2.2.5_work.
+
+RESULTADO
+- Nuevas AUG-095 a AUG-097; VAL-23 planificada.
+- Controles presentes: módulo compartido, toolbar reutilizada, formatos, listas UL/OL, marcadores, Enter, sanitizador allow-list, normalización de saltos y precache v14.
+- Riesgos abiertos: backend almacena HTML sin saneamiento; dos sinks de catálogo usan innerHTML directo; modo estricto/avanzado no está conectado.
+- No se modificó código, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+- No se ejecutaron navegador, DOMParser, XSS, Playwright, HTTP, Apps Script, pruebas de persistencia, service worker en dispositivo ni E2/E3.
+- Solo documentación; no hubo merge ni despliegue.
+
+Archivos documentales actualizados: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+El commit documental se publicará con parent_sha/expected_sha deefa3a8ceca4aae892c61d0e99fec73c3e44837, force:false. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 deberá permanecer intacta.
+Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos.
+================================================================================

@@ -62,7 +62,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
 | AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE |
 | AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/YOUTUBE PENDIENTE |
-| AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | POR AUDITAR |
+| AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
 | AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | POR AUDITAR; incluye cancelación |
 | AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | POR AUDITAR |
 | AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | POR AUDITAR |
@@ -835,3 +835,14 @@ Hallazgos: credenciales faltantes; publicación pending antes de aprobación; de
 Tareas: nuevas AUG-092 a AUG-094; adendas AUG-043/AUG-068; AUG-040 conserva coordinación; VAL-22 planificada.
 Límites: E1 estática; sin YouTube API/OAuth/XHR/navegador/Apps Script/Spreadsheet real, concurrencia, red interrumpida, 308, XSS ejecutado ni E2/E3. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## 37. Iteración técnica — AUD-T-014
+Sesión AUD-20261108-S032 | Checkpoint AUD-CP-0032 | HEAD deefa3a8ceca4aae892c61d0e99fec73c3e44837 | árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-014-001 a H-AUD-014-003 abiertos; validación funcional/seguridad pendiente.
+Alcance: Tarea 13 y ampliación de listas/saltos naturales; rich-text.js, ui.js, add_cortes.html, WRITE/FEEDBACK, detalle/carrusel/impresión, CSS y service worker.
+Controles: editor compartido; barras en formularios; UL/OL y marcadores; Enter continuar/salir; sanitizer allow-list; normalización de LF/CRLF; estilos de listas y precache v14.
+Hallazgos: backend persiste HTML sin saneamiento autoritativo; dos sinks de contenido de catálogo omiten sanitizer; modo estricto/avanzado descrito en requisito no está conectado.
+Tareas: nuevas AUG-095 a AUG-097; VAL-23 planificada. Hallazgos de render/sanitización no duplican AUG-039 ni AUG-094.
+Límites: E1 estática; sin navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, service worker en dispositivo ni E2/E3. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar cancelación de filtros rápidos documentada.

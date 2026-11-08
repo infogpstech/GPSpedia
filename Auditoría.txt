@@ -10011,3 +10011,86 @@ LÍMITES
 E1 estática; sin YouTube API, OAuth real, XHR, navegador, Apps Script desplegado, Spreadsheet/Drive real, concurrencia, red interrumpida, 308, payload XSS ejecutado ni E2/E3. No se modificaron código, assets, endpoints, configuración OAuth/Cloud, Drive, Spreadsheet, datos productivos ni deployments.
 Resultado: E1 COMPLETADA; H-AUD-013-001 a H-AUD-013-010 abiertos o vinculados; validación funcional/seguridad/YouTube pendiente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-014: TEXTO ENRIQUECIDO, SANITIZACIÓN, LISTAS, PÁRRAFOS Y SALTOS DE LÍNEA
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S032 | Checkpoint: AUD-CP-0032
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: deefa3a8ceca4aae892c61d0e99fec73c3e44837 | Árbol: af44c6c3d2c911f72e6891f9b935a83fdcb83a38
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+ALCANCE Y MÉTODO
+E1 estática de Tarea 13 y su ampliación posterior de listas/saltos naturales. Revisión de rich-text.js, integración en ui.js/add_cortes.html/index.html/main.js, presentación style.css, caché service-worker.js y persistencia en Services/write.js/Services/feedback.js. Contraste con Tarea 13, requerimiento pendiente “Ampliar las barras de texto enriquecido con listas y respeto automático de saltos de línea”, commit 79230c57b34ab345db318d42b2d851f4faa6588a y revisiones pre-commit H-RTE-07 a H-RTE-11.
+
+ARCHIVOS/BLOBS REVISADOS
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c.
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb.
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e.
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a.
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af.
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670.
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9.
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5.
+- Tareas.txt 78c27dc95bba03bdf590eb39b83f7a7bcdcdbd89.
+- Plan_auditoría/Plan_Auditoria.md ad8b44c5a1d7cad9a5573b663f811ab06338341d.
+- Plan_auditoría/Aug_Tareas.md 26b2d4a23bbe80c3d649e2c13c1edb955cf12f5b.
+
+INVENTARIO E INTEGRACIÓN REVISADOS
+1. rich-text.js centraliza SAFE_MARKERS, fuentes/tamaños/colores, splitSelectionIntoListItems(), applyRichTextFormat(), applyRichTextColor(), attachListKeyboardBehavior(), createRichTextToolbar(), sanitizeSafeStyle() y sanitizeHtmlContent() (líneas 1–431).
+2. La barra ofrece negrita, cursiva, subrayado, tachado, color, tamaño, fuente, marcador UL, lista UL y lista OL (243–305). El helper de ui.js se encuentra en líneas 16–21; callsites de edición: nota importante 2188, corte 2953, Inbox 5553, apertura/alimentación 5830/5868, Tutorial 6639 y PyS descripción/solución/prevención 8798/8802/8806. Formularios dinámicos incluyen data-rich-target en ui.js:7017, 7460, 7786, 7864, 8198, 8207 y 9128.
+3. add_cortes.html contiene placeholders de barra para ubicacionCorte1, apertura, cableAlimen y notaImportante (229–324); crea las barras en inicialización (622–628) y envía valores al servicio addSupplementaryInfo (1297–1324).
+4. Sanitizador compartido: DOMParser; allow-list de B/STRONG/SPAN/BR/P/DIV/I/EM/U/S/STRIKE/OL/UL/LI/A/IMG/SMALL/MARK/FONT; atributos específicos, URL http/https y mailto/tel para enlaces, https para imágenes, estilos mediante sanitizeSafeStyle; normalización CRLF/LF a BR (327–431).
+5. style.css define marcadores UL mediante data-gp-marker y pseudoelementos (3418–3442); ui.js reproduce reglas de marcadores en impresión (9395–9401).
+6. service-worker.js incluye rich-text.js en precache y usa gpsepedia-cache-v14 (1–18).
+7. Vistas ya sanitizadas incluyen createDetailParagraph (ui.js:1665), nota importante (2193), algunos datos de corte (2964–2966), Inbox (5583–5631), secciones de detalle (8883) e información de ficha/impresión (9292–9354).
+
+H-AUD-014-001 — Persistencia backend almacena HTML enriquecido sin sanitización autoritativa
+Prioridad Alta; nueva AUG-095.
+Evidencia: Services/write.js handleAddSupplementaryInfoLocked (791–816) escribe apertura, cableAlimen/cableAlimen2/cableAlimen3 y notaImportante directamente con setValue; Services/feedback.js handleAddPysItem (1390–1450), handleAddSolution/handleAddPrevention (1458–1495) y handleUpdatePysItem (1958–1995) guardan descripción/solución/prevención sin invocar un sanitizador HTML. No se encontró una utilidad de sanitización de rich text en los servicios revisados.
+Impacto: el backend conserva markup arbitrario enviado por llamadas directas o clientes modificados; la protección depende de cada consumidor frontend y no satisface la especificación de Tarea 13 que describe saneamiento en cliente y servidor. Los registros históricos/importados también requieren política de lectura segura.
+Criterio: aplicar una allow-list equivalente en el límite autoritativo de escritura o almacenar una representación canónica segura; validar tipo/tamaño y campos por acción; conservar formatos permitidos; no confiar en el saneamiento del navegador; revisar datos históricos en render sin migración masiva no autorizada; probar llamadas directas a cada handler y contenido normal/enriquecido/malicioso.
+
+H-AUD-014-002 — Dos rutas de renderizado de descripciones insertan contenido de catálogo sin sanitizar
+Prioridad Alta; nueva AUG-096.
+Evidencia: ui.js updateSlide() asigna slideText.innerHTML con activeCable.label y activeCable.content (5905–5909); la vista sin carrusel asigna contentP.innerHTML = activeContent (5998–6004). Ambos valores proceden de secciones del catálogo y el contenido enriquecido puede persistir desde Cortes/servicios. En contraste, otros consumidores usan sanitizeHtmlContent.
+Impacto: esas rutas omiten la allow-list y pueden interpretar HTML/event handlers de datos almacenados; constituyen sinks XSS en el ciclo de detalle/carrusel de cables y secciones suplementarias. No se ejecutaron payloads ni se afirma explotación en producción.
+Criterio: sanitizar todos los sinks HTML de contenido descriptivo antes de insertarlos; mantener label como texto, no interpolarlo como markup; inventariar detalle, carrusel, impresión, exportación y vistas offline/alternativas; probar payloads controlados en cada ruta.
+
+H-AUD-014-003 — El modo configurable estricto/avanzado descrito en Tarea 13 no está conectado al sanitizador vigente
+Prioridad Media; nueva AUG-097.
+Evidencia: Tareas.txt especifica clave localStorage gpsepedia_rich_text_mode, modo estricto por defecto (B/STRONG/SPAN/BR) y modo avanzado. En HEAD revisado no se encontró esa clave ni lectura de modo en api-config.js, ui.js, main.js, index.html o rich-text.js. sanitizeHtmlContent mantiene una allow-list única que admite siempre P/DIV/I/EM/U/S/STRIKE/OL/UL/LI/A/IMG/SMALL/MARK/FONT; createRichTextToolbar presenta siempre los controles ampliados.
+Impacto: no se puede seleccionar ni aplicar el modo estricto solicitado; contenido estructural/avanzado se acepta en todos los contextos y el comportamiento no corresponde al mecanismo de configuración documentado.
+Criterio: implementar y conectar el modo en fuente de configuración autoritativa; default estricto; allow-list y toolbar coherentes por modo; persistencia y permisos del ajuste; probar modo ausente, inválido, estricto, avanzado, cambio de modo y registros históricos.
+
+CONTROLES PRESENTES / CORRECCIONES HISTÓRICAS REVALIDADAS
+- Lógica compartida de formato y barras dinámicas reutilizadas en múltiples formularios.
+- Marcadores independientes UL mediante data-gp-marker y estilos en detalle/impresión.
+- Conversión de líneas seleccionadas, soporte de listas ya existentes, Enter para continuar/salir, tratamiento de P/DIV y BR internos y normalización de saltos naturales.
+- Sanitizador con allow-list de etiquetas/atributos, filtros de URL/CSS y normalización de saltos.
+- El commit 79230c57 documenta correcciones H-RTE-07 a H-RTE-11: modificación de lista existente, división de P/DIV y BR, posición del cursor, wrappers DIV y escapes regex. Se confirma su presencia estática; no se presume validación de navegador.
+- service worker incorpora rich-text.js en cache v14.
+- No se encontró referencia a gpsepedia_rich_text_mode en los módulos de configuración/interfaz revisados.
+
+VALIDACIÓN PENDIENTE — VAL-23
+1. Barras en cada formulario/campo identificado, incluido Inbox, contacto, add_cortes, cortes, apertura, alimentación, Tutorial, PyS, solución y prevención.
+2. Negrita/color/saltos; controles existentes cursiva/subrayado/tachado/fuente/tamaño.
+3. Crear lista UL con cada marcador; verificar independencia entre listas del mismo campo.
+4. Crear OL y verificar numeración después de guardar/editar/recargar.
+5. Convertir texto seleccionado y líneas con LF/CRLF; no duplicar ni perder texto.
+6. Enter en LI con texto, selección, LI vacío intermedio y último LI; comprobar cursor, salida y listas anidadas.
+7. Compatibilidad de contenido histórico: texto plano, BR, P/DIV, UL/OL y marcadores.
+8. Sanitizador: script, onerror, SVG, iframe, srcdoc, javascript:, data:, enlaces mailto/tel, URL HTTPS, CSS malicioso y HTML malformado.
+9. Llamadas directas backend para Cortes, PyS, solución, prevención y edición; comprobar sanitización sin confiar en frontend.
+10. Renderizar detalle, carrusel, sección sin carrusel, impresión, exportación, Inbox y offline; confirmar que no queda sink sin sanitizar.
+11. Modo estricto por defecto y modo avanzado; persistencia del ajuste y compatibilidad con sesiones/roles.
+12. Service worker v14: instalación, actualización, caché de rich-text.js y recuperación offline.
+Estado VAL-23: PLANIFICADA; no ejecutada.
+
+LÍMITES
+E1 estática. No se ejecutaron navegador, DOMParser real, pruebas XSS, Playwright, edición/guardado real, HTTP, Apps Script, Spreadsheet/Drive, service worker en dispositivo ni E2/E3. No se verificó deployment. No se modificaron código, assets, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 COMPLETADA; H-AUD-014-001 a H-AUD-014-003 abiertos; validación funcional/seguridad y matriz VAL-23 pendientes.
+================================================================================

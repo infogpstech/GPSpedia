@@ -289,3 +289,31 @@ Sesión AUD-20261108-S031 | Checkpoint AUD-CP-0031 | HEAD d8a164c2974f4dc472f169
 14. Enlaces manuales conservan comportamiento y se distinguen de pending.
 15. Cierre del detalle detiene/remueve iframe por todos los métodos.
 - Estado VAL-22: PLANIFICADA; no ejecutada.
+
+
+## 21. Actualización de cobertura — AUD-T-014
+Sesión AUD-20261108-S032 | Checkpoint AUD-CP-0032 | HEAD deefa3a8ceca4aae892c61d0e99fec73c3e44837 | árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-014 E1 estática completada; H-AUD-014-001 a H-AUD-014-003 documentados; validación funcional/seguridad pendiente.
+- Catálogo AUD-T: 38 unidades; 28 con E1 completada, 1 parcial y 9 por auditar.
+- Catálogo AUG: 96 IDs únicos dentro de AUG-001 a AUG-097; AUG-015 continúa ausente.
+- Nuevas AUG-095 a AUG-097: saneamiento backend, renderizado de contenido enriquecido en todos los sinks y conexión del modo estricto/avanzado.
+- VAL-23 planificada para editores, listas, saltos, sanitización, persistencia, sinks, modos y service worker.
+- Se revalidan correcciones históricas H-RTE-07 a H-RTE-11 de 79230c57 solo por presencia estática; no equivalen a pruebas funcionales.
+- El backend WRITE/FEEDBACK persiste HTML sin saneamiento autoritativo; ui.js conserva dos sinks directos de contenido descriptivo; no se ejecutó XSS.
+- service-worker.js precachea rich-text.js en v14; falta validar actualización/uso offline en dispositivo.
+- No se ejecutaron DOMParser real, Playwright, navegador, HTTP, Apps Script, Spreadsheet/Drive real, XSS, persistencia, service worker en dispositivo ni E2/E3.
+
+### VAL-23 — Matriz pendiente de validación texto enriquecido
+1. Barras de Inbox, contacto, add_cortes, cortes, apertura, alimentación, Tutorial, PyS, solución y prevención.
+2. Negrita/color/saltos y controles existentes de cursiva/subrayado/tachado/fuente/tamaño.
+3. UL por cada marcador; independencia entre listas del mismo campo.
+4. OL, numeración y conservación tras guardar/editar/recargar.
+5. Conversión de selección y líneas LF/CRLF sin duplicación/pérdida.
+6. Enter en LI normal, con selección, vacío intermedio y último LI; cursor, salida y anidamiento.
+7. Texto plano e histórico con BR/P/DIV/UL/OL y marcadores.
+8. Sanitizador: script, onerror, SVG, iframe, srcdoc, javascript:, data:, URL, CSS y HTML malformado.
+9. Llamadas directas backend en Cortes/PyS/solución/prevención/edición.
+10. Detalle, carrusel, sección sin carrusel, impresión, exportación, Inbox y offline.
+11. Modo estricto por defecto, avanzado, persistencia y permisos.
+12. Service worker v14: instalación, actualización, caché y recuperación offline.
+- Estado VAL-23: PLANIFICADA; no ejecutada.

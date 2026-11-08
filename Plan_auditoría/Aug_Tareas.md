@@ -1312,3 +1312,33 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - Probar atrás/gesto, X, Cancelar, overlay padre y carga activa; cada retroceso debe cerrar solo el overlay superior.
 
 - 2026-11-08 — AUD-T-013: nuevas AUG-092 a AUG-094; adendas AUG-043/AUG-068. Inventario: 93 IDs únicos dentro de AUG-001 a AUG-094; AUG-015 continúa ausente.
+
+
+## Hallazgos derivados de AUD-T-014 — 2026-11-08
+
+### AUG-095 — Sanitización autoritativa del contenido enriquecido en backend
+- Origen: H-AUD-014-001. Tarea AUD-T-014/Tarea 13. Sesión/checkpoint: AUD-20261108-S032/AUD-CP-0032. Prioridad: Alta.
+- Evidencia: Services/write.js handleAddSupplementaryInfoLocked (791–816); Services/feedback.js handleAddPysItem (1390–1450), handleAddSolution/handleAddPrevention (1458–1495) y handleUpdatePysItem (1958–1995). Los handlers escriben valores de descripción/apertura/alimentación/nota/solución/prevención sin sanitizador HTML.
+- Problema: el backend conserva markup arbitrario y depende de que cada consumidor frontend lo sanee; contradice el requisito de saneamiento cliente/servidor.
+- Criterios:
+  1. Definir una allow-list canónica compatible con rich-text.js y aplicarla en los handlers autoritativos antes de persistir.
+  2. Validar tipo, longitud y campos por acción; no confiar en limpieza cliente.
+  3. Mantener texto plano y formatos autorizados; rechazar/eliminar scripts, eventos, elementos activos, esquemas URL peligrosos y CSS no permitido.
+  4. Revisar todos los sinks de lectura, incluidos detalle, carrusel, impresión, exportación y offline.
+  5. No migrar masivamente registros productivos sin autorización.
+  6. Probar llamadas directas a backend y reintentos para cada campo.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-096 — Sanitizar todas las rutas de renderizado de contenido descriptivo
+- Origen: H-AUD-014-002. Tarea AUD-T-014. Sesión/checkpoint: AUD-20261108-S032/AUD-CP-0032. Prioridad: Alta.
+- Evidencia: ui.js updateSlide() (5905–5909), vista sin carrusel (5998–6004); otros consumidores sí invocan sanitizeHtmlContent (1665, 2193, 2964–2966, 8883, 9292–9354).
+- Problema: activeCable.content y activeContent se asignan directamente a innerHTML, aunque son datos del catálogo y admiten contenido enriquecido.
+- Criterios: sanitizar cada sink de HTML descriptivo; usar textContent para etiquetas/identificadores; inventariar detalle, carrusel, vistas alternativas, impresión, exportación y offline; probar payloads controlados en cada ruta.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-097 — Conectar el modo estricto/avanzado de texto enriquecido
+- Origen: H-AUD-014-003. Tarea AUD-T-014/Tarea 13. Sesión/checkpoint: AUD-20261108-S032/AUD-CP-0032. Prioridad: Media.
+- Evidencia: Tareas.txt define gpsepedia_rich_text_mode y dos allow-lists; api-config.js, ui.js, main.js, index.html y rich-text.js no contienen la clave ni una lectura de modo; rich-text.js:327–431 usa una allow-list fija ampliada y createRichTextToolbar:243–305 expone siempre controles ampliados.
+- Problema: el modo estricto predeterminado y la configuración avanzada descritos en el requisito no se pueden seleccionar ni aplicar en el código vigente revisado.
+- Criterios: fuente de configuración definida; modo estricto por defecto; sanitizer y toolbar cambian coherentemente por modo; persistencia y autorización del ajuste; compatibilidad con registros existentes; pruebas de valor ausente/inválido/estricto/avanzado y cambio de modo.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.

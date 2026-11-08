@@ -6173,3 +6173,24 @@ RESULTADO
 LÍMITES
 Solo documentación. No se modificaron código, assets, endpoints, OAuth scopes, Google Cloud, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron YouTube API/OAuth/XHR/navegador/Apps Script, concurrencia, cancelación/red/308, XSS ni E2/E3. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-014
+Fecha 2026-11-08 | Sesión AUD-20261108-S032 | Checkpoint AUD-CP-0032
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-014-001 a H-AUD-014-003 documentados; validación funcional/seguridad pendiente.
+HEAD deefa3a8ceca4aae892c61d0e99fec73c3e44837 | árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+
+RESULTADO
+- Alcance: Tarea 13 y ampliación de listas/saltos naturales; rich-text.js, ui.js, add_cortes.html, backend WRITE/FEEDBACK, detalle/carrusel/impresión, CSS y service worker.
+- Controles presentes: módulo compartido, barras reutilizadas, negrita/cursiva/subrayado/tachado/color/fuente/tamaño, UL/OL y cuatro marcadores, Enter continuar/salir, sanitizer DOMParser allow-list, normalización LF/CRLF a BR, CSS de marcadores y precache v14.
+- H-AUD-014-001: backend WRITE/FEEDBACK persiste campos enriquecidos sin sanitización autoritativa (AUG-095).
+- H-AUD-014-002: ui.js inserta activeCable.content y activeContent sin sanitizeHtmlContent en detalle/carrusel (AUG-096).
+- H-AUD-014-003: el modo gpsepedia_rich_text_mode estricto/avanzado descrito en Tarea 13 no aparece conectado en los módulos revisados; sanitizador y toolbar operan siempre con allow-list/controles ampliados (AUG-097).
+- Commit histórico 79230c57 documenta correcciones H-RTE-07 a H-RTE-11; su presencia se confirma estáticamente, no funcionalmente.
+- VAL-23 agrega matriz de pruebas de formatos, listas, saltos, sanitizer, backend, sinks, modos y service worker.
+- La tarea histórica Tarea 13 permanece marcada COMPLETADA; esta auditoría registra defectos actuales y no certifica su funcionamiento.
+
+LÍMITES
+Solo documentación. No se modificaron archivos de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron navegador, DOMParser, XSS, Playwright, HTTP, Apps Script, pruebas de persistencia ni E2/E3. Sin merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================

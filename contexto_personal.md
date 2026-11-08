@@ -435,3 +435,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Fuentes: youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; Estudio_Factibilidad_YouTube.md f5b2774d0ddbfd9862f8c51cae5a31e1481825ee.
 - Límites: E1 estática; sin YouTube API/OAuth/XHR/navegador/Apps Script/Spreadsheet real, concurrencia, red interrumpida, 308, XSS ejecutado ni E2/E3. Sin cambios de aplicación/configuración/datos.
 - Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## Continuidad — AUD-T-014 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S032/AUD-CP-0032.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD deefa3a8ceca4aae892c61d0e99fec73c3e44837; árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- AUD-T-014 Texto enriquecido, sanitización, listas, párrafos y saltos de línea: E1 estática completada; H-AUD-014-001 a H-AUD-014-003 documentados; validación funcional/seguridad pendiente.
+- Fuentes principales: rich-text.js a7180766bb5097be510153edd851f4dfa939912c; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5.
+- Hallazgos: backend WRITE/FEEDBACK persiste HTML sin saneamiento autoritativo; ui.js tiene sinks directos en carrusel y sección sin carrusel; modo gpsepedia_rich_text_mode estricto/avanzado no está conectado.
+- Nuevas AUG-095 a AUG-097; VAL-23 planificada.
+- Límites: E1 estática; sin navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, service worker en dispositivo ni E2/E3. Sin cambios de aplicación/configuración/datos.
+- Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.
