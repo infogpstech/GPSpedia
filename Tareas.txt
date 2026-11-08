@@ -6050,3 +6050,32 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S027 | Checkpoint AUD-CP-0027
 - contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0027.
 Solo documentación de auditoría y trazabilidad. No se modificaron archivos de aplicación, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni operaciones externas. La rama base permanece sin cambios.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-010: REPORTES DE PROBLEMAS Y SUGERENCIAS DE CAMBIOS EN CORTES
+Fecha: 2026-11-08 | Sesión AUD-20261108-S028 | Checkpoint AUD-CP-0028.
+HEAD auditado: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | rama GPSpedia2.2.5_work | base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-010-001 a H-AUD-010-007 ABIERTOS; validación funcional, seguridad e integración pendiente.
+
+Alcance: TAREA 9 (2.1–2.3), ui.js, api-config.js, Services/feedback.js, Inbox y esquema documentado Feedbacks. Contraste histórico: 64d8d044, fb7f2fcf, db6951ed, db0eee87; revisiones H-TESTIGO-REPORT-01 y H-TESTIGO-SUGGEST-02.
+
+Controles revalidados:
+- Reporte individual asociado al índice de corte, reportId generado antes del envío y metadatos reportMetadata con vehículo, corte y testigo.
+- Extensión dinámica del esquema Feedbacks sin desplazar A:I; compatibilidad de reportes históricos.
+- Sugerencias versionadas y almacenadas independientemente en Feedbacks; estado derivado de Se resolvio; no se modifica Cortes.
+- Normalización actual de activaTestigo true/false/null y presentación de proposedValues en Inbox.
+- H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06 revalidados como corregidos en el código actual.
+
+Hallazgos nuevos:
+- H-AUD-010-001 (ALTA): reportProblem y suggestCutChange no validan sesión ni derivan identidad en backend; userId/userName son client-controlled.
+- H-AUD-010-002 (ALTA): stored XSS posible por item.subject/item.user y otros valores dinámicos insertados sin escape en innerHTML.
+- H-AUD-010-003 (MEDIA): el adjunto del reporte solo registra el nombre local; no carga ni persiste la imagen.
+- H-AUD-010-004 (MEDIA): no se valida que reportId exista ni que vehículo/corte coincidan con el reporte y el slot real.
+- H-AUD-010-005 (MEDIA): FileReader sin error/abort, fallos Drive silenciados, MIME fijo incorrecto, sin límites y acceso ANYONE_WITH_LINK.
+- H-AUD-010-006 (MEDIA): append de sugerencias sin lock ni idempotencia; riesgo de colisión/duplicado concurrente.
+- H-AUD-010-007 (MEDIA): validación incompleta de details, problemText y proposedValues; se aceptan propiedades/tipos/longitudes no restringidos.
+
+Tareas derivadas: AUG-075 a AUG-081. Sin duplicar H-TR/H-SUG históricos; se mantienen sus cierres estáticos previos.
+Límites: no se ejecutaron E2/E3, Apps Script, HTTP, navegador, FileReader real, XSS, Drive, Spreadsheet, concurrencia ni deployments. No se modificó código, assets, configuración, endpoints ni datos productivos.
+Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+================================================================================

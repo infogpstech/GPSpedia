@@ -392,3 +392,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nueva AUG-074; adenda a AUG-052. Inventario: 73 IDs AUG únicos dentro de AUG-001 a AUG-074; AUG-015 continúa ausente.
 - Límites: sin pruebas E2/E3, navegador, instalación/actualización Service Worker, recarga offline, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments. Sin cambios de aplicación, assets, endpoints, configuración ni datos productivos.
 - Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+
+## Continuidad — AUD-T-010 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S028 / AUD-CP-0028.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; árbol 283e324bca6e2b055e353059a3aa00ce38f66f5d; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-010 — reportes de problemas y sugerencias de cambios en cortes: E1 estática completada; H-AUD-010-001 a H-AUD-010-007 abiertos; validación funcional/seguridad/integración pendiente.
+- Alcance: ui.js, api-config.js, Services/feedback.js, Inbox y esquema documentado Feedbacks. Contraste con commits 64d8d044, fb7f2fcf, db6951ed y db0eee87, además de revisiones H-TESTIGO-REPORT-01/H-TESTIGO-SUGGEST-02.
+- Controles revalidados: reportMetadata dinámico, metadatos del testigo, compatibilidad histórica, contrato suggestion_cut versionado, estado derivado de Se resolvio y almacenamiento separado de Cortes.
+- Hallazgos: acciones reportProblem/suggestCutChange sin validación backend de sesión/identidad; sinks innerHTML con datos no escapados; adjunto de reporte no se carga; vínculo reportId/vehicleId/corteIndex no se verifica; pipeline de imagen de sugerencia puede bloquear/confirmar fallos y publica por enlace; append de sugerencias carece de lock/idempotencia; validación backend de texto/proposedValues incompleta.
+- Nuevas tareas AUG-075 a AUG-081. Inventario: 80 IDs AUG únicos dentro de AUG-001 a AUG-081; AUG-015 continúa ausente.
+- Límites: E1 estática; sin Apps Script, HTTP, navegador, FileReader real, XSS, Drive/Spreadsheet, concurrencia ni deployments. Sin cambios de código, assets, endpoints, configuración ni datos productivos.
+- Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.

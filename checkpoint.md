@@ -763,3 +763,80 @@ CONTINUIDAD
 - parent_sha y expected_sha deberán ser c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; force:false. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - El SHA del commit que incorpora este checkpoint será identificable en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0028
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S028 | Tarea: AUD-T-010.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial confirmado: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | Árbol inicial: 283e324bca6e2b055e353059a3aa00ce38f66f5d.
+Rama base: GPSpedia2.2.5 | HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 | Árbol base: 56353d01cde57f57ab08135f5c49d91027a137c0.
+Tarea: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+Estado inicial: POR AUDITAR. AUD-T-009 E1 estática completada; la validación funcional consolidada de las tareas sigue pendiente.
+Alcance previsto: TAREA 9 (2.1–2.3), botón por corte, modal de reporte, metadatos reportId/vehicleId/corteIndex/testigo, modal de sugerencia, carga de imágenes, persistencia independiente en Feedbacks, lectura/revisión Inbox, autorización, identidad, validación, concurrencia, historial y consumidores.
+Archivos principales: ui.js, api-config.js, Services/feedback.js; Tareas.txt, Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Contraste auxiliar Spreadsheet/GPSpedia_DB_columnas.md y commits históricos 64d8d044, fb7f2fcf, db6951ed, db0eee87.
+Hallazgos conocidos antes de esta sesión: H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06 tienen decisiones/cierres documentados; no asumir vigencia, revalidar contra HEAD actual. El requisito del reporte individual incluye imagen opcional; la revisión histórica indicó que el modal registraba solo el nombre del archivo, no el archivo. La autenticación/autorización quedó fuera de alcance en revisiones previas, pero será observada en la auditoría actual sin modificarla.
+Restricciones: E1 estática diagnóstica; no editar código, no operar Spreadsheet/Drive, no ejecutar Apps Script/HTTP/deployments ni pruebas productivas. Documentar hallazgos antes de cualquier implementación futura. No modificar la rama base.
+RESPALDOS EXACTOS (blob SHA previo):
+- checkpoint.md: 90ae78f02d45c5267aa3d5b6db2574433c99dc84
+- Auditoría.txt: 4e7958e6403d39bb1f5d7425a881c27fb9984a33
+- Tareas.txt: 8861d8f399e5e62c78b1ce6ff8a82eecef8d1238
+- Plan_auditoría/Plan_Auditoria.md: 8fa0281a196d52eceb010e86aa72d4577d958a7f
+- Plan_auditoría/Aug_Tareas.md: 7d761383ae4781472c6e87ce2de1a4e62c9875c5
+- Plan_auditoría/Consolidacion_Auditoria.md: cfe2d7f7a4f31a43c4b22953d170b6a375923dbb
+- ChangesLogs.txt: a66667ae2f1f5b282d487bff0908df296958f464
+- contexto_personal.md: 9098d208dbe9f1020574b4ed98ed50d7f1291ea1
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+Fase inicial: HEAD/rama/base/árbol y blobs previos confirmados; sin cambios de código ni operaciones externas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0028
+Fecha: 2026-11-08 | Sesión AUD-20261108-S028 | Tarea: AUD-T-010.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work.
+HEAD auditado/padre previsto: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | árbol: 283e324bca6e2b055e353059a3aa00ce38f66f5d.
+Rama base: GPSpedia2.2.5 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 | árbol base: 56353d01cde57f57ab08135f5c49d91027a137c0 (sin cambios).
+Estado final: AUDITORÍA ESTÁTICA E1 COMPLETADA; H-AUD-010-001 a H-AUD-010-007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+RESULTADO
+- Revalidados H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06 como corregidos estáticamente en los blobs actuales.
+- Documentados siete hallazgos nuevos: autenticación/identidad backend, stored XSS, adjunto de reporte no cargado, relación reportId/vehículo/corte no verificada, pipeline de imagen de sugerencia, concurrencia/idempotencia y validación insuficiente.
+- Nuevas tareas AUG-075 a AUG-081.
+- No se modificó código, assets, endpoints, configuración, Spreadsheet/Drive, datos productivos ni deployments.
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: líneas 9636–9724.
+- Tareas.txt: líneas 6055–6080.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-010 línea 61; iteración 33 líneas 797–806.
+- Plan_auditoría/Aug_Tareas.md: actualización de inventario línea 1048; nuevas AUG-075 a AUG-081 líneas 1051–1119.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera/estado e inventario; VAL-19 línea 109; actualización AUD-T-010 líneas 228–237.
+- contexto_personal.md: líneas 396–405.
+- ChangesLogs.txt: líneas 4169–4186.
+- checkpoint.md: checkpoint inicial líneas 768–793; checkpoint final líneas líneas 795–842.
+
+RESPALDOS EXACTOS (blob SHA previo a la tarea)
+- Auditoría.txt: 4e7958e6403d39bb1f5d7425a881c27fb9984a33
+- Tareas.txt: 8861d8f399e5e62c78b1ce6ff8a82eecef8d1238
+- Plan_auditoría/Plan_Auditoria.md: 8fa0281a196d52eceb010e86aa72d4577d958a7f
+- Plan_auditoría/Aug_Tareas.md: 7d761383ae4781472c6e87ce2de1a4e62c9875c5
+- Plan_auditoría/Consolidacion_Auditoria.md: cfe2d7f7a4f31a43c4b22953d170b6a375923dbb
+- ChangesLogs.txt: a66667ae2f1f5b282d487bff0908df296958f464
+- contexto_personal.md: 9098d208dbe9f1020574b4ed98ed50d7f1291ea1
+- checkpoint.md: 90ae78f02d45c5267aa3d5b6db2574433c99dc84
+- Código auditado sin modificación: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a.
+- Esquema leído sin modificación: Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05.
+
+VALIDACIÓN Y LÍMITES
+- E1: revisión estática de criterios, handlers, helpers, rutas, consumidores Inbox, esquema documentado e historial Git.
+- No se ejecutaron E2/E3, Apps Script, HTTP, navegador, FileReader real, pruebas XSS, cargas Drive, lecturas/escrituras Spreadsheet, concurrencia ni deployments.
+- No se inspeccionó ni modificó Spreadsheet/Drive productivos. Sin cambios de aplicación, configuración ni datos.
+- No hubo merge ni despliegue.
+
+CONTINUIDAD
+- Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+- El único commit documental se publicará mediante Git Database API con mensaje: docs(audit): auditar reportes y sugerencias de cortes.
+- parent_sha y expected_sha deberán ser 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; force:false. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El SHA del commit que incorpora este checkpoint será identificable en el historial de GPSpedia2.2.5_work.
+================================================================================

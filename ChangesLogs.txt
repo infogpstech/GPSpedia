@@ -4165,3 +4165,22 @@ ALCANCE
 - No se ejecutaron pruebas E2/E3, navegador, Service Worker, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen ni pruebas de red.
 - No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-010
+Fecha: 2026-11-08 | Rama GPSpedia2.2.5_work | Sesión AUD-20261108-S028
+- Auditoría.txt: líneas 9636–9724; siete hallazgos H-AUD-010-001 a H-AUD-010-007.
+- Tareas.txt: líneas 6055–6080; resultado AUD-T-010 y referencias AUG-075 a AUG-081.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-010 línea 61; iteración 33 líneas 797–806.
+- Plan_auditoría/Aug_Tareas.md: inventario línea 1048; AUG-075 a AUG-081 líneas 1051–1119.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera/estado/inventario, VAL-19 línea 109 y líneas 228–237.
+- contexto_personal.md: líneas 396–405.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0028 en líneas 768–793 y 795–842.
+- ChangesLogs.txt: líneas 4169–4186; registro de este conjunto documental en el único commit.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron ui.js, api-config.js, Services/feedback.js, Spreadsheet/GPSpedia_DB_columnas.md ni otros archivos de aplicación/esquema.
+- No se modificaron endpoints, configuración, Spreadsheet/Drive, datos productivos ni deployments.
+- No se ejecutaron Apps Script, HTTP, navegador, FileReader real, pruebas XSS, Drive/Spreadsheet, concurrencia ni deployments.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

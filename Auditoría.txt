@@ -9631,3 +9631,95 @@ No se modificaron archivos de aplicación, assets, endpoints, configuración, da
 AUD-T-009 queda con E1 estática completada y tres hallazgos nuevos abiertos. La base PWA, el manifiesto, el fallback de navegación y la persistencia IndexedDB están presentes, pero el precache no cubre el grafo ESM completo, la instalación del worker carece de diagnóstico ante fallos y la detección de instalación no contempla de forma fiable iPadOS con UA de escritorio. Los problemas generales de transacciones, cuotas, miniaturas, privacidad y timeout se mantienen en H-AUD-037/H-AUD-038 y sus tareas existentes.
 Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-010
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S028 | Checkpoint: AUD-CP-0028
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009
+Árbol auditado: 283e324bca6e2b055e353059a3aa00ce38f66f5d
+HEAD base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Árbol base: 56353d01cde57f57ab08135f5c49d91027a137c0
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-010-001 a H-AUD-010-007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+1. ALCANCE Y FUENTES
+TAREA 9 (2.1, 2.2 y 2.3): botón de reporte por corte, formulario de reporte, vínculo reportId/vehicleId/corteIndex/testigo, confirmación, modal de sugerencia, valores propuestos, imágenes, persistencia independiente en Feedbacks y consulta/revisión desde Inbox.
+Archivos revisados:
+- ui.js — blob f00f48a42ee9bf0fd200f21959eb741f113363eb. renderCutContent(), renderInboxList(), renderInboxDetail(), openReportCutModal(), showReportSuccessModal(), openSuggestCutModal().
+- api-config.js — blob a5c718d01b7da50b4b5e650c3bacd91456f4d670. ACTION_TO_SERVICE_MAP, routeAction(), reportProblem(), suggestCutChange().
+- Services/feedback.js — blob 3db189523f6cb849d33550f29971c0ec6f386b3a. assertFeedbackSession(), doPost(), actionPermissions, ensureReportMetadataColumn(), parseReportMetadata(), handleReportProblem(), normalizeSuggestionProposedValues(), parseCutSuggestionRecord(), handleGetFeedbackItems(), handleSuggestCutChange(), handlers de Inbox.
+- Spreadsheet/GPSpedia_DB_columnas.md — blob 21e353fd74ad97496de4ff15677d03a3cf9b5f05. Esquema Feedbacks A:I y extensiones dinámicas suggestionActorKey/reportMetadata.
+- Tareas.txt — especificación TAREA 9, líneas 1254–1335; requisitos 2.1–2.3 y criterios de aceptación.
+- Auditoría.txt — auditorías previas H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06; revalidación de sus decisiones contra los blobs actuales.
+Historial contrastado: 64d8d044 (integración TAREA 9), fb7f2fcf (reporte individual), db6951ed (modal de sugerencia e índice), db0eee87 (almacenamiento independiente), más las revisiones H-TESTIGO-REPORT-01 y H-TESTIGO-SUGGEST-02 documentadas el 2026-11-07.
+
+2. CONTROLES Y DECISIONES PREVIAS REVALIDADOS
+- renderCutContent() asocia el botón al índice del corte y abre openReportCutModal() con vehículo, índice y datos del corte.
+- El reporte crea reportId antes del envío; reportProblem() transmite reportId, corteIndex y activaTestigoMotor.
+- handleReportProblem() valida el formato del reportId, índice 1–3 y booleano; usa ScriptLock; escribe los campos históricos y reportMetadata antes de un único flush; no escribe en Cortes.
+- reportMetadata se añade por encabezado después de las extensiones existentes; las nueve columnas históricas A:I se conservan. El parser valida JSON, reportId, coincidencia de vehículo, índice y booleano.
+- El Inbox recupera reportMetadata como propiedad separada; los reportes históricos sin metadatos siguen siendo legibles.
+- openSuggestCutModal() normaliza activaTestigo como true/false/null; la lectura histórica de activaCheckEngine permanece compatible.
+- handleSuggestCutChange() serializa suggestion_cut con schemaVersion 2, reportId, vehicleId, corteIndex, identidad declarada, createdAt, imageUrl, details, proposedValues y estado pendiente; escribe Feedbacks, no Cortes.
+- parseCutSuggestionRecord() reconstruye suggestionData y valida coincidencia entre el vehículo del JSON y la fila, e índice 1–3. El estado visible deriva de Feedbacks.Se resolvio.
+- El Inbox conserva type='problem_report' para reutilizar responder, resolver y eliminar; el acceso de lectura/gestión del Inbox sí pasa por assertFeedbackSession y roles administrativos.
+- H-TR-05/06/07 y H-SUG-01 a H-SUG-06 se observan corregidos en los blobs actuales. H-TR-01 a H-TR-04 también tienen implementaciones actuales coherentes con sus decisiones.
+
+3. HALLAZGOS NUEVOS
+
+H-AUD-010-001 — Las acciones de reporte y sugerencia no validan sesión ni derivan la identidad en backend.
+Severidad: ALTA.
+Evidencia: Services/feedback.js:302–319 define actionPermissions y no incluye reportProblem ni suggestCutChange; doPost() enruta ambas acciones directamente a sus handlers (líneas 340 y 367). assertFeedbackSession() existe, pero no se invoca para estas dos acciones. api-config.js:164–178 reportProblem() envía userId/userName y contexto, sin sessionToken; suggestCutChange() (líneas 190–192) transmite el objeto recibido sin credenciales. handleReportProblem() (970–1042) y handleSuggestCutChange() (1293–1349) aceptan userId/userName del payload y los utilizan para atribuir el registro y la actividad.
+Impacto: una petición directa al endpoint puede falsificar la identidad y crear reportes/sugerencias sin demostrar una sesión activa. En sugerencias también alcanza la ruta de carga a Drive. La UI comprueba currentUser, pero esa comprobación no sustituye autorización del servidor. La explotación efectiva depende de la accesibilidad del deployment, que no se probó.
+Corrección propuesta: exigir una sesión activa para ambas acciones usando assertFeedbackSession(payload, null), transmitir sessionToken desde frontend y reemplazar userId/userName con la identidad obtenida de Users. No imponer rol administrativo: la especificación permite a los usuarios autorizados reportar y sugerir. Rechazar antes de cualquier escritura en Feedbacks, Drive o ActividadUsuario.
+
+H-AUD-010-002 — Datos controlables se insertan sin escape en sinks innerHTML del Inbox y de los modales.
+Severidad: ALTA.
+Evidencia: ui.js:5534–5540 inserta item.subject en renderInboxList(); ui.js:5612 en adelante inserta item.subject e item.user directamente en renderInboxDetail(). Services/feedback.js almacena vehicleId/userName recibidos del cliente y handleGetFeedbackItems() los devuelve para construir subject/user. Además, openReportCutModal() interpola currentCutData.tipo y openSuggestCutModal() interpola reportRef, vehicleId, valores actuales y opciones de dropdown en content.innerHTML (ui.js:6767–7100). En contraste, item.content y parte de los metadatos sí pasan por sanitizeHtmlContent().
+Impacto: contenido HTML/atributos aportado en nombre, identificador de vehículo, datos de corte u opciones puede persistirse y ejecutarse cuando un administrador abre el Inbox o un usuario abre el modal afectado. La ausencia de autenticación del hallazgo H-AUD-010-001 aumenta la exposición, pero la falta de escape existe independientemente.
+Corrección propuesta: construir nodos y asignar textContent/value/atributos; para contenido enriquecido usar exclusivamente el sanitizador previsto. No interpolar valores de base de datos o payloads en HTML sin escape contextual. Probar cargas de HTML/event handlers en subject, userName, vehicleId, tipo, ubicación, color y dropdowns.
+
+H-AUD-010-003 — El adjunto opcional del reporte individual no se carga ni se conserva.
+Severidad: MEDIA.
+Evidencia: openReportCutModal() presenta #rep-img-file (ui.js:6805), pero al seleccionar archivo solo agrega su nombre a fullProblemText (líneas 6839–6842). reportProblem() no transmite imgBase64 ni imageUrl (api-config.js:164–178), y handleReportProblem() solo guarda Usuario, ID_vehiculo, Problema y reportMetadata. No se crea archivo ni referencia recuperable.
+Impacto: la interfaz aparenta admitir evidencia, pero el reporte conserva únicamente el nombre local del archivo; el administrador no puede abrir la imagen. Incumple el requisito de adjuntar imagen cuando corresponda y el criterio de almacenamiento de imágenes.
+Corrección propuesta: completar el flujo de lectura/carga y persistir una referencia recuperable, con validación de tipo/tamaño y tratamiento de errores; conservar compatibilidad con llamadores históricos de reportProblem().
+
+H-AUD-010-004 — La sugerencia no comprueba que reportId, vehículo y corte correspondan al mismo reporte real.
+Severidad: MEDIA.
+Evidencia: openSuggestCutModal() sustituye un reportId ausente por REP-<timestamp> (ui.js:6925–6932). handleSuggestCutChange() convierte reportId ausente en 'N/A' y no busca el reporte original (Services/feedback.js:1293–1304). Tampoco verifica que vehicleId exista en Cortes o que corteIndex identifique un slot ocupado de ese vehículo. parseCutSuggestionRecord() solo comprueba que el vehicleId del JSON coincida con el ID de la fila y que corteIndex esté entre 1 y 3; no verifica reportId contra reportMetadata de un reporte existente.
+Impacto: pueden almacenarse propuestas huérfanas, asociadas a un identificador ficticio, o con combinación de vehículo/corte no respaldada por el reporte original. La etiqueta «Vinculado al Reporte» no garantiza integridad relacional.
+Corrección propuesta: en nuevas escrituras exigir un reportId existente y único; recuperar su reportMetadata y comprobar igualdad exacta de vehicleId/corteIndex. Validar además que el vehículo y el slot existen en el catálogo. Mantener lectura de registros históricos, sin reescribirlos.
+
+H-AUD-010-005 — El flujo de imagen de sugerencia puede quedar bloqueado o confirmar una carga fallida.
+Severidad: MEDIA.
+Evidencia: openSuggestCutModal() deshabilita el botón y ejecuta FileReader antes del bloque try; la promesa solo define onload y no define onerror/onabort (ui.js:7040–7060). Un fallo de lectura puede dejar la promesa pendiente y el formulario bloqueado. En backend, handleSuggestCutChange() captura errores de Drive, solo los registra en consola y continúa escribiendo la sugerencia con imageUrl vacío (Services/feedback.js:1305–1317); el frontend recibe success y muestra confirmación. La carga declara siempre MIME image/jpeg y extensión .jpg, aunque el input acepta image/* y se conservan bytes originales. No hay límites visibles de tamaño ni allowlist MIME. El archivo se comparte con DriveApp.Access.ANYONE_WITH_LINK.
+Impacto: una imagen elegida puede perderse sin informar; formatos PNG/WebP pueden quedar declarados como JPEG; payloads grandes o tipos no admitidos no se rechazan antes de la operación; la imagen resultante queda visible para cualquier persona que obtenga el enlace.
+Corrección propuesta: manejar load/error/abort y timeout; validar MIME y tamaño antes de leer/subir; conservar el MIME real o convertir efectivamente los bytes; no devolver éxito si falla el adjunto seleccionado; definir una política de acceso restringido y explícita en vez de publicar por enlace sin justificación. Reconciliar/eliminar archivos huérfanos si falla la escritura posterior.
+
+H-AUD-010-006 — La inserción de sugerencias carece de exclusión mutua e idempotencia.
+Severidad: MEDIA.
+Evidencia: handleSuggestCutChange() lee getLastRow(), calcula newRowNumber, copia fórmulas y escribe sin LockService (Services/feedback.js:1320–1343). handleReportProblem(), en contraste, usa ScriptLock en el bloque de inserción (línea 999). No existe identificador de operación/idempotencia para reconocer un reintento de la misma sugerencia.
+Impacto: dos solicitudes concurrentes pueden calcular el mismo newRowNumber y competir por la misma fila; una petición reintentada tras timeout puede crear duplicados. La pérdida/sobrescritura es un riesgo estático, no se reprodujo contra Spreadsheet.
+Corrección propuesta: proteger lectura de última fila, copia, escritura y flush con lock y finally; añadir una clave de operación estable para reconocer reintentos y evitar duplicados. Probar concurrencia y respuesta perdida en Spreadsheet aislada.
+
+H-AUD-010-007 — La validación backend de texto y proposedValues no limita el contrato permitido.
+Severidad: MEDIA.
+Evidencia: normalizeSuggestionProposedValues() (Services/feedback.js:1090–1102) valida que proposedValues sea objeto y normaliza únicamente activaTestigo; copia sin allowlist ni validación de tipo/longitud los demás campos y propiedades adicionales. handleSuggestCutChange() convierte details a String sin trim, límite ni rechazo de vacío (líneas 1293–1304); el handler de reporte comprueba problemText truthy, pero no normaliza espacios ni limita longitud. El formulario required del navegador no protege llamadas directas al endpoint.
+Impacto: se pueden guardar propuestas sin campos útiles, detalles vacíos o excesivos, propiedades desconocidas y tipos inesperados. Aumenta el tamaño de Feedbacks y deja el contrato dependiente de validaciones solo visuales.
+Corrección propuesta: aplicar allowlist tipo/ubicacion/colorCable/configRelay/activaTestigo; normalizar y limitar longitudes, rechazar tipos incompatibles y texto vacío; exigir al menos un campo propuesto significativo o definir explícitamente un modo de observación sin cambios. Validar también problemText en backend.
+
+4. TAREAS DERIVADAS
+- AUG-075: autenticar reportProblem/suggestCutChange y derivar actor desde sesión.
+- AUG-076: eliminar stored XSS en Inbox y HTML dinámico de los modales.
+- AUG-077: completar adjuntos de imagen en reportes individuales.
+- AUG-078: validar vínculo real reportId–vehicleId–corteIndex.
+- AUG-079: robustecer carga, formato, error y política de acceso de imágenes de sugerencias.
+- AUG-080: serializar/idempotentizar la escritura de sugerencias.
+- AUG-081: validar esquema, tipos y límites de los datos propuestos.
+
+5. LÍMITES Y RESULTADO
+Auditoría E1 estática de archivos, handlers, helpers, consumidores, esquema documentado e historial de commits. No se ejecutaron Apps Script, solicitudes HTTP, navegador, FileReader real, cargas a Drive, lecturas/escrituras de Spreadsheet, concurrencia, pruebas de XSS ni pruebas de deployment. No se inspeccionó la Spreadsheet/Drive productiva. No se modificó código, assets, endpoints, configuración, datos productivos ni deployments.
+La TAREA 9 permanece marcada como implementación histórica completada en Tareas.txt; esta auditoría no cambia esa marca, pero documenta siete hallazgos abiertos que impiden considerar el flujo completamente validado.
+Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+================================================================================

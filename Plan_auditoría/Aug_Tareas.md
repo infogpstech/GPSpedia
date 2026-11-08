@@ -1045,4 +1045,76 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   5. Probar iPhone Safari, iPadOS con UA móvil y de escritorio, apertura instalada en standalone, apertura en navegador normal y un Mac de escritorio como control negativo.
 - **Relación:** AUD-T-009 y AUG-052; no duplicar los criterios generales de instalación/actualización del Service Worker.
 
-- 2026-11-08 — AUD-T-009: nueva AUG-074; adenda a AUG-052. Inventario: 73 IDs únicos dentro de AUG-001 a AUG-074; AUG-015 continúa ausente.
+- 2026-11-08 — AUD-T-009: nueva AUG-074; adenda a AUG-052. Inventario: 80 IDs únicos dentro de AUG-001 a AUG-081; AUG-015 continúa ausente.
+
+================================================================================
+### AUG-075 — Autenticar reportes y sugerencias y derivar identidad desde sesión
+- **Origen:** H-AUD-010-001. **Prioridad:** Alta.
+- **Problema:** reportProblem y suggestCutChange no pasan por assertFeedbackSession; los helpers no transmiten sessionToken y los handlers confían en userId/userName del cliente.
+- **Criterios de aceptación:**
+  1. Exigir sesión activa para ambas acciones mediante ActiveSessions/Users, sin imponer rol administrativo adicional a los usuarios autenticados.
+  2. Transmitir sessionToken desde frontend; reemplazar userId/userName del payload con los valores resueltos en backend.
+  3. Registrar actividad con identidad verificada y rechazar la operación antes de cualquier escritura en Feedbacks, Drive o ActividadUsuario cuando falte, no coincida o esté revocada la sesión.
+  4. Probar sesión válida de cada rol permitido, token ausente/inválido/revocado, userId/token no coincidente y payload con identidad falsificada.
+
+### AUG-076 — Eliminar stored XSS en Inbox y modales de reporte/sugerencia
+- **Origen:** H-AUD-010-002. **Prioridad:** Alta.
+- **Problema:** item.subject/item.user y datos de catálogo/payload se insertan directamente en innerHTML; algunos campos del contenido sí se sanitizan, pero la protección no cubre todos los sinks.
+- **Criterios de aceptación:**
+  1. Construir texto visible con textContent y atributos/valores mediante APIs DOM; no interpolar datos externos en HTML.
+  2. Aplicar el sanitizador existente solo a contenido enriquecido que deba admitir formato; no usar sanitización parcial como sustituto de escape contextual.
+  3. Cubrir renderInboxList(), renderInboxDetail(), openReportCutModal() y openSuggestCutModal(), incluidos subject, user, vehicleId, reportId, currentCutData y dropdownOptions.
+  4. Probar HTML, SVG, atributos onerror/onload, comillas y payloads almacenados; no debe ejecutarse código al abrir Inbox, detalle ni formularios.
+
+### AUG-077 — Implementar el adjunto real de imágenes en reportes individuales
+- **Origen:** H-AUD-010-003. **Prioridad:** Media.
+- **Problema:** el modal de reporte registra el nombre del archivo como texto, pero no transmite bytes ni guarda una referencia recuperable.
+- **Criterios de aceptación:**
+  1. Leer el archivo seleccionado y transmitirlo mediante un contrato explícito y compatible desde reportProblem()/api-config.js hasta FEEDBACK.
+  2. Guardar la imagen con el mecanismo autorizado y asociar imageUrl/metadata al reportId sin mezclarla con el texto libre.
+  3. Mostrar la evidencia en Inbox mediante un enlace seguro; reportes históricos sin imagen siguen siendo válidos.
+  4. Validar MIME, tamaño y errores de lectura/carga; no confirmar éxito si el adjunto seleccionado no quedó guardado.
+  5. Mantener compatibilidad con llamadores históricos de cuatro argumentos y reportes sin imagen.
+
+### AUG-078 — Validar la relación entre reporte, vehículo y corte en sugerencias
+- **Origen:** H-AUD-010-004. **Prioridad:** Media.
+- **Problema:** la sugerencia admite reportId N/A o sintético, no busca el reporte original y no verifica que vehicleId/corteIndex correspondan al mismo reporte ni a un slot real.
+- **Criterios de aceptación:**
+  1. Exigir reportId real, existente y único para nuevas sugerencias; retirar el fallback que fabrica un ID cuando falta.
+  2. Recuperar reportMetadata y comprobar igualdad exacta de reportId, vehicleId y corteIndex antes de crear imagen o escribir.
+  3. Comprobar que el vehículo existe y que el slot de corte indicado está ocupado/identificado en el catálogo.
+  4. Mantener lectura de registros históricos y no modificar automáticamente Cortes.
+  5. Probar ID inexistente/duplicado, vehículo cruzado, corte distinto, slot vacío, reporte histórico sin metadatos y reporte válido.
+
+### AUG-079 — Robustecer carga y política de acceso de imágenes de sugerencias
+- **Origen:** H-AUD-010-005. **Prioridad:** Media.
+- **Problema:** FileReader carece de error/abort; Drive puede fallar y aun así la sugerencia se confirma; los bytes se declaran siempre image/jpeg y se comparten con ANYONE_WITH_LINK.
+- **Criterios de aceptación:**
+  1. Gestionar load/error/abort y liberar el estado de envío en todos los resultados; no dejar promesas pendientes.
+  2. Validar allowlist MIME y tamaño máximo en frontend y backend; verificar Base64 y firma/formato real.
+  3. Conservar MIME/extensión reales o convertir efectivamente los bytes antes de declararlos JPEG.
+  4. Si el usuario selecciona imagen y la carga falla, devolver error y no mostrar éxito como si la evidencia estuviera adjunta.
+  5. Definir permisos de Drive explícitos y restringidos según los usuarios que revisan el Inbox; no usar acceso ANYONE_WITH_LINK sin decisión aprobada.
+  6. Reconciliar/eliminar archivos huérfanos si falla la escritura posterior en Feedbacks.
+
+### AUG-080 — Serializar e idempotentizar la inserción de sugerencias
+- **Origen:** H-AUD-010-006. **Prioridad:** Media.
+- **Problema:** handleSuggestCutChange calcula getLastRow() y escribe la fila siguiente sin lock ni clave de operación; peticiones concurrentes o reintentos pueden colisionar o duplicar registros.
+- **Criterios de aceptación:**
+  1. Proteger lectura de última fila, copia de fórmulas, escritura y flush con LockService y liberación garantizada en finally.
+  2. Introducir una clave de operación estable para reconocer reintentos del mismo envío y devolver el resultado previo sin duplicar filas ni archivos.
+  3. Mantener intactas las columnas históricas y el estado pendiente de revisión.
+  4. Probar dos o más solicitudes concurrentes, reintento tras timeout/respuesta perdida, mismo ID con payload distinto y recuperación de fallo parcial.
+
+### AUG-081 — Validar esquema y límites de reportes y propuestas
+- **Origen:** H-AUD-010-007. **Prioridad:** Media.
+- **Problema:** proposedValues copia claves/tipos arbitrarios; details/problemText no se validan semánticamente ni tienen límites backend; el required del navegador se puede eludir.
+- **Criterios de aceptación:**
+  1. Aceptar únicamente tipo, ubicacion, colorCable, configRelay y activaTestigo con tipos definidos; rechazar claves desconocidas, arrays/objetos inesperados y valores incompatibles.
+  2. Normalizar espacios y establecer límites documentados para descripción, justificación y cada campo propuesto; validar en servidor.
+  3. Exigir texto de reporte y justificación no vacíos; exigir al menos un campo propuesto significativo o definir expresamente una modalidad de observación sin cambio de campos.
+  4. Mantener true/false/null para activaTestigo y compatibilidad de lectura histórica.
+  5. Probar propuesta de un solo campo, varios campos, no-op, texto vacío/espacios, valores excesivos, tipos incorrectos y propiedades adicionales.
+
+- 2026-11-08 — AUD-T-010: nuevas AUG-075 a AUG-081. Inventario: 80 IDs únicos dentro de AUG-001 a AUG-081; AUG-015 continúa ausente.
+================================================================================

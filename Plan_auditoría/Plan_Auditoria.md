@@ -58,7 +58,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MÓVIL PENDIENTE |
 | AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
 | AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
-| AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | POR AUDITAR |
+| AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
 | AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | POR AUDITAR |
 | AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | POR AUDITAR |
 | AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | POR AUDITAR |
@@ -793,3 +793,13 @@ Hallazgos: grafo ESM de precache incompleto (youtubeUpload.js no está incluido;
 Tareas: nueva AUG-074; adenda a AUG-052. H-AUD-037-008/009/010/011, H-AUD-038-003/004, AUG-022/AUG-051/AUG-052/AUG-065 se mantienen como antecedentes, sin duplicar sus causas.
 Límites: E1 estática; sin pruebas sintácticas, navegador, instalación/actualización Service Worker, recarga offline, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+
+## 33. Iteración técnica — AUD-T-010
+Sesión AUD-20261108-S028 | Checkpoint AUD-CP-0028 | HEAD auditado 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | árbol 283e324bca6e2b055e353059a3aa00ce38f66f5d | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-010-001 a H-AUD-010-007 abiertos; validación funcional, seguridad e integración pendiente.
+Alcance: TAREA 9 (2.1–2.3), ui.js, api-config.js, Services/feedback.js, Inbox y esquema Feedbacks. Contraste con commits 64d8d044, fb7f2fcf, db6951ed, db0eee87 y revisiones H-TESTIGO-REPORT-01/H-TESTIGO-SUGGEST-02.
+Controles: reportMetadata dinámico, identidad de corte/testigo, compatibilidad histórica, suggestion_cut versionado, estado desde Se resolvio y persistencia independiente de Cortes revalidados.
+Hallazgos: reportProblem/suggestCutChange sin sesión/identidad de servidor; stored XSS en Inbox/modales; adjunto de reporte no subido; vínculo reportId–vehículo–corte no verificado; carga de imagen de sugerencia con fallos silenciados/MIME y permisos débiles; append sin lock/idempotencia; validación backend insuficiente.
+Tareas: nuevas AUG-075 a AUG-081. No duplicar H-TR-01 a 07 ni H-SUG-01 a 06, cuyas correcciones estáticas se revalidaron.
+Límites: E1 estática; sin Apps Script, HTTP, navegador, FileReader real, pruebas XSS, Drive/Spreadsheet, concurrencia ni deployments. Sin cambios de código/datos.
+Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
