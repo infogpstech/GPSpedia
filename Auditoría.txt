@@ -9091,3 +9091,66 @@ TAREAS DERIVADAS
 CONCLUSIÓN Y LÍMITES
 E1 estática completada. Se identifican dos áreas nuevas: aislamiento/retención de snapshots locales y autorización/minimización de checkOperation. Las demás observaciones se vinculan a tareas existentes. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas E2/E3, navegador, IndexedDB real, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-003: REGISTRO DE VEHÍCULOS Y CORTES, IDEMPOTENCIA Y RESILIENCIA DE RED
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S021 | Checkpoint: AUD-CP-0021
+HEAD auditado: 06f18e42383f5be448c378bc09ab534731cfbd6b | Rama: GPSpedia2.2.5_work | Base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: E1 COMPLETADA; H-AUD-003-001 a 004 abiertos; validación funcional y de integración pendiente.
+
+1. ALCANCE Y FUENTES
+Alcance histórico confirmado en TAREA 3 y commits ancla 14bbd04f, 77ea1d0b y 2eaeb476:
+- Formulario guiado add_cortes.html; verificación de vehículo; registro nuevo/existente; cortes complementarios; segundo corte; vídeo guía; disponibilidad dinámica; «No recomendado»; opId, persistencia, recuperación y resiliencia de red.
+- Servicios WRITE y ADMIN, asignación de identidad, bloqueo, escritura de Cortes/Drive, recuperación por opId, hoja Idempotencia y respuestas.
+- api-config.js: ACTION_TO_SERVICE_MAP, routeAction() y override WRITE/ADMIN.
+- Dependencia de vídeo: youtubeUpload.js y los handlers de aprobación FEEDBACK, contrastados con H-AUD-035-001 a 004.
+Archivos y funciones principales:
+- add_cortes.html: init(), populateAllDropdowns(), isNoRecomendadoValue(), toggleNoRecomendado(), setupEventListeners(), handleStage1Submit(), handleSuggestion(), applySuggestion(), displayMatches(), proceedToStage2(), handleStage2Submit(), proceedToStage3(), handleStage3Submit(), getOrGenerateOpId(), checkAndRecoverPendingOperation(), fileToBase64(), setupImagePreview(), resetImagePreviews().
+- Services/write.js: doPost(), getAuthenticatedCollaborator(), handleCheckVehicle(), handleAddOrUpdateCut(), handleAddOrUpdateCutLocked(), handleAddSupplementaryInfo(), handleAddSupplementaryInfoLocked(), uploadImageToDrive(), buildImageUploadOperationKey()/buildImageUploadToken(), findExistingImageUpload(), recordOpId(), findRowByOpId(), handleCheckOperation().
+- Services/admin.js: doPost(), assertDeveloperSession(), handleAddOrUpdateCut(), handleAddSupplementaryInfo(), uploadImageToDrive(), recordOpId(), findRowByOpId(), handleCheckOperation(), requestNextVehicleIdFromWriteService().
+- api-config.js: API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction().
+- Contraste adicional: youtubeUpload.js, Tareas.txt (especificaciones 4.1–4.4/B31), Auditoría.txt (AUD-T-031/032/033/035/038 y sus hallazgos), AUG-039/AUG-043/AUG-053/AUG-054.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- El formulario conserva vehicleInfo y el ID del vehículo al volver desde la etapa suplementaria a la etapa de corte; la foto general no se vuelve obligatoria para un vehículo existente.
+- «No recomendado» se reconoce con normalización de mayúsculas/acentos/separadores; se deshabilitan los campos técnicos y se omite la imagen de corte.
+- El segundo corte reutiliza selectedVehicleId; WRITE/ADMIN buscan el primer slot de corte vacío y rechazan la escritura cuando no hay slot disponible.
+- handleAddOrUpdateCut() mantiene un bloqueo local por servicio, valida sesión de colaborador en WRITE y exige sesión/rol Desarrollador en ADMIN.
+- La idempotencia backend usa la hoja dedicada Idempotencia/Idempotencia_Cortes, asociación opId–vehicleId–slotIndex, estados pending/completed, SpreadsheetApp.flush() y recuperación/reparación por findRowByOpId().
+- uploadImageToDrive() valida MIME/contenido y utiliza token temporal para localizar/reutilizar cargas; el flujo de imagen cuenta con auditorías previas de reconciliación.
+- api-config.js mapea checkVehicle/checkOperation/addOrUpdateCut/addSupplementaryInfo a WRITE; el registro silencioso aplica override ADMIN, cuyo dispatcher valida rol.
+- El backend vuelve a verificar disponibilidad del slot de corte bajo el lock antes de escribir; la interfaz, sin embargo, no refleja siempre esa disponibilidad (H-AUD-003-002).
+
+3. HALLAZGOS
+H-AUD-003-001 — ALTA — La persistencia local puede fallar sin impedir el envío y el opId no queda ligado al payload esperado.
+En handleStage2Submit(), después de construir pendingOp, localStorage.setItem('gpsepedia_pending_operation', ...) está dentro de try/catch; si falla, el flujo continúa con checkOperation y addOrUpdateCut. Si también falla el segundo intento de persistencia en catch, el error se ignora. Tras perder la respuesta y recargar, el navegador puede no conservar el opId original y generar otro, anulando la garantía de reintento idempotente.
+Además, getOrGenerateOpId() reutiliza parsed.id de cualquier objeto almacenado sin validar status, vehicleId ni que corresponda a la operación que se va a enviar. checkAndRecoverPendingOperation() ignora estados distintos de processing/failed, por lo que un registro obsoleto puede permanecer. Si la limpieza removeItem falla, el código continúa y pone state.opId=null; un segundo corte puede recuperar el opId anterior desde localStorage. En WRITE y ADMIN, la rama de recuperación por findRowByOpId() usa la fila asociada al opId sin comparar el vehicleId solicitado ni una huella del payload con la operación original. El servidor puede recuperar una operación anterior en vez de crear el corte esperado.
+Finalmente, routeAction() devuelve cualquier objeto JSON cuyo status no sea exactamente 'error'; handleStage2Submit() no exige result.status === 'success' ni un vehicleId válido antes de limpiar el snapshot y avanzar a etapa 3. Una respuesta incompleta puede presentarse como guardado exitoso.
+Impacto: duplicación ante pérdida de respuesta y almacenamiento no disponible; o asociación/reutilización de una clave entre operaciones distintas. Relación: H-AUD-038-001/AUG-053 por privacidad del snapshot y H-AUD-038-005/AUG-054 por autorización de checkOperation; no duplicar esos hallazgos.
+
+H-AUD-003-002 — MEDIA — La interfaz no oculta opciones cuando los slots de cortes o vídeo ya están ocupados.
+displayMatches() genera siempre el botón «Agregar Nuevo Corte» sin contar tipoCorte1/2/3. El acordeón #second-cut-accordion también permanece disponible: no se encontró una condición que lo oculte cuando los tres slots están ocupados. El backend sí vuelve a comprobar los slots y devuelve «No hay espacios disponibles para más cortes», pero la opción se ofrece al usuario aun cuando no puede completarse.
+Para vídeo, proceedToStage3() intenta consultar state.catalogData.cortes; en add_cortes.html state.catalogData solo se lee en ese bloque y nunca se inicializa ni se asigna. Aunque state.matches contiene el registro seleccionado y sus campos, no se utiliza para esa comprobación. Por tanto, la condición de ocultar el acordeón cuando ya existe videoGuiaDesarmeUrl no queda sustentada por el estado cargado.
+El enlace manual #videoGuiaUrl tampoco se incorpora al payload de handleStage3Submit(); este problema de persistencia ya se encuentra en H-AUD-035-002/AUG-043. Se amplía esa tarea para incluir el callsite de add_cortes.html, sin crear una tarea duplicada.
+
+H-AUD-003-003 — MEDIA — Errores de lectura de archivos dejan bloqueado el formulario.
+handleStage2Submit() establece isSubmittingStage2=true y activa loading antes de convertir las imágenes. Los await fileToBase64() ocurren antes del bloque try/catch/finally; si FileReader.onerror rechaza la promesa, no se ejecuta finally, isSubmittingStage2 queda true y el overlay permanece activo.
+handleStage3Submit() activa loading y realiza conversiones fileToBase64() también antes de su try; un error de lectura deja el botón/overlay en estado de carga sin restauración garantizada.
+Impacto: el usuario puede quedar sin posibilidad de reintentar sin recargar la página; la operación aún no necesariamente fue enviada al servidor.
+
+H-AUD-003-004 — MEDIA — Los disparadores de recuperación automática no están serializados.
+checkAndRecoverPendingOperation() puede ejecutarse desde init(), el evento online y visibilitychange. No tiene bandera/mutex propio ni comprueba isSubmittingStage2 antes de consultar y modificar el estado/formulario. Varias ejecuciones pueden competir por el mismo snapshot, alternar showPhase()/state y llamar toggleLoading(false) aunque otra recuperación siga activa. Un evento online durante un envío también puede iniciar una comprobación paralela de checkOperation.
+Impacto: transiciones visuales/estado inconsistentes y recuperación concurrente difícil de reproducir. La protección isSubmittingStage2 solo serializa el submit; no serializa la recuperación automática.
+
+4. HALLAZGOS EXISTENTES RELACIONADOS — NO DUPLICAR
+- H-AUD-038-001/AUG-053: snapshot gpsepedia_pending_operation sin owner/retención y recuperación entre cuentas; la presente auditoría añade la falla de persistencia y ciclo de opId, no reemplaza la tarea de privacidad.
+- H-AUD-038-005/AUG-054 y H-AUD-035-001/004/AUG-043: checkOperation en WRITE carece de validación de sesión y devuelve rowData; el flujo YouTube tiene problemas de credenciales/ID/idempotencia. No se recrean estas tareas.
+- H-AUD-035-002/AUG-043: el enlace manual de vídeo no se persiste. Se amplía AUG-043 para el campo #videoGuiaUrl de add_cortes.html y su validación/guardado o retiro explícito.
+- H-AUD-032-001/AUG-039: addSupplementaryInfo en WRITE/ADMIN carece de autorización propia y sus callsites de etapa 3 no transmiten contexto de sesión. Mantener la tarea existente.
+- H-AUD-033-001/AUG-034: los ScriptLock de WRITE y ADMIN son locales a proyectos distintos y no forman exclusión mutua compartida. No duplicar.
+- AUD-T-031: reconciliación de cargas Drive/Spreadsheet y operaciones suplementarias sin identificador durable; mantener su tarea/criterios previos.
+- El modal (+) implementado en ui.js/offline.js tiene su propio snapshot IndexedDB y comparación de userId; no confundir ese flujo con el formulario add_cortes.html.
+
+5. LÍMITES DE LA AUDITORÍA
+E1 estática sobre los bloques y callsites del alcance, con revisión de sus dependencias y funciones auxiliares. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No se ejecutaron navegador, FileReader real, localStorage con cuota bloqueada, pérdida de respuesta HTTP, Apps Script V8, operaciones reales de Drive/Spreadsheet, concurrencia, pruebas de dos usuarios ni verificación de que los deployments publicados coincidan con estos blobs.
+================================================================================

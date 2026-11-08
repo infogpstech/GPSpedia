@@ -686,7 +686,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 ================================================================================
 CONTROL DE INVENTARIO DE IDENTIFICADORES AUG — AUD-CP-0019
 Fecha: 2026-11-07 | Sesión AUD-20261107-S019
-La revisión de encabezados y referencias del archivo identifica 53 IDs AUG únicos en el rango AUG-001 a AUG-054. AUG-015 no aparece en el contenido consultado. No crear, inferir, reutilizar ni renumerar ese identificador sin evidencia histórica.
+La revisión de encabezados y referencias del archivo identifica 57 IDs AUG únicos en el rango AUG-001 a AUG-058. AUG-015 no aparece en el contenido consultado. No crear, inferir, reutilizar ni renumerar ese identificador sin evidencia histórica.
 Los encabezados repetidos para AUG-005, AUG-006, AUG-007, AUG-008 y AUG-013, además de las ampliaciones posteriores, se conservan como adendas/actualizaciones de tareas existentes; no representan por sí solos tareas adicionales.
 AUG-001, AUG-002 y AUG-004 se mantienen como entregables transversales/equivalentes ya documentados según sus propias fichas; no duplicarlos como tareas de implementación.
 La matriz de validación consolidada está en Plan_auditoría/Consolidacion_Auditoria.md. Este inventario no modifica criterios de aceptación ni prioridades.
@@ -734,4 +734,54 @@ AUG-051 — ampliar criterios:
   5. Probar petición anónima, token inválido, otro usuario, opId inexistente, pendiente/completada y respuesta minimizada.
 - **Relación:** AUD-T-031, AUD-T-035 y AUD-T-038.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+================================================================================
+
+### AUG-055 — Garantizar el ciclo durable y la vinculación de opId en add_cortes
+- **Origen:** H-AUD-003-001. **Prioridad:** Alta.
+- **Problema:** el formulario continúa aunque no pueda persistir el snapshot; puede reutilizar un opId obsoleto y el backend no verifica que la operación recuperada corresponda al vehículo/payload solicitado.
+- **Criterios de aceptación:**
+  1. No enviar addOrUpdateCut si no se ha conservado de forma verificable el snapshot y el opId; definir una alternativa durable aprobada si localStorage no está disponible.
+  2. Validar estructura, estado, vehículo y tipo de operación de cualquier snapshot antes de reutilizarlo; no reutilizar registros completed, corruptos, ajenos o de otra operación.
+  3. Vincular opId en backend a vehicleId, slotIndex y contenido/huella de la operación; rechazar un reintento cuyo vehículo o contenido no coincida con el registro original.
+  4. Si la limpieza local falla después de confirmar, impedir que el opId anterior se reutilice para un corte nuevo; resolver/aislar el snapshot sin perder la recuperación de una respuesta incierta.
+  5. Exigir status === success y vehicleId válido/coincidente antes de borrar el snapshot y avanzar a etapa 3; tratar respuestas incompletas como resultado incierto recuperable.
+  6. Probar cuota agotada, storage bloqueado, write/remove fallido, snapshot obsoleto/corrupto, reintento mismo/diferente vehículo, respuesta perdida antes/después del commit y operación completada.
+- **Relación:** AUD-T-003; AUD-T-031; AUD-T-038/AUG-053/AUG-054.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-056 — Aplicar disponibilidad dinámica real a cortes y vídeo en add_cortes
+- **Origen:** H-AUD-003-002. **Prioridad:** Media.
+- **Criterios de aceptación:**
+  1. Calcular los slots disponibles desde el registro seleccionado y mantener la decisión sincronizada con el estado vigente.
+  2. Ocultar «Agregar Nuevo Corte» y #second-cut-accordion cuando los tres tipos de corte estén ocupados; mantener la comprobación autoritativa del backend bajo lock.
+  3. Resolver la disponibilidad de vídeo con el registro seleccionado/fuente de datos real; ocultar la opción si videoGuiaDesarmeUrl ya está ocupado.
+  4. Si otro usuario ocupa el último slot después de mostrar la opción, conservar los datos del formulario y comunicar la indisponibilidad sin duplicar ni sobrescribir.
+  5. Probar 0/1/2/3 slots, vehículo nuevo/existente, video presente/ausente y actualización concurrente.
+- **Relación:** AUD-T-003; AUG-043 (enlace y ciclo de vídeo); AUG-039 (escritura suplementaria).
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-057 — Restaurar el estado del formulario ante fallos de lectura de archivos
+- **Origen:** H-AUD-003-003. **Prioridad:** Media.
+- **Criterios de aceptación:**
+  1. Incluir todas las lecturas FileReader dentro de un flujo try/catch/finally que restaure overlay, botón y flags de envío.
+  2. Distinguir imagen opcional ausente de error real de lectura; no iniciar una petición con datos incompletos por un error de conversión.
+  3. Conservar datos recuperables y permitir reintentar sin recargar la página.
+  4. Probar FileReader success/error/abort, archivo vacío, imagen opcional ausente y fallo de lectura antes del envío en etapas 2 y 3.
+- **Relación:** AUD-T-003.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-058 — Serializar la recuperación automática de operaciones pendientes
+- **Origen:** H-AUD-003-004. **Prioridad:** Media.
+- **Criterios de aceptación:**
+  1. Permitir una sola recuperación activa por formulario/snapshot y evitar solapamiento entre init(), online y visibilitychange.
+  2. Coordinar recuperación y submit para que una consulta no cambie de etapa ni limpie el overlay mientras una escritura está activa.
+  3. Mantener el estado de loading hasta que finalicen todas las operaciones activas; gestionar errores sin bloquear la interfaz.
+  4. Probar disparadores simultáneos, retorno online durante submit, pestaña visible durante recuperación, checkOperation lento y respuestas pending/completed.
+- **Relación:** AUD-T-003; AUG-034 por coordinación de mutaciones entre proyectos.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+================================================================================
+ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
+- Incorporar #videoGuiaUrl y el flujo de add_cortes.html al criterio 6: validar el enlace manual y persistirlo mediante acción/contrato backend explícito con sesión, o retirar la opción; no dejar un input visible sin efecto.
+- Corregir el control de visibilidad del acordeón de vídeo usando una fuente de registro que sí se cargue y pueda comprobar videoGuiaDesarmeUrl.
 ================================================================================

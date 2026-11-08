@@ -4065,3 +4065,15 @@ Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S020
 - contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0020.
 Solo documentación. Sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas E2/E3, navegador, HTTP, Apps Script, IndexedDB real, cuota, concurrencia ni verificación de deployments. Rama base sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-003
+Fecha 2026-11-07 | Sesión AUD-20261107-S021 | Rama GPSpedia2.2.5_work
+- Auditoría.txt: agregado informe E1 y hallazgos H-AUD-003-001 a 004.
+- Tareas.txt: agregado resultado de AUD-T-003, criterios de AUG-055 a AUG-058 y adenda a AUG-043.
+- Plan_auditoría/Plan_Auditoria.md: actualizada fila AUD-T-003, estado global y siguiente acción; añadida iteración 26.
+- Plan_auditoría/Aug_Tareas.md: actualizado inventario a 57 IDs y añadidas AUG-055 a AUG-058/adenda AUG-043.
+- Plan_auditoría/Consolidacion_Auditoria.md: actualizados conteos AUD-T/AUG, dominios, matriz VAL-08/09/14 y siguiente acción.
+- contexto_personal.md: añadido estado de continuidad AUD-T-003.
+- checkpoint.md: añadido checkpoint inicial/final AUD-CP-0021.
+Solo documentación. Sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas funcionales o de integración.

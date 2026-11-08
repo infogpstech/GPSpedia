@@ -316,3 +316,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Controles: modal (+) compara operation.userId; ADMIN valida sesión/rol; API POST y Service Worker ignora POST; métricas solo memoria; VinSignatureStore no persiste el VIN introducido.
 - Sin cambios de aplicación, endpoints, configuración, Drive, Spreadsheet, datos productivos o deployments. Solo E1 estática; sin pruebas E2/E3 ni operaciones reales.
 - Siguiente: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red.
+
+## Continuidad — AUD-T-003 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S021 / AUD-CP-0021.
+- HEAD auditado: 06f18e42383f5be448c378bc09ab534731cfbd6b en GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1 estática completada; H-AUD-003-001 a 004 abiertos; validación funcional y de integración pendiente.
+- Hallazgos: persistencia local no obligatoria y ciclo de opId sin vinculación estricta; opciones de corte/vídeo no se ocultan según disponibilidad real; FileReader puede dejar el formulario bloqueado; recuperación online/visibilitychange/init no serializada.
+- Tareas: AUG-055 a AUG-058 nuevas; adenda a AUG-043 para #videoGuiaUrl y disponibilidad de vídeo.
+- No duplicar H-AUD-038-001/AUG-053, H-AUD-038-005/AUG-054, H-AUD-035-002/AUG-043, H-AUD-032-001/AUG-039 ni H-AUD-033-001/AUG-034. AUD-T-031 conserva reconciliación Drive.
+- Controles positivos: backend valida sesión/rol y slot; segundo corte conserva vehicleId; «No recomendado» normaliza y omite campos; Idempotencia pending/completed y token de carga.
+- Sin cambios de aplicación, endpoints, configuración, Drive, Spreadsheet, datos productivos o deployments. Solo E1 estática; sin navegador, HTTP, Apps Script, FileReader real, cuota, concurrencia ni deployments.
+- Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.

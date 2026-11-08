@@ -482,3 +482,39 @@ Cambios de aplicación: ninguno. Datos productivos: sin cambios.
 Siguiente acción: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red.
 Este checkpoint final es la última actualización documental antes del único commit. parent_sha y expected_sha: bfcdf8e57d4e09c1c920cf904265301c4554b334; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0021
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S021
+Tarea: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 06f18e42383f5be448c378bc09ab534731cfbd6b | Árbol: df13476222de951f65c7d31559598d5fe12914a5
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: add_cortes.html, Services/write.js, Services/admin.js, api-config.js; dependencias de vídeo youtubeUpload.js y hallazgos relacionados de auditorías previas.
+Fuentes: commits 14bbd04f, 77ea1d0b y 2eaeb476; especificaciones TAREA 3 (4.1–4.4/B31).
+Estado inicial real: AUD-T-003 figuraba POR AUDITAR; AUD-T-038 ya E1 completada; catálogo AUD-T 38 unidades (16 E1, 1 parcial, 21 pendientes); AUG 53 IDs únicos (AUG-015 ausente).
+Riesgos/dependencias conocidas: H-AUD-031 (reconciliación Drive); H-AUD-032-001/AUG-039 (autorización supplementary); H-AUD-033-001/AUG-034 (lock entre proyectos); H-AUD-035-002/AUG-043 (enlace manual vídeo); H-AUD-038-001/005 (privacidad snapshot/checkOperation).
+Restricciones: diagnóstico E1; no modificar código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments; no ejecutar operaciones reales.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0021
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S021 | Tarea: AUD-T-003.
+HEAD auditado/padre previsto: 06f18e42383f5be448c378bc09ab534731cfbd6b | base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 COMPLETADA; H-AUD-003-001 a 004 abiertos; validación funcional y de integración pendiente.
+Resultado: ciclo de opId depende de localStorage y puede reutilizar claves obsoletas; disponibilidad dinámica de cortes/vídeo incompleta; errores FileReader pueden dejar la UI bloqueada; recuperación automática no serializada.
+Tareas: AUG-055 a AUG-058 nuevas; adenda a AUG-043. Hallazgos existentes H-AUD-038-001/005, H-AUD-035-002, H-AUD-032-001 y H-AUD-033-001 se mantienen en sus tareas originales.
+Archivos documentales modificados: Auditoría.txt; Tareas.txt; Plan_auditoría/Plan_Auditoria.md; Plan_auditoría/Aug_Tareas.md; Plan_auditoría/Consolidacion_Auditoria.md; ChangesLogs.txt; contexto_personal.md; checkpoint.md.
+RESPALDOS EXACTOS (blob SHA previo):
+- Auditoría.txt: 0cd9ff2dee3b1861fe541797b4ae6d6be36f60f3
+- Tareas.txt: 3e2610670519884af7fa7993dfe9a03e3412b2f0
+- Plan_auditoría/Plan_Auditoria.md: 93b74332640d96d6a6cde0b9887393bec53ce166
+- Plan_auditoría/Aug_Tareas.md: b58d38c61d625dcf869063cc28b760234b5f412a
+- Plan_auditoría/Consolidacion_Auditoria.md: 98312f7558bca3d3e57bcc6315241eaa84024a7c
+- ChangesLogs.txt: 419ca49b3f4b26d9c7d79298abcb6e3fff111ab5
+- contexto_personal.md: 4ec41d42430dcff289667b3a61284c2c3cc51401
+- checkpoint.md: 351e1c5d3add46df2456dfe78380b380857976bd
+VERIFICACIÓN: inspección estática de rutas/funciones/callsites del alcance y contraste con auditorías previas; no se ejecutaron pruebas funcionales, HTTP, navegador, FileReader real, cuota localStorage, Apps Script, Drive/Spreadsheet, concurrencia ni deployments.
+Cambios de aplicación: ninguno. Datos productivos: sin cambios.
+Siguiente acción: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+Este checkpoint final es la última actualización documental antes del único commit. parent_sha y expected_sha: 06f18e42383f5be448c378bc09ab534731cfbd6b; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

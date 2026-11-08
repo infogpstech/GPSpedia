@@ -51,7 +51,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 |---|---|---|---|
 | AUD-T-001 | Recuperación del App Shell, arranque, inicialización y estabilización general | 2251d499 — Implementar Tarea 1 y router doGet en admin.js; 4445f2c7 — Mejoras de UI, corrección de sesiones y optimizaciones generales | POR AUDITAR |
 | AUD-T-002 | RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (ciclo de sesiones en AUD-T-024; legal en AUD-T-036) | 97eef18c — Implementar Tarea 2: RBAC, sesión y cumplimiento legal; 414c4258 — Fix greeting name and implement History API in users profile; 6a226c18 — ADMIN 0: retirar credenciales de logs de AUTH | AUDITADO PARCIALMENTE; HALLAZGOS ABIERTOS (AUD-CP-0002) |
-| AUD-T-003 | Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red | 14bbd04f — Implementar Tarea 3: Formulario add_cortes, idempotencia y resiliencia; 77ea1d0b — registro sin cortes y recuperación de red; 2eaeb476 — make add-cut modal idempotent | POR AUDITAR |
+| AUD-T-003 | Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red | 14bbd04f — Implementar Tarea 3: Formulario add_cortes, idempotencia y resiliencia; 77ea1d0b — registro sin cortes y recuperación de red; 2eaeb476 — make add-cut modal idempotent | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | POR AUDITAR |
 | AUD-T-005 | Modal de detalle, ampliación dinámica y acciones contextuales | d72a1e61 — Implementar Tarea 5: Ampliación dinámica en modal de detalle; 183cff59 — recuperación del botón expand plus | POR AUDITAR |
 | AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | POR AUDITAR |
@@ -196,11 +196,11 @@ No se asignará E4/E5 a una tarea basándose únicamente en documentación. No s
 | Verificación de cancelaciones/sustituciones por código e historial | PENDIENTE |
 | Matriz funcional consolidada | PENDIENTE |
 
-**Estado global:** PLANIFICACIÓN INICIAL REGISTRADA. LA AUDITORÍA TÉCNICA DE LAS 37 UNIDADES TODAVÍA NO SE DECLARA COMPLETADA.
+**Estado global actualizado:** 38 unidades AUD-T en el inventario; 17 con E1 completada, 1 parcial y 20 por auditar. La auditoría estática no equivale a validación funcional.
 
 ## 10. Próxima acción
 
-Continuar la Fase F3 con **AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación**. Crear el checkpoint individual antes de comenzar; mantener la auditoría estática y no mover, renombrar, borrar ni compartir archivos reales.
+La siguiente unidad pendiente en la secuencia de tareas es **AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial**. Crear el checkpoint individual antes de comenzar y mantener la auditoría estática sin migraciones ni operaciones productivas.
 
 
 ## 11. Iteración técnica — AUD-T-002
@@ -708,3 +708,12 @@ Fuentes: offline.js, auth.js, state.js, ui.js (funciones de persistencia), add_c
 Tareas: AUG-053/AUG-054 nuevas; adendas a AUG-022/AUG-051. Se mantienen AUG-006/AUG-042/AUG-045 y H-AUD-037-008/009 sin duplicación.
 Límites: E1 estática; sin navegador, cambio de cuenta, IndexedDB real, cuota, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red (fase F2 crítica).
+
+## 26. Iteración técnica — AUD-T-003
+Sesión AUD-20261107-S021 | Checkpoint AUD-CP-0021 | HEAD 06f18e42383f5be448c378bc09ab534731cfbd6b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 COMPLETADA; H-AUD-003-001 a 004 abiertos; validación funcional y de integración pendiente.
+Alcance: add_cortes.html, WRITE, ADMIN, api-config.js, segundo corte, vídeo guía, «No recomendado», disponibilidad, opId y recuperación de red. Contraste auxiliar youtubeUpload.js y hallazgos previos AUD-T-031/032/033/035/038.
+Hallazgos: persistencia local no obligatoria y opId sin vinculación al payload; opciones de corte/vídeo no se ocultan por disponibilidad real; FileReader puede dejar UI bloqueada; recuperación automática no serializada.
+Tareas: AUG-055 a AUG-058 nuevas; adenda a AUG-043. No duplicar AUG-039/AUG-043/AUG-053/AUG-054 ni H-AUD-033-001/H-AUD-035-002/H-AUD-038-001/005.
+Límites: E1 estática; sin navegador, cuota localStorage, FileReader real, pérdida de respuesta HTTP, Apps Script, Drive/Spreadsheet real, concurrencia ni deployments. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
