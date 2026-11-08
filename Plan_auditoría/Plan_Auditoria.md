@@ -2138,3 +2138,48 @@ No se ejecutaron navegador, payload XSS, FileReader real, dos usuarios concurren
 
 ### Siguiente iteración
 AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+
+
+## 71. Revalidación de continuidad — AUD-T-006
+
+**Sesión:** AUD-20261108-S087  
+**Checkpoint:** AUD-CP-0086  
+**E1 original:** 5ab07e75513b05a51a4c62fbc731e451105eb1a8 (AUD-20261107-S024 / AUD-CP-0024)  
+**Árbol E1:** 7138c44c0d36ee62cc3706610e068957be6ac1df  
+**HEAD revalidado:** 31fdacb038620c7e203b70d3d2e348ee6c15cf3b  
+**Árbol actual:** 58d790a24ed3ed4aa0d1aa32f1f8ff7978a0476b  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-006-001 A 003 ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron lightbox, carrusel de cables, gestos, pinch zoom, resolución de imágenes, caché de miniaturas, transparencia PNG y tratamiento dark-mode. Archivos: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los seis archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+
+### Revalidación de hallazgos y tareas
+- H-AUD-006-001 a H-AUD-006-003 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- El parámetro size continúa sin aplicarse en getImageUrl() y las cachés de memoria/IndexedDB no distinguen variantes; una miniatura PNG de 400 px puede satisfacer una solicitud de mayor resolución.
+- El selector dark-mode sigue aplicando mix-blend-mode: lighten a imágenes que no necesariamente son PNG transparentes.
+- El gesto del carrusel del modal continúa comparando solo desplazamiento horizontal y no exige predominio frente al eje vertical.
+- H-AUD-005-001/AUG-064 mantiene la ampliación del sink slideText.innerHTML en updateSlide(); no se crea hallazgo duplicado.
+- AUG-065 continúa pendiente para variantes de resolución y separación de cachés por tamaño.
+- AUG-066 continúa pendiente para limitar el modo de fusión a assets transparentes.
+- AUG-067 continúa pendiente para discriminar gestos horizontales/verticales y manejar multitáctil/touchcancel.
+- AUD-T-009/AUG-051 y AUD-T-038 conservan el alcance de caché/privacidad general; AUD-T-007 mantiene History API y overlays.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los seis archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba visual, móvil o de rendimiento.
+
+No se ejecutaron pruebas de navegador, dispositivos móviles, PWA standalone, gestos reales, pinch zoom, comparación PNG/JPEG, CDN Google, medición de bytes/latencia, IndexedDB real, canvas/toBlob ni regresión visual. No se modificó código, assets, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.

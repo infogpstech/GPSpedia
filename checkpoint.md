@@ -1884,3 +1884,34 @@ Sin cambios funcionales, endpoints, configuración, hojas, datos productivos ni 
 Commit documental único: docs(audit): verify AUD-T-005 continuity; parent 19beba9e600a7e6cbe83a2b895f96fb6c6a5f292; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0086
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S087
+Tarea: AUD-T-006 — revalidación de continuidad E1 de visualización técnica avanzada, lightbox, carrusel de cables y transparencias.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 31fdacb038620c7e203b70d3d2e348ee6c15cf3b; árbol 58d790a24ed3ed4aa0d1aa32f1f8ff7978a0476b; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 5ab07e75513b05a51a4c62fbc731e451105eb1a8; árbol E1 7138c44c0d36ee62cc3706610e068957be6ac1df; sesión original AUD-20261107-S024 / AUD-CP-0024.
+Alcance: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+Hallazgos conocidos: H-AUD-006-001 a 003. Tareas derivadas: AUG-065/AUG-066/AUG-067; adenda a AUG-064.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los seis archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: variantes de resolución/caché, composición de transparencias, gesto horizontal/vertical y sanitización del contenido de cables.
+Sin cambios de código, assets, configuración, datos productivos, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0086
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S087
+Tarea: AUD-T-006 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-006-001 A 003 ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE.
+HEAD auditado: 31fdacb038620c7e203b70d3d2e348ee6c15cf3b; árbol 58d790a24ed3ed4aa0d1aa32f1f8ff7978a0476b; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 5ab07e75513b05a51a4c62fbc731e451105eb1a8; árbol E1 7138c44c0d36ee62cc3706610e068957be6ac1df; 63 commits posteriores.
+Los seis archivos del alcance conservan SHA E1: lightbox.js 841f44a54fe12b867c0c58cc560ce4474cde3e03; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77.
+Hallazgos revalidados: H-AUD-006-001 a 003 permanecen sin cambios; H-AUD-005-001/AUG-064 conserva el sink adicional. AUG-065/AUG-066/AUG-067 pendientes. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de seis archivos y revisión de consistencia documental. No ejecutadas: navegador, móviles, PWA, gestos, zoom, CDN, IndexedDB, canvas ni mediciones.
+Sin cambios funcionales, assets, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-006 continuity; parent 31fdacb038620c7e203b70d3d2e348ee6c15cf3b; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+================================================================================

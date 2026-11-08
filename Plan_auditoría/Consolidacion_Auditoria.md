@@ -876,3 +876,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-061/AUG-062/AUG-063/AUG-064 pendientes; AUG-043/AUG-050/AUG-057 con adendas; navegación transferida a AUD-T-007.
 - Solo continuidad E1 y revisión documental. Sin navegador, XSS, FileReader, concurrencia, HTTP, Apps Script, Spreadsheet/Drive, responsive, gesto atrás ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
+
+
+## 60. AUD-T-006 — continuidad E1 y revalidación de lightbox/imagen
+- Sesión AUD-20261108-S087; checkpoint AUD-CP-0086; E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8; árbol E1 7138c44c0d36ee62cc3706610e068957be6ac1df; HEAD 31fdacb038620c7e203b70d3d2e348ee6c15cf3b; árbol actual 58d790a24ed3ed4aa0d1aa32f1f8ff7978a0476b; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; lightbox.js, ui.js, offline.js, style.css, index.html y main.js conservan SHA idénticos a E1.
+- H-AUD-006-001 a 003 permanecen abiertos: variantes/tamaños no aplicados y caché sin separación; blend mode afecta imágenes opacas; carrusel modal puede cambiar ante gesto diagonal vertical.
+- H-AUD-005-001/AUG-064 conserva el sink adicional slideText.innerHTML. AUG-065/AUG-066/AUG-067 pendientes; AUD-T-009/AUG-051/AUD-T-038 y AUD-T-007 mantienen sus ámbitos.
+- Solo continuidad E1 y revisión documental. Sin navegador, móviles, PWA, gestos, zoom, comparación visual, CDN, IndexedDB, canvas ni mediciones. Sin cambios funcionales, assets, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
