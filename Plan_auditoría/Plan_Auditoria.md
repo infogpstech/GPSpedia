@@ -1206,3 +1206,40 @@ AUG-122 a AUG-135 continúan pendientes; VAL-28 pendiente. No se crean hallazgos
 Archivos con identidad SHA comprobada: Services/write.js, Services/catalog.js, Services/admin.js, Services/Utilities.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js, Services/Test/users.js, Services/Test/README.md, api-config.js, main.js, ui.js, index.html y README.md. Todos mantienen los SHA listados en AUD-CP-0058.
 No se ejecutaron Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner de pruebas ni E2/E3. No se verificaron ACL/deployments ni datos productivos. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, pruebas ni README. Sin merge ni despliegue.
 Siguiente unidad secuencial: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+
+
+## 44. Continuidad verificada — AUD-T-020
+Sesión AUD-20261108-S060 | Checkpoint AUD-CP-0059 | HEAD E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | árbol E1 011980eae1ae02143377faffcf5148c7067bfad7 | HEAD previo 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | árbol previo 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-020 ya estaba completada. La comparación Git confirma 21 commits posteriores y únicamente ocho archivos documentales modificados. Los 27 archivos funcionales/técnicos del alcance conservan exactamente sus SHA históricos; no existe deriva funcional desde la E1.
+Se revalidan H-AUD-020-001 a H-AUD-020-004 sin evidencia de corrección en los artefactos: bloqueos anti-inspección eludibles que restringen zoom; logs de recuperación que exponen pendingOp y Base64; parsers VIN/versiones y helpers Drive duplicados con contratos divergentes; funciones internas y markup de depuración sin referencias internas confirmadas. H-AUD-020-005 permanece corregido documentalmente en la tabla de cobertura.
+AUG-136 a AUG-139 continúan pendientes; AUG-036 y AUG-104 conservan sus adendas; VAL-29 sigue planificada y no ejecutada. No se crean hallazgos ni tareas duplicados. La Tarea 21 conserva su estado histórico COMPLETADA; E1 estática no certifica comportamiento funcional.
+Archivos del alcance con identidad SHA comprobada (todos idénticos a E1):
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- lightbox.js 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Test/Auth.js f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+No se ejecutaron Node/lint, navegador, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.

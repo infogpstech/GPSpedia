@@ -628,3 +628,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tarea 19 conserva su estado histórico COMPLETADA; E1 estática no certifica ejecución funcional de pruebas 31–38.
 - Sin Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner automatizado ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+
+
+## Continuidad AUD-T-020 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S060/AUD-CP-0059; HEAD histórico 25d5d548edd79f812ab6b2bf9411d8c77fb30188, árbol 011980eae1ae02143377faffcf5148c7067bfad7; HEAD revalidado 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, exclusivamente ocho documentos. Los 27 archivos funcionales/técnicos del alcance conservan exactamente sus SHA históricos.
+- H-AUD-020-001 a 004 siguen abiertos; H-AUD-020-005 corregido documentalmente. AUG-136 a AUG-139 pendientes; adendas AUG-036/AUG-104; VAL-29 pendiente. Sin hallazgos ni tareas duplicados.
+- La Tarea 21 conserva estado histórico COMPLETADA; E1 no certifica pruebas funcionales ni ejecución de Drive, navegador o servicios.
+- Sin Node/lint, navegador, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, restauraciones, migraciones, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
