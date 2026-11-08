@@ -1389,3 +1389,55 @@ Comparación E1→HEAD; SHA de siete archivos; comparación byte por byte de fun
 
 ### Siguiente iteración
 AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+
+
+## 55. Revalidación de continuidad — AUD-T-026
+
+**Sesión:** AUD-20261108-S071  
+**Checkpoint:** AUD-CP-0070  
+**E1 original:** eafb425abadc9ccda9964a5abd50d4ac020cf80a (AUD-20261107-S007 / AUD-CP-0007)  
+**HEAD revalidado:** b66c36f7d8d666eaf979ebdb21b187330b03ad58  
+**Árbol:** 61b59637ab2b7c11adff329ecee99eb92314423e  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-026-001 A 005 ABIERTOS; AUG-024 Y AUG-025 PENDIENTES; VERIFICACIÓN DE BACKEND/DEPLOYMENTS Y VALIDACIÓN FUNCIONAL PENDIENTES.
+
+### Alcance y comparación
+Archivos: api-config.js, ui.js, index.html, style.css, main.js, auth.js, offline.js, youtubeUpload.js, README.md y Services/Test/README.md. Comparación E1→HEAD: 65 commits posteriores y 10 archivos en el diff global. Los diez archivos funcionales/auxiliares de AUD-T-026 conservan SHA idénticos a E1. Los cambios funcionales globales son Services/admin.js y Services/write.js, ambos fuera del alcance; los demás cambios del diff corresponden a documentación.
+
+SHA idénticos en E1 y HEAD:
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+
+### Revalidación de hallazgos
+- **H-AUD-026-001 (Media): confirmado.** El ping POST `routeAction('ping')` se espera antes de llamar `runServicesHealthScan()`; `routeAction()` no establece timeout. Una solicitud pendiente puede retrasar indefinidamente el comienzo del escaneo GET.
+- **H-AUD-026-002 (Media): confirmado.** `checkAllServicesHealth()` convierte el cuerpo no parseable a `debugData = null`; con HTTP 2xx, `reportedFailure` queda falso y el resultado puede clasificarse `online` sin validar un contrato reconocible.
+- **H-AUD-026-003 (Media): confirmado.** La clasificación visible se limita a `online/error/offline`; no existen estados explícitos `slow/unknown/stale`. El detalle no expone `code` ni el motivo `error` devuelto por el helper.
+- **H-AUD-026-004 (Baja): confirmado.** La suscripción de métricas actualiza gráfica y detalle al recibir eventos sin comprobar visibilidad del panel. La ventana se depura al solicitar snapshot o registrar eventos, pero no hay temporizador que refresque la vista cuando el tiempo transcurre sin tráfico; puede quedar una muestra caducada visible.
+- **H-AUD-026-005 (Baja): confirmado.** `routeAction()` registra `timestamp: Date.now()` en `finally`, al finalizar la solicitud, aunque el gráfico no etiqueta esa semántica. La gráfica usa 15 buckets de un minuto iniciados en el minuto actual menos 14 minutos; el intervalo de 15 minutos exactos puede excluir eventos del borde inicial. El arreglo trunca a 600 eventos sin indicador de truncamiento.
+
+### Controles positivos y riesgo condicionado
+- `checkAllServicesHealth()` ejecuta los GET en paralelo, aplica timeout individual de 8 segundos y captura errores por servicio.
+- La telemetría es local a la sesión/pestaña del navegador, temporal (15 minutos), con máximo de 600 eventos y sin conservar payloads ni credenciales. No representa tráfico global ni ejecuciones internas de Apps Script.
+- La interfaz declara que las métricas son observadas desde el navegador y no afirma conocer contadores internos/globales.
+- La posible exposición histórica de spreadsheetId, driveFolderId, nombres/estructura de hojas u otros metadatos por endpoints `debug=true` **no se puede confirmar en los deployments actuales**: las fuentes backend privadas no están en este repositorio. Se mantiene como verificación condicionada, no como exposición actual confirmada.
+- No se mezclan las transferencias a YouTube ni la carga de imágenes con la telemetría de microservicios GPSpedia.
+
+### Hallazgos y tareas
+- H-AUD-026-001 a H-AUD-026-005 permanecen abiertos; no se identifican hallazgos nuevos porque los diez archivos del alcance no cambiaron desde E1.
+- AUG-024 sigue pendiente para contrato de health check, clasificación de estados, timeout del ping, visibilidad de errores y verificación segura de endpoints/deployments.
+- AUG-025 sigue pendiente para vigencia, semántica temporal, ventana y truncamiento de telemetría local.
+- No se agregan IDs ni tareas duplicadas. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los cinco hallazgos y las dos tareas derivadas ya están registrados.
+
+### Validaciones y límites
+Comparación E1→HEAD; SHA de diez archivos de alcance; inspección estática de `routeAction()`, `checkAllServicesHealth()`, `triggerAdminPanelPing()`, `runServicesHealthScan()`, `recordServiceMetric()`, `getServiceMetricsSnapshot()`, suscripción UI y `renderServiceTrafficChart()`. No se ejecutaron pruebas HTTP, navegador, Apps Script V8, latencia/concurrencia real ni llamadas a endpoints. No se accedió a fuentes backend privadas ni se verificaron deployments. Sin cambios funcionales, configuración, datos productivos, merge ni despliegue.
+
+### Siguiente iteración
+AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.

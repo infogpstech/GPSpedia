@@ -727,3 +727,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-023-005/AUG-013 sigue vigente. AUG-018 a AUG-022 pendientes.
 - Sin Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purga, concurrencia, recuperación ni deployments. Sin cambios funcionales ni datos productivos.
 - Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+
+
+## Continuidad AUD-T-026 — 2026-11-08
+- Revalidación AUD-20261108-S071/AUD-CP-0070; E1 histórica eafb425abadc9ccda9964a5abd50d4ac020cf80a; HEAD b66c36f7d8d666eaf979ebdb21b187330b03ad58; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 65 commits posteriores; los diez archivos funcionales/auxiliares del alcance conservan SHA idénticos. Services/admin.js y Services/write.js son cambios funcionales fuera del alcance.
+- H-AUD-026-001 a 005 permanecen abiertos. Se confirman por continuidad: ping POST sin timeout antes del escaneo; 2xx con cuerpo inválido puede marcar online; faltan estados slow/unknown/stale y detalle de error; métricas locales no refrescan al caducar y renderizan aunque el panel esté oculto; timestamp de finalización, borde inicial de ventana y truncamiento 600 sin aviso.
+- Controles positivos: GET paralelos con timeout individual de 8 s; telemetría local temporal y sin payloads/credenciales ni métricas globales inventadas.
+- El riesgo histórico de metadatos en debug=true no se confirma en deployments actuales porque las fuentes backend están fuera del repositorio.
+- AUG-024 y AUG-025 siguen pendientes. No se crean hallazgos/tareas nuevas ni se modifican Auditoría.txt/Tareas.txt/Aug_Tareas.md.
+- No se ejecutaron HTTP, navegador, Apps Script V8, latencia/concurrencia real ni verificación de deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.

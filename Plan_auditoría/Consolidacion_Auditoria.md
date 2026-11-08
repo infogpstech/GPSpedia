@@ -725,3 +725,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Controles positivos: ADMIN valida sesión Desarrollador salvo ping; FEEDBACK restringe las purgas a Desarrollador; backup DB verifica identidad/tipo/ubicación y existencia de Cortes.
 - Sin Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purgas, concurrencia, recuperación ni deployments. Sin cambios funcionales o productivos.
 - Siguiente: AUD-T-026.
+
+
+## 44. AUD-T-026 — continuidad E1 y revalidación de telemetría
+- Sesión AUD-20261108-S071; checkpoint AUD-CP-0070; E1 eafb425abadc9ccda9964a5abd50d4ac020cf80a (AUD-20261107-S007/AUD-CP-0007); HEAD b66c36f7d8d666eaf979ebdb21b187330b03ad58; árbol 61b59637ab2b7c11adff329ecee99eb92314423e; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 65 commits posteriores; los diez archivos de alcance conservan SHA E1. Los cambios funcionales globales Services/admin.js y Services/write.js están fuera del alcance.
+- H-AUD-026-001 a 005 continúan abiertos: ping POST sin timeout antes del escaneo; 2xx con cuerpo inválido puede quedar online; faltan slow/unknown/stale y detalle de HTTP/error; vista local no caduca/refresca al pasar el tiempo y actualiza aunque esté oculta; timestamp al finalizar, borde inicial de la ventana de 15 min y límite 600 sin advertencia.
+- Controles positivos: GET en paralelo con timeout individual 8 s y errores aislados; telemetría local temporal, máximo 600 eventos, sin payloads/credenciales ni afirmaciones de métricas globales.
+- Riesgo histórico de metadatos sensibles en debug=true permanece condicionado: backend y deployments no están en el repositorio, por lo que no se confirma exposición actual.
+- AUG-024 y AUG-025 permanecen pendientes; sin nuevos hallazgos ni tareas. Auditoría.txt/Tareas.txt/Aug_Tareas.md no se modifican porque los hallazgos y criterios ya constan en el historial.
+- Validación estática de funciones de API/UI y comparación SHA; sin HTTP, navegador, Apps Script V8, concurrencia/latencia real, fuentes backend privadas ni deployments. Sin cambios funcionales ni productivos.
+- Siguiente: AUD-T-027.
