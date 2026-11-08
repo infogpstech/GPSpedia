@@ -1798,3 +1798,54 @@ No se ejecutaron pruebas de navegador, HTTP, Apps Script, cambio de rol real, lo
 
 ### Siguiente iteración
 AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+
+
+## 64. Revalidación de continuidad — AUD-T-035
+
+**Sesión:** AUD-20261108-S080  
+**Checkpoint:** AUD-CP-0079  
+**E1 original:** e13623beb059b33171758545404381fbbf512c16 (AUD-20261107-S016 / AUD-CP-0016)  
+**Árbol E1:** 870a53ffc2d2d9af46c8062fcb71e6bfe5eaa8b8  
+**HEAD revalidado:** 019979ccc15361a47e1c7a49b42aaf02fb5c4e75  
+**Árbol actual:** a265c33a61a2513533ddaeb68557e56e3e7fa454  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-035-001 A 006 ABIERTOS; CONTRATOS INCONSISTENTES; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron ACTION_TO_SERVICE_MAP, dispatchers doPost, helpers api-config.js, consumidores frontend, contratos de sesión/payload/respuesta en FEEDBACK, flujos de imágenes y subida/aprobación de vídeos, rutas mapeadas sin handler y handlers sin ruta.
+
+Archivos de alcance: api-config.js, Services/Auth.js, Services/catalog.js, Services/write.js, Services/users.js, Services/feedback.js, Services/Utilities.js, Services/admin.js, ui.js, auth.js, main.js, add_cortes.html, users.html y youtubeUpload.js.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los catorce archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+
+### Revalidación de hallazgos y tareas
+- H-AUD-035-001 a H-AUD-035-006 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Los consumidores de acciones FEEDBACK protegidas siguen sin transmitir consistentemente userId/sessionToken; addSupplementaryInfo manual de vídeo sigue sin contrato que escriba videoGuiaDesarmeUrl; la aprobación de YouTube no se aplica uniformemente a PYS/Tutorial; opVideoId puede confundirse con ID real de YouTube y no se conserva para idempotencia; ACTION_TO_SERVICE_MAP mantiene rutas no implementadas/no registradas; alta PYS puede responder success aunque falle la imagen requerida.
+- AUG-043 continúa pendiente para credenciales de consumidores FEEDBACK, contrato de enlace manual, publicación/aprobación de vídeo e idempotencia de YouTube.
+- AUG-044 continúa pendiente para alinear mapa de acciones, dispatchers y consumidores.
+- AUG-039 sigue cubriendo addSupplementaryInfo y consumidores de apertura/alimentación/etapa 3; AUG-040 mantiene integridad de escrituras FEEDBACK e imágenes; AUG-041 mantiene UTILITIES; AUG-042 mantiene sincronización de rol/sesión.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los catorce archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validar los contratos en ejecución.
+
+No se ejecutaron pruebas de navegador, HTTP, Apps Script V8, YouTube Data API, Drive, Spreadsheet real, aprobación/rechazo, reintentos ni concurrencia. No se verificó que los deployments publicados correspondan a la rama. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.

@@ -812,3 +812,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-042 pendiente; AUG-006/AUG-016/AUG-017 mantienen dependencias de sesión, revocación y visibilidad. Los controles backend positivos permanecen estáticos, pero no se probaron.
 - Solo continuidad E1 y revisión documental. Sin pruebas navegador, HTTP, Apps Script, cambio real de rol, logout/revocación ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+
+
+## 53. AUD-T-035 — continuidad E1 y revalidación de contratos frontend/backend
+- Sesión AUD-20261108-S080; checkpoint AUD-CP-0079; E1 e13623beb059b33171758545404381fbbf512c16; árbol E1 870a53ffc2d2d9af46c8062fcb71e6bfe5eaa8b8; HEAD 019979ccc15361a47e1c7a49b42aaf02fb5c4e75; árbol actual a265c33a61a2513533ddaeb68557e56e3e7fa454; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los catorce archivos de código del alcance conservan SHA idénticos a E1.
+- H-AUD-035-001 a 006 permanecen abiertos: credenciales FEEDBACK ausentes en consumidores, enlace manual no persistido, aprobación YouTube incompleta para PYS/Tutorial, opVideoId confundido con ID real, mapa/dispatchers desalineados y alta PYS exitosa sin imagen.
+- AUG-043/AUG-044 pendientes; AUG-039/AUG-040/AUG-041/AUG-042 conservan relaciones existentes. No se crean hallazgos ni tareas nuevas.
+- Solo continuidad E1 y revisión documental. Sin pruebas navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet, aprobación/rechazo ni concurrencia. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.

@@ -811,3 +811,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-042 pendiente; AUG-006/AUG-016/AUG-017 como dependencias. Controles backend positivos permanecen estáticos, no probados funcionalmente.
 - No se ejecutaron pruebas de navegador, HTTP, Apps Script, sesiones reales, cambio de rol, logout/revocación ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+
+
+## Continuidad AUD-T-035 — 2026-11-08 | AUD-20261108-S080
+- Revalidación AUD-20261108-S080/AUD-CP-0079; E1 histórica e13623beb059b33171758545404381fbbf512c16 (AUD-20261107-S016/AUD-CP-0016); HEAD 019979ccc15361a47e1c7a49b42aaf02fb5c4e75; árbol actual a265c33a61a2513533ddaeb68557e56e3e7fa454; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. api-config.js, Services/Auth.js, catalog.js, write.js, users.js, feedback.js, Utilities.js, admin.js, ui.js, auth.js, main.js, add_cortes.html, users.html y youtubeUpload.js conservan exactamente sus SHA E1.
+- H-AUD-035-001 a 006 permanecen abiertos: credenciales FEEDBACK ausentes; enlace manual de vídeo no guardado; aprobación PYS/Tutorial incompleta; ID de operación YouTube confundido con ID de vídeo; mapa/dispatchers desalineados; alta PYS puede tener éxito sin imagen.
+- AUG-043/AUG-044 pendientes; AUG-039/AUG-040/AUG-041/AUG-042 conservan sus dependencias. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas de navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet, aprobación/rechazo ni concurrencia. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
