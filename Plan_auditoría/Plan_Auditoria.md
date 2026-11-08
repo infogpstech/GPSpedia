@@ -85,7 +85,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | E1 COMPLETADA; CONTRATOS INCONSISTENTES; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REVISIÓN LEGAL PENDIENTES |
-| AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | POR AUDITAR |
+| AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/RENDIMIENTO PENDIENTE |
 
 ### 4.1. Control de cancelaciones, sustituciones y cambios de alcance
 
@@ -679,3 +679,12 @@ Resultado: H-AUD-036-001 a 005; aceptación local sin versión/identidad, fallo 
 Tareas: AUG-045, AUG-046, AUG-047.
 Límites: E1 estática; sin pruebas de navegador, teclado/lector, PWA offline, storage, cambio de cuenta, revisión jurídica o verificación de deployments. No se modificó código ni datos.
 Siguiente: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
+
+## 23. Iteración técnica — AUD-T-037
+Sesión AUD-20261107-S018 | Checkpoint AUD-CP-0018 | HEAD 513c9982407db2a1c9b357a418d0949786ec4141 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/RENDIMIENTO PENDIENTE.
+Alcance: catalog service, carga inicial, IndexedDB, sincronización silenciosa, búsqueda global, VIN engine, Service Worker e historial.
+Hallazgos H-AUD-037-001 a 012: caché conserva eliminados; sync no detecta ediciones de Tutorial/Relay con igual cantidad; autoapertura de sección incorrecta; búsqueda incompleta; PyS asíncrono redundante; ambigüedad año/modelo; VIN puede seleccionar variante incorrecta; persistencia/miniaturas sin ciclo de vida; historial compartido; deep link/HTTP sin timeout; cache runtime PWA incompleto; lecturas completas de Spreadsheet sin caché efectiva.
+Tareas: AUG-048 a AUG-052.
+Límites: E1 estática; sin navegador, IndexedDB real, cuota, PWA offline, rendimiento, VIN dataset, sincronización concurrente, HTTP ni Apps Script/Spreadsheet real. No se modificó código/datos.
+Siguiente: AUD-T-038 — revisar seguridad del almacenamiento local y ciclo de datos de usuario, sujeto a confirmación del plan.

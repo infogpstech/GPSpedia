@@ -623,3 +623,62 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Probar teclado, lector, móvil, tema claro/oscuro, offline y apertura desde login/footer/aviso.
 - Relación: AUD-T-036/AUD-T-037/AUG-045.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-048 — Corregir snapshot autoritativo y sincronización silenciosa del catálogo
+- Origen: H-AUD-037-001/002. Prioridad alta.
+- Criterios:
+  1. Definir el contrato de getCatalogData como instantánea completa o delta explícito. Si es instantánea, reemplazar/prunar las colecciones para que eliminados no sobrevivan en IndexedDB.
+  2. Comparar contenido de Tutoriales/Relay y logos/metadatos, no solo cantidad; actualizar estado cuando cambien campos sin cambiar cardinalidad.
+  3. Mantener IDs estables y evitar colisiones de claves fallback por Tema/configuración.
+  4. Probar alta, modificación y eliminación de Cortes/Tutoriales/Relay/Logos; después reiniciar offline y comprobar que no reaparecen registros retirados.
+- Relación: AUD-T-037; AUG-031/AUG-032 para persistencia y snapshot de Drive, sin duplicar sus ámbitos.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-049 — Completar búsqueda global y navegación por sección
+- Origen: H-AUD-037-003 a H-AUD-037-006. Prioridad alta.
+- Criterios:
+  1. Normalizar texto de consulta y campos (mayúsculas, espacios y diacríticos) antes de comparar.
+  2. Incluir los campos relevantes de todos los slots de Cortes (tipo, ubicación, color, relay y detalles) además de marca/modelo/versión/años/VIN; conservar los campos textuales de Relay, Tutorial y PyS.
+  3. Implementar la prioridad requerida: coincidencia exacta de título/nombre, coincidencia parcial de título y después campos descriptivos; mantener etiquetas y destino de cada sección.
+  4. Limitar la autoapertura de detalle de vehículo a resultados Corte; Relay/Tutorial/PyS deben abrir su modal específico aunque sean el único resultado.
+  5. Evitar clasificación de resultados no-Corte como marca sintética Relay/Tutorial/Problema.
+  6. Compartir una sola promesa de carga getPysData; al completarse, reejecutar la consulta activa sin duplicar peticiones.
+  7. Desambiguar números de cuatro dígitos usados como año frente a nombre de modelo; no filtrar únicamente por rango cuando exista coincidencia literal.
+  8. Probar acentos, términos HTML, múltiples slots, año/modelo numérico, una coincidencia por cada sección, cero resultados y deep links.
+- Relación: Tarea 10.1; commits f1db85fe/7fae24ac; AUD-T-037.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-050 — Corregir resolución e integración del motor diferencial VIN
+- Origen: H-AUD-037-007. Prioridad alta por riesgo de identificar variante vehicular incorrecta.
+- Criterios:
+  1. Cargar firmas guardadas cuando sean compatibles con versión/huella del catálogo; recalcular e invalidar de forma controlada cuando los datos cambien.
+  2. Resolver la firma por classKey o identidad completa (marca, modelo, rango y versión), no solo marca+modelo.
+  3. Cuando queryVehicle devuelva estado ambiguo/matches, mostrar opciones o pedir más contexto; no conservar automáticamente el primer prefijo encontrado.
+  4. Usar realmente la versión identificada en el resultado y no descartarla en el filtrado/renderizado.
+  5. Revisar umbral de muestras, coste de combinaciones y recalculado; medir con el catálogo real.
+  6. Probar VIN completo, prefijo único, prefijo ambiguo, varias generaciones del mismo modelo, varias versiones y firma obsoleta.
+- Relación: AUD-T-037; VIN y esquema de columnas AUD-T-030; migración VIN y freeze IDs.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-051 — Robustecer IndexedDB, miniaturas y privacidad del historial local
+- Origen: H-AUD-037-008/009. Prioridad media/alta.
+- Criterios:
+  1. Hacer que operaciones críticas esperen transaction.oncomplete y manejen onerror/onabort; no interpretar request.onsuccess como persistencia confirmada.
+  2. Cerrar conexiones ante onversionchange y gestionar bloqueos de upgrade.
+  3. Implementar política de cuota/evicción LRU/TTL para thumbnails, límite del cache RAM y URL.revokeObjectURL cuando corresponda.
+  4. Respetar tamaños de imagen solicitados o separar claves por tamaño; incluir imgApertura y demás campos necesarios; limitar concurrencia de compresión y cerrar ImageBitmap.
+  5. Definir retención/aislamiento de searchHistory por cuenta o borrar/ocultar búsquedas al cambiar de usuario; tratar VIN como dato potencialmente sensible.
+  6. Probar transacciones abortadas, storage quota, upgrades con varias pestañas, offline, imágenes pequeñas/grandes/transparencias y cambio de cuenta.
+- Relación: AUD-T-037; AUG-031 para estado local de auditoría Drive, sin reutilizar su store administrativo.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-052 — Robustecer carga inicial, deep links y estrategia PWA/backend de catálogo
+- Origen: H-AUD-037-010 a H-AUD-037-012. Prioridad media.
+- Criterios:
+  1. Añadir timeout/cancelación/reintento controlado a fetch de catálogo y deep links; reemplazar polling infinito por promesa/estado terminal con límite.
+  2. Asegurar que un fallo de red sin caché termina en mensaje recuperable; con caché, indicar estado de datos posiblemente desactualizados.
+  3. Incluir el grafo de módulos requerido (incluido VinDifferentialEngine.js) en precache o validar explícitamente que el runtime cache lo obtuvo; asociar escrituras cache.put a event.waitUntil y manejar errores de cuota.
+  4. Evaluar caché/paginación o getNavigationData para reducir lecturas completas de Spreadsheet; documentar cuándo usar cada endpoint.
+  5. Probar primera instalación, actualización de Service Worker, arranque offline, deep link sin sesión/sin catálogo, API lenta/caída y catálogos de tamaño representativo.
+- Relación: AUD-T-037; AUD-T-029/AUG-033 por límites de tiempo y cargas de Drive; no confundir catálogo Spreadsheet con auditoría Drive.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.

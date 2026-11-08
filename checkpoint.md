@@ -380,3 +380,29 @@ Validación: solo E1 estática; sin navegador, PWA offline, pruebas de storage/c
 Solo documentación; ningún cambio de código/datos productivos.
 Siguiente: AUD-T-037. Commit previsto: audit(legal): revisar consentimiento y términos de GPSpedia; parent/expected bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; force=false; base debe permanecer d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0018
+Fecha 2026-11-07 | Sesión AUD-20261107-S018 | Tarea AUD-T-037.
+Rama GPSpedia2.2.5_work HEAD 513c9982407db2a1c9b357a418d0949786ec4141; rama base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Alcance: catálogo, caché, sincronización incremental, búsqueda, VIN, IndexedDB, miniaturas, Service Worker y carga inicial.
+Referencias históricas: f1db85fe y 7fae24ac.
+Sin modificar código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0018
+HEAD auditado 513c9982407db2a1c9b357a418d0949786ec4141; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+Estado E1 completada; H-AUD-037-001 a 012 abiertos; AUG-048 a AUG-052 creadas; validación funcional/rendimiento pendiente.
+RESPALDOS EXACTOS:
+- Auditoría.txt: aeb969e728456574218d39987625ae4f1e81fe66
+- Tareas.txt: c9d267fa0a847ad738fdf2aaf2285f328ee09cdb
+- Plan_auditoría/Plan_Auditoria.md: f8f5cae8869281b380169045e3bc592e7ea167f7
+- Plan_auditoría/Aug_Tareas.md: c45b693656f919ec5789280a59323be17535233d
+- ChangesLogs.txt: a2592d799c0156b9b31d6e4f054bca2c9775caca
+- contexto_personal.md: f9a501b5e05d76d982742d133f46ed028e339fdc
+- checkpoint.md: 9834cdc2f6947b70754bc43e7f78ef4a7ed13428
+Validación solo E1 estática; sin navegador, IndexedDB real, cuota, PWA offline, rendimiento, VIN dataset, HTTP ni Spreadsheet/Apps Script real.
+Solo documentación; ningún cambio de código/datos productivos.
+Siguiente AUD-T-038, sujeto a confirmar el plan. Commit previsto: audit(catalog): revisar caché, sincronización y búsqueda; parent/expected 513c9982407db2a1c9b357a418d0949786ec4141; force=false; base debe permanecer d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

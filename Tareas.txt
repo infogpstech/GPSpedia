@@ -5599,3 +5599,37 @@ Controles: aviso posterior a autenticación, catálogo/footer ocultos, sin X, bl
 Tareas: AUG-045 aceptación versionada/trazable; AUG-046 revisión legal; AUG-047 accesibilidad/History/offline.
 Límites: solo E1 estática; sin navegador, PWA offline, pruebas de cuenta/storage, revisión legal externa ni verificación de deployments. No se modificó código ni datos productivos.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-037: CATÁLOGO, CACHÉ, SINCRONIZACIÓN INCREMENTAL Y BÚSQUEDA
+Fecha: 2026-11-07 | Sesión AUD-20261107-S018 | Checkpoint AUD-CP-0018
+HEAD auditado: 513c9982407db2a1c9b357a418d0949786ec4141
+Estado: E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/RENDIMIENTO PENDIENTE.
+
+HALLAZGOS
+- H-AUD-037-001 (ALTA): saveCatalog fusiona la instantánea nueva con el caché anterior sin eliminar registros retirados; reaparecen offline.
+- H-AUD-037-002 (MEDIA/ALTA): performSilentSync solo compara cantidad de Tutoriales/Relay y no detecta cambios de contenido con igual cantidad ni cambios de logos.
+- H-AUD-037-003 (ALTA): la autoapertura de mostrarResultadosDeBusqueda llama mostrarDetalleModal sin excluir _sectionType; un único Relay/Tutorial/PyS puede abrir modal de Corte.
+- H-AUD-037-004 (MEDIA/ALTA): búsqueda sin normalización de acentos, sin todos los campos de corte y sin ranking de coincidencia; Tarea 10.1 marcada COMPLETADA pero criterios incompletos.
+- H-AUD-037-005 (MEDIA): búsqueda dispara getPysData repetidamente mientras no está cargado y no vuelve a filtrar al terminar.
+- H-AUD-037-006 (MEDIA): números de cuatro dígitos entre 1900–2100 se interpretan como año y no se distinguen de modelos numéricos.
+- H-AUD-037-007 (ALTA): búsqueda VIN puede elegir primera coincidencia, ignora versión/rango al mapear firma y no carga firmas persistidas.
+- H-AUD-037-008 (MEDIA): performOp no espera transaction complete; caché de miniaturas/memoryUrlCache sin evicción, object URLs sin revocar, tamaño fijo 400 px y omite imgApertura.
+- H-AUD-037-009 (MEDIA): searchHistory se comparte entre cuentas, puede contener VIN y no tiene caducidad/limpieza.
+- H-AUD-037-010 (MEDIA): deep link reintenta cada 100 ms indefinidamente; routeAction/loadInitialData no tienen timeout de red.
+- H-AUD-037-011 (MEDIA): cache.put runtime no usa event.waitUntil y VinDifferentialEngine.js no está en precache.
+- H-AUD-037-012 (MEDIA): getCatalogData lee hojas completas en cada sesión; CacheService no muestra escritura efectiva y getNavigationData no tiene consumidor.
+
+CONTROLES POSITIVOS
+- Cache-first local con fallback de red; búsqueda multi-sección con badges y handlers específicos; IndexedDB para historial/vistos/miniaturas; Service Worker network-first; motor VIN separa clases y puede informar ambigüedad.
+
+TAREAS NUEVAS
+- AUG-048 snapshot/sincronización.
+- AUG-049 búsqueda global.
+- AUG-050 motor VIN.
+- AUG-051 IndexedDB/miniaturas/privacidad local.
+- AUG-052 startup/deep link/Service Worker/backend catálogo.
+
+LÍMITES
+Solo E1 estática. Sin navegador, IndexedDB real, pruebas de cuota, PWA offline, rendimiento, dataset completo, VIN ambiguo, sincronización concurrente, HTTP ni Spreadsheet/Apps Script real. No se verificaron deployments. No se modificó código ni datos productivos.
+================================================================================

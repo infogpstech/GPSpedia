@@ -8949,3 +8949,71 @@ E1 completada. El aviso y acuerdo están integrados y accesibles desde tres punt
 No se ejecutaron pruebas de navegador, lector de pantalla, teclado, PWA offline, cambio de cuenta, storage bloqueado o nueva versión legal. No hubo revisión jurídica externa ni verificación de deployments. No se modificó código, assets, endpoints, Spreadsheet, Drive, datos productivos ni deployments.
 Siguiente unidad: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-037: CATÁLOGO, CACHÉ, SINCRONIZACIÓN INCREMENTAL Y BÚSQUEDA
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S018 | Checkpoint: AUD-CP-0018
+HEAD auditado: 513c9982407db2a1c9b357a418d0949786ec4141 | Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y DE RENDIMIENTO PENDIENTE.
+
+ALCANCE
+Services/catalog.js (doGet/doPost, handleGetCatalogData, handleGetNavigationData, mapRowToObject); auth.js (loadInitialData, processCatalogData, checkSession, normalizeCatalogData); offline.js (initDB, performOp, saveCatalog/getCatalog, search history, viewed items, thumbnail cache); ui.js (setOptimizedImage, performSilentSync, updateFullState, mostrarResultadosDeBusqueda, crearCardVehiculo); navigation.js (filtrarContenido, navegación y VIN); VinDifferentialEngine.js (matriz, firmas, consulta y persistencia); api-config.js (routeAction/fetchCatalogData); main.js (input, History API, deep links); service-worker.js; index.html. Contraste con Tarea 10.1 de Tareas.txt, commits f1db85fe y 7fae24ac.
+
+CONTROLES POSITIVOS
+- auth.js aplica cache-first: intenta rehidratar catálogo desde IndexedDB con límite de espera de 3 segundos y después solicita el catálogo al servidor; si falla la red y existe una caché válida con Cortes, conserva el uso offline.
+- La búsqueda agrega resultados de Cortes, Relay, Tutoriales y PyS con _sectionType; crearCardVehiculo muestra distintivo y asigna un handler específico a Relay, Tutorial y PyS.
+- El historial de búsqueda y los vistos se guardan en IndexedDB; setOptimizedImage intenta memoria, IndexedDB y finalmente red.
+- El Service Worker usa network-first para navegación/assets y fallback a caché/index.html; los módulos principales y hojas de estilo están en urlsToCache.
+- VinDifferentialEngine separa firmas por clase de marca/modelo/rango/versión y queryVehicle puede devolver una respuesta ambigua en vez de elegir una firma arbitraria.
+- El backend mapea campos de imagen a IDs normalizados y entrega los datos de Cortes, Tutorial y Relay desde sus hojas.
+
+HALLAZGOS
+
+H-AUD-037-001 — ALTA — saveCatalog conserva registros que el servidor ya eliminó.
+offline.js inicializa cortesMap/tutorialesMap/relayMap con los datos anteriores y agrega/actualiza los registros recibidos. No elimina las claves antiguas que ya no aparecen en newData. Como getCatalogData entrega una instantánea completa, una eliminación confirmada en servidor desaparece del estado online tras performSilentSync(), pero permanece en IndexedDB y puede reaparecer en el siguiente arranque offline. La misma unión incremental conserva tutoriales y relay retirados. El caché no representa fielmente la última instantánea autoritativa.
+
+H-AUD-037-002 — MEDIA/ALTA — performSilentSync no detecta modificaciones de Tutoriales/Relay con igual cantidad de registros ni cambios de logos.
+ui.js compara el contenido completo de Cortes, pero para tutoriales y relay solo compara length. Si se modifica un título, descripción, imagen o configuración sin añadir/eliminar filas, hasChanges permanece false y la función retorna sin ejecutar updateFullState(). Tampoco compara logos u otros metadatos del catálogo. La interfaz conserva los datos anteriores hasta una recarga o un cambio de longitud.
+
+H-AUD-037-003 — ALTA — un único resultado de Relay/Tutorial/PyS puede abrir el modal de vehículo.
+navigation.js envía resultados globales no-corte a mostrarResultadosDeBusqueda() con type="modelo". ui.js crea tarjetas cuyo onclick sí usa _sectionType, pero la autoapertura posterior solo verifica que exista un modelo/versión/año único y llama mostrarDetalleModal(results[0]) sin excluir _sectionType. Cuando la búsqueda devuelve un único Relay, Tutorial o PyS, se puede abrir el modal de Cortes en lugar del modal propio de esa sección. La autoapertura debe limitarse a resultados Corte.
+
+H-AUD-037-004 — MEDIA/ALTA — la búsqueda no satisface varios criterios expresos de la Tarea 10.1.
+navigation.js usa toLowerCase() y stripHtml(), pero no normaliza diacríticos; «ignicion» no coincide necesariamente con «ignición». El texto indexado para Cortes incluye marca, modelo, versión, tipo de encendido, categoría, años, tipo/ubicación/color del primer corte y VIN, pero omite los campos equivalentes de los slots 2 y 3, configuraciones Relay y otros detalles disponibles. La clasificación no calcula prioridad de coincidencia exacta de título/nombre sobre coincidencias parciales/descriptivas; se limita a coincidencia de todas las palabras y una regla de marca única. Tareas.txt marca la Tarea 10.1 como COMPLETADA, pero esos criterios originales no están satisfechos completamente.
+
+H-AUD-037-005 — MEDIA — la carga asíncrona de PyS puede omitir resultados y generar solicitudes redundantes.
+Cuando pysData aún no está en state, cada ejecución de filtrarContenido() dispara routeAction('getPysData') sin una promesa compartida ni indicador de carga. El input ejecuta la búsqueda en cada evento input, por lo que varias pulsaciones pueden generar peticiones concurrentes al servicio FEEDBACK. Cuando una petición termina, solo actualiza pysData; no vuelve a ejecutar la consulta activa. La primera búsqueda puede mostrar resultados sin PyS y no incorporarlos hasta que el usuario vuelva a escribir.
+
+H-AUD-037-006 — MEDIA — los años de cuatro dígitos pueden confundirse con nombres de modelo.
+yearSearchTerm reconoce cualquier número de cuatro dígitos entre 1900 y 2100. Después, la palabra igual al año se considera satisfecha sin comprobar que aparezca en el texto del vehículo. Una consulta como «2000» devuelve todos los registros cuyo rango incluya ese año, aunque exista un modelo cuyo nombre literal sea «2000»; se producen falsos positivos y no se distingue intención de año frente a modelo. El commit 7fae24ac conserva números de modelo fuera de ese rango, pero no resuelve la ambigüedad dentro de 1900–2100.
+
+H-AUD-037-007 — ALTA — la búsqueda diferencial VIN puede seleccionar una variante incorrecta y no consume firmas persistidas.
+navigation.js usa cortes.find() para la primera coincidencia de VIN exacto/prefijo; un prefijo compartido puede asignar matchedVehicleById al primer registro. Si el motor devuelve varias firmas, queryVehicle entrega matches/estado ambiguo, pero navigation.js solo procesa diffMatch.match; conserva entonces el primer resultado directo. Cuando existe una firma única, la resolución posterior busca solo marca+modelo e ignora rango de años y versión incluidos en la firma, por lo que puede elegir otra generación. _identifiedVersion se agrega al objeto, pero no se usa en el filtrado/renderizado posterior. Además, VinSignatureStore implementa loadSignatures(), pero no hay llamada a ese método; el motor comienza vacío y recalcula firmas al primer intento VIN aunque localStorage ya contenga una versión guardada. La persistencia no evita el recálculo y no tiene invalidación por huella del catálogo.
+
+H-AUD-037-008 — MEDIA — el ciclo IndexedDB/miniaturas no confirma transacciones ni controla crecimiento/calidad.
+performOp() resuelve en request.onsuccess y no espera transaction.oncomplete ni observa transaction.onabort/onerror; además captura errores y devuelve null. saveCatalog() y otras operaciones pueden interpretarlo como persistencia terminada sin confirmación de la transacción. initDB() no registra db.onversionchange para cerrar conexiones antiguas y permitir upgrades. No hay política de cuota/evicción para thumbnails ni límite del memoryUrlCache; setOptimizedImage crea object URLs que nunca revoca. compressAndStoreThumbnail almacena siempre PNG de 400 px aunque el consumidor solicite tamaño mayor, por lo que una imagen mediana cacheada puede sustituir una versión remota de mayor resolución. cacheItemImages() omite imgApertura y dispara múltiples compresiones en segundo plano sin límite de concurrencia. No se encontró limpieza por antigüedad de miniaturas.
+
+H-AUD-037-009 — MEDIA — el historial local de búsqueda es compartido entre cuentas y no tiene retención.
+searchHistory se guarda en IndexedDB bajo el término, sin userId ni separación por sesión. checkSession() rehidrata ese historial antes de resolver la cuenta actual y getSearchHistory(10) solo limita lo mostrado, no los registros almacenados. Las consultas pueden incluir VIN u otros identificadores que otro usuario del mismo navegador podría ver en «Búsquedas Recientes». No existe caducidad ni borrado selectivo de historial en el módulo auditado.
+
+H-AUD-037-010 — MEDIA — deep link y carga de catálogo pueden quedar esperando indefinidamente.
+main.js ejecuta checkDataAndSearch() cada 100 ms hasta que catalogData.cortes.length sea mayor que cero; no tiene límite, cancelación ni estado terminal si el usuario no inicia sesión, la caché está vacía o el catálogo no llega. routeAction() usa fetch sin AbortController/timeout. loadInitialData() tampoco limita la petición de red: con caché válida la interfaz conserva datos viejos, pero la sincronización puede no terminar; sin caché, el estado de carga puede quedar indefinido.
+
+H-AUD-037-011 — MEDIA — la estrategia de caché del Service Worker no garantiza persistencia de escrituras runtime ni todos los módulos offline.
+En el handler fetch, cache.put() se inicia mediante promesa secundaria sin adjuntarse a event.waitUntil(); el Service Worker puede finalizar antes de completar la escritura. VinDifferentialEngine.js es dependencia importada por navigation.js y ui.js, pero no aparece en urlsToCache; depende de haber sido descargada/caché runtime anteriormente para funcionar offline en todos los escenarios. La prueba de instalación no demuestra que el grafo completo de módulos quede precargado.
+
+H-AUD-037-012 — MEDIA — el backend vuelve a leer el catálogo completo de Spreadsheet en cada solicitud.
+handleGetCatalogData() lee las hojas y construye la respuesta completa; la estrategia CacheService del servicio está desactivada/no se observa escritura efectiva de la clave de catálogo. auth.js llama fetchCatalogData() en cada inicio de sesión y usa el endpoint completo, aunque existe getNavigationData() como ruta ligera que no tiene consumidor frontend actual. No hay paginación ni sincronización por cambios; el rendimiento dependerá del tamaño de las hojas y del tiempo de Apps Script.
+
+TAREAS DERIVADAS
+- AUG-048: corregir snapshot autoritativo y sincronización silenciosa.
+- AUG-049: completar búsqueda global, normalización, ranking, filtros y rutas por sección.
+- AUG-050: corregir resolución e integración del motor diferencial VIN.
+- AUG-051: robustecer IndexedDB, miniaturas y privacidad/retención del historial local.
+- AUG-052: robustecer startup/deep links, timeout de red, Service Worker y carga de catálogo backend.
+
+CONCLUSIÓN Y LÍMITES
+AUD-T-037 queda con auditoría estática E1 completada y hallazgos abiertos. La arquitectura ya cuenta con carga local-first, búsqueda multi-sección y sincronización silenciosa, pero la persistencia puede conservar eliminados, la sincronización omite modificaciones con igual cardinalidad, ciertos resultados abren un modal incorrecto, la búsqueda no cumple la normalización/ranking/cobertura solicitados y el motor VIN no resuelve de forma segura variantes ambiguas. El almacenamiento local no confirma transacciones ni controla crecimiento y el historial de búsqueda se comparte entre cuentas.
+No se ejecutaron pruebas de navegador, IndexedDB real, cuota/evicción, PWA offline, rendimiento con catálogo completo, búsquedas con dataset representativo, VIN ambiguos, sincronización concurrente, Apps Script/Spreadsheet real ni pruebas HTTP. No se verificaron deployments publicados. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+Siguiente unidad del plan: AUD-T-038 — revisar seguridad del almacenamiento local y ciclo de datos de usuario, o la siguiente unidad definida en el plan tras consolidación.
+================================================================================

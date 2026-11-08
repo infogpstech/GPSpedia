@@ -288,3 +288,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Sección 13 de privacidad general; requiere aprobación legal. Logo_TemaOscuro y tracklink_logo fuera de precache; falta semántica/foco accesible.
 - Tareas AUG-045 aceptación versionada/trazable; AUG-046 revisión legal; AUG-047 accesibilidad/History/offline.
 - Sin cambios de código ni datos; solo E1 estática. Siguiente AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
+
+## Continuidad — AUD-T-037 (2026-11-07)
+- Sesión/checkpoint AUD-20261107-S018 / AUD-CP-0018.
+- HEAD 513c9982407db2a1c9b357a418d0949786ec4141 en GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1 estática completada; H-AUD-037-001 a 012 abiertos; validación funcional, PWA y rendimiento pendientes.
+- Hallazgos: saveCatalog conserva eliminados; performSilentSync compara solo longitudes de Tutorial/Relay; autoapertura puede dirigir un resultado único no-Corte al modal de Corte; búsqueda no normaliza acentos/no cubre todos los campos/no prioriza; PyS se solicita repetidamente y no reejecuta búsqueda; años numéricos ambiguos; VIN puede seleccionar primera variante y no carga firmas guardadas; IndexedDB no confirma transacciones ni controla crecimiento; searchHistory se comparte entre cuentas; deep links y fetch sin timeout; precache/runtime cache incompleto; backend lee catálogo completo sin caché efectiva.
+- Tareas AUG-048 snapshot/sync, AUG-049 búsqueda, AUG-050 VIN, AUG-051 IndexedDB/miniaturas/privacidad, AUG-052 startup/PWA/backend.
+- No se modificó código ni datos; solo inspección E1. Sin navegador, IndexedDB real, cuota, PWA offline, rendimiento, VIN con dataset real ni Spreadsheet/Apps Script.
+- Siguiente: AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario, pendiente de confirmar plan.
