@@ -691,3 +691,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - VAL-12 y validación funcional/integración pendientes; la E1 estática no certifica ejecución real, persistencia, migración, Spreadsheet ni concurrencia.
 - Sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet/Drive, concurrencia, migración, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## Continuidad AUD-T-005 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S067/AUD-CP-0066; E1 histórica c56c6f7e21a668774db726e2f14139588f1bc5c0; HEAD previo c7ad01b89f7228622f9732c5d38850cd987a207a; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 44 commits posteriores; ocho archivos cambiados, todos documentales. Los 11 archivos funcionales del alcance mantienen SHA idénticos a E1. Sin deriva funcional.
+- H-AUD-005-001 a 008 abiertos; AUG-061 a AUG-064 pendientes; AUG-043/AUG-050/AUG-057 conservan adendas. H-AUD-005-008 queda coordinado con AUD-T-007.
+- Se confirman por continuidad de código los riesgos de sanitización, cupos/respuestas suplementarias, sincronización de detalle, selectores, FileReader, enlace de vídeo y contador VIN. No se duplican registros.
+- Validación funcional, seguridad dinámica e integración pendientes. Sin navegador, XSS dinámico, FileReader real, concurrencia, Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, móvil/PWA, deployments ni E2/E3.
+- Sin cambios funcionales ni operaciones productivas. Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.

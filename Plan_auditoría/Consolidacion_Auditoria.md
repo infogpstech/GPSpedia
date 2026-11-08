@@ -686,3 +686,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - VAL-12 y las pruebas funcionales/de integración siguen pendientes. La comparación estática/Git no demuestra persistencia VIN, validez de colecciones, ejecución del diferencial ni migración productiva.
 - No se ejecutaron navegador, Node/lint, pruebas reales VIN, HTTP, Apps Script V8, Spreadsheet/Drive, concurrencia, migración, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-005.
+
+
+## 40. Continuidad AUD-T-005 — verificación E1
+- Sesión AUD-20261108-S067; checkpoint AUD-CP-0066; E1 histórica c56c6f7e21a668774db726e2f14139588f1bc5c0; HEAD previo c7ad01b89f7228622f9732c5d38850cd987a207a; árbol f0b42401982a0f6ac35a93be3230a4d31af37b3e; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 44 commits posteriores; ocho archivos documentales modificados. Los 11 archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional.
+- H-AUD-005-001 a 008 permanecen abiertos; AUG-061/AUG-064 nuevas y pendientes; AUG-043/AUG-050/AUG-057 conservan sus adendas. H-AUD-005-008 se mantiene bajo coordinación AUD-T-007 para History API/overlays.
+- La inspección puntual confirma que los sinks de contenido enriquecido, la validación de slots suplementarios, la actualización del detalle, los selectores, la recuperación FileReader y los contratos contextuales permanecen como en E1. Sin tareas duplicadas.
+- No se ejecutaron navegador, XSS dinámico, FileReader real, concurrencia, HTTP, Apps Script V8, Spreadsheet/Drive, YouTube, móvil/PWA, deployments ni E2/E3. Validación funcional/seguridad/integración pendiente.
+- Sin cambios funcionales, datos productivos, merge ni despliegue. Siguiente: AUD-T-006.

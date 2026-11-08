@@ -1188,3 +1188,50 @@ Sin cambios de código, HTML, CSS, servicios, endpoints, contratos, esquema, con
 Commit documental único: docs(audit): verify AUD-T-004 continuity; parent b8eeeccc0571cb7bb8065cbbb6f7921fbea453bd.
 Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales (revalidación de continuidad E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0066
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S067
+Tarea: AUD-T-005 — revalidación de continuidad E1 del modal de detalle, ampliación dinámica y acciones contextuales.
+E1 histórica: c56c6f7e21a668774db726e2f14139588f1bc5c0 (AUD-20261107-S023 / AUD-CP-0023).
+HEAD inicial de GPSpedia2.2.5_work: c7ad01b89f7228622f9732c5d38850cd987a207a; árbol inicial: f0b42401982a0f6ac35a93be3230a4d31af37b3e.
+HEAD de GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (protegida, sin cambios).
+Alcance (11 archivos): ui.js, Services/catalog.js, Services/write.js, Services/admin.js, api-config.js, rich-text.js, state.js, main.js, style.css, index.html y offline.js.
+SHA de respaldo E1/HEAD se registran en el checkpoint final. Objetivo: comparar E1→HEAD, revalidar los ocho hallazgos existentes y comprobar que las AUG/adendas asociadas continúan trazables. No corregir código ni generar hallazgos/tareas duplicados.
+Sin operaciones productivas, cambios funcionales, merge o despliegue. El checkpoint inicial y final se publican juntos en el único commit documental de esta tarea.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0066
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S067
+Tarea: AUD-T-005 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-005-001 a H-AUD-005-008 permanecen abiertos. AUG-061 a AUG-064 pendientes; AUG-043/AUG-050/AUG-057 conservan sus adendas. H-AUD-005-008 se coordina con AUD-T-007 para no duplicar la auditoría global de History API/overlays. Sin hallazgos ni tareas nuevas.
+E1 histórica: c56c6f7e21a668774db726e2f14139588f1bc5c0. HEAD auditado: c7ad01b89f7228622f9732c5d38850cd987a207a; árbol inicial f0b42401982a0f6ac35a93be3230a4d31af37b3e. Comparación E1→HEAD: 44 commits posteriores; ocho archivos cambiados, todos documentales. Ningún archivo funcional del alcance aparece en el diff.
+Los 11 archivos del alcance mantienen SHA idénticos entre E1 y HEAD:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+Hallazgos revalidados por continuidad de código:
+- H-AUD-005-001: contenido enriquecido de apertura/alimentación llega a sinks innerHTML sin aplicar sanitización; se observa activeCable.content en slideText.innerHTML y activeContent en contentP.innerHTML. El sanitizador compartido existe, pero estos sinks no lo aplican.
+- H-AUD-005-002: addSupplementaryInfo no calcula/valida disponibilidad de slots desde el registro actual ni impide sobrescrituras por estado obsoleto; payload sin campos reconocidos puede completar el handler con respuesta success sin escritura útil. Mantener AUG-061.
+- H-AUD-005-003: la actualización de catalogData no reconstruye de forma fiable el detalle abierto después de la ampliación confirmada; mantener AUG-062.
+- H-AUD-005-004: tipos de corte/relay se obtienen parcialmente desde la primera columna y el formulario conserva opciones/fallbacks estáticos; mantener AUG-063.
+- H-AUD-005-005/006/007: continúan los riesgos históricos de lectura de archivos sin recuperación completa de error/abort, disponibilidad/contrato de enlace manual de vídeo y contador/estado de cupos VIN; conservar las adendas existentes a AUG-057, AUG-043 y AUG-050 sin crear duplicados.
+- H-AUD-005-008: riesgo de cierre de overlays mediante popstate; la cobertura global fue transferida a AUD-T-007 y se conserva allí sin duplicar lógica.
+Registros existentes: AUG-061 (slot y no sobrescritura), AUG-062 (sincronización del detalle), AUG-063 (selectores centralizados), AUG-064 (sanitización); adendas a AUG-043/AUG-050/AUG-057. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: no hay hallazgos/tareas nuevos y las acciones correctivas ya están registradas.
+Validaciones ejecutadas: HEAD y base; comparación Git E1→HEAD; SHA individual de los 11 archivos; inspección estática puntual de createAccordionSection/updateSlide, addSupplementaryInfo en WRITE/ADMIN, handleGetDropdownData y formularios contextuales.
+No ejecutadas: navegador, XSS dinámico, pruebas de payload, FileReader real, concurrencia/último slot, Apps Script V8, HTTP, Spreadsheet/Drive, actualización real de catálogo, YouTube, navegación móvil, deployments ni E2/E3. La revalidación Git/E1 no certifica comportamiento en producción.
+Sin cambios de código, HTML, CSS, servicios, endpoints, contratos, configuración, credenciales, assets, permisos, Spreadsheet, Drive ni datos productivos. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Commit documental único: docs(audit): verify AUD-T-005 continuity; parent c7ad01b89f7228622f9732c5d38850cd987a207a.
+Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom (revalidación de continuidad E1).
+================================================================================
