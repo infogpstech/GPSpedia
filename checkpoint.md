@@ -1352,3 +1352,36 @@ Documentos actualizados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Cons
 Commit documental único: docs(audit): verify AUD-T-024 continuity; parent 2f627a9f11a2e0c6282903d515b8ef893cd15b96.
 Siguiente unidad: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento (revalidación de continuidad E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0069
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S070
+Tarea: AUD-T-025 — Herramientas ADMIN, base de datos, backup, restore, logs y mantenimiento; revalidación E1.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 650e566945aa4238f241d1c86736b24e3d396733; árbol 033a5a02967b5e9fde7dce9e28638b28f290b098; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 941dfb166ae5af4631d0711d50ab3d45cf7225c1 (AUD-20261107-S006 / AUD-CP-0006).
+Alcance: Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html, README.md y Services/Test/README.md.
+Hallazgos conocidos: H-AUD-025-001 a 009; relación H-AUD-023-005/AUG-013. Tareas existentes AUG-018 a AUG-023; no duplicar.
+Estado inicial observado: E1 estática histórica completada; continuidad pendiente de revalidación contra HEAD actual. Rama base sin cambios.
+Documentos previos: Plan 365541b7c6920d8dfb72ea6a754464c6b5c50fe3; Consolidación ffdf01be760e3881ea67e3987623277f83ce4955; ChangesLogs 122617febb6d3abba952bdbe9363e95ca5ff7dd3; contexto 51ccb9ac78e1e2b538ae66b84b2419c15aa644c4; Tareas da518bf5bffdee906c90586fe438963b8571fc86; AUG 7fa06009143e67ee8ac6f3eec8a72f52d216500f; checkpoint 3caf5a9cbbe7389e27d5341f317afc7bfc95fab7.
+Auditoría.txt recuperado íntegramente; historial anterior preservado.
+No se modificará código ni se ejecutarán operaciones en Drive/Spreadsheet o deployments. Checkpoint inicial y final incluidos en el único commit documental.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0069
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S070
+Tarea: AUD-T-025 — revalidación de continuidad E1.
+Estado: CONTINUIDAD CONFIRMADA; H-AUD-025-001 a 009 abiertos; AUG-018 a AUG-023 pendientes. H-AUD-025-009 precisa corrección factual de su descripción.
+HEAD auditado: 650e566945aa4238f241d1c86736b24e3d396733; árbol 033a5a02967b5e9fde7dce9e28638b28f290b098; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 941dfb166ae5af4631d0711d50ab3d45cf7225c1. 65 commits posteriores.
+Seis de siete archivos del alcance conservan SHA E1. Services/admin.js cambió globalmente, pero funciones de backup, restore, terminal Drive, sheet handlers, doPost y helpers de copia/limpieza permanecen byte idénticas. Services/write.js cambió fuera del alcance.
+H-AUD-025-001 a 008 confirmados. H-AUD-025-009: ACTION_TO_SERVICE_MAP sí incluye createSheet/addColumn; switch ADMIN también; no hay llamadas UI ni controles HTML. La carencia real es consumidor frontend/definición de uso externo, no mapeo routeAction. H-AUD-023-005/AUG-013 reconfirmada. Sin nuevos IDs ni tareas duplicadas.
+Validaciones ejecutadas: comparación E1→HEAD; SHA siete archivos; comparación byte por byte de funciones/helpers críticos; permisos FEEDBACK, router ADMIN, handlers logs, IndexedDB y referencias UI.
+No ejecutadas: Apps Script V8, HTTP, navegador, DriveApp/SpreadsheetApp, backup/restore/purgas reales, concurrencia, recuperación, deployments ni E2/E3. No se inspeccionaron datos productivos.
+Documentación actualizada: Auditoría.txt, Tareas.txt, Aug_Tareas.md, Plan_Auditoria.md, Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Sin cambios funcionales, endpoints, configuración, credenciales ni datos productivos. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-025 continuity; parent 650e566945aa4238f241d1c86736b24e3d396733.
+Siguiente tarea: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+================================================================================

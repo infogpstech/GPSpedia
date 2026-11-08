@@ -6478,3 +6478,17 @@ Estado: PLANIFICADA; NO EJECUTADA.
 7. GET debug, ping y operaciones ADMIN reales de lectura/escritura en entorno aislado, con permisos y dependencias verificadas.
 8. Regresión coordinada con VAL-27 y VAL-31 sin duplicar sus pruebas.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CONTINUIDAD — AUD-T-025
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S070 | Checkpoint: AUD-CP-0069
+E1: 941dfb166ae5af4631d0711d50ab3d45cf7225c1 | HEAD: 650e566945aa4238f241d1c86736b24e3d396733 | Base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- H-AUD-025-001 a 008 permanecen confirmados y abiertos por continuidad de código.
+- H-AUD-025-009 se corrige en alcance: api-config.js sí mapea createSheet y addColumn a ADMIN; los handlers también existen en doPost. No se hallaron llamadas en ui.js ni controles en index.html. AUG-023 queda enfocada en identificar/documentar un consumidor frontend o el uso externo/manual y decidir su soporte; no en agregar un mapeo inexistente.
+- H-AUD-023-005/AUG-013 sigue vigente por la carrera entre la purga FEEDBACK y las inserciones AUTH; no duplicar.
+- AUG-018 a AUG-022 permanecen pendientes; AUG-023 se conserva con alcance precisado. Sin tareas nuevas.
+- Seis de siete archivos del alcance conservan SHA E1. Services/admin.js cambió, pero las funciones auditadas de backup, restore, Drive terminal, sheet handlers y doPost son idénticas byte por byte. Services/write.js cambió fuera del alcance.
+- No se ejecutaron Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purgas ni concurrencia real. Sin cambios funcionales ni operaciones productivas.
+Siguiente: AUD-T-026.
+================================================================================

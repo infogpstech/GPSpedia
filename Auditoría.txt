@@ -11284,3 +11284,46 @@ Validaciones pendientes: VAL-20 (PyS), VAL-03 (sesión/RBAC), VAL-09 (cargas), V
 Límites: solo E1 estática y continuidad Git. No se modificó código, HTML/CSS funcional, servicios, endpoints, esquema productivo, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue. La rama base permanece intacta.
 Siguiente unidad secuencial: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
 ================================================================================
+
+
+================================================================================
+ADENDA DE REVALIDACIÓN — AUD-T-025 — 2026-11-08
+Sesión: AUD-20261108-S070 | Checkpoint: AUD-CP-0069
+E1 histórica: 941dfb166ae5af4631d0711d50ab3d45cf7225c1 (AUD-20261107-S006 / AUD-CP-0006).
+HEAD revalidado: 650e566945aa4238f241d1c86736b24e3d396733; árbol 033a5a02967b5e9fde7dce9e28638b28f290b098; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+Comparación E1→HEAD: 65 commits posteriores; 10 archivos en el diff global. Dentro del alcance, seis archivos conservan SHA E1; Services/admin.js cambió después de E1, pero las funciones de esta auditoría y helpers críticos conservan contenido idéntico byte por byte: doPost, handleBackupDatabase, handleBackupDrive, copyFolderRecursively, handleRestoreDatabase, handleRestoreDrive, clearFolderContents, handleDriveCommand, handleCreateSheet y handleAddColumn. Services/write.js es cambio funcional fuera del alcance.
+SHA por archivo del alcance:
+- Services/admin.js: E1 847a2bb80e53918bede067e530b80e41bfdb6afa; HEAD ffb120badeb9e8cbe931226a0ce90c0476363012; modificado; funciones auditadas idénticas.
+- Services/feedback.js: E1 3db189523f6cb849d33550f29971c0ec6f386b3a; HEAD 3db189523f6cb849d33550f29971c0ec6f386b3a; sin cambios.
+- ui.js: E1 f00f48a42ee9bf0fd200f21959eb741f113363eb; HEAD f00f48a42ee9bf0fd200f21959eb741f113363eb; sin cambios.
+- api-config.js: E1 a5c718d01b7da50b4b5e650c3bacd91456f4d670; HEAD a5c718d01b7da50b4b5e650c3bacd91456f4d670; sin cambios.
+- index.html: E1 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; HEAD 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; sin cambios.
+- README.md: E1 4a944ac44602152a1a4ad8e985dcf12e4e33331c; HEAD 4a944ac44602152a1a4ad8e985dcf12e4e33331c; sin cambios.
+- Services/Test/README.md: E1 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff; HEAD 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff; sin cambios.
+HALLAZGOS REVALIDADOS:
+- H-AUD-025-001 (Alta): confirmado. handleRestoreDatabase() crea TEMP_RESTORE_HOLDER, elimina las hojas existentes antes de copiar el respaldo y no tiene rollback ni respaldo automático inmediato del destino.
+- H-AUD-025-002 (Alta): confirmado. handleRestoreDrive() ejecuta clearFolderContents() antes de copyFolderRecursively(), sin staging ni recuperación ante fallo.
+- H-AUD-025-003 (Alta): confirmado. handleBackupDrive() usa copia recursiva/síncrona sin manifiesto, marcador de integridad, lotes ni reanudación. restoreDrive acepta carpeta por prefijo/estado/ubicación sin verificar integridad completa.
+- H-AUD-025-004 (Media): confirmado. handleDriveCommand() acepta currentFolderId directamente, permite cd .. al padre, mkdir en la carpeta activa y move con fileId/targetFolderId arbitrarios; no verifica ascendencia dentro de Cortes.
+- H-AUD-025-005 (Media): confirmado. handleGetActivityLogs() lee getDataRange().getValues() de toda la hoja y solo después transforma, invierte y limita a 100.
+- H-AUD-025-006 (Baja): confirmado. Timestamps vacíos/no válidos producen entryTime 0/NaN y no se eliminan ni reportan en la purga por antigüedad.
+- H-AUD-025-007 (Media): confirmado. logMessage() de ADMIN agrega eventos a un arreglo local logs y lo devuelve en la respuesta HTTP; no persiste un ledger de operaciones.
+- H-AUD-025-008 (Baja): confirmado. ui.js llama indexedDB.deleteDatabase() sin esperar onsuccess/onerror/onblocked; informa éxito, limpia localStorage y programa recarga inmediatamente.
+- H-AUD-025-009 (Baja): CONFIRMADO CON CORRECCIÓN DE ALCANCE. El hallazgo histórico afirmó que createSheet/addColumn no estaban mapeadas en ACTION_TO_SERVICE_MAP. Esa afirmación es incorrecta: api-config.js sí contiene 'createSheet': 'ADMIN' y 'addColumn': 'ADMIN', y el router ADMIN mantiene ambos casos/handlers. Lo que sí se confirma es que no hay llamadas en ui.js ni controles en index.html. La observación se limita a ausencia de consumidor frontend identificado y falta de decisión/documentación sobre uso externo/manual; no existe ausencia de ruta routeAction.
+HALLAZGO RELACIONADO RECONFIRMADO:
+- H-AUD-023-005 / AUG-013: clearSensitiveLogs() toma una instantánea de Logs y borra por índices mientras AUTH puede insertar desde otro proyecto Apps Script; no hay coordinación común. No se crea otro ID.
+CONTROLES POSITIVOS:
+- ADMIN conserva assertDeveloperSession(payload) antes del switch para toda acción distinta de ping.
+- FEEDBACK mantiene actionPermissions: getActivityLogs admite Desarrollador/Gefe/Jefe/Supervisor; clearActivityLogs y clearSensitiveLogs exigen Desarrollador y pasan por assertFeedbackSession.
+- handleBackupDatabase verifica ID, MIME, nombre, ubicación, identidad y hoja Cortes; vincula el backup a la sesión de Desarrollador en ScriptCache.
+- Los restores validan origen distinto del destino, tipo/prefijo/ubicación antes de modificar; esto no sustituye rollback ni verificación integral.
+- Las purgas de ActividadUsuario y Logs permanecen separadas; la UI mantiene confirmaciones y deshabilita controles durante la operación iniciada desde esa interfaz.
+- copyFolderRecursively copia nombres, archivos y jerarquía, pero no acredita ACL/permisos ni metadatos de compartición.
+TAREAS:
+- AUG-018 a AUG-022 siguen pendientes. AUG-023 se conserva con alcance precisado: el mapeo routeAction sí existe; falta consumidor frontend/decisión de soporte. No crear otra tarea.
+- AUG-013 sigue abierta; AUD-T-033/AUG-003 continúa como dependencia de coordinación interproyectos. Sin hallazgos ni tareas nuevas.
+VALIDACIONES EJECUTADAS: comparación E1→HEAD; SHA de siete archivos; comparación byte por byte de diez funciones ADMIN/helpers; inspección de permisos FEEDBACK, router ADMIN, handlers de logs, limpieza IndexedDB y referencias createSheet/addColumn en ui.js/index.html.
+NO EJECUTADAS: Apps Script V8, HTTP, navegador, DriveApp, SpreadsheetApp, backup/restore/purgas reales, pruebas de recuperación, manifiestos reales, concurrencia AUTH/WRITE/USERS/FEEDBACK, deployments ni E2/E3. No se inspeccionaron recursos productivos.
+Sin cambios de código, endpoints, contratos, configuración, credenciales, hojas, Drive, Spreadsheet ni datos productivos. Sin despliegue ni merge.
+Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+================================================================================

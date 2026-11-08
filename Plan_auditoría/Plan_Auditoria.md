@@ -1363,3 +1363,29 @@ Sesión AUD-20261108-S069 | Checkpoint AUD-CP-0068 | E1 histórica 3e458bbf67fce
 - Se conservan AUG-005 a 008 y sus adendas; AUG-010/AUD-T-033/AUG-003; AUG-016 y AUG-017. Sin tareas duplicadas.
 - Sin navegador, multi-pestaña, HTTP, Apps Script V8, login/revocación/expiración reales, concurrencia, fallos inyectados, pruebas de roles, deployments ni E2/E3. E1 no certifica comportamiento funcional.
 - Sin cambios de código, endpoints, contratos, configuración, credenciales ni datos productivos. No se modifican Auditoría.txt, Tareas.txt ni Aug_Tareas.md. Siguiente: AUD-T-025.
+
+
+## 54. Revalidación de continuidad — AUD-T-025
+
+**Sesión:** AUD-20261108-S070  
+**Checkpoint:** AUD-CP-0069  
+**E1 original:** 941dfb166ae5af4631d0711d50ab3d45cf7225c1 (AUD-20261107-S006 / AUD-CP-0006)  
+**HEAD revalidado:** 650e566945aa4238f241d1c86736b24e3d396733  
+**Árbol:** 033a5a02967b5e9fde7dce9e28638b28f290b098  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-025-001 A 009 ABIERTOS; AUG-018 A 023 PENDIENTES; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance y comparación
+Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html, README.md y Services/Test/README.md. 65 commits posteriores a E1; seis archivos conservan SHA. Services/admin.js cambió después de E1, pero doPost, handlers backup/restore, helpers de copia/limpieza, terminal Drive y sheet handlers permanecen byte por byte idénticos. Services/write.js también cambió, fuera del alcance.
+
+### Resultado
+- H-AUD-025-001 a 008 continúan confirmados: restores destructivos sin rollback; backup Drive recursivo sin manifiesto; terminal sin límite de ascendencia; lectura completa de ActividadUsuario; timestamps inválidos no reportados; logs ADMIN solo en respuesta; IndexedDB.deleteDatabase sin espera asíncrona.
+- H-AUD-025-009 se mantiene con alcance corregido: createSheet/addColumn SÍ están en ACTION_TO_SERVICE_MAP y en el switch ADMIN; no se encontraron consumidores en ui.js ni controles en index.html. La decisión pendiente es documentar el uso externo/manual o el consumidor frontend; no falta ruta routeAction.
+- H-AUD-023-005/AUG-013 sigue vigente. AUG-018 a AUG-022 y AUG-023 permanecen pendientes; sin tareas nuevas.
+- ADMIN continúa exigiendo sesión Desarrollador para acciones distintas de ping. FEEDBACK mantiene permisos específicos; ambas purgas requieren Desarrollador.
+
+### Validaciones y límites
+Comparación E1→HEAD; SHA de siete archivos; comparación byte por byte de funciones y helpers críticos; inspección de permisos FEEDBACK, handlers de logs, limpieza IndexedDB y referencias UI. No se ejecutaron Apps Script V8, HTTP, navegador, DriveApp/SpreadsheetApp, backup/restore/purga real, concurrencia, pruebas de recuperación, deployments ni E2/E3. Sin modificaciones funcionales ni operaciones productivas.
+
+### Siguiente iteración
+AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.

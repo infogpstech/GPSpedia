@@ -253,6 +253,9 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Estado:** NUEVA; pendiente.
 
  
+
+- **Adenda AUD-T-025 (2026-11-08):** `api-config.js` sí contiene `'createSheet': 'ADMIN'` y `'addColumn': 'ADMIN'`; los dos casos también existen en el switch de `Services/admin.js`. La afirmación previa de ausencia de mapeo routeAction queda rectificada. La falta confirmada es de consumidor frontend: no hay llamadas en `ui.js` ni controles en `index.html`.
+- **Criterio precisado:** documentar si estas acciones se reservan para uso externo/manual o requieren interfaz; identificar y validar consumidores externos antes de cualquier retirada. Si se mantienen, documentar contrato, autorización, validación y pruebas. No agregar un mapeo ya existente ni eliminar handlers durante auditoría.
 ### AUG-024 — Robustecer el contrato de health check y la clasificación de estados de microservicios
 - **Origen:** H-AUD-026-001, H-AUD-026-002 y H-AUD-026-003; riesgo histórico de metadatos debug pendiente de verificación. **Prioridad:** Alta.
 - **Tarea auditada:** AUD-T-026. **Sesión/checkpoint:** AUD-20261107-S007 / AUD-CP-0007.

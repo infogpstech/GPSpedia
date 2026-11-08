@@ -4627,3 +4627,15 @@ Sesión AUD-20261108-S069 | Checkpoint AUD-CP-0068 | E1 3e458bbf67fce2a95847f4f5
 - Sin navegador, multi-pestaña, HTTP, Apps Script V8, login real, revocación, expiración, concurrencia, fallos inyectados, pruebas de roles, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 Siguiente unidad: AUD-T-025.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — REVALIDACIÓN AUD-T-025
+Fecha: 2026-11-08 | Sesión AUD-20261108-S070 | Checkpoint AUD-CP-0069
+- Auditoría.txt: adenda de continuidad E1 y corrección factual de H-AUD-025-009.
+- Tareas.txt: estado de continuidad y precisión del alcance AUG-023.
+- Plan_auditoría/Aug_Tareas.md: adenda a AUG-023; createSheet/addColumn sí están mapeadas en ACTION_TO_SERVICE_MAP, pero no tienen consumidor frontend identificado.
+- Plan_auditoría/Plan_Auditoria.md y Consolidacion_Auditoria.md: revalidación de hallazgos, siete archivos y siguiente unidad AUD-T-026.
+- contexto_personal.md y checkpoint.md: continuidad, SHA/HEAD, límites y siguiente acción.
+ALCANCE: documentación solamente. Sin modificaciones de archivos de aplicación, endpoints, configuración, hojas, Drive, datos productivos ni deployments. Sin operaciones externas, merge o despliegue.
+================================================================================

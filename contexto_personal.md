@@ -718,3 +718,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Controles positivos: USERS valida token, usuario y rol en getVerifiedSession y protege resetUserSessions para Desarrollador. Persisten riesgos de coordinación AUTH/USERS, respuestas obsoletas, fallos parciales, logout local y expiración no definida.
 - No se ejecutaron pruebas reales de navegador, multi-pestaña, HTTP, Apps Script, revocación, expiración, concurrencia, roles ni deployments. Sin cambios funcionales ni datos productivos.
 - Siguiente: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+
+
+## Continuidad AUD-T-025 — 2026-11-08
+- Revalidación AUD-20261108-S070/AUD-CP-0069; E1 histórica 941dfb166ae5af4631d0711d50ab3d45cf7225c1; HEAD 650e566945aa4238f241d1c86736b24e3d396733; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- 65 commits posteriores; seis de siete archivos de alcance mantienen SHA E1. Services/admin.js cambió fuera de las funciones auditadas; handlers backup/restore, Drive terminal, sheet handlers, doPost y helpers críticos permanecen byte idénticos.
+- H-AUD-025-001 a 008 siguen abiertos. H-AUD-025-009 se precisa: createSheet/addColumn sí están mapeadas a ADMIN, pero no tienen llamadas en ui.js ni controles en index.html. AUG-023 se conserva con esta corrección; no crear tarea duplicada.
+- H-AUD-023-005/AUG-013 sigue vigente. AUG-018 a AUG-022 pendientes.
+- Sin Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purga, concurrencia, recuperación ni deployments. Sin cambios funcionales ni datos productivos.
+- Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.

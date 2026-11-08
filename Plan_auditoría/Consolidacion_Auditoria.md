@@ -715,3 +715,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Controles backend positivos observados: USERS verifica token/usuario/rol y limita resetUserSessions a Desarrollador. Los locks son locales a cada proyecto; no se consideran una transacción compartida.
 - No se ejecutaron navegador, multi-pestaña, HTTP, Apps Script V8, login real, revocación, expiración, concurrencia, fallos parciales, pruebas de roles, deployments ni E2/E3. Validación funcional pendiente.
 - Sin cambios funcionales, datos productivos, merge ni despliegue. Siguiente: AUD-T-025.
+
+
+## 43. AUD-T-025 — continuidad E1 y precisión de AUG-023
+- Sesión AUD-20261108-S070; checkpoint AUD-CP-0069; E1 941dfb166ae5af4631d0711d50ab3d45cf7225c1; HEAD 650e566945aa4238f241d1c86736b24e3d396733; árbol 033a5a02967b5e9fde7dce9e28638b28f290b098; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- 65 commits posteriores; seis de siete archivos del alcance mantienen SHA. Services/admin.js cambió, pero las funciones de backup/restore/terminal/sheet handlers/doPost y helpers críticos permanecen idénticas byte por byte.
+- H-AUD-025-001 a 008 siguen abiertos. H-AUD-025-009 se precisa: createSheet/addColumn sí están mapeadas en ACTION_TO_SERVICE_MAP y en el router ADMIN, pero carecen de consumidor frontend en ui.js/index.html. Se rectifica únicamente la afirmación de ausencia de mapeo.
+- H-AUD-023-005/AUG-013 continúa vigente; AUG-018 a AUG-022 y AUG-023 siguen pendientes. Sin duplicar tareas.
+- Controles positivos: ADMIN valida sesión Desarrollador salvo ping; FEEDBACK restringe las purgas a Desarrollador; backup DB verifica identidad/tipo/ubicación y existencia de Cortes.
+- Sin Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purgas, concurrencia, recuperación ni deployments. Sin cambios funcionales o productivos.
+- Siguiente: AUD-T-026.
