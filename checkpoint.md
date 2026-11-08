@@ -1760,3 +1760,34 @@ Sin cambios funcionales, endpoints, configuración, hojas, datos productivos ni 
 Commit documental único: docs(audit): verify AUD-T-037 continuity; parent 2bab8f39e5fa3c3baaffd19681f91ce93a2a8ebf; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, sujeto al orden vigente del plan.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0082
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S083
+Tarea: AUD-T-038 — revalidación de continuidad E1 de seguridad del almacenamiento local y ciclo de datos de usuario.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 8ea95b85ce27a99c278d4419ca96f7d7ae908a10; árbol bacda66b5aef9533bafc93d48186f6fb95850b4a; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: bfcdf8e57d4e09c1c920cf904265301c4554b334; árbol E1 2d65382ae9db49b8cd80ab3bb8a888f26ff32a80; sesión original AUD-20261107-S020 / AUD-CP-0020.
+Alcance: offline.js, auth.js, state.js, ui.js, add_cortes.html, users.html, main.js, VinDifferentialEngine.js, api-config.js, service-worker.js, Services/Auth.js, Services/users.js, Services/write.js y Services/admin.js.
+Hallazgos conocidos: H-AUD-038-001 a 005. Tareas derivadas: AUG-053/AUG-054; adendas a AUG-051/AUG-022.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los catorce archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: snapshots locales sin propietario/expiración, vistas/historial compartidos, política de retención, vaciado incompleto de IndexedDB y endpoint checkOperation sin autenticación/minimización.
+Sin cambios de código, sesiones, datos locales/productivos, operaciones Drive/Spreadsheet, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0082
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S083
+Tarea: AUD-T-038 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-038-001 A 005 ABIERTOS; VALIDACIÓN FUNCIONAL/PRIVACIDAD PENDIENTE.
+HEAD auditado: 8ea95b85ce27a99c278d4419ca96f7d7ae908a10; árbol bacda66b5aef9533bafc93d48186f6fb95850b4a; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: bfcdf8e57d4e09c1c920cf904265301c4554b334; árbol E1 2d65382ae9db49b8cd80ab3bb8a888f26ff32a80; 63 commits posteriores.
+Los catorce archivos del alcance conservan SHA E1: offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; users.html e41f402675677a4d2783493614737021ec2eade5; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5; Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed; Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012.
+Hallazgos revalidados: H-AUD-038-001 a 005 permanecen sin cambios. AUG-053/AUG-054 pendientes; AUG-051/AUG-022 ampliadas. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de catorce archivos y revisión de consistencia documental. No ejecutadas: navegador, IndexedDB real, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments.
+Sin cambios funcionales, endpoints, configuración, sesiones, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-038 continuity; parent 8ea95b85ce27a99c278d4419ca96f7d7ae908a10; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+================================================================================

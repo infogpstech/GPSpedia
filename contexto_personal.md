@@ -838,3 +838,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-048/AUG-049/AUG-050/AUG-051/AUG-052 pendientes. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron pruebas de navegador, IndexedDB, PWA offline, cuota/evicción, búsqueda representativa, VIN, HTTP, Apps Script, Spreadsheet, concurrencia ni benchmarks. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, sujeto al orden vigente del plan.
+
+
+## Continuidad AUD-T-038 — 2026-11-08 | AUD-20261108-S083
+- Revalidación AUD-20261108-S083/AUD-CP-0082; E1 histórica bfcdf8e57d4e09c1c920cf904265301c4554b334 (AUD-20261107-S020/AUD-CP-0020); HEAD 8ea95b85ce27a99c278d4419ca96f7d7ae908a10; árbol actual bacda66b5aef9533bafc93d48186f6fb95850b4a; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. offline.js, auth.js, state.js, ui.js, add_cortes.html, users.html, main.js, VinDifferentialEngine.js, api-config.js, service-worker.js, Services/Auth.js, Services/users.js, Services/write.js y Services/admin.js conservan exactamente sus SHA E1.
+- H-AUD-038-001 a 005 permanecen abiertos: snapshot add_cortes cruzable entre cuentas; snapshots ADMIN/backups sin owner/retención; viewedItems/validationCache sin política; vaciado local incompleto; checkOperation sin auth y con rowData completo.
+- AUG-053/AUG-054 pendientes; AUG-051/AUG-022 ampliadas. No duplicar tareas previas de caché, sesión, aceptación legal o eliminación IndexedDB.
+- No se ejecutaron pruebas de navegador, IndexedDB, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.

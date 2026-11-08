@@ -1944,3 +1944,56 @@ No se ejecutaron pruebas de navegador, IndexedDB real, cuota/evicción, PWA offl
 
 ### Siguiente iteración
 AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, según la siguiente unidad del plan.
+
+
+## 67. Revalidación de continuidad — AUD-T-038
+
+**Sesión:** AUD-20261108-S083  
+**Checkpoint:** AUD-CP-0082  
+**E1 original:** bfcdf8e57d4e09c1c920cf904265301c4554b334 (AUD-20261107-S020 / AUD-CP-0020)  
+**Árbol E1:** 2d65382ae9db49b8cd80ab3bb8a888f26ff32a80  
+**HEAD revalidado:** 8ea95b85ce27a99c278d4419ca96f7d7ae908a10  
+**Árbol actual:** bacda66b5aef9533bafc93d48186f6fb95850b4a  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-038-001 A 005 ABIERTOS; VALIDACIÓN FUNCIONAL/PRIVACIDAD PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron persistencia local y consumidores: IndexedDB/localStorage, snapshots pendientes, identidad/retención, historial/vistos, validationCache, vaciado de caché, recuperación de operaciones y autorización/minimización de checkOperation. Archivos: offline.js, auth.js, state.js, ui.js, add_cortes.html, users.html, main.js, VinDifferentialEngine.js, api-config.js, service-worker.js, Services/Auth.js, Services/users.js, Services/write.js y Services/admin.js.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los catorce archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+
+### Revalidación de hallazgos y tareas
+- H-AUD-038-001 a H-AUD-038-005 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- El snapshot local de add_cortes sigue sin propietario/expiración y puede recuperarse bajo otra cuenta; la recuperación también registra el objeto completo en consola.
+- Los snapshots ADMIN y respaldo de edición siguen sin aislamiento/retención suficiente; viewedItems y validationCache carecen de política explícita de cuenta/retención.
+- «Vaciar caché local» sigue sin representar el inventario completo y no espera la finalización de deleteDatabase.
+- checkOperation sigue sin validar sesión/relación actor-operación y puede devolver rowData completo; opId no es credencial.
+- AUG-053 continúa pendiente para aislar, proteger y depurar snapshots locales y respaldos por cuenta.
+- AUG-054 continúa pendiente para autenticar checkOperation y minimizar su respuesta; se relaciona con H-AUD-032-002 y H-AUD-035-001, sin duplicar el mismo problema.
+- AUG-051 conserva la ampliación de viewedItems y validationCache; AUG-022 conserva la ampliación de inventario y semántica de limpieza.
+- H-AUD-037-008/009, AUD-T-034/AUG-006/AUG-042, AUD-T-036/AUG-045 y AUD-T-024/AUG-005/AUG-007/AUG-008 mantienen sus tareas originales; no se crean IDs duplicados.
+- No se identifican hallazgos ni tareas nuevas. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los catorce archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba de aislamiento, privacidad o autorización funcional.
+
+No se ejecutaron pruebas E2/E3, navegador, IndexedDB real, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. No se inspeccionaron datos locales reales de usuarios. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red, según la secuencia vigente de cobertura.
