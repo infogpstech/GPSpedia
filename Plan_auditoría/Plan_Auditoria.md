@@ -688,3 +688,13 @@ Hallazgos H-AUD-037-001 a 012: caché conserva eliminados; sync no detecta edici
 Tareas: AUG-048 a AUG-052.
 Límites: E1 estática; sin navegador, IndexedDB real, cuota, PWA offline, rendimiento, VIN dataset, sincronización concurrente, HTTP ni Apps Script/Spreadsheet real. No se modificó código/datos.
 Siguiente: AUD-T-038 — revisar seguridad del almacenamiento local y ciclo de datos de usuario, sujeto a confirmación del plan.
+
+## 24. Consolidación global y matriz de validación — AUD-PLAN-2026-001
+
+Sesión AUD-20261107-S019 | Checkpoint AUD-CP-0019 | HEAD de inicio eb3b72e205ad8d772a4bd5cdad94fb3e26533917 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: CONSOLIDACIÓN DOCUMENTAL COMPLETADA; MATRIZ VAL-01 A VAL-15 PREPARADA; EJECUCIÓN PENDIENTE.
+Se confirma el catálogo de 37 AUD-T: AUD-T-023 a AUD-T-037 tienen E1 completada (15); AUD-T-002 está parcialmente auditada (1); AUD-T-001 y AUD-T-003 a AUD-T-022 siguen por auditar (21). No se debe afirmar que las 37 unidades tienen E1 completada.
+Aug_Tareas.md contiene 51 IDs AUG únicos; AUG-015 no aparece. Los encabezados repetidos corresponden a adendas/actualizaciones y no se renumeran ni duplican sin evidencia.
+Se crea Plan_auditoría/Consolidacion_Auditoria.md con índice por dominio, dependencias, matriz VAL-01 a VAL-15 y reglas de ejecución.
+Límites: trabajo documental; sin pruebas E2/E3, navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments. Sin cambios de aplicación ni datos productivos.
+Siguiente: AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario, previa comprobación de no duplicidad con AUG-051 y AUD-T-037.

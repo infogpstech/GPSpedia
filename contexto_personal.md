@@ -297,3 +297,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tareas AUG-048 snapshot/sync, AUG-049 búsqueda, AUG-050 VIN, AUG-051 IndexedDB/miniaturas/privacidad, AUG-052 startup/PWA/backend.
 - No se modificó código ni datos; solo inspección E1. Sin navegador, IndexedDB real, cuota, PWA offline, rendimiento, VIN con dataset real ni Spreadsheet/Apps Script.
 - Siguiente: AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario, pendiente de confirmar plan.
+
+## Continuidad — consolidación AUD-PLAN-2026-001 (2026-11-07)
+- Sesión/checkpoint AUD-20261107-S019 / AUD-CP-0019.
+- Rama GPSpedia2.2.5_work: HEAD inicial eb3b72e205ad8d772a4bd5cdad94fb3e26533917; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Corrección de cobertura: 37 AUD-T en el catálogo; AUD-T-023 a AUD-T-037 con E1 completada (15), AUD-T-002 parcial (1), AUD-T-001 y AUD-T-003 a AUD-T-022 por auditar (21).
+- Aug_Tareas.md contiene 51 IDs únicos; AUG-015 no aparece y no debe inferirse. Los encabezados repetidos se conservan como adendas.
+- Nuevo Plan_auditoría/Consolidacion_Auditoria.md con matriz VAL-01 a VAL-15; matriz preparada, no ejecutada.
+- Siguiente: AUD-T-038, previa revisión de no duplicidad con AUG-051/AUD-T-037.
+- Solo documentación; sin pruebas funcionales ni cambios de aplicación/datos productivos.

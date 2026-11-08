@@ -682,3 +682,12 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Probar primera instalación, actualización de Service Worker, arranque offline, deep link sin sesión/sin catálogo, API lenta/caída y catálogos de tamaño representativo.
 - Relación: AUD-T-037; AUD-T-029/AUG-033 por límites de tiempo y cargas de Drive; no confundir catálogo Spreadsheet con auditoría Drive.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+================================================================================
+CONTROL DE INVENTARIO DE IDENTIFICADORES AUG — AUD-CP-0019
+Fecha: 2026-11-07 | Sesión AUD-20261107-S019
+La revisión de encabezados y referencias del archivo identifica 51 IDs AUG únicos en el rango AUG-001 a AUG-052. AUG-015 no aparece en el contenido consultado. No crear, inferir, reutilizar ni renumerar ese identificador sin evidencia histórica.
+Los encabezados repetidos para AUG-005, AUG-006, AUG-007, AUG-008 y AUG-013, además de las ampliaciones posteriores, se conservan como adendas/actualizaciones de tareas existentes; no representan por sí solos tareas adicionales.
+AUG-001, AUG-002 y AUG-004 se mantienen como entregables transversales/equivalentes ya documentados según sus propias fichas; no duplicarlos como tareas de implementación.
+La matriz de validación consolidada está en Plan_auditoría/Consolidacion_Auditoria.md. Este inventario no modifica criterios de aceptación ni prioridades.
+================================================================================

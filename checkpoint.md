@@ -406,3 +406,44 @@ Validación solo E1 estática; sin navegador, IndexedDB real, cuota, PWA offline
 Solo documentación; ningún cambio de código/datos productivos.
 Siguiente AUD-T-038, sujeto a confirmar el plan. Commit previsto: audit(catalog): revisar caché, sincronización y búsqueda; parent/expected 513c9982407db2a1c9b357a418d0949786ec4141; force=false; base debe permanecer d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0019
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S019
+Tarea: Consolidación global de auditoría y preparación de matriz de validación.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: eb3b72e205ad8d772a4bd5cdad94fb3e26533917
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: revisar el estado del catálogo AUD-T, inventariar IDs AUG, registrar inconsistencias documentales, organizar dependencias y preparar una matriz de validación.
+Restricciones: no modificar código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments; no ejecutar pruebas ni operaciones reales.
+Estado inicial: AUD-T-001 a AUD-T-037; la tabla marca 15 unidades E1 completadas (023–037), una parcial (002) y 21 por auditar (001 y 003–022). AUG: 51 IDs únicos observados; AUG-015 ausente.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0019
+HEAD auditado: eb3b72e205ad8d772a4bd5cdad94fb3e26533917; rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+Estado: CONSOLIDACIÓN DOCUMENTAL COMPLETADA; MATRIZ VAL-01 A VAL-15 PREPARADA; EJECUCIÓN PENDIENTE.
+Archivos modificados:
+- Plan_auditoría/Consolidacion_Auditoria.md (nuevo): inventario, dependencias, secuencia y matriz.
+- Plan_auditoría/Plan_Auditoria.md: iteración 24.
+- Plan_auditoría/Aug_Tareas.md: control de IDs AUG.
+- Tareas.txt: resultado y límites.
+- Auditoría.txt: OBS-CONS-001 a OBS-CONS-003.
+- ChangesLogs.txt: registro de documentación.
+- contexto_personal.md: continuidad.
+- checkpoint.md: checkpoint inicial y final.
+RESPALDOS EXACTOS (blob SHA antes de editar):
+- Plan_auditoría/Plan_Auditoria.md: c3388e0dac6a24da77746dd1d27d6231909299e9
+- Plan_auditoría/Aug_Tareas.md: cb2227a42012d3efda6a79e9e7e27bf4adef7984
+- Tareas.txt: cf343fc8b705475d52c7cc49e9e2ec2558638a33
+- Auditoría.txt: 4eba719b71dcf527879a979dd315c33f27115b9f
+- ChangesLogs.txt: 9f3710715db2fe47fe2119decead742e27cfa6ba
+- checkpoint.md: d37670e8ab9ff33e24f8e67abbebf29cced50777
+- contexto_personal.md: bcce4ca7ebaa028f3ec19bbbe8ba0f1a2331d461
+Verificaciones: consistencia documental de conteos y referencias; no se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments.
+Cambios de aplicación: ninguno. Datos productivos: sin cambios.
+Siguiente acción: AUD-T-038, previa revisión de solapamiento con AUG-051 y AUD-T-037.
+El checkpoint final se incluye en el único commit de esta tarea. parent_sha y expected_sha serán eb3b72e205ad8d772a4bd5cdad94fb3e26533917; force=false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

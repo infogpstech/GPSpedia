@@ -5633,3 +5633,29 @@ TAREAS NUEVAS
 LÍMITES
 Solo E1 estática. Sin navegador, IndexedDB real, pruebas de cuota, PWA offline, rendimiento, dataset completo, VIN ambiguo, sincronización concurrente, HTTP ni Spreadsheet/Apps Script real. No se verificaron deployments. No se modificó código ni datos productivos.
 ================================================================================
+
+================================================================================
+CONSOLIDACIÓN DOCUMENTAL — AUD-PLAN-2026-001
+Fecha: 2026-11-07 | Sesión AUD-20261107-S019 | Checkpoint AUD-CP-0019
+Estado: COMPLETADA; MATRIZ DE VALIDACIÓN PREPARADA; PRUEBAS PENDIENTES.
+
+ESTADO REAL DEL CATÁLOGO AUD-T
+- AUD-T-023 a AUD-T-037: auditoría estática E1 completada, con hallazgos y validaciones pendientes (15 unidades).
+- AUD-T-002: auditada parcialmente (1 unidad).
+- AUD-T-001 y AUD-T-003 a AUD-T-022: por auditar (21 unidades).
+- Total: 37 unidades. No declarar las 37 como auditadas.
+
+INVENTARIO AUG
+- 51 identificadores únicos presentes.
+- AUG-015 no aparece en el registro consultado; requiere investigación histórica, sin renumeración ni creación inferida.
+- Los encabezados repetidos corresponden a adendas/actualizaciones; no duplicar tareas.
+- AUG-001, AUG-002 y AUG-004 conservan su naturaleza de entregables transversales/equivalentes descrita en sus fichas.
+
+ENTREGABLE
+- Plan_auditoría/Consolidacion_Auditoria.md: índice por dominios, dependencias, matriz VAL-01 a VAL-15 y reglas de ejecución.
+- La matriz es planificación, no evidencia de pruebas ejecutadas.
+- Próxima unidad prevista: AUD-T-038, previa comprobación de no duplicidad con AUG-051 y AUD-T-037.
+
+LÍMITES
+Solo documentación. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No se ejecutaron pruebas funcionales, HTTP, navegador, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments.
+================================================================================

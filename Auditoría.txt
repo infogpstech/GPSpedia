@@ -9017,3 +9017,24 @@ AUD-T-037 queda con auditoría estática E1 completada y hallazgos abiertos. La 
 No se ejecutaron pruebas de navegador, IndexedDB real, cuota/evicción, PWA offline, rendimiento con catálogo completo, búsquedas con dataset representativo, VIN ambiguos, sincronización concurrente, Apps Script/Spreadsheet real ni pruebas HTTP. No se verificaron deployments publicados. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
 Siguiente unidad del plan: AUD-T-038 — revisar seguridad del almacenamiento local y ciclo de datos de usuario, o la siguiente unidad definida en el plan tras consolidación.
 ================================================================================
+
+================================================================================
+CONSOLIDACIÓN DE AUDITORÍA — CONTROL DE COBERTURA Y TRAZABILIDAD
+Fecha: 2026-11-07 | Sesión AUD-20261107-S019 | Checkpoint AUD-CP-0019
+Referencia: AUD-PLAN-2026-001
+
+OBS-CONS-001 — INCONSISTENCIA DE COBERTURA EN LA CONTINUIDAD
+El catálogo del plan contiene 37 unidades AUD-T, pero no todas tienen E1 completada. La tabla vigente registra AUD-T-023 a AUD-T-037 como E1 completada (15), AUD-T-002 como auditada parcialmente (1) y AUD-T-001 más AUD-T-003 a AUD-T-022 como POR AUDITAR (21). Cualquier resumen que declare las 37 unidades auditadas contradice el estado documental y queda corregido en la consolidación.
+
+OBS-CONS-002 — HUECO EN LA NUMERACIÓN AUG
+Aug_Tareas.md contiene 51 IDs únicos dentro del rango AUG-001 a AUG-052. AUG-015 no aparece. No se puede concluir si fue omitida, cancelada o reservada sin evidencia histórica adicional. Los encabezados repetidos de otros IDs se mantienen como adendas y no se interpretan como tareas independientes.
+
+OBS-CONS-003 — MATRIZ DE VALIDACIÓN AÚN NO EJECUTADA
+Se organiza la validación en VAL-01 a VAL-15. No existe evidencia en esta consolidación de pruebas funcionales reales, navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia o verificación de deployments. La matriz define cobertura pendiente y no cambia el estado de las tareas.
+
+ENTREGABLE
+Plan_auditoría/Consolidacion_Auditoria.md documenta el índice AUG, la secuencia propuesta, las dependencias, la matriz y las reglas de ejecución.
+
+CONCLUSIÓN
+Consolidación documental completada. Se mantienen abiertos los hallazgos y tareas AUG; no se autoriza por esta entrada ninguna modificación funcional ni operación sobre datos productivos.
+================================================================================
