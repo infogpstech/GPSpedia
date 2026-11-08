@@ -1535,3 +1535,45 @@ No se ejecutaron pruebas de navegador/PWA, HTTP, Apps Script V8, Drive, Spreadsh
 
 ### Siguiente iteración
 AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+
+
+## 58. Revalidación de continuidad — AUD-T-029
+
+**Sesión:** AUD-20261108-S074  
+**Checkpoint:** AUD-CP-0073  
+**E1 original:** 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9 (AUD-20261107-S010 / AUD-CP-0010)  
+**Árbol E1:** b589230be3b127e9a58c2b54b104405d1312cc79  
+**HEAD revalidado:** 4745eb60f6d562c92ec2bc69f5d66beee0b8943e  
+**Árbol actual:** 1a54888e302607f6eed4865413e0a3810fe5a808  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-029-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE RENDIMIENTO PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la continuidad del recorrido recursivo Drive Cortes, snapshot de referencias, cursor y reanudación, lotes/iteradores, persistencia local IndexedDB y contratos frontend/backend. Archivos de código del alcance: Services/admin.js, ui.js, offline.js, api-config.js e index.html.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los cinco archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+
+### Revalidación de hallazgos y tareas
+- H-AUD-029-001 a H-AUD-029-008 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Persisten las brechas documentadas: cursor de cliente no autoritativo y posible aceptación de pila vacía; firma de posición contaminada por contadores y falta de deduplicación; reescritura completa del arreglo IndexedDB por lote; snapshot con capacidad fija y TTL de seis horas no renovado; lectura de matrices más amplias que las columnas utilizadas; lotes fijos y ausencia de presupuesto/timeout; repetición de validación de ancestros; clave local única compartida entre pestañas.
+- AUG-028 conserva la adenda de cursor autoritativo y prueba verificable de auditoría completa.
+- AUG-030 conserva la adenda de firma de posición y deduplicación entre lotes/reanudaciones.
+- AUG-031 continúa pendiente para persistencia incremental y aislamiento de auditorías concurrentes.
+- AUG-032 continúa pendiente para capacidad, compresión, TTL e integridad del snapshot.
+- AUG-033 continúa pendiente para presupuesto temporal, lotes adaptativos, lectura eficiente y memoización segura.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los cinco archivos de código y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validación funcional ni de rendimiento.
+
+No se ejecutaron pruebas sintácticas E2, unitarias E3, navegador/PWA, Apps Script V8, HTTP, Drive, Spreadsheet, concurrencia real ni mediciones de tiempo/memoria. No se midieron tamaño real del snapshot, volumen de referencias, cuotas ni expiración de CacheService/iteradores. No se verificó deployment ADMIN, scopes OAuth ni versión operativa. Sin cambios de código, configuración, datos productivos ni operaciones Drive/Spreadsheet.
+
+### Siguiente iteración
+AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.

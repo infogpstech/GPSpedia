@@ -757,3 +757,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La normalización automática de nombres autorizada se limita a imágenes vinculadas inequívocamente a Cortes; no autoriza mover archivos automáticamente ni modificar el inventario de solo lectura. Sin renombrados ni operaciones productivas durante esta revalidación.
 - No se ejecutaron pruebas reales de navegador, HTTP, Apps Script, Drive, Spreadsheet, cuota, permisos, concurrencia ni deployments.
 - Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+
+
+## Continuidad AUD-T-029 — 2026-11-08 | AUD-20261108-S074
+- Revalidación AUD-20261108-S074/AUD-CP-0073; E1 histórica 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9 (AUD-20261107-S010/AUD-CP-0010); HEAD 4745eb60f6d562c92ec2bc69f5d66beee0b8943e; árbol actual 1a54888e302607f6eed4865413e0a3810fe5a808; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Services/admin.js, ui.js, offline.js, api-config.js e index.html conservan exactamente sus SHA E1.
+- H-AUD-029-001 a 008 permanecen abiertos: cursor autoritativo, posición repetida/deduplicación, persistencia IndexedDB, capacidad/TTL de snapshot, lectura amplia, timeout/presupuesto de lotes, memoización de ancestros y aislamiento multi-pestaña.
+- AUG-028/AUG-030 mantienen adendas; AUG-031/AUG-032/AUG-033 pendientes. No hay hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2–E5, navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni benchmarks reales. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.

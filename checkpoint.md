@@ -1481,3 +1481,34 @@ Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, re
 Commit documental único: docs(audit): verify AUD-T-028 continuity; parent e1087bfa98a9949d179bd4f61f769e6874b52593; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0073
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S074
+Tarea: AUD-T-029 — revalidación de continuidad E1 de auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 4745eb60f6d562c92ec2bc69f5d66beee0b8943e; árbol 1a54888e302607f6eed4865413e0a3810fe5a808; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9; árbol E1 b589230be3b127e9a58c2b54b104405d1312cc79; sesión original AUD-20261107-S010 / AUD-CP-0010.
+Alcance: Services/admin.js, ui.js, offline.js, api-config.js e index.html.
+Hallazgos conocidos: H-AUD-029-001 a 008. Tareas derivadas: adendas a AUG-028/AUG-030 y AUG-031/AUG-032/AUG-033.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 64 commits posteriores; los cinco archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: integridad del cursor y snapshot, reanudación, deduplicación, persistencia IndexedDB, TTL/capacidad, límites/timeout, lectura de Spreadsheet y coordinación multi-pestaña. Validación E2–E5 y mediciones reales pendientes.
+Sin cambios de código, configuración, datos productivos, operaciones Drive/Spreadsheet, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0073
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S074
+Tarea: AUD-T-029 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-029-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE RENDIMIENTO PENDIENTE.
+HEAD auditado: 4745eb60f6d562c92ec2bc69f5d66beee0b8943e; árbol 1a54888e302607f6eed4865413e0a3810fe5a808; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9; árbol E1 b589230be3b127e9a58c2b54b104405d1312cc79; 64 commits posteriores.
+Los cinco archivos de código del alcance conservan SHA E1: Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+Hallazgos revalidados: H-AUD-029-001 a 008 permanecen sin cambios. AUG-028/AUG-030 mantienen adendas; AUG-031/AUG-032/AUG-033 pendientes. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de cinco archivos y revisión de consistencia documental. No ejecutadas: pruebas E2–E5, HTTP, navegador/PWA, Apps Script V8, Drive, Spreadsheet, concurrencia, mediciones de tiempo/memoria, TTL real ni deployments.
+Sin cambios funcionales, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-029 continuity; parent 4745eb60f6d562c92ec2bc69f5d66beee0b8943e; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+================================================================================

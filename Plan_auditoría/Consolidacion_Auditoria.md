@@ -757,3 +757,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - La normalización automática de nombres autorizada para imágenes asociadas inequívocamente a Cortes no autoriza movimientos automáticos ni modificaciones del inventario de solo lectura. No se realizaron renombrados ni operaciones en Drive/Spreadsheet.
 - Solo continuidad E1 y revisión documental. Sin pruebas de navegador, HTTP, Apps Script V8, Drive, Spreadsheet, cuota real, permisos, scopes, concurrencia ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+
+
+## 47. AUD-T-029 — continuidad E1 y revalidación de recorrido/snapshot Drive
+- Sesión AUD-20261108-S074; checkpoint AUD-CP-0073; E1 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9; árbol E1 b589230be3b127e9a58c2b54b104405d1312cc79; HEAD 4745eb60f6d562c92ec2bc69f5d66beee0b8943e; árbol actual 1a54888e302607f6eed4865413e0a3810fe5a808; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los cinco archivos de código de AUD-T-029 conservan SHA idénticos a E1.
+- H-AUD-029-001 a 008 permanecen abiertos por continuidad: cursor no autoritativo, detección incompleta de posición repetida/deduplicación, persistencia completa IndexedDB por lote, snapshot limitado/TTL no renovado, lectura amplia, lotes fijos sin presupuesto/timeout, validación repetida de ancestros y estado local compartido entre pestañas.
+- AUG-028 y AUG-030 mantienen sus adendas; AUG-031/AUG-032/AUG-033 continúan pendientes. No se crean hallazgos ni tareas nuevas.
+- Solo continuidad E1 y revisión documental. Sin pruebas E2–E5, navegador, Apps Script, HTTP, Drive, Spreadsheet, concurrencia ni benchmarks reales. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
