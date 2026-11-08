@@ -802,3 +802,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-034/AUG-040/AUG-041 pendientes; AUG-003 como antecedente. No hay hallazgos ni tareas nuevas.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive/Spreadsheet ni concurrencia interproyectos. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+
+## Continuidad AUD-T-034 — 2026-11-08 | AUD-20261108-S079
+- Revalidación AUD-20261108-S079/AUD-CP-0078; E1 histórica 3819d0d73368982a5a463fb89515e13ec452dde3 (AUD-20261107-S015/AUD-CP-0015); HEAD 6c7d83864f4abbb0e631a356ef3b7c63eae72298; árbol actual 76de6ee817a6ccf08ef8c7740687a623f0744efb; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. ui.js, auth.js, main.js, index.html, users.html, Services/Auth.js, Services/admin.js, Services/feedback.js y Services/users.js conservan exactamente sus SHA E1.
+- H-AUD-034-001 a 004 permanecen abiertos: limpieza logout, rol local tras cambio de Privilegios, visibilidad Inbox/Dashboard y discrepancia Rol/Privilegios en aprobación de vídeo.
+- AUG-042 pendiente; AUG-006/AUG-016/AUG-017 como dependencias. Controles backend positivos permanecen estáticos, no probados funcionalmente.
+- No se ejecutaron pruebas de navegador, HTTP, Apps Script, sesiones reales, cambio de rol, logout/revocación ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.

@@ -1754,3 +1754,47 @@ No se ejecutaron pruebas E2/E3, Apps Script V8, HTTP, navegador, restauraciones,
 
 ### Siguiente iteración
 AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+
+## 63. Revalidación de continuidad — AUD-T-034
+
+**Sesión:** AUD-20261108-S079  
+**Checkpoint:** AUD-CP-0078  
+**E1 original:** 3819d0d73368982a5a463fb89515e13ec452dde3 (AUD-20261107-S015 / AUD-CP-0015)  
+**Árbol E1:** 96fb07b57fa3c9c27362f893cc23dfbd2e57793c  
+**HEAD revalidado:** 6c7d83864f4abbb0e631a356ef3b7c63eae72298  
+**Árbol actual:** 76de6ee817a6ccf08ef8c7740687a623f0744efb  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-034-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL DE SESIÓN/ROLES PENDIENTE.
+
+### Alcance y comparación
+Se revalidó visibilidad y acceso al panel de desarrollador, historial/inventario de imágenes, Inbox, Dashboard y gestión de usuarios; condiciones frontend frente a permisos backend ADMIN/FEEDBACK/AUTH/USERS; cambio de rol, cierre de sesión y persistencia de información privilegiada en la instancia del navegador.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los nueve archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+
+### Revalidación de hallazgos y tareas
+- H-AUD-034-001 a H-AUD-034-004 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Persisten: logout sin limpieza de currentUser/DOM privilegiado; rol local que no se actualiza al cambiar Privilegios; visibilidad de Inbox/Dashboard que no siempre se restablece y política Jefe/Inbox inconsistente; renderInboxDetail consulta currentUser.Rol mientras AUTH entrega Privilegios.
+- AUG-042 continúa pendiente para sincronizar rol y limpiar estado privilegiado al cerrar sesión, invalidar sesión o cambiar de cuenta/rol.
+- AUG-006 mantiene la revocación backend y limpieza local complementaria; AUG-016 mantiene la consistencia de sesión/rol; AUG-017 mantiene la visibilidad de navegación y la decisión Jefe/Inbox.
+- El backend conserva controles positivos estáticos: ADMIN exige Desarrollador; FEEDBACK y USERS consultan permisos en servidor. La revalidación no eleva la inconsistencia de interfaz a bypass backend.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los nueve archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba funcional de sesión o autorización.
+
+No se ejecutaron pruebas de navegador, HTTP, Apps Script, cambio de rol real, logout/revocación, cuenta compartida ni deployments. No se inspeccionaron sesiones activas reales ni se probaron modales con datos previamente cargados. No se modificó código, configuración, datos ni deployments.
+
+### Siguiente iteración
+AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.

@@ -1636,3 +1636,34 @@ Sin cambios funcionales, endpoints, configuración, hojas, datos productivos ni 
 Commit documental único: docs(audit): verify AUD-T-033 continuity; parent 8156ba1c2f5d9ac3c824fd53af9fd5b93b5459b4; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0078
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S079
+Tarea: AUD-T-034 — revalidación de continuidad E1 de acceso y visibilidad del panel/historial por rol y sesión.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 6c7d83864f4abbb0e631a356ef3b7c63eae72298; árbol 76de6ee817a6ccf08ef8c7740687a623f0744efb; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 3819d0d73368982a5a463fb89515e13ec452dde3; árbol E1 96fb07b57fa3c9c27362f893cc23dfbd2e57793c; sesión original AUD-20261107-S015 / AUD-CP-0015.
+Alcance: ui.js, auth.js, main.js, index.html, users.html, Services/Auth.js, Services/admin.js, Services/feedback.js y Services/users.js.
+Hallazgos conocidos: H-AUD-034-001 a 004. Tareas relacionadas: AUG-006, AUG-016, AUG-017 y AUG-042.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 64 commits posteriores; los nueve archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: logout sin limpieza/revocación completa, perfil/rol obsoleto, visibilidad de navegación inconsistente, discrepancia de propiedad Rol/Privilegios y conservación de datos privilegiados en modales.
+Sin cambios de código, configuración, sesiones, datos productivos, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0078
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S079
+Tarea: AUD-T-034 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-034-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL DE SESIÓN/ROLES PENDIENTE.
+HEAD auditado: 6c7d83864f4abbb0e631a356ef3b7c63eae72298; árbol 76de6ee817a6ccf08ef8c7740687a623f0744efb; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 3819d0d73368982a5a463fb89515e13ec452dde3; árbol E1 96fb07b57fa3c9c27362f893cc23dfbd2e57793c; 64 commits posteriores.
+Los nueve archivos del alcance conservan SHA E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; users.html e41f402675677a4d2783493614737021ec2eade5; Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0.
+Hallazgos revalidados: H-AUD-034-001 a 004 permanecen sin cambios. AUG-042 pendiente; AUG-006/AUG-016/AUG-017 relacionadas. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de nueve archivos y revisión de consistencia documental. No ejecutadas: navegador, HTTP, Apps Script, cambio de rol, logout/revocación, cuenta compartida ni deployments.
+Sin cambios funcionales, endpoints, configuración, sesiones, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-034 continuity; parent 6c7d83864f4abbb0e631a356ef3b7c63eae72298; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+================================================================================

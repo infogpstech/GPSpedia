@@ -803,3 +803,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-034 continúa pendiente para coordinación común; AUG-040 para seguridad FEEDBACK; AUG-041 para UTILITIES. AUG-003 sigue siendo el antecedente de coordinación, no un protocolo ya implementado.
 - Solo continuidad E1 y revisión documental. Sin pruebas E2/E3, Apps Script, HTTP, navegador, restauraciones, Drive/Spreadsheet ni concurrencia interproyectos. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+
+## 52. AUD-T-034 — continuidad E1 y revalidación de acceso por rol/sesión
+- Sesión AUD-20261108-S079; checkpoint AUD-CP-0078; E1 3819d0d73368982a5a463fb89515e13ec452dde3; árbol E1 96fb07b57fa3c9c27362f893cc23dfbd2e57793c; HEAD 6c7d83864f4abbb0e631a356ef3b7c63eae72298; árbol actual 76de6ee817a6ccf08ef8c7740687a623f0744efb; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los nueve archivos de código del alcance conservan SHA idénticos a E1.
+- H-AUD-034-001 a 004 permanecen abiertos: logout no limpia estado/DOM privilegiado; rol local obsoleto tras cambio de Privilegios; navegación Inbox/Dashboard no se restablece y Jefe/Inbox es inconsistente; propiedad Rol/Privilegios no coincide en aprobación de vídeo.
+- AUG-042 pendiente; AUG-006/AUG-016/AUG-017 mantienen dependencias de sesión, revocación y visibilidad. Los controles backend positivos permanecen estáticos, pero no se probaron.
+- Solo continuidad E1 y revisión documental. Sin pruebas navegador, HTTP, Apps Script, cambio real de rol, logout/revocación ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
