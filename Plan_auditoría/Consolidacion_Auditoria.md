@@ -1,12 +1,12 @@
 # Consolidación de auditoría y matriz de validación — GPSpedia
 
 **Plan:** AUD-PLAN-2026-001  
-**Sesión:** AUD-20261108-S025  
-**Checkpoint:** AUD-CP-0025  
+**Sesión:** AUD-20261108-S026  
+**Checkpoint:** AUD-CP-0026  
 **Fecha:** 2026-11-08  
 **Repositorio:** infogpstech/GPSpedia  
 **Rama de trabajo:** GPSpedia2.2.5_work  
-**HEAD de referencia al inicio:** 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e  
+**HEAD de referencia al inicio:** f3d7558abeef482957582fea08f2041490b54f34  
 **Rama base:** GPSpedia2.2.5  
 **HEAD de la base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
 
@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-007 y AUD-T-023 a AUD-T-038 | 21 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-008 y AUD-T-023 a AUD-T-038 | 22 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 y AUD-T-008 a AUD-T-022 | 16 |
+| Por auditar | AUD-T-001 y AUD-T-009 a AUD-T-022 | 15 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-008 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-007 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-009 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-007 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **70 identificadores AUG únicos** dentro del rango AUG-001 a AUG-071. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **72 identificadores AUG únicos** dentro del rango AUG-001 a AUG-073. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -53,6 +53,8 @@ Algunos encabezados AUG se repiten en el archivo porque las auditorías posterio
 | Modal de detalle y ampliaciones contextuales | AUG-061 a AUG-064 | Cupos suplementarios; refresh del detalle; selectores desde Sheets; sanitización de apertura/alimentación |
 | Visualización técnica, transparencia y gestos | AUG-065 a AUG-067 | Resolución y cachés por variante; tratamiento de PNG transparente; discriminación de gestos del carrusel |
 | Navegación, History API y overlays | AUG-068 a AUG-071 | Registro de overlays dinámicos; retroceso interno sincronizado; cierre secuencial; reconciliación de entradas de historial |
+
+| Compartir y conectividad | AUG-072/AUG-073 | Identidad estable y fallback de enlaces compartidos; semántica accesible del indicador de conectividad |
 
 El índice no reemplaza los criterios de aceptación detallados de Aug_Tareas.md. La implementación debe seguir consultando cada ficha completa, incluidas sus adendas, evidencias, decisiones y dependencias.
 
@@ -95,12 +97,13 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 | VAL-09 | Cargas y ciclo de vídeo — AUG-037, AUG-038, AUG-043, AUG-056, AUG-057, AUG-064 | Carga interrumpida/reintentada, contenido distinto con mismo identificador, descarte de edición, aprobación/rechazo, videoId provisional y sincronización del destino | Hash/contenido, ledger, historial, estado de aprobación y destino final coherentes; operaciones repetidas idempotentes |
 | VAL-10 | Términos y accesibilidad — AUG-045 a AUG-047 | Primera aceptación, nueva versión, cambio de cuenta/dispositivo, almacenamiento bloqueado, modal ausente, teclado, foco, lector de pantalla, History API y offline | Versión/identidad/fecha conforme a decisión aprobada, bloqueo seguro, foco y navegación correctos, revisión legal documentada |
 | VAL-11 | Catálogo, caché y sincronización — AUG-048/AUG-052 | Alta, edición y eliminación de registros; cambios con igual cardinalidad; reinicio offline; instantánea y delta; timeouts y respuestas inválidas | Comparación de datos de origen y caché, ausencia de registros retirados, sincronización recuperable y estado terminal visible |
-| VAL-12 | Búsqueda y VIN — AUG-036, AUG-049/AUG-050, AUG-060 | Acentos, mayúsculas, espacios, campos de cada sección, coincidencia exacta/parcial, años/modelos numéricos ambiguos, VIN completo/prefijo, variantes múltiples, rangos solapados/no solapados, umbral de muestras, slots vacíos y presentación de cuatro caracteres sin doble recorte | Conjunto de resultados esperado, ranking, sección/modal correcto, ambigüedades explícitas y variante identificada sin selección arbitraria |
+| VAL-12 | Búsqueda y VIN — AUG-036, AUG-049/AUG-050, AUG-060 | Acentos, mayúsculas, espacios, campos de cada sección, coincidencia exacta/parcial, años/modelos numéricos ambiguos, enlaces compartidos con números de cuatro dígitos y anoDesde distinto, VIN completo/prefijo, variantes múltiples, rangos solapados/no solapados, umbral de muestras, slots vacíos y presentación de cuatro caracteres sin doble recorte | Conjunto de resultados esperado, ranking, sección/modal correcto, ambigüedades explícitas y variante identificada sin selección arbitraria |
 | VAL-13 | IndexedDB, miniaturas y privacidad local — AUG-022, AUG-031/AUG-032, AUG-051, AUG-053, AUG-065/AUG-066 | Transacción complete/abort/error, upgrade bloqueado, cuota/evicción, URLs de objeto, tamaños de miniatura, cuentas distintas, retención y limpieza | Confirmación de transacción, límites de almacenamiento, ausencia de datos cruzados entre cuentas y revocación/liberación de recursos |
-| VAL-14 | PWA, deep links y rendimiento — AUG-033, AUG-049, AUG-052, AUG-055, AUG-057, AUG-058, AUG-067 | Instalación limpia, precache del grafo requerido, runtime cache, offline, deep link sin catálogo, red lenta/interrumpida, catálogo grande | Recursos disponibles offline, reintentos acotados, cancelación/timeout, tiempos medidos y comportamiento sin espera infinita |
+| VAL-14 | PWA, deep links y rendimiento — AUG-033, AUG-049, AUG-052, AUG-055, AUG-057, AUG-058, AUG-067 | Instalación limpia, precache del grafo requerido, runtime cache, offline, deep link sin sesión/catálogo, hash malformado, red lenta/interrumpida, catálogo grande | Recursos disponibles offline, reintentos acotados, cancelación/timeout, recuperación ante hash inválido, tiempos medidos y comportamiento sin espera infinita |
 | VAL-15 | Regresión integral y deployments — AUG-002 y todas las tareas afectadas | Repetir flujos críticos después de cada corrección; comparar HEAD con cada deployment autorizado; probar roles y navegadores/dispositivos soportados | SHA de código, URL/identidad del deployment, fecha, ambiente, navegador, pasos, resultado, logs sanitizados y aprobación |
 | VAL-16 | Modal de detalle y ampliaciones contextuales — AUG-043, AUG-050, AUG-057, AUG-061 a AUG-064 | Payloads XSS; apertura/alimentación con slots vacíos/ocupados e imágenes huérfanas; dos usuarios por último slot; payload vacío; refresh fallido tras guardar; re-render; dropdowns de Sheets; FileReader success/error/abort; vídeo existente y confirmación; contador VIN; navegación atrás | Evidencia de sanitización, respuesta backend/slot, datos antes/después, escritura separada de refresh, listas de Sheets, estado del formulario y cierre de overlays |
 | VAL-17 | Navegación, History API y overlays — AUG-047, AUG-068 a AUG-071 | Back/Forward desde cada nivel; botones internos Volver; búsqueda Forward-Stack; 2–3 overlays anidados; modal dinámico sobre ficha; menú→Inbox/Dashboard/Changelog; cierre por X/backdrop/submit; términos iniciales y acuerdo; perfil users.html; carga YouTube activa en add_cortes.html; deep links y secciones | Secuencia de history.state/URL, overlay superior antes/después, vista y query restauradas, cantidad de entradas y ausencia de overlays o estados residuales |
+| VAL-18 | Deep links, compartir e indicador de conectividad — AUG-049, AUG-052, AUG-072/AUG-073 | Abrir enlaces históricos y nuevos; identificadores estables y colisiones; modelo/equipamiento con números de cuatro dígitos y año inicial distinto; coincidencias multi-sección; hash malformado; carga sin sesión/catálogo, API lenta/caída y cancelación de reintentos; Web Share exitoso/cancelado/rechazado; Clipboard ausente/rechazado; indicador online/offline, backend inaccesible con navigator.onLine=true, lector de pantalla y movimiento reducido | URL/ID resuelto, resultado y modal correcto, history.state, estado terminal de carga, fallback/feedback de compartir, anuncios accesibles y distinción entre red del navegador y salud backend |
 
 ### 5.1. Reglas de ejecución de la matriz
 
@@ -197,3 +200,14 @@ Sesión AUD-20261108-S025 | Checkpoint AUD-CP-0025 | HEAD auditado 61c9898309ef2
 - H-AUD-005-008 se amplía al conjunto de submodales dinámicos; no se crea una tarea duplicada.
 - VAL-10 conserva la política legal y AUG-047; VAL-17 agrega secuencias de navegación, overlays, users.html y carga YouTube desde add_cortes.html.
 - No se ejecutaron pruebas E2/E3, navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ejecutados ni medición de history.state. No se modificó código, endpoints, configuración ni datos productivos.
+
+
+## 15. Actualización de cobertura — AUD-T-008
+Sesión AUD-20261108-S026 | Checkpoint AUD-CP-0026 | HEAD auditado f3d7558abeef482957582fea08f2041490b54f34 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-008 tiene E1 estática completada; H-AUD-008-001 a 004 abiertos; validación funcional, multiplataforma y de conectividad real pendiente.
+- Catálogo AUD-T: 38 unidades; 22 con E1 completada, 1 parcial y 15 por auditar.
+- Catálogo AUG: 72 IDs únicos dentro de AUG-001 a AUG-073; AUG-015 continúa ausente y no se infiere ni renumera.
+- AUG-072/AUG-073 nuevas: identidad/fallback de enlaces compartidos y accesibilidad/semántica del indicador.
+- AUG-049 recibe adenda sobre números de cuatro dígitos en shareQuery y autoapertura limitada a Corte; AUG-052 recibe adenda sobre hash malformado, espera terminal y cancelación.
+- VAL-12 se amplía con números de año/código dentro de enlaces compartidos; VAL-14 se amplía con hash malformado y ausencia de sesión/catálogo; VAL-18 incorpora compartir, conectividad y accesibilidad.
+- No se ejecutaron E2/E3, Web Share, Clipboard, navegador, móvil/PWA, lector de pantalla, HTTP, health check, Apps Script, dataset real ni pruebas de red. No se modificó código, endpoints, configuración ni datos productivos.

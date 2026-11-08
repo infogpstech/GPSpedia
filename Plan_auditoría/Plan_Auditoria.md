@@ -56,7 +56,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-005 | Modal de detalle, ampliación dinámica y acciones contextuales | d72a1e61 — Implementar Tarea 5: Ampliación dinámica en modal de detalle; 183cff59 — recuperación del botón expand plus | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
 | AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE |
 | AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MÓVIL PENDIENTE |
-| AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | POR AUDITAR |
+| AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
 | AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | POR AUDITAR |
 | AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | POR AUDITAR |
 | AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | POR AUDITAR |
@@ -756,3 +756,31 @@ Tareas: AUG-068 a AUG-071 nuevas; adenda a AUG-047. H-AUD-005-008 se amplía sin
 No duplicar: AUG-047/AUD-T-036 (política legal), AUG-049/AUD-T-037 (búsqueda), AUG-017/AUG-042 (limpieza de overlays privilegiados por cambio de cuenta).
 Límites: E1 estática; sin navegador, Android/iOS, PWA, gesto nativo, teclado virtual, submits reales, deep links ejecutados ni medición de historial. Sin cambios de código/datos.
 Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## 31. Iteración técnica — AUD-T-008
+**Sesión:** AUD-20261108-S026  
+**Checkpoint:** AUD-CP-0026  
+**HEAD auditado:** f3d7558abeef482957582fea08f2041490b54f34  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** E1 ESTÁTICA COMPLETADA; H-AUD-008-001 a 004 abiertos; validación funcional, móvil/PWA y de conectividad real pendiente.
+
+### Alcance
+TAREA 8/B09/B10/B11/B12/B23; ui.js, main.js, navigation.js, index.html, style.css y auth.js. Contraste con commits 4ce4baae93, 95d248b11e, 0d00e25d51, 76d44aff, 20290cdd y 7714b985; auditorías AUD-T-007 y AUD-T-037.
+
+### Resultado
+- H-AUD-008-001 a 004 documentados en Auditoría.txt.
+- El share query incluye marca/modelo/equipamiento/encendido/año, pero no ID estable y depende de una coincidencia global única.
+- Web Share no cae a Clipboard ante fallos recuperables; Clipboard no valida disponibilidad ni ofrece feedback completo.
+- decodeURIComponent() no está protegido y la restauración depende de polling sin límite.
+- El indicador 3px y los eventos online/offline están presentes; faltan semántica accesible y distinción entre conectividad del navegador y disponibilidad backend.
+- H-AUD-037-003, H-AUD-037-006 y H-AUD-037-010 se confirman vigentes; AUG-049 y AUG-052 reciben adendas.
+
+### Tareas derivadas
+AUG-072 — identidad y fallback de enlaces compartidos. AUG-073 — accesibilidad y semántica del indicador. AUG-049 recibe adenda por números/años y autoapertura por sección; AUG-052 recibe adenda por decodificación segura y espera terminal.
+
+### Evidencia y límites
+E1: inspección estática de funciones, consumidores, HTML/CSS, contratos de historial e historial Git. No se ejecutaron Web Share, Clipboard, navegador, móvil/PWA, lector de pantalla, URLs malformadas, dataset con colisiones, HTTP/health check, Apps Script ni pruebas de red. No se verificaron deployments. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.

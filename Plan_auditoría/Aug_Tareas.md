@@ -989,3 +989,39 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - No alterar la regla de que el aviso inicial impide abandonar la aceptación obligatoria.
 
 - 2026-11-08 — AUD-T-007: nuevas AUG-068 a AUG-071; adenda AUG-047. Inventario: 70 IDs únicos dentro de AUG-001 a AUG-071; AUG-015 continúa ausente.
+
+
+
+### Adenda derivada de AUD-T-008 — AUG-049
+- Incluir enlaces compartidos en las pruebas de desambiguación: el query concatena marca, modelo, versionesAplicables, tipoEncendido y anoDesde, pero navigation.js toma el primer token de cuatro dígitos de toda la consulta como yearSearchTerm. El año puede proceder de modelo/equipamiento/encendido y no de anoDesde; separar el campo de año o utilizar un formato tipado.
+- La autoapertura debe ejecutarse únicamente para resultados _sectionType='corte'. Un único Relay/Tutorial/PyS debe abrir su modal específico, nunca mostrarDetalleModal().
+- Probar consultas compartidas con modelo/equipamiento numérico, año inicial distinto, coincidencias multi-sección y resultados duplicados.
+
+### Adenda derivada de AUD-T-008 — AUG-052
+- Proteger decodeURIComponent() al interpretar #search=; un porcentaje inválido debe producir un estado recuperable y no abortar el arranque.
+- Reemplazar el polling de 100 ms por carga/estado terminal con límite y cancelación. Cubrir checkSession sin usuario, lock de sesión activo, loadInitialData sin caché y error de red que deja cortes vacío.
+- No dejar tareas de reintento activas después de logout, cambio de ruta o estado terminal de carga.
+
+### AUG-072 — Robustecer la identidad y el fallback de enlaces compartidos
+- **Origen:** H-AUD-008-001 y H-AUD-008-002. **Prioridad:** Media.
+- **Problema:** el enlace usa solo texto de búsqueda y depende de que exista un único resultado global; además, Web Share no tiene fallback ante errores recuperables y el portapapeles no se valida ni informa todos los fallos.
+- **Criterios de aceptación:**
+  1. Incorporar una identidad estable del vehículo al enlace compartido (por ejemplo, ID del registro), manteniendo compatibilidad con enlaces históricos #search= y un fallback de búsqueda cuando el identificador no esté disponible.
+  2. Resolver el identificador contra el catálogo cargado y comprobar que el registro existe antes de abrir el modal; no abrir un registro de otra sección.
+  3. Distinguir cancelación explícita de Web Share (AbortError) de fallos recuperables; no copiar automáticamente cuando el usuario cancela, pero ofrecer fallback ante errores reales.
+  4. Comprobar navigator.clipboard y writeText antes de invocarlos; capturar errores síncronos y rechazos asíncronos.
+  5. Mostrar confirmación visible de copia y un error recuperable cuando no sea posible compartir/copiar; permitir acceder al enlace para copiarlo manualmente.
+  6. Centralizar la construcción del URL para Web Share y Clipboard; no generar destinos diferentes.
+  7. Probar metadatos duplicados, varias variantes, resultado multi-sección, Web Share exitoso/cancelado/rechazado, Clipboard ausente/rechazado y navegadores móviles/escritorio en contexto seguro.
+
+### AUG-073 — Hacer accesible y semánticamente preciso el indicador de conectividad
+- **Origen:** H-AUD-008-004. **Prioridad:** Baja.
+- **Problema:** el indicador es solo un div visual de 3px con title dinámico; no garantiza anuncio a tecnologías de asistencia y navigator.onLine no acredita que los endpoints de GPSpedia estén disponibles.
+- **Criterios de aceptación:**
+  1. Conservar el diseño minimalista de 3px y añadir semántica accesible mediante role=status, aria-live=polite y un texto/etiqueta accesible que cambie con el estado.
+  2. Expresar con precisión que navigator.onLine informa conectividad del navegador/dispositivo, sin afirmar que los servicios backend responden.
+  3. Si se requiere mostrar disponibilidad de backend, implementar un estado separado con health check limitado por timeout; no sustituir ni bloquear el indicador de red con una petición indefinida.
+  4. Respetar prefers-reduced-motion para la animación offline sin retirar el estado visual.
+  5. Probar lector de pantalla, estado online/offline, red disponible con backend inaccesible y movimiento reducido.
+
+- 2026-11-08 — AUD-T-008: nuevas AUG-072/AUG-073; adendas AUG-049/AUG-052. Inventario: 72 IDs únicos dentro de AUG-001 a AUG-073; AUG-015 continúa ausente.

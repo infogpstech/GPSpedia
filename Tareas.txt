@@ -6024,3 +6024,17 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; pruebas de navega
 - No alterar la regla de que el aviso inicial impide abandonar la aceptación obligatoria.
 
 - 2026-11-08 — AUD-T-007: nuevas AUG-068 a AUG-071; adenda AUG-047. Inventario: 70 IDs únicos dentro de AUG-001 a AUG-071; AUG-015 continúa ausente.
+
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-008
+Fecha: 2026-11-08 | Sesión AUD-20261108-S026 | Checkpoint AUD-CP-0026
+- Auditoría.txt: informe E1 y hallazgos H-AUD-008-001 a 004; ampliación de H-AUD-037-003, H-AUD-037-006 y H-AUD-037-010.
+- Tareas.txt: resultado de AUD-T-008, nuevas AUG-072/AUG-073 y adendas a AUG-049/AUG-052.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-008 actualizado a E1 completada; iteración 31; siguiente AUD-T-009.
+- Plan_auditoría/Aug_Tareas.md: AUG-072/AUG-073 nuevas; adendas de precisión de búsqueda y restauración deep link.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 22 E1/1 parcial/15 pendientes; inventario AUG a 72 IDs; VAL-18 incorporada.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0026.
+Solo documentación. No se modificaron archivos de aplicación, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni operaciones externas. Rama base sin cambios.
+================================================================================

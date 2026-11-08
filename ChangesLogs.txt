@@ -4125,3 +4125,24 @@ contexto_personal.md: líneas 363–371
 checkpoint.md: se añadieron CHECKPOINT INICIAL y CHECKPOINT FINAL AUD-CP-0025, con HEAD/base y referencias de respaldo exacto.
 ChangesLogs.txt: líneas 4118–4128 — se registra el conjunto documental de AUD-T-007 en un único commit.
 No se modificaron archivos de aplicación, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-008
+Fecha: 2026-11-08 | Sesión AUD-20261108-S026 | Rama GPSpedia2.2.5_work
+Auditoría.txt: líneas 9479–9568
+Tareas.txt: líneas 6030–6041
+Plan_auditoría/Plan_Auditoria.md: fila AUD-T-008 (línea 59) y líneas 761–787
+Plan_auditoría/Aug_Tareas.md: líneas 995–1028
+Plan_auditoría/Consolidacion_Auditoria.md: cabecera/resumen, índice de dominios, VAL-12 (línea 98), VAL-14 (línea 100), VAL-18 (línea 106) y líneas 205–214
+contexto_personal.md: líneas 374–384
+checkpoint.md: líneas 653–687
+ChangesLogs.txt: líneas 4132–4149 — registro documental de AUD-T-008 en el único commit.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron ui.js, main.js, navigation.js, index.html, style.css, auth.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, Web Share, Clipboard, lector de pantalla, HTTP, Apps Script ni operaciones externas.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================

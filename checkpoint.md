@@ -646,3 +646,41 @@ Verificaciones: revisión estática de funciones, consumidores, estilos, markup,
 Cambios de aplicación: ninguno. Endpoints/configuración/datos productivos/Drive/Spreadsheet/deployments: sin cambios.
 Commit único previsto: docs(audit): auditar navegación y cierre secuencial de overlays; parent_sha y expected_sha 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente acción: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0026
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S026 | Tarea: AUD-T-008.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work.
+HEAD inicial verificado: f3d7558abeef482957582fea08f2041490b54f34.
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado inicial: AUD-T-007 E1 estática completada; AUD-T-008 por auditar; siguiente unidad confirmada en Plan_Auditoria.md.
+Alcance: TAREA 8/B09/B10/B11/B12/B23; deep links, restauración, compartir, precisión de búsqueda e indicador online/offline.
+Commits ancla: 7714b985cb0610ab06278f647a8bc7b1f1924565; 76d44aff36d67caf2a601a5a1fa920d224d4ecbb; 20290cdd62ba0613ec846c846061ee3b33437457.
+Estado inicial: TAREA 8 marcada COMPLETADA; auditoría técnica específica pendiente. Hallazgos relacionados: H-AUD-037-003/AUG-049, H-AUD-037-006/AUG-049, H-AUD-037-010/AUG-052 y H-AUD-007-001 a 005/AUG-068 a AUG-071.
+Respaldo exacto previo (blob SHA):
+- Auditoría.txt: dd6498ff638912d024533f453b483cfe8e598fd4
+- Tareas.txt: 85596d5e0f5b15a2f8f54219b94d57a00c89521e
+- Plan_auditoría/Plan_Auditoria.md: 29affa054e16dcd2dce40b1c2d18793f68d2cb27
+- Plan_auditoría/Aug_Tareas.md: f9d753c8c02d8e6e61507ab4d5e9d620a9639ce6
+- Plan_auditoría/Consolidacion_Auditoria.md: 98a7377070a16086b42249832e678eb0c2a12b1d
+- ChangesLogs.txt: aeb05ef68a423c7493b9f7a1b988f7cd6b6c8232
+- contexto_personal.md: 8bb1ec183daf337d7400906ec07b52f9ce728b9e
+- checkpoint.md: 1877083cbe90100e473656946a9bd1ae728f5592
+Límite: auditoría E1 estática; sin cambios de código, assets, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0026
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S026 | Tarea: AUD-T-008.
+HEAD auditado/padre previsto: f3d7558abeef482957582fea08f2041490b54f34 | base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-008-001 a 004 abiertos; validación funcional, multiplataforma y de conectividad real pendiente.
+Resultado: enlaces textuales sin identidad estable; fallback Web Share/Clipboard incompleto; decodeURIComponent sin protección; indicador sin semántica accesible y navigator.onLine limitado a conectividad del navegador. H-AUD-037-003/006/010 confirmados; AUG-049/AUG-052 ampliadas.
+Tareas: AUG-072/AUG-073 nuevas; adendas AUG-049/AUG-052. Inventario AUG: 72 IDs únicos dentro de AUG-001 a AUG-073; AUG-015 continúa ausente.
+Archivos documentales modificados: Auditoría.txt; Tareas.txt; Plan_auditoría/Plan_Auditoria.md; Plan_auditoría/Aug_Tareas.md; Plan_auditoría/Consolidacion_Auditoria.md; ChangesLogs.txt; contexto_personal.md; checkpoint.md. Rangos registrados en ChangesLogs.txt.
+VERIFICACIÓN: revisión estática de funciones, consumidores, HTML/CSS, historial Git, referencias y adendas. No se ejecutaron pruebas E2/E3, navegador, Web Share, Clipboard, Android/iOS, PWA, lector de pantalla, URL malformada, dataset de colisiones, HTTP, health check, Apps Script ni pruebas de red.
+Cambios de aplicación/assets: ninguno. Endpoints/configuración/datos productivos/Drive/Spreadsheet/deployments: sin cambios.
+Commit único previsto: docs(audit): auditar deep links, compartir e indicador de conectividad; parent_sha y expected_sha: f3d7558abeef482957582fea08f2041490b54f34; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente acción: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+================================================================================

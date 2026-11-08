@@ -369,3 +369,15 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tareas nuevas: AUG-068 a AUG-071. Adenda: AUG-047. H-AUD-005-008 ampliado sin duplicar.
 - Límites: sin navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ejecutados ni medición de historial. Sin cambios de aplicación/datos.
 - Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## Continuidad — AUD-T-008 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S026 / AUD-CP-0026.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado f3d7558abeef482957582fea08f2041490b54f34; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red: auditoría estática E1 completada; H-AUD-008-001 a 004 abiertos. No se modificó código.
+- Alcance: ui.js, main.js, navigation.js, index.html, style.css y auth.js; commits ancla 7714b985, 76d44aff y 20290cdd, con historia de ubicación del indicador 4ce4baae/95d248b/0d00e25.
+- Hallazgos: URL compartida sin ID estable y autoapertura condicionada a unicidad; fallback incompleto Web Share/Clipboard; decodeURIComponent sin protección; indicador sin role/aria-live y navigator.onLine no prueba salud backend.
+- H-AUD-037-003/AUG-049, H-AUD-037-006/AUG-049 y H-AUD-037-010/AUG-052 se confirman y reciben adendas; no duplicar sus hallazgos.
+- Tareas nuevas: AUG-072 y AUG-073. AUG-049 y AUG-052 reciben adendas.
+- Límites: sin navegador, Web Share, Clipboard, móvil/PWA, lector de pantalla, enlaces malformados, colisiones de catálogo, HTTP/health check, Apps Script, datos productivos ni deployments. Solo E1 estática; sin cambios de aplicación.
+- Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.

@@ -9472,3 +9472,96 @@ AUD-T-007 queda con E1 estática completada y cinco hallazgos abiertos. El Forwa
 Tareas nuevas: AUG-068 a AUG-071. Adenda: AUG-047. No se modificó código ni datos productivos.
 Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
 ================================================================================
+
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-008: DEEP LINKS, COMPARTIR, ENLACES PRECISOS E INDICADOR DE RED
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S026 | Checkpoint: AUD-CP-0026
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: f3d7558abeef482957582fea08f2041490b54f34
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-008-001 a 004 ABIERTOS; VALIDACIÓN FUNCIONAL, MULTIPLATAFORMA Y DE CONECTIVIDAD REAL PENDIENTE.
+
+1. ALCANCE Y FUENTES
+Se contrastó TAREA 8 y sus especificaciones B09, B10, B11, B12 y B23 en Tareas.txt. Se revisaron ui.js, main.js, navigation.js, index.html y style.css, junto con auth.js y state.js para el ciclo de carga inicial. Se inspeccionaron las dependencias de History API con AUD-T-007 y la búsqueda global con AUD-T-037.
+
+Commits históricos contrastados: 4ce4baae93 (indicador/deep link); 95d248b11e (ubicación temporal en .header-controls y compartir); 0d00e25d51 (ubicación posterior junto al mensaje de bienvenida); 76d44aff36d67caf2a601a5a1fa920d224d4ecbb (compartir y deep linking); 20290cdd62ba0613ec846c846061ee3b33437457 (precisión de consulta compartida); 7714b985cb0610ab06278f647a8bc7b1f1924565 (comentarios/documentación, no implementación funcional principal).
+
+Archivos/funciones auditados:
+- ui.js: mostrarDetalleModal()/shareBtn.onclick (1714–1748); mostrarResultadosDeBusqueda() (1572–1635); crearCardVehiculo() (6143–6199); apertura modalOpen (2280–2284).
+- main.js: listeners online/offline (171–183); estado History API inicial (25–28); popstate/cierre modal (190–283); restauración #search= (845–871).
+- navigation.js: irAPaginaPrincipal() (22–48); filtrarContenido() (52–262), detección de año, búsqueda global, escritura de hash y clasificación.
+- index.html: #connection-status (107–112); style.css: indicador/animación (142–165) y botón limpiar búsqueda (256–275).
+- auth.js: loadInitialData() (20–100) y checkSession() (125–221), por su interacción asíncrona con el catálogo.
+
+2. RESULTADO POR REQUISITO
+2.1. Deep linking y restauración
+- navigation.js genera #search= con encodeURIComponent(textoBusqueda); irAPaginaPrincipal() lo elimina mediante replaceState.
+- main.js reconoce el hash al iniciar, recupera el término, lo coloca en searchInput y espera a que catalogData.cortes tenga registros antes de filtrar.
+- mostrarResultadosDeBusqueda() puede abrir el detalle si autoOpen está activo y existe exactamente un resultado con una sola combinación de modelo, versión y rango de años. mostrarDetalleModal() agrega modalOpen y main.js cierra el detalle al recibir popstate.
+- H-AUD-008-003: decodeURIComponent(hash.substring(8)) no está protegido por try/catch. Un hash con secuencia porcentual malformada provoca URIError y aborta esa restauración.
+- Se confirma H-AUD-037-010: checkDataAndSearch() se programa cada 100 ms sin límite ni cancelación y solo termina cuando cortes.length > 0. auth.checkSession() inicia loadInitialData() sin esperarlo; si no hay sesión retorna, y si la carga falla sin caché auth.js deja cortes vacío. En esos escenarios el ciclo continúa indefinidamente. Se amplía AUG-052, sin duplicar el hallazgo.
+- La autoapertura depende de un único resultado global. La URL compartida no contiene ID estable; si hay registros con los mismos atributos serializados no puede distinguirlos. Es riesgo condicional; no se confirmó colisión en datos reales.
+- Se confirma H-AUD-037-003: la búsqueda global incluye Relay, Tutorial y PyS; la autoapertura llama mostrarDetalleModal(results[0]) sin comprobar _sectionType. Una única coincidencia no-Corte puede abrir el modal equivocado. Se amplía AUG-049.
+
+2.2. Precisión del enlace
+- ui.js construye shareQuery con marca, modelo, versionesAplicables, tipoEncendido y anoDesde; elimina valores vacíos, codifica el resultado y genera #search=.
+- La implementación coincide con los campos de B23 y mejora la versión histórica que solo incluía marca/modelo.
+- Se confirma y amplía H-AUD-037-006: navigation.js selecciona el primer token de cuatro dígitos de toda la consulta como yearSearchTerm. Como el enlace coloca modelo/equipamiento/encendido antes de anoDesde, un código de cuatro dígitos en esos campos puede interpretarse como año antes del año real y excluir la generación correcta.
+- El destino sigue siendo una búsqueda textual global, no una resolución por ID. La autoapertura exige results.length === 1; la precisión depende de que no existan colisiones ni coincidencias de otras secciones. No se ejecutó prueba con catálogo real, modelos numéricos o duplicados. Se amplían AUG-049 y AUG-072.
+
+2.3. Compartir y portapapeles
+- Web Share API se utiliza cuando navigator.share existe; el portapapeles solo se intenta cuando navigator.share no existe.
+- Si navigator.share está disponible pero rechaza por un error distinto de cancelación, solo se ejecuta console.error; no se intenta copiar el enlace.
+- Si navigator.clipboard no existe, writeText puede lanzar un error síncrono antes de que .catch() pueda capturarlo. Si la promesa rechaza, el catch solo registra el error y no muestra un estado visible.
+- H-AUD-008-001: el enlace no incorpora identificador estable y depende de una coincidencia textual única. H-AUD-008-002: el fallback no cubre todos los errores ni ofrece feedback visible.
+
+2.4. Indicador de red
+- index.html coloca #connection-status junto al mensaje de bienvenida, conforme al refinamiento posterior del commit 0d00e25d51. El movimiento temporal a .header-controls del commit 95d248b11e fue revertido posteriormente.
+- main.js escucha online/offline y actualiza clase y tooltip usando navigator.onLine. style.css conserva 3px × 3px, color verde/ámbar y pulso offline.
+- H-AUD-008-004: el indicador es un div sin role, aria-live ni texto accesible persistente; cambiar title no garantiza anuncio por lector de pantalla. navigator.onLine representa conectividad informada por el navegador, no disponibilidad de Internet ni salud de endpoints Apps Script. «Conectado» puede ser más concluyente que la señal comprobada.
+- No se encontró health check asociado. Si el requisito se limita al estado de red del navegador, la ausencia de health check es un límite semántico, no un incumplimiento funcional probado.
+
+3. HALLAZGOS NUEVOS
+H-AUD-008-001 — MEDIA — El enlace compartido depende de unicidad textual y no contiene identidad estable del vehículo.
+ui.js serializa marca/modelo/equipamiento/encendido/año en #search=, sin incluir item.id. La autoapertura requiere exactamente un resultado global. Si hay colisión entre registros con esos atributos, la aplicación no puede resolver el destino inequívocamente. No se afirma que exista colisión productiva. Relación: AUG-072; interacción con H-AUD-037-003/AUG-049.
+
+H-AUD-008-002 — MEDIA — El fallback de compartir no cubre rechazos de Web Share ni ausencia de Clipboard API.
+El branch navigator.share no intenta clipboard ante errores recuperables; el branch clipboard no comprueba que navigator.clipboard.writeText exista y solo registra fallos en consola. El usuario puede pulsar Compartir sin recibir enlace ni notificación útil. Relación: AUG-072.
+
+H-AUD-008-003 — MEDIA — Un hash malformado puede abortar la restauración de deep link.
+main.js ejecuta decodeURIComponent() sin protección al procesar #search=. Una secuencia porcentual inválida lanza URIError y detiene el callback de restauración. Relación: H-AUD-037-010/AUG-052, que se amplía.
+
+H-AUD-008-004 — BAJA — El indicador de red carece de semántica accesible y no distingue conectividad del navegador de disponibilidad backend.
+El elemento es un div visual de 3px con title dinámico, sin role/status ni aria-live. navigator.onLine no comprueba los endpoints de GPSpedia. Relación: nueva AUG-073.
+
+4. HALLAZGOS EXISTENTES RELACIONADOS — NO DUPLICAR
+- H-AUD-037-003/AUG-049: la autoapertura no restringe resultados a _sectionType='corte' y puede abrir el modal de vehículo para un único Relay/Tutorial/PyS. Se confirma y amplía el caso deep link.
+- H-AUD-037-006/AUG-049: ambigüedad de números de cuatro dígitos; el primer número puede provenir de modelo/equipamiento/encendido y no de anoDesde.
+- H-AUD-037-010/AUG-052: espera indefinida por catálogo; se confirma polling de 100 ms y se agregan hash malformado y arranque sin sesión/catálogo.
+- H-AUD-007-001 a 005/AUG-068 a AUG-071: gestión global de overlays e historial. El detalle compartido usa modalOpen y depende de popstate; no se duplica la auditoría general.
+- La ubicación actual del indicador en el grupo de bienvenida es posterior al traslado histórico a header-controls.
+
+5. TAREAS DERIVADAS
+- AUG-072 — Robustecer la identidad y el fallback de enlaces compartidos.
+- AUG-073 — Hacer accesible y semánticamente preciso el indicador de conectividad.
+- AUG-049 recibe adenda sobre token de año en enlaces compartidos y autoapertura limitada a resultados Corte.
+- AUG-052 recibe adenda sobre decodificación segura de hash, cancelación/estado terminal y restauración sin sesión/catálogo.
+No se duplican H-AUD-037-003, H-AUD-037-006 ni H-AUD-037-010.
+
+6. CONTROLES POSITIVOS CONFIRMADOS
+- URL de búsqueda codificada con encodeURIComponent y restauración inicial de #search=.
+- Limpieza del hash al volver a la página principal.
+- El modal de vehículo agrega modalOpen y el listener popstate contempla su cierre.
+- La consulta compartida incluye marca, modelo, equipamiento, tipo de encendido y año inicial.
+- El indicador recibe eventos online/offline, actualiza clase/tooltip y conserva dimensión visual de 3px.
+- La ubicación actual del indicador coincide con el último refinamiento histórico del grupo de bienvenida.
+
+7. VALIDACIÓN Y LÍMITES
+E1 estática: revisión de funciones, consumidores, HTML/CSS, contratos de History API e historial de commits. No se ejecutaron pruebas E2/E3, navegador, Web Share API, portapapeles, Android/iOS, PWA instalada, enlaces malformados, colisiones de catálogo, lector de pantalla, eventos online/offline reales, health checks HTTP, Apps Script ni pruebas de red. No se verificaron deployments. No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+
+8. CONCLUSIÓN
+AUD-T-008 queda con E1 estática completada y cuatro hallazgos nuevos abiertos. La estructura básica de deep linking, compartir e indicador minimalista está presente; la precisión depende de la unicidad de búsqueda, el parser de año puede tomar un número de otro campo, el fallback de compartir es incompleto y el hash malformado no está protegido. Se confirman además dependencias ya registradas en búsqueda global y espera indefinida de catálogo.
+Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+================================================================================
