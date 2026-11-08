@@ -1265,3 +1265,50 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - **Criterio adicional:** incluir acordeón vehicular y modal de asociación existente en la estrategia común de frescura, deduplicación de promesas e invalidación; comprobar que la sincronización no sobrescriba una relación más reciente con una respuesta antigua.
 
 - 2026-11-08 — AUD-T-012: nuevas AUG-088 a AUG-091; adendas a AUG-043 y AUG-087. Inventario: 90 IDs únicos dentro de AUG-001 a AUG-091; AUG-015 continúa ausente y no se infiere ni renumera.
+
+
+## Hallazgos derivados de AUD-T-013 — 2026-11-08
+
+### AUG-092 — Alinear esquema, persistencia y autorización del módulo Tutorial
+- Hallazgos origen: H-AUD-013-003 y H-AUD-013-004. Tarea: AUD-T-013/Tarea 12. Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031.
+- Prioridad: Alta.
+- Evidencia: Services/catalog.js COLS_TUTORIALES (61–69) y lectura Tutorial (339–347); Services/feedback.js handleAddTutorial (1498–1526), handleUpdateTutorialItem (2010–2055); ui.js mostrarDetalleTutorialModal (6533–6703), openAddTutorialModal (9092–9197); Spreadsheet/GPSpedia_DB_columnas.md.
+- Problema: catálogo lee Tutorial con siete columnas; alta busca/crea Tutoriales y escribe cinco valores en orden distinto; edición también escribe posiciones incorrectas. El formulario omite campos existentes y el detalle no muestra colaborador. addTutorial no valida sesión backend ni duplica de forma segura.
+- Criterios:
+  1. Usar la hoja Tutorial y preservar sus siete columnas históricas.
+  2. Alinear alta, edición, lectura y renderizado con ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles y Video.
+  3. Definir extensión mínima posterior para Colaborador si se mantiene ese requisito, sin reinterpretar registros antiguos.
+  4. Incluir los campos existentes y mostrar colaborador al final del detalle.
+  5. Exigir sesión backend, derivar identidad desde Users y definir roles de alta.
+  6. Validar URL/payload, deduplicar por ID/clave estable e idempotencia bajo concurrencia.
+  7. Probar datos históricos, alta, edición, duplicados y sesiones/roles.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-093 — Validar tipo y estado antes de aprobar/rechazar vídeos
+- Hallazgo origen: H-AUD-013-005. Tarea AUD-T-013. Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031. Prioridad: Alta.
+- Evidencia: Services/feedback.js handleGetFeedbackItems (1173–1189), handleApproveVideo (1847–1905), handleRejectVideo (1911–1942).
+- Problema: Inbox identifica video_approval por subType, pero los handlers mutan cualquier registro cuyo contenido sea JSON parseable; no exigen subType ni status pending.
+- Criterios: exigir subType==='video_approval' y status==='pending'; validar ID único y consistencia; rechazar reportes/sugerencias y estados terminales; impedir transiciones repetidas; probar IDs cruzados, JSON inválido y decisiones concurrentes.
+- Relación: AUG-040 coordinación de escrituras; AUG-043 política de publicación.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-094 — Eliminar inyección HTML en el modal unificado de subida YouTube
+- Hallazgo origen: H-AUD-013-007. Tarea AUD-T-013. Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031. Prioridad: Media.
+- Evidencia: youtubeUpload.js content.innerHTML (42–72); valores iniciales ui.js (264–280, 9145–9162) y add_cortes.html (1240–1276).
+- Problema: initialDescription se interpola directamente dentro de textarea y initialTitle recibe escape parcial; datos proceden de formularios/catálogo.
+- Criterios: crear nodos y asignar value/textContent o escape contextual; probar comillas, ampersands, etiquetas, cierre textarea, atributos/eventos; conservar acentos y saltos de línea.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### Adenda AUD-T-013 — AUG-043
+- En HEAD d8a164c2974f4dc472f169442c2b7efb969bf350, youtubeUpload.js:166–189/236–252 omite sessionToken y usa currentUser.id; routeAction no inyecta credenciales; FEEDBACK exige assertFeedbackSession incluso con allowedRoles=null.
+- Callbacks de éxito copian URL pending a formularios Corte/PyS/Tutorial; guardados ordinarios la persisten antes de aprobar. handleApproveVideo solo escribe destino Corte. Revalidar publicación para los tres contentType.
+- handleInitYouTubeUpload devuelve opVideoId también como videoId; cliente lo conserva si no parsea la respuesta final. submitVideoForApproval no valida ID real, URL coincidente ni idempotencia.
+- No existe persistencia uploadUrl/opVideoId en IndexedDB ni reanudación 308, pese al diseño en Estudio_Factibilidad_YouTube.md §5.3.
+- categoryId='28' y payload incompleto frente a los atributos fijos de Tarea 8.1; confirmar contrato API.
+- Añadir criterios de ID real, recuperación, cancelación/limpieza, idempotencia, metadatos y pruebas por contentType.
+
+### Adenda AUD-T-013 — AUG-068
+- youtubeUpload.js crea #youtube-upload-modal y lo elimina manualmente, sin History API/popstate (30–40, 122–135).
+- Probar atrás/gesto, X, Cancelar, overlay padre y carga activa; cada retroceso debe cerrar solo el overlay superior.
+
+- 2026-11-08 — AUD-T-013: nuevas AUG-092 a AUG-094; adendas AUG-043/AUG-068. Inventario: 93 IDs únicos dentro de AUG-001 a AUG-094; AUG-015 continúa ausente.

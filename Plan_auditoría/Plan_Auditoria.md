@@ -61,7 +61,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
 | AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
 | AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE |
-| AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | POR AUDITAR |
+| AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/YOUTUBE PENDIENTE |
 | AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | POR AUDITAR |
 | AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | POR AUDITAR; incluye cancelación |
 | AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | POR AUDITAR |
@@ -824,3 +824,14 @@ Hallazgos: los callbacks de asociación recrean el acordeón sin originModal y p
 Tareas: nuevas AUG-088 a AUG-091; adendas a AUG-043 y AUG-087. H-AUD-011-007/AUG-087 se mantiene como antecedente; no duplicar.
 Límites: E1 estática; sin E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni pruebas de navegación real. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+
+
+## 36. Iteración técnica — AUD-T-013
+Sesión AUD-20261108-S031 | Checkpoint AUD-CP-0031 | HEAD d8a164c2974f4dc472f169442c2b7efb969bf350 | árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-013-001 a H-AUD-013-010 abiertos o vinculados; validación funcional/seguridad/OAuth/YouTube pendiente.
+Alcance: Tarea 12 y Bloque 8 (8.1–8.4), tutoriales, hoja Tutorial, subida directa, OAuth, Inbox, aprobación/rechazo, integración Corte/PyS/Tutorial, reproductor, overlays, sanitización y esquema.
+Controles presentes: tarjeta/formulario tutorial, módulo unificado, progreso/advertencia, bloqueo de cierre, cancelación XHR, privacyStatus unlisted, audiencia no infantil, Inbox por rol y MutationObserver de cierre.
+Hallazgos: credenciales faltantes; publicación pending antes de aprobación; destino solo Corte; esquema Tutorial incompatible; alta sin auth/dedup; handlers sin guard tipo/estado; ID provisional; falta reanudación; sink HTML; uploader sin History API; discrepancias de metadatos; pruebas YouTube ausentes.
+Tareas: nuevas AUG-092 a AUG-094; adendas AUG-043/AUG-068; AUG-040 conserva coordinación; VAL-22 planificada.
+Límites: E1 estática; sin YouTube API/OAuth/XHR/navegador/Apps Script/Spreadsheet real, concurrencia, red interrumpida, 308, XSS ejecutado ni E2/E3. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.

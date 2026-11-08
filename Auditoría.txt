@@ -9910,3 +9910,104 @@ LÍMITES DE LA FASE
 Auditoría E1 estática; no se ejecutaron pruebas Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, pruebas de permisos en deployment ni flujos E2/E3. No se modificaron código, assets, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 COMPLETADA; H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a tareas existentes. La validación funcional, seguridad, integridad y navegación sigue pendiente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-013: TUTORIALES, MULTIMEDIA Y CARGA DIRECTA DE VÍDEOS YOUTUBE CON APROBACIÓN
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S031 | Checkpoint: AUD-CP-0031
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: d8a164c2974f4dc472f169442c2b7efb969bf350 | Árbol: abce39b7f437ecd02647bebdf4252f47d4ed4ca2
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+ALCANCE
+E1 estática de Tarea 12 y Bloque 8 (8.1–8.4): tutoriales, esquema Tutorial, subida directa YouTube, OAuth/sesión FEEDBACK, progreso/cancelación, aprobación/rechazo Inbox, publicación por contentType (corte/tutorial/pys), ciclo de iframe, overlays, persistencia, idempotencia, resiliencia, sanitización y compatibilidad. Contraste con commits 5fa1427a701715c306e3efac5b06eac296ad0917 y bd8e2fe3a4e34c7b0de0d2835d10bd6ec0c5a8c8, Estudio_Factibilidad_YouTube.md y esquema Spreadsheet.
+
+ARCHIVOS/BLOBS REVISADOS
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161.
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a.
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af.
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670.
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb.
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+- Estudio_Factibilidad_YouTube.md f5b2774d0ddbfd9862f8c51cae5a31e1481825ee.
+- Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05.
+
+CONTROLES REVALIDADOS COMO PRESENTES
+1. Tarjeta de creación de tutorial antes de las demás; formulario con tema, vídeo y descripción (ui.js:6466–6500, 9092–9197).
+2. Modal unificado con selección de archivo, título/descripción, advertencia, progreso, bloqueo del cierre y prevención local de doble submit (youtubeUpload.js:20–139).
+3. Transferencia de bytes desde navegador por XMLHttpRequest PUT; no se envía el binario completo a Apps Script (youtubeUpload.js:202–245).
+4. Backend configura privacyStatus='unlisted', selfDeclaredMadeForKids=false y tags vacías (Services/feedback.js:1737–1750).
+5. Inbox reconoce video_approval y presenta acciones para roles permitidos (Services/feedback.js:1161–1218; ui.js:5577–5695).
+6. El detalle de tutorial asigna dataset.modalType='tutorial'; MutationObserver elimina iframe al cerrar (ui.js:6703–6707; main.js:419–440). B04 sigue presente estáticamente.
+7. add_cortes, PyS y Tutorial invocan el uploader y conservan campos manuales de URL (add_cortes.html:305–316, 1234–1285; ui.js:258–280, 9092–9165).
+
+H-AUD-013-001 — El uploader no envía sessionToken requerido por FEEDBACK
+Prioridad Alta; AUG-043.
+Evidencia: youtubeUpload.js:166–189 y 236–252 envía userId desde currentUser.id y userName, pero no sessionToken. routeAction (api-config.js:74–120) no inyecta credenciales. FEEDBACK declara initYouTubeUpload/submitVideoForApproval en actionPermissions y doPost llama assertFeedbackSession, que exige userId y sessionToken (Services/feedback.js:42–74, 302–334).
+Impacto: la inicialización de subida es rechazada por sesión incompleta; currentUser.id además no es el campo canónico currentUser.ID.
+Criterio: enviar ID y SessionToken de la sesión vigente; no confiar en rol/nombre del navegador; probar sesión válida, ausente, inválida y revocada. No duplicar AUG-043.
+
+H-AUD-013-002 — La aprobación previa puede eludirse; aprobación no vincula Tutorial/PyS
+Prioridad Alta; AUG-043.
+Evidencia: al crear solicitud pending, youtubeUpload.js ejecuta onSuccess con videoUrl (236–252). Callbacks copian la URL al formulario principal (add_cortes.html:1278–1284; ui.js:273–280 y 9157–9162); los guardados ordinarios persisten el enlace sin comprobar estado approved (ui.js:314–323, 8383–8400, 9179–9190; Services/feedback.js:1388–1455, 1498–1520). handleApproveVideo solo escribe videoGuiaDesarmeUrl para contentType corte (Services/feedback.js:1847–1905); rechazo no elimina referencias ya guardadas (1911–1942).
+Impacto: vídeos pending pueden aparecer antes de aprobar; para Tutorial/PyS no existe asociación posterior al aprobar.
+Criterio: mantener URL pending separada; solo publicar al aprobar y en destino correcto; rechazo no debe dejar enlace visible; conservar enlaces manuales distinguiéndolos de cargas pending. No duplicar AUG-043.
+
+H-AUD-013-003 — Alta/edición Tutorial no respeta la hoja ni el esquema vigente
+Prioridad Alta; nueva AUG-092.
+Evidencia: esquema versionado define hoja Tutorial con 7 columnas ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles y Video. Services/catalog.js usa COLS_TUTORIALES en esas posiciones y lee SHEET_NAMES.TUTORIALES='Tutorial' (61–69, 339–347). handleAddTutorial usa getSafeSheet('Tutoriales') y crea Tutoriales si no existe; el fallback del helper transforma Tutoriales en Tutoriale, no Tutorial. El alta escribe cinco valores [tema, thumbnail, videoUrl, descripcion, colaborador] sin ID y con orden incompatible (Services/feedback.js:1498–1526). handleUpdateTutorialItem escribe tema en A, video en C y descripción en D, pero el esquema requiere B, G y F (2010–2055). El formulario omite comoIdentificarlo/dondeEncontrarlo y el detalle no muestra Colaborador (ui.js:6533–6703, 9092–9197).
+Impacto: hoja paralela no leída por catálogo, columnas desplazadas, edición destructiva, ID/atribución incorrectos.
+Criterio: usar hoja Tutorial; preservar siete columnas; alinear alta/edición/lectura; definir extensión mínima posterior para Colaborador si procede; incluir campos existentes y mantener compatibilidad histórica.
+
+H-AUD-013-004 — addTutorial carece de autenticación backend y deduplicación
+Prioridad Alta; nueva AUG-092.
+Evidencia: api-config.js mapea addTutorial a FEEDBACK, pero no aparece en actionPermissions; doPost solo llama assertFeedbackSession para acciones declaradas (Services/feedback.js:295–334). handleAddTutorial no valida sesión/rol ni usa LockService o búsqueda de duplicados; ejecuta appendRow (1498–1520). La comprobación currentUser en UI es solo cliente (ui.js:9168–9197).
+Impacto: una petición directa puede crear tutoriales sin sesión y reintentos pueden duplicar filas.
+Criterio: política explícita de roles, sesión backend, identidad derivada de Users, validación de URL/payload, deduplicación e idempotencia bajo concurrencia.
+
+H-AUD-013-005 — Aprobar/rechazar modifica JSON sin comprobar tipo ni estado
+Prioridad Alta; nueva AUG-093.
+Evidencia: Inbox clasifica por subType==='video_approval' (Services/feedback.js:1173–1189), pero handleApproveVideo/handleRejectVideo solo requieren JSON parseable y no exigen subType ni status==='pending' (1847–1942).
+Impacto: una solicitud directa con ID de otro registro JSON de Feedbacks puede alterar su status y marcarlo resuelto; también se permiten transiciones repetidas.
+Criterio: validar subType, estado pending, ID único y consistencia; rechazar otros tipos y estados terminales; probar IDs cruzados y doble decisión.
+
+H-AUD-013-006 — No hay recuperación reanudable y puede usarse opVideoId como videoId
+Prioridad Alta; AUG-043.
+Evidencia: handleInitYouTubeUpload devuelve opVideoId también como videoId provisional (Services/feedback.js:1730–1795). El cliente lo usa como finalVideoId y lo conserva si no puede parsear la respuesta final; después construye watch?v= y solicita aprobación (youtubeUpload.js:202–252). No guarda uploadUrl/opVideoId/estado en IndexedDB ni consulta rango 308. Estudio_Factibilidad_YouTube.md sección 5.3 describe persistencia y reanudación. handleSubmitVideoForApproval solo valida title/videoUrl; no verifica ID real, correspondencia URL/ID ni idempotencia (Services/feedback.js:1799–1842).
+Impacto: links ficticios yt_*, vídeos/sesiones huérfanos y re-subidas tras pérdida de respuesta.
+Criterio: separar opVideoId de videoId real; exigir ID real y URL coincidente; persistir/reanudar; cancelar/limpiar sesión; idempotencia ante reintentos. No duplicar AUG-043.
+
+H-AUD-013-007 — Descripción inicial se interpola sin escape HTML
+Prioridad Media; nueva AUG-094.
+Evidencia: youtubeUpload.js construye content.innerHTML e interpola initialDescription dentro de textarea sin escape; initialTitle solo sustituye comillas dobles (42–72). Los valores provienen de formularios y catálogo (ui.js:264–280, 9145–9162; add_cortes.html:1240–1276).
+Impacto: un valor con cierre textarea/markup puede alterar DOM; no se ejecutaron payloads y no se afirma explotación remota.
+Criterio: crear nodos y asignar value/textContent o escapar por contexto; probar comillas, ampersands, etiquetas, cierre textarea y atributos/eventos.
+
+H-AUD-013-008 — El modal uploader no se integra con History API
+Prioridad Alta; adenda AUG-068.
+Evidencia: #youtube-upload-modal se agrega a document.body y closeModal lo elimina, sin pushState/popstate (youtubeUpload.js:30–40, 122–135). AUG-068 ya exige registrar todos los overlays, incluido youtubeUpload.js.
+Impacto: Atrás/gesto puede cerrar el padre o cambiar la vista sin cerrar primero el uploader; riesgo durante transferencia.
+Criterio: usar coordinador común de overlays; atrás debe cerrar solo el overlay superior y mantener coherente carga/cancelación. No duplicar AUG-068.
+
+H-AUD-013-009 — Metadatos fijos de publicación no coinciden completamente con la especificación
+Prioridad Media; adenda AUG-043.
+Evidencia: Tarea 8.1 pide no listado, audiencia no infantil, no promoción pagada, no contenido sintético, sin colaboradores, sin etiquetas, sin remixes y sin categoría predeterminada. UI muestra esos estados (youtubeUpload.js:64–77), pero backend solo fija tags=[], categoryId='28', privacyStatus='unlisted', selfDeclaredMadeForKids=false, embeddable y publicStatsViewable (Services/feedback.js:1737–1750).
+Impacto: categoryId 28 contradice la redacción de no asignar categoría predeterminada; los demás atributos no aparecen enviados/verificados. No se concluye si el endpoint permite todos los atributos; requiere reconciliar API y requisito.
+Criterio: documentar campos admitidos, no mostrar como garantizado lo que no se envía/verifica y probar payload efectivo.
+
+H-AUD-013-010 — No existe suite automatizada YouTube/Tutorial reproducible
+Prioridad: Validación pendiente.
+Evidencia: árbol actual solo contiene Services/Test/Auth.js y Services/Test/users.js; no hay pruebas YouTube, aprobación ni persistencia Tutorial. Los commits históricos describen pruebas/auditorías, pero no conservan suite reproducible.
+Criterio: incluir recorridos en VAL-22 y validación consolidada; no atribuir pruebas funcionales por referencias históricas.
+
+ADENDAS/DEPENDENCIAS
+- AUG-043 ya registra sesión, currentUser.id, bypass de aprobación, opVideoId y ciclo YouTube; AUD-T-013 confirma vigencia y amplía evidencia, sin duplicar.
+- AUG-040 mantiene coordinación de approveVideo y consistencia Feedbacks/Cortes.
+- AUG-068 ya incluye youtubeUpload.js en su alcance; se agrega evidencia del modal sin History API.
+- La conclusión del esquema se basa en archivos versionados; no se inspeccionó ni modificó Spreadsheet productivo.
+
+LÍMITES
+E1 estática; sin YouTube API, OAuth real, XHR, navegador, Apps Script desplegado, Spreadsheet/Drive real, concurrencia, red interrumpida, 308, payload XSS ejecutado ni E2/E3. No se modificaron código, assets, endpoints, configuración OAuth/Cloud, Drive, Spreadsheet, datos productivos ni deployments.
+Resultado: E1 COMPLETADA; H-AUD-013-001 a H-AUD-013-010 abiertos o vinculados; validación funcional/seguridad/YouTube pendiente.
+================================================================================

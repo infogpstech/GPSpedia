@@ -258,3 +258,34 @@ Sesión AUD-20261108-S030 | Checkpoint AUD-CP-0030 | HEAD auditado 2afdde923d14e
 - VAL-21 agrega recorridos bidireccionales, asociaciones nueva/existente, supresión anti-ciclos tras mutación, retorno con scroll/estado, edición y popstate, sesión/rol, integridad referencial y concurrencia. VAL-03 y AUG-043 mantienen las pruebas transversales de sesión/RBAC; AUG-002 mantiene la validación funcional consolidada.
 - El commit f6299fcf declara pruebas Playwright para esta funcionalidad, pero el árbol actual solo contiene pruebas aisladas de AUTH/USERS; no hay suite PyS–vehículo reproducible.
 - No se ejecutaron E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni deployments. No se modificó código, assets, endpoints, configuración ni datos productivos.
+
+
+## 20. Actualización de cobertura — AUD-T-013
+Sesión AUD-20261108-S031 | Checkpoint AUD-CP-0031 | HEAD d8a164c2974f4dc472f169442c2b7efb969bf350 | árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-013 E1 estática completada; H-AUD-013-001 a H-AUD-013-010 documentados; validación funcional/seguridad/YouTube pendiente.
+- Catálogo AUD-T: 38 unidades; 27 con E1 completada, 1 parcial y 10 por auditar.
+- Catálogo AUG: 93 IDs únicos dentro de AUG-001 a AUG-094; AUG-015 continúa ausente.
+- Nuevas AUG-092 a AUG-094: esquema/seguridad de Tutorial; guard de tipo/estado de solicitudes de vídeo; eliminación de inyección HTML en uploader.
+- AUG-043 recibe evidencia actualizada de sesión, bypass de aprobación, ID provisional, recuperación y metadatos. AUG-068 recibe evidencia del uploader sin History API. AUG-040 mantiene coordinación de approveVideo.
+- VAL-22 agrega casos de Tutorial CRUD/esquema/atribución, sesión, YouTube, resiliencia, Inbox, aprobación/rechazo, no publicación pending, tipos/estados, overlays, sanitización y compatibilidad manual.
+- Esquema versionado: hoja Tutorial con siete columnas; no se inspeccionó ni modificó Spreadsheet productivo.
+- B04 de cierre del iframe sigue presente estáticamente; no equivale a validación en navegador.
+- No se ejecutaron E2/E3, YouTube API, OAuth real, XHR, navegador, Apps Script, Spreadsheet/Drive real, concurrencia, cancelación, reanudación, XSS ni deployments.
+
+### VAL-22 — Matriz pendiente de validación Tutorial/YouTube
+1. Lectura de registros históricos y siete columnas de Tutorial.
+2. Alta/edición/ID/colaborador/campos descriptivos/URL/refresco catálogo.
+3. addTutorial con sesión ausente, inválida, rol no autorizado y válida.
+4. Doble clic, reintento y altas concurrentes.
+5. initYouTubeUpload con sessionToken válido/ausente/incorrecto/revocado.
+6. OAuth, uploadUrl ausente, error API, respuesta JSON inválida y videoId real.
+7. Cancelación, pérdida de red, suspensión/reapertura, HTTP 308 y limpieza.
+8. Inbox pending, autor, doble submit e idempotencia.
+9. Aprobación Corte/Tutorial/PyS; asociación solo tras aprobar.
+10. Rechazo sin enlace visible ni referencias huérfanas.
+11. IDs de otros tipos y estados terminales no deben mutarse como video_approval.
+12. Atrás/gesto/X/Cancelar/overlay padre/carga activa.
+13. Payloads HTML en title/description sin ejecución ni alteración DOM.
+14. Enlaces manuales conservan comportamiento y se distinguen de pending.
+15. Cierre del detalle detiene/remueve iframe por todos los métodos.
+- Estado VAL-22: PLANIFICADA; no ejecutada.

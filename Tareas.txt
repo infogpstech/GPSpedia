@@ -6155,3 +6155,21 @@ ALCANCE Y LÍMITES
 - No se ejecutaron Playwright, navegador, HTTP, Apps Script, concurrencia, permisos en deployment ni pruebas E2/E3.
 - No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-013
+Fecha 2026-11-08 | Sesión AUD-20261108-S031 | Checkpoint AUD-CP-0031
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-013-001 a H-AUD-013-010 documentados; hallazgos abiertos o vinculados; validación funcional/seguridad/YouTube pendiente.
+HEAD d8a164c2974f4dc472f169442c2b7efb969bf350 | árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+
+RESULTADO
+- Revisión de Tarea 12/Bloque 8 (8.1–8.4), youtubeUpload.js, FEEDBACK/CATALOG, formularios Tutorial/PyS/Cortes, Inbox, esquema Tutorial, ciclo de iframe y Estudio_Factibilidad_YouTube.md.
+- Controles presentes: tarjeta/formulario de tutorial, modal unificado, progreso/advertencia, bloqueo de cierre, abort XHR, privacyStatus unlisted, audiencia no infantil, botones Inbox por rol y limpieza iframe al cerrar detalle.
+- Hallazgos: falta sessionToken; URL pending puede persistirse antes de aprobación; backend solo asocia Corte; esquema Tutorial incompatible; addTutorial sin autenticación/deduplicación; approve/reject sin guard de subType/status; opVideoId como videoId provisional; sin recuperación IndexedDB/308; sink HTML; modal sin History API; metadatos no coinciden totalmente; suite YouTube no reproducible.
+- Nuevas AUG-092 a AUG-094; adendas AUG-043 y AUG-068; AUG-040 conserva coordinación de approveVideo; VAL-22 planificada.
+- Tarea 12 conserva su estado histórico COMPLETADA; E1 registra defectos actuales y no equivale a validación funcional.
+
+LÍMITES
+Solo documentación. No se modificaron código, assets, endpoints, OAuth scopes, Google Cloud, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron YouTube API/OAuth/XHR/navegador/Apps Script, concurrencia, cancelación/red/308, XSS ni E2/E3. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

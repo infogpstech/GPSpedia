@@ -990,3 +990,54 @@ VALIDACIÓN Y LÍMITES
 CONTINUIDAD
 - Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0031
+Fecha 2026-11-08 | Sesión AUD-20261108-S031
+Tarea AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+Repositorio infogpstech/GPSpedia | Rama trabajo GPSpedia2.2.5_work.
+HEAD inicial d8a164c2974f4dc472f169442c2b7efb969bf350 | árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2 | parent 2afdde923d14e4f3dd078d347007b15e5ab09b2b.
+Rama base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Alcance: Tarea 12/Bloque 8; tutoriales, hoja Tutorial, subida directa, OAuth, Inbox, aprobación, Corte/PyS/Tutorial, reproductor y overlays.
+Sin cambios de aplicación iniciados.
+
+BLOBS DE REFERENCIA
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- Estudio_Factibilidad_YouTube.md f5b2774d0ddbfd9862f8c51cae5a31e1481825ee
+- Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Auditoría.txt 8fb6634f5ef78089da11696aa4303e0336472336
+- Tareas.txt 1b1c16e73d04e4af2523e7359bc05e52ec56522e
+- Plan_Auditoria.md f80703b3506001c73b896e837977329f4cd296ca
+- Aug_Tareas.md b73d66848371313c7d6c85d44c878eef6302055f
+- Consolidacion_Auditoria.md 60b77713a699ba66d56b57b8e14e6a0f4f122666
+- ChangesLogs.txt 5952c41df7c003efd37bdd1409b4a9791ab10185
+- contexto_personal.md 3ac6da80458bad4c5c701271b689abe525112fdd
+- checkpoint.md b12b66adf3ab8888e171119a250d2a720abe6ab0
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0031
+Fecha 2026-11-08 | Sesión AUD-20261108-S031
+Tarea AUD-T-013: E1 ESTÁTICA COMPLETADA; H-AUD-013-001 a H-AUD-013-010 documentados; validación funcional/seguridad/YouTube pendiente.
+HEAD padre d8a164c2974f4dc472f169442c2b7efb969bf350; árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta; rama GPSpedia2.2.5_work.
+
+RESULTADO
+- Nuevas AUG-092 a AUG-094; adendas AUG-043 y AUG-068; AUG-040 conserva coordinación approveVideo; VAL-22 planificada.
+- Controles presentes: tarjeta/formulario, uploader central, progreso/advertencia, bloqueo cierre, abort XHR, privacidad unlisted, audiencia no infantil, Inbox por rol y limpieza iframe.
+- Riesgos abiertos: credenciales, bypass aprobación, destino Tutorial/PyS, esquema Tutorial, alta sin auth/dedup, guard tipo/estado, ID provisional, falta reanudación 308, sink HTML, overlay sin History API, metadatos y pruebas reproducibles.
+- No se modificó código, assets, endpoints, OAuth scopes, Google Cloud, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron YouTube API/OAuth/XHR/navegador/Apps Script, concurrencia, red/308, XSS ni E2/E3.
+- Solo documentación; no hubo merge ni despliegue.
+
+Archivos documentales actualizados: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+El commit documental se publicará con parent_sha/expected_sha d8a164c2974f4dc472f169442c2b7efb969bf350, force:false. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 deberá permanecer intacta.
+Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+================================================================================

@@ -424,3 +424,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Fuentes principales: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0.
 - Límites: E1 estática; sin Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni E2/E3. Sin cambios de aplicación, assets, endpoints, configuración ni datos productivos.
 - Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+
+
+## Continuidad — AUD-T-013 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD d8a164c2974f4dc472f169442c2b7efb969bf350; árbol abce39b7f437ecd02647bebdf4252f47d4ed4ca2; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- AUD-T-013 Tutoriales, multimedia y carga directa YouTube con aprobación: E1 estática completada; H-AUD-013-001 a H-AUD-013-010 documentados; validación funcional/seguridad/YouTube pendiente.
+- Hallazgos: uploader omite sessionToken y usa currentUser.id; URL pending puede guardarse antes de aprobación; backend solo asocia Corte; esquema Tutorial incompatible; addTutorial sin auth/dedup; approve/reject sin guard subType/status; opVideoId como videoId provisional; sin recuperación IndexedDB/308; sink HTML; overlay sin History API; metadatos no coinciden totalmente; no hay suite YouTube reproducible.
+- Nuevas AUG-092 a AUG-094; adendas AUG-043/AUG-068; AUG-040 mantiene coordinación; VAL-22 planificada.
+- Fuentes: youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; Estudio_Factibilidad_YouTube.md f5b2774d0ddbfd9862f8c51cae5a31e1481825ee.
+- Límites: E1 estática; sin YouTube API/OAuth/XHR/navegador/Apps Script/Spreadsheet real, concurrencia, red interrumpida, 308, XSS ejecutado ni E2/E3. Sin cambios de aplicación/configuración/datos.
+- Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
