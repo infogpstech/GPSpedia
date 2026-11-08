@@ -682,3 +682,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - E1 estática no certifica cuota localStorage, FileReader real, respuesta HTTP perdida, persistencia, recuperación concurrente ni integración/deployments. Validación funcional pendiente.
 - Sin navegador, Node/lint, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## Continuidad AUD-T-004 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S066/AUD-CP-0065; E1 histórica 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; HEAD previo b8eeeccc0571cb7bb8065cbbb6f7921fbea453bd; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 44 commits posteriores; ocho archivos cambiados, todos documentales. Los nueve archivos funcionales/auxiliares del alcance mantienen SHA idénticos a E1. Sin deriva funcional.
+- H-AUD-004-001 a 003 abiertos; AUG-059/AUG-060 pendientes; AUG-050 conserva su ampliación y H-AUD-037-007 su relación. Sin nuevos hallazgos/tareas.
+- VAL-12 y validación funcional/integración pendientes; la E1 estática no certifica ejecución real, persistencia, migración, Spreadsheet ni concurrencia.
+- Sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet/Drive, concurrencia, migración, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

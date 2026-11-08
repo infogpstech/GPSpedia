@@ -1322,3 +1322,14 @@ Resumen de hallazgos conservados: persistencia local no obligatoria y opId no vi
 La E1 es estática y esta revalidación es documental/Git: no certifica cuota real de localStorage, FileReader, pérdida/ambigüedad de respuesta HTTP, recuperación concurrente, persistencia real, integración Apps Script/Drive/Spreadsheet ni deployments. No se ejecutaron navegador, Node/lint, pruebas de cuota, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets o datos productivos; sin merge ni despliegue.
 No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los hallazgos y tareas están registrados y no hay novedades que justifiquen duplicación.
 Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial (continuidad E1 ya completada).
+
+
+## 50. Continuidad AUD-T-004 — verificación E1
+- Sesión AUD-20261108-S066; checkpoint AUD-CP-0065; E1 histórica 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; HEAD previo b8eeeccc0571cb7bb8065cbbb6f7921fbea453bd; árbol inicial f3d2c8efb7d1b475c6788b7819763368bf475f81; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 44 commits posteriores; ocho archivos cambiados, todos documentales. Los nueve archivos funcionales/auxiliares del alcance mantienen exactamente sus SHA de E1; sin deriva funcional.
+- H-AUD-004-001 a 003 permanecen abiertos; AUG-059/AUG-060 pendientes; H-AUD-037-007 y AUG-050 conservan su relación/ampliación. No se crean hallazgos ni tareas duplicados.
+- Se confirma que el editor administrativo de VIN, la validación backend de longitud y la asociación/presentación por slots continúan sin cambios respecto a la E1 original; los riesgos históricos siguen vigentes.
+- VAL-12 y validación funcional/integración continúan pendientes. Esta revalidación Git no certifica ejecución de VIN, persistencia, migración, Spreadsheet/Apps Script ni concurrencia.
+- Sin navegador, Node/lint, ejecución del motor VIN, HTTP, Apps Script V8, Spreadsheet/Drive, concurrencia, migración, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge ni despliegue.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: no hay hallazgos/tareas nuevos.
+- Siguiente: AUD-T-005.
