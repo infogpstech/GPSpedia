@@ -1679,3 +1679,55 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
 - 2026-11-08 — AUD-T-020: AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas. Inventario: 138 IDs únicos dentro de AUG-001 a AUG-139; AUG-015 continúa ausente y no se infiere ni renumera.
+
+## Hallazgos derivados de AUD-T-021 — 2026-11-08
+
+### Adenda AUD-T-021 a AUG-096 — sinks de metadatos y títulos en ficha imprimible
+- **Nueva evidencia:** ui.js:9232, 9291, 9337, 9379, 9912 y 9919–9935; getImageUrl():607–616.
+- **Ampliación:** incluir title, marca, modelo, categoría, años, tipoEncendido, versionesAplicables, VIN, tipo de corte y URLs de imagen que se interpolan en document.write() sin escape. Los campos de descripción que ya usan sanitizeHtmlContent() no cubren estas etiquetas/atributos.
+- **Criterios adicionales:** usar escape de texto/atributos y textContent para identificadores; permitir HTML enriquecido únicamente en campos autorizados; validar esquema y host de imágenes; probar payloads controlados en cada campo y confirmar que no se ejecute markup en la ventana de impresión.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-096.
+
+### AUG-140 — Alinear márgenes y contrato de paginación de la ficha imprimible
+- **Origen:** H-AUD-021-001. **Prioridad:** Media.
+- **Problema:** Tarea 2.2/README indican una página Carta vertical con 10 mm; Bloque 7 permite paginar cuando una página perjudica la legibilidad; el código usa 5 mm.
+- **Criterios:** decidir el margen físico definitivo; documentar cuándo se usa una o varias páginas; alinear @page, altura útil, README y Tareas; comprobar Carta vertical y márgenes reales sin recortar contenido.
+- **Estado:** NUEVA; decisión, diseño, implementación y pruebas pendientes.
+
+### AUG-141 — Completar la representación de Check Engine y el aviso de testigo
+- **Origen:** H-AUD-021-002. **Prioridad:** Media.
+- **Problema:** la ficha no incorpora una imagen específica de Check Engine; el aviso se inserta dentro de .tech-item-info antes de la imagen y el documento independiente no carga Font Awesome.
+- **Criterios:** definir el recurso/campo autorizado de Check Engine; preservar proporción; colocar el aviso debajo de la imagen; incluir iconografía/estilos locales cuando se requieran; probar activo/inactivo y cortes con/sin imagen.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-142 — Asegurar la disponibilidad de todos los recursos antes de imprimir
+- **Origen:** H-AUD-021-003. **Prioridad:** Media.
+- **Problema:** la espera cubre únicamente imágenes de tarjetas técnicas; foto principal, QR y logos quedan fuera; imagen completa con naturalWidth=0 se trata como resuelta y no hay fallback explícito.
+- **Criterios:** esperar carga/decodificación de todos los recursos obligatorios; distinguir error de ausencia opcional; proporcionar fallback visible; evitar que beforeprint calcule con dimensiones desconocidas; espera acotada y estado listo; probar lentitud, error, URL inválida y offline.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-143 — Hacer la paginación consciente de altura real y preservar orden/prioridad
+- **Origen:** H-AUD-021-004 y H-AUD-021-005. **Prioridad:** Media.
+- **Problema:** los grupos se deciden por aspecto y cantidad de imágenes, no por altura total de texto/metadatos/avisos/pie; rowMaxHeight fuerza 80 px mínimos; las tarjetas sin imagen se trasladan a la última página y pueden perder orden/prioridad.
+- **Criterios:** medir el contenido real de cada página; detectar overflow; reagrupar tarjetas completas sin cortar asociaciones texto/imagen; no forzar altura mínima que rebase el espacio; conservar prioridad y secuencia técnica con tarjetas con/sin imagen; corregir el comentario obsoleto de cuatro imágenes; probar páginas iniciales/intermedias/finales y textos extensos.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-144 — Proteger enlaces de vídeos no listados al generar QR
+- **Origen:** H-AUD-021-006. **Prioridad:** Media.
+- **Problema:** api.qrserver.com recibe la URL completa del vídeo como parámetro GET; README define vídeos unlisted. No hay generación local ni fallback offline y la resolución de 85×85 no está validada.
+- **Criterios:** preferir generación local o servicio expresamente aprobado con análisis de privacidad; validar URL de YouTube/modelo; conservar QR condicional y sin URL visible; probar escaneo real en PDF/papel, contraste, resolución, red y offline sin revelar enlaces no listados a terceros.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-145 — Corregir los modos duplicados del selector de distribución
+- **Origen:** H-AUD-021-007. **Prioridad:** Baja.
+- **Problema:** las reglas posteriores de .sheet-page-wrapper y las clases de layout adaptativo prevalecen sobre parte del modo Vertical; Automática y Vertical terminan con una composición esencialmente igual.
+- **Criterios:** definir de forma inequívoca cada modo; ajustar cascada/especificidad o retirar opción duplicada; comprobar Automática, Horizontal, Vertical e Imagen ampliada en pares, tríos, mezclas y una imagen.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-146 — Corregir referencias históricas de AUD-T-021 en el plan maestro
+- **Origen:** H-AUD-021-009. **Prioridad:** Baja.
+- **Problema:** Plan_Auditoria atribuye 6d7fbb9c a la ficha imprimible, pero el commit corresponde al panel de desarrollador y formulario PyS.
+- **Criterios:** conservar trazabilidad y corregir la lista de fuentes para incluir únicamente commits que afecten la ficha imprimible; revisar los mensajes/diffs antes de atribuir cambios.
+- **Estado:** NUEVA; corrección documental pendiente.
+
+- 2026-11-08 — AUD-T-021: AUG-140 a AUG-146 nuevas; AUG-096 ampliada. Inventario: 145 IDs únicos dentro de AUG-001 a AUG-146; AUG-015 continúa ausente y no se infiere ni renumera.

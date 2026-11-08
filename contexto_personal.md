@@ -503,3 +503,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas tareas AUG-136 a AUG-139; adendas a AUG-036 y AUG-104. La cobertura se actualizó a 34 E1, 1 parcial y 3 por auditar.
 - No se modificó código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No hubo ejecución funcional.
 - Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+
+## Continuidad de auditoría — AUD-T-021
+- Fecha: 2026-11-08. Sesión AUD-20261108-S039; checkpoint AUD-CP-0039.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 3339694150823f8f8adca6ffbad6211c708a8960; árbol ebe322745a0458df1dbf749a28517ce97e36eb08; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes: E1 estática completada; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 pendiente.
+- Hallazgos principales: margen 5 mm vs 10 mm; falta imagen Check Engine y aviso antes de imagen; recursos no esperados antes de imprimir; riesgo de overflow y tarjetas sin imagen fuera de orden; QR expone URL unlisted a tercero; selector Vertical duplicado; datos de catálogo interpolados sin escape; referencia 6d7fbb9c ajena a impresión en Plan_Auditoria.
+- Nuevas tareas AUG-140 a AUG-146; adenda AUG-096. Cobertura consolidada: 35 E1, 1 parcial y 2 por auditar.
+- No se modificó código, CSS, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. No hubo navegador, impresión, PDF ni QR real.
+- Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.

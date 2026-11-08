@@ -6406,3 +6406,28 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-0
 - No se modificaron archivos funcionales, endpoints, configuración, assets ni datos productivos; no hubo ejecución de Apps Script, navegador, Drive, Spreadsheet, YouTube, concurrencia ni despliegues.
 - Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
 ================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-021
+Fecha: 2026-11-08 | Sesión AUD-20261108-S039 | Checkpoint AUD-CP-0039
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 planificada, no ejecutada.
+- Alcance: ficha imprimible exportVehiclePrintSheet(), paginación, distribución adaptativa, imágenes, QR, metadatos, testigo de motor, sanitización y recursos de impresión.
+- Controles confirmados: botón conectado; cortes, cables, apertura, metadatos, nota y QR condicional; proporciones de imagen conservadas; encabezado/pie por página; campos descriptivos parcialmente sanitizados; colaboradores, utilidad y reportes de error no se imprimen.
+- Hallazgos: margen 5 mm frente a 10 mm especificados; falta imagen Check Engine y aviso antes de imagen; espera de carga incompleta; riesgo de desbordamiento por paginación no basada en altura real; tarjetas sin imagen trasladadas a última página; QR transmite URL de vídeo no listado a tercero; modo vertical sin diferencia efectiva; interpolación HTML sin escape en metadatos/títulos/URL de imagen; referencia histórica errónea en Plan_Auditoria.
+- Nuevas tareas: AUG-140 a AUG-146. AUG-096 ampliada con sinks concretos de impresión.
+- VAL-30 planificada para pruebas de Carta/márgenes, 0–7 imágenes, carga/error/offline, orden/prioridad, Check Engine, QR, selector y XSS. No ejecutada.
+- La tarea histórica Bloque 7 conserva estado COMPLETADA; E1 no certifica impresión real ni PDF.
+- No se modificaron código, CSS, assets, servicios, endpoints, contratos, configuración ni datos productivos; no hubo navegador, PDF, Apps Script, Drive, Spreadsheet ni despliegue.
+- Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+================================================================================
+
+TAREAS DERIVADAS DE AUD-T-021 — DISEÑO/IMPLEMENTACIÓN/PRUEBAS PENDIENTES
+- AUG-140: alinear márgenes físicos y contrato de una/múltiples páginas; reconciliar Tarea 2.2, Bloque 7 y README.
+- AUG-141: completar imagen Check Engine y ubicar el aviso debajo de la imagen.
+- AUG-142: esperar y validar todos los recursos de impresión; manejar imágenes lentas/rotas y fallback.
+- AUG-143: paginación basada en altura real, detección de overflow y preservación de prioridad/orden de tarjetas.
+- AUG-144: proteger URLs de vídeos no listados durante la generación del QR y validar calidad/escaneo/offline.
+- AUG-145: hacer efectivos y diferenciados los modos Automática, Horizontal, Vertical e Imagen ampliada.
+- AUG-146: corregir la referencia de commits históricos de AUD-T-021 en Plan_Auditoria.md.
+- Adenda AUG-096: escapar/sanitizar título, metadatos, tipo de corte, VIN, versiones y URLs de imagen en la ventana de impresión.
+================================================================================

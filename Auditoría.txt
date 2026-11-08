@@ -10805,3 +10805,141 @@ No se ejecutó ningún caso de VAL-29.
 E1 estática. No se ejecutaron Node/lint, navegador, Apps Script, HTTP, Spreadsheet, Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, ACL de deployments ni E2/E3. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas; VAL-29 pendiente.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-021: FICHA TÉCNICA IMPRIMIBLE, PAGINACIÓN Y DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S039 | Checkpoint: AUD-CP-0039
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 3339694150823f8f8adca6ffbad6211c708a8960 | Árbol: ebe322745a0458df1dbf749a28517ce97e36eb08
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+1. ALCANCE Y MÉTODO
+E1 estática de la ficha imprimible y su integración con el modal de detalle. Se revisó ui.js: exportVehiclePrintSheet() (9224–10131), botón invocador (1752–1756), getImageUrl() (592–618), getActivaTestigoValue() (1651–1658), sanitizeHtmlContent() en rich-text.js, estilos internos de la ventana de impresión, assets referenciados y documentación.
+Se contrastaron Tareas.txt: Tarea 2.2 (320–321) y Bloque 7 (386–505); README.md (95 y 123–125); ChangesLogs.txt (1955–2055); Plan_auditoría/Plan_Auditoria.md (72); y los commits históricos 6d7fbb9c, 199ee4be, cbbcb0cb y 04c86ce6. El commit 6d7fbb9c se verificó por su diff y no corresponde al desarrollo de impresión.
+La revisión es estática. No se ejecutaron navegador, ventana de impresión, generación de PDF, escaneo QR, Node/lint, pruebas móviles, red, Apps Script, Drive ni Spreadsheet. El árbol contiene pruebas aisladas AUTH/USERS, pero no una suite de impresión/PDF.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- El botón del modal invoca exportVehiclePrintSheet(activeItem) (ui.js:1752–1756).
+- La ficha recopila hasta tres cortes, tres cables de alimentación, apertura, fotografía principal, metadatos, VIN, nota técnica y QR cuando existe un enlace de vídeo.
+- Se mantiene la prioridad del corte recomendado cuando tiene imagen y se conserva la compatibilidad de activaTestigoN con marcadores históricos mediante getActivaTestigoValue().
+- Las tarjetas que contienen imagen mantienen título, descripción, aviso e imagen dentro de .tech-item-card; las imágenes usan dimensiones automáticas, max-width y object-fit:contain. La foto principal también usa object-fit:contain en impresión.
+- El encabezado y el pie se clonan por página; metadatos, foto principal y QR aparecen únicamente en la primera página. La nota técnica se conserva en la tabla de metadatos.
+- El QR no imprime la URL como texto visible y no reserva espacio cuando no existe un enlace de vídeo.
+- Los campos descriptivos de ubicación, color, relay, alimentación, apertura y nota técnica pasan por sanitizeHtmlContent(). No se encontraron en la ficha nombres de colaboradores, cantidades de utilidad ni reportes de error.
+- La agrupación actual crea páginas explícitas. El código agrupa normalmente dos imágenes y permite tres cuando las tres consecutivas son verticales; esta lógica corresponde a la corrección posterior registrada en ChangesLogs.txt, no al comentario antiguo de cuatro imágenes.
+- No se modificó ningún archivo funcional, CSS global, asset, servicio, endpoint, contrato ni dato.
+
+3. HALLAZGOS
+
+H-AUD-021-001 — MEDIA — Márgenes de impresión divergentes de los requisitos y documentación.
+Evidencia:
+- Tareas.txt:321 y Bloque 7, requisito 7, especifican márgenes de 10 mm.
+- README.md:124 declara una ficha en una página Carta vertical con márgenes de 10 mm.
+- ui.js:9381–9384 establece @page size: 216mm 279mm portrait y margin: 5mm; la altura mínima de .sheet-page-wrapper es 269 mm.
+- ChangesLogs.txt registra que el margen se cambió deliberadamente a 5 mm el 2026-11-03.
+Impacto: el área imprimible actual no cumple el margen de 10 mm descrito en los requisitos. Existe además una discrepancia documental sobre una sola página: Tarea 2.2/README la prometen, mientras el Bloque 7 posterior permite paginar si una sola página reduce la legibilidad. Por tanto, la multipágina no se clasifica por sí sola como defecto; debe prevalecer un contrato único y explícito.
+Criterios: confirmar el margen autorizado; alinear @page y dimensiones útiles; aclarar si la ficha puede usar varias páginas según contenido; actualizar README y especificación sin prometer una página única cuando el contenido requiera paginación; probar tamaño Carta y márgenes físicos.
+Tarea derivada: AUG-140.
+
+H-AUD-021-002 — MEDIA — La representación del testigo de motor no cumple íntegramente la especificación.
+Evidencia:
+- Tareas.txt, requisito 2.1 y aceptación 9, exige conservar la imagen del testigo Check Engine; requisito 4.1 exige colocar el aviso debajo de la imagen.
+- ui.js:9297–9300 genera únicamente un icono fa-triangle-exclamation y el texto del aviso; no se encontró campo imgTestigo/imgCheckEngine ni un asset específico de Check Engine en la ficha.
+- ui.js:9340 inserta extraHtml dentro de .tech-item-info, antes de .tech-item-img-wrapper; por tanto, el aviso precede a la imagen en el orden del documento.
+- El documento nuevo de impresión contiene CSS propio, pero no incorpora una hoja de estilos de Font Awesome; no se garantiza que la clase del icono se represente en esa ventana.
+Impacto: falta la imagen indicada en el requisito y el aviso no ocupa la posición solicitada. El icono puede no representarse en el documento independiente de impresión.
+Criterios: definir el recurso/campo autorizado de la imagen Check Engine; conservar su proporción; colocar el aviso debajo de la imagen; incluir el recurso visual necesario en la ventana de impresión; verificar corte con y sin testigo.
+Tarea derivada: AUG-141.
+
+H-AUD-021-003 — MEDIA — La preparación de imágenes antes de imprimir cubre solo una parte de los recursos.
+Evidencia:
+- ui.js:10121–10128 espera load/error únicamente para imágenes obtenidas desde allTechnicalCards.
+- La fotografía principal, el QR, icon-v3-512x512.png y tracklink_logo.png se generan fuera de esa colección.
+- ui.js:10129 ejecuta arrangeTechnicalCards() desde beforeprint sin una espera asíncrona de recursos.
+- Si img.complete ya es true con naturalWidth=0, la promesa se resuelve inmediatamente; getAspect() devuelve una proporción de respaldo y la tarjeta permanece contada como tarjeta con imagen. No existe una sustitución explícita de la imagen fallida en esta ruta.
+Impacto: la composición puede calcularse o imprimirse sin confirmar la disponibilidad de todos los recursos visuales. Las imágenes rotas pueden participar en la agrupación como si fueran imágenes válidas; no hay garantía estática de que foto, QR y logos estén listos.
+Criterios: centralizar el estado de carga de todos los recursos de impresión; distinguir carga correcta, error y ausencia opcional; usar fallback explícito para imagen fallida; establecer una espera acotada y un estado listo antes de imprimir; probar recursos lentos, fallidos y sin conexión.
+Tarea derivada: AUG-142.
+
+H-AUD-021-004 — MEDIA — La paginación no garantiza que cada grupo completo quepa en el área útil.
+Evidencia:
+- ui.js:9993–10008 elige grupos según la relación de aspecto y cantidad de imágenes, sin medir la altura real de títulos, descripciones, avisos, metadatos, QR y pie para decidir el siguiente grupo.
+- ui.js:10099 aplica un mínimo de 80 px por fila aunque availableHeight sea insuficiente.
+- .sheet-page-wrapper usa altura auto, min-height 269mm y overflow:visible (ui.js:9402–9410 y reglas de impresión 9861–9875); no se observa una comprobación final de desbordamiento ni una segunda paginación basada en la altura renderizada.
+- ui.js:9962 conserva un comentario que afirma hasta cuatro imágenes por hoja, mientras choosePageGroups() limita el grupo a dos o tres. ChangesLogs.txt registra la corrección posterior a dos imágenes, o tres verticales.
+Impacto: tarjetas con texto extenso, primera página con metadatos/QR/foto, nota técnica o filas con altura elevada pueden superar el espacio previsto. El mínimo de imagen puede mantener altura incluso cuando no queda espacio; el navegador podría producir saltos adicionales o dividir la página lógica sin que el algoritmo reorganice el contenido.
+Criterios: medir el contenido real por página y sus recursos; detectar desbordamiento después de dimensionar; reubicar tarjetas completas cuando no quepan; no imponer un mínimo que fuerce overflow; mantener encabezado, pie y saltos dentro del área imprimible; actualizar el comentario obsoleto.
+Tarea derivada: AUG-143.
+
+H-AUD-021-005 — MEDIA — Las tarjetas sin imagen se trasladan al final y pueden perder prioridad/orden técnico.
+Evidencia:
+- ui.js:10030–10034 ordena las tarjetas, identifica la prioritaria y luego separa imageCards y textCards.
+- ui.js:10051 agrega todas las textCards únicamente a la última página, después de las tarjetas con imagen.
+Impacto: una tarjeta prioritaria sin imagen queda fuera del primer grupo y termina en la última página. Cuando se mezclan tarjetas con y sin imagen, el orden original entre ellas deja de conservarse, aunque la prioridad se haya calculado antes de separarlas.
+Criterios: conservar la secuencia técnica y la prioridad del corte aunque una tarjeta no tenga imagen; distribuir las tarjetas sin imagen en el flujo de páginas sin romper la asociación ni provocar desbordamientos; probar cortes prioritarios con/sin imagen y combinaciones de texto e imagen.
+Tarea derivada: AUG-143.
+
+H-AUD-021-006 — MEDIA — El QR envía enlaces de vídeos no listados a un proveedor externo.
+Evidencia:
+- ui.js:9365 construye una solicitud a api.qrserver.com y envía directVideoUrl como parámetro data mediante GET.
+- README.md, sección de YouTube, establece visibilidad estricta No listado (unlisted).
+- Tareas.txt, requisitos 6 y 8, exige QR del enlace real y evitar dependencias externas innecesarias.
+Impacto: el proveedor externo recibe la URL completa del vídeo. Para vídeos no listados, esa URL funciona como enlace de acceso; además, el QR depende de un servicio externo y no hay fallback local. El tamaño solicitado es 85×85 px, pero su legibilidad en PDF/papel no está validada.
+Criterios: decidir generación local o un servicio aprobado que no exponga el enlace no listado; validar que el enlace corresponde a YouTube y al modelo; conservar QR solo cuando exista vídeo; probar resolución, contraste y escaneo real en PDF/papel, incluyendo modo sin conexión.
+Tarea derivada: AUG-144.
+
+H-AUD-021-007 — BAJA — El modo «Imagen debajo del texto» no presenta una diferencia efectiva respecto a «Automática».
+Evidencia:
+- ui.js ofrece los modos auto, horizontal, vertical e image-focus.
+- Las reglas body[data-print-layout="vertical"] definen una columna y ancho adaptado, pero las reglas posteriores .sheet-page-wrapper .adaptive-tech-grid y .sheet-page-wrapper .tech-item-body vuelven a imponer la composición base; las clases de layout adaptativo también prevalecen sobre parte de las reglas anteriores (aprox. 9698–9805).
+- Horizontal sí conserva una regla posterior específica y image-focus conserva el límite ampliado de imagen.
+Impacto: dos opciones del selector pueden producir esencialmente la misma composición, por lo que el control no representa cuatro modos funcionalmente diferenciados.
+Criterios: definir el resultado visual de cada modo; ajustar especificidad/orden de reglas o retirar una opción duplicada; comprobar visualmente auto, horizontal, vertical e image-focus en diferentes grupos de imágenes.
+Tarea derivada: AUG-145.
+
+H-AUD-021-008 — MEDIA — Datos del catálogo se interpolan sin escape en el documento HTML de impresión.
+Evidencia:
+- ui.js:9232 construye title con marca/modelo/años sin escape.
+- ui.js:9291 usa c.tipo dentro del título de corte sin sanitizeHtmlContent().
+- ui.js:9337 inserta entry.title; ui.js:9379 y :9912 insertan title en el documento.
+- ui.js:9919–9935 inserta marca, modelo, categoría, años, encendido, versiones y VIN directamente en HTML.
+- getImageUrl() devuelve URLs HTTP externas directamente (ui.js:607–616), y sus resultados se interpolan en atributos src sin escape HTML.
+- Otros campos descriptivos sí usan sanitizeHtmlContent(), por lo que la protección no es uniforme.
+Impacto: si un valor persistido del catálogo contiene markup, puede interpretarse al construir la ventana con document.write(). La revisión estática identifica sinks sin escape; no se ejecutó una prueba de explotación. Este hallazgo amplía el alcance ya registrado en AUG-096, no crea una tarea duplicada.
+Criterios: escapar texto y atributos; usar textContent para etiquetas/identificadores y sanitización allow-list solo donde se admita texto enriquecido; validar esquemas/host de URL; probar valores controlados en marca, modelo, tipo de corte, VIN, versiones e imágenes.
+Relación: ampliar AUG-096.
+
+H-AUD-021-009 — BAJA — El plan maestro contiene una referencia histórica ajena a la ficha imprimible.
+Evidencia:
+- Plan_auditoría/Plan_Auditoria.md:72 asocia AUD-T-021 con 6d7fbb9c como «tareas 1.2/1.3».
+- El commit 6d7fbb9c tiene el mensaje «fix: complete tasks 1.2 and 1.3 in developer panel and pys form» y su diff modifica la documentación y añade marcadores en initAdminPanelListeners/openAddProblemModal; no implementa la ficha imprimible.
+- Los commits de impresión revisados son 199ee4be (layouts configurables), cbbcb0cb (paginación) y 04c86ce6 (layout adaptativo).
+Impacto: la fila de AUD-T-021 no identifica con precisión todas sus fuentes históricas y dificulta reproducir la trazabilidad.
+Criterios: corregir la referencia en el plan maestro, conservar el historial de commits y asociar únicamente cambios que afecten la ficha imprimible.
+Tarea derivada: AUG-146.
+
+4. OBSERVACIONES TRANSVERSALES
+- La especificación de una página única de Tarea 2.2/README debe reconciliarse con el Bloque 7 posterior, que admite paginación cuando mejora la legibilidad.
+- El margen de 5 mm aparece también en ChangesLogs.txt como decisión histórica; la especificación vigente consultada mantiene 10 mm.
+- El aviso de testigo, el recurso Check Engine y la carga de recursos requieren una validación visual real; no se infiere funcionamiento por la presencia de markup.
+- El histórico de ChangesLogs.txt contiene verificaciones estáticas, pero no evidencia de una impresión real/PDF ejecutado.
+- AUG-096 ya contempla la sanitización de sinks de impresión/exportación; se amplía con los campos de metadatos, título de corte y atributos de imagen concretos.
+- La Tarea/Bloque 7 conserva su estado histórico COMPLETADA; esta E1 registra deuda residual y no certifica su aceptación funcional.
+
+5. MATRIZ VAL-30 — PLANIFICADA, NO EJECUTADA
+1. Imprimir desde escritorio y móvil en tamaño Carta vertical; comprobar márgenes de 10 mm, escala, orientación, vista previa y PDF.
+2. Probar 0–7 imágenes técnicas con orientaciones vertical, cuadrada, horizontal y panorámica; incluir combinaciones mixtas, baja resolución, carga lenta, error y URL inválida.
+3. Probar primera página con/sin foto principal, QR, VIN y nota; páginas intermedias y última página con varias tarjetas y textos extensos.
+4. Comprobar que cada tarjeta permanezca completa y que el corte prioritario conserve posición con y sin imagen; mezclar tarjetas de texto e imagen y validar orden técnico.
+5. Probar testigo activado/desactivado, imagen Check Engine, posición del aviso, iconografía y legibilidad.
+6. Verificar que todas las imágenes (principal, cortes, alimentación, apertura, QR y logos) estén listas antes de imprimir; simular fallo y desconexión.
+7. Generar QR con vídeo real no listado; comprobar privacidad del enlace, resolución, contraste y escaneo desde PDF y papel.
+8. Comparar los cuatro modos del selector y comprobar que cada uno tenga un resultado visual distinto y consistente.
+9. Probar datos controlados con markup en marca, modelo, tipo de corte, VIN, versiones y URL de imagen para verificar escape/sanitización.
+10. Probar popup bloqueado, cancelación del diálogo, reimpresión y cambio de modo antes de imprimir.
+No se ejecutó ningún caso de VAL-30.
+
+6. LÍMITES
+E1 estática. No se ejecutaron Node/lint, navegador, impresión física, generación PDF, escaneo QR, pruebas visuales responsive, red externa, Apps Script, HTTP, Spreadsheet, Drive, migraciones, concurrencia, estrés ni E2/E3. No se modificaron código, estilos, assets, servicios, endpoints, contratos, configuración, datos productivos ni deployments.
+Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 planificada; AUG-140 a AUG-146 nuevas; AUG-096 ampliada. Sin cambios funcionales.
+================================================================================

@@ -4327,3 +4327,17 @@ Archivos documentales modificados:
 - ChangesLogs.txt: registro de esta tarea añadido al final.
 - checkpoint.md: checkpoint inicial y final AUD-CP-0038 añadidos como último paso documental antes del único commit.
 No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-021
+Fecha: 2026-11-08 | Sesión AUD-20261108-S039 | Checkpoint AUD-CP-0039
+Archivos documentales modificados:
+- Auditoría.txt: líneas 10810–10946. Añadida E1 AUD-T-021 y hallazgos H-AUD-021-001 a 009.
+- Tareas.txt: líneas 6411–6434. Añadido registro AUD-T-021, VAL-30 y resumen AUG-140 a AUG-146.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-021 actualizada en línea 72; iteración 43 añadida en líneas 910–919.
+- Plan_auditoría/Aug_Tareas.md: líneas 1683–1734. Añadidas AUG-140 a AUG-146 y adenda a AUG-096.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 35 E1, 1 parcial y 2 pendientes; sección 13 añadida en líneas 408–418.
+- contexto_personal.md: líneas 507–515. Añadida continuidad AUD-T-021.
+- ChangesLogs.txt: registro de documentación añadido al final.
+- checkpoint.md: checkpoint inicial AUD-CP-0039 y final AUD-CP-0039; el checkpoint final se crea como último blob documental.
+No se modificaron ui.js, rich-text.js, index.html, main.js, style.css, api-config.js, assets, servicios, endpoints, contratos, configuración ni datos productivos. Sin navegador, impresión, PDF, Apps Script, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.

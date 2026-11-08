@@ -69,7 +69,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-27 PENDIENTE |
 | AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-28 PENDIENTE |
 | AUD-T-020 | Saneamiento arquitectural, DRY, anti-debugging y auditorías globales | Tarea 21; 27c9311c — auditoría integral y navegación; d93b3a5e — consolidación global y DRY | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-29 PENDIENTE |
-| AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | POR AUDITAR |
+| AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-30 PENDIENTE |
 | AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | POR AUDITAR |
 | AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
@@ -906,3 +906,13 @@ Hallazgos: restricciones de DevTools no constituyen seguridad y bloquean zoom; r
 Nuevas tareas: AUG-136 a AUG-139; adendas a AUG-036 y AUG-104. La tabla de cobertura de Consolidacion_Auditoria.md se corrigió.
 Límites: sin Node/lint, navegador, Apps Script, HTTP, Spreadsheet, Drive, YouTube, concurrencia, restauraciones, migraciones, despliegues ni E2/E3. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+
+## 43. Iteración técnica — AUD-T-021
+Sesión AUD-20261108-S039 | Checkpoint AUD-CP-0039 | HEAD auditado 3339694150823f8f8adca6ffbad6211c708a8960 | árbol ebe322745a0458df1dbf749a28517ce97e36eb08 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 pendiente.
+Alcance: ficha imprimible exportVehiclePrintSheet(), integración modal, márgenes, paginación, layout adaptativo, imágenes, Check Engine/testigo, QR, sanitización, metadatos y assets.
+Hallazgos: margen 5 mm vs 10 mm; falta imagen Check Engine y aviso antes de imagen; carga incompleta de recursos; riesgo de overflow y tarjetas sin imagen fuera de orden; QR expone URL unlisted a tercero; selector vertical no se diferencia de Automática; interpolaciones HTML sin escape; referencia histórica incorrecta en el plan.
+Nuevas tareas: AUG-140 a AUG-146; adenda a AUG-096. VAL-30 planificada, no ejecutada.
+Nota de trazabilidad: la referencia 6d7fbb9c de la fila AUD-T-021 corresponde a tareas del panel de desarrollador y formulario PyS, no a impresión; se conserva registrada hasta su corrección mediante AUG-146. Los commits de impresión revisados son 199ee4be, cbbcb0cb y 04c86ce6.
+Límites: sin navegador, impresión, PDF, QR real, Node/lint, Apps Script, HTTP, Spreadsheet, Drive, concurrencia, migraciones, despliegues ni E2/E3. Sin cambios de aplicación.
+Siguiente: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
