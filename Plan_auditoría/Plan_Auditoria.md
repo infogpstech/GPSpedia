@@ -2566,3 +2566,16 @@ H-AUD-015-001 a H-AUD-015-004 permanecen abiertos; H-AUD-037-003 a H-AUD-037-006
 Se conserva la cancelación y retirada de filtros rápidos: no reintroducirlos. La continuidad verifica identidad de archivos y trazabilidad estática; no acredita ejecución correcta, seguridad dinámica ni validación funcional.
 No se ejecutaron navegador/DOM, payloads XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue; rama base intacta.
 Siguiente unidad secuencial: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive; su continuidad previa debe respetarse sin duplicar registros.
+
+
+## 41. AUD-T-016 — revalidación ampliada de continuidad y calidad visual
+- Sesión AUD-20261108-S097; checkpoint AUD-CP-0096; E1 2daf88c96d29999cbc734c968ef94355ee5324ca; continuidad anterior 39d35bbe4bb0e6497ab444ced3afae62b679724c; HEAD inicial 8ee33a4694813152b8c5809b1576afde4049a657; árbol inicial a58014f1b34cfa191e8bb00d21a4c7d5ade37819; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 63 commits posteriores; comparación S056→HEAD: 42 commits. En ambos diffs solo aparecen ocho archivos documentales; no hay divergencia.
+- Los seis archivos funcionales conservan SHA E1: index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; users.html e41f402675677a4d2783493614737021ec2eade5; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- H-AUD-016-001 a 004 permanecen abiertos. Se incorpora H-AUD-016-005 (Media), contraste insuficiente en controles de acción y texto fijo; se amplía AUG-103, sin crear ID nuevo.
+- Contraste estático calculado: blanco/#007bff 3.98:1; blanco/#58a6ff 2.53:1; #888/#fff 3.54:1. Los cálculos no sustituyen pruebas de estilos computados en navegador.
+- AUG-102 a AUG-105 siguen pendientes; AUG-104 ya tiene adenda para bloqueo global de zoom. AUG-112 sigue pendiente para conciliar la entrada histórica en Auditoría.txt. VAL-25 planificada, no ejecutada.
+- Matriz: cumplimiento parcial; calidad/mantenibilidad afectadas por tokens fragmentados, colores fijos y estilos inline; no se identifica nueva vulnerabilidad de datos ni regresión estática de rendimiento; los bloqueos frontend de zoom/contextmenu no son controles de seguridad.
+- El footer dinámico conserva la estructura sentinel/IntersectionObserver; no se certifica su ejecución. No se ejecutaron navegador, mediciones WCAG computadas, lector de pantalla, zoom real, PWA, benchmarks ni E2/E3.
+- Sin cambios funcionales, configuración, assets, servicios, endpoints, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue. Base sin cambios; GitHub informa protected=false.
+- Siguiente: AUD-T-017 — revalidación de continuidad E1, sin duplicar el registro previo.

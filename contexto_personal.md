@@ -963,3 +963,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-015-001 a 004 siguen abiertos; H-AUD-037-003 a 006 continúan vinculados a AUG-049. AUG-098 a AUG-101 y VAL-24 pendientes. No duplicar hallazgos ni tareas.
 - La cancelación de filtros rápidos se mantiene; no restaurarlos. E1/continuidad estática no certifica pruebas dinámicas ni E2/E3.
 - Sin cambios de aplicación, configuración, datos productivos, operaciones externas, merge o despliegue. Siguiente: AUD-T-016, revalidación de continuidad.
+
+
+## Continuidad AUD-T-016 — AUD-20261108-S097
+- Revalidación ampliada AUD-20261108-S097/AUD-CP-0096; E1 2daf88c96d29999cbc734c968ef94355ee5324ca; checkpoint previo S056/CP-0055; HEAD inicial 8ee33a4694813152b8c5809b1576afde4049a657; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- 42 commits desde continuidad previa y 63 desde E1; solo ocho documentos cambiaron. Los seis archivos funcionales mantienen SHA exactos de E1.
+- H-AUD-016-001 a 004 siguen abiertos; nuevo H-AUD-016-005 registra contraste insuficiente en controles y texto fijo, con ratios estáticos 3.98:1, 2.53:1 y 3.54:1. Vinculado a AUG-103, que se amplía sin duplicar.
+- AUG-102 a AUG-105 pendientes; AUG-104 ya incluye zoom global; AUG-112 pendiente para conciliación histórica de AUD-T-016 en Auditoría.txt; VAL-25 planificada/no ejecutada.
+- Cumplimiento parcial. La fragmentación de tokens y colores hardcodeados afecta calidad/mantenibilidad. No se identifica nueva vulnerabilidad de datos ni regresión estática de rendimiento. Bloqueos frontend no son controles de seguridad.
+- No se ejecutaron navegador, medición computada de contraste, zoom real, lector de pantalla, PWA, benchmarks ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente: AUD-T-017, revalidación de continuidad sin duplicar el registro previo.

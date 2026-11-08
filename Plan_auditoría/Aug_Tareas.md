@@ -1794,3 +1794,11 @@ Sesión: AUD-20261108-S042 | Checkpoint: AUD-CP-0042 | Estado: E1 estática comp
 - AUG-005 conserva la adenda AUD-T-024 sobre autodeleción y revocación; AUG-006 mantiene logout remoto; AUG-007 sigue pendiente de decisión de política; AUG-008 conserva sus adendas de coordinación y respuestas obsoletas; AUG-009 requiere validación backend del nombre; AUG-010 conserva su dependencia con AUD-T-033 y la coordinación AUTH/USERS.
 - Los riesgos de concurrencia y consistencia de sesiones se relacionan con AUG-016; hashing y migración de credenciales se mantienen en AUD-T-023/AUG-011 a AUG-014, sin trasladar ni duplicar su alcance.
 - No se detectaron nuevos hallazgos que justifiquen una AUG adicional. Pruebas funcionales y verificación de deployments permanecen pendientes.
+
+
+### Adenda AUD-T-016 a AUG-103 — contraste medible de botones y texto fijo
+- **Nueva evidencia:** style.css:50/68/1298–1320 aplica texto blanco sobre --accent-color (#007bff claro; #58a6ff oscuro); users.html:11/16/22/117 aplica texto blanco sobre --primary-color; add_cortes.html:83 usa blanco sobre #007bff y :50 usa #888 sobre fondo de tarjeta blanco.
+- **Contraste calculado con colores sólidos:** blanco/#007bff = 3.98:1; blanco/#58a6ff = 2.53:1; #888/#fff = 3.54:1. Son valores estáticos, no mediciones de estilos computados en navegador.
+- **Ampliación:** definir combinaciones de texto/fondo que cumplan 4.5:1 para texto normal y 3:1 para texto grande/elementos gráficos aplicables; revisar estados hover, focus y disabled en index.html, users.html y add_cortes.html.
+- **Pruebas:** incorporar los pares y estados a VAL-25, con medición de estilos computados en ambos temas.
+- **Estado:** EXISTENTE; ampliada; diseño, implementación y validación pendientes. No crear AUG adicional.

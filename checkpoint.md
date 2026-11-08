@@ -2196,3 +2196,37 @@ Solo verificación Git, identidad SHA y continuidad documental/estática. No se 
 Commit documental único previsto: docs(audit): verify AUD-T-015 continuity; parent 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5.
 Siguiente unidad: AUD-T-016 — revalidación de continuidad E1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0096
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S097
+Tarea: AUD-T-016 — revalidación ampliada de continuidad E1 y evaluación de cumplimiento/calidad.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 8ee33a4694813152b8c5809b1576afde4049a657 | Árbol inicial: a58014f1b34cfa191e8bb00d21a4c7d5ade37819
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; GitHub informa protected=false).
+E1 histórica: 2daf88c96d29999cbc734c968ef94355ee5324ca.
+Continuidad previa AUD-T-016: S056/CP-0055, HEAD 39d35bbe4bb0e6497ab444ced3afae62b679724c.
+Alcance: index.html, style.css, main.js, ui.js, users.html y add_cortes.html.
+Hallazgos conocidos: H-AUD-016-001 a 004; AUG-102 a 105; AUG-112 por conciliación documental; VAL-25 pendiente.
+Acción inicial: confirmar HEAD/base, comparar continuidad y E1, verificar SHA de archivos funcionales, revisar criterios de cumplimiento/calidad/seguridad/rendimiento/mantenibilidad y registrar hallazgos sin modificar código.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0096
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S097
+Tarea: AUD-T-016 — revalidación ampliada de continuidad E1.
+Estado final: continuidad confirmada; evaluación ampliada estática completada; H-AUD-016-001 a 004 continúan abiertos y H-AUD-016-005 nuevo (Media) queda registrado; AUG-102 a 105 pendientes, AUG-103 ampliada; AUG-112 pendiente; VAL-25 planificada/no ejecutada.
+HEAD padre: 8ee33a4694813152b8c5809b1576afde4049a657; árbol inicial a58014f1b34cfa191e8bb00d21a4c7d5ade37819; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparaciones: 42 commits desde continuidad S056 y 63 desde E1; en ambos casos solo ocho documentos modificados. Los seis archivos funcionales conservan SHA E1:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+Archivos documentales modificados: Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+No se modificó código, HTML/CSS/JS funcional, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron navegador, estilos computados, mediciones reales WCAG, zoom 200/400 %, lectores de pantalla, PWA, benchmarks ni E2/E3. Sin merge ni despliegue.
+Commit único esperado: docs(audit): revalidate AUD-T-016 visual quality; parent 8ee33a4694813152b8c5809b1576afde4049a657.
+Siguiente unidad: AUD-T-017 — revalidación de continuidad E1.
+================================================================================

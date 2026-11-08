@@ -11327,3 +11327,47 @@ NO EJECUTADAS: Apps Script V8, HTTP, navegador, DriveApp, SpreadsheetApp, backup
 Sin cambios de código, endpoints, contratos, configuración, credenciales, hojas, Drive, Spreadsheet ni datos productivos. Sin despliegue ni merge.
 Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
 ================================================================================
+
+
+================================================================================
+REVALIDACIÓN AMPLIADA — AUD-T-016
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S097 | Checkpoint: AUD-CP-0096
+E1 histórica: 2daf88c96d29999cbc734c968ef94355ee5324ca
+Continuidad previa: 39d35bbe4bb0e6497ab444ced3afae62b679724c
+HEAD auditado: 8ee33a4694813152b8c5809b1576afde4049a657
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; GitHub informa protected=false).
+
+HALLAZGO NUEVO
+
+H-AUD-016-005 — MEDIA — Contraste insuficiente en textos y controles de acción de las vistas principales.
+Evidencia estática:
+- style.css:50 y 68 define --accent-color como #007bff en tema claro y #58a6ff en tema oscuro; style.css:1298–1320 aplica color blanco a .validation-btn sobre ese fondo.
+- users.html:11, 16, 22 y 117 define --primary-color como #007bff/#58a6ff y --light-text como #fff; .btn-primary usa texto blanco sobre el color primario.
+- add_cortes.html:83 define .btn-primary con fondo #007bff y texto blanco.
+- Cálculo de contraste WCAG para colores sólidos: blanco/#007bff = 3.98:1; blanco/#58a6ff = 2.53:1. Ambos quedan por debajo de 4.5:1 para texto normal.
+- add_cortes.html:50 usa #888 sobre el contenedor claro #fff; contraste calculado 3.54:1 para texto normal.
+Impacto: etiquetas y texto de acciones pueden resultar difíciles de distinguir, especialmente en el tema oscuro. El cálculo es estático sobre los colores declarados; no sustituye medición de estilos computados ni pruebas visuales en navegador.
+Criterios:
+1. Definir pares accesibles de texto/fondo para botones primarios y secundarios en ambos temas.
+2. Alcanzar al menos 4.5:1 en texto normal y 3:1 en texto grande/elementos gráficos aplicables.
+3. Revisar colores fijos de texto descriptivo en add_cortes.html y estados hover/focus/disabled.
+4. Medir estilos computados en navegador para index.html, users.html y add_cortes.html.
+Tarea relacionada: ampliar AUG-103; no crear una tarea duplicada.
+
+REVALIDACIÓN DE HALLAZGOS EXISTENTES
+- H-AUD-016-001 a 004 continúan vigentes; no se observa corrección en los seis archivos funcionales.
+- AUG-102 a AUG-105 continúan pendientes. AUG-104 ya cuenta con adenda de AUD-T-020 para el bloqueo global de zoom en main.js/index.html, además de add_cortes.html; no duplicar.
+- AUG-112 permanece pendiente: la entrada histórica completa de AUD-T-016 aún requiere conciliación en Auditoría.txt. Esta adenda registra el hallazgo nuevo sin dar por resuelta la omisión histórica.
+
+MATRIZ AMPLIADA
+- Cumplimiento: parcial; persisten hallazgos sobre selector/tokens, colores, zoom y responsive.
+- Calidad técnica: fragmentación de tokens y estilos locales; el footer usa IntersectionObserver y sentinel, pero su comportamiento real no fue ejecutado.
+- Seguridad: no se identifica una nueva vulnerabilidad de datos en el alcance visual. Los bloqueos frontend de zoom/contextmenu no constituyen controles de seguridad efectivos.
+- Rendimiento: no se identifica una regresión estática nueva; no se ejecutaron benchmarks ni mediciones de renderizado.
+- Mantenibilidad: sistemas de variables separados y colores hardcodeados elevan el costo de mantener coherencia; relacionado con AUG-103.
+- Mejoras: tokens semánticos compartidos, contraste medido, zoom accesible y breakpoints específicos para formularios/modales.
+- Validación: VAL-25 continúa planificada y no ejecutada.
+
+LÍMITES
+No se ejecutaron navegador, Playwright, capturas, medición de estilos computados, lectores de pantalla, pruebas Android/iOS, zoom real 200/400 %, PWA standalone, rotación, pruebas visuales ni E2/E3. No se modificaron archivos funcionales, configuración, assets, servicios, endpoints, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+================================================================================

@@ -967,3 +967,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Sin deriva funcional. H-AUD-015-001 a 004 continúan abiertos; H-AUD-037-003 a 006 siguen asociados a AUG-049; AUG-098 a AUG-101 y VAL-24 continúan pendientes.
 - Se mantiene la cancelación de filtros rápidos; no se reintroducen. Sin hallazgos/tareas duplicados. E1 estática y continuidad no sustituyen E2/E3 ni pruebas dinámicas.
 - Sin cambios funcionales, pruebas reales, operaciones productivas, merge ni despliegue. Siguiente unidad: AUD-T-016.
+
+
+## 31. AUD-T-016 — revalidación ampliada
+- AUD-20261108-S097/AUD-CP-0096; E1 2daf88c96d29999cbc734c968ef94355ee5324ca; continuidad previa 39d35bbe4bb0e6497ab444ced3afae62b679724c; HEAD 8ee33a4694813152b8c5809b1576afde4049a657; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 63 commits; continuidad→HEAD: 42 commits. Ambos diffs contienen solo ocho documentos. Los seis archivos funcionales conservan sus SHA históricos.
+- H-AUD-016-001 a 004 siguen abiertos; H-AUD-016-005 nuevo (Media) identifica contraste insuficiente en texto de botones y párrafos con colores fijos. Se vincula a AUG-103; no se crea nueva AUG.
+- Ratios calculados sobre colores sólidos: blanco/#007bff 3.98:1; blanco/#58a6ff 2.53:1; #888/#fff 3.54:1. Se requiere verificación posterior con estilos computados.
+- AUG-102 a 105 pendientes; AUG-104 ampliada previamente para zoom global; AUG-112 pendiente para conciliación histórica; VAL-25 planificada.
+- Resultado de la matriz ampliada: cumplimiento parcial; calidad/mantenibilidad afectadas por fragmentación de tokens; sin nueva vulnerabilidad de datos ni regresión estática de rendimiento identificada. Bloqueos frontend de zoom/contextmenu no se consideran controles de seguridad.
+- Footer estructuralmente presente mediante sentinel/IntersectionObserver; ejecución real no probada. Sin E2/E3, navegador, lectores de pantalla, zoom real, PWA, benchmarks ni operaciones productivas.
+- No se modificó código, configuración, assets, endpoints, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Base intacta.

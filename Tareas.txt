@@ -6492,3 +6492,21 @@ E1: 941dfb166ae5af4631d0711d50ab3d45cf7225c1 | HEAD: 650e566945aa4238f241d1c8673
 - No se ejecutaron Apps Script V8, HTTP, navegador, Drive/Spreadsheet reales, backup/restore/purgas ni concurrencia real. Sin cambios funcionales ni operaciones productivas.
 Siguiente: AUD-T-026.
 ================================================================================
+
+
+================================================================================
+ADENDA DE REVALIDACIÓN AMPLIADA — AUD-T-016
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S097 | Checkpoint: AUD-CP-0096
+HEAD inicial: 8ee33a4694813152b8c5809b1576afde4049a657 | Base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 63 commits posteriores; solo ocho archivos documentales en el diff.
+- Comparación continuidad S056→HEAD: 42 commits posteriores; solo ocho archivos documentales en el diff.
+- Los seis archivos funcionales del alcance mantienen SHA E1: index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; users.html e41f402675677a4d2783493614737021ec2eade5; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- H-AUD-016-001 a 004 continúan abiertos. Se incorpora H-AUD-016-005 (Media): contraste insuficiente en botones primarios y texto descriptivo. Evidencia y criterios completos en Auditoría.txt.
+- Contraste calculado: blanco/#007bff 3.98:1; blanco/#58a6ff 2.53:1; #888/#fff 3.54:1. Cálculos estáticos; no son mediciones de estilos computados del navegador.
+- H-AUD-016-005 se vincula a AUG-103 mediante adenda; no se crea nuevo ID AUG. AUG-102 a AUG-105 siguen pendientes; AUG-112 conserva la conciliación histórica pendiente.
+- VAL-25 se amplía para comprobar explícitamente los pares de contraste, estados y colores fijos; sigue PLANIFICADA, no ejecutada.
+- Matriz ampliada: cumplimiento parcial; calidad/mantenibilidad condicionadas por tokens fragmentados y estilos hardcodeados; no se identifica nueva vulnerabilidad de datos ni regresión estática de rendimiento; seguridad de bloqueos frontend no se presume.
+- La rama base conserva SHA d9acc68d889985c2e2f42fe3a02e502efc86ead1. GitHub informa protected=false; no se modifica la configuración.
+- No se ejecutaron pruebas dinámicas, navegador, lector de pantalla, zoom real, PWA, benchmarks, E2/E3 ni operaciones productivas. Sin cambios funcionales, merge o despliegue.
+Siguiente unidad: AUD-T-017 — revalidación de continuidad E1, sin duplicar su registro previo.
+================================================================================
