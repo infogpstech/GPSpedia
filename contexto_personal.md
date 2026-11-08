@@ -910,3 +910,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-037-008 a 012 y H-AUD-038-003/004 confirmados por continuidad; AUG-051/AUG-052/AUG-022 conservan sus tareas. AUG-074 pendiente y AUG-052 ampliada.
 - No se ejecutaron pruebas PWA/offline, CacheStorage/IndexedDB, cuota, iOS/iPadOS, standalone, lector de pantalla, CDN, red interrumpida ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+
+
+## Continuidad AUD-T-010 — 2026-11-08 | AUD-20261108-S091
+- Revalidación AUD-20261108-S091/AUD-CP-0090; E1 histórica 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 (AUD-20261108-S028/AUD-CP-0028); HEAD c194fa122ffd30f0425b82906152108090b9c0d8; árbol actual 140f2f3cc8a239841cf609a60652b1761060d775; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. ui.js, api-config.js, Services/feedback.js y Spreadsheet/GPSpedia_DB_columnas.md conservan exactamente sus SHA E1.
+- H-AUD-010-001 a 007 permanecen abiertos: falta autenticación/actor, sinks innerHTML, adjunto individual no recuperable, vínculo reportId sin validar, fallos de FileReader/Drive/MIME/ACL, falta lock/idempotencia y proposedValues/texto sin límites.
+- AUG-075/AUG-076/AUG-077/AUG-078/AUG-079/AUG-080/AUG-081 pendientes. Antecedentes H-TR/H-SUG corregidos estáticamente no se reabren.
+- No se ejecutaron Apps Script, HTTP, navegador, FileReader real, Drive, Spreadsheet, concurrencia, XSS, sesión revocada ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.

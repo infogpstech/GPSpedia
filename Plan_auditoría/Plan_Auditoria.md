@@ -2329,3 +2329,47 @@ No se ejecutaron pruebas E2/E3, instalación/actualización real del Service Wor
 
 ### Siguiente iteración
 AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+
+
+## 75. Revalidación de continuidad — AUD-T-010
+
+**Sesión:** AUD-20261108-S091  
+**Checkpoint:** AUD-CP-0090  
+**E1 original:** 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 (AUD-20261108-S028 / AUD-CP-0028)  
+**Árbol E1:** 283e324bca6e2b055e353059a3aa00ce38f66f5d  
+**HEAD revalidado:** c194fa122ffd30f0425b82906152108090b9c0d8  
+**Árbol actual:** 140f2f3cc8a239841cf609a60652b1761060d775  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-010-001 A 007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron reporte individual por corte, vínculo reportId/vehicleId/corteIndex/testigo, adjuntos, sugerencia de cambio, proposedValues, persistencia independiente en Feedbacks, Inbox y acciones de revisión. Archivos: ui.js, api-config.js, Services/feedback.js y Spreadsheet/GPSpedia_DB_columnas.md; se contrastaron las especificaciones de TAREA 9 y los antecedentes H-TR/H-SUG.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los cuatro archivos funcionales/esquema mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+### Revalidación de hallazgos y tareas
+- H-AUD-010-001 a H-AUD-010-007 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- H-AUD-010-001 (ALTA): reportProblem/suggestCutChange no validan sesión y aceptan identidad declarada por payload; la exposición real depende del deployment no verificado.
+- H-AUD-010-002 (ALTA): datos controlables se insertan en sinks innerHTML del Inbox/modales sin escape contextual.
+- H-AUD-010-003: adjunto opcional de reporte individual solo conserva nombre local; no crea referencia recuperable.
+- H-AUD-010-004: no se comprueba relación real reportId–vehicleId–corteIndex con un reporte existente.
+- H-AUD-010-005: FileReader sin error/abort; fallos de Drive pueden continuar como éxito sin imageUrl; MIME/extensión se fijan como JPEG y se comparte con ANYONE_WITH_LINK.
+- H-AUD-010-006: sugerencias sin lock ni idempotencia; reintentos pueden duplicar/competir por fila.
+- H-AUD-010-007: proposedValues sin allowlist/tipos/límites y texto sin normalización/límite backend.
+- AUG-075 a AUG-081 continúan pendientes para autenticación/actor, XSS, adjunto individual, vínculo real, robustez/política de imágenes, serialización/idempotencia y validación de contrato.
+- Las decisiones históricas H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06 permanecen corregidas en los blobs estáticos originales; esta continuidad no las vuelve a abrir.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los cuatro archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validar seguridad o integración en ejecución.
+
+No se ejecutaron Apps Script, HTTP, navegador, FileReader real, cargas Drive, Spreadsheet, concurrencia, pruebas XSS, sesión revocada, endpoints publicados ni despliegues. No se inspeccionaron datos productivos. No se modificó código, assets, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.

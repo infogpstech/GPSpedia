@@ -912,3 +912,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - H-AUD-037-008 a 012 y H-AUD-038-003/004 se confirman por continuidad; AUG-051/AUG-052/AUG-022 conservan las tareas existentes. AUG-074 pendiente; AUG-052 ampliada.
 - Solo continuidad E1 y revisión documental. Sin instalación PWA, offline real, CacheStorage/IndexedDB, cuota, iOS/iPadOS, standalone, lector de pantalla, CDN, red interrumpida ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+
+
+## 64. AUD-T-010 — continuidad E1 y revalidación de reportes/sugerencias
+- Sesión AUD-20261108-S091; checkpoint AUD-CP-0090; E1 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; árbol E1 283e324bca6e2b055e353059a3aa00ce38f66f5d; HEAD c194fa122ffd30f0425b82906152108090b9c0d8; árbol actual 140f2f3cc8a239841cf609a60652b1761060d775; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; ui.js, api-config.js, Services/feedback.js y Spreadsheet/GPSpedia_DB_columnas.md conservan SHA idénticos a E1.
+- H-AUD-010-001 a 007 permanecen abiertos: falta auth/actor en reportProblem/suggestCutChange; stored XSS; adjunto individual no recuperable; vínculo reportId no verificado; carga Drive/Reader/MIME/ACL; sugerencias sin lock/idempotencia; proposedValues/texto sin allowlist/límites.
+- AUG-075 a AUG-081 continúan pendientes. H-TR-01 a 07 y H-SUG-01 a 06 siguen corregidos estáticamente en los blobs revisados; no reabrirlos sin nueva evidencia.
+- Solo continuidad E1 y revisión documental. Sin Apps Script, HTTP, navegador, FileReader, Drive, Spreadsheet, concurrencia, XSS, sesión revocada ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.

@@ -2008,3 +2008,34 @@ Sin cambios funcionales, assets, endpoints, configuración, hojas, datos product
 Commit documental único: docs(audit): verify AUD-T-009 continuity; parent 31205e431c84ac917c2971aa7a0a0fa820bc2302; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0090
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S091
+Tarea: AUD-T-010 — revalidación de continuidad E1 de reportes de problemas y sugerencias de cambios en cortes.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: c194fa122ffd30f0425b82906152108090b9c0d8; árbol 140f2f3cc8a239841cf609a60652b1761060d775; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; árbol E1 283e324bca6e2b055e353059a3aa00ce38f66f5d; sesión original AUD-20261108-S028 / AUD-CP-0028.
+Alcance: ui.js, api-config.js, Services/feedback.js y Spreadsheet/GPSpedia_DB_columnas.md.
+Hallazgos conocidos: H-AUD-010-001 a 007. Tareas derivadas: AUG-075/AUG-076/AUG-077/AUG-078/AUG-079/AUG-080/AUG-081.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los cuatro archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: autenticación/atribución de actor, stored XSS, adjuntos, integridad relacional reportId, errores/ACL de Drive, idempotencia y contrato de datos.
+Sin cambios de código, assets, endpoints, configuración, Spreadsheet, Drive, datos productivos, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0090
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S091
+Tarea: AUD-T-010 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-010-001 A 007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+HEAD auditado: c194fa122ffd30f0425b82906152108090b9c0d8; árbol 140f2f3cc8a239841cf609a60652b1761060d775; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; árbol E1 283e324bca6e2b055e353059a3aa00ce38f66f5d; 63 commits posteriores.
+Los cuatro archivos del alcance conservan SHA E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05.
+Hallazgos revalidados: H-AUD-010-001 a 007 permanecen sin cambios. AUG-075 a AUG-081 pendientes. H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06 permanecen corregidos estáticamente; no se reabren. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de cuatro archivos y revisión de consistencia documental. No ejecutadas: Apps Script, HTTP, navegador, FileReader, Drive, Spreadsheet, concurrencia, XSS, sesión revocada ni deployments.
+Sin cambios funcionales, assets, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-010 continuity; parent c194fa122ffd30f0425b82906152108090b9c0d8; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+================================================================================
