@@ -592,3 +592,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-015-001 a 004 siguen abiertos; H-AUD-037-003 a 006 continúan vinculados a AUG-049. AUG-098 a AUG-101 y VAL-24 pendientes. Sin hallazgos/tareas duplicados.
 - La cancelación de filtros rápidos se mantiene como restricción. No ejecutar cambios de código durante E1.
 - Sin navegador, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, pruebas móviles ni E2/E3. Siguiente unidad: AUD-T-016, revalidación de continuidad.
+
+
+## Continuidad AUD-T-016 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S056/AUD-CP-0055; HEAD histórico 2daf88c96d29999cbc734c968ef94355ee5324ca; HEAD actual 39d35bbe4bb0e6497ab444ced3afae62b679724c; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, solo documentales. Los seis archivos funcionales del alcance visual/tema/responsive conservan exactamente sus SHA de E1.
+- H-AUD-016-001 a 004 siguen abiertos; AUG-102 a AUG-105 pendientes; VAL-25 planificada. Sin hallazgos/tareas duplicados.
+- Los hallazgos de botones siguen vinculados a AUG-100. Sin navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA ni E2/E3.
+- Siguiente unidad: AUD-T-017, revalidación de continuidad E1.

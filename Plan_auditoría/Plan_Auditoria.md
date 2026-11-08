@@ -1153,3 +1153,19 @@ Archivos funcionales con identidad SHA comprobada:
 - VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
 No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación, configuración, datos productivos, Drive, Spreadsheet, deployments, merge ni despliegue.
 Siguiente unidad secuencial: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive; realizar revalidación de continuidad E1 sin duplicar hallazgos.
+
+
+## 40. Continuidad verificada — AUD-T-016
+Sesión AUD-20261108-S056 | Checkpoint AUD-CP-0055 | HEAD E1 2daf88c96d29999cbc734c968ef94355ee5324ca | árbol E1 f2fb8eee6b69ad0542659f152aa484ada148d9dd | HEAD actual 39d35bbe4bb0e6497ab444ced3afae62b679724c | árbol actual d8fe0aa7199ce25147c03c9a6e25cd04fb9e519f | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-016 se mantiene completada. La comparación Git registra 21 commits posteriores y exclusivamente ocho archivos documentales modificados. Los seis archivos funcionales del alcance conservan exactamente sus SHA históricos; no existe deriva funcional desde la E1.
+Se revalidan H-AUD-016-001 a H-AUD-016-004, sin evidencia de corrección: selector/token del banner de validación; fragmentación de tokens de tema entre páginas; restricción de zoom en add_cortes.html; adaptación responsive incompleta de formulario y vista de usuarios.
+AUG-102 a AUG-105 continúan pendientes; VAL-25 sigue planificada. No se crean hallazgos ni tareas duplicadas. Los hallazgos de botones permanecen en AUG-100 y no se duplican en esta unidad.
+Archivos funcionales con identidad SHA comprobada:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+No se ejecutaron navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA standalone, rotación ni E2/E3. Sin cambios funcionales, configuración, datos productivos, Drive, Spreadsheet, deployments, merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-017 — Gestión colaborativa de años y validación comunitaria; revalidar continuidad E1.
