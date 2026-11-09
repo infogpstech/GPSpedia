@@ -3622,3 +3622,42 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: b3cb1e4758fc464a540ee3ff92109575a07d5411
 Solo se actualiza documentación de continuidad. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque H-AUD-032-001 a 003 y AUG-039 ya están registrados. Sin cambios funcionales, renombrados, operaciones productivas, merge o despliegue.
 Siguiente unidad secuencial: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+
+
+## 94. Revalidación incremental — AUD-T-033: coordinación de mutaciones entre servicios y Utilities
+**Sesión:** AUD-20261109-S144 | **Checkpoint:** AUD-CP-0143  
+**E1 original:** 32b4898e967aea45a9372aa127cb0735aed99fc5 (AUD-20261107-S014 / AUD-CP-0014; árbol E1 ca7fb184bc754e188a7f8af6dea2637831290798)  
+**Revalidación anterior:** AUD-20261108-S078 / AUD-CP-0077; HEAD 8156ba1c2f5d9ac3c824fd53af9fd5b93b5459b4; árbol b80cc472e64b833d8ea77c18eb46fd6a28211b25.  
+**HEAD actual auditado:** 6915ba9fe2a892eb20fa3adc39fc5357b7023a1c; árbol db0b2de017a3056eaedca4601f6fdc79c9e5fdd6; **base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+### Alcance y comparación
+Se revalida la continuidad del inventario de escritores de Cortes/Drive en WRITE, ADMIN, FEEDBACK y UTILITIES; locks locales; coordinación entre proyectos Apps Script; llamadas anidadas ADMIN→WRITE; contrato de Utilities y consumidores frontend. Archivos principales: Services/write.js, Services/admin.js, Services/feedback.js, Services/Utilities.js, api-config.js y ui.js.
+
+E1→HEAD: 130 commits posteriores, merge-base igual a E1, sin divergencia; compare_commits enumera únicamente ocho archivos documentales (Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md). Revalidación anterior CP-0077→HEAD actual: 66 commits posteriores y el mismo conjunto de ocho documentos; ningún archivo funcional aparece en ambos diffs. Los seis archivos principales conservan SHA idénticos a E1:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+
+### Hallazgos y tareas
+H-AUD-033-001 a H-AUD-033-007 permanecen abiertos, sin cambio de estado ni evidencia de cierre. Continúan los riesgos documentados: ausencia de coordinador compartido entre proyectos; rutas FEEDBACK con autorización/serialización insuficiente; mutaciones ADMIN/WRITE/FEEDBACK que pueden competir; llamadas anidadas ADMIN→WRITE sin protocolo demostrado; Utilities no constituye un coordinador, declara AUTH: NONE, carece de lock y no implementa migrateYearRanges pese al mapeo; migrateTimestamps limpia Hoja 1 antes de escribir y no aporta staging/rollback.
+
+AUG-003 permanece como auditoría del contrato y alcance real de Utilities. AUG-034 continúa pendiente para coordinación compartida, ventana de mantenimiento, drenaje y llamadas anidadas sin deadlock. AUG-040 continúa pendiente para autorización e integridad de escrituras FEEDBACK. AUG-041 continúa pendiente para alinear/proteger Utilities y su migración. No se crean hallazgos ni tareas nuevos ni se duplican IDs. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos y tareas relacionadas ya están registrados.
+
+### Validaciones y límites
+Se verificaron HEAD de ambas ramas, ascendencia E1→HEAD, merge-base, cantidad y lista de commits, diff global, comparación CP-0077→HEAD y SHA exactos de los seis archivos principales. La igualdad SHA demuestra ausencia de cambios en esos archivos desde E1; no demuestra comportamiento real de deployments, atomicidad, exclusión mutua, recuperación, autorización efectiva ni consistencia de Drive/Spreadsheet.
+
+No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, migraciones, backups/restores, operaciones Drive/Spreadsheet, fallos inducidos, concurrencia interproyectos ni pruebas de deployment. No se accedió ni modificó información productiva.
+
+**Resultado:** continuidad E1 confirmada; H-AUD-033-001 a 007 abiertos; protocolo compartido ausente/no demostrado; validación funcional pendiente. Sin cambios de código, endpoints, contratos, configuración, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue. Rama base intacta.
+
+**Respaldos exactos de blobs antes de esta actualización:**
+- Plan_auditoría/Plan_Auditoria.md: 5c7baece27560e44e961b9166f94274c93537240
+- Plan_auditoría/Consolidacion_Auditoria.md: 6733fd508f8b837a17a203f877f68f730fb01db1
+- ChangesLogs.txt: a9f796e00522379eb0ec49dec2594e36c9d6d2d7
+- contexto_personal.md: 87f0737528c90ff0d1f5a2bbbcc54cc7811fbe2d
+- checkpoint.md: e333cfb9951565259bfbb77554d5317ddb309b2f
+
+**Siguiente unidad secuencial:** AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
