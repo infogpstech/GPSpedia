@@ -3735,3 +3735,41 @@ Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Conso
 Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, renombrados, merge o despliegue. Rama base intacta.
 Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0138
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S139
+Tarea: AUD-T-028 — revalidación de continuidad E1 del inventario de imágenes sin uso, clasificación y monitor global de Drive.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: e405e96aa83acfa12f56603ca8cf6c6daaff4407 | árbol: 56cb539d2aa6e2cc34d8bd7ee49236042422a30a.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: a1e66b81eb4ea146dfc76e9e2980f41b64a8c124 (AUD-20261107-S009 / AUD-CP-0009).
+Revalidación previa: AUD-20261108-S073 / AUD-CP-0072, HEAD e1087bfa98a9949d179bd4f61f769e6874b52593.
+Alcance: Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js y Spreadsheet/GPSpedia_DB_columnas.md.
+Estado inicial: H-AUD-028-001 a 009 abiertos; AUG-028/AUG-029/AUG-030 pendientes; adendas a AUG-026/AUG-003/AUG-021; rendimiento relacionado con AUD-T-029; causa del síntoma de 14 archivos no confirmada.
+Fase: revalidación estática de continuidad E1; sin autorización para modificar código/esquema ni ejecutar operaciones productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 3dd5aa3fe74a46c0264414f90b3ed39ccd111fab
+- Plan_auditoría/Consolidacion_Auditoria.md: 4637d8c2e115961f2c694f0e92ddeffdeb50cb34
+- ChangesLogs.txt: f22f200caec34553d93660ef202da9483a2e79df
+- contexto_personal.md: 93b2d50d28e1f4d5b55bf26c07aa74a314cb9311
+- checkpoint.md: 4e8c00ae4c05e4cbcd05dd9bd70e0cfc61ad5f91
+Siguiente acción: comparar E1→HEAD y CP-0072→HEAD, verificar SHA de los ocho archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0138
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S139
+Tarea: AUD-T-028 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-028-001 a 009 abiertos; AUG-028/AUG-029/AUG-030 pendientes; adendas a AUG-026/AUG-003/AUG-021 conservadas; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: e405e96aa83acfa12f56603ca8cf6c6daaff4407; árbol inicial 56cb539d2aa6e2cc34d8bd7ee49236042422a30a. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 130 commits posteriores; merge-base igual a E1; diff exclusivamente ocho documentos. Los ocho archivos funcionales/esquema del alcance conservan SHA idénticos a E1.
+CP-0072→HEAD: 66 commits posteriores y únicamente ocho documentos; no hay deriva funcional posterior a la revalidación previa.
+Hallazgos: H-AUD-028-001 a 009 permanecen abiertos. El síntoma de 14 archivos sin uso/categoría sigue sin causa confirmada. No se crean hallazgos nuevos.
+Tareas/relaciones: AUG-028, AUG-029 y AUG-030 pendientes; adendas a AUG-026/AUG-003/AUG-021 conservadas; rendimiento permanece en AUD-T-029. Sin IDs duplicados.
+No ejecutadas: HTTP, navegador/PWA, Apps Script V8, DriveApp/SpreadsheetApp, escaneo real, OAuth/scopes, cuotas, permisos, concurrencia, reanudación, movimientos, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, movimientos, renombrados, merge o despliegue. Rama base intacta.
+Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+================================================================================

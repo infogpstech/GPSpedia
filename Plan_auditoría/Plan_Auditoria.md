@@ -3491,3 +3491,30 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: c450a9be4309dc380087b3ed86eae00edabc234a
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los hallazgos, decisiones y tareas ya constan. Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, renombrados, merge o despliegue. Rama base intacta.
 Siguiente unidad secuencial: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive (respetar E1 y revalidaciones previas).
+
+
+## 89. Continuidad verificada — AUD-T-028 (revalidación E1)
+Sesión AUD-20261108-S139 | Checkpoint AUD-CP-0138 | E1 histórica a1e66b81eb4ea146dfc76e9e2980f41b64a8c124 | HEAD inicial e405e96aa83acfa12f56603ca8cf6c6daaff4407 | árbol inicial 56cb539d2aa6e2cc34d8bd7ee49236042422a30a | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original AUD-20261107-S009/AUD-CP-0009; revalidación previa AUD-20261108-S073/AUD-CP-0072, HEAD e1087bfa98a9949d179bd4f61f769e6874b52593.
+Comparación E1→HEAD: 130 commits posteriores, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos de auditoría; ninguno de los ocho archivos funcionales/esquema del alcance aparece en el diff. Comparación CP-0072→HEAD: 66 commits posteriores y únicamente los mismos ocho documentos. No existe deriva funcional desde E1 ni desde la revalidación previa.
+Los ocho archivos conservan SHA idénticos a E1:
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+H-AUD-028-001 a H-AUD-028-009 permanecen abiertos por continuidad. Se mantienen las observaciones registradas: organización automática acoplada a escaneo/restauración; falta de prueba backend autoritativa de auditoría completa antes de actualizar inventario; estados históricos no protegidos; escrituras parciales sin resultado durable por archivo; deduplicación/estado local/URL de visualización; diferencias entre historial e inventario; y el síntoma de 14 archivos sin causa confirmada. El monitor global estático no acredita permisos OAuth, cuotas, cobertura de Drive ni deployment.
+AUG-028, AUG-029 y AUG-030 continúan pendientes. Se conservan las adendas a AUG-026, AUG-003 y AUG-021. El rendimiento y el coste de escaneo permanecen en AUD-T-029; no duplicar. No se crean hallazgos ni tareas nuevas.
+La igualdad SHA confirma que los artefactos del alcance no cambiaron desde E1; no certifica integridad del inventario real, escaneo completo, clasificación de referencias ni permisos efectivos de Drive.
+No se ejecutaron HTTP, navegador/PWA, Apps Script V8, DriveApp, SpreadsheetApp, escaneo real, OAuth/scopes, cuotas, permisos, concurrencia, reanudación, movimientos ni deployments. La revalidación es estática y de identidad de contenido.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 3dd5aa3fe74a46c0264414f90b3ed39ccd111fab
+- Plan_auditoría/Consolidacion_Auditoria.md: 4637d8c2e115961f2c694f0e92ddeffdeb50cb34
+- ChangesLogs.txt: f22f200caec34553d93660ef202da9483a2e79df
+- contexto_personal.md: 93b2d50d28e1f4d5b55bf26c07aa74a314cb9311
+- checkpoint.md: 4e8c00ae4c05e4cbcd05dd9bd70e0cfc61ad5f91
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los nueve hallazgos y las tareas/adendas ya constan. Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, movimientos, renombrados, merge o despliegue. Rama base intacta.
+Siguiente unidad secuencial: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación (respetar E1 y revalidaciones previas).

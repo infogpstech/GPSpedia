@@ -1373,3 +1373,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron HTTP, navegador/PWA, Apps Script V8, Drive/Spreadsheet, concurrencia, recuperación real, escaneo ni deployments. No se certifica el comportamiento productivo.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, renombrados, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+
+
+## 74. AUD-T-028 — continuidad E1 del inventario de imágenes sin uso
+- Sesión AUD-20261108-S139; checkpoint AUD-CP-0138; E1 a1e66b81eb4ea146dfc76e9e2980f41b64a8c124; HEAD e405e96aa83acfa12f56603ca8cf6c6daaff4407; árbol 56cb539d2aa6e2cc34d8bd7ee49236042422a30a; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1; diff exclusivamente ocho documentos. Los ocho archivos funcionales/esquema conservan SHA exactos de E1.
+- CP-0072→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior a la revalidación previa.
+- H-AUD-028-001 a 009 permanecen abiertos. AUG-028/029/030 pendientes; adendas existentes a AUG-026/AUG-003/AUG-021; rendimiento continúa en AUD-T-029.
+- El síntoma de 14 archivos sigue sin causa confirmada. El monitor estático no certifica OAuth, permisos, cuotas, cobertura de Drive ni deployment.
+- No se ejecutaron HTTP, navegador/PWA, Apps Script V8, DriveApp/SpreadsheetApp, escaneo real, OAuth/scopes, cuotas, concurrencia, reanudación, movimientos ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, movimientos, renombrados, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.

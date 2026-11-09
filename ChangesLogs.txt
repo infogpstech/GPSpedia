@@ -5396,3 +5396,13 @@ Sesión AUD-20261108-S098 | Checkpoint AUD-CP-0097 | E1 f9c47bad48fa8050a4acac33
 - checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0137.
 - No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-027-001 a 008, AUG-026/027 y la adenda AUG-021 ya constan.
 - No se modifican código, esquema, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-028 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 89 con comparación E1→HEAD, SHA de los ocho archivos y estado de hallazgos/tareas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 74 con continuidad y límites de Drive/OAuth/deployment.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0138.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-028-001 a 009, AUG-028/029/030 y las adendas existentes ya constan.
+- No se modifican código, esquema, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.

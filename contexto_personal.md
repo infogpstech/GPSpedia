@@ -1320,3 +1320,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-027-001 a 006 abiertos; H-AUD-027-007/008 pendientes de decisión. AUG-026/027 pendientes; AUG-021 ampliada; AUG-003/AUD-T-033 relacionada.
 - AUD-IMG-03 conserva decisión pendiente sobre alcance de referencias. No se ejecutaron HTTP, navegador/PWA, Apps Script, Drive/Spreadsheet, concurrencia, recuperación real, escaneo ni deployments.
 - Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+
+
+## Continuidad de auditoría — AUD-T-028 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S139 / AUD-CP-0138; rama GPSpedia2.2.5_work, HEAD inicial e405e96aa83acfa12f56603ca8cf6c6daaff4407; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 a1e66b81eb4ea146dfc76e9e2980f41b64a8c124; 130 commits posteriores; diff global de ocho documentos; ocho archivos del alcance conservan SHA idénticos.
+- CP-0072→HEAD: 66 commits y únicamente ocho documentos; sin deriva funcional desde la revalidación anterior.
+- H-AUD-028-001 a 009 abiertos; AUG-028/029/030 pendientes; adendas a AUG-026/AUG-003/AUG-021 conservadas; rendimiento en AUD-T-029.
+- El síntoma de 14 archivos sigue sin causa confirmada. No se ejecutaron Drive/OAuth/Spreadsheet reales, escaneo, concurrencia, reanudación ni deployments.
+- Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
