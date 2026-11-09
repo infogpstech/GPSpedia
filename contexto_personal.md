@@ -1583,3 +1583,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No hay nuevos hallazgos, tareas duplicadas ni cierres. Auditoría.txt no pudo leerse por el conector y no se modifica.
 - No se ejecutaron Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, carga, runner, ACL/deployments ni E2/E3. Sin cambios funcionales/productivos, merge o despliegue.
 - Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-020 (2026-11-09)
+- Sesión AUD-20261109-S167 / checkpoint AUD-CP-0166. E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188; CP-0122/HEAD previo 8b695738d2714d350a5897d0262262a612ff6ac0; HEAD actual 668a550c1f16d8848cc118809f0140eaf7cd1b96; árbol f98a95fc852d7e7900177d7c6af2402e1ad2e766; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD 129 commits y CP-0122→HEAD 44 commits, sin divergencia; diffs exclusivamente documentales. Los 27 archivos funcionales/técnicos conservan SHA exactos de E1.
+- H-AUD-020-001 a 004 abiertos; H-AUD-020-005 corregido documentalmente. Persisten anti-debugging/zoom, logs con pendingOp/Base64, duplicación helpers Drive/parsers VIN y call graph incompleto de funciones/markup. Controles positivos previos conservados.
+- AUG-136 a 139 pendientes; adendas AUG-036/AUG-104; VAL-29 planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
+- No se ejecutaron Node/lint, navegador, accesibilidad, Apps Script, HTTP, Drive, Spreadsheet, YouTube, concurrencia, migraciones, restauraciones, ACL/deployments ni E2/E3. No se modifican archivos funcionales ni datos productivos.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.

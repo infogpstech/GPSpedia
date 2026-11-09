@@ -1726,3 +1726,14 @@ Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33
 - AUG-122 a AUG-135 siguen pendientes; no hay hallazgos nuevos, duplicados ni cierres. Los controles positivos históricos (autenticación WRITE para cortes/VIN, lock/idempotencia en operaciones centrales, hash/lockout AUTH, RBAC USERS/ADMIN/FEEDBACK y validaciones básicas PyS) no eliminan los defectos abiertos.
 - Auditoría.txt no pudo leerse por el conector y no se modifica. No se ejecutaron servicios, Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner, ACL/deployments ni E2/E3.
 - Sin cambios funcionales o productivos, merge o despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+
+
+## 102. AUD-T-020 — continuidad E1 y revalidación arquitectural/DRY
+
+- E1 histórica: 25d5d548edd79f812ab6b2bf9411d8c77fb30188 (árbol 011980eae1ae02143377faffcf5148c7067bfad7); revalidación previa CP-0122/HEAD 8b695738d2714d350a5897d0262262a612ff6ac0; HEAD actual 668a550c1f16d8848cc118809f0140eaf7cd1b96 (árbol f98a95fc852d7e7900177d7c6af2402e1ad2e766); base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits, merge-base idéntico, diff solo de ocho documentos. CP-0122→HEAD: 44 commits, merge-base idéntico, diff solo de cinco documentos. Los 27 archivos funcionales/técnicos conservan SHA exactos de E1; no hay deriva de implementación.
+- H-AUD-020-001 a 004 permanecen abiertos: anti-debugging eludible y zoom bloqueado; logs de recuperación exponen pendingOp/Base64; helpers Drive y parsers VIN/versiones duplicados con contratos divergentes; funciones/markup de depuración sin consumidores internos aún no confirmados mediante call graph. H-AUD-020-005 continúa corregido documentalmente, sin atribuirle corrección funcional.
+- Controles: hoist createDetailParagraph, ausencia de funciones retiradas históricamente y archivos temporales, renombrado automático protegido ante duplicados ambiguos; conservar #dev-console-log activo.
+- AUG-136 a 139 pendientes; adendas AUG-036/AUG-104 vigentes; VAL-29 planificada/no ejecutada. Sin duplicados ni cierres.
+- No se ejecutaron Node/lint, navegador, zoom/accesibilidad, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, migraciones, restauraciones, ACL/deployments ni E2/E3. Tarea 21 conserva COMPLETADA como estado histórico, no como certificación funcional.
+- Sin cambios funcionales/productivos, merge o despliegue. Rama base intacta.

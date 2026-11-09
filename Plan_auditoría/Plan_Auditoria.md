@@ -4690,3 +4690,46 @@ La E1 de AUD-T-018 se completó en AUD-20261108-S036 / AUD-CP-0036. La revalidac
 - Solo se actualiza documentación de continuidad. Sin cambios de código, tests, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, deployments, merge o despliegue. No reintroducir filtros rápidos cancelados ni remanentes de su implementación fallida.
 
 **Siguiente unidad:** AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales (revalidación E1).
+
+
+## 102. Continuidad verificada — AUD-T-020 (revalidación E1)
+
+- Sesión AUD-20261109-S167 / checkpoint AUD-CP-0166. E1 original: AUD-20261108-S038 / AUD-CP-0038, commit 25d5d548edd79f812ab6b2bf9411d8c77fb30188, árbol 011980eae1ae02143377faffcf5148c7067bfad7. Revalidación anterior: AUD-20261108-S123 / AUD-CP-0122, HEAD 8b695738d2714d350a5897d0262262a612ff6ac0. HEAD actual: 668a550c1f16d8848cc118809f0140eaf7cd1b96, árbol f98a95fc852d7e7900177d7c6af2402e1ad2e766. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff limitado a ocho documentos (Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md). CP-0122→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; diff limitado a cinco documentos (ChangesLogs.txt, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, checkpoint.md y contexto_personal.md). No hay divergencia funcional en el alcance.
+- Los 27 archivos funcionales/técnicos conservan SHA exactos de E1:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+- H-AUD-020-001 a H-AUD-020-004 siguen abiertos, sin cambios que permitan cerrarlos: (001) restricciones anti-inspección de DevTools eludibles y bloqueo de zoom, que no protegen código/datos; (002) recuperación en add_cortes registra pendingOp completo, potencialmente con Base64 de imágenes, además de mensajes PING-PONG/respuestas completas; (003) helpers de Drive repetidos entre WRITE/ADMIN/FEEDBACK y parsers VIN/versiones duplicados, con diferencias de normalización Unicode y contratos de entrada; (004) funciones internas/exports y markup de depuración sin consumidores internos identificados, pendientes de call graph y verificación de contratos externos antes de retirar. H-AUD-020-005 continúa corregido únicamente en la tabla documental de cobertura; no se declara una corrección funcional.
+- Controles positivos confirmados por continuidad: createDetailParagraph conserva su hoist; funciones retiradas históricamente continúan ausentes; no hay archivos temporales en el árbol; el renombrado automático de carpeta equivalente conserva protección ante duplicados ambiguos. El panel activo #dev-console-log debe mantenerse separado del markup obsoleto #debug-console.
+- AUG-136 a AUG-139 siguen pendientes de diseño, implementación y pruebas. Se mantienen las adendas a AUG-036 (parsers VIN/versiones) y AUG-104 (zoom global/add_cortes). VAL-29 sigue planificada y no ejecutada. No se crean hallazgos ni tareas duplicados.
+- La matriz histórica permanece en cumplimiento parcial/no certificado frente a B01/B14/B15/B17/B20/B28/B29/B30. No se certifican seguridad por bloqueos frontend, accesibilidad/zoom, rendimiento, call graph completo ni contratos de deployments independientes.
+- No se ejecutaron Node/lint, navegador, zoom 200/400%, lector de pantalla, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3. Sin operaciones productivas.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los cuatro hallazgos abiertos, el estado documental de H-AUD-020-005, las tareas AUG-136 a 139, adendas y VAL-29 ya están registrados. No hay novedades ni duplicados.
+- Revalidación estática de continuidad, no auditoría funcional nueva ni certificación de Tarea 21. Sin cambios de código, CSS/HTML, servicios, endpoints, contratos, configuración, assets, pruebas, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. No reintroducir filtros rápidos cancelados ni remanentes de esa implementación fallida.
+
+**Siguiente unidad:** AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes (respetar E1 y revalidaciones previas).
