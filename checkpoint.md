@@ -207,3 +207,46 @@ Sintaxis de código y pruebas funcionales: N/A, no se modificó código. No se m
 Último paso documental antes del único commit: este checkpoint final.
 Siguiente tarea tras verificar el commit: DOC-LEGACY-2026-001, revalidación de cierres históricos [X] según el Plan Maestro.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — DOC-LEGACY-2026-001
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado al inicio formal: 9392b1b2c2e3c1791e6f8b73b505c565bba0950b
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: revalidar los cierres históricos [X] de TAREA 1–21 antes de aceptar cualquier promoción a completadas vigentes.
+Alcance: Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt a parte_004.txt, índice legacy, Tareas.txt, tareas_completadas_parte1.txt, Tareas_pendientes_parte1.txt y parte2.txt, Auditoría.txt, ChangesLogs.txt, Plan Maestro, commits/diffs, archivos fuente actuales, pruebas y revisiones de GitHub.
+Restricción crítica: Olds/Documentacion_Legacy/ es inmutable. No editar, mover, truncar ni reescribir ningún archivo de esa carpeta. No modificar código ni servicios; esta tarea es de auditoría y reconciliación documental.
+Inventario preliminar no vinculante: se observaron 20 encabezados históricos [X] en parte_001 (TAREA 1–3 y 5–21); TAREA 4 está [~]. El registro vigente reproduce esos 20 estados históricos. No se presupone que [X] demuestre cierre actual.
+Riesgo/proceso: una exploración preliminar de contexto se realizó antes de comprobar que el checkpoint inicial de esta tarea estuviera efectivamente guardado. El blob 434759c9f0a3b886ae17f427f8249b513693313c corresponde a un snapshot previo de checkpoint.md y NO contiene este checkpoint DOC-LEGACY. Para no falsear la secuencia, esta entrada se formaliza ahora con nota de retraso; la auditoría formal se reinicia desde este punto y se volverán a verificar los datos tras esta creación. El desvío se registrará en Auditoría.txt.
+Estado inicial formal: HEAD y rama base verificados; alcance y restricciones fijados; auditoría formal reiniciada; sin modificaciones en archivos de producto ni legacy.
+Siguiente acción: repetir inventario de cierres, contrastar commits/diffs y revisar evidencia de sintaxis, pruebas funcionales y Code Review.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — DOC-LEGACY-2026-001 (CICLO PARCIAL)
+Fecha: 2026-11-09
+Estado: PARCIAL — NO CERRADA; no se promueve ninguna marca histórica [X].
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: 9392b1b2c2e3c1791e6f8b73b505c565bba0950b
+Rama base: GPSpedia2.2.5; HEAD confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Checkpoint inicial específico: blob 6e16091fded2fe27a8db0675dedb89dec83170a2; formalizado con retraso y con nota explícita. La exploración preliminar previa se registra en H-AUD-052; la auditoría formal se reinició después de crear el checkpoint.
+Inventario: 20 tareas principales históricas [X] (TAREA 1–3 y 5–21); TAREA 4 [~]. No se cambió ningún archivo de Olds/Documentacion_Legacy/.
+Archivos documentales preparados para este ciclo: Auditoría.txt, Tareas.txt, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt y checkpoint.md.
+Hallazgos: H-AUD-051 documenta que commits y marcas históricas no prueban por sí solos pruebas funcionales y Code Review; H-AUD-052 documenta el checkpoint inicial formalizado tarde y el reinicio del ciclo formal. Ambos permanecen abiertos.
+Sintaxis del snapshot actual: PASS_SCRIPT en Services/admin.js, Services/users.js, Services/write.js, Services/feedback.js y lightbox.js; PASS_BODY_ONLY (imports/exports retirados) en ui.js, main.js, navigation.js y api-config.js; scripts inline de add_cortes.html y users.html PASS; index.html sin scripts inline; style.css balance de llaves 545/545. Herramienta: Function constructor del runtime V8 de Code Mode, versión exacta no expuesta. No se ejecutó parser ESM/HTML/CSS completo ni se verificaron todos los snapshots históricos.
+Pruebas funcionales: no ejecutadas en este ciclo. Services/Test/README.md declara que los proyectos Apps Script de prueba no han sido creados ni desplegados. Los workflows consultados son solo Pages build/deployment; no se encontró workflow de pruebas.
+Code Review documental: revisión de los seis documentos preparados; los cambios están limitados a los hallazgos y estado parcial; la entrada de pendientes se modificó únicamente en la línea DOC-LEGACY; las demás adendas son append-only; H-AUD-051/052 tienen evidencia y estados coherentes; IDs no duplicados; referencias de commits/blobs comprobadas; todos los archivos permanecen por debajo de 180,000 caracteres Unicode. La descripción de los registros complementarios de impresión se cotejó con las líneas 2196–2266 de la fuente legacy y se ajustó para no atribuirlos erróneamente al encabezado TAREA 21.
+Code Review de implementación histórica: no se encontró revisión formal individual de las tareas históricas; PR #129 no presenta registros de revisión asociados en la consulta. Mensajes de commit con afirmaciones de prueba no se sustituyen por artefactos reproducibles.
+Decisión: conservar [X] como estado histórico no promovido; mantener TAREA 4 [~]; no certificar ninguna tarea como completada vigente. Filtros rápidos continúan cancelados y retirados; no reintroducir.
+Pendientes: analizador apropiado para ESM/HTML/CSS; revisión de snapshots históricos afectados; pruebas funcionales reproducibles en entornos aislados; Code Review por tarea; reevaluar cada cierre solo cuando exista evidencia.
+Verificaciones documentales: H-AUD-051/052 registrados; estado parcial en Tareas.txt y Tareas_pendientes_parte2.txt; nota de no promoción en tareas_completadas_parte1.txt; diffs revisados; límites documentales verificados; legacy intacto; rama base sin cambios.
+No se modificaron código, Services, endpoints, deployments, README ni datos productivos.
+Último documento de este ciclo: este checkpoint final, inmediatamente antes del único commit de auditoría parcial.
+Siguiente acción: completar las validaciones pendientes y reabrir la promoción de cierres solo con evidencia verificable.
+================================================================================

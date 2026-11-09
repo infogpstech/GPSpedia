@@ -83,3 +83,44 @@ Impacto: el checkpoint final afirmó que Auditoría.txt había sido actualizado 
 Corrección: conservar intacto el commit original; recuperar e incorporar explícitamente el checkpoint inicial con nota de incorporación tardía; registrar H-AUD-049 y este hallazgo; documentar la tarea correctiva y verificar su commit independiente.
 Estado: RESUELTO DOCUMENTALMENTE EN DOC-TRACE-2026-001, sujeto a verificación del commit correctivo.
 ================================================================================
+
+
+================================================================================
+H-AUD-051 — Marcas históricas [X] sin evidencia suficiente para promoción a completadas vigentes
+Fecha: 2026-11-09. Tarea: DOC-LEGACY-2026-001. Severidad: P2 — trazabilidad y control de calidad.
+
+Evidencia del inventario:
+- Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt, líneas 517–2273: 20 encabezados principales con marca histórica [X] (TAREA 1–3 y 5–21). TAREA 4 conserva [~].
+- tareas_completadas_parte1.txt, líneas 35–54, reproduce esas 20 marcas dentro de la sección histórica de tareas no promovidas; la norma interna ya establece que una marca [X] no constituye cierre vigente.
+- Se identificaron commits relacionados con las tareas: T1 2251d499; T2 97eef18; T3 14bbd04; T5 d72a1e6; T6 7f57e2f; T7 09c7a44; T8 7714b98; T9 64d8d04; T10 f93ad12; T11 2af2af; T12 6f2fc4f; T13 692e23c; T14/T15 ded75b6; retirada de filtros e Inbox 1.6/1.7 e5b191; T16 4b136cd, 28f4ace y a9b15e5; T17 aa57c4; T18 27760cf y a1c910; T19 19ff4f; T20 d9476ab; T21 0e0058d. Los commits acreditan cambios en archivos, no por sí solos el cumplimiento de todos los criterios ni la revisión formal.
+- Las auditorías E1 posteriores no equivalen a pruebas funcionales: AUD-T-017 registra siete hallazgos abiertos y VAL-26 planificada; AUD-T-018 nueve hallazgos y VAL-27 planificada; AUD-T-019 catorce hallazgos y VAL-28 planificada; AUD-T-020 cuatro hallazgos abiertos y VAL-29 planificada; AUD-T-021 nueve hallazgos y VAL-30 no ejecutada; AUD-T-022 cuatro hallazgos y VAL-31 no ejecutada; AUD-T-001 conserva dos hallazgos abiertos y VAL-32 no ejecutada. AUD-T-002 figura como auditada parcialmente.
+- TAREA 19 especifica las pruebas 31–38, pero la matriz VAL-28 se encuentra planificada, no ejecutada.
+- Los registros complementarios de distribución e impresión de ficha técnica en la parte_001 (líneas 2196–2266) declaran pendientes de validación visual en navegador y PDF real; esos estados no acreditan cierre funcional.
+- TAREA 15 combina la retirada de filtros rápidos con la estandarización universal de botones. Los filtros están cancelados/retirados y no deben restaurarse; la auditoría E1 conserva hallazgos y VAL-24 pendiente para los criterios restantes de botones.
+- Services/Test/README.md indica que los proyectos Apps Script de prueba no han sido creados ni desplegados desde el repositorio; la validación funcional solo comienza después de crear y comprobar los deployments aislados.
+- Los workflows de la rama consultados corresponden únicamente a “pages build and deployment”; no se encontró workflow de pruebas. PR #129 está cerrado/mergeado y no tiene registros de revisión asociados en la consulta; no se encontró Code Review formal individual asociado a los commits de las tareas. Algunos mensajes de commit afirman pruebas/validaciones (por ejemplo e5b191 y 19ff4f), pero no se localizó informe reproducible ni artefacto de pruebas asociado.
+
+Comprobación sintáctica estática del snapshot actual GPSpedia2.2.5_work, realizada después del checkpoint inicial:
+- Herramienta: constructor Function del runtime JavaScript V8 disponible en Code Mode; versión exacta de V8 no expuesta.
+- PASS_SCRIPT: Services/admin.js, Services/users.js, Services/write.js, Services/feedback.js y lightbox.js.
+- PASS_BODY_ONLY: ui.js, main.js, navigation.js y api-config.js después de retirar temporalmente declaraciones import/export. Este resultado no valida la gramática completa del módulo ESM.
+- Scripts inline: add_cortes.html y users.html, un bloque cada uno, PASS. index.html no contiene scripts inline.
+- style.css: balance de llaves PASS (545 apertura / 545 cierre); no equivale a validación completa con parser CSS.
+- HTML: no se ejecutó un parser HTML; estructura y DOM no certificados.
+- No se encontraron errores en las comprobaciones limitadas anteriores. No se considera satisfecha la revisión sintáctica completa de todos los snapshots históricos ni de la gramática ESM/HTML/CSS.
+
+Impacto: aceptar las 20 marcas [X] como completadas vigentes implicaría afirmar pruebas y revisión que no están respaldadas por evidencia reproducible. Las marcas originales se preservan como historia, pero ninguna se promueve en esta revalidación. TAREA 4 permanece parcial.
+
+Acción: mantener DOC-LEGACY-2026-001 en estado PARCIAL; no alterar ni reescribir Olds/Documentacion_Legacy/; conservar la lista histórica como no promovida; completar con analizador ESM/HTML/CSS apropiado, pruebas funcionales reproducibles y Code Review por alcance antes de cualquier promoción.
+Estado: ABIERTO — NO PROMOVER [X].
+================================================================================
+
+================================================================================
+H-AUD-052 — Formalización tardía del checkpoint inicial de DOC-LEGACY-2026-001
+Fecha: 2026-11-09. Tarea: DOC-LEGACY-2026-001. Severidad: P2 — cumplimiento del procedimiento.
+
+Evidencia: la exploración preliminar del repositorio comenzó antes de confirmar que el checkpoint inicial específico de DOC-LEGACY-2026-001 estuviera persistido. El blob 434759c9f0a3b886ae17f427f8249b513693313c corresponde a un snapshot previo de checkpoint.md y no contiene el checkpoint de esta tarea. El checkpoint inicial específico se formalizó posteriormente en el blob 6e16091fded2fe27a8db0675dedb89dec83170a2, con nota explícita del retraso.
+Impacto: la secuencia exploratoria inicial no cumplió el orden checkpoint → auditoría.
+Corrección: se reinició la auditoría formal después de crear el checkpoint específico; HEAD, rama base, inventario legacy, commits/diffs, fuentes actuales, sintaxis estática, pruebas y registros de revisión se volvieron a consultar. No se modificó ningún archivo de producto ni legacy antes de la formalización.
+Estado: DESVIACIÓN DOCUMENTADA; ciclo formal reiniciado desde el checkpoint. No se afirma que la exploración preliminar hubiera cumplido el procedimiento.
+================================================================================

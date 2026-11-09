@@ -105,3 +105,9 @@ Validación: diff del commit original contrastado; seis documentos de trazabilid
 No se reescribió el commit original ni se modificaron código, Services, endpoints, deployments o legacy.
 Commit correctivo: consultar historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+ADENDA DE REVALIDACIÓN — DOC-LEGACY-2026-001 — 2026-11-09
+Las 20 tareas enumeradas en “MARCAS HISTÓRICAS [X] NO PROMOVIDAS” continúan siendo referencias históricas; esta revalidación no las trasladó a “TAREAS QUE CUMPLEN LA COMPUERTA”. No existe evidencia reproducible suficiente de pruebas funcionales y Code Review individual para aceptarlas como completadas vigentes. TAREA 4 sigue parcial [~]. H-AUD-051 y H-AUD-052 quedan abiertos; DOC-LEGACY-2026-001 permanece parcial. No se modificó Olds/Documentacion_Legacy/.
+================================================================================

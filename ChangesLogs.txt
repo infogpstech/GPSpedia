@@ -65,3 +65,12 @@ Se recuperó checkpoint inicial de DOC-README-2026-002 desde blob 434759c9f0a3b8
 Se añadieron adendas a Tareas.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt. El commit 8b2bec3 y sus registros originales se conservaron sin reescritura.
 Cambio exclusivamente documental; sintaxis de código y pruebas funcionales N/A.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — DOC-LEGACY-2026-001 — REVALIDACIÓN PARCIAL DE CIERRES HISTÓRICOS
+Se registró en Auditoría.txt el inventario de 20 tareas históricas [X], la TAREA 4 parcial, commits/diffs relacionados, estados E1/VAL, evidencia de pruebas y revisiones, y el alcance de las comprobaciones sintácticas limitadas.
+Se añadió H-AUD-051 sobre evidencia insuficiente para promover las marcas históricas y H-AUD-052 sobre formalización tardía del checkpoint inicial y reinicio de la auditoría formal.
+Se actualizó Tareas.txt, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt y checkpoint.md. Las marcas históricas se conservan sin promover; TAREA 4 permanece [~].
+No se modificaron archivos legacy, código, Services, endpoints, deployments ni rama base. No se ejecutaron pruebas funcionales ni Code Review individual de las tareas históricas. La auditoría DOC-LEGACY-2026-001 permanece parcial y abierta.
+================================================================================

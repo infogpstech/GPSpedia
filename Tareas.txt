@@ -77,3 +77,16 @@ Acciones: checkpoint inicial recuperado desde blob 434759c9f0a3b886ae17f427f8249
 No se reescribió el commit 8b2bec3 ni se modificó README, código, Services, endpoints, deployments o legacy.
 Sintaxis de código: N/A. Validación funcional: N/A; tarea exclusivamente documental. Diff, referencias, límites y Code Review documental registrados.
 ================================================================================
+
+
+================================================================================
+DOC-LEGACY-2026-001 — REVALIDACIÓN DE CIERRES HISTÓRICOS [X]
+Fecha: 2026-11-09.
+Estado: PARCIAL — NO CERRADA; ninguna de las 20 marcas históricas [X] se promueve como completada vigente. TAREA 4 permanece [~].
+Alcance auditado: inventario de tareas 1–21; commits/diffs relacionados; auditorías E1 y matrices VAL; archivos fuente actuales; registros de pruebas, workflows y revisiones de GitHub.
+Resultado: se localizaron commits de implementación y algunos mensajes que afirman verificaciones, pero no evidencia reproducible suficiente de pruebas funcionales y Code Review por tarea. Las auditorías E1 posteriores mantienen hallazgos abiertos y VAL pendientes/no ejecutadas. Services/Test no acredita deployments funcionales; su README indica que aún no se han creado ni desplegado proyectos de prueba.
+Sintaxis: comprobación estática limitada del snapshot actual. Cinco archivos JS pasaron como script; cuatro módulos pasaron solo tras retirar import/export; dos scripts inline pasaron; CSS pasó balance de llaves. No se ejecutó parser completo ESM, HTML o CSS ni se validaron todos los snapshots históricos.
+Decisión: conservar marcas [X] solo como historia; no modificar Olds/Documentacion_Legacy/ ni promover cierres sin pruebas y revisión verificables.
+Hallazgos: H-AUD-051 (evidencia insuficiente para promoción) y H-AUD-052 (checkpoint inicial formalizado tarde; auditoría formal reiniciada) abiertos.
+Pendiente: completar parser apropiado, pruebas funcionales reproducibles y Code Review por tarea. Esta tarea no se declara completada.
+================================================================================

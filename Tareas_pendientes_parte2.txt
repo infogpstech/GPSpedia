@@ -474,6 +474,7 @@ Estado: COMPLETADA — DOCUMENTAL. Evidencia: README.md actualizado; mención de
 DOC-README-2026-002 — Reconciliar la descripción de microservicios y carpeta Services. Requisitos: confirmar visibilidad del repositorio y contenido real; distinguir fuentes, deployments y endpoints; revisar exposición; no borrar ni publicar archivos por inferencia; actualizar README solo tras confirmar política autorizada.
 Estado: COMPLETADA — DOCUMENTAL. README ahora describe Services/ como fuentes temporales durante implementación/corrección y establece su eliminación al cierre de esa fase. Distingue código fuente de deployments y endpoints. No se borró ni modificó ningún archivo de Services/.
 DOC-LEGACY-2026-001 — Revalidar cierres históricos [X]. Requisitos: contrastar cada tarea con commit/diff; revisar sintaxis de cada archivo afectado; registrar herramienta/versión/resultado; comprobar pruebas funcionales y Code Review; promover solo con evidencia; mantener legacy inmutable.
+Estado: PARCIAL — NO CERRADA. Se inventariaron 20 marcas [X] y TAREA 4 [~]; commits relacionados identificados; E1/VAL revisados; pruebas funcionales y Code Review individual no acreditados. Sintaxis actual verificada solo parcialmente; parser ESM/HTML/CSS y snapshots históricos pendientes. H-AUD-051 y H-AUD-052 abiertos. No modificar legacy ni promover marcas.
 
 
 
