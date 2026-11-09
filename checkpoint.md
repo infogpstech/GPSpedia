@@ -3997,3 +3997,42 @@ Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Conso
 Sin cambios de código, servicios, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
 Commit documental único previsto: docs(audit): revalidate AUD-T-033 continuity; parent 6915ba9fe2a892eb20fa3adc39fc5357b7023a1c. Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0144
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S145
+Tarea: AUD-T-034 — revalidación incremental de continuidad E1 de acceso y visibilidad del panel/historial por rol y sesión.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 03a554a391664955ec3c5901fe34a7d197d4ae15; árbol 038367d5ad224e37e3d700f259dc4abf5525b63e; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: 3819d0d73368982a5a463fb89515e13ec452dde3; árbol E1: 96fb07b57fa3c9c27362f893cc23dfbd2e57793c; revalidación previa CP-0078/HEAD: 6c7d83864f4abbb0e631a356ef3b7c63eae72298.
+Alcance: ui.js, auth.js, main.js, index.html, users.html, Services/Auth.js, Services/admin.js, Services/feedback.js y Services/users.js.
+Estado conocido: H-AUD-034-001 a 004 abiertos; AUG-006/AUG-016/AUG-017/AUG-042 pendientes. Revisión de continuidad estática; no se autorizan cambios funcionales ni pruebas sobre datos productivos.
+Preflight de solo lectura: E1 es ancestro de HEAD con 130 commits; CP-0078 es ancestro con 66 commits; nueve archivos del alcance conservan SHA E1; rama base sin cambios.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0144
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S145
+Tarea: AUD-T-034 — revalidación incremental de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-034-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL DE SESIÓN/ROLES PENDIENTE.
+HEAD padre confirmado: 03a554a391664955ec3c5901fe34a7d197d4ae15; árbol: 038367d5ad224e37e3d700f259dc4abf5525b63e; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 3819d0d73368982a5a463fb89515e13ec452dde3; árbol E1: 96fb07b57fa3c9c27362f893cc23dfbd2e57793c; revalidación previa CP-0078: 6c7d83864f4abbb0e631a356ef3b7c63eae72298.
+E1→HEAD: 130 commits posteriores, merge-base igual a E1, sin divergencia; diff únicamente ocho documentos. CP-0078→HEAD: 66 commits posteriores, merge-base igual a CP-0078; diff únicamente ocho documentos.
+Los nueve archivos del alcance conservan SHA idénticos a E1:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+Hallazgos: H-AUD-034-001 a 004 permanecen abiertos. AUG-006/AUG-016/AUG-017 mantienen sus dependencias; AUG-042 continúa pendiente. Sin nuevos hallazgos/tareas ni cierres.
+Validaciones ejecutadas: HEAD de ambas ramas; comparación E1→HEAD y CP-0078→HEAD; merge-base; lista de archivos del diff; comparación SHA de nueve archivos; consistencia de hallazgos y tareas.
+No ejecutadas: navegador, logout real, cambio de rol, revocación de sesión, HTTP, Apps Script V8, pruebas multi-cuenta/multi-pestaña, pruebas E2/E3 ni deployments.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque hallazgos/tareas ya constan.
+Sin cambios de código, servicios, endpoints, contratos, configuración, sesiones, credenciales, datos productivos, Drive o Spreadsheet. Sin merge o despliegue.
+Commit documental único previsto: docs(audit): revalidate AUD-T-034 continuity; parent 03a554a391664955ec3c5901fe34a7d197d4ae15; update_ref con force=false y expected_sha=03a554a391664955ec3c5901fe34a7d197d4ae15. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.
+================================================================================

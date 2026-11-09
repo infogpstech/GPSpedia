@@ -3661,3 +3661,25 @@ No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, migraciones, backup
 - checkpoint.md: e333cfb9951565259bfbb77554d5317ddb309b2f
 
 **Siguiente unidad secuencial:** AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+
+## 95. Continuidad incremental — AUD-T-034: acceso y visibilidad por rol/sesión
+- Sesión AUD-20261109-S145; checkpoint AUD-CP-0144. E1 original 3819d0d73368982a5a463fb89515e13ec452dde3 (AUD-20261107-S015 / AUD-CP-0015; árbol 96fb07b57fa3c9c27362f893cc23dfbd2e57793c); revalidación previa CP-0078 con HEAD 6c7d83864f4abbb0e631a356ef3b7c63eae72298; HEAD actual de trabajo 03a554a391664955ec3c5901fe34a7d197d4ae15, árbol 038367d5ad224e37e3d700f259dc4abf5525b63e. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- E1→HEAD: 130 commits posteriores; merge-base igual a E1; comparación sin divergencia. El diff contiene únicamente ocho documentos. CP-0078→HEAD: 66 commits posteriores; merge-base igual a CP-0078; diff también limitado a ocho documentos.
+- Los nueve archivos funcionales del alcance conservan SHA idénticos a E1:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- H-AUD-034-001 a 004 permanecen abiertos por continuidad. Se mantienen los riesgos: logout no limpia completamente currentUser/token ni el DOM privilegiado; el rol local puede quedar obsoleto tras modificar Privilegios; la visibilidad de Inbox/Dashboard no se restablece uniformemente y la política Jefe/Inbox es inconsistente; renderInboxDetail consulta currentUser.Rol mientras AUTH entrega Privilegios, lo que puede ocultar los controles de aprobación.
+- Controles positivos estáticos conservados: ADMIN exige rol Desarrollador en POST salvo ping; FEEDBACK y USERS vuelven a comprobar sesión/permisos en servidor. La inconsistencia visual no se eleva a bypass backend sin evidencia.
+- AUG-006, AUG-016 y AUG-017 mantienen sus alcances de revocación, consistencia de sesión/rol y visibilidad. AUG-042 continúa pendiente para limpiar estado privilegiado, sincronizar rol y unificar el contrato de campos. No se crean hallazgos ni tareas, no se cierran IDs y no se duplican registros; Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+- No se ejecutaron navegador, logout real, cambio de rol, sesión revocada, HTTP, Apps Script V8, pruebas de aprobación por rol, multi-cuenta, multi-pestaña ni deployments. La igualdad SHA solo confirma ausencia de deriva de código; no acredita autorización o comportamiento real.
+- Resultado: continuidad E1 confirmada; H-AUD-034-001 a 004 abiertos; validación funcional de sesión/roles pendiente. Sin cambios de código, endpoints, contratos, configuración, sesiones, datos productivos, Drive o Spreadsheet; sin merge ni despliegue. Rama base intacta.
+- Respaldos de blobs previos a esta actualización: \n  - Plan_auditoría/Plan_Auditoria.md: 7e524761c0530e4071ddf86909c8c9e7e05eeac4\n  - Plan_auditoría/Consolidacion_Auditoria.md: 970cd754fd317661f5f5691885fd84daf8b99e86\n  - ChangesLogs.txt: ac1cbfb4b3fe7ce33aa61a7f9592a230fbb6b860\n  - contexto_personal.md: 78563ad0c95c145ba7fb54ac5b3c2f36236808d0\n  - checkpoint.md: 50443f371455986314807313d7fbfd4f9e0d0656
+- Siguiente unidad: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.

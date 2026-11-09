@@ -1373,3 +1373,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-033-001 a 007 permanecen abiertos; el protocolo compartido de coordinación entre proyectos no está demostrado. AUG-003, AUG-034, AUG-040 y AUG-041 continúan pendientes. No hay hallazgos ni tareas nuevos.
 - No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, Drive/Spreadsheet real, migraciones, fallos inducidos, concurrencia ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+
+## Continuidad incremental — AUD-T-034 (2026-11-09)
+- Sesión AUD-20261109-S145 / checkpoint AUD-CP-0144. E1 3819d0d73368982a5a463fb89515e13ec452dde3; revalidación previa CP-0078 con HEAD 6c7d83864f4abbb0e631a356ef3b7c63eae72298; HEAD actual 03a554a391664955ec3c5901fe34a7d197d4ae15, árbol 038367d5ad224e37e3d700f259dc4abf5525b63e. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 130 commits, merge-base igual a E1 y diff limitado a ocho documentos. CP-0078→HEAD: 66 commits, también solo documentos. Los nueve archivos de acceso/roles conservan SHA idénticos a E1.
+- H-AUD-034-001 a 004 permanecen abiertos. AUG-006, AUG-016 y AUG-017 conservan sus alcances; AUG-042 sigue pendiente para sincronización de rol y limpieza del estado privilegiado. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script V8, logout/revocación, cambio real de rol, multi-cuenta, multi-pestaña ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.

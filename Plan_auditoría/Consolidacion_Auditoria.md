@@ -1435,3 +1435,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, migraciones, Drive/Spreadsheet real, backups/restores, fallos inducidos, concurrencia ni deployments. No se modificaron datos productivos.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+
+## 80. AUD-T-034 — continuidad incremental de acceso por rol y sesión
+- Sesión AUD-20261109-S145; checkpoint AUD-CP-0144; E1 3819d0d73368982a5a463fb89515e13ec452dde3 (árbol 96fb07b57fa3c9c27362f893cc23dfbd2e57793c); revalidación previa CP-0078/HEAD 6c7d83864f4abbb0e631a356ef3b7c63eae72298; HEAD 03a554a391664955ec3c5901fe34a7d197d4ae15; árbol 038367d5ad224e37e3d700f259dc4abf5525b63e; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1 y diff de ocho documentos. CP-0078→HEAD: 66 commits, merge-base igual a CP-0078 y diff de los mismos ocho documentos. Los nueve archivos del alcance conservan SHA idénticos a E1.
+- H-AUD-034-001 a 004 permanecen abiertos: limpieza incompleta del estado privilegiado al logout; rol local obsoleto después de cambios de Privilegios; visibilidad inconsistente de Inbox/Dashboard y regla Jefe/Inbox; discrepancia currentUser.Rol frente a AUTH.Privilegios en renderInboxDetail.
+- Se mantienen controles backend positivos estáticos: ADMIN exige Desarrollador salvo ping; FEEDBACK y USERS verifican sesión/permisos en servidor. No se demuestra bypass backend.
+- AUG-006/AUG-016/AUG-017 continúan pendientes en sus alcances originales; AUG-042 permanece pendiente para sincronización del rol y limpieza del estado privilegiado. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron navegador, HTTP, Apps Script, cambio real de rol, logout/revocación, multi-cuenta, multi-pestaña ni deployments. Solo continuidad estática/documental; no certifica el comportamiento real de sesión/autorización. Sin cambios funcionales, datos productivos, merge o despliegue.
