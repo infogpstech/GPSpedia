@@ -1171,3 +1171,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-017-001 a 007 abiertos; AUG-106 a AUG-112 pendientes; H-AUD-017-007/AUG-112 mantienen la reconciliación de AUD-T-016 en Auditoría.txt. VAL-26 pendiente.
 - No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, sincronización ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+
+
+## Continuidad de auditoría — AUD-T-018 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S121 / AUD-CP-0120; rama GPSpedia2.2.5_work, HEAD inicial ca7beaf7beaf60c0d8537836dd2962aaeba31bc6; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; trece archivos funcionales/de prueba conservan SHA idénticos.
+- H-AUD-018-001 a 009 abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada.
+- No se ejecutaron navegador, XSS real, Apps Script, HTTP, Spreadsheet, YouTube, Drive, concurrencia, carga, recuperación, pruebas de roles/sesiones ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.

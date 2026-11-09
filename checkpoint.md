@@ -3047,3 +3047,41 @@ Sin cambios funcionales, servicios, endpoints, configuración, assets, datos pro
 Commit documental único: docs(audit): verify AUD-T-017 continuity; parent 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52.
 Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0120
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S121
+Tarea: AUD-T-018 — revalidación de continuidad E1 de usuarios, Inbox, dashboard, actividad y flujos FEEDBACK.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: ca7beaf7beaf60c0d8537836dd2962aaeba31bc6 | árbol: 3fae1efd15ba2f48d847adc3c82816358c7034cb.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: f9c47bad48fa8050a4acac33a4a45784fe433ef7.
+Revalidación ampliada previa: AUD-20261108-S098 / AUD-CP-0097, HEAD 4e82cb75ec16abff180915efa8d3767099dc8147.
+Alcance: index.html, ui.js, main.js, state.js, navigation.js, auth.js, users.html, api-config.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js y Services/Test/users.js.
+Estado inicial: E1 estática completada; H-AUD-018-001 a 009 abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: e7c01274b0892a80105555610a02352019017ff7
+- Plan_auditoría/Consolidacion_Auditoria.md: c2f99175829b233435bc1e563ffd9717f89208e6
+- ChangesLogs.txt: 50f0ca034858904043b9625bd9083102e852c420
+- contexto_personal.md: eda98a02b3b906bb6662d16f49f6c8ebb4638813
+- checkpoint.md: ff5ffa7b306815ff253adc20fc063f1fca4dd57a
+Siguiente acción: comparar E1→HEAD, verificar SHA de los trece archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0120
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S121
+Tarea: AUD-T-018 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-018-001 a 009 abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada.
+HEAD padre confirmado: ca7beaf7beaf60c0d8537836dd2962aaeba31bc6; árbol inicial 3fae1efd15ba2f48d847adc3c82816358c7034cb. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los trece archivos funcionales/de prueba del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: XSS almacenado; discrepancia Rol/Privilegios; caché Inbox; protección de última cuenta y sesiones; perfil local; auditoría de mutaciones; lectura de historial; itemType inválido. H-AUD-018-001 a 009 permanecen abiertos.
+Tareas/validaciones: AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, XSS real, Apps Script, HTTP, Spreadsheet, YouTube, Drive, concurrencia, carga, recuperación, pruebas de roles/sesiones, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, tests, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-018 continuity; parent ca7beaf7beaf60c0d8537836dd2962aaeba31bc6.
+Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
+================================================================================
