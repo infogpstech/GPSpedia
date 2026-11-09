@@ -2394,3 +2394,33 @@ No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, móvil, red 
 Commit documental único esperado; rama base intacta.
 Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0101
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S102
+Tarea: AUD-T-022 — revalidación de continuidad E1 del panel de desarrollador, navegación por secciones y modal administrativo.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 9910a1aabc48a21c1efe5e5651b9b1f49010959f | Árbol: 6fb502104e8b510854cdae3b17e4a3762af57b66
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación; GitHub informa protected=false).
+E1 histórica: 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | Árbol E1: e0c80e7334378847c24e9ada5020248a539cb168.
+Revalidación previa: HEAD e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0 | Checkpoint AUD-CP-0061.
+Alcance: ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js.
+Estado inicial: E1 histórica completada; H-AUD-022-001 a 004 abiertos; AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada.
+Fase: checkpoint inicial preparado; auditoría estática de continuidad y comparación Git; sin autorización para cambiar archivos funcionales.
+Riesgos/dependencias: logout y revocación de sesión; cierre del modal al mostrar login; semántica/foco del diálogo; ARIA de pestañas; clasificación de errores HTTP/red/aplicación. Validaciones dinámicas pendientes.
+Siguiente acción: comparar E1→HEAD, comprobar SHA de los nueve archivos funcionales, confirmar estado de hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0101
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S102
+Tarea: AUD-T-022 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-022-001 a 004 abiertos; AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada.
+HEAD padre confirmado: 9910a1aabc48a21c1efe5e5651b9b1f49010959f; árbol inicial 6fb502104e8b510854cdae3b17e4a3762af57b66. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b→9910a1aabc48a21c1efe5e5651b9b1f49010959f: 62 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance mantienen SHA exactos de E1; no hay deriva funcional.
+Hallazgos revalidados: logout sin revocación/limpieza de estado; modal administrativo no se cierra al mostrar login; diálogo sin semántica/gestión completa de foco; pestañas con ARIA incoherente y errores ADMIN normalizados a HTTP 500. Se mantienen los cuatro hallazgos abiertos.
+Tareas y validación: AUG-147 a AUG-150 pendientes; VAL-31 planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos, tareas y validación ya están registrados.
+No se ejecutaron navegador, teclado real, lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. Sin cambios funcionales, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: docs(audit): verify AUD-T-022 continuity; parent 9910a1aabc48a21c1efe5e5651b9b1f49010959f. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
+Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+================================================================================

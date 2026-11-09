@@ -1020,3 +1020,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Controles positivos revalidados estáticamente: botón de impresión conectado a exportVehiclePrintSheet; incluye cortes, cables, apertura, metadatos, nota y QR condicional; conserva proporción de imagen; encabezado/pie por página; campos descriptivos parcialmente sanitizados; colaboradores/utilidades/reportes de error no se imprimen.
 - No se ejecutaron navegador, impresión física, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
 - Resultado: continuidad confirmada; nueve hallazgos abiertos; AUG-140 a AUG-146 pendientes; AUG-096 ampliada; VAL-30 pendiente. No hay evidencia para cerrar ni duplicar registros.
+
+
+## 37. AUD-T-022 — continuidad E1 revalidada
+- Sesión AUD-20261108-S102; checkpoint AUD-CP-0101; E1 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b; HEAD 9910a1aabc48a21c1efe5e5651b9b1f49010959f; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 62 commits; merge-base igual a E1; únicamente ocho documentos modificados. Ninguno de los nueve archivos funcionales de AUD-T-022 aparece en el diff.
+- Los nueve archivos del alcance conservan SHA exactos de E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed.
+- H-AUD-022-001 a 004 siguen abiertos; AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. No se crean duplicados.
+- No se ejecutaron pruebas dinámicas, navegador, teclado, lector de pantalla, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. La E1 es estática y no certifica comportamiento real.
+- Sin cambios funcionales, permisos, endpoints, contratos, configuración, assets, datos productivos, operaciones Drive/Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-001, siguiendo la secuencia documental vigente.

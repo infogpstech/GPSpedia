@@ -1016,3 +1016,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Controles positivos revalidados estáticamente: botón de impresión conectado a exportVehiclePrintSheet; incluye cortes, cables, apertura, metadatos, nota y QR condicional; conserva proporción de imagen; encabezado/pie por página; campos descriptivos parcialmente sanitizados; colaboradores/utilidades/reportes de error no se imprimen.
 - No se ejecutaron navegador, impresión física, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
 - Siguiente unidad: AUD-T-022; conservar el historial y no duplicar E1 ni checkpoints previos.
+
+
+## Continuidad de auditoría — AUD-T-022
+- Revalidación E1 realizada en sesión AUD-20261108-S102 / checkpoint AUD-CP-0101 sobre GPSpedia2.2.5_work.
+- E1: 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b; HEAD revalidado: 9910a1aabc48a21c1efe5e5651b9b1f49010959f; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- 62 commits desde E1; el diff contiene únicamente ocho documentos. Los nueve archivos funcionales del alcance conservan SHA exactos de E1.
+- H-AUD-022-001 a 004 abiertos; AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. Sin duplicación de hallazgos ni tareas.
+- Próxima unidad secuencial registrada: AUD-T-001. Las pruebas funcionales siguen pendientes.
