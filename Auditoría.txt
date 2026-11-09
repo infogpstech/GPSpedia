@@ -62,3 +62,24 @@ Impacto: la documentación presenta como disponible una funcionalidad cancelada 
 Criterio de corrección: retirar la afirmación de disponibilidad y sustituirla por una nota explícita de cancelación; conservar el resto de novedades; no tocar código ni legacy.
 Estado: RESUELTO DOCUMENTALMENTE EN DOC-README-2026-001. La revisión posterior confirma que solo cambió la línea prevista.
 ================================================================================
+
+
+================================================================================
+H-AUD-049 — README describe como retiradas fuentes backend presentes temporalmente en la fase de implementación
+Fecha: 2026-11-09. Tarea: DOC-README-2026-002. Severidad: P2 documental.
+Evidencia: README.md, sección 5, en HEAD 8d296358b3b805a33d2c814406d7efe54d2782bb, afirma que write.js, auth.js, catalog.js y feedback.js fueron retirados del repositorio público y que la lógica se encuentra resguardada de forma privada. El árbol de la rama de trabajo contiene siete archivos JS bajo Services/. La rama base contiene seis; la rama main no contiene Services/.
+Causa/contexto confirmado por el usuario: el repositorio está en fase de implementación y las fuentes temporales se eliminan del repositorio una vez terminadas las implementaciones y correcciones.
+Impacto: la descripción no representa el estado temporal del repositorio y mezcla exclusión final, código fuente, deployments y endpoints.
+Corrección: README sección 5 actualizada en el commit 8b2bec3 para aclarar que Services/ contiene fuentes temporales durante implementación/corrección y que deben retirarse al cierre de esa fase; distingue fuentes de deployments y endpoints independientes. No se borraron archivos en esa tarea.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-README-2026-002; el texto de README está corregido y verificado en el commit 8b2bec3.
+================================================================================
+
+
+================================================================================
+H-AUD-050 — Omisión de auditoría y checkpoint inicial en el commit de DOC-README-2026-002
+Fecha: 2026-11-09. Tarea correctiva: DOC-TRACE-2026-001. Severidad: P2 — cumplimiento del procedimiento y trazabilidad.
+Evidencia: el diff y la lista de archivos del commit 8b2bec3b1e16cb06d5dc9dde95c10a024f9f5fb3 muestran seis archivos modificados y excluyen Auditoría.txt. El diff de checkpoint.md incorpora el checkpoint final de DOC-README-2026-002, pero no el checkpoint inicial. El checkpoint inicial sí fue preparado como blob 434759c9f0a3b886ae17f427f8249b513693313c y el borrador de H-AUD-049 como blob 731136558e71014801ef96b4f98f3cb6e12346aa, pero ambos quedaron fuera del árbol del commit original.
+Impacto: el checkpoint final afirmó que Auditoría.txt había sido actualizado y que el checkpoint inicial se había incorporado, aunque Git no contiene esos cambios en dicho commit. El cierre original no cumplió íntegramente el procedimiento obligatorio.
+Corrección: conservar intacto el commit original; recuperar e incorporar explícitamente el checkpoint inicial con nota de incorporación tardía; registrar H-AUD-049 y este hallazgo; documentar la tarea correctiva y verificar su commit independiente.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-TRACE-2026-001, sujeto a verificación del commit correctivo.
+================================================================================

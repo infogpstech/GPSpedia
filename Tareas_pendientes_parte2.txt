@@ -475,3 +475,9 @@ DOC-README-2026-002 — Reconciliar la descripción de microservicios y carpeta 
 Estado: COMPLETADA — DOCUMENTAL. README ahora describe Services/ como fuentes temporales durante implementación/corrección y establece su eliminación al cierre de esa fase. Distingue código fuente de deployments y endpoints. No se borró ni modificó ningún archivo de Services/.
 DOC-LEGACY-2026-001 — Revalidar cierres históricos [X]. Requisitos: contrastar cada tarea con commit/diff; revisar sintaxis de cada archivo afectado; registrar herramienta/versión/resultado; comprobar pruebas funcionales y Code Review; promover solo con evidencia; mantener legacy inmutable.
 
+
+
+
+ADENDA DE TRAZABILIDAD — DOC-README-2026-002
+La corrección del README fue publicada en 8b2bec3. La auditoría y el checkpoint inicial que el cierre original declaró incorporados no estaban en ese commit. La omisión se registra en H-AUD-050 y se corrige mediante DOC-TRACE-2026-001, sin reescribir el historial del commit original. DOC-README-2026-002 queda validada documentalmente después de la verificación del commit correctivo.
+================================================================================

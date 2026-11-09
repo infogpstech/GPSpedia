@@ -65,3 +65,15 @@ Estado: COMPLETADA — DOCUMENTAL.
 Hallazgo H-AUD-049 resuelto. README refleja la presencia temporal de fuentes Services durante implementación/corrección y su eliminación al finalizar esa fase. Distingue fuente, deployment y endpoint.
 No se borraron ni modificaron archivos de código o deployments. Siguiente paso: DOC-LEGACY-2026-001, revalidación de cierres históricos [X], según Plan Maestro.
 ================================================================================
+
+
+
+================================================================================
+TAREA DOC-TRACE-2026-001 — CORRECCIÓN DE TRAZABILIDAD DE DOC-README-2026-002
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL, tras verificación del commit correctivo.
+Hallazgos: H-AUD-049 registrado como resuelto documentalmente; H-AUD-050 documenta la omisión de Auditoría.txt y checkpoint inicial en 8b2bec3 y su corrección transparente.
+Acciones: checkpoint inicial recuperado desde blob 434759c9f0a3b886ae17f427f8249b513693313c e incorporado con nota de recuperación tardía; Auditoría.txt actualizado; registros de tareas y changelog rectificados sin borrar el historial original.
+No se reescribió el commit 8b2bec3 ni se modificó README, código, Services, endpoints, deployments o legacy.
+Sintaxis de código: N/A. Validación funcional: N/A; tarea exclusivamente documental. Diff, referencias, límites y Code Review documental registrados.
+================================================================================

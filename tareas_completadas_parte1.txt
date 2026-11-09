@@ -93,3 +93,15 @@ Auditoría: H-AUD-049 resuelto documentalmente.
 Alcance: no se modificó ni eliminó ningún archivo de Services/, código, endpoints, deployments o legacy.
 Validación: contraste de README contra árbol de la rama de trabajo, rama base y rama main; diff limitado a la sección 5; Code Review documental aprobado. Sintaxis de código: N/A.
 ================================================================================
+
+
+
+================================================================================
+DOC-TRACE-2026-001 — CORRECCIÓN DE TRAZABILIDAD DE DOC-README-2026-002
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: H-AUD-050 documenta que el commit 8b2bec3 omitió Auditoría.txt y el checkpoint inicial; el checkpoint inicial preparado se recuperó desde blob 434759c9f0a3b886ae17f427f8249b513693313c y se incorporó con nota de recuperación tardía. H-AUD-049 quedó registrado y resuelto documentalmente.
+Validación: diff del commit original contrastado; seis documentos de trazabilidad revisados; referencias y estados reconciliados; límites documentales verificados; Code Review documental. Sintaxis de código y pruebas funcionales: N/A.
+No se reescribió el commit original ni se modificaron código, Services, endpoints, deployments o legacy.
+Commit correctivo: consultar historial de GPSpedia2.2.5_work.
+================================================================================

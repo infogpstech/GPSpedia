@@ -55,3 +55,13 @@ Sintaxis de código: N/A. H-AUD-048 resuelto.
 README sección 5 actualizada para reflejar que Services/ contiene fuentes temporales durante implementación y corrección, que se eliminarán del repositorio al concluir esa fase. Se separa explícitamente código fuente de deployments y endpoints independientes.
 H-AUD-049 resuelto. No se borraron ni modificaron archivos Services/, endpoints, deployments o legacy. Cambio exclusivamente documental; revisión y diff aprobados.
 ================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-TRACE-2026-001 — RECTIFICACIÓN DE TRAZABILIDAD
+Se incorporó a Auditoría.txt el hallazgo H-AUD-049 y el registro H-AUD-050 sobre la omisión de Auditoría.txt y del checkpoint inicial en el commit 8b2bec3.
+Se recuperó checkpoint inicial de DOC-README-2026-002 desde blob 434759c9f0a3b886ae17f427f8249b513693313c y se añadió una nota explícita de incorporación tardía. Se agregó checkpoint inicial y final de la tarea correctiva.
+Se añadieron adendas a Tareas.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt. El commit 8b2bec3 y sus registros originales se conservaron sin reescritura.
+Cambio exclusivamente documental; sintaxis de código y pruebas funcionales N/A.
+================================================================================

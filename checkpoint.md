@@ -146,3 +146,64 @@ Validaciones: árbol de rama de trabajo/base/main contrastado; sección reemplaz
 Siguiente tarea del Plan Maestro: DOC-LEGACY-2026-001, revalidar cierres históricos [X] con evidencia de commits, diffs, sintaxis, pruebas y Code Review.
 Este checkpoint final es el último documento actualizado antes del único commit.
 ================================================================================
+
+
+================================================================================
+RECUPERACIÓN DE TRAZABILIDAD — DOC-README-2026-002
+El siguiente checkpoint inicial fue preparado antes de la edición de README.md y quedó almacenado como blob 434759c9f0a3b886ae17f427f8249b513693313c, pero no fue incorporado al commit 8b2bec3b1e16cb06d5dc9dde95c10a024f9f5fb3. Se incorpora aquí de forma tardía y explícita mediante la tarea correctiva DOC-TRACE-2026-001; no se presenta como si hubiera formado parte del commit original.
+
+CHECKPOINT INICIAL — DOC-README-2026-002
+Fecha: 2026-11-09
+Rama de trabajo: GPSpedia2.2.5_work; HEAD confirmado: 8d296358b3b805a33d2c814406d7efe54d2782bb.
+Rama base: GPSpedia2.2.5; HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: reconciliar la descripción de microservicios y carpeta Services en README con la fase temporal de implementación.
+Requisito: Tareas_pendientes_parte2.txt, DOC-README-2026-002. La adenda 14 del Plan Maestro establece que DOC-README-2026-002 sigue a DOC-README-2026-001.
+Auditoría de ciclo anterior: commit 8d296358b3b805a33d2c814406d7efe54d2782bb revisado; README de filtros rápidos quedó actualizado; rama base intacta.
+Auditoría pre-implementación: repositorio GitHub público; rama de trabajo contiene siete fuentes en Services/ (Auth.js, Utilities.js, admin.js, catalog.js, feedback.js, users.js, write.js). Rama base contiene seis de ellas; Utilities.js solo está en la rama de trabajo. La rama default main no contiene Services/. README sección 5 afirma que cuatro microservicios han sido retirados del repositorio público y que la lógica está resguardada privadamente, lo cual no describe la situación temporal actual.
+Aclaración autorizada por el usuario: el repositorio está en fase de implementación; los archivos de Services son temporales y se eliminan del repositorio al finalizar las implementaciones y correcciones. No deben eliminarse durante esta tarea.
+Hallazgo H-AUD-049: contradicción documental entre la afirmación de retiro definitivo y la presencia temporal de fuentes backend durante la fase de implementación.
+Riesgo: confundir presencia de fuente con existencia/estado de deployments o endpoints; actualizar sección separando esos conceptos. No inferir que URLs de Apps Script equivalen a credenciales. No publicar secretos, URLs ni detalles internos en README.
+Respaldos exactos previos a edición (blobs): README.md=b11c8b726086fc129402a8518e6299d591951ac1; checkpoint.md=32ee797ff8b343269fc24e6cadd517b692e117fd; Auditoría.txt=f2dce5e2c41760f0796a43bc2d3ed0624b94ef0f; Tareas.txt=44af3b0c2a60510750666d265bf7779ea54e816d; ChangesLogs.txt=4fa3310370eaf8e09fe2e2ae9d397dafd4774f2e; Tareas_pendientes_parte2.txt=799902cb559a72db8ddb0d4bceccb10171cc78c2; tareas_completadas_parte1.txt=96e885d4486722c5d3bf487847c2b664350e9ed7.
+Alcance: README.md y registros de trazabilidad checkpoint.md, Auditoría.txt, Tareas.txt, ChangesLogs.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt. No tocar código, Services/, legacy, endpoints ni deployments.
+Estado: checkpoint inicial, auditoría y respaldo completados; implementación documental pendiente.
+================================================================================
+================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — DOC-TRACE-2026-001
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado antes de la tarea: 8b2bec3b1e16cb06d5dc9dde95c10a024f9f5fb3
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: corregir de forma transparente la trazabilidad incompleta del cierre DOC-README-2026-002.
+Alcance: checkpoint.md, Auditoría.txt, Tareas.txt, Tareas_pendientes_parte2.txt, ChangesLogs.txt y tareas_completadas_parte1.txt.
+Auditoría diagnóstica: el commit 8b2bec3 contiene README.md, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte2.txt, checkpoint.md y tareas_completadas_parte1.txt; no contiene Auditoría.txt. El diff del commit confirma que checkpoint.md recibió el bloque final de DOC-README-2026-002, pero no su checkpoint inicial. El blob temporal 434759c9f0a3b886ae17f427f8249b513693313c conserva el checkpoint inicial; el blob temporal 731136558e71014801ef96b4f98f3cb6e12346aa conserva el hallazgo H-AUD-049, ninguno incluido en el commit original.
+Impacto: los registros del commit original afirman una auditoría y un checkpoint inicial versionados que no constan en el árbol del commit; la secuencia documental no cumple el procedimiento.
+Criterio correctivo: preservar el commit 8b2bec3 sin reescribirlo; incorporar ahora el checkpoint inicial recuperado con nota de incorporación tardía; agregar H-AUD-049 con estado real y H-AUD-050 sobre la omisión; registrar la tarea correctiva y su commit único.
+Respaldos exactos previos a esta corrección: checkpoint.md=53243c59a3c40d5704d5288da55bcb38486e4f28; Auditoría.txt=f2dce5e2c41760f0796a43bc2d3ed0624b94ef0f; Tareas.txt=4f27d4ebbb2172cdedcab9acd3f2d18de600cc4f; Tareas_pendientes_parte2.txt=4c71a56abb7d2353a30c1082baf0f5a5177039d8; ChangesLogs.txt=4f658962361049c7f90b209d01a597f9e01dd0da; tareas_completadas_parte1.txt=69241ebbf6b04321b969a4b0a78ed424162ff253.
+Estado inicial: HEAD y rama base confirmados; auditoría documental completada; respaldos identificados; corrección pendiente.
+Siguiente acción: incorporar las adendas, revisar diff y límites, efectuar Code Review documental y añadir checkpoint final como último documento antes del único commit.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — DOC-TRACE-2026-001
+Fecha: 2026-11-09
+Estado: COMPLETADA — DOCUMENTAL; pendiente únicamente de la verificación Git posterior a la publicación de este commit.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: 8b2bec3b1e16cb06d5dc9dde95c10a024f9f5fb3
+Rama base: GPSpedia2.2.5; HEAD confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Archivos actualizados: Auditoría.txt, checkpoint.md, Tareas.txt, Tareas_pendientes_parte2.txt, ChangesLogs.txt y tareas_completadas_parte1.txt.
+Hallazgos: H-AUD-049 incorporado con estado RESUELTO DOCUMENTALMENTE; H-AUD-050 registra y resuelve la omisión de Auditoría.txt y del checkpoint inicial en el commit 8b2bec3.
+Recuperación: checkpoint inicial de DOC-README-2026-002 recuperado del blob 434759c9f0a3b886ae17f427f8249b513693313c e incorporado con nota explícita de recuperación tardía. No se afirma que formara parte del commit original.
+Rectificación: el commit 8b2bec3 se conserva intacto. DOC-README-2026-002 queda cerrada documentalmente tras incorporar la auditoría omitida y documentar la secuencia de checkpoints. DOC-TRACE-2026-001 queda registrada en Tareas.txt, ChangesLogs.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt.
+Respaldos exactos previos: checkpoint.md=53243c59a3c40d5704d5288da55bcb38486e4f28; Auditoría.txt=f2dce5e2c41760f0796a43bc2d3ed0624b94ef0f; Tareas.txt=4f27d4ebbb2172cdedcab9acd3f2d18de600cc4f; Tareas_pendientes_parte2.txt=4c71a56abb7d2353a30c1082baf0f5a5177039d8; ChangesLogs.txt=4f658962361049c7f90b209d01a597f9e01dd0da; tareas_completadas_parte1.txt=69241ebbf6b04321b969a4b0a78ed424162ff253.
+Code Review documental: revisados los seis documentos y las adendas; se conserva el historial original; H-AUD-049 y H-AUD-050 mantienen evidencia y estados coherentes; los cambios se limitan a trazabilidad; IDs no duplicados; referencias de blobs/commits verificadas; cada archivo permanece por debajo de 180,000 caracteres Unicode.
+Sintaxis de código y pruebas funcionales: N/A, no se modificó código. No se modificaron README, Services, endpoints, deployments, permisos, archivos legacy ni rama base.
+Último paso documental antes del único commit: este checkpoint final.
+Siguiente tarea tras verificar el commit: DOC-LEGACY-2026-001, revalidación de cierres históricos [X] según el Plan Maestro.
+================================================================================
