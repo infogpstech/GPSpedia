@@ -1155,3 +1155,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-015-001 a 004 abiertos; H-AUD-037-003 a 006 relacionados; AUG-098 a AUG-101 y VAL-24 pendientes.
 - Filtros rápidos cancelados/retirados y no se reintroducen. No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, accesibilidad, móvil ni E2/E3.
 - Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.
+
+
+## Continuidad de auditoría — AUD-T-016 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S119 / AUD-CP-0118; rama GPSpedia2.2.5_work, HEAD inicial 9355e181a009b3dce7f3bf1893643896af0cf822; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 2daf88c96d29999cbc734c968ef94355ee5324ca; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; seis archivos funcionales conservan SHA idénticos.
+- H-AUD-016-001 a 005 abiertos; AUG-102 a 105 pendientes, AUG-103 ampliada, AUG-112 pendiente. VAL-25 planificada/no ejecutada.
+- No se ejecutaron navegador, mediciones WCAG reales, zoom, lectores de pantalla, Android/iOS, PWA, rotación, benchmarks ni E2/E3. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.

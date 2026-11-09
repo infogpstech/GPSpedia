@@ -2932,3 +2932,28 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 618856f64ef5cd75826ae213e9c92b2a5069261d
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación de continuidad E1).
+
+
+## 69. Continuidad verificada — AUD-T-016 (revalidación E1)
+Sesión AUD-20261108-S119 | Checkpoint AUD-CP-0118 | E1 histórica 2daf88c96d29999cbc734c968ef94355ee5324ca | HEAD inicial 9355e181a009b3dce7f3bf1893643896af0cf822 | árbol inicial 2018c1df0f6d4a92d90e99aeaf00e09099975872 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S034 / AUD-CP-0034. Revalidación ampliada previa AUD-20261108-S097 / AUD-CP-0096, HEAD 8ee33a4694813152b8c5809b1576afde4049a657.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+Los seis archivos conservan SHA idénticos a E1:
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+Hallazgos: H-AUD-016-001 a H-AUD-016-004 permanecen abiertos. H-AUD-016-005 (contraste insuficiente en botones primarios y texto descriptivo) continúa vigente; los ratios documentados son cálculos estáticos, no mediciones del navegador. No se crean hallazgos nuevos.
+Tareas: AUG-102 a AUG-105 continúan pendientes; AUG-103 conserva la adenda por contraste. AUG-112 sigue pendiente de reconciliación documental. VAL-25 permanece planificada/no ejecutada.
+Controles positivos históricos permanecen presentes en el código E1: persistencia de darkMode, intercambio de logos, variables CSS, flex-wrap del encabezado del modal y footer con sentinel/IntersectionObserver. La identidad SHA confirma continuidad, no cumplimiento visual real.
+No se ejecutaron navegador, estilos computados, mediciones WCAG, zoom 200/400 %, lectores de pantalla, Android/iOS, PWA, rotación, benchmarks ni E2/E3. La continuidad Git no certifica contraste ni responsive real.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 6f690aa6844d20a44e06ca3d4fd7fe9bb44853bc
+- Plan_auditoría/Consolidacion_Auditoria.md: b045418a9d061b51387bb04095d4cadb56e314cd
+- ChangesLogs.txt: 80c21f2aac1af188ca1ad2e7f44a1a6bec935072
+- contexto_personal.md: 027495f60a5368233877a55c539c3fd829b70669
+- checkpoint.md: 7a638f3e207a6fd1f26b7a1030fca58dfaa856a6
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas; H-AUD-016-005 y AUG-112 ya están registrados. Sin cambios funcionales, CSS/HTML/JS, servicios, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación de continuidad E1).
