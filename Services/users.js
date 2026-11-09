@@ -220,6 +220,23 @@ function generateNextUserId_(userSheet) {
     return 'USR-' + String(maxSequence + 1).padStart(4, '0');
 }
 
+// Reutiliza la primera fila sin datos de cuenta. Si la hoja tiene fórmulas
+// prellenadas en Users.ID, la escritura del ID fijo sustituye la fórmula de esa fila.
+function findNextUserRow_(userSheet) {
+    const lastRow = userSheet.getLastRow();
+    if (lastRow < 2) return 2;
+
+    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
+    const rows = userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1).getValues();
+    for (let i = 0; i < rows.length; i++) {
+        const rowIsEmpty = rows[i].every(value =>
+            String(value === null || value === undefined ? '' : value).trim() === ''
+        );
+        if (rowIsEmpty) return i + 2;
+    }
+    return lastRow + 1;
+}
+
 function handleCreateUser(payload) {
     const { newUser, sessionToken } = payload || {};
     if (!newUser || !sessionToken) {
@@ -266,10 +283,11 @@ function handleCreateUser(payload) {
         }
 
         const passwordHash = createPasswordHash(newUser.Password);
-        const newRowNumber = lastRow + 1;
-        const lastColumn = userSheet.getLastColumn();
+        const newRowNumber = findNextUserRow_(userSheet);
+        const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
         const newUserId = generateNextUserId_(userSheet);
-        if (lastRow > 0) {
+        // Copiar formato/validaciones solo al extender la hoja; nunca copiar fórmulas.
+        if (lastRow > 0 && newRowNumber > lastRow) {
             const previousRow = userSheet.getRange(lastRow, 1, 1, lastColumn);
             const newRow = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
             previousRow.copyTo(newRow, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
