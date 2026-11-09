@@ -1293,3 +1293,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-024-001 a 010 abiertos; AUG-005 a 008, AUG-010, AUG-016 y AUG-017 vigentes.
 - No se ejecutaron navegador, multi-pestaña, HTTP, Apps Script, sesiones reales, concurrencia, fallos inyectados, roles ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+
+
+## Continuidad de auditoría — AUD-T-025 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S136 / AUD-CP-0135; rama GPSpedia2.2.5_work, HEAD inicial 11f1c3bc272ea1e3d14b14760ae592e361f6df73; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 941dfb166ae5af4631d0711d50ab3d45cf7225c1; 131 commits posteriores. Diff global: ocho documentos, Services/admin.js y Services/write.js (fuera de alcance). Seis de siete archivos del alcance mantienen SHA E1; funciones críticas T025 en admin/feedback comparadas byte por byte sin cambios.
+- CP-0069→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior a la revalidación anterior.
+- H-AUD-025-001 a 009 abiertos; AUG-018 a AUG-023 pendientes. H-025-009 corregido en cuanto a routeAction; H-025-007 precisado por logging parcial de acciones de imágenes. H-AUD-023-005/AUG-013 relacionado.
+- No se ejecutaron Apps Script, HTTP, navegador, Drive/Spreadsheet real, backup/restore/purgas, IndexedDB, concurrencia, recuperación, pruebas de permisos ni deployments.
+- Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.

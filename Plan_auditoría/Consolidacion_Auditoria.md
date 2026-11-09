@@ -1340,3 +1340,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, multi-pestaña, HTTP, Apps Script V8, login/revocación/expiración real, concurrencia, fallos inyectados, roles ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+
+
+## 71. AUD-T-025 — continuidad E1 y precisión de logging ADMIN
+- Sesión AUD-20261108-S136; checkpoint AUD-CP-0135; E1 941dfb166ae5af4631d0711d50ab3d45cf7225c1; HEAD 11f1c3bc272ea1e3d14b14760ae592e361f6df73; árbol 5d544409f0cb223d6ba0df044827ab8c05274fde; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 131 commits, merge-base igual a E1. El diff global contiene ocho documentos, Services/admin.js y Services/write.js; este último está fuera de alcance. Seis de siete archivos auditados conservan SHA E1. En Services/admin.js, los cambios posteriores se concentran en normalización/organización de imágenes; las funciones críticas de backup, restore, terminal, router y hojas fueron comparadas byte por byte y permanecen idénticas.
+- CP-0069→HEAD: 66 commits posteriores, únicamente ocho documentos; no hay deriva funcional después de la revalidación previa.
+- H-AUD-025-001 a 008 siguen abiertos. H-AUD-025-009 mantiene la precisión: createSheet/addColumn sí están mapeadas y en el switch, pero sin consumidor frontend identificado.
+- Logging: algunas operaciones de administración de imágenes sí escriben ActividadUsuario mediante recordImageAdministrationActivity; el log general de doPost sigue siendo respuesta-local y no garantiza registro durable de backup/restore u otras acciones ADMIN. H-AUD-025-007 continúa abierto, con alcance precisado.
+- AUG-018 a AUG-023 pendientes; AUG-021 conserva adendas existentes; H-AUD-023-005/AUG-013 sigue relacionado. Sin nuevos IDs ni tareas duplicadas.
+- No se ejecutaron Apps Script V8, HTTP, navegador, DriveApp/SpreadsheetApp, backup/restore/purga real, IndexedDB, concurrencia, recuperación, permisos ni deployments. Solo continuidad estática/documental.
+- Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.

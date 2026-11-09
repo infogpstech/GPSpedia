@@ -3617,3 +3617,43 @@ Sin cambios funcionales, endpoints, contratos, configuración, credenciales, dat
 Commit documental único: docs(audit): verify AUD-T-024 continuity; parent 8df484a29af6aa3c12ab09887e7d07dd03e5d0fa.
 Siguiente unidad: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0135
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S136
+Tarea: AUD-T-025 — revalidación de continuidad E1 de herramientas ADMIN, base de datos, backup, restore, logs y mantenimiento.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 11f1c3bc272ea1e3d14b14760ae592e361f6df73 | árbol: 5d544409f0cb223d6ba0df044827ab8c05274fde.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 941dfb166ae5af4631d0711d50ab3d45cf7225c1 (AUD-20261107-S006 / AUD-CP-0006).
+Revalidación previa: AUD-20261108-S070 / AUD-CP-0069, HEAD 650e566945aa4238f241d1c86736b24e3d396733.
+Alcance: Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html, README.md y Services/Test/README.md.
+Estado inicial: H-AUD-025-001 a 009 abiertos; AUG-018 a AUG-023 pendientes; H-AUD-023-005/AUG-013 relacionado; H-025-009 conserva corrección factual sobre el mapeo; H-025-007 con cobertura parcial de logging para acciones de imágenes.
+Fase: revalidación estática E1 y comparación de continuidad; sin autorización para modificar código ni ejecutar operaciones productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 8afb0eaef84fbfb50b50516190b24fe9cadfca03
+- Plan_auditoría/Consolidacion_Auditoria.md: 6aa1516fc34bc87d078f0394c0b87b9990618b47
+- ChangesLogs.txt: 1b30cc894c8794927acdf4951d869ed7f41eb164
+- contexto_personal.md: 4dda135c6a6524cfb8fe18cfcff01f637ed477b2
+- checkpoint.md: ec9795390fcbeaaf96bd04e275d6d941dc360536
+Siguiente acción: comparar E1→HEAD y CP-0069→HEAD, verificar SHA de los siete archivos, contrastar byte por byte las funciones críticas y confirmar estado de hallazgos/tareas/base; actualizar solo documentación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0135
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S136
+Tarea: AUD-T-025 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-025-001 a 009 abiertos; AUG-018 a AUG-023 pendientes; H-AUD-023-005/AUG-013 relacionado; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: 11f1c3bc272ea1e3d14b14760ae592e361f6df73; árbol inicial 5d544409f0cb223d6ba0df044827ab8c05274fde. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 131 commits posteriores; merge-base igual a E1; ocho documentos y dos archivos de código en el diff global. Services/write.js está fuera del alcance. Seis de siete archivos del alcance conservan SHA E1; Services/admin.js cambió por normalización/organización de imágenes.
+Comparación byte por byte: doPost, handleBackupDatabase, handleBackupDrive, copyFolderRecursively, handleRestoreDatabase, handleRestoreDrive, clearFolderContents, handleCreateSheet, handleAddColumn y handleDriveCommand en Services/admin.js; doPost, handleGetActivityLogs, handleClearActivityLogs y handleClearSensitiveLogs en Services/feedback.js. Todas idénticas a E1. ui.js, api-config.js, index.html, README.md y Services/Test/README.md conservan SHA E1.
+CP-0069→HEAD: 66 commits posteriores y únicamente ocho documentos; no existe deriva funcional posterior a la revalidación anterior.
+Hallazgos revalidados: restores destructivos sin rollback; backup Drive sin manifiesto/reanudación; terminal sin restricción de ascendencia; carga completa de ActividadUsuario; timestamps inválidos sin reporte; logging ADMIN general no persistente; IndexedDB.deleteDatabase sin espera; createSheet/addColumn sin consumidor frontend identificado pese a estar mapeadas. H-AUD-025-001 a 009 permanecen abiertos.
+Precisión: algunas acciones de administración de imágenes sí registran ActividadUsuario mediante recordImageAdministrationActivity, pero no se persiste el log general de doPost ni se garantiza registro durable de backups/restores y demás operaciones ADMIN. H-025-007 permanece abierto.
+Tareas: AUG-018 a AUG-023 pendientes; AUG-021 conserva adenda de acciones de imágenes; H-AUD-023-005/AUG-013 relacionado. Sin IDs duplicados.
+No ejecutadas: Apps Script V8, HTTP, navegador, DriveApp/SpreadsheetApp, backup/restore/purga real, IndexedDB, concurrencia, recuperación, permisos, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+================================================================================

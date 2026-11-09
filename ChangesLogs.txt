@@ -5365,3 +5365,14 @@ Sesión AUD-20261108-S098 | Checkpoint AUD-CP-0097 | E1 f9c47bad48fa8050a4acac33
 - checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0134.
 - No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no se detectan hallazgos o tareas nuevas.
 - No se modifican archivos funcionales del alcance, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+
+
+2026-11-08 — AUD-T-025 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 86 con comparación E1→HEAD, SHA de los siete archivos y verificación byte por byte de funciones críticas.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 71 con continuidad y precisión del logging ADMIN.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial y final AUD-CP-0135.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; H-AUD-025-001 a 009 y AUG-018 a 023 ya constan. Se conserva la corrección de AUG-023 y la adenda existente de AUG-021.
+- Se aclara que el registro persistente de algunas acciones de administración de imágenes no equivale a logging durable de todas las operaciones ADMIN.
+- No se modifican código funcional, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.

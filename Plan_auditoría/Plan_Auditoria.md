@@ -3405,3 +3405,32 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: c6d8a304ae6721aed78704889f9308709ec85994
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y los registros existentes se conservan. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento (revalidación de continuidad E1).
+
+
+## 86. Continuidad verificada — AUD-T-025 (revalidación E1)
+Sesión AUD-20261108-S136 | Checkpoint AUD-CP-0135 | E1 histórica 941dfb166ae5af4631d0711d50ab3d45cf7225c1 | HEAD inicial 11f1c3bc272ea1e3d14b14760ae592e361f6df73 | árbol inicial 5d544409f0cb223d6ba0df044827ab8c05274fde | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original AUD-20261107-S006/AUD-CP-0006. Revalidación previa AUD-20261108-S070/AUD-CP-0069, HEAD 650e566945aa4238f241d1c86736b24e3d396733.
+Comparación E1→HEAD: 131 commits posteriores, merge-base idéntico a E1 y sin divergencia. El diff global contiene ocho documentos y dos archivos de código: Services/admin.js y Services/write.js. Services/write.js está fuera del alcance. Seis de los siete archivos del alcance conservan SHA idénticos a E1; Services/admin.js cambió por trabajos posteriores de normalización/organización de imágenes, pero las funciones críticas de AUD-T-025 permanecen byte por byte idénticas.
+Los siete archivos y SHA actuales:
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+- Services/Test/README.md 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+Comparación de la revalidación previa CP-0069→HEAD: 66 commits posteriores; diff exclusivamente documental (ocho documentos). No hay deriva funcional desde la revalidación anterior.
+Funciones comparadas byte por byte E1→HEAD: Services/admin.js doPost, handleBackupDatabase, handleBackupDrive, copyFolderRecursively, handleRestoreDatabase, handleRestoreDrive, clearFolderContents, handleCreateSheet, handleAddColumn y handleDriveCommand; Services/feedback.js doPost, handleGetActivityLogs, handleClearActivityLogs y handleClearSensitiveLogs. Todas permanecen idénticas. ui.js, api-config.js, index.html, README.md y Services/Test/README.md mantienen SHA E1.
+H-AUD-025-001 a 008 permanecen abiertos: restauración DB destructiva sin rollback; restoreDrive limpia Cortes antes de copiar y no revierte; backup Drive recursivo sin manifiesto/reanudación; terminal Drive sin límite de ascendencia al árbol Cortes; lectura completa de ActividadUsuario para devolver 100 filas; timestamps inválidos sin reporte en purga; logging general de operaciones ADMIN solo en respuesta; deleteDatabase de IndexedDB no espera sus eventos.
+H-AUD-025-009 conserva la corrección factual: createSheet/addColumn sí están en ACTION_TO_SERVICE_MAP y en el switch ADMIN, pero no se identifican consumidores en ui.js/index.html. No falta el mapeo routeAction; queda pendiente documentar uso externo/manual o consumidor soportado.
+H-AUD-025-007 requiere precisión de alcance: existen escrituras persistentes en ActividadUsuario para algunas acciones de administración de imágenes mediante recordImageAdministrationActivity; eso no persiste el log general de doPost ni sustituye el registro durable de backups, restores y demás operaciones ADMIN. El helper captura y registra fallos con Logger, pero no garantiza trazabilidad de todas las acciones.
+AUG-018 a AUG-023 permanecen pendientes. AUG-021 conserva su adenda para operaciones de imágenes y su relación con AUD-T-033/AUG-003 y AUD-T-023/AUG-013. H-AUD-023-005/AUG-013 continúa relacionado; no se crean tareas duplicadas ni hallazgos nuevos.
+No se ejecutaron Apps Script V8, HTTP, navegador, DriveApp/SpreadsheetApp, backup/restore/purga real, IndexedDB en navegador, concurrencia, recuperación, pruebas de permisos ni deployments. La revalidación es estática y de identidad de contenido; no certifica comportamiento funcional, datos ni ACL.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 8afb0eaef84fbfb50b50516190b24fe9cadfca03
+- Plan_auditoría/Consolidacion_Auditoria.md: 6aa1516fc34bc87d078f0394c0b87b9990618b47
+- ChangesLogs.txt: 1b30cc894c8794927acdf4951d869ed7f41eb164
+- contexto_personal.md: 4dda135c6a6524cfb8fe18cfcff01f637ed477b2
+- checkpoint.md: ec9795390fcbeaaf96bd04e275d6d941dc360536
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los nueve hallazgos y las seis tareas ya constan, incluida la corrección de AUG-023. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente unidad secuencial: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios (respetar su E1 y revalidaciones previas).
