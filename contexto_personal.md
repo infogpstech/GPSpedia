@@ -1235,3 +1235,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; adenda AUG-043 conservada.
 - No se ejecutaron navegador, localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, recuperación de red ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## Continuidad de auditoría — AUD-T-004 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S129 / AUD-CP-0128; rama GPSpedia2.2.5_work, HEAD inicial e5f65c485c1193f75c0354884fe80e6c6c2f23f6; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; 107 commits posteriores; merge-base igual a E1; diff global de ocho documentos; nueve archivos funcionales/técnicos conservan SHA idénticos.
+- H-AUD-004-001 a 003 abiertos; H-AUD-037-007 ampliado; AUG-059/AUG-060/AUG-050 vigentes; VAL-08/12/15 pendientes.
+- No se ejecutaron navegador, dataset VIN, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia, dos usuarios ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

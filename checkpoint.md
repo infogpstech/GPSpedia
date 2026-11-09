@@ -3350,3 +3350,41 @@ Sin cambios funcionales, endpoints, contratos, configuración, credenciales, ass
 Commit documental único: docs(audit): verify AUD-T-003 continuity; parent 9669f93f03a38b1125da5a7bb34dce267f736240.
 Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0128
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S129
+Tarea: AUD-T-004 — revalidación de continuidad E1 de VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: e5f65c485c1193f75c0354884fe80e6c6c2f23f6 | árbol: 130e90f33f0a8183ce75869b4ee2e5efb7190ce3.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 24f68780e6b7ad5ad835ce76c1d6abda0a80a528.
+Revalidación previa: AUD-20261108-S106 / AUD-CP-0105, HEAD 6cd7e651d33d0967acfc947c99f457aefad44664.
+Alcance: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md.
+Estado inicial: H-AUD-004-001 a 003 abiertos; H-AUD-037-007 ampliado; AUG-059/AUG-060 y AUG-050 vigentes; VAL-08/12/15 pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: ee25d3b2c575d7defa87811c8c362869ac407480
+- Plan_auditoría/Consolidacion_Auditoria.md: 6ecade3d127af88a8fdbba59ae7b8b2d3163e740
+- ChangesLogs.txt: 35352b3d9cb0450b18fc06c01b5beddae9df8814
+- contexto_personal.md: 3e6554254c12714a4720f758b96a95f5b3e184b9
+- checkpoint.md: 18a808b647812df2f54c2c6401dd56b495f7b58c
+Siguiente acción: comparar E1→HEAD, verificar SHA de los nueve archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0128
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S129
+Tarea: AUD-T-004 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-004-001 a 003 abiertos; H-AUD-037-007 ampliado; AUG-059/AUG-060 y AUG-050 vigentes; VAL-08/12/15 pendientes.
+HEAD padre confirmado: e5f65c485c1193f75c0354884fe80e6c6c2f23f6; árbol inicial 130e90f33f0a8183ce75869b4ee2e5efb7190ce3. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los nueve archivos funcionales/técnicos del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: colección UI pierde índices y recorta prefijo por segunda vez; editor administrativo no persiste fieldName='vin'; backend no impone longitud máxima ni rechaza entradas demasiado cortas; H-AUD-037-007 conserva ampliación sobre resolución y criterios de coincidencia. No se crean hallazgos nuevos.
+Tareas/validaciones: AUG-059/AUG-060 y ampliación AUG-050 vigentes; VAL-08/12/15 pendientes. Sin IDs duplicados ni tareas duplicadas.
+Validaciones no ejecutadas: navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, dos usuarios, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, esquema, configuración, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-004 continuity; parent e5f65c485c1193f75c0354884fe80e6c6c2f23f6.
+Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+================================================================================

@@ -3212,3 +3212,30 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: eefc262ad22a794936efdfcaf0aac64d00ae35c0
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial (revalidación de continuidad E1).
+
+
+## 79. Continuidad verificada — AUD-T-004 (revalidación E1)
+Sesión AUD-20261108-S129 | Checkpoint AUD-CP-0128 | E1 histórica 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | HEAD inicial e5f65c485c1193f75c0354884fe80e6c6c2f23f6 | árbol inicial 130e90f33f0a8183ce75869b4ee2e5efb7190ce3 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261107-S022 / AUD-CP-0022. Revalidación previa AUD-20261108-S106 / AUD-CP-0105, HEAD 6cd7e651d33d0967acfc947c99f457aefad44664.
+Comparación E1→HEAD: 107 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los nueve archivos funcionales/técnicos del alcance aparece en el diff.
+Los nueve archivos conservan SHA idénticos a E1:
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+H-AUD-004-001 a H-AUD-004-003 permanecen abiertos: colección UI pierde índices y recorta prefijo por segunda vez; editor administrativo no persiste fieldName='vin'; backend no impone longitud máxima ni rechaza entradas demasiado cortas. H-AUD-037-007 conserva su ampliación sobre resolución y criterios de coincidencia.
+AUG-059/AUG-060 y la ampliación AUG-050 continúan vigentes. VAL-08, VAL-12 y VAL-15 permanecen pendientes. No se crean hallazgos ni tareas duplicados.
+No se ejecutaron navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas con dos usuarios, deployments ni E2/E3. La continuidad Git no certifica búsqueda/diferencial ni integridad VIN en producción.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: ee25d3b2c575d7defa87811c8c362869ac407480
+- Plan_auditoría/Consolidacion_Auditoria.md: 6ecade3d127af88a8fdbba59ae7b8b2d3163e740
+- ChangesLogs.txt: 35352b3d9cb0450b18fc06c01b5beddae9df8814
+- contexto_personal.md: 3e6554254c12714a4720f758b96a95f5b3e184b9
+- checkpoint.md: 18a808b647812df2f54c2c6401dd56b495f7b58c
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, esquema, configuración, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales (revalidación de continuidad E1).
