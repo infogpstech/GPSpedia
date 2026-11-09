@@ -482,8 +482,8 @@ function handleResetUserSessions(payload) {
                 targetRows.push({ rowIndex: i + 1, row: usersData[i] });
             }
         }
-        if (requesterRows.length !== 1) {
-            throw new Error('No se pudo identificar de forma única la cuenta solicitante.');
+        if (requesterRows.length !== 1 || !isActiveAuthUserRecord(requesterRows[0])) {
+            throw new Error('No se pudo identificar de forma única una cuenta solicitante activa.');
         }
 
         const requesterRole = String(requesterRows[0][COLS_USERS.Privilegios - 1] || '')
@@ -501,6 +501,10 @@ function handleResetUserSessions(payload) {
             throw new Error(targetRows.length > 1
                 ? 'El ID del usuario seleccionado está duplicado.'
                 : 'El usuario seleccionado no existe.');
+        }
+
+        if (!isActiveAuthUserRecord(targetRows[0].row)) {
+            throw new Error('No se pueden cerrar sesiones de una cuenta desactivada.');
         }
 
         targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
