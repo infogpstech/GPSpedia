@@ -3085,3 +3085,41 @@ Sin cambios funcionales, tests, servicios, endpoints, configuración, assets, da
 Commit documental único: docs(audit): verify AUD-T-018 continuity; parent ca7beaf7beaf60c0d8537836dd2962aaeba31bc6.
 Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0121
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S122
+Tarea: AUD-T-019 — revalidación de continuidad E1 de integridad backend y pruebas automatizadas.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54 | árbol: c34146c1433cf8fc46a6d3c775b043430a575a99.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 6f0f901179c10833cbeedcb2767a25fcdd085b0d | árbol E1: 111dcd6270f62d5aaad6d5bfe34ebf47acafee82.
+Revalidación previa: AUD-20261108-S099 / AUD-CP-0098, HEAD a4246145bace0844e90b65c56d39d980a1c9d61f.
+Alcance: Services/write.js, Services/catalog.js, Services/admin.js, Services/Utilities.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js, Services/Test/users.js, Services/Test/README.md, api-config.js, main.js, ui.js, index.html y README.md.
+Estado inicial: E1 estática completada; H-AUD-019-001 a 014 abiertos; AUG-122 a AUG-135 pendientes; VAL-28 planificada/no ejecutada.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 981bcdc1eb7e099df16696a10d131bd80a655c3b
+- Plan_auditoría/Consolidacion_Auditoria.md: fea969e49bf4c96e4b24d924df953a51c9b26205
+- ChangesLogs.txt: a1c34b2043c41b571de37b06c70456c5022db36b
+- contexto_personal.md: 210b3bb8b15bc136cfefde38be65887ea9c27388
+- checkpoint.md: ae35e4a7f03201803def9ade9b6fe48fab9fb183
+Siguiente acción: comparar E1→HEAD, verificar SHA de los quince archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0121
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S122
+Tarea: AUD-T-019 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-019-001 a 014 abiertos; AUG-122 a AUG-135 pendientes; VAL-28 planificada/no ejecutada.
+HEAD padre confirmado: 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54; árbol inicial c34146c1433cf8fc46a6d3c775b043430a575a99. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los quince archivos funcionales/técnicos del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: autenticación/identidad WRITE/Utilities; esquema Tutoriales/Tutorial y mapa API; restauraciones no transaccionales; validación/escrituras parciales; éxito falso de vídeo; asociaciones PyS; allowlist administrativa; updateUser; aprobación de vídeo; VIN; runner reproducible; README de microservicios. H-AUD-019-001 a 014 permanecen abiertos.
+Tareas/validaciones: AUG-122 a AUG-135 pendientes; VAL-28 planificada/no ejecutada. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner automatizado, ACL/deployments, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, pruebas, README, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-019 continuity; parent 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54.
+Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+================================================================================

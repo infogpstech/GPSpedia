@@ -3012,3 +3012,36 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: ff5ffa7b306815ff253adc20fc063f1fca4dd57a
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, tests, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación ampliada de continuidad E1).
+
+
+## 72. Continuidad verificada — AUD-T-019 (revalidación E1)
+Sesión AUD-20261108-S122 | Checkpoint AUD-CP-0121 | E1 histórica 6f0f901179c10833cbeedcb2767a25fcdd085b0d | HEAD inicial 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54 | árbol inicial c34146c1433cf8fc46a6d3c775b043430a575a99 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S059 / AUD-CP-0058; revalidación ampliada previa AUD-20261108-S099 / AUD-CP-0098, HEAD a4246145bace0844e90b65c56d39d980a1c9d61f.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los quince archivos funcionales/técnicos del alcance aparece en el diff.
+Los quince archivos conservan SHA idénticos a E1:
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+H-AUD-019-001 a H-AUD-019-014 permanecen abiertos. La evidencia conserva riesgos de autenticación/identidad en WRITE y Utilities; divergencia de esquema Tutoriales/Tutorial y mapa API; restauraciones Spreadsheet/Drive no transaccionales; validación tardía/escrituras parciales; éxito falso de vídeo suplementario; asociaciones PyS sin validación/lock; edición administrativa sin allowlist; updateUser parcial; aprobación de vídeo sin validar destino/estado; validación VIN permisiva; ausencia de runner reproducible; y README contradictorio sobre despliegues/fuentes de microservicios.
+AUG-122 a AUG-135 continúan pendientes; VAL-28 permanece planificada/no ejecutada. La presencia de copias aisladas AUTH/USERS y README de preparación no acredita runner reproducible, proyectos Apps Script, deployments, ACL ni suites completas. No se ejecutaron pruebas 31–38.
+No se ejecutaron Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner automatizado ni E2/E3. La continuidad Git no certifica pruebas funcionales, integración, permisos ni despliegues.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 981bcdc1eb7e099df16696a10d131bd80a655c3b
+- Plan_auditoría/Consolidacion_Auditoria.md: fea969e49bf4c96e4b24d924df953a51c9b26205
+- ChangesLogs.txt: a1c34b2043c41b571de37b06c70456c5022db36b
+- contexto_personal.md: 210b3bb8b15bc136cfefde38be65887ea9c27388
+- checkpoint.md: ae35e4a7f03201803def9ade9b6fe48fab9fb183
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y los catorce hallazgos/tareas ya están registrados. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, pruebas, README, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales (revalidación de continuidad E1).
