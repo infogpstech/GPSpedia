@@ -1571,3 +1571,14 @@ H-AUD-070 resuelto. users.html ahora mide el mínimo de 8 caracteres después de
 Pruebas locales: sintaxis 1/1 PASS; escenarios funcionales 10/10 PASS, incluyendo límites 7/8, espacios/tabulaciones externas, confirmación, valor enviado y normalización en AUTH producción/prueba. Diff contra respaldo: exactamente dos líneas; reconstrucción inversa PASS.
 No se ejecutaron navegador real, deployment, HTTP ni Sheets. No se modificó SHA-256 ni el formato sha256$.
 ================================================================================
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-016 — 2026-11-09
+Estado: BLOQUEADA; auditoría pre-implementación completada, sin cambios de código.
+Hallazgos registrados: H-AUD-071 (creación de sesión con escrituras secuenciales y sin idempotencia), H-AUD-072 (respuesta/recuperación ante invalidación parcial en resetUserSessions), H-AUD-073 (revocación y cambio/restablecimiento de contraseña parcialmente aplicados) y H-AUD-074 (cambio de Privilegios sin sincronización del estado de sesión/cliente).
+Avance previo reconocido: AUG-153 centralizó en AUTH los escritores de ActiveSessions; login, logout, resetUserSessions y deleteUser usan el mismo ScriptLock local. Esto resuelve en fuentes la carrera entre AUTH y USERS para esas mutaciones, pero no demuestra atomicidad ni concurrencia real.
+Bloqueo: H-AUD-074 requiere definir si un cambio de Privilegios invalida todas las sesiones o actualiza el perfil del cliente. AUTH y USERS son proyectos Apps Script separados y sus ScriptLock no se comparten. La coordinación interproyectos AUD-T-033/AUG-034 sigue pendiente. Además, H-AUD-071–073 requieren diseñar recuperación e idempotencia que no dependan de atomicidad de Spreadsheet.
+No se modificó código, api-config.js, endpoints, deployments ni datos. No se ejecutaron Apps Script real, HTTP ni hojas reales.
+Siguiente acción: resolver la política de cambio de rol y la arquitectura de coordinación de AUG-034; después diseñar/implementar la recuperación de mutaciones AUTH en una nueva ejecución auditada de AUG-016 y validar únicamente en deployments aislados.
+================================================================================

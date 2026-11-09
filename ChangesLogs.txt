@@ -254,3 +254,14 @@ AUG-014 — Validación de contraseña en UI — 2026-11-09
 - No se modificaron los servicios AUTH de producción/prueba ni api-config.js; el valor original sigue enviándose a changePassword y el backend mantiene su validación.
 - Verificación local: sintaxis 1/1 PASS; escenarios funcionales 10/10 PASS; diff de dos líneas y reconstrucción contra respaldo PASS. No se ejecutó navegador real ni deployment.
 ================================================================================
+
+
+================================================================================
+AUG-016 — Auditoría del ciclo de sesión — 2026-11-09
+- Auditoría.txt: añadió H-AUD-071 a H-AUD-074, evidencia de las mutaciones AUTH/USERS, controles existentes, límites y dependencia de AUG-034.
+- Tareas_pendientes_parte1.txt: añadió adenda de estado BLOQUEADA para AUG-016; conserva la entrada original.
+- Tareas.txt: añadió registro activo de AUG-016 como BLOQUEADA, con hallazgos, dependencia y siguiente acción.
+- lista_beta.txt: añadió la matriz de validación aislada requerida después de resolver el bloqueo y completar la implementación.
+- checkpoint.md: añadió checkpoint inicial y cierre de auditoría de AUG-016.
+- No se modificaron archivos de código, endpoints, deployments ni datos. No se ejecutaron pruebas funcionales ni validaciones en Apps Script real.
+================================================================================

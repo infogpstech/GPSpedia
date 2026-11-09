@@ -1029,3 +1029,51 @@ Restricciones preservadas:
 Siguiente tarea identificada en Tareas_pendientes_parte1.txt: AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión. AUG-015 no aparece en el tramo activo consultado; no se debe inferir ni crear esa tarea.
 Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-014.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-016 — 2026-11-09
+Estado: INICIADA; auditoría formal pendiente. No se ha modificado código.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 5be28707b2a8ab91dfbe8850713089bbe841bcc2
+Árbol inicial: 74c4805025560d9745cb4b770a60c17bf4a0c490
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión.
+Alcance registrado: coordinación de login con cierre remoto; consistencia de creación/revocación de sesiones; operaciones idempotentes y recuperación/reconciliación ante fallos de setValue, appendRow y deleteRow; revisión de los cambios de Privilegios y de la información de rol que AUTH entrega al cliente. No asumir atomicidad de Spreadsheet ni locks compartidos entre proyectos.
+Antecedentes: AUG-153 trasladó resetUserSessions a AUTH para centralizar las escrituras de ActiveSessions; AUG-006 implementó logout con revocación backend. Ambos mantienen validación real en deployments aislados pendiente. AUG-034 conserva la coordinación general interproyectos; no presumir que está resuelta.
+Archivos candidatos a auditoría: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, auth.js, api-config.js, Services/Test/README.md y los registros de tareas/auditoría. El alcance definitivo dependerá de la auditoría diagnóstica.
+Restricciones: no modificar endpoints operativos, deployments ni hojas productivas; preservar los Spreadsheet IDs independientes de prueba; no alterar hashing SHA-256 ni reactivar AUG-011; no implementar AUG-017/AUG-042 fuera de los puntos expresamente vinculados a AUG-016.
+Riesgos/dependencias conocidos antes de la auditoría: los proyectos AUTH y USERS son Apps Script separados; AUG-034/AUD-T-033 define la coordinación interproyectos aún pendiente; las pruebas aisladas requieren deployments nuevos y no constan como creados en Services/Test/README.md.
+Commit previo: AUG-014 5be28707b2a8ab91dfbe8850713089bbe841bcc2. Rama base sin cambios al inicio.
+Verificaciones previas relevantes: AUG-014 10/10 escenarios funcionales y 1/1 sintaxis local PASS; AUG-013 24/24 escenarios funcionales y 4/4 sintaxis local PASS. No equivalen a validación real de Apps Script.
+Siguiente acción concreta: auditar íntegramente las funciones de mutación/validación de sesión y sus consumidores/copies, sin editar código; registrar todos los hallazgos antes de decidir implementación.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-016 — 2026-11-09
+Estado: BLOQUEADA; auditoría pre-implementación completada. No se implementaron cambios de código.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada: GPSpedia2.2.5_work
+HEAD padre confirmado antes de AUG-016: 5be28707b2a8ab91dfbe8850713089bbe841bcc2
+Árbol padre: 74c4805025560d9745cb4b770a60c17bf4a0c490
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Commit de AUG-016: único commit documental; SHA se verificará en el historial de GPSpedia2.2.5_work. No se creó commit intermedio.
+Auditoría:
+- Se revisaron los flujos directamente relacionados en Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, auth.js, api-config.js y Services/Test/README.md.
+- H-AUD-071: login elimina la sesión antigua antes de confirmar setValue/appendRow; no hay clave de idempotencia para reintentos y las filas con token vacío cuentan en SESSION_LIMITS.
+- H-AUD-072: resetUserSessions invalida tokens en escrituras secuenciales sin capturar fallos intermedios; el borrado parcial de filas sí informa cleanupPending y puede reintentarse.
+- H-AUD-073: changePassword/resetUserPassword pueden dejar revocación y escritura de contraseña parcialmente aplicadas.
+- H-AUD-074: USERS cambia Privilegios sin invalidar sesiones; AUTH no devuelve el rol actualizado; el cliente conserva validaciones recientes y touchSession solo actualiza actividad.
+Avance reconocido: AUG-153 centralizó los escritores de ActiveSessions en AUTH y usa el mismo ScriptLock local para login/logout/resetUserSessions/deleteUser. Esto resuelve en fuentes la antigua carrera entre dos proyectos escritores, no la atomicidad de Sheets ni la coordinación de cambios de rol desde USERS.
+Bloqueo: AUG-034/AUD-T-033 sigue pendiente. Debe definirse la coordinación interproyectos o una autoridad única para la mutación de Privilegios y aprobarse si un cambio de rol invalida todas las sesiones o actualiza el perfil. También debe diseñarse recuperación/idempotencia para H-AUD-071–073 sin asumir atomicidad.
+Archivos documentales modificados: Auditoría.txt, Tareas_pendientes_parte1.txt, Tareas.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md. No se modificó código ni api-config.js.
+Verificaciones: comparación append-only contra respaldos exactos PASS para los cinco registros; límite documental de Tareas_pendientes_parte1.txt respetado (165,967 caracteres, máximo 180,000); IDs H-AUD-071–074 registrados; AUG-016 queda BLOQUEADA en ambos registros activos. Revisión documental final PASS.
+Validaciones no realizadas: no se ejecutaron pruebas funcionales, parser de código, navegador, Apps Script real, deployments aislados, HTTP, Spreadsheet real ni concurrencia. No se accedió ni modificó datos productivos.
+Riesgos pendientes: creación de sesión parcialmente confirmada; recuperación de invalidaciones y cambio de contraseña; sincronización de rol; validación real en copia aislada después de implementar.
+Siguiente acción concreta: resolver AUG-034/AUD-T-033 y la política de cambio de rol; después reanudar AUG-016 desde auditoría/diseño de recuperación, con checkpoint propio y pruebas aisladas.
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-016.
+================================================================================

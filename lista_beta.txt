@@ -214,3 +214,18 @@ AUG-013 — Validación real de purga de Logs coordinada con AUTH
 
 ADENDA DE VALIDACIÓN LOCAL AUG-013 — 2026-11-09
 Batería ampliada: 24/24 pruebas funcionales locales PASS. Se añadieron reintento de purga parcial, timeout de lock sin eliminación y rechazo de autorización por doPost en ambas fuentes. Sintaxis 4/4 PASS. No sustituye la prueba real concurrente del deployment AUTH aislado.
+
+
+================================================================================
+AUG-016 — Validación aislada de mutaciones y ciclo de sesión (pendiente de desbloqueo)
+No ejecutar hasta que AUD-T-033/AUG-034 y la política de cambio de Privilegios estén resueltas y la implementación de AUG-016 haya superado su revisión local.
+- Crear/verificar deployments AUTH y USERS aislados que apunten exclusivamente a la Spreadsheet de prueba descrita en Services/Test/README.md. No modificar api-config.js para apuntar a pruebas ni llamar endpoints operativos.
+- Ejecutar login concurrente con resetUserSessions y logout; comprobar el orden serializado por AUTH y que una revocación confirmada no deje válida una sesión incluida en la operación de cierre.
+- Inyectar fallos antes/durante/después de setValue(Users.SessionToken), appendRow(ActiveSessions), clearContent de tokens y deleteRow. Registrar el estado físico de ambas hojas, respuesta devuelta, liberación del lock y resultado de un reintento.
+- Simular pérdida de respuesta después de crear sesión y reintento de la misma solicitud; comprobar idempotencia y ausencia de sesiones duplicadas.
+- Preparar filas residuales con token vacío y comprobar que no se contabilicen como sesiones activas para SESSION_LIMITS; comprobar limpieza reintentable.
+- Probar changePassword y resetUserPassword con fallo en revocación, escritura de hash, limpieza de Users.SessionToken y borrado de filas. Confirmar qué credenciales y tokens siguen vigentes tras cada fallo.
+- Cambiar Privilegios con sesiones abiertas en otros dispositivos; comprobar la política aprobada (invalidación de todas las sesiones o perfil actualizado), estado visual del cliente y rechazo backend de permisos antiguos.
+- Probar tokens duplicados, IDs duplicados, usuario desactivado, sesión expirada, actor no autorizado, sesiones objetivo al inicio/medio/final y preservación de otras cuentas.
+- No usar hojas productivas, cuentas reales ni deployments operativos.
+================================================================================

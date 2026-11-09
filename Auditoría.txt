@@ -560,3 +560,56 @@ Estado: RESUELTO EN FUENTES.
 - Pruebas funcionales locales del handler real extraído de users.html: 8 escenarios PASS (7/8 caracteres, espacios externos, tabulaciones, preservación del valor original, confirmación distinta y texto corregido). Pruebas de normalización y mínimo backend en AUTH producción y copia de prueba: 2/2 PASS. Total de escenarios funcionales: 10/10 PASS.
 - No se ejecutó navegador real, deployment, HTTP ni hoja de cálculo. La prueba local no sustituye una validación visual integrada en navegador.
 - No se modificaron hashing SHA-256, prefijo sha256$, credenciales, sesiones, roles, validación backend ni otras rutas.
+
+
+================================================================================
+AUDITORÍA PRE-IMPLEMENTACIÓN — AUG-016 — 2026-11-09
+HEAD auditado: 5be28707b2a8ab91dfbe8850713089bbe841bcc2.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5 (HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Alcance: ciclo de creación, validación, revocación y recuperación de sesiones; intercalados login/cierre remoto; efectos de cambios de Privilegios sobre sesiones y estado del cliente. Auditoría diagnóstica realizada sin editar código.
+
+Inventario y coordinación:
+- Services/Auth.js concentra doPost para login, validateSession, touchSession, logout, resetUserSessions, changePassword, resetUserPassword y deleteUser.
+- Desde AUG-153, AUTH es el único escritor de ActiveSessions para login, logout, resetUserSessions y deleteUser. Las operaciones usan LockService.getScriptLock() del proyecto AUTH; el orden de adquisición serializa esos escritores dentro de ese proyecto.
+- api-config.js enruta resetUserSessions y deleteUser a AUTH. Services/users.js ya no expone una mutación de ActiveSessions; getVerifiedSession() consulta la sesión y el perfil desde USERS.
+- Services/Test/README.md confirma que AUTH y USERS son proyectos Apps Script separados y que no hay deployments aislados creados/verificados. Sus ScriptLock no son compartidos.
+- Services/Auth.js y Services/Test/Auth.js coinciden en toda la lógica; única diferencia de contenido: SPREADSHEET_ID (línea 9). Services/users.js y Services/Test/users.js solo difieren en SPREADSHEET_ID y dos líneas vacías finales.
+- AUG-153 resolvió en fuentes la carrera entre escritores de ActiveSessions que antes vivían en AUTH y USERS. No demuestra concurrencia real de Apps Script ni resuelve escrituras de Users ejecutadas desde el proyecto USERS.
+
+Hallazgos:
+H-AUD-071 — Alta — Creación de sesión con escrituras secuenciales no recuperadas.
+- Services/Auth.js handleLogin(), líneas 581, 589 y 599: cuando se alcanza el límite, elimina primero la sesión más antigua; después escribe Users.SessionToken con setValue() y finalmente agrega la nueva sesión con appendRow(). Si falla setValue() o appendRow() después de eliminar la anterior, la sesión previa ya no existe y el login termina en error; si una escritura se confirmó antes de producirse el error, el estado físico puede no coincidir con la respuesta.
+- handleLogin() no recibe/guarda una clave de idempotencia de la solicitud. Si el servidor crea la sesión pero se pierde la respuesta HTTP, un reintento puede crear otra sesión; para Desarrollador el límite configurado es Infinity.
+- El recuento de sesiones en handleLogin() considera todas las filas del usuario sin filtrar ActiveSessions vacío. Las filas residuales con token ya invalidado por una limpieza parcial pueden contarse como sesiones activas y provocar la eliminación de una fila que ya no autoriza.
+Impacto: pérdida de una sesión anterior ante fallo posterior, referencias incompletas, duplicación por reintento y aplicación incorrecta del límite cuando existen filas residuales.
+
+H-AUD-072 — Alta — Recuperación incompleta de resetUserSessions ante fallos parciales.
+- Services/Auth.js handleResetUserSessions(), líneas 691–825: invalida tokens mediante clearContent() secuencial y luego elimina filas en orden descendente. El bucle de invalidación no captura el fallo por fila ni construye un resultado parcial; una excepción intermedia sale por finally y doPost responde error genérico, aunque algunas sesiones puedan haber quedado invalidadas.
+- El fallo de deleteRow() sí se captura y devuelve status=error/cleanupPending; un reintento vuelve a localizar las filas restantes por ID de usuario. La operación es reintentable en ese caso, pero no existe una transacción de Spreadsheet.
+- Tras AUG-153, login y resetUserSessions usan el mismo ScriptLock AUTH. Un login que termina antes del reset queda dentro de la instantánea y puede ser revocado; uno que se ejecuta después queda ordenado después del reset. Esta serialización local resuelve el antiguo cruce de escritores, sin demostrar atomicidad de las escrituras físicas.
+Impacto: respuesta insuficiente ante invalidación parcial y limpieza física pendiente; las sesiones cuyo token ya fue borrado no autorizan, pero sus filas pueden permanecer.
+
+H-AUD-073 — Alta — Revocación de sesiones y mutación de contraseña pueden quedar parcialmente aplicadas.
+- Services/Auth.js revokeAllUserSessionsUnderLock_(), línea 689, limpia tokens en varias llamadas clearContent() y ejecuta flush(). Un fallo intermedio puede dejar solo parte de las sesiones invalidadas.
+- handleChangePassword(), líneas 1043–1057, revoca primero los tokens y luego escribe el nuevo hash. Si la revocación parcial falla, el flujo sale antes de cambiar la contraseña; si se invalida el token propio antes de una falla posterior, el usuario ya no puede reintentar con esa sesión.
+- handleResetUserPassword(), líneas 1059–1075, aplica el mismo orden para la cuenta objetivo. La limpieza de SessionToken y deleteRow() tienen manejo parcial, pero el resultado no constituye una transacción ni cubre una escritura de contraseña cuyo resultado sea ambiguo.
+Impacto: la respuesta puede no describir el estado final de contraseña/sesiones; el cambio propio puede requerir volver a iniciar sesión antes de reintentar. No debe afirmarse atomicidad.
+
+H-AUD-074 — Alta — Cambio de Privilegios no sincronizado con el ciclo de sesión ni con el perfil del cliente.
+- Services/users.js handleUpdateUser(), líneas 331–380, actualiza Privilegios bajo el ScriptLock local de USERS y no revoca las sesiones del usuario objetivo.
+- AUTH validateAndTouchSession_(), línea 688, lee la cuenta activa pero solo devuelve valid, userId, createdAt y lastActivityAt; no devuelve Privilegios ni perfil actualizado.
+- auth.js getRecentValidation()/validateSessionCoordinated(), líneas 36–89, conserva una validación local reciente durante 10 segundos. api-config.js ensureSessionTouched_(), líneas 73–85, limita touchSession a una llamada cada cinco minutos y solo actualiza SessionLastActivityAt.
+- AUTH y USERS son proyectos separados; sus ScriptLock no se excluyen mutuamente. El backend de cada servicio puede volver a leer el rol vigente para autorizar acciones, pero la interfaz puede conservar controles visuales correspondientes al rol anterior.
+Impacto: permisos visuales obsoletos después de un cambio de rol. La política no está definida en los registros: invalidar todas las sesiones del objetivo o propagar un perfil actualizado. Resolverlo de forma concurrente requiere definir la autoridad de escritura y el protocolo interproyectos de AUD-T-033/AUG-034; no se puede asumir que agregar otro ScriptLock lo resuelve.
+
+Controles existentes y límites:
+- handleLogout() elimina la fila por token y luego limpia Users.SessionToken solo si coincide. Si la limpieza falla, el reintento detecta el token residual y puede limpiar la referencia; la operación es idempotente respecto de la revocación del token.
+- handleDeleteUser() desactiva primero la cuenta y después elimina sesiones; si deleteRow falla, la cuenta permanece desactivada y AUTH rechaza sesiones residuales. El reintento puede completar la limpieza.
+- validateAndTouchSession_() revalida token único, identidad, cuenta activa y expiración bajo el lock AUTH; el cambio de LastActivityAt se escribe separadamente y no es transaccional.
+- No se ejecutaron Apps Script real, deployments aislados, HTTP, Sheets reales ni pruebas de concurrencia entre proyectos. No se modificaron endpoints operativos ni datos productivos.
+
+Decisión de auditoría:
+- H-AUD-071, H-AUD-072 y H-AUD-073 requieren diseño de recuperación/idempotencia y pruebas de fallo físico antes de modificar las mutaciones.
+- H-AUD-074 requiere una decisión explícita sobre el efecto de cambiar Privilegios y una arquitectura que serialice la mutación de rol con AUTH o invalide las sesiones bajo una autoridad común. AUG-034/AUD-T-033 sigue pendiente y es dependencia bloqueante para declarar resuelta la coordinación interproyectos.
+- La auditoría de AUG-016 queda completada; la implementación se marca BLOQUEADA hasta resolver la dependencia de coordinación/política. No se modificó código.
+================================================================================

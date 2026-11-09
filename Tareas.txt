@@ -259,3 +259,16 @@ Estado: COMPLETADA EN FUENTES.
 users.html valida el mínimo de 8 caracteres sobre newPassword.trim().length, coincidiendo con normalizePassword() del servicio AUTH. Se corrigió «reincie sesión» por «reinicie sesión». Backend y formato sha256$ sin cambios.
 Validación local: módulo JavaScript 1/1 PASS; escenarios funcionales 10/10 PASS; diff exacto de dos líneas y reconstrucción contra respaldo PASS. No se ejecutaron navegador real ni deployment.
 ================================================================================
+
+
+================================================================================
+AUG-016 — CONSISTENCIA Y RECUPERACIÓN DE MUTACIONES DEL CICLO DE SESIÓN
+Fecha: 2026-11-09.
+Estado: BLOQUEADA — auditoría completada; implementación no iniciada.
+Hallazgos: H-AUD-071 a H-AUD-074, registrados en Auditoría.txt.
+Resultado de auditoría: AUG-153 ya centraliza en AUTH las escrituras de ActiveSessions y serializa login/logout/resetUserSessions/deleteUser dentro del ScriptLock AUTH. Persisten fallos parciales en creación/revocación de sesiones y cambio/restablecimiento de contraseña; además, USERS cambia Privilegios sin invalidar sesiones ni propagar el rol vigente al cliente.
+Dependencia bloqueante: AUD-T-033/AUG-034 debe definir coordinación interproyectos o una autoridad única para la mutación de rol; también debe aprobarse la política de cambio de Privilegios (invalidar sesiones o actualizar el perfil). No se asumirán locks compartidos entre proyectos Apps Script.
+Archivos auditados: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, auth.js, api-config.js y Services/Test/README.md.
+No se modificó código ni se ejecutaron pruebas funcionales, Apps Script real, deployments, HTTP o Sheets. No se tocaron endpoints operativos ni datos productivos.
+Siguiente acción: resolver dependencia/política; reanudar implementación de recuperación con pruebas de fallos setValue/appendRow/deleteRow, reintentos e intercalados exclusivamente en copia aislada.
+================================================================================
