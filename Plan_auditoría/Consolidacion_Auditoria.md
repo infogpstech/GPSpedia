@@ -1494,3 +1494,22 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - H-AUD-003-001 a 004 permanecen abiertos. AUG-055 a AUG-058 siguen pendientes; AUG-043 conserva su adenda. Sin hallazgos/tareas nuevos, duplicados, cierres ni cambios de prioridad.
 - No se ejecutaron navegador, localStorage real, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, recuperación de red, deployments ni E2/E3.
 - Solo continuidad estática/documental; no se modificó código, endpoints, contratos, configuración, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue. Rama base intacta.
+
+
+## 86. AUD-T-004 — continuidad incremental revalidada
+- Sesión AUD-20261109-S151; checkpoint AUD-CP-0150; E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; revalidación previa CP-0128/HEAD e5f65c485c1193f75c0354884fe80e6c6c2f23f6; HEAD actual f81212ec0d7ef16fea61d4f7cdfbb72617b84744; árbol 1e181e2feae98db9668e9904e46dbb9e190beeb3; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, merge-base igual a E1 y diff global de ocho documentos. Los nueve archivos del alcance conservan SHA idénticos a E1:
+- `VinDifferentialEngine.js` — `7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4`
+- `navigation.js` — `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `ui.js` — `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `add_cortes.html` — `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- `Services/write.js` — `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- `Services/admin.js` — `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- `Services/catalog.js` — `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `api-config.js` — `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `Spreadsheet/GPSpedia_DB_columnas.md` — `21e353fd74ad97496de4ff15677d03a3cf9b5f05`
+- CP-0128→HEAD: 22 commits posteriores; únicamente cinco documentos de continuidad cambiaron. Sin deriva funcional posterior a la revalidación anterior.
+- H-AUD-004-001 a 003 abiertos; H-AUD-037-007 conserva su ampliación. AUG-059/AUG-060 pendientes; AUG-050 mantiene sus criterios ampliados; VAL-08/12/15 pendientes. Sin duplicados, cierres ni cambios de prioridad.
+- No se ejecutaron navegador, dataset VIN, Node/lint, motor diferencial, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia, dos usuarios, deployments ni E2/E3.
+- Solo continuidad estática/documental. Sin cambios funcionales, esquema, endpoints, contratos, configuración, permisos, assets, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

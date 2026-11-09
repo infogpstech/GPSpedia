@@ -1421,3 +1421,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-003-001 a 004 permanecen abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva su adenda. Sin hallazgos/tareas nuevos ni cierres.
 - No se ejecutaron navegador, localStorage real, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, concurrencia, recuperación de red ni deployments. Sin cambios funcionales o productivos.
 - Siguiente: continuar según el plan; las validaciones funcionales e integración de AUD-T-003 siguen pendientes.
+
+
+## Continuidad incremental — AUD-T-004 (2026-11-09)
+- Sesión AUD-20261109-S151 / checkpoint AUD-CP-0150. E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; revalidación previa CP-0128/HEAD e5f65c485c1193f75c0354884fe80e6c6c2f23f6; HEAD actual f81212ec0d7ef16fea61d4f7cdfbb72617b84744; árbol 1e181e2feae98db9668e9904e46dbb9e190beeb3; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits, merge-base idéntico a E1 y diff global de ocho documentos. Los nueve archivos del alcance conservan exactamente los SHA de E1. CP-0128→HEAD: 22 commits y solo cinco documentos de continuidad.
+- H-AUD-004-001 a 003 abiertos; H-AUD-037-007 mantiene ampliación; AUG-059/AUG-060 pendientes; AUG-050 ampliada; VAL-08/12/15 pendientes. Sin hallazgos/tareas nuevos ni duplicados.
+- No se ejecutaron navegador, dataset VIN, Node/lint, motor diferencial, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia, dos usuarios, deployments ni E2/E3. No se modificó código ni datos productivos.
+- Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

@@ -3907,3 +3907,50 @@ No se ejecutaron navegador, cuota/evicción real de localStorage, FileReader rea
 No se modificaron código, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
 
 **Siguiente unidad:** continuar según el orden del plan, conservando pendientes las validaciones funcionales/integración de AUD-T-003.
+
+
+## 101. Continuidad incremental — AUD-T-004: VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial
+
+**Sesión:** AUD-20261109-S151  
+**Checkpoint:** AUD-CP-0150  
+**E1 histórica:** 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 (AUD-20261107-S022 / AUD-CP-0022)  
+**Revalidación anterior:** AUD-20261108-S129 / AUD-CP-0128; HEAD e5f65c485c1193f75c0354884fe80e6c6c2f23f6  
+**HEAD inicial de esta sesión:** f81212ec0d7ef16fea61d4f7cdfbb72617b84744  
+**Árbol del HEAD inicial:** 1e181e2feae98db9668e9904e46dbb9e190beeb3  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-004-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+
+### Alcance y continuidad
+Se conserva el alcance aprobado: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md.
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base idéntico a E1 y ausencia de divergencia. El diff global enumera exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los nueve archivos funcionales/técnicos del alcance aparece en el diff.
+
+Los nueve archivos conservan SHA idénticos a E1:
+- `VinDifferentialEngine.js` — `7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4`
+- `navigation.js` — `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `ui.js` — `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `add_cortes.html` — `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- `Services/write.js` — `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- `Services/admin.js` — `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- `Services/catalog.js` — `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `api-config.js` — `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `Spreadsheet/GPSpedia_DB_columnas.md` — `21e353fd74ad97496de4ff15677d03a3cf9b5f05`
+
+Desde la revalidación anterior CP-0128 (e5f65c485c1193f75c0354884fe80e6c6c2f23f6) hasta HEAD se registran 22 commits y únicamente cinco documentos de continuidad modificados: ChangesLogs.txt, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, checkpoint.md y contexto_personal.md. No hay deriva funcional desde la última revalidación.
+
+### Hallazgos, tareas y validaciones
+- H-AUD-004-001 permanece abierto: parseVinCollection() elimina slots vacíos antes de asociar VIN con versionesAplicables y mapVersionsWithVins() vuelve a recortar cinco caracteres de prefijos ya normalizados, desplazando o alterando la presentación por versión.
+- H-AUD-004-002 permanece abierto: el editor administrativo envía fieldName='vin', pero handleUpdateVehicleField() no resuelve ese campo dinámico mediante el encabezado de la colección, por lo que el control puede no persistir.
+- H-AUD-004-003 permanece abierto: los puntos de entrada de VIN no aplican de forma autoritativa el máximo de 18 caracteres en backend y pueden ignorar silenciosamente valores demasiado cortos en vez de rechazarlos explícitamente.
+- H-AUD-037-007 mantiene su ampliación relacionada con resolución de variantes VIN, ambigüedad y criterios de coincidencia. No se duplica ese hallazgo.
+- AUG-059 y AUG-060 continúan pendientes. AUG-050 conserva los criterios ampliados del motor diferencial. VAL-08, VAL-12 y VAL-15 permanecen pendientes de ejecución funcional/integración.
+- No se crean hallazgos, tareas o validaciones duplicados; no se cierran IDs ni se modifican prioridades o estados.
+
+### Verificaciones y límites
+Se verificaron HEAD de ambas ramas, ascendencia/merge-base E1→HEAD, diff global, continuidad desde CP-0128 y SHA de los nueve archivos del alcance. La rama base permanece exactamente en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+No se ejecutaron navegador, dataset VIN real, Node/lint, pruebas del motor diferencial, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas con dos usuarios, deployments ni E2/E3. La continuidad Git confirma que los nueve archivos no cambiaron desde E1; no certifica persistencia VIN, integridad de slots, límites de entrada ni identificación correcta de variantes en producción.
+
+No se modificaron código, esquema, endpoints, contratos, configuración, permisos, assets, credenciales, datos productivos, Drive o Spreadsheet. Sin migración, merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales; continuar mediante revalidación de continuidad E1.
