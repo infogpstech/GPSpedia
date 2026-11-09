@@ -164,3 +164,16 @@ Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, I
 
 ADENDA AUG-007 — Revocación administrativa resiliente
 handleResetUserSessions() invalida primero todos los tokens de la cuenta destino antes de limpiar filas. Si una eliminación falla, informa invalidatedSessions/cleanupPending y las filas remanentes quedan sin token utilizable.
+
+
+================================================================================
+AUG-008 — Coordinación de validación y sincronización entre pestañas — 2026-11-09
+- Se sustituyó el bloqueo no atómico en localStorage por Web Locks API con exclusión compartida entre pestañas y timeout de espera.
+- La petición validateSession ahora admite AbortSignal; auth.js cancela tras ocho segundos y libera el lock al terminar la operación.
+- Se agregó marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token para evitar validaciones secuenciales redundantes. No es una fuente de autorización.
+- checkSession resuelve la interfaz sin dejar el splash bloqueado y espera la validación coordinada; las respuestas solo afectan la sesión si el userId/token siguen coincidiendo.
+- logout es token-aware y no puede cerrar una sesión posterior por una respuesta obsoleta. handleLoginSuccess evita reescribir una sesión más reciente durante el arranque.
+- Se propagan cambios del almacenamiento compartido: auth.js reconcilia pestañas; users.html y add_cortes.html abandonan la página protegida al desaparecer/cambiar la sesión.
+- Validaciones locales: sintaxis 4/4 PASS; coordinación 2 contextos/1 llamada PASS; respuesta obsoleta A frente a B PASS; logout obsoleto PASS; propagación de cierre PASS.
+- No se ejecutaron pruebas de navegador, Apps Script real, deployments aislados ni endpoints operativos. Pruebas multi-pestaña reales pendientes en Beta.
+================================================================================

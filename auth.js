@@ -4,12 +4,16 @@
 // - Interact with the API module for backend communication.
 // - Update the user state.
 
-import { setState } from './state.js';
+import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, login as apiLogin, validateSession as apiValidateSession } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError } from './ui.js';
 import * as offline from './offline.js';
 
 const SESSION_KEY = 'gpsepedia_session';
+const VALIDATION_LOCK_NAME = 'gpsepedia-session-validation';
+const VALIDATION_CACHE_TTL_MS = 10000;
+const VALIDATION_TIMEOUT_MS = 8000;
+const LOCK_WAIT_TIMEOUT_MS = 5000;
 
 function addSessionCalendarMonthsUTC(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
 function getLocalSessionExpiry(user,now=new Date()){
@@ -19,13 +23,92 @@ function getLocalSessionExpiry(user,now=new Date()){
  if(now.getTime()>=addSessionCalendarMonthsUTC(activity,1).getTime())return'inactivity_expiration';
  return null;
 }
-function persistSessionValidation(user,result){
- if(!result||result.valid!==true)return;
- try{const latest=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(latest&&latest.SessionToken===user.SessionToken){latest.SessionCreatedAt=result.createdAt||latest.SessionCreatedAt;latest.SessionLastActivityAt=result.lastActivityAt||latest.SessionLastActivityAt;localStorage.setItem(SESSION_KEY,JSON.stringify(latest));}}catch(e){console.warn('No se pudo actualizar la vigencia local:',e.message);}
+function readStoredSession(){
+ try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(e){return null;}
 }
+function sameSession(a,b){
+ return Boolean(a&&b&&String(a.ID||a.id||'')===String(b.ID||b.id||'')&&a.SessionToken&&a.SessionToken===b.SessionToken);
+}
+function isCurrentSession(user){
+ return sameSession(readStoredSession(),user);
+}
+// Caché de coordinación, no es autorización: AUTH y los servicios siguen validando cada operación.
+function getRecentValidation(user){
+ const latest=readStoredSession();
+ const validatedAt=latest&&latest.SessionValidatedAt;
+ return sameSession(latest,user)&&Number.isFinite(validatedAt)&&
+  Date.now()-validatedAt>=0&&Date.now()-validatedAt<VALIDATION_CACHE_TTL_MS;
+}
+function persistSessionValidation(user,result){
+ if(!result||result.valid!==true||!isCurrentSession(user))return;
+ try{
+  const latest=readStoredSession();
+  if(!sameSession(latest,user))return;
+  latest.SessionCreatedAt=result.createdAt||latest.SessionCreatedAt;
+  latest.SessionLastActivityAt=result.lastActivityAt||latest.SessionLastActivityAt;
+  latest.SessionValidatedAt=Date.now();
+  localStorage.setItem(SESSION_KEY,JSON.stringify(latest));
+ }catch(e){console.warn('No se pudo actualizar la vigencia local:',e.message);}
+}
+async function validateSessionCoordinated(user){
+ const validate=async()=>{
+  if(!isCurrentSession(user))return{stale:true};
+  if(getRecentValidation(user))return{valid:true,cached:true};
+  const requestController=typeof AbortController!=='undefined'?new AbortController():null;
+  let timer=null,result;
+  try{
+   if(requestController){
+    timer=setTimeout(()=>requestController.abort(),VALIDATION_TIMEOUT_MS);
+    result=await apiValidateSession(user.ID||user.id,user.SessionToken,requestController.signal);
+   }else{
+    result=await Promise.race([
+     apiValidateSession(user.ID||user.id,user.SessionToken),
+     new Promise(resolve=>{timer=setTimeout(()=>resolve({validationTimeout:true}),VALIDATION_TIMEOUT_MS);})
+    ]);
+    if(result&&result.validationTimeout)return{timeout:true};
+   }
+  }catch(error){
+   if(requestController&&requestController.signal.aborted)return{timeout:true};
+   throw error;
+  }finally{if(timer)clearTimeout(timer);}
+  if(!isCurrentSession(user))return{stale:true,result};
+  if(result&&result.valid===true)persistSessionValidation(user,result);
+  return result;
+ };
+ if(!navigator.locks||typeof navigator.locks.request!=='function'||typeof AbortController==='undefined')return validate();
+ const controller=new AbortController();
+ let lockTimer=setTimeout(()=>controller.abort(),LOCK_WAIT_TIMEOUT_MS);
+ try{
+  return await navigator.locks.request(VALIDATION_LOCK_NAME,{mode:'exclusive',signal:controller.signal},async()=>{
+   clearTimeout(lockTimer);
+   return validate();
+  });
+ }catch(error){
+  if(error&&error.name==='AbortError')return{timeout:true};
+  throw error;
+ }finally{clearTimeout(lockTimer);}
+}
+function handleSessionStorageChange(event){
+ if(!event||event.key!==SESSION_KEY)return;
+ const current=getState().currentUser;
+ const latest=readStoredSession();
+ if(!latest){
+  if(current){
+   setState({currentUser:null});
+   showLoginScreen('La sesión se cerró en otra pestaña. Inicia sesión nuevamente.');
+  }
+  return;
+ }
+ if(current&&sameSession(current,latest)){
+  setState({currentUser:latest});
+  return;
+ }
+ checkSession().catch(error=>console.warn('No se pudo sincronizar la sesión entre pestañas:',error));
+}
+if(typeof window!=='undefined')window.addEventListener('storage',handleSessionStorageChange);
 
-function handleLoginSuccess(user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+function handleLoginSuccess(user, persist = true) {
+    if (persist) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setState({ currentUser: user });
     showApp(user); // Muestra la UI principal inmediatamente
 }
@@ -136,106 +219,95 @@ function processCatalogData(catalogData) {
 
 
 export async function checkSession() {
-    // Phase 3.2/3.3: Rehidratación inmediata al inicio (con protección de timeout)
+    // Rehidratar datos auxiliares sin bloquear el flujo de autenticación.
     try {
         const historyPromise = offline.getSearchHistory();
         const viewedPromise = offline.getViewedItems();
-
-        // Rehidratar inmediatamente pysData desde la caché local para 0ms de retardo
         try {
             const cachedPysRaw = localStorage.getItem('gpsepedia_pys_cache');
             if (cachedPysRaw) {
                 const parsedPys = JSON.parse(cachedPysRaw);
-                if (Array.isArray(parsedPys) && parsedPys.length > 0) {
-                    setState({ pysData: parsedPys });
-                }
+                if (Array.isArray(parsedPys) && parsedPys.length > 0) setState({ pysData: parsedPys });
             }
         } catch(e) {}
-
-        // No bloqueamos el arranque si estas operaciones fallan o tardan mucho
         Promise.all([historyPromise, viewedPromise]).then(([history, viewed]) => {
-            if (history || viewed) {
-                console.log("Rehidratando datos persistentes:", {
-                    historyCount: history?.length || 0,
-                    viewedCount: viewed?.length || 0
-                });
-                setState({
-                    searchHistory: history || [],
-                    viewedItems: viewed || []
-                });
-            }
+            if (history || viewed) setState({ searchHistory: history || [], viewedItems: viewed || [] });
         }).catch(e => console.warn("Error asíncrono cargando historial/vistos:", e));
-
     } catch (e) {
         console.warn("Error en el flujo de rehidratación:", e);
     }
 
-    const LOCK_KEY = 'session_validation_lock';
-    const LOCK_TIMEOUT = 5000; // 5 segundos, tiempo durante el cual una pestaña puede bloquear a otras.
-
-    const lock = localStorage.getItem(LOCK_KEY);
-    const now = Date.now();
-
-    // Si existe un bloqueo y no ha expirado, esta pestaña no intentará validar.
-    if (lock && (now - parseInt(lock, 10)) < LOCK_TIMEOUT) {
-        return;
-    }
-
-    // Adquirir el bloqueo para esta pestaña.
-    localStorage.setItem(LOCK_KEY, now.toString());
-
     const sessionData = localStorage.getItem(SESSION_KEY);
     if (!sessionData) {
+        setState({ currentUser: null });
         showLoginScreen();
-        localStorage.removeItem(LOCK_KEY); // Liberar bloqueo si no hay sesión
         return;
     }
 
+    let user;
     try {
-        const user = JSON.parse(sessionData);
-        const localExpiration=getLocalSessionExpiry(user);
-        if(localExpiration){
-            logout(localExpiration==='absolute_expiration'?'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.':'Tu sesión expiró por inactividad. Inicia sesión nuevamente.');
-            return;
-        }
-
-        // Phase 3.1: Acceso inmediato si hay sesión local (Non-blocking)
-        handleLoginSuccess(user);
-        loadInitialData();
-
-        // Validar en segundo plano
-        if (window.navigator && window.navigator.onLine !== false) {
-            apiValidateSession(user.ID, user.SessionToken).then(result => {
-                persistSessionValidation(user,result);
-                // Phase 3.3: Solo cerrar sesión si el servidor confirma EXPLICITAMENTE que es inválida.
-                if (result && result.valid === false) {
-                    console.warn("Sesión invalidada por el servidor.");
-                    logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-                }
-            }).catch(error => {
-                console.warn("Fallo validación de sesión (API inaccesible):", error.message);
-                const errorMsg = (error.message || "").toLowerCase();
-                const isExpirationError = errorMsg.includes('expirada') ||
-                                         errorMsg.includes('inválida') ||
-                                         errorMsg.includes('expired');
-
-                if (isExpirationError) {
-                    console.error("Cerrando sesión por error de validación explícito:", errorMsg);
-                    showGlobalError(`Error de sesión: ${error.message}`);
-                    logout();
-                }
-            });
-        }
-
+        user = JSON.parse(sessionData);
+        if (!user || !user.SessionToken || !(user.ID || user.id)) throw new Error('Datos de sesión incompletos.');
     } catch (error) {
-        console.error("Error crítico en checkSession:", error);
-        // Phase 3.5: Asegurar que el splash screen se oculte incluso en error crítico
-        const splash = document.getElementById('splash-screen');
-        if (splash) splash.style.display = 'none';
-        logout();
-    } finally {
-        // Liberar el bloqueo para que otras pestañas puedan validar si es necesario.
-        localStorage.removeItem(LOCK_KEY);
+        console.error("Sesión local inválida:", error);
+        if (localStorage.getItem(SESSION_KEY) !== sessionData) return checkSession();
+        localStorage.removeItem(SESSION_KEY);
+        setState({ currentUser: null });
+        showLoginScreen('La sesión local no es válida. Inicia sesión nuevamente.');
+        return;
+    }
+
+    const latestSession = readStoredSession();
+    if (!sameSession(latestSession, user)) {
+        if (latestSession) return checkSession();
+        setState({ currentUser: null });
+        showLoginScreen();
+        return;
+    }
+    user = latestSession;
+
+    const localExpiration = getLocalSessionExpiry(user);
+    if (localExpiration) {
+        logout(localExpiration === 'absolute_expiration'
+            ? 'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.'
+            : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
+        return;
+    }
+
+    // La interfaz no espera al lock remoto: cada pestaña alcanza un estado visual.
+    if (!isCurrentSession(user)) {
+        const latest = readStoredSession();
+        if (latest) return checkSession();
+        setState({ currentUser: null });
+        showLoginScreen();
+        return;
+    }
+    handleLoginSuccess(user, false);
+    loadInitialData();
+
+    if (window.navigator && window.navigator.onLine === false) return;
+
+    try {
+        const result = await validateSessionCoordinated(user);
+        if (result && result.stale) return;
+        if (result && result.valid === false) {
+            console.warn("Sesión invalidada por el servidor.");
+            logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.", user);
+        } else if (result && result.timeout) {
+            console.warn("La validación de sesión superó el tiempo máximo; se conserva el estado local y el backend seguirá validando cada operación.");
+        }
+    } catch (error) {
+        if (!isCurrentSession(user)) return;
+        console.warn("Fallo validación de sesión (API inaccesible):", error.message);
+        const errorMsg = (error.message || "").toLowerCase();
+        const isExpirationError = errorMsg.includes('expirada') ||
+                                  errorMsg.includes('inválida') ||
+                                  errorMsg.includes('expired');
+        if (isExpirationError) {
+            console.error("Cerrando sesión por error de validación explícito:", errorMsg);
+            showGlobalError(`Error de sesión: ${error.message}`);
+            logout(null, user);
+        }
     }
 }
 
@@ -253,27 +325,27 @@ export async function login(username, password) {
     }
 }
 
-export function logout(reason = null) {
-    let sessionToken = null;
-    try {
-        const sessionData = localStorage.getItem(SESSION_KEY);
-        if (sessionData) {
-            const user = JSON.parse(sessionData);
-            if (user && typeof user.SessionToken === 'string' && user.SessionToken.length > 0) {
-                sessionToken = user.SessionToken;
-            }
-        }
-    } catch (error) {
-        console.warn('No se pudo leer el token local para revocarlo:', error.message);
+export function logout(reason = null, expectedSession = null) {
+    const currentSession = readStoredSession();
+    const inMemorySession = getState().currentUser;
+    const guardedSession = expectedSession || inMemorySession;
+    if (guardedSession && !sameSession(currentSession, guardedSession)) {
+        console.info('Se ignoró un cierre de sesión obsoleto porque la sesión local ya cambió.');
+        return false;
     }
 
-    // Cerrar la sesión también en el estado en memoria; retirar localStorage
-    // por sí solo deja disponible el usuario/token para código que consulte state.
+    const session = guardedSession || currentSession;
+    const sessionToken = session && typeof session.SessionToken === 'string' ? session.SessionToken : null;
+
+    // Nunca borrar una sesión que haya sustituido a la que originó esta operación.
+    if (guardedSession && !isCurrentSession(guardedSession)) return false;
     setState({ currentUser: null });
-    localStorage.removeItem(SESSION_KEY);
+    if (!guardedSession || sameSession(readStoredSession(), guardedSession)) {
+        localStorage.removeItem(SESSION_KEY);
+    }
     showLoginScreen(reason);
 
-    if (!sessionToken) return;
+    if (!sessionToken) return true;
 
     routeAction('logout', { sessionToken })
         .then(result => {
@@ -284,7 +356,6 @@ export function logout(reason = null) {
                 }
                 return;
             }
-
             console.warn('La sesión local se cerró, pero AUTH no confirmó la revocación remota.');
             showGlobalError('Cierre local completado, pero no se pudo confirmar la revocación en el servidor. La revocación queda pendiente.');
         })
@@ -292,6 +363,7 @@ export function logout(reason = null) {
             console.warn('La sesión local se cerró; la revocación backend quedó pendiente:', error.message);
             showGlobalError('La sesión se cerró en este dispositivo, pero no se pudo confirmar su revocación en el servidor. Puede seguir activa en otros dispositivos.');
         });
+    return true;
 }
 
 /**

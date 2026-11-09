@@ -482,6 +482,19 @@
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('storage', event => {
+            if (event.key !== SESSION_KEY) return;
+            let latest = null;
+            try { latest = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (error) {}
+            const sameSession = latest &&
+                String(latest.ID || latest.id || '') === state.userId &&
+                latest.SessionToken === state.sessionToken;
+            if (!sameSession) {
+                state.userId = '';
+                state.sessionToken = '';
+                window.location.replace('index.html');
+            }
+        });
 
         // Expose to window for inline onclicks in navigation
         window.showPhase = showPhase;

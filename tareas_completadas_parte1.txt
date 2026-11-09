@@ -162,3 +162,15 @@ Validaciones locales: sintaxis PASS en 12 archivos; política calendario 8/8 PAS
 Limitaciones: no hay deployments aislados configurados según Services/Test/README.md; no se ejecutaron Apps Script real, endpoints live ni hojas productivas. La validación funcional/concurrente y la migración de columna F quedan en Beta.
 H-AUD-060 y H-AUD-061: RESUELTOS EN FUENTES.
 ================================================================================
+
+
+================================================================================
+AUG-008 — Coordinación de validación y sincronización entre pestañas
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; pruebas funcionales multi-pestaña diferidas a Beta.
+Problemas resueltos: lock localStorage no atómico/tempranamente liberado; retorno que podía dejar el splash sin transición; respuesta de validación A capaz de cerrar sesión B; falta de propagación del cierre entre pestañas.
+Implementación: Web Locks API con exclusión por origen, timeout de espera de cinco segundos y cancelación AbortSignal de la petición a los ocho segundos; marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token; comparación de sesión actual antes de mutar/cerrar; logout token-aware; eventos storage para sincronizar index.html, users.html y add_cortes.html.
+Archivos: auth.js, api-config.js, users.html y add_cortes.html.
+Pruebas locales: sintaxis 4/4 PASS; dos contextos y una sola llamada de validación PASS; respuesta tardía A no elimina/revoca B PASS; logout obsoleto no altera B PASS; evento de eliminación limpia estado local PASS.
+Limitaciones: no se ejecutaron pruebas de navegador real, Apps Script real, deployments aislados ni endpoints operativos. En navegadores sin Web Locks puede haber validaciones redundantes, sin confiar en localStorage como lock; el backend mantiene la autorización definitiva.
+H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES.
+================================================================================

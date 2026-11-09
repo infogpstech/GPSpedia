@@ -331,3 +331,27 @@ Estado: RESUELTO EN FUENTES; validación funcional y fallos parciales diferidos 
 
 ADENDA AUG-007 — Revocación administrativa resiliente (2026-11-09)
 handleResetUserSessions(), reservado a Desarrollador, ahora invalida primero todos los tokens de las sesiones destino y después elimina las filas en orden descendente. Si la eliminación de filas falla, devuelve cleanupPending e invalidatedSessions; las filas remanentes conservan tokens vacíos y no autorizan solicitudes. También intenta limpiar Users.SessionToken aun cuando la limpieza de filas quede pendiente.
+
+
+================================================================================
+RESOLUCIÓN EN FUENTES — AUG-008 / H-AUD-062 / H-AUD-063 — 2026-11-09
+Correcciones implementadas:
+- auth.js sustituye el lock localStorage no atómico por Web Locks API con nombre compartido, adquisición exclusiva y límite de espera de cinco segundos. La validación queda dentro de la promesa del lock y se libera al resolver o fallar.
+- api-config.js permite pasar AbortSignal a routeAction y validateSession. auth.js cancela la petición de validación tras ocho segundos para no dejar una operación de red huérfana reteniendo el lock.
+- La marca SessionValidatedAt, almacenada junto a la sesión local y válida diez segundos para el mismo userId/token, evita que pestañas en cola repitan la validación recién completada. Se documenta como optimización de coordinación, nunca como autorización; el backend continúa validando cada operación protegida.
+- checkSession no retorna por un lock local que deje el splash sin transición: presenta primero el estado de la sesión local y luego coordina la validación. Si el lock no se adquiere en cinco segundos, conserva el estado visual y registra el timeout; las acciones siguen sujetas al backend.
+- La respuesta de validación se compara con la sesión actualmente almacenada. logout acepta una sesión esperada y no limpia ni revoca otra sesión que haya sustituido a la original. handleLoginSuccess puede actualizar el estado sin reescribir una sesión leída antes de una carrera.
+- auth.js escucha cambios de gpsepedia_session y reconcilia el estado de cada pestaña. users.html y add_cortes.html redirigen a index.html si la sesión compartida desaparece o cambia de identidad/token; las actualizaciones del perfil con el mismo token no expulsan al usuario.
+Archivos funcionales: auth.js, api-config.js, users.html y add_cortes.html.
+Verificación local: sintaxis PASS en los cuatro archivos; simulación con dos contextos y Web Locks: una sola llamada de validación y la segunda pestaña reutiliza el resultado; respuesta inválida tardía de token A después de guardar token B: B permanece y no se solicita logout remoto; logout obsoleto A frente a B: rechazado; evento de eliminación de sesión: estado en memoria limpiado y pantalla de login mostrada.
+Limitaciones: no se ejecutaron pruebas en navegador real, Apps Script real, deployments aislados, endpoints operativos ni datos productivos. En navegadores sin Web Locks se ejecuta validación segura sin lock compartido; puede haber validaciones redundantes, pero no se asume atomicidad de localStorage. Las pruebas reales de pestañas y el comportamiento sin Web Locks quedan en Beta.
+Estado H-AUD-062/H-AUD-063: RESUELTOS EN FUENTES; verificación funcional multi-pestaña diferida a Beta.
+================================================================================
+
+
+CODE REVIEW FINAL — AUG-008 — 2026-11-09
+Revisión del diff contra los respaldos exactos previos a edición: PASS. auth.js contiene únicamente el reemplazo del lock localStorage, coordinación/timeout/caché de validación, reconciliación storage, protección de sesión esperada y el ajuste de arranque; api-config.js solo agrega requestOptions.signal y lo expone en validateSession; users.html y add_cortes.html solo agregan la reconciliación del evento storage. No se modificaron main.js, index.html, servicios Apps Script, deployments, endpoints ni hojas/datos.
+Comprobaciones de integridad: la clave session_validation_lock y su limpieza fueron retiradas; no se usa localStorage como lock; Web Locks mantiene el lock hasta que la promesa de validación resuelve/rechaza; el timeout aborta la petición cuando AbortController está disponible y limita la espera cuando no lo está; todas las rutas antiguas de routeAction mantienen sus tres argumentos compatibles; SessionValidatedAt es solo caché de coordinación y no autorización.
+Casos lógicos repetidos sobre la versión final: 1 validación compartida entre dos contextos; resultado obsoleto A no cierra B; logout manual de pestaña A no elimina B; evento de eliminación limpia estado; fallback sin AbortController retorna timeout. Todos PASS.
+Resultado: Code Review aprobado en alcance de fuentes. No se declara verificación funcional en navegador ni deployment.
+================================================================================

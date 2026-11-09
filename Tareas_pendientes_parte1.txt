@@ -1503,3 +1503,13 @@ Implementación: ActiveSessions.date se conserva como creación inmutable y se a
 Pruebas locales: política calendario 8/8 PASS; simulación de revocación selectiva PASS; sintaxis de todos los archivos de código afectados PASS. No se desplegaron servicios ni se llamaron endpoints operativos.
 H-AUD-060 y H-AUD-061: RESUELTOS EN FUENTES. Pruebas funcionales/concurrentes y migración de la hoja aislada agregadas a lista_beta.txt.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-008 — 2026-11-09
+Estado vigente: COMPLETADA EN FUENTES; validación funcional multi-pestaña diferida a Beta. Se conserva la definición histórica original y su adenda sin reescribirlas.
+Implementación: Web Locks API para validación exclusiva; timeout de espera de cinco segundos; AbortSignal de ocho segundos para cancelar la petición; marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token; protección token-aware contra respuestas obsoletas; sincronización por evento storage en auth.js, users.html y add_cortes.html.
+Archivos: auth.js, api-config.js, users.html y add_cortes.html.
+Pruebas locales: sintaxis 4/4 PASS; dos contextos concurrentes comparten una validación; token A obsoleto no cierra token B; logout obsoleto no modifica B; evento de eliminación sincroniza estado local.
+H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES. No se ejecutaron navegador real, Apps Script, deployments aislados ni endpoints operativos. Pruebas de dos o más pestañas, fallback sin Web Locks y revocación en otros dispositivos quedan en lista_beta.txt.
+================================================================================

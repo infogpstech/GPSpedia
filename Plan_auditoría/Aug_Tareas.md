@@ -73,3 +73,14 @@ ADENDA DE ESTADO — AUG-007 — 2026-11-09
 Política aprobada e implementada en fuentes: tres meses calendario absolutos y un mes calendario de inactividad. AUTH centraliza el registro de actividad, validación y revocación por cambio/restablecimiento de contraseña; USERS, ADMIN, FEEDBACK y WRITE aplican los límites. Restablecimiento administrativo de contraseña y cierre remoto de sesiones reservados a Desarrollador. Sintaxis y pruebas locales PASS; validación funcional aislada diferida a Beta.
 Siguiente tarea de la ola: AUG-008 — coordinación de validación y sincronización entre pestañas.
 ================================================================================
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-008 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación funcional multi-pestaña diferida a Beta.
+Alcance implementado: coordinación Web Locks; cancelación temporizada de validateSession; marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token; respuestas token-aware; sincronización de cambios de sesión en index.html, users.html y add_cortes.html.
+Archivos: auth.js, api-config.js, users.html y add_cortes.html.
+Verificación local: sintaxis 4/4 PASS; simulación de dos contextos con una sola validación PASS; respuesta obsoleta A no cierra B PASS; logout obsoleto no altera B PASS; propagación de cierre PASS.
+H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES. No se ejecutaron pruebas en navegador real, Apps Script ni deployments aislados. La prueba funcional multi-pestaña se registra en lista_beta.txt.
+Siguiente tarea de la ola: AUG-009 — validar el nombre de usuario en el backend.
+================================================================================

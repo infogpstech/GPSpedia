@@ -582,3 +582,48 @@ Este checkpoint final es el último documento actualizado antes del único commi
 
 ADENDA FINAL DE CODE REVIEW — AUG-007
 La revocación remota de sesiones por Desarrollador también invalida los tokens antes de borrar filas. Un fallo posterior de eliminación deja filas sin token, reporta cleanupPending e invalidatedSessions y no conserva sesiones utilizables.
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-008
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de trabajo confirmado: a91c94f5b1b4eddbeb42a3153551dfa9d88d9e8d
+Rama base: GPSpedia2.2.5
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-008 — coordinación de validación de sesión entre pestañas.
+Requisitos canónicos: Tareas_pendientes_parte1.txt, sección AUG-008 y adenda AUD-T-024; Plan_auditoría/Aug_Tareas.md confirma que es la siguiente tarea de la ola tras AUG-007.
+Alcance previsto para auditoría: auth.js, api-config.js, main.js, index.html, users.html y los módulos/servicios auxiliares que participen directamente en la validación, cierre o propagación de sesión. El alcance final de implementación se limitará a los archivos necesarios.
+Criterios: coordinar pestañas concurrentes sin asumir atomicidad de localStorage; cubrir toda la validación asíncrona; liberar estado en éxito, fallo y timeout; evitar validaciones duplicadas y bloqueos indefinidos; hacer que cada pestaña resuelva su estado visual aunque otra valide; una respuesta solo puede modificar/cerrar la sesión si sigue correspondiendo al mismo userId/token; respuestas obsoletas no deben borrar sesiones nuevas; probar dos o más pestañas.
+Restricciones: mantener validación autoritativa en servidor; señales entre pestañas solo coordinan UX y nunca sustituyen autorización backend. No tocar deployments, endpoints operativos ni hojas/datos productivos. Una sola confirmación de commit mediante Git Database API; únicamente GPSpedia2.2.5_work; no Contents API ni Git local.
+Riesgos iniciales a comprobar: lock localStorage no atómico; finally libera antes de terminar promesa de validación; retorno temprano puede dejar splash sin transición; logout no recibe token esperado y puede borrar sesión posterior; falta de propagación explícita de cierre/revocación a otras pestañas.
+Estado inicial: ramas verificadas; requisitos leídos; checkpoint inicial registrado antes de completar auditoría. No se ha modificado código.
+Siguiente acción: completar auditoría íntegra de los consumidores y productores de estado de sesión; registrar hallazgos en Auditoría.txt antes de implementar.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-008
+Fecha: 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación funcional multi-pestaña diferida a Beta.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado antes del commit: a91c94f5b1b4eddbeb42a3153551dfa9d88d9e8d
+Rama base: GPSpedia2.2.5
+HEAD base confirmado antes del commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+Tarea: AUG-008 — coordinación de validación y sincronización entre pestañas.
+Hallazgos: H-AUD-062 y H-AUD-063 resueltos en fuentes.
+Archivos funcionales modificados: auth.js, api-config.js, users.html y add_cortes.html.
+Documentación/trazabilidad modificada: Auditoría.txt, Tareas.txt, ChangesLogs.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt, lista_beta.txt, Plan_auditoría/Aug_Tareas.md y Plan_auditoría/Plan_Maestro_Implementacion.md.
+Implementación: Web Locks API con exclusión por origen cuando está disponible; espera máxima del lock de cinco segundos; validación con timeout de ocho segundos y AbortSignal; fallback temporizado sin asumir atomicidad de localStorage; marca SessionValidatedAt en la sesión local durante diez segundos para el mismo userId/token; respuestas obsoletas ignoradas; logout protegido por identidad/token esperado; eventos storage para reconciliar index.html y abandonar users.html/add_cortes.html cuando la sesión compartida se elimina o cambia.
+Respaldo exacto previo a edición (blob SHA): auth.js=858e44b01cb8847e8c73db67630f7ff3716b4378; api-config.js=acebb3ff7dac2467c16cb45f233cc0a29e688fe9; users.html=5c9598119e7b349189682e18fd1e6d481845af92; add_cortes.html=8a5e4bf51b3cd602224016a1267f478ce55ee329; Auditoría.txt=30912df69b29c8025a195a4cb5d32538848bd43c; Tareas.txt=37a4903942f2aa9c1ff74413b3d734437451f72f; ChangesLogs.txt=8f98d203b2c081f43cb32c8a0e99bdc9bb512239; Tareas_pendientes_parte1.txt=fef649495c2b1068dcbacc283e4a697b4a53a6bb; tareas_completadas_parte1.txt=b4886d0e45979acea9fd50e2e154d74ed6267bf1; lista_beta.txt=6120d7c1c46c29dd8f6a350b478229e48e363e88; Plan_auditoría/Aug_Tareas.md=196012b7292f6164f8454bc112c965a6980fe097; Plan_auditoría/Plan_Maestro_Implementacion.md=253a51588b3e8003772121b0028e358961db6531; checkpoint.md=654312c8fc71a51ee4f9f2096ade0b1bf5409f75.
+Checkpoint inicial preparado antes de la auditoría: blob 0d3867e25baaa372ce8aa8d3d1e044d55b47d3c9. Auditoría registrada antes de implementación en H-AUD-062/H-AUD-063.
+Verificación sintáctica: PASS en los cuatro archivos funcionales.
+Pruebas lógicas locales: dos contextos Web Locks comparten una sola validación y el segundo reutiliza SessionValidatedAt; respuesta inválida tardía A no elimina ni revoca B; logout obsoleto A no elimina B; evento storage de cierre limpia currentUser y muestra login; fallback sin AbortController retorna timeout. Todos PASS.
+Code Review: PASS; diff comparado contra los respaldos exactos; cambios limitados al alcance; las llamadas existentes a routeAction mantienen compatibilidad con los tres argumentos originales.
+Limitaciones: no se ejecutaron navegador real, Apps Script real, deployments aislados, endpoints operativos ni hojas/datos productivos. En navegadores sin Web Locks pueden existir validaciones redundantes; el backend conserva la autoridad de autorización. Pruebas multi-pestaña reales, revocación entre dispositivos y fallos de red se encuentran en lista_beta.txt.
+No modificados: rama base, Services/, deployments, endpoints operativos, datos productivos, main.js e index.html.
+Siguiente tarea: AUG-009 — validar el nombre de usuario en el backend, según la secuencia vigente.
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-008.
+================================================================================

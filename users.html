@@ -329,6 +329,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     currentUser = JSON.parse(sessionData);
+    window.addEventListener('storage', event => {
+        if (event.key !== SESSION_KEY) return;
+        let latest = null;
+        try { latest = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (error) {}
+        const sameToken = latest && currentUser &&
+            String(latest.ID || latest.id || '') === String(currentUser.ID || currentUser.id || '') &&
+            latest.SessionToken === currentUser.SessionToken;
+        if (!sameToken) {
+            currentUser = null;
+            window.location.replace('index.html');
+            return;
+        }
+        currentUser = latest;
+        displayProfile();
+    });
 
     // Aplicar modo oscuro si está activo
     if (localStorage.getItem('darkMode') === 'true') {

@@ -86,7 +86,7 @@ async function ensureSessionTouched_(token){
 }
 
 // 2. LÓGICA DE RUTEO CENTRAL
-export async function routeAction(action, payload = {}, serviceOverride = null) {
+export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);
     let targetUrl = API_ENDPOINTS[service];
@@ -100,7 +100,8 @@ export async function routeAction(action, payload = {}, serviceOverride = null) 
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action, payload }),
-            redirect: 'follow'
+            redirect: 'follow',
+            signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
         });
         httpStatus = response.status;
         if (!response.ok) {
@@ -138,8 +139,8 @@ export async function login(username, password) {
     return await routeAction('login', { username, password });
 }
 
-export async function validateSession(userId, sessionToken) {
-    return await routeAction('validateSession', { userId, sessionToken });
+export async function validateSession(userId, sessionToken, signal = null) {
+    return await routeAction('validateSession', { userId, sessionToken }, null, signal ? { signal } : {});
 }
 
 export async function fetchCatalogData() {

@@ -180,3 +180,13 @@ Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, I
 ACTUALIZACIÓN — AUG-007 — 2026-11-09
 Política aprobada e implementada en fuentes: tres meses calendario de vigencia absoluta y un mes calendario de inactividad. AUTH registra lastActivityAt, valida/toca sesiones y centraliza los cambios de contraseña; USERS, ADMIN, FEEDBACK y WRITE rechazan sesiones vencidas. Cambio propio y restablecimiento administrativo revocan todas las sesiones; el restablecimiento administrativo exige Desarrollador. Validación local de sintaxis, calendario y revocación PASS; pruebas funcionales aisladas diferidas a Beta.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — AUG-008 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; pruebas funcionales multi-pestaña diferidas a Beta.
+Alcance: coordinación de validación con Web Locks API, timeout/abort de la petición, marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token, protección token-aware ante respuestas obsoletas y propagación de cambios de gpsepedia_session a index.html, users.html y add_cortes.html.
+Archivos: auth.js, api-config.js, users.html y add_cortes.html.
+Verificación local: sintaxis 4/4 PASS; coordinación entre dos contextos 1/1 validación; respuesta A tardía no borra/revoca B; logout obsoleto no altera B; evento de cierre limpia estado local.
+H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES. No se realizaron pruebas en navegador real ni deployments/endpoints Apps Script; validar en Beta con dos o más pestañas y deployments aislados.
+================================================================================

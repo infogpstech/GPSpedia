@@ -139,3 +139,17 @@ Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, I
 - Probar llamadas autenticadas desde api-config.js, throttle de cinco minutos, errores de red, expiración y comportamiento offline/local.
 - Cambiar contraseña propia y restablecer contraseña de otra cuenta con Desarrollador; verificar revocación de todas las sesiones, rechazo de otros roles, prohibición de auto-restablecimiento administrativo, limpieza parcial y reintento.
 - No utilizar endpoints operativos ni datos productivos.
+
+
+================================================================================
+AUG-008 — Validación funcional multi-pestaña (solo deployments y datos aislados)
+- Abrir dos o más pestañas del mismo origen HTTPS con la misma sesión; iniciar validación simultánea y comprobar una sola llamada AUTH cuando Web Locks está disponible y la reutilización del marcador exitoso por las pestañas en espera.
+- Simular respuesta lenta, éxito, sesión inválida, error de red y timeout/AbortSignal; confirmar liberación del lock, ausencia de espera indefinida y transición visual de splash/login.
+- Cambiar de token A a token B mientras validateSession(A) está pendiente; resolver A como inválida y confirmar que B permanece en localStorage, no se revoca y no se elimina.
+- Cerrar sesión en una pestaña y comprobar que index.html, users.html y add_cortes.html en las demás pestañas reconcilian/abandonan el estado protegido.
+- Cambiar la contraseña propia desde users.html y comprobar que las otras pestañas abandonan la sesión compartida.
+- Actualizar el perfil manteniendo el mismo token y comprobar que las otras pestañas no expulsan al usuario.
+- Probar navegador sin navigator.locks: validación directa con timeout de petición cuando AbortController exista; puede haber solicitudes redundantes, pero ninguna respuesta obsoleta debe modificar otra sesión.
+- Revocar sesiones desde otro dispositivo/deployment: confirmar que las rutas backend rechazan la siguiente operación protegida; la sincronización local no sustituye esta validación.
+- No utilizar endpoints operativos, deployments de producción ni hojas/datos productivos.
+================================================================================

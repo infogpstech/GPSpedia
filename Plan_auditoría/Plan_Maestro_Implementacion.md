@@ -264,3 +264,9 @@ Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, I
 ADENDA DE PROGRESO — SEGURIDAD Y SESIONES — 2026-11-09
 AUG-007 queda COMPLETADA EN FUENTES con política aprobada de tres meses calendario absolutos y un mes calendario de inactividad. La validación temporal cubre AUTH, USERS, ADMIN, FEEDBACK y WRITE; cambio/restablecimiento de contraseña revoca sesiones. La validación funcional aislada permanece en Beta. Siguiente secuencia: AUG-008 (coordinación entre pestañas), después AUG-009–013 (validación de identidad y serialización USERS).
 ================================================================================
+
+
+================================================================================
+ADENDA DE PROGRESO — SEGURIDAD Y SESIONES — AUG-008 — 2026-11-09
+AUG-008 queda COMPLETADA EN FUENTES. La validación entre pestañas usa Web Locks API, cancelación temporizada de la petición, marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token y protección contra respuestas obsoletas. Los cambios de gpsepedia_session se propagan a las páginas index.html, users.html y add_cortes.html. H-AUD-062/H-AUD-063 resueltos en fuentes. La validación funcional real con dos o más pestañas y deployments aislados permanece en Beta. Siguiente secuencia: AUG-009–013 (validación de identidad y serialización USERS), respetando sus dependencias.
+================================================================================
