@@ -1251,3 +1251,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-005-001 a 008 abiertos; AUG-061 a 064 pendientes; adendas AUG-043/AUG-050/AUG-057; H-AUD-005-008/VAL-17 transferidos a AUD-T-007. VAL-03/09/14/16 pendientes.
 - No se ejecutaron navegador, XSS dinámico, FileReader, concurrencia, HTTP, Apps Script, Drive/Spreadsheet, YouTube, móvil/PWA, accesibilidad ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+
+
+## Continuidad de auditoría — AUD-T-006 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S131 / AUD-CP-0130; rama GPSpedia2.2.5_work, HEAD inicial 23bdafc8a0414d6b60cea177a3a51183e19f6e99; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8; 107 commits posteriores; merge-base igual a E1; diff global de ocho documentos; seis archivos funcionales conservan SHA idénticos.
+- H-AUD-006-001 a 003 abiertos; AUG-065 a 067 pendientes; adenda AUG-064; dependencias AUD-T-009/AUD-T-038/AUD-T-007 conservadas.
+- No se ejecutaron navegador, móvil, PWA, CDN, IndexedDB real, mediciones, comparación visual, canvas ni pruebas de gestos. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.

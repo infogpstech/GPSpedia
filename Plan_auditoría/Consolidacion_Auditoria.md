@@ -1293,3 +1293,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, XSS dinámico, FileReader, concurrencia, HTTP, Apps Script, Drive/Spreadsheet, YouTube, móvil/PWA, accesibilidad ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+
+
+## 66. AUD-T-006 — continuidad E1 y revalidación de lightbox/carrusel
+- Sesión AUD-20261108-S131; checkpoint AUD-CP-0130; E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8; HEAD inicial 23bdafc8a0414d6b60cea177a3a51183e19f6e99; árbol 8bca058f0b2df7b8264d4ed6421fc072709a5d9b; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los seis archivos funcionales conservan SHA exactos de E1.
+- H-AUD-006-001 a 003 permanecen abiertos; AUG-065 a 067 pendientes; AUG-064 conserva adenda; dependencias AUD-T-009/AUD-T-038/AUD-T-007 conservadas.
+- No se ejecutaron navegador, móvil, PWA, CDN, IndexedDB real, mediciones, comparación visual, canvas ni pruebas de gestos.
+- Solo continuidad estática/documental; sin cambios funcionales, CSS, HTML, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.

@@ -3425,3 +3425,41 @@ Sin cambios funcionales, endpoints, contratos, configuración, credenciales, ass
 Commit documental único: docs(audit): verify AUD-T-005 continuity; parent 73ec786e667f59374037b4528fc767b8d3e18fdb.
 Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0130
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S131
+Tarea: AUD-T-006 — revalidación de continuidad E1 de lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 23bdafc8a0414d6b60cea177a3a51183e19f6e99 | árbol: 8bca058f0b2df7b8264d4ed6421fc072709a5d9b.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 5ab07e75513b05a51a4c62fbc731e451105eb1a8.
+Revalidación previa: AUD-20261108-S108 / AUD-CP-0107, HEAD cd3ad9621ae87507a28df91534718263feae0d82.
+Alcance: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+Estado inicial: H-AUD-006-001 a 003 abiertos; AUG-065 a AUG-067 pendientes; AUG-064 vigente; dependencias de caché y navegación en AUD-T-009/AUD-T-038/AUD-T-007.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni assets.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 061e095e3b4612c66f21ad0e531104629a7fafaa
+- Plan_auditoría/Consolidacion_Auditoria.md: a02cf5d13ea2f66ac45d59ae19ed59affab642f9
+- ChangesLogs.txt: 5d5653d2e3501908e55cc9b950eed231b51a6bab
+- contexto_personal.md: 8541945faf47a47abefc7921fd61105e8ec89807
+- checkpoint.md: 2784537c9b594cb1d927d4e9057fe6b086aef003
+Siguiente acción: comparar E1→HEAD, verificar SHA de los seis archivos, confirmar hallazgos/tareas/dependencias y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0130
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S131
+Tarea: AUD-T-006 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-006-001 a 003 abiertos; AUG-065 a 067 pendientes; AUG-064 conserva adenda.
+HEAD padre confirmado: 23bdafc8a0414d6b60cea177a3a51183e19f6e99; árbol inicial 8bca058f0b2df7b8264d4ed6421fc072709a5d9b. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los seis archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: variantes de resolución/caché sin separación; mix-blend-mode afecta imágenes opacas; swipe del carrusel ignora el eje vertical. H-AUD-006-001 a 003 permanecen abiertos.
+Tareas/relaciones: AUG-065 a AUG-067 pendientes; AUG-064 conserva adenda para updateSlide()/slideText.innerHTML; dependencias de caché y navegación permanecen en AUD-T-009/AUD-T-038/AUD-T-007. Sin IDs duplicados.
+Validaciones no ejecutadas: navegador, dispositivos móviles, PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación visual, canvas, gestos, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, CSS, HTML de aplicación, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-006 continuity; parent 23bdafc8a0414d6b60cea177a3a51183e19f6e99.
+Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+================================================================================

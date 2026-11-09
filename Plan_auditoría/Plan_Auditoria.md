@@ -3268,3 +3268,27 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 851c607a293a14e446223ba6ef3d6b9f67b50e01
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom (revalidación de continuidad E1).
+
+
+## 81. Continuidad verificada — AUD-T-006 (revalidación E1)
+Sesión AUD-20261108-S131 | Checkpoint AUD-CP-0130 | E1 histórica 5ab07e75513b05a51a4c62fbc731e451105eb1a8 | HEAD inicial 23bdafc8a0414d6b60cea177a3a51183e19f6e99 | árbol inicial 8bca058f0b2df7b8264d4ed6421fc072709a5d9b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S046 / AUD-CP-0045. Revalidación previa AUD-20261108-S108 / AUD-CP-0107, HEAD cd3ad9621ae87507a28df91534718263feae0d82.
+Comparación E1→HEAD: 107 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+Los seis archivos conservan SHA idénticos a E1:
+- lightbox.js 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+H-AUD-006-001 a H-AUD-006-003 permanecen abiertos: variantes de resolución/caché sin separación; mix-blend-mode afecta imágenes opacas; swipe del carrusel ignora el eje vertical.
+AUG-065 a AUG-067 continúan pendientes; AUG-064 conserva su adenda para updateSlide()/slideText.innerHTML. Se mantienen las dependencias de caché general y navegación en AUD-T-009/AUD-T-038 y AUD-T-007, sin duplicación.
+No se ejecutaron navegador, dispositivos móviles, PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación visual de imágenes, canvas ni pruebas de gestos. La continuidad Git no certifica comportamiento táctil/visual real.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 061e095e3b4612c66f21ad0e531104629a7fafaa
+- Plan_auditoría/Consolidacion_Auditoria.md: a02cf5d13ea2f66ac45d59ae19ed59affab642f9
+- ChangesLogs.txt: 5d5653d2e3501908e55cc9b950eed231b51a6bab
+- contexto_personal.md: 8541945faf47a47abefc7921fd61105e8ec89807
+- checkpoint.md: 2784537c9b594cb1d927d4e9057fe6b086aef003
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, CSS, HTML de aplicación, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación de continuidad E1).
