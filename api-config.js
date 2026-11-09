@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
 };
 
 export const ACTION_TO_SERVICE_MAP = {
-    'login': 'AUTH', 'validateSession': 'AUTH',
+    'login': 'AUTH', 'validateSession': 'AUTH', 'logout': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'USERS', 'changePassword': 'USERS', 'updateProfile': 'USERS', 'resetUserSessions': 'USERS',

@@ -1427,3 +1427,15 @@ Hallazgos: H-AUD-053 (sesiones huérfanas y validación AUTH incompleta); H-AUD-
 No se incorporó código. No se modificaron deployments, endpoints ni datos.
 Requisito para reanudar: confirmar fórmula/tipo de Users.ID en una copia aislada y definir estrategia segura para conservar identificadores y referencias.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-006
+Fecha: 2026-11-09.
+Estado operativo: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS.
+Hallazgo: H-AUD-055.
+Implementación: acción AUTH logout; revocación individual por token exacto; limpieza condicional de Users.SessionToken; respuesta idempotente; cierre local inmediato con aviso cuando la revocación remota no se confirma.
+Archivos: auth.js, api-config.js, Services/Auth.js y Services/Test/Auth.js. La copia de prueba conserva su Spreadsheet ID.
+Pruebas: 7 casos backend y 4 frontend con dobles locales PASS. No se realizaron pruebas en Apps Script real.
+Pendiente: parser sintáctico integral, Code Review independiente y deployments aislados para validación funcional. No promover a COMPLETADA hasta contar con evidencia.
+================================================================================

@@ -292,3 +292,48 @@ Archivos documentales del ciclo: Auditoría.txt, Tareas.txt, Tareas_pendientes_p
 Siguiente acción: confirmar en una copia aislada la fórmula/tipo de Users!A2 y la estabilidad de los IDs. Si son dependientes de fila, diseñar primero una estrategia de identificadores inmutables y revisar referencias; después reiniciar AUG-005 desde checkpoint y auditoría.
 Último documento de este ciclo: este checkpoint final, inmediatamente antes del único commit documental de estado bloqueado.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-006 (CIERRE DE SESIÓN CON REVOCACIÓN BACKEND)
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado antes de la tarea: bbd9992acd83063f480e56652a60a8223c764a68
+Rama base: GPSpedia2.2.5
+HEAD confirmado de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Protección técnica observada: protected=false tanto en la rama de trabajo como en la rama base; no se modificó la configuración de ramas.
+Tarea: AUG-006 — Implementar cierre de sesión con revocación backend.
+Alcance: acción AUTH que revoca únicamente el token invocante; limpiar Users.SessionToken solo si coincide con el token revocado; cerrar la sesión local sin esperar a la red e informar cuando la revocación remota no se confirme.
+Hallazgos de origen: H-AUD-002 y H-AUD-024-008; nuevo H-AUD-055. AUG-005 permanece BLOQUEADA por H-AUD-054 y no se alteró.
+Archivos candidatos confirmados: auth.js, Services/Auth.js, api-config.js y Services/Test/Auth.js. No se requiere modificar Services/users.js.
+Estado inicial: checkpoint inicial registrado antes de auditoría; no se había modificado código.
+Restricciones: no tocar GPSpedia2.2.5; un solo commit mediante Git Database API; respaldos exactos por SHA; cambios mínimos; no modificar Olds/Documentacion_Legacy/ ni el procedimiento; filtros rápidos siguen cancelados.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUG-006 (IMPLEMENTADA; VALIDACIONES PENDIENTES)
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: bbd9992acd83063f480e56652a60a8223c764a68
+Rama base: GPSpedia2.2.5
+HEAD base confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Protección técnica observada: protected=false en ambas ramas; no se modificó.
+Tarea: AUG-006 — Implementar cierre de sesión con revocación backend.
+Estado final: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; no se declara completada.
+Checkpoint inicial: blob e32dea3dfee3411a140750d871f197e843625658; su contenido se incorpora junto con este checkpoint final en el único commit de la tarea.
+Hallazgo: H-AUD-055 registrado en Auditoría.txt.
+Archivos modificados: auth.js, api-config.js, Services/Auth.js, Services/Test/Auth.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+Resumen: auth.logout() conserva el token en memoria, retira la sesión local y muestra login antes de iniciar la petición AUTH asíncrona. Los fallos remotos se informan como revocación pendiente. AUTH valida que el token sea string no vacío, usa ScriptLock, rechaza duplicados, elimina únicamente la fila exacta, limpia Users.SessionToken solo si coincide y responde idempotentemente cuando el token ya no existe. La copia de prueba conserva su Spreadsheet ID independiente. No se registran tokens en Logs.
+Respaldos exactos (blob SHA original): auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed; Services/Test/Auth.js f9e522cdc673d1028ad2f6979bc860a2eff752f7; Auditoría.txt b7315578c44bc620ec0881efb6d3971c64de569e; ChangesLogs.txt 3d34fae669f880f31229b86b8eab8cf406b3a1ed; Tareas.txt 0187c0d522ee9a01532cbf7db439bb55cbe7d9bc; Tareas_pendientes_parte1.txt e7deac1ca1a5296d355fe71a6bf788e41129ff67; checkpoint.md 9d39f5af5ae674dc7f91ee2d9bcf5da056d4f14d.
+Pruebas locales con dobles: backend 7/7 PASS; frontend 4/4 PASS. Casos cubiertos: revocación individual, sesiones múltiples, preservación del token más reciente, idempotencia, duplicados, fallo de limpieza secundaria, token ausente y desconexión.
+Sintaxis: Node.js v22 ejecutó los fragmentos de backend y frontend modificados dentro de los harnesses. No se ejecutó parser integral ESM de auth.js/api-config.js ni parser completo de Apps Script para ambos servicios; permanece pendiente.
+Validación funcional real: NO EJECUTADA. Services/Test/README.md declara que los proyectos AUTH/USERS aislados no están creados ni desplegados. No se llamaron endpoints productivos ni se modificaron datos.
+Code Review: revisión estática interna de cambios y efectos completada. Se verificó que la acción no confía en userId del cliente, no borra sesiones ajenas, no limpia un token más reciente y no persiste/loguea el token bearer. Revisión independiente formal pendiente.
+Riesgos/pendientes: validar sintaxis integral con parser apropiado; completar revisión independiente formal; crear/verificar deployments AUTH de prueba y ejecutar casos en Spreadsheet aislada; solo entonces reevaluar estado. AUG-005 continúa bloqueada por verificación de Users.ID.
+Filtros rápidos: continúan cancelados; no se reintrodujeron ni se tocaron.
+Siguiente acción: completar parser sintáctico integral y revisión independiente; después validar logout contra deployment AUTH aislado.
+Este checkpoint final es el último documento preparado antes del único commit.
+================================================================================

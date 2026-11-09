@@ -88,3 +88,16 @@ Descripción objetiva: la auditoría identificó que handleDeleteUser no elimina
 No se modificaron archivos de código, Services, endpoints, deployments, datos productivos, README, archivos legacy ni la rama base. Los blobs preliminares de código no fueron añadidos al árbol ni a la rama.
 Pruebas funcionales de Apps Script: no ejecutadas; Services/Test/README.md indica que los proyectos aislados aún no están creados/desplegados. No se declara implementación ni validación funcional completada.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — AUG-006 — CIERRE DE SESIÓN CON REVOCACIÓN BACKEND
+Archivos de código modificados:
+- auth.js: la función logout() captura el SessionToken antes de retirar la sesión local; presenta la pantalla de acceso inmediatamente y solicita la acción AUTH logout en segundo plano. Los errores remotos y la limpieza secundaria pendiente se comunican mediante showGlobalError.
+- api-config.js: se asignó la acción logout al servicio AUTH.
+- Services/Auth.js: doPost enruta logout; handleLogout localiza el token exacto bajo ScriptLock, elimina solo su fila, responde idempotentemente si ya no existe y limpia Users.SessionToken solo cuando coincide con el token revocado. Los tokens duplicados se rechazan sin mutaciones.
+- Services/Test/Auth.js: se sincronizó la lógica de AUTH conservando el Spreadsheet ID aislado y su comentario de configuración.
+No se modificaron Services/users.js, main.js, ui.js, endpoints, deployments ni datos productivos.
+Verificación local con dobles: 7 casos backend y 4 casos frontend PASS (revocación individual, sesiones múltiples, token más reciente preservado, idempotencia, duplicados, fallo de limpieza secundaria, token ausente y fallo de red). No equivale a prueba en Apps Script real.
+La revisión de sintaxis se limita a los fragmentos modificados ejecutados con Node.js v22. No se ejecutó un parser integral de todos los módulos/archivos afectados. Estado: implementación incorporada, pendiente de revisión sintáctica integral y validación funcional en deployments aislados AUTH.
+================================================================================

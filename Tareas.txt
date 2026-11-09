@@ -102,3 +102,15 @@ Decisión: no se incorporó ningún cambio de código. Los blobs preliminares de
 Pendiente obligatorio: verificar en una copia aislada la fórmula efectiva de Users!A2 y el tipo de los IDs existentes; si son dependientes de fila, diseñar y auditar IDs inmutables y referencias antes de reanudar. Después implementar revocación de todas las sesiones, validación AUTH y bloqueo de autodeleción, con pruebas reproducibles.
 Siguiente acción: confirmar la fórmula real de la columna Users.ID y la política de identificadores.
 ================================================================================
+
+
+================================================================================
+AUG-006 — CIERRE DE SESIÓN CON REVOCACIÓN BACKEND
+Fecha: 2026-11-09.
+Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; validación funcional en Apps Script pendiente.
+Hallazgo: H-AUD-055.
+Cambio: logout() elimina la sesión local de inmediato y solicita la revocación AUTH en segundo plano; AUTH elimina únicamente la fila del token invocante y limpia Users.SessionToken solo cuando coincide. La acción es idempotente y reporta revocación remota no confirmada.
+Archivos: auth.js, api-config.js, Services/Auth.js, Services/Test/Auth.js.
+Pruebas con dobles locales: 7 casos backend y 4 frontend PASS. No se ejecutaron pruebas contra deployments reales; Services/Test/README.md confirma que no están creados/desplegados.
+Pendiente: parser sintáctico integral de los módulos afectados, Code Review independiente y pruebas en deployments aislados AUTH; no marcar como completada hasta superar esos requisitos.
+================================================================================

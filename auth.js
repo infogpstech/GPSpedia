@@ -235,9 +235,41 @@ export async function login(username, password) {
 }
 
 export function logout(reason = null) {
+    let sessionToken = null;
+    try {
+        const sessionData = localStorage.getItem(SESSION_KEY);
+        if (sessionData) {
+            const user = JSON.parse(sessionData);
+            if (user && typeof user.SessionToken === 'string' && user.SessionToken.length > 0) {
+                sessionToken = user.SessionToken;
+            }
+        }
+    } catch (error) {
+        console.warn('No se pudo leer el token local para revocarlo:', error.message);
+    }
+
     localStorage.removeItem(SESSION_KEY);
-    // localStorage.removeItem(SESSION_ID_KEY); // This key is not used in the new architecture
     showLoginScreen(reason);
+
+    if (!sessionToken) return;
+
+    routeAction('logout', { sessionToken })
+        .then(result => {
+            if (result && (result.revoked === true || result.alreadyRevoked === true)) {
+                if (result.userSessionTokenMatched === true && result.userSessionTokenCleared !== true) {
+                    console.warn('La sesión fue revocada, pero no se pudo limpiar Users.SessionToken.');
+                    showGlobalError('La sesión fue revocada, pero no se pudo limpiar el token de referencia en Users. Requiere revisión.');
+                }
+                return;
+            }
+
+            console.warn('La sesión local se cerró, pero AUTH no confirmó la revocación remota.');
+            showGlobalError('Cierre local completado, pero no se pudo confirmar la revocación en el servidor. La revocación queda pendiente.');
+        })
+        .catch(error => {
+            console.warn('La sesión local se cerró; la revocación backend quedó pendiente:', error.message);
+            showGlobalError('La sesión se cerró en este dispositivo, pero no se pudo confirmar su revocación en el servidor. Puede seguir activa en otros dispositivos.');
+        });
 }
 
 /**

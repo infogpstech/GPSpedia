@@ -215,6 +215,9 @@ function doPost(e) {
             case 'validateSession':
                 response = handleValidateSession(request.payload);
                 break;
+            case 'logout':
+                response = handleLogout(request.payload);
+                break;
             default:
                 throw new Error(`Acción desconocida: ${request.action}`);
         }
@@ -397,4 +400,121 @@ function handleValidateSession(payload) {
         logToSheet('ERROR', `Error in handleValidateSession: ${error.message}`, { stack: error.stack });
         return { valid: false, error: error.message };
     }
+}
+
+function handleLogout(payload) {
+    const sessionToken = payload && payload.sessionToken;
+    if (typeof sessionToken !== 'string' || sessionToken.length === 0) {
+        throw new Error('Token de sesión requerido para cerrar la sesión.');
+    }
+
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    let userId = null;
+    let revoked = false;
+    let alreadyRevoked = false;
+    let userSessionTokenMatched = false;
+    let userSessionTokenCleared = false;
+    let cleanupError = null;
+
+    try {
+        lock.waitLock(10000);
+        lockAcquired = true;
+
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const activeSessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!activeSessionsSheet || !usersSheet) {
+            throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        }
+
+        const sessionsData = activeSessionsSheet.getDataRange().getValues();
+        const matchingSessions = [];
+        for (let i = 1; i < sessionsData.length; i++) {
+            if (sessionsData[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken) {
+                matchingSessions.push({
+                    rowIndex: i + 1,
+                    userId: sessionsData[i][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]
+                });
+            }
+        }
+        if (matchingSessions.length > 1) {
+            throw new Error('El token aparece en varias sesiones; no se modificó ninguna fila.');
+        }
+
+        const usersData = usersSheet.getDataRange().getValues();
+        if (matchingSessions.length === 1) {
+            userId = matchingSessions[0].userId;
+            const matchingUsers = [];
+            if (userId !== null && userId !== undefined && String(userId).trim() !== '') {
+                for (let i = 1; i < usersData.length; i++) {
+                    if (String(usersData[i][COLS_USERS.ID - 1]) === String(userId)) {
+                        matchingUsers.push({ rowIndex: i + 1, row: usersData[i] });
+                    }
+                }
+            }
+            if (matchingUsers.length > 1) {
+                throw new Error('El ID de usuario asociado a la sesión está duplicado; no se modificó ninguna fila.');
+            }
+
+            activeSessionsSheet.deleteRow(matchingSessions[0].rowIndex);
+            revoked = true;
+
+            if (matchingUsers.length === 1 &&
+                matchingUsers[0].row[COLS_USERS.SessionToken - 1] === sessionToken) {
+                userSessionTokenMatched = true;
+                try {
+                    usersSheet.getRange(matchingUsers[0].rowIndex, COLS_USERS.SessionToken).setValue('');
+                    userSessionTokenCleared = true;
+                } catch (error) {
+                    cleanupError = error;
+                }
+            }
+        } else {
+            alreadyRevoked = true;
+            const staleUserMatches = [];
+            for (let i = 1; i < usersData.length; i++) {
+                if (usersData[i][COLS_USERS.SessionToken - 1] === sessionToken) {
+                    staleUserMatches.push({ rowIndex: i + 1, row: usersData[i] });
+                }
+            }
+            if (staleUserMatches.length > 1) {
+                throw new Error('El token aparece en varias cuentas; no se modificó ninguna fila.');
+            }
+            if (staleUserMatches.length === 1) {
+                userId = staleUserMatches[0].row[COLS_USERS.ID - 1];
+                userSessionTokenMatched = true;
+                try {
+                    usersSheet.getRange(staleUserMatches[0].rowIndex, COLS_USERS.SessionToken).setValue('');
+                    userSessionTokenCleared = true;
+                } catch (error) {
+                    cleanupError = error;
+                }
+            }
+        }
+        SpreadsheetApp.flush();
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+
+    if (revoked) {
+        logToSheet('INFO', 'Session revoked through logout.', { userId, userSessionTokenCleared });
+    } else {
+        logToSheet('INFO', 'Logout requested for an already revoked session.', { userId, userSessionTokenCleared });
+    }
+    if (cleanupError) {
+        logToSheet('ERROR', 'Session revoked but Users.SessionToken cleanup failed.', {
+            userId,
+            error: cleanupError.message
+        });
+    }
+
+    return {
+        status: 'success',
+        revoked,
+        alreadyRevoked,
+        userSessionTokenMatched,
+        userSessionTokenCleared,
+        cleanupPending: Boolean(cleanupError)
+    };
 }
