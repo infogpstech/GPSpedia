@@ -1166,3 +1166,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script V8, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## 52. AUD-T-014 — continuidad E1 y revalidación de texto enriquecido
+- Sesión AUD-20261108-S117; checkpoint AUD-CP-0116; E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837; HEAD inicial acde0781b7592a73704dab30a58e4208bf29cb31; árbol 3ff9e037388e19db9bcf407474704b4e6f79c6ac; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los siete archivos funcionales del alcance conservan SHA exactos de E1.
+- H-AUD-014-001 a 003 permanecen abiertos: saneamiento backend autoritativo ausente; dos sinks sin sanitización; modo estricto/avanzado no conectado. AUG-095/AUG-096/AUG-097 pendientes; VAL-23 planificada.
+- No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia ni Service Worker en dispositivo.
+- Solo continuidad estática/documental; sin cambios funcionales, servicios, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.

@@ -2880,3 +2880,28 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 487cdc746f458e31c42088e87500c842735ad7cc
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación de continuidad E1).
+
+
+## 67. Continuidad verificada — AUD-T-014 (revalidación E1)
+Sesión AUD-20261108-S117 | Checkpoint AUD-CP-0116 | E1 histórica deefa3a8ceca4aae892c61d0e99fec73c3e44837 | HEAD inicial acde0781b7592a73704dab30a58e4208bf29cb31 | árbol inicial 3ff9e037388e19db9bcf407474704b4e6f79c6ac | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S032 / AUD-CP-0032. Revalidación previa incremental AUD-20261108-S095 / AUD-CP-0094, HEAD e8a533219006742d30cc7bddf506da777eb83319.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los siete archivos funcionales del alcance aparece en el diff.
+Los siete archivos conservan SHA idénticos a E1:
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5
+H-AUD-014-001 a H-AUD-014-003 permanecen abiertos: WRITE/FEEDBACK persisten HTML sin saneamiento autoritativo; dos sinks descriptivos en ui.js insertan contenido sin sanitizeHtmlContent; el modo gpsepedia_rich_text_mode estricto/avanzado no está conectado al editor/sanitizador.
+Se conservan los controles positivos estáticos: editor compartido, toolbar, listas UL/OL y marcadores, comportamiento de Enter, allow-list DOMParser, filtrado de atributos/URLs/estilos, normalización LF/CRLF y precache del módulo. Su presencia no certifica seguridad ni comportamiento real.
+AUG-095 a AUG-097 continúan pendientes y VAL-23 permanece planificada. No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia ni Service Worker en dispositivo. La continuidad Git no certifica E2/E3.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: f4c1442266eaf2732a4264833ec92103fdf1b5ce
+- Plan_auditoría/Consolidacion_Auditoria.md: 52923ee72dd68602fdd85c1d4578718cd12c1e0b
+- ChangesLogs.txt: fe5a1d12554ab43171f156e0de169e80446fbe2c
+- contexto_personal.md: c8b76c49590a35927905206e344acd932898b9eb
+- checkpoint.md: d44fda98cf9cdf66aa298dac5f50c47f50266f91
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.

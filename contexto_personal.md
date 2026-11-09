@@ -1139,3 +1139,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-013-001 a 010 abiertos o vinculados; AUG-092/AUG-093/AUG-094 pendientes; adendas AUG-043/AUG-068 y coordinación AUG-040 conservadas; VAL-22 planificada.
 - No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Drive/Spreadsheet, concurrencia, red/308, XSS dinámico ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## Continuidad de auditoría — AUD-T-014 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S117 / AUD-CP-0116; rama GPSpedia2.2.5_work, HEAD inicial acde0781b7592a73704dab30a58e4208bf29cb31; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; siete archivos funcionales conservan SHA idénticos.
+- H-AUD-014-001 a 003 abiertos; AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin hallazgos ni tareas duplicadas.
+- No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia ni Service Worker en dispositivo. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.
