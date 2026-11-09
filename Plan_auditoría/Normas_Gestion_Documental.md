@@ -26,3 +26,15 @@ Aplica a Auditoría, ChangesLogs, Tareas, checkpoints, contexto, LOGS, Aug_Tarea
 
 ## 5. Integridad y auditoría
 La migración mecánica conserva contenido y no constituye una auditoría. **No auditar auditorías** ni reabrir unidades AUD-T completadas. Antes de cada rotación se verifican HEAD, conteo, número siguiente, reconstrucción exacta, manifiesto y referencias. Si hay discrepancia, detenerse sin sobrescribir el original.
+
+
+
+## 6. Separación de registros de tareas y compuerta de sintaxis
+- Los pendientes se mantienen en Tareas_pendientes_parteNN.txt; los cierres demostrados en tareas_completadas_parteNN.txt; las funcionalidades pospuestas para Beta en lista_beta.txt.
+- Cada parte es autocontenida e incluye sus normas internas. Máximo 180,000 caracteres Unicode; rotar secuencialmente sin pérdida ni renumeración de IDs.
+- No mover una tarea al registro de completadas por aparecer como [X], «implementada», «revisada estáticamente» o «validada parcialmente» en un documento histórico.
+- Para implementaciones de código, registrar revisión sintáctica exitosa de todos los archivos afectados, con analizador apropiado, herramienta/versión y resultado. Una sintaxis no ejecutada o fallida mantiene la tarea abierta.
+- La sintaxis aprobada no reemplaza pruebas funcionales/de regresión, comparación con respaldo, Code Review, revisión de efectos colaterales ni verificación del commit único. Si alguna es obligatoria y está pendiente, no cerrar la tarea.
+- Para tareas documentales, declarar sintaxis de código N/A y validar estructura, integridad, referencias, límite de caracteres y revisión documental.
+- Las tareas Beta no se implementan antes de superar la compuerta de entrada descrita en lista_beta.txt.
+- Las partes legacy permanecen inmutables; los estados antiguos son antecedentes, no cierres vigentes sin evidencia.

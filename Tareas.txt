@@ -18,3 +18,16 @@ Validación: diez fuentes archivadas; partes numeradas y menores o iguales a 180
 No se ejecutaron pruebas funcionales ni operaciones en Apps Script, HTTP, Drive, Spreadsheet o deployments; no hubo cambios funcionales ni productivos.
 Siguiente: continuar Plan Maestro desde Fase 1, respetando dependencias y validaciones pendientes.
 ================================================================================
+
+
+================================================================================
+TAREA DOC-REG-2026-002 — SEPARACIÓN Y NORMALIZACIÓN DE REGISTROS DE TAREAS
+Fecha: 2026-11-09.
+Estado: COMPLETADA EN ALCANCE DOCUMENTAL.
+Entregables: Tareas_pendientes_parte1.txt a parte4.txt; tareas_completadas_parte1.txt; lista_beta.txt.
+Normas: Plan_auditoría/Normas_Gestion_Documental.md, sección 6.
+Hallazgos: H-AUD-044 resuelto documentalmente; H-AUD-045 y H-AUD-046 pendientes.
+Validación: 151 IDs AUG únicos; 49 registros legacy abiertos/parciales preservados para reconciliación; límites, referencias y normas internas verificados; ninguna tarea de código marcada completada sin evidencia sintáctica.
+No se modificó código, servicios, endpoints, datos productivos ni deployments.
+Siguiente: resolver DOC-README-2026-001/002; después continuar Fase 1 P0 del Plan Maestro.
+================================================================================

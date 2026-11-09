@@ -25,3 +25,12 @@ Consultar este archivo y `Proceso de desarollo.md` al comenzar cada tarea.
 - Diferenciar una opción oculta por permisos, una opción no conectada, un error de petición, una respuesta vacía y una diferencia entre código y despliegue.
 - Registrar las evidencias en `Auditoría.txt` y crear o actualizar la tarea correspondiente en `Tareas.txt`.
 - Tras la auditoría y cuando proceda la implementación, crear una rama nueva para el código y preparar un Pull Request hacia la rama base indicada.
+
+
+
+## Aclaración operativa vigente — 2026-11-09
+Esta sección prevalece sobre las instrucciones antiguas de este archivo que mencionan la rama `fix/pys-carousel-card-sizing-print-images` o la creación de una rama nueva para la tarea del historial de imágenes.
+- Rama de trabajo vigente: `GPSpedia2.2.5_work`.
+- Rama base: `GPSpedia2.2.5`; no escribir ni fusionar en ella sin autorización expresa.
+- No crear ramas nuevas para el flujo actual salvo instrucción expresa del usuario.
+- La tarea de historial/inventario de imágenes sigue pendiente de auditoría y reconciliación; iniciar en la rama vigente y seguir Proceso de desarollo.md, Protocolo_Ciclo_Continuo.md y el procedimiento Git Database API de contexto_personal.md.

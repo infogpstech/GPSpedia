@@ -13,3 +13,29 @@ Impacto: riesgo de truncamiento, sobrescritura y pérdida de trazabilidad.
 Corrección: preservar los originales en partes legacy numeradas, crear registros activos y establecer DOC-NORM-2026-001.
 Estado: RESUELTO DOCUMENTALMENTE EN DOC-MIG-2026-001; reconstrucción exacta documentada en el manifiesto.
 ================================================================================
+
+================================================================================
+H-AUD-044 — Desincronización del Plan Maestro y del contexto operativo
+Fecha: 2026-11-09. Origen: DOC-REG-2026-002; HEAD d18e9f1a1a356782322104e5b0425c931fd77a1e.
+Severidad: P2 — trazabilidad y gobierno documental.
+Evidencia: Plan_Maestro_Implementacion.md conserva HEAD inicial d747696416c6d0a67edb558e8ec21e04e1e7eadf, mientras GitHub confirma d18e9f1a1a356782322104e5b0425c931fd77a1e; el registro AUG incluye AUG-152 y 151 IDs únicos porque AUG-015 está ausente; Tareas.txt activo es un registro resumido y el historial se conserva en Olds/Documentacion_Legacy; el plan menciona VAL-01 a VAL-33 mientras AUG-152 define VAL-34. Contexto de trabajo.md conserva instrucciones de una rama antigua y crear una rama nueva, contradictorias con contexto_personal.md y la rama vigente.
+Impacto: riesgo de ejecutar tareas sobre referencias incorrectas, contar mal el backlog o duplicar trabajo.
+Corrección: adenda de sincronización al Plan Maestro; aclaración vigente en Contexto de trabajo.md; registros independientes de pendientes/completadas/Beta; referencias añadidas a los registros activos.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-REG-2026-002.
+================================================================================
+H-AUD-045 — README anuncia filtros rápidos de catálogo cancelados
+Fecha: 2026-11-09. Origen: DOC-REG-2026-002.
+Severidad: P2 — contradicción funcional/documental.
+Evidencia: README.md enumera una barra de filtros rápidos colapsable por categoría y año; el Plan Maestro y la instrucción operativa vigente declaran cancelada esa implementación y ordenan eliminar sus remanentes.
+Impacto: induce a esperar o reintroducir una funcionalidad retirada.
+Corrección requerida: revisar y actualizar README.md y referencias activas para declarar la cancelación; verificar que no se describan como disponibles. No modificar legacy ni reintroducir código.
+Estado: ABIERTO; tarea DOC-README-2026-001.
+================================================================================
+H-AUD-046 — README describe los microservicios como retirados pese a existir carpeta Services
+Fecha: 2026-11-09. Origen: DOC-REG-2026-002.
+Severidad: P1 — precisión documental y posible exposición de fuentes.
+Evidencia: README.md afirma que write.js, auth.js, catalog.js y feedback.js fueron retirados; el árbol actual de GPSpedia2.2.5_work contiene Services/ con archivos de esos servicios y utilidades.
+Impacto: la documentación no refleja el contenido real y no permite determinar si la presencia de fuentes corresponde a una política autorizada.
+Corrección requerida: verificar visibilidad, política de publicación y contenido esperado; después actualizar README o tomar medidas autorizadas. No eliminar archivos ni cambiar permisos por inferencia.
+Estado: ABIERTO; tarea DOC-README-2026-002.
+================================================================================

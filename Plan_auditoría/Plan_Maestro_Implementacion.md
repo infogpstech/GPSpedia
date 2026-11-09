@@ -147,3 +147,18 @@ Una sesión puede contener dos commits solo cuando corresponden a dos tareas dis
 ## 12. Gobierno documental y rotación
 
 Es obligatoria la norma `Plan_auditoría/Normas_Gestion_Documental.md`. Los registros son append-only: las entradas anteriores no se borran, editan, sustituyen ni reordenan; cada entrada nueva se agrega al final. El máximo es 180,000 caracteres Unicode por archivo. Antes de excederlo, rotar a `Olds/Documentacion_Legacy/` con sufijo `_legacy_parte_NNN`, crear el documento activo canónico y mantener un manifiesto verificable. Los documentos que ya excedan el límite se dividen en partes secuenciales sin pérdida. Las partes legacy son inmutables y no se reauditan.
+
+
+
+## 13. Adenda de sincronización documental — DOC-REG-2026-002
+**Fecha:** 2026-11-09. Esta adenda corrige el estado operativo sin borrar el registro histórico de las secciones anteriores.
+
+- HEAD de trabajo verificado al iniciar esta tarea: d18e9f1a1a356782322104e5b0425c931fd77a1e; su padre es 63fbee17260ce850d8dcaeae363288559c49715e. HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1. El valor d747696... de la cabecera original corresponde a una referencia anterior y no debe usarse como HEAD vigente.
+- El registro AUG contiene 151 IDs únicos en el rango AUG-001 a AUG-152; AUG-015 no aparece en la fuente y no se inventa ni renumera. AUG-152 está registrado y requiere VAL-34.
+- Los 185 identificadores H-AUD históricos se conservan en las partes legacy de Tareas; Tareas.txt activo funciona como registro reciente/índice y no contiene actualmente los 185 registros completos.
+- Auditoría.txt activo sí contiene H-AUD-043; su historial anterior se conserva en Olds/Documentacion_Legacy/Auditoría_legacy_parte_001.txt. La nota anterior sobre una lectura vacía del conector no describe el estado del archivo activo.
+- VAL-34 queda vinculado a AUG-152; las matrices VAL no se consideran ejecutadas por el mero hecho de estar documentadas.
+- Registros independientes: Tareas_pendientes_parte1.txt a parte4.txt; tareas_completadas_parte1.txt; lista_beta.txt. Cada archivo contiene sus normas internas y respeta el máximo de 180,000 caracteres Unicode.
+- Las tareas históricas marcadas [X] no se promueven automáticamente: requieren evidencia de revisión sintáctica y demás validaciones obligatorias.
+- H-AUD-044 se resuelve documentalmente. H-AUD-045 y H-AUD-046 quedan abiertos como tareas documentales independientes.
+- Los filtros rápidos permanecen cancelados y excluidos de la hoja de ruta Beta.

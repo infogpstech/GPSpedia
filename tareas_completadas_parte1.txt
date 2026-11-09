@@ -1,0 +1,56 @@
+GPSpedia — Registro de tareas completadas — Parte 1
+Fecha de corte: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+
+NORMAS INTERNAS
+1. Registro independiente y append-only. No borrar, reordenar ni sobrescribir cierres; las rectificaciones se agregan como adendas.
+2. Una tarea de implementación solo ingresa aquí después de revisar sintácticamente todos los archivos modificados con analizador apropiado y registrar herramienta, versión, archivos y resultado.
+3. La sintaxis aprobada es necesaria, pero no suficiente: deben completarse pruebas funcionales/de regresión aplicables, comparación post-edición, Code Review, revisión de efectos colaterales y verificación del commit único.
+4. No convertir «implementada», «revisada estáticamente», «validada parcialmente» o una marca histórica [X] en COMPLETADA por sí solas.
+5. Para tareas documentales, declarar sintaxis de código N/A y validar estructura, integridad, referencias, límite de caracteres y revisión documental.
+6. Máximo 180,000 caracteres Unicode; rotar sin pérdida conforme a Plan_auditoría/Normas_Gestion_Documental.md.
+
+## TAREAS QUE CUMPLEN LA COMPUERTA
+
+### DOC-MIG-2026-001 — Migración y rotación documental
+- Estado: COMPLETADA — DOCUMENTAL.
+- Evidencia: diez registros históricos archivados en Olds/Documentacion_Legacy; partes dentro del límite de 180,000 caracteres; reconstrucción exacta y manifiesto documentados.
+- Sintaxis de código: N/A; no se modificó código.
+- Commit verificado en GPSpedia2.2.5_work: d18e9f1a1a356782322104e5b0425c931fd77a1e; padre 63fbee17260ce850d8dcaeae363288559c49715e. Rama base conservada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+### DOC-REG-2026-002 — Separación de tareas y compuerta de sintaxis
+- Estado: COMPLETADA EN ALCANCE DOCUMENTAL, una vez verificada la publicación del commit de esta tarea.
+- Entregables: Tareas_pendientes_parte1.txt a parte4.txt; tareas_completadas_parte1.txt; lista_beta.txt; adendas a Normas, Plan Maestro, índice AUG y Contexto de trabajo.
+- Sintaxis de código: N/A; no se modificó código.
+- Validaciones documentales: conservación de 151 IDs AUG únicos y 49 registros legacy abiertos/parciales; límites de caracteres; rutas; normas internas; referencias; separación de pendientes, cierres y Beta.
+- SHA exacto de este cierre: consultar checkpoint.md y el historial de GPSpedia2.2.5_work.
+
+## AUDITORÍAS ESTÁTICAS COMPLETADAS (NO EQUIVALEN A IMPLEMENTACIÓN)
+- AUD-T-001 a AUD-T-039: unidades de auditoría E1 estática registradas como completadas según el Plan Maestro y la consolidación histórica.
+- Alcance limitado a E1. No certifican pruebas funcionales, seguridad runtime, accesibilidad, integración ni despliegues. Las matrices VAL correspondientes siguen pendientes cuando así se indica.
+
+## MARCAS HISTÓRICAS [X] NO PROMOVIDAS
+Las siguientes tareas aparecen marcadas [X] en Tareas_legacy, pero no se consideran cierres vigentes porque la fuente revisada no demuestra para cada implementación la revisión sintáctica exigida por la norma nueva. Deben contrastarse con commit/diff y evidencia antes de incorporarse a la sección de completadas:
+- TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL [X]
+- TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL [X]
+- TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML) [X]
+- TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') [X]
+- TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS [X]
+- TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS [X]
+- TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED [X]
+- TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES [X]
+- TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN [X]
+- TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS [X]
+- TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA [X]
+- TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS [X]
+- TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS [X]
+- TAREA 15: ~~BARRA DE FILTROS RÁPIDOS DE CATÁLOGO~~ Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
+- TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA ADAPTATIVO [X]
+- TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉCNICAS [X]
+- TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESEMPEÑO [X]
+- TAREA 19: VALIDACIONES DE INTEGRIDAD EN BACKEND Y BATERÍA EXHAUSTIVA DE PRUEBAS AUTOMATIZADAS [X]
+- TAREA 20: INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) Y COMPATIBILIDAD MULTIPLATAFORMA [X]
+- TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBUGGING Y CIERRE DE AUDITORÍA GLOBAL [X]
+
+Las tareas y requisitos completos permanecen intactos en Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt a parte_004.txt. Esta lista de marcas históricas no modifica ni invalida el archivo legacy; únicamente evita que un estado antiguo se use como cierre actual sin evidencia.

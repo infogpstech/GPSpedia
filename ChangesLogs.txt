@@ -14,3 +14,15 @@ Historial anterior preservado en `Olds/Documentacion_Legacy/`. No editar las par
 - Norma creada en Plan_auditoría/Normas_Gestion_Documental.md y vinculada desde Protocolo y Plan Maestro.
 - Sin cambios en código funcional, servicios, endpoints, configuración ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — DOC-REG-2026-002 — SEPARACIÓN DE TAREAS Y COMPUERTA DE SINTAXIS
+- Se crearon cuatro partes de tareas pendientes: backlog AUG completo y registros legacy abiertos/parciales en reconciliación.
+- Se creó tareas_completadas_parte1.txt; solo incluye cierres con evidencia y separa auditorías E1 de implementaciones.
+- Se creó lista_beta.txt con funcionalidades pospuestas y compuerta de entrada.
+- Se incorporó la regla de que ninguna implementación se marca COMPLETADA sin revisión sintáctica registrada y demás validaciones obligatorias.
+- Se sincronizó el Plan Maestro con HEAD real y registros AUG/VAL; se aclaró el contexto de rama.
+- Las partes legacy permanecen intactas; no hubo cambios de código ni pruebas funcionales/deployments.
+- H-AUD-044 resuelto documentalmente; H-AUD-045 y H-AUD-046 quedan abiertos.
+================================================================================

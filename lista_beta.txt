@@ -1,0 +1,93 @@
+GPSpedia — Lista de funcionalidades para la etapa Beta
+Fecha de elaboración: 2026-11-09
+Estado: PLANIFICACIÓN; no autoriza implementación anticipada.
+
+NORMAS INTERNAS
+1. Este documento contiene funcionalidades candidatas para implementar, integrar o validar una vez que GPSpedia alcance el estado Beta definido en el Plan Maestro.
+2. No sustituye Tareas_pendientes*. Las dependencias de seguridad, identidad, integridad, recuperación y despliegue deben resolverse antes.
+3. Cada funcionalidad deberá convertirse en una tarea con alcance, dependencias, criterios de aceptación y pruebas antes de implementarse.
+4. No marcar una funcionalidad como completada sin revisión sintáctica de todos los archivos modificados, pruebas funcionales aplicables, Code Review y verificación del commit.
+5. Mantener este listado append-only; las decisiones nuevas se agregan como adendas. Máximo 180,000 caracteres Unicode.
+6. Los filtros rápidos de catálogo están cancelados definitivamente y quedan excluidos de la Beta.
+
+## COMPUERTA DE ENTRADA A BETA
+No iniciar estas funcionalidades hasta que:
+- identidad, sesiones, autorización backend y XSS crítico estén corregidos y probados;
+- escrituras, concurrencia, idempotencia, respaldos y restauración tengan pruebas reproducibles;
+- los servicios requeridos tengan deployments identificados y verificados;
+- la suite de pruebas crítica y los procedimientos de rollback estén disponibles;
+- los hallazgos P0 bloqueantes estén cerrados con evidencia y la rama base tenga protección administrativa verificable.
+
+## FUNCIONALIDADES CANDIDATAS
+
+### BETA-01 — Inbox como centro de conversaciones bidireccionales
+Referencias: AUG-152; dependencias AUG-040, AUG-043, AUG-075–081, AUG-113–121 y AUG-147–149.
+- Mensajería individual Desarrollador↔usuario con conversaciones de varios mensajes.
+- Bandejas Recibidos, No leídos, Enviados y Archivados; búsqueda, paginación, lectura y contadores.
+- Plantillas editables de bienvenida; sin difusión masiva por defecto.
+- Participantes y permisos verificados en backend; idempotencia, rate limit, auditoría inmutable y renderizado seguro.
+- Layout adaptable, scroll independiente, teclado, foco, lectores de pantalla y estados offline/error.
+
+### BETA-02 — Historial e inventario integral de imágenes en Drive
+Referencias: AUG-026–038 y tareas legacy de gestión de imágenes.
+- Consultar historial de reemplazos, relaciones con vehículos y archivos; distinguir historial de inventario de imágenes sin uso.
+- Reanudar auditorías, deduplicar referencias, conservar ubicaciones manuales y requerir movimiento/eliminación explícitos.
+- Proteger operaciones concurrentes, snapshots, integridad Drive/Spreadsheet y recuperación ante fallos.
+- Mostrar diagnóstico por archivo y estado verificable; no purgar automáticamente.
+
+### BETA-03 — Registro vehicular y gestión avanzada de VIN
+Referencias: AUG-050, AUG-055–063, AUG-106–112 y AUG-132.
+- Completar el ciclo durable e idempotente del formulario de cortes.
+- Validar VIN y colecciones por versión; conservar posiciones, privacidad y compatibilidad de parsers.
+- Sincronizar disponibilidad de slots, vídeo y datos suplementarios; evitar sobrescrituras concurrentes.
+- Probar fallos de red, reintentos, caché y reconciliación.
+
+### BETA-04 — Catálogo, búsqueda global y experiencia PWA
+Referencias: AUG-048–052, AUG-065–074, AUG-098 y AUG-151.
+- Búsqueda global con clasificación inequívoca, deep links y estado explícito de catálogo.
+- IndexedDB, snapshots por usuario, miniaturas y caché con expiración y recuperación.
+- Instalación PWA multiplataforma y comportamiento offline verificable.
+- Navegación History API y overlays coherentes; sin filtros rápidos cancelados.
+
+### BETA-05 — Problemas y Soluciones, Tutoriales y ciclo multimedia
+Referencias: AUG-082–094, AUG-124, AUG-127, AUG-128 y AUG-131.
+- Integridad referencial de asociaciones PyS↔vehículos y navegación sin ciclos.
+- Esquema, identidad y permisos consistentes para Tutoriales.
+- Aprobación/rechazo de vídeos con validación de tipo, destino y transición de estado.
+- Carga, almacenamiento y recuperación de imágenes y vídeos con idempotencia.
+
+### BETA-06 — Contenido enriquecido seguro
+Referencias: AUG-064, AUG-095–097, AUG-111 y AUG-113–114.
+- Listas y saltos de línea con presentación consistente.
+- Sanitización autoritativa backend y frontend; allowlist explícita y eliminación de stored XSS.
+- Modos de edición estrictos/avanzados con compatibilidad y límites definidos.
+
+### BETA-07 — Ficha técnica imprimible y PDF
+Referencias: AUG-140–145 y tareas legacy de impresión.
+- Paginación basada en altura real, orden y prioridad técnica.
+- Espera de imágenes, QR, logos y recursos obligatorios; fallback ante fallos.
+- Márgenes, encabezado/pie, distribución adaptativa y conservación de proporciones.
+- Protección de enlaces no listados y pruebas reales de navegador, PDF y papel.
+
+### BETA-08 — Accesibilidad, temas y diseño responsive
+Referencias: AUG-100–105, AUG-148 y AUG-149.
+- Tokens de color y contraste en temas claro/oscuro.
+- Zoom, reflujo, teclado, foco, semántica de diálogos y pestañas.
+- Formularios, tablas y modales adaptables a móvil y escritorio.
+
+### BETA-09 — Administración, telemetría y mantenimiento
+Referencias: AUG-018–025, AUG-028–033, AUG-134–139 y AUG-150.
+- Restauración recuperable de DB/Drive y auditoría persistente de operaciones sensibles.
+- Health checks con estados reales y errores HTTP/red/aplicación diferenciados.
+- Inventario, terminal Drive restringida, telemetría y utilidades compartidas con contratos seguros.
+- Política anti-debugging explícita y documentada; no añadir bloqueos que perjudiquen accesibilidad o diagnóstico autorizado.
+
+### BETA-10 — Gobierno de contenido y políticas de publicación
+Referencias: AUG-045–047, AUG-135 y AUG-139.
+- Versionado de aceptación de términos y revisión legal/privacidad.
+- Política verificable de publicación de fuentes y microservicios.
+- Decisiones de protección de datos, acceso y retención.
+
+## EXCLUSIONES EXPLÍCITAS
+- Barra/filtros rápidos de catálogo: cancelados; no reintroducir.
+- Funcionalidades que dependan de autorización, datos o despliegues no validados: permanecen fuera de ejecución hasta superar la compuerta.
