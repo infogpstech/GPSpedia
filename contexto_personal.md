@@ -1040,3 +1040,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - 62 commits desde E1; el diff contiene únicamente ocho documentos. Los cinco archivos funcionales del alcance conservan SHA exactos de E1.
 - H-AUD-001 a 006 abiertos; AUG-005 a 010 vigentes; se conservan dependencias AUD-T-023, AUD-T-024, AUD-T-033 y AUD-T-036. No se duplican hallazgos ni tareas.
 - Próxima unidad secuencial: AUD-T-003. Las pruebas funcionales siguen pendientes.
+
+
+## Continuidad de auditoría — AUD-T-003
+- Revalidación E1 realizada en sesión AUD-20261108-S105 / checkpoint AUD-CP-0104 sobre GPSpedia2.2.5_work.
+- E1: 06f18e42383f5be448c378bc09ab534731cfbd6b; HEAD revalidado: 9ef25f8fc58432e2838703d0b45c723abe09eb1f; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- 84 commits desde E1; el diff contiene únicamente ocho documentos. Los cinco archivos funcionales/auxiliares del alcance conservan SHA exactos de E1.
+- H-AUD-003-001 a 004 abiertos; AUG-055 a 058 pendientes; AUG-043 conserva adenda; sin duplicación de referencias.
+- Próxima unidad secuencial: AUD-T-004. La validación funcional y de integración sigue pendiente.

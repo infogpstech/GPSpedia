@@ -1050,3 +1050,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron pruebas dinámicas, navegador, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. La E1 es estática y no certifica funcionamiento real.
 - Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-003, siguiendo la secuencia documental vigente.
+
+
+## 40. AUD-T-003 — continuidad E1 revalidada
+- Sesión AUD-20261108-S105; checkpoint AUD-CP-0104; E1 06f18e42383f5be448c378bc09ab534731cfbd6b; HEAD 9ef25f8fc58432e2838703d0b45c723abe09eb1f; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 84 commits; merge-base igual a E1; únicamente ocho documentos modificados. Ninguno de los cinco archivos funcionales/auxiliares del alcance aparece en el diff.
+- Los cinco archivos conservan SHA exactos de E1: add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161.
+- H-AUD-003-001 a 004 siguen abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; no se duplican tareas ni hallazgos relacionados.
+- No se ejecutaron pruebas dinámicas, navegador, FileReader, HTTP, Apps Script, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. La E1 es estática y no certifica funcionamiento real.
+- Sin cambios funcionales, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-004, mediante revalidación de continuidad.

@@ -2483,3 +2483,33 @@ No se ejecutaron navegador, HTTP, Apps Script V8, Spreadsheet, pruebas reales de
 Commit documental único: docs(audit): verify AUD-T-002 continuity; parent 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
 Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0104
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S105
+Tarea: AUD-T-003 — revalidación de continuidad E1 del registro de vehículos/cortes, add_cortes, idempotencia y resiliencia de red.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 9ef25f8fc58432e2838703d0b45c723abe09eb1f | Árbol: 4c653202730e9e432b4fe0658119182b5750f1ae
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación; GitHub informa protected=false).
+E1 histórica: 06f18e42383f5be448c378bc09ab534731cfbd6b | Árbol E1: df13476222de951f65c7d31559598d5fe12914a5.
+Revalidación previa: HEAD 3e6ee89273e209bfdfea7e7e9517a14efa5a9096 | Checkpoint AUD-CP-0064.
+Alcance: add_cortes.html, Services/write.js, Services/admin.js, api-config.js y youtubeUpload.js como contraste auxiliar.
+Estado inicial: E1 estática completada; H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; validación funcional/integración pendiente.
+Fase: checkpoint inicial preparado; revalidación de continuidad E1; sin autorización para cambiar archivos funcionales.
+Riesgos/dependencias: persistencia local y vínculo opId/payload; disponibilidad real de opciones; ciclo de vida de FileReader; serialización de recuperación; dependencias WRITE/ADMIN/Drive/Spreadsheet.
+Siguiente acción: comparar E1→HEAD, comprobar SHA de los cinco archivos funcionales/auxiliares, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0104
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S105
+Tarea: AUD-T-003 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; validación funcional/integración pendiente.
+HEAD padre confirmado: 9ef25f8fc58432e2838703d0b45c723abe09eb1f; árbol inicial 4c653202730e9e432b4fe0658119182b5750f1ae. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación 06f18e42383f5be448c378bc09ab534731cfbd6b→9ef25f8fc58432e2838703d0b45c723abe09eb1f: 84 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los cinco archivos funcionales/auxiliares del alcance mantienen SHA exactos de E1; no hay deriva funcional.
+Hallazgos revalidados: persistencia local no obligatoria y opId sin vínculo al payload; opciones no condicionadas a disponibilidad; FileReader con posible bloqueo de interfaz; recuperación automática no serializada. Los cuatro hallazgos permanecen abiertos.
+Tareas y validación: AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; no duplicar referencias previas. No se ejecutó validación funcional/integración.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos y tareas ya están registrados.
+No se ejecutaron navegador, cuota localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, deployments ni E2/E3. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: docs(audit): verify AUD-T-003 continuity; parent 9ef25f8fc58432e2838703d0b45c723abe09eb1f. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
+Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+================================================================================
