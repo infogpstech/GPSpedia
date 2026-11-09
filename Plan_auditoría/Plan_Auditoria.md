@@ -3090,3 +3090,26 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 06ab71ed0ca20eaa3d2b01b3b0341649d4dceda7
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, pruebas, README, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes (revalidación de continuidad E1).
+
+
+## 74. Continuidad verificada — AUD-T-021 (revalidación E1)
+Sesión AUD-20261108-S124 | Checkpoint AUD-CP-0123 | E1 histórica 3339694150823f8f8adca6ffbad6211c708a8960 | HEAD inicial 903a5bc773eab6992c1952b2f1f9b5fa45bba800 | árbol inicial d5c0298f213fcccb4ffdbfcfd730338d59bec704 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S061 / AUD-CP-0060. Revalidación ampliada previa AUD-20261108-S101 / AUD-CP-0100, HEAD 2f9b567ecf68d52665818b1e450e93795a03de58.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. No hay cambios en archivos funcionales, CSS, HTML de aplicación ni assets desde E1.
+Los cinco artefactos principales conservan SHA idénticos a E1:
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+H-AUD-021-001 a H-AUD-021-009 permanecen abiertos: márgenes/contrato de paginación; imagen y aviso Check Engine; espera de recursos/naturalWidth; paginación sin altura real; orden/prioridad de tarjetas sin imagen; exposición de URL de vídeo unlisted a api.qrserver.com; modo Vertical sin diferencia efectiva; interpolación HTML sin escape uniforme; referencia histórica incorrecta en fila maestra.
+AUG-140 a AUG-145 continúan pendientes; AUG-146 sigue pendiente por trazabilidad; AUG-096 conserva su adenda sobre sinks de impresión. VAL-30 permanece planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
+Los controles positivos documentados en E1 permanecen idénticos por SHA, pero la continuidad no certifica impresión/PDF, QR, recursos, paginación, responsive ni sanitización efectiva. No se ejecutaron navegador, impresión física, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: cb47365be819811ac7259a5bf7f8be4e03215c6a
+- Plan_auditoría/Consolidacion_Auditoria.md: 64f5b90d0da2d1637883df6fae27e4901586b747
+- ChangesLogs.txt: ba7a6eac654544766bd539026d57d4cd39eb4b76
+- contexto_personal.md: c9619cb6c352ad66cccb5c328f7ee2a73cbb50d5
+- checkpoint.md: d6311182c968de10d968da4156d780596b85f4ca
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo (revalidación de continuidad E1).

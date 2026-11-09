@@ -3161,3 +3161,41 @@ Sin cambios funcionales, servicios, endpoints, contratos, configuración, assets
 Commit documental único: docs(audit): verify AUD-T-020 continuity; parent 8b695738d2714d350a5897d0262262a612ff6ac0.
 Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0123
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S124
+Tarea: AUD-T-021 — revalidación de continuidad E1 de ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 903a5bc773eab6992c1952b2f1f9b5fa45bba800 | árbol: d5c0298f213fcccb4ffdbfcfd730338d59bec704.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 3339694150823f8f8adca6ffbad6211c708a8960.
+Revalidación ampliada previa: AUD-20261108-S101 / AUD-CP-0100, HEAD 2f9b567ecf68d52665818b1e450e93795a03de58.
+Alcance: ui.js, rich-text.js, style.css, index.html, README.md, assets referenciados y documentación de Tarea 2.2/Bloque 7.
+Estado inicial: H-AUD-021-001 a 009 abiertos; AUG-140 a AUG-146 pendientes; AUG-096 ampliada; VAL-30 planificada/no ejecutada.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni assets.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: cb47365be819811ac7259a5bf7f8be4e03215c6a
+- Plan_auditoría/Consolidacion_Auditoria.md: 64f5b90d0da2d1637883df6fae27e4901586b747
+- ChangesLogs.txt: ba7a6eac654544766bd539026d57d4cd39eb4b76
+- contexto_personal.md: c9619cb6c352ad66cccb5c328f7ee2a73cbb50d5
+- checkpoint.md: d6311182c968de10d968da4156d780596b85f4ca
+Siguiente acción: comparar E1→HEAD, verificar SHA de artefactos y ausencia de deriva funcional/assets, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0123
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S124
+Tarea: AUD-T-021 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-021-001 a 009 abiertos; AUG-140 a 145 pendientes; AUG-146 pendiente; AUG-096 ampliada; VAL-30 planificada/no ejecutada.
+HEAD padre confirmado: 903a5bc773eab6992c1952b2f1f9b5fa45bba800; árbol inicial d5c0298f213fcccb4ffdbfcfd730338d59bec704. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. No hay cambios funcionales, CSS, HTML de aplicación ni assets. Los cinco artefactos principales conservan SHA idénticos a E1.
+Hallazgos revalidados: márgenes/contrato de paginación; Check Engine; espera de recursos; cálculo de altura; orden de tarjetas sin imagen; exposición URL unlisted; modo Vertical; interpolación HTML; referencia histórica incorrecta. H-AUD-021-001 a 009 permanecen abiertos.
+Tareas/validaciones: AUG-140 a 145 pendientes; AUG-146 pendiente por trazabilidad; AUG-096 ampliada; VAL-30 planificada/no ejecutada. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, impresión física, PDF, QR/escaneo, Node/lint, móvil, red externa, Apps Script, Drive, Spreadsheet, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-021 continuity; parent 903a5bc773eab6992c1952b2f1f9b5fa45bba800.
+Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+================================================================================
