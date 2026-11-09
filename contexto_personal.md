@@ -1115,3 +1115,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-010-001 a 007 abiertos; AUG-075 a AUG-081 pendientes; H-TR/H-SUG históricos no se reabren. VAL-19/03/09 pendientes de ejecución real.
 - No se ejecutaron Apps Script, HTTP, navegador, FileReader, Drive, Spreadsheet, concurrencia, XSS, revocación de sesión ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## Continuidad de auditoría — AUD-T-011 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S114 / AUD-CP-0113; rama GPSpedia2.2.5_work, HEAD inicial 4aec4dd2d7582616fa7d9fee0a320b06310539b3; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; ocho archivos del alcance conservan SHA idénticos.
+- H-AUD-011-001 a 007 abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 conservadas. VAL-20/03/09/13/14 pendientes de ejecución real.
+- No se ejecutaron navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, XSS, cargas, concurrencia ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.

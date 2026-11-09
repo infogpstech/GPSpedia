@@ -2781,3 +2781,41 @@ Sin cambios funcionales, endpoints, contratos, configuración, permisos, datos p
 Commit documental único: docs(audit): verify AUD-T-010 continuity; parent 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7.
 Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0113
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S114
+Tarea: AUD-T-011 — revalidación de continuidad E1 del módulo Problemas y Soluciones (PyS), formularios y visualización.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 4aec4dd2d7582616fa7d9fee0a320b06310539b3 | árbol: 46e4171b8423a0bf4731517d7bafe586afa8477e.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: bba61f0cd16e5a35d6f709e048ebd31d8709a193.
+Revalidación previa: AUD-20261108-S092 / AUD-CP-0091, HEAD 4a9acfc54850f182817287c1626dd65082891a68.
+Alcance: index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css.
+Estado inicial: E1 estática completada; H-AUD-011-001 a 007 abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 vigentes; VAL-20/03/09/13/14 pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: e0fd445a318e697aa6cb2d8d7b381d5fbdb78a98
+- Plan_auditoría/Consolidacion_Auditoria.md: be522d9f14969b2fd9195cacff06a5505d45309f
+- ChangesLogs.txt: c74f2c1c7ca48b7ff0b33ca6ffdc1dc42a6f15df
+- contexto_personal.md: a34d63cf345decbd036050261dffaa77e70bebf3
+- checkpoint.md: 918cd2451c94f5ff04a9b8a39022057fac179db4
+Siguiente acción: comparar E1→HEAD, verificar SHA de los ocho archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0113
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S114
+Tarea: AUD-T-011 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-011-001 a 007 abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 conservadas; VAL-20/03/09/13/14 pendientes de ejecución real.
+HEAD padre confirmado: 4aec4dd2d7582616fa7d9fee0a320b06310539b3; árbol inicial 46e4171b8423a0bf4731517d7bafe586afa8477e. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los ocho archivos de código/esquema del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: stored XSS; acciones sin sesión/actor; imagen/Drive/MIME/ACL; ID/esquema/opId; límites/tipos/URL; overwrite de solución/prevención; lecturas PyS redundantes. H-AUD-011-001 a 007 permanecen abiertos.
+Tareas/relaciones: AUG-082 a AUG-087 pendientes; AUG-040/AUG-043/AUG-057 y relaciones H-AUD-035/H-AUD-037 conservadas. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, FileReader real, HTTP, Apps Script, Drive, Spreadsheet, XSS controlado, cargas, concurrencia, permisos/deployment, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-011 continuity; parent 4aec4dd2d7582616fa7d9fee0a320b06310539b3.
+Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+================================================================================

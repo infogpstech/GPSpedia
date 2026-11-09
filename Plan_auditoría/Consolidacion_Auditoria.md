@@ -1139,3 +1139,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - VAL-19, VAL-03 y VAL-09 pendientes. No se ejecutaron Apps Script, HTTP, navegador, FileReader, Drive, Spreadsheet, concurrencia, XSS, sesión revocada ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+
+
+## 49. AUD-T-011 — continuidad E1 y revalidación del módulo PyS
+- Sesión AUD-20261108-S114; checkpoint AUD-CP-0113; E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193; HEAD inicial 4aec4dd2d7582616fa7d9fee0a320b06310539b3; árbol 46e4171b8423a0bf4731517d7bafe586afa8477e; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los ocho archivos de código/esquema conservan SHA exactos de E1.
+- H-AUD-011-001 a 007 permanecen abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 y relaciones H-AUD-035/H-AUD-037 conservadas, sin duplicación.
+- VAL-20 y VAL-03/09/13/14 pendientes. No se ejecutaron navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, XSS, cargas, concurrencia ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
