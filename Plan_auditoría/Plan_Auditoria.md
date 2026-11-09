@@ -3518,3 +3518,27 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 4e8c00ae4c05e4cbcd05dd9bd70e0cfc61ad5f91
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los nueve hallazgos y las tareas/adendas ya constan. Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, movimientos, renombrados, merge o despliegue. Rama base intacta.
 Siguiente unidad secuencial: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación (respetar E1 y revalidaciones previas).
+
+
+## 90. Continuidad verificada — AUD-T-029 (revalidación E1)
+Sesión AUD-20261108-S140 | Checkpoint AUD-CP-0139 | E1 histórica 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9 | HEAD inicial 443d9e91e497344b041826b7afcdd47eb8740e3a | árbol inicial 8f6eccd4feb6abcbe84fe3116f578a5c112e70d7 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original AUD-20261107-S010/AUD-CP-0010; revalidación previa AUD-20261108-S074/AUD-CP-0073, HEAD 4745eb60f6d562c92ec2bc69f5d66beee0b8943e.
+Comparación E1→HEAD: 130 commits posteriores, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos de auditoría; ninguno de los cinco archivos funcionales del alcance aparece en el diff. Comparación CP-0073→HEAD: 66 commits posteriores y únicamente los mismos ocho documentos. No existe deriva funcional desde E1 ni desde la revalidación previa.
+Los cinco archivos conservan SHA idénticos a E1:
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+H-AUD-029-001 a H-AUD-029-008 permanecen abiertos por continuidad. Se conservan los riesgos registrados sobre integridad del cursor/snapshot, reanudación y duplicación, persistencia IndexedDB compartida entre pestañas, TTL/capacidad, límites/timeout, lectura de Spreadsheet y coordinación concurrente. No hay evidencia de corrección funcional en los artefactos del alcance.
+AUG-031, AUG-032 y AUG-033 continúan pendientes. Se mantienen las adendas existentes a AUG-028 y AUG-030. No se duplican las tareas de rendimiento del inventario AUD-T-028 ni las de coordinación general AUD-T-033/AUG-003.
+La igualdad SHA confirma que los cinco archivos no cambiaron desde E1; no acredita rendimiento, recuperación, aislamiento entre pestañas, consistencia de snapshot ni comportamiento real de Drive/Spreadsheet.
+No se ejecutaron pruebas E2–E5, HTTP, navegador/PWA, Apps Script V8, Drive, Spreadsheet, concurrencia, mediciones de tiempo/memoria, TTL real, reanudación ni deployments. La revalidación es estática y de identidad de contenido.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 5217e76380acd512919bbce83098387704b1d5e2
+- Plan_auditoría/Consolidacion_Auditoria.md: 0781cd15d7c0196448dee401eac9a8fa17ad4879
+- ChangesLogs.txt: 023f8975983ad82b792b1354030a5cf109d46e57
+- contexto_personal.md: 5127e2d123b71de180062f41b3025aa59047aafa
+- checkpoint.md: 81002aec565e5cf6226f3bc53b280040649a6b0b
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los ocho hallazgos y las tareas/adendas ya constan. Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente unidad secuencial: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones (respetar E1 y revalidaciones previas).

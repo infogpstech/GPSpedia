@@ -3773,3 +3773,41 @@ Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Conso
 Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, movimientos, renombrados, merge o despliegue. Rama base intacta.
 Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0139
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S140
+Tarea: AUD-T-029 — revalidación de continuidad E1 de auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 443d9e91e497344b041826b7afcdd47eb8740e3a | árbol: 8f6eccd4feb6abcbe84fe3116f578a5c112e70d7.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9 (AUD-20261107-S010 / AUD-CP-0010).
+Revalidación previa: AUD-20261108-S074 / AUD-CP-0073, HEAD 4745eb60f6d562c92ec2bc69f5d66beee0b8943e.
+Alcance: Services/admin.js, ui.js, offline.js, api-config.js e index.html.
+Estado inicial: H-AUD-029-001 a 008 abiertos; AUG-031/AUG-032/AUG-033 pendientes; adendas a AUG-028/AUG-030; rendimiento y coordinación conservan sus tareas relacionadas.
+Fase: revalidación estática de continuidad E1; sin autorización para modificar código/configuración ni ejecutar Drive/Spreadsheet.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 5217e76380acd512919bbce83098387704b1d5e2
+- Plan_auditoría/Consolidacion_Auditoria.md: 0781cd15d7c0196448dee401eac9a8fa17ad4879
+- ChangesLogs.txt: 023f8975983ad82b792b1354030a5cf109d46e57
+- contexto_personal.md: 5127e2d123b71de180062f41b3025aa59047aafa
+- checkpoint.md: 81002aec565e5cf6226f3bc53b280040649a6b0b
+Siguiente acción: comparar E1→HEAD y CP-0073→HEAD, verificar SHA de los cinco archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0139
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S140
+Tarea: AUD-T-029 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-029-001 a 008 abiertos; AUG-031/AUG-032/AUG-033 pendientes; adendas a AUG-028/AUG-030 conservadas; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: 443d9e91e497344b041826b7afcdd47eb8740e3a; árbol inicial 8f6eccd4feb6abcbe84fe3116f578a5c112e70d7. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 130 commits posteriores; merge-base igual a E1; diff exclusivamente ocho documentos. Los cinco archivos funcionales del alcance conservan SHA idénticos a E1.
+CP-0073→HEAD: 66 commits posteriores y únicamente ocho documentos; no hay deriva funcional posterior a la revalidación previa.
+Hallazgos: H-AUD-029-001 a 008 permanecen abiertos; no se crean hallazgos nuevos.
+Tareas/relaciones: AUG-031, AUG-032 y AUG-033 pendientes; adendas a AUG-028/AUG-030 conservadas; no duplicar rendimiento AUD-T-028 ni coordinación AUD-T-033/AUG-003.
+No ejecutadas: E2–E5, HTTP, navegador/PWA, Apps Script V8, Drive, Spreadsheet, concurrencia, mediciones de tiempo/memoria, TTL real, reanudación, deployments ni pruebas funcionales.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente unidad: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+================================================================================
