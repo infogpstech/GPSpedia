@@ -1397,3 +1397,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-036-001 a 005 permanecen abiertos; aceptación sin trazabilidad completa, fallo abierto ante ausencia de modal/storage, aviso de privacidad pendiente de revisión legal, logos fuera de precache y accesibilidad/History API incompletas. AUG-045/AUG-046/AUG-047 y VAL-10/VAL-17 siguen pendientes. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron navegador, lector, teclado, PWA offline, storage bloqueado, cambio de cuenta, aceptación real, revisión legal externa ni deployments. No se modificó código, assets ni datos productivos.
 - Siguiente unidad: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda (revalidación de continuidad E1).
+
+
+## Continuidad incremental — AUD-T-037 (2026-11-09)
+- Sesión AUD-20261109-S148 / checkpoint AUD-CP-0147. E1 513c9982407db2a1c9b357a418d0949786ec4141; revalidación previa CP-0081 con HEAD 2bab8f39e5fa3c3baaffd19681f91ce93a2a8ebf; HEAD inicial actual 8c65a3b05ef44972adbc3ade2b9962baeb64195d, árbol da718d741cbd12c4112b307f99cc82e0bcc8f00e. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 130 commits posteriores, merge-base igual a E1 y diff de ocho documentos. CP-0081→HEAD: 66 commits posteriores, merge-base igual a CP-0081 y diff de los mismos ocho documentos. Los diez archivos del alcance conservan SHA idénticos a E1.
+- H-AUD-037-001 a 012 permanecen abiertos; AUG-048/AUG-049/AUG-050/AUG-051/AUG-052 siguen pendientes. No hay hallazgos ni tareas nuevas, ni cierres ni cambios de prioridad.
+- No se ejecutaron navegador, IndexedDB real, cuota/evicción, PWA offline, búsqueda representativa, VIN ambiguos, HTTP, Apps Script/Spreadsheet, concurrencia ni benchmarks. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario.

@@ -3762,3 +3762,49 @@ Se verificaron HEAD de ambas ramas, ascendencia y merge-base E1→HEAD, comparac
 No se ejecutaron navegador, teclado, lector de pantalla, PWA offline, storage bloqueado, cambio de cuenta, aceptación real, revisión jurídica externa ni verificación de deployments. No se modificaron código, assets, endpoints, configuración, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda (revalidación de continuidad E1).
+
+
+## 98. Revalidación incremental de continuidad — AUD-T-037: catálogo, caché, sincronización y búsqueda
+
+**Sesión:** AUD-20261109-S148  
+**Checkpoint:** AUD-CP-0147  
+**E1 original:** 513c9982407db2a1c9b357a418d0949786ec4141 (AUD-20261107-S018 / AUD-CP-0018)  
+**Árbol E1:** 8b8fba9f8211dad51fd461d95b0a3e740c776940  
+**Revalidación anterior:** AUD-CP-0081 / HEAD 2bab8f39e5fa3c3baaffd19681f91ce93a2a8ebf / árbol 036aedb93bb198496d47b612b8781f0c7915b364  
+**HEAD inicial actual:** 8c65a3b05ef44972adbc3ade2b9962baeb64195d / árbol da718d741cbd12c4112b307f99cc82e0bcc8f00e  
+**HEAD de la rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-037-001 A 012 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE RENDIMIENTO PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la continuidad del catálogo, caché, sincronización incremental, búsqueda multi-sección, motor diferencial VIN, navegación/deep links, IndexedDB, miniaturas y Service Worker. Archivos incluidos: Services/catalog.js, auth.js, offline.js, ui.js, navigation.js, VinDifferentialEngine.js, api-config.js, main.js, service-worker.js e index.html.
+
+La comparación E1→HEAD confirma 130 commits posteriores, estado ahead, merge-base igual a E1 y sin divergencia. El diff global contiene exclusivamente ocho archivos documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. La comparación del checkpoint anterior CP-0081→HEAD confirma 66 commits posteriores, merge-base igual a CP-0081 y los mismos ocho archivos documentales. Ningún archivo funcional del alcance aparece en los diffs.
+
+SHA actuales verificados directamente en los árboles Git de E1 y HEAD; los diez coinciden:
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+
+### Revalidación de hallazgos y tareas
+- H-AUD-037-001 a H-AUD-037-012 permanecen abiertos; no hay cambios funcionales en el alcance que permitan cerrar o modificar los hallazgos.
+- Se mantienen los riesgos previamente documentados: snapshot/caché que conserva registros eliminados; sincronización que omite cambios de contenido con igual cardinalidad; autoapertura de sección incorrecta; búsqueda incompleta y sin normalización/ranking requeridos; carga concurrente de PyS sin promesa compartida; ambigüedad entre año y modelo numérico; resolución VIN ambigua y firmas persistidas no consumidas correctamente; transacciones IndexedDB, miniaturas y cuota/evicción; historial de búsqueda compartido entre cuentas; falta de timeout/terminación en carga y deep links; precache incompleto; y lecturas completas del catálogo backend sin estrategia incremental.
+- AUG-048 permanece pendiente para snapshot autoritativo y sincronización silenciosa.
+- AUG-049 permanece pendiente para búsqueda global, normalización, ranking, filtros y navegación por sección.
+- AUG-050 permanece pendiente para resolución e integración segura del motor diferencial VIN.
+- AUG-051 permanece pendiente para IndexedDB, miniaturas y privacidad/retención del historial local.
+- AUG-052 permanece pendiente para startup/deep links, timeout, Service Worker y carga backend.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md porque los hallazgos y tareas ya están registrados y no hay cambios de estado.
+
+### Validaciones y límites
+Se verificaron HEAD de ambas ramas, ascendencia y merge-base E1→HEAD, comparación CP-0081→HEAD, listas de archivos modificados, árbol E1 y árbol actual, y SHA de los diez archivos del alcance. La rama base permanece intacta. La continuidad Git demuestra que los archivos auditados no cambiaron desde E1; no certifica comportamiento real, sincronización, búsqueda, rendimiento ni funcionamiento offline.
+
+No se ejecutaron navegador, IndexedDB real, cuota/evicción, PWA offline, búsquedas con dataset representativo, VIN ambiguos, sincronización concurrente, Apps Script/Spreadsheet real, pruebas HTTP ni benchmarks. No se verificaron deployments publicados. No se modificaron código, endpoints, configuración, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, según el orden documentado del plan.
