@@ -248,6 +248,9 @@ export function logout(reason = null) {
         console.warn('No se pudo leer el token local para revocarlo:', error.message);
     }
 
+    // Cerrar la sesión también en el estado en memoria; retirar localStorage
+    // por sí solo deja disponible el usuario/token para código que consulte state.
+    setState({ currentUser: null });
     localStorage.removeItem(SESSION_KEY);
     showLoginScreen(reason);
 
