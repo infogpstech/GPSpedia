@@ -3189,3 +3189,26 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 9edc558a75bf4517708ed6badd9c911c2fd0d518
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y los seis hallazgos/tareas ya están registrados. Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red (revalidación de continuidad E1).
+
+
+## 78. Continuidad verificada — AUD-T-003 (revalidación E1)
+Sesión AUD-20261108-S128 | Checkpoint AUD-CP-0127 | E1 histórica 06f18e42383f5be448c378bc09ab534731cfbd6b | HEAD inicial 9669f93f03a38b1125da5a7bb34dce267f736240 | árbol inicial 565a6f9b6c93644682362906c4b8e963413d6a85 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261107-S021 / AUD-CP-0021. Revalidación previa AUD-20261108-S105 / AUD-CP-0104, HEAD 9ef25f8fc58432e2838703d0b45c723abe09eb1f.
+Comparación E1→HEAD: 107 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los cinco archivos funcionales/auxiliares del alcance aparece en el diff.
+Los cinco archivos conservan SHA idénticos a E1:
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+H-AUD-003-001 a H-AUD-003-004 permanecen abiertos: persistencia local no obligatoria y opId sin vínculo suficiente al payload; opciones de corte/vídeo no condicionadas a disponibilidad real; FileReader puede dejar la interfaz bloqueada; recuperación automática no serializada.
+AUG-055 a AUG-058 continúan pendientes; AUG-043 conserva su adenda. No se crean hallazgos ni tareas duplicados.
+No se ejecutaron navegador, cuota localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, recuperación de red, deployments ni E2/E3. La continuidad Git no certifica resiliencia funcional.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: bcb9c8e10e559884bb3b9223ce5a01b230ff8b4e
+- Plan_auditoría/Consolidacion_Auditoria.md: 4807157787150b5daf3882c15daa6a2b631d3062
+- ChangesLogs.txt: a4b1f7999effe325ccb820ec33c785ff9f8fc896
+- contexto_personal.md: 35c73a79337311fbde311149bbba42d84c8b9446
+- checkpoint.md: eefc262ad22a794936efdfcaf0aac64d00ae35c0
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial (revalidación de continuidad E1).

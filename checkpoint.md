@@ -3312,3 +3312,41 @@ Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configura
 Commit documental único: docs(audit): verify AUD-T-002 continuity; parent 9af478d990968bb45f94ef7fd5db42ffdc4abf4d.
 Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0127
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S128
+Tarea: AUD-T-003 — revalidación de continuidad E1 de registro de vehículos/cortes, add_cortes, idempotencia y resiliencia de red.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 9669f93f03a38b1125da5a7bb34dce267f736240 | árbol: 565a6f9b6c93644682362906c4b8e963413d6a85.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 06f18e42383f5be448c378bc09ab534731cfbd6b.
+Revalidación previa: AUD-20261108-S105 / AUD-CP-0104, HEAD 9ef25f8fc58432e2838703d0b45c723abe09eb1f.
+Alcance: add_cortes.html, Services/write.js, Services/admin.js, api-config.js y youtubeUpload.js (contraste auxiliar).
+Estado inicial: H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; validación funcional/integración pendiente.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: bcb9c8e10e559884bb3b9223ce5a01b230ff8b4e
+- Plan_auditoría/Consolidacion_Auditoria.md: 4807157787150b5daf3882c15daa6a2b631d3062
+- ChangesLogs.txt: a4b1f7999effe325ccb820ec33c785ff9f8fc896
+- contexto_personal.md: 35c73a79337311fbde311149bbba42d84c8b9446
+- checkpoint.md: eefc262ad22a794936efdfcaf0aac64d00ae35c0
+Siguiente acción: comparar E1→HEAD, verificar SHA de los cinco archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0127
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S128
+Tarea: AUD-T-003 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda; validación funcional/integración pendiente.
+HEAD padre confirmado: 9669f93f03a38b1125da5a7bb34dce267f736240; árbol inicial 565a6f9b6c93644682362906c4b8e963413d6a85. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los cinco archivos funcionales/auxiliares del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: persistencia local no obligatoria y opId sin vínculo suficiente al payload; opciones no condicionadas a disponibilidad real; FileReader con posible bloqueo de interfaz; recuperación automática no serializada. H-AUD-003-001 a 004 permanecen abiertos.
+Tareas/relaciones: AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, recuperación de red, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-003 continuity; parent 9669f93f03a38b1125da5a7bb34dce267f736240.
+Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
+================================================================================

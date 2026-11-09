@@ -1227,3 +1227,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-001 a 006 abiertos; AUG-005 a AUG-010 vigentes; dependencias AUD-T-023/024/033/036 conservadas. Validación funcional pendiente.
 - No se ejecutaron navegador, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## Continuidad de auditoría — AUD-T-003 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S128 / AUD-CP-0127; rama GPSpedia2.2.5_work, HEAD inicial 9669f93f03a38b1125da5a7bb34dce267f736240; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 06f18e42383f5be448c378bc09ab534731cfbd6b; 107 commits posteriores; merge-base igual a E1; diff global de ocho documentos; cinco archivos funcionales/auxiliares conservan SHA idénticos.
+- H-AUD-003-001 a 004 abiertos; AUG-055 a AUG-058 pendientes; adenda AUG-043 conservada.
+- No se ejecutaron navegador, localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, recuperación de red ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.

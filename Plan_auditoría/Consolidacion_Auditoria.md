@@ -1266,3 +1266,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, HTTP, Apps Script V8, Spreadsheet, pruebas reales de roles/sesiones, concurrencia, multi-pestaña, accesibilidad ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## 63. AUD-T-003 — continuidad E1 y revalidación de registro de cortes
+- Sesión AUD-20261108-S128; checkpoint AUD-CP-0127; E1 06f18e42383f5be448c378bc09ab534731cfbd6b; HEAD inicial 9669f93f03a38b1125da5a7bb34dce267f736240; árbol 565a6f9b6c93644682362906c4b8e963413d6a85; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los cinco archivos funcionales/auxiliares conservan SHA exactos de E1.
+- H-AUD-003-001 a 004 permanecen abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva adenda.
+- No se ejecutaron navegador, localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, recuperación de red ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial.
