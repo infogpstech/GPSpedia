@@ -1490,3 +1490,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Solo documentación; sin cambios funcionales, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Se conserva la regla de renombrado automático, pero no existe patrón normativo verificable; no se inventa ni se aplica.
 - Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-011 (2026-11-09)
+- Sesión AUD-20261109-S158 / checkpoint AUD-CP-0157. E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193; revalidación previa CP-0091/HEAD 4a9acfc54850f182817287c1626dd65082891a68; HEAD actual 87aba25883dda8ae615e31cdc0d1fa39a6659328; árbol 15b905263c8436f5de50d4c6f7a041f8c924af97; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; los ocho archivos funcionales/de esquema conservan SHA exactos de E1.
+- CP-0091→HEAD: 66 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-011-001 a 007 abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 y antecedentes H-AUD-035/H-AUD-037 conservados sin duplicación. VAL-20/03/09/13/14 pendientes.
+- No se ejecutaron navegador, FileReader real, HTTP, Apps Script, Drive, Spreadsheet, XSS, cargas, concurrencia, ACL, despliegues ni E2/E3. No se certifica seguridad o integración dinámica.
+- Solo documentación; sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Se conserva la instrucción de renombrado automático, pero no existe patrón normativo verificable; no se inventa ni se aplica.
+- Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.

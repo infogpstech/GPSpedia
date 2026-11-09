@@ -4579,3 +4579,51 @@ La instrucción de renombrado automático se conserva, pero no existe patrón no
 Commit documental único: pendiente de crear mediante Git Database API con parent 956eaf8068b7a713661805ae358a3dfaf538aa0b; update_ref force=false y expected_sha=956eaf8068b7a713661805ae358a3dfaf538aa0b. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0157
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S158
+Tarea: AUD-T-011 — revalidación incremental de continuidad E1 del módulo Problemas y Soluciones (PyS), formularios y visualización.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base protegida: GPSpedia2.2.5.
+HEAD inicial confirmado: 87aba25883dda8ae615e31cdc0d1fa39a6659328; árbol: 15b905263c8436f5de50d4c6f7a041f8c924af97; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: bba61f0cd16e5a35d6f709e048ebd31d8709a193 (AUD-20261108-S029 / AUD-CP-0029; auditoría estática completada); árbol E1 b44d845fdd0cb485cdefc04752ebafd1c340f355.
+Revalidación previa AUD-T-011: AUD-20261108-S092 / AUD-CP-0091; HEAD 4a9acfc54850f182817287c1626dd65082891a68; árbol 72ad854ee609966f8bda0ddc1ba3d8df68c468b4.
+Alcance: index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css.
+Estado inicial: H-AUD-011-001 a 007 abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 y antecedentes H-AUD-035/H-AUD-037 conservados; VAL-20/03/09/13/14 pendientes.
+Fase: revalidación estática/documental de continuidad. No se autoriza modificar archivos funcionales, assets, endpoints, contratos, configuración ni datos productivos.
+Preflight: E1 es ancestro de HEAD (129 commits); CP-0091 es ancestro de HEAD (66 commits); ambos diffs contienen ocho documentos; los ocho archivos del alcance conservan SHA E1; rama base sin cambios.
+Respaldos exactos previos a la actualización documental (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 8689022af2f0dd51bf40a6c6970f4e05c1aa00f7
+- Plan_auditoría/Consolidacion_Auditoria.md: b2b7d8c7113edbdf09b9831b64173c1f9b521269
+- ChangesLogs.txt: aeee36ceb617600809854a9c53c59b1292bc0ddc
+- contexto_personal.md: 7c26676e79cd520d5eede45c1f40f0c957303216
+- checkpoint.md: 1d598ddc51c4f4a485fd567bfddf49f5d91e0df7
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0157
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S158
+Tarea: AUD-T-011 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-011-001 A 007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+HEAD padre: 87aba25883dda8ae615e31cdc0d1fa39a6659328; árbol 15b905263c8436f5de50d4c6f7a041f8c924af97; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental (ocho archivos).
+CP-0091→HEAD: 66 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental (ocho archivos).
+Ocho archivos del alcance conservan SHA idénticos a E1:
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c
+- Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+Hallazgos: H-AUD-011-001 a 007 abiertos. AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 y antecedentes H-AUD-035/H-AUD-037 conservados; VAL-20/03/09/13/14 pendientes. Sin hallazgos nuevos, duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, árbol actual, compare E1→HEAD, compare CP-0091→HEAD, merge-base, diff global y SHA de los ocho archivos.
+No ejecutadas: navegador, FileReader real, HTTP, Apps Script, Drive, Spreadsheet, XSS controlado, cargas, concurrencia, ACL, despliegues ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque no hay hallazgos/tareas nuevas.
+Sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+La instrucción de renombrado automático se conserva, pero no existe patrón normativo verificable; no se infiere ni se aplica.
+Commit documental único: pendiente de crear mediante Git Database API con parent 87aba25883dda8ae615e31cdc0d1fa39a6659328; update_ref force=false y expected_sha=87aba25883dda8ae615e31cdc0d1fa39a6659328. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+================================================================================

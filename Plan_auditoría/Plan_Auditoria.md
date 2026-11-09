@@ -4279,3 +4279,59 @@ La revalidación es documental. No se modifican código, endpoints, contratos, c
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas consultadas no definen un patrón verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
 
 **Siguiente unidad:** AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación de continuidad E1).
+
+
+## 108. Continuidad incremental — AUD-T-011: módulo Problemas y Soluciones (PyS), formularios y visualización
+
+**Sesión:** AUD-20261109-S158  
+**Checkpoint:** AUD-CP-0157  
+**E1 original:** bba61f0cd16e5a35d6f709e048ebd31d8709a193 (AUD-20261108-S029 / AUD-CP-0029; E1 estática completada).  
+**Revalidación previa:** AUD-20261108-S092 / AUD-CP-0091; HEAD 4a9acfc54850f182817287c1626dd65082891a68; árbol 72ad854ee609966f8bda0ddc1ba3d8df68c468b4.  
+**HEAD inicial de esta sesión:** 87aba25883dda8ae615e31cdc0d1fa39a6659328; árbol 15b905263c8436f5de50d4c6f7a041f8c924af97.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-011-001 A 007 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad del módulo PyS: formularios de alta/edición, presentación de problemas, soluciones y prevención, colaboradores y vídeos, contenido enriquecido, adjuntos/imágenes, llamadas backend, esquema documentado de Spreadsheet y estilos asociados. Archivos de alcance y SHA comprobados:
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `api-config.js`: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `Services/feedback.js`: `3db189523f6cb849d33550f29971c0ec6f386b3a`
+- `rich-text.js`: `a7180766bb5097be510153edd851f4dfa939912c`
+- `Spreadsheet/GPSpedia_DB_columnas.md`: `21e353fd74ad97496de4ff15677d03a3cf9b5f05`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+
+Comparación E1→HEAD: 129 commits posteriores, cero commits detrás, estado ahead y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los ocho archivos del alcance aparece en el diff; todos conservan SHA idénticos a E1.
+
+Comparación desde la revalidación previa AUD-CP-0091 / 4a9acfc54850f182817287c1626dd65082891a68: 66 commits posteriores, cero detrás, merge-base idéntico al HEAD anterior y diff limitado a los mismos ocho documentos de auditoría. No existe deriva funcional en los ocho archivos del alcance desde E1 ni desde la revalidación previa.
+
+### Hallazgos, tareas y relaciones
+
+H-AUD-011-001 a H-AUD-011-007 permanecen abiertos, sin cambios de prioridad ni estado:
+1. Stored XSS potencial en valores dinámicos de título, colaborador y vídeo cuando se insertan en HTML sin escape/contexto seguro.
+2. Acciones backend del módulo sin validación suficiente de sesión e identidad/actor confiable.
+3. Persistencia y confirmación de imagen no suficientemente fiables; riesgo de indicar éxito sin verificar la persistencia efectiva.
+4. Flujo de carpeta, MIME, lectura y permisos de Drive con validaciones/manejo de errores insuficientes.
+5. Gestión de ID, esquema y clave de operación `opId` con garantías insuficientes de unicidad/consistencia.
+6. Límites, tipos de datos y URL de vídeo insuficientemente validados en servidor y formularios.
+7. Solución y prevención susceptibles de sobrescritura concurrente, además de consultas PyS redundantes.
+
+AUG-082 a AUG-087 continúan pendientes. Se conservan las adendas a AUG-040, AUG-043 y AUG-057. H-AUD-035-001/003/006 y H-AUD-037-005 permanecen como antecedentes relacionados, sin duplicar causas ni abrir registros nuevos. No se detectaron hallazgos nuevos ni cambios de estado.
+
+VAL-20 y las validaciones transversales VAL-03, VAL-09, VAL-13 y VAL-14 permanecen pendientes de ejecución real. No se presume su cumplimiento por continuidad de hashes.
+
+### Verificaciones y límites
+
+Se verificaron HEAD y árbol de la rama de trabajo, HEAD de la rama base, ascendencia y merge-base E1→HEAD, comparación AUD-CP-0091→HEAD, lista completa de archivos de ambos diffs y SHA exactos de los ocho archivos de alcance.
+
+No se ejecutaron navegador, FileReader real, HTTP, Apps Script, Drive, Spreadsheet, XSS controlado, carga de imágenes, concurrencia, pruebas de permisos/ACL, despliegues ni pruebas E2/E3. La continuidad Git no certifica seguridad dinámica, autenticación real, persistencia de archivos, consistencia de datos ni comportamiento multiusuario.
+
+### Integridad y alcance de cambios
+
+Esta sesión es una revalidación estática/documental. No se modifican código, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos, tareas y relaciones ya están registrados. Sin merge ni despliegue.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas no definen un patrón verificable. No se inventa una regla ni se renombran elementos.
+
+**Siguiente unidad:** AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo (revalidación de continuidad E1).

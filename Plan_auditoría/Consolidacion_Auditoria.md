@@ -1593,3 +1593,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Solo documentación. Sin cambios de código, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - La instrucción de renombrado automático se conserva; no existe patrón normativo verificable, por lo que no se infiere ni se renombra.
 - Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación E1).
+
+
+## 93. AUD-T-011 — continuidad E1 y revalidación incremental del módulo PyS
+- Sesión AUD-20261109-S158; checkpoint AUD-CP-0157; E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193; árbol E1 b44d845fdd0cb485cdefc04752ebafd1c340f355; revalidación previa CP-0091/HEAD 4a9acfc54850f182817287c1626dd65082891a68; HEAD actual 87aba25883dda8ae615e31cdc0d1fa39a6659328; árbol 15b905263c8436f5de50d4c6f7a041f8c924af97; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff exclusivamente de ocho documentos. Los ocho archivos funcionales/de esquema del alcance conservan SHA idénticos a E1.
+- CP-0091→HEAD: 66 commits posteriores, cero detrás, merge-base idéntico y diff limitado a ocho documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-011-001 a 007 permanecen abiertos: stored XSS en título/colaborador/vídeo; acciones sin sesión/actor validado; persistencia/confirmación de imagen no fiable; carpeta/MIME/lectura/permisos Drive; ID/esquema/opId; límites/tipos/URL insuficientes; solución/prevención sobrescribibles y consultas PyS redundantes.
+- AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 conservadas; H-AUD-035-001/003/006 y H-AUD-037-005 como antecedentes relacionados, sin duplicación. VAL-20/03/09/13/14 pendientes.
+- No se ejecutaron navegador, FileReader real, HTTP, Apps Script, Drive, Spreadsheet, XSS controlado, cargas, concurrencia, ACL, despliegues ni E2/E3. La continuidad Git no certifica seguridad ni integración dinámica.
+- Solo documentación. Sin cambios de código, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- La instrucción de renombrado automático se conserva; no existe patrón normativo verificable, por lo que no se infiere ni se aplica.
+- Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
