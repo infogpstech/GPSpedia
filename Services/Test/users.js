@@ -187,6 +187,39 @@ function handleGetUsers(payload) {
     return { status: 'success', users: users };
 }
 
+// Genera IDs permanentes secuenciales. La columna ID se escribe como valor,
+// nunca se copia ni se conserva su fórmula en las filas nuevas.
+function generateNextUserId_(userSheet) {
+    const lastRow = userSheet.getLastRow();
+    if (lastRow < 2) return 'USR-0001';
+
+    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
+    const rows = userSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const seen = new Set();
+    let maxSequence = 0;
+
+    rows.forEach(row => {
+        const id = String(row[COLS_USERS.ID - 1] === null || row[COLS_USERS.ID - 1] === undefined
+            ? '' : row[COLS_USERS.ID - 1]).trim();
+        const hasAccountData = row.slice(1).some(value =>
+            String(value === null || value === undefined ? '' : value).trim() !== ''
+        );
+        if (!hasAccountData && !id) return;
+        if (!hasAccountData) return;
+        if (!id) throw new Error('Existe una fila de usuario con datos pero sin ID. No se creó la cuenta.');
+        if (seen.has(id)) throw new Error('Se detectó un ID de usuario duplicado. No se creó la cuenta.');
+        seen.add(id);
+
+        const match = /^USR-(\\d{4,})$/i.exec(id);
+        if (match) maxSequence = Math.max(maxSequence, Number(match[1]));
+    });
+
+    if (!Number.isSafeInteger(maxSequence) || maxSequence >= Number.MAX_SAFE_INTEGER) {
+        throw new Error('Se agotó el rango disponible para generar IDs de usuario.');
+    }
+    return 'USR-' + String(maxSequence + 1).padStart(4, '0');
+}
+
 function handleCreateUser(payload) {
     const { newUser, sessionToken } = payload || {};
     if (!newUser || !sessionToken) {
@@ -235,7 +268,7 @@ function handleCreateUser(payload) {
         const passwordHash = createPasswordHash(newUser.Password);
         const newRowNumber = lastRow + 1;
         const lastColumn = userSheet.getLastColumn();
-        const newUserId = Utilities.getUuid();
+        const newUserId = generateNextUserId_(userSheet);
         if (lastRow > 0) {
             const previousRow = userSheet.getRange(lastRow, 1, 1, lastColumn);
             const newRow = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
