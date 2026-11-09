@@ -4871,3 +4871,43 @@ Sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configura
 Commit documental único: pendiente; parent 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec; tree base 2bb59eb95dec8bf9984d209d439280a02dba9217; update_ref force=false y expected_sha=8b3275dd4cd10d01d4d55a3def14d5b245fa8aec. Rama base protegida.
 Siguiente unidad: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0163
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S164
+Tarea: AUD-T-017 — revalidación incremental E1 de gestión colaborativa de años y validación comunitaria.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial confirmado: b30b84cc9b38e522085f1c520eef284128109479.
+Árbol inicial: 46667088ee45b0dd5fba43e6655ec84cebf4cbff.
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+E1 original: 11d617cbf6401748a017fbe69f89ab63fa08800e (AUD-20261108-S035 / AUD-CP-0035).
+Revalidación previa: AUD-20261108-S120 / AUD-CP-0119; HEAD 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52.
+Alcance: ui.js, offline.js, api-config.js, Services/feedback.js, árbol Spreadsheet, Spreadsheet/GPSpedia_DB_columnas.md y Spreadsheet/Text.txt.
+Estado inicial: H-AUD-017-001 a H-AUD-017-007 abiertos; AUG-106 a AUG-112 pendientes; VAL-26 planificada/no ejecutada. No duplicar hallazgos ni tareas.
+Preflight: E1→HEAD 129 commits posteriores, cero detrás, merge-base E1; diff exclusivamente de ocho documentos. CP-0119→HEAD 44 commits posteriores, cero detrás, merge-base CP-0119; diff exclusivamente de cinco documentos. Los cuatro archivos funcionales y tres artefactos/árboles Spreadsheet conservan SHA exactos de E1. Rama base intacta.
+Hallazgos históricos a revalidar: colisión backend de rango sin límite inferior; actualización/cache local prematura; cache no individualizada por usuario; identidad anónima regenerable/controlada por cliente; banner de sugerencia acoplado a onload; esquema Feedbacks auxiliar/documentación incompleta; registro AUD-T-016 pendiente en Auditoría.txt.
+Restricciones: revalidación estática/documental; no modificar código ni ejecutar operaciones sobre Apps Script, Spreadsheet o Drive reales; no despliegue ni merge.
+Respaldos exactos previos a edición documental (blob SHA): Plan_auditoría/Plan_Auditoria.md c3292bf1a7bf699123a003d90f2ce1a2843ddd5e; Plan_auditoría/Consolidacion_Auditoria.md e8d06e7fc48ee8caa4a0e2969af58800212a5d4d; ChangesLogs.txt f0e44fe9441c5e191dcc05e68beaec32b5089229; contexto_personal.md df7589e3bfa8df58c140314dd6eb9c1ea257debc; checkpoint.md b5edd3f494d303af18f887e63024fb3db495c22c.
+Siguiente acción: inspeccionar los artefactos del alcance y revalidar H-AUD-017-001 a 007 contra E1 y el estado actual; registrar solo diferencias demostrables.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0163
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S164
+Tarea: AUD-T-017 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-017-001 a 007 ABIERTOS; AUG-106 a 112 PENDIENTES; VAL-26 PLANIFICADA/NO EJECUTADA.
+HEAD padre confirmado: b30b84cc9b38e522085f1c520eef284128109479; árbol inicial 46667088ee45b0dd5fba43e6655ec84cebf4cbff; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental de ocho archivos.
+CP-0119→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental de cinco archivos.
+Los cuatro archivos funcionales y tres artefactos/árboles Spreadsheet conservan SHA exactos de E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; Spreadsheet tree 527317d85bbdbfb3ceaf555c6ddef83aea3d8812; Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05; Spreadsheet/Text.txt 8b137891791fe96927ad78e64b0aad7bded08bdc.
+Hallazgos revalidados: colisión backend no comprueba límite inferior; respuesta se guarda en IndexedDB sin esperar confirmación de FEEDBACK; validationCache indexada solo por vehicleId; ID anónimo controlado/persistido por cliente; banner acoplado a img.onload; esquema principal Feedbacks A:I y extensión dinámica J documentada por separado; H-AUD-017-007/AUG-112 permanece pendiente.
+Auditoría.txt no pudo leerse mediante el conector por tamaño (1,238,024 bytes); no se modificó ni se afirma verificación independiente de su contenido.
+Verificaciones: HEAD de rama trabajo/base; ascendencia/merge-base E1→HEAD y CP-0119→HEAD; listas completas de archivos de ambos diffs; SHA exactos; inspección estática focalizada de funciones de UI, caché IndexedDB, contrato API, handler FEEDBACK y esquema documentado.
+No ejecutadas: navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, multiusuario, sincronización, deployments, pruebas dinámicas ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md sin cambios.
+Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: pendiente de crear mediante Git Database API; parent b30b84cc9b38e522085f1c520eef284128109479; update_ref force=false y expected_sha=b30b84cc9b38e522085f1c520eef284128109479. Rama base protegida por procedimiento interno.
+Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).
+================================================================================

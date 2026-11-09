@@ -1553,3 +1553,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Controles positivos estáticos conservados, sin certificación visual real. No se ejecutaron navegador, WCAG computado, zoom, lectores de pantalla, Android/iOS, PWA, rotación, benchmarks ni E2/E3.
 - Solo documentación; sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Siguiente unidad: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-017 (2026-11-09)
+- Sesión AUD-20261109-S164 / checkpoint AUD-CP-0163. E1 11d617cbf6401748a017fbe69f89ab63fa08800e; revalidación previa CP-0119/HEAD 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52; HEAD b30b84cc9b38e522085f1c520eef284128109479; árbol 46667088ee45b0dd5fba43e6655ec84cebf4cbff; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff exclusivamente documental de ocho archivos. CP-0119→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff documental de cinco archivos. Cuatro archivos funcionales y tres artefactos/árboles Spreadsheet conservan SHA exactos de E1.
+- H-AUD-017-001 a 007 abiertos; AUG-106 a 112 pendientes; VAL-26 planificada/no ejecutada. Se mantienen colisión de rango sin límite inferior, caché prematura/no individualizada, identidad anónima regenerable, banner ligado a onload y documentación de esquema incompleta. H-AUD-017-007/AUG-112 conserva la reconciliación pendiente de AUD-T-016 en Auditoría.txt.
+- El conector no devolvió texto del archivo Auditoría.txt de 1,238,024 bytes; no se afirma una comprobación independiente de su contenido. Sin cambios en ese archivo.
+- No se ejecutaron navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, multiusuario, sincronización, deployments ni E2/E3.
+- Solo documentación; sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+- Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).

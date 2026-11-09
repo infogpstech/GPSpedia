@@ -1665,3 +1665,17 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, estilos computados, WCAG real, zoom 200/400 %, lectores de pantalla, Android/iOS, PWA, rotación, benchmarks ni E2/E3.
 - Solo continuidad documental; sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación E1).
+
+
+## 99. Actualización de cobertura — AUD-T-017
+Sesión AUD-20261109-S164 | Checkpoint AUD-CP-0163 | HEAD b30b84cc9b38e522085f1c520eef284128109479 | E1 11d617cbf6401748a017fbe69f89ab63fa08800e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- H-AUD-017-001 a H-AUD-017-007 permanecen abiertos; AUG-106 a AUG-112 continúan pendientes y VAL-26 permanece planificada/no ejecutada.
+- - Comparación E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico a E1; el diff global contiene exclusivamente ocho documentos. Comparación CP-0119→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico a CP-0119; el diff contiene exclusivamente cinco documentos. No hay deriva funcional dentro del alcance.
+- Los cuatro archivos funcionales y los tres artefactos/árboles Spreadsheet conservan los SHA exactos de E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; Spreadsheet tree 527317d85bbdbfb3ceaf555c6ddef83aea3d8812; Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05; Spreadsheet/Text.txt 8b137891791fe96927ad78e64b0aad7bded08bdc.
+- Revalidación estática: Services/feedback.js conserva ScriptLock; la colisión compara year <= otherAnoHasta sin exigir year >= otherAnoDesde; ui.js dispara suggestYear sin esperar su resolución y guarda la respuesta en IndexedDB inmediatamente; validationCache conserva keyPath vehicleId sin identidad de usuario; el identificador anónimo persiste en localStorage y es controlado desde el cliente; el banner se inicia desde img.onload. api-config.js enruta suggestYear a FEEDBACK.
+- El inventario base de Feedbacks documenta nueve columnas A:I y la extensión suggestionActorKey por separado; Spreadsheet/Text.txt está vacío (1 byte). Se mantiene el hallazgo de esquema/documentación sin declarar migración productiva.
+- H-AUD-017-007/AUG-112 sigue pendiente según el registro histórico: reconciliar la entrada AUD-T-016 en Auditoría.txt. El archivo Auditoría.txt (1,238,024 bytes) no pudo ser inspeccionado por contenido en esta sesión porque el conector no devolvió texto para ese archivo de gran tamaño; no se afirma una verificación independiente de su contenido. No se modifica.
+- No se ejecutaron navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, multiusuario, sincronización ni deployments. No se ejecutaron pruebas E2/E3.
+- No se crearon hallazgos ni tareas duplicados; no se cerró ni reclasificó ningún hallazgo. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- AUD-T-017 conserva su estado histórico COMPLETADA; esta revalidación E1 no certifica validación funcional ni migración productiva.
+- Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).
