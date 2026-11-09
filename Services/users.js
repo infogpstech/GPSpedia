@@ -106,9 +106,6 @@ function doPost(e) {
             case 'updateUser':
                 response = handleUpdateUser(request.payload);
                 break;
-            case 'deleteUser':
-                response = handleDeleteUser(request.payload);
-                break;
             case 'changePassword':
                 response = handleChangePassword(request.payload);
                 break;
@@ -130,47 +127,30 @@ function doPost(e) {
 // ============================================================================
 
 function getVerifiedSession(sessionToken) {
-    if (!sessionToken) {
-        throw new Error("Acceso no autorizado: Se requiere token de sesión.");
-    }
-
-    const sessionsSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+    if (!sessionToken) throw new Error("Acceso no autorizado: Se requiere token de sesión.");
+    const ss = getSpreadsheet(), sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
     if (!sessionsSheet) throw new Error("Hoja de sesiones no encontrada.");
-    const sessionsData = sessionsSheet.getDataRange().getValues();
-    sessionsData.shift();
-
-    let userId = null;
-    for (const row of sessionsData) {
-        if (row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken) {
-            userId = row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1];
-            break;
-        }
-    }
-
-    if (!userId) {
-        throw new Error("Acceso no autorizado: Sesión inválida o expirada.");
-    }
-
-    const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+    const sessionRows = sessionsSheet.getDataRange().getValues().slice(1).filter(row => row[2] === sessionToken);
+    if (sessionRows.length !== 1) throw new Error("Acceso no autorizado: Sesión inválida, duplicada o expirada.");
+    const userId = String(sessionRows[0][0] ?? '').trim();
+    if (!userId) throw new Error("Acceso no autorizado: Identidad de sesión inválida.");
+    const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
     if (!usersSheet) throw new Error("Hoja de usuarios no encontrada.");
-    const usersData = usersSheet.getDataRange().getValues();
-    usersData.shift();
-
-    for (const row of usersData) {
-        if (row[COLS_USERS.ID - 1] == userId) {
-            return {
-                userId: String(userId),
-                role: row[COLS_USERS.Privilegios - 1]
-            };
-        }
-    }
-
-    throw new Error("Acceso no autorizado: Usuario asociado a la sesión no encontrado.");
+    const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => String(row[0] ?? '').trim() === userId);
+    if (userRows.length !== 1 || !isActiveUserRecord(userRows[0])) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
+    return { userId, role: userRows[0][3] };
 }
 
 // ============================================================================
 // MANEJADORES DE ACCIONES
 // ============================================================================
+function isActiveUserRecord(row) {
+    if (!row) return false;
+    const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
+    const role = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return Boolean(username) && !username.startsWith('__deleted__:') &&
+        ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
+}
 
 function handleGetUsers(payload) {
     const { sessionToken } = payload;
@@ -186,6 +166,7 @@ function handleGetUsers(payload) {
 
     const users = data
         .filter(row => {
+            if (!isActiveUserRecord(row)) return false;
             const role = row[COLS_USERS.Privilegios - 1];
             if (requesterRole === 'Desarrollador') return true;
             if (requesterRole === 'Gefe' || requesterRole === 'Jefe') return ['Supervisor', 'Tecnico'].includes(role);
@@ -235,7 +216,11 @@ function handleCreateUser(payload) {
             throw new Error(`El rol '${creatorRole}' no tiene permisos para crear usuarios de tipo '${newUser.Privilegios}'.`);
         }
 
-        const newUsername = String(newUser.Nombre_Usuario || '').trim();
+            const newUsername = String(newUser.Nombre_Usuario || '').trim();
+        if (!newUsername) throw new Error('El nombre de usuario es obligatorio.');
+        if (newUsername.toLowerCase().startsWith('__deleted__:')) {
+            throw new Error('El prefijo __deleted__: está reservado para cuentas desactivadas.');
+        }
         const lastRow = userSheet.getLastRow();
         const existingUsernames = lastRow > 1
             ? userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, 1).getValues().flat()
@@ -250,29 +235,16 @@ function handleCreateUser(payload) {
         const passwordHash = createPasswordHash(newUser.Password);
         const newRowNumber = lastRow + 1;
         const lastColumn = userSheet.getLastColumn();
-
-        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
+        const newUserId = Utilities.getUuid();
         if (lastRow > 0) {
-            const previousRowRange = userSheet.getRange(lastRow, 1, 1, lastColumn);
-            const newRowRange = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
-            previousRowRange.copyTo(newRowRange);
+            const previousRow = userSheet.getRange(lastRow, 1, 1, lastColumn);
+            const newRow = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
+            previousRow.copyTo(newRow, SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+            previousRow.copyTo(newRow, SpreadsheetApp.CopyPasteType.PASTE_DATA_VALIDATION, false);
         }
-
-        // 2. Preparar los datos que se van a escribir, EXCLUYENDO la columna de ID.
-        const dataToWrite = [
-            newUsername,
-            passwordHash,
-            newUser.Privilegios,
-            newUser.Telefono || '',
-            newUser.Correo_Electronico || '',
-            newUser.Nombre_Completo || '',
-            '' // SessionToken se deja vacío
-        ];
-
-        // 3. Obtener el rango SOLO para las celdas de datos y escribirlos.
-        // Esto deja la columna 1 (ID) intacta, conservando la fórmula heredada.
-        const dataRange = userSheet.getRange(newRowNumber, COLS_USERS.Nombre_Usuario, 1, dataToWrite.length);
-        dataRange.setValues([dataToWrite]);
+        userSheet.getRange(newRowNumber, COLS_USERS.ID).setValue(newUserId);
+        const dataToWrite = [newUsername, passwordHash, newUser.Privilegios, newUser.Telefono || '', newUser.Correo_Electronico || '', newUser.Nombre_Completo || '', ''];
+        userSheet.getRange(newRowNumber, COLS_USERS.Nombre_Usuario, 1, dataToWrite.length).setValues([dataToWrite]);
 
         return { status: 'success', message: `Usuario '${newUsername}' creado.` };
     } finally {
@@ -333,36 +305,6 @@ function handleUpdateUser(payload) {
         }
     }
     throw new Error("Usuario no encontrado para actualizar.");
-}
-
-function handleDeleteUser(payload) {
-    const { userId, sessionToken } = payload;
-    if (!userId || !sessionToken) throw new Error("Datos insuficientes para eliminar. Se requiere sessionToken.");
-
-    const { role: deleterRole } = getVerifiedSession(sessionToken);
-    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-    const data = userSheet.getDataRange().getValues();
-    data.shift();
-
-    for (let i = 0; i < data.length; i++) {
-        if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
-            const userToDeleteRole = data[i][COLS_USERS.Privilegios - 1];
-
-            const canDelete = {
-                 'Desarrollador': () => true,
-                 'Gefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
-                 'Jefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
-                 'Supervisor': (targetRole) => targetRole === 'Tecnico'
-            };
-
-            if (!canDelete[deleterRole] || !canDelete[deleterRole](userToDeleteRole)) {
-                throw new Error(`Rol '${deleterRole}' no tiene permisos para eliminar a un '${userToDeleteRole}'.`);
-            }
-            userSheet.deleteRow(i + 2);
-            return { status: 'success', message: 'Usuario eliminado.' };
-        }
-    }
-    throw new Error("Usuario no encontrado para eliminar.");
 }
 
 function handleUpdateProfile(payload) {

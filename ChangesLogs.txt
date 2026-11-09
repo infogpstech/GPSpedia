@@ -127,3 +127,25 @@ Sintaxis integral: pendiente; no se declara parser completo de los archivos. Cod
 No se crearon deployments, no se llamaron endpoints productivos, no se modificaron datos ni la rama base. Filtros rápidos cancelados; sin cambios.
 Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; H-AUD-056/AUG-006 siguen pendientes de validación aislada concurrente.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — AUG-005 — REVOCACIÓN DE SESIONES Y ELIMINACIÓN SEGURA DE CUENTAS
+- Services/Auth.js y Services/Test/Auth.js: deleteUser bajo ScriptLock AUTH; validación de token/actor/destino, RBAC y autodeleción; desactivación lógica antes de revocar sesiones; borrado descendente y reintento ante fallos parciales. validateSession comprueba usuario único/activo. handleLogin revalida cuenta dentro del lock antes de crear sesión.
+- Services/users.js y Services/Test/users.js: retiro de deleteUser del router/handler USERS; getVerifiedSession exige sesión/usuario únicos y activos; getUsers filtra desactivados; createUser asigna UUID estático y reserva __deleted__:.
+- api-config.js: deleteUser se enruta a AUTH.
+- users.html: se oculta Eliminar para la cuenta autenticada.
+- Services/Test/README.md: documentación del flujo y pruebas aisladas pendientes; Spreadsheet ID conservado.
+- Spreadsheet/GPSpedia_DB_columnas.md: política de IDs estáticos y eliminación lógica.
+Verificaciones: sintaxis PASS en scripts Apps Script, api-config.js (harness ESM) y script inline users.html; copias sincronizadas al normalizar Spreadsheet IDs; lógica con dobles locales 13/13 PASS. No se crearon deployments ni se ejecutaron pruebas Apps Script reales. La validación funcional aislada/concurrente se difiere a Beta. Sin cambios a endpoints, datos productivos, rama base ni filtros rápidos.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 13/13 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+- Code Review adicional H-AUD-059: se revisaron los consumidores ActiveSessions de ADMIN, FEEDBACK y WRITE. ADMIN y WRITE ya rechazan el tombstone por rol/nombre completo vacío; Services/feedback.js ahora también exige username no reservado y rol activo conocido incluso cuando allowedRoles es null. Pruebas locales del guard FEEDBACK PASS; sintaxis PASS. Se mantiene la desactivación primero y la revocación posterior porque todos los consumidores de sesión rechazan tombstones.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.

@@ -403,11 +403,13 @@ function renderUserTable() {
         editButton.addEventListener('click', () => openUserModal(user));
         actionsCell.appendChild(editButton);
 
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'btn btn-danger btn-sm';
-        deleteButton.textContent = 'Eliminar';
-        deleteButton.addEventListener('click', (e) => deleteUser(user.ID, e.currentTarget));
-        actionsCell.appendChild(deleteButton);
+        if (String(user.ID) !== String(currentUser.ID)) {
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'btn btn-danger btn-sm';
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.addEventListener('click', (e) => deleteUser(user.ID, e.currentTarget));
+            actionsCell.appendChild(deleteButton);
+        }
 
         const isDeveloper = String(currentUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
         if (isDeveloper && String(user.ID) !== String(currentUser.ID)) {

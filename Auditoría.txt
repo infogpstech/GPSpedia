@@ -257,3 +257,52 @@ Impacto: dos trabajos distintos comparten ID, lo que puede provocar ejecución d
 Corrección: conservar AUG-100 para el sistema universal de botones; no reescribir los registros históricos. Reasignar la tarea de centralización a AUG-153 en Tareas_pendientes_parte2.txt y agregar adendas trazables en Tareas.txt, Tareas_pendientes_parte1.txt, Aug_Tareas.md y Plan_Maestro_Implementacion.md.
 Estado: RESUELTO DOCUMENTALMENTE mediante la adenda de AUG-153; la entrada histórica duplicada se conserva y queda invalidada para ejecución.
 ================================================================================
+
+
+================================================================================
+CIERRE TÉCNICO — AUG-005 / H-AUD-053 / H-AUD-054
+Fecha: 2026-11-09. Implementación revisada sobre HEAD padre c3bc6df232eed42e9cc015e3b3453a77d2c9b5c0.
+Code Review identificó un riesgo de carrera: handleLogin podía leer credenciales antes del ScriptLock AUTH y crear una sesión después de que deleteUser desactivara la cuenta. Se corrigió revalidando dentro del lock que exista exactamente una fila con el ID y que la cuenta siga activa antes de agregar la sesión.
+Implementación: deleteUser se enruta a AUTH y comparte el ScriptLock de login/logout/resetUserSessions. La eliminación es lógica: se conserva fila e ID; Nombre_Usuario se sustituye por __deleted__:<UUID> y se limpian contraseña, rol, contacto, nombre completo y SessionToken. No se ejecuta deleteRow() en Users. AUTH desactiva primero, revoca sesiones en orden descendente y permite reintento ante fallo parcial; sesiones residuales se rechazan. AUTH validateSession comprueba token único, userId coincidente y usuario único/activo. USERS getVerifiedSession también exige token/usuario únicos y activos; getUsers filtra desactivados. createUser asigna UUID estático y reserva el prefijo __deleted__:. UI oculta Eliminar para el usuario autenticado; backend impide autodeleción.
+Copias de prueba AUTH/USERS sincronizadas conservando Spreadsheet IDs. No se añadieron URLs de prueba a api-config.js.
+Pruebas con dobles locales: 13/13 PASS (conservación de fila/ID, revocación multi-sesión, preservación de terceros, rechazo de token residual, autodeleción, RBAC, tokens/IDs duplicados, fallo parcial/reintento, idempotencia, lock liberado y revalidación de login bajo lock). Sintaxis: PASS en cuatro scripts Apps Script; PASS en api-config.js tras retirar exportaciones ESM para el harness; PASS en script inline users.html. Copias de prueba coinciden al normalizar solo Spreadsheet ID/comentario.
+Limitación: Services/Test/README.md confirma que no hay deployments aislados. No se ejecutaron pruebas funcionales en Apps Script ni endpoints live, ni se modificaron hojas/datos. Las pruebas funcionales y concurrentes aisladas se difieren a Beta.
+H-AUD-053: RESUELTO EN FUENTES. H-AUD-054: RESUELTO POR DISEÑO al no borrar físicamente filas y asignar UUID estáticos a cuentas nuevas; no se asumió la fórmula histórica. AUG-005: COMPLETADA EN FUENTES; lógica y sintaxis PASS; validación real diferida a Beta.
+No se modificaron rama base, endpoints operativos, deployments, datos productivos, archivos legacy ni filtros rápidos cancelados.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 13/13 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+
+================================================================================
+H-AUD-058 — Carrera de login con desactivación de cuenta (revisión de AUG-005)
+Fecha: 2026-11-09. Origen: Code Review de la implementación de AUG-005.
+Evidencia: Services/Auth.js, handleLogin(), validaba credenciales antes de adquirir el ScriptLock; sin revalidación dentro del lock podía crear una sesión si deleteUser desactivaba la cuenta durante esa ventana.
+Riesgo: una cuenta recién desactivada podría recibir una nueva sesión posterior a la revocación masiva.
+Corrección: revalidar dentro del ScriptLock AUTH que el ID corresponde a una única cuenta activa antes de mutar ActiveSessions y crear el token. deleteUser, login, logout y resetUserSessions comparten el mismo lock AUTH.
+Verificación: prueba estática del orden del guard y caso lógico local PASS dentro de la batería 13/13. No se ejecutó intercalado real en deployment Apps Script; queda en la validación Beta.
+Estado: RESUELTO EN FUENTES; validación funcional concurrente diferida a Beta. No requiere tarea AUG separada porque forma parte de la seguridad transaccional de AUG-005.
+================================================================================
+
+
+================================================================================
+H-AUD-059 — Sesiones residuales tras fallo parcial de eliminación lógica
+Fecha: 2026-11-09. Origen: Code Review/reinicio de AUG-005.
+Evidencia: Services/admin.js assertDeveloperSession() valida ActiveSessions y existencia de Users, pero no excluye tombstones; Services/feedback.js assertFeedbackSession() y Services/write.js getAuthenticatedCollaborator() siguen el mismo patrón de comprobar sesión y fila de usuario sin verificar el prefijo __deleted__:. Por tanto, si AUTH marcara la cuenta como desactivada antes de terminar de retirar todas las sesiones y fallara la limpieza, esos consumidores podrían aceptar un token residual.
+Riesgo: una cuenta marcada como eliminada podría conservar acceso a operaciones de ADMIN/FEEDBACK/WRITE mediante una fila de sesión residual.
+Corrección requerida: dentro del lock AUTH, inutilizar primero los tokens de todas las sesiones destino en ActiveSessions; después eliminar filas de sesión en orden descendente. Solo cuando todas las sesiones hayan sido retiradas se congelarán los IDs históricos y se marcará la cuenta como tombstone. Ante fallo parcial, las filas restantes tendrán token vacío y no serán aceptadas por los demás servicios; la cuenta permanecerá activa hasta completar el reintento, sin afirmar que la eliminación terminó.
+Alcance auditado: Services/Auth.js, Services/admin.js, Services/feedback.js, Services/write.js, Services/users.js y copias de prueba. No se encontró otro escritor de ActiveSessions fuera de AUTH; ADMIN/FEEDBACK/WRITE son consumidores.
+Estado: ABIERTO DURANTE REINICIO; corrección incluida en AUG-005, no se crea AUG adicional.
+================================================================================
+
+
+RESOLUCIÓN DE H-AUD-059 — 2026-11-09
+El contraste completo de consumidores determinó que ADMIN ya rechaza tombstones porque exige rol Desarrollador, y WRITE rechaza el registro porque la desactivación limpia Nombre_Completo. FEEDBACK era el único consumidor que podía aceptar un usuario tombstone cuando allowedRoles era null. Se actualizó Services/feedback.js assertFeedbackSession() para exigir username no reservado y rol activo conocido antes de autorizar cualquier acción, independientemente de allowedRoles. AUTH y USERS ya rechazan tombstones. Por ello, la estrategia de desactivar primero y revocar después mantiene el rechazo de sesiones residuales incluso ante fallo parcial.
+Prueba local de FEEDBACK para usuario tombstone y rol inválido: PASS; cuenta activa: PASS. Sintaxis completa de Services/feedback.js: PASS. No se modificó Services/admin.js ni Services/write.js porque sus validaciones existentes ya rechazan el registro desactivado por rol vacío/nombre completo vacío.
+Estado H-AUD-059: RESUELTO EN FUENTES; validación funcional aislada/concurrente diferida a Beta.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.

@@ -423,3 +423,109 @@ No se modificaron users.html, deployments, endpoints operativos, datos productiv
 Siguiente acción: parser integral; después crear y verificar deployments aislados AUTH/USERS y probar intercalados reales de login/logout/reset, con filas objetivo al inicio/medio/final, sesiones múltiples, duplicados y fallos parciales. Solo entonces reevaluar H-AUD-056 y desbloquear AUG-006.
 Este checkpoint final se incorpora como último documento antes del único commit de AUG-153.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-005 (REANUDACIÓN CON AUTORIZACIÓN EXPLÍCITA)
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado: c3bc6df232eed42e9cc015e3b3453a77d2c9b5c0
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-005 — revocar sesiones al eliminar cuentas y validar la existencia del usuario.
+Autorización del usuario: los registros actuales son de prueba y no hay usuarios en producción; se autoriza resolver H-AUD-054 y avanzar.
+Hallazgos conocidos: H-AUD-053 (eliminación no revoca sesiones y AUTH valida solo ActiveSessions); H-AUD-054 (posible reindexación de Users.ID al eliminar físicamente una fila); dependencias de concurrencia AUTH/USERS por confirmar.
+Alcance preliminar: Services/users.js, Services/Auth.js, copias Services/Test, users.html, api-config.js y documentación de esquema/pruebas. Se confirmaron consumidores de IDs como valores/cadenas; no se encontró aritmética dependiente de IDs numéricos.
+Estado inicial: HEAD de ambas ramas verificado; auditoría actual aún no iniciada; no se había modificado código ni documentación de producto en esta tarea.
+Restricciones: no modificar GPSpedia2.2.5; no llamar endpoints operativos ni modificar datos/deployments; preservar Spreadsheet IDs de prueba; no reintroducir filtros rápidos cancelados; respaldar archivos antes de editar; un solo commit Git Database API.
+Siguiente paso: auditar línea por línea, documentar hallazgos y después implementar.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-005
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: c3bc6df232eed42e9cc015e3b3453a77d2c9b5c0
+Rama base: GPSpedia2.2.5
+HEAD base confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: COMPLETADA EN FUENTES; validación funcional aislada diferida a Beta.
+Resumen: deleteUser se centralizó en AUTH bajo el mismo ScriptLock que login/logout/resetUserSessions. La cuenta se desactiva lógicamente sin eliminar ni desplazar la fila Users; se conserva su ID y se limpian credenciales/perfil. Se revocan todas las sesiones en orden descendente; el fallo parcial mantiene la cuenta desactivada y permite reintento. AUTH valida token único y usuario único/activo; login revalida dentro del lock antes de crear sesión. USERS filtra cuentas desactivadas y asigna UUID estático a cuentas nuevas. UI y backend bloquean autodeleción.
+Archivos modificados: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, users.html, api-config.js, Services/Test/README.md, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Maestro_Implementacion.md, lista_beta.txt y checkpoint.md.
+Respaldos exactos (blob SHA anterior):
+- Services/Auth.js: 726de51c4291e284745947bbc228ed521ae53afc
+- Services/Test/Auth.js: 6d1c369889ea03d590c3359a2a7d9618db475db4
+- Services/users.js: 50279e9141395661941036b0ca9dcf9a070d1937
+- Services/Test/users.js: 930c089d6ee12b3ba6e94b40b3c5515ef4faa512
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: ca7e5860c7a1ff13e2fec166e4fc7b0272056c2d
+- Services/Test/README.md: aefabb12367462ab58d458e03973218e82b36e9a
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Auditoría.txt: 148200c55bc0d68ebaf39110191c2bceac189338
+- ChangesLogs.txt: 4f32218ad8d15cb6a87d97fa79d9fd87aa319f2a
+- Tareas.txt: 12c1f48ab96cc082ce3d0ad6cc39ac76d1e6ba6e
+- Tareas_pendientes_parte1.txt: a97cdc8af076a80b60acf1df5d23999d7a8404fd
+- tareas_completadas_parte1.txt: bc19116bfe46f886a03b4c9240e75a1039b7546c
+- Plan_auditoría/Aug_Tareas.md: 11bcb0873f6c540e9a81ff45eb961c915b294d58
+- Plan_auditoría/Plan_Maestro_Implementacion.md: fc33d55d358e48951269d6446635b448dbab7a1c
+- lista_beta.txt: 6e4a0d1732d948acbcccc1a92633027706b872f9
+- checkpoint.md: b94392be1b8db6cea0cd7fe8cbf715ce717e14f5
+Verificaciones: se congelan los IDs históricos antes de la desactivación y se rechazan IDs vacíos/duplicados; parser PASS en cuatro scripts Apps Script; api-config.js PASS tras retirar exportaciones ESM para el harness; script inline users.html PASS; copias de prueba coinciden al normalizar Spreadsheet IDs; lógica con dobles locales 13/13 PASS. Code Review revisó RBAC, tokens duplicados, unicidad de IDs, tombstone, orden de borrado, lock común, login concurrente, reintentos y preservación de filas/IDs.
+Limitaciones: no se crearon deployments; no se ejecutaron pruebas funcionales reales ni endpoints operativos. Las validaciones aisladas/concurrentes se agregaron a lista_beta.txt. No se modificaron rama base, datos productivos, deployments, legacy ni filtros rápidos cancelados.
+Siguiente tarea: continuar con AUG-001 según el orden maestro, sin iniciar otra tarea hasta verificar el commit y el estado de la rama.
+Este checkpoint final se incorpora como último documento antes del único commit de AUG-005.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 13/13 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+
+================================================================================
+REINICIO DEL CICLO POR CODE REVIEW — AUG-005
+Fecha: 2026-11-09. HEAD de trabajo sin cambios: c3bc6df232eed42e9cc015e3b3453a77d2c9b5c0. Rama base conservada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Observación: la revisión detectó que ADMIN, FEEDBACK y WRITE validan sesiones consultando ActiveSessions; algunos consumidores no comprueban el estado tombstone de Users. Si AUTH desactivara primero una cuenta y una revocación posterior fallara parcialmente, esos servicios podrían aceptar tokens residuales.
+Acción: reiniciar auditoría del flujo de eliminación y de los consumidores de ActiveSessions; ajustar el orden para retirar/inutilizar los tokens antes de desactivar la cuenta; documentar el hallazgo antes de modificar fuentes. Los respaldos exactos de AUTH son los blobs 08bbe08f416a4703fbef94a05939c3773f4b3f93 y 345dd76efea09447d9663cee5914870e6e6c8532.
+Estado: ciclo anterior no se publica; no se ha movido la rama. Ningún endpoint ni dato fue modificado.
+================================================================================
+
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-005 (CIERRE TRAS CODE REVIEW)
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: c3bc6df232eed42e9cc015e3b3453a77d2c9b5c0
+Rama base: GPSpedia2.2.5
+HEAD base confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: COMPLETADA EN FUENTES; validación funcional real diferida a Beta.
+Resumen: deleteUser se centralizó en AUTH bajo el mismo ScriptLock que login/logout/resetUserSessions. La cuenta se desactiva lógicamente sin eliminar ni desplazar la fila Users; antes de limpiar el perfil, AUTH congela como valores estáticos los IDs calculados de todas las filas y aborta ante IDs vacíos/duplicados. Las cuentas nuevas reciben UUID estático y solo copian formato/validaciones, nunca fórmulas de ID. AUTH valida token único y usuario único/activo; login revalida dentro del lock antes de crear sesión. USERS filtra cuentas desactivadas. UI y backend bloquean autodeleción.
+Code Review: H-AUD-058 resuelto con revalidación de login dentro del lock. H-AUD-059 resuelto al verificar que AUTH, USERS, ADMIN, FEEDBACK y WRITE rechazan cuentas tombstone; FEEDBACK se reforzó porque permitía allowedRoles=null sin validar estado. ADMIN ya rechaza por rol Desarrollador y WRITE por Nombre_Completo vacío.
+Archivos modificados: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, Services/feedback.js, users.html, api-config.js, Services/Test/README.md, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Maestro_Implementacion.md, lista_beta.txt y checkpoint.md. Services/admin.js y Services/write.js se auditaron/probaron, pero no se modificaron.
+Respaldos exactos (blob SHA anterior):
+- Services/Auth.js: 726de51c4291e284745947bbc228ed521ae53afc
+- Services/Test/Auth.js: 6d1c369889ea03d590c3359a2a7d9618db475db4
+- Services/users.js: 50279e9141395661941036b0ca9dcf9a070d1937
+- Services/Test/users.js: 930c089d6ee12b3ba6e94b40b3c5515ef4faa512
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: ca7e5860c7a1ff13e2fec166e4fc7b0272056c2d
+- Services/Test/README.md: aefabb12367462ab58d458e03973218e82b36e9a
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Auditoría.txt: 148200c55bc0d68ebaf39110191c2bceac189338
+- ChangesLogs.txt: 4f32218ad8d15cb6a87d97fa79d9fd87aa319f2a
+- Tareas.txt: 12c1f48ab96cc082ce3d0ad6cc39ac76d1e6ba6e
+- Tareas_pendientes_parte1.txt: a97cdc8af076a80b60acf1df5d23999d7a8404fd
+- tareas_completadas_parte1.txt: bc19116bfe46f886a03b4c9240e75a1039b7546c
+- Plan_auditoría/Aug_Tareas.md: 11bcb0873f6c540e9a81ff45eb961c915b294d58
+- Plan_auditoría/Plan_Maestro_Implementacion.md: fc33d55d358e48951269d6446635b448dbab7a1c
+- lista_beta.txt: 6e4a0d1732d948acbcccc1a92633027706b872f9
+- checkpoint.md: b94392be1b8db6cea0cd7fe8cbf715ce717e14f5
+Verificación: 20/20 pruebas lógicas PASS (13 AUTH/USERS, 3 FEEDBACK, 2 ADMIN, 2 WRITE); sintaxis PASS en cuatro scripts AUTH/USERS, Services/feedback.js, Services/admin.js, Services/write.js, api-config.js (harness ESM) y script inline users.html. Copias de prueba AUTH/USERS coinciden al normalizar únicamente Spreadsheet ID/comentario; IDs aislados preservados. Aug_Tareas.md permanece bajo 180,000 caracteres.
+Limitaciones: no existen deployments aislados según Services/Test/README.md. No se ejecutaron pruebas funcionales reales ni endpoints operativos. Las pruebas funcionales y concurrentes aisladas se agregaron a lista_beta.txt. No se modificaron rama base, datos productivos, deployments, legacy ni filtros rápidos cancelados.
+Siguiente tarea: continuar con AUG-001 según el orden maestro, después de verificar el commit y la rama.
+Este checkpoint final es la última actualización documental antes del único commit de AUG-005.
+================================================================================

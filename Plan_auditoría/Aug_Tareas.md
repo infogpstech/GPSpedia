@@ -25,3 +25,23 @@ ADENDA DE ÍNDICE — 2026-11-09
 AUG-153 se incorpora al registro operativo de Tareas_pendientes_parte2.txt. El rango operativo de la parte 2 queda extendido de AUG-100–AUG-152 a AUG-100–AUG-153. El inventario vigente comprende 152 IDs únicos entre AUG-001 y AUG-153; AUG-015 continúa ausente y no se crea ni reutiliza.
 Corrección de H-AUD-057: AUG-100 conserva como tarea canónica el sistema universal de estilos y estados de botones. La centralización de ActiveSessions se registra como AUG-153; no se reescriben entradas históricas.
 ================================================================================
+
+
+================================================================================
+AUG-005 — REVOCAR SESIONES Y DESACTIVAR CUENTAS DE FORMA SEGURA
+Estado: COMPLETADA EN FUENTES (2026-11-09).
+H-AUD-053 resuelto; H-AUD-054 resuelto mediante eliminación lógica, sin borrar filas ni reindexar Users.ID. deleteUser y la revocación se centralizaron en AUTH bajo el lock común; AUTH valida usuario único/activo; login revalida bajo lock; IDs nuevos UUID estáticos; UI/backend impiden autodeleción.
+Pruebas locales: lógica 20/20 y sintaxis PASS. Pruebas funcionales en deployments aislados quedan diferidas a Beta.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 20/20 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+
+ADENDA FINAL POST-REVISIÓN — AUG-005 / H-AUD-059
+Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.

@@ -388,3 +388,12 @@ Propiedades almacenadas:
 - `activaTestigoMotor`: booleano enviado explícitamente por el checkbox. `true` representa la confirmación positiva del técnico; `false` representa que no marcó la confirmación y nunca una orden para desactivar el testigo.
 
 Los reportes históricos sin metadatos permanecen válidos y se devuelven desde Inbox con `reportMetadata=null`. El lector valida el JSON y su asociación con el vehículo antes de exponerlo. La columna no sustituye ni modifica `Cortes.activaTestigo1..3`.
+
+
+## Política de identidad y eliminación de cuentas (AUG-005)
+
+La columna `Users.ID` es una clave de identidad y no debe depender de la posición de la fila. Las cuentas creadas por la implementación actual reciben un UUID estático. Para compatibilidad con filas históricas cuyo ID pudiera ser fórmula, la eliminación es lógica: la fila no se elimina ni se desplaza. AUTH marca el registro con el prefijo reservado `__deleted__:` y limpia sus credenciales/datos de perfil; las consultas y la autenticación excluyen esos registros. La hoja conserva el ID histórico para mantener referencias existentes en `ActiveSessions` y registros relacionados.
+
+
+### Conservación de identificadores históricos
+Antes de desactivar una cuenta, AUTH convierte en valores estáticos los IDs calculados de las filas existentes y aborta ante IDs vacíos/duplicados. Esto preserva las referencias históricas aunque las fórmulas originales dependieran de la fila u otros campos. Las cuentas nuevas utilizan UUID estáticos; las filas de cuenta no se eliminan físicamente.

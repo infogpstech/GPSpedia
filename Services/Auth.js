@@ -218,6 +218,9 @@ function doPost(e) {
             case 'resetUserSessions':
                 response = handleResetUserSessions(request.payload);
                 break;
+            case 'deleteUser':
+                response = handleDeleteUser(request.payload);
+                break;
             case 'logout':
                 response = handleLogout(request.payload);
                 break;
@@ -301,6 +304,15 @@ function handleLogin(payload) {
             sessionLock.waitLock(10000);
             sessionLockAcquired = true;
 
+            // Revalidar la cuenta dentro del mismo lock que serializa login y eliminación.
+            const currentUserRows = userSheet.getDataRange().getValues().slice(1)
+                .map((row, index) => ({ row, rowIndex: index + 2 }))
+                .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
+            if (currentUserRows.length !== 1 || !isActiveAuthUserRecord(currentUserRows[0].row)) {
+                throw new Error('La cuenta fue desactivada o su ID dejó de ser único; no se creará una sesión.');
+            }
+            foundUserIndex = currentUserRows[0].rowIndex - 2;
+
             const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
             if (!activeSessionsSheet) throw new Error("Hoja ActiveSessions no encontrada.");
 
@@ -382,31 +394,37 @@ function handleLogin(payload) {
 
 function handleValidateSession(payload) {
     try {
-        const { userId, sessionToken } = payload;
-        if (!userId || !sessionToken) {
-            return { valid: false };
-        }
-
-        const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        const data = activeSessionsSheet.getDataRange().getValues();
-        data.shift(); // Remove headers
-
-        for (const row of data) {
-            // Compare userId and sessionToken from the ActiveSessions sheet
-            if (row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1] == userId && row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken) {
-                return { valid: true };
-            }
-        }
-
-        return { valid: false };
+        const { userId, sessionToken } = payload || {};
+        if (!userId || !sessionToken) return { valid: false };
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!sessionsSheet || !usersSheet) return { valid: false };
+        const sessionRows = sessionsSheet.getDataRange().getValues().slice(1).filter(row => row[2] === sessionToken);
+        if (sessionRows.length !== 1 || normalizeUserId(sessionRows[0][0]) !== normalizeUserId(userId)) return { valid: false };
+        const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => normalizeUserId(row[0]) === normalizeUserId(userId));
+        if (userRows.length !== 1 || !isActiveAuthUserRecord(userRows[0])) return { valid: false };
+        return { valid: true };
     } catch (error) {
         logToSheet('ERROR', `Error in handleValidateSession: ${error.message}`, { stack: error.stack });
         return { valid: false, error: error.message };
     }
 }
 
-
-// Todas las mutaciones de ActiveSessions (login, logout y resetUserSessions) deben permanecer en AUTH.
+// Todas las mutaciones de ActiveSessions y las eliminaciones de cuenta se coordinan en AUTH.
+function isActiveAuthUserRecord(row) {
+    if (!row) return false;
+    const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
+    const role = normalizeRoleName(row[COLS_USERS.Privilegios - 1]);
+    return Boolean(username) && !username.startsWith('__deleted__:') &&
+        ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
+}
+function normalizeRoleName(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+}
+function normalizeUserId(value) {
+    return String(value === null || value === undefined ? '' : value).trim();
+}
 function handleResetUserSessions(payload) {
     const targetUserId = payload && payload.targetUserId;
     const sessionToken = payload && payload.sessionToken;
@@ -565,6 +583,170 @@ function handleResetUserSessions(payload) {
         message: cleanupError
             ? message + ' No se pudo limpiar la referencia del token; requiere revisión.'
             : message + (userSessionTokenCleared ? '' : ' No había una referencia de token que limpiar.')
+    };
+}
+
+function handleDeleteUser(payload) {
+    const userId = normalizeUserId(payload && payload.userId);
+    const sessionToken = payload && payload.sessionToken;
+    if (!userId || typeof sessionToken !== 'string' || !sessionToken) {
+        throw new Error('Datos insuficientes para eliminar. Se requiere userId y sessionToken.');
+    }
+
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    let requesterUserId = '';
+    let closedSessions = 0;
+    let deletionError = null;
+    let alreadyDeleted = false;
+
+    try {
+        lock.waitLock(10000);
+        lockAcquired = true;
+
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if (!usersSheet || !sessionsSheet) {
+            throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        }
+
+        const sessionsData = sessionsSheet.getDataRange().getValues();
+        const requesterSessions = sessionsData.slice(1).filter(row =>
+            row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken
+        );
+        if (requesterSessions.length !== 1) {
+            throw new Error(requesterSessions.length > 1
+                ? 'Token solicitante duplicado; no se modificó ninguna cuenta.'
+                : 'Sesión inválida o expirada.');
+        }
+
+        requesterUserId = normalizeUserId(requesterSessions[0][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        if (!requesterUserId) {
+            throw new Error('Identidad de sesión inválida.');
+        }
+
+        const usersData = usersSheet.getDataRange().getValues();
+        const requesterRows = [];
+        const targetRows = [];
+        const uniqueIds = new Set();
+
+        for (let i = 1; i < usersData.length; i++) {
+            const row = usersData[i];
+            const rowId = normalizeUserId(row[COLS_USERS.ID - 1]);
+            const rowHasData = row.some(value => String(value === null || value === undefined ? '' : value).trim() !== '');
+
+            if (rowHasData && !rowId) {
+                throw new Error('Existe una cuenta sin ID; no se modificó ninguna cuenta.');
+            }
+            if (rowId && uniqueIds.has(rowId)) {
+                throw new Error('Hay IDs de usuario duplicados; no se modificó ninguna cuenta.');
+            }
+            if (rowId) uniqueIds.add(rowId);
+
+            if (rowId === requesterUserId) requesterRows.push({ rowIndex: i + 1, row });
+            if (rowId === userId) targetRows.push({ rowIndex: i + 1, row });
+        }
+
+        if (requesterRows.length !== 1 || !isActiveAuthUserRecord(requesterRows[0].row)) {
+            throw new Error('Solicitante no único o inactivo.');
+        }
+        if (requesterUserId === userId) {
+            throw new Error('No puedes eliminar tu propia cuenta.');
+        }
+        if (targetRows.length !== 1) {
+            throw new Error(targetRows.length > 1 ? 'ID destino duplicado.' : 'Usuario no encontrado.');
+        }
+
+        const target = targetRows[0];
+        alreadyDeleted = !isActiveAuthUserRecord(target.row);
+        const requesterRole = normalizeRoleName(requesterRows[0].row[COLS_USERS.Privilegios - 1]);
+        const targetRole = normalizeRoleName(target.row[COLS_USERS.Privilegios - 1]);
+        const canDelete = {
+            desarrollador: () => true,
+            gefe: role => ['supervisor', 'tecnico'].includes(role),
+            jefe: role => ['supervisor', 'tecnico'].includes(role),
+            supervisor: role => role === 'tecnico'
+        };
+
+        if (!alreadyDeleted && (!canDelete[requesterRole] || !canDelete[requesterRole](targetRole))) {
+            throw new Error('Permisos insuficientes para eliminar la cuenta.');
+        }
+        if (alreadyDeleted && requesterRole !== 'desarrollador') {
+            throw new Error('Solo Desarrollador puede completar la limpieza.');
+        }
+
+        const targetSessionRows = [];
+        const seenTokens = new Set();
+        for (let i = 1; i < sessionsData.length; i++) {
+            const row = sessionsData[i];
+            if (normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== userId) continue;
+
+            const token = row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1];
+            if (token !== null && token !== undefined && String(token) !== '') {
+                const tokenKey = String(token);
+                const globalCount = sessionsData.filter(session =>
+                    session[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token
+                ).length;
+                if (seenTokens.has(tokenKey) || globalCount > 1) {
+                    throw new Error('Token de sesión duplicado; no se modificó ninguna fila.');
+                }
+                seenTokens.add(tokenKey);
+            }
+            targetSessionRows.push(i + 1);
+        }
+
+        // Congelar los IDs calculados actuales antes de cambiar nombres/roles.
+        // Esto conserva referencias históricas aunque alguna fórmula dependa de otros campos.
+        if (usersData.length > 1) {
+            const idValues = usersData.slice(1).map(row => [row[COLS_USERS.ID - 1]]);
+            usersSheet.getRange(2, COLS_USERS.ID, idValues.length, 1).setValues(idValues);
+        }
+
+        // Desactivar primero: AUTH rechazará inmediatamente cualquier sesión residual.
+        if (!alreadyDeleted) {
+            const tombstone = '__deleted__:' + Utilities.getUuid();
+            usersSheet.getRange(target.rowIndex, COLS_USERS.Nombre_Usuario, 1, 7)
+                .setValues([[tombstone, '', '', '', '', '', '']]);
+            alreadyDeleted = true;
+        }
+
+        // Revocar todas las sesiones en orden descendente; un fallo es reintentable.
+        for (let i = targetSessionRows.length - 1; i >= 0; i--) {
+            try {
+                sessionsSheet.deleteRow(targetSessionRows[i]);
+                closedSessions++;
+            } catch (error) {
+                deletionError = error;
+                break;
+            }
+        }
+        SpreadsheetApp.flush();
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+
+    if (deletionError) {
+        logToSheet('ERROR', 'Partial account deletion in AUTH; account remains disabled.', {
+            requesterUserId, targetUserId: userId, closedSessions, error: deletionError.message
+        });
+        return {
+            status: 'error',
+            closedSessions,
+            disabled: true,
+            message: 'Cuenta desactivada; limpieza de sesiones incompleta y reintentable.'
+        };
+    }
+
+    logToSheet('INFO', 'Account logically deleted in AUTH.', {
+        requesterUserId, targetUserId: userId, closedSessions, alreadyDeleted
+    });
+    return {
+        status: 'success',
+        deleted: true,
+        alreadyDeleted,
+        closedSessions,
+        message: 'Cuenta desactivada y sesiones revocadas.'
     };
 }
 

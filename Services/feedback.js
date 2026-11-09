@@ -61,8 +61,14 @@ function assertFeedbackSession(payload, allowedRoles) {
     if (!userRow) throw new Error("Acceso denegado: sesión no autorizada.");
 
     const role = String(userRow[3] || "").trim();
+    const username = String(userRow[1] || "").trim();
+    const normalizedRole = normalizeFeedbackRole(role);
+    const activeRoles = ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'];
+    if (!username || username.toLowerCase().startsWith('__deleted__:') || !activeRoles.includes(normalizedRole)) {
+        throw new Error("Acceso denegado: sesión no autorizada.");
+    }
     if (Array.isArray(allowedRoles) &&
-        !allowedRoles.some(allowed => normalizeFeedbackRole(allowed) === normalizeFeedbackRole(role))) {
+        !allowedRoles.some(allowed => normalizeFeedbackRole(allowed) === normalizedRole)) {
         throw new Error("Acceso denegado: sesión no autorizada.");
     }
 

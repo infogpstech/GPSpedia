@@ -236,3 +236,21 @@ AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH — se incorpor
 HEAD verificado al iniciar AUG-153: 20515351c4f7c0ca4f822473e89442722539642d. HEAD de rama base conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Estado: implementación de fuentes incorporada; sintaxis integral y pruebas en deployments aislados pendientes. H-AUD-056 permanece abierto hasta superar esas validaciones.
 ================================================================================
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-005 — 2026-11-09
+AUG-005 se considera completada en fuentes tras resolver H-AUD-053 y H-AUD-054. La eliminación lógica conserva filas e IDs históricos; los IDs nuevos son UUID estáticos. AUTH centraliza eliminación/revocación bajo el lock común y valida el estado de la cuenta. Pruebas de lógica 20/20 y sintaxis PASS. La validación funcional en deployments aislados se registra para Beta y no se afirma como ejecutada.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 20/20 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+
+ADENDA FINAL POST-REVISIÓN — AUG-005 / H-AUD-059
+Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
