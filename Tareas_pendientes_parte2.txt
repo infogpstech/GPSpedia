@@ -482,3 +482,25 @@ Estado: PARCIAL — NO CERRADA. Se inventariaron 20 marcas [X] y TAREA 4 [~]; co
 ADENDA DE TRAZABILIDAD — DOC-README-2026-002
 La corrección del README fue publicada en 8b2bec3. La auditoría y el checkpoint inicial que el cierre original declaró incorporados no estaban en ese commit. La omisión se registra en H-AUD-050 y se corrige mediante DOC-TRACE-2026-001, sin reescribir el historial del commit original. DOC-README-2026-002 queda validada documentalmente después de la verificación del commit correctivo.
 ================================================================================
+
+
+================================================================================
+### AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH
+- Origen: H-AUD-056 y H-AUD-057. Fecha: 2026-11-09. Prioridad: Crítica — integridad de sesiones.
+- Problema: AUTH y USERS son proyectos Apps Script separados y sus ScriptLock no se comparten. AUTH.login/logout y USERS.resetUserSessions modificaban ActiveSessions desde proyectos distintos; una eliminación concurrente podía invalidar índices de fila y afectar sesiones ajenas o dejar sesiones objetivo activas.
+- Criterios de aceptación:
+  1. AUTH es la única autoridad que escribe en ActiveSessions para login, logout y resetUserSessions.
+  2. Mover resetUserSessions a AUTH; validar el token invocante contra ActiveSessions y derivar ID/rol desde Users, sin confiar en identidad/rol del cliente.
+  3. Exigir rol Desarrollador, impedir auto-cierre, exigir unicidad de sesión y cuentas solicitante/destino y rechazar tokens duplicados antes de mutar.
+  4. Eliminar las sesiones destino en orden descendente bajo el mismo ScriptLock usado por login/logout; preservar sesiones ajenas e idempotencia.
+  5. Enrutar resetUserSessions a AUTH desde api-config.js y retirar ruta/handler de escritura de USERS y Services/Test/users.js.
+  6. Sincronizar Services/Test/Auth.js conservando el Spreadsheet ID de pruebas; documentar la ruta de prueba sin introducir URLs live.
+  7. Inventariar todos los escritores de ActiveSessions y demostrar que los demás consumidores son de solo lectura.
+  8. Probar en entorno aislado intercalados reales de login/logout/reset con objetivo al inicio/medio/final, mismo usuario/usuarios distintos, duplicados, reintentos y fallos parciales.
+  9. No ejecutar contra endpoints operativos ni datos productivos.
+- Dependencias: bloquea el cierre de H-AUD-056 y la aprobación/despliegue de AUG-006. AUG-005/H-AUD-053/H-AUD-054 permanecen independientes.
+- Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; pruebas aisladas y validación concurrente pendientes.
+
+ADENDA DE RANGO — 2026-11-09
+La descripción inicial de esta parte indicaba AUG-100 a AUG-152 como rango de corte. Con la incorporación de AUG-153, el rango operativo queda extendido a AUG-100–AUG-153. AUG-015 continúa ausente y no se crea ni reutiliza.
+================================================================================

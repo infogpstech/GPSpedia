@@ -225,3 +225,35 @@ Criterio de corrección: centralizar todas las mutaciones de ActiveSessions bajo
 Pruebas obligatorias: intercalados entre logout y resetUserSessions con la fila objetivo al inicio/medio/final; mismo usuario y usuarios distintos; demostrar que no se elimina una sesión ajena y que la sesión objetivo siempre queda revocada; duplicados e idempotencia; copia AUTH/USERS aislada y deployments de prueba.
 Estado: ABIERTO — BLOQUEANTE para AUG-006. No se modificó código, endpoints, deployments ni datos productivos durante esta revisión.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-056 — INVENTARIO COMPLETO DE MUTACIONES DE ACTIVESESSIONS
+Fecha: 2026-11-09. Tarea correctiva: AUG-153.
+
+La inspección ampliada del árbol de trabajo incluyó los 21 archivos JavaScript/Apps Script vigentes fuera de Olds:
+- AUTH: handleLogin agrega sesiones y puede eliminar la más antigua por límite; handleLogout elimina el token invocante. Ambas operaciones usan LockService.getScriptLock() del proyecto AUTH.
+- USERS: handleResetUserSessions eliminaba las sesiones de un usuario bajo el ScriptLock del proyecto USERS, que es distinto al de AUTH.
+- admin.js, write.js y feedback.js consultan ActiveSessions para autorización, pero en los puntos examinados no escriben en esa hoja. Los demás módulos del inventario no contienen referencias a ActiveSessions.
+- Services/Test/Auth.js y Services/Test/users.js son copias de prueba; cada proyecto Apps Script es independiente y sus locks tampoco se comparten con los proyectos live.
+
+Por tanto, la carrera no se limita a logout: el reset remoto de USERS también podía intercalarse con la eliminación por límite o el append de handleLogin en AUTH. La solución adoptada en AUG-153 traslada resetUserSessions a AUTH, enruta la acción desde api-config.js a AUTH y elimina el handler de escritura de USERS y su copia de prueba. De este modo, login, logout y resetUserSessions quedan bajo el mismo ScriptLock del proyecto AUTH. Los consumidores restantes de ActiveSessions permanecen en lectura.
+
+La limpieza de Users.SessionToken sigue siendo un efecto secundario de resetUserSessions. Los riesgos de reindexación/borrado de filas de Users identificados en H-AUD-053/H-AUD-054 y AUG-005 permanecen fuera del alcance y no se consideran resueltos por esta tarea.
+
+Estado: CORRECCIÓN INCORPORADA EN FUENTES; cierre de H-AUD-056 pendiente de parser integral y pruebas en deployments aislados con intercalados login/logout/reset. No se probaron endpoints productivos ni se modificaron datos.
+================================================================================
+
+
+================================================================================
+H-AUD-057 — COLISIÓN DE IDENTIFICADOR AUG-100 EN LOS REGISTROS ACTIVOS
+Fecha: 2026-11-09. Prioridad: Media — trazabilidad y gobierno documental.
+Evidencia:
+- Tareas_pendientes_parte2.txt asigna AUG-100 al sistema universal de estilos y estados de botones; el Plan Maestro 14.2 identifica parte2 como fuente canónica para AUG-100 a AUG-152.
+- Tareas_pendientes_parte1.txt y Tareas.txt contienen una entrada posterior que asigna AUG-100 a centralizar las mutaciones de ActiveSessions.
+- Aug_Tareas.md y el Plan Maestro no registraban una segunda tarea AUG-100.
+
+Impacto: dos trabajos distintos comparten ID, lo que puede provocar ejecución duplicada, referencias incorrectas y cierres atribuidos a la tarea equivocada.
+Corrección: conservar AUG-100 para el sistema universal de botones; no reescribir los registros históricos. Reasignar la tarea de centralización a AUG-153 en Tareas_pendientes_parte2.txt y agregar adendas trazables en Tareas.txt, Tareas_pendientes_parte1.txt, Aug_Tareas.md y Plan_Maestro_Implementacion.md.
+Estado: RESUELTO DOCUMENTALMENTE mediante la adenda de AUG-153; la entrada histórica duplicada se conserva y queda invalidada para ejecución.
+================================================================================

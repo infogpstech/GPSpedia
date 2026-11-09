@@ -133,3 +133,22 @@ Objetivo: evitar carreras entre revocación individual de AUTH y cierre masivo d
 Criterios mínimos: (1) definir una única autoridad de escritura/bloqueo para ActiveSessions; (2) enrutar logout individual y resetUserSessions por esa autoridad, o demostrar un mecanismo de exclusión realmente compartido entre proyectos; (3) impedir que una fila cambie de identidad entre localización y mutación; (4) conservar autorización de reset masivo y revocación por token exacto; (5) mantener idempotencia y preservación de sesiones ajenas; (6) sincronizar copias de prueba sin cambiar sus Spreadsheet IDs; (7) probar intercalados concurrentes entre AUTH/USERS, fila objetivo al inicio/medio/final, mismo usuario/usuarios distintos, token duplicado, reintentos y errores parciales; (8) no usar endpoints productivos ni datos reales para validar.
 Dependencia: resolver AUG-100 antes de aprobar o desplegar AUG-006. El cambio debe auditarse y tener checkpoint propio.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CORRECCIÓN DE IDENTIFICADOR — H-AUD-057
+Fecha: 2026-11-09.
+La entrada «AUG-100 — CENTRALIZAR LA MUTACIÓN DE ACTIVASESSIONS ENTRE AUTH Y USERS» agregada al final de este registro tiene un identificador duplicado y no debe ejecutarse como AUG-100. La tarea canónica AUG-100 es «Consolidar un sistema universal de estilos y estados de botones», registrada en Tareas_pendientes_parte2.txt. Sin reescribir la entrada anterior, la tarea de centralización queda identificada como AUG-153 y vinculada a H-AUD-056/H-AUD-057.
+================================================================================
+
+================================================================================
+AUG-153 — CENTRALIZAR LAS MUTACIONES DE ACTIVESESSIONS EN AUTH
+Fecha: 2026-11-09.
+Origen: H-AUD-056 y H-AUD-057. Prioridad: CRÍTICA — integridad de sesiones.
+Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; validación funcional aislada pendiente.
+Objetivo: asegurar que login, logout y resetUserSessions muten ActiveSessions bajo una única autoridad de bloqueo.
+Implementación: resetUserSessions se trasladó al servicio AUTH; api-config.js enruta la acción a AUTH; se retiró el handler y la ruta de escritura de USERS y de su copia de prueba; Services/Test/Auth.js se sincronizó preservando su Spreadsheet ID. AUTH deriva identidad y rol desde la sesión bearer almacenada, exige Desarrollador, impide auto-cierre, rechaza tokens/IDs duplicados y elimina filas objetivo en orden descendente bajo el mismo ScriptLock usado por login/logout. La limpieza secundaria de Users.SessionToken informa cleanupPending si falla; los fallos parciales de eliminación informan cuántas sesiones se revocaron y permiten reintento.
+Pruebas de lógica con dobles locales: 8/8 PASS (múltiples sesiones en posiciones inicial/media/final y preservación de otras cuentas; rol no autorizado; auto-cierre; token del solicitante duplicado; token objetivo duplicado globalmente; reintento idempotente; fallo parcial de eliminación; fallo de limpieza secundaria). Esta simulación no sustituye parser integral, ejecución de Apps Script ni prueba concurrente entre deployments.
+Pendiente: parser sintáctico integral de los archivos modificados; crear/verificar deployments aislados AUTH/USERS y ejecutar intercalados reales de login/logout/reset, errores parciales y reintentos. No llamar endpoints operativos ni modificar datos productivos.
+Dependencia: AUG-153 bloquea el cierre de H-AUD-056 y la aprobación/despliegue de AUG-006 hasta completar las pruebas aisladas. AUG-005 y H-AUD-053/H-AUD-054 siguen bloqueadas y no se modifican.
+================================================================================

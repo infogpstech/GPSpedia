@@ -1454,3 +1454,9 @@ Pendiente: parser sintáctico integral, Code Review independiente y deployments 
   7. Validar exclusivamente con Spreadsheet y deployments aislados; no llamar endpoints operativos ni modificar datos productivos.
 - **Dependencia:** bloquea la aprobación y el despliegue de AUG-006.
 - **Estado:** NUEVA; diseño, implementación, revisión independiente y pruebas pendientes.
+
+
+================================================================================
+ADENDA DE CORRECCIÓN DE IDENTIFICADOR — 2026-11-09
+La entrada «AUG-100 — CENTRALIZAR LA MUTACIÓN DE ACTIVASESSIONS ENTRE AUTH Y USERS» incorporada al final de esta parte no es una segunda AUG-100 válida. El identificador AUG-100 pertenece a la tarea canónica de estilos universales de botones en Tareas_pendientes_parte2.txt. Por la regla de asignación única, no ejecutar ni citar la tarea de centralización como AUG-100. Se conserva la entrada histórica sin borrarla; la tarea correctiva de sesiones queda reasignada a AUG-153 en la parte 2, vinculada a H-AUD-056/H-AUD-057.
+================================================================================

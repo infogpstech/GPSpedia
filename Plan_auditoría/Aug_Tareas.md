@@ -18,3 +18,10 @@ La lista operativa independiente con requisitos se distribuye en:
 - Tareas_pendientes_parte3.txt y parte4.txt (registros legacy abiertos/parciales pendientes de reconciliación).
 Los cierres demostrados se registran en tareas_completadas_parte1.txt. Las funcionalidades diferidas se registran en lista_beta.txt.
 Compuerta: no marcar implementaciones como completadas sin revisión sintáctica registrada y validaciones obligatorias. AUG-015 continúa ausente; no crear ni reutilizar ese ID.
+
+
+================================================================================
+ADENDA DE ÍNDICE — 2026-11-09
+AUG-153 se incorpora al registro operativo de Tareas_pendientes_parte2.txt. El rango operativo de la parte 2 queda extendido de AUG-100–AUG-152 a AUG-100–AUG-153. El inventario vigente comprende 152 IDs únicos entre AUG-001 y AUG-153; AUG-015 continúa ausente y no se crea ni reutiliza.
+Corrección de H-AUD-057: AUG-100 conserva como tarea canónica el sistema universal de estilos y estados de botones. La centralización de ActiveSessions se registra como AUG-153; no se reescriben entradas históricas.
+================================================================================

@@ -215,6 +215,9 @@ function doPost(e) {
             case 'validateSession':
                 response = handleValidateSession(request.payload);
                 break;
+            case 'resetUserSessions':
+                response = handleResetUserSessions(request.payload);
+                break;
             case 'logout':
                 response = handleLogout(request.payload);
                 break;
@@ -400,6 +403,169 @@ function handleValidateSession(payload) {
         logToSheet('ERROR', `Error in handleValidateSession: ${error.message}`, { stack: error.stack });
         return { valid: false, error: error.message };
     }
+}
+
+
+// Todas las mutaciones de ActiveSessions (login, logout y resetUserSessions) deben permanecer en AUTH.
+function handleResetUserSessions(payload) {
+    const targetUserId = payload && payload.targetUserId;
+    const sessionToken = payload && payload.sessionToken;
+    const normalizeId = value => String(value === null || value === undefined ? '' : value).trim();
+
+    if (normalizeId(targetUserId) === '' || typeof sessionToken !== 'string' || sessionToken.length === 0) {
+        throw new Error('Datos insuficientes para cerrar las sesiones del usuario.');
+    }
+
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    let requesterUserId = null;
+    let closedSessions = 0;
+    let targetUsername = '';
+    let cleanupError = null;
+    let deletionError = null;
+    let userSessionTokenCleared = false;
+
+    try {
+        lock.waitLock(10000);
+        lockAcquired = true;
+
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!sessionsSheet || !usersSheet) {
+            throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        }
+
+        const sessionsData = sessionsSheet.getDataRange().getValues();
+        const requesterMatches = [];
+        for (let i = 1; i < sessionsData.length; i++) {
+            if (sessionsData[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken) {
+                requesterMatches.push(sessionsData[i]);
+            }
+        }
+        if (requesterMatches.length !== 1) {
+            throw new Error(requesterMatches.length > 1
+                ? 'El token del solicitante aparece duplicado; no se modificó ninguna sesión.'
+                : 'Acceso no autorizado: sesión inválida o expirada.');
+        }
+
+        requesterUserId = normalizeId(requesterMatches[0][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        if (!requesterUserId) {
+            throw new Error('Acceso no autorizado: identidad de sesión inválida.');
+        }
+
+        const usersData = usersSheet.getDataRange().getValues();
+        const requesterRows = [];
+        const targetRows = [];
+        for (let i = 1; i < usersData.length; i++) {
+            const rowUserId = normalizeId(usersData[i][COLS_USERS.ID - 1]);
+            if (rowUserId === requesterUserId) requesterRows.push(usersData[i]);
+            if (rowUserId === normalizeId(targetUserId)) {
+                targetRows.push({ rowIndex: i + 1, row: usersData[i] });
+            }
+        }
+        if (requesterRows.length !== 1) {
+            throw new Error('No se pudo identificar de forma única la cuenta solicitante.');
+        }
+
+        const requesterRole = String(requesterRows[0][COLS_USERS.Privilegios - 1] || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+        if (requesterRole !== 'desarrollador') {
+            throw new Error('Acceso denegado. Esta operación está reservada al rol Desarrollador.');
+        }
+        if (requesterUserId === normalizeId(targetUserId)) {
+            throw new Error('No puedes cerrar remotamente tu propia sesión desde esta operación.');
+        }
+        if (targetRows.length !== 1) {
+            throw new Error(targetRows.length > 1
+                ? 'El ID del usuario seleccionado está duplicado.'
+                : 'El usuario seleccionado no existe.');
+        }
+
+        targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
+        const targetSessions = [];
+        for (let i = 1; i < sessionsData.length; i++) {
+            if (normalizeId(sessionsData[i][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === normalizeId(targetUserId)) {
+                const token = sessionsData[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1];
+                if (token !== null && token !== undefined && String(token) !== '') {
+                    const duplicateCount = sessionsData.filter(row =>
+                        row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token
+                    ).length;
+                    if (duplicateCount > 1) {
+                        throw new Error('Una sesión del usuario seleccionado tiene un token duplicado; no se modificó ninguna fila.');
+                    }
+                }
+                targetSessions.push(i + 1);
+            }
+        }
+
+        for (let i = targetSessions.length - 1; i >= 0; i--) {
+            try {
+                sessionsSheet.deleteRow(targetSessions[i]);
+                closedSessions++;
+            } catch (error) {
+                deletionError = error;
+                break;
+            }
+        }
+        if (!deletionError) {
+            try {
+                usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.SessionToken).clearContent();
+                userSessionTokenCleared = true;
+            } catch (error) {
+                cleanupError = error;
+            }
+        }
+        SpreadsheetApp.flush();
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+
+    if (deletionError) {
+        logToSheet('ERROR', 'Partial user session reset in AUTH.', {
+            requesterUserId,
+            targetUserId: normalizeId(targetUserId),
+            closedSessions,
+            error: deletionError.message
+        });
+        return {
+            status: 'error',
+            closedSessions,
+            message: `La operación se interrumpió después de cerrar ${closedSessions} sesión(es) de ${targetUsername}. Vuelve a intentarlo para revocar las restantes.`
+        };
+    }
+
+    if (cleanupError) {
+        logToSheet('ERROR', 'Sessions revoked but Users.SessionToken cleanup failed.', {
+            requesterUserId,
+            targetUserId: normalizeId(targetUserId),
+            closedSessions,
+            error: cleanupError.message
+        });
+    } else {
+        logToSheet('INFO', 'User sessions reset through AUTH.', {
+            requesterUserId,
+            targetUserId: normalizeId(targetUserId),
+            closedSessions,
+            userSessionTokenCleared
+        });
+    }
+
+    const message = closedSessions > 0
+        ? `Se cerraron ${closedSessions} sesión(es) activa(s) de ${targetUsername}.`
+        : 'El usuario no tenía sesiones activas.';
+    return {
+        status: 'success',
+        closedSessions,
+        userSessionTokenCleared,
+        cleanupPending: Boolean(cleanupError),
+        message: cleanupError
+            ? message + ' No se pudo limpiar la referencia del token; requiere revisión.'
+            : message + (userSessionTokenCleared ? '' : ' No había una referencia de token que limpiar.')
+    };
 }
 
 function handleLogout(payload) {

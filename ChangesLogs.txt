@@ -111,3 +111,19 @@ La revisión de sintaxis se limita a los fragmentos modificados ejecutados con N
 - AUG-006 queda BLOQUEADA hasta centralizar/coordenar todas las mutaciones de ActiveSessions y demostrarlo con pruebas de intercalado. No desplegar la versión actual.
 - Services/Test/README.md confirma que los proyectos de prueba siguen sin crearse/desplegarse. No se llamaron endpoints operativos ni se modificaron datos.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — AUG-153 — CENTRALIZACIÓN DE MUTACIONES DE ACTIVESESSIONS
+Archivos de código:
+- Services/Auth.js y Services/Test/Auth.js: se incorporó resetUserSessions bajo el ScriptLock AUTH, con autorización derivada del token activo, unicidad de actor/destino, protección contra auto-cierre y duplicados, eliminación descendente de sesiones y reporte de limpieza secundaria pendiente.
+- Services/users.js y Services/Test/users.js: se retiró el router y handler que mutaban ActiveSessions desde el proyecto USERS; las consultas de sesión permanecen de solo lectura.
+- api-config.js: resetUserSessions ahora se enruta a AUTH.
+- Services/Test/README.md: se documentó AUTH como autoridad única de escritura de ActiveSessions y la ruta de prueba.
+Documentación: H-AUD-056 ampliado; H-AUD-057 registra y resuelve la colisión documental de AUG-100; se incorporó AUG-153 en Tareas_pendientes_parte2.txt, Tareas.txt, Aug_Tareas.md y Plan Maestro; se agregó rectificación append-only a Tareas_pendientes_parte1.txt.
+Verificación estática: se inventariaron 21 archivos JS/Apps Script; solo AUTH login/logout y USERS reset escribían ActiveSessions. admin.js, write.js y feedback.js solo consultan esa hoja; los módulos restantes no la referencian. Después del cambio, USERS no conserva handler de escritura de ActiveSessions.
+Pruebas de lógica con dobles locales: 8/8 PASS en simulación (multi-sesión y preservación de cuentas ajenas; rol no autorizado; auto-cierre; token solicitante duplicado; token objetivo duplicado; reintento idempotente; fallo parcial de eliminación; fallo de limpieza secundaria). No equivale a prueba de intercalado real ni a deployment.
+Sintaxis integral: pendiente; no se declara parser completo de los archivos. Code Review estática: revisados autorización, bloqueo compartido, orden descendente, duplicados, logging sin bearer token y limpieza parcial. La limpieza de Users.SessionToken sigue expuesta a los riesgos independientes H-AUD-053/H-AUD-054/AUG-005.
+No se crearon deployments, no se llamaron endpoints productivos, no se modificaron datos ni la rama base. Filtros rápidos cancelados; sin cambios.
+Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; H-AUD-056/AUG-006 siguen pendientes de validación aislada concurrente.
+================================================================================

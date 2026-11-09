@@ -115,9 +115,6 @@ function doPost(e) {
             case 'updateProfile':
                 response = handleUpdateProfile(request.payload);
                 break;
-            case 'resetUserSessions':
-                response = handleResetUserSessions(request.payload);
-                break;
             default:
                 throw new Error(`La acción '${request.action}' es desconocida.`);
         }
@@ -207,63 +204,6 @@ function handleGetUsers(payload) {
         });
 
     return { status: 'success', users: users };
-}
-
-function handleResetUserSessions(payload) {
-    const { targetUserId, sessionToken } = payload || {};
-    if (!targetUserId || !sessionToken) {
-        throw new Error("Datos insuficientes para cerrar las sesiones del usuario.");
-    }
-    const lock = LockService.getScriptLock();
-    let lockAcquired = false;
-    try {
-        lock.waitLock(30000);
-        lockAcquired = true;
-        const requester = getVerifiedSession(sessionToken);
-        const requesterRole = String(requester.role || "")
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .trim()
-            .toLowerCase();
-        if (requesterRole !== "desarrollador") {
-            throw new Error("Acceso denegado. Esta operación está reservada al rol Desarrollador.");
-        }
-        if (String(requester.userId) === String(targetUserId)) {
-            throw new Error("No puedes cerrar remotamente tu propia sesión desde esta operación.");
-        }
-        const ss = getSpreadsheet();
-        const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-        const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        if (!usersSheet || !sessionsSheet) throw new Error("No se encontraron las hojas Users o ActiveSessions.");
-        const usersData = usersSheet.getDataRange().getValues();
-        let targetUserRow = -1;
-        for (let i = 1; i < usersData.length; i++) {
-            if (String(usersData[i][COLS_USERS.ID - 1]).trim() === String(targetUserId).trim()) {
-                targetUserRow = i + 1;
-                break;
-            }
-        }
-        if (targetUserRow < 0) throw new Error("El usuario seleccionado no existe.");
-        const sessionsData = sessionsSheet.getDataRange().getValues();
-        let closedSessions = 0;
-        for (let i = sessionsData.length - 1; i >= 1; i--) {
-            if (String(sessionsData[i][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]).trim() === String(targetUserId).trim()) {
-                sessionsSheet.deleteRow(i + 1);
-                closedSessions++;
-            }
-        }
-        usersSheet.getRange(targetUserRow, COLS_USERS.SessionToken).clearContent();
-        SpreadsheetApp.flush();
-        return {
-            status: "success",
-            closedSessions,
-            message: closedSessions > 0
-                ? `Se cerraron ${closedSessions} sesión(es) activa(s) de ${usersData[targetUserRow - 1][COLS_USERS.Nombre_Usuario - 1]}.`
-                : "El usuario no tenía sesiones activas. Se limpió el token de referencia."
-        };
-    } finally {
-        if (lockAcquired) lock.releaseLock();
-    }
 }
 
 function handleCreateUser(payload) {

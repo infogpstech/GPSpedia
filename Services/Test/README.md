@@ -27,10 +27,14 @@ Los deployments de prueba deben conservar la política de acceso que corresponda
 
 ## Operaciones que afectan la copia
 
-- AUTH: consulta `Users` y escribe en `Users.Password` al migrar una contraseña legacy; actualiza `Users.SessionToken`; agrega/elimina registros en `ActiveSessions`; escribe registros en `Logs`; utiliza CacheService para el contador de intentos.
-- USERS: consulta y modifica `Users` y `ActiveSessions` para las acciones que correspondan, incluidas creación, actualización, eliminación, cambio de contraseña y cierre de sesiones.
+- AUTH: consulta `Users`; actualiza `Users.Password` al migrar una contraseña legacy y `Users.SessionToken`; es la única autoridad que agrega/elimina registros de `ActiveSessions` para login, logout y resetUserSessions; escribe registros en `Logs`; utiliza CacheService para el contador de intentos.
+- USERS: consulta `ActiveSessions` para validar sesiones y modifica `Users` para las acciones que correspondan. El cierre remoto de sesiones se enruta a AUTH; USERS no debe escribir en `ActiveSessions`.
 
 Antes de probar, confirmar que la copia contiene las hojas `Users`, `ActiveSessions` y `Logs`, con los encabezados y columnas esperados por los servicios. Utilizar una cuenta de prueba dedicada y no realizar las pruebas contra las URLs operativas.
+
+## Pruebas de resetUserSessions
+
+La acción `resetUserSessions` debe invocarse exclusivamente contra el deployment AUTH aislado; el deployment USERS ya no expone un handler de escritura para ActiveSessions. Ejecutar pruebas concurrentes de login, logout y reset sobre la misma Spreadsheet de prueba. Verificar sesiones objetivo ubicadas al inicio, medio y final; sesiones de otros usuarios preservadas; token solicitante/objetivo duplicado; reintentos; fallo parcial de deleteRow y respuesta cleanupPending. No usar las URLs operativas.
 
 ## Límites
 

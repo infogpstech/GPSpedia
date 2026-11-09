@@ -225,3 +225,14 @@ El orden de trabajo no se sustituye por esta matriz. Para cada tarea individual 
 - Índice de las tareas AUG: `Plan_auditoría/Aug_Tareas.md`.
 - Historial inmutable: `Olds/Documentacion_Legacy/`.
 Una tarea solo pasa a completada cuando su ficha, evidencia, revisión sintáctica de todos los archivos de código afectados, pruebas funcionales aplicables, Code Review y commit verificable cumplen la compuerta. Las tareas documentales declaran sintaxis de código N/A y pasan revisión documental.
+
+
+================================================================================
+ADENDA DE GOBIERNO — AUG-153 Y H-AUD-057
+Fecha: 2026-11-09.
+El registro operativo contiene ahora 152 IDs AUG únicos en el rango AUG-001 a AUG-153; AUG-015 continúa ausente. La parte 2 se extiende a AUG-100–AUG-153. El conteo previo de 151 IDs se mantiene como antecedente del corte anterior.
+AUG-100 conserva su asignación canónica a «Consolidar un sistema universal de estilos y estados de botones», conforme a Tareas_pendientes_parte2.txt y la matriz 14.2. La entrada de centralización de ActiveSessions que se había agregado con AUG-100 en Tareas_pendientes_parte1.txt/Tareas.txt queda invalidada para ejecución y se reasigna a AUG-153 sin reescribir el historial.
+AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH — se incorpora como corrección crítica de continuidad para resolver H-AUD-056 antes de aprobar o desplegar AUG-006. Debe ejecutarse antes de dar por cerrada la ola de sesiones de Fase 1; no duplica AUG-100 ni modifica las fases propietarias de otras tareas.
+HEAD verificado al iniciar AUG-153: 20515351c4f7c0ca4f822473e89442722539642d. HEAD de rama base conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: implementación de fuentes incorporada; sintaxis integral y pruebas en deployments aislados pendientes. H-AUD-056 permanece abierto hasta superar esas validaciones.
+================================================================================

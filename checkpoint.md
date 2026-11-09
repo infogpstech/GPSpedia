@@ -367,3 +367,59 @@ No se modificó código durante esta revisión. No se llamaron endpoints product
 Siguiente acción: diseñar y ejecutar AUG-100 con prueba de intercalado; después repetir revisión independiente y validación funcional aislada para AUG-006.
 Este checkpoint final cierra la revisión documental antes del único commit.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-153
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado: 20515351c4f7c0ca4f822473e89442722539642d
+Padre del HEAD: 2342701fa31e9a19cfc0e04ff46af4bdc3ccc825
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH.
+Hallazgos: H-AUD-056 bloquea AUG-006; H-AUD-057 identifica la colisión de AUG-100. AUG-100 canónica permanece asignada a estilos de botones.
+Alcance: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, api-config.js y Services/Test/README.md; revisión de consumers en users.html y del inventario completo de módulos JS/Apps Script.
+Estado inicial: checkpoint y HEAD verificados; sin modificaciones de código ni documentación en esta tarea.
+Restricciones: no escribir en GPSpedia2.2.5; no usar endpoints operativos ni modificar datos; conservar IDs de Spreadsheet de prueba; no tocar filtros rápidos cancelados; un solo commit Git Database API.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUG-153
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: 20515351c4f7c0ca4f822473e89442722539642d
+Rama base: GPSpedia2.2.5
+HEAD base confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; validación funcional aislada pendiente. No declarar AUG-153 ni AUG-006 completadas.
+Cambios: resetUserSessions se trasladó a AUTH y usa el mismo ScriptLock que login/logout; api-config enruta la acción a AUTH; se retiró el handler de escritura de USERS y de su copia de prueba; la copia AUTH se sincronizó conservando su Spreadsheet ID independiente.
+Seguridad: el actor/rol se deriva del token bearer y Users; solo Desarrollador; se impide auto-cierre; se rechazan duplicados de token e IDs antes de mutar; sesiones destino se eliminan en orden descendente; los fallos parciales de eliminación devuelven closedSessions y permiten reintento; la limpieza secundaria reporta cleanupPending. No se registra el token.
+Auditoría: H-AUD-056 ampliado para incluir login como escritor AUTH y queda pendiente de cierre hasta validar intercalados reales. H-AUD-057 resuelto documentalmente: AUG-100 conserva la tarea de botones y la centralización queda como AUG-153.
+Archivos modificados: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, api-config.js, Services/Test/README.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, Tareas_pendientes_parte2.txt, Plan_auditoría/Plan_Maestro_Implementacion.md, Plan_auditoría/Aug_Tareas.md y checkpoint.md.
+Respaldos exactos (blob SHA anterior):
+- Services/Auth.js: e24973db0b2074c9fc7fc15c8cd0cb56de9297d8
+- Services/Test/Auth.js: 08c57c509943749c312df97ba5465d88a2f6565b
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- api-config.js: 7f8a80b876c3b562f8730d916c8b49b12f176874
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- Auditoría.txt: 44b559da476deb3b45e2d8de5930ae29d1c6ae6b
+- ChangesLogs.txt: 551ce99fe5befcfd2f99f22109825bde8e4075f2
+- Tareas.txt: 497d831b6c3ee9f567e8175ce3204d40b6bf5ac7
+- Tareas_pendientes_parte1.txt: 6dc97d1c6c19e4bb7737f45c4d20f02c39a8d3eb
+- Tareas_pendientes_parte2.txt: b91eb48d548cabb318411bb04a4ccf18d4cc50fc
+- Plan_auditoría/Plan_Maestro_Implementacion.md: 93d32124274093a6fdb8cccc589e8b83fa7c6174
+- Plan_auditoría/Aug_Tareas.md: 54fcc151d83cd8de5938cb9aec155c9085d702d8
+- checkpoint.md: ee015651fa5d2d4951d75c036ae8bc519dc13aa4
+Verificaciones:
+- Inventario estático de 21 archivos JS/Apps Script: no se detectaron otros escritores de ActiveSessions fuera de AUTH login/logout y el antiguo USERS reset.
+- Pruebas de lógica con dobles locales: 8/8 PASS en simulación; no sustituyen pruebas concurrentes entre deployments.
+- Parser sintáctico integral de todos los archivos modificados: pendiente.
+- AUTH/USERS de prueba no están creados/desplegados según Services/Test/README.md. No se ejecutaron pruebas funcionales reales ni intercalados entre proyectos.
+Code Review estática: segunda revisión de seguridad/efectos colaterales completada; el lock compartido cubre los tres caminos de escritura. La modificación no resuelve los riesgos independientes de Users.ID y borrado físico (H-AUD-053/H-AUD-054/AUG-005).
+No se modificaron users.html, deployments, endpoints operativos, datos productivos, rama base ni archivos legacy. Filtros rápidos continúan cancelados.
+Siguiente acción: parser integral; después crear y verificar deployments aislados AUTH/USERS y probar intercalados reales de login/logout/reset, con filas objetivo al inicio/medio/final, sesiones múltiples, duplicados y fallos parciales. Solo entonces reevaluar H-AUD-056 y desbloquear AUG-006.
+Este checkpoint final se incorpora como último documento antes del único commit de AUG-153.
+================================================================================
