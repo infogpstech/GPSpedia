@@ -208,3 +208,12 @@ AUG-010 — Serialización local USERS y migración legacy AUTH — 2026-11-09
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
 Recuento final: USERS 14/14; createUser fallo/reintento 2/2; AUTH 8/8 incluyendo migración legacy normal, cambio propio intercalado, reset administrativo intercalado y aplicación del límite según rol revalidado dentro del lock. Total funcional 24/24 PASS; sintaxis 4/4 PASS. H-AUD-067 resuelto. H-AUD-066 se mantiene en AUG-154. Sin pruebas reales de Apps Script/deployments.
+
+
+================================================================================
+2026-11-09 — ADENDA DOCUMENTAL AUG-011 — OMISIÓN EXPRESA
+- Tareas_pendientes_parte1.txt: se agregó a la ficha AUG-011 la decisión expresa del usuario de no ejecutar la sustitución de SHA-256 por KDF.
+- Se conserva SHA-256 y el formato/compatibilidad actuales; no se autoriza seleccionar KDF, modificar hashes, migrar credenciales ni desplegar cambios de hashing.
+- AUG-011 queda OMITIDA POR DECISIÓN DEL USUARIO y no debe reactivarse en sesiones futuras sin nueva autorización explícita.
+- No se modificó código, autenticación, credenciales, datos, hojas ni deployments. Cambio exclusivamente documental.
+================================================================================

@@ -779,3 +779,43 @@ Limitaciones: pruebas realizadas con dobles locales, no son concurrencia real de
 Siguiente tarea secuencial registrada: AUG-011 — sustituir SHA-256 rápido por KDF resistente y completar migración versionada. AUG-154 permanece como tarea nueva de recuperación de escrituras parciales.
 Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-010.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — ADENDA DOCUMENTAL AUG-011
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+HEAD de trabajo confirmado: f1108069f6f4a2da6ad727053a7771855d3024ab
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones previstas).
+Tarea: registrar en la ficha AUG-011 la decisión expresa del usuario de omitirla.
+Alcance exclusivo: documentación de la ficha AUG-011, registro ChangesLogs.txt y checkpoint.md. No auditar ni modificar código AUTH/USERS, algoritmos de contraseña, credenciales, datos, hojas ni deployments.
+Estado inicial: AUG-011 figura como tarea pendiente para sustituir SHA-256 por KDF. El usuario indicó expresamente mantener SHA-256 y no ejecutar esa tarea.
+Decisión que debe quedar inequívoca: AUG-011 OMITIDA POR DECISIÓN DEL USUARIO; conservar el esquema SHA-256 actual; no seleccionar KDF, no cambiar formato sha256$, no migrar credenciales, no cambiar compatibilidad ni desplegar cambios de hashing. No reactivar ni ejecutar en sesiones futuras salvo nueva autorización explícita del usuario.
+Archivos previstos: Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+Riesgos/dependencias: el Plan Maestro menciona AUG-011 dentro de la ola de seguridad; la ficha específica debe prevalecer como instrucción de no ejecución. No se amplía el alcance a reordenar el Plan Maestro.
+Verificaciones previas: rama de trabajo y rama base consultadas; HEADs confirmados. No se realizarán pruebas de código porque no hay cambios funcionales.
+Siguiente acción: insertar la observación en la ficha AUG-011, registrar el cambio documental y cerrar con checkpoint final antes del único commit.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — ADENDA DOCUMENTAL AUG-011
+Fecha: 2026-11-09
+Estado: COMPLETADA — decisión registrada; tarea funcional AUG-011 OMITIDA y NO EJECUTABLE sin nueva autorización explícita.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: f1108069f6f4a2da6ad727053a7771855d3024ab
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Archivos modificados:
+- Tareas_pendientes_parte1.txt — anotación expresa dentro de AUG-011.
+- ChangesLogs.txt — registro de la adenda documental.
+- checkpoint.md — continuidad y cierre de esta tarea.
+Resultado: SHA-256 y el formato sha256$ actual permanecen sin cambios. Se prohíbe inferir autorización para seleccionar KDF, modificar hashing, migrar credenciales o desplegar esa modificación. La tarea no debe reactivarse en otra sesión sin nueva autorización expresa del usuario.
+Verificación: cambio documental limitado a la nota de AUG-011, la entrada de ChangesLogs y este checkpoint. No aplica prueba funcional/sintáctica: no hubo cambios de código. No se modificaron Services/Auth.js, Services/Test/Auth.js, hojas, credenciales, endpoints ni deployments.
+Limitaciones: el Plan Maestro conserva su mención histórica de AUG-011; la ficha específica de la tarea contiene la decisión operativa y debe respetarse. No se alteró el Plan Maestro para mantener el alcance solicitado.
+Siguiente acción: continuar con la siguiente tarea elegible, excluyendo AUG-011. AUG-012 puede auditarse por separado conforme al procedimiento.
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de esta adenda.
+================================================================================

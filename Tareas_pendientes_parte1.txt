@@ -181,6 +181,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Problema:** SHA-256 de una pasada no es KDF; cuentas legacy pueden quedar en texto claro; formatos desconocidos se interpretan como legacy.
 - **Criterios:** seleccionar KDF compatible con Apps Script V8 y medir rendimiento; formato versionado con parámetros y salt individual; compatibilidad temporal controlada con legacy/sha256$; rechazar formatos codificados desconocidos; definir migración de cuentas inactivas y política para contraseñas legacy cortas; probar reversión en copia aislada.
 - **Restricción:** no migrar ni desplegar producción sin autorización.
+- **Decisión expresa del usuario (2026-11-09): OMITIDA; NO EJECUTAR.** Se conserva el esquema SHA-256 actual. No seleccionar ni implementar KDF, no cambiar el formato `sha256$<salt>$<digest>`, no migrar credenciales, no alterar compatibilidad ni realizar despliegues relacionados con hashing. Esta tarea no debe retomarse ni ejecutarse en otra sesión por aparecer en el Plan Maestro o por continuidad automática; solo podrá reabrirse mediante una nueva autorización explícita del usuario.
 
 ### AUG-012 — Hacer consistente el contador de intentos ante autenticaciones concurrentes
 - **Origen:** H-AUD-023-004. **Prioridad:** Media.
