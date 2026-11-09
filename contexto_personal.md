@@ -1338,3 +1338,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-029-001 a 008 abiertos; AUG-031/032/033 pendientes; adendas a AUG-028/AUG-030 conservadas.
 - No se ejecutaron E2–E5, HTTP, navegador/PWA, Apps Script, Drive/Spreadsheet, concurrencia, rendimiento, TTL, reanudación ni deployments.
 - Siguiente unidad: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+
+## Continuidad de auditoría — AUD-T-030 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S141 / AUD-CP-0140; rama GPSpedia2.2.5_work, HEAD inicial 672490a0d916bf5678487b9c1793ace4d5f0496a; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 c8c971ed061f08fca212f6879b35c857d9a0192c; 130 commits posteriores; diff global de ocho documentos; seis archivos del alcance conservan SHA idénticos.
+- CP-0074→HEAD: 66 commits y únicamente ocho documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-030-001 a 008 abiertos; AUG-034/035/036 pendientes; AUD-T-033/AUG-003 relacionada.
+- No se ejecutaron Apps Script, Spreadsheet/Drive real, migraciones VIN, concurrencia, recuperación ni deployments. No se modificaron datos productivos.
+- Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.

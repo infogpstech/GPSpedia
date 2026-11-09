@@ -1394,3 +1394,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron E2–E5, HTTP, navegador/PWA, Apps Script V8, Drive/Spreadsheet, concurrencia, mediciones de tiempo/memoria, TTL real, reanudación ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+
+## 76. AUD-T-030 — continuidad E1 de esquema, IDs, opId y migraciones
+- Sesión AUD-20261108-S141; checkpoint AUD-CP-0140; E1 c8c971ed061f08fca212f6879b35c857d9a0192c; HEAD 672490a0d916bf5678487b9c1793ace4d5f0496a; árbol d49f15f20f153d677f4a75dfc660af45d1895a4f; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1; diff exclusivamente ocho documentos. Los seis archivos funcionales/esquema conservan SHA exactos de E1.
+- CP-0074→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior a la revalidación previa.
+- H-AUD-030-001 a 008 permanecen abiertos. AUG-034/035/036 pendientes; AUD-T-033/AUG-003 conserva la dependencia de coordinación.
+- No se ejecutaron E2/E3, HTTP, navegador/PWA, Apps Script V8, Spreadsheet/Drive real, migración VIN, cambios de columnas, concurrencia, recuperación ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, esquema, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
