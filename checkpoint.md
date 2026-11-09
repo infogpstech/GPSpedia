@@ -3501,3 +3501,41 @@ Sin cambios funcionales, HTML/CSS de aplicación, endpoints, configuración, ass
 Commit documental único: docs(audit): verify AUD-T-007 continuity; parent e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec.
 Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0132
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S133
+Tarea: AUD-T-008 — revalidación de continuidad E1 de deep links, compartir, enlaces precisos e indicador de red.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 9a961cd812450bf5e3308b2e957c71b1cb438e1d | árbol: 707a52c775ea544825da1078144b41d7e007299c.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: f3d7558abeef482957582fea08f2041490b54f34.
+Revalidación previa: AUD-20261108-S110 / AUD-CP-0109, HEAD 00a550252fe75efd83c209d2c2c15ef363ab2b4c.
+Alcance: ui.js, main.js, navigation.js, index.html, style.css y auth.js.
+Estado inicial: H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052; VAL-12/14/18 pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas reales.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: c83d6c85d38f65f114036089438b23385520642e
+- Plan_auditoría/Consolidacion_Auditoria.md: 00f71005c5745179867ca8cff9fe5bad1acbe27e
+- ChangesLogs.txt: d055c8e9526ef47fca0797a3ae47ca3cadb5be2a
+- contexto_personal.md: 16cbe814ff7fb444ddca9ace7337ea9cc2e2517d
+- checkpoint.md: f07d654e471761786a3189b809961174c38e5266
+Siguiente acción: comparar E1→HEAD, verificar SHA de los seis archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0132
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S133
+Tarea: AUD-T-008 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052; VAL-12/14/18 pendientes.
+HEAD padre confirmado: 9a961cd812450bf5e3308b2e957c71b1cb438e1d; árbol inicial 707a52c775ea544825da1078144b41d7e007299c. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los seis archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: enlaces compartidos sin ID estable/autoapertura ambigua; fallback Web Share/Clipboard incompleto; hash malformado puede interrumpir restauración; indicador sin semántica accesible ni salud backend. H-AUD-008-001 a 004 permanecen abiertos.
+Tareas/relaciones: AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052; H-AUD-037-003/006/010 relacionados. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset real, HTTP/health check, Apps Script, red real, móvil/PWA, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-008 continuity; parent 9a961cd812450bf5e3308b2e957c71b1cb438e1d.
+Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.
+================================================================================

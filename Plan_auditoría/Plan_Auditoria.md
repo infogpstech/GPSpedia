@@ -3320,3 +3320,27 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 2b64f00603c37deb00d8338f346234e2dff612d3
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, HTML/CSS de aplicación, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación de continuidad E1).
+
+
+## 83. Continuidad verificada — AUD-T-008 (revalidación E1)
+Sesión AUD-20261108-S133 | Checkpoint AUD-CP-0132 | E1 histórica f3d7558abeef482957582fea08f2041490b54f34 | HEAD inicial 9a961cd812450bf5e3308b2e957c71b1cb438e1d | árbol inicial 707a52c775ea544825da1078144b41d7e007299c | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S026 / AUD-CP-0026. Revalidación previa AUD-20261108-S110 / AUD-CP-0109, HEAD 00a550252fe75efd83c209d2c2c15ef363ab2b4c.
+Comparación E1→HEAD: 107 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+Los seis archivos conservan SHA idénticos a E1:
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+H-AUD-008-001 a H-AUD-008-004 permanecen abiertos: enlaces compartidos sin ID estable/autoapertura ambigua; fallback Web Share/Clipboard incompleto; hash malformado puede interrumpir la restauración; indicador sin semántica accesible ni comprobación de salud backend.
+H-AUD-037-003, H-AUD-037-006 y H-AUD-037-010 se mantienen como relaciones, sin duplicación. AUG-072/AUG-073 continúan pendientes; AUG-049/AUG-052 conservan adendas. VAL-12, VAL-14 y VAL-18 permanecen pendientes.
+No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset real, HTTP/health check, Apps Script, red real, móvil/PWA ni deployments. La continuidad Git no certifica comportamiento multiplataforma.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: c83d6c85d38f65f114036089438b23385520642e
+- Plan_auditoría/Consolidacion_Auditoria.md: 00f71005c5745179867ca8cff9fe5bad1acbe27e
+- ChangesLogs.txt: d055c8e9526ef47fca0797a3ae47ca3cadb5be2a
+- contexto_personal.md: 16cbe814ff7fb444ddca9ace7337ea9cc2e2517d
+- checkpoint.md: f07d654e471761786a3189b809961174c38e5266
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación de continuidad E1).

@@ -1311,3 +1311,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ni medición de history.state.
 - Solo continuidad estática/documental; sin cambios funcionales, HTML/CSS, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## 68. AUD-T-008 — continuidad E1 y revalidación de deep links/compartir/red
+- Sesión AUD-20261108-S133; checkpoint AUD-CP-0132; E1 f3d7558abeef482957582fea08f2041490b54f34; HEAD inicial 9a961cd812450bf5e3308b2e957c71b1cb438e1d; árbol 707a52c775ea544825da1078144b41d7e007299c; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los seis archivos funcionales conservan SHA exactos de E1.
+- H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes; VAL-12/14/18 pendientes.
+- No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset real, HTTP/health check, Apps Script, red real, móvil/PWA ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, HTML/CSS, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.

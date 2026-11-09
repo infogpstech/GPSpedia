@@ -1267,3 +1267,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-007-001 a 005 abiertos; AUG-068 a 071 pendientes; adenda AUG-047; H-AUD-005-008 ampliado. VAL-10/17 pendientes.
 - No se ejecutaron navegador, Android/iOS, PWA, gestos, teclado virtual, submits reales, deep links ni medición de history.state. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## Continuidad de auditoría — AUD-T-008 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S133 / AUD-CP-0132; rama GPSpedia2.2.5_work, HEAD inicial 9a961cd812450bf5e3308b2e957c71b1cb438e1d; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 f3d7558abeef482957582fea08f2041490b54f34; 107 commits posteriores; merge-base igual a E1; diff global de ocho documentos; seis archivos funcionales conservan SHA idénticos.
+- H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052; VAL-12/14/18 pendientes.
+- No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, HTTP, Apps Script, red real, móvil/PWA ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.
