@@ -1330,3 +1330,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron Apps Script V8, HTTP, login real, Sheets/Logs, benchmark KDF, migración, concurrencia, CacheService, locks entre proyectos, deployments ni E2/E3.
 - Solo continuidad estática/documental; sin cambios funcionales, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
+
+
+## 70. AUD-T-024 — continuidad E1 y revalidación de ciclo de sesiones
+- Sesión AUD-20261108-S135; checkpoint AUD-CP-0134; E1 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec; HEAD inicial 8df484a29af6aa3c12ab09887e7d07dd03e5d0fa; árbol 0c20f70aa81143206e65c7a8a25b6c0c09b463c0; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 131 commits posteriores; merge-base igual a E1; diff de diez archivos con Services/admin.js/Services/write.js fuera del alcance. Los doce archivos funcionales/auxiliares conservan SHA exactos de E1.
+- Comparación CP-0068→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior.
+- H-AUD-024-001 a 010 permanecen abiertos; AUG-005 a 008, AUG-010, AUG-016 y AUG-017 vigentes; no duplicar.
+- No se ejecutaron navegador, multi-pestaña, HTTP, Apps Script V8, login/revocación/expiración real, concurrencia, fallos inyectados, roles ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.

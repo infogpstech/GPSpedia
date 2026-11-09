@@ -3578,3 +3578,42 @@ Sin cambios de código, endpoints, contratos, configuración, credenciales, hoja
 Commit documental único: docs(audit): verify AUD-T-023 continuity; parent ca05d375f75e2b0955164196202d95cbcd927b14.
 Siguiente unidad: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0134
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S135
+Tarea: AUD-T-024 — revalidación de continuidad E1 de administración de usuarios, privilegios, sesiones y controles de acceso.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 8df484a29af6aa3c12ab09887e7d07dd03e5d0fa | árbol: 0c20f70aa81143206e65c7a8a25b6c0c09b463c0.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec.
+Revalidación previa: AUD-20261108-S069 / AUD-CP-0068, HEAD 2f627a9f11a2e0c6282903d515b8ef893cd15b96.
+Alcance: Services/Auth.js, Services/users.js, Services/Test/Auth.js, Services/Test/users.js, auth.js, users.html, api-config.js, main.js, ui.js, state.js, index.html y Services/Test/README.md.
+Estado inicial: H-AUD-024-001 a 010 abiertos; AUG-005 a 008, AUG-010, AUG-016 y AUG-017 vigentes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas de autenticación real.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 71f9cddd4b560eb2e5c99c7fbf007a236c2943b8
+- Plan_auditoría/Consolidacion_Auditoria.md: 367a549d94d8224a72e47b962a32583e06a98cfa
+- ChangesLogs.txt: 98c5421e6744a5d5dd84b4c86b3658e7a350aeff
+- contexto_personal.md: 23f1e022a1afd39e0b7df9285fbaa7599c2a9d39
+- checkpoint.md: c6d8a304ae6721aed78704889f9308709ec85994
+Siguiente acción: comparar E1→HEAD y CP-0068→HEAD, verificar SHA de los doce archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0134
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S135
+Tarea: AUD-T-024 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-024-001 a 010 abiertos; AUG-005 a 008, AUG-010, AUG-016 y AUG-017 vigentes; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: 8df484a29af6aa3c12ab09887e7d07dd03e5d0fa; árbol inicial 0c20f70aa81143206e65c7a8a25b6c0c09b463c0. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 131 commits posteriores; merge-base igual a E1; diff con ocho documentos y dos archivos fuera del alcance (Services/admin.js/Services/write.js). Los doce archivos funcionales/auxiliares conservan SHA idénticos a E1.
+Comparación CP-0068→HEAD: 66 commits posteriores y únicamente ocho documentos; no hay deriva funcional posterior a la revalidación previa.
+Hallazgos revalidados: respuesta asíncrona obsoleta; lock local no atómico; carrera login/resetUserSessions; autodeleción/sesiones huérfanas; creación parcial; reset múltiple parcial; navegación residual tras cambio de rol; logout local; expiración indefinida; AUTH no comprueba existencia del usuario. H-AUD-024-001 a 010 permanecen abiertos.
+Tareas/relaciones: AUG-005 a 008, AUG-010, AUG-016 y AUG-017 conservadas. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, multi-pestaña, HTTP, Apps Script V8, login/revocación/expiración real, concurrencia, fallos inyectados, roles, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-024 continuity; parent 8df484a29af6aa3c12ab09887e7d07dd03e5d0fa.
+Siguiente unidad: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+================================================================================

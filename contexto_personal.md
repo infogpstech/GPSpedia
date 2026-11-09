@@ -1284,3 +1284,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-023-001 a 008 abiertos; AUG-010 a AUG-014 pendientes; relaciones AUD-T-033/AUG-003 y AUD-T-024 conservadas.
 - No se ejecutaron Apps Script, HTTP, login real, Sheets/Logs, benchmark KDF, migración, concurrencia, CacheService, locks entre proyectos, deployments ni E2/E3. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
+
+
+## Continuidad de auditoría — AUD-T-024 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S135 / AUD-CP-0134; rama GPSpedia2.2.5_work, HEAD inicial 8df484a29af6aa3c12ab09887e7d07dd03e5d0fa; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec; 131 commits posteriores; merge-base igual a E1; diff con ocho documentos y dos archivos fuera de alcance; doce archivos funcionales del alcance conservan SHA idénticos.
+- Desde CP-0068 hay 66 commits y solo ocho documentos; sin cambios funcionales desde la revalidación previa.
+- H-AUD-024-001 a 010 abiertos; AUG-005 a 008, AUG-010, AUG-016 y AUG-017 vigentes.
+- No se ejecutaron navegador, multi-pestaña, HTTP, Apps Script, sesiones reales, concurrencia, fallos inyectados, roles ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
