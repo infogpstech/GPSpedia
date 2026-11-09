@@ -3113,3 +3113,30 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: d6311182c968de10d968da4156d780596b85f4ca
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo (revalidación de continuidad E1).
+
+
+## 75. Continuidad verificada — AUD-T-022 (revalidación E1)
+Sesión AUD-20261108-S125 | Checkpoint AUD-CP-0124 | E1 histórica 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | HEAD inicial 5118addaae3371837cfe83f9bfcd82456bf62a8b | árbol inicial a20dfec494f6b66f0e7c4d99f3c4838bd7bce00c | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S040 / AUD-CP-0040. Revalidación previa AUD-20261108-S102 / AUD-CP-0101, HEAD 9910a1aabc48a21c1efe5e5651b9b1f49010959f.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los nueve archivos funcionales del alcance aparece en el diff.
+Los nueve archivos conservan SHA idénticos a E1:
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+H-AUD-022-001 a H-AUD-022-004 permanecen abiertos: logout sin revocación/limpieza completa de estado; modal de desarrollador que no se cierra al mostrar login; semántica y gestión de foco incompletas del diálogo; ARIA incoherente en pestañas y normalización de errores ADMIN a HTTP 500.
+AUG-147 a AUG-150 continúan pendientes. VAL-31 permanece planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
+No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. La continuidad Git no certifica sesión, accesibilidad ni respuestas HTTP.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 2988481eda6b223f9b031ea5664c5067b2e3b1fa
+- Plan_auditoría/Consolidacion_Auditoria.md: 8923a39c164446ee0e2d76cbff2438db2d53d387
+- ChangesLogs.txt: 10bc56f0362ccd03af363e5dfb809a658ca89f8b
+- contexto_personal.md: 83f52844fb6548e34894a187d5e9cbd5552c535c
+- checkpoint.md: 10e4b62525f9a69f8f10876d8847a7bd29a83856
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general (continuidad desde AUD-CP-0001).

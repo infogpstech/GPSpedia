@@ -3199,3 +3199,41 @@ Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints,
 Commit documental único: docs(audit): verify AUD-T-021 continuity; parent 903a5bc773eab6992c1952b2f1f9b5fa45bba800.
 Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0124
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S125
+Tarea: AUD-T-022 — revalidación de continuidad E1 del panel de desarrollador, navegación por secciones y modal administrativo.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 5118addaae3371837cfe83f9bfcd82456bf62a8b | árbol: a20dfec494f6b66f0e7c4d99f3c4838bd7bce00c.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b.
+Revalidación previa: AUD-20261108-S102 / AUD-CP-0101, HEAD 9910a1aabc48a21c1efe5e5651b9b1f49010959f.
+Alcance: ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js.
+Estado inicial: H-AUD-022-001 a 004 abiertos; AUG-147 a AUG-150 pendientes; VAL-31 planificada/no ejecutada.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 2988481eda6b223f9b031ea5664c5067b2e3b1fa
+- Plan_auditoría/Consolidacion_Auditoria.md: 8923a39c164446ee0e2d76cbff2438db2d53d387
+- ChangesLogs.txt: 10bc56f0362ccd03af363e5dfb809a658ca89f8b
+- contexto_personal.md: 83f52844fb6548e34894a187d5e9cbd5552c535c
+- checkpoint.md: 10e4b62525f9a69f8f10876d8847a7bd29a83856
+Siguiente acción: comparar E1→HEAD, verificar SHA de los nueve archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0124
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S125
+Tarea: AUD-T-022 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-022-001 a 004 abiertos; AUG-147 a AUG-150 pendientes; VAL-31 planificada/no ejecutada.
+HEAD padre confirmado: 5118addaae3371837cfe83f9bfcd82456bf62a8b; árbol inicial a20dfec494f6b66f0e7c4d99f3c4838bd7bce00c. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: logout sin revocación/limpieza completa; modal no se cierra al mostrar login; gestión de foco/semántica incompletas; ARIA de pestañas y errores ADMIN normalizados a HTTP 500. H-AUD-022-001 a 004 permanecen abiertos.
+Tareas/validaciones: AUG-147 a AUG-150 pendientes; VAL-31 planificada/no ejecutada. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-022 continuity; parent 5118addaae3371837cfe83f9bfcd82456bf62a8b.
+Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+================================================================================

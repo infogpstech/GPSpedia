@@ -1203,3 +1203,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-021-001 a 009 abiertos; AUG-140 a 145 pendientes; AUG-146 pendiente por trazabilidad; AUG-096 ampliada; VAL-30 planificada/no ejecutada.
 - No se ejecutaron navegador, impresión, PDF, QR, Node/lint, móvil, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+
+
+## Continuidad de auditoría — AUD-T-022 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S125 / AUD-CP-0124; rama GPSpedia2.2.5_work, HEAD inicial 5118addaae3371837cfe83f9bfcd82456bf62a8b; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; nueve archivos funcionales conservan SHA idénticos.
+- H-AUD-022-001 a 004 abiertos; AUG-147 a AUG-150 pendientes; VAL-31 planificada/no ejecutada.
+- No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
