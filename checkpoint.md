@@ -2424,3 +2424,33 @@ No se ejecutaron navegador, teclado real, lector de pantalla, logout/revocación
 Commit documental único: docs(audit): verify AUD-T-022 continuity; parent 9910a1aabc48a21c1efe5e5651b9b1f49010959f. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
 Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0102
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S103
+Tarea: AUD-T-001 — revalidación de continuidad E1 del App Shell, arranque, inicialización, sesión, catálogo y deep links.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 888893f5f7adabec8c0218cc235a91f72bfd8b85 | Árbol: 42c8760869a08801bc68378732ad3a4f4a64f68f
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación; GitHub informa protected=false).
+E1 histórica: 35446ac7dd3697b4cd318895c9040e3bf239720c | Árbol E1: 0d9e88098c57b7550334e84bf74feecf6fef83ae.
+Revalidación previa: HEAD 787df40810778acf35cca65ee52f84d2dcf2a991 | Checkpoint AUD-CP-0062.
+Alcance: main.js, auth.js, ui.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js.
+Estado inicial: E1 estática completada; H-AUD-001-001/002 abiertos; AUG-151 y adendas AUG-008/AUG-049 pendientes; H-AUD-015-002 en AUG-099; VAL-32 planificada/no ejecutada.
+Fase: checkpoint inicial preparado; revalidación de continuidad E1; sin autorización para cambiar archivos funcionales.
+Riesgos/dependencias: estado terminal del catálogo, errores de procesamiento, polling/cancelación de deep links, coordinación de sesión entre pestañas y endpoint ADMIN.
+Siguiente acción: comparar E1→HEAD, comprobar SHA de los nueve archivos funcionales, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0102
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S103
+Tarea: AUD-T-001 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-001-001/002 abiertos; AUG-151 y adendas AUG-008/AUG-049 pendientes; H-AUD-015-002 relacionado con AUG-099; VAL-32 planificada/no ejecutada.
+HEAD padre confirmado: 888893f5f7adabec8c0218cc235a91f72bfd8b85; árbol inicial 42c8760869a08801bc68378732ad3a4f4a64f68f. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación 35446ac7dd3697b4cd318895c9040e3bf239720c→888893f5f7adabec8c0218cc235a91f72bfd8b85: 62 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance mantienen SHA exactos de E1; no hay deriva funcional.
+Hallazgos revalidados: polling de deep link sin límite/cancelación ante catálogo vacío/no disponible; procesamiento de catálogo que absorbe errores y permite marcar carga completa sin confirmar actualización. Se mantienen abiertos.
+Tareas y validación: AUG-151 pendiente; adendas AUG-008/AUG-049 conservadas; H-AUD-015-002 en AUG-099; VAL-32 planificada/no ejecutada. No se crean duplicados.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos, tareas y validación ya están registrados.
+No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: docs(audit): verify AUD-T-001 continuity; parent 888893f5f7adabec8c0218cc235a91f72bfd8b85. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
+Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+================================================================================
