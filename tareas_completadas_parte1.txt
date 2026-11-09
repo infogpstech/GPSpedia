@@ -134,3 +134,19 @@ Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora recha
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
 Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+AUG-006 — CIERRE DE SESIÓN CON REVOCACIÓN BACKEND
+Estado: COMPLETADA (2026-11-09; validación local PASS; Beta diferida).
+AUTH revoca únicamente el token invocante bajo ScriptLock. El cliente limpia currentUser en memoria y la sesión local, solicita logout remoto y reporta revocación pendiente cuando no puede confirmar respuesta. Sintaxis PASS; harness logout 2/2 PASS; prueba de limpieza en memoria PASS. Sin despliegue ni llamadas operativas.
+================================================================================
+
+AUG-153 — CENTRALIZAR MUTACIONES DE ActiveSessions EN AUTH
+Estado: COMPLETADA (2026-11-09; validación local PASS; Beta diferida).
+AUTH es el único escritor de ActiveSessions. resetUserSessions se ejecuta en AUTH, valida solicitante y destino activos, exige Desarrollador, rechaza aut cierre y duplicados, y elimina filas en orden descendente bajo el mismo ScriptLock de login/logout. USERS solo lee sesiones. Sintaxis PASS; ruteo y dispatch PASS; harness remoto 5/5 PASS. Concurrencia real de Apps Script y fallos físicos quedan diferidos a Beta.
+================================================================================
+
+CORRECCIÓN DE IDENTIFICADORES — AUG-005 / Users.ID
+La referencia histórica a UUID estático queda sustituida para las nuevas cuentas por IDs secuenciales permanentes `USR-0001`, `USR-0002`, etc. La asignación se realiza en USERS bajo su ScriptLock, escaneando los IDs de filas con datos y escribiendo el nuevo ID como valor fijo. Las filas nuevas copian únicamente formato y validaciones, no la fórmula de ID. Los IDs existentes y de cuentas desactivadas se conservan y nunca se reutilizan. La corrección no cambia IDs históricos ni elimina filas.
+================================================================================
