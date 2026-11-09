@@ -1481,3 +1481,15 @@ Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora recha
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
 Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-006 — 2026-11-09
+Estado vigente: COMPLETADA (validación local aprobada; validación funcional en Beta diferida).
+Implementación verificada:
+- `auth.js` ahora limpia `currentUser` del estado en memoria y elimina la sesión local antes de solicitar la revocación remota.
+- El logout invoca `routeAction('logout')` en AUTH; el backend revoca exclusivamente el token invocante bajo el `ScriptLock` común y limpia `Users.SessionToken` solo si todavía coincide con ese token.
+- Si la red falla, el cierre local se mantiene y se informa que la revocación remota quedó pendiente; no se presenta como revocada.
+Validaciones locales: sintaxis PASS en `Services/Auth.js`, `Services/Test/Auth.js` y `auth.js` (módulo ESM); harness de logout 2/2 PASS; prueba de limpieza de estado en memoria y solicitud remota PASS.
+No se desplegaron servicios ni se llamaron endpoints operativos. La verificación funcional en deployment aislado queda diferida a Beta.
+================================================================================
