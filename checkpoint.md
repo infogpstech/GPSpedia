@@ -2454,3 +2454,32 @@ No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, co
 Commit documental único: docs(audit): verify AUD-T-001 continuity; parent 888893f5f7adabec8c0218cc235a91f72bfd8b85. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
 Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0103
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S104
+Tarea: AUD-T-002 — revalidación de continuidad E1 de RBAC, AUTH, USERS, roles y autorización.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b | Árbol: 603918837ac7f7e184996fcc5f1a28342d11b30f
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación; GitHub informa protected=false).
+E1 histórica: 1136f20ee25778cceac857b4a3145aa2f405ba54 | Árbol E1: 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f.
+Revalidación previa: HEAD 139c03443c6ab83173c357fbb421decf6a0294cb | Checkpoint AUD-CP-0063.
+Alcance: Services/users.js, Services/Auth.js, auth.js, users.html y api-config.js.
+Estado inicial: E1 estática completada; H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 vigentes; validación funcional pendiente.
+Fase: checkpoint inicial preparado; revalidación de continuidad E1; sin autorización para cambiar archivos funcionales.
+Riesgos/dependencias: revocación de cuenta/sesión, política de expiración, lock entre pestañas, validación backend de username, serialización de mutaciones y coordinación AUTH/USERS.
+Siguiente acción: comparar E1→HEAD, comprobar SHA de los cinco archivos funcionales, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0103
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S104
+Tarea: AUD-T-002 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 vigentes; validación funcional pendiente.
+HEAD padre confirmado: 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b; árbol inicial 603918837ac7f7e184996fcc5f1a28342d11b30f. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación 1136f20ee25778cceac857b4a3145aa2f405ba54→8b9c495e3aee8b899c2f0f4477a580708aaf1f8b: 62 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los cinco archivos funcionales del alcance mantienen SHA exactos de E1; no hay deriva funcional.
+Hallazgos revalidados: los seis hallazgos históricos H-AUD-001 a H-AUD-006 permanecen abiertos. AUG-005 a AUG-010 conservan su estado y relaciones; AUD-T-023, AUD-T-024, AUD-T-033 y AUD-T-036 permanecen como dependencias relacionadas.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos, tareas y relaciones ya están registrados.
+No se ejecutaron navegador, HTTP, Apps Script V8, Spreadsheet, pruebas reales de roles/sesiones, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: docs(audit): verify AUD-T-002 continuity; parent 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
+Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+================================================================================

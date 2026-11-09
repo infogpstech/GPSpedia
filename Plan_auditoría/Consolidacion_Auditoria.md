@@ -1040,3 +1040,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron pruebas dinámicas, navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. La E1 es estática y no certifica funcionamiento real.
 - Sin cambios funcionales, permisos, contratos, configuración, assets, datos productivos, operaciones Drive/Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-002, continuando desde su E1 histórica.
+
+
+## 39. AUD-T-002 — continuidad E1 revalidada
+- Sesión AUD-20261108-S104; checkpoint AUD-CP-0103; E1 1136f20ee25778cceac857b4a3145aa2f405ba54; HEAD 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 62 commits; merge-base igual a E1; únicamente ocho documentos modificados. Ninguno de los cinco archivos funcionales del alcance aparece en el diff.
+- Los cinco archivos del alcance conservan SHA exactos de E1: Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0; Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; users.html e41f402675677a4d2783493614737021ec2eade5; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670.
+- H-AUD-001 a H-AUD-006 siguen abiertos; AUG-005 a AUG-010 y sus relaciones previas se mantienen. Sin hallazgos ni tareas duplicados.
+- No se ejecutaron pruebas dinámicas, navegador, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. La E1 es estática y no certifica funcionamiento real.
+- Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-003, siguiendo la secuencia documental vigente.
