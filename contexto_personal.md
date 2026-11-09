@@ -1219,3 +1219,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-001-001/002 abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 conservadas; H-AUD-015-002/AUG-099 relacionado. VAL-32 planificada/no ejecutada.
 - No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, multi-pestaña, accesibilidad ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+
+
+## Continuidad de auditoría — AUD-T-002 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S127 / AUD-CP-0126; rama GPSpedia2.2.5_work, HEAD inicial 9af478d990968bb45f94ef7fd5db42ffdc4abf4d; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 1136f20ee25778cceac857b4a3145aa2f405ba54; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; cinco archivos funcionales conservan SHA idénticos.
+- H-AUD-001 a 006 abiertos; AUG-005 a AUG-010 vigentes; dependencias AUD-T-023/024/033/036 conservadas. Validación funcional pendiente.
+- No se ejecutaron navegador, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.

@@ -3167,3 +3167,25 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: c1c43e290ac908fa29addbdd82c4fb96c6362d8f
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (revalidación de continuidad E1).
+
+
+## 77. Continuidad verificada — AUD-T-002 (revalidación E1)
+Sesión AUD-20261108-S127 | Checkpoint AUD-CP-0126 | E1 histórica 1136f20ee25778cceac857b4a3145aa2f405ba54 | HEAD inicial 9af478d990968bb45f94ef7fd5db42ffdc4abf4d | árbol inicial f499352a83ef687f7558f8a297fa95b32ecfeb10 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática de RBAC/AUTH/USERS se completó en AUD-20261108-S042 / AUD-CP-0042, continuando el análisis parcial de AUD-CP-0002. Revalidación previa AUD-20261108-S104 / AUD-CP-0103, HEAD 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los cinco archivos funcionales del alcance aparece en el diff.
+Los cinco archivos conservan SHA idénticos a E1:
+- Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+H-AUD-001 a H-AUD-006 permanecen abiertos. AUG-005 a AUG-010 conservan su estado y relaciones. Se mantienen como dependencias relacionadas AUD-T-023 (hashing/logs/migración), AUD-T-024 (ciclo de sesión), AUD-T-033 (coordinación interservicios) y AUD-T-036 (cumplimiento legal).
+La continuidad no certifica autorización, revocación, expiración ni concurrencia reales. No se ejecutaron navegador, HTTP, Apps Script V8, Spreadsheet, pruebas reales de roles/sesiones, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 77fe921135ffc66a3f98d85fa8e70bede8c411c4
+- Plan_auditoría/Consolidacion_Auditoria.md: 4d48b91f44db1002fe12c3fe9ba3543fc225608a
+- ChangesLogs.txt: fb7d24dcfccf86d0069bf7fd742c068654ebff6e
+- contexto_personal.md: db032bd3e66813c1ebcad49c870357f5a5442ee4
+- checkpoint.md: 9edc558a75bf4517708ed6badd9c911c2fd0d518
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y los seis hallazgos/tareas ya están registrados. Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red (revalidación de continuidad E1).

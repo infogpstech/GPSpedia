@@ -3275,3 +3275,40 @@ Sin cambios funcionales, permisos, contratos, configuración, assets, datos prod
 Commit documental único: docs(audit): verify AUD-T-001 continuity; parent f27cbf676dfd4966a753a80bfb0fafd3e975e15a.
 Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0126
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S127
+Tarea: AUD-T-002 — revalidación de continuidad E1 de RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 9af478d990968bb45f94ef7fd5db42ffdc4abf4d | árbol: f499352a83ef687f7558f8a297fa95b32ecfeb10.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 1136f20ee25778cceac857b4a3145aa2f405ba54 | árbol E1: 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f.
+Revalidación previa: AUD-20261108-S104 / AUD-CP-0103, HEAD 8b9c495e3aee8b899c2f0f4477a580708aaf1f8b.
+Alcance: Services/users.js, Services/Auth.js, auth.js, users.html y api-config.js.
+Estado inicial: H-AUD-001 a 006 abiertos; AUG-005 a AUG-010 vigentes; dependencias AUD-T-023/024/033/036; validación funcional pendiente.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 77fe921135ffc66a3f98d85fa8e70bede8c411c4
+- Plan_auditoría/Consolidacion_Auditoria.md: 4d48b91f44db1002fe12c3fe9ba3543fc225608a
+- ChangesLogs.txt: fb7d24dcfccf86d0069bf7fd742c068654ebff6e
+- contexto_personal.md: db032bd3e66813c1ebcad49c870357f5a5442ee4
+- checkpoint.md: 9edc558a75bf4517708ed6badd9c911c2fd0d518
+Siguiente acción: comparar E1→HEAD, verificar SHA de los cinco archivos, confirmar hallazgos/tareas/dependencias y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0126
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S127
+Tarea: AUD-T-002 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 vigentes; validación funcional pendiente.
+HEAD padre confirmado: 9af478d990968bb45f94ef7fd5db42ffdc4abf4d; árbol inicial f499352a83ef687f7558f8a297fa95b32ecfeb10. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los cinco archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: los seis hallazgos históricos H-AUD-001 a H-AUD-006 permanecen abiertos. AUG-005 a AUG-010 conservan su estado y relaciones; AUD-T-023, AUD-T-024, AUD-T-033 y AUD-T-036 permanecen como dependencias relacionadas.
+Validaciones no ejecutadas: navegador, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, permisos, credenciales, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-002 continuity; parent 9af478d990968bb45f94ef7fd5db42ffdc4abf4d.
+Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+================================================================================
