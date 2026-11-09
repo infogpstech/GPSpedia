@@ -240,6 +240,17 @@ function findNextUserRow_(userSheet) {
     return lastRow + 1;
 }
 
+// Nombre de usuario: el backend acepta solo texto y aplica la política común de identidad.
+function normalizeUsername_(value) {
+    if (typeof value !== 'string') throw new Error('El nombre de usuario debe ser texto.');
+    const normalized = value.trim();
+    if (!normalized) throw new Error('El nombre de usuario es obligatorio.');
+    if (normalized.toLowerCase().startsWith('__deleted__:')) {
+        throw new Error('El prefijo __deleted__: está reservado para cuentas desactivadas.');
+    }
+    return normalized;
+}
+
 function handleCreateUser(payload) {
     const { newUser, sessionToken } = payload || {};
     if (!newUser || !sessionToken) {
@@ -269,11 +280,7 @@ function handleCreateUser(payload) {
             throw new Error(`El rol '${creatorRole}' no tiene permisos para crear usuarios de tipo '${newUser.Privilegios}'.`);
         }
 
-            const newUsername = String(newUser.Nombre_Usuario || '').trim();
-        if (!newUsername) throw new Error('El nombre de usuario es obligatorio.');
-        if (newUsername.toLowerCase().startsWith('__deleted__:')) {
-            throw new Error('El prefijo __deleted__: está reservado para cuentas desactivadas.');
-        }
+        const newUsername = normalizeUsername_(newUser.Nombre_Usuario);
         const lastRow = userSheet.getLastRow();
         const existingUsernames = lastRow > 1
             ? userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, 1).getValues().flat()

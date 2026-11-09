@@ -86,3 +86,20 @@ Antes de desactivar una cuenta, AUTH congela como valores estáticos los IDs cal
 - `touchSession` y `validateSession` actualizan `lastActivityAt` solo después de validar token único, usuario activo y vigencia. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites sin escribir en ActiveSessions.
 - `changePassword` y `resetUserPassword` se enrutan a AUTH. Cambiar/restablecer una contraseña invalida primero todos los tokens de la cuenta y luego limpia las filas de sesión. `resetUserPassword` requiere rol Desarrollador y no permite restablecer la propia cuenta desde el formulario administrativo.
 - Probar límites absolutos/de inactividad, meses de 28/29/30/31 días, timestamps inválidos, sesiones históricas sin columna F, actividad, revocación y fallos parciales únicamente en la Spreadsheet aislada.
+
+
+## AUG-009 — Validación directa del nombre de usuario
+
+Para comprobar la creación sin depender de users.html, enviar la acción createUser directamente al doPost del proyecto USERS aislado. Usar exclusivamente la Spreadsheet y el deployment de prueba descritos arriba.
+
+Casos requeridos:
+- Nombre_Usuario ausente, null, número u objeto: rechazar por tipo no textual.
+- Cadena vacía o formada solo por espacios: rechazar después de trim().
+- Prefijo reservado __deleted__: con variaciones de mayúsculas y espacios externos: rechazar.
+- Nombre duplicado con diferencias de mayúsculas o espacios externos: rechazar.
+- Nombre textual válido con espacios externos: aceptar y almacenar el valor recortado.
+
+En cada caso rechazado, verificar que no se haya agregado ni modificado una fila de usuario. No configurar URLs de prueba en api-config.js y no llamar endpoints operativos.
+
+
+Ampliación de casos: incluir también el campo Nombre_Usuario ausente y un nombre Unicode válido. El backend no impone un conjunto cerrado de caracteres ni una longitud máxima hasta que exista una política aprobada; la prueba debe confirmar que los nombres textuales no vacíos se conservan tras trim().

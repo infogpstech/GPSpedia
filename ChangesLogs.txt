@@ -177,3 +177,18 @@ AUG-008 — Coordinación de validación y sincronización entre pestañas — 2
 - Validaciones locales: sintaxis 4/4 PASS; coordinación 2 contextos/1 llamada PASS; respuesta obsoleta A frente a B PASS; logout obsoleto PASS; propagación de cierre PASS.
 - No se ejecutaron pruebas de navegador, Apps Script real, deployments aislados ni endpoints operativos. Pruebas multi-pestaña reales pendientes en Beta.
 ================================================================================
+
+
+================================================================================
+AUG-009 — Validación del nombre de usuario en backend — 2026-11-09
+- Se agregó normalizeUsername_() en Services/users.js y Services/Test/users.js; rechaza valores que no sean string antes de convertir/normalizar, recorta espacios externos, rechaza vacío y el prefijo reservado __deleted__:.
+- La comprobación de duplicados continúa comparando trim()+toLowerCase(), compatible con la normalización de login. No se impuso lista blanca de caracteres ni longitud no aprobada.
+- users.html conserva required como control de interfaz; el backend valida independientemente llamadas directas.
+- Sintaxis PASS en ambos servicios. doPost/createUser directo con dobles locales: 9/9 casos PASS en producción y 9/9 en la copia aislada (18/18).
+- No se ejecutaron Apps Script real, deployment aislado ni endpoints operativos. Prueba directa real pendiente en Beta.
+================================================================================
+
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
+Batería ampliada: 11/11 casos directos de doPost PASS en producción y 11/11 en copia aislada (22/22 funcionales); sintaxis PASS en ambas fuentes. Se añadieron pruebas de campo ausente y Unicode válido. No sustituye la prueba real del deployment aislado, que permanece en Beta.

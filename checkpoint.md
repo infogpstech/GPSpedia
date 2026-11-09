@@ -627,3 +627,60 @@ No modificados: rama base, Services/, deployments, endpoints operativos, datos p
 Siguiente tarea: AUG-009 — validar el nombre de usuario en el backend, según la secuencia vigente.
 Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-008.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-009
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de trabajo confirmado: 9867bd10b1bfccd5e02bdf95d2696988abd2c22a
+Rama base: GPSpedia2.2.5
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-009 — validar el nombre de usuario en el backend.
+Requisitos canónicos: Tareas_pendientes_parte1.txt, ficha AUG-009; H-AUD-005; AUD-T-002; evidencia histórica Services/users.js handleCreateUser() y users.html handleUserFormSubmit().
+Criterios: el backend debe rechazar nombres vacíos después de trim(), rechazar entradas fuera de la política de nombre acordada, mantener comparación normalizada para detectar duplicados y comprobarlo mediante llamadas directas al endpoint sin depender de validación HTML.
+Alcance previsto para auditoría: Services/users.js y sus copias de prueba; users.html (flujo de creación/edición y restricciones de nombre); contratos/ruteo relacionados solo si son necesarios para verificar la llamada. El alcance de implementación se limitará a los archivos funcionales imprescindibles y sus pruebas/documentación vinculadas.
+Ciclo A previo — AUG-008: commit 9867bd10b1bfccd5e02bdf95d2696988abd2c22a verificado como HEAD de la rama de trabajo; padre a91c94f5b1b4eddbeb42a3153551dfa9d88d9e8d; rama base intacta. Se revisaron los cuatro archivos funcionales modificados (auth.js, api-config.js, users.html, add_cortes.html), su diff y contratos de propagación. No se identificaron defectos nuevos que requieran tarea correctiva; limitaciones de navegador/deployment permanecen explícitamente diferidas a Beta.
+Riesgos a comprobar: política de caracteres/longitud no definida o discordante entre cliente y backend; nombres vacíos o compuestos por espacios; Unicode/acentos; duplicados con diferencias de mayúsculas, espacios o normalización; modificación de nombre de usuario en edición; llamadas directas que omitan HTML; compatibilidad de usuarios existentes y de copias de prueba.
+Restricciones: no asumir ni inventar una política de caracteres no aprobada; no modificar hojas/datos productivos ni deployments/endpoints operativos; no modificar rama base; usar Git Database API y un único commit en GPSpedia2.2.5_work; backups exactos antes de editar.
+Estado inicial: checkpoint registrado antes de la auditoría pre-implementación. No se ha modificado código funcional de AUG-009.
+Siguiente acción: completar auditoría íntegra de backend, UI, pruebas y política existente; registrar hallazgos antes de implementar.
+================================================================================
+
+
+AUDITORÍA PRE-IMPLEMENTACIÓN — AUG-009 — 2026-11-09
+Auditoría de ciclo A (AUG-008): se revisaron auth.js, api-config.js, users.html y add_cortes.html contra el diff real del commit 9867bd10b1bfccd5e02bdf95d2696988abd2c22a y su padre. Sin hallazgos nuevos que requieran tarea correctiva; los límites de navegador/deployments ya están diferidos a Beta.
+Auditoría AUG-009 completada antes de editar: Services/users.js (ba04370b81a939649adc1e0ffdc90b1e536ee5f8), Services/Test/users.js (e5e9192673d4738c2e1cbafa04721b935a40c89d), users.html (42e6afd633af634ae4a8d6c3622dd78f5f161bea), api-config.js (26c4575a7d3b355e18e5b559d659de4bda5a2746), Services/Test/README.md (87424b4a5ef64506a6d19d983cf9ecb10d17fd0d), Tareas_pendientes_parte1.txt (ab63881f6d21e7dad062168599fc96012b6eaaac) y referencias de login Services/Auth.js/Services/Test/Auth.js.
+Hallazgo pre-implementación registrado primero en Auditoría.txt: H-AUD-064. La fuente ya rechaza vacío después de trim() y prefijo reservado; el defecto reproducible es coerción de tipos no textuales. Política explícita identificada: string, trim, no vacío, no prefijo __deleted__:, duplicado por trim()+toLowerCase(). No se encontró límite de longitud ni lista blanca aprobada de caracteres; no inventar.
+Respaldo exacto previo a edición (no sobrescribir): Services/users.js=ba04370b81a939649adc1e0ffdc90b1e536ee5f8; Services/Test/users.js=e5e9192673d4738c2e1cbafa04721b935a40c89d. No se modificarán users.html ni api-config.js porque sus controles/contrato existentes son suficientes para el alcance.
+Alcance final: únicamente validación de tipo en el backend de creación y sincronización idéntica de esa lógica en la copia aislada; pruebas directas de doPost mediante dobles locales; sin cambiar login, usernames históricos, reglas de longitud/caracteres, roles, serialización de otras mutaciones, endpoints ni hojas/datos.
+Estado: auditoría terminada; implementación aún no iniciada.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-009
+Fecha: 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación real del endpoint USERS aislado diferida a Beta.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado antes del commit: 9867bd10b1bfccd5e02bdf95d2696988abd2c22a
+Rama base: GPSpedia2.2.5
+HEAD base confirmado antes del commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+Tarea: AUG-009 — validar el nombre de usuario en el backend.
+Hallazgo: H-AUD-064 resuelto en fuentes. La observación histórica H-AUD-005 sobre cadenas vacías ya estaba parcialmente corregida en el código existente y se conservó.
+Archivos funcionales modificados: Services/users.js y Services/Test/users.js.
+Archivos documentales/trazabilidad modificados: Auditoría.txt, Tareas.txt, Tareas_pendientes_parte1.txt, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, tareas_completadas_parte1.txt, lista_beta.txt y Services/Test/README.md.
+Implementación: normalizeUsername_() exige que Nombre_Usuario sea de tipo string antes de normalizar; aplica trim(); rechaza cadenas vacías y el prefijo reservado __deleted__:. La comparación de duplicados conserva trim()+toLowerCase(), compatible con la búsqueda de login. No se añadieron límites de longitud ni lista blanca de caracteres porque no existe una política aprobada en las fuentes. users.html mantiene required como ayuda de interfaz; la validación de backend no depende del HTML.
+Respaldos exactos previos a edición: Services/users.js=ba04370b81a939649adc1e0ffdc90b1e536ee5f8; Services/Test/users.js=e5e9192673d4738c2e1cbafa04721b935a40c89d. Los diffs finales contienen únicamente la nueva función de validación y su llamada en cada copia. Se conservaron los Spreadsheet IDs separados: producción 1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs; prueba 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k.
+Checkpoint inicial registrado antes de la auditoría: blob 0d f83e89749ed11a9deb26de55e62f3497202b0f. Auditoría y respaldo pre-implementación registrados antes de editar en el checkpoint intermedio f6de75cac6ddddf492a25a60ee0dec5c655612ba y en Auditoría.txt.
+Verificación sintáctica: PASS en Services/users.js y Services/Test/users.js.
+Pruebas directas de doPost/createUser con dobles locales, sin interfaz: 11/11 casos PASS en fuente de producción y 11/11 en copia aislada (22/22 funcionales). Casos: Nombre_Usuario ausente, null, número, objeto, cadena vacía, solo espacios, prefijo reservado, duplicado con espacios, duplicado por mayúsculas, string válido recortado y string Unicode válido. Total con sintaxis (2) = 24/24 comprobaciones PASS.
+Integridad: los bloques normalizeUsername_() y handleCreateUser() son idénticos entre producción y copia de prueba; solo se conserva el Spreadsheet ID distinto. Documentos activos bajo el límite de 180,000 caracteres Unicode.
+Code Review / Safety & Side Effects: PASS. La validación ocurre antes del hash y de las escrituras de usuario; los datos no textuales no se convierten silenciosamente; no se alteraron reglas de login, cuentas existentes, roles, IDs, otras mutaciones, frontend, endpoints ni hojas. Los duplicados continúan comprobándose dentro del lock existente.
+Limitaciones: las pruebas directas se ejecutaron con dobles locales de Apps Script y no equivalen a una ejecución real de Apps Script/HTTP. No se crearon deployments ni se llamaron endpoints operativos; no se accedió ni modificó ninguna Spreadsheet real. La prueba real en deployment USERS aislado queda en lista_beta.txt.
+Ciclo A anterior (AUG-008): commit previo revisado; no se encontraron defectos nuevos que requieran tarea correctiva.
+Siguiente tarea: AUG-010 — serialización de mutaciones USERS, con dependencia explícita de AUD-T-033 para coordinación interproyectos.
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-009.
+================================================================================

@@ -190,3 +190,17 @@ Archivos: auth.js, api-config.js, users.html y add_cortes.html.
 Verificación local: sintaxis 4/4 PASS; coordinación entre dos contextos 1/1 validación; respuesta A tardía no borra/revoca B; logout obsoleto no altera B; evento de cierre limpia estado local.
 H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES. No se realizaron pruebas en navegador real ni deployments/endpoints Apps Script; validar en Beta con dos o más pestañas y deployments aislados.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — AUG-009 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; prueba funcional del deployment aislado diferida a Beta.
+H-AUD-064 resuelto en Services/users.js y Services/Test/users.js. El backend ahora exige que Nombre_Usuario sea string, aplica trim(), rechaza vacío y el prefijo reservado __deleted__: y conserva la unicidad por trim()+toLowerCase(). No se añadió límite de longitud ni lista blanca de caracteres porque no existe una política aprobada en las fuentes.
+Pruebas directas de doPost con dobles locales: 9/9 PASS en fuente de producción y 9/9 PASS en copia aislada (18/18); sintaxis PASS en ambos archivos. users.html mantiene required como ayuda de interfaz, pero la validación autoritativa está en backend.
+No se ejecutaron Apps Script real, deployments aislados ni endpoints operativos. Beta debe probar la acción createUser directamente contra el deployment USERS aislado.
+================================================================================
+
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
+Batería ampliada final: 11/11 casos directos de doPost PASS en Services/users.js y 11/11 en Services/Test/users.js (22/22 funcionales); sintaxis PASS en ambas fuentes (24/24 comprobaciones incluyendo sintaxis). Se añadieron casos de campo ausente y Unicode válido. La prueba real del deployment USERS aislado continúa en lista_beta.txt.

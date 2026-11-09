@@ -84,3 +84,16 @@ Verificación local: sintaxis 4/4 PASS; simulación de dos contextos con una sol
 H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES. No se ejecutaron pruebas en navegador real, Apps Script ni deployments aislados. La prueba funcional multi-pestaña se registra en lista_beta.txt.
 Siguiente tarea de la ola: AUG-009 — validar el nombre de usuario en el backend.
 ================================================================================
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-009 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación funcional del endpoint aislado diferida a Beta. H-AUD-064 resuelto.
+USERS exige Nombre_Usuario de tipo string, recorta espacios externos, rechaza vacío y prefijo reservado __deleted__: y conserva comparación de duplicados trim()+toLowerCase(). No se añadieron reglas de longitud/caracteres no aprobadas. Sintaxis PASS en Services/users.js y Services/Test/users.js; pruebas directas de doPost con dobles locales 9/9 PASS por fuente (18/18). Prueba real del deployment aislado registrada en lista_beta.txt.
+Siguiente tarea: AUG-010 — serialización de mutaciones USERS, respetando la dependencia de AUD-T-033.
+================================================================================
+
+
+
+ADENDA FINAL DE PRUEBAS — AUG-009 — 2026-11-09
+La batería final se amplió a 11/11 casos directos de doPost PASS por fuente (22/22 funcionales) y sintaxis PASS en ambas fuentes. Casos: campo ausente, null, número, objeto, cadena vacía, espacios, prefijo reservado, duplicados con espacios/mayúsculas y texto válido recortado/Unicode. La prueba HTTP en deployment aislado permanece en Beta.

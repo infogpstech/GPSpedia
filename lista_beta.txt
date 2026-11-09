@@ -153,3 +153,14 @@ AUG-008 — Validación funcional multi-pestaña (solo deployments y datos aisla
 - Revocar sesiones desde otro dispositivo/deployment: confirmar que las rutas backend rechazan la siguiente operación protegida; la sincronización local no sustituye esta validación.
 - No utilizar endpoints operativos, deployments de producción ni hojas/datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-009 — Validación directa de createUser en USERS aislado
+- Invocar doPost/action createUser directamente en el deployment USERS de prueba, sin interfaz HTML.
+- Probar Nombre_Usuario ausente/null, número, objeto, cadena vacía y solo espacios; confirmar error y que no se agrega ni modifica ninguna fila.
+- Probar prefijo __deleted__: con distintas mayúsculas y espacios externos; confirmar rechazo.
+- Probar duplicados con espacios externos y diferencias de mayúsculas; confirmar rechazo por la misma normalización trim()+toLowerCase().
+- Probar un string válido con espacios externos; confirmar que se almacena recortado y que el login acepta el mismo identificador.
+- Confirmar que la prueba utiliza la Spreadsheet y deployment USERS aislados; nunca api-config.js live, endpoints operativos ni datos productivos.
+================================================================================

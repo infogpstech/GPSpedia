@@ -1513,3 +1513,16 @@ Archivos: auth.js, api-config.js, users.html y add_cortes.html.
 Pruebas locales: sintaxis 4/4 PASS; dos contextos concurrentes comparten una validación; token A obsoleto no cierra token B; logout obsoleto no modifica B; evento de eliminación sincroniza estado local.
 H-AUD-062 y H-AUD-063: RESUELTOS EN FUENTES. No se ejecutaron navegador real, Apps Script, deployments aislados ni endpoints operativos. Pruebas de dos o más pestañas, fallback sin Web Locks y revocación en otros dispositivos quedan en lista_beta.txt.
 ================================================================================
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-009 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación funcional del endpoint aislado diferida a Beta.
+H-AUD-064 resuelto. Se valida el tipo string antes de normalizar; se conservan trim(), rechazo de vacío/prefijo reservado y comparación de duplicados por trim()+toLowerCase(). No se inventaron restricciones de longitud o caracteres sin política aprobada.
+Pruebas directas de doPost con dobles locales: 9/9 PASS en producción y 9/9 en copia aislada; sintaxis PASS en ambas. Pruebas HTTP/Apps Script real y endpoint aislado pendientes en lista_beta.txt.
+================================================================================
+
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
+Batería final ampliada: 11/11 casos directos de doPost PASS por fuente (22/22 funcionales); sintaxis PASS en producción y copia aislada. Se comprobaron campo ausente, null, número, objeto, vacío, espacios, prefijo reservado, duplicados normalizados y nombres válidos recortados/Unicode. Validación HTTP real en deployment aislado sigue diferida a Beta.

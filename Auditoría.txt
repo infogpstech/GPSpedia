@@ -355,3 +355,25 @@ Comprobaciones de integridad: la clave session_validation_lock y su limpieza fue
 Casos lógicos repetidos sobre la versión final: 1 validación compartida entre dos contextos; resultado obsoleto A no cierra B; logout manual de pestaña A no elimina B; evento de eliminación limpia estado; fallback sin AbortController retorna timeout. Todos PASS.
 Resultado: Code Review aprobado en alcance de fuentes. No se declara verificación funcional en navegador ni deployment.
 ================================================================================
+
+
+================================================================================
+H-AUD-064 — USERS convierte valores no textuales en nombres de usuario durante la creación
+Fecha: 2026-11-09. Tarea: AUG-009. Origen: revisión pre-implementación posterior a AUG-008; HEAD 9867bd10b1bfccd5e02bdf95d2696988abd2c22a.
+Severidad: P2 — validación de identidad e integridad de cuentas.
+Evidencia: Services/users.js, handleCreateUser(), obtiene el nombre mediante String(newUser.Nombre_Usuario || '').trim(). Esto rechaza cadenas vacías/espacios y el prefijo reservado __deleted__: ya está bloqueado, pero también convierte números u objetos JSON a cadenas (por ejemplo, 123 o [object Object]) en vez de rechazar un campo que no sea texto. users.html solo declara input type=text y required; estos controles pueden omitirse mediante llamada directa a createUser. Services/Test/users.js contiene la misma lógica funcional y conserva un Spreadsheet ID aislado. El login normaliza mediante trim().toLowerCase(), y la comprobación de duplicados de creación usa la misma normalización básica.
+Política verificable en las fuentes: Nombre_Usuario debe ser una cadena de texto, se recortan espacios externos, no puede quedar vacío, no puede iniciar con el prefijo reservado __deleted__: y la unicidad se compara con trim()+toLowerCase(). No se encontró una regla aprobada de longitud ni una lista blanca de caracteres; no se inventan restricciones adicionales ni se cambia la compatibilidad de cuentas existentes.
+Impacto: llamadas directas pueden crear cuentas a partir de valores de tipo incorrecto que la interfaz no produciría; no existe un contrato backend explícito de tipo para la identidad.
+Corrección requerida: validar el tipo original antes de normalizar; mantener rechazo de vacío/prefijo reservado y la comparación normalizada de duplicados; sincronizar la copia aislada de USERS; comprobar doPost/createUser directamente sin depender del formulario.
+Alcance relacionado: AUG-009. No duplicar AUG-010 (serialización de otras mutaciones USERS) ni AUD-T-033 (coordinación entre proyectos).
+Estado: ABIERTO; corrección dentro de AUG-009.
+================================================================================
+
+
+
+RESOLUCIÓN — H-AUD-064 / AUG-009 — 2026-11-09
+Se incorporó normalizeUsername_() antes de cualquier coerción: el backend exige tipo string, aplica trim(), rechaza vacío y el prefijo reservado __deleted__:. La comparación de duplicados permanece trim()+toLowerCase(), igual que la búsqueda de login. No se añadieron límites de longitud ni lista blanca de caracteres porque no existe una decisión aprobada en las fuentes.
+Se sincronizó la función en Services/users.js y Services/Test/users.js, preservando el Spreadsheet ID de prueba. La UI no se considera barrera de seguridad y no requirió cambio.
+Verificación final: sintaxis PASS en ambos servicios; 11 casos directos de doPost PASS por servicio (22/22 funcionales): campo ausente, null, número, objeto, vacío, solo espacios, prefijo reservado, duplicado con trim, duplicado por mayúsculas, texto válido recortado y texto Unicode válido. Total de comprobaciones incluyendo sintaxis 24/24 PASS. No se ejecutó Apps Script real ni deployment aislado.
+Estado H-AUD-064: RESUELTO EN FUENTES; prueba real de endpoint aislado diferida a Beta.
+================================================================================
