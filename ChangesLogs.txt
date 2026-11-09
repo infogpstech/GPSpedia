@@ -5609,3 +5609,16 @@ Sesión AUD-20261109-S158 | Checkpoint AUD-CP-0157 | E1 bba61f0cd16e5a35d6f709e0
 - No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los hallazgos, tareas y relaciones ya están registrados.
 - No se modifican archivos funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-012 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S159 | Checkpoint AUD-CP-0158 | E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b | HEAD inicial 09c76db0e7047ab5a74304a57d635432d306f534 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 109 con comparación E1→HEAD, comparación CP-0114→HEAD, SHA de los siete archivos y estado de hallazgos/validaciones.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 94 con continuidad de H-AUD-012-001 a 008, AUG-088 a AUG-091 y relaciones.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-012 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0158.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los hallazgos y tareas ya están registrados.
+- No se modifican archivos funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================

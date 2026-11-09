@@ -1501,3 +1501,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Solo documentación; sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Se conserva la instrucción de renombrado automático, pero no existe patrón normativo verificable; no se inventa ni se aplica.
 - Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## Continuidad incremental — AUD-T-012 (2026-11-09)
+- Sesión AUD-20261109-S159 / checkpoint AUD-CP-0158. E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b; revalidación previa CP-0114/HEAD f5895ab64e9468e6cc8d8004978a8cb471d8a573; HEAD actual 09c76db0e7047ab5a74304a57d635432d306f534; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; los siete archivos funcionales conservan SHA exactos de E1.
+- CP-0114→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff de cinco documentos; sin deriva funcional desde la revalidación anterior.
+- H-AUD-012-001 a 008 abiertos o vinculados; AUG-088 a AUG-091 pendientes; adendas AUG-043/AUG-087 y relaciones AUG-068 a AUG-071 conservadas. VAL-21/03/17 pendientes.
+- No se ejecutaron navegador, Playwright, gestos, modales, scroll real, multiusuario, concurrencia, HTTP, Apps Script, Spreadsheet, permisos/deployment ni E2/E3. No se certifica integridad funcional dinámica.
+- Solo documentación; sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación E1).

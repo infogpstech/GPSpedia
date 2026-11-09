@@ -4627,3 +4627,50 @@ La instrucción de renombrado automático se conserva, pero no existe patrón no
 Commit documental único: pendiente de crear mediante Git Database API con parent 87aba25883dda8ae615e31cdc0d1fa39a6659328; update_ref force=false y expected_sha=87aba25883dda8ae615e31cdc0d1fa39a6659328. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0158
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S159
+Tarea: AUD-T-012 — revalidación incremental de continuidad E1 de asociación bidireccional PyS–vehículos y navegación anti-ciclo.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial confirmado: 09c76db0e7047ab5a74304a57d635432d306f534.
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: 2afdde923d14e4f3dd078d347007b15e5ab09b2b; árbol E1 06fc72da78912df18227e2f45ce0d33349fa7cc5.
+Revalidación previa: AUD-20261108-S115 / AUD-CP-0114; HEAD f5895ab64e9468e6cc8d8004978a8cb471d8a573; árbol dffa7da791ae461025ab07341ea843586a73f922.
+Alcance: ui.js, Services/feedback.js, api-config.js, main.js, navigation.js, Services/catalog.js e index.html.
+Estado inicial: H-AUD-012-001 a 008 abiertos o vinculados; AUG-088 a AUG-091 pendientes; adendas AUG-043/AUG-087 y relaciones AUG-068 a AUG-071 conservadas; VAL-21/VAL-03/VAL-17 pendientes.
+Fase: revalidación estática/documental de continuidad. Sin autorización para modificar archivos funcionales.
+Preflight: E1 es ancestro de HEAD (129 commits); CP-0114 es ancestro de HEAD (44 commits); ambos diffs contienen solo documentos; los siete archivos del alcance conservan SHA E1; rama base sin cambios.
+Respaldos exactos previos a la actualización documental (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 57a3993cf5cf6bf0c9a8aebd6c9a04817d809996
+- Plan_auditoría/Consolidacion_Auditoria.md: 786ba6d27b9ec5d05ae3fb679bdb83021f1fac1c
+- ChangesLogs.txt: 33cf1f3e74532ee7f2d1978d5682b58f3c2925ff
+- contexto_personal.md: 9f9acab18d90aaed6241f79e10c487bde0fb03c4
+- checkpoint.md: e32feeaf4abc9855a822306ef10ff263d2cd3728
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0158
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S159
+Tarea: AUD-T-012 — revalidación de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-012-001 A 008 ABIERTOS O VINCULADOS; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE.
+HEAD padre confirmado: 09c76db0e7047ab5a74304a57d635432d306f534; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental (ocho archivos).
+CP-0114→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; diff limitado a cinco documentos.
+Siete archivos del alcance conservan SHA idénticos a E1:
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+Hallazgos: H-AUD-012-001 a 008 abiertos o vinculados. AUG-088 a AUG-091 pendientes; adendas AUG-043/AUG-087 y relaciones AUG-068 a AUG-071 conservadas. VAL-21/03/17 pendientes. Sin hallazgos nuevos, duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, ascendencia/merge-base E1→HEAD, compare CP-0114→HEAD, lista de archivos de ambos diffs y SHA de los siete archivos.
+No ejecutadas: navegador, Playwright, gestos, modales, scroll real, multiusuario, concurrencia, HTTP, Apps Script, Spreadsheet, permisos/deployment ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+Commit documental único: pendiente de crear mediante Git Database API con parent 09c76db0e7047ab5a74304a57d635432d306f534; update_ref force=false y expected_sha=09c76db0e7047ab5a74304a57d635432d306f534. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación E1).
+================================================================================

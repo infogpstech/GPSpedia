@@ -1605,3 +1605,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Solo documentación. Sin cambios de código, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - La instrucción de renombrado automático se conserva; no existe patrón normativo verificable, por lo que no se infiere ni se aplica.
 - Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## 94. AUD-T-012 — continuidad E1 y revalidación de asociación PyS–vehículos
+- Sesión AUD-20261109-S159; checkpoint AUD-CP-0158; E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b; revalidación previa CP-0114/HEAD f5895ab64e9468e6cc8d8004978a8cb471d8a573; HEAD actual 09c76db0e7047ab5a74304a57d635432d306f534; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff exclusivamente de ocho documentos. Los siete archivos funcionales del alcance conservan SHA idénticos a E1.
+- CP-0114→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico al HEAD anterior y diff limitado a cinco documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-012-001 a 008 permanecen abiertos o vinculados a tareas existentes. AUG-088 a AUG-091 pendientes; adendas AUG-043/AUG-087 y relaciones AUG-068 a AUG-071 conservadas. VAL-21/03/17 pendientes.
+- Se mantienen los riesgos de contexto anti-ciclo, coordinación modal/scroll/carrusel, credenciales ausentes en callsites de asociación, integridad referencial/serialización, título de acordeón, consultas PyS redundantes y falta de suite Playwright.
+- No se ejecutaron navegador, Playwright, gestos, modales, scroll real, multiusuario, concurrencia, HTTP, Apps Script, Spreadsheet, permisos/deployment ni E2/E3.
+- Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación E1).

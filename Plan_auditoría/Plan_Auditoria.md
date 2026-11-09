@@ -4335,3 +4335,50 @@ Esta sesión es una revalidación estática/documental. No se modifican código,
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas no definen un patrón verificable. No se inventa una regla ni se renombran elementos.
 
 **Siguiente unidad:** AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo (revalidación de continuidad E1).
+
+
+## 109. Continuidad incremental — AUD-T-012: vinculación bidireccional PyS–vehículos y navegación anti-ciclo
+
+**Sesión:** AUD-20261109-S159  
+**Checkpoint:** AUD-CP-0158  
+**E1 original:** 2afdde923d14e4f3dd078d347007b15e5ab09b2b (AUD-20261108-S030 / AUD-CP-0030; E1 estática completada).  
+**Revalidación previa:** AUD-20261108-S115 / AUD-CP-0114; HEAD f5895ab64e9468e6cc8d8004978a8cb471d8a573.  
+**HEAD inicial de esta sesión:** 09c76db0e7047ab5a74304a57d635432d306f534.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-012-001 A 008 ABIERTOS O VINCULADOS; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad de la asociación bidireccional entre problemas PyS y vehículos, alta/eliminación de asociaciones, búsqueda y selección de vehículos, tarjetas y acordeones, navegación entre problemas relacionados, carruseles, contexto anti-ciclo, pila modal y restauración de scroll. Archivos de alcance y SHA comprobados:
+
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `Services/feedback.js`: `3db189523f6cb849d33550f29971c0ec6f386b3a`
+- `api-config.js`: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `navigation.js`: `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `Services/catalog.js`: `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+
+Comparación E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los siete archivos funcionales del alcance aparece en el diff; todos conservan SHA idénticos a E1.
+
+Comparación desde AUD-CP-0114 / HEAD f5895ab64e9468e6cc8d8004978a8cb471d8a573: 44 commits posteriores, cero detrás, merge-base idéntico al HEAD de esa revalidación y diff limitado a cinco documentos de auditoría. No se observa deriva funcional desde la revisión anterior.
+
+### Hallazgos, tareas y relaciones
+
+H-AUD-012-001 a H-AUD-012-008 permanecen abiertos o vinculados a tareas existentes, sin cambios de prioridad ni cierre. Se conservan los riesgos previamente documentados sobre: pérdida del contexto anti-ciclo tras mutaciones; coordinación de pila modal, scroll y carrusel; llamadas de asociación sin credenciales de sesión requeridas; integridad referencial y serialización de asociaciones; discrepancia del título del acordeón; consultas PyS redundantes y falta de cobertura automatizada de navegación.
+
+AUG-088, AUG-089, AUG-090 y AUG-091 continúan pendientes. Se mantienen las adendas de AUG-043 (credenciales en acciones de asociación) y AUG-087 (frescura, deduplicación e invalidación de consultas PyS). Las relaciones transversales AUG-068 a AUG-071 y los antecedentes relacionados se conservan sin duplicación. No se detectaron hallazgos nuevos ni cambios de estado.
+
+VAL-21, VAL-03 y VAL-17 permanecen pendientes de ejecución real.
+
+### Verificaciones y límites
+
+Se verificaron la ascendencia E1→HEAD, el merge-base, la lista completa de archivos del diff, la comparación desde AUD-CP-0114 y los SHA exactos de los siete archivos de alcance. La comparación GPSpedia2.2.5→GPSpedia2.2.5_work confirma que la rama de trabajo está 355 commits por delante, cero detrás, con merge-base en el HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+No se ejecutaron Playwright, navegador, gestos, modales, scroll real, pruebas multiusuario, concurrencia, HTTP, Apps Script, Spreadsheet real, permisos/deployment ni E2/E3. La continuidad Git no certifica integridad referencial en producción ni comportamiento de navegación real.
+
+### Integridad y alcance de cambios
+
+Esta sesión es una revalidación estática/documental. No se modifican código, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos y tareas ya están registrados. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación de continuidad E1).
