@@ -3463,3 +3463,41 @@ Sin cambios funcionales, CSS, HTML de aplicación, assets, endpoints, contratos,
 Commit documental único: docs(audit): verify AUD-T-006 continuity; parent 23bdafc8a0414d6b60cea177a3a51183e19f6e99.
 Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0131
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S132
+Tarea: AUD-T-007 — revalidación de continuidad E1 de navegación, History API, popstate, overlays y gesto atrás.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec | árbol: 41ebd5949fa5b6fba97574a1f693dca0d912bfc0.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e.
+Revalidación previa: AUD-20261108-S109 / AUD-CP-0108, HEAD e7eb9147e78c726d175ad3e33ffcc349abfd529b.
+Alcance: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+Estado inicial: H-AUD-007-001 a 005 abiertos; AUG-068 a 071 pendientes; adenda AUG-047; H-AUD-005-008 ampliado; VAL-10/17 pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas dinámicas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 2b0433d39de5061fcd792c88c5ace46fb769cd07
+- Plan_auditoría/Consolidacion_Auditoria.md: 233bd5124b770744e5ae9886bac74b4dc579619e
+- ChangesLogs.txt: fb3eb23b329c2329da05ce0b471a4ab5c3ba6375
+- contexto_personal.md: a5c472279bf190d5bb359e52907ad2add573ec0d
+- checkpoint.md: 2b64f00603c37deb00d8338f346234e2dff612d3
+Siguiente acción: comparar E1→HEAD, verificar SHA de los diez archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0131
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S132
+Tarea: AUD-T-007 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-007-001 a 005 abiertos; AUG-068 a 071 pendientes; adenda AUG-047; H-AUD-005-008 ampliado; VAL-10/17 pendientes.
+HEAD padre confirmado: e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec; árbol inicial 41ebd5949fa5b6fba97574a1f693dca0d912bfc0. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los diez archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: overlays dinámicos no detectados uniformemente; «Volver» crea entradas; popstate cierra varios overlays; cierres/aperturas dejan entradas obsoletas; prioridad incorrecta de modales de términos. H-AUD-007-001 a 005 permanecen abiertos.
+Tareas/relaciones: AUG-068 a AUG-071 pendientes; AUG-047 conserva adenda; H-AUD-005-008 permanece ampliado sin duplicación. VAL-10/17 pendientes.
+Validaciones no ejecutadas: navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links, history.state, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, HTML/CSS de aplicación, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-007 continuity; parent e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec.
+Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+================================================================================

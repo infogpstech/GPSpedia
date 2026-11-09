@@ -1302,3 +1302,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, móvil, PWA, CDN, IndexedDB real, mediciones, comparación visual, canvas ni pruebas de gestos.
 - Solo continuidad estática/documental; sin cambios funcionales, CSS, HTML, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+
+
+## 67. AUD-T-007 — continuidad E1 y revalidación de navegación/overlays
+- Sesión AUD-20261108-S132; checkpoint AUD-CP-0131; E1 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; HEAD inicial e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec; árbol 41ebd5949fa5b6fba97574a1f693dca0d912bfc0; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los diez archivos funcionales conservan SHA exactos de E1.
+- H-AUD-007-001 a 005 permanecen abiertos; AUG-068 a 071 pendientes; AUG-047 conserva adenda; H-AUD-005-008 se mantiene ampliado. VAL-10/17 pendientes.
+- No se ejecutaron navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ni medición de history.state.
+- Solo continuidad estática/documental; sin cambios funcionales, HTML/CSS, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
