@@ -3859,3 +3859,51 @@ Se verificaron HEAD de ambas ramas, ascendencia y merge-base E1→HEAD, diff glo
 No se ejecutaron navegador, cambio de cuenta real, IndexedDB real, cuota/evicción, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments. No se modificaron código, endpoints, configuración, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red (fase F2 crítica), según el orden documentado del plan.
+
+
+## 100. Revalidación incremental de continuidad — AUD-T-003: registro de vehículos y cortes
+
+**Sesión:** AUD-20261109-S150  
+**Checkpoint:** AUD-CP-0149  
+**E1 original:** 06f18e42383f5be448c378bc09ab534731cfbd6b (AUD-20261107-S021 / AUD-CP-0021)  
+**Revalidación previa:** AUD-20261108-S128 / AUD-CP-0127; HEAD 9669f93f03a38b1125da5a7bb34dce267f736240  
+**HEAD inicial actual:** 6eadfde51a56881247ae3615968a4227a672a6b9  
+**Árbol del HEAD inicial:** b3755050738afb06e43e71f1ea1df38289a892a7  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-003-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidó el registro de vehículos y cortes, el formulario add_cortes, la persistencia local de operaciones pendientes, la generación/uso de opId, las opciones de corte y vídeo, la lectura de imágenes y la recuperación automática ante cambios de conectividad. Archivos del alcance:
+- add_cortes.html
+- Services/write.js
+- Services/admin.js
+- api-config.js
+- youtubeUpload.js
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los cinco archivos funcionales/auxiliares del alcance aparece en el diff.
+
+Los cinco archivos conservan SHA idénticos a E1:
+- add_cortes.html: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- Services/write.js: `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- Services/admin.js: `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- api-config.js: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- youtubeUpload.js: `01559b95d4fff7b03c7833d5903496ab41dbc161`
+
+La comparación desde la revalidación previa CP-0127 hasta HEAD comprende 22 commits y solo cinco documentos de continuidad; no hay deriva funcional posterior a esa revisión.
+
+### Revalidación de hallazgos y tareas
+- H-AUD-003-001 permanece abierto: la persistencia local no es obligatoria en todos los recorridos y el opId no queda vinculado de forma suficiente al contenido del payload para demostrar idempotencia ante reintentos o respuestas perdidas.
+- H-AUD-003-002 permanece abierto: las opciones de corte/vídeo no están condicionadas de forma consistente a la disponibilidad real de listas, configuración o registro asociado; la interfaz puede exponer opciones que no están listas para guardarse.
+- H-AUD-003-003 permanece abierto: el procesamiento de FileReader no garantiza en todos los caminos la restauración del overlay, botón y flags de envío ante error/abort; puede dejar la interfaz bloqueada.
+- H-AUD-003-004 permanece abierto: init(), eventos online/visibilitychange y submit pueden iniciar recuperaciones concurrentes sin una serialización completa del estado del formulario.
+- AUG-055 a AUG-058 continúan pendientes. AUG-043 conserva su adenda sobre #videoGuiaUrl y el flujo de add_cortes. No se crean hallazgos/tareas duplicados ni se modifican prioridades o estados.
+- Se conservan las relaciones con AUD-T-031, AUD-T-033, AUD-T-035 y AUD-T-038, además de las tareas AUG existentes, sin ampliar sus alcances en esta iteración.
+
+### Validaciones y límites
+Se verificaron HEAD de trabajo y base, ascendencia/merge-base E1→HEAD, diff global, continuidad desde CP-0127 y SHA de los cinco archivos del alcance. La rama base permanece idéntica a su SHA conocido.
+
+No se ejecutaron navegador, cuota/evicción real de localStorage, FileReader real, pruebas HTTP, Apps Script V8, Drive/Spreadsheet, pérdida de respuesta, concurrencia, recuperación de red, pruebas multiusuario, deployments ni E2/E3. La continuidad Git demuestra que los archivos no cambiaron desde E1; no certifica el comportamiento funcional o la resiliencia en producción.
+
+No se modificaron código, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+
+**Siguiente unidad:** continuar según el orden del plan, conservando pendientes las validaciones funcionales/integración de AUD-T-003.

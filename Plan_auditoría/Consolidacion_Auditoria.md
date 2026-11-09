@@ -1480,3 +1480,17 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-053/AUG-054 continúan pendientes. AUG-022/AUG-051 conservan sus adendas. No duplicar AUG-006/AUG-042/AUG-045 ni H-AUD-037-008/009. Sin hallazgos o tareas nuevas.
 - Solo continuidad E1 y revisión documental. Sin pruebas de navegador, cambio de cuenta, IndexedDB real, cuota/evicción, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments.
 - Sin cambios funcionales, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+
+
+## 85. AUD-T-003 — continuidad E1 revalidada incrementalmente
+- Sesión AUD-20261109-S150; checkpoint AUD-CP-0149; E1 06f18e42383f5be448c378bc09ab534731cfbd6b; revalidación previa CP-0127 con HEAD 9669f93f03a38b1125da5a7bb34dce267f736240; HEAD actual 6eadfde51a56881247ae3615968a4227a672a6b9; árbol b3755050738afb06e43e71f1ea1df38289a892a7; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, merge-base igual a E1 y diff limitado a ocho documentos. Los cinco archivos funcionales/auxiliares del alcance conservan SHA idénticos a E1:
+- add_cortes.html: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- Services/write.js: `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- Services/admin.js: `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- api-config.js: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- youtubeUpload.js: `01559b95d4fff7b03c7833d5903496ab41dbc161`
+- CP-0127→HEAD: 22 commits posteriores y solo cinco documentos de continuidad; no hay cambios funcionales desde la revalidación previa.
+- H-AUD-003-001 a 004 permanecen abiertos. AUG-055 a AUG-058 siguen pendientes; AUG-043 conserva su adenda. Sin hallazgos/tareas nuevos, duplicados, cierres ni cambios de prioridad.
+- No se ejecutaron navegador, localStorage real, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, concurrencia, recuperación de red, deployments ni E2/E3.
+- Solo continuidad estática/documental; no se modificó código, endpoints, contratos, configuración, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue. Rama base intacta.

@@ -1413,3 +1413,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-038-001 a 005 permanecen abiertos; AUG-053/AUG-054 siguen pendientes. AUG-022/AUG-051 mantienen adendas. Sin hallazgos ni tareas nuevas ni cierres.
 - No se ejecutaron navegador, cambio de cuenta, IndexedDB real, cuota/evicción, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red.
+
+
+## Continuidad incremental — AUD-T-003 (2026-11-09)
+- Sesión AUD-20261109-S150 / checkpoint AUD-CP-0149. E1 06f18e42383f5be448c378bc09ab534731cfbd6b; revalidación previa CP-0127/HEAD 9669f93f03a38b1125da5a7bb34dce267f736240; HEAD actual 6eadfde51a56881247ae3615968a4227a672a6b9; árbol b3755050738afb06e43e71f1ea1df38289a892a7; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits, merge-base igual a E1 y solo ocho documentos modificados. Los cinco archivos del alcance conservan SHA idénticos a E1. CP-0127→HEAD: 22 commits y solo cinco documentos.
+- H-AUD-003-001 a 004 permanecen abiertos; AUG-055 a AUG-058 pendientes; AUG-043 conserva su adenda. Sin hallazgos/tareas nuevos ni cierres.
+- No se ejecutaron navegador, localStorage real, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, concurrencia, recuperación de red ni deployments. Sin cambios funcionales o productivos.
+- Siguiente: continuar según el plan; las validaciones funcionales e integración de AUD-T-003 siguen pendientes.
