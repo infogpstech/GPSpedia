@@ -439,3 +439,46 @@ H-AUD-066: ABIERTO y derivado a AUG-154; no se oculta que updateUser puede dejar
 Verificación final: sintaxis 4/4 PASS; harness USERS 14/14 PASS; createUser fallo/reintento 2/2 PASS; AUTH migración legacy normal, cambio propio intercalado, reset administrativo intercalado y límite de sesión con rol revalidado: 8/8 PASS. Total funcional local 24/24; sintaxis 4/4. Doble de prueba aislado y producción comparten lógica; se preservan Spreadsheet IDs distintos.
 No se ejecutó Apps Script real, deployment aislado, HTTP ni endpoints operativos; no se accedió ni modificó ninguna Spreadsheet real. Concurrencia real y coordinación interproyectos no se certifican.
 ================================================================================
+
+
+================================================================================
+H-AUD-068 — Contador de intentos sin identidad individual por solicitud — 2026-11-09
+Severidad: P2 — consistencia del límite de intentos y bloqueo temporal.
+Tarea propietaria: AUG-012. Origen relacionado: H-AUD-023-004.
+
+Evidencia en Services/Auth.js y Services/Test/Auth.js (lógica equivalente; la copia conserva un Spreadsheet ID independiente):
+- beginLoginAttempt() (líneas 96–126) incrementa un único campo state.attempts antes de verificar las credenciales. El ScriptLock serializa el read-modify-write, pero el contador no identifica qué solicitud creó cada incremento.
+- resetLoginAttempts() (128–135) elimina toda la clave del usuario. Si otra autenticación sigue pendiente o ya completó un fallo concurrente, un login válido puede borrar ese estado ajeno.
+- rollbackLoginAttempt() (137–156) resta uno al contador agregado sin identificar la reserva que se revierte. Si una solicitud termina con error de infraestructura después de que otra ya registró credenciales inválidas, puede descontar el fallo de la segunda.
+- handleLogin() (250–422) conserva solo attemptReserved como booleano. No hay token por solicitud que permita finalizar exclusivamente la reserva propia. Las credenciales inválidas dejan el incremento en el contador; los errores de infraestructura llaman rollback; una credencial válida llama reset antes de la gestión de sesión.
+- Intercalado reproducible por la lógica: A y B reservan; B falla por credenciales inválidas; A termina por error de infraestructura; rollback de A decrementa el total y puede borrar el fallo de B. En otro orden, B falla y A valida credenciales; reset de A elimina también el fallo concurrente de B.
+
+Dependencias y efectos colaterales:
+- LockService.getScriptLock() protege las operaciones del contador, pero no atribuye propiedad a cada incremento. El mismo lock también es utilizado por logToSheet(), gestión de sesiones y mutaciones de contraseña; no debe mantenerse mientras se llama a logToSheet() ni introducirse una adquisición anidada.
+- CacheService.getScriptCache() es almacenamiento temporal de mejor esfuerzo; puede desalojar entradas antes del TTL. El contador y el bloqueo de 15 minutos no son durables ni pueden garantizarse frente a una expulsión de caché.
+- La búsqueda de referencias internas confirma que beginLoginAttempt/resetLoginAttempts/rollbackLoginAttempt se utilizan dentro de handleLogin en estos archivos; no se identificaron consumidores adicionales en el árbol del repositorio.
+- Services/Test/Auth.js difiere de producción únicamente en el Spreadsheet ID de prueba; al sincronizar la corrección debe preservarse esa diferencia.
+
+Corrección delimitada para AUG-012:
+- Asignar un identificador único a cada reserva y guardar por separado fallos completados y reservas pendientes.
+- Login válido: retirar solo su reserva y reiniciar fallos previos, preservando otras reservas pendientes.
+- Credenciales inválidas: retirar solo su reserva y registrar un fallo.
+- Error de infraestructura: retirar solo su reserva, sin incrementar ni descontar fallos ajenos.
+- Mantener el máximo de cinco intentos y el bloqueo nominal de 900 segundos; limpiar reservas abandonadas por antigüedad.
+- Documentar que CacheService puede perder el estado antes del TTL.
+
+Estado: AUDITORÍA COMPLETADA; no se modificó código durante la auditoría. No se ejecutó concurrencia real de Apps Script ni se verificaron deployments/endpoints. La validación de esta tarea se realizará con pruebas locales deterministas; la limitación de CacheService permanece explícita.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN H-AUD-068 — AUG-012 — 2026-11-09
+Estado: RESUELTO EN FUENTES.
+- Services/Auth.js y Services/Test/Auth.js: se sustituyó el contador agregado sin identidad por reservas individuales con UUID. El estado separa failedAttempts de pendingAttempts y limpia reservas con más de 900 segundos.
+- beginLoginAttempt devuelve el ID de la reserva. resetLoginAttempts elimina solo la reserva propia y reinicia fallos previos sin borrar reservas concurrentes. registerFailedLoginAttempt elimina la reserva propia y suma un fallo. rollbackLoginAttempt elimina solo la reserva propia y no decrementa fallos ajenos.
+- handleLogin conserva el ID y finaliza según resultado: credenciales inválidas registran fallo; errores de infraestructura revierten la reserva; credenciales válidas reinician el contador como antes.
+- Se mantiene compatibilidad de lectura con el estado anterior { attempts, lockedUntil }. No se modificaron SHA-256, formatos de contraseña, credenciales, sesiones, roles, rutas ni IDs de Spreadsheet.
+- Revisión de diffs contra los blobs originales: PASS; únicamente se modificaron helpers del contador y sus callsites directos en handleLogin. Services/Test/Auth.js conserva su Spreadsheet ID independiente y coincide con producción en toda la lógica restante.
+- Sintaxis: 2/2 PASS. Pruebas deterministas de helpers: 18/18 PASS (9 por fuente), incluyendo intercalados de fallo/éxito/error de infraestructura, cinco fallos, bloqueo, expiración, rollback de la quinta reserva, limpieza de reservas obsoletas y migración de estado previo. Pruebas de handleLogin: 4/4 PASS (credenciales inválidas y error de infraestructura en producción/copia de prueba). Total funcional local: 22/22 PASS.
+- Límite conservado: CacheService es temporal y puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo. La concurrencia real y el deployment aislado quedan diferidos a Beta; no se ejecutaron Apps Script real, HTTP, deployments ni hojas productivas.
+================================================================================

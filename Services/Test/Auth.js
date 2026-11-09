@@ -93,63 +93,151 @@ function getLoginAttemptCacheKey(username) {
     return 'login_attempts_' + digestToHex(digest);
 }
 
+// CacheService es temporal: puede desalojar el estado antes del TTL; el bloqueo es de mejor esfuerzo.
+function readLoginAttemptState_(cache, key, now) {
+    const rawState = cache.get(key);
+    let state = {};
+    if (rawState) {
+        try { state = JSON.parse(rawState) || {}; }
+        catch (e) { state = {}; }
+    }
+    if (!state || typeof state !== 'object' || Array.isArray(state)) state = {};
+
+    // Compatibilidad temporal con el contador anterior { attempts, lockedUntil }.
+    if (!Object.prototype.hasOwnProperty.call(state, 'failedAttempts')) {
+        state.failedAttempts = Math.max(0, Number(state.attempts) || 0);
+    }
+    state.failedAttempts = Math.floor(Math.max(0, Number(state.failedAttempts) || 0));
+    const oldestPendingAt = now - LOGIN_LOCKOUT_SECONDS * 1000;
+    state.pendingAttempts = Array.isArray(state.pendingAttempts)
+        ? state.pendingAttempts.filter(item =>
+            item &&
+            typeof item.id === 'string' &&
+            item.id.length > 0 &&
+            Number.isFinite(Number(item.startedAt)) &&
+            Number(item.startedAt) <= now &&
+            Number(item.startedAt) > oldestPendingAt
+        )
+        : [];
+
+    const lockedUntil = Number(state.lockedUntil);
+    if (Number.isFinite(lockedUntil) && lockedUntil > now) {
+        state.lockedUntil = lockedUntil;
+    } else {
+        delete state.lockedUntil;
+        if (Number.isFinite(lockedUntil) && lockedUntil <= now) state.failedAttempts = 0;
+    }
+    delete state.attempts;
+    return state;
+}
+
+function writeLoginAttemptState_(cache, key, state) {
+    const hasActiveLock = Number(state.lockedUntil) > Date.now();
+    if (state.failedAttempts === 0 && state.pendingAttempts.length === 0 && !hasActiveLock) {
+        cache.remove(key);
+        return;
+    }
+    cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+}
+
+function removeLoginAttemptReservation_(state, attemptId) {
+    const previousLength = state.pendingAttempts.length;
+    state.pendingAttempts = state.pendingAttempts.filter(item => item.id !== attemptId);
+}
+
 function beginLoginAttempt(username) {
     const cache = CacheService.getScriptCache();
     const key = getLoginAttemptCacheKey(username);
     const lock = LockService.getScriptLock();
+    const attemptId = Utilities.getUuid();
     lock.waitLock(10000);
     try {
-        const rawState = cache.get(key);
-        let state = { attempts: 0 };
-        if (rawState) {
-            try { state = JSON.parse(rawState) || { attempts: 0 }; }
-            catch (e) { state = { attempts: 0 }; }
-        }
-        if (!state || typeof state !== 'object' || Array.isArray(state)) state = { attempts: 0 };
         const now = Date.now();
+        const state = readLoginAttemptState_(cache, key, now);
         if (state.lockedUntil && now < state.lockedUntil) {
             throw new Error('Se alcanzó el máximo de intentos. Intenta nuevamente en 15 minutos.');
         }
-        if (state.lockedUntil && now >= state.lockedUntil) state = { attempts: 0 };
-        state.attempts = Number(state.attempts) || 0;
-        if (state.attempts >= LOGIN_MAX_ATTEMPTS) {
+
+        const activeAttempts = state.failedAttempts + state.pendingAttempts.length;
+        if (activeAttempts >= LOGIN_MAX_ATTEMPTS) {
             state.lockedUntil = now + LOGIN_LOCKOUT_SECONDS * 1000;
-            cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+            writeLoginAttemptState_(cache, key, state);
             throw new Error('Se alcanzó el máximo de intentos. Intenta nuevamente en 15 minutos.');
         }
-        state.attempts++;
-        if (state.attempts >= LOGIN_MAX_ATTEMPTS) state.lockedUntil = now + LOGIN_LOCKOUT_SECONDS * 1000;
-        cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+
+        state.pendingAttempts.push({ id: attemptId, startedAt: now });
+        if (state.failedAttempts + state.pendingAttempts.length >= LOGIN_MAX_ATTEMPTS) {
+            state.lockedUntil = now + LOGIN_LOCKOUT_SECONDS * 1000;
+        }
+        writeLoginAttemptState_(cache, key, state);
+        return attemptId;
     } finally {
         lock.releaseLock();
     }
 }
 
-function resetLoginAttempts(username) {
-    const cache = CacheService.getScriptCache();
-    const key = getLoginAttemptCacheKey(username);
-    const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-    try { cache.remove(key); }
-    finally { lock.releaseLock(); }
-}
-
-function rollbackLoginAttempt(username) {
+function resetLoginAttempts(username, attemptId) {
+    if (typeof attemptId !== 'string' || !attemptId) {
+        throw new Error('Se requiere el identificador de la reserva para reiniciar intentos.');
+    }
     const cache = CacheService.getScriptCache();
     const key = getLoginAttemptCacheKey(username);
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try {
-        const rawState = cache.get(key);
-        if (!rawState) return;
-        let state;
-        try { state = JSON.parse(rawState); }
-        catch (e) { cache.remove(key); return; }
-        if (!state || typeof state !== 'object' || Array.isArray(state)) { cache.remove(key); return; }
-        state.attempts = Math.max(0, (Number(state.attempts) || 0) - 1);
-        if (state.attempts === 0) { cache.remove(key); return; }
-        if (state.attempts < LOGIN_MAX_ATTEMPTS) delete state.lockedUntil;
-        cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+        const state = readLoginAttemptState_(cache, key, Date.now());
+        removeLoginAttemptReservation_(state, attemptId);
+        state.failedAttempts = 0;
+        delete state.lockedUntil;
+        writeLoginAttemptState_(cache, key, state);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function registerFailedLoginAttempt(username, attemptId) {
+    if (typeof attemptId !== 'string' || !attemptId) {
+        throw new Error('Se requiere el identificador de la reserva para registrar el fallo.');
+    }
+    const cache = CacheService.getScriptCache();
+    const key = getLoginAttemptCacheKey(username);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+        const now = Date.now();
+        const state = readLoginAttemptState_(cache, key, now);
+        removeLoginAttemptReservation_(state, attemptId);
+        state.failedAttempts++;
+        if (state.failedAttempts >= LOGIN_MAX_ATTEMPTS ||
+            state.failedAttempts + state.pendingAttempts.length >= LOGIN_MAX_ATTEMPTS) {
+            if (!state.lockedUntil || state.lockedUntil <= now) {
+                state.lockedUntil = now + LOGIN_LOCKOUT_SECONDS * 1000;
+            }
+        } else {
+            delete state.lockedUntil;
+        }
+        writeLoginAttemptState_(cache, key, state);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function rollbackLoginAttempt(username, attemptId) {
+    if (typeof attemptId !== 'string' || !attemptId) {
+        throw new Error('Se requiere el identificador de la reserva para revertir el intento.');
+    }
+    const cache = CacheService.getScriptCache();
+    const key = getLoginAttemptCacheKey(username);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+        const state = readLoginAttemptState_(cache, key, Date.now());
+        removeLoginAttemptReservation_(state, attemptId);
+        if (state.failedAttempts < LOGIN_MAX_ATTEMPTS &&
+            state.failedAttempts + state.pendingAttempts.length < LOGIN_MAX_ATTEMPTS) {
+            delete state.lockedUntil;
+        }
+        writeLoginAttemptState_(cache, key, state);
     } finally {
         lock.releaseLock();
     }
@@ -249,6 +337,7 @@ function doPost(e) {
 // ============================================================================
 function handleLogin(payload) {
     let normalizedUsername = '';
+    let attemptId = null;
     let attemptReserved = false;
     let invalidCredentials = false;
     try {
@@ -259,7 +348,7 @@ function handleLogin(payload) {
         const normalizedPassword = normalizePassword(password);
         if (!normalizedUsername || !normalizedPassword) throw new Error("Usuario y contraseña son requeridos.");
 
-        beginLoginAttempt(normalizedUsername);
+        attemptId = beginLoginAttempt(normalizedUsername);
         attemptReserved = true;
 
         const userSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);
@@ -289,7 +378,7 @@ function handleLogin(payload) {
             throw new Error("Credenciales inválidas.");
         }
 
-        resetLoginAttempts(normalizedUsername);
+        resetLoginAttempts(normalizedUsername, attemptId);
         attemptReserved = false;
 
         const userId = foundUserRow[COLS_USERS.ID - 1];
@@ -412,9 +501,17 @@ function handleLogin(payload) {
         return { status: 'success', user: user };
 
     } catch (error) {
-        if (attemptReserved && !invalidCredentials) {
-            try { rollbackLoginAttempt(normalizedUsername); }
-            catch (rollbackError) { console.error('No se pudo revertir el intento reservado:', rollbackError.message); }
+        if (attemptReserved) {
+            try {
+                if (invalidCredentials) {
+                    registerFailedLoginAttempt(normalizedUsername, attemptId);
+                } else {
+                    rollbackLoginAttempt(normalizedUsername, attemptId);
+                }
+                attemptReserved = false;
+            } catch (rollbackError) {
+                console.error('No se pudo finalizar la reserva de intento:', rollbackError.message);
+            }
         }
         logToSheet('ERROR', `Error in handleLogin: ${error.message}`, { stack: error.stack });
         return { status: 'error', message: error.message };

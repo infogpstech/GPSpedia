@@ -187,6 +187,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Origen:** H-AUD-023-004. **Prioridad:** Media.
 - **Problema:** resetLoginAttempts() y rollbackLoginAttempt() pueden eliminar/descontar intentos de otras solicitudes.
 - **Criterios:** diseñar reservas/identificadores de intento o estrategia equivalente; preservar bloqueo temporal; probar fallos, éxito y errores de infraestructura simultáneos; documentar el límite de CacheService.
+- **Diseño derivado de H-AUD-068:** cada login tendrá un ID de reserva; el estado separará fallos completados de reservas pendientes. Éxito elimina solo su reserva y reinicia fallos previos; credenciales inválidas eliminan su reserva y suman un fallo; error de infraestructura elimina solo su reserva sin alterar fallos ajenos. Las reservas abandonadas se depuran por antigüedad. El bloqueo seguirá siendo de mejor esfuerzo por la posible expulsión anticipada de CacheService.
 
 ### AUG-013 — Coordinar purga de Logs con inserciones AUTH
 - **Origen:** H-AUD-023-005. **Prioridad:** Media.
@@ -1544,3 +1545,7 @@ Estado: COMPLETADA EN EL ALCANCE LOCAL DE USERS/AUTH; validación real en deploy
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
 Recuento final corregido tras añadir la prueba del límite de sesiones con rol revalidado: sintaxis 4/4 PASS; USERS 14/14; createUser fallo/reintento 2/2; AUTH migración legacy normal, cambio propio intercalado, reset Desarrollador intercalado y límite por rol actualizado 8/8. Total funcional local 24/24 PASS. H-AUD-067 resuelto. H-AUD-066 permanece abierto en AUG-154. No se ejecutaron deployments ni concurrencia real.
+
+- **Cierre local (2026-11-09): COMPLETADA EN FUENTES.** H-AUD-068 resuelto. AUTH asigna UUID por solicitud y mantiene `failedAttempts` separado de `pendingAttempts`; éxito elimina solo su reserva y reinicia fallos previos, credenciales inválidas finalizan como fallo y errores de infraestructura revierten solo la reserva propia. Se migran estados cacheados con el campo anterior `attempts` y se depuran reservas con más de 900 segundos.
+- **Verificación:** sintaxis 2/2 PASS; pruebas deterministas de helpers 18/18 PASS (9 por fuente); pruebas de integración de `handleLogin` para credenciales inválidas y error de infraestructura 4/4 PASS (ambas fuentes). Total funcional local 22/22 PASS. Producción y copia de prueba conservan lógica equivalente y Spreadsheet IDs distintos.
+- **Limitación:** CacheService puede desalojar el estado antes del TTL; el bloqueo no es durable. La concurrencia real de Apps Script y el deployment AUTH aislado quedan diferidos a `lista_beta.txt`. No se ejecutaron deployments, endpoints HTTP ni hojas reales.

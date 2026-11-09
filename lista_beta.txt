@@ -188,3 +188,13 @@ AUG-154 — Fallos parciales de updateUser
 
 
 Ampliación AUG-010 AUTH: intercalar un cambio de rol antes de que login adquiera el ScriptLock y verificar que el límite aplicado corresponde al rol revalidado dentro del lock. Este ensayo local no sustituye el coordinador compartido AUTH↔USERS de AUG-034.
+
+
+================================================================================
+AUG-012 — Concurrencia real del contador de intentos AUTH
+- Crear/verificar un deployment AUTH aislado que utilice exclusivamente la Spreadsheet de prueba; no modificar api-config.js ni sustituir URLs live.
+- Ejecutar solicitudes concurrentes para el mismo usuario: credenciales inválidas, una autenticación válida y errores de infraestructura controlados. Confirmar que cada solicitud finaliza solo su reserva y que un rollback no reduce fallos de otras solicitudes.
+- Ejecutar cinco fallos y verificar el bloqueo nominal de 15 minutos; comprobar expiración y recuperación. Probar también que una reserva de infraestructura revertida no deja un bloqueo falso.
+- Verificar que las solicitudes pendientes se limpian y que el estado de CacheService se comporta según sus límites; no interpretar esta caché como almacenamiento durable.
+- No ejecutar contra deployments/endpoints operativos ni hojas productivas. Las pruebas locales deterministas 22/22 PASS no sustituyen esta validación real.
+================================================================================

@@ -217,3 +217,15 @@ Recuento final: USERS 14/14; createUser fallo/reintento 2/2; AUTH 8/8 incluyendo
 - AUG-011 queda OMITIDA POR DECISIÓN DEL USUARIO y no debe reactivarse en sesiones futuras sin nueva autorización explícita.
 - No se modificó código, autenticación, credenciales, datos, hojas ni deployments. Cambio exclusivamente documental.
 ================================================================================
+
+
+================================================================================
+AUG-012 — Contador de intentos concurrentes AUTH — 2026-11-09
+- Services/Auth.js (líneas 97–244): helpers de lectura/escritura del estado, migración del formato cacheado anterior, reservas por UUID, limpieza de reservas con más de 900 segundos y finalización diferenciada para éxito, credenciales inválidas y error de infraestructura.
+- Services/Auth.js (handleLogin, desde línea 338): conserva el ID de reserva; éxito reinicia solo fallos previos y elimina la reserva propia; el catch registra credenciales inválidas o revierte únicamente la reserva propia según el resultado.
+- Services/Test/Auth.js: misma lógica; se preservó su Spreadsheet ID independiente.
+- No se modificó el bloque SHA-256, el formato sha256$, credenciales, sesiones, roles, rutas ni configuración de despliegues.
+- Auditoría H-AUD-068 cerrada en fuentes; AUG-012 marcada completada en el alcance local y registrada en tareas_completadas_parte1.txt. Concurrencia real AUTH queda en lista_beta.txt.
+- Verificación: sintaxis 2/2 PASS; pruebas deterministas helpers 18/18 PASS; integración handleLogin 4/4 PASS; total funcional local 22/22 PASS. Revisión de diffs contra blobs originales PASS.
+- CacheService puede desalojar entradas antes del TTL; el bloqueo es de mejor esfuerzo. No se ejecutaron deployments, HTTP, Apps Script real ni hojas productivas.
+================================================================================

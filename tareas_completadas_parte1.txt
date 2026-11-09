@@ -188,3 +188,14 @@ Validación local: sintaxis PASS en ambas copias; doPost/createUser directo con 
 
 ADENDA FINAL DE VALIDACIÓN — AUG-009 — 2026-11-09
 La batería final quedó en 11/11 casos directos de doPost PASS por fuente (22/22 funcionales) y sintaxis PASS en ambas. Incluye campo ausente/null, tipos no textuales, vacío/espacios, prefijo reservado, duplicados normalizados y nombres válidos recortados/Unicode. La ejecución real en deployment USERS aislado queda en Beta.
+
+
+================================================================================
+AUG-012 — Hacer consistente el contador de intentos ante autenticaciones concurrentes
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; concurrencia real de Apps Script diferida a Beta.
+H-AUD-068 resuelto. Se añadieron reservas de login por UUID y estado separado de fallos completados/reservas pendientes. Cada resultado finaliza solo su propia reserva: éxito reinicia fallos previos sin borrar otras reservas; credenciales inválidas suman un fallo; errores de infraestructura revierten únicamente la reserva propia. Se conserva compatibilidad de lectura del estado cacheado anterior y se limpian reservas obsoletas después de 900 segundos.
+Archivos funcionales: Services/Auth.js y Services/Test/Auth.js. La copia de prueba conserva su Spreadsheet ID independiente.
+Validación: sintaxis 2/2 PASS; helpers 18/18 PASS (9 por fuente); handleLogin 4/4 PASS; total funcional local 22/22 PASS. Diffs contra los originales limitados a los helpers y callsites directos del contador.
+Limitación: CacheService puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo. Concurrencia real y deployment AUTH aislado registrados en lista_beta.txt. Sin llamadas HTTP, deployments ni acceso a hojas reales.
+No se modificó hashing SHA-256, formato de contraseña, credenciales, sesiones, roles ni configuración de rutas.
+================================================================================

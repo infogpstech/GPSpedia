@@ -819,3 +819,56 @@ Limitaciones: el Plan Maestro conserva su mención histórica de AUG-011; la fic
 Siguiente acción: continuar con la siguiente tarea elegible, excluyendo AUG-011. AUG-012 puede auditarse por separado conforme al procedimiento.
 Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de esta adenda.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-012 — 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+HEAD de trabajo confirmado: 1d5ca10f8a738c707bfd2f171cbed090933d3268
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones previstas).
+Tarea: AUG-012 — hacer consistente el contador de intentos ante autenticaciones concurrentes.
+Fase: checkpoint inicial registrado antes de completar auditoría; sin cambios de código.
+Alcance: Services/Auth.js y Services/Test/Auth.js, además de Auditoría.txt, Tareas_pendientes_parte1.txt, ChangesLogs.txt y este checkpoint. Solo el contador de intentos y su integración directa en handleLogin.
+Estado observado: LOGIN_MAX_ATTEMPTS=5; LOGIN_LOCKOUT_SECONDS=900. beginLoginAttempt incrementa un contador compartido bajo ScriptLock; resetLoginAttempts elimina la clave completa; rollbackLoginAttempt decrementa el contador compartido. handleLogin reserva antes de leer credenciales, deja el incremento en credenciales inválidas, elimina la clave en credenciales válidas y revierte un incremento en errores de infraestructura.
+Riesgo conocido: solicitudes concurrentes no tienen identidad individual; reset/rollback pueden afectar contadores correspondientes a otras solicitudes. CacheService puede desalojar datos antes de TTL, por lo que el bloqueo no es durable.
+Dependencias: LockService.getScriptLock también se usa en logToSheet y operaciones de sesión/contraseña AUTH; evitar reentrada del mismo lock. Services/Test/Auth.js conserva Spreadsheet ID de prueba distinto; debe preservarse. AUG-011 está expresamente omitida y no forma parte del alcance; mantener SHA-256 sin cambios.
+Archivos previstos: Services/Auth.js, Services/Test/Auth.js, Auditoría.txt, Tareas_pendientes_parte1.txt y ChangesLogs.txt; checkpoint.md al cierre.
+Verificaciones previas conocidas: AUG-010 tuvo pruebas locales 24/24 y sintaxis 4/4, sin concurrencia real Apps Script ni endpoints. Para AUG-012 se requieren pruebas deterministas de intercalado, regresión y sintaxis.
+Siguiente acción: terminar auditoría completa de ambos Auth.js y consumidores; registrar hallazgos antes de implementar; respaldar blobs originales; diseñar reservas por ID de solicitud y finalización diferenciada éxito/fallo/error.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-012 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación real de concurrencia diferida a Beta.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+HEAD padre confirmado antes de esta tarea: 1d5ca10f8a738c707bfd2f171cbed090933d3268
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+Commit de esta tarea: único commit con mensaje "fix(auth): serialize concurrent login attempt accounting"; su SHA se identifica en el historial de GPSpedia2.2.5_work después de publicar el commit (no puede auto-incluirse en el blob que forma parte de ese mismo commit).
+Archivos funcionales modificados:
+- Services/Auth.js — reservas por UUID, estado de fallos y reservas pendientes, compatibilidad de estado anterior, limpieza por antigüedad y finalización diferenciada.
+- Services/Test/Auth.js — misma lógica; Spreadsheet ID de prueba preservado.
+Archivos documentales modificados:
+- Auditoría.txt — H-AUD-068 y resolución AUG-012.
+- Tareas_pendientes_parte1.txt — diseño y cierre local AUG-012.
+- Tareas.txt — actualización de estado.
+- tareas_completadas_parte1.txt — registro de cierre.
+- lista_beta.txt — concurrencia real en deployment aislado pendiente.
+- ChangesLogs.txt — registro objetivo de archivos y cambios.
+- checkpoint.md — este cierre.
+Respaldos exactos previos a la edición (blobs originales inmutables): Services/Auth.js 47672d8a0306bd736fa34d8d3c98f42d8f07eb76; Services/Test/Auth.js 23381af766bfc4c0aa8f194a26d5c593916a23df. Los demás documentos se leyeron desde los blobs verificados antes de su edición.
+Implementación: cada intento tiene ID propio. El estado separa failedAttempts y pendingAttempts. El login válido retira solo su reserva y reinicia fallos previos; credenciales inválidas retiran su reserva y suman un fallo; errores de infraestructura retiran únicamente su reserva sin decrementar fallos ajenos. El estado antiguo { attempts, lockedUntil } se interpreta temporalmente y las reservas con más de 900 segundos se depuran.
+Revisión de código: reconstrucción inversa contra los originales confirmó que los únicos cambios en ambos Auth.js son los helpers del contador y los callsites directos en handleLogin. El bloque SHA-256 y el formato sha256$ permanecen idénticos. Producción y prueba son equivalentes salvo sus Spreadsheet IDs. No se modificaron sesiones, roles, rutas, endpoints ni configuración.
+Verificaciones: sintaxis 2/2 PASS; pruebas deterministas de helpers 18/18 PASS (9 por fuente); pruebas de handleLogin para credenciales inválidas y error de infraestructura 4/4 PASS (ambas fuentes); total funcional local 22/22 PASS. Se verificó liberación del ScriptLock en todos los escenarios simulados.
+Limitaciones: CacheService puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo, no durable. No se ejecutó concurrencia real de Apps Script, deployment aislado, HTTP ni acceso a hojas reales. Esas pruebas están registradas en lista_beta.txt.
+Siguiente acción: continuar con AUG-013 — coordinación de purga de Logs con inserciones AUTH, respetando su dependencia de coordinación interproyectos.
+Este checkpoint final es la última actualización documental antes del único commit de AUG-012.
+================================================================================
+
+
+ADENDA DE CIERRE DEL CHECKPOINT — AUG-012
+La versión final de Auditoría.txt contiene tanto el hallazgo H-AUD-068 registrado antes de la implementación como su resolución posterior. La ficha AUG-012, Tareas.txt, tareas_completadas_parte1.txt, lista_beta.txt y ChangesLogs.txt están actualizados. No se realizarán más cambios documentales antes del único commit de esta tarea.

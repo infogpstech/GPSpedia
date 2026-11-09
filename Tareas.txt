@@ -230,3 +230,13 @@ H-AUD-006 revalidado; H-AUD-065 resuelto. H-AUD-066 se deriva a AUG-154 porque u
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
 El recuento final es 24/24 pruebas funcionales locales PASS y 4/4 sintaxis PASS. Se añadió intercalado que cambia el rol antes de adquirir el lock AUTH y confirma que el límite de sesiones se calcula con el rol revalidado. H-AUD-067 resuelto. H-AUD-066 sigue abierto en AUG-154.
+
+
+================================================================================
+ACTUALIZACIÓN — AUG-012 — CONTADOR DE INTENTOS CONCURRENTES — 2026-11-09
+Estado: COMPLETADA EN FUENTES; concurrencia real de Apps Script diferida a Beta.
+H-AUD-068 resuelto. AUTH ahora registra reservas por UUID, separa fallos completados de solicitudes pendientes y finaliza cada solicitud sin descontar ni borrar el estado de otra. Se preservan cinco intentos, bloqueo nominal de 15 minutos y compatibilidad de lectura del estado anterior. CacheService continúa siendo almacenamiento temporal de mejor esfuerzo.
+Archivos: Services/Auth.js y Services/Test/Auth.js; registros Auditoría.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt, lista_beta.txt, ChangesLogs.txt y checkpoint.md.
+Pruebas locales: sintaxis 2/2 PASS; helpers 18/18 PASS; handleLogin 4/4 PASS; total funcional 22/22 PASS. No se ejecutaron deployments, HTTP, hojas reales ni concurrencia real Apps Script.
+No se modificaron hashing SHA-256, credenciales, sesiones, roles, rutas ni Spreadsheet IDs. La copia de prueba conserva su ID independiente.
+================================================================================
