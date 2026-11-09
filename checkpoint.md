@@ -4288,3 +4288,52 @@ Sin cambios funcionales, esquema, endpoints, contratos, configuración, permisos
 Commit documental único: docs(audit): revalidate AUD-T-004 continuity; parent f81212ec0d7ef16fea61d4f7cdfbb72617b84744; update_ref force=false y expected_sha=f81212ec0d7ef16fea61d4f7cdfbb72617b84744. La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales; continuar mediante revalidación E1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0151
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S152
+Tarea: AUD-T-005 — revalidación incremental de continuidad E1.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial: 594fbc89b216ea8ba85d2541e280f947c1f2a7e9; árbol: a07feecd4fa3994c5727ea9295ed4d6fa5a3bb14; rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: c56c6f7e21a668774db726e2f14139588f1bc5c0. Revalidación previa: AUD-CP-0129 / HEAD 73ec786e667f59374037b4528fc767b8d3e18fdb.
+Alcance: ui.js, Services/catalog.js, Services/write.js, Services/admin.js, api-config.js, rich-text.js, state.js, main.js, style.css, index.html y offline.js.
+Estado inicial: H-AUD-005-001 a 008 abiertos; AUG-061 a AUG-064 pendientes; adendas AUG-043/AUG-050/AUG-057; H-AUD-005-008/VAL-17 coordinados con AUD-T-007; VAL-03/09/14/16 pendientes.
+Preflight: E1 ancestro de HEAD con 129 commits; CP-0129 ancestro con 22 commits; once archivos del alcance sin deriva; rama base intacta.
+Fase: revalidación estática/documental. Sin autorización para modificar código, servicios, endpoints, contratos, configuración, assets o datos productivos.
+Respaldos exactos previos a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 4dd6c5deff04c1b17c16b572a5b9e67c658350b2
+- Plan_auditoría/Consolidacion_Auditoria.md: ed5e7d79eda7621d0ec6681acb7c123a280af88f
+- ChangesLogs.txt: 93be5128b968783da804d256a38e0ed00f72b338
+- contexto_personal.md: 62024d4dd648793a1b0a94d6a7de0aee2a9fabcd
+- checkpoint.md: 33b036b5ce72433c52f0d812ed36d1ae8aecfc60
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0151
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S152
+Tarea: AUD-T-005 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-005-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+HEAD padre confirmado: 594fbc89b216ea8ba85d2541e280f947c1f2a7e9; árbol a07feecd4fa3994c5727ea9295ed4d6fa5a3bb14; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, merge-base idéntico a E1, sin divergencia; diff global exclusivamente de ocho documentos.
+Once archivos del alcance, SHA E1 = SHA HEAD:
+- `ui.js` — `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `Services/catalog.js` — `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `Services/write.js` — `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- `Services/admin.js` — `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- `api-config.js` — `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `rich-text.js` — `a7180766bb5097be510153edd851f4dfa939912c`
+- `state.js` — `f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f`
+- `main.js` — `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `style.css` — `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `index.html` — `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `offline.js` — `c68e8698c74ef45a1c9bb534c6b2be77df817c34`
+CP-0129→HEAD: 22 commits posteriores y exclusivamente cinco documentos de continuidad; sin deriva funcional desde la revalidación anterior.
+Hallazgos: H-AUD-005-001 a 008 abiertos; H-AUD-005-008 coordinado con AUD-T-007. Tareas AUG-061 a AUG-064 pendientes; adendas AUG-043/AUG-050/AUG-057 vigentes. VAL-03/09/14/16 pendientes; VAL-17 transferida a AUD-T-007. Sin hallazgos/tareas/validaciones duplicados, cierres ni cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, compare E1→HEAD, merge-base, diff global, CP-0129→HEAD y SHA de once archivos.
+No ejecutadas: navegador, XSS dinámico, payloads, FileReader real, concurrencia/último slot, HTTP, Apps Script V8, Spreadsheet/Drive, catálogo real, YouTube, móvil/PWA, accesibilidad, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los registros ya existen.
+Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: docs(audit): revalidate AUD-T-005 continuity; parent 594fbc89b216ea8ba85d2541e280f947c1f2a7e9; actualización protegida con expected_sha=594fbc89b216ea8ba85d2541e280f947c1f2a7e9.
+Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+================================================================================

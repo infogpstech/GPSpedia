@@ -3954,3 +3954,54 @@ No se ejecutaron navegador, dataset VIN real, Node/lint, pruebas del motor difer
 No se modificaron código, esquema, endpoints, contratos, configuración, permisos, assets, credenciales, datos productivos, Drive o Spreadsheet. Sin migración, merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales; continuar mediante revalidación de continuidad E1.
+
+
+## 102. Continuidad incremental — AUD-T-005: modal de detalle, ampliación dinámica y acciones contextuales
+
+**Sesión:** AUD-20261109-S152  
+**Checkpoint:** AUD-CP-0151  
+**E1 histórica:** c56c6f7e21a668774db726e2f14139588f1bc5c0 (AUD-20261107-S023 / AUD-CP-0023)  
+**Revalidación anterior:** AUD-20261108-S130 / AUD-CP-0129; HEAD 73ec786e667f59374037b4528fc767b8d3e18fdb  
+**HEAD inicial de esta sesión:** 594fbc89b216ea8ba85d2541e280f947c1f2a7e9  
+**Árbol del HEAD inicial:** a07feecd4fa3994c5727ea9295ed4d6fa5a3bb14  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-005-001 A 008 ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se conserva el alcance de once archivos: ui.js, Services/catalog.js, Services/write.js, Services/admin.js, api-config.js, rich-text.js, state.js, main.js, style.css, index.html y offline.js.
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base idéntico a E1 y ausencia de divergencia. El diff global enumera exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los once archivos funcionales del alcance aparece en el diff.
+
+Los once archivos conservan SHA idénticos a E1:
+- `ui.js` — `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `Services/catalog.js` — `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `Services/write.js` — `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- `Services/admin.js` — `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- `api-config.js` — `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `rich-text.js` — `a7180766bb5097be510153edd851f4dfa939912c`
+- `state.js` — `f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f`
+- `main.js` — `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `style.css` — `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `index.html` — `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `offline.js` — `c68e8698c74ef45a1c9bb534c6b2be77df817c34`
+
+Desde la revalidación anterior CP-0129 (73ec786e667f59374037b4528fc767b8d3e18fdb) hasta HEAD se registran 22 commits y únicamente cinco documentos de continuidad modificados: ChangesLogs.txt, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, checkpoint.md y contexto_personal.md. No existe deriva funcional desde la revalidación anterior.
+
+### Hallazgos, tareas y validaciones
+- H-AUD-005-001 permanece abierto: contenido enriquecido de apertura/alimentación alcanza sinks innerHTML sin aplicar sanitización de forma consistente. La ampliación registrada en AUD-T-006 sobre activeCable.content → slideText.innerHTML se conserva en el mismo hallazgo; no se duplica.
+- H-AUD-005-002 permanece abierto: addSupplementaryInfo no demuestra validación autoritativa de cupos desde el registro vigente ni protección suficiente contra sobrescritura por estado obsoleto; un payload sin campos reconocidos puede producir respuesta de éxito sin escritura útil.
+- H-AUD-005-003 permanece abierto: la confirmación de escritura y la reconstrucción/refresh del detalle activo no están separadas ni sincronizadas de forma fiable.
+- H-AUD-005-004 permanece abierto: los selectores de corte/relay conservan opciones estáticas/fallbacks y la lectura de listas centralizadas no cubre de forma consistente todas las posiciones.
+- H-AUD-005-005, H-AUD-005-006 y H-AUD-005-007 permanecen abiertos: recuperación incompleta de FileReader; contrato/disponibilidad del enlace manual de vídeo; y contador/capacidad de ampliación VIN. Se conservan las adendas existentes a AUG-057, AUG-043 y AUG-050.
+- H-AUD-005-008 permanece abierto y coordinado con AUD-T-007 para la cobertura global de History API/overlays. No se duplica esa auditoría.
+- AUG-061 a AUG-064 continúan pendientes. AUG-043, AUG-050 y AUG-057 conservan sus adendas. VAL-03, VAL-09, VAL-14 y VAL-16 continúan pendientes; VAL-17 conserva la cobertura transferida a AUD-T-007.
+- No se crean hallazgos, tareas ni validaciones duplicados; no se cierran IDs ni se modifican prioridades o estados.
+
+### Verificaciones y límites
+Se verificaron HEAD de ambas ramas, ascendencia/merge-base E1→HEAD, diff global, continuidad desde CP-0129 y SHA de los once archivos del alcance. La rama base permanece exactamente en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+No se ejecutaron navegador, XSS dinámico, pruebas de payload, FileReader real, concurrencia/último slot, HTTP, Apps Script V8, Spreadsheet/Drive real, actualización real de catálogo, YouTube, pruebas móviles/PWA, accesibilidad, deployments ni E2/E3. La continuidad Git confirma que los once archivos no cambiaron desde E1; no certifica el comportamiento dinámico, seguridad efectiva ni persistencia en producción.
+
+No se modificaron código, HTML, CSS, servicios, endpoints, contratos, configuración, credenciales, assets, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom (revalidación de continuidad E1).

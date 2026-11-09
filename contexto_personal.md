@@ -1429,3 +1429,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-004-001 a 003 abiertos; H-AUD-037-007 mantiene ampliación; AUG-059/AUG-060 pendientes; AUG-050 ampliada; VAL-08/12/15 pendientes. Sin hallazgos/tareas nuevos ni duplicados.
 - No se ejecutaron navegador, dataset VIN, Node/lint, motor diferencial, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia, dos usuarios, deployments ni E2/E3. No se modificó código ni datos productivos.
 - Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## Continuidad incremental — AUD-T-005 (2026-11-09)
+- Sesión AUD-20261109-S152 / checkpoint AUD-CP-0151. E1 c56c6f7e21a668774db726e2f14139588f1bc5c0; revalidación previa CP-0129/HEAD 73ec786e667f59374037b4528fc767b8d3e18fdb; HEAD actual 594fbc89b216ea8ba85d2541e280f947c1f2a7e9; árbol a07feecd4fa3994c5727ea9295ed4d6fa5a3bb14; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits, merge-base idéntico a E1 y diff global de ocho documentos. Los once archivos del alcance conservan exactamente sus SHA de E1. CP-0129→HEAD: 22 commits y solo cinco documentos de continuidad.
+- H-AUD-005-001 a 008 abiertos; H-AUD-005-008 coordinado con AUD-T-007. AUG-061 a AUG-064 pendientes; adendas AUG-043/AUG-050/AUG-057 vigentes. VAL-03/09/14/16 pendientes; VAL-17 transferida a AUD-T-007. Sin duplicados ni cierres.
+- No se ejecutaron navegador, XSS dinámico, payloads, FileReader real, concurrencia, HTTP, Apps Script, Spreadsheet/Drive, catálogo real, YouTube, móvil/PWA, accesibilidad, deployments ni E2/E3. No se modificó código ni datos productivos.
+- Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.

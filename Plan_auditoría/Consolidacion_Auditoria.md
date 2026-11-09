@@ -1513,3 +1513,24 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, dataset VIN, Node/lint, motor diferencial, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia, dos usuarios, deployments ni E2/E3.
 - Solo continuidad estática/documental. Sin cambios funcionales, esquema, endpoints, contratos, configuración, permisos, assets, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## 87. AUD-T-005 — continuidad incremental revalidada
+- Sesión AUD-20261109-S152; checkpoint AUD-CP-0151; E1 c56c6f7e21a668774db726e2f14139588f1bc5c0; revalidación previa CP-0129/HEAD 73ec786e667f59374037b4528fc767b8d3e18fdb; HEAD actual 594fbc89b216ea8ba85d2541e280f947c1f2a7e9; árbol a07feecd4fa3994c5727ea9295ed4d6fa5a3bb14; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, merge-base idéntico a E1 y diff global limitado a ocho documentos. Los once archivos del alcance conservan SHA idénticos a E1:
+- `ui.js` — `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `Services/catalog.js` — `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `Services/write.js` — `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- `Services/admin.js` — `ffb120badeb9e8cbe931226a0ce90c0476363012`
+- `api-config.js` — `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `rich-text.js` — `a7180766bb5097be510153edd851f4dfa939912c`
+- `state.js` — `f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f`
+- `main.js` — `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `style.css` — `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `index.html` — `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `offline.js` — `c68e8698c74ef45a1c9bb534c6b2be77df817c34`
+- CP-0129→HEAD: 22 commits posteriores y solo cinco documentos de continuidad; sin deriva funcional posterior a la revalidación anterior.
+- H-AUD-005-001 a 008 continúan abiertos; H-AUD-005-008 coordinado con AUD-T-007. AUG-061 a AUG-064 pendientes; adendas AUG-043/AUG-050/AUG-057 vigentes; VAL-03/09/14/16 pendientes y VAL-17 transferida a AUD-T-007. Sin hallazgos/tareas/validaciones duplicados, cierres ni cambios de prioridad.
+- No se ejecutaron navegador, XSS dinámico, payloads, FileReader real, concurrencia, HTTP, Apps Script V8, Spreadsheet/Drive, catálogo real, YouTube, móvil/PWA, accesibilidad, deployments ni E2/E3.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
