@@ -1679,3 +1679,40 @@ Sesión AUD-20261109-S164 | Checkpoint AUD-CP-0163 | HEAD b30b84cc9b38e522085f1c
 - No se crearon hallazgos ni tareas duplicados; no se cerró ni reclasificó ningún hallazgo. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - AUD-T-017 conserva su estado histórico COMPLETADA; esta revalidación E1 no certifica validación funcional ni migración productiva.
 - Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).
+
+
+## 100. Actualización de cobertura — AUD-T-018
+Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7 | HEAD 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f | base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- H-AUD-018-001 a H-AUD-018-009 permanecen abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada.
+- Comparación E1→HEAD: 129 commits posteriores, cero detrás, merge-base E1; CP-0057→HEAD: 108 commits posteriores, cero detrás, merge-base CP-0057. Ambos diffs contienen solo los mismos ocho archivos documentales/de registro; no existe deriva en los 13 archivos funcionales/de prueba.
+- SHA exactos del alcance:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- H-AUD-018-001 a H-AUD-018-009 permanecen abiertos y sin cambios: XSS almacenado en dashboard; XSS almacenado/validación insuficiente de contenido y URL en Inbox; discrepancia Rol/Privilegios; caché Inbox desconectada de la ruta activa; ausencia de protección de última cuenta Desarrollador y limpieza de sesiones al eliminar/degradar usuarios; perfil local sin refresco tras actualización; mutaciones de Inbox sin auditoría central; lectura completa del historial antes de limitar a 100; y respuesta success para itemType no soportado.
+- Revisión estática actual:
+- Dashboard: ui.js construye filas con innerHTML e interpola nombreUsuario, tipoActividad y detalle sin escape contextual; Services/feedback.js registra actividad desde payload y recordLike no exige sesión ni deriva identidad desde sesión autenticada.
+- Inbox: ui.js renderiza subject, metadatos y enlaces en HTML dinámico; los campos dinámicos no están todos escapados/validados. El contenido principal y la respuesta sí pasan por sanitizeHtmlContent, pero no cubre todos los sinks.
+- Rol: Services/users.js devuelve Privilegios; renderInboxDetail consulta currentUser.Rol para habilitar aprobación. No hay normalización/unificación en esa lectura.
+- Caché: loadAndRenderInbox existe en ui.js, pero openInbox realiza getFeedbackItems directamente; no se integra la caché en el flujo habitual ni se evidencia invalidación tras mutaciones.
+- Usuarios: handleUpdateUser permite modificar privilegios según RBAC, incluso el rol Desarrollador por el propio Desarrollador; handleDeleteUser permite borrar usuarios Desarrollador sin contar/impedir la eliminación del último. No se ve revocación de ActiveSessions coordinada con deleteUser.
+- Perfil: handleUpdateProfile actualiza el nombre en Users y devuelve success; el estado cliente no queda sincronizado en la respuesta backend ni se fuerza un refresco de perfil en la ruta revisada.
+- Inbox: handleReplyToFeedback, handleMarkAsResolved y handleDeleteFeedbackItem mutan hojas sin llamar al registro central de actividad.
+- Dashboard: handleGetActivityLogs usa getDataRange().getValues() y solo después transforma/revierte/corta a 100; el límite no reduce la lectura.
+- Respuesta: handleReplyToFeedback solo procesa problem_report y contact_form, pero cae al return success cuando itemType no coincide con esos valores.
+- Cumplimiento parcial/no certificado. RBAC backend y validaciones de contraseña/perfil propio existen, pero no eliminan XSS, inconsistencia de rol, riesgo de última cuenta/sesiones, caché desconectada ni falta de trazabilidad de mutaciones. Calidad afectada por sinks HTML y contratos de identidad/rol/tipo inconsistentes; rendimiento afectado por lectura completa del historial; mantenibilidad afectada por caché no conectada y falta de registro central de eventos Inbox.
+- Auditoría.txt no pudo leerse por el conector (contenido vacío incluso por rangos/base64); no se modifica. No se afirma validación de su contenido.
+- No se ejecutaron pruebas dinámicas, XSS real, servicios, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, carga, roles/sesiones ni deployments. Sin E2/E3.
+- Sin hallazgos/tareas duplicados ni cierres. Sin cambios funcionales o productivos, merge o despliegue.
+- AUD-T-018 conserva estado histórico COMPLETADA; esta revalidación de continuidad E1 no certifica validación funcional.
+- Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).

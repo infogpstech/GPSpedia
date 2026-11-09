@@ -4911,3 +4911,52 @@ Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets
 Commit documental único: pendiente de crear mediante Git Database API; parent b30b84cc9b38e522085f1c520eef284128109479; update_ref force=false y expected_sha=b30b84cc9b38e522085f1c520eef284128109479. Rama base protegida por procedimiento interno.
 Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0164
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S165
+Tarea: AUD-T-018 — revalidación incremental de Usuarios, Inbox, dashboard, actividad y FEEDBACK.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial: 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f; árbol: c0b4aad1a658c268c48ceb2208209e1f898d3be3; rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: f9c47bad48fa8050a4acac33a4a45784fe433ef7 (AUD-20261108-S036 / AUD-CP-0036). Revalidación previa: df6a78e1fe29c6f29e864d5542cade12f8c6e7df (AUD-20261108-S058 / AUD-CP-0057).
+Alcance: index.html, ui.js, main.js, state.js, navigation.js, auth.js, users.html, api-config.js, Services/Auth.js, Services/users.js, Services/feedback.js, Services/Test/Auth.js, Services/Test/users.js.
+Estado histórico: E1 estática completada; H-AUD-018-001 a 009 abiertos; AUG-113 a AUG-121 pendientes; VAL-27 planificada/no ejecutada. No duplicar.
+Preflight: E1→HEAD 129 commits posteriores, cero detrás, merge-base idéntico; CP-0057→HEAD 108 posteriores, cero detrás, merge-base idéntico. Ambos diffs contienen ocho documentos/registros. Rama base intacta.
+Restricciones: auditoría estática únicamente; no modificar código, endpoints, servicios, datos productivos, Apps Script, Spreadsheet, Drive ni deployments; sin merge.
+Respaldos documentales exactos antes de editar: Plan_Auditoria a0b39591b770a4e4ac1d86c0f1f434bb6cd95b71; Consolidacion 5f5d6291ba629fc6260104a3a48e51c077e7afe0; ChangesLogs 6efab469e9cd856b7bd15763c08ad8c48552ecc6; contexto_personal 187ad1de5a3ab99f348a5b500e988adfa75a8beb; checkpoint 8a958f90422019b9c31fd856d2aeb82d30d4bbc7.
+Siguiente acción: verificar SHA de los 13 archivos contra E1, inspeccionar flujos y confirmar H-AUD-018-001 a 009/AUG-113 a 121 sin duplicaciones.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0164
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S165
+Tarea: AUD-T-018 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-018-001 a 009 ABIERTOS; AUG-113 a AUG-121 PENDIENTES; VAL-27 PLANIFICADA/NO EJECUTADA.
+HEAD padre: 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f; árbol inicial c0b4aad1a658c268c48ceb2208209e1f898d3be3; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente de ocho archivos documentales/de registro.
+CP-0057→HEAD: 108 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente de los mismos ocho archivos.
+Los trece archivos funcionales/de prueba mantienen SHA E1 exactos:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+Hallazgos revalidados: XSS almacenado dashboard e Inbox; discrepancia Rol/Privilegios; caché Inbox no integrada; falta de protección de último Desarrollador y revocación de sesiones al eliminar/degradar; perfil local sin refresco; mutaciones Inbox sin auditoría central; lectura completa del historial antes de cortar a 100; éxito falso para itemType no soportado.
+Evidencia estática: UI dashboard interpola campos de actividad con innerHTML; UI Inbox construye HTML dinámico con campos y URLs no todos escapados/validados; USERS entrega Privilegios y renderInboxDetail consulta currentUser.Rol; openInbox consulta directamente mientras loadAndRenderInbox no se invoca; update/delete de usuarios no protege última cuenta ni coordina revocación de sesiones; updateProfile no devuelve perfil actualizado para refrescar estado; handlers de reply/resolve/delete no registran actividad; getActivityLogs carga todo el rango antes de slice(0,100); handleReplyToFeedback devuelve success para itemType no soportado.
+Controles positivos: sesión/RBAC backend, hash y verificación de contraseña actual, edición de perfil propio y restricciones de lectura/limpieza de logs. No neutralizan los hallazgos.
+Auditoría.txt aparece en el diff de ocho archivos, pero el conector devuelve contenido vacío al solicitar rangos o base64; no se inspeccionó ni se modifica. Los hallazgos existentes están descritos en Tareas.txt y Plan_Auditoria/Consolidacion_Auditoria.
+No se ejecutaron navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, carga, pruebas de roles/sesiones, runner ni deployments. No E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md sin cambios.
+Sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único por Git Database API; parent 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f; update_ref force=false y expected_sha=727d390c4546ffa35c61bd4cf0a5bcabcf56a16f. Siguiente unidad: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).
+================================================================================

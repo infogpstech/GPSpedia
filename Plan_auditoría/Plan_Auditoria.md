@@ -4621,3 +4621,42 @@ La E1 histórica de AUD-T-017 se completó en AUD-20261108-S035 / AUD-CP-0035. E
 - No se crearon hallazgos ni tareas duplicados; no se cerró ni reclasificó ningún hallazgo. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 
 Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).
+
+
+## 100. Continuidad verificada — AUD-T-018 (revalidación E1)
+Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7 | revalidación previa CP-0057/HEAD df6a78e1fe29c6f29e864d5542cade12f8c6e7df | HEAD actual 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f | árbol c0b4aad1a658c268c48ceb2208209e1f898d3be3 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+La E1 de AUD-T-018 se completó en AUD-20261108-S036 / AUD-CP-0036. La revalidación anterior quedó en AUD-20261108-S058 / AUD-CP-0057 y fue ampliada en AUD-20261108-S098/CP-0097 y AUD-20261108-S121/CP-0120. Esta sesión verifica continuidad sin reiniciar ni duplicar la auditoría.
+
+- Comparación E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico a E1. Comparación CP-0057→HEAD: 108 commits posteriores, cero detrás, merge-base idéntico a CP-0057. Ambos diffs contienen exclusivamente ocho archivos de registro/documentación: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md.
+- Los trece archivos funcionales/de prueba del alcance conservan SHA idénticos a E1:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- H-AUD-018-001 a H-AUD-018-009 permanecen abiertos y sin cambios: XSS almacenado en dashboard; XSS almacenado/validación insuficiente de contenido y URL en Inbox; discrepancia Rol/Privilegios; caché Inbox desconectada de la ruta activa; ausencia de protección de última cuenta Desarrollador y limpieza de sesiones al eliminar/degradar usuarios; perfil local sin refresco tras actualización; mutaciones de Inbox sin auditoría central; lectura completa del historial antes de limitar a 100; y respuesta success para itemType no soportado.
+- Revisión estática actual:
+- Dashboard: ui.js construye filas con innerHTML e interpola nombreUsuario, tipoActividad y detalle sin escape contextual; Services/feedback.js registra actividad desde payload y recordLike no exige sesión ni deriva identidad desde sesión autenticada.
+- Inbox: ui.js renderiza subject, metadatos y enlaces en HTML dinámico; los campos dinámicos no están todos escapados/validados. El contenido principal y la respuesta sí pasan por sanitizeHtmlContent, pero no cubre todos los sinks.
+- Rol: Services/users.js devuelve Privilegios; renderInboxDetail consulta currentUser.Rol para habilitar aprobación. No hay normalización/unificación en esa lectura.
+- Caché: loadAndRenderInbox existe en ui.js, pero openInbox realiza getFeedbackItems directamente; no se integra la caché en el flujo habitual ni se evidencia invalidación tras mutaciones.
+- Usuarios: handleUpdateUser permite modificar privilegios según RBAC, incluso el rol Desarrollador por el propio Desarrollador; handleDeleteUser permite borrar usuarios Desarrollador sin contar/impedir la eliminación del último. No se ve revocación de ActiveSessions coordinada con deleteUser.
+- Perfil: handleUpdateProfile actualiza el nombre en Users y devuelve success; el estado cliente no queda sincronizado en la respuesta backend ni se fuerza un refresco de perfil en la ruta revisada.
+- Inbox: handleReplyToFeedback, handleMarkAsResolved y handleDeleteFeedbackItem mutan hojas sin llamar al registro central de actividad.
+- Dashboard: handleGetActivityLogs usa getDataRange().getValues() y solo después transforma/revierte/corta a 100; el límite no reduce la lectura.
+- Respuesta: handleReplyToFeedback solo procesa problem_report y contact_form, pero cae al return success cuando itemType no coincide con esos valores.
+- Controles positivos conservados: validación backend de sesión/rol en USERS e Inbox; hash de contraseña y verificación de contraseña actual; actualización de perfil propio; restricciones de rol para lectura y limpieza de logs. Estos controles no neutralizan los hallazgos anteriores ni equivalen a prueba funcional.
+- AUG-113 a AUG-121 continúan pendientes; VAL-27 permanece planificada/no ejecutada. No se crean hallazgos ni tareas duplicados; no se cierra ni reclasifica ninguno. Tarea 18 conserva estado histórico COMPLETADA; esta continuidad estática no certifica E2/E3.
+- Limitación documental: Auditoría.txt figura entre los ocho archivos cambiados desde E1, pero el conector devuelve contenido vacío incluso solicitando rangos o base64; no se pudo inspeccionar su entrada ni se modifica. Se conserva la evidencia disponible en Tareas.txt, Plan_Auditoria y Consolidacion_Auditoria.
+- No se ejecutaron navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, carga, pruebas de roles/sesiones, runner de pruebas ni deployments. No se ejecutaron pruebas E2/E3.
+- Sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue. Rama base intacta.
+
+**Siguiente unidad:** AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).

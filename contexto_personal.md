@@ -1563,3 +1563,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se ejecutaron navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, multiusuario, sincronización, deployments ni E2/E3.
 - Solo documentación; sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
 - Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-018 (2026-11-09)
+- Sesión AUD-20261109-S165 / checkpoint AUD-CP-0164. E1 f9c47bad48fa8050a4acac33a4a45784fe433ef7; revalidación previa CP-0057/HEAD df6a78e1fe29c6f29e864d5542cade12f8c6e7df; HEAD 727d390c4546ffa35c61bd4cf0a5bcabcf56a16f; árbol c0b4aad1a658c268c48ceb2208209e1f898d3be3; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; CP-0057→HEAD: 108 commits posteriores, cero detrás, merge-base idéntico. Ambos diffs contienen solo ocho documentos/registros; los 13 archivos funcionales/de prueba mantienen SHA exactos de E1.
+- H-AUD-018-001 a 009 abiertos: XSS dashboard/Inbox, discrepancia Rol/Privilegios, caché Inbox desconectada, protección última cuenta Desarrollador/sesiones, perfil local sin refresco, mutaciones Inbox sin auditoría, lectura amplia del historial y éxito falso para itemType inválido. AUG-113 a 121 pendientes; VAL-27 planificada/no ejecutada.
+- No se crean hallazgos/tareas duplicados ni se cierran los existentes. E1 estática no certifica pruebas E2/E3.
+- Auditoría.txt no pudo leerse por el conector y no se modifica. No se ejecutaron navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, carga, pruebas de roles/sesiones ni deployments.
+- Sin cambios funcionales/productivos, merge o despliegue.
+- Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).
