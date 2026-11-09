@@ -1248,3 +1248,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+
+
+## 61. AUD-T-001 — continuidad E1 y revalidación de App Shell/arranque
+- Sesión AUD-20261108-S126; checkpoint AUD-CP-0125; E1 35446ac7dd3697b4cd318895c9040e3bf239720c; HEAD inicial f27cbf676dfd4966a753a80bfb0fafd3e975e15a; árbol ecce84c8011b5499e12ddbf69a96a163d080002b; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los nueve archivos funcionales conservan SHA exactos de E1.
+- H-AUD-001-001/002 permanecen abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 conservadas; H-AUD-015-002/AUG-099 relacionado; VAL-32 planificada/no ejecutada.
+- No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, multi-pestaña, accesibilidad ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.

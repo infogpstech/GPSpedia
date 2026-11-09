@@ -1211,3 +1211,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-022-001 a 004 abiertos; AUG-147 a AUG-150 pendientes; VAL-31 planificada/no ejecutada.
 - No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+
+
+## Continuidad de auditoría — AUD-T-001 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S126 / AUD-CP-0125; rama GPSpedia2.2.5_work, HEAD inicial f27cbf676dfd4966a753a80bfb0fafd3e975e15a; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 35446ac7dd3697b4cd318895c9040e3bf239720c; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; nueve archivos funcionales conservan SHA idénticos.
+- H-AUD-001-001/002 abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 conservadas; H-AUD-015-002/AUG-099 relacionado. VAL-32 planificada/no ejecutada.
+- No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, multi-pestaña, accesibilidad ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.

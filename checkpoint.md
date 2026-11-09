@@ -3237,3 +3237,41 @@ Sin cambios funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, c
 Commit documental único: docs(audit): verify AUD-T-022 continuity; parent 5118addaae3371837cfe83f9bfcd82456bf62a8b.
 Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0125
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S126
+Tarea: AUD-T-001 — revalidación de continuidad E1 de App Shell, arranque, inicialización y estabilización general.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: f27cbf676dfd4966a753a80bfb0fafd3e975e15a | árbol: ecce84c8011b5499e12ddbf69a96a163d080002b.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 35446ac7dd3697b4cd318895c9040e3bf239720c.
+Revalidación previa: AUD-20261108-S103 / AUD-CP-0102, HEAD 888893f5f7adabec8c0218cc235a91f72bfd8b85.
+Alcance: main.js, auth.js, ui.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js.
+Estado inicial: H-AUD-001-001/002 abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049; H-AUD-015-002 relacionado con AUG-099; VAL-32 planificada/no ejecutada.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 461a1603f06a3eb28004125da645418cdce8a6d9
+- Plan_auditoría/Consolidacion_Auditoria.md: e5536e6ed1460c3c606389c63eb4633ad8c6d31c
+- ChangesLogs.txt: bdafa8a05f96d4f95de3d69be47904ce7c77a4f9
+- contexto_personal.md: a2995e2ce788f5ec9f524682bdb71e4449ba3dbe
+- checkpoint.md: c1c43e290ac908fa29addbdd82c4fb96c6362d8f
+Siguiente acción: comparar E1→HEAD, verificar SHA de los nueve archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0125
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S126
+Tarea: AUD-T-001 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-001-001/002 abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 conservadas; VAL-32 planificada/no ejecutada.
+HEAD padre confirmado: f27cbf676dfd4966a753a80bfb0fafd3e975e15a; árbol inicial ecce84c8011b5499e12ddbf69a96a163d080002b. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: polling de deep link sin límite/cancelación; error de catálogo absorbido con estado catalogLoaded prematuro. H-AUD-001-001/002 permanecen abiertos.
+Tareas/relaciones: AUG-151 pendiente; adendas AUG-008/AUG-049 conservadas; H-AUD-015-002/AUG-099 relacionado; VAL-32 planificada. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, multi-pestaña, accesibilidad, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-001 continuity; parent f27cbf676dfd4966a753a80bfb0fafd3e975e15a.
+Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+================================================================================
