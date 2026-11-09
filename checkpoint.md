@@ -5071,3 +5071,54 @@ Sin cambios funcionales, CSS/HTML, servicios, endpoints, contratos, configuraci�
 Commit documental único mediante Git Database API; parent 668a550c1f16d8848cc118809f0140eaf7cd1b96; update_ref force=false y expected_sha=668a550c1f16d8848cc118809f0140eaf7cd1b96.
 Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0167
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S168
+Tarea: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes (revalidación E1).
+Repositorio: infogpstech/GPSpedia | Rama de trabajo autorizada: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial confirmado: 8b4fa409b8ed553de2e21da2878b22c8992c0ded | Árbol: 5ff0b0548f714101bb895199606b34e948cb1372 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: AUD-20261108-S039 / AUD-CP-0039, commit 3339694150823f8f8adca6ffbad6211c708a8960, árbol ebe322745a0458df1dbf749a28517ce97e36eb08. Revalidación previa: AUD-20261108-S124 / AUD-CP-0123, HEAD 903a5bc773eab6992c1952b2f1f9b5fa45bba800.
+Alcance: continuidad E1 de ficha imprimible exportVehiclePrintSheet(), integración del modal, márgenes, paginación, layout adaptativo, carga y distribución de imágenes, Check Engine/testigo, QR, sanitización, metadatos, assets y trazabilidad de commits. Artefactos principales: ui.js, rich-text.js, style.css, index.html y README.md.
+Estado inicial: E1 estática histórica completada; H-AUD-021-001 a 009 abiertos; AUG-140 a 146 pendientes; AUG-096 ampliada; VAL-30 planificada/no ejecutada. Tarea 2.2/Bloque 7 conservan estado histórico COMPLETADA, sin certificación funcional. No duplicar ni cerrar hallazgos/tareas sin evidencia.
+Preflight: E1→HEAD 129 commits posteriores/0 detrás, merge-base idéntico y diff solo de ocho documentos. CP-0123→HEAD 44 commits posteriores/0 detrás, merge-base idéntico y diff solo de cinco documentos. Rama base sin cambios.
+Riesgos conocidos: margen 5 mm vs 10 mm; contrato de una página/paginación contradictorio; imagen Check Engine/aviso; espera incompleta de recursos; paginación sin altura real; orden de tarjetas sin imagen; exposición de URL unlisted a servicio QR externo; modo Vertical redundante; sinks HTML sin escape uniforme; referencia 6d7fbb9c incorrecta en la fila maestra.
+Fase: auditoría estática de continuidad y trazabilidad. No modificar código, CSS/HTML de aplicación, servicios, endpoints, configuración, assets ni datos. No ejecutar navegador, impresión/PDF, QR real, Node/lint, Apps Script, HTTP, Drive, Spreadsheet, migraciones ni despliegues.
+Siguiente acción concreta: contrastar SHA E1/HEAD de los cinco artefactos, revisar comparaciones Git y validar mensajes/diffs de commits de impresión frente a 6d7fbb9c; documentar solo continuidad y pendientes existentes.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0167
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S168
+Tarea: AUD-T-021 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-021-001 a 009 ABIERTOS; AUG-140 a 146 PENDIENTES; adenda AUG-096 vigente; VAL-30 PLANIFICADA/NO EJECUTADA. Sin hallazgos nuevos ni cierres.
+HEAD padre de la tarea: 8b4fa409b8ed553de2e21da2878b22c8992c0ded; árbol inicial 5ff0b0548f714101bb895199606b34e948cb1372; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores/0 detrás, merge-base idéntico y diff de ocho documentos. CP-0123→HEAD: 44 commits posteriores/0 detrás, merge-base idéntico y diff de cinco documentos. Los cinco artefactos de impresión conservan SHA E1 exactos:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+Trazabilidad: commits de impresión confirmados 199ee4bee2f958dda47952ca12a72f4ae825379d, cbbcb0cbd00fb78a4f6438baabaa13e0ab69ef18 y 04c86ce64f98b9e65d2dd0d82ed2d3ee3a2be51b; 6d7fbb9c962ffb5622a209fa160b79ca0020c494 corresponde a tareas 1.2/1.3, no impresión. AUG-146 permanece pendiente.
+Hallazgos conservados: margen/paginación; Check Engine/aviso; carga de recursos; medición de altura; orden/prioridad de tarjetas; privacidad del QR; selector Vertical; sanitización HTML; atribución documental. Controles positivos E1 se mantienen por SHA, pero no certifican ejecución real.
+Documentos modificados y SHA de sus blobs nuevos:
+- Plan_auditoría/Plan_Auditoria.md: c18a71054bb50035f48780c10e7c1411fc2beab7
+- Plan_auditoría/Consolidacion_Auditoria.md: 748626d0f77050786200d1d658a88593ac62ca86
+- ChangesLogs.txt: 64732eff51f685ccdaffeafa885ad689f2ffaee7
+- contexto_personal.md: 0d271025173eecc4c8f4a0c4788f064be60035f4
+- checkpoint.md: este blob final.
+Respaldos exactos previos a edición (SHA de HEAD inicial):
+- Plan_auditoría/Plan_Auditoria.md: 05361833885efb9432bd2a751b389f1223e044fd
+- Plan_auditoría/Consolidacion_Auditoria.md: df94599bcb5df4b567f0cbd280e0689d0c02e84e
+- ChangesLogs.txt: e717602f4ad264d0510991ce9bf628062ce5eeda
+- contexto_personal.md: b319fc99d98093b75c400b56315329289f13976a
+- checkpoint.md: 82f41b66c56ce110919cd975dd0e9dd1172307de
+Comparación post-edición: todos los documentos actualizados son append-only; el contenido original completo se conserva como prefijo. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; no hay nuevos hallazgos/tareas. Auditoría.txt no pudo leerse por el conector, por lo que no se afirma inspección de su contenido.
+Verificaciones ejecutadas: branch HEAD/base; compare E1→HEAD y CP-0123→HEAD; SHA de cinco artefactos E1/HEAD; lectura de los commits 199ee4be, cbbcb0cb, 04c86ce6 y 6d7fbb9c; revisión estática de estados H/AUG/VAL.
+No ejecutadas: navegador, impresión física/preview, PDF, QR/escaneo, Node/lint, móvil, red externa, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, migraciones, deployments, pruebas E2/E3 y VAL-30.
+Sin cambios funcionales, servicios, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: docs(audit): revalidate AUD-T-021 printable technical sheet continuity; parent 8b4fa409b8ed553de2e21da2878b22c8992c0ded; se identifica en el historial Git de la rama GPSpedia2.2.5_work.
+Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo (revalidación E1).
+================================================================================

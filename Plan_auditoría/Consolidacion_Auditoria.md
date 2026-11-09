@@ -1737,3 +1737,15 @@ Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33
 - AUG-136 a 139 pendientes; adendas AUG-036/AUG-104 vigentes; VAL-29 planificada/no ejecutada. Sin duplicados ni cierres.
 - No se ejecutaron Node/lint, navegador, zoom/accesibilidad, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, migraciones, restauraciones, ACL/deployments ni E2/E3. Tarea 21 conserva COMPLETADA como estado histórico, no como certificación funcional.
 - Sin cambios funcionales/productivos, merge o despliegue. Rama base intacta.
+
+
+## 103. AUD-T-021 — continuidad E1 y revalidación de ficha técnica imprimible
+
+- Sesión AUD-20261109-S168 / checkpoint AUD-CP-0167. E1 3339694150823f8f8adca6ffbad6211c708a8960 (árbol ebe322745a0458df1dbf749a28517ce97e36eb08); revalidación previa CP-0123/HEAD 903a5bc773eab6992c1952b2f1f9b5fa45bba800; HEAD actual 8b4fa409b8ed553de2e21da2878b22c8992c0ded (árbol 5ff0b0548f714101bb895199606b34e948cb1372); base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparaciones: E1→HEAD 129 commits adelante/0 detrás, merge-base E1; CP-0123→HEAD 44 adelante/0 detrás, merge-base CP-0123. Los cambios posteriores se limitan a ocho y cinco archivos documentales, respectivamente. Los cinco artefactos de impresión (ui.js, rich-text.js, style.css, index.html y README.md) conservan SHA E1 exactos.
+- H-AUD-021-001 a 009 continúan abiertos. Se conservan márgenes 5/10 mm y contrato de paginación contradictorio; Check Engine/aviso; carga de recursos; medición de altura; orden de tarjetas sin imagen; exposición de URL unlisted a QR externo; modo Vertical duplicado; sinks HTML sin escape uniforme; referencia histórica incorrecta.
+- Se verificó la atribución de commits: 199ee4be, cbbcb0cb y 04c86ce6 afectan ui.js y se refieren a layouts/paginación/imagen adaptativa. 6d7fbb9c trata Tareas 1.2/1.3 (panel de desarrollador y formulario PyS), no la impresión; AUG-146 permanece pendiente y no se corrige la fila en esta revalidación.
+- AUG-140 a 146 pendientes; AUG-096 ampliada; VAL-30 planificada/no ejecutada. Sin hallazgos nuevos, duplicados ni cierres. El estado histórico COMPLETADA de Tarea 2.2/Bloque 7 no equivale a pruebas funcionales.
+- Controles E1 conservados: función de impresión enlazada; incluye datos técnicos y QR condicional; mantiene proporciones y encabezado/pie; excluye colaboradores, utilidad y reportes. Sanitización parcial insuficiente para todos los sinks.
+- No se ejecutaron navegador, impresión, PDF, QR real, Node/lint, móvil, red, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, migraciones, deployments ni E2/E3. Auditoría.txt no pudo leerse por el conector y no se modifica.
+- Solo continuidad estática/documental; sin cambios de aplicación, servicios, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, permisos, merge o despliegue. Siguiente: AUD-T-022.

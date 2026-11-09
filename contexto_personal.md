@@ -1592,3 +1592,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-136 a 139 pendientes; adendas AUG-036/AUG-104; VAL-29 planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
 - No se ejecutaron Node/lint, navegador, accesibilidad, Apps Script, HTTP, Drive, Spreadsheet, YouTube, concurrencia, migraciones, restauraciones, ACL/deployments ni E2/E3. No se modifican archivos funcionales ni datos productivos.
 - Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+
+
+## Continuidad incremental — AUD-T-021 (2026-11-09)
+- Sesión AUD-20261109-S168 / checkpoint AUD-CP-0167. E1 3339694150823f8f8adca6ffbad6211c708a8960; revalidación previa CP-0123/HEAD 903a5bc773eab6992c1952b2f1f9b5fa45bba800; HEAD 8b4fa409b8ed553de2e21da2878b22c8992c0ded; árbol 5ff0b0548f714101bb895199606b34e948cb1372; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD 129 commits, cero detrás; CP-0123→HEAD 44 commits, cero detrás; merge-base idéntico y diffs exclusivamente documentales. Los cinco artefactos de impresión conservan SHA E1 exactos: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; rich-text.js a7180766bb5097be510153edd851f4dfa939912c; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c.
+- H-AUD-021-001 a 009 abiertos; AUG-140 a 146 pendientes; AUG-096 ampliada; VAL-30 planificada/no ejecutada. Se confirma que 6d7fbb9c corresponde al panel de desarrollador y formulario PyS, no a la ficha imprimible; AUG-146 continúa pendiente.
+- No se crean hallazgos ni tareas duplicados. No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, móvil, red externa, Apps Script, HTTP, Spreadsheet/Drive ni E2/E3. Auditoría.txt no pudo leerse por el conector.
+- Sin cambios funcionales, servicios, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+- Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo (revalidación E1).
