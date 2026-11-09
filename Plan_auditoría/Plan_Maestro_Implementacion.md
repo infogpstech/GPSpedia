@@ -124,6 +124,10 @@ No implementar envío nuevo antes de resolver autorización/actor FEEDBACK y mod
 Los criterios complementarios se alinean conceptualmente con WCAG 2.2 AA, el patrón de diálogo modal de WAI-ARIA Authoring Practices y las guías OWASP de prevención de XSS y control de acceso. La conformidad requiere pruebas reales. No se realizó consulta web en esta sesión y no se afirma verificación en línea de las versiones vigentes.
 
 ## 9. Definition of Done
+
+## 10. Norma vigente de cierre local y Beta — 2026-11-09
+La norma canónica de cierre está en `Plan_auditoría/Normas_Gestion_Documental.md`, sección 7. **COMPLETADA** depende del cumplimiento de requisitos y validaciones locales, no de la ejecución de deployments o pruebas de Beta. La falta de despliegue no mantiene abierta una tarea que ya pasó sus pruebas locales. Las validaciones de despliegue e integración se ejecutan en Beta después de completar las implementaciones previstas. Todo defecto descubierto entonces genera su propio hallazgo/tarea correctiva, sin reabrir automáticamente la tarea original.
+
 Checkpoint inicial; confirmar refs; revisar archivos funcionales (no informes); registrar solo hallazgos nuevos; respaldos exactos; cambio mínimo; pruebas unitarias/contrato/integración/browser según aplique; comparación post-edición; Code Review/Safety & Side Effects; checkpoint final; un commit mediante Git Database API; verificar archivos y rama base intacta.
 
 ## 10. Siguiente paso
