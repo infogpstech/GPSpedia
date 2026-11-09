@@ -3808,3 +3808,54 @@ Se verificaron HEAD de ambas ramas, ascendencia y merge-base E1→HEAD, comparac
 No se ejecutaron navegador, IndexedDB real, cuota/evicción, PWA offline, búsquedas con dataset representativo, VIN ambiguos, sincronización concurrente, Apps Script/Spreadsheet real, pruebas HTTP ni benchmarks. No se verificaron deployments publicados. No se modificaron código, endpoints, configuración, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario, según el orden documentado del plan.
+
+
+## 99. Revalidación incremental de continuidad — AUD-T-038: seguridad del almacenamiento local y ciclo de datos de usuario
+
+**Sesión:** AUD-20261109-S149  
+**Checkpoint:** AUD-CP-0148  
+**E1 original:** bfcdf8e57d4e09c1c920cf904265301c4554b334 (AUD-20261107-S020 / AUD-CP-0020)  
+**Árbol E1:** 2d65382ae9db49b8cd80ab3bb8a888f26ff32a80  
+**HEAD inicial actual:** a6a175982e85ff49b9a23475d483f8c5f10bddee / árbol 3443dbd6b42c83941dd714960fca34ad035b42e4  
+**HEAD de la rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-038-001 A 005 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE PRIVACIDAD PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la continuidad de localStorage, IndexedDB, Cache Storage, Service Worker, sesión, snapshots pendientes, historial/vistos, respaldos locales, limpieza y recuperación entre cuentas. Archivos incluidos: offline.js, auth.js, state.js, ui.js (funciones de persistencia), add_cortes.html, users.html, main.js, VinDifferentialEngine.js, api-config.js, service-worker.js, Services/Auth.js, Services/users.js, Services/write.js y Services/admin.js.
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base igual a E1 y sin divergencia. El diff global contiene exclusivamente ocho archivos documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los catorce archivos funcionales del alcance aparece en el diff.
+
+SHA actuales verificados directamente en los árboles Git de E1 y HEAD; los catorce coinciden:
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+
+### Revalidación de hallazgos y tareas
+- H-AUD-038-001 permanece abierto: snapshots locales de add_cortes conservan datos/VIN/archivos sin owner estable y la restauración puede usar la cuenta activa; el payload completo en consola sigue siendo un riesgo documentado.
+- H-AUD-038-002 permanece abierto: adminImageUploadPending y gpsepedia_edit_backup no tienen owner/retención; addCutPending comprueba userId, pero la clave por vehicleId puede provocar bloqueo entre cuentas.
+- H-AUD-038-003 permanece abierto: viewedItems y validationCache siguen sin política aprobada de cuenta/retención. searchHistory se mantiene en AUG-051/AUD-T-037, sin duplicarlo.
+- H-AUD-038-004 permanece abierto: el vaciado local no espera de forma completa deleteDatabase y elimina solo parte de las claves/almacenamientos; la adenda correspondiente continúa en AUG-022.
+- H-AUD-038-005 permanece abierto: checkOperation continúa sin la validación de sesión indicada por la auditoría y puede devolver rowData completo; AUG-054 conserva el trabajo de autenticación/minimización.
+- AUG-053 continúa pendiente para aislamiento, owner, retención, limpieza segura y recuperación de snapshots locales por cuenta.
+- AUG-054 continúa pendiente para autenticar checkOperation y minimizar la respuesta.
+- AUG-022 mantiene la adenda de inventario y semántica de «Vaciar caché local», incluida la espera de deleteDatabase.
+- AUG-051 mantiene la adenda sobre viewedItems y clasificación de validationCache; no trasladar searchHistory desde AUD-T-037.
+- Se mantienen las dependencias AUG-006/AUG-042/AUG-045 y H-AUD-037-008/009 sin duplicación. No se crean hallazgos ni tareas nuevas; no se alteran IDs, prioridades ni estados.
+
+### Validaciones y límites
+Se verificaron HEAD de ambas ramas, ascendencia y merge-base E1→HEAD, diff global, árbol E1 y árbol actual, y SHA de los catorce archivos del alcance. La rama base permanece intacta. La continuidad Git demuestra que los archivos auditados no cambiaron desde E1; no certifica el comportamiento real de cambio de cuenta, limpieza, IndexedDB, endpoints ni privacidad.
+
+No se ejecutaron navegador, cambio de cuenta real, IndexedDB real, cuota/evicción, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments. No se modificaron código, endpoints, configuración, assets, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red (fase F2 crítica), según el orden documentado del plan.

@@ -1405,3 +1405,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-037-001 a 012 permanecen abiertos; AUG-048/AUG-049/AUG-050/AUG-051/AUG-052 siguen pendientes. No hay hallazgos ni tareas nuevas, ni cierres ni cambios de prioridad.
 - No se ejecutaron navegador, IndexedDB real, cuota/evicción, PWA offline, búsqueda representativa, VIN ambiguos, HTTP, Apps Script/Spreadsheet, concurrencia ni benchmarks. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario.
+
+
+## Continuidad incremental — AUD-T-038 (2026-11-09)
+- Sesión AUD-20261109-S149 / checkpoint AUD-CP-0148. E1 bfcdf8e57d4e09c1c920cf904265301c4554b334; árbol E1 2d65382ae9db49b8cd80ab3bb8a888f26ff32a80; HEAD inicial actual a6a175982e85ff49b9a23475d483f8c5f10bddee, árbol 3443dbd6b42c83941dd714960fca34ad035b42e4. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 129 commits posteriores, merge-base igual a E1 y diff de ocho documentos. Los catorce archivos del alcance conservan SHA idénticos a E1.
+- H-AUD-038-001 a 005 permanecen abiertos; AUG-053/AUG-054 siguen pendientes. AUG-022/AUG-051 mantienen adendas. Sin hallazgos ni tareas nuevas ni cierres.
+- No se ejecutaron navegador, cambio de cuenta, IndexedDB real, cuota/evicción, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red.
