@@ -1352,3 +1352,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron Apps Script V8, HTTP, navegador, DriveApp/SpreadsheetApp, backup/restore/purga real, IndexedDB, concurrencia, recuperación, permisos ni deployments. Solo continuidad estática/documental.
 - Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+
+
+## 72. AUD-T-026 — continuidad E1 y revalidación de telemetría
+- Sesión AUD-20261108-S137; checkpoint AUD-CP-0136; E1 eafb425abadc9ccda9964a5abd50d4ac020cf80a; HEAD 64de5b21d244fc60375b194f27d409aa0a832c7b; árbol 81ce4c40d075b8aa3ddae5d585b7bfbc9ebb977d; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 131 commits, merge-base igual a E1; diff global con ocho documentos y Services/admin.js/Services/write.js fuera del alcance. Los diez archivos funcionales/técnicos conservan SHA E1.
+- CP-0070→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior a la revalidación previa.
+- H-AUD-026-001 a 005 abiertos; AUG-024 y AUG-025 pendientes. Se conservan controles positivos y limitaciones de telemetría local; el riesgo de metadatos debug backend sigue condicionado por falta de fuentes/deployments.
+- No se ejecutaron HTTP, navegador, Apps Script V8, latencia/concurrencia real, endpoints privados, Drive/Spreadsheet ni deployments. No se certifica disponibilidad real.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.

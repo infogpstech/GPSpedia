@@ -3657,3 +3657,43 @@ Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Conso
 Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0136
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S137
+Tarea: AUD-T-026 — revalidación de continuidad E1 de telemetría, diagnóstico y health check de microservicios.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 64de5b21d244fc60375b194f27d409aa0a832c7b | árbol: 81ce4c40d075b8aa3ddae5d585b7bfbc9ebb977d.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: eafb425abadc9ccda9964a5abd50d4ac020cf80a (AUD-20261107-S007 / AUD-CP-0007).
+Revalidación previa: AUD-20261108-S071 / AUD-CP-0070, HEAD b66c36f7d8d666eaf979ebdb21b187330b03ad58.
+Alcance: api-config.js, ui.js, index.html, style.css, main.js, auth.js, offline.js, youtubeUpload.js, README.md y Services/Test/README.md.
+Estado inicial: H-AUD-026-001 a 005 abiertos; AUG-024 y AUG-025 pendientes; riesgo de metadatos debug backend condicionado; validación funcional y verificación de fuentes/deployments pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para modificar código ni ejecutar pruebas de endpoints.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 4493cb29d579c0483c3561d7453d2a2faf8865b0
+- Plan_auditoría/Consolidacion_Auditoria.md: 164b38a369e2be42f23cef6c653d4f6d77dac30a
+- ChangesLogs.txt: ef246d729f07654e4397cae54344617e6b0e55c3
+- contexto_personal.md: 7ce06edb6e8ed50c380394c407ec254d4a5ba3bd
+- checkpoint.md: db7cb876e7a27f12507923b8ab74edf36d01713c
+Siguiente acción: comparar E1→HEAD y CP-0070→HEAD, verificar SHA de los diez archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0136
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S137
+Tarea: AUD-T-026 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-026-001 a 005 abiertos; AUG-024/025 pendientes; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: 64de5b21d244fc60375b194f27d409aa0a832c7b; árbol inicial 81ce4c40d075b8aa3ddae5d585b7bfbc9ebb977d. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 131 commits posteriores; merge-base igual a E1; diff global con ocho documentos y dos archivos fuera del alcance (Services/admin.js y Services/write.js). Los diez archivos funcionales/técnicos del alcance conservan SHA idénticos a E1.
+CP-0070→HEAD: 66 commits posteriores y únicamente ocho documentos; no existe deriva funcional posterior a la revalidación previa.
+Hallazgos revalidados: ping ADMIN sin timeout; respuesta 2xx no válida potencialmente online; estados slow/unknown/stale y detalle HTTP/error ausentes; telemetría local sin caducidad por tiempo y render en panel oculto; marca temporal al finalizar, borde de ventana y límite de 600 sin advertencia. H-AUD-026-001 a 005 permanecen abiertos.
+Controles positivos: GET paralelo con timeout individual de 8 s y errores aislados; telemetría temporal local limitada a 600 eventos, sin payloads/credenciales ni métricas globales.
+Riesgo debug: no se confirma exposición actual de metadatos sensibles porque las fuentes backend y deployments no están en el repositorio. La revisión frontend no certifica seguridad del endpoint.
+Tareas: AUG-024 y AUG-025 pendientes; sin IDs duplicados ni hallazgos nuevos.
+No ejecutadas: HTTP, navegador, Apps Script V8, latencia/concurrencia real, endpoints privados, fuentes backend, Drive/Spreadsheet, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+================================================================================

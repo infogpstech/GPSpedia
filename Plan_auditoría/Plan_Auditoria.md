@@ -3434,3 +3434,33 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: ec9795390fcbeaaf96bd04e275d6d941dc360536
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los nueve hallazgos y las seis tareas ya constan, incluida la corrección de AUG-023. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente unidad secuencial: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios (respetar su E1 y revalidaciones previas).
+
+
+## 87. Continuidad verificada — AUD-T-026 (revalidación E1)
+Sesión AUD-20261108-S137 | Checkpoint AUD-CP-0136 | E1 histórica eafb425abadc9ccda9964a5abd50d4ac020cf80a | HEAD inicial 64de5b21d244fc60375b194f27d409aa0a832c7b | árbol inicial 81ce4c40d075b8aa3ddae5d585b7bfbc9ebb977d | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original AUD-20261107-S007/AUD-CP-0007; revalidación previa AUD-20261108-S071/AUD-CP-0070, HEAD b66c36f7d8d666eaf979ebdb21b187330b03ad58.
+Comparación E1→HEAD: 131 commits posteriores, merge-base idéntico a E1 y sin divergencia. El diff global contiene ocho documentos y dos archivos de código fuera del alcance: Services/admin.js y Services/write.js. Los diez archivos de AUD-T-026 conservan SHA idénticos a E1:
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+- README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+- Services/Test/README.md 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+Comparación CP-0070→HEAD: 66 commits posteriores; diff exclusivamente documental (ocho documentos). No existe deriva funcional desde la revalidación previa.
+H-AUD-026-001 a 005 permanecen abiertos. Se conserva la evidencia estática: ping POST ADMIN sin timeout previo al escaneo; respuesta 2xx no válida que puede interpretarse como online; falta de estados slow/unknown/stale y detalle HTTP/error; panel local sin caducidad/actualización por tiempo y suscripción que puede actualizar DOM oculto; timestamp al finalizar la solicitud, borde de ventana de quince minutos y límite de 600 eventos sin advertencia.
+Controles positivos permanecen en E1: escaneo GET paralelo con timeout individual de 8 s y errores aislados; telemetría local temporal limitada a 600 eventos, sin payloads ni credenciales y sin afirmar métricas globales.
+El riesgo histórico de metadatos sensibles en debug=true continúa condicionado: las fuentes backend y deployments no están en el repositorio; no se confirma exposición actual. La igualdad SHA confirma que el frontend no cambió, no que los endpoints privados actuales sean seguros.
+AUG-024 y AUG-025 continúan pendientes. No se crean hallazgos ni tareas nuevas. VAL funcional/de integración y verificación de fuentes backend/deployments siguen pendientes.
+No se ejecutaron HTTP, navegador, Apps Script V8, pruebas reales de latencia/concurrencia, acceso a endpoints, fuentes backend privadas, Drive/Spreadsheet ni verificación de deployments. La revalidación es estática y de identidad de contenido; no certifica salud real de servicios.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 4493cb29d579c0483c3561d7453d2a2faf8865b0
+- Plan_auditoría/Consolidacion_Auditoria.md: 164b38a369e2be42f23cef6c653d4f6d77dac30a
+- ChangesLogs.txt: ef246d729f07654e4397cae54344617e6b0e55c3
+- contexto_personal.md: 7ce06edb6e8ed50c380394c407ec254d4a5ba3bd
+- checkpoint.md: db7cb876e7a27f12507923b8ab74edf36d01713c
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque H-AUD-026-001 a 005 y AUG-024/025 ya están registrados. Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente unidad secuencial: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión (respetar E1 y revalidaciones previas).

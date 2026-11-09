@@ -1302,3 +1302,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-025-001 a 009 abiertos; AUG-018 a AUG-023 pendientes. H-025-009 corregido en cuanto a routeAction; H-025-007 precisado por logging parcial de acciones de imágenes. H-AUD-023-005/AUG-013 relacionado.
 - No se ejecutaron Apps Script, HTTP, navegador, Drive/Spreadsheet real, backup/restore/purgas, IndexedDB, concurrencia, recuperación, pruebas de permisos ni deployments.
 - Siguiente unidad: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+
+
+## Continuidad de auditoría — AUD-T-026 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S137 / AUD-CP-0136; rama GPSpedia2.2.5_work, HEAD inicial 64de5b21d244fc60375b194f27d409aa0a832c7b; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 eafb425abadc9ccda9964a5abd50d4ac020cf80a; 131 commits posteriores. Diff global: ocho documentos y dos archivos fuera del alcance; los diez archivos auditados conservan SHA E1.
+- CP-0070→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior a la revalidación anterior.
+- H-AUD-026-001 a 005 abiertos; AUG-024/025 pendientes. El riesgo de metadatos debug backend continúa condicionado por falta de fuentes/deployments en el repositorio.
+- No se ejecutaron HTTP, navegador, Apps Script V8, latencia/concurrencia real, endpoints privados, Drive/Spreadsheet ni deployments. No se certifica salud real de servicios.
+- Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
