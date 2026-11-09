@@ -2852,3 +2852,31 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 70f8f2cd6efbba57518226a4dd0bbb10a33741f0
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, configuración, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación de continuidad E1).
+
+
+## 66. Continuidad verificada — AUD-T-013 (revalidación E1)
+Sesión AUD-20261108-S116 | Checkpoint AUD-CP-0115 | E1 histórica d8a164c2974f4dc472f169442c2b7efb969bf350 | HEAD inicial 5280bceef23e0a67f20e3e77d1653f269c2a6cbd | árbol inicial 29049604ea59bacc11446715c1f1585789d94a0b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S094 / AUD-CP-0093. Revalidación previa documentada en AUD-CP-0093, HEAD 35122f7fb8b41de7dd6900d5bd567b66ccc363a6.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los diez archivos del alcance aparece en el diff.
+Los diez archivos conservan SHA idénticos a E1:
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Estudio_Factibilidad_YouTube.md f5b2774d0ddbfd9862f8c51cae5a31e1481825ee
+H-AUD-013-001 a H-AUD-013-010 permanecen abiertos o vinculados a tareas existentes: sesión/token ausente en uploader; URL pending antes de aprobación; backend asocia solo Corte; incompatibilidad de esquema Tutorial; addTutorial sin auth/deduplicación; approve/reject sin guardas suficientes; ID provisional; recuperación IndexedDB/308; sink HTML; History API y contrato/metadatos inconsistentes; ausencia de suite YouTube reproducible.
+AUG-092/AUG-093/AUG-094 continúan pendientes; AUG-043/AUG-068 conservan sus adendas; AUG-040 mantiene la coordinación de approveVideo. VAL-22 continúa planificada. No se duplican hallazgos ni tareas.
+No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script V8, Spreadsheet/Drive real, concurrencia, red/308, XSS dinámico ni deployments. La continuidad Git no certifica E2/E3 ni el flujo real de aprobación.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: eed1e652a1c73e9b181aa94e30ce729c3e50a945
+- Plan_auditoría/Consolidacion_Auditoria.md: 9a03e3994bb8fe402fe4593b1b3927861eb0516d
+- ChangesLogs.txt: 3b2fc99d4c9311683f0479cb90521712f75a1da6
+- contexto_personal.md: abf663c80be03d29678efcd9e0d3b09806b7ec41
+- checkpoint.md: 487cdc746f458e31c42088e87500c842735ad7cc
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación de continuidad E1).

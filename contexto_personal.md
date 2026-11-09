@@ -1131,3 +1131,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-012-001 a 008 abiertos o vinculados; AUG-088/AUG-089/AUG-090 pendientes; adendas AUG-043/AUG-087/AUG-068 a 071 conservadas. VAL-21/03/17 pendientes de ejecución real.
 - No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos/deployment, modales, gestos ni pruebas multiusuario. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+
+
+## Continuidad de auditoría — AUD-T-013 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S116 / AUD-CP-0115; rama GPSpedia2.2.5_work, HEAD inicial 5280bceef23e0a67f20e3e77d1653f269c2a6cbd; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 d8a164c2974f4dc472f169442c2b7efb969bf350; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; diez archivos del alcance conservan SHA idénticos.
+- H-AUD-013-001 a 010 abiertos o vinculados; AUG-092/AUG-093/AUG-094 pendientes; adendas AUG-043/AUG-068 y coordinación AUG-040 conservadas; VAL-22 planificada.
+- No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Drive/Spreadsheet, concurrencia, red/308, XSS dinámico ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
