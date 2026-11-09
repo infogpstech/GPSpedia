@@ -595,7 +595,7 @@ Archivos modificados:
 
 **Versión:** Incremento a v2.1.4.
 
-**CHANGES LOG - 18/02/2026 (REFINAMIENTOS DEL FRONTEND - VERSIÓN 2.1.5)**
+**CHANGES LOG - 18/02/2026 (REFINAMIENTOS DEL FRONT5088 - VERSIÓN 2.1.5)**
 
 **Archivo: add_cortes.html**
 - Tarea 1: Agregada la versión de equipamiento en las tarjetas de coincidencias del formulario de registro en la Etapa 1.5. Implementado un algoritmo robusto de normalización de variantes agrupadas (ej. "LX, EX, Sport" vs "sport / lx / ex") que las identifica como equivalentes independientemente del orden, espacios, mayúsculas o delimitadores, mostrando una etiqueta de color verde "(Coincide)" cuando hay coincidencia exacta con el formulario.
@@ -5077,3 +5077,11 @@ Sesión AUD-20261108-S098 | Checkpoint AUD-CP-0097 | E1 f9c47bad48fa8050a4acac33
 - ChangesLogs.txt: registro de esta continuidad añadido (líneas 5073–PENDIENTE).
 - contexto_personal.md: estado de continuidad añadido (líneas 1052–1059).
 - checkpoint.md: checkpoint inicial y final AUD-CP-0105 añadidos (líneas 2517–2545).
+
+ 
+2026-11-08 — AUD-T-005 — revalidación de continuidad E1
+- Plan_auditoría/Plan_Auditoria.md: sección 57 añadida (líneas 2697–2706).
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 42 añadida (líneas 1074–1083).
+- ChangesLogs.txt: registro de esta continuidad añadido (líneas 5081–END).
+- contexto_personal.md: estado de continuidad añadido (líneas 1060–1068).
+- checkpoint.md: checkpoint inicial y final AUD-CP-0106 añadidos (líneas 2546–2575).

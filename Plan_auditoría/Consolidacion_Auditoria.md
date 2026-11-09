@@ -1070,3 +1070,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - VAL-08, VAL-12 y VAL-15 siguen pendientes. No se ejecutaron navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas multiusuario, deployments ni E2/E3.
 - Sin cambios funcionales, esquema, configuración, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-005, mediante revalidación de continuidad.
+
+
+## 42. AUD-T-005 — continuidad E1 revalidada
+- Sesión AUD-20261108-S107; checkpoint AUD-CP-0106; E1 c56c6f7e21a668774db726e2f14139588f1bc5c0; HEAD 5c6bd001be440ee790e3ae6ae73d6ff3271712b4; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 84 commits; merge-base igual a E1; únicamente ocho documentos modificados. Ninguno de los once archivos funcionales del alcance aparece en el diff.
+- Los once archivos conservan SHA exactos de E1: ui.js, style.css, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js, rich-text.js, state.js, main.js, offline.js e index.html; hashes completos registrados en la sección 57 del plan.
+- H-AUD-005-001 a 008 siguen abiertos; AUG-061 a AUG-064 pendientes; adendas AUG-043/AUG-050/AUG-057 vigentes; H-AUD-005-008 permanece transferido a AUD-T-007. Sin duplicación de hallazgos/tareas.
+- VAL-03, VAL-09, VAL-14 y VAL-16 pendientes; VAL-17 conserva navegación transferida. No se ejecutaron pruebas dinámicas, XSS, FileReader, concurrencia, HTTP, Apps Script V8, Drive/Spreadsheet, YouTube, móvil/PWA, accesibilidad, deployments ni E2/E3.
+- Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-006, mediante revalidación de continuidad.
