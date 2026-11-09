@@ -1601,3 +1601,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se crean hallazgos ni tareas duplicados. No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, móvil, red externa, Apps Script, HTTP, Spreadsheet/Drive ni E2/E3. Auditoría.txt no pudo leerse por el conector.
 - Sin cambios funcionales, servicios, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
 - Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-022 (2026-11-09)
+- Sesión AUD-20261109-S169 / checkpoint AUD-CP-0168. E1 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b; revalidación previa CP-0124/HEAD 5118addaae3371837cfe83f9bfcd82456bf62a8b; HEAD 448aeca444870f966b6465c93b4bac44584d02a5; árbol 50aeb01d62852e428459e3cc84de1dddc452b929; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos. CP-0124→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff de cinco documentos. Los nueve archivos funcionales del alcance conservan SHA exactos de E1.
+- H-AUD-022-001 a 004 abiertos; AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. H-001 cubre logout/revocación y overlay; H-002 semántica/foco del diálogo; H-003 ARIA de pestañas; H-004 status HTTP ADMIN. No duplicar ni cerrar sin evidencia.
+- No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación, HTTP, Apps Script, Drive/Spreadsheet, Node/lint, concurrencia, deployments ni E2/E3. Auditoría.txt no pudo leerse por el conector y no se modifica.
+- Solo documentación; sin cambios funcionales/productivos, merge o despliegue. No reintroducir filtros rápidos cancelados ni sus remanentes.
+- Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general (revalidación E1).

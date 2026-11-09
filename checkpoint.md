@@ -5122,3 +5122,41 @@ Sin cambios funcionales, servicios, endpoints, contratos, configuración, assets
 Commit documental único: docs(audit): revalidate AUD-T-021 printable technical sheet continuity; parent 8b4fa409b8ed553de2e21da2878b22c8992c0ded; se identifica en el historial Git de la rama GPSpedia2.2.5_work.
 Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0168
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S169
+Tarea: AUD-T-022 — revalidación incremental de continuidad E1 del panel de desarrollador, navegación por secciones y modal administrativo.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo autorizada: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial confirmado: 448aeca444870f966b6465c93b4bac44584d02a5 | Árbol: 50aeb01d62852e428459e3cc84de1dddc452b929.
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b. Auditoría estática original: AUD-20261108-S040 / AUD-CP-0040. Revalidación previa: AUD-20261108-S125 / AUD-CP-0124, HEAD 5118addaae3371837cfe83f9bfcd82456bf62a8b.
+Alcance: ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js; continuidad de menú/roles, modal, cinco secciones, consola/terminal, listeners, acciones ADMIN, ruteo API, autorización, logout/estado/sesión y accesibilidad.
+Estado inicial: H-AUD-022-001 a 004 abiertos; AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. Tarea de revalidación estática/documental; sin autorización para modificar archivos funcionales ni ejecutar pruebas productivas.
+Fase: checkpoint inicial registrado; auditoría de continuidad pendiente de documentar en esta tarea. No asumir correcciones ni cierres.
+Respaldos exactos previos a edición (SHA de blobs en el HEAD inicial):
+- Plan_auditoría/Plan_Auditoria.md: c18a71054bb50035f48780c10e7c1411fc2beab7
+- Plan_auditoría/Consolidacion_Auditoria.md: 748626d0f77050786200d1d658a88593ac62ca86
+- ChangesLogs.txt: 64732eff51f685ccdaffeafa885ad689f2ffaee7
+- contexto_personal.md: 0d271025173eecc4c8f4a0c4788f064be60035f4
+- checkpoint.md: bcd639b7ce256a8ca1a2d8ce267431a5b3b465ae
+Siguiente acción concreta: comparar E1→HEAD y CP-0124→HEAD; verificar los nueve SHA funcionales, confirmar rama base y continuidad de H/AUG/VAL; actualizar únicamente documentos de continuidad.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0168
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S169
+Tarea: AUD-T-022 — revalidación incremental de continuidad E1.
+Estado final: COMPLETADA EN ALCANCE ESTÁTICO/DOCUMENTAL; continuidad E1 confirmada; H-AUD-022-001 a 004 ABIERTOS; AUG-147 a 150 PENDIENTES; VAL-31 PLANIFICADA/NO EJECUTADA.
+HEAD padre confirmado: 448aeca444870f966b6465c93b4bac44584d02a5; árbol inicial 50aeb01d62852e428459e3cc84de1dddc452b929. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 129 commits posteriores/0 detrás, merge-base idéntico, diff de ocho documentos. CP-0124→HEAD: 44 commits posteriores/0 detrás, merge-base idéntico, diff de cinco documentos. Los nueve archivos funcionales del alcance conservan SHA exactos de E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed.
+Hallazgos conservados: H-AUD-022-001 logout sin revocación/limpieza completa y modal que no se cierra al mostrar login; H-AUD-022-002 semántica/foco del diálogo incompletos; H-AUD-022-003 ARIA de pestañas incoherente; H-AUD-022-004 errores ADMIN normalizados a HTTP 500. No hay evidencia de corrección funcional ni nuevos hallazgos.
+Tareas/validaciones: AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. No se crean IDs duplicados ni se cierran hallazgos.
+Validaciones no ejecutadas: navegador, teclado/lector de pantalla, logout/revocación real, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments y E2/E3. Auditoría.txt no pudo leerse por el conector; no se modifica ni se afirma su inspección independiente.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, CSS/HTML/JS, servicios, endpoints, contratos, permisos, configuración, assets, pruebas, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Se mantienen cancelados los filtros rápidos; no reintroducirlos ni conservar remanentes.
+Commit documental único previsto: docs(audit): revalidate AUD-T-022 developer panel continuity; parent 448aeca444870f966b6465c93b4bac44584d02a5. El commit que incorpora este checkpoint se identifica en el historial Git de GPSpedia2.2.5_work.
+Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general (revalidación E1).
+================================================================================

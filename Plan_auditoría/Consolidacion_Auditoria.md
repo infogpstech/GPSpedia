@@ -1749,3 +1749,14 @@ Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33
 - Controles E1 conservados: función de impresión enlazada; incluye datos técnicos y QR condicional; mantiene proporciones y encabezado/pie; excluye colaboradores, utilidad y reportes. Sanitización parcial insuficiente para todos los sinks.
 - No se ejecutaron navegador, impresión, PDF, QR real, Node/lint, móvil, red, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, migraciones, deployments ni E2/E3. Auditoría.txt no pudo leerse por el conector y no se modifica.
 - Solo continuidad estática/documental; sin cambios de aplicación, servicios, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, permisos, merge o despliegue. Siguiente: AUD-T-022.
+
+
+## 104. AUD-T-022 — continuidad E1 y revalidación del panel de desarrollador
+
+- E1 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b; revalidación previa CP-0124/HEAD 5118addaae3371837cfe83f9bfcd82456bf62a8b; HEAD actual 448aeca444870f966b6465c93b4bac44584d02a5; árbol 50aeb01d62852e428459e3cc84de1dddc452b929; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits, 0 detrás, merge-base idéntico y diff de ocho documentos. CP-0124→HEAD: 44 commits, 0 detrás, merge-base idéntico y diff de cinco documentos.
+- Los nueve archivos del alcance (ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js) conservan SHA E1 exactos; no hay deriva funcional.
+- H-AUD-022-001 a 004 siguen abiertos: logout sin revocación/limpieza completa y modal que no se cierra al mostrar login; semántica y foco del diálogo; ARIA incoherente de pestañas; errores ADMIN normalizados a HTTP 500.
+- AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. Sin hallazgos/tareas duplicados ni cierres. Controles positivos E1 permanecen por identidad de archivos, sin sustituir validación runtime.
+- No se ejecutaron navegador, accesibilidad, logout real, HTTP, Apps Script, Drive/Spreadsheet, Node/lint, concurrencia, deployments ni E2/E3. Auditoría.txt no pudo leerse por el conector y no se modifica.
+- Solo continuidad documental; sin cambios funcionales/productivos, merge o despliegue. Tareas.txt y Aug_Tareas.md permanecen sin cambios. Siguiente: AUD-T-001.
