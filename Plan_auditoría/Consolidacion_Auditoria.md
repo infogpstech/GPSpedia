@@ -1362,3 +1362,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron HTTP, navegador, Apps Script V8, latencia/concurrencia real, endpoints privados, Drive/Spreadsheet ni deployments. No se certifica disponibilidad real.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+
+
+## 73. AUD-T-027 — continuidad E1 del historial de imágenes reemplazadas
+- Sesión AUD-20261108-S138; checkpoint AUD-CP-0137; E1 6932cf19d77c9c020a02e3d766b937f3175b8985; HEAD fce2ec25630909c3970a67bccf2db73c0695428b; árbol 17f959438d3314c0d9b5504f9e76f8a90421e814; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1; diff exclusivamente ocho documentos. Los ocho archivos funcionales/esquema conservan SHA exactos de E1.
+- CP-0071→HEAD: 66 commits y solo ocho documentos; sin deriva funcional posterior a la revalidación anterior.
+- H-AUD-027-001 a 006 abiertos; H-AUD-027-007/008 siguen pendientes de decisión. AUG-026/AUG-027 pendientes; AUG-021 ampliada; AUG-003/AUD-T-033 relacionada.
+- AUD-IMG-03 sigue pendiente de definición del alcance de referencias; no se infiere que deba ser solo Cortes o todas las hojas.
+- No se ejecutaron HTTP, navegador/PWA, Apps Script V8, Drive/Spreadsheet, concurrencia, recuperación real, escaneo ni deployments. No se certifica el comportamiento productivo.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, configuración, hojas, datos productivos, Drive, Spreadsheet, renombrados, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.

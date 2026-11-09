@@ -1311,3 +1311,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-026-001 a 005 abiertos; AUG-024/025 pendientes. El riesgo de metadatos debug backend continúa condicionado por falta de fuentes/deployments en el repositorio.
 - No se ejecutaron HTTP, navegador, Apps Script V8, latencia/concurrencia real, endpoints privados, Drive/Spreadsheet ni deployments. No se certifica salud real de servicios.
 - Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+
+
+## Continuidad de auditoría — AUD-T-027 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S138 / AUD-CP-0137; rama GPSpedia2.2.5_work, HEAD inicial fce2ec25630909c3970a67bccf2db73c0695428b; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 6932cf19d77c9c020a02e3d766b937f3175b8985; 130 commits posteriores; diff global de ocho documentos; los ocho archivos del alcance conservan SHA idénticos.
+- CP-0071→HEAD: 66 commits y únicamente ocho documentos; sin deriva funcional desde la revalidación anterior.
+- H-AUD-027-001 a 006 abiertos; H-AUD-027-007/008 pendientes de decisión. AUG-026/027 pendientes; AUG-021 ampliada; AUG-003/AUD-T-033 relacionada.
+- AUD-IMG-03 conserva decisión pendiente sobre alcance de referencias. No se ejecutaron HTTP, navegador/PWA, Apps Script, Drive/Spreadsheet, concurrencia, recuperación real, escaneo ni deployments.
+- Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
