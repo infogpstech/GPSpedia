@@ -1107,3 +1107,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-009-001 a 003 abiertos; AUG-074 pendiente; adenda AUG-052 y relaciones AUG-051/AUG-022/AUG-065 conservadas. VAL-13/14 pendientes de ejecución real.
 - No se ejecutaron PWA/offline, CacheStorage, IndexedDB, cuota, iOS/iPadOS, instalación, red real ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+
+
+## Continuidad de auditoría — AUD-T-010 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S113 / AUD-CP-0112; rama GPSpedia2.2.5_work, HEAD inicial 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; cuatro archivos del alcance conservan SHA idénticos.
+- H-AUD-010-001 a 007 abiertos; AUG-075 a AUG-081 pendientes; H-TR/H-SUG históricos no se reabren. VAL-19/03/09 pendientes de ejecución real.
+- No se ejecutaron Apps Script, HTTP, navegador, FileReader, Drive, Spreadsheet, concurrencia, XSS, revocación de sesión ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.

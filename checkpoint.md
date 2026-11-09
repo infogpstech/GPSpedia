@@ -2743,3 +2743,41 @@ Sin cambios funcionales, Service Worker, manifest, assets, endpoints, contratos,
 Commit documental único: docs(audit): verify AUD-T-009 continuity; parent 0561e53dac85d010e57af9cac36320f02f9e14b9.
 Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0112
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S113
+Tarea: AUD-T-010 — revalidación de continuidad E1 de reportes de problemas y sugerencias de cambios en cortes.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7 | árbol: 5c16c20e0657bc8295c93c45db08d7edff5d89ab.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 | árbol E1: 283e324bca6e2b055e353059a3aa00ce38f66f5d.
+Revalidación previa: AUD-20261108-S091 / AUD-CP-0090, HEAD c194fa122ffd30f0425b82906152108090b9c0d8.
+Alcance: ui.js, api-config.js, Services/feedback.js y Spreadsheet/GPSpedia_DB_columnas.md.
+Estado inicial: E1 estática completada; H-AUD-010-001 a 007 abiertos; AUG-075 a AUG-081 pendientes; VAL-19/VAL-03/VAL-09 pendientes; H-TR-01 a 07 y H-SUG-01 a 06 conservados como correcciones estáticas históricas.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 0809ad6b2126545662486a07eb8beb20829631b1
+- Plan_auditoría/Consolidacion_Auditoria.md: dbc1b1b4f1565b5e47011f9ef9c15870dac501bf
+- ChangesLogs.txt: 4921ca83510f1586ed07ba885c99e4344b1a4d1c
+- contexto_personal.md: e7029d2bdcd444a4246b5ca803019b5529e1488f
+- checkpoint.md: b213c86bb3042b1a1a5596b4687ea1ddcb8afead
+Siguiente acción: comparar E1→HEAD, verificar SHA de los cuatro archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0112
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S113
+Tarea: AUD-T-010 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-010-001 a 007 abiertos; AUG-075 a AUG-081 pendientes; VAL-19/VAL-03/VAL-09 pendientes de ejecución real.
+HEAD padre confirmado: 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7; árbol inicial 5c16c20e0657bc8295c93c45db08d7edff5d89ab. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los cuatro archivos del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: falta de identidad/actor de servidor; stored XSS; adjunto no persistido; vínculo reportId no verificado; riesgos de carga Drive/Reader/MIME/ACL; sugerencias sin lock/idempotencia; validación backend incompleta. H-AUD-010-001 a 007 permanecen abiertos.
+Tareas/relaciones: AUG-075 a AUG-081 pendientes; H-TR-01 a 07 y H-SUG-01 a 06 se mantienen como correcciones estáticas históricas. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: Apps Script, HTTP, navegador, FileReader real, Drive, Spreadsheet, concurrencia, XSS controlado, sesión revocada, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-010 continuity; parent 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7.
+Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
+================================================================================
