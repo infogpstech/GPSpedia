@@ -48,3 +48,16 @@ Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora recha
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
 Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+CIERRE LOCAL — AUG-006 Y AUG-153 — 2026-11-09
+AUG-006: COMPLETADA. Sintaxis PASS en backend AUTH y cliente auth.js; logout mocked 2/2 PASS y limpieza de estado en memoria PASS. El backend invalida el token invocante y el cliente diferencia cierre local de revocación remota pendiente.
+AUG-153: COMPLETADA. AUTH es único escritor de ActiveSessions; USERS solo consulta; resetUserSessions se enruta a AUTH y valida ambos usuarios antes de eliminar sesiones bajo el mismo ScriptLock. Sintaxis PASS en cuatro copias AUTH/USERS; validación de ruteo y dispatch PASS; harness de revocación remota 5/5 PASS.
+La concurrencia real de Google Apps Script, la integración con deployments y la comprobación de fallos físicos quedan como validación diferida a Beta, no como impedimento para el cierre local.
+================================================================================
+
+CORRECCIÓN DEL FORMATO DE Users.ID — 2026-11-09
+Se reemplaza la generación UUID para nuevas cuentas mencionada en las adendas anteriores de AUG-005. El formato vigente es secuencial y permanente: `USR-0001`, `USR-0002`, etc. USERS calcula el siguiente número bajo su ScriptLock, detecta IDs duplicados o filas con datos sin ID y escribe el resultado como valor fijo. La fila nueva recibe formato y validaciones, nunca la fórmula de ID. Los IDs de cuentas desactivadas se conservan y no se reutilizan.
+Pruebas locales del generador: 6/6 PASS (inicio sin cuentas, incremento, máximo existente, cuenta desactivada, duplicado y fila con datos sin ID).
+================================================================================
