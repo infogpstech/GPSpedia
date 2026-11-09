@@ -1356,3 +1356,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-031-001 a 010 permanecen abiertos. AUG-034/AUG-035 conservan sus adendas; AUG-037/AUG-038 continúan pendientes. H-AUD-031-009 conserva su relación con la recuperación de add_cortes.
 - No se ejecutaron E2/E3, navegador/PWA, Apps Script V8, HTTP, Drive/Spreadsheet real, fallos inducidos, pérdida de respuesta, concurrencia, compensaciones ni deployments. No se modificó código ni datos productivos.
 - Sin hallazgos ni tareas nuevas. Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+
+
+## Continuidad de auditoría — AUD-T-032 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S143 / AUD-CP-0142; rama GPSpedia2.2.5_work, HEAD inicial 4858e15aa3a9c1fa5b37346b75648dbdef5cb195; árbol 0a3cdf2369dd889601d6b57320794226d61acbd6. Rama base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 ad13f5340152ff42b552f06184d2a2adb17117c9; 130 commits posteriores; merge-base igual a E1; diff global exclusivamente de ocho documentos. CP-0076→HEAD: 66 commits documentales; CP-0141→HEAD: sin commits adicionales antes del registro actual.
+- Los diez archivos funcionales/configuración/pruebas del alcance conservan SHA idénticos a E1. Se confirman los controles de atribución de addOrUpdateCut, sesión ADMIN y uso de ActiveSessions en AUTH/USERS.
+- H-AUD-032-001 a 003 permanecen abiertos; AUG-039 pendiente. Se conservan dependencias AUD-T-035/AUG-024, AUD-T-033/AUG-003 y AUD-T-024/AUG-016. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron E2/E3, HTTP, navegador/PWA, Apps Script V8, sesiones reales/revocadas, pruebas de rol, Drive/Spreadsheet, concurrencia ni deployments. Sin cambios de código o datos productivos.
+- Siguiente unidad: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.

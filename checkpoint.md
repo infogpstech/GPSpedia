@@ -3903,3 +3903,52 @@ Sin cambios de código, esquema, endpoints, contratos, configuración, assets, p
 Commit único esperado: docs(audit): verify AUD-T-031 continuity; parent 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5.
 Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0142
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S143
+Tarea: AUD-T-032 — revalidación de continuidad E1 de identidad autenticada del colaborador en WRITE y ADMIN.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: 4858e15aa3a9c1fa5b37346b75648dbdef5cb195 | árbol: 0a3cdf2369dd889601d6b57320794226d61acbd6.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: ad13f5340152ff42b552f06184d2a2adb17117c9 (AUD-20261107-S013 / AUD-CP-0013; árbol 8e359fbf194440bcf5cc8ef65252a81033555c86).
+Revalidación previa AUD-20261108-S077 / AUD-CP-0076; HEAD 80bc51c1bff923ac497b453ecbe33ebf69af5fd8.
+Alcance: Services/write.js, Services/admin.js, Services/Auth.js, Services/users.js, api-config.js, add_cortes.html, ui.js, Services/Test/Auth.js, Services/Test/users.js y Services/Test/README.md.
+Estado inicial: H-AUD-032-001 a 003 abiertos; AUG-039 pendiente; dependencias AUD-T-035/AUG-024, AUD-T-033/AUG-003 y AUD-T-024/AUG-016.
+Preflight: E1→HEAD = 130 commits, merge-base igual a E1, diff global de ocho documentos; CP-0076→HEAD = 66 commits y solo documentos; CP-0141 coincide con HEAD. Se comprobarán SHA de los diez archivos contra E1.
+Fase: continuidad estática/documental; sin autorización para modificar código, endpoints, contratos, configuración o datos productivos.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 1bb84263a9304133f3727f6c39cd1c22393d294a
+- Plan_auditoría/Consolidacion_Auditoria.md: 1b765d7a1b823aea3b0dd07d2f836edfcd935856
+- ChangesLogs.txt: b9e28005b8f83a8365a6b62eecb6cedf0ee65299
+- contexto_personal.md: e6b5f24fb5f8a4c39db4934763810c707cf661d2
+- checkpoint.md: b3cb1e4758fc464a540ee3ff92109575a07d5411
+Siguiente acción: registrar la continuidad E1, preservar H-AUD-032-001 a 003 y AUG-039, y mantener la rama base intacta.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0142
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S143
+Tarea: AUD-T-032 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-032-001 a 003 permanecen abiertos; AUG-039 pendiente; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: 4858e15aa3a9c1fa5b37346b75648dbdef5cb195; árbol inicial 0a3cdf2369dd889601d6b57320794226d61acbd6. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 130 commits posteriores; merge-base igual a E1; diff exclusivamente ocho documentos. CP-0076→HEAD: 66 commits y únicamente documentos; CP-0141→HEAD: cero commits adicionales antes de esta actualización.
+Archivos del alcance revalidados (SHA idénticos a E1):
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+Hallazgos: H-AUD-032-001 (ALTA), H-AUD-032-002 (MEDIA) y H-AUD-032-003 (MEDIA) permanecen abiertos. AUG-039 pendiente; se conservan dependencias AUD-T-035/AUG-024, AUD-T-033/AUG-003 y AUD-T-024/AUG-016.
+Validaciones ejecutadas: comparación Git E1→HEAD, CP-0076→HEAD y CP-0141→HEAD; verificación de merge-base; comparación SHA de diez archivos; revisión estática de controles de identidad/atribución en WRITE, ADMIN, AUTH y USERS; revisión de registros de hallazgos y tareas.
+Validaciones no ejecutadas: E2/E3, parseo, Apps Script V8, HTTP, navegador/PWA, sesiones reales/revocadas, pruebas de rol, Drive/Spreadsheet real, concurrencia y deployments.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los hallazgos y AUG-039 ya constan.
+Sin cambios de código, servicios, contratos, endpoints, configuración, datos productivos, Drive, Spreadsheet, renombrados, merge o despliegue. No se realizaron pruebas E2/E3.
+Commit documental único: docs(audit): verify AUD-T-032 continuity; parent 4858e15aa3a9c1fa5b37346b75648dbdef5cb195. Siguiente unidad: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+================================================================================

@@ -1414,3 +1414,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, Drive/Spreadsheet real, fallos inducidos, concurrencia, recuperación ni deployments. No se inspeccionaron ni modificaron datos productivos.
 - Solo continuidad estática/documental; sin cambios de código, esquema, endpoints, configuración, assets, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+
+
+## 78. AUD-T-032 — continuidad E1 de identidad autenticada en WRITE y ADMIN
+- Sesión AUD-20261108-S143; checkpoint AUD-CP-0142; E1 ad13f5340152ff42b552f06184d2a2adb17117c9; HEAD 4858e15aa3a9c1fa5b37346b75648dbdef5cb195; árbol 0a3cdf2369dd889601d6b57320794226d61acbd6; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits; merge-base igual a E1; diff exclusivamente ocho documentos. CP-0076→HEAD: 66 commits y solo documentos. CP-0141→HEAD: cero commits adicionales antes de esta actualización.
+- Los diez archivos del alcance conservan SHA idénticos a E1. Se mantienen los controles de atribución de addOrUpdateCut, la validación de sesión ADMIN y ActiveSessions en AUTH/USERS.
+- H-AUD-032-001 a 003 permanecen abiertos: addSupplementaryInfo sin autorización de sesión; checkOperation sin validación de sesión y con exposición de rowData; allocateVehicleId sin restricción de rol Desarrollador. AUG-039 continúa pendiente; se conservan las dependencias AUD-T-035/AUG-024, AUD-T-033/AUG-003 y AUD-T-024/AUG-016.
+- No se crean hallazgos ni tareas nuevas ni se cierran los existentes. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque el registro de hallazgos y AUG-039 ya existe.
+- No se ejecutaron E2/E3, HTTP, navegador/PWA, Apps Script V8, sesiones reales/revocadas, pruebas de rol, Drive/Spreadsheet, concurrencia ni deployments. La igualdad SHA no certifica comportamiento real.
+- Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.

@@ -3592,3 +3592,33 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 678eaf1533c59fbd37779b6f7b844a04c643b1ba
 Solo se actualiza documentación de continuidad. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los diez hallazgos y las tareas/adendas relacionadas ya constan. Sin renombrados, cambios funcionales, operaciones productivas, merge o despliegue. Rama base intacta.
 Siguiente unidad secuencial: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN (respetar E1 y revalidaciones previas).
+
+
+## 93. Continuidad verificada — AUD-T-032 (revalidación E1)
+Sesión AUD-20261108-S143 | Checkpoint AUD-CP-0142 | E1 histórica ad13f5340152ff42b552f06184d2a2adb17117c9 | HEAD inicial 4858e15aa3a9c1fa5b37346b75648dbdef5cb195 | árbol inicial 0a3cdf2369dd889601d6b57320794226d61acbd6 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original AUD-20261107-S013/AUD-CP-0013. Revalidación previa AUD-20261108-S077/AUD-CP-0076 (HEAD 80bc51c1bff923ac497b453ecbe33ebf69af5fd8). Revalidación actual en GPSpedia2.2.5_work; rama base GPSpedia2.2.5 confirmada intacta.
+Comparación E1→HEAD: 130 commits posteriores, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos de auditoría; ninguno de los diez archivos funcionales, de configuración o pruebas del alcance aparece en el diff. Comparación CP-0076→HEAD: 66 commits posteriores, también limitados a los ocho documentos de auditoría. Comparación CP-0141→HEAD: HEAD coincide con CP-0141; no hay commits intermedios ni deriva funcional.
+Los diez archivos conservan SHA idénticos a E1:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+Se confirma la continuidad de los controles de atribución: addOrUpdateCut valida userId/sessionToken contra ActiveSessions y resuelve Nombre_Completo desde Users; ADMIN exige sesión de Desarrollador en acciones POST salvo ping y atribuye desde developerContext.fullName; AUTH/USERS mantienen ActiveSessions como fuente de sesión; add_cortes.html y el modal de ui.js transmiten credenciales a addOrUpdateCut.
+H-AUD-032-001 (ALTA), H-AUD-032-002 (MEDIA) y H-AUD-032-003 (MEDIA) permanecen abiertos: addSupplementaryInfo muta Cortes/Drive sin validar sesión; checkOperation no valida sesión y devuelve rowData completo; allocateVehicleId no restringe la acción al rol Desarrollador aunque modifica el contador central. No se crean hallazgos nuevos ni se cierran hallazgos existentes.
+AUG-039 continúa pendiente para autorización y minimización de datos en WRITE. Se conservan las relaciones con AUD-T-035/AUG-024, AUD-T-033/AUG-003 y AUD-T-024/AUG-016. No se duplica ni reabre ninguna tarea existente.
+La igualdad SHA confirma que los diez archivos no cambiaron desde E1; no demuestra el comportamiento de deployments reales, sesiones activas/revocadas, respuestas HTTP, Drive/Spreadsheet ni la ausencia de mutaciones en producción.
+No se ejecutaron E2/E3, parseo, pruebas de servicios Apps Script, HTTP, navegador/PWA, sesiones reales o revocadas, pruebas de rol, Drive/Spreadsheet real, concurrencia ni deployments. No se modificó código, endpoints, contratos, configuración, datos productivos, Drive o Spreadsheet.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 1bb84263a9304133f3727f6c39cd1c22393d294a
+- Plan_auditoría/Consolidacion_Auditoria.md: 1b765d7a1b823aea3b0dd07d2f836edfcd935856
+- ChangesLogs.txt: b9e28005b8f83a8365a6b62eecb6cedf0ee65299
+- contexto_personal.md: e6b5f24fb5f8a4c39db4934763810c707cf661d2
+- checkpoint.md: b3cb1e4758fc464a540ee3ff92109575a07d5411
+Solo se actualiza documentación de continuidad. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque H-AUD-032-001 a 003 y AUG-039 ya están registrados. Sin cambios funcionales, renombrados, operaciones productivas, merge o despliegue.
+Siguiente unidad secuencial: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
