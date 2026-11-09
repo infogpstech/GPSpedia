@@ -6612,3 +6612,10 @@ Evidencia: patrón completo H-AUD-###-### produce 185 identificadores individual
 Acción: H-AUD-040 se marca inválido sin borrar historial; Plan_Maestro_Implementacion.md recupera el conteo correcto y aclara el formato.
 Commit: el commit de esta rectificación se identifica en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+================================================================================
+H-AUD-042 — Compuerta de continuidad entre tareas
+Estado: REGISTRADO; CORRECCIÓN INCLUIDA EN LA TAREA ACTUAL DE NORMAS DE DESARROLLO.
+Se requiere un ciclo obligatorio que audite la implementación anterior, registre y corrija sus hallazgos con un commit independiente, verifique el commit y solo entonces audite la tarea actual antes de implementarla.
+No auditar informes de auditoría ni repetir auditorías AUD-T completadas.
+================================================================================

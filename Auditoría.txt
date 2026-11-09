@@ -33,3 +33,18 @@ Corrección: invalidar H-AUD-040 sin borrar su historial; restaurar en el plan m
 Estado: CORREGIDO EN EL COMMIT DE ESTA TAREA; SHA identificable en el historial de GPSpedia2.2.5_work.
 Nota: no se auditan ni modifican los informes de auditoría. Se consulta Tareas.txt solo como registro de IDs y Auditoría.txt como registro de hallazgos.
 ================================================================================
+
+
+================================================================================
+H-AUD-042 — Falta un control obligatorio entre tareas consecutivas
+Fecha: 2026-11-09
+Origen: auditoría pre-implementación del procedimiento de desarrollo y del plan maestro en HEAD d8ac322be1b50fe491521272ce72d5be1b059a96.
+Severidad: P1 — gobierno del desarrollo y prevención de regresiones.
+Archivos revisados: Proceso de desarollo.md y Plan_auditoría/Plan_Maestro_Implementacion.md. No se auditaron informes de auditoría.
+Evidencia: el procedimiento contiene checkpoint, auditoría inicial, registro, respaldo, implementación, verificación, Code Review y commit único, pero no exige auditar la implementación del checkpoint anterior, corregir sus hallazgos mediante una tarea/commit independiente y verificar ese commit antes de auditar la tarea actual.
+Impacto: pueden acumularse defectos de una tarea previa y comenzar una nueva implementación sobre una base con regresiones conocidas; tampoco queda definida la separación de commits correctivos y commits de la tarea actual.
+Causa: el flujo describe fases dentro de una tarea, pero no establece una compuerta secuencial entre tareas.
+Corrección requerida: añadir protocolo obligatorio de continuidad con (1) validación del último checkpoint, (2) auditoría del entregable funcional/documental de la tarea anterior sin auditar informes, (3) registro y resolución de hallazgos previos con commit propio, (4) verificación de ese commit, (5) auditoría pre-implementación de la tarea actual, (6) implementación, pruebas y commit propio.
+Restricciones: no auditar auditorías ni reabrir AUD-T completadas; cada tarea conserva un único commit Git Database API; rama base intacta; no continuar si el checkpoint/HEAD no coincide o los registros no están disponibles.
+Estado: REGISTRADO; SE RESUELVE EN EL ALCANCE DE LA TAREA ACTUAL.
+================================================================================

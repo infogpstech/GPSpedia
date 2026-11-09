@@ -5262,3 +5262,50 @@ Conteo confirmado: 185 identificadores individuales únicos con formato H-AUD-##
 No se modifican informes de auditoría, código funcional, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
 Siguiente: verificar commit y luego auditar la tarea actual de refuerzo del procedimiento, antes de su implementación.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — GOV-CYCLE-2026-001
+Fecha: 2026-11-09
+Tarea: reforzar las normas de desarrollo con una compuerta de continuidad entre tareas.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD inicial verificado: d8ac322be1b50fe491521272ce72d5be1b059a96
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea anterior revisada: RECT-H-AUD-041, commit d8ac322be1b50fe491521272ce72d5be1b059a96. Estado de la rectificación confirmado.
+Auditoría pre-implementación actual:
+- Proceso de desarollo.md ya contiene checkpoint, auditoría inicial, registro, respaldos, pruebas, Code Review y un commit por tarea mediante Git Database API.
+- No contiene una compuerta que obligue a auditar la implementación anterior, corregir sus hallazgos con commit separado y verificarlo antes de auditar la tarea actual.
+- Tampoco declara explícitamente la prohibición de auditar informes ni la separación de commits por tarea anterior y tarea actual.
+- Hallazgo H-AUD-042 registrado en Auditoría.txt y Tareas.txt antes de implementar.
+Alcance: crear anexo normativo, referenciarlo desde Plan_Maestro_Implementacion.md y registrar cambios/checkpoint. Proceso de desarollo.md se preserva sin edición.
+Respaldos:
+- Auditoría.txt: 893e05ddf1da08a0864fcefef77831e8593b6289
+- Tareas.txt: 2ea33c2e607e79a534ada6aad079c9102fb23d07
+- Plan_auditoría/Plan_Maestro_Implementacion.md: 6659664d23f0771b03de4928bd68d9703d825a11
+- ChangesLogs.txt: 4b2edc594b3d46b8338af195477560b0f0b5ed2e
+- checkpoint.md: 5f88ba7b7cce39f3544fa5a1958b244e4fa2ceae
+- Proceso de desarollo.md: 489aaab545253a54a0be359c3c5ac92801761854
+Siguiente: implementar el anexo y referencia al plan maestro, comparar cambios, registrar ChangesLogs y checkpoint final, publicar un único commit.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — GOV-CYCLE-2026-001
+Fecha: 2026-11-09
+Tarea: protocolo obligatorio de continuidad entre tareas.
+Estado: COMPLETADA EN ALCANCE DOCUMENTAL; no implica implementación funcional.
+HEAD padre: d8ac322be1b50fe491521272ce72d5be1b059a96; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+Hallazgo H-AUD-042: registrado antes de implementar y resuelto documentalmente con el anexo normativo.
+Archivos modificados:
+- Auditoría.txt: H-AUD-042.
+- Tareas.txt: H-AUD-042 y referencia a la tarea de refuerzo de proceso.
+- Plan_auditoría/Protocolo_Ciclo_Continuo.md: nuevo anexo obligatorio.
+- Plan_auditoría/Plan_Maestro_Implementacion.md: sección 11 con compuerta secuencial.
+- ChangesLogs.txt: registro objetivo.
+- checkpoint.md: checkpoint inicial/final.
+Archivo preservado sin cambios: Proceso de desarollo.md (se respeta su instrucción de preservación; el anexo es complementario).
+Reglas: primero validar checkpoint; auditar implementación anterior sin auditar informes; registrar y corregir hallazgos anteriores en tarea/commit separado; verificar commit; solo después auditar tarea actual pre-implementación; registrar hallazgos; implementar y publicar commit independiente.
+Cada tarea genera exactamente un commit mediante Git Database API. No se altera rama base ni se reintroducen filtros rápidos cancelados.
+Verificaciones: referencias/HEAD y base confirmados; respaldo de documentos; comparación de contenido; diff limitado a los archivos previstos. No se ejecutaron pruebas funcionales ni deployments, no aplican al cambio normativo.
+Siguiente: en cada sesión, aplicar este protocolo desde el último checkpoint válido. Prompt reciclable entregado al usuario.
+================================================================================

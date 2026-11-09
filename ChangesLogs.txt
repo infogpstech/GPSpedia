@@ -5784,3 +5784,15 @@ Tarea correctiva separada del trabajo de protocolo de ciclo.
 - Se restaura el dato correcto en Plan_auditoría/Plan_Maestro_Implementacion.md y se explica el patrón de extracción.
 - No se modifican informes de auditoría ni archivos funcionales.
 ================================================================================
+
+================================================================================
+2026-11-09 — H-AUD-042 / PROTOCOLO DE CONTINUIDAD ENTRE TAREAS
+Auditoría pre-implementación: Proceso de desarollo.md y Plan_auditoría/Plan_Maestro_Implementacion.md.
+- Se detecta ausencia de compuerta obligatoria para auditar la implementación del checkpoint anterior y corregir sus hallazgos antes de auditar la tarea actual.
+- Auditoría.txt: H-AUD-042 registrado antes de implementar.
+- Tareas.txt: H-AUD-042 vinculado al trabajo actual.
+- Se crea Plan_auditoría/Protocolo_Ciclo_Continuo.md como anexo normativo; se agrega referencia y secuencia obligatoria al plan maestro.
+- Proceso de desarollo.md se conserva sin cambios por su instrucción explícita de preservación; el anexo lo complementa sin sustituirlo.
+- Sin cambios en código funcional, servicios, endpoints, contratos, configuración, assets ni datos productivos.
+- No se ejecutan pruebas funcionales porque el alcance es documental; se verifica el diff y el procedimiento de commit.
+================================================================================

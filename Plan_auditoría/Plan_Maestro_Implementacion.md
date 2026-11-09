@@ -128,3 +128,17 @@ Checkpoint inicial; confirmar refs; revisar archivos funcionales (no informes); 
 
 ## 10. Siguiente paso
 Iniciar Fase 1 con identidad/sesiones y XSS. Después diseñar el modelo y contrato de AUG-152 sobre FEEDBACK seguro. Este documento y la tarea nueva son planificación; no implementan funcionalidad.
+
+
+## 11. Compuerta obligatoria entre tareas
+Se incorpora como norma de cumplimiento obligatorio el anexo `Plan_auditoría/Protocolo_Ciclo_Continuo.md`, complementario a `Proceso de desarollo.md`.
+
+Secuencia exigida:
+1. Validar el último checkpoint y HEAD.
+2. Auditar la implementación real de la tarea anterior, sin auditar informes ni repetir AUD-T cerradas.
+3. Registrar hallazgos anteriores y resolverlos mediante tarea correctiva separada, con un único commit permitido.
+4. Verificar el commit correctivo y su checkpoint.
+5. Solo entonces auditar la tarea actual antes de implementar.
+6. Registrar hallazgos actuales, implementar, probar, revisar y publicar un commit independiente de la tarea actual.
+
+Una sesión puede contener dos commits solo cuando corresponden a dos tareas distintas: corrección anterior y tarea actual. Cada tarea conserva un único commit Git Database API. No se continúa ante checkpoint/HEAD no verificable ni hallazgos bloqueantes anteriores sin resolver. La instrucción de no auditar auditorías es absoluta.
