@@ -61,3 +61,8 @@ CORRECCIÓN DEL FORMATO DE Users.ID — 2026-11-09
 Se reemplaza la generación UUID para nuevas cuentas mencionada en las adendas anteriores de AUG-005. El formato vigente es secuencial y permanente: `USR-0001`, `USR-0002`, etc. USERS calcula el siguiente número bajo su ScriptLock, detecta IDs duplicados o filas con datos sin ID y escribe el resultado como valor fijo. La fila nueva recibe formato y validaciones, nunca la fórmula de ID. Los IDs de cuentas desactivadas se conservan y no se reutilizan.
 Pruebas locales del generador: 6/6 PASS (inicio sin cuentas, incremento, máximo existente, cuenta desactivada, duplicado y fila con datos sin ID).
 ================================================================================
+
+
+ADENDA DE VERIFICACIÓN — IDs USR Y FILAS CON FÓRMULA — 2026-11-09
+La validación del generador de IDs se amplió a 9/9 PASS: secuencia vacía/inicial, incremento, máximo existente, cuenta desactivada, duplicados, fila con datos sin ID y reutilización de filas vacías que contienen fórmula en Users.ID. Se verificó que la primera cuenta usa USR-0001 incluso si la fila de plantilla ya contiene fórmula; la siguiente recibe USR-0002. La fila nueva se escribe con ID estático y la fórmula queda sustituida en esa fila.
+La copia de prueba de USERS coincide con la fuente de producción, excepto por el Spreadsheet ID aislado. Sintaxis PASS en ambas.
