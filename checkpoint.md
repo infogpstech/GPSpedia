@@ -2299,3 +2299,61 @@ SHA E1 confirmados para los 15 archivos:
 No se ejecutaron pruebas Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner automatizado ni E2/E3. No se modificaron aplicación, servicios, contratos, endpoints, configuración, assets, pruebas ni datos productivos. Sin merge ni despliegue.
 Siguiente: continuar con la siguiente unidad pendiente, sin duplicar AUD-T-019.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0099
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S100
+Tarea: AUD-T-020 — revalidación ampliada de continuidad E1, DRY, anti-debugging y auditorías globales.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 2945013779d999215e46efcb61e5f1825984185d | Árbol: 3501fe2a265546472686dcb4d761f675c953867d
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; protected=false).
+E1 histórica: 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | Continuidad anterior S060/CP-0059: 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1.
+Alcance: 27 archivos funcionales/técnicos; H-AUD-020-001 a 005; AUG-136 a 139; adendas AUG-036/AUG-104; VAL-29.
+Acción: verificar continuidad E1 y CP-0059, identidad SHA, hallazgos/tareas existentes y matriz de cumplimiento/calidad/seguridad/rendimiento/mantenibilidad; sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+CHECKPOINT FINAL — AUD-CP-0099
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S100
+Tarea: AUD-T-020 — revalidación ampliada de continuidad y calidad arquitectural.
+- Sesión AUD-20261108-S100; checkpoint AUD-CP-0099; E1 histórica 25d5d548edd79f812ab6b2bf9411d8c77fb30188; continuidad previa S060/CP-0059 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1; HEAD inicial 2945013779d999215e46efcb61e5f1825984185d; árbol 3501fe2a265546472686dcb4d761f675c953867d; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; GitHub informa protected=false).
+- Comparación E1→HEAD: 62 commits; comparación CP-0059→HEAD: 41 commits. En ambas comparaciones el merge-base coincide con la base y únicamente aparecen ocho documentos de auditoría modificados; no hay divergencia funcional.
+- Los 27 archivos funcionales/técnicos del alcance conservan SHA exactos de E1. No existe deriva de implementación en el alcance.
+- H-AUD-020-001 a H-AUD-020-004 continúan abiertos; H-AUD-020-005 permanece corregido documentalmente en la tabla de cobertura. AUG-136 a AUG-139 siguen pendientes; AUG-036 y AUG-104 mantienen sus adendas; VAL-29 continúa planificada/no ejecutada. No se crean hallazgos ni tareas duplicados.
+- Evidencia estática revalidada: add_cortes.html bloquea contextmenu, F12 y atajos Ctrl+Shift+I/J/C/Ctrl+U, además de zoom por rueda/teclado/gestos; esos controles son eludibles y no protegen código ni datos. La recuperación registra pendingOp completo, que puede incluir Base64 de imágenes. WRITE, ADMIN y FEEDBACK conservan implementaciones repetidas de helpers Drive con diferencias de normalización Unicode y contrato de entrada (objeto frente a fila); los parsers VIN/versiones también están duplicados entre frontend y backend. Existen funciones/markup de depuración sin consumidores internos localizados, pero los exports y contratos externos deben revisarse antes de retirar código; no se declara huérfano definitivo sin call graph completo.
+- Matriz ampliada: cumplimiento parcial/no certificado respecto a B01/B14/B15/B17/B20/B28/B29/B30; calidad técnica y mantenibilidad afectadas por duplicación y contratos divergentes; seguridad no mejora con bloqueos frontend y los logs pueden exponer payloads; rendimiento no puede cuantificarse sin pruebas, aunque la repetición de búsquedas de carpetas en Drive puede incrementar llamadas; no se certifican accesibilidad/zoom, ejecución real ni comportamiento de despliegues.
+- Controles positivos conservados: createDetailParagraph mantiene su hoist; funciones retiradas históricamente siguen ausentes; no se observan archivos temporales en el árbol; el renombrado automático de carpeta equivalente mantiene protección ante duplicados ambiguos.
+- No se ejecutaron Node/lint, navegador, zoom 200/400%, lector de pantalla, Apps Script, HTTP, Spreadsheet/Drive, YouTube, pruebas de concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+SHA E1 confirmados para los 27 archivos:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+Documentos modificados en este commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md (último blob documental).
+No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md. No se modificaron archivos funcionales, servicios, endpoints, configuración, assets, pruebas ni datos productivos. Sin Node/lint, navegador, Apps Script, HTTP, Drive, Spreadsheet, YouTube, concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3. Sin merge ni despliegue.
+Commit documental único esperado; rama base intacta.
+Siguiente unidad: AUD-T-021 — ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+================================================================================
