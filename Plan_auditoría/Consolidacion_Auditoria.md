@@ -1060,3 +1060,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron pruebas dinámicas, navegador, FileReader, HTTP, Apps Script, Drive/Spreadsheet, concurrencia, deployments ni E2/E3. La E1 es estática y no certifica funcionamiento real.
 - Sin cambios funcionales, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-004, mediante revalidación de continuidad.
+
+
+## 41. AUD-T-004 — continuidad E1 revalidada
+- Sesión AUD-20261108-S106; checkpoint AUD-CP-0105; E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; HEAD 6cd7e651d33d0967acfc947c99f457aefad44664; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 84 commits; merge-base igual a E1; únicamente ocho documentos modificados. Ninguno de los nueve archivos funcionales/técnicos del alcance aparece en el diff.
+- Archivos de alcance confirmados sin deriva: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md.
+- H-AUD-004-001 a 003 siguen abiertos; H-AUD-037-007 conserva ampliación; AUG-059/AUG-060 y adenda AUG-050 se mantienen. No duplicar relaciones existentes.
+- VAL-08, VAL-12 y VAL-15 siguen pendientes. No se ejecutaron navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas multiusuario, deployments ni E2/E3.
+- Sin cambios funcionales, esquema, configuración, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-005, mediante revalidación de continuidad.

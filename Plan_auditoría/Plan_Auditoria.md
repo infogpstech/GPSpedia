@@ -2683,3 +2683,13 @@ AUG-055 a AUG-058 continúan pendientes; AUG-043 conserva su adenda. No se dupli
 La continuidad estática no certifica persistencia local, FileReader real, pérdida de respuesta HTTP, recuperación de red, idempotencia, Apps Script, Drive/Spreadsheet ni deployments. No se ejecutaron navegador, cuota localStorage, FileReader real, HTTP, Apps Script, Drive/Spreadsheet real, concurrencia, deployments ni E2/E3.
 Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue. La rama base permanece intacta.
 Siguiente unidad: AUD-T-004 — VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial (continuar mediante revalidación de continuidad).
+
+
+## 56. Continuidad verificada — AUD-T-004 (revalidación E1)
+Sesión AUD-20261108-S106 | Checkpoint AUD-CP-0105 | E1 histórica 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 | HEAD actual 6cd7e651d33d0967acfc947c99f457aefad44664 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática de AUD-T-004 fue completada en AUD-20261107-S022 / AUD-CP-0022. La comparación E1→HEAD comprende 84 commits posteriores, con merge-base igual a E1; compare_commits enumera exclusivamente ocho documentos modificados: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los nueve archivos funcionales/técnicos del alcance aparece en el diff.
+Archivos revalidados por continuidad: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md. La comparación confirma que conservan el contenido de E1.
+H-AUD-004-001 a 003 permanecen abiertos; H-AUD-037-007 conserva su ampliación. Se mantienen AUG-059 y AUG-060, además de la ampliación de AUG-050. No se duplican H-AUD-030/AUG-036, H-AUD-037-009/AUG-051 ni H-AUD-038-001/AUG-053.
+VAL-08, VAL-12 y VAL-15 continúan pendientes de ejecución funcional/integración. La continuidad estática no certifica resolución de VIN, colecciones, persistencia de fieldName='vin', límites de entrada ni resultados con datasets reales.
+No se ejecutaron navegador, dataset VIN, HTTP, Apps Script V8, Spreadsheet/Drive real, migración, concurrencia, pruebas con dos usuarios ni deployments. Sin cambios funcionales, esquema, configuración, assets, permisos, Spreadsheet, Drive, datos productivos o deployments. Sin merge ni despliegue. La rama base permanece intacta.
+Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales (continuar mediante revalidación de continuidad).
