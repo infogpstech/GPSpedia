@@ -142,3 +142,8 @@ Secuencia exigida:
 6. Registrar hallazgos actuales, implementar, probar, revisar y publicar un commit independiente de la tarea actual.
 
 Una sesión puede contener dos commits solo cuando corresponden a dos tareas distintas: corrección anterior y tarea actual. Cada tarea conserva un único commit Git Database API. No se continúa ante checkpoint/HEAD no verificable ni hallazgos bloqueantes anteriores sin resolver. La instrucción de no auditar auditorías es absoluta.
+
+
+## 12. Gobierno documental y rotación
+
+Es obligatoria la norma `Plan_auditoría/Normas_Gestion_Documental.md`. Los registros son append-only: las entradas anteriores no se borran, editan, sustituyen ni reordenan; cada entrada nueva se agrega al final. El máximo es 180,000 caracteres Unicode por archivo. Antes de excederlo, rotar a `Olds/Documentacion_Legacy/` con sufijo `_legacy_parte_NNN`, crear el documento activo canónico y mantener un manifiesto verificable. Los documentos que ya excedan el límite se dividen en partes secuenciales sin pérdida. Las partes legacy son inmutables y no se reauditan.

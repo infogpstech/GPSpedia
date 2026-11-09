@@ -157,3 +157,8 @@ No se realizan pruebas contra datos, servicios o deployments productivos cuando 
 - **No cerrar sin evidencia.** Estado, pruebas y limitaciones deben ser verificables.
 - **No alterar la rama base.** Todo el trabajo ordinario permanece en `GPSpedia2.2.5_work`.
 - **No reintroducir los filtros rápidos cancelados** del catálogo.
+
+
+## 10. Gestión documental acumulativa y rotación
+
+Se aplica `Plan_auditoría/Normas_Gestion_Documental.md` a todos los registros y documentos acumulativos. Las entradas históricas no se borran, truncan, sobrescriben ni reordenan; las nuevas se agregan al final. El límite máximo es 180,000 caracteres Unicode por archivo. Antes de superarlo, archivar como `_legacy_parte_NNN`, crear el documento activo y continuar allí. Los documentos que ya exceden el límite se dividen en partes numeradas sin pérdida y se documentan en un manifiesto. Las partes legacy son inmutables. Archivar informes no constituye una auditoría ni reabre unidades AUD-T.
