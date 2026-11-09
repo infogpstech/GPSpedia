@@ -4660,3 +4660,33 @@ La E1 de AUD-T-018 se completó en AUD-20261108-S036 / AUD-CP-0036. La revalidac
 - Sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue. Rama base intacta.
 
 **Siguiente unidad:** AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).
+
+
+## 101. Continuidad verificada — AUD-T-019 (revalidación E1)
+
+- Sesión AUD-20261109-S166 / checkpoint AUD-CP-0165. E1 histórica: 6f0f901179c10833cbeedcb2767a25fcdd085b0d (árbol 111dcd6270f62d5aaad6d5bfe34ebf47acafee82). Revalidación anterior: AUD-CP-0121 / HEAD 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54. HEAD actual: c61e00c2926b2b4ce5480ba755789ce4c0fffa1e; árbol 2df5b97066ef18998c6d1c56032d920787ded20b; rama base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; el diff contiene únicamente ocho documentos/registros. CP-0121→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; el diff contiene únicamente cinco documentos de continuidad. No se observa deriva funcional desde E1 ni desde la revalidación anterior.
+- Los quince archivos funcionales/técnicos del alcance conservan SHA idénticos a E1:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+- Revisión estática focalizada confirma que H-AUD-019-001 a H-AUD-019-014 permanecen abiertos, sin corrección detectable: (001) addSupplementaryInfo sin sesión/rol y sin derivar actor autenticado; (002) migración UTILITIES sin autenticación ni lock, con limpieza previa del destino; (003) esquema/hoja Tutoriales divergente entre FEEDBACK y CATALOG; (004) restore DB/Drive sin staging/rollback transaccional; (005) validación incompleta o tardía de payload tras reservar fila/ID; (006) contrato de vídeo suplementario y respuesta de éxito inconsistentes; (007) asociaciones PyS–vehículos sin integridad relacional/serialización común; (008) edición ADMIN permite campos sensibles/ID sin allowlist específica; (009) updateUser realiza escrituras parciales sin lock común; (010) aprobación de vídeo sin validar destino/estado de forma suficiente; (011) VIN sin validación estricta de longitud/formato; (012) ausencia de suite automatizada reproducible para pruebas 31–38; (013) mapa ACTION_TO_SERVICE_MAP y routers/handlers no forman contrato sincronizado; (014) README declara retirados los microservicios mientras sus fuentes permanecen en el árbol público.
+- La evidencia de pruebas confirma que Services/Test/Auth.js y users.js son copias de servicios con routers operativos y Spreadsheet aislada, no una suite: no contienen asserts ni casos ejecutables; la única coincidencia de `test(` es el método RegExp `.test()`. Services/Test/README.md indica que no hay proyectos Apps Script creados/desplegados, que ADMIN no tiene copia y que la validación funcional depende de crear y verificar deployments independientes. No se ejecutó ningún test ni deployment.
+- AUG-122 a AUG-135 siguen NUEVAS / diseño, implementación y pruebas pendientes; VAL-28 continúa planificada y no ejecutada. No se crean hallazgos/tareas duplicados ni se cierran los existentes.
+- No se ejecutaron Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, migraciones/restauraciones, concurrencia, estrés, runner automatizado, ACL/deployments ni E2/E3. La revisión es estática; no certifica comportamiento en runtime.
+- Limitación: Auditoría.txt (1,238,024 bytes) no pudo leerse con el conector; no se modifica ni se afirma revisión independiente de su contenido. La continuidad se documenta con la evidencia disponible en Tareas.txt, Aug_Tareas.md, Plan_Auditoria y Consolidacion_Auditoria.
+- Solo se actualiza documentación de continuidad. Sin cambios de código, tests, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, deployments, merge o despliegue. No reintroducir filtros rápidos cancelados ni remanentes de su implementación fallida.
+
+**Siguiente unidad:** AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales (revalidación E1).

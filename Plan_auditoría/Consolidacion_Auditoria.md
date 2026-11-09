@@ -1716,3 +1716,13 @@ Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33
 - Sin hallazgos/tareas duplicados ni cierres. Sin cambios funcionales o productivos, merge o despliegue.
 - AUD-T-018 conserva estado histórico COMPLETADA; esta revalidación de continuidad E1 no certifica validación funcional.
 - Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).
+
+
+## 101. AUD-T-019 — continuidad E1 y revalidación de integridad backend/pruebas automatizadas
+
+- E1 histórica 6f0f901179c10833cbeedcb2767a25fcdd085b0d; revalidación anterior CP-0121/HEAD 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54; HEAD actual c61e00c2926b2b4ce5480ba755789ce4c0fffa1e. E1→HEAD: 129 commits, merge-base idéntico, diff solo de ocho documentos. CP-0121→HEAD: 44 commits, merge-base idéntico, diff solo de cinco documentos.
+- Los 15 archivos funcionales/técnicos auditados mantienen SHA exactos de E1; no hay deriva funcional. Se confirman los 14 hallazgos H-AUD-019-001 a 014 ya registrados: WRITE.addSupplementaryInfo sin sesión; UTILITIES sin auth/lock; contrato Tutoriales FEEDBACK/CATALOG divergente; restore no transaccional; validación tardía de payload; falso éxito/contrato de vídeo suplementario; relaciones PyS sin integridad/lock; campos ADMIN/ID sin allowlist estricta; updateUser parcial y sin lock; aprobación de vídeo sin validar destino; VIN permisivo; suite de pruebas ausente; mapa API desincronizado; README contradice fuentes presentes.
+- Pruebas aisladas: Services/Test solo contiene copias AUTH/USERS para una Spreadsheet separada; sin asserts, runner ni casos automatizados. No hay copia ADMIN y el README declara que no se han creado/desplegado proyectos Apps Script. La prueba funcional 31–38 y VAL-28 permanecen sin ejecución.
+- AUG-122 a AUG-135 siguen pendientes; no hay hallazgos nuevos, duplicados ni cierres. Los controles positivos históricos (autenticación WRITE para cortes/VIN, lock/idempotencia en operaciones centrales, hash/lockout AUTH, RBAC USERS/ADMIN/FEEDBACK y validaciones básicas PyS) no eliminan los defectos abiertos.
+- Auditoría.txt no pudo leerse por el conector y no se modifica. No se ejecutaron servicios, Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner, ACL/deployments ni E2/E3.
+- Sin cambios funcionales o productivos, merge o despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.

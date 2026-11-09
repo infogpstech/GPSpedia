@@ -1573,3 +1573,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Auditoría.txt no pudo leerse por el conector y no se modifica. No se ejecutaron navegador, XSS real, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, carga, pruebas de roles/sesiones ni deployments.
 - Sin cambios funcionales/productivos, merge o despliegue.
 - Siguiente: AUD-T-019 — Validaciones de integridad en backend y batería exhaustiva de pruebas automatizadas (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-019 (2026-11-09)
+- Sesión AUD-20261109-S166 / checkpoint AUD-CP-0165. E1 6f0f901179c10833cbeedcb2767a25fcdd085b0d; revalidación previa CP-0121/HEAD 6210e4dda1c4ea58c378bfc33ec2b1a8c33b5a54; HEAD c61e00c2926b2b4ce5480ba755789ce4c0fffa1e; árbol 2df5b97066ef18998c6d1c56032d920787ded20b; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits, cero detrás, merge-base idéntico y diff solo de ocho documentos; CP-0121→HEAD: 44 commits, cero detrás, merge-base idéntico y diff solo de cinco documentos. Los 15 archivos funcionales/técnicos conservan SHA exactos de E1.
+- H-AUD-019-001 a 014 permanecen abiertos; AUG-122 a 135 pendientes; VAL-28 planificada/no ejecutada. Se confirman defectos de auth WRITE/UTILITIES, contratos Tutoriales, restore, validación previa, vídeo suplementario, relaciones PyS, allowlist ADMIN, atomicidad USERS, aprobación, VIN, pruebas automatizadas, mapa API y publicación README.
+- Services/Test/Auth.js y users.js son copias de servicios para una Spreadsheet aislada, sin asserts ni runner. README indica que no existen proyectos Apps Script desplegados y que ADMIN no tiene copia. No se ejecutaron pruebas 31–38 ni VAL-28.
+- No hay nuevos hallazgos, tareas duplicadas ni cierres. Auditoría.txt no pudo leerse por el conector y no se modifica.
+- No se ejecutaron Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, carga, runner, ACL/deployments ni E2/E3. Sin cambios funcionales/productivos, merge o despliegue.
+- Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales (revalidación E1).
