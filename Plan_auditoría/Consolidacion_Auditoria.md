@@ -1080,3 +1080,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - VAL-03, VAL-09, VAL-14 y VAL-16 pendientes; VAL-17 conserva navegación transferida. No se ejecutaron pruebas dinámicas, XSS, FileReader, concurrencia, HTTP, Apps Script V8, Drive/Spreadsheet, YouTube, móvil/PWA, accesibilidad, deployments ni E2/E3.
 - Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-006, mediante revalidación de continuidad.
+
+
+## 43. AUD-T-006 — continuidad E1 revalidada
+- Sesión AUD-20261108-S108; checkpoint AUD-CP-0107; E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8; HEAD cd3ad9621ae87507a28df91534718263feae0d82; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 84 commits; merge-base igual a E1; únicamente ocho documentos modificados. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+- Los seis archivos conservan SHA exactos de E1: lightbox.js, ui.js, offline.js, style.css, index.html y main.js; hashes completos registrados en la sección 58 del plan.
+- H-AUD-006-001 a 003 siguen abiertos; AUG-065 a AUG-067 pendientes; adenda AUG-064 vigente para el sink adicional de updateSlide(). No duplicar H-AUD-005-001/AUG-064, caché general AUD-T-009/AUD-T-038 ni History API AUD-T-007.
+- No se ejecutaron navegador, móviles, PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación de imágenes, canvas ni pruebas de gestos. La continuidad estática no certifica comportamiento visual ni funcional.
+- Sin cambios funcionales, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-007, mediante revalidación de continuidad.

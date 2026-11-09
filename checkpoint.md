@@ -2572,3 +2572,32 @@ No se ejecutaron navegador, XSS dinámico, FileReader real, concurrencia, HTTP, 
 Commit documental único: docs(audit): verify AUD-T-005 continuity; parent 5c6bd001be440ee790e3ae6ae73d6ff3271712b4. El commit que incorpora este checkpoint queda identificado en el historial de Git por ese mensaje.
 Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0107
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S108
+Tarea: AUD-T-006 — revalidación de continuidad E1 de visualización técnica, lightbox, carrusel de cables y transparencias.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: cd3ad9621ae87507a28df91534718263feae0d82.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 5ab07e75513b05a51a4c62fbc731e451105eb1a8.
+Alcance: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+Estado inicial: E1 estática completada; H-AUD-006-001 a 003 abiertos; AUG-065 a AUG-067 pendientes; adenda AUG-064 vigente para updateSlide()/slideText.innerHTML.
+Fase: checkpoint inicial preparado; revalidación de continuidad E1; sin autorización para cambiar archivos funcionales.
+Riesgos/dependencias: variantes de resolución y claves de caché; transparencia y mix-blend-mode; gesto horizontal/vertical del carrusel; sink de contenido del cable bajo AUG-064; límites de caché general y navegación asignados a AUD-T-009/AUD-T-038 y AUD-T-007.
+Siguiente acción: comparar E1→HEAD, verificar SHA de los seis archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0107
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S108
+Tarea: AUD-T-006 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-006-001 a 003 abiertos; AUG-065 a AUG-067 pendientes; adenda AUG-064 vigente.
+HEAD padre confirmado: cd3ad9621ae87507a28df91534718263feae0d82. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación 5ab07e75513b05a51a4c62fbc731e451105eb1a8→cd3ad9621ae87507a28df91534718263feae0d82: 84 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los seis archivos funcionales del alcance mantienen SHA exactos de E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: variantes de resolución/caché sin separación; mix-blend-mode afecta imágenes opacas; el swipe del carrusel ignora el eje vertical. Se conservan AUG-065 a AUG-067 y la adenda AUG-064; no se crean hallazgos ni tareas duplicados.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos, tareas y adenda ya están registrados.
+No se ejecutaron navegador, dispositivos móviles, PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación de imágenes, canvas ni pruebas de gestos. Sin cambios funcionales, CSS, HTML de aplicación, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+Commit documental único: pendiente de creación; parent cd3ad9621ae87507a28df91534718263feae0d82.
+Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+================================================================================
