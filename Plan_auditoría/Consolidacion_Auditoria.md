@@ -1175,3 +1175,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia ni Service Worker en dispositivo.
 - Solo continuidad estática/documental; sin cambios funcionales, servicios, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.
+
+
+## 53. AUD-T-015 — continuidad E1 y revalidación de búsqueda/jerarquía
+- Sesión AUD-20261108-S118; checkpoint AUD-CP-0117; E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695; HEAD inicial 0a3873072cc253fe9ea134e1712585cc0988fbc1; árbol 0d733c4dd410895f22cca5135e1953084f3fab39; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los nueve archivos funcionales del alcance conservan SHA exactos de E1.
+- H-AUD-015-001 a 004 permanecen abiertos; H-AUD-037-003 a 006 siguen relacionados con AUG-049. AUG-098 a AUG-101 y VAL-24 pendientes.
+- Filtros rápidos continúan cancelados/retirados; no reintroducirlos ni registrar su ausencia como regresión.
+- No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3.
+- Solo continuidad estática/documental; sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.

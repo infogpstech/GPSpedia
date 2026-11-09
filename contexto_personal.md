@@ -1147,3 +1147,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-014-001 a 003 abiertos; AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin hallazgos ni tareas duplicadas.
 - No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia ni Service Worker en dispositivo. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.
+
+
+## Continuidad de auditoría — AUD-T-015 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S118 / AUD-CP-0117; rama GPSpedia2.2.5_work, HEAD inicial 0a3873072cc253fe9ea134e1712585cc0988fbc1; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; nueve archivos del alcance conservan SHA idénticos.
+- H-AUD-015-001 a 004 abiertos; H-AUD-037-003 a 006 relacionados; AUG-098 a AUG-101 y VAL-24 pendientes.
+- Filtros rápidos cancelados/retirados y no se reintroducen. No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, accesibilidad, móvil ni E2/E3.
+- Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.

@@ -2933,3 +2933,41 @@ Sin cambios funcionales, servicios, endpoints, contratos, configuración, assets
 Commit documental único: docs(audit): verify AUD-T-014 continuity; parent acde0781b7592a73704dab30a58e4208bf29cb31.
 Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0117
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S118
+Tarea: AUD-T-015 — revalidación de continuidad E1 de búsqueda global, jerarquía, filtros cancelados y estandarización de botones.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 0a3873072cc253fe9ea134e1712585cc0988fbc1 | árbol: 0d733c4dd410895f22cca5135e1953084f3fab39.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: c4f61a1f8dc402c9fec6802032ca7d7f9c304695.
+Revalidación previa: AUD-20261108-S096 / AUD-CP-0095, HEAD 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5.
+Alcance: navigation.js, ui.js, main.js, style.css, index.html, users.html, add_cortes.html, Services/catalog.js y VinDifferentialEngine.js.
+Estado inicial: E1 estática completada; H-AUD-015-001 a 004 abiertos; H-AUD-037-003 a 006 relacionados; AUG-098 a AUG-101 y VAL-24 pendientes. Filtros rápidos cancelados/retirados.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni reintroducir filtros rápidos.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 8c43de19c0acce5fce84524bdadeab1827818f2a
+- Plan_auditoría/Consolidacion_Auditoria.md: b9dcd58b59c748937b426ba7b194f15bf1e5e477
+- ChangesLogs.txt: 33f710b6e401161f180ed068876d97b6a3d35d90
+- contexto_personal.md: 7430032e62f4c71abf5a91d2c90a90b5af0c16f0
+- checkpoint.md: 618856f64ef5cd75826ae213e9c92b2a5069261d
+Siguiente acción: comparar E1→HEAD, verificar SHA de los nueve archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0117
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S118
+Tarea: AUD-T-015 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-015-001 a 004 abiertos; H-AUD-037-003 a 006 relacionados; AUG-098 a AUG-101 y VAL-24 pendientes.
+HEAD padre confirmado: 0a3873072cc253fe9ea134e1712585cc0988fbc1; árbol inicial 0d733c4dd410895f22cca5135e1953084f3fab39. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los nueve archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: query reflejada en innerHTML; referencias residuales a filtros cancelados; estilos de botones no unificados; marcadores sintéticos de sección usados como marcas. H-AUD-015-001 a 004 permanecen abiertos.
+Tareas/relaciones: H-AUD-037-003 a 006 y AUG-049 conservados; AUG-098 a AUG-101 pendientes; VAL-24 pendiente. Filtros rápidos siguen cancelados/retirados. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, DOM, XSS controlado, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-015 continuity; parent 0a3873072cc253fe9ea134e1712585cc0988fbc1.
+Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.
+================================================================================

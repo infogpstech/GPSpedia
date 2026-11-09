@@ -2905,3 +2905,30 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: d44fda98cf9cdf66aa298dac5f50c47f50266f91
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.
+
+
+## 68. Continuidad verificada — AUD-T-015 (revalidación E1)
+Sesión AUD-20261108-S118 | Checkpoint AUD-CP-0117 | E1 histórica c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | HEAD inicial 0a3873072cc253fe9ea134e1712585cc0988fbc1 | árbol inicial 0d733c4dd410895f22cca5135e1953084f3fab39 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S033 / AUD-CP-0033. Revalidación previa AUD-20261108-S096 / AUD-CP-0095, HEAD 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los nueve archivos funcionales del alcance aparece en el diff.
+Los nueve archivos conservan SHA idénticos a E1:
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+H-AUD-015-001 a H-AUD-015-004 permanecen abiertos. H-AUD-037-003 a 006 continúan relacionados con AUG-049, sin duplicación. AUG-098 a AUG-101 y VAL-24 siguen pendientes.
+La función de filtros rápidos permanece cancelada/retirada según Tareas.txt y el historial de alcance. No se reactiva ni se interpreta como regresión su ausencia en HTML/CSS.
+No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. La continuidad Git no certifica comportamiento real.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 8c43de19c0acce5fce84524bdadeab1827818f2a
+- Plan_auditoría/Consolidacion_Auditoria.md: b9dcd58b59c748937b426ba7b194f15bf1e5e477
+- ChangesLogs.txt: 33f710b6e401161f180ed068876d97b6a3d35d90
+- contexto_personal.md: 7430032e62f4c71abf5a91d2c90a90b5af0c16f0
+- checkpoint.md: 618856f64ef5cd75826ae213e9c92b2a5069261d
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación de continuidad E1).
