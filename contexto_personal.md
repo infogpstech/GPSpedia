@@ -1123,3 +1123,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-011-001 a 007 abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-043/AUG-057 conservadas. VAL-20/03/09/13/14 pendientes de ejecución real.
 - No se ejecutaron navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, XSS, cargas, concurrencia ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## Continuidad de auditoría — AUD-T-012 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S115 / AUD-CP-0114; rama GPSpedia2.2.5_work, HEAD inicial f5895ab64e9468e6cc8d8004978a8cb471d8a573; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; siete archivos del alcance conservan SHA idénticos.
+- H-AUD-012-001 a 008 abiertos o vinculados; AUG-088/AUG-089/AUG-090 pendientes; adendas AUG-043/AUG-087/AUG-068 a 071 conservadas. VAL-21/03/17 pendientes de ejecución real.
+- No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos/deployment, modales, gestos ni pruebas multiusuario. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.

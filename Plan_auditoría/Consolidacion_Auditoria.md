@@ -1148,3 +1148,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - VAL-20 y VAL-03/09/13/14 pendientes. No se ejecutaron navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, XSS, cargas, concurrencia ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## 50. AUD-T-012 — continuidad E1 y revalidación de asociación PyS–vehículos
+- Sesión AUD-20261108-S115; checkpoint AUD-CP-0114; E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b; HEAD inicial f5895ab64e9468e6cc8d8004978a8cb471d8a573; árbol dffa7da791ae461025ab07341ea843586a73f922; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los siete archivos funcionales del alcance conservan SHA exactos de E1.
+- H-AUD-012-001 a 008 permanecen abiertos o vinculados; AUG-088/AUG-089/AUG-090 pendientes; AUG-043/AUG-087/AUG-068 a 071 conservan sus ámbitos relacionados.
+- VAL-21 y VAL-03/VAL-17 pendientes. No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos/deployment, modales, gestos ni pruebas multiusuario.
+- Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.

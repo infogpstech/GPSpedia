@@ -2827,3 +2827,28 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 918cd2451c94f5ff04a9b8a39022057fac179db4
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo (revalidación de continuidad E1).
+
+
+## 65. Continuidad verificada — AUD-T-012 (revalidación E1)
+Sesión AUD-20261108-S115 | Checkpoint AUD-CP-0114 | E1 histórica 2afdde923d14e4f3dd078d347007b15e5ab09b2b | HEAD inicial f5895ab64e9468e6cc8d8004978a8cb471d8a573 | árbol inicial dffa7da791ae461025ab07341ea843586a73f922 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S030 / AUD-CP-0030. Revalidación previa AUD-20261108-S093 / AUD-CP-0092, HEAD eb49d689dd1dec087db46ca11640942491ec6d9a.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los siete archivos del alcance aparece en el diff.
+Los siete archivos conservan SHA idénticos a E1:
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+H-AUD-012-001 a H-AUD-012-008 permanecen abiertos o vinculados a tareas existentes: pérdida del contexto anti-ciclo tras mutaciones; pila modal duplicada/incompleta; restauración de scroll/carrusel; callsites sin credenciales requeridas; integridad referencial y serialización de relaciones; título de acordeón inconsistente; consultas getPysData redundantes; ausencia de suite Playwright reproducible.
+AUG-088/AUG-089/AUG-090 continúan pendientes. AUG-043/AUG-087 y AUG-068 a AUG-071 mantienen sus ámbitos relacionados; H-AUD-011-007/AUG-087 se conserva como antecedente. No se duplican hallazgos ni tareas.
+VAL-21 y las validaciones transversales VAL-03/VAL-17 permanecen pendientes de ejecución. No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, pruebas de permisos/deployment, modales, gestos ni pruebas multiusuario. La continuidad Git no certifica E2/E3.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: a142417dbd4ad8645e8763b09e69371b2552b2f4
+- Plan_auditoría/Consolidacion_Auditoria.md: fd774d5cca6af11f105402be37a1373380fe0aeb
+- ChangesLogs.txt: e319bd01f59e202b615fb76c13ef3d84ccf988d0
+- contexto_personal.md: b7a6b4faad9f44a39d7fe6416ae0fdc2fe0130f0
+- checkpoint.md: 70f8f2cd6efbba57518226a4dd0bbb10a33741f0
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, configuración, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación de continuidad E1).
