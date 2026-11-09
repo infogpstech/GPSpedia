@@ -4229,3 +4229,53 @@ La revalidación es documental. No se modifican Service Worker, manifest, HTML/C
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas consultadas no definen un patrón verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
 
 **Siguiente unidad:** AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación de continuidad E1).
+
+
+## 107. Continuidad incremental — AUD-T-010: reportes de problemas y sugerencias de cambios en cortes
+
+**Sesión:** AUD-20261109-S157  
+**Checkpoint:** AUD-CP-0156  
+**E1 original:** 9b1401d37ea8c7b78a7ae9117c90afc4deb68009 (AUD-20261108-S028 / AUD-CP-0028; E1 estática completada).  
+**Revalidación previa de AUD-T-010:** AUD-20261108-S113 / AUD-CP-0112; HEAD 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7.  
+**HEAD inicial de esta sesión:** 956eaf8068b7a713661805ae358a3dfaf538aa0b; árbol 3800683fd64ca9b678b8747cc593089495fb5125.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-010-001 A 007 ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad del envío de reportes de problemas asociados a cortes/testigos, metadatos de reporte, adjuntos, bandeja Inbox y envío de sugerencias de cambios, incluida la separación entre Feedbacks y Cortes. Archivos de alcance:
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `api-config.js`: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `Services/feedback.js`: `3db189523f6cb849d33550f29971c0ec6f386b3a`
+- `Spreadsheet/GPSpedia_DB_columnas.md`: `21e353fd74ad97496de4ff15677d03a3cf9b5f05`
+
+Comparación E1→HEAD: 129 commits posteriores, estado ahead, cero commits detrás y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los cuatro archivos funcionales/de esquema del alcance aparece en el diff. Los cuatro conservan los SHA exactos de E1 indicados arriba.
+
+Comparación desde AUD-CP-0112 / 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7: 44 commits posteriores, cero detrás y merge-base idéntico al HEAD anterior. El diff contiene únicamente cinco documentos: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No hay cambios en los cuatro archivos del alcance desde la revalidación anterior.
+
+### Hallazgos, tareas y dependencias
+
+H-AUD-010-001 a H-AUD-010-007 permanecen abiertos y sin cambios de estado:
+1. `reportProblem` y `suggestCutChange` no validan sesión ni derivan identidad confiable en backend; `userId/userName` pueden ser controlados desde cliente.
+2. Posible stored XSS en Inbox por inserción de valores dinámicos (por ejemplo `item.subject`/ `item.user`) mediante `innerHTML` sin escape suficiente.
+3. El adjunto individual del reporte solo registra el nombre local; la imagen no se carga ni persiste como adjunto.
+4. No se valida suficientemente la existencia de `reportId` ni la correspondencia reporte–vehículo–corte–slot real.
+5. Flujo de adjuntos con riesgos de FileReader sin manejo completo de error/abort, fallos de Drive silenciados, MIME fijo, ausencia de límites y permisos `ANYONE_WITH_LINK`.
+6. Inserción de sugerencias sin lock ni idempotencia; riesgo de colisión o duplicación concurrente.
+7. Validación backend insuficiente de `details`, `problemText` y `proposedValues`, incluidas propiedades, tipos y longitudes.
+
+AUG-075 a AUG-081 continúan pendientes. H-TR-01 a H-TR-07 y H-SUG-01 a H-SUG-06 se mantienen como correcciones estáticas históricas; no se reabren sin evidencia nueva. Se conservan los controles de `reportMetadata`, compatibilidad histórica de nueve columnas A:I, almacenamiento versionado independiente de `suggestion_cut` y ausencia de escritura en `Cortes` por el flujo de sugerencias. VAL-19, VAL-03 y VAL-09 siguen pendientes de ejecución real. No se crean hallazgos, tareas ni IDs nuevos; no se cierran ni reclasifican registros.
+
+### Verificaciones y límites
+
+Se verificaron HEAD de ambas ramas, árbol actual, comparación E1→HEAD, comparación AUD-CP-0112→HEAD, merge-base, lista completa de archivos del diff y SHA de los cuatro archivos funcionales/de esquema.
+
+No se ejecutaron navegador, XSS controlado, Apps Script, HTTP, FileReader real, Drive, Spreadsheet, concurrencia, sesión revocada, pruebas de permisos/ACL ni deployments. Tampoco se ejecutaron pruebas E2/E3. La continuidad Git no certifica autenticación real, persistencia de adjuntos, seguridad XSS efectiva, integridad de referencias, concurrencia ni comportamiento con datos productivos.
+
+### Integridad y alcance de cambios
+
+La revalidación es documental. No se modifican código, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los siete hallazgos, las siete tareas y las relaciones históricas ya están registrados. No se ejecuta merge ni despliegue.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas consultadas no definen un patrón verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
+
+**Siguiente unidad:** AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación de continuidad E1).

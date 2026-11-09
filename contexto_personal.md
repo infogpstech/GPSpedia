@@ -1479,3 +1479,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Solo documentación; sin cambios funcionales, Service Worker, manifest, assets, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Se conserva la regla de renombrado automático, pero no existe patrón normativo verificable; no se inventa ni se aplica.
 - Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-010 (2026-11-09)
+- Sesión AUD-20261109-S157 / checkpoint AUD-CP-0156. E1 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; revalidación previa CP-0112/HEAD 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7; HEAD actual 956eaf8068b7a713661805ae358a3dfaf538aa0b; árbol 3800683fd64ca9b678b8747cc593089495fb5125; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; los cuatro archivos funcionales/de esquema conservan SHA exactos de E1.
+- CP-0112→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff de cinco documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-010-001 a 007 abiertos; AUG-075 a AUG-081 pendientes; H-TR/H-SUG históricos conservados sin reapertura; controles reportMetadata, compatibilidad A:I, suggestion_cut versionado y no escritura en Cortes preservados; VAL-19/03/09 pendientes.
+- No se ejecutaron navegador, XSS, Apps Script, HTTP, FileReader, Drive, Spreadsheet, concurrencia, sesión revocada, ACL, deployments ni E2/E3. No se certifica seguridad ni integración dinámica.
+- Solo documentación; sin cambios funcionales, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Se conserva la regla de renombrado automático, pero no existe patrón normativo verificable; no se inventa ni se aplica.
+- Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación E1).

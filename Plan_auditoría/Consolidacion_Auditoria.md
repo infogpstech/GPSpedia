@@ -1581,3 +1581,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Solo documentación. Sin cambios de Service Worker, manifest, HTML/CSS de aplicación, JavaScript funcional, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - La instrucción de renombrado automático se conserva; no existe patrón normativo verificable, por lo que no se infiere ni se renombra.
 - Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación E1).
+
+
+## 92. AUD-T-010 — continuidad E1 y revalidación incremental de reportes/sugerencias
+- Sesión AUD-20261109-S157; checkpoint AUD-CP-0156; E1 9b1401d37ea8c7b78a7ae9117c90afc4deb68009; árbol E1 283e324bca6e2b055e353059a3aa00ce38f66f5d; revalidación previa CP-0112/HEAD 4d53ee67f3ad4a5ad2d4f6c676cafc5e329530d7; HEAD actual 956eaf8068b7a713661805ae358a3dfaf538aa0b; árbol 3800683fd64ca9b678b8747cc593089495fb5125; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos. Los cuatro archivos del alcance conservan SHA idénticos a E1.
+- CP-0112→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico al HEAD anterior y diff limitado a cinco documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-010-001 a 007 permanecen abiertos: identidad/sesión client-controlled; stored XSS en Inbox; adjunto no persistido; vínculo reportId–vehículo–corte–slot no verificado; riesgos FileReader/Drive/MIME/ACL; sugerencias sin lock/idempotencia; validación backend incompleta.
+- AUG-075 a AUG-081 pendientes; H-TR-01 a 07 y H-SUG-01 a 06 se conservan como correcciones estáticas históricas sin reapertura. Controles de reportMetadata, compatibilidad A:I, suggestion_cut versionado y no escritura en Cortes preservados. VAL-19/03/09 pendientes.
+- No se ejecutaron navegador, XSS controlado, Apps Script, HTTP, FileReader real, Drive, Spreadsheet, concurrencia, sesión revocada, ACL ni deployments/E2/E3. Continuidad Git no certifica integración ni seguridad dinámica.
+- Solo documentación. Sin cambios de código, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- La instrucción de renombrado automático se conserva; no existe patrón normativo verificable, por lo que no se infiere ni se renombra.
+- Siguiente: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización (revalidación E1).
