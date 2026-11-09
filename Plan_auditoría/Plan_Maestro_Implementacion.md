@@ -162,3 +162,66 @@ Es obligatoria la norma `Plan_auditoría/Normas_Gestion_Documental.md`. Los regi
 - Las tareas históricas marcadas [X] no se promueven automáticamente: requieren evidencia de revisión sintáctica y demás validaciones obligatorias.
 - H-AUD-044 se resuelve documentalmente. H-AUD-045 y H-AUD-046 quedan abiertos como tareas documentales independientes.
 - Los filtros rápidos permanecen cancelados y excluidos de la hoja de ruta Beta.
+
+
+## 14. Adenda operativa — orden único de ejecución y ubicación de requisitos
+**Fecha:** 2026-11-09. **Tarea documental:** DOC-PLAN-2026-003. Esta adenda vuelve ejecutable la secuencia de las fases 0–9 y prevalece cuando los rangos repetidos de las secciones 3–7 parezcan asignar una misma AUG a varias fases. No elimina ni reescribe el historial de planificación.
+
+### 14.1. Fuentes canónicas de requisitos
+Cada ejecución debe abrir la ficha completa y sus adendas en el archivo indicado antes de auditar código. Los resúmenes del Plan Maestro no sustituyen los requisitos.
+
+| Identificador / tipo | Archivo canónico de requisitos | Uso |
+|---|---|---|
+| AUG-001 a AUG-099 | `Tareas_pendientes_parte1.txt` | Fichas operativas y adendas de la primera serie AUG. |
+| AUG-100 a AUG-152 | `Tareas_pendientes_parte2.txt` | Fichas operativas y adendas de la segunda serie AUG. |
+| Requisitos históricos abiertos o parciales sin reconciliar | `Tareas_pendientes_parte3.txt` y `Tareas_pendientes_parte4.txt` | Solo investigación y reconciliación; no ejecutar directamente ni duplicar una AUG. La fuente original es `Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt` a `parte_004.txt`. |
+| H-AUD-### y hallazgos | `Auditoría.txt` y, para antecedentes históricos, `Olds/Documentacion_Legacy/Auditoría_legacy_parte_001.txt` | Describe evidencia del problema; no sustituye los criterios de aceptación de la tarea AUG. |
+| DOC-README-2026-001/002 | `Tareas_pendientes_parte2.txt`, sección «TAREAS DOCUMENTALES ABIERTAS» | Correcciones de README y política de publicación. |
+| Funcionalidades pospuestas a Beta | `lista_beta.txt` | No ejecutar antes de superar la compuerta Beta; cada elemento debe convertirse en una tarea formal con requisitos y pruebas. |
+| Normas de documentación y estados | `Plan_auditoría/Normas_Gestion_Documental.md` | Estados, append-only, rotación y límite documental. |
+| Procedimiento obligatorio de cada tarea | `Proceso de desarollo.md` | Orden de auditoría, implementación, verificaciones, Code Review y commit único. |
+| Compuerta entre tareas | `Plan_auditoría/Protocolo_Ciclo_Continuo.md` | Validación de checkpoint/HEAD y resolución de bloqueos previos. |
+| Procedimiento Git autorizado | `Contexto de trabajo.md` | Git Database API, un árbol, un commit y update_ref con expected SHA. |
+
+### 14.2. Regla de asignación única
+1. Cada ID AUG tiene una sola fase propietaria para su ejecución. Si aparece citado en otra fase, la segunda aparición significa dependencia o referencia cruzada, nunca una segunda implementación.
+2. Los rangos de fases anteriores que se solapan se interpretan según la matriz de propiedad de 14.3. Si una AUG está cerrada con evidencia, no se reabre salvo regresión o nueva adenda explícita.
+3. No ejecutar tareas legacy de partes 3–4 hasta reconciliarlas contra las fichas AUG de partes 1–2. Conservar su texto y registrar la correspondencia; si no hay equivalencia, crear una tarea nueva con ID disponible conforme a las normas.
+4. Antes de cada tarea, consultar estado y dependencias; una prioridad superior no permite saltar requisitos previos.
+5. Las correcciones documentales DOC-README-2026-001/002 preceden a cualquier tarea que dependa de la política o del inventario de Services. No borrar ni modificar Services por inferencia.
+6. Los filtros rápidos están cancelados: AUG-099 solo elimina/verifica remanentes según su ficha; no reconstruir filtros ni sus controles.
+
+### 14.3. Orden maestro y propiedad de ejecución
+Las fases se ejecutan en este orden. Dentro de cada fase, respetar las olas y dependencias descritas. Los IDs se conservan tal como fueron creados.
+
+| Orden | Fase / prioridad | Tareas propietarias y orden interno | Requisitos completos |
+|---:|---|---|---|
+| 0 | Gobierno y saneamiento documental | Primero DOC-README-2026-001 (cancelación de filtros rápidos en README); después DOC-README-2026-002 (verificar inventario/política de Services y corregir documentación solo con evidencia). Luego AUG-001 (protección de rama), AUG-004 (cancelación/continuidad), AUG-003 (contrato de Services/Utilities). AUG-002 se reserva para validación de deployments en Fase 9; AUG-112 es trazabilidad documental y se resuelve con su hallazgo vinculado, sin repetir auditorías. | DOC: `Tareas_pendientes_parte2.txt`; AUG: `Tareas_pendientes_parte1.txt`; AUG-112: `Tareas_pendientes_parte2.txt`. |
+| 1 | Seguridad, identidad, sesiones y XSS — P0 | Ola 1: AUG-005–008, 014, 016–017 y 147 (revocación, cierre, expiración, sincronización entre pestañas y limpieza de estado). Ola 2: AUG-009–013 (validación de identidad, serialización USERS, KDF/migración, contador y coordinación de logs). Ola 3: AUG-039, 042, 075, 109, 115, 117–118, 122, 129–130 (autorización backend, actor/rol, confianza, última cuenta y mutaciones privilegiadas). Ola 4: AUG-076, 082, 113–114 y la parte de seguridad de AUG-064 (XSS, URLs y sanitización autoritativa). No iniciar mensajería ni ampliar contenido enriquecido hasta cerrar las olas aplicables. | `Tareas_pendientes_parte1.txt` para AUG-005–014, 016–017, 039, 042, 064, 075–082; `Tareas_pendientes_parte2.txt` para AUG-109, 113–118, 122, 129–130, 147. |
+| 2 | Integridad de datos, concurrencia y recuperación — P0 | Ola 1: AUG-018 y 125 (backup, restore, snapshot y rollback antes de migraciones sensibles). Ola 2: AUG-034–038, 053–058, 123, 126 y 136–138 (coordinación entre servicios, idempotencia, snapshots, operaciones Drive/Spreadsheet y recuperación). Ola 3: AUG-019–033 y 041 (ADMIN/Drive/Logs/Utilities restantes), sin repetir las tareas de respaldo, historial de imágenes o coordinación ya ejecutadas en esta fase. Ola 4: AUG-055–063 y 077–080, 083–090, 128 (ciclos durables, adjuntos, VIN, asociaciones y relaciones), siempre después de sus controles de autorización. | `Tareas_pendientes_parte1.txt` para AUG-018–041, 053–090; `Tareas_pendientes_parte2.txt` para AUG-123, 125–126, 128, 136–138. |
+| 3 | Feedback e Inbox — P1/P2 | Primero completar las dependencias de seguridad de Fase 1 y de integridad de Fase 2. Después AUG-040, 043, 077–081, 111, 119–121 y 152; integrar 113–118 solo como dependencias ya resueltas, no como segunda ejecución. Ejecutar VAL-19, VAL-26, VAL-27 y VAL-34 después de implementar sus contratos y sin duplicar casos. | `Tareas_pendientes_parte1.txt` para AUG-040, 043, 077–081; `Tareas_pendientes_parte2.txt` para AUG-111, 113–121, 152. VAL-34 y aceptación detallada de AUG-152 se consultan también en `Tareas_pendientes_parte2.txt`. |
+| 4 | Catálogo, cortes, VIN y búsqueda — P1/P3 | Tras asegurar escrituras y recuperación: AUG-048–052, 055–063, 065–074, 098–099, 101, 106–112 y 151; ejecutar solo la parte de cada AUG no cerrada en Fases 1–2. AUG-036 y 126 son dependencias de esquema/escritura propietarias de Fase 2: no repetirlas aquí. AUG-099 se limita a retirar remanentes de filtros cancelados. | `Tareas_pendientes_parte1.txt` para AUG-048–099; `Tareas_pendientes_parte2.txt` para AUG-101, 106–112, 151. |
+| 5 | PyS, Tutoriales y YouTube — P1/P2 | Con autorización, XSS, escritura y adjuntos seguros: AUG-082–097, 124, 127, 128, 131. AUG-082 es propiedad de Fase 1 por XSS; AUG-083–090 y 128 son propiedad de Fase 2 por almacenamiento/integridad; aquí solo se completan las partes de integración y experiencia que sigan pendientes, sin repetir la implementación propietaria. | `Tareas_pendientes_parte1.txt` para AUG-082–097; `Tareas_pendientes_parte2.txt` para AUG-124, 127–128, 131. |
+| 6 | PWA, navegación, responsive y accesibilidad — P3 | Después de estabilizar contratos/datos: AUG-047, 065–074, 098–105, 148–149. Las tareas 065–071 que sean dependencias de imágenes/History API se ejecutan una sola vez aquí, salvo que una corrección de seguridad obligue a adelantarlas. | `Tareas_pendientes_parte1.txt` para AUG-047, 065–074, 098; `Tareas_pendientes_parte2.txt` para AUG-100–105, 148–149. |
+| 7 | ADMIN, Drive, telemetría y arquitectura residual — P2/P4 | Completar únicamente deuda no resuelta de AUG-019–027, 033, 041, 122–139 y 150. Las AUG de respaldo, coordinación, autorización o integridad que ya sean propietarias de Fases 1–2 no se repiten. Consolidar helpers solo después de revisar call graph y contratos. | `Tareas_pendientes_parte1.txt` para AUG-019–027, 033, 041; `Tareas_pendientes_parte2.txt` para AUG-122–139, 150. |
+| 8 | Impresión y presentación — P3 | Después de sanitización y estabilidad de datos: AUG-095–097 y 140–146. No ampliar sinks HTML antes de la ola XSS de Fase 1. | `Tareas_pendientes_parte1.txt` para AUG-095–097; `Tareas_pendientes_parte2.txt` para AUG-140–146. |
+| 9 | Validación integral, deployments y cierre | Ejecutar AUG-002 y AUG-133; completar matrices VAL-01 a VAL-34 según sus casos; separar E2/E3/E4/E5; probar deployments aislados y registrar SHA exacto. No declarar cierre por existencia de matrices ni por E1 estática. | `Tareas_pendientes_parte1.txt` para AUG-002; `Tareas_pendientes_parte2.txt` para AUG-133 y VAL-34; `Plan_auditoría/Plan_Maestro_Implementacion.md` (esta matriz) y las fichas VAL vinculadas a las tareas. |
+
+### 14.4. Dependencias que bloquean el avance
+- No iniciar una tarea que escriba datos antes de tener autorización backend, validación de payload, idempotencia, coordinación de concurrencia y recuperación aplicables.
+- No iniciar Inbox/mensajería (AUG-152) antes de cerrar sesión/actor/rol, XSS, permisos de participantes, integridad de mensajes y controles de abuso.
+- No implementar rich text ni renderizado HTML nuevo antes de cerrar sanitización autoritativa y sinks relacionados.
+- No migrar Spreadsheet/Drive sin respaldo verificable, staging, rollback y prueba de fallo parcial.
+- No ejecutar Beta hasta superar íntegramente la compuerta de `lista_beta.txt`.
+- No empezar la siguiente tarea si el checkpoint, HEAD, Code Review o hallazgos bloqueantes de la tarea anterior no cumplen `Plan_auditoría/Protocolo_Ciclo_Continuo.md`.
+
+### 14.5. Procedimiento obligatorio dentro de cada tarea
+El orden de trabajo no se sustituye por esta matriz. Para cada tarea individual se debe seguir, sin saltos, `Proceso de desarollo.md`: checkpoint inicial; auditoría diagnóstica archivo/función/línea sin editar; registro en Auditoría.txt; creación de respaldo exacto; implementación mínima; pruebas funcionales; comparación contra respaldo; eliminación de temporales después de Code Review y antes del commit; revisión de integridad/efectos colaterales; revisión final línea/función/archivo; ChangesLogs.txt; actualización de Tareas.txt y del registro independiente correspondiente; checkpoint final como último documento antes del único commit; un commit Git Database API; verificación de commit, parent, HEAD de trabajo y rama base intacta. Toda observación de Code Review que requiera cambios reinicia el ciclo completo.
+
+### 14.6. Control de estado y ubicación de cierres
+- Pendientes y requisitos: `Tareas_pendientes_parte1.txt` a `Tareas_pendientes_parte4.txt`.
+- Cierres demostrados: `tareas_completadas_parte1.txt` (rotar secuencialmente cuando corresponda).
+- Funcionalidades diferidas: `lista_beta.txt`.
+- Índice de las tareas AUG: `Plan_auditoría/Aug_Tareas.md`.
+- Historial inmutable: `Olds/Documentacion_Legacy/`.
+Una tarea solo pasa a completada cuando su ficha, evidencia, revisión sintáctica de todos los archivos de código afectados, pruebas funcionales aplicables, Code Review y commit verificable cumplen la compuerta. Las tareas documentales declaran sintaxis de código N/A y pasan revisión documental.

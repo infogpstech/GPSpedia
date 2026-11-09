@@ -31,3 +31,16 @@ Validación: 151 IDs AUG únicos; 49 registros legacy abiertos/parciales preserv
 No se modificó código, servicios, endpoints, datos productivos ni deployments.
 Siguiente: resolver DOC-README-2026-001/002; después continuar Fase 1 P0 del Plan Maestro.
 ================================================================================
+
+
+
+================================================================================
+TAREA DOC-PLAN-2026-003 — ORDEN ÚNICO DEL PLAN MAESTRO Y RUTAS A REQUISITOS
+Fecha: 2026-11-09.
+Estado: COMPLETADA EN ALCANCE DOCUMENTAL.
+Requisitos: adenda 14 de Plan_auditoría/Plan_Maestro_Implementacion.md.
+Resultado: fases y olas ordenadas; IDs AUG con propiedad única de ejecución; requisitos vinculados a Tareas_pendientes_parte1.txt/parte2.txt; partes 3–4 reservadas para reconciliación legacy; lista_beta.txt y normas vinculadas; dependencias bloqueantes explícitas.
+Validación: rutas, identificadores, referencias, límites y coherencia documental revisados. No se modificó código, servicios, endpoints ni deployments.
+Hallazgo H-AUD-047 resuelto documentalmente.
+Siguiente: DOC-README-2026-001/002; después Fase 1 P0.
+================================================================================

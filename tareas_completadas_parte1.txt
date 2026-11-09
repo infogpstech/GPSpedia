@@ -54,3 +54,14 @@ Las siguientes tareas aparecen marcadas [X] en Tareas_legacy, pero no se conside
 - TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBUGGING Y CIERRE DE AUDITORÍA GLOBAL [X]
 
 Las tareas y requisitos completos permanecen intactos en Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt a parte_004.txt. Esta lista de marcas históricas no modifica ni invalida el archivo legacy; únicamente evita que un estado antiguo se use como cierre actual sin evidencia.
+
+
+
+================================================================================
+DOC-PLAN-2026-003 — Orden único del Plan Maestro y rutas a requisitos
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: adenda 14 de Plan_auditoría/Plan_Maestro_Implementacion.md; matriz de propiedad por fase/olas, rutas exactas a requisitos, bloqueos y flujo por tarea.
+Sintaxis de código: N/A; no se modificó código.
+Validación documental: referencias de rutas e IDs cotejadas contra archivos vigentes; solapamientos aclarados; partes legacy separadas para reconciliación; límites documentales comprobados.
+Commit: consultar el historial de GPSpedia2.2.5_work para el SHA de esta tarea.
+================================================================================

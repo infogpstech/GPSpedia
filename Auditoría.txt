@@ -39,3 +39,15 @@ Impacto: la documentación no refleja el contenido real y no permite determinar 
 Corrección requerida: verificar visibilidad, política de publicación y contenido esperado; después actualizar README o tomar medidas autorizadas. No eliminar archivos ni cambiar permisos por inferencia.
 Estado: ABIERTO; tarea DOC-README-2026-002.
 ================================================================================
+
+
+
+================================================================================
+H-AUD-047 — Plan Maestro sin propiedad única de tareas ni ruta uniforme a requisitos
+Fecha: 2026-11-09. Tarea: DOC-PLAN-2026-003.
+Severidad: P2 — riesgo de secuenciación y trazabilidad.
+Evidencia: las secciones 4–7 del Plan Maestro citan AUG en varias fases (por ejemplo AUG-018–027, AUG-033–041, AUG-064, AUG-075–082, AUG-095–105, AUG-106–112 y AUG-122–139) sin declarar siempre si son ejecución, dependencia o referencia. Los archivos independientes de pendientes contienen las fichas completas, pero el Plan Maestro no ofrece un mapa uniforme hacia ellos. Las partes 3–4 son registros históricos abiertos/parciales y requieren reconciliación, no ejecución directa.
+Impacto: riesgo de repetir implementaciones, saltar dependencias o trabajar con resúmenes en lugar de los requisitos completos.
+Corrección: adenda 14 del Plan Maestro con propiedad única por fase, olas internas, bloqueos, rutas exactas de requisitos y procedimiento obligatorio por tarea.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-PLAN-2026-003. No se modificó código ni legacy.
+================================================================================

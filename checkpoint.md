@@ -55,3 +55,36 @@ Hallazgos: H-AUD-044 resuelto documentalmente; H-AUD-045 y H-AUD-046 permanecen 
 Siguiente paso: resolver DOC-README-2026-001/002 y después continuar el Plan Maestro por Fase 1 (P0), no iniciar AUD-T-020 como implementación independiente.
 El SHA exacto de este commit se identifica en el historial de GPSpedia2.2.5_work; la rama base no se modifica.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT INICIAL — DOC-PLAN-2026-003
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de trabajo confirmado: 092b8bd73a2f5add8fb1d91b7d107aaf9a06b19d
+Rama base: GPSpedia2.2.5
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: precisar el orden de ejecución del Plan Maestro y enlazar cada grupo de tareas con el archivo canónico de requisitos.
+Alcance: Plan_auditoría/Plan_Maestro_Implementacion.md, checkpoint.md, Auditoría.txt, Tareas.txt, ChangesLogs.txt y tareas_completadas_parte1.txt.
+Auditoría documental: las fases existentes se solapan en IDs AUG y no declaran de forma uniforme el archivo que contiene requisitos completos. La planificación mezcla referencias/dependencias con propiedad de ejecución, por lo que puede ocasionar duplicidad o saltos de prerrequisitos.
+Restricciones: no modificar código, Services, deployments, endpoints, datos productivos, archivos legacy ni Proceso de desarollo.md. No reintroducir filtros rápidos.
+Estado inicial: auditoría del plan y sus fuentes de requisitos realizada; corrección documental pendiente.
+Siguiente acción: agregar matriz de propiedad por fase, orden interno, bloqueos y rutas canónicas; registrar y verificar el commit único.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — DOC-PLAN-2026-003
+Fecha: 2026-11-09
+Estado: COMPLETADA EN ALCANCE DOCUMENTAL.
+HEAD previo: 092b8bd73a2f5add8fb1d91b7d107aaf9a06b19d
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+Archivo principal actualizado: Plan_auditoría/Plan_Maestro_Implementacion.md, adenda 14.
+Archivos de trazabilidad actualizados: checkpoint.md, Auditoría.txt, Tareas.txt, ChangesLogs.txt y tareas_completadas_parte1.txt.
+Cambios: se incorporó una matriz de orden de ejecución por fase y olas, propiedad única de AUG, rutas exactas a requisitos y dependencias bloqueantes. Se aclaró que las partes 3–4 son registros históricos abiertos/parciales que requieren reconciliación y no se ejecutan directamente. Se enlazaron normas y procedimiento obligatorio.
+Verificaciones: consistencia de rutas/IDs contra archivos vigentes; límites documentales; revisión de solapamientos y dependencias; confirmación de que no se modificó código ni legacy.
+No ejecutadas: pruebas funcionales, sintaxis de código, navegador, servicios o deployments; no aplican porque el cambio es exclusivamente documental.
+Pendientes: DOC-README-2026-001/002 continúan abiertas. La matriz organiza su ejecución, no las declara resueltas.
+Siguiente acción: ejecutar DOC-README-2026-001 y DOC-README-2026-002 según Fase 0; después continuar la Fase 1 P0 respetando sus olas.
+================================================================================
