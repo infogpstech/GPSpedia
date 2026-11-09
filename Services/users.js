@@ -210,7 +210,7 @@ function generateNextUserId_(userSheet) {
         if (seen.has(id)) throw new Error('Se detectó un ID de usuario duplicado. No se creó la cuenta.');
         seen.add(id);
 
-        const match = /^USR-(\\d{4,})$/i.exec(id);
+        const match = /^USR-(\d{4,})$/i.exec(id);
         if (match) maxSequence = Math.max(maxSequence, Number(match[1]));
     });
 
