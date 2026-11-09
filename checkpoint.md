@@ -5208,3 +5208,30 @@ Comparación post-edición: documentos existentes append-only y contenido previo
 Sin cambios en código, CSS/HTML de aplicación, servicios, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge. Filtros rápidos de catálogo continúan cancelados.
 Commit único identificable en historial de GPSpedia2.2.5_work; parent d747696416c6d0a67edb558e8ec21e04e1e7eadf. Siguiente: Fase 1 (identidad/sesiones y XSS), luego diseño/implementación AUG-152.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — CORR-H-AUD-040
+Fecha: 2026-11-09
+Tarea: corregir conteo H-AUD erróneo del entregable PLAN-CP-0169.
+Rama: GPSpedia2.2.5_work | Base: GPSpedia2.2.5
+HEAD inicial verificado: deea984c411203cfb06c1d5dfa6b2b7a1b85a138
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Auditoría de tarea anterior: revisión del entregable documental no perteneciente a informes de auditoría. Se verificó el commit deea984c411203cfb06c1d5dfa6b2b7a1b85a138 y el registro Tareas.txt.
+Hallazgo H-AUD-040: 185 IDs únicos afirmados sin evidencia; Tareas.txt contiene 248 ocurrencias y 38 IDs únicos; falta H-AUD-002.
+No se auditan informes de auditoría ni se modifica su contenido.
+Respaldos: Auditoría.txt=c47cb99b7849fb15d0a1053fe5e6dc4ea4da4f1f; Tareas.txt=39c844bef9d7e50cd6340938afb81164a8265136; Plan_auditoría/Plan_Maestro_Implementacion.md=1cb41132656648fcdb711418d7c2e1e9681ce37f; ChangesLogs.txt=5d011c5d291961441b3f3b3d520ce8f949b64d99; checkpoint.md=b64a659157225ee899d84814a11975b0853dc98a
+Siguiente: registrar H-AUD-040, corregir el dato del plan maestro, registrar cambios y checkpoint final; publicar un único commit.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — CORR-H-AUD-040
+Fecha: 2026-11-09
+Tarea: corrección documental del conteo H-AUD del checkpoint PLAN-CP-0169.
+Estado: CORREGIDA DOCUMENTALMENTE; verificación de commit pendiente al momento de redactar este registro.
+HEAD padre: deea984c411203cfb06c1d5dfa6b2b7a1b85a138; base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+Archivos previstos: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Maestro_Implementacion.md, ChangesLogs.txt, checkpoint.md.
+Hallazgo H-AUD-040: cifra de 185 identificadores únicos no reproducible. Evidencia exacta: 248 referencias, 38 IDs únicos, H-AUD-001 y H-AUD-003..039; H-AUD-002 ausente.
+Corrección: plan maestro actualizado; Auditoría.txt y Tareas.txt registran hallazgo y corrección; ChangesLogs y checkpoint conservan trazabilidad. Informes de auditoría no re-auditados ni modificados.
+Sin cambios funcionales, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet o deployments.
+Siguiente: verificar este commit; después iniciar la auditoría pre-implementación de la tarea actual de protocolo de ciclo, registrando sus hallazgos antes de implementarla.
+================================================================================

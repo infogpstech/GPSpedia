@@ -6583,3 +6583,15 @@ Estado: PLANIFICADA; NO EJECUTADA.
 - Foco inicial/restauración, Escape, teclado, lector de pantalla, nombres de controles, contraste y foco visible.
 - Compatibilidad con feedback histórico, vídeos, caché, dashboard y logout.
 - Evidencias por caso, rol, commit, entorno, datos antes/después y logs sanitizados; solo entornos aislados.
+
+
+
+================================================================================
+TAREA CORRECTIVA — H-AUD-040
+Título: Corregir el conteo de identificadores H-AUD publicado en el plan maestro.
+Estado: CORREGIDA DOCUMENTALMENTE EN ESTA TAREA.
+Alcance: Plan_auditoría/Plan_Maestro_Implementacion.md, Auditoría.txt, ChangesLogs.txt y checkpoint.md. Los informes de auditoría no se reauditan ni se reescriben.
+Evidencia: Tareas.txt en HEAD deea984c411203cfb06c1d5dfa6b2b7a1b85a138 contiene 248 ocurrencias y 38 IDs H-AUD únicos; H-AUD-002 no aparece.
+Corrección: actualizar el conteo del plan maestro y conservar la trazabilidad de la cifra anterior en los registros históricos.
+Commit: el commit que contiene esta corrección se identifica en el historial de GPSpedia2.2.5_work.
+================================================================================

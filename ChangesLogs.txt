@@ -5764,3 +5764,14 @@ Sesión PLAN-20261109-S170 | Checkpoint PLAN-CP-0169 | HEAD inicial d747696416c6
 - Auditoría.txt devuelve contenido vacío; no se afirma lectura íntegra. Sin cambios funcionales/productivos.
 - No se ejecutan pruebas ni se cierran hallazgos. Filtros rápidos del catálogo siguen cancelados.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — CORRECCIÓN H-AUD-040
+Tarea correctiva separada del trabajo de protocolo de ciclo.
+- Plan_auditoría/Plan_Maestro_Implementacion.md: se corrige el inventario H-AUD; 248 ocurrencias y 38 IDs únicos en Tareas.txt (001, 003–039).
+- Auditoría.txt: se registra H-AUD-040 con evidencia, impacto y corrección.
+- Tareas.txt: se añade el registro de H-AUD-040 y su tarea correctiva.
+- checkpoint.md: se registra checkpoint inicial/final de esta corrección.
+- No se modifican informes de auditoría, código funcional, servicios, endpoints ni datos productivos.
+================================================================================
