@@ -90,3 +90,15 @@ Decisión: conservar marcas [X] solo como historia; no modificar Olds/Documentac
 Hallazgos: H-AUD-051 (evidencia insuficiente para promoción) y H-AUD-052 (checkpoint inicial formalizado tarde; auditoría formal reiniciada) abiertos.
 Pendiente: completar parser apropiado, pruebas funcionales reproducibles y Code Review por tarea. Esta tarea no se declara completada.
 ================================================================================
+
+
+================================================================================
+AUG-005 — Revocar sesiones cuando se elimina una cuenta
+Fecha: 2026-11-09.
+Estado: BLOQUEADA — no integrar el borrado físico de Users hasta verificar la fórmula y estabilidad de Users.ID.
+Auditoría: H-AUD-053 confirma que handleDeleteUser no elimina ActiveSessions y que AUTH no comprueba Users; H-AUD-054 identifica el riesgo crítico de reindexación si Users.ID depende de la fila.
+Alcance revisado: Services/users.js, Services/Auth.js, users.html, auth.js, api-config.js, Services/Test/users.js, Services/Test/Auth.js, Services/Test/README.md y los puntos pertinentes de Services/admin.js.
+Decisión: no se incorporó ningún cambio de código. Los blobs preliminares de implementación no se añadieron al árbol ni a la rama. No se modificaron endpoints, deployments ni datos.
+Pendiente obligatorio: verificar en una copia aislada la fórmula efectiva de Users!A2 y el tipo de los IDs existentes; si son dependientes de fila, diseñar y auditar IDs inmutables y referencias antes de reanudar. Después implementar revocación de todas las sesiones, validación AUTH y bloqueo de autodeleción, con pruebas reproducibles.
+Siguiente acción: confirmar la fórmula real de la columna Users.ID y la política de identificadores.
+================================================================================

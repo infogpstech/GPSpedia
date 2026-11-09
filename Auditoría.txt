@@ -124,3 +124,55 @@ Impacto: la secuencia exploratoria inicial no cumplió el orden checkpoint → a
 Corrección: se reinició la auditoría formal después de crear el checkpoint específico; HEAD, rama base, inventario legacy, commits/diffs, fuentes actuales, sintaxis estática, pruebas y registros de revisión se volvieron a consultar. No se modificó ningún archivo de producto ni legacy antes de la formalización.
 Estado: DESVIACIÓN DOCUMENTADA; ciclo formal reiniciado desde el checkpoint. No se afirma que la exploración preliminar hubiera cumplido el procedimiento.
 ================================================================================
+
+
+================================================================================
+H-AUD-053 — Eliminación de cuentas no revoca sesiones y AUTH valida solo ActiveSessions
+Fecha: 2026-11-09. Tarea: AUG-005. Origen: H-AUD-001; AUD-T-002; adendas H-AUD-024-004 y H-AUD-024-010. Prioridad: Alta — seguridad de sesión.
+
+Auditoría de solo lectura sobre GPSpedia2.2.5_work, HEAD 1cad8d604c2147b632030dc3d33df85b826eac1f:
+- Services/users.js: doPost enruta deleteUser a handleDeleteUser. getVerifiedSession ya exige que el token exista en ActiveSessions y que su ID corresponda a un usuario presente en Users. En contraste, handleDeleteUser elimina únicamente la fila Users; no elimina filas ActiveSessions ni limpia/reconcilia el token de referencia. No adquiere ScriptLock, aunque handleResetUserSessions y handleCreateUser sí lo hacen.
+- Services/Auth.js: doPost enruta validateSession a handleValidateSession. Esta función confirma únicamente la coincidencia userId + sessionToken en ActiveSessions; no consulta Users. Por tanto, un token huérfano de una cuenta eliminada puede seguir recibiendo valid:true.
+- users.html: renderUserTable presenta el botón Eliminar también para la fila del usuario Desarrollador autenticado; deleteUser no bloquea la autodeleción ni comunica el efecto sobre sesiones.
+- auth.js: checkSession consume apiValidateSession y cierra la sesión local cuando AUTH devuelve valid:false. No requiere cambio para consumir la respuesta actual.
+- api-config.js: deleteUser ya está asignada a USERS y validateSession a AUTH; routeAction transporta status:error y no requiere cambio de ruteo.
+- Services/Test/users.js y Services/Test/Auth.js son copias de sus fuentes, con SPREADSHEET_ID distinto para la hoja aislada; deben mantenerse sincronizadas con los cambios funcionales sin alterar ese ID.
+- Services/Test/README.md declara que los proyectos Apps Script de prueba no se han creado ni desplegado. No existen deployments de prueba verificables desde el repositorio; no se autoriza probar contra endpoints live.
+
+Riesgos y límites:
+- AUTH y USERS son proyectos Apps Script separados. Sus ScriptLock no se comparten; la coordinación total de login concurrente y eliminación requiere tratar la dependencia de concurrencia registrada en AUG-010/AUG-117. La comprobación de existencia en AUTH debe garantizar que, después de eliminar una cuenta, las validaciones posteriores rechacen sus tokens aunque quede una fila residual por una carrera entre proyectos.
+- La ficha AUG-117 conserva como alcance posterior la protección de la última cuenta Desarrollador, el registro de auditoría y los controles de operaciones destructivas/degradación. No duplicar esa implementación aquí.
+- La política explícita de AUG-005 para autodeleción será impedir que el Desarrollador autenticado elimine su propia cuenta; el backend será autoritativo y la interfaz no mostrará esa acción para su propia fila.
+
+Archivos auditados en alcance: Services/users.js, Services/Auth.js, users.html, auth.js, api-config.js, Services/Test/users.js, Services/Test/Auth.js y Services/Test/README.md. No se modificó ningún archivo de código durante la auditoría.
+
+Acción prevista: hacer que deleteUser invalide y elimine las sesiones de la cuenta antes de borrar su fila; serializar la operación dentro de USERS; hacer que AUTH compruebe también la existencia del usuario; impedir autodeleción del Desarrollador en backend e interfaz; sincronizar las copias aisladas conservando su Spreadsheet ID. Probar idempotencia, cuenta inexistente, sesiones múltiples, token huérfano, usuario válido, sesión inválida y autodeleción con dobles locales. La validación funcional en Apps Script real queda bloqueada hasta disponer de los deployments aislados indicados en Services/Test/README.md.
+Estado: ABIERTO — HALLAZGO AUDITADO; IMPLEMENTACIÓN PENDIENTE.
+================================================================================
+
+
+================================================================================
+H-AUD-054 — Riesgo de reindexación de Users.ID al eliminar físicamente una fila
+Fecha: 2026-11-09. Tarea relacionada: AUG-005. Prioridad: CRÍTICA — integridad de identidad y sesiones.
+Origen: revisión de efectos colaterales posterior a H-AUD-053; auditoría de Services/users.js y Services/admin.js en HEAD 1cad8d604c2147b632030dc3d33df85b826eac1f.
+
+Evidencia:
+- Services/users.js, handleCreateUser(): copia la fila anterior completa con copyTo() y el comentario del código indica expresamente que hereda todas las fórmulas, incluida la columna ID. El archivo no revela cuál es la fórmula efectiva de Users.ID.
+- Services/admin.js, handleCreateSheet(): cuando se proporciona idFormula, asigna a la primera columna la fórmula indicada o '=ROW()-1'. Esta función es genérica; no demuestra por sí sola que la hoja Users utilice esa fórmula.
+- Services/users.js, handleDeleteUser(): elimina físicamente la fila de Users mediante deleteRow(). ActiveSessions mantiene ID_Usuario como referencia.
+- No hay en el repositorio una copia verificable de la fórmula efectiva de Users!A2 ni una exportación de la hoja que permita comprobar si los IDs son valores fijos o fórmulas dependientes de la fila.
+- La búsqueda de integración mostró Google Drive deshabilitado por el administrador (DISABLED_BY_ADMIN / NOT_AVAILABLE); no se pudo consultar el Spreadsheet operativo ni su copia.
+
+Riesgo:
+Si Users.ID depende del número de fila (por ejemplo, ROW()-1), borrar una fila puede recalcular los IDs de las cuentas posteriores. Sus registros ActiveSessions y otros datos que referencien esos IDs conservarían valores anteriores; una sesión residual podría quedar asociada a una cuenta distinta o las sesiones legítimas podrían invalidarse. Limpiar primero las sesiones del usuario objetivo no resuelve la reindexación de las demás cuentas. No se afirma que la fórmula real sea ROW()-1: precisamente falta verificarla.
+
+Decisión de seguridad:
+- BLOQUEAR la integración de cualquier borrado físico de filas de Users dentro de AUG-005 hasta verificar la fórmula real y la estabilidad de los identificadores.
+- No incorporar los blobs preliminares de código creados durante la evaluación; no forman parte de ningún árbol, commit ni ref de la rama.
+- No probar ni modificar los endpoints operativos ni la hoja productiva.
+- Confirmar en una copia aislada si cada ID es valor fijo o fórmula; si depende de fila, diseñar primero una estrategia de IDs inmutables y revisar los consumidores/referencias antes de reanudar la eliminación.
+- Mantener como requisitos pendientes la revocación de todas las sesiones y el rechazo AUTH de cuentas inexistentes; no marcar AUG-005 como implementada.
+
+Relación con H-AUD-053: este hallazgo bloquea la acción de borrado físico descrita allí hasta resolver la integridad de Users.ID. La auditoría de seguridad de sesiones sigue siendo válida; el plan de corrección debe ajustarse al esquema real.
+Estado: ABIERTO — BLOQUEANTE; AUG-005 BLOQUEADA POR VERIFICACIÓN DE ESQUEMA.
+================================================================================

@@ -74,3 +74,17 @@ Se añadió H-AUD-051 sobre evidencia insuficiente para promover las marcas hist
 Se actualizó Tareas.txt, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt y checkpoint.md. Las marcas históricas se conservan sin promover; TAREA 4 permanece [~].
 No se modificaron archivos legacy, código, Services, endpoints, deployments ni rama base. No se ejecutaron pruebas funcionales ni Code Review individual de las tareas históricas. La auditoría DOC-LEGACY-2026-001 permanece parcial y abierta.
 ================================================================================
+
+
+================================================================================
+AUG-005 — Auditoría y bloqueo preventivo por integridad de Users.ID
+Fecha: 2026-11-09.
+Archivos documentales modificados:
+- Auditoría.txt: añadidos H-AUD-053 y H-AUD-054; el segundo registra el riesgo de reindexación y bloquea el borrado físico hasta verificar el esquema.
+- Tareas.txt: añadida la ficha de estado BLOQUEADA de AUG-005.
+- Tareas_pendientes_parte1.txt: añadida actualización append-only de estado y requisito para reanudar.
+- checkpoint.md: incorporados checkpoint inicial y final del ciclo bloqueado.
+Descripción objetiva: la auditoría identificó que handleDeleteUser no elimina sesiones y que AUTH no verifica la existencia de la cuenta. La revisión posterior detectó que handleCreateUser copia la fórmula de ID; al no poder consultar la fórmula efectiva de Users.ID, se registró el riesgo de reindexación y se detuvo la integración.
+No se modificaron archivos de código, Services, endpoints, deployments, datos productivos, README, archivos legacy ni la rama base. Los blobs preliminares de código no fueron añadidos al árbol ni a la rama.
+Pruebas funcionales de Apps Script: no ejecutadas; Services/Test/README.md indica que los proyectos aislados aún no están creados/desplegados. No se declara implementación ni validación funcional completada.
+================================================================================

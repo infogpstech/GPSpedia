@@ -250,3 +250,45 @@ No se modificaron código, Services, endpoints, deployments, README ni datos pro
 Último documento de este ciclo: este checkpoint final, inmediatamente antes del único commit de auditoría parcial.
 Siguiente acción: completar las validaciones pendientes y reabrir la promoción de cierres solo con evidencia verificable.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-005 (REVOCACIÓN DE SESIONES AL ELIMINAR UNA CUENTA)
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado antes de la tarea: 1cad8d604c2147b632030dc3d33df85b826eac1f
+Rama base protegida: GPSpedia2.2.5
+HEAD confirmado de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-005 — Revocar sesiones cuando se elimina una cuenta.
+Alcance: revisar e implementar, si el código y los contratos lo permiten, la eliminación coherente de todas las sesiones de la cuenta eliminada y el rechazo en AUTH de tokens asociados a usuarios inexistentes; definir y probar explícitamente la autodeleción. Respetar las adendas vinculadas al mismo AUG-005; no duplicar tareas.
+Archivos candidatos sujetos a auditoría: Services/users.js, Services/Auth.js, users.html, auth.js, api-config.js y archivos de configuración/contrato que las llamadas demuestren necesarios. No se presume que todos deban modificarse.
+Hallazgo relacionado: H-AUD-001 y H-AUD-024-004 / H-AUD-024-010, según ficha AUG-005.
+Dependencias/riesgos conocidos: sesiones almacenadas en ActiveSessions; validación AUTH debe comprobar existencia de usuario; operaciones USERS/AUTH pueden pertenecer a proyectos Apps Script distintos y sus ScriptLock no son compartidos; proteger la última cuenta Desarrollador y aclarar autodeleción sin ampliar el alcance accidentalmente.
+Estado inicial: checkpoint inicial formalizado; auditoría técnica completa pendiente; no se ha modificado código ni se ha creado commit de esta tarea.
+Restricciones: no tocar GPSpedia2.2.5; no usar Contents API ni commits automáticos; usar Git Database API; una sola tarea/commit; respaldos exactos antes de editar; cambios mínimos; filtros rápidos siguen cancelados; no modificar Olds/Documentacion_Legacy/ ni el procedimiento.
+Siguiente acción: auditar en modo solo lectura los archivos candidatos, funciones, consumidores, llamadas y contratos; registrar hallazgos antes de editar.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-005 (BLOQUEADA POR VERIFICACIÓN DE USERS.ID)
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: 1cad8d604c2147b632030dc3d33df85b826eac1f
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado y conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-005 — Revocar sesiones cuando se elimina una cuenta.
+Estado final: BLOQUEADA; no se incorporó implementación de código.
+Checkpoint inicial: formalizado antes de la auditoría en el blob 1e75f653a5d55f3921172e0c0aa8c74596a1d532 e incluido en este ciclo documental.
+Auditoría: H-AUD-053 documenta la eliminación de usuarios sin limpiar ActiveSessions y la validación AUTH sin consulta de Users. H-AUD-054 documenta el riesgo de reindexación de IDs debido a la fórmula que handleCreateUser copia desde la fila anterior.
+Archivos auditados: Services/users.js, Services/Auth.js, users.html, auth.js, api-config.js, Services/Test/users.js, Services/Test/Auth.js, Services/Test/README.md y puntos pertinentes de Services/admin.js.
+Hallazgo bloqueante: no se puede confirmar en el repositorio si Users.ID contiene valores fijos o fórmulas dependientes de fila. El acceso al conector Google Drive/Sheets está deshabilitado por el administrador. Si los IDs dependen de fila, deleteRow() puede cambiar identificadores de otras cuentas y romper o reasignar referencias de ActiveSessions.
+Decisión: no incorporar los blobs preliminares de código. No se modificaron fuentes, endpoints, deployments ni datos productivos. No se realizó ninguna operación de borrado en hojas.
+Verificaciones: revisión estática de funciones y consumidores; confirmación de copias de prueba separadas; lectura de Services/Test/README.md. Se prepararon pruebas con dobles locales durante la evaluación, pero no se consideran validación funcional ni se incorporaron al registro como pruebas de implementación, porque el código no fue integrado y el esquema real permanece sin verificar.
+Pruebas reales: no ejecutadas. Los proyectos Apps Script aislados aún no están creados/desplegados.
+Archivos documentales del ciclo: Auditoría.txt, Tareas.txt, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+Siguiente acción: confirmar en una copia aislada la fórmula/tipo de Users!A2 y la estabilidad de los IDs. Si son dependientes de fila, diseñar primero una estrategia de identificadores inmutables y revisar referencias; después reiniciar AUG-005 desde checkpoint y auditoría.
+Último documento de este ciclo: este checkpoint final, inmediatamente antes del único commit documental de estado bloqueado.
+================================================================================

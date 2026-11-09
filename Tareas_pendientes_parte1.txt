@@ -1416,3 +1416,14 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
   3. Probar blur, limpiar búsqueda, abrir resultado, modal, navegación atrás y cambio de sección.
   4. Verificar ausencia de errores y ausencia de DOM residual.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-005
+Fecha: 2026-11-09.
+Estado operativo: BLOQUEADA — VERIFICACIÓN DE ESQUEMA PENDIENTE.
+Motivo: handleCreateUser() copia la fórmula de la columna ID desde la fila anterior; no se ha confirmado si Users.ID depende del número de fila. El borrado físico puede reindexar otras cuentas y romper/asociar incorrectamente sus sesiones.
+Hallazgos: H-AUD-053 (sesiones huérfanas y validación AUTH incompleta); H-AUD-054 (riesgo crítico de reindexación).
+No se incorporó código. No se modificaron deployments, endpoints ni datos.
+Requisito para reanudar: confirmar fórmula/tipo de Users.ID en una copia aislada y definir estrategia segura para conservar identificadores y referencias.
+================================================================================
