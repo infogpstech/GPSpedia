@@ -1534,3 +1534,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, XSS dinámico, payloads, FileReader real, concurrencia, HTTP, Apps Script V8, Spreadsheet/Drive, catálogo real, YouTube, móvil/PWA, accesibilidad, deployments ni E2/E3.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+
+
+## 88. AUD-T-006 — continuidad incremental revalidada
+- Sesión AUD-20261109-S153; checkpoint AUD-CP-0152; E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8; revalidación previa CP-0130/HEAD 23bdafc8a0414d6b60cea177a3a51183e19f6e99; HEAD actual 27653a1c8470c59bf370ff1790f025efbfcfc9a9; árbol 321baed240961cd87fed354190a2dfbf5b496970; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits, merge-base idéntico y diff global limitado a ocho documentos. Los seis archivos del alcance conservan SHA idénticos a E1: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+- CP-0130→HEAD: 22 commits, merge-base idéntico y únicamente cinco documentos de continuidad modificados; sin deriva funcional desde la revalidación anterior.
+- H-AUD-006-001 a 003 permanecen abiertos. AUG-065 a AUG-067 pendientes; AUG-064 conserva la adenda sobre updateSlide()/slideText.innerHTML. Dependencias de caché y navegación global se mantienen en AUD-T-009 y AUD-T-007, sin duplicación.
+- No se ejecutaron navegador, móviles/PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación visual, canvas ni pruebas reales de gestos.
+- Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Se observó que los documentos normativos consultados no definen un patrón formal de nombres para carpetas/imágenes; no se renombró nada por falta de criterio verificable. Se conserva la instrucción de renombrado automático una vez que el formato aplicable esté definido.
+- Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación E1).

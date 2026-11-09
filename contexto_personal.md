@@ -1437,3 +1437,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-005-001 a 008 abiertos; H-AUD-005-008 coordinado con AUD-T-007. AUG-061 a AUG-064 pendientes; adendas AUG-043/AUG-050/AUG-057 vigentes. VAL-03/09/14/16 pendientes; VAL-17 transferida a AUD-T-007. Sin duplicados ni cierres.
 - No se ejecutaron navegador, XSS dinámico, payloads, FileReader real, concurrencia, HTTP, Apps Script, Spreadsheet/Drive, catálogo real, YouTube, móvil/PWA, accesibilidad, deployments ni E2/E3. No se modificó código ni datos productivos.
 - Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+
+
+## Continuidad incremental — AUD-T-006 (2026-11-09)
+- Sesión AUD-20261109-S153 / checkpoint AUD-CP-0152. E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8; revalidación previa CP-0130/HEAD 23bdafc8a0414d6b60cea177a3a51183e19f6e99; HEAD actual 27653a1c8470c59bf370ff1790f025efbfcfc9a9; árbol 321baed240961cd87fed354190a2dfbf5b496970; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits, merge-base idéntico y diff exclusivamente documental (ocho archivos). Los seis archivos funcionales del alcance conservan SHA E1. CP-0130→HEAD: 22 commits y solo cinco documentos modificados.
+- H-AUD-006-001 a 003 abiertos; AUG-065 a AUG-067 pendientes; adenda AUG-064 vigente. No hay nuevos hallazgos, duplicados ni cierres.
+- No se ejecutaron navegador, móviles/PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación visual, canvas, gestos reales ni E2/E3. Sin cambios funcionales o productivos.
+- La instrucción de renombrar automáticamente carpetas/imágenes que incumplan el formato se conserva. No se encontró una especificación normativa del patrón en Proceso de desarollo.md, README.md ni Contexto de trabajo.md; no se infiere ni se aplican renombrados hasta contar con un criterio comprobable.
+- Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación de continuidad E1).

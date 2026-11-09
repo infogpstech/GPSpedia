@@ -4337,3 +4337,49 @@ Sin cambios funcionales, endpoints, contratos, configuración, credenciales, ass
 Commit documental único: docs(audit): revalidate AUD-T-005 continuity; parent 594fbc89b216ea8ba85d2541e280f947c1f2a7e9; actualización protegida con expected_sha=594fbc89b216ea8ba85d2541e280f947c1f2a7e9.
 Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0152
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S153
+Tarea: AUD-T-006 — revalidación incremental de continuidad E1.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial confirmado: 27653a1c8470c59bf370ff1790f025efbfcfc9a9; árbol: 321baed240961cd87fed354190a2dfbf5b496970; rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: 5ab07e75513b05a51a4c62fbc731e451105eb1a8 (AUD-20261107-S024 / AUD-CP-0024).
+Revalidación anterior: AUD-20261108-S131 / AUD-CP-0130; HEAD 23bdafc8a0414d6b60cea177a3a51183e19f6e99.
+Alcance: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+Estado inicial: H-AUD-006-001 a 003 abiertos; AUG-065 a AUG-067 pendientes; adenda AUG-064 vigente; validación visual/móvil/rendimiento pendiente.
+Preflight: E1 ancestro de HEAD con 129 commits; CP-0130 ancestro con 22 commits; seis archivos del alcance sin deriva; rama base intacta.
+Fase: revalidación estática/documental. Sin autorización para modificar código, HTML/CSS de aplicación, assets, endpoints, configuración o datos productivos.
+Respaldos exactos previos a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 874c7b9cb86d802b514c7524fcafc9959ec6b868
+- Plan_auditoría/Consolidacion_Auditoria.md: eaddbd40b83fefd72393bb4f3be494ccd224ef10
+- ChangesLogs.txt: f90a16d91c3051e1280edffd2d08d23cc78cd437
+- contexto_personal.md: a7e6890b891ce1a3159a88390d9de44ee3e7b20f
+- checkpoint.md: f77b171741b9140a9bf820e8a78650e2193ad6ae
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0152
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S153
+Tarea: AUD-T-006 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-006-001 A 003 ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE.
+HEAD padre confirmado: 27653a1c8470c59bf370ff1790f025efbfcfc9a9; árbol 321baed240961cd87fed354190a2dfbf5b496970; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, merge-base idéntico a E1, sin divergencia; diff global exclusivamente documental (ocho archivos).
+Seis archivos del alcance, SHA E1 = SHA HEAD:
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+CP-0130→HEAD: 22 commits posteriores, merge-base idéntico y únicamente cinco documentos modificados; sin deriva funcional desde la revalidación anterior.
+Hallazgos: H-AUD-006-001 a 003 abiertos. AUG-065 a AUG-067 pendientes; adenda AUG-064 vigente. Sin hallazgos/tareas nuevas ni duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, árbol, compare E1→HEAD, compare CP-0130→HEAD, merge-base, diff global y SHA de seis archivos.
+No ejecutadas: navegador, móviles/PWA, CDN, IndexedDB real, benchmarks, comparación visual, canvas, gestos reales, accesibilidad y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los hallazgos/tareas ya constan.
+Requisito adicional: renombrado automático solicitado para carpetas/imágenes fuera del formato. El patrón exacto no está definido en los documentos normativos consultados; no se infiere ni se renombran elementos en esta tarea.
+Sin cambios funcionales, CSS/HTML de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): revalidate AUD-T-006 continuity; parent 27653a1c8470c59bf370ff1790f025efbfcfc9a9; update_ref force=false y expected_sha=27653a1c8470c59bf370ff1790f025efbfcfc9a9. La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación E1).
+================================================================================

@@ -4005,3 +4005,49 @@ No se ejecutaron navegador, XSS dinámico, pruebas de payload, FileReader real, 
 No se modificaron código, HTML, CSS, servicios, endpoints, contratos, configuración, credenciales, assets, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom (revalidación de continuidad E1).
+
+
+## 103. Continuidad incremental — AUD-T-006: Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom
+
+**Sesión:** AUD-20261109-S153  
+**Checkpoint:** AUD-CP-0152  
+**E1 original:** 5ab07e75513b05a51a4c62fbc731e451105eb1a8 (AUD-20261107-S024 / AUD-CP-0024)  
+**Revalidación anterior:** AUD-20261108-S131 / AUD-CP-0130; HEAD 23bdafc8a0414d6b60cea177a3a51183e19f6e99  
+**HEAD inicial de esta sesión:** 27653a1c8470c59bf370ff1790f025efbfcfc9a9  
+**Árbol del HEAD inicial:** 321baed240961cd87fed354190a2dfbf5b496970  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-006-001 A 003 ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE.
+
+### Alcance y comparación
+Se conserva el alcance de seis archivos: `lightbox.js`, `ui.js`, `offline.js`, `style.css`, `index.html` y `main.js`. La revisión cubre lightbox, carrusel de cables, gestos, pinch zoom, resolución de imágenes, caché de miniaturas, transparencia PNG y tratamiento dark-mode.
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base idéntico a E1 y ausencia de divergencia. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+
+Los seis archivos conservan SHA idénticos a E1:
+- `lightbox.js` — `841f44a54fe12b867c0c58cc560ce4474cde3e03`
+- `ui.js` — `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `offline.js` — `c68e8698c74ef45a1c9bb534c6b2be77df817c34`
+- `style.css` — `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `index.html` — `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `main.js` — `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+
+Desde la revalidación anterior CP-0130 (23bdafc8a0414d6b60cea177a3a51183e19f6e99) hasta HEAD se registran 22 commits, con merge-base idéntico y únicamente cinco documentos modificados: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No existe deriva funcional desde la revalidación anterior.
+
+### Hallazgos, tareas y validaciones
+- H-AUD-006-001 permanece abierto: el parámetro `size` no se aplica de forma efectiva en `getImageUrl()` y las cachés de memoria/IndexedDB no distinguen variantes; una miniatura PNG de 400 px puede satisfacer una solicitud de mayor resolución.
+- H-AUD-006-002 permanece abierto: `mix-blend-mode: lighten` se aplica también a imágenes opacas en determinadas condiciones de modo oscuro.
+- H-AUD-006-003 permanece abierto: el gesto del carrusel del modal considera el desplazamiento horizontal sin discriminar suficientemente el eje vertical.
+- AUG-065, AUG-066 y AUG-067 continúan pendientes. La adenda AUG-064 sobre `updateSlide()/slideText.innerHTML` permanece vinculada a H-AUD-005-001; no se crea un hallazgo duplicado.
+- Se mantienen las dependencias con AUD-T-009/AUG-051 para la caché general y con AUD-T-007 para History API/overlays. No se duplican tareas ni se cierran hallazgos.
+
+### Verificaciones y límites
+Se verificaron HEAD de ambas ramas, árbol de trabajo, ascendencia/merge-base E1→HEAD, diff global, continuidad CP-0130→HEAD y SHA de los seis archivos del alcance. La rama base permanece exactamente en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+No se ejecutaron navegador, dispositivos móviles, PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación visual de imágenes, canvas ni pruebas reales de gestos. La continuidad Git no certifica calidad visual, resolución efectiva, transparencia, comportamiento táctil, rendimiento ni operación offline.
+
+### Inventario de nombres
+El árbol actual contiene carpetas `Olds`, `Olds/GPSpedia 1.0`, `Olds/GPSpedia 1.5`, `Plan_auditoría`, `Services`, `Services/Test` y `Spreadsheet`, además de imágenes `Logo_TemaOscuro.png`, `tracklink_logo.png`, `verification.png` y la familia `icon-pwa`/`icon-v2`/`icon-v3`. Los documentos normativos consultados no establecen una regla formal de nomenclatura que permita clasificar objetivamente esos nombres como válidos o inválidos. Se conserva la instrucción del usuario de renombrar automáticamente los elementos que incumplan el formato, pero no se infiere un patrón ni se renombran elementos en esta revalidación.
+
+No se modificaron código, CSS, HTML de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación de continuidad E1).
