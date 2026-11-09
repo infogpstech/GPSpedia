@@ -1404,3 +1404,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron E2/E3, HTTP, navegador/PWA, Apps Script V8, Spreadsheet/Drive real, migración VIN, cambios de columnas, concurrencia, recuperación ni deployments.
 - Solo continuidad estática/documental; sin cambios funcionales, endpoints, contratos, configuración, esquema, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## 77. AUD-T-031 — continuidad E1 de cargas de imágenes, reintentos y reconciliación
+- Sesión AUD-20261108-S142; checkpoint AUD-CP-0141; E1 histórica 71058f8b1924d59924fa289f66226aeaac41b7bc; HEAD 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5; árbol 8ae1f308ebb02d16bd2ff64ba36780716c2ea518; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1; diff exclusivamente ocho documentos. Los seis archivos del alcance mantienen SHA E1. CP-0140→HEAD: un commit y solo cinco documentos; sin deriva funcional posterior.
+- H-AUD-031-001 a 010 permanecen abiertos. Se conservan AUG-034/AUG-035 y AUG-037/AUG-038, además de la relación de H-AUD-031-009 con recuperación de add_cortes.
+- La revisión confirma continuidad de los riesgos de hash del archivo recuperado, confirmación del ledger, reconciliación pending, coordinación interservicios, compensación de reemplazos y unicidad de vehicleId.
+- No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, Drive/Spreadsheet real, fallos inducidos, concurrencia, recuperación ni deployments. No se inspeccionaron ni modificaron datos productivos.
+- Solo continuidad estática/documental; sin cambios de código, esquema, endpoints, configuración, assets, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.

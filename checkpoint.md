@@ -3849,3 +3849,57 @@ Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Conso
 Sin cambios funcionales, endpoints, contratos, configuración, esquema, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0141
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S142
+Tarea: AUD-T-031 — revalidación de continuidad E1 de subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5 | árbol: 8ae1f308ebb02d16bd2ff64ba36780716c2ea518.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 71058f8b1924d59924fa289f66226aeaac41b7bc (AUD-20261107-S012 / AUD-CP-0012).
+Alcance: Services/write.js, Services/admin.js, ui.js, offline.js, add_cortes.html y Spreadsheet/GPSpedia_DB_columnas.md.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. H-AUD-031-001 a 010 abiertos; AUG-034/AUG-035 con adendas; AUG-037/AUG-038 pendientes.
+Comparación previa: E1→HEAD = 130 commits, merge-base igual a E1, diff exclusivamente documental; CP-0140→HEAD = un commit documental. Se verificará SHA de los seis archivos contra E1.
+Fase: auditoría estática de continuidad; sin autorización para modificar código, esquema, assets, endpoints, configuración o datos productivos.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: fbe5603233e53fa93d737e6745bf2a098a793bd6
+- Plan_auditoría/Consolidacion_Auditoria.md: 8ac56a77b1aaea7bb7f891f0f8c1c22d5fbdeaf4
+- ChangesLogs.txt: 2ad2ca3a5f4f924410893da6d18f174fb0b72512
+- contexto_personal.md: 6809d842aa0303981b21141144e6a346e36713cf
+- checkpoint.md: 678eaf1533c59fbd37779b6f7b844a04c643b1ba
+Siguiente acción: confirmar comparación E1→HEAD y CP-0140→HEAD, revisar identidad SHA de los seis archivos, preservar H-AUD-031-001 a 010 y AUG-034/035/037/038, y documentar continuidad sin cambios funcionales.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0141
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S142
+Tarea: AUD-T-031 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-031-001 a 010 abiertos; AUG-034/AUG-035 con adendas y AUG-037/AUG-038 pendientes; sin hallazgos ni tareas nuevas.
+HEAD padre confirmado: 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5; árbol inicial 8ae1f308ebb02d16bd2ff64ba36780716c2ea518. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+E1→HEAD: 130 commits posteriores; merge-base igual a E1; diff exclusivamente ocho documentos. Los seis archivos del alcance conservan SHA idénticos a E1.
+CP-0140→HEAD: un commit posterior y únicamente cinco documentos; no existe deriva funcional desde la revalidación previa.
+Archivos funcionales/esquema revalidados:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+Hallazgos: H-AUD-031-001 a 010 permanecen abiertos; no se crean hallazgos nuevos ni se cierran hallazgos existentes. Se conservan las adendas AUG-034/AUG-035 y las tareas AUG-037/AUG-038. H-AUD-031-009 mantiene su relación con recuperación de add_cortes.
+Validaciones ejecutadas: comparación Git E1→HEAD y CP-0140→HEAD; comprobación del merge-base; identidad SHA de seis archivos; revisión estática de helpers de carga, tokens, reintentos, ledger, hash, verificación Drive, reemplazo in-modal, compensaciones, IndexedDB, persistencia de add_cortes y esquema documentado; revisión de historial y registros de tareas.
+Validaciones no ejecutadas: E2/E3, lint, navegador/PWA, Apps Script V8, HTTP, Drive/Spreadsheet real, fallos inducidos, respuesta perdida, concurrencia, compensaciones reales, pruebas de recuperación ni deployments.
+Documentos modificados:
+- Plan_auditoría/Plan_Auditoria.md: 1bb84263a9304133f3727f6c39cd1c22393d294a
+- Plan_auditoría/Consolidacion_Auditoria.md: 1b765d7a1b823aea3b0dd07d2f836edfcd935856
+- ChangesLogs.txt: b9e28005b8f83a8365a6b62eecb6cedf0ee65299
+- contexto_personal.md: e6b5f24fb5f8a4c39db4934763810c707cf661d2
+- checkpoint.md: este blob final.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los hallazgos y tareas ya constan.
+Sin cambios de código, esquema, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, renombrados, merge o despliegue. No se realizaron pruebas E2/E3.
+Commit único esperado: docs(audit): verify AUD-T-031 continuity; parent 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5.
+Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+================================================================================

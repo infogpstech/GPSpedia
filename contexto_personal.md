@@ -1347,3 +1347,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-030-001 a 008 abiertos; AUG-034/035/036 pendientes; AUD-T-033/AUG-003 relacionada.
 - No se ejecutaron Apps Script, Spreadsheet/Drive real, migraciones VIN, concurrencia, recuperación ni deployments. No se modificaron datos productivos.
 - Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## Continuidad de auditoría — AUD-T-031 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S142 / AUD-CP-0141; rama GPSpedia2.2.5_work, HEAD inicial 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5; árbol 8ae1f308ebb02d16bd2ff64ba36780716c2ea518. Rama base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 71058f8b1924d59924fa289f66226aeaac41b7bc; 130 commits posteriores; merge-base igual a E1; diff global exclusivamente de ocho documentos. Los seis archivos funcionales/esquema conservan SHA idénticos a E1.
+- CP-0140→HEAD: un commit y únicamente cinco documentos de continuidad; sin deriva funcional desde la revalidación anterior.
+- H-AUD-031-001 a 010 permanecen abiertos. AUG-034/AUG-035 conservan sus adendas; AUG-037/AUG-038 continúan pendientes. H-AUD-031-009 conserva su relación con la recuperación de add_cortes.
+- No se ejecutaron E2/E3, navegador/PWA, Apps Script V8, HTTP, Drive/Spreadsheet real, fallos inducidos, pérdida de respuesta, concurrencia, compensaciones ni deployments. No se modificó código ni datos productivos.
+- Sin hallazgos ni tareas nuevas. Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.

@@ -3567,3 +3567,28 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 68ec61225ce60b95852e79c7eb64bb2199b65b74
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los ocho hallazgos y AUG-034/035/036 ya constan. Sin cambios funcionales, endpoints, contratos, configuración, esquema, hojas, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente unidad secuencial: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia (respetar E1 y revalidaciones previas).
+
+
+## 92. Continuidad verificada — AUD-T-031 (revalidación E1)
+Sesión AUD-20261108-S142 | Checkpoint AUD-CP-0141 | E1 histórica 71058f8b1924d59924fa289f66226aeaac41b7bc | HEAD inicial 73f45ce0f81a9bbaa0c29397ddf5bf1947a8f7e5 | árbol inicial 8ae1f308ebb02d16bd2ff64ba36780716c2ea518 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original AUD-20261107-S012/AUD-CP-0012. Revalidación de continuidad en la rama GPSpedia2.2.5_work; rama base GPSpedia2.2.5 confirmada intacta.
+Comparación E1→HEAD: 130 commits posteriores, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos de auditoría; ninguno de los seis archivos funcionales/esquema del alcance aparece en el diff. Comparación CP-0140→HEAD: un commit posterior, limitado a cinco documentos de continuidad; no existe deriva funcional desde la revalidación anterior.
+Los seis archivos conservan SHA idénticos a E1:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+Se revalidó la identidad del contenido y la persistencia de las rutas funcionales principales. Continúan presentes las condiciones documentadas: el helper general de WRITE/ADMIN reutiliza archivos recuperados sin recalcular su hash; markImageUploadLinked() puede devolver false sin bloquear todos los callsites; saveAdminImageUploadOperation() no relee la fila escrita; no existe reconciliador general de cargas pending; el reemplazo in-modal conserva la semántica de descarte y compensación observada; la coordinación de ScriptLock sigue siendo local al proyecto; y handleUploadAdminImage() selecciona la primera fila por vehicleId sin exigir unicidad. El flujo local de IndexedDB y el envío de add_cortes conservan el comportamiento de E1.
+H-AUD-031-001 a H-AUD-031-010 permanecen abiertos por continuidad. No se crean hallazgos nuevos ni se cierran hallazgos existentes. Se conservan las relaciones: AUG-034 (adenda de coordinación interservicios), AUG-035 (adenda de unicidad de vehicleId), AUG-037 (reconciliación durable de cargas generales) y AUG-038 (compensación de reemplazos in-modal). H-AUD-031-009 sigue relacionado con recuperación de add_cortes y persistencia local.
+La igualdad SHA confirma que los seis archivos no cambiaron desde E1; no certifica comportamiento real de Drive/Spreadsheet, despliegues, concurrencia, respuesta HTTP perdida, compensaciones, ni estado de datos productivos.
+No se ejecutaron E2/E3, pruebas sintácticas, navegador/PWA, Apps Script V8, HTTP, Drive/Spreadsheet real, fallos inducidos, pérdida de respuesta, concurrencia, recuperación ni deployments. No se modificó código, esquema, assets, endpoints, configuración, datos productivos, Drive o Spreadsheet.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: fbe5603233e53fa93d737e6745bf2a098a793bd6
+- Plan_auditoría/Consolidacion_Auditoria.md: 8ac56a77b1aaea7bb7f891f0f8c1c22d5fbdeaf4
+- ChangesLogs.txt: 2ad2ca3a5f4f924410893da6d18f174fb0b72512
+- contexto_personal.md: 6809d842aa0303981b21141144e6a346e36713cf
+- checkpoint.md: 678eaf1533c59fbd37779b6f7b844a04c643b1ba
+Solo se actualiza documentación de continuidad. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los diez hallazgos y las tareas/adendas relacionadas ya constan. Sin renombrados, cambios funcionales, operaciones productivas, merge o despliegue. Rama base intacta.
+Siguiente unidad secuencial: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN (respetar E1 y revalidaciones previas).
