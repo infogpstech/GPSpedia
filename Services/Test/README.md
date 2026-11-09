@@ -103,3 +103,24 @@ En cada caso rechazado, verificar que no se haya agregado ni modificado una fila
 
 
 Ampliación de casos: incluir también el campo Nombre_Usuario ausente y un nombre Unicode válido. El backend no impone un conjunto cerrado de caracteres ni una longitud máxima hasta que exista una política aprobada; la prueba debe confirmar que los nombres textuales no vacíos se conservan tras trim().
+
+
+## AUG-010 — Serialización de mutaciones y contraseña legacy
+
+Las copias AUTH y USERS deben probarse en proyectos Apps Script separados que utilicen únicamente la Spreadsheet aislada. Los locks de cada proyecto son locales; no asumir que el ScriptLock de AUTH coordina escrituras de USERS.
+
+Pruebas USERS:
+- Ejecutar createUser, updateUser y updateProfile en el deployment USERS aislado; comprobar que la sección crítica comienza antes de validar sesión/rol y termina después de la escritura.
+- Probar contención/timeout del lock y que se libera después de errores de autorización o escritura.
+- En updateUser, enviar simultáneamente Nombre_Completo válido y un Privilegios no permitido; confirmar rechazo sin modificar ninguno de los dos campos.
+- Inyectar fallo después de escribir el ID en createUser; comprobar que la fila ID-only se puede reutilizar en un reintento sin duplicar IDs.
+
+Pruebas AUTH:
+- Intercalar un login con contraseña legacy con changePassword para esa cuenta; el login con la contraseña anterior debe fallar al revalidar bajo el lock y no debe restaurar el hash antiguo ni crear sesión.
+- Intercalar login legacy de un usuario con resetUserPassword ejecutado por Desarrollador; el login antiguo debe fallar, conservarse el hash nuevo y no crearse sesión adicional.
+- Confirmar que una migración legacy normal se escribe bajo el lock AUTH y que un login con el hash actual sigue funcionando.
+
+No usar api-config.js para apuntar a URLs de prueba ni invocar endpoints operativos. La prueba real de conflictos AUTH↔USERS queda diferida a AUG-034, que define el coordinador interproyectos. La recuperación de escrituras parciales de updateUser se prueba bajo AUG-154, no se considera resuelta por AUG-010.
+
+
+Prueba adicional AUTH: cambiar el rol de la cuenta después de la lectura inicial de login y antes de que adquiera el ScriptLock; el límite de sesiones debe corresponder al rol revalidado dentro de la sección crítica, no al valor anterior.

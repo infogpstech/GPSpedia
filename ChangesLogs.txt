@@ -192,3 +192,19 @@ AUG-009 — Validación del nombre de usuario en backend — 2026-11-09
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
 Batería ampliada: 11/11 casos directos de doPost PASS en producción y 11/11 en copia aislada (22/22 funcionales); sintaxis PASS en ambas fuentes. Se añadieron pruebas de campo ausente y Unicode válido. No sustituye la prueba real del deployment aislado, que permanece en Beta.
+
+
+================================================================================
+AUG-010 — Serialización local USERS y migración legacy AUTH — 2026-11-09
+- Services/users.js y Services/Test/users.js: helper withUsersMutationLock_() con waitLock(30000)/finally; handleUpdateUser y handleUpdateProfile validan sesión y realizan escrituras dentro del lock local. createUser conserva su sección crítica existente.
+- handleUpdateUser valida el rol destino antes de escribir Nombre_Completo; evita mutación por rechazo RBAC.
+- Services/Auth.js y Services/Test/Auth.js: migración legacy de Password movida al lock AUTH que también serializa cambio/reset de contraseña y creación de sesión; revalida el valor almacenado vigente antes de migrar. Una credencial antigua ya reemplazada no puede crear sesión ni sobrescribir el hash nuevo.
+- Se preservaron los Spreadsheet IDs separados de producción/prueba. users.html y api-config.js no requieren cambios: los actions ya se enrutan a sus servicios propietarios.
+- Sintaxis 4/4 PASS; pruebas locales con dobles: USERS 14/14, createUser fallo/reintento 2/2, AUTH intercalado cambio propio/reset administrativo vs login legacy 4/4, migración normal 2/2. Total funcional 22/22; sintaxis 4/4.
+- H-AUD-006 revalidado; H-AUD-065 resuelto. H-AUD-066 (escritura parcial si falla la segunda columna de updateUser) se registra y deriva a AUG-154.
+- Alcance interproyectos no resuelto: ScriptLock no se comparte entre proyectos; AUG-034 permanece responsable del coordinador común. Sin Apps Script real, deployments, endpoints live ni hojas productivas.
+================================================================================
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
+Recuento final: USERS 14/14; createUser fallo/reintento 2/2; AUTH 8/8 incluyendo migración legacy normal, cambio propio intercalado, reset administrativo intercalado y aplicación del límite según rol revalidado dentro del lock. Total funcional 24/24 PASS; sintaxis 4/4 PASS. H-AUD-067 resuelto. H-AUD-066 se mantiene en AUG-154. Sin pruebas reales de Apps Script/deployments.

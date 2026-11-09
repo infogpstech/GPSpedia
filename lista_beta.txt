@@ -164,3 +164,27 @@ AUG-009 — Validación directa de createUser en USERS aislado
 - Probar un string válido con espacios externos; confirmar que se almacena recortado y que el login acepta el mismo identificador.
 - Confirmar que la prueba utiliza la Spreadsheet y deployment USERS aislados; nunca api-config.js live, endpoints operativos ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-010 — Concurrencia local USERS y contraseña AUTH en deployments aislados
+- Crear/verificar deployments separados AUTH y USERS que utilicen exclusivamente la Spreadsheet de prueba. No modificar api-config.js ni sustituir URLs live.
+- En USERS, ejecutar en paralelo createUser, updateUser y updateProfile; comprobar que las operaciones de escritura de un mismo proyecto no se intercalan dentro de la sección crítica y que IDs/nombres/roles quedan consistentes.
+- Probar contención y timeout de ScriptLock; confirmar que no hay lectura/escritura cuando no se adquiere y que el lock se libera tras errores RBAC, validación y escritura.
+- Probar updateUser con Nombre_Completo válido y Privilegios no permitido; ambos campos deben permanecer intactos.
+- Probar createUser con fallo después de escribir ID y reintento; la fila ID-only debe reutilizarse sin duplicar identificadores.
+- En AUTH, intercalar login legacy con changePassword propio y, por separado, con resetUserPassword administrativo de Desarrollador. La contraseña anterior no debe crear sesión ni sobrescribir el hash nuevo; el cambio/reset debe conservar su hash y revocación de sesiones.
+- Probar login legacy normal y confirmar que la migración de Password ocurre bajo el mismo lock AUTH que serializa changePassword/resetUserPassword.
+- No considerar estos ensayos simulados como prueba real hasta ejecutarlos en Apps Script con la Spreadsheet aislada.
+- Conflictos entre AUTH y USERS (por ejemplo, deleteUser simultáneo a updateUser/updateProfile) permanecen bloqueados hasta el coordinador de AUG-034; no afirmar que los ScriptLock locales se comparten.
+================================================================================
+
+================================================================================
+AUG-154 — Fallos parciales de updateUser
+- Tras implementar la estrategia de compensación/estado parcial, inyectar error en la segunda escritura de updateUser y verificar que no se reporta éxito engañoso ni se pierde el estado previo sin indicación explícita.
+- Probar también fallo de compensación y reintento; confirmar que el resultado informa claramente si requiere revisión manual.
+- Mantener pruebas en deployment USERS aislado; no endpoints live.
+================================================================================
+
+
+Ampliación AUG-010 AUTH: intercalar un cambio de rol antes de que login adquiera el ScriptLock y verificar que el límite aplicado corresponde al rol revalidado dentro del lock. Este ensayo local no sustituye el coordinador compartido AUTH↔USERS de AUG-034.

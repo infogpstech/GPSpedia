@@ -518,3 +518,13 @@ Implementación verificada:
 Validaciones locales: sintaxis PASS en AUTH/USERS de producción y prueba; revisión de ruteo/dispatch PASS; USERS sin escrituras de ActiveSessions PASS; harness de revocación remota 5/5 PASS. Los escenarios incluyeron preservar sesiones ajenas, múltiples sesiones objetivo, rechazo de rol no autorizado, aut cierre, cuenta inactiva y token duplicado.
 La prueba de intercalados reales con LockService y Spreadsheet de Google Apps Script, así como fallos físicos de escritura, queda diferida a Beta. No se ejecutaron endpoints operativos ni se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-154 — Recuperación de escrituras parciales en USERS
+Estado: NUEVA; pendiente. Hallazgo H-AUD-066 identificado durante las pruebas de fallo de AUG-010. La segunda escritura de updateUser puede fallar después de guardar Nombre_Completo, dejando un resultado parcial aunque la API responda error. Diseñar compensación/estado parcial seguro y probar reintentos; no asumir transacciones ni lock interproyectos. Mantener separado de AUG-010.
+================================================================================
+
+
+ADENDA DE RANGO — 2026-11-09
+Con AUG-154, el rango operativo de esta parte queda extendido a AUG-100–AUG-154. AUG-015 continúa ausente y no se crea ni reutiliza.

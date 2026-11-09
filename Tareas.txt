@@ -204,3 +204,29 @@ No se ejecutaron Apps Script real, deployments aislados ni endpoints operativos.
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
 Batería ampliada final: 11/11 casos directos de doPost PASS en Services/users.js y 11/11 en Services/Test/users.js (22/22 funcionales); sintaxis PASS en ambas fuentes (24/24 comprobaciones incluyendo sintaxis). Se añadieron casos de campo ausente y Unicode válido. La prueba real del deployment USERS aislado continúa en lista_beta.txt.
+
+
+================================================================================
+AUG-154 — Recuperación de escrituras parciales en las mutaciones de USERS
+- **Hallazgo:** H-AUD-066.
+- **Origen:** prueba de fallos durante AUG-010, 2026-11-09.
+- **Prioridad:** Alta.
+- **Evidencia:** handleUpdateUser() escribe Nombre_Completo y Privilegios mediante dos llamadas separadas. Si la segunda falla después de confirmar la primera, la API devuelve error pero el nombre queda modificado. El lock se libera correctamente; no hay transacción ni compensación.
+- **Alcance:** diseñar una estrategia segura para recuperar/compensar actualizaciones multicolumna de USERS, definir respuesta explícita ante compensación incompleta y cubrir fallos antes/durante/después de cada escritura. Evaluar también la recuperación de una fila con ID estático sin datos tras fallo en createUser; no confundir ese caso recuperable con una cuenta creada.
+- **Criterios:** no sobrescribir cambios de otros servicios; no asumir atomicidad de Range.setValue/setValues ni ScriptLock compartido; pruebas con fallo inyectado, reintento e integridad de fila; actualizar copias aisladas.
+- **Dependencias:** AUD-T-033/AUG-034 para conflictos interproyectos. Mantener separado de AUG-010 (serialización local).
+- **Estado:** NUEVA; pendiente.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — AUG-010 — 2026-11-09
+Estado: COMPLETADA EN EL ALCANCE LOCAL DE USERS/AUTH; validación real de deployments aislados pendiente en Beta. Coordinación interproyectos separada en AUG-034.
+Cambios: USERS serializa createUser/updateUser/updateProfile dentro del lock local; AUTH revalida la contraseña almacenada bajo su lock antes de migrar una credencial legacy y crear sesión. updateUser valida RBAC antes de escribir. Se preservaron los Spreadsheet IDs independientes de prueba.
+Pruebas locales: sintaxis 4/4; USERS 14/14; createUser fallo/reintento 2/2; AUTH login legacy vs cambio propio/reset administrativo 4/4; migración normal 2/2. Total funcional 22/22 PASS. No se ejecutaron deployments ni endpoints operativos.
+H-AUD-006 revalidado; H-AUD-065 resuelto. H-AUD-066 se deriva a AUG-154 porque una falla en la segunda escritura de updateUser puede dejar aplicada la primera aunque la API responda error. No se afirma atomicidad ni coordinación entre proyectos.
+================================================================================
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
+El recuento final es 24/24 pruebas funcionales locales PASS y 4/4 sintaxis PASS. Se añadió intercalado que cambia el rol antes de adquirir el lock AUTH y confirma que el límite de sesiones se calcula con el rol revalidado. H-AUD-067 resuelto. H-AUD-066 sigue abierto en AUG-154.

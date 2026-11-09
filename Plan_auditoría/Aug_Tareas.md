@@ -97,3 +97,16 @@ Siguiente tarea: AUG-010 — serialización de mutaciones USERS, respetando la d
 
 ADENDA FINAL DE PRUEBAS — AUG-009 — 2026-11-09
 La batería final se amplió a 11/11 casos directos de doPost PASS por fuente (22/22 funcionales) y sintaxis PASS en ambas fuentes. Casos: campo ausente, null, número, objeto, cadena vacía, espacios, prefijo reservado, duplicados con espacios/mayúsculas y texto válido recortado/Unicode. La prueba HTTP en deployment aislado permanece en Beta.
+
+
+AUG-154 — Recuperación/compensación de escrituras parciales en mutaciones USERS (H-AUD-066). Pendiente; separado de AUG-010 y dependiente de la coordinación interproyectos de AUG-034 cuando corresponda.
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-010 — 2026-11-09
+Alcance local completado en fuentes: createUser/updateUser/updateProfile serializados en USERS; migración legacy de AUTH revalidada bajo el lock de contraseña/sesión. Sintaxis 4/4 y pruebas locales funcionales 22/22 PASS. La coordinación entre proyectos sigue separada en AUG-034; pruebas reales en deployments aislados pendientes en lista_beta.txt. H-AUD-066 se registra como AUG-154 para recuperación de escrituras parciales.
+================================================================================
+
+
+ADENDA FINAL DE PRUEBAS — AUG-010 — 2026-11-09
+Recuento final 24/24 funcionales locales PASS y 4/4 sintaxis PASS. AUTH incluye migración legacy, intercalados de cambio propio/reset administrativo y límite de sesiones calculado desde el rol revalidado dentro del lock. H-AUD-067 resuelto; H-AUD-066 permanece en AUG-154. Validación real aislada y coordinación interproyectos pendientes de Beta/AUG-034.

@@ -251,6 +251,22 @@ function normalizeUsername_(value) {
     return normalized;
 }
 
+// Serializa las mutaciones que pertenecen al proyecto USERS.
+// Este lock solo coordina ejecuciones del mismo proyecto Apps Script.
+function withUsersMutationLock_(operation) {
+    const lock = LockService.getScriptLock();
+    try {
+        lock.waitLock(30000);
+    } catch (error) {
+        throw new Error('El servidor está ocupado. Por favor intenta de nuevo en unos momentos.');
+    }
+    try {
+        return operation();
+    } finally {
+        lock.releaseLock();
+    }
+}
+
 function handleCreateUser(payload) {
     const { newUser, sessionToken } = payload || {};
     if (!newUser || !sessionToken) {
@@ -317,79 +333,81 @@ function handleUpdateUser(payload) {
     if (!userId || !updates || !sessionToken) throw new Error("Datos insuficientes para actualizar. Se requiere sessionToken.");
     if (updates.Password) throw new Error('El restablecimiento administrativo de contraseñas debe realizarse mediante AUTH con el rol Desarrollador.');
 
-    const { role: updaterRole } = getVerifiedSession(sessionToken);
-    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-    const data = userSheet.getDataRange().getValues();
-    data.shift();
+    return withUsersMutationLock_(() => {
+        const { role: updaterRole } = getVerifiedSession(sessionToken);
+        const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+        const data = userSheet.getDataRange().getValues();
+        data.shift();
 
-    for (let i = 0; i < data.length; i++) {
-        if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
-            const userToUpdateRole = data[i][COLS_USERS.Privilegios - 1];
+        for (let i = 0; i < data.length; i++) {
+            if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
+                const userToUpdateRole = data[i][COLS_USERS.Privilegios - 1];
 
-            /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */
-            // RBAC strict enforcement
-            const canUpdate = {
-                'Desarrollador': () => true,
-                'Gefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
-                'Jefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
-                'Supervisor': (targetRole) => targetRole === 'Tecnico'
-            };
+                /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */
+                // RBAC strict enforcement
+                const canUpdate = {
+                    'Desarrollador': () => true,
+                    'Gefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
+                    'Jefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
+                    'Supervisor': (targetRole) => targetRole === 'Tecnico'
+                };
 
-            if (!canUpdate[updaterRole] || !canUpdate[updaterRole](userToUpdateRole)) {
-                 throw new Error(`Rol '${updaterRole}' no tiene permisos para modificar a un '${userToUpdateRole}'.`);
-            }
+                if (!canUpdate[updaterRole] || !canUpdate[updaterRole](userToUpdateRole)) {
+                    throw new Error(`Rol '${updaterRole}' no tiene permisos para modificar a un '${userToUpdateRole}'.`);
+                }
 
-            // PROHIBIDO cambiar nombre de usuario
-            // updates.Nombre_Usuario es ignorado deliberadamente
-
-            if (updates.Nombre_Completo) {
-                userSheet.getRange(i + 2, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
-            }
-            if (updates.Privilegios) {
-                // Verificar que el nuevo privilegio también esté permitido para el updater
+                // PROHIBIDO cambiar nombre de usuario; updates.Nombre_Usuario se ignora.
                 const allowedRoles = {
                     'Desarrollador': ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
                     'Gefe': ['Supervisor', 'Tecnico'],
                     'Jefe': ['Supervisor', 'Tecnico'],
                     'Supervisor': ['Tecnico']
                 };
-                if (allowedRoles[updaterRole].includes(updates.Privilegios)) {
-                    userSheet.getRange(i + 2, COLS_USERS.Privilegios).setValue(updates.Privilegios);
-                } else {
+                if (updates.Privilegios && !allowedRoles[updaterRole].includes(updates.Privilegios)) {
                     throw new Error(`El rol '${updaterRole}' no puede asignar el privilegio '${updates.Privilegios}'.`);
                 }
+
+                // Validar todo antes de escribir para evitar cambios parciales por rechazo RBAC.
+                if (updates.Nombre_Completo) {
+                    userSheet.getRange(i + 2, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
+                }
+                if (updates.Privilegios) {
+                    userSheet.getRange(i + 2, COLS_USERS.Privilegios).setValue(updates.Privilegios);
+                }
+                return { status: 'success', message: 'Usuario actualizado.' };
             }
-            return { status: 'success', message: 'Usuario actualizado.' };
         }
-    }
-    throw new Error("Usuario no encontrado para actualizar.");
+        throw new Error("Usuario no encontrado para actualizar.");
+    });
 }
 
 function handleUpdateProfile(payload) {
     const { userId, updates, sessionToken } = payload;
     if (!userId || !updates || !sessionToken) throw new Error("Datos insuficientes.");
 
-    const { userId: authenticatedUserId } = getVerifiedSession(sessionToken);
+    return withUsersMutationLock_(() => {
+        const { userId: authenticatedUserId } = getVerifiedSession(sessionToken);
 
-    if (authenticatedUserId !== String(userId)) {
-        throw new Error("Acceso no autorizado: Solo puedes editar tu propio perfil.");
-    }
-
-    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-    const data = userSheet.getDataRange().getValues();
-    data.shift();
-
-    for (let i = 0; i < data.length; i++) {
-        if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
-            // Solo permitir cambios en Nombre_Completo
-            if (updates.Nombre_Completo) {
-                userSheet.getRange(i + 2, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
-            }
-            // Password se maneja en handleChangePassword por seguridad (requiere contraseña actual)
-            return { status: 'success', message: 'Perfil actualizado correctamente.' };
+        if (authenticatedUserId !== String(userId)) {
+            throw new Error("Acceso no autorizado: Solo puedes editar tu propio perfil.");
         }
-    }
-    throw new Error("Usuario no encontrado.");
+
+        const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+        const data = userSheet.getDataRange().getValues();
+        data.shift();
+
+        for (let i = 0; i < data.length; i++) {
+            if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
+                // Solo permitir cambios en Nombre_Completo
+                if (updates.Nombre_Completo) {
+                    userSheet.getRange(i + 2, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
+                }
+                // Password se maneja exclusivamente en AUTH por seguridad.
+                return { status: 'success', message: 'Perfil actualizado correctamente.' };
+            }
+        }
+        throw new Error("Usuario no encontrado.");
+    });
 }
 
 

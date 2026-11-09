@@ -289,19 +289,14 @@ function handleLogin(payload) {
             throw new Error("Credenciales inválidas.");
         }
 
-        if (passwordCheck.legacy) {
-            userSheet.getRange(foundUserIndex + 2, COLS_USERS.Password)
-                .setValue(createPasswordHash(normalizedPassword, false));
-        }
         resetLoginAttempts(normalizedUsername);
         attemptReserved = false;
 
-        const userRole = (foundUserRow[COLS_USERS.Privilegios - 1] || '').toString().toLowerCase().trim();
         const userId = foundUserRow[COLS_USERS.ID - 1];
-        const sessionLimit = SESSION_LIMITS[userRole] ?? 1;
+        let sessionLimit = 1;
 
-        // Manage sessions atomically. The script lock is shared with login-attempt and log operations.
-        // Do not invoke logToSheet() while this lock is held.
+        // Serialize session and legacy-password mutations within the AUTH project.
+        // The ScriptLock is also used by login-attempt and log operations; do not call logToSheet() while held.
         const sessionLock = LockService.getScriptLock();
         let sessionLockAcquired = false;
         let oldestSession = null;
@@ -322,6 +317,23 @@ function handleLogin(payload) {
             if (currentUserRows.length !== 1 || !isActiveAuthUserRecord(currentUserRows[0].row)) {
                 throw new Error('La cuenta fue desactivada o su ID dejó de ser único; no se creará una sesión.');
             }
+
+            // Revalidar la contraseña dentro del mismo lock que changePassword/resetUserPassword.
+            // Una migración legacy atrasada nunca debe sobrescribir un hash más reciente.
+            foundUserRow = currentUserRows[0].row;
+            const currentPasswordCheck = verifyStoredPassword(
+                foundUserRow[COLS_USERS.Password - 1], normalizedPassword
+            );
+            if (!currentPasswordCheck.matches) {
+                invalidCredentials = true;
+                throw new Error('Credenciales inválidas.');
+            }
+            if (currentPasswordCheck.legacy) {
+                userSheet.getRange(currentUserRows[0].rowIndex, COLS_USERS.Password)
+                    .setValue(createPasswordHash(normalizedPassword, false));
+            }
+            const currentUserRole = (foundUserRow[COLS_USERS.Privilegios - 1] || '').toString().toLowerCase().trim();
+            sessionLimit = SESSION_LIMITS[currentUserRole] ?? 1;
             foundUserIndex = currentUserRows[0].rowIndex - 2;
 
             const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);

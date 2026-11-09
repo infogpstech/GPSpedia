@@ -377,3 +377,65 @@ Se sincronizó la función en Services/users.js y Services/Test/users.js, preser
 Verificación final: sintaxis PASS en ambos servicios; 11 casos directos de doPost PASS por servicio (22/22 funcionales): campo ausente, null, número, objeto, vacío, solo espacios, prefijo reservado, duplicado con trim, duplicado por mayúsculas, texto válido recortado y texto Unicode válido. Total de comprobaciones incluyendo sintaxis 24/24 PASS. No se ejecutó Apps Script real ni deployment aislado.
 Estado H-AUD-064: RESUELTO EN FUENTES; prueba real de endpoint aislado diferida a Beta.
 ================================================================================
+
+
+================================================================================
+REVALIDACIÓN AUG-010 — H-AUD-006 / ADENDA AUD-T-023 — 2026-11-09
+HEAD auditado: 1b76256c660e13ea5f3db5328da50df24f18afb1. Rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Alcance: serialización de las mutaciones de USERS y concurrencia de contraseña AUTH indicada en la adenda AUD-T-023. Auditoría estática completa antes de editar; no se modificó código.
+
+Inventario vigente de USERS:
+- doPost expone getUsers (lectura), createUser, updateUser y updateProfile.
+- handleCreateUser ya usa LockService.getScriptLock(), waitLock(30000) y finally para liberar; generación de ID, detección de duplicados y escrituras ocurren dentro de la sección crítica.
+- handleUpdateUser y handleUpdateProfile leen Users/ActiveSessions y escriben Users sin adquirir ScriptLock. Sus lecturas de sesión/rol y escrituras no quedan serializadas frente a otras mutaciones del mismo proyecto USERS.
+- handleResetUserSessions, handleDeleteUser y handleChangePassword ya no pertenecen a USERS. El router api-config.js los asigna a AUTH; Services/Auth.js es el escritor de ActiveSessions. handleResetUserSessions y handleDeleteUser usan ScriptLock AUTH; handleChangePassword y handleResetUserPassword también usan ScriptLock AUTH.
+- handleUpdateUser rechaza updates.Password; users.html elimina Password del objeto updateUser y, si se proporcionó una contraseña administrativa, envía resetUserPassword por separado a AUTH. El cambio propio de contraseña se envía a AUTH mediante changePassword. No existe una ruta vigente para modificar Password desde USERS.
+
+Hallazgos:
+1. H-AUD-006 continúa vigente parcialmente: createUser está serializado, pero updateUser/updateProfile no lo están. La corrección local debe adquirir el lock antes de validar sesión/rol y mantenerlo hasta completar la lectura y escritura; timeout definido de 30 segundos, igual que createUser; liberar en finally.
+2. H-AUD-065 — P2: handleUpdateUser escribe Nombre_Completo antes de validar que el nuevo Privilegios esté permitido. Un payload con nombre válido y rol no autorizado puede devolver error después de haber cambiado el nombre. Validar todos los campos/roles antes de la primera escritura.
+3. H-AUD-023-002 permanece vigente en AUTH: handleLogin migra una contraseña legacy escribiendo Users.Password antes de adquirir el lock usado para crear la sesión. Si changePassword/resetUserPassword actualiza el hash entre la lectura inicial y esa escritura, una migración atrasada puede sobrescribir el hash nuevo. La adenda AUD-T-023 a AUG-010 exige revalidar el valor vigente y serializar esa migración con las mutaciones de contraseña AUTH.
+4. AUD-T-033 revalidado: los ScriptLock de proyectos Apps Script separados no se comparten; no existe coordinador interproyectos vigente. AUG-034 conserva el diseño/implementación del coordinador compartido y está pendiente. AUG-010 no debe fingir que el lock local de USERS protege frente a AUTH/ADMIN/WRITE/FEEDBACK ni duplicar AUG-034. La parte local USERS y la sección crítica de contraseña dentro de AUTH sí pueden serializarse dentro de sus respectivos proyectos.
+
+Copias y consumidores:
+- Services/Test/users.js y Services/Test/Auth.js mantienen lógica funcional equivalente a producción; solo difieren en el Spreadsheet ID aislado y comentarios de identificación de prueba. Mantener ambos IDs independientes al sincronizar.
+- users.html llama updateUser, updateProfile, createUser, changePassword y resetUserPassword con los payloads/rutas correspondientes. api-config.js mapea updateUser/updateProfile/createUser a USERS y changePassword/resetUserPassword/resetUserSessions/deleteUser a AUTH; no requiere cambio de ruteo.
+- Services/Test/README.md confirma que AUTH y USERS son proyectos Apps Script distintos y que no hay deployments aislados creados/verificados. No llamar endpoints live ni cambiar api-config.js para pruebas.
+
+Alcance de implementación propuesto: serializar updateUser y updateProfile bajo el lock local USERS; validar Privilegios antes de cualquier escritura; mantener createUser como está salvo la batería de regresión; mover la migración legacy de AUTH dentro del mismo lock que revalida credenciales y crea sesión, de modo que no sobrescriba un hash más reciente. No implementar aquí coordinación entre proyectos, eliminación/revocación de sesiones, cambios de rol en sesiones ni KDF (AUG-034/AUG-016/AUG-011 a 014 mantienen esos alcances).
+
+Archivos auditados íntegramente/referencias: Services/users.js, Services/Test/users.js, Services/Auth.js, Services/Test/Auth.js, users.html, api-config.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Maestro_Implementacion.md y registros legacy de AUD-T-033/AUG-034. No se ejecutaron Apps Script real, HTTP, deployments, Sheets reales ni concurrencia real.
+Estado: AUDITORÍA COMPLETADA; implementación aún no iniciada.
+================================================================================
+
+
+================================================================================
+H-AUD-066 — Escritura parcial en updateUser ante fallo de la segunda columna — 2026-11-09
+Severidad: P2 — consistencia de perfil/rol.
+Evidencia reproducida después de implementar el lock local: updateUser escribe Nombre_Completo y luego Privilegios en dos llamadas separadas. En un harness con fallo inyectado en la escritura de Privilegios, la API devuelve status=error, el nombre ya quedó actualizado y el rol permanece sin cambio; el ScriptLock se libera correctamente.
+La validación previa evita escrituras cuando el rol es inválido, pero no convierte dos escrituras físicas de Sheets en una transacción ni revierte una primera escritura si falla la segunda. No se debe afirmar atomicidad.
+Alcance: recuperación/compensación de escrituras parciales; separado de la serialización de solicitudes de AUG-010. Se crea AUG-154 para evaluar una estrategia segura de compensación/estado parcial y pruebas de fallo físico, sin asumir un lock compartido entre proyectos.
+Estado: ABIERTO; fuera del alcance de AUG-010.
+================================================================================
+
+
+================================================================================
+H-AUD-067 — Límite de sesiones calculado con rol leído antes del lock AUTH — 2026-11-09
+Severidad: P2 — aplicación del límite de sesiones por rol.
+Evidencia de revisión: handleLogin() leía el rol para calcular SESSION_LIMITS antes de adquirir el ScriptLock y después volvía a leer la cuenta dentro del lock. Un cambio de rol ocurrido entre ambas lecturas podía hacer que la creación de sesión aplicara el límite anterior.
+Corrección AUG-010: sessionLimit ahora se calcula con el rol de la fila revalidada dentro de la sección crítica AUTH. El lock sigue siendo local al proyecto AUTH; un cambio de rol ocurrido después de esa lectura desde USERS no queda coordinado hasta AUG-034.
+Prueba de intercalado con dobles: se cambió el rol de Desarrollador a Tecnico entre la lectura inicial y el lock; login aplicó el límite Tecnico de dos sesiones, conservó la sesión más reciente y creó la nueva (PASS en producción y copia aislada).
+Estado: RESUELTO EN FUENTES, con límite interproyectos expresamente pendiente de AUG-034.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN Y VERIFICACIÓN FINAL — AUG-010 — 2026-11-09
+H-AUD-006: resuelto en el alcance local de USERS; createUser/updateUser/updateProfile quedan serializados por el ScriptLock del proyecto USERS. La coordinación AUTH↔USERS no se considera resuelta y permanece en AUG-034.
+H-AUD-065: RESUELTO; updateUser valida el nuevo Privilegios antes de cualquier escritura.
+H-AUD-023-002 (adenda AUD-T-023): RESUELTO en el alcance AUTH; login revalida la contraseña actual bajo el mismo ScriptLock que changePassword/resetUserPassword y migra solo si la credencial presentada todavía coincide.
+H-AUD-067: RESUELTO; el límite de sesiones usa el rol revalidado dentro del lock AUTH.
+H-AUD-066: ABIERTO y derivado a AUG-154; no se oculta que updateUser puede dejar una primera escritura aplicada si falla la segunda.
+Verificación final: sintaxis 4/4 PASS; harness USERS 14/14 PASS; createUser fallo/reintento 2/2 PASS; AUTH migración legacy normal, cambio propio intercalado, reset administrativo intercalado y límite de sesión con rol revalidado: 8/8 PASS. Total funcional local 24/24; sintaxis 4/4. Doble de prueba aislado y producción comparten lógica; se preservan Spreadsheet IDs distintos.
+No se ejecutó Apps Script real, deployment aislado, HTTP ni endpoints operativos; no se accedió ni modificó ninguna Spreadsheet real. Concurrencia real y coordinación interproyectos no se certifican.
+================================================================================

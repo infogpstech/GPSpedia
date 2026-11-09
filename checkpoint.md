@@ -684,3 +684,98 @@ Ciclo A anterior (AUG-008): commit previo revisado; no se encontraron defectos n
 Siguiente tarea: AUG-010 — serialización de mutaciones USERS, con dependencia explícita de AUD-T-033 para coordinación interproyectos.
 Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-009.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-010
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado al iniciar: 1b76256c660e13ea5f3db5328da50df24f18afb1
+Rama base: GPSpedia2.2.5
+HEAD base confirmado al iniciar: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-010 — completar serialización de mutaciones del servicio USERS.
+Origen registrado: H-AUD-006 / AUD-T-002; prioridad Alta.
+Dependencia declarada: AUD-T-033 para coordinación de mutaciones entre proyectos. La tarea y su protocolo deben verificarse antes de definir alcance; no asumir que ScriptLock de proyectos Apps Script distintos sea compartido.
+Alcance provisional: auditar íntegramente Services/users.js, su copia Services/Test/users.js, consumidores y servicios relacionados AUTH, rutas frontend, protocolo AUD-T-033, documentación y pruebas; inventariar cada mutación que comparte Users/ActiveSessions y distinguir locks locales de coordinación interproyectos. Incluir las adendas AUD-T-023 sobre operaciones de contraseña y migración legacy si forman parte del alcance operativo de AUG-010.
+Riesgos: carreras de lectura-modificación-escritura; lock no compartido entre proyectos; cambios de contraseña/roles/perfiles concurrentes; creación/actualización/eliminación y revocación de sesiones; efectos parciales y falsa afirmación de atomicidad; desincronización de copia aislada.
+Archivos candidatos para auditoría (no exhaustivos): Services/users.js, Services/Test/users.js, Services/Auth.js, Services/Test/Auth.js, api-config.js, users.html, Services/Test/README.md, documentación de AUD-T-033 y tareas relacionadas. Se ampliará o reducirá el alcance solo con evidencia del registro.
+Regla: no editar código durante la auditoría. Registrar todos los hallazgos en Auditoría.txt antes de implementar; los hallazgos fuera de alcance se registran en Tareas.txt. Crear respaldo exacto antes de cada edición.
+Pruebas previstas: sintaxis, harness directo por handler, intercalados concurrentes y fallos parciales/reintentos en dobles aislados; no llamar endpoints operativos ni tocar hojas productivas. La concurrencia real de Apps Script y despliegues aislados solo se afirmará si se ejecuta realmente.
+Siguiente paso: localizar y leer la definición completa de AUD-T-033 y las adendas de AUG-010; luego auditar íntegramente todos los archivos afectados sin modificaciones.
+Estado: INICIADA; AUD-T-033 pendiente de verificación; auditoría sin comenzar.
+================================================================================
+
+
+================================================================================
+CHECKPOINT INTERMEDIO — AUG-010 — AUDITORÍA COMPLETADA
+HEAD auditado: 1b76256c660e13ea5f3db5328da50df24f18afb1. HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (intacto).
+Auditoría registrada antes de implementar en Auditoría.txt, blob 9d8305096cb3883f1a39af0cf9ef42a722e91898. H-AUD-006 revalidado; H-AUD-065 nuevo; H-AUD-023-002 revalidado dentro de la adenda AUD-T-023.
+Conclusión de alcance: USERS expone createUser/updateUser/updateProfile como mutaciones. createUser ya usa ScriptLock 30 s y finally; updateUser/updateProfile carecen de lock. resetUserSessions/deleteUser/changePassword/resetUserPassword están en AUTH y sus rutas ya están centralizadas allí. AUTH password handlers usan lock local; la migración legacy de handleLogin ocurre antes del lock y debe trasladarse a la sección crítica con revalidación del hash vigente.
+Dependencia AUD-T-033: no existe lock compartido entre proyectos. AUG-034 mantiene pendiente el coordinador interproyectos. AUG-010 no implementará ni simulará ese coordinador; el alcance local de USERS y el lock de contraseña interno de AUTH se mantienen diferenciados. Riesgo residual de carreras AUTH↔USERS queda documentado y se difiere a AUG-034/AUG-016 según dominio.
+Code no modificado durante la auditoría.
+Respaldos exactos previos a editar (blobs inmutables del HEAD auditado): Services/users.js=26c764d1f1aa08f8c848db87d8d1a58366397484; Services/Test/users.js=27f26d55ff29b3d5125e1d5962a21df3ae446428; Services/Auth.js=94f1057e88e09e22f8a36dcc186c17f6a2aa067f; Services/Test/Auth.js=039fe1ce8590f6c866dfae0d6fd99f6dbf135912. Los archivos de prueba conservan Spreadsheet ID independiente. Archivos de frontend/ruteo/documentación auditados y no previstos para edición funcional: users.html=42e6afd633af634ae4a8d6c3622dd78f5f161bea; api-config.js=26c4575a7d3b355e18e5b559d659de4bda5a2746; Services/Test/README.md=7f523e56c91dcdac5701c6128c4240b5621ed5d4.
+Plan de implementación: (1) incorporar helper de lock local USERS con espera de 30 s y finally en updateUser/updateProfile; (2) validar rol nuevo antes de cualquier escritura; (3) en AUTH, mover la migración legacy dentro del lock ya usado para crear sesión, revalidar el hash almacenado vigente y no sobrescribir un hash nuevo; (4) sincronizar copias de prueba; (5) probar éxito, rechazo, timeout, liberación tras error, conflicto updateUser/updateProfile, carrera legacy-login/changePassword/resetUserPassword simulada y regresiones createUser; (6) actualizar README y Beta con límites de validación real.
+Siguiente paso: implementar únicamente después de este checkpoint y el registro de auditoría; respaldos exactos ya fijados arriba.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-010
+Fecha: 2026-11-09
+Estado: COMPLETADA EN EL ALCANCE LOCAL DE USERS/AUTH. La coordinación interproyectos sigue pendiente en AUG-034; la validación real en deployments aislados queda en Beta.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado: 1b76256c660e13ea5f3db5328da50df24f18afb1
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+Tarea: AUG-010 — completar serialización de mutaciones del servicio USERS; adenda AUD-T-023 de concurrencia de operaciones de contraseña.
+Dependencia AUD-T-033 revalidada: ScriptLock es local a cada proyecto Apps Script y no se comparte entre AUTH/USERS/otros servicios. AUG-034 conserva el coordinador interproyectos. Este commit no implementa ni simula ese coordinador.
+
+Archivos funcionales modificados:
+- Services/users.js — blob a3bdd603cd958a6975a4053208d635cf76965676.
+- Services/Test/users.js — blob 71d84a33994340a34025fb390d4346997320833d.
+- Services/Auth.js — blob 47672d8a0306bd736fa34d8d3c98f42d8f07eb76.
+- Services/Test/Auth.js — blob 23381af766bfc4c0aa8f194a26d5c593916a23df.
+
+Documentación/trazabilidad modificada:
+- Auditoría.txt — blob 7eb680990d98c01587cc162119cdd48331192ea8.
+- Tareas.txt — blob a12b04f050008e75e4d9e7a223be860eb2e6048f.
+- Tareas_pendientes_parte1.txt — blob aef48ae328d3fff9d2f840dc4ada6d6c918111cb.
+- Tareas_pendientes_parte2.txt — blob 1f3aa074e71b3875c2bfb5b8f125c27791612779 (incluye AUG-154 y rango 100–154).
+- Plan_auditoría/Aug_Tareas.md — blob 87b692c7b7a8a5863d57fcc41e84b9f715194a24.
+- ChangesLogs.txt — blob bb54b6abb35feae55529ff1e413cab2fb6b16783.
+- Services/Test/README.md — blob 8dbdc2fb6fe880a8d5de4d9f19891e493677da00.
+- lista_beta.txt — blob 447d3bae59a66df5c6a92ea2ea54733e7d86cafc.
+- checkpoint.md — este documento final.
+
+Respaldos exactos previos a editar (blobs inmutables del HEAD padre): Services/users.js=26c764d1f1aa08f8c848db87d8d1a58366397484; Services/Test/users.js=27f26d55ff29b3d5125e1d5962a21df3ae446428; Services/Auth.js=94f1057e88e09e22f8a36dcc186c17f6a2aa067f; Services/Test/Auth.js=039fe1ce8590f6c866dfae0d6fd99f6dbf135912. Los IDs de Spreadsheet de producción y prueba permanecen distintos.
+
+Implementación final:
+1. USERS: createUser conserva su ScriptLock de 30 s. Se añadió withUsersMutationLock_() con waitLock(30000)/finally y se aplica a updateUser/updateProfile. El lock cubre validación de sesión/rol, lectura de Users y escrituras. No se modificaron acciones de lectura.
+2. USERS: updateUser valida permisos del rol destino antes de escribir Nombre_Completo o Privilegios. Password sigue rechazado en USERS; el frontend ya enruta cambios/restablecimientos de contraseña a AUTH.
+3. AUTH: login vuelve a leer la cuenta y revalida la contraseña dentro del mismo ScriptLock que protege el cambio propio y reset administrativo. La migración legacy se escribe solo si la contraseña almacenada vigente todavía coincide con la presentada; un hash nuevo nunca se sobrescribe con una migración atrasada.
+4. AUTH: el límite de sesiones se calcula con el rol revalidado dentro de la sección crítica, no con la lectura previa al lock.
+5. Copias aisladas sincronizadas; al normalizar el Spreadsheet ID y comentarios de prueba, la lógica funcional coincide con producción. No se modificaron users.html ni api-config.js porque el ruteo ya es correcto.
+
+Hallazgos y estado:
+- H-AUD-006: resuelto en el alcance local de USERS. La coordinación AUTH↔USERS no se considera resuelta; permanece en AUG-034.
+- H-AUD-023-002 (adenda AUD-T-023): resuelto para las mutaciones de contraseña dentro de AUTH; handleUpdateUser ya no escribe Password.
+- H-AUD-065: resuelto; la validación RBAC ocurre antes de cualquier escritura.
+- H-AUD-067: resuelto; límite de sesión calculado desde el rol revalidado bajo lock.
+- H-AUD-066: permanece abierto y se registra como AUG-154. Si la primera escritura de Nombre_Completo tiene éxito y falla la segunda escritura de Privilegios, updateUser puede responder error con la primera modificación aplicada. El lock se libera; no se afirma atomicidad ni rollback.
+
+Pruebas locales con dobles de Apps Script:
+- Sintaxis: 4/4 PASS (USERS/Auth de producción y copia aislada).
+- USERS: 14/14 PASS (updateUser válido, rechazo RBAC sin escrituras, updateProfile, contención de lock, liberación tras error, regresión createUser y rechazo de Password en USERS; ejecutado en ambas fuentes).
+- createUser fallo/reintento: 2/2 PASS; fila con ID estático y sin datos se reutiliza y conserva el identificador esperado.
+- AUTH: 8/8 PASS; migración legacy normal bajo lock, cambio propio intercalado, reset administrativo intercalado y límite de sesiones con rol actualizado antes de adquirir lock; producción y copia aislada.
+- Total funcional local: 24/24 PASS. La falla parcial de updateUser se reprodujo y se registró como H-AUD-066/AUG-154, no se contó como PASS ni se ocultó.
+
+Code Review / Safety & Side Effects: PASS para el alcance implementado. Revisión de los cuatro archivos completos y de los diffs contra respaldos; cambios limitados a los locks locales, validación RBAC previa, revalidación/migración de contraseña y cálculo de límite de sesiones. Copias de prueba conservan sus Spreadsheet IDs separados. No se cambiaron rutas frontend, URLs, esquemas, roles, KDF, endpoints ni datos productivos. El ScriptLock no protege frente a proyectos distintos.
+
+Limitaciones: pruebas realizadas con dobles locales, no son concurrencia real de Apps Script ni prueba HTTP. No se crearon/verificaron deployments, no se llamaron endpoints live, no se accedió ni modificó ninguna Spreadsheet real. Las pruebas reales de USERS/AUTH aislados están en lista_beta.txt. Los conflictos interproyectos quedan bloqueados hasta AUG-034. La compensación de escrituras parciales queda en AUG-154.
+
+Siguiente tarea secuencial registrada: AUG-011 — sustituir SHA-256 rápido por KDF resistente y completar migración versionada. AUG-154 permanece como tarea nueva de recuperación de escrituras parciales.
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-010.
+================================================================================

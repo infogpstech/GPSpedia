@@ -1526,3 +1526,20 @@ Pruebas directas de doPost con dobles locales: 9/9 PASS en producción y 9/9 en 
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
 Batería final ampliada: 11/11 casos directos de doPost PASS por fuente (22/22 funcionales); sintaxis PASS en producción y copia aislada. Se comprobaron campo ausente, null, número, objeto, vacío, espacios, prefijo reservado, duplicados normalizados y nombres válidos recortados/Unicode. Validación HTTP real en deployment aislado sigue diferida a Beta.
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-010 — 2026-11-09
+Estado: COMPLETADA EN EL ALCANCE LOCAL DE USERS/AUTH; validación real en deployments aislados diferida a Beta. La coordinación interproyectos permanece en AUG-034, sin asumir ScriptLock compartido.
+- USERS: createUser conserva su lock de 30 s; updateUser y updateProfile ahora serializan lectura de sesión/rol y escritura bajo el mismo ScriptLock local, con liberación en finally. updateUser valida el rol destino antes de escribir.
+- AUTH: la migración de contraseña legacy se realiza dentro del mismo lock que revalida la contraseña vigente y crea la sesión; evita que una migración atrasada sobrescriba un hash establecido por changePassword/resetUserPassword.
+- handleUpdateUser ya rechaza updates.Password; la UI enruta cambio propio y reset administrativo a AUTH. Los handlers AUTH de cambio/reset ya usan su lock local.
+- Sintaxis 4/4 PASS; harness USERS 14/14 PASS; recuperación de fila ID-only de createUser tras fallo/reintento 2/2 PASS; intercalados AUTH de cambio propio y reset Desarrollador contra login legacy 4/4 PASS; migración legacy normal bajo lock 2/2 PASS. Total funcional local: 22/22 PASS; sintaxis: 4/4 PASS.
+- H-AUD-065 resuelto en fuentes. H-AUD-066 detectado como riesgo distinto de escritura parcial de updateUser y trasladado a AUG-154; no se afirma atomicidad.
+- AUD-T-033: no existe coordinador interproyectos; AUG-034 mantiene ese diseño/implementación. No se modificó api-config.js ni se llamaron endpoints operativos.
+- Pruebas reales de concurrencia Apps Script/Spreadsheet aislada pendientes en lista_beta.txt. No se ejecutó deployment ni se tocaron datos productivos.
+================================================================================
+
+
+ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
+Recuento final corregido tras añadir la prueba del límite de sesiones con rol revalidado: sintaxis 4/4 PASS; USERS 14/14; createUser fallo/reintento 2/2; AUTH migración legacy normal, cambio propio intercalado, reset Desarrollador intercalado y límite por rol actualizado 8/8. Total funcional local 24/24 PASS. H-AUD-067 resuelto. H-AUD-066 permanece abierto en AUG-154. No se ejecutaron deployments ni concurrencia real.
