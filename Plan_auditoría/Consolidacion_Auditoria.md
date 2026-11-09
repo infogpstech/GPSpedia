@@ -1090,3 +1090,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, móviles, PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación de imágenes, canvas ni pruebas de gestos. La continuidad estática no certifica comportamiento visual ni funcional.
 - Sin cambios funcionales, assets, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-007, mediante revalidación de continuidad.
+
+
+## 44. AUD-T-007 — continuidad E1 revalidada
+- Sesión AUD-20261108-S109; checkpoint AUD-CP-0108; E1 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; HEAD e7eb9147e78c726d175ad3e33ffcc349abfd529b; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Revalidación previa: AUD-20261108-S047 / AUD-CP-0046, HEAD 673114ee77c36d4bdc4ab3e67b1c31365b8f5ceb. Comparación actual E1→HEAD: 84 commits; merge-base igual a E1; únicamente ocho documentos modificados.
+- Los diez archivos funcionales del alcance conservan SHA exactos de E1: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js; hashes completos en sección 59 del plan.
+- H-AUD-007-001 a 005 siguen abiertos; AUG-068 a AUG-071 pendientes; adenda AUG-047 vigente. H-AUD-005-008 continúa ampliado sin duplicar su identificador.
+- VAL-10 y VAL-17 pendientes. No se ejecutaron pruebas de navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits, deep links ni medición de history.state.
+- Sin cambios funcionales, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- Siguiente: AUD-T-008, mediante revalidación de continuidad.

@@ -2601,3 +2601,33 @@ No se ejecutaron navegador, dispositivos móviles, PWA, CDN, IndexedDB real, med
 Commit documental único: pendiente de creación; parent cd3ad9621ae87507a28df91534718263feae0d82.
 Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0108
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S109
+Tarea: AUD-T-007 — revalidación de continuidad E1 de navegación, History API, popstate, overlays y gesto atrás.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: e7eb9147e78c726d175ad3e33ffcc349abfd529b.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e. Revalidación previa documentada en AUD-20261108-S047 / AUD-CP-0046.
+Alcance: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+Estado inicial: E1 estática completada; H-AUD-007-001 a 005 abiertos; AUG-068 a AUG-071 pendientes; adenda AUG-047 vigente; H-AUD-005-008 ampliado sin duplicación.
+Fase: revalidación de continuidad E1; sin autorización para cambiar archivos funcionales.
+Riesgos/dependencias: registro de overlays dinámicos, navegación interna «Volver», cierre secuencial de capas, reconciliación de entradas History API y prioridad del acuerdo de términos; VAL-10/VAL-17 pendientes.
+Siguiente acción: comparar E1→HEAD, verificar SHA de los diez archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0108
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S109
+Tarea: AUD-T-007 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-007-001 a 005 abiertos; AUG-068 a AUG-071 pendientes; adenda AUG-047 vigente.
+HEAD padre confirmado: e7eb9147e78c726d175ad3e33ffcc349abfd529b. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e→e7eb9147e78c726d175ad3e33ffcc349abfd529b: 84 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los diez archivos funcionales del alcance mantienen SHA exactos de E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: overlays dinámicos no detectados uniformemente; botones internos «Volver» pueden crear entradas nuevas; popstate puede cerrar varios overlays; cierres manuales/aperturas pueden dejar entradas obsoletas; prioridad incorrecta entre #terms-modal y #terms-agreement-modal. Se conservan AUG-068 a AUG-071 y la adenda AUG-047. H-AUD-005-008 sigue ampliado sin duplicar su ID.
+Validaciones pendientes: VAL-10 y VAL-17. No se ejecutaron navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ni medición de history.state.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque los hallazgos y tareas ya están registrados.
+Sin cambios funcionales, HTML/CSS de aplicación, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+Commit documental único: pendiente de creación; parent e7eb9147e78c726d175ad3e33ffcc349abfd529b.
+Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+================================================================================
