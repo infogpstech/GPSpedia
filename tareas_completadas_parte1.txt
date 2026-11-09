@@ -213,3 +213,11 @@ Límite: concurrencia real y timeout del logger durante purgas prolongadas queda
 
 ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
 Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+
+================================================================================
+AUG-014 — Alinear validación de contraseña en UI y corregir texto
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES.
+Hallazgo H-AUD-070 resuelto. Archivo funcional: users.html. La longitud mínima se valida mediante newPassword.trim().length; el valor original continúa enviándose a AUTH. Se corrigió «reincie sesión» por «reinicie sesión».
+No se modificaron Services/Auth.js, Services/Test/Auth.js ni api-config.js. Se conservaron la validación backend, SHA-256 y el prefijo sha256$.
+Validación: sintaxis del módulo inline 1/1 PASS; pruebas funcionales locales 10/10 PASS; reconstrucción inversa exacta contra el respaldo PASS; solo dos líneas modificadas (642 y 653). No se ejecutaron navegador real, deployment, HTTP ni Sheets.
+================================================================================

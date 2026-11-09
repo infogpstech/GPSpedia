@@ -252,3 +252,10 @@ Sintaxis 4/4 PASS; pruebas funcionales locales 18/18 PASS, incluyendo fixtures h
 
 ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
 Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+
+================================================================================
+ACTUALIZACIÓN — AUG-014 — VALIDACIÓN DE CONTRASEÑA EN UI — 2026-11-09
+Estado: COMPLETADA EN FUENTES.
+users.html valida el mínimo de 8 caracteres sobre newPassword.trim().length, coincidiendo con normalizePassword() del servicio AUTH. Se corrigió «reincie sesión» por «reinicie sesión». Backend y formato sha256$ sin cambios.
+Validación local: módulo JavaScript 1/1 PASS; escenarios funcionales 10/10 PASS; diff exacto de dos líneas y reconstrucción contra respaldo PASS. No se ejecutaron navegador real ni deployment.
+================================================================================

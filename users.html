@@ -639,7 +639,7 @@ async function handleChangePasswordSubmit(e) {
         return;
     }
 
-    if (newPassword.length < 8) {
+    if (newPassword.trim().length < 8) {
         alert('La nueva contraseña debe tener al menos 8 caracteres.');
         return;
     }
@@ -650,7 +650,7 @@ async function handleChangePasswordSubmit(e) {
 
         const userId = currentUser.ID || currentUser.id;
         if (!userId) {
-            alert('Error: No se pudo identificar al usuario actual. Por favor reincie sesión.');
+            alert('Error: No se pudo identificar al usuario actual. Por favor reinicie sesión.');
             return;
         }
 

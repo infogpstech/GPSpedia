@@ -1563,3 +1563,11 @@ Verificación local: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS. No se ej
 
 ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
 Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+
+================================================================================
+ACTUALIZACIÓN AUG-014 — VALIDACIÓN DE CONTRASEÑA EN UI — 2026-11-09
+Estado: COMPLETADA EN FUENTES.
+H-AUD-070 resuelto. users.html ahora mide el mínimo de 8 caracteres después de aplicar trim(), igual que AUTH, y corrige «reincie sesión» por «reinicie sesión». El valor original sigue enviándose al backend; la validación backend permanece obligatoria y sin cambios.
+Pruebas locales: sintaxis 1/1 PASS; escenarios funcionales 10/10 PASS, incluyendo límites 7/8, espacios/tabulaciones externas, confirmación, valor enviado y normalización en AUTH producción/prueba. Diff contra respaldo: exactamente dos líneas; reconstrucción inversa PASS.
+No se ejecutaron navegador real, deployment, HTTP ni Sheets. No se modificó SHA-256 ni el formato sha256$.
+================================================================================

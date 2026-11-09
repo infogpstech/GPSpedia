@@ -957,3 +957,75 @@ Este checkpoint final es la última actualización documental inmediatamente ant
 
 ADENDA FINAL DE TRAZABILIDAD — AUG-013 — 2026-11-09
 Se verificó que los blobs documentales finales incluidos en el commit contienen: hallazgo H-AUD-069 y su resolución en Auditoría.txt; cierre AUG-013 en Tareas_pendientes_parte1.txt y Tareas.txt; registro en tareas_completadas_parte1.txt; pruebas reales pendientes en lista_beta.txt; y cambios objetivos en ChangesLogs.txt. La batería final queda en 24/24 pruebas funcionales locales PASS y 4/4 sintaxis PASS. Esta adenda es la última actualización documental antes del único commit de AUG-013.
+
+================================================================================
+CHECKPOINT INICIAL — AUG-014 — 2026-11-09
+Estado: INICIADA; auditoría pendiente. No se ha modificado código.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 057852fc12582da55c1ffb03331c2b83dd9ea81e
+Árbol inicial: 0960be9696a9b33de3b4bc368fc02ff8b9b8c3b1
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-014 — Alinear validación de contraseña en UI y corregir el texto «reincie» por «reinicie».
+Alcance definido en Tareas_pendientes_parte1.txt: users.html valida longitud sin trim mientras backend aplica trim; mensaje contiene «reincie». Criterios: aplicar en cliente la misma longitud normalizada sin sustituir validación backend; corregir a «reinicie sesión»; probar espacios externos y longitudes límite.
+Archivos candidatos: users.html y los módulos/servicios que participen directamente en la actualización de contraseña, además de Auditoría.txt, ChangesLogs.txt, Tareas.txt, registro de tareas y checkpoint.md.
+Restricciones: mantener intacta la validación backend y el formato de contraseña; no reactivar AUG-011 ni cambiar SHA-256. No tocar otras funcionalidades ni estilos ajenos.
+Commit previo: AUG-013 057852fc12582da55c1ffb03331c2b83dd9ea81e; AUG-012 anterior 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f.
+Riesgos/dependencias: flujo de cambio de contraseña y cualquier normalización backend/cliente deben coincidir exactamente; confirmar límites reales y si hay varias validaciones de contraseña en users.html.
+Pendiente: localizar todas las referencias del formulario y el texto; auditar línea por línea antes de editar; registrar hallazgos en Auditoría.txt.
+Siguiente acción concreta: completar inventario de archivos y auditoría diagnóstica AUG-014 sin cambios de código.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUG-014 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación integrada en navegador no ejecutada.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada: GPSpedia2.2.5_work
+HEAD padre confirmado antes de AUG-014: 057852fc12582da55c1ffb03331c2b83dd9ea81e
+Árbol padre: 0960be9696a9b33de3b4bc368fc02ff8b9b8c3b1
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado antes de commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Commit previsto: único commit con mensaje "fix(users): align password length validation"; el SHA se verificará en el historial de GPSpedia2.2.5_work.
+
+Auditoría y hallazgo:
+- Se auditó users.html completo (738 líneas), el handler handleChangePasswordSubmit(), postToAction(), el modal y su cableado de submit.
+- Se inspeccionaron normalizePassword(), createPasswordHash(), verifyStoredPassword(), handleChangePassword() y su despacho doPost en Services/Auth.js y Services/Test/Auth.js; también el mapeo changePassword→AUTH en api-config.js.
+- H-AUD-070 quedó registrado en Auditoría.txt antes de implementar. La UI medía newPassword.length; AUTH normaliza con String(...).trim() y aplica el mínimo de 8 caracteres sobre la cadena normalizada.
+- La copia AUTH de prueba coincide con producción en la lógica de normalización y cambio de contraseña; únicamente difiere en Spreadsheet ID.
+
+Cambio funcional:
+- Único archivo de código modificado: users.html.
+- Línea 642: newPassword.length < 8 cambió a newPassword.trim().length < 8.
+- Línea 653: «reincie sesión» cambió a «reinicie sesión».
+- Se mantiene el valor original newPassword en el payload a changePassword; AUTH vuelve a normalizar y valida en backend. No se cambió la comparación de confirmación ni el flujo de sesión.
+
+Respaldo exacto previo:
+- users.html: blob 42e6afd633af634ae4a8d6c3622dd78f5f161bea.
+- La reconstrucción inversa del archivo modificado 315ac91bcef0d767b60cbed69276081c65a5903e reproduce exactamente el original. Diferencia: dos líneas, ambas dentro del alcance.
+
+Archivos documentales modificados:
+- Auditoría.txt: H-AUD-070 y resolución.
+- Tareas_pendientes_parte1.txt: estado de AUG-014.
+- Tareas.txt: registro de finalización.
+- tareas_completadas_parte1.txt: registro de tarea completada.
+- ChangesLogs.txt: cambios objetivos en líneas 642 y 653.
+- checkpoint.md: checkpoint inicial y este cierre.
+
+Verificaciones:
+- Sintaxis del módulo JavaScript inline de users.html: 1/1 PASS.
+- Pruebas funcionales del handler real extraído de users.html: 8/8 PASS, cubriendo longitudes de 7 y 8 caracteres, espacios y tabulaciones externos, valor original enviado, confirmación distinta y mensaje corregido.
+- Pruebas de normalizePassword()/createPasswordHash() en AUTH producción y copia de prueba: 2/2 PASS; 7 caracteres tras trim se rechazan y 8 se aceptan.
+- Total de escenarios funcionales locales: 10/10 PASS.
+- changePassword continúa enrutado a AUTH; no se modificó api-config.js.
+- Code Review final: sin hallazgos; diff exacto de dos líneas y sin cambios colaterales.
+- Límites: no se ejecutaron navegador real, deployment, HTTP ni Spreadsheet real. No se afirma validación visual integrada.
+
+Restricciones preservadas:
+- Services/Auth.js y Services/Test/Auth.js permanecen intactos.
+- No se modificaron hashing SHA-256, prefijo sha256$, credenciales, sesiones, roles, otras rutas ni endpoints.
+- AUG-011 continúa omitida por decisión expresa del usuario.
+
+Siguiente tarea identificada en Tareas_pendientes_parte1.txt: AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión. AUG-015 no aparece en el tramo activo consultado; no se debe inferir ni crear esa tarea.
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-014.
+================================================================================

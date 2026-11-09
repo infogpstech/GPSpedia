@@ -532,3 +532,31 @@ Estado: RESUELTO EN FUENTES; validación real aislada pendiente en Beta.
 
 ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
 Se ampliaron las pruebas con seis escenarios: reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost, en producción simulada y copia de prueba. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+
+================================================================================
+H-AUD-070 — Desalineación de longitud mínima de contraseña entre UI y AUTH
+Fecha: 2026-11-09. Origen: AUG-014 / H-AUD-023-008. HEAD de auditoría: 057852fc12582da55c1ffb03331c2b83dd9ea81e.
+Severidad: P3 — consistencia de validación y experiencia de usuario.
+Evidencia:
+- users.html, handleChangePasswordSubmit(), líneas 633–645: compara confirmación y valida newPassword.length < 8 sin eliminar espacios externos.
+- Services/Auth.js y Services/Test/Auth.js, normalizePassword() líneas 53–55 y createPasswordHash() líneas 61–68: aplican String(...).trim() antes de comprobar mínimo de 8 caracteres.
+- Services/Auth.js y Services/Test/Auth.js, handleChangePassword() líneas 1043–1057: el valor recibido se pasa a createPasswordHash(), por lo que el backend vuelve a normalizar y validar.
+- api-config.js línea 19 enruta changePassword a AUTH; users.html invoca routeAction mediante postToAction(). La copia AUTH de prueba mantiene la misma lógica de normalización salvo el Spreadsheet ID.
+Impacto: una contraseña con espacios externos puede superar o no superar la comprobación visual de forma distinta a la validación real del servidor; el usuario recibe el error del backend aunque la UI haya aceptado el formulario. En el sentido inverso, la UI puede rechazar una contraseña que el backend considera válida después de normalizarla.
+Hallazgo adicional del mismo alcance: users.html línea 653 contiene el texto «reincie sesión».
+Corrección acotada: cambiar la comprobación del cliente a la longitud de newPassword.trim(), mantener el envío del valor original y conservar la validación obligatoria del backend; corregir únicamente «reincie» a «reinicie».
+Riesgos/dependencias: no alterar comparación de confirmación, flujo de cambio de contraseña, token/sesiones, roles, backend, hashing ni formato sha256$. AUG-011 permanece omitida por decisión expresa del usuario.
+Estado: REGISTRADO ANTES DE IMPLEMENTAR; auditoría completada.
+================================================================================
+
+RESOLUCIÓN H-AUD-070 — AUG-014 — 2026-11-09
+Estado: RESUELTO EN FUENTES.
+- users.html, handleChangePasswordSubmit(): la comprobación de longitud mínima ahora utiliza newPassword.trim().length, igual que normalizePassword() en AUTH. El valor original continúa enviándose a changePassword y el backend conserva su normalización y validación obligatoria.
+- users.html: se corrigió «reincie sesión» por «reinicie sesión».
+- Services/Auth.js y Services/Test/Auth.js no se modificaron. Ambas copias conservan normalizePassword() y createPasswordHash() con mínimo de 8 caracteres después de trim(); su lógica es equivalente salvo el Spreadsheet ID.
+- api-config.js no se modificó; changePassword continúa enrutado a AUTH.
+- Comparación contra el blob original de users.html: reconstrucción inversa exacta PASS; únicamente dos líneas cambiadas (642 y 653).
+- Sintaxis del módulo JavaScript inline de users.html: 1/1 PASS.
+- Pruebas funcionales locales del handler real extraído de users.html: 8 escenarios PASS (7/8 caracteres, espacios externos, tabulaciones, preservación del valor original, confirmación distinta y texto corregido). Pruebas de normalización y mínimo backend en AUTH producción y copia de prueba: 2/2 PASS. Total de escenarios funcionales: 10/10 PASS.
+- No se ejecutó navegador real, deployment, HTTP ni hoja de cálculo. La prueba local no sustituye una validación visual integrada en navegador.
+- No se modificaron hashing SHA-256, prefijo sha256$, credenciales, sesiones, roles, validación backend ni otras rutas.

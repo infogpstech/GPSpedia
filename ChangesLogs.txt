@@ -246,3 +246,11 @@ AUG-013 — Purga coordinada de Logs — 2026-11-09
 ADENDA DE VALIDACIÓN AUG-013 — 2026-11-09
 - Se añadieron pruebas locales de reintento tras fallo parcial, timeout de ScriptLock sin borrado y rechazo de autorización por doPost en AUTH producción/copia de prueba.
 - Resultado funcional local ampliado: 24/24 PASS; sintaxis 4/4 PASS. No se ejecutaron deployments ni concurrencia real Apps Script.
+
+================================================================================
+AUG-014 — Validación de contraseña en UI — 2026-11-09
+- users.html, línea 642: cambió la comprobación de newPassword.length a newPassword.trim().length para medir el mínimo de 8 caracteres después de eliminar espacios externos, conforme a normalizePassword() de AUTH.
+- users.html, línea 653: corrigió el texto «reincie sesión» por «reinicie sesión».
+- No se modificaron los servicios AUTH de producción/prueba ni api-config.js; el valor original sigue enviándose a changePassword y el backend mantiene su validación.
+- Verificación local: sintaxis 1/1 PASS; escenarios funcionales 10/10 PASS; diff de dos líneas y reconstrucción contra respaldo PASS. No se ejecutó navegador real ni deployment.
+================================================================================
