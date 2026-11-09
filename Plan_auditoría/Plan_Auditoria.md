@@ -3683,3 +3683,35 @@ No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, migraciones, backup
 - Resultado: continuidad E1 confirmada; H-AUD-034-001 a 004 abiertos; validación funcional de sesión/roles pendiente. Sin cambios de código, endpoints, contratos, configuración, sesiones, datos productivos, Drive o Spreadsheet; sin merge ni despliegue. Rama base intacta.
 - Respaldos de blobs previos a esta actualización: \n  - Plan_auditoría/Plan_Auditoria.md: 7e524761c0530e4071ddf86909c8c9e7e05eeac4\n  - Plan_auditoría/Consolidacion_Auditoria.md: 970cd754fd317661f5f5691885fd84daf8b99e86\n  - ChangesLogs.txt: ac1cbfb4b3fe7ce33aa61a7f9592a230fbb6b860\n  - contexto_personal.md: 78563ad0c95c145ba7fb54ac5b3c2f36236808d0\n  - checkpoint.md: 50443f371455986314807313d7fbfd4f9e0d0656
 - Siguiente unidad: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.
+
+
+## 96. Continuidad incremental — AUD-T-035: endpoints y contratos frontend/backend
+- Sesión AUD-20261109-S146; checkpoint AUD-CP-0145. E1 original e13623beb059b33171758545404381fbbf512c16 (AUD-20261107-S016 / AUD-CP-0016; árbol 870a53ffc2d2d9af46c8062fcb71e6bfe5eaa8b8); revalidación previa CP-0079 con HEAD 019979ccc15361a47e1c7a49b42aaf02fb5c4e75 (árbol a265c33a61a2513533ddaeb68557e56e3e7fa454); HEAD actual bd85edcec4ec0000fac20e78e734022154e28b85, árbol 0a5d39458a6f1ed2100ca433fbfa0dd3f42adfe7. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 130 commits posteriores; merge-base igual a E1, sin divergencia; diff limitado a ocho documentos. CP-0079→HEAD: 66 commits posteriores; merge-base igual a CP-0079; diff también limitado a ocho documentos.
+- Los 14 archivos del alcance conservan SHA idénticos a E1 y a CP-0079:
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- H-AUD-035-001 a 006 permanecen abiertos. Se conservan los riesgos documentados: llamadas FEEDBACK protegidas sin credenciales completas; youtubeUpload.js usa currentUser.id y omite SessionToken; el enlace manual envía fieldName/fieldValue que addSupplementaryInfo no procesa; PYS/Tutorial pueden publicar URL antes de aprobación y la aprobación/rechazo no sincroniza todos los destinos; opVideoId se confunde con videoId real y no aporta idempotencia; ACTION_TO_SERVICE_MAP y dispatchers/callsites no están alineados; handleAddProblem puede confirmar alta aunque falle la imagen Drive.
+- Controles positivos estáticos conservados: sendContactForm es ruta pública deliberada; existen validaciones de sesión en handlers FEEDBACK protegidos, pero varios consumidores no cumplen el contrato; no se presume que la igualdad SHA pruebe autorización, aprobación o persistencia en ejecución.
+- AUG-043 continúa pendiente para contratos protegidos y ciclo de aprobación YouTube; AUG-044 continúa pendiente para reconciliar mapa y dispatchers. AUG-040 conserva la adenda de integridad de imagen PYS. Se mantienen AUG-039/AUG-041/AUG-042 como dependencias relacionadas. No se crean hallazgos/tareas nuevos, no se cierran IDs ni se duplican registros; Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican.
+- No se ejecutaron navegador, HTTP, Apps Script V8, YouTube API/OAuth, Drive/Spreadsheet real, aprobación/rechazo, pérdida de respuesta, reintentos, doble envío, concurrencia ni deployments. No se verificó el comportamiento del deployment publicado. La igualdad SHA confirma ausencia de deriva de los 14 archivos, no la corrección funcional de los contratos.
+- Resultado: continuidad E1 confirmada; H-AUD-035-001 a 006 abiertos; AUG-043/AUG-044 y adenda AUG-040 pendientes; validación funcional/integración pendiente. Sin cambios de código, servicios, endpoints, contratos, configuración, datos productivos, Drive o Spreadsheet; sin merge ni despliegue. Rama base intacta.
+- Respaldos exactos de blobs previos a esta actualización:
+  - Plan_auditoría/Plan_Auditoria.md: 07cab3323201cd6f37e4298bd2ff177a202f971f
+  - Plan_auditoría/Consolidacion_Auditoria.md: d6c3ed557738a41f024af7083da5f9f08ac0f1c1
+  - ChangesLogs.txt: 4c4d84bd6ccb5e9782f18f0f3099e3208d6349a0
+  - contexto_personal.md: 46c7742fb82f61b5f374127331908e70a51b8ca2
+  - checkpoint.md: 96fd5fb600dce75d2c431bec3b035b221ecf1e57
+- Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.

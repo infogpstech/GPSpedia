@@ -4036,3 +4036,47 @@ Sin cambios de código, servicios, endpoints, contratos, configuración, sesione
 Commit documental único previsto: docs(audit): revalidate AUD-T-034 continuity; parent 03a554a391664955ec3c5901fe34a7d197d4ae15; update_ref con force=false y expected_sha=03a554a391664955ec3c5901fe34a7d197d4ae15. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0145
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S146
+Tarea: AUD-T-035 — revalidación incremental de continuidad E1 de endpoints, separación de servicios y contratos frontend/backend.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: bd85edcec4ec0000fac20e78e734022154e28b85; árbol 0a5d39458a6f1ed2100ca433fbfa0dd3f42adfe7; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: e13623beb059b33171758545404381fbbf512c16; árbol E1: 870a53ffc2d2d9af46c8062fcb71e6bfe5eaa8b8; revalidación previa CP-0079/HEAD: 019979ccc15361a47e1c7a49b42aaf02fb5c4e75; árbol CP-0079: a265c33a61a2513533ddaeb68557e56e3e7fa454.
+Alcance: api-config.js; Services/Auth.js, catalog.js, write.js, users.js, feedback.js, Utilities.js y admin.js; ui.js, auth.js, main.js, add_cortes.html, users.html y youtubeUpload.js.
+Estado conocido: H-AUD-035-001 a 006 abiertos; AUG-043/AUG-044 pendientes; adenda AUG-040 y dependencias AUG-039/AUG-041/AUG-042 conservadas. Revisión estática/documental; sin cambios de código ni pruebas sobre sistemas productivos.
+Preflight de solo lectura: E1 es ancestro de HEAD con 130 commits; CP-0079 es ancestro con 66 commits; ocho archivos documentales constituyen los diffs; 14 archivos del alcance conservan SHA E1; rama base sin cambios.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0145
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S146
+Tarea: AUD-T-035 — revalidación incremental de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-035-001 A 006 ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRACIÓN PENDIENTE.
+HEAD padre confirmado: bd85edcec4ec0000fac20e78e734022154e28b85; árbol 0a5d39458a6f1ed2100ca433fbfa0dd3f42adfe7; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: e13623beb059b33171758545404381fbbf512c16; árbol E1 870a53ffc2d2d9af46c8062fcb71e6bfe5eaa8b8; revalidación previa CP-0079: 019979ccc15361a47e1c7a49b42aaf02fb5c4e75; árbol a265c33a61a2513533ddaeb68557e56e3e7fa454.
+E1→HEAD: 130 commits posteriores, merge-base igual a E1, sin divergencia; diff únicamente ocho documentos. CP-0079→HEAD: 66 commits posteriores, merge-base igual a CP-0079; diff únicamente ocho documentos.
+Los 14 archivos del alcance conservan SHA idénticos a E1:
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+Hallazgos: H-AUD-035-001 a 006 permanecen abiertos. AUG-043/AUG-044 continúan pendientes; AUG-040 conserva la adenda de integridad de imagen PYS; AUG-039/AUG-041/AUG-042 se mantienen como dependencias. Sin nuevos hallazgos/tareas ni cierres.
+Validaciones ejecutadas: HEAD de ambas ramas; comparación E1→HEAD y CP-0079→HEAD; merge-base; lista de archivos del diff; comparación SHA de 14 archivos; revisión de hallazgos y tareas existentes.
+No ejecutadas: E2/E3, navegador, HTTP, Apps Script V8, YouTube API/OAuth, Drive/Spreadsheet real, aprobación/rechazo, reintentos, pérdida de respuesta, doble envío, concurrencia ni deployments.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los hallazgos/tareas ya constan.
+Sin cambios de código, servicios, endpoints, contratos, configuración, credenciales, datos productivos, Drive o Spreadsheet. Sin merge o despliegue.
+Commit documental único previsto: docs(audit): revalidate AUD-T-035 continuity; parent bd85edcec4ec0000fac20e78e734022154e28b85; update_ref con force=false y expected_sha=bd85edcec4ec0000fac20e78e734022154e28b85. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+================================================================================

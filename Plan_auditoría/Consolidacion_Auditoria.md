@@ -1444,3 +1444,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Se mantienen controles backend positivos estáticos: ADMIN exige Desarrollador salvo ping; FEEDBACK y USERS verifican sesión/permisos en servidor. No se demuestra bypass backend.
 - AUG-006/AUG-016/AUG-017 continúan pendientes en sus alcances originales; AUG-042 permanece pendiente para sincronización del rol y limpieza del estado privilegiado. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron navegador, HTTP, Apps Script, cambio real de rol, logout/revocación, multi-cuenta, multi-pestaña ni deployments. Solo continuidad estática/documental; no certifica el comportamiento real de sesión/autorización. Sin cambios funcionales, datos productivos, merge o despliegue.
+
+
+## 81. AUD-T-035 — continuidad incremental de endpoints y contratos frontend/backend
+- Sesión AUD-20261109-S146; checkpoint AUD-CP-0145; E1 e13623beb059b33171758545404381fbbf512c16 (árbol 870a53ffc2d2d9af46c8062fcb71e6bfe5eaa8b8); revalidación previa CP-0079/HEAD 019979ccc15361a47e1c7a49b42aaf02fb5c4e75 (árbol a265c33a61a2513533ddaeb68557e56e3e7fa454); HEAD bd85edcec4ec0000fac20e78e734022154e28b85; árbol 0a5d39458a6f1ed2100ca433fbfa0dd3f42adfe7; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1 y diff de ocho documentos. CP-0079→HEAD: 66 commits, merge-base igual a CP-0079 y diff de los mismos ocho documentos. Los 14 archivos del alcance conservan SHA idénticos a E1 y CP-0079.
+- H-AUD-035-001 a 006 permanecen abiertos: credenciales ausentes en callsites FEEDBACK/youtubeUpload; contrato manual de vídeo no procesado; publicación/aprobación PYS/Tutorial no sincronizada; opVideoId confundido con videoId y sin idempotencia; ACTION_TO_SERVICE_MAP/dispatchers desalineados; alta PyS puede confirmarse sin imagen Drive.
+- AUG-043 y AUG-044 continúan pendientes; AUG-040 conserva la adenda sobre integridad de imagen PYS. Se mantienen AUG-039/AUG-041/AUG-042 como dependencias. Sin hallazgos ni tareas nuevas ni cierres.
+- No se ejecutaron navegador, HTTP, Apps Script V8, YouTube, Drive/Spreadsheet real, aprobación/rechazo, reintentos, concurrencia ni deployments. La continuidad es estática/documental y no certifica comportamiento real.
+- Sin cambios funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.

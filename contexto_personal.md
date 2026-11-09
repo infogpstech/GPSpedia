@@ -1381,3 +1381,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-034-001 a 004 permanecen abiertos. AUG-006, AUG-016 y AUG-017 conservan sus alcances; AUG-042 sigue pendiente para sincronización de rol y limpieza del estado privilegiado. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script V8, logout/revocación, cambio real de rol, multi-cuenta, multi-pestaña ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.
+
+
+## Continuidad incremental — AUD-T-035 (2026-11-09)
+- Sesión AUD-20261109-S146 / checkpoint AUD-CP-0145. E1 e13623beb059b33171758545404381fbbf512c16; revalidación previa CP-0079 con HEAD 019979ccc15361a47e1c7a49b42aaf02fb5c4e75; HEAD actual bd85edcec4ec0000fac20e78e734022154e28b85, árbol 0a5d39458a6f1ed2100ca433fbfa0dd3f42adfe7. Rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1→HEAD: 130 commits, merge-base igual a E1 y diff limitado a ocho documentos. CP-0079→HEAD: 66 commits, también solo documentos. Los 14 archivos del alcance conservan SHA idénticos a E1.
+- H-AUD-035-001 a 006 permanecen abiertos. AUG-043/AUG-044 continúan pendientes; AUG-040 conserva la adenda de integridad de imagen PYS; AUG-039/AUG-041/AUG-042 siguen como dependencias. Sin hallazgos ni tareas nuevos.
+- No se ejecutaron E2/E3, navegador, HTTP, Apps Script V8, YouTube API/OAuth, Drive/Spreadsheet real, aprobación/rechazo, reintentos, concurrencia ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
