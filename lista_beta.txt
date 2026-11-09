@@ -110,3 +110,21 @@ Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora recha
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
 Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+### AUG-006 — Logout con revocación remota
+- Configurar AUTH de prueba contra la Spreadsheet aislada.
+- Probar logout con token vigente, token ya revocado, token duplicado y fallo de red.
+- Confirmar que solo se elimina la sesión invocante; que Users.SessionToken se limpia únicamente si coincide; y que el navegador limpia currentUser aunque la revocación remota quede pendiente.
+- Verificar que una sesión revocada no supera validateSession ni puede ejecutar acciones protegidas.
+
+### AUG-153 — Revocación remota centralizada
+- Ejecutar login/logout/resetUserSessions concurrentes en AUTH aislado sobre la misma Spreadsheet.
+- Probar sesiones objetivo en primera, intermedia y última fila; usuarios iguales/diferentes; sesiones ajenas; tokens duplicados; reintentos y fallos parciales de deleteRow/clearContent.
+- Confirmar que USERS no escribe en ActiveSessions y que todas las mutaciones pasan por AUTH.
+
+### Users.ID — Secuencia permanente
+- Confirmar que una hoja sin cuentas registradas crea `USR-0001` y continúa `USR-0002`, `USR-0003`, etc.
+- Probar con fórmulas prellenadas en filas vacías: el servicio reutiliza la primera fila sin datos y sustituye la fórmula por un valor fijo.
+- Confirmar que IDs existentes y de cuentas desactivadas no se reutilizan; probar duplicados y filas con datos sin ID.
+- No editar manualmente IDs de producción ni ejecutar pruebas contra endpoints operativos.
