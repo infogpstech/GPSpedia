@@ -1187,3 +1187,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-019-001 a 014 abiertos; AUG-122 a AUG-135 pendientes; VAL-28 planificada/no ejecutada.
 - No se ejecutaron Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner automatizado ni E2/E3. No se certifican ACL/deployments.
 - Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+
+
+## Continuidad de auditoría — AUD-T-020 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S123 / AUD-CP-0122; rama GPSpedia2.2.5_work, HEAD inicial 8b695738d2714d350a5897d0262262a612ff6ac0; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; 27 archivos funcionales/técnicos conservan SHA idénticos.
+- H-AUD-020-001 a 004 abiertos; H-AUD-020-005 corregido documentalmente; AUG-136 a AUG-139 pendientes; adendas AUG-036/AUG-104 conservadas. VAL-29 planificada/no ejecutada.
+- No se ejecutaron Node/lint, navegador, XSS, Apps Script, HTTP, Spreadsheet/Drive, YouTube, concurrencia, restauraciones, migraciones, ACL/deployments ni E2/E3. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
