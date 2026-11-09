@@ -199,3 +199,17 @@ Validación: sintaxis 2/2 PASS; helpers 18/18 PASS (9 por fuente); handleLogin 4
 Limitación: CacheService puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo. Concurrencia real y deployment AUTH aislado registrados en lista_beta.txt. Sin llamadas HTTP, deployments ni acceso a hojas reales.
 No se modificó hashing SHA-256, formato de contraseña, credenciales, sesiones, roles ni configuración de rutas.
 ================================================================================
+
+
+================================================================================
+AUG-013 — Coordinar purga de Logs con inserciones AUTH
+Fecha: 2026-11-09. Estado: COMPLETADA EN FUENTES; validación real aislada diferida a Beta.
+H-AUD-069 resuelto. AUTH centraliza inserciones y purga de Logs bajo su ScriptLock local. clearSensitiveLogs valida sesión, identidad, expiración, cuenta activa y rol Desarrollador; conserva los patrones históricos de detección y elimina filas sensibles en orden descendente. FEEDBACK ya no realiza deleteRow sobre Logs; api-config.js enruta la acción a AUTH.
+Archivos funcionales: Services/Auth.js, Services/Test/Auth.js, Services/feedback.js y api-config.js. Documentación de prueba: Services/Test/README.md. Se preservó el Spreadsheet ID de prueba.
+Validación: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS (fixtures, autorización, despacho y fallo parcial en ambas fuentes). Diffs limitados al alcance. No se ejecutaron Apps Script real, deployments, HTTP ni Spreadsheet real.
+Límite: concurrencia real y timeout del logger durante purgas prolongadas quedan en lista_beta.txt. La coordinación general de mantenimiento/restore entre proyectos permanece en AUG-034.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
+Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.

@@ -482,3 +482,53 @@ Estado: RESUELTO EN FUENTES.
 - Sintaxis: 2/2 PASS. Pruebas deterministas de helpers: 18/18 PASS (9 por fuente), incluyendo intercalados de fallo/éxito/error de infraestructura, cinco fallos, bloqueo, expiración, rollback de la quinta reserva, limpieza de reservas obsoletas y migración de estado previo. Pruebas de handleLogin: 4/4 PASS (credenciales inválidas y error de infraestructura en producción/copia de prueba). Total funcional local: 22/22 PASS.
 - Límite conservado: CacheService es temporal y puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo. La concurrencia real y el deployment aislado quedan diferidos a Beta; no se ejecutaron Apps Script real, HTTP, deployments ni hojas productivas.
 ================================================================================
+
+
+================================================================================
+H-AUD-069 — Purga de Logs por índices obsoletos ante inserciones concurrentes AUTH — 2026-11-09
+Severidad: P2 — integridad de registros y conservación de evidencia.
+Tarea propietaria: AUG-013. Origen relacionado: H-AUD-023-005 / AUD-T-025.
+
+Evidencia auditada en HEAD 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f:
+- Services/feedback.js, handleClearSensitiveLogs() (líneas 1673–1707): lee Logs una sola vez mediante getRange(2, 1, lastRow - 1, lastColumn), calcula filas absolutas en rowsToDelete y luego ejecuta deleteRow() en orden descendente. No adquiere LockService ni vuelve a identificar cada registro antes de borrarlo.
+- Services/Auth.js, logToSheet() (líneas 249–269): adquiere LockService.getScriptLock(), inserta una fila nueva en la posición 2 mediante insertRowBefore(2), escribe cuatro columnas y libera el lock en finally.
+- Services/Test/README.md confirma que AUTH y USERS se instalan en proyectos Apps Script separados. El ScriptLock de AUTH no coordina el proyecto FEEDBACK; agregar otro ScriptLock en FEEDBACK no resolvería la carrera.
+- Intercalado reproducible por la estructura: FEEDBACK lee y guarda la fila 5 como sensible; AUTH inserta una nueva fila 2; el registro sensible se desplaza a fila 6, pero FEEDBACK elimina la fila 5 anterior, que puede ser un registro no sensible. La iteración descendente solo protege frente a las eliminaciones de FEEDBACK, no frente a inserciones externas posteriores a la lectura.
+- api-config.js, ACTION_TO_SERVICE_MAP (línea 24) y clearSensitiveLogs() (líneas 170–171) enrutan actualmente la acción a FEEDBACK; ui.js invoca la misma acción con getDeveloperSessionPayload(). FEEDBACK la restringe a Desarrollador en actionPermissions, pero esa autorización no coordina las filas con AUTH.
+- En el inventario de fuentes activas revisadas, AUTH es el escritor de Logs mediante logToSheet y FEEDBACK es el servicio que ejecuta la purga. ADMIN protege la hoja Logs frente a determinadas operaciones destructivas de hojas; la coordinación general de mantenimiento entre servicios permanece en AUG-034/AUD-T-033.
+- La detección histórica actual reconoce claves JSON password, sheetPassword, currentPassword, newPassword, fromSheet y fromClient en Details; username cuando Message es exactamente handleLogin started.; y Message exactamente Password comparison. La regla debe preservarse y verificarse contra fixtures históricos, sin ampliar el borrado a registros no clasificados.
+
+Dependencias y efectos colaterales:
+- AUTH registra dos eventos de doPost antes de despachar la acción; logToSheet libera su lock antes de que el handler comience. El handler de purga no deberá llamar logToSheet mientras mantenga el lock; cualquier resultado se registra después de liberar.
+- La operación debe revalidar en AUTH el sessionToken, userId, expiración, unicidad de sesión/cuenta y rol Desarrollador dentro del mismo lock que protege logToSheet. No confiar en el rol enviado por FEEDBACK o el navegador.
+- FEEDBACK debe dejar de ejecutar deleteRow sobre Logs; la ruta frontend de clearSensitiveLogs se reasignará a AUTH. No se necesita asumir lock compartido entre proyectos: ambas mutaciones quedan bajo el lock local de AUTH.
+- La copia Services/Test/Auth.js mantiene un Spreadsheet ID distinto. Las pruebas de purga deben ejecutarse contra esa copia y no contra la hoja productiva. No existe una copia FEEDBACK de prueba y no será necesaria si la acción se enruta directamente a AUTH.
+
+Corrección delimitada para AUG-013:
+- Añadir clearSensitiveLogs al router AUTH y ejecutar autenticación de Desarrollador, lectura, clasificación y borrado descendente dentro de su ScriptLock.
+- Mantener la detección histórica existente y comprobar que tras la purga no queden filas clasificadas como sensibles ni se eliminen registros no sensibles.
+- Reasignar clearSensitiveLogs en api-config.js a AUTH; retirar el permiso, case y handler destructivo de FEEDBACK para impedir que un consumidor antiguo siga ejecutando una purga no coordinada.
+- Sincronizar Services/Test/Auth.js, documentar la prueba aislada y registrar que la coordinación general de restauraciones/mantenimiento ADMIN↔otros servicios permanece en AUG-034.
+
+Validación requerida: sintaxis de fuentes; pruebas de autorización (sesión ausente, token inválido/duplicado/expirado, usuario/rol no válido); fixtures de cada formato histórico y registros seguros; simulación de inserción AUTH durante la sección crítica; verificación de que el lock se libera en éxito/error; comparación de las dos fuentes AUTH y de la ruta api-config. La concurrencia real en Apps Script y el deployment aislado no se pueden certificar desde este entorno y deberán quedar en Beta.
+Estado: AUDITORÍA PRE-IMPLEMENTACIÓN COMPLETADA; hallazgo registrado antes de editar. No se modificó código durante la auditoría.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN H-AUD-069 — AUG-013 — 2026-11-09
+Estado: RESUELTO EN FUENTES; validación real aislada pendiente en Beta.
+- Services/Auth.js y Services/Test/Auth.js: se añadió clearSensitiveLogs al router AUTH. La función valida userId, token único, correspondencia de identidad, expiración, cuenta activa y rol Desarrollador dentro del ScriptLock AUTH; lee y elimina únicamente registros clasificados como sensibles mientras conserva el mismo lock utilizado por logToSheet().
+- La clasificación histórica se mantiene: claves JSON password, sheetPassword, currentPassword, newPassword, fromSheet y fromClient en Details; username cuando Message es exactamente handleLogin started.; y Message exactamente Password comparison. Los fixtures locales confirmaron la eliminación de esos ocho registros y la conservación de dos registros seguros.
+- El borrado se realiza en orden descendente dentro de la sección crítica. Si una eliminación o flush falla, la función libera el lock, informa status=error, deletedCount y cleanupPending, y no comunica una purga completa. El registro de resultado se escribe después de liberar el lock; no existe adquisición anidada.
+- api-config.js ahora enruta clearSensitiveLogs a AUTH. ui.js conserva getDeveloperSessionPayload(), que envía userId y sessionToken. Services/feedback.js ya no declara el permiso, la ruta ni la función que borraba Logs por índices; tampoco mantiene SHEET_NAMES.LOGS.
+- Services/Test/Auth.js replica la lógica de producción y conserva el Spreadsheet ID aislado. Services/Test/README.md documenta la prueba directa en AUTH de prueba.
+- Revisión de diffs contra los blobs originales: PASS. La reconstrucción inversa confirmó que los cambios de Auth.js, Test/Auth.js, feedback.js y api-config.js se limitan al alcance AUG-013; el README conserva intacto su contenido previo y añade la sección AUG-013. La lógica de las dos fuentes AUTH es equivalente salvo el Spreadsheet ID.
+- Sintaxis: 4/4 PASS (AUTH producción, AUTH prueba, FEEDBACK y cuerpo de api-config tras retirar import/export ESM para la comprobación limitada). Pruebas funcionales locales iniciales: 18/18 PASS, incluyendo fixtures, autorización, dispatch, inserción intercalada, preservación de logs seguros y fallo parcial en ambas fuentes.
+- La simulación de inserción AUTH durante el borrado confirmó que logToSheet no puede entrar a la sección crítica hasta que termine la purga; la escritura de resultado se produce después de liberar el lock.
+- Límite: no se ejecutó Apps Script real, deployment aislado, HTTP ni Spreadsheet real. La concurrencia real y el posible timeout del logger durante purgas prolongadas quedan para Beta. La coordinación general de restauraciones/mantenimiento ADMIN↔otros servicios sigue en AUG-034; esta tarea solo resuelve la carrera entre logToSheet AUTH y clearSensitiveLogs.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
+Se ampliaron las pruebas con seis escenarios: reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost, en producción simulada y copia de prueba. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.

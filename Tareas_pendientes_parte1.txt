@@ -1549,3 +1549,17 @@ Recuento final corregido tras añadir la prueba del límite de sesiones con rol 
 - **Cierre local (2026-11-09): COMPLETADA EN FUENTES.** H-AUD-068 resuelto. AUTH asigna UUID por solicitud y mantiene `failedAttempts` separado de `pendingAttempts`; éxito elimina solo su reserva y reinicia fallos previos, credenciales inválidas finalizan como fallo y errores de infraestructura revierten solo la reserva propia. Se migran estados cacheados con el campo anterior `attempts` y se depuran reservas con más de 900 segundos.
 - **Verificación:** sintaxis 2/2 PASS; pruebas deterministas de helpers 18/18 PASS (9 por fuente); pruebas de integración de `handleLogin` para credenciales inválidas y error de infraestructura 4/4 PASS (ambas fuentes). Total funcional local 22/22 PASS. Producción y copia de prueba conservan lógica equivalente y Spreadsheet IDs distintos.
 - **Limitación:** CacheService puede desalojar el estado antes del TTL; el bloqueo no es durable. La concurrencia real de Apps Script y el deployment AUTH aislado quedan diferidos a `lista_beta.txt`. No se ejecutaron deployments, endpoints HTTP ni hojas reales.
+
+
+================================================================================
+ACTUALIZACIÓN AUG-013 — PURGA DE LOGS COORDINADA — 2026-11-09
+Estado: COMPLETADA EN FUENTES; prueba real de concurrencia diferida a Beta.
+H-AUD-069 resuelto. Se trasladó la purga sensible al servicio AUTH, que ahora valida sesión/identidad/rol Desarrollador y mantiene el ScriptLock durante lectura y eliminación. logToSheet usa el mismo lock; FEEDBACK dejó de eliminar filas de Logs. api-config.js enruta clearSensitiveLogs a AUTH.
+Se preservaron los criterios históricos de clasificación y se probó la eliminación de ocho fixtures sensibles con conservación de dos registros seguros. Se reportan fallos parciales sin afirmar purga completa.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/feedback.js, api-config.js y Services/Test/README.md. Registros: Auditoría.txt, ChangesLogs.txt, Tareas.txt, tareas_completadas_parte1.txt, lista_beta.txt y checkpoint.md.
+Verificación local: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS. No se ejecutaron deployments, HTTP ni Spreadsheet real. La coordinación general de mantenimiento/restauración entre proyectos permanece en AUG-034.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
+Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.

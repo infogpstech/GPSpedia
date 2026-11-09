@@ -229,3 +229,20 @@ AUG-012 — Contador de intentos concurrentes AUTH — 2026-11-09
 - Verificación: sintaxis 2/2 PASS; pruebas deterministas helpers 18/18 PASS; integración handleLogin 4/4 PASS; total funcional local 22/22 PASS. Revisión de diffs contra blobs originales PASS.
 - CacheService puede desalojar entradas antes del TTL; el bloqueo es de mejor esfuerzo. No se ejecutaron deployments, HTTP, Apps Script real ni hojas productivas.
 ================================================================================
+
+
+================================================================================
+AUG-013 — Purga coordinada de Logs — 2026-11-09
+- Services/Auth.js (líneas 273–439): añadió isSensitiveLogRecord_() y handleClearSensitiveLogs(); valida sesión/identidad/expiración/cuenta/rol Desarrollador y ejecuta escaneo/borrado dentro del ScriptLock AUTH compartido con logToSheet(). Reporta fallos parciales después de liberar el lock.
+- Services/Auth.js (línea 448): añadió clearSensitiveLogs al router doPost.
+- Services/Test/Auth.js (líneas 273–439 y 448): sincronizó la lógica y conservó el Spreadsheet ID aislado.
+- Services/feedback.js: retiró SHEET_NAMES.LOGS, el permiso y la ruta clearSensitiveLogs y la función que eliminaba filas por índices precalculados.
+- api-config.js (línea 24): reasignó clearSensitiveLogs de FEEDBACK a AUTH; ui.js y getDeveloperSessionPayload() no requirieron cambios.
+- Services/Test/README.md (líneas 128–135): documentó la prueba aislada y la coordinación de Logs.
+- Verificación local: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS; reconstrucción de diffs contra respaldos PASS. No se ejecutaron deployments, HTTP ni Spreadsheet real.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN AUG-013 — 2026-11-09
+- Se añadieron pruebas locales de reintento tras fallo parcial, timeout de ScriptLock sin borrado y rechazo de autorización por doPost en AUTH producción/copia de prueba.
+- Resultado funcional local ampliado: 24/24 PASS; sintaxis 4/4 PASS. No se ejecutaron deployments ni concurrencia real Apps Script.

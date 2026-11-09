@@ -198,3 +198,19 @@ AUG-012 — Concurrencia real del contador de intentos AUTH
 - Verificar que las solicitudes pendientes se limpian y que el estado de CacheService se comporta según sus límites; no interpretar esta caché como almacenamiento durable.
 - No ejecutar contra deployments/endpoints operativos ni hojas productivas. Las pruebas locales deterministas 22/22 PASS no sustituyen esta validación real.
 ================================================================================
+
+
+================================================================================
+AUG-013 — Validación real de purga de Logs coordinada con AUTH
+- Crear/verificar deployment AUTH aislado que use exclusivamente la Spreadsheet de prueba descrita en Services/Test/README.md. No modificar api-config.js para apuntar a endpoints de prueba ni invocar URLs operativas.
+- Usar una cuenta Desarrollador de prueba con sesión válida. Ejecutar clearSensitiveLogs directamente contra AUTH y confirmar que la identidad, token, expiración y rol se validan en backend.
+- Insertar registros AUTH simultáneamente con la purga. Confirmar que las inserciones esperan al ScriptLock de AUTH o se completan después; no debe borrarse ningún registro no sensible por desplazamiento de índices.
+- Preparar fixtures de claves password, sheetPassword, currentPassword, newPassword, fromSheet, fromClient; username en handleLogin started.; Password comparison; y varios registros no sensibles. Verificar que se eliminan todos los sensibles y se conservan todos los seguros.
+- Comprobar sesiones ausentes, tokens inválidos/duplicados/expirados, userId no coincidente y roles distintos de Desarrollador; ningún rechazo debe borrar filas.
+- Medir si una purga prolongada puede hacer que logToSheet agote su espera de lock (10 segundos) y omita un registro; documentar duración, volumen y resultado. Si ocurre, abrir tarea específica de robustez del logger sin debilitar la exclusión.
+- No ejecutar contra hojas productivas. Las pruebas locales 18/18 PASS no sustituyen esta validación real.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN LOCAL AUG-013 — 2026-11-09
+Batería ampliada: 24/24 pruebas funcionales locales PASS. Se añadieron reintento de purga parcial, timeout de lock sin eliminación y rechazo de autorización por doPost en ambas fuentes. Sintaxis 4/4 PASS. No sustituye la prueba real concurrente del deployment AUTH aislado.

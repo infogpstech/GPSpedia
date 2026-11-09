@@ -124,3 +124,12 @@ No usar api-config.js para apuntar a URLs de prueba ni invocar endpoints operati
 
 
 Prueba adicional AUTH: cambiar el rol de la cuenta después de la lectura inicial de login y antes de que adquiera el ScriptLock; el límite de sesiones debe corresponder al rol revalidado dentro de la sección crítica, no al valor anterior.
+
+## AUG-013 — Purga coordinada de Logs
+
+- AUTH es la única autoridad para insertar y purgar filas de la hoja `Logs`. `logToSheet()` y la acción `clearSensitiveLogs` usan el mismo `LockService.getScriptLock()` del proyecto AUTH.
+- `api-config.js` enruta `clearSensitiveLogs` directamente a AUTH. FEEDBACK ya no elimina filas de Logs; sus locks no se consideran compartidos con AUTH.
+- Para validar la acción, ejecutar `clearSensitiveLogs` directamente contra el deployment AUTH aislado, enviando `{ userId, sessionToken }` de una cuenta Desarrollador activa de la Spreadsheet de prueba.
+- Fixtures requeridos: claves JSON `password`, `sheetPassword`, `currentPassword`, `newPassword`, `fromSheet`, `fromClient`; `username` en `handleLogin started.`; `Password comparison`; y registros no sensibles que deben conservarse.
+- Ejecutar inserciones AUTH durante la purga y comprobar que esperan al mismo ScriptLock o se ejecutan después; no usar endpoints ni hojas productivas.
+- La coordinación general de operaciones ADMIN/WRITE/FEEDBACK sobre recursos compartidos continúa pendiente en AUG-034.

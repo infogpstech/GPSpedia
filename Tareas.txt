@@ -240,3 +240,15 @@ Archivos: Services/Auth.js y Services/Test/Auth.js; registros Auditoría.txt, Ta
 Pruebas locales: sintaxis 2/2 PASS; helpers 18/18 PASS; handleLogin 4/4 PASS; total funcional 22/22 PASS. No se ejecutaron deployments, HTTP, hojas reales ni concurrencia real Apps Script.
 No se modificaron hashing SHA-256, credenciales, sesiones, roles, rutas ni Spreadsheet IDs. La copia de prueba conserva su ID independiente.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — AUG-013 — PURGA DE LOGS COORDINADA — 2026-11-09
+Estado: COMPLETADA EN FUENTES; concurrencia real diferida a Beta.
+La acción clearSensitiveLogs ahora se ejecuta en AUTH bajo el mismo ScriptLock que logToSheet. Se valida la sesión activa y el rol Desarrollador en backend; FEEDBACK ya no elimina filas por índices calculados en una lectura anterior. api-config.js enruta la acción a AUTH.
+Sintaxis 4/4 PASS; pruebas funcionales locales 18/18 PASS, incluyendo fixtures históricos, autorización, despacho doPost, preservación de registros seguros y fallo parcial. No se ejecutaron deployments ni Sheets reales. La coordinación general de mantenimiento entre servicios continúa en AUG-034.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
+Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.

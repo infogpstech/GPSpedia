@@ -268,6 +268,135 @@ function logToSheet(level, message, details = {}) {
     }
 }
 
+
+// ============================================================================
+// PURGA COORDINADA DE LOGS — ÚNICA AUTORIDAD AUTH
+// ============================================================================
+function isSensitiveLogRecord_(row) {
+    const message = String(row[2] || "").trim();
+    const details = String(row[3] || "");
+    const containsCredentialFields = /"(?:password|sheetPassword|currentPassword|newPassword|fromSheet|fromClient)"\s*:/i.test(details);
+    const containsLoginUsername = message === "handleLogin started." && /"username"\s*:/i.test(details);
+    const isPasswordComparison = message === "Password comparison";
+    return containsCredentialFields || containsLoginUsername || isPasswordComparison;
+}
+
+function handleClearSensitiveLogs(payload) {
+    const userId = normalizeUserId(payload && payload.userId);
+    const sessionToken = payload && payload.sessionToken;
+    if (!userId || typeof sessionToken !== "string" || !sessionToken) {
+        throw new Error("Se requiere una sesión válida de Desarrollador para purgar Logs.");
+    }
+
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
+    let scannedCount = 0;
+    let deletedCount = 0;
+    let deletionError = null;
+
+    try {
+        lock.waitLock(10000);
+        lockAcquired = true;
+
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const logsSheet = spreadsheet.getSheetByName(SHEET_NAMES.LOGS);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!logsSheet || !sessionsSheet || !usersSheet) {
+            throw new Error("No se encontraron las hojas Logs, ActiveSessions y Users.");
+        }
+
+        const sessionsData = sessionsSheet.getDataRange().getValues();
+        const requesterSessions = sessionsData.slice(1).filter(row =>
+            row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === sessionToken
+        );
+        if (requesterSessions.length !== 1) {
+            throw new Error(requesterSessions.length > 1
+                ? "El token del solicitante está duplicado; no se modificó Logs."
+                : "Acceso denegado: sesión inválida o expirada.");
+        }
+
+        const requesterSession = requesterSessions[0];
+        if (normalizeUserId(requesterSession[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== userId) {
+            throw new Error("Acceso denegado: la sesión no corresponde al usuario indicado.");
+        }
+        const expiration = getSessionExpirationStatus_(requesterSession, new Date());
+        if (expiration.expired) {
+            throw new Error("Acceso denegado: la sesión expiró por " + expiration.reason + ".");
+        }
+
+        const requesterUsers = usersSheet.getDataRange().getValues().slice(1).filter(row =>
+            normalizeUserId(row[COLS_USERS.ID - 1]) === userId
+        );
+        if (requesterUsers.length !== 1 || !isActiveAuthUserRecord(requesterUsers[0])) {
+            throw new Error("Acceso denegado: no se pudo identificar una cuenta activa y única.");
+        }
+        if (normalizeRoleName(requesterUsers[0][COLS_USERS.Privilegios - 1]) !== "desarrollador") {
+            throw new Error("Acceso denegado: la purga de Logs está reservada a Desarrollador.");
+        }
+
+        const lastRow = logsSheet.getLastRow();
+        if (lastRow < 1) throw new Error("La hoja Logs no contiene una fila de encabezados.");
+        if (lastRow > 1) {
+            const lastColumn = Math.max(logsSheet.getLastColumn(), 4);
+            const data = logsSheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+            scannedCount = data.length;
+            const rowsToDelete = [];
+            for (let i = 0; i < data.length; i++) {
+                if (isSensitiveLogRecord_(data[i])) rowsToDelete.push(i + 2);
+            }
+
+            // AUTH logToSheet() usa este mismo ScriptLock; ninguna inserción AUTH
+            // puede desplazar estos índices hasta que termine el borrado.
+            for (let i = rowsToDelete.length - 1; i >= 0; i--) {
+                try {
+                    logsSheet.deleteRow(rowsToDelete[i]);
+                    deletedCount++;
+                } catch (error) {
+                    deletionError = error;
+                    break;
+                }
+            }
+            try {
+                SpreadsheetApp.flush();
+            } catch (error) {
+                if (!deletionError) deletionError = error;
+            }
+        }
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+
+    // No adquirir logToSheet() mientras el lock anterior siga retenido.
+    if (deletionError) {
+        logToSheet("ERROR", "Sensitive Logs purge incomplete.", {
+            requesterUserId: userId,
+            scannedCount,
+            deletedCount,
+            cleanupPending: true
+        });
+        return {
+            status: "error",
+            scannedCount,
+            deletedCount,
+            cleanupPending: true,
+            message: "La purga quedó incompleta. Se eliminaron " + deletedCount + " registros; ejecuta nuevamente la operación para revisar los restantes."
+        };
+    }
+
+    logToSheet("INFO", "Sensitive Logs purge completed.", {
+        requesterUserId: userId,
+        scannedCount,
+        deletedCount
+    });
+    return {
+        status: "success",
+        scannedCount,
+        deletedCount,
+        message: "Se eliminaron " + deletedCount + " registros confidenciales de Logs."
+    };
+}
+
 // ============================================================================
 // ROUTER PRINCIPAL
 // ============================================================================
@@ -315,6 +444,9 @@ function doPost(e) {
                 break;
             case 'resetUserSessions':
                 response = handleResetUserSessions(request.payload);
+                break;
+            case 'clearSensitiveLogs':
+                response = handleClearSensitiveLogs(request.payload);
                 break;
             case 'deleteUser':
                 response = handleDeleteUser(request.payload);

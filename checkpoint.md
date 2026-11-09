@@ -872,3 +872,88 @@ Este checkpoint final es la última actualización documental antes del único c
 
 ADENDA DE CIERRE DEL CHECKPOINT — AUG-012
 La versión final de Auditoría.txt contiene tanto el hallazgo H-AUD-068 registrado antes de la implementación como su resolución posterior. La ficha AUG-012, Tareas.txt, tareas_completadas_parte1.txt, lista_beta.txt y ChangesLogs.txt están actualizados. No se realizarán más cambios documentales antes del único commit de esta tarea.
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-013 — 2026-11-09
+Estado: INICIADA; auditoría diagnóstica pendiente. No se ha modificado código.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada de trabajo: GPSpedia2.2.5_work
+HEAD al inicio: 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f
+Rama base protegida: GPSpedia2.2.5
+HEAD base observado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: AUG-013 — Coordinar purga de Logs con inserciones AUTH (H-AUD-023-005 / AUD-T-025).
+Alcance: analizar Services/feedback.js, handleClearSensitiveLogs(), inserciones de Services/Auth.js y dependencias entre FEEDBACK/AUTH; revisar formatos históricos de Logs y pruebas aisladas. No asumir ScriptLock compartido.
+Criterios: evitar índices obsoletos; preservar logs no sensibles; detectar formatos históricos sin dejar credenciales; definir coordinación entre proyectos y probar inserciones simultáneas en copia.
+Hallazgo previo: FEEDBACK calcula índices a borrar y AUTH inserta nuevas filas en la misma hoja; los ScriptLock pertenecen a proyectos separados. Estrategia aún no determinada.
+Archivos candidatos: Services/feedback.js, Services/Auth.js, Services/Test/Auth.js, Services/Test/README.md, api-config.js, tareas y registros de auditoría.
+Cambios previos vigentes: AUG-012 commit 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f; SHA-256 permanece por decisión expresa del usuario; AUG-011 no se reactiva.
+Riesgos/dependencias: no se dispone de deployment IDs ni URLs de proyectos de prueba. El cambio de filas puede invalidar índices capturados. La coordinación general de mantenimiento/restore sigue relacionada con AUG-034.
+Siguiente acción: completar auditoría de archivos afectados y registrar hallazgos en Auditoría.txt antes de editar código.
+================================================================================
+
+
+REVISIÓN DE LA TAREA ANTERIOR — CICLO A — AUG-012 — 2026-11-09
+Commit revisado: 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f.
+Archivos revisados: Services/Auth.js y Services/Test/Auth.js; diff real, helpers del contador, integración handleLogin, locks y callsites.
+Resultado: no se identificaron defectos bloqueantes nuevos. Se confirmó reserva individual por UUID, finalización diferenciada de éxito/fallo/error, liberación de locks y equivalencia lógica de ambas fuentes salvo Spreadsheet ID. CacheService permanece temporal y la concurrencia real está correctamente diferida a Beta.
+Observación menor no bloqueante: removeLoginAttemptReservation_ conserva una variable local previousLength no utilizada; no afecta comportamiento y no se refactorizó fuera de alcance.
+Ciclo A cerrado sin hallazgos bloqueantes; se habilita auditoría pre-implementación AUG-013.
+
+
+AUDITORÍA PRE-IMPLEMENTACIÓN — AUG-013 — 2026-11-09
+Se auditaron Services/feedback.js (router, permisos y handleClearSensitiveLogs), Services/Auth.js (doPost, logToSheet, ScriptLock y callsites), Services/Test/Auth.js, Services/Test/README.md, api-config.js, ui.js y referencias de tareas/plan.
+H-AUD-069 quedó registrado en Auditoría.txt antes de la implementación. Diagnóstico: FEEDBACK toma una instantánea y guarda índices absolutos; AUTH inserta en fila 2 bajo un ScriptLock local a su proyecto. Una inserción concurrente desplaza índices y puede borrar un log seguro dejando un sensible.
+Diseño: centralizar clearSensitiveLogs en AUTH; validar allí sesión/identidad/expiración/rol Desarrollador bajo el mismo ScriptLock de logToSheet; enrutar api-config.js a AUTH y retirar la purga física de FEEDBACK. Preservar los patrones históricos. La coordinación general de mantenimiento/restore entre servicios permanece en AUG-034.
+Estado de auditoría: COMPLETADA. No se modificó código durante la auditoría.
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-013 — 2026-11-09
+Estado: COMPLETADA EN FUENTES; validación real de concurrencia en Apps Script diferida a Beta.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada: GPSpedia2.2.5_work
+HEAD padre confirmado antes de AUG-013: 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+Commit único: "fix(auth): coordinate sensitive log purge with auth writes"; SHA verificable en historial de la rama después de publicar.
+
+Implementación:
+- AUTH es la autoridad única para insertar y purgar Logs. clearSensitiveLogs valida userId, token único, identidad coincidente, expiración, cuenta activa y rol Desarrollador dentro del mismo ScriptLock que usa logToSheet.
+- FEEDBACK dejó de ejecutar la purga física; api-config.js dirige clearSensitiveLogs a AUTH. ui.js/getDeveloperSessionPayload no requirió cambios.
+- Se preservaron los formatos históricos: claves password, sheetPassword, currentPassword, newPassword, fromSheet, fromClient; username en handleLogin started.; y Password comparison. El borrado es descendente y reporta fallos parciales con deletedCount/cleanupPending después de liberar el lock.
+
+Archivos funcionales modificados: Services/Auth.js, Services/Test/Auth.js, Services/feedback.js, api-config.js y Services/Test/README.md.
+Registros modificados: Auditoría.txt, Tareas_pendientes_parte1.txt, Tareas.txt, tareas_completadas_parte1.txt, lista_beta.txt, ChangesLogs.txt y checkpoint.md.
+
+Respaldos exactos previos:
+- Services/Auth.js f45cb0f33bd5f16021acd3fd15453b0d5f5fd8b2
+- Services/Test/Auth.js 4bb1cd29d18550fa1deb36cd4afa9b192efb2228
+- Services/feedback.js 0c6e5659f242b69ecd0637e669ed35cd6109f4d6
+- api-config.js 26c4575a7d3b355e18e5b559d659de4bda5a2746
+- Services/Test/README.md 8dbdc2fb6fe880a8d5de4d9f19891e493677da00
+- Auditoría.txt 5cc2162d8496932336ac338e4115d7cce7f95fa7
+- Tareas_pendientes_parte1.txt 77dece872d55faf7712ad7bc4b616db3b881d745
+- Tareas.txt a53f04b4b56d25cd9bf7a08df2da80134005666e
+- tareas_completadas_parte1.txt 88fc98af046721a74d073d182382643d20e7b637
+- lista_beta.txt 450e3a96b0517c0e7d6c24d982d94f3e452d9419
+- ChangesLogs.txt d89b24ecf60ece69e1b7b8dbe81029fbd7243156
+- checkpoint.md 30cbf690ad65fd4ffe0f545e25a5221abc470bac
+
+Revisión y comparación: reconstrucción inversa PASS para Services/Auth.js, Services/Test/Auth.js, Services/feedback.js y api-config.js; README mantiene intacto el contenido anterior y añade solo la sección AUG-013. Ambas fuentes AUTH son equivalentes salvo Spreadsheet ID. No se modificaron SHA-256, formatos de contraseña, credenciales, sesiones existentes, roles ni otras rutas.
+
+Verificaciones:
+- Sintaxis 4/4 PASS: AUTH producción, AUTH prueba, FEEDBACK y cuerpo de api-config después de retirar import/export ESM para comprobación limitada.
+- Funcional local 24/24 PASS: fixtures históricos, preservación de registros seguros, autorización de seis escenarios, despacho doPost, inserción intercalada bloqueada, reporte de fallo parcial, reintento, timeout de lock sin borrar y rechazo de autorización por doPost, en ambas fuentes.
+- En el harness, ningún registro sensible quedó después de la purga válida; los logs seguros se conservaron; la escritura de resultado ocurrió tras liberar el lock.
+
+Limitaciones: no se ejecutaron Apps Script real, deployment aislado, HTTP ni Spreadsheet real. La concurrencia real, configuración de copia y duración/timeout de purga quedan en Beta. logToSheet espera 10 segundos; una purga prolongada podría causar timeout y omisión de un log concurrente, por medir en Beta. La coordinación general de mantenimiento/restore entre servicios permanece en AUG-034/AUD-T-033.
+
+AUG-011 permanece omitida por decisión del usuario; SHA-256 se conserva.
+Siguiente tarea secuencial: AUG-014 — alinear validación de contraseña en UI y corregir «reincie» por «reinicie».
+Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-013.
+================================================================================
+
+
+ADENDA FINAL DE TRAZABILIDAD — AUG-013 — 2026-11-09
+Se verificó que los blobs documentales finales incluidos en el commit contienen: hallazgo H-AUD-069 y su resolución en Auditoría.txt; cierre AUG-013 en Tareas_pendientes_parte1.txt y Tareas.txt; registro en tareas_completadas_parte1.txt; pruebas reales pendientes en lista_beta.txt; y cambios objetivos en ChangesLogs.txt. La batería final queda en 24/24 pruebas funcionales locales PASS y 4/4 sintaxis PASS. Esta adenda es la última actualización documental antes del único commit de AUG-013.
