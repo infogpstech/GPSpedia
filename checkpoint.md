@@ -4479,3 +4479,58 @@ La instrucción de renombrado automático se conserva, pero no existe patrón no
 Commit documental único: pendiente de crear mediante Git Database API con parent b3c624b541e2720088f48227ce93648b418a9177; update_ref force=false y expected_sha=b3c624b541e2720088f48227ce93648b418a9177. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0155
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S156
+Tarea: AUD-T-009 — revalidación incremental de continuidad E1 de PWA/offline/IndexedDB/Service Worker/iOS.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base protegida: GPSpedia2.2.5.
+HEAD inicial confirmado: ebc54e68747341359f773284da31cea00345a8e3; árbol: 4aa37f34c838ce1bd20e527d4407e2471f17f481; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac (AUD-20261108-S027 / AUD-CP-0027; E1 estática completada); árbol E1 9617c2c588190a50fde235bfe2d32b3ebee7b7ba.
+Revalidación previa: AUD-20261108-S112 / AUD-CP-0111; HEAD 0561e53dac85d010e57af9cac36320f02f9e14b9; árbol 5f082f6c1d2679da7fb793284f77a19169717838.
+Alcance: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, api-config.js, add_cortes.html y users.html.
+Estado inicial: H-AUD-009-001 a 003 abiertos; AUG-074 pendiente; adenda AUG-052 vigente; AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 relacionados; VAL-13/14 pendientes.
+Fase: revalidación estática/documental de continuidad. No se autoriza modificar archivos funcionales, Service Worker, manifest ni assets.
+Preflight: E1 es ancestro de HEAD (129 commits); CP-0111 es ancestro de HEAD (44 commits); diff E1 de ocho documentos; diff CP-0111 de cinco documentos; quince archivos del alcance conservan SHA E1; rama base sin cambios.
+Respaldos exactos previos a la actualización documental (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 24a7e5db995c741440993f096bf065f7ecc59004
+- Plan_auditoría/Consolidacion_Auditoria.md: a4a0895e354597ab80ce1ef6c9d1483d08db26c7
+- ChangesLogs.txt: 10c256317207ea1867f1b92f58f1da571e1ecef7
+- contexto_personal.md: c3174c88e1757babdf9abc4c286109604d159d4f
+- checkpoint.md: f70ceb19894b8b940a375363d2a6a22ec7bd8ede
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0155
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S156
+Tarea: AUD-T-009 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-009-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+HEAD padre: ebc54e68747341359f773284da31cea00345a8e3; árbol 4aa37f34c838ce1bd20e527d4407e2471f17f481; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental (ocho archivos).
+CP-0111→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental (cinco archivos).
+Quince archivos funcionales/técnicos conservan SHA idénticos a E1:
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- manifest.json 4634b82d1ad767a4fbd2d59a945eb33fb1b668b9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html e41f402675677a4d2783493614737021ec2eade5
+Hallazgos: H-AUD-009-001 a 003 abiertos. AUG-074 pendiente; adenda AUG-052 vigente; AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 relacionados; VAL-13/14 pendientes. Sin hallazgos nuevos, duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, árbol actual, compare E1→HEAD, compare CP-0111→HEAD, merge-base, diff global y SHA de los quince archivos.
+No ejecutadas: navegador, PWA/offline real, CacheStorage, IndexedDB, cuota/evicción, Android/iOS/iPadOS, Add to Home Screen, red interrumpida, CDN, lector de pantalla, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque no hay hallazgos/tareas nuevas.
+Sin cambios de Service Worker, manifest, HTML/CSS de aplicación, JavaScript funcional, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+La instrucción de renombrado automático se conserva, pero no existe patrón normativo verificable; no se infiere ni se aplica.
+Commit documental único: pendiente de crear mediante Git Database API con parent ebc54e68747341359f773284da31cea00345a8e3; update_ref force=false y expected_sha=ebc54e68747341359f773284da31cea00345a8e3. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación E1).
+================================================================================

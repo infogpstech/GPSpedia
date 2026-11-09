@@ -1468,3 +1468,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Solo documentación; sin cambios de código, assets, endpoints, contratos, HTML/CSS de aplicación, configuración, credenciales, permisos ni datos productivos. Sin merge/despliegue.
 - La regla de renombrado automático se conserva, pero el patrón normativo no está definido; no se inventa ni se aplica.
 - Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-009 (2026-11-09)
+- Sesión AUD-20261109-S156 / checkpoint AUD-CP-0155. E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; revalidación previa CP-0111/HEAD 0561e53dac85d010e57af9cac36320f02f9e14b9; HEAD actual ebc54e68747341359f773284da31cea00345a8e3; árbol 4aa37f34c838ce1bd20e527d4407e2471f17f481; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; los quince archivos funcionales/técnicos conservan SHA exactos de E1.
+- CP-0111→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff de cinco documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-009-001 a 003 abiertos; AUG-074 pendiente; adenda AUG-052 vigente; AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 conservados como relaciones; VAL-13/14 pendientes.
+- No se ejecutaron navegador, PWA/offline real, CacheStorage, IndexedDB, cuota, Android/iOS/iPadOS, Add to Home Screen, red interrumpida, CDN, lector de pantalla, deployments ni E2/E3. No se certifica comportamiento dinámico.
+- Solo documentación; sin cambios funcionales, Service Worker, manifest, assets, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Se conserva la regla de renombrado automático, pero no existe patrón normativo verificable; no se inventa ni se aplica.
+- Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación E1).

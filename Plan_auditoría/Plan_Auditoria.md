@@ -4172,3 +4172,60 @@ La revalidación es documental. No se modifican código, HTML/CSS de aplicación
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas consultadas no definen un patrón verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
 
 **Siguiente unidad:** AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación de continuidad E1).
+
+
+## 106. Continuidad incremental — AUD-T-009: PWA, offline, IndexedDB, caché, Service Worker e iOS/iPadOS
+
+**Sesión:** AUD-20261109-S156  
+**Checkpoint:** AUD-CP-0155  
+**E1 original:** c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac (AUD-20261108-S027 / AUD-CP-0027; E1 estática completada).  
+**Revalidación anterior:** AUD-20261108-S112 / AUD-CP-0111; HEAD 0561e53dac85d010e57af9cac36320f02f9e14b9.  
+**HEAD inicial de esta sesión:** ebc54e68747341359f773284da31cea00345a8e3; árbol 4aa37f34c838ce1bd20e527d4407e2471f17f481.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-009-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad de manifest PWA, precache y actualización del Service Worker, grafo de módulos ES, fallback offline, persistencia IndexedDB, catálogo/miniaturas, sesión local, limpieza de almacenamiento e instalación iOS/iPadOS. Archivos de alcance:
+- `service-worker.js`: `6779c97db87a574149eb44c7e97729ac7f18f4f5`
+- `manifest.json`: `4634b82d1ad767a4fbd2d59a945eb33fb1b668b9`
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `offline.js`: `c68e8698c74ef45a1c9bb534c6b2be77df817c34`
+- `auth.js`: `2dc65f2e5903fc208ca14505053e82203a9dbd86`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `navigation.js`: `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `state.js`: `f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f`
+- `VinDifferentialEngine.js`: `7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4`
+- `youtubeUpload.js`: `01559b95d4fff7b03c7833d5903496ab41dbc161`
+- `api-config.js`: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `add_cortes.html`: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- `users.html`: `e41f402675677a4d2783493614737021ec2eade5`
+
+Comparación E1→HEAD: 129 commits posteriores, estado ahead, cero commits detrás y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los quince archivos funcionales/técnicos del alcance aparece en el diff. Los quince conservan los SHA exactos de E1 indicados arriba.
+
+Comparación desde AUD-CP-0111 / 0561e53dac85d010e57af9cac36320f02f9e14b9: 44 commits posteriores, cero detrás y merge-base idéntico al HEAD previo. El diff contiene únicamente cinco documentos: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No hay cambios en los quince archivos de aplicación desde la revalidación anterior.
+
+### Hallazgos, tareas y dependencias
+
+H-AUD-009-001 a H-AUD-009-003 permanecen abiertos y sin cambios de estado:
+1. El precache del Service Worker no cubre el grafo ESM estático completo: `youtubeUpload.js` es importado estáticamente y no está precargado; `VinDifferentialEngine.js` también falta y conserva su referencia de riesgo en H-AUD-037-011/AUG-052.
+2. La instalación/actualización del Service Worker mantiene riesgos por `cache.addAll()` atómico, registro sin manejo/diagnóstico explícito de rechazo y escritura `cache.put()` sin asociación a `event.waitUntil()`; la primera recarga offline y recuperación ante recursos faltantes requieren validación.
+3. La detección iOS/iPadOS basada en tokens UA no reconoce de forma fiable iPadOS con UA de escritorio; `index.html` no declara `apple-touch-icon` ni metadatos Apple específicos de web app.
+
+AUG-074 continúa pendiente. AUG-052 conserva la adenda para grafo ESM completo, separación de recursos obligatorios/opcionales, atomicidad y diagnóstico de `cache.addAll()`, rechazo de `register()`, `cache.put()` con `event.waitUntil()` y primera recarga offline. AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 permanecen como dependencias y referencias existentes, sin duplicar tareas. VAL-13 y VAL-14 siguen pendientes. No se crean hallazgos, tareas ni IDs nuevos; no se cierran ni reclasifican registros.
+
+### Verificaciones y límites
+
+Se verificaron HEAD de ambas ramas, árbol actual, comparación E1→HEAD, comparación AUD-CP-0111→HEAD, merge-base, lista completa de archivos del diff y SHA de los quince archivos funcionales/técnicos.
+
+No se ejecutaron navegador, instalación/actualización PWA, CacheStorage, IndexedDB real, cuota/evicción, Android/iOS/iPadOS, Add to Home Screen, red interrumpida, CDN, lector de pantalla, despliegues ni pruebas E2/E3. La continuidad Git no certifica funcionamiento offline, persistencia real, instalación, recuperación de fallos, compatibilidad móvil ni privacidad del almacenamiento.
+
+### Integridad y alcance de cambios
+
+La revalidación es documental. No se modifican Service Worker, manifest, HTML/CSS de aplicación, JavaScript funcional, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos, la tarea AUG-074 y las adendas relacionadas ya están registrados. No se ejecuta merge ni despliegue.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas consultadas no definen un patrón verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
+
+**Siguiente unidad:** AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación de continuidad E1).

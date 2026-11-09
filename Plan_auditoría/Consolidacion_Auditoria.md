@@ -1569,3 +1569,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Solo continuidad documental. Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Se conserva la instrucción de renombrado automático; no existe patrón normativo verificable, por lo que no se infiere ni se renombra.
 - Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación de continuidad E1).
+
+
+## 91. AUD-T-009 — continuidad E1 y revalidación PWA/offline/iOS
+- Sesión AUD-20261109-S156; checkpoint AUD-CP-0155; E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; árbol E1 9617c2c588190a50fde235bfe2d32b3ebee7b7ba; revalidación previa CP-0111/HEAD 0561e53dac85d010e57af9cac36320f02f9e14b9; HEAD actual ebc54e68747341359f773284da31cea00345a8e3; árbol 4aa37f34c838ce1bd20e527d4407e2471f17f481; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos. Los quince archivos funcionales/técnicos conservan SHA idénticos a E1.
+- CP-0111→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico al HEAD previo y diff limitado a cinco documentos; no hay deriva funcional desde la revalidación anterior.
+- H-AUD-009-001 a 003 permanecen abiertos: grafo ESM de precache incompleto; manejo/diagnóstico insuficiente de fallos de instalación/registro del Service Worker y cache.put sin waitUntil; detección iPadOS con UA escritorio y metadatos Apple incompletos.
+- AUG-074 pendiente; adenda AUG-052 vigente para grafo ESM, recursos obligatorios/opcionales, atomicidad/diagnóstico cache.addAll(), rechazo register(), cache.put()/event.waitUntil() y primera recarga offline. AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 permanecen como referencias existentes. VAL-13/14 pendientes. Sin duplicados, nuevos hallazgos ni cambios de estado.
+- No se ejecutaron navegador, instalación/actualización PWA, CacheStorage, IndexedDB real, cuota/evicción, Android/iOS/iPadOS, Add to Home Screen, red interrumpida, CDN, lector de pantalla, deployments ni E2/E3. Continuidad Git no certifica E2/E3.
+- Solo documentación. Sin cambios de Service Worker, manifest, HTML/CSS de aplicación, JavaScript funcional, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- La instrucción de renombrado automático se conserva; no existe patrón normativo verificable, por lo que no se infiere ni se renombra.
+- Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación E1).
