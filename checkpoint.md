@@ -5235,3 +5235,30 @@ Corrección: plan maestro actualizado; Auditoría.txt y Tareas.txt registran hal
 Sin cambios funcionales, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet o deployments.
 Siguiente: verificar este commit; después iniciar la auditoría pre-implementación de la tarea actual de protocolo de ciclo, registrando sus hallazgos antes de implementarla.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — RECT-H-AUD-041
+Fecha: 2026-11-09
+Tarea: rectificar el método de conteo aplicado en H-AUD-040 antes de iniciar el nuevo trabajo de protocolo.
+Rama: GPSpedia2.2.5_work; base GPSpedia2.2.5.
+HEAD inicial: c3d4452e5cb6b1afaac2d233892be637a139f72c; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Auditoría del checkpoint anterior: el commit c3d4452e5cb6b1afaac2d233892be637a139f72c añadió una corrección basada en el prefijo H-AUD-### y no en el identificador completo H-AUD-###-###.
+Evidencia: 185 IDs individuales completos únicos en Tareas.txt.
+Hallazgo: H-AUD-041. H-AUD-040 queda invalidado, conservando su registro.
+Respaldos: Auditoría.txt=e4c7c71f23cd48da5a94dcb1a322f1de32600826; Tareas.txt=414a6ae5c103de7235dbde4112072167ac1aa22a; Plan_auditoría/Plan_Maestro_Implementacion.md=92e78feebf1c49bfb119bc129f0678ca27780354; ChangesLogs.txt=2c2d1cd9bd9a09b17d5a79308d0d67aab1190254; checkpoint.md=2821c8529505421627ff43f79a22433fb38fe203
+No se auditan informes de auditoría.
+Siguiente: registrar rectificación, restaurar conteo en el plan maestro, documentar y publicar un commit correctivo independiente.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — RECT-H-AUD-041
+Fecha: 2026-11-09
+Tarea: rectificación del conteo H-AUD.
+Estado: CORREGIDA DOCUMENTALMENTE; commit pendiente de verificación al redactar.
+HEAD padre: c3d4452e5cb6b1afaac2d233892be637a139f72c; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Archivos: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Maestro_Implementacion.md, ChangesLogs.txt y checkpoint.md.
+H-AUD-040 queda invalidado sin borrar historial. H-AUD-041 registra la metodología incompleta de conteo.
+Conteo confirmado: 185 identificadores individuales únicos con formato H-AUD-###-###. La extracción por prefijo H-AUD-### no es válida para contar hallazgos.
+No se modifican informes de auditoría, código funcional, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
+Siguiente: verificar commit y luego auditar la tarea actual de refuerzo del procedimiento, antes de su implementación.
+================================================================================

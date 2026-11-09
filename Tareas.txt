@@ -6595,3 +6595,20 @@ Evidencia: Tareas.txt en HEAD deea984c411203cfb06c1d5dfa6b2b7a1b85a138 contiene 
 Corrección: actualizar el conteo del plan maestro y conservar la trazabilidad de la cifra anterior en los registros históricos.
 Commit: el commit que contiene esta corrección se identifica en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+
+================================================================================
+RECTIFICACIÓN DE TAREA — H-AUD-040
+Estado: INVALIDADA por metodología de conteo incorrecta; registro histórico conservado, no borrar.
+Motivo: se contó H-AUD-### en lugar del ID completo H-AUD-###-###. El inventario correcto de hallazgos individuales es 185 IDs completos únicos.
+Hallazgo correctivo: H-AUD-041. La rectificación se publica en un commit independiente antes de iniciar la auditoría de la tarea actual.
+================================================================================
+
+================================================================================
+H-AUD-041 — Corrección del método de conteo de hallazgos H-AUD
+Estado: CORREGIDO DOCUMENTALMENTE EN ESTA TAREA.
+Evidencia: patrón completo H-AUD-###-### produce 185 identificadores individuales únicos en Tareas.txt; el patrón truncado H-AUD-### no permite contar hallazgos individuales.
+Acción: H-AUD-040 se marca inválido sin borrar historial; Plan_Maestro_Implementacion.md recupera el conteo correcto y aclara el formato.
+Commit: el commit de esta rectificación se identifica en el historial de GPSpedia2.2.5_work.
+================================================================================

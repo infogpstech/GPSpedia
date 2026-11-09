@@ -11,3 +11,25 @@ Corrección: reemplazar el dato del plan maestro por el conteo verificable; aña
 Estado: CORREGIDO EN EL COMMIT DE ESTA TAREA; SHA identificable en el historial de GPSpedia2.2.5_work.
 Nota de alcance: no se auditaron ni modificaron Auditoría.txt como informe, Plan_Auditoria.md ni Consolidacion_Auditoria.md. Auditoría.txt estaba vacío y se utiliza aquí únicamente como registro de este hallazgo.
 ================================================================================
+
+================================================================================
+RECTIFICACIÓN — H-AUD-040 (REGISTRO INVÁLIDO)
+Fecha: 2026-11-09
+El hallazgo H-AUD-040 queda INVALIDADO. La corrección previa contó únicamente el prefijo H-AUD-### y omitió el sufijo de los identificadores individuales H-AUD-###-###. Por tanto, el resultado de 38 identificadores no representa el total de hallazgos.
+No se elimina el registro histórico. Su error metodológico se documenta como H-AUD-041.
+La cifra de 185 identificadores individuales completos se confirma con extracción del patrón completo H-AUD-\d{3}-\d{3} sobre Tareas.txt.
+================================================================================
+
+================================================================================
+H-AUD-041 — Conteo incorrecto por truncamiento de identificadores H-AUD
+Fecha: 2026-11-09
+Origen: auditoría de la tarea correctiva H-AUD-040, commit c3d4452e5cb6b1afaac2d233892be637a139f72c.
+Severidad: P2 — documental/trazabilidad.
+Archivos afectados: Plan_auditoría/Plan_Maestro_Implementacion.md, Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+Evidencia reproducible: extraer identificadores completos con patrón H-AUD-\d{3}-\d{3} en Tareas.txt. Se obtienen 185 valores únicos. La extracción previa H-AUD-\d{3} colapsó los sufijos y contó prefijos de agrupación, no hallazgos individuales.
+Impacto: H-AUD-040 declaró incorrectamente que el inventario previo de 185 hallazgos era falso y sustituyó la cifra por un conteo de prefijos, creando una corrección errónea.
+Causa: patrón de extracción incompleto, que truncó los identificadores jerárquicos.
+Corrección: invalidar H-AUD-040 sin borrar su historial; restaurar en el plan maestro el conteo de 185 IDs individuales completos; documentar el patrón de conteo y la rectificación.
+Estado: CORREGIDO EN EL COMMIT DE ESTA TAREA; SHA identificable en el historial de GPSpedia2.2.5_work.
+Nota: no se auditan ni modifican los informes de auditoría. Se consulta Tareas.txt solo como registro de IDs y Auditoría.txt como registro de hallazgos.
+================================================================================

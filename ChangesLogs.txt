@@ -5775,3 +5775,12 @@ Tarea correctiva separada del trabajo de protocolo de ciclo.
 - checkpoint.md: se registra checkpoint inicial/final de esta corrección.
 - No se modifican informes de auditoría, código funcional, servicios, endpoints ni datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-09 — RECTIFICACIÓN H-AUD-040 / H-AUD-041
+- La auditoría del commit c3d4452e5cb6b1afaac2d233892be637a139f72c detectó que la extracción H-AUD-### truncaba los IDs individuales H-AUD-###-###.
+- Se invalida H-AUD-040 sin borrar el registro histórico.
+- Se registra H-AUD-041 y se confirma el conteo correcto de 185 IDs individuales completos en Tareas.txt.
+- Se restaura el dato correcto en Plan_auditoría/Plan_Maestro_Implementacion.md y se explica el patrón de extracción.
+- No se modifican informes de auditoría ni archivos funcionales.
+================================================================================

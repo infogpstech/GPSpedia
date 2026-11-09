@@ -18,7 +18,7 @@ Resolver los hallazgos ya registrados en E1 y las tareas AUG existentes sin repe
 - Catálogo AUD-T-001 a AUD-T-039: 39 unidades registradas; la consolidación marca 38/38 unidades principales con E1 estática completada y AUD-T-039 como revisión de configuración de ramas.
 - E1 no certifica pruebas funcionales, seguridad runtime, integración, accesibilidad ni deployments.
 - Aug_Tareas.md contiene 151 IDs AUG únicos, AUG-001 a AUG-151. Hay adendas/repeticiones de encabezados; no contarlas como tareas nuevas.
-- Tareas.txt contiene 248 referencias correspondientes a 38 identificadores H-AUD distintos (H-AUD-001 y H-AUD-003 a H-AUD-039; H-AUD-002 no aparece). El conteo es una lectura literal del registro actual, no equivale al total de hallazgos abiertos.
+- Tareas.txt contiene 185 identificadores individuales únicos con formato completo H-AUD-###-###. El conteo usa el identificador completo, no el prefijo de agrupación ni el número de ocurrencias repetidas.
 - Las matrices VAL-01 a VAL-33 están registradas; su existencia no acredita ejecución.
 - Auditoría.txt devolvió contenido vacío por el conector GitHub. La consolidación usa Tareas.txt, Aug_Tareas.md, Plan_Auditoria.md, Consolidacion_Auditoria.md y código legible. No se afirma lectura íntegra independiente de Auditoría.txt.
 - Inbox actual: lista/detalle, lectura de feedback, respuesta ligada a item, resolución para determinados reportes, eliminación y aprobación/rechazo de vídeos. El CSS aplica overflow a columnas, pero el modal padre oculta overflow y el alto del wrapper depende del layout; requiere rediseño y pruebas responsive.
