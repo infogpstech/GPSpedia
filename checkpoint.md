@@ -3388,3 +3388,40 @@ Sin cambios funcionales, esquema, configuración, assets, permisos, datos produc
 Commit documental único: docs(audit): verify AUD-T-004 continuity; parent e5f65c485c1193f75c0354884fe80e6c6c2f23f6.
 Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0129
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S130
+Tarea: AUD-T-005 — revalidación de continuidad E1 del modal de detalle, ampliación dinámica y acciones contextuales.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 73ec786e667f59374037b4528fc767b8d3e18fdb | árbol: 7df71e03ab284a3a5a55305049a3219408c74b16.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: c56c6f7e21a668774db726e2f14139588f1bc5c0.
+Revalidación previa: AUD-20261108-S107 / AUD-CP-0106, HEAD 5c6bd001be440ee790e3ae6ae73d6ff3271712b4.
+Alcance: ui.js, style.css, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js, rich-text.js, state.js, main.js, offline.js e index.html.
+Estado inicial: H-AUD-005-001 a 008 abiertos; AUG-061 a 064 pendientes; adendas AUG-043/AUG-050/AUG-057; H-AUD-005-008/VAL-17 transferidos a AUD-T-007; VAL-03/09/14/16 pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar pruebas productivas.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 64a833e052c45852fb21924ed8a3021d59e681bb
+- Plan_auditoría/Consolidacion_Auditoria.md: c7c24710b14b9799feffa8cdf9ed5b0205213543
+- ChangesLogs.txt: b64fed027325b1cf1d67ece1de3e9e32a94d3886
+- contexto_personal.md: 2bab0827bbed49ea43a4ca8be0d234c10ec9d852
+- checkpoint.md: 851c607a293a14e446223ba6ef3d6b9f67b50e01
+Siguiente acción: comparar E1→HEAD, verificar SHA de los once archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0129
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S130
+Tarea: AUD-T-005 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-005-001 a 008 abiertos; AUG-061 a 064 pendientes; adendas AUG-043/AUG-050/AUG-057 conservadas; H-AUD-005-008/VAL-17 transferidos a AUD-T-007; VAL-03/09/14/16 pendientes.
+HEAD padre confirmado: 73ec786e667f59374037b4528fc767b8d3e18fdb; árbol inicial 7df71e03ab284a3a5a55305049a3219408c74b16. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 107 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los once archivos funcionales del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: H-AUD-005-001 a 008 permanecen abiertos. Se conservan las tareas AUG-061 a AUG-064 y adendas AUG-043/AUG-050/AUG-057. H-AUD-005-008 permanece transferido a AUD-T-007.
+Validaciones no ejecutadas: navegador, XSS dinámico, FileReader real, concurrencia, HTTP, Apps Script V8, Drive/Spreadsheet real, YouTube, móvil/PWA, accesibilidad, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, endpoints, contratos, configuración, credenciales, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-005 continuity; parent 73ec786e667f59374037b4528fc767b8d3e18fdb.
+Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+================================================================================

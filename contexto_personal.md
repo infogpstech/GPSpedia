@@ -1243,3 +1243,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-004-001 a 003 abiertos; H-AUD-037-007 ampliado; AUG-059/AUG-060/AUG-050 vigentes; VAL-08/12/15 pendientes.
 - No se ejecutaron navegador, dataset VIN, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia, dos usuarios ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
+
+
+## Continuidad de auditoría — AUD-T-005 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S130 / AUD-CP-0129; rama GPSpedia2.2.5_work, HEAD inicial 73ec786e667f59374037b4528fc767b8d3e18fdb; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 c56c6f7e21a668774db726e2f14139588f1bc5c0; 107 commits posteriores; merge-base igual a E1; diff global de ocho documentos; once archivos funcionales conservan SHA idénticos.
+- H-AUD-005-001 a 008 abiertos; AUG-061 a 064 pendientes; adendas AUG-043/AUG-050/AUG-057; H-AUD-005-008/VAL-17 transferidos a AUD-T-007. VAL-03/09/14/16 pendientes.
+- No se ejecutaron navegador, XSS dinámico, FileReader, concurrencia, HTTP, Apps Script, Drive/Spreadsheet, YouTube, móvil/PWA, accesibilidad ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
