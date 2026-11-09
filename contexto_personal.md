@@ -1446,3 +1446,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se ejecutaron navegador, móviles/PWA, CDN, IndexedDB real, mediciones de rendimiento, comparación visual, canvas, gestos reales ni E2/E3. Sin cambios funcionales o productivos.
 - La instrucción de renombrar automáticamente carpetas/imágenes que incumplan el formato se conserva. No se encontró una especificación normativa del patrón en Proceso de desarollo.md, README.md ni Contexto de trabajo.md; no se infiere ni se aplican renombrados hasta contar con un criterio comprobable.
 - Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación de continuidad E1).
+
+
+## Continuidad incremental — AUD-T-007 (2026-11-09)
+- Sesión AUD-20261109-S154 / checkpoint AUD-CP-0153. E1 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; revalidación previa CP-0131/HEAD e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec; HEAD actual 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935; árbol 433cfe28f5d07f75ded3f485ee34e4f8900c993a; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, merge-base idéntico y diff de ocho documentos. Los diez archivos funcionales conservan SHA exactos de E1.
+- CP-0131→HEAD: 22 commits posteriores, merge-base idéntico y solo cinco documentos de continuidad; no hay deriva funcional desde la revalidación anterior.
+- H-AUD-007-001 a 005 abiertos; AUG-068 a AUG-071 pendientes; AUG-047 con adenda; H-AUD-005-008 ampliado sin duplicación; VAL-10/17 pendientes.
+- No se ejecutaron navegador, Android/iOS, PWA, gestos nativos, teclado, submits, deep links, lector de pantalla, overlays reales, history.state ni deployments. No se certifica comportamiento funcional dinámico.
+- Solo documentación; sin cambios de código, assets, endpoints, contratos, configuración, credenciales, permisos ni datos productivos. Sin merge/despliegue.
+- Se mantiene la instrucción de renombrado automático de carpetas/imágenes fuera del formato; las fuentes consultadas no especifican el patrón, por lo que no se inventa ni se renombra.
+- Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación E1).

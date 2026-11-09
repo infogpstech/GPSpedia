@@ -4383,3 +4383,53 @@ Sin cambios funcionales, CSS/HTML de aplicación, assets, endpoints, contratos, 
 Commit documental único: docs(audit): revalidate AUD-T-006 continuity; parent 27653a1c8470c59bf370ff1790f025efbfcfc9a9; update_ref force=false y expected_sha=27653a1c8470c59bf370ff1790f025efbfcfc9a9. La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0153
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S154
+Tarea: AUD-T-007 — revalidación incremental de continuidad E1.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base protegida: GPSpedia2.2.5.
+HEAD inicial confirmado: 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935; árbol: 433cfe28f5d07f75ded3f485ee34e4f8900c993a; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e (AUD-20261108-S025 / AUD-CP-0025; auditoría estática completada).
+Revalidación previa AUD-T-007: AUD-20261108-S132 / AUD-CP-0131; HEAD e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec.
+Alcance: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+Estado inicial: H-AUD-007-001 a 005 abiertos; AUG-068 a AUG-071 pendientes; adenda AUG-047 vigente; H-AUD-005-008 ampliado; VAL-10/17 pendientes.
+Fase: revalidación estática/documental de continuidad. No se autoriza modificar código, HTML/CSS de aplicación, assets, endpoints, contratos, configuración ni datos productivos.
+Preflight observado: E1 es ancestro de HEAD (129 commits); CP-0131 es ancestro de HEAD (22 commits); los diez archivos funcionales conservan SHA E1; rama base sin cambios.
+Respaldos exactos previos a la actualización documental (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: eefa3d2b83e554600a811ff40a47d86377769091
+- Plan_auditoría/Consolidacion_Auditoria.md: 3bc6584fc5bd93802c3f4b4ad28d7ab36607956e
+- ChangesLogs.txt: 857da2b904b2fee578c4fbe4748588809f4712dd
+- contexto_personal.md: 26132b39b3ba15d0c6c32276513a8176fe70d2c3
+- checkpoint.md: 2bb215239cbe8be4a75af3cf2c3cb4a0bca44fcb
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0153
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S154
+Tarea: AUD-T-007 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-007-001 A 005 ABIERTOS; VALIDACIÓN REAL DE NAVEGADOR/MÓVIL/PWA PENDIENTE.
+HEAD padre: 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935; árbol 433cfe28f5d07f75ded3f485ee34e4f8900c993a; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores; merge-base idéntico a E1; diff exclusivamente documental (ocho archivos).
+Diez archivos funcionales con SHA idénticos a E1:
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+CP-0131→HEAD: 22 commits posteriores; merge-base idéntico; cinco documentos modificados y sin deriva funcional.
+Hallazgos: H-AUD-007-001 a 005 abiertos. AUG-068 a AUG-071 pendientes; AUG-047 con adenda; H-AUD-005-008 ampliado sin duplicación; VAL-10/17 pendientes. Sin hallazgos nuevos, duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, árboles E1/HEAD, compare E1→HEAD, compare CP-0131→HEAD, merge-base, diff global y SHA de los diez archivos.
+No ejecutadas: navegador, Android/iOS, PWA, gestos, teclado, submits, deep links, lector de pantalla, overlays reales, history.state, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque no hay hallazgos ni tareas nuevas.
+Sin cambios funcionales, HTML/CSS de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+La instrucción de renombrado automático se conserva, pero no se identificó un patrón normativo verificable; no se infiere ni se aplica uno.
+Commit documental único: docs(audit): revalidate AUD-T-007 continuity; parent 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935; update_ref force=false y expected_sha=47e0eb4ca1ab67592b3ba574f547b5d36e9ae935. La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación E1).
+================================================================================

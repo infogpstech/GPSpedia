@@ -1545,3 +1545,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Se observó que los documentos normativos consultados no definen un patrón formal de nombres para carpetas/imágenes; no se renombró nada por falta de criterio verificable. Se conserva la instrucción de renombrado automático una vez que el formato aplicable esté definido.
 - Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación E1).
+
+
+## 89. AUD-T-007 — continuidad incremental revalidada
+- Sesión AUD-20261109-S154; checkpoint AUD-CP-0153; E1 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; revalidación previa CP-0131/HEAD e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec; HEAD actual 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935; árbol 433cfe28f5d07f75ded3f485ee34e4f8900c993a; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, merge-base idéntico, sin divergencia. El diff global contiene ocho documentos; los diez archivos funcionales del alcance conservan sus SHA de E1.
+- CP-0131→HEAD: 22 commits posteriores, merge-base igual a CP-0131 y solo cinco documentos modificados; sin deriva funcional desde la revalidación anterior.
+- H-AUD-007-001 a 005 abiertos; AUG-068 a AUG-071 pendientes; AUG-047 con adenda vigente; H-AUD-005-008 ampliado sin duplicación; VAL-10/17 pendientes.
+- Sin hallazgos nuevos, cierres, cambios de prioridad ni duplicación de tareas. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+- No se ejecutaron navegador, Android/iOS, PWA, gestos, teclado virtual, submits, deep links, lector de pantalla, overlays reales ni medición de history.state. No se validaron deployments.
+- Solo continuidad documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, permisos, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
+- La regla de renombrado automático se conserva, pero no existe patrón normativo verificable en las fuentes consultadas; no se inventa ni aplica un formato.
+- Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación E1).

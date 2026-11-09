@@ -4051,3 +4051,66 @@ El árbol actual contiene carpetas `Olds`, `Olds/GPSpedia 1.0`, `Olds/GPSpedia 1
 No se modificaron código, CSS, HTML de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás (revalidación de continuidad E1).
+
+
+## 104. Continuidad incremental — AUD-T-007: navegación, History API, popstate, overlays y gesto atrás
+
+**Sesión:** AUD-20261109-S154  
+**Checkpoint:** AUD-CP-0153  
+**E1 original:** 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e (AUD-20261108-S025 / AUD-CP-0025; auditoría estática E1 completada).  
+**Revalidación anterior de AUD-T-007:** AUD-20261108-S132 / AUD-CP-0131; HEAD e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec.  
+**HEAD inicial de esta sesión:** 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935.  
+**Árbol del HEAD inicial:** 433cfe28f5d07f75ded3f485ee34e4f8900c993a.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-007-001 A 005 ABIERTOS; VALIDACIÓN REAL DE NAVEGADOR/MÓVIL/PWA PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la continuidad de History API, popstate, overlays, gesto atrás, navegación de catálogo, búsqueda/Forward-Stack, restauración de estado, menú lateral, lightbox, modales de usuario, add_cortes y subida YouTube. El alcance funcional permanece en diez archivos:
+- `main.js`
+- `navigation.js`
+- `ui.js`
+- `users.html`
+- `add_cortes.html`
+- `youtubeUpload.js`
+- `index.html`
+- `style.css`
+- `lightbox.js`
+- `state.js`
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base idéntico a E1 y cero commits detrás. El diff global enumera exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los diez archivos funcionales del alcance aparece en el diff.
+
+Los diez archivos conservan SHA idénticos a E1:
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `navigation.js`: `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `users.html`: `e41f402675677a4d2783493614737021ec2eade5`
+- `add_cortes.html`: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- `youtubeUpload.js`: `01559b95d4fff7b03c7833d5903496ab41dbc161`
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `lightbox.js`: `841f44a54fe12b867c0c58cc560ce4474cde3e03`
+- `state.js`: `f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f`
+
+La comparación de la revalidación anterior de AUD-T-007 (CP-0131 / e2e53c3e36923b68bd28aa14b9c2608ae8bf5fec) a HEAD actual confirma 22 commits posteriores, merge-base igual al HEAD anterior y únicamente cinco documentos modificados: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No se detecta deriva funcional desde esa revalidación.
+
+### Hallazgos, tareas y dependencias
+Los hallazgos históricos H-AUD-007-001 a H-AUD-007-005 permanecen abiertos y sin cambios de estado:
+1. Overlays dinámicos no detectados/registrados uniformemente.
+2. Botones internos «Volver» pueden crear entradas nuevas y dejar vistas profundas en el historial.
+3. Un evento popstate puede cerrar varios overlays en lugar de cerrar solo el superior.
+4. Aperturas y cierres manuales no mantienen simetría con las entradas de History API.
+5. La prioridad entre `#terms-modal` y `#terms-agreement-modal` no permite cerrar primero el acuerdo superior.
+
+AUG-068 a AUG-071 continúan pendientes. AUG-047 conserva la adenda del acuerdo legal y el orden de capas. H-AUD-005-008 permanece ampliado en este dominio sin duplicar su ID. AUG-017/AUG-042 (limpieza al cambiar de cuenta) y AUG-049 (clasificación/búsqueda) conservan sus ámbitos separados. VAL-10 y VAL-17 siguen pendientes. No se crean hallazgos, tareas ni IDs nuevos; no se cierran ni reclasifican registros.
+
+### Verificaciones y límites
+Se verificaron HEAD de ambas ramas, árbol de trabajo, comparación E1→HEAD, comparación CP-0131→HEAD, merge-base, lista completa de archivos del diff y SHA de los diez archivos funcionales. La rama base permanece exactamente en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+No se ejecutaron navegador, Android/iOS, PWA standalone, gestos nativos, teclado virtual, submits reales, deep links, lector de pantalla, medición real de `history.state` ni pruebas de overlays simultáneos. Tampoco se compararon deployments. La continuidad Git confirma que el código del alcance no ha cambiado respecto de E1; no certifica el comportamiento real del historial o de los overlays en dispositivos.
+
+### Integridad y alcance de cambios
+La revalidación es documental. No se modifican código, HTML/CSS de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive ni Spreadsheet. No se ejecuta merge ni despliegue. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los cinco hallazgos, las cuatro AUG y sus relaciones ya están registrados.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes del proyecto consultadas no definen un patrón normativo verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
+
+**Siguiente unidad:** AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación de continuidad E1).
