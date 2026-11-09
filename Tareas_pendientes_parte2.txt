@@ -470,6 +470,7 @@ ADENDAS Y CONTINUIDAD DEL REGISTRO ORIGINAL
 
 TAREAS DOCUMENTALES ABIERTAS
 DOC-README-2026-001 — Retirar del README la afirmación de que los filtros rápidos están activos. Requisitos: revisar todas las referencias activas; declarar cancelación; verificar que no se describen como disponibles; no tocar legacy ni reintroducir código.
+Estado: COMPLETADA — DOCUMENTAL. Evidencia: README.md actualizado; mención de funcionalidad activa sustituida por nota explícita de cancelación. Sintaxis de código: N/A (sin cambios de código). Revisión documental y diff contra respaldo: aprobados.
 DOC-README-2026-002 — Reconciliar la descripción de microservicios y carpeta Services. Requisitos: confirmar visibilidad del repositorio y contenido real; distinguir fuentes, deployments y endpoints; revisar exposición; no borrar ni publicar archivos por inferencia; actualizar README solo tras confirmar política autorizada.
 DOC-LEGACY-2026-001 — Revalidar cierres históricos [X]. Requisitos: contrastar cada tarea con commit/diff; revisar sintaxis de cada archivo afectado; registrar herramienta/versión/resultado; comprobar pruebas funcionales y Code Review; promover solo con evidencia; mantener legacy inmutable.
 

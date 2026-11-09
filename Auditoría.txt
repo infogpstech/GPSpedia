@@ -51,3 +51,14 @@ Impacto: riesgo de repetir implementaciones, saltar dependencias o trabajar con 
 Corrección: adenda 14 del Plan Maestro con propiedad única por fase, olas internas, bloqueos, rutas exactas de requisitos y procedimiento obligatorio por tarea.
 Estado: RESUELTO DOCUMENTALMENTE EN DOC-PLAN-2026-003. No se modificó código ni legacy.
 ================================================================================
+
+
+
+================================================================================
+H-AUD-048 — README anuncia filtros rápidos cancelados como funcionalidad activa
+Fecha: 2026-11-09. Tarea: DOC-README-2026-001. Severidad: P2.
+Evidencia: README.md, sección 5, línea 96 del archivo auditado en HEAD 7c21387c8122ce84321e7e2318e750902c509010. El texto anuncia una “Barra de Filtros Rápidos Colapsable” por Categoría y Año e identifica el botón #btn-toggle-filters.
+Impacto: la documentación presenta como disponible una funcionalidad cancelada y puede inducir a reintroducirla.
+Criterio de corrección: retirar la afirmación de disponibilidad y sustituirla por una nota explícita de cancelación; conservar el resto de novedades; no tocar código ni legacy.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-README-2026-001. La revisión posterior confirma que solo cambió la línea prevista.
+================================================================================

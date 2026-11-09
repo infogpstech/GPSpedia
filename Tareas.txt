@@ -44,3 +44,15 @@ Validación: rutas, identificadores, referencias, límites y coherencia document
 Hallazgo H-AUD-047 resuelto documentalmente.
 Siguiente: DOC-README-2026-001/002; después Fase 1 P0.
 ================================================================================
+
+
+
+================================================================================
+TAREA DOC-README-2026-001 — CORRECCIÓN DE README: FILTROS RÁPIDOS CANCELADOS
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: README.md actualizado; la única mención de la barra colapsable fue sustituida por una declaración de cancelación.
+Revisión: H-AUD-048 resuelto; diff comparado byte por byte contra respaldo exacto; Code Review documental aprobado. Sintaxis de código N/A porque no se modificó código.
+No se tocaron legacy, frontend funcional, Services, endpoints ni deployments.
+Siguiente: DOC-README-2026-002, sujeto a verificar política y contenido real de Services.
+================================================================================

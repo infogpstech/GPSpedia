@@ -37,3 +37,13 @@ Se aclaró que las partes 3–4 de pendientes son registros históricos abiertos
 Se actualizaron checkpoint.md, Auditoría.txt, Tareas.txt y tareas_completadas_parte1.txt.
 No se modificó código ni archivos legacy; no se ejecutaron pruebas funcionales ni deployments.
 ================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-README-2026-001 — CANCELACIÓN DE FILTROS RÁPIDOS EN README
+Se sustituyó la afirmación de que la barra de filtros rápidos por Categoría/Año estaba activa por una nota explícita de cancelación.
+Archivo modificado: README.md. No se modificó código, funcionalidades, legacy ni Services.
+Validación documental: búsqueda de referencias, comparación byte por byte contra respaldo exacto y Code Review documental.
+Sintaxis de código: N/A. H-AUD-048 resuelto.
+================================================================================

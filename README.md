@@ -93,7 +93,7 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Mejoras de Experiencia de Usuario (UX) e Inbox
 - **Exportación e Impresión de Fichas Técnicas:** Botón con icono de impresora (`exportVehiclePrintSheet`) en el modal de detalle para generar e imprimir fichas técnicas limpias optimizadas para formato físico/PDF para técnicos instaladores en campo.
-- **Barra de Filtros Rápidos Colapsable:** Desplegable de filtros rápidos por Categoría y Año mediante el botón `#btn-toggle-filters`, activo únicamente cuando la búsqueda está en uso.
+- **Filtros rápidos de catálogo:** Funcionalidad cancelada; no forma parte de la versión vigente de GPSpedia y no debe considerarse disponible.
 - **Navegación Jerárquica Progresiva de Búsqueda:** Búsqueda agrupada por Modelo único -> Versiones de Equipamiento -> Rangos de Años -> Modal de Detalle (auto-abriendo si sólo existe 1 modelo, 1 versión y 1 rango de año).
 - **Gestión Completa del Inbox:** Opción de eliminación permanente de mensajes y reportes (`deleteFeedbackItem`) en el panel del Inbox.
 

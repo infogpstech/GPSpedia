@@ -65,3 +65,18 @@ Sintaxis de código: N/A; no se modificó código.
 Validación documental: referencias de rutas e IDs cotejadas contra archivos vigentes; solapamientos aclarados; partes legacy separadas para reconciliación; límites documentales comprobados.
 Commit: consultar el historial de GPSpedia2.2.5_work para el SHA de esta tarea.
 ================================================================================
+
+
+
+================================================================================
+DOC-README-2026-001 — RETIRAR AFIRMACIÓN DE FILTROS RÁPIDOS ACTIVOS
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Requisitos: Tareas_pendientes_parte2.txt, sección TAREAS DOCUMENTALES ABIERTAS.
+Evidencia: README.md, sección 5. La afirmación de la barra colapsable, filtros Categoría/Año y botón #btn-toggle-filters fue sustituida por una nota explícita de cancelación.
+Auditoría: H-AUD-048 registrado y resuelto.
+Sintaxis de código: N/A; no se modificó código.
+Validación: búsqueda de referencias en README; diff reconstruido desde respaldo exacto y coincide byte por byte; Code Review documental aprobado.
+No se modificaron legacy, código, Services, endpoints ni deployments.
+Commit: consultar historial de GPSpedia2.2.5_work.
+================================================================================

@@ -88,3 +88,45 @@ No ejecutadas: pruebas funcionales, sintaxis de código, navegador, servicios o 
 Pendientes: DOC-README-2026-001/002 continúan abiertas. La matriz organiza su ejecución, no las declara resueltas.
 Siguiente acción: ejecutar DOC-README-2026-001 y DOC-README-2026-002 según Fase 0; después continuar la Fase 1 P0 respetando sus olas.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT INICIAL — DOC-README-2026-001
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de trabajo verificado: 7c21387c8122ce84321e7e2318e750902c509010
+Rama base: GPSpedia2.2.5
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: corregir README para que no anuncie como activa la barra de filtros rápidos cancelada.
+Requisitos: Tareas_pendientes_parte2.txt, sección TAREAS DOCUMENTALES ABIERTAS, DOC-README-2026-001. Plan: Plan_auditoría/Plan_Maestro_Implementacion.md, adenda 14, Fase 0.
+Alcance: README.md; checkpoint.md; Auditoría.txt; Tareas.txt; ChangesLogs.txt; Tareas_pendientes_parte2.txt; tareas_completadas_parte1.txt.
+Ciclo A — tarea anterior DOC-PLAN-2026-003: commit 7c21387c8122ce84321e7e2318e750902c509010, parent 092b8bd73a2f5add8fb1d91b7d107aaf9a06b19d. Se revisó el diff y los documentos de producto/trazabilidad afectados; no se encontró defecto que requiera tarea correctiva. Rama base intacta. Ciclo A cerrado.
+Auditoría pre-implementación: README.md contiene una única mención de filtros rápidos en la sección 5, línea 96: anuncia barra colapsable, filtros Categoría/Año y botón #btn-toggle-filters. No se encontraron otras menciones en README.
+Riesgo: borrar el bloque de novedades afectaría contenido ajeno. Se sustituirá únicamente la línea obsoleta por una declaración de cancelación. No se tocarán código ni legacy.
+Estado inicial: checkpoint y auditoría completados; hallazgo H-AUD-048 registrado; respaldo exacto creado antes de editar.
+Siguiente acción: reemplazar la línea obsoleta; revisar diff contra respaldo; Code Review documental; actualizar registros y checkpoint final; un commit.
+Respaldo exacto README: blob 4a944ac44602152a1a4ad8e985dcf12e4e33331c.
+================================================================================
+
+
+
+================================================================================
+CHECKPOINT FINAL — DOC-README-2026-001
+Fecha: 2026-11-09
+Estado: COMPLETADA — DOCUMENTAL.
+HEAD inicial: 7c21387c8122ce84321e7e2318e750902c509010.
+Rama base: GPSpedia2.2.5; HEAD inicial confirmado d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Archivo de producto modificado: README.md.
+Archivos de trazabilidad: checkpoint.md, Auditoría.txt, Tareas.txt, ChangesLogs.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt.
+Resultado: README ya no anuncia como activa la barra de filtros rápidos. La única mención restante declara que la funcionalidad fue cancelada y no está disponible.
+Ciclo A: commit anterior DOC-PLAN-2026-003 revisado; sin hallazgos correctivos bloqueantes.
+Auditoría actual: H-AUD-048 registrado y resuelto documentalmente.
+Respaldo exacto README: blob 4a944ac44602152a1a4ad8e985dcf12e4e33331c.
+Verificaciones: ocurrencia única identificada; reemplazo único; reconstrucción desde respaldo coincide byte por byte; resto del README conservado; Code Review documental aprobado.
+Sintaxis de código: N/A; no se modificó código. Pruebas funcionales/navegador: N/A para este cambio documental.
+No modificados: archivos legacy, Services, endpoints, deployments, datos productivos y rama base.
+Siguiente tarea: DOC-README-2026-002 — verificar política de publicación y contenido real de Services antes de modificar esa sección del README.
+Este checkpoint final es el último documento actualizado antes del único commit.
+================================================================================
