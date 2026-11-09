@@ -1453,3 +1453,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-043 y AUG-044 continúan pendientes; AUG-040 conserva la adenda sobre integridad de imagen PYS. Se mantienen AUG-039/AUG-041/AUG-042 como dependencias. Sin hallazgos ni tareas nuevas ni cierres.
 - No se ejecutaron navegador, HTTP, Apps Script V8, YouTube, Drive/Spreadsheet real, aprobación/rechazo, reintentos, concurrencia ni deployments. La continuidad es estática/documental y no certifica comportamiento real.
 - Sin cambios funcionales, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+
+
+## 82. AUD-T-036 — continuidad incremental de términos y consentimiento legal
+- Sesión AUD-20261109-S147; checkpoint AUD-CP-0146; E1 bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 (árbol 1942a7d8a385c9e5492cc8f2a4dd52c8425e8d90); revalidación previa CP-0080/HEAD fe0fafb4b799a27108580303fb07caa10c37f0eb; HEAD inicial ae0acc6633b9bf16693cae2f0ed93f30fe33a54f; árbol ff7fd31742fd67585faedfd659b87c5ee3f77631; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 130 commits, merge-base igual a E1 y diff exclusivamente de ocho documentos. CP-0080→HEAD: 66 commits, merge-base igual a CP-0080 y diff de los mismos ocho documentos. Los seis archivos funcionales y tres assets del alcance conservan SHA idénticos a E1.
+- H-AUD-036-001 a 005 permanecen abiertos: aceptación local sin identidad/fecha/versión; dependencia de terms-modal y localStorage sin fail-closed/excepciones; privacidad general pendiente de revisión legal; logos no incluidos en precache; accesibilidad/foco y navegación de modales incompletos.
+- AUG-045/AUG-046/AUG-047 continúan pendientes. VAL-10 y VAL-17 permanecen pendientes. No se crean hallazgos/tareas, no se cierran IDs ni se modifican Auditoría.txt, Tareas.txt o Aug_Tareas.md.
+- No se ejecutaron navegador, teclado, lector, PWA offline, storage bloqueado, cambio de cuenta, aceptación real, revisión legal externa ni deployments. La continuidad estática no certifica comportamiento ni cumplimiento legal.
+- Sin cambios funcionales, assets, endpoints, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.

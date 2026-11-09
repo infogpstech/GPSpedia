@@ -3715,3 +3715,50 @@ No se ejecutaron E2/E3, Apps Script V8, HTTP, navegador/PWA, migraciones, backup
   - contexto_personal.md: 46c7742fb82f61b5f374127331908e70a51b8ca2
   - checkpoint.md: 96fd5fb600dce75d2c431bec3b035b221ecf1e57
 - Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+
+## 97. Revalidación de continuidad — AUD-T-036: términos, consentimiento inicial y elementos legales
+
+**Sesión:** AUD-20261109-S147  
+**Checkpoint:** AUD-CP-0146  
+**E1 original:** bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 (AUD-20261107-S017 / AUD-CP-0017)  
+**Árbol E1:** 1942a7d8a385c9e5492cc8f2a4dd52c8425e8d90  
+**Revalidación previa:** AUD-CP-0080 / HEAD fe0fafb4b799a27108580303fb07caa10c37f0eb  
+**HEAD inicial auditado:** ae0acc6633b9bf16693cae2f0ed93f30fe33a54f  
+**Árbol inicial:** ff7fd31742fd67585faedfd659b87c5ee3f77631  
+**HEAD rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-036-001 A 005 ABIERTOS; REVISIÓN LEGAL Y VALIDACIÓN FUNCIONAL PENDIENTES.
+
+### Alcance y comparación
+Se revalidó la continuidad del aviso inicial de términos, consentimiento, acuerdo legal, modales, navegación/History API, logos y disponibilidad offline. Alcance: index.html, ui.js, main.js, style.css, auth.js, service-worker.js, icon-v3-512x512.png, Logo_TemaOscuro.png y tracklink_logo.png.
+
+La comparación E1→HEAD confirma 130 commits posteriores, estado ahead y merge-base idéntico a E1, sin divergencia. El diff contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. La comparación CP-0080→HEAD confirma 66 commits posteriores, merge-base igual a CP-0080 y los mismos ocho archivos documentales. Ningún archivo funcional ni asset del alcance aparece en los diffs.
+
+SHA actuales, idénticos a E1:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- icon-v3-512x512.png: c5990f19eb0acfa13f831fe0288bdb82947d3350
+- Logo_TemaOscuro.png: 1776253dbef2cd02bcd9d0f21fe01150901d71c9
+- tracklink_logo.png: edb1904e3faba5bbe11601f6a2dd030dad4ce012
+
+### Revalidación de hallazgos y tareas
+- H-AUD-036-001 a H-AUD-036-005 permanecen abiertos; no hay cambios de código o assets que justifiquen modificar severidad o cerrar hallazgos.
+- La aceptación permanece local por dispositivo y sin trazabilidad suficiente de usuario, fecha y versión del acuerdo.
+- El flujo sigue dependiendo de la existencia de terms-modal y del funcionamiento de localStorage; permanecen los riesgos de fallo abierto y excepciones de almacenamiento.
+- El aviso de privacidad continúa siendo general y requiere revisión/aprobación legal según jurisdicción, operación, entidad responsable y relación de marca. Esta auditoría no emite dictamen jurídico.
+- Logo_TemaOscuro.png y tracklink_logo.png continúan fuera de la lista de precache documentada en la E1; persiste el riesgo de disponibilidad offline.
+- Los modales siguen sin semántica de diálogo y gestión completa de foco/teclado; permanece pendiente la secuencia de History API al cerrar el acuerdo sobre el aviso inicial.
+- AUG-045 continúa pendiente para aceptación versionada/trazable, política por usuario/dispositivo y manejo seguro de errores de storage.
+- AUG-046 continúa pendiente de revisión y aprobación legal del acuerdo y aviso de privacidad.
+- AUG-047 continúa pendiente para accesibilidad, History API y disponibilidad offline.
+- VAL-10 y VAL-17 permanecen pendientes. No se crean hallazgos ni tareas nuevas, no se duplican IDs y no se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque los registros existentes siguen vigentes.
+
+### Validaciones y límites
+Se verificaron HEAD de ambas ramas, ascendencia y merge-base E1→HEAD, comparación CP-0080→HEAD, los archivos del diff y los nueve SHA del alcance. La rama base permanece intacta. La continuidad Git demuestra ausencia de deriva en esos archivos; no demuestra funcionamiento real, cumplimiento legal ni disponibilidad offline.
+
+No se ejecutaron navegador, teclado, lector de pantalla, PWA offline, storage bloqueado, cambio de cuenta, aceptación real, revisión jurídica externa ni verificación de deployments. No se modificaron código, assets, endpoints, configuración, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda (revalidación de continuidad E1).

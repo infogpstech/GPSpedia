@@ -4080,3 +4080,41 @@ Sin cambios de código, servicios, endpoints, contratos, configuración, credenc
 Commit documental único previsto: docs(audit): revalidate AUD-T-035 continuity; parent bd85edcec4ec0000fac20e78e734022154e28b85; update_ref con force=false y expected_sha=bd85edcec4ec0000fac20e78e734022154e28b85. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0146
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S147
+Tarea: AUD-T-036 — revalidación incremental de continuidad E1 de términos, consentimiento inicial y elementos legales.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: ae0acc6633b9bf16693cae2f0ed93f30fe33a54f; árbol ff7fd31742fd67585faedfd659b87c5ee3f77631; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; árbol E1: 1942a7d8a385c9e5492cc8f2a4dd52c8425e8d90; revalidación previa CP-0080/HEAD: fe0fafb4b799a27108580303fb07caa10c37f0eb.
+Alcance: index.html, ui.js, main.js, style.css, auth.js, service-worker.js y assets icon-v3-512x512.png, Logo_TemaOscuro.png y tracklink_logo.png.
+Estado conocido: H-AUD-036-001 a 005 abiertos; AUG-045/AUG-046/AUG-047 pendientes; VAL-10/VAL-17 pendientes. Solo revisión estática/documental; sin cambios funcionales ni pruebas productivas.
+Preflight: E1 es ancestro de HEAD con 130 commits; CP-0080 es ancestro con 66 commits; ocho documentos forman ambos diffs; los nueve elementos del alcance conservan SHA E1; rama base intacta.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0146
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S147
+Tarea: AUD-T-036 — revalidación incremental de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-036-001 A 005 ABIERTOS; REVISIÓN LEGAL Y VALIDACIÓN FUNCIONAL PENDIENTES.
+HEAD padre confirmado: ae0acc6633b9bf16693cae2f0ed93f30fe33a54f; árbol ff7fd31742fd67585faedfd659b87c5ee3f77631; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; árbol E1 1942a7d8a385c9e5492cc8f2a4dd52c8425e8d90; revalidación previa CP-0080: fe0fafb4b799a27108580303fb07caa10c37f0eb.
+E1→HEAD: 130 commits posteriores, merge-base igual a E1 y diff exclusivamente de ocho documentos. CP-0080→HEAD: 66 commits posteriores, merge-base igual a CP-0080 y diff de los mismos ocho documentos.
+Los nueve elementos del alcance conservan SHA idénticos a E1:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- icon-v3-512x512.png: c5990f19eb0acfa13f831fe0288bdb82947d3350
+- Logo_TemaOscuro.png: 1776253dbef2cd02bcd9d0f21fe01150901d71c9
+- tracklink_logo.png: edb1904e3faba5bbe11601f6a2dd030dad4ce012
+Hallazgos: H-AUD-036-001 a 005 permanecen abiertos. AUG-045/AUG-046/AUG-047 y VAL-10/VAL-17 continúan pendientes. Sin hallazgos/tareas nuevas ni cierres.
+Validaciones ejecutadas: HEAD de ambas ramas; comparación E1→HEAD y CP-0080→HEAD; merge-base; archivos del diff; SHA de nueve elementos; consistencia de hallazgos/tareas.
+No ejecutadas: navegador, lector de pantalla, teclado, PWA offline, storage bloqueado, cambio de cuenta, aceptación real, revisión legal externa ni deployments.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque los registros ya constan.
+Sin cambios de código, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+Commit documental único previsto: docs(audit): revalidate AUD-T-036 continuity; parent ae0acc6633b9bf16693cae2f0ed93f30fe33a54f; update_ref force=false y expected_sha=ae0acc6633b9bf16693cae2f0ed93f30fe33a54f. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda (revalidación de continuidad E1).
+================================================================================
