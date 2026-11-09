@@ -1091,3 +1091,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados sin duplicación; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes; VAL-12/14/18 pendientes.
 - No se certifican Web Share, Clipboard, deep links reales, catálogo, accesibilidad, conectividad backend, móvil/PWA ni deployments. No se ejecutaron pruebas E2/E3.
 - Próxima unidad secuencial: AUD-T-009, mediante revalidación de continuidad E1.
+
+
+## Auditoría de repositorio — AUD-T-039
+- E1 estática/configuración realizada en AUD-20261108-S111 / AUD-CP-0110, rama GPSpedia2.2.5_work, HEAD 5d4d68a72f663df5d1e25d5396c1f868021d8b70; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- Se auditó la tarea pendiente de protección técnica de la rama base. GitHub informa protected=false/protection.enabled=false, required checks off/sin contexts y rulesets propios/heredados vacíos. La rama de trabajo también aparece sin protección.
+- La rama base no es default (main); la regla debe apuntar explícitamente a GPSpedia2.2.5. El árbol no contiene .github/workflows; no hay checks CI verificables. El repositorio permite merge commit, squash y rebase.
+- H-AUD-039-001 a 004 abiertos. AUG-001 existente ampliada; VAL-33 pendiente. El endpoint detallado de protección devuelve 403 para esta integración.
+- No se cambió configuración ni se realizaron PRs/pushes de prueba. La configuración administrativa permanece pendiente.

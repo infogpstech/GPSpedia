@@ -87,6 +87,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REVISIÓN LEGAL PENDIENTES |
 | AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/RENDIMIENTO PENDIENTE |
 | AUD-T-038 | Seguridad del almacenamiento local y ciclo de datos de usuario | Continuidad propuesta después de AUD-T-037 y consolidación S019 | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/PRIVACIDAD PENDIENTE |
+| AUD-T-039 | Protección técnica de la rama base, rulesets y flujo de revisión GitHub | Tarea pendiente Tareas.txt (2026-11-06); AUG-001 existente | E1 ESTÁTICA/CONFIGURACIÓN COMPLETADA; H-AUD-039-001 a 004 ABIERTOS; AUG-001/VAL-33 PENDIENTES |
 
 ### 4.1. Control de cancelaciones, sustituciones y cambios de alcance
 
@@ -100,7 +101,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 
 | Fase | Alcance | IDs principales | Prioridad |
 |---|---|---|---|
-| F0 | Baseline, historial, clasificación inicial y trazabilidad | AUD-T-001 a AUD-T-038 (inventario) | En curso |
+| F0 | Baseline, historial, clasificación inicial y trazabilidad | AUD-T-001 a AUD-T-039 (inventario) | En curso |
 | F1 | Seguridad, AUTH, USERS, RBAC, sesiones, legal y contratos de servicios | 002, 023, 024, 034, 035, 018 | Crítica |
 | F2 | Escrituras, registro de cortes, VIN, opId, esquema e identidad | 003, 004, 030, 031, 032 | Crítica |
 | F3 | Drive, historial/reemplazo, inventario sin uso, snapshot y coordinación | 027, 028, 029, 031, 033 | Crítica |
@@ -2735,3 +2736,14 @@ AUG-072 y AUG-073 continúan pendientes; se mantienen las adendas a AUG-049 y AU
 La continuidad estática no certifica Web Share, Clipboard, deep links ejecutados, desambiguación con catálogo real, restauración, accesibilidad, conectividad backend ni comportamiento móvil/PWA. No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset con colisiones, HTTP/health check, Apps Script, pruebas de red ni deployments.
 Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue. La rama base permanece intacta.
 Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS (revalidación de continuidad E1).
+
+
+## 61. Auditoría estática/configuración — AUD-T-039
+Sesión AUD-20261108-S111 | Checkpoint AUD-CP-0110 | HEAD auditado 5d4d68a72f663df5d1e25d5396c1f868021d8b70 | árbol 6279b2487c0e072d1f6222985925ba753dbae9c8 | base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 estática/configuración completada; H-AUD-039-001 a 004 abiertos; AUG-001 existente y ampliada; VAL-33 planificada/no ejecutada.
+Alcance: protección técnica de GPSpedia2.2.5, reglas clásicas, rulesets del repositorio/heredados, rama de trabajo, rama predeterminada, opciones de merge, CI/workflows y flujo de revisión documentado.
+Evidencia: la API de ramas devuelve protected=false y protection.enabled=false para GPSpedia2.2.5; required_status_checks está off y sin contexts/checks. rulesets?includes_parents=true devuelve []. GPSpedia2.2.5_work también está sin protección. La rama predeterminada es main; GPSpedia2.2.5 necesita una regla explícita. El árbol no contiene .github/workflows. El repositorio permite merge commit, squash y rebase. El endpoint detallado de protección devuelve 403 para esta integración.
+Hallazgos: H-AUD-039-001 (base sin protección), H-AUD-039-002 (sin rulesets), H-AUD-039-003 (sin CI/checks), H-AUD-039-004 (política de revisión/merge no especificada).
+Tareas: AUG-001 ya existe y se amplía; no se crea una tarea duplicada. VAL-33 planificada para verificación administrativa de PR, aprobaciones, bypass, force-push, borrado, checks y método de merge.
+Límites: solo consultas de lectura. No se ejecutaron PRs, push, force-push, borrado, CI, pruebas de permisos individuales ni cambios administrativos. Sin cambios de configuración, ramas, código o datos. Base intacta.
+Siguiente: completar AUG-001 mediante configuración administrativa autorizada; no hay otra auditoría independiente de protección que deba duplicarse.

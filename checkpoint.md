@@ -2666,3 +2666,42 @@ Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configur
 Commit documental único: pendiente de creación; parent 00a550252fe75efd83c209d2c2c15ef363ab2b4c.
 Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0110
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S111
+Tarea: AUD-T-039 — protección técnica de la rama base, rulesets y flujo de revisión.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 5d4d68a72f663df5d1e25d5396c1f868021d8b70 | árbol: 6279b2487c0e072d1f6222985925ba753dbae9c8
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 | árbol: 56353d01cde57f57ab08135f5c49d91027a137c0
+Estado inicial: protected=false y protection.enabled=false para GPSpedia2.2.5; rulesets propios/heredados []; .github/workflows ausente. AUG-001 ya existe y enlaza la tarea administrativa de Tareas.txt.
+Respaldos exactos antes de la documentación:
+- Plan_auditoría/Plan_Auditoria.md: 020fa58e180f2adf10e27bba0dd3a796999a8343
+- Plan_auditoría/Consolidacion_Auditoria.md: 07657ba140e45d38bf1c60c4d060397c49ac2161
+- Plan_auditoría/Aug_Tareas.md: 3b9624c0c4e1146d7c91d2c89ad931b947a489b9
+- Tareas.txt: ab5959ef43daaf6ecd3af5abf64fbc7cc01c6ac3
+- ChangesLogs.txt: 09590c328ee50627237ea829831d6e0d978d129d
+- contexto_personal.md: dc4e4150ca03afe07b2cb7b56d090bfcffbefeef
+- checkpoint.md: 102bde29222f6132de57ed342059582dbfaa9722
+- Auditoría.txt: 6fbdf18b2b45d5962b0307c0593ed950916bf21c
+Fase: auditoría estática/configuración en modo solo lectura. Sin autorización para cambiar settings, ramas, rulesets o workflows.
+Siguiente acción: verificar metadatos de rama, rulesets, opciones de merge, CI y restricciones de acceso; registrar hallazgos y validación pendiente.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0110
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S111
+Tarea: AUD-T-039 — protección técnica de la rama base.
+Estado final: E1 ESTÁTICA/CONFIGURACIÓN COMPLETADA; H-AUD-039-001 a 004 ABIERTOS; AUG-001 EXISTENTE Y AMPLIADA; VAL-33 PLANIFICADA/NO EJECUTADA.
+HEAD padre confirmado: 5d4d68a72f663df5d1e25d5396c1f868021d8b70. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Resultado: GPSpedia2.2.5 informa protected=false/protection.enabled=false; required checks off y vacíos; rulesets?includes_parents=true devuelve []; GPSpedia2.2.5_work también sin protección; default_branch=main; no hay .github/workflows; merge commit, squash y rebase están permitidos. El endpoint detallado /protection devuelve 403 para esta integración.
+Hallazgos: ausencia de protección de rama; ausencia de rulesets; falta de CI/checks; política de revisión, bypass y método de merge no especificados.
+Tareas: AUG-001 se amplía sin duplicación; VAL-33 queda pendiente. La configuración administrativa original permanece pendiente y requiere intervención autorizada fuera de esta auditoría.
+Validaciones no ejecutadas: PR real, aprobación, dismiss stale reviews, conversación resuelta, bypass, push/force-push, borrado, checks CI y verificación desde otra cuenta. No se cambiaron settings ni se realizaron operaciones destructivas.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Auditoría.txt, Tareas.txt, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Sin cambios de código, configuración, ramas, permisos, endpoints, workflows, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue. Rama base intacta.
+Commit documental único: pendiente de creación; parent 5d4d68a72f663df5d1e25d5396c1f868021d8b70.
+Siguiente: completar AUG-001 mediante configuración administrativa autorizada y ejecutar VAL-33; no existe permiso en esta tarea para cambiar settings.
+================================================================================

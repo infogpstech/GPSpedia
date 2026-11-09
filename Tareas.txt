@@ -6510,3 +6510,21 @@ HEAD inicial: 8ee33a4694813152b8c5809b1576afde4049a657 | Base: d9acc68d889985c2e
 - No se ejecutaron pruebas dinámicas, navegador, lector de pantalla, zoom real, PWA, benchmarks, E2/E3 ni operaciones productivas. Sin cambios funcionales, merge o despliegue.
 Siguiente unidad: AUD-T-017 — revalidación de continuidad E1, sin duplicar su registro previo.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA ESTÁTICA/CONFIGURACIÓN — AUD-T-039: PROTECCIÓN TÉCNICA DE LA RAMA BASE
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S111 | Checkpoint: AUD-CP-0110
+Rama auditada: GPSpedia2.2.5_work | HEAD: 5d4d68a72f663df5d1e25d5396c1f868021d8b70
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: E1 ESTÁTICA/CONFIGURACIÓN COMPLETADA; CONFIGURACIÓN ADMINISTRATIVA PENDIENTE.
+
+- GitHub API informa protected=false y protection.enabled=false para GPSpedia2.2.5; los checks están desactivados y sin contexts.
+- GET /rulesets?includes_parents=true devuelve []; no se observan rulesets propios ni heredados.
+- GPSpedia2.2.5_work también aparece sin protección. GPSpedia2.2.5 no es la rama predeterminada (main), por lo que la regla debe apuntar a su nombre exacto.
+- No existe .github/workflows en el árbol auditado; no hay checks CI verificables. El repositorio permite merge commit, squash y rebase.
+- El endpoint detallado de branch protection devuelve 403 para esta integración. No se ejecutaron PRs, push, force-push, borrado ni cambios administrativos.
+- Hallazgos H-AUD-039-001 a 004 registrados en Auditoría.txt y Plan_auditoría/Plan_Auditoria.md.
+- AUG-001 ya existía; se amplía sin crear otra tarea. VAL-33 queda planificada, no ejecutada.
+- La tarea «CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE» permanece PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA. No se modificó la configuración ni la rama base.
+================================================================================

@@ -11440,3 +11440,84 @@ Resultado: H-AUD-018-001 a H-AUD-018-009 permanecen abiertos. AUG-113 a AUG-121 
 VAL-27 permanece pendiente. No se ejecutaron navegador, payloads XSS reales, Apps Script, HTTP, Spreadsheet/Drive productivo, YouTube API, sesiones concurrentes, carga de historial grande, pruebas de recuperación ni E2/E3. Los 13 SHA prueban identidad de archivos, no funcionamiento ni calidad integral.
 No se modificaron aplicación, servicios, endpoints, configuración, assets, tests, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA DE CONFIGURACIÓN — AUD-T-039: PROTECCIÓN TÉCNICA DE LA RAMA BASE Y FLUJO DE REVISIÓN
+Fecha: 2026-11-08
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD auditado: 5d4d68a72f663df5d1e25d5396c1f868021d8b70
+Árbol auditado: 6279b2487c0e072d1f6222985925ba753dbae9c8
+Rama base: GPSpedia2.2.5
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Árbol de la rama base: 56353d01cde57f57ab08135f5c49d91027a137c0
+Sesión/checkpoint: AUD-20261108-S111 / AUD-CP-0110
+Estado: E1 ESTÁTICA/CONFIGURACIÓN COMPLETADA; HALLAZGOS ABIERTOS; CONFIGURACIÓN ADMINISTRATIVA Y VALIDACIÓN FUNCIONAL PENDIENTES.
+
+1. OBJETIVO Y PROCEDENCIA
+- Se audita desde cero la tarea «CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE», registrada en Tareas.txt el 2026-11-06.
+- Relación previa: AUG-001 ya existe en Plan_auditoría/Aug_Tareas.md y remite a la misma tarea. Se amplía AUG-001; no se crea un identificador duplicado.
+- La nota previa en Auditoría.txt sobre protected:false se toma como antecedente, no como evidencia suficiente de configuración actual.
+- La revisión de la normalización automática de imágenes se omitió como unidad nueva porque Auditoría.txt ya contiene una auditoría estática específica H-NORM-001 a H-NORM-005 y un registro de implementación/Code Review. Se continúa con la siguiente tarea pendiente sin duplicar aquella revisión.
+- Restricción de Tareas.txt: esta unidad es diagnóstica; no intentar modificar la configuración administrativa ni la rama base.
+
+2. MÉTODO Y FUENTES
+- Consulta de metadatos GitHub API para GPSpedia2.2.5 y GPSpedia2.2.5_work.
+- Consulta de reglas clásicas de protección, reglasets del repositorio e inclusiones heredadas.
+- Consulta de opciones generales de merge del repositorio y rama predeterminada.
+- Inspección del árbol Git completo de HEAD para localizar .github/workflows y archivos de CI.
+- Contraste con Proceso de desarollo.md y la tarea original de Tareas.txt.
+- No se realizaron intentos de push, force-push, eliminación de rama, apertura/merge de PR ni cambios de configuración.
+
+3. EVIDENCIA OBSERVADA
+- GET /repos/infogpstech/GPSpedia/branches/GPSpedia2.2.5 devuelve protected=false, protection.enabled=false, required_status_checks.enforcement_level=off y contexts/checks vacíos.
+- GET /repos/infogpstech/GPSpedia/rulesets?includes_parents=true devuelve una lista vacía ([]). No se identifican rulesets del repositorio ni reglas heredadas en el resultado consultado.
+- GET /repos/infogpstech/GPSpedia/branches/GPSpedia2.2.5_work también devuelve protected=false. La rama de trabajo no tiene protección técnica declarada en los metadatos.
+- El repositorio declara default_branch=main; GPSpedia2.2.5 no es la rama predeterminada. Cualquier ruleset que solo apunte a la rama predeterminada no cubriría GPSpedia2.2.5.
+- La configuración general permite allow_merge_commit=true, allow_squash_merge=true y allow_rebase_merge=true. No se observa una política de repositorio que limite el método de integración a una sola estrategia. delete_branch_on_merge=false.
+- El árbol completo de HEAD no contiene .github ni archivos de workflows. No se identifican workflows CI desde los que obtener checks obligatorios.
+- La consulta GET /branches/GPSpedia2.2.5/protection devuelve HTTP 403 «Resource not accessible by integration». La lectura del endpoint detallado queda limitada; no obstante, el endpoint de rama expone explícitamente protected=false y protection.enabled=false.
+- La rama base mantiene HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1; la revisión no modifica referencias ni configuración.
+
+4. HALLAZGOS
+H-AUD-039-001 — ALTA — La rama base GPSpedia2.2.5 no tiene protección técnica activa.
+Evidencia: metadatos de GET /branches/GPSpedia2.2.5: protected=false y protection.enabled=false; required_status_checks desactivado.
+Impacto: el procedimiento interno de no actualizar la rama base depende de disciplina y permisos generales, pero no está reforzado por una regla de protección de rama que exija PR o bloquee actualizaciones directas/forzadas. Esto no demuestra que cualquier usuario pueda escribir; demuestra que la capa de protección de rama no impone esas restricciones.
+Criterio: configurar y verificar reglas que protejan el nombre exacto GPSpedia2.2.5, requieran PR y bloqueen force-push/eliminación, con bypass limitado y explícito.
+
+H-AUD-039-002 — ALTA — No existen rulesets del repositorio ni reglas heredadas visibles para proteger la rama.
+Evidencia: GET /rulesets?includes_parents=true devuelve [].
+Impacto: no existe una regla alternativa de repositorio/organización visible que compense la ausencia de protección clásica.
+Criterio: después de la aprobación administrativa, configurar branch protection o un ruleset que incluya explícitamente GPSpedia2.2.5. No apuntar solo a la rama predeterminada main.
+
+H-AUD-039-003 — MEDIA — No hay CI/workflows ni checks verificables para exigir como condición de integración.
+Evidencia: el árbol completo de HEAD no contiene .github/workflows; required_status_checks está off y no tiene contexts/checks.
+Impacto: no es posible definir actualmente checks de estado reales y verificables sin crear primero un flujo CI. Activar checks requeridos con nombres inexistentes podría bloquear PRs sin aportar validación.
+Criterio: decidir si se incorporará CI. Si se incorpora, definir checks estables, ejecutarlos en PR y exigirlos solo después de verificar su nombre y resultado; mientras no exista CI, no declarar que los checks están cubiertos.
+
+H-AUD-039-004 — MEDIA — La política de revisión y estrategia de merge no está especificada de forma verificable.
+Evidencia: la tarea de Tareas.txt solicita «el flujo de revisión acordado», pero no define número de aprobaciones, revisores autorizados, tratamiento de aprobaciones obsoletas, resolución de conversaciones, bypass administrativo ni método de merge. El repositorio permite merge commit, squash y rebase.
+Impacto: aunque se active una protección, una configuración parcial puede no cumplir la intención del proyecto o producir una integración incompatible con la trazabilidad de commits por tarea.
+Criterio: aprobar explícitamente los parámetros de revisión, bypass, historial lineal y estrategia de merge antes de aplicar la regla.
+
+5. CONTROLES POSITIVOS Y LÍMITES
+- Proceso de desarollo.md documenta que la rama base no debe actualizarse y que los commits de trabajo se publican exclusivamente en la rama de trabajo mediante Git Database API con force:false y expected_sha.
+- La rama base no fue modificada y su HEAD coincide con el valor inicial.
+- La consulta de ramas muestra también GPSpedia2.2.5_work sin protección. La tarea original se centra en la base; decidir separadamente si la rama de trabajo requiere protección.
+- El repositorio usa main como rama predeterminada; la protección solicitada debe apuntar por nombre explícito a GPSpedia2.2.5.
+- El endpoint detallado de protección no fue accesible para esta integración (403). No se puede certificar la lista completa de reglas individuales ni bypasses ocultos fuera de los metadatos consultados.
+- No se verificaron colaboradores, equipos, permisos individuales ni excepciones de administración; no se infiere quién puede hacer push.
+- No se ejecutaron PRs de prueba, aprobaciones, checks, intentos de push, force-push o borrado. No se ejecutó CI ni se modificó la configuración.
+
+6. TAREAS Y VALIDACIÓN
+- AUG-001 permanece como tarea existente; se amplía con la evidencia y los criterios anteriores. No crear otra AUG para la misma protección.
+- VAL-33 queda planificada para verificar, con acceso administrativo autorizado, la regla aplicada a GPSpedia2.2.5, PR obligatorio, aprobación, dismiss stale reviews, conversación resuelta, bypass, force-push/borrado bloqueados y estrategia de merge.
+- La validación de status checks queda condicionada a que exista CI y a que los checks reales estén definidos.
+- La tarea administrativa original permanece PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA. Esta auditoría no la declara resuelta.
+
+7. CONCLUSIÓN Y LÍMITES
+E1 estática/configuración completada: la evidencia actual confirma que GPSpedia2.2.5 no tiene branch protection activa, no hay rulesets visibles (incluidos heredados) y no hay workflows CI en el árbol auditado. La política de revisión y merge todavía requiere decisión explícita.
+No se ejecutaron pruebas E2/E3, PR real, push/force-push, cambios de settings, CI, revisión por otra cuenta ni comprobación de permisos individuales. La E1 no certifica la eficacia de una protección que aún no está configurada.
+Sin cambios de código, configuración, permisos, endpoints, workflows, datos, ramas, merge o despliegue. La rama base permanece intacta.
+================================================================================

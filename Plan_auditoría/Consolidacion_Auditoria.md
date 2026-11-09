@@ -12,7 +12,7 @@
 
 ## 1. Objetivo y límites
 
-Consolidar el estado documentado de las 38 unidades AUD-T, organizar el inventario de tareas derivadas AUG y establecer una matriz de validación para la fase posterior. Esta consolidación es documental: no corrige hallazgos, no implementa tareas AUG, no modifica código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+Consolidar el estado documentado de las 39 unidades AUD-T, organizar el inventario de tareas derivadas AUG y establecer una matriz de validación para la fase posterior. Esta consolidación es documental: no corrige hallazgos, no implementa tareas AUG, no modifica código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
 
 La matriz es una planificación de pruebas, no evidencia de que estas se hayan ejecutado. Ninguna tarea se considera funcionalmente validada por el hecho de contar con auditoría estática E1.
 
@@ -111,6 +111,7 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 
 | VAL-19 | Reportes y sugerencias de cortes — AUG-075 a AUG-081 | Sesión válida/ausente/revocada, actor falsificado, XSS en subject/user/datos de modal, reporte con/sin imagen, reportId inexistente/duplicado/cruzado, vehículo/corte/slot incorrecto, FileReader error/abort, MIME/tamaño, Drive sin permisos, respuesta perdida, concurrencia y payloads vacíos/alterados | Actor verificado, contenido mostrado como texto seguro, imagen recuperable con permiso previsto, relación reportId–vehicleId–corteIndex comprobada, ausencia de duplicados/colisiones y validación server-side de todos los campos |
 | VAL-20 | Módulo PyS — AUG-040, AUG-043, AUG-057, AUG-082 a AUG-087 | Navegación y tarjeta +; orden de registros; formulario y límites exactos; Sin solución; sesión/actor; XSS en título/colaborador/vídeo; FileReader success/error/abort; MIME/tamaño y carpeta Drive; fallo parcial/archivo huérfano; esquema/IDs con filas eliminadas; reintento/idempotencia; solución/prevención simultáneas; edición Desarrollador; caché fresca/obsoleta y cambios repetidos de sección | Actor backend verificado; HTML seguro; imagen persistida y recuperable; esquema/IDs únicos; ausencia de duplicados/sobrescrituras; datos/cache coherentes; modal y navegación correctos; evidencia E2/E3/E4/E5 separada por entorno |
+| VAL-33 | Protección de ramas y revisión GitHub — AUD-T-039/AUG-001 | Coincidencia exacta GPSpedia2.2.5; PR obligatorio; aprobación y revisores; dismiss stale reviews; conversaciones resueltas; bypass; force-push/borrado bloqueados; método de merge; checks CI solo si existen | Respuesta de API de branch protection/ruleset, prueba PR desde rama de trabajo, actor autorizado, resultado de push bloqueado, aprobaciones y checks asociados al SHA; no usar intentos destructivos sobre la rama base |
 
 ### 5.1. Reglas de ejecución de la matriz
 
@@ -1110,3 +1111,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron Web Share, Clipboard, navegador, móvil/PWA, lector de pantalla, deep links, URLs malformadas, catálogo real, HTTP/health check, Apps Script, pruebas de red ni E2/E3. La continuidad Git no certifica esos comportamientos.
 - Sin cambios funcionales, endpoints, contratos, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - Siguiente: AUD-T-009, mediante revalidación de continuidad E1.
+
+
+## 46. AUD-T-039 — protección técnica de rama base y flujo de revisión
+- Sesión AUD-20261108-S111; checkpoint AUD-CP-0110; HEAD 5d4d68a72f663df5d1e25d5396c1f868021d8b70; árbol 6279b2487c0e072d1f6222985925ba753dbae9c8; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1 estática/configuración completada. GitHub informa protected=false y protection.enabled=false para GPSpedia2.2.5; required status checks están desactivados y vacíos. Rulesets del repositorio e incluidos los heredados: []. La rama GPSpedia2.2.5_work también aparece sin protección.
+- GPSpedia2.2.5 no es la rama predeterminada (main); cualquier regla debe incluir explícitamente el nombre GPSpedia2.2.5. El árbol no contiene .github/workflows; no existen checks CI verificables para exigir. El repositorio permite merge commit, squash y rebase.
+- H-AUD-039-001 a 004 abiertos: base sin protección; ausencia de rulesets; ausencia de CI/checks; política de aprobación, bypass y método de merge sin especificar.
+- AUG-001 ya existe y se amplía; no se crea una AUG duplicada. VAL-33 planificada/no ejecutada.
+- El endpoint detallado /branches/GPSpedia2.2.5/protection devuelve 403 para esta integración; no se inspeccionaron permisos individuales ni bypasses fuera de metadatos. No se intentaron push, force-push, PR, merge, borrado ni cambios administrativos.
+- No se modificaron ramas, settings, workflows, código, endpoints, permisos ni datos. La base permanece intacta. E1 no certifica la eficacia de reglas aún no configuradas.

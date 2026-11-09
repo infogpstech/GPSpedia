@@ -1802,3 +1802,12 @@ Sesión: AUD-20261108-S042 | Checkpoint: AUD-CP-0042 | Estado: E1 estática comp
 - **Ampliación:** definir combinaciones de texto/fondo que cumplan 4.5:1 para texto normal y 3:1 para texto grande/elementos gráficos aplicables; revisar estados hover, focus y disabled en index.html, users.html y add_cortes.html.
 - **Pruebas:** incorporar los pares y estados a VAL-25, con medición de estilos computados en ambos temas.
 - **Estado:** EXISTENTE; ampliada; diseño, implementación y validación pendientes. No crear AUG adicional.
+
+
+### Adenda AUD-T-039 a AUG-001 — criterios verificables de protección y revisión
+- **Nueva evidencia:** la API de GPSpedia2.2.5 devuelve protected=false, protection.enabled=false y required_status_checks off/sin contexts. GET /rulesets?includes_parents=true devuelve []. La rama de trabajo también está sin protección. La rama predeterminada es main y GPSpedia2.2.5 requiere una coincidencia explícita.
+- **Ampliación:** aplicar la regla al nombre exacto GPSpedia2.2.5; exigir PR; definir aprobaciones y revisores autorizados; descartar aprobaciones obsoletas tras nuevos commits; exigir resolución de conversaciones; bloquear force-push y eliminación; definir bypass de emergencia y método de merge/historial lineal.
+- **CI:** el árbol actual no contiene .github/workflows y no hay checks de estado. No exigir nombres de checks inexistentes; decidir primero si se incorpora CI y después fijar checks reales.
+- **Alcance relacionado:** decidir si GPSpedia2.2.5_work también requiere protección, sin cambiar el criterio de que los commits ordinarios se realizan en la rama de trabajo autorizada.
+- **Validación:** VAL-33 debe comprobar la regla activa desde una cuenta administrativa, PR de prueba, aprobaciones, conversaciones, bypass, force-push, borrado y checks disponibles.
+- **Estado:** EXISTENTE; ampliada por AUD-T-039. No crear otra AUG para la misma tarea. Configuración administrativa pendiente.
