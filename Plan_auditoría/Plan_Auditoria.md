@@ -2957,3 +2957,28 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: 7a638f3e207a6fd1f26b7a1030fca58dfaa856a6
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas; H-AUD-016-005 y AUG-112 ya están registrados. Sin cambios funcionales, CSS/HTML/JS, servicios, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación de continuidad E1).
+
+
+## 70. Continuidad verificada — AUD-T-017 (revalidación E1)
+Sesión AUD-20261108-S120 | Checkpoint AUD-CP-0119 | E1 histórica 11d617cbf6401748a017fbe69f89ab63fa08800e | HEAD inicial 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52 | árbol inicial a3caf30f2b64c6c79f77b2f91d15565f91b9f809 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S035 / AUD-CP-0035. Revalidación previa AUD-20261108-S057 / AUD-CP-0056, HEAD 75ba652774610832dd4de1db86e40d75c4ef9484.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los cuatro archivos funcionales, el árbol Spreadsheet ni los dos documentos de esquema del alcance aparece en el diff.
+Los siete objetos conservan SHA idénticos a E1:
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Spreadsheet tree 527317d85bbdbfb3ceaf555c6ddef83aea3d8812
+- Spreadsheet/GPSpedia_DB_columnas.md 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Spreadsheet/Text.txt 8b137891791fe96927ad78e64b0aad7bded08bdc
+H-AUD-017-001 a H-AUD-017-007 permanecen abiertos. La continuidad conserva los riesgos ya registrados: límite inferior de colisión backend; estado IndexedDB anterior a confirmación backend; caché sin aislamiento por usuario; identidad anónima regenerable/controlada por cliente; banner acoplado a onload de imagen; esquema sin suggestionActorKey; y ausencia del registro AUD-T-016 en Auditoría.txt.
+AUG-106 a AUG-112 continúan pendientes. AUG-112 sigue siendo la tarea documental para reconciliar la entrada AUD-T-016 en Auditoría.txt; no se ejecuta ni se duplica en esta revalidación. VAL-26 permanece planificada/no ejecutada.
+No se ejecutaron navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, sincronización, pruebas multiusuario ni deployments. La continuidad Git no certifica E2/E3.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: bb10bc36f7bf8f23b01dea8f9120262f943c7680
+- Plan_auditoría/Consolidacion_Auditoria.md: 98d8811e358cffc8d41ecc2278fdfc7471972003
+- ChangesLogs.txt: 61bf8d225c107bcbff4ffca1d634fcb8492b7b78
+- contexto_personal.md: 42c5ede4d4a9e2857a84e50d03c193933fb10524
+- checkpoint.md: 9a097aa391fa55f06034fa707901908aa8fec6de
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas; H-AUD-017-007/AUG-112 permanecen pendientes en sus registros existentes. Sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK (revalidación de continuidad E1).

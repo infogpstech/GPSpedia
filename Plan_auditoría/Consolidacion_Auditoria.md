@@ -1194,3 +1194,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, WCAG computado, zoom, lectores de pantalla, Android/iOS, PWA, rotación ni benchmarks.
 - Solo continuidad estática/documental; sin cambios funcionales, CSS/HTML/JS, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
+
+
+## 55. AUD-T-017 — continuidad E1 y revalidación de gestión colaborativa de años
+- Sesión AUD-20261108-S120; checkpoint AUD-CP-0119; E1 11d617cbf6401748a017fbe69f89ab63fa08800e; HEAD inicial 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52; árbol a3caf30f2b64c6c79f77b2f91d15565f91b9f809; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los cuatro archivos funcionales, el árbol Spreadsheet y los dos documentos de esquema conservan SHA exactos de E1.
+- H-AUD-017-001 a 007 permanecen abiertos; AUG-106 a AUG-112 pendientes; H-AUD-017-007/AUG-112 conserva la ausencia de AUD-T-016 en Auditoría.txt. VAL-26 planificada/no ejecutada.
+- No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, sincronización ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.

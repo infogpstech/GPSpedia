@@ -3009,3 +3009,41 @@ Sin cambios funcionales, CSS/HTML/JS, servicios, configuración, assets, datos p
 Commit documental único: docs(audit): verify AUD-T-016 continuity; parent 9355e181a009b3dce7f3bf1893643896af0cf822.
 Siguiente unidad: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0119
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S120
+Tarea: AUD-T-017 — revalidación de continuidad E1 de gestión colaborativa de años y validación comunitaria.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52 | árbol: a3caf30f2b64c6c79f77b2f91d15565f91b9f809.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 11d617cbf6401748a017fbe69f89ab63fa08800e.
+Revalidación previa: AUD-20261108-S057 / AUD-CP-0056, HEAD 75ba652774610832dd4de1db86e40d75c4ef9484.
+Alcance: ui.js, offline.js, api-config.js, Services/feedback.js, Spreadsheet/GPSpedia_DB_columnas.md, Spreadsheet/Text.txt y árbol Spreadsheet.
+Estado inicial: E1 estática completada; H-AUD-017-001 a 007 abiertos; AUG-106 a AUG-112 pendientes; VAL-26 pendiente. H-AUD-017-007/AUG-112 conserva la conciliación documental AUD-T-016.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni ejecutar la conciliación de AUG-112 en esta tarea.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: bb10bc36f7bf8f23b01dea8f9120262f943c7680
+- Plan_auditoría/Consolidacion_Auditoria.md: 98d8811e358cffc8d41ecc2278fdfc7471972003
+- ChangesLogs.txt: 61bf8d225c107bcbff4ffca1d634fcb8492b7b78
+- contexto_personal.md: 42c5ede4d4a9e2857a84e50d03c193933fb10524
+- checkpoint.md: 9a097aa391fa55f06034fa707901908aa8fec6de
+Siguiente acción: comparar E1→HEAD, verificar SHA de los objetos del alcance, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0119
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S120
+Tarea: AUD-T-017 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-017-001 a 007 abiertos; AUG-106 a AUG-112 pendientes; VAL-26 planificada/no ejecutada.
+HEAD padre confirmado: 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52; árbol inicial a3caf30f2b64c6c79f77b2f91d15565f91b9f809. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los cuatro archivos funcionales, el árbol Spreadsheet y los dos documentos de esquema conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: validación inferior de colisiones; confirmación de persistencia IndexedDB; aislamiento de caché; identidad de aportantes anónimos; carga del banner; documentación de suggestionActorKey; ausencia de AUD-T-016 en Auditoría.txt. H-AUD-017-001 a 007 permanecen abiertos.
+Tareas/relaciones: AUG-106 a AUG-112 pendientes. H-AUD-017-007/AUG-112 permanece pendiente de reconciliar la entrada de AUD-T-016 en Auditoría.txt. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, sincronización, multiusuario, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-017 continuity; parent 3e47adb25b99a3d2b9d4ff0a76d3f02dc16e0b52.
+Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+================================================================================
