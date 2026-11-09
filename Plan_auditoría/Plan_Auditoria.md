@@ -3344,3 +3344,33 @@ Respaldo documental previo a edición (SHA de blob):
 - checkpoint.md: f07d654e471761786a3189b809961174c38e5266
 Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación de continuidad E1).
+
+
+## 84. Continuidad verificada — AUD-T-023 (revalidación E1)
+Sesión AUD-20261108-S134 | Checkpoint AUD-CP-0133 | E1 histórica 87d75c38d72e76ed60132d2507661f4e1017a0e8 | HEAD inicial ca05d375f75e2b0955164196202d95cbcd927b14 | árbol inicial 9198782f7fb4ae0c6f6305bd190bba72149a117d | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261107-S004 / AUD-CP-0004. Revalidación previa AUD-20261108-S068 / AUD-CP-0067, HEAD 843818e9199e0952ca575196e79efa09f5bffb87.
+Comparación E1→HEAD: 131 commits posteriores, estado ahead, merge-base idéntico a E1. El diff global contiene ocho documentos y dos archivos de código: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md, contexto_personal.md, Services/admin.js y Services/write.js. Services/write.js está fuera del alcance. Nueve de los diez archivos del alcance conservan SHA E1; Services/admin.js está modificado.
+Comparación CP-0067→HEAD: 66 commits posteriores y únicamente los mismos ocho documentos; no hay cambios de código posteriores a la revalidación previa. En Services/admin.js, assertDeveloperSession() y los primeros 45 renglones de doPost() (guardia inicial/orden de autorización) se compararon byte por byte y permanecen idénticos a E1 y CP-0067.
+SHA de los diez archivos:
+- Services/Auth.js fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/admin.js E1 847a2bb80e53918bede067e530b80e41bfdb6afa; HEAD ffb120badeb9e8cbe931226a0ce90c0476363012 (modificado; guardas revisadas)
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- Services/Test/Auth.js f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+H-AUD-023-001 a H-AUD-023-008 permanecen abiertos: SHA-256 sin KDF/work factor; migración legacy sin coordinación; escrituras de contraseña USERS sin serialización común; contador de intentos concurrente; purga Logs por índices sin coordinación; cuentas legacy inactivas sin migración por lotes; formatos desconocidos tratados como legacy; validación UI sin trim y typo.
+ADMIN 0: assertDeveloperSession() continúa validando sesión activa y rol Desarrollador; doPost() exige autorización para toda acción distinta de ping antes del switch. Las líneas de logging añadidas en admin.js se conservan fuera del bloque de autorización y no registran password/credential/secret/token según la revisión previa.
+AUG-010 a AUG-014 continúan pendientes; se conserva relación AUD-T-033/AUG-003 y separación de AUD-T-024. No se crean hallazgos ni tareas duplicados.
+No se ejecutaron Apps Script V8, HTTP, login real, acceso a Sheets/Logs productivos, benchmark KDF, migración, concurrencia real, CacheService, locks entre proyectos, deployments, navegador ni E2/E3. No se afirma purga de Logs ni migración de cuentas legacy.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: a9c728026e9d97b8040f7b307e188f03f2113a69
+- Plan_auditoría/Consolidacion_Auditoria.md: 96b3f9899321f321654a3183a51f38335f50865d
+- ChangesLogs.txt: 84eb03d16addf1b3b74da0b6363dea061db09a1f
+- contexto_personal.md: d66e415f62da419486fcb4eb797872e453f41cb3
+- checkpoint.md: 651e253ef79f55ca07a15ad7c46a2e85ced1a7fd
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y los registros existentes se mantienen. Sin cambios de código, endpoints, contratos, configuración, credenciales, hojas, Drive, Spreadsheet, datos productivos, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso (revalidación de continuidad E1).

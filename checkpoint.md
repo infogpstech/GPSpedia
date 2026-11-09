@@ -3539,3 +3539,42 @@ Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configur
 Commit documental único: docs(audit): verify AUD-T-008 continuity; parent 9a961cd812450bf5e3308b2e957c71b1cb438e1d.
 Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0133
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S134
+Tarea: AUD-T-023 — revalidación de continuidad E1 de seguridad ADMIN 0, credenciales, hashing y migración.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: ca05d375f75e2b0955164196202d95cbcd927b14 | árbol: 9198782f7fb4ae0c6f6305bd190bba72149a117d.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: 87d75c38d72e76ed60132d2507661f4e1017a0e8.
+Revalidación previa: AUD-20261108-S068 / AUD-CP-0067, HEAD 843818e9199e0952ca575196e79efa09f5bffb87.
+Alcance: Services/Auth.js, Services/users.js, Services/admin.js, Services/feedback.js, api-config.js, auth.js, users.html, Services/Test/Auth.js, Services/Test/users.js y Services/Test/README.md.
+Estado inicial: H-AUD-023-001 a 008 abiertos; AUG-010 a AUG-014 vigentes; relación AUD-T-033/AUG-003 y separación AUD-T-024.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales ni acceder a datos productivos.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: a9c728026e9d97b8040f7b307e188f03f2113a69
+- Plan_auditoría/Consolidacion_Auditoria.md: 96b3f9899321f321654a3183a51f38335f50865d
+- ChangesLogs.txt: 84eb03d16addf1b3b74da0b6363dea061db09a1f
+- contexto_personal.md: d66e415f62da419486fcb4eb797872e453f41cb3
+- checkpoint.md: 651e253ef79f55ca07a15ad7c46a2e85ced1a7fd
+Siguiente acción: comparar E1→HEAD y CP-0067→HEAD, verificar SHA/guardas de autorización, confirmar hallazgos/tareas y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0133
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S134
+Tarea: AUD-T-023 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; H-AUD-023-001 a 008 abiertos; AUG-010 a AUG-014 pendientes; relaciones AUD-T-033/AUG-003 y AUD-T-024 conservadas.
+HEAD padre confirmado: ca05d375f75e2b0955164196202d95cbcd927b14; árbol inicial 9198782f7fb4ae0c6f6305bd190bba72149a117d. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 131 commits posteriores; merge-base igual a E1; ocho documentos y dos archivos de código modificados. Services/write.js está fuera de alcance; Services/admin.js cambió, pero assertDeveloperSession() y los primeros 45 renglones de doPost() permanecen byte por byte idénticos a E1.
+Comparación CP-0067→HEAD: 66 commits posteriores, únicamente ocho documentos; no hubo cambios de código desde la revalidación previa.
+Hallazgos revalidados: KDF/work factor ausente; migración legacy no coordinada; escrituras Password sin serialización; contador concurrente; purga Logs por índices; migración incompleta de cuentas legacy inactivas; formatos desconocidos tratados como legacy; validación UI sin trim/typo. H-AUD-023-001 a 008 permanecen abiertos.
+Tareas/relaciones: AUG-010 a AUG-014 pendientes; AUD-T-033/AUG-003 y AUD-T-024 conservadas. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: Apps Script V8, HTTP, login real, acceso a Sheets/Logs productivos, benchmark KDF, migración, concurrencia real, CacheService, locks entre proyectos, deployments, navegador y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios de código, endpoints, contratos, configuración, credenciales, hojas, Drive, Spreadsheet, datos productivos, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-023 continuity; parent ca05d375f75e2b0955164196202d95cbcd927b14.
+Siguiente unidad: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
+================================================================================

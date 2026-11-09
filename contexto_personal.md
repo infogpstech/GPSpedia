@@ -1275,3 +1275,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052; VAL-12/14/18 pendientes.
 - No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, HTTP, Apps Script, red real, móvil/PWA ni deployments. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.
+
+
+## Continuidad de auditoría — AUD-T-023 (2026-11-08)
+- Revalidación E1 en sesión AUD-20261108-S134 / AUD-CP-0133; rama GPSpedia2.2.5_work, HEAD inicial ca05d375f75e2b0955164196202d95cbcd927b14; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 87d75c38d72e76ed60132d2507661f4e1017a0e8; 131 commits posteriores; merge-base igual a E1; diff incluye ocho documentos y dos archivos de código. WRITE fuera de alcance; admin.js cambió respecto a E1, pero sus guardas de autorización son byte idénticas.
+- Desde CP-0067 hay 66 commits y solo ocho documentos; sin cambios de código desde la revalidación previa.
+- H-AUD-023-001 a 008 abiertos; AUG-010 a AUG-014 pendientes; relaciones AUD-T-033/AUG-003 y AUD-T-024 conservadas.
+- No se ejecutaron Apps Script, HTTP, login real, Sheets/Logs, benchmark KDF, migración, concurrencia, CacheService, locks entre proyectos, deployments ni E2/E3. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
