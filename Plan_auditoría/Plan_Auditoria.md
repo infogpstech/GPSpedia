@@ -4553,3 +4553,56 @@ No se ejecutaron navegador, DOM, XSS controlado, Playwright, catálogo real, App
 Esta sesión es una revalidación E1 estática/documental. No se modifican archivos funcionales, HTML, CSS, JavaScript, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos y AUG-098 a AUG-101 ya están registrados. No se realiza la limpieza funcional en esta fase; queda como trabajo pendiente explícito en H-AUD-015-002/AUG-099. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).
+
+
+## 113. Continuidad incremental — AUD-T-016: diseño visual, tema, contraste, footer y responsive
+
+**Sesión:** AUD-20261109-S163  
+**Checkpoint:** AUD-CP-0162  
+**E1 original:** 2daf88c96d29999cbc734c968ef94355ee5324ca (AUD-20261108-S034 / AUD-CP-0034).  
+**Revalidación previa:** AUD-20261108-S119 / AUD-CP-0118; HEAD 9355e181a009b3dce7f3bf1893643896af0cf822.  
+**HEAD inicial de esta sesión:** 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec.  
+**Árbol inicial:** 2bb59eb95dec8bf9984d209d439280a02dba9217.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-016-001 A 005 ABIERTOS; AUG-102 A 105, AUG-112 Y VAL-25 PENDIENTES.
+
+### Alcance y comparación
+
+Se revalidaron los seis archivos funcionales de la unidad: `index.html`, `style.css`, `main.js`, `ui.js`, `users.html` y `add_cortes.html`. Los seis conservan exactamente sus SHA de E1:
+
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `users.html`: `e41f402675677a4d2783493614737021ec2eade5`
+- `add_cortes.html`: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+
+Comparación E1→HEAD: 129 commits posteriores, cero detrás y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+
+Comparación desde AUD-CP-0118 / HEAD 9355e181a009b3dce7f3bf1893643896af0cf822: 44 commits posteriores, cero detrás y merge-base idéntico. El diff se limita a cinco documentos: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No hay deriva funcional desde la revalidación previa.
+
+La rama de trabajo está 359 commits por delante de `GPSpedia2.2.5`, cero detrás, con merge-base `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. La rama base permanece intacta.
+
+### Hallazgos, tareas y validaciones
+
+H-AUD-016-001 a H-AUD-016-005 permanecen abiertos; no se crean hallazgos nuevos ni se cierran los existentes:
+
+- **H-AUD-016-001 / AUG-102:** el banner de validación no utiliza de forma coherente el mecanismo activo `body.dark-mode`; hay reglas basadas en `[data-theme="dark"]` que no se activan y referencias al token `--text-primary` no definido.
+- **H-AUD-016-002 / AUG-103:** los tokens de tema están fragmentados entre `style.css`, `users.html` y `add_cortes.html`, con colores fijos y estilos locales. Se conserva la adenda que amplía AUG-103 para incluir contraste insuficiente.
+- **H-AUD-016-003 / AUG-104:** `add_cortes.html` restringe el zoom mediante `maximum-scale=1.0` y `user-scalable=no`.
+- **H-AUD-016-004 / AUG-105:** el formulario de cortes mantiene una cuadrícula de dos columnas sin breakpoint; la página de usuarios carece de media queries específicas y conserva tabla con `nowrap`/scroll horizontal y modal de ancho fijo relativo.
+- **H-AUD-016-005:** contraste insuficiente en botones primarios y texto descriptivo. Los cálculos estáticos documentados son blanco/`#007bff` 3.98:1, blanco/`#58a6ff` 2.53:1 y `#888`/`#fff` 3.54:1. Son estimaciones de color declarativo, no mediciones de estilos computados ni certificación WCAG del navegador. Se conserva vinculación con AUG-103.
+
+AUG-102 a AUG-105 siguen pendientes; AUG-103 conserva su ampliación por contraste. AUG-112 permanece pendiente de reconciliar la entrada histórica AUD-T-016 en `Auditoría.txt`; esta revalidación no altera ese estado. VAL-25 continúa planificada y no ejecutada.
+
+### Controles positivos y límites
+
+La continuidad de los hashes confirma que permanecen los mecanismos estáticos ya documentados: persistencia de `darkMode`, intercambio de logos, variables CSS, `flex-wrap` en el encabezado del modal y footer con sentinel/`IntersectionObserver`. No demuestra que el tema, el contraste, el footer o el responsive funcionen correctamente en dispositivos reales.
+
+No se ejecutaron navegador, estilos computados, mediciones WCAG reales, zoom 200/400 %, lectores de pantalla, Android/iOS, PWA, rotación, pruebas de anchos, benchmarks ni E2/E3. No se certifica accesibilidad ni comportamiento visual real.
+
+### Integridad y alcance de cambios
+
+Esta sesión es una revalidación E1 estática/documental. No se modifican CSS, HTML, JavaScript, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos y tareas ya están registrados; AUG-112 conserva expresamente su estado pendiente. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación E1).

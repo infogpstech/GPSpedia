@@ -1653,3 +1653,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3.
 - Solo continuidad documental; no se modifican archivos funcionales, HTML/CSS/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).
+
+
+## 98. AUD-T-016 — continuidad E1 y revalidación de diseño visual
+- Sesión AUD-20261109-S163; checkpoint AUD-CP-0162; E1 2daf88c96d29999cbc734c968ef94355ee5324ca; revalidación previa CP-0118/HEAD 9355e181a009b3dce7f3bf1893643896af0cf822; HEAD inicial 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec; árbol 2bb59eb95dec8bf9984d209d439280a02dba9217; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff limitado a ocho documentos. Los seis archivos funcionales conservan SHA exactos de E1.
+- CP-0118→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff de cinco documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-016-001 a 005 siguen abiertos. Temas: selector/token de banner oscuro; fragmentación de tokens; zoom bloqueado; responsive de formularios/usuarios; contraste insuficiente (ratios estáticos 3.98:1, 2.53:1 y 3.54:1).
+- AUG-102 a AUG-105 pendientes; AUG-103 ampliada por contraste; AUG-112 sigue pendiente de reconciliar AUD-T-016 en Auditoría.txt; VAL-25 planificada/no ejecutada. Sin hallazgos nuevos ni cierres.
+- Controles estáticos de persistencia darkMode, logos, variables CSS, flex-wrap del encabezado y footer sentinel/IntersectionObserver conservados; no certifican renderizado ni accesibilidad reales.
+- No se ejecutaron navegador, estilos computados, WCAG real, zoom 200/400 %, lectores de pantalla, Android/iOS, PWA, rotación, benchmarks ni E2/E3.
+- Solo continuidad documental; sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación E1).

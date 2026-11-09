@@ -4824,3 +4824,50 @@ Sin cambios funcionales, HTML, CSS, JavaScript, servicios, contratos, endpoints,
 Commit documental único: pendiente de crear; parent 445a008dea6c15c3325a7becade69e791dcc2827; update_ref force=false y expected_sha=445a008dea6c15c3325a7becade69e791dcc2827. Rama base protegida.
 Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0162
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S163
+Tarea: AUD-T-016 — revalidación incremental E1 de diseño visual, tema, contraste, footer y responsive.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | Base: GPSpedia2.2.5.
+HEAD inicial: 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec.
+Árbol inicial: 2bb59eb95dec8bf9984d209d439280a02dba9217.
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: 2daf88c96d29999cbc734c968ef94355ee5324ca (AUD-20261108-S034/AUD-CP-0034).
+Revalidación previa: AUD-20261108-S119/AUD-CP-0118; HEAD 9355e181a009b3dce7f3bf1893643896af0cf822.
+Alcance: index.html, style.css, main.js, ui.js, users.html y add_cortes.html.
+Estado inicial: H-AUD-016-001 a 005 abiertos; AUG-102 a 105 pendientes; AUG-112 pendiente; VAL-25 planificada/no ejecutada.
+Preflight: E1 ancestro de HEAD (129 commits); CP-0118 ancestro de HEAD (44 commits); ambos diffs solo documentales; seis archivos de alcance conservan SHA E1; base intacta.
+Respaldos exactos previos a la actualización documental:
+- Plan_auditoría/Plan_Auditoria.md: fef43efaccf9cd8803b222bb2161b3b8cc406685
+- Plan_auditoría/Consolidacion_Auditoria.md: 34384ebdaa3d5fdcd24ff388402db15b97cbcb5a
+- ChangesLogs.txt: 471174af6ddc2ea35ecee0afa2be614621244f3b
+- contexto_personal.md: b0ccca0595732f0daf3e9e878bd79fd170669ae7
+- checkpoint.md: 8b81a6c4c351b792f2ce53f8d2f7c4f27976e094
+No se realizarán cambios funcionales ni pruebas visuales dinámicas en esta revalidación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0162
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S163
+Tarea: AUD-T-016 — revalidación de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-016-001 A 005 ABIERTOS; AUG-102 A 105, AUG-112 Y VAL-25 PENDIENTES.
+HEAD padre: 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec; árbol inicial 2bb59eb95dec8bf9984d209d439280a02dba9217; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente de ocho documentos.
+CP-0118→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente de cinco documentos.
+Seis archivos del alcance conservan SHA idénticos a E1:
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+Hallazgos: H-AUD-016-001 a 005 abiertos. AUG-102 a 105 pendientes; AUG-103 ampliada; AUG-112 pendiente; VAL-25 planificada/no ejecutada. Sin nuevos hallazgos ni cierres.
+Controles estáticos de darkMode, logos, variables CSS, flex-wrap del encabezado y footer sentinel/IntersectionObserver conservados; no certifican contraste, accesibilidad ni responsive real.
+No ejecutadas: navegador, estilos computados, WCAG real, zoom 200/400 %, lectores de pantalla, Android/iOS, PWA, rotación, pruebas de anchos, benchmarks ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, CSS/HTML/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge ni despliegue.
+Commit documental único: pendiente; parent 8b3275dd4cd10d01d4d55a3def14d5b245fa8aec; tree base 2bb59eb95dec8bf9984d209d439280a02dba9217; update_ref force=false y expected_sha=8b3275dd4cd10d01d4d55a3def14d5b245fa8aec. Rama base protegida.
+Siguiente unidad: AUD-T-017 — Gestión colaborativa de años y validación comunitaria (revalidación E1).
+================================================================================
