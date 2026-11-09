@@ -1760,3 +1760,15 @@ Sesión AUD-20261109-S165 | Checkpoint AUD-CP-0164 | E1 f9c47bad48fa8050a4acac33
 - AUG-147 a 150 pendientes; VAL-31 planificada/no ejecutada. Sin hallazgos/tareas duplicados ni cierres. Controles positivos E1 permanecen por identidad de archivos, sin sustituir validación runtime.
 - No se ejecutaron navegador, accesibilidad, logout real, HTTP, Apps Script, Drive/Spreadsheet, Node/lint, concurrencia, deployments ni E2/E3. Auditoría.txt no pudo leerse por el conector y no se modifica.
 - Solo continuidad documental; sin cambios funcionales/productivos, merge o despliegue. Tareas.txt y Aug_Tareas.md permanecen sin cambios. Siguiente: AUD-T-001.
+
+
+## 105. Plan maestro de resolución de hallazgos y rediseño del Inbox
+- HEAD de trabajo inicial: d747696416c6d0a67edb558e8ec21e04e1e7eadf; base: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificación.
+- Se confirma catálogo de 39 AUD-T (38 unidades principales E1 estáticas completadas en consolidación y AUD-T-039 de configuración), 151 IDs AUG únicos y 185 IDs H-AUD distintos referenciados. No equivalen a tareas todas pendientes ni a hallazgos abiertos.
+- Hoja de ruta por dominios/fases: Plan_auditoría/Plan_Maestro_Implementacion.md.
+- Inbox: lista/detalle, lectura FEEDBACK, respuesta ligada a item, resolución, eliminación y aprobación/rechazo de vídeos. api-config.js no ofrece acción dedicada para iniciar conversación Desarrollador→usuario; replyToFeedback no es hilo bidireccional.
+- CSS define overflow en lista/detalle, pero el modal padre oculta overflow y el wrapper depende de un alto no robusto; rediseñar y probar escritorio/móvil.
+- AUG-152 cubre scroll responsive, nuevo mensaje individual, bienvenida, consulta de usuario, múltiples mensajes, participantes, leído/no leído, archivo, búsqueda/paginación, notificaciones internas, seguridad, idempotencia y accesibilidad.
+- VAL-34 PLANIFICADA/NO EJECUTADA. Dependencias: AUG-075–081, AUG-113–121 y AUG-147–149.
+- No se modifican archivos funcionales ni datos; no se ejecutan pruebas E2/E3, Apps Script, HTTP, Drive, Spreadsheet, browser ni deployments.
+- Auditoría.txt devuelve contenido vacío por el conector; no se declara lectura íntegra independiente.

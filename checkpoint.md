@@ -5160,3 +5160,51 @@ Sin cambios funcionales, CSS/HTML/JS, servicios, endpoints, contratos, permisos,
 Commit documental único previsto: docs(audit): revalidate AUD-T-022 developer panel continuity; parent 448aeca444870f966b6465c93b4bac44584d02a5. El commit que incorpora este checkpoint se identifica en el historial Git de GPSpedia2.2.5_work.
 Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general (revalidación E1).
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — PLAN-CP-0169
+Fecha: 2026-11-09 | Sesión: PLAN-20261109-S170
+Tarea: consolidar hallazgos existentes, diseñar plan maestro e incorporar AUG-152/VAL-34 para el rediseño Inbox.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD inicial confirmado: d747696416c6d0a67edb558e8ec21e04e1e7eadf
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+Alcance documental: Tareas.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, checkpoint.md y nuevo Plan_auditoría/Plan_Maestro_Implementacion.md.
+Archivos funcionales revisados focalizadamente y sin cambios: index.html, ui.js, style.css y api-config.js.
+Hallazgos de partida: H-AUD-010, H-AUD-017, H-AUD-018 y relaciones H-AUD-034/035 sobre FEEDBACK/Inbox; AUG-075–081 y AUG-113–121; AUG-147–150 para sesión/accesibilidad. No duplicar ni auditar informes.
+Estado: planificación documental; no se implementa mensajería ni se modifica esquema/servicios.
+Limitación: Auditoría.txt devuelve contenido vacío por el conector GitHub; evidencia consolidada en Tareas.txt, Aug_Tareas.md, Plan_Auditoria, Consolidacion_Auditoria y código legible. No afirmar lectura íntegra de Auditoría.txt.
+Respaldos exactos de documentos antes de editar:
+- Tareas.txt: 6508ca5c5b9fd4e5831f4fd5ea5d04ee0c5ae4c0
+- Plan_auditoría/Aug_Tareas.md: 8009705ac512eef7c45cae379ce992b728f0d8b0
+- Plan_auditoría/Plan_Auditoria.md: dd267d6553bda85cbf7d6e4e09670b9e41f328cf
+- Plan_auditoría/Consolidacion_Auditoria.md: 0ce6fa52eca24296f3d5145c6b3cb27b6bb0f050
+- ChangesLogs.txt: 43fb6137a8044c6bebb51b497cd5346ae98f035a
+- checkpoint.md: ab174f3fba7a6638297c862073a78f0a4c2f1851
+Siguiente acción: agregar AUG-152/VAL-34, hoja de ruta, comparar cambios documentales y publicar un único commit autorizado.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — PLAN-CP-0169
+Fecha: 2026-11-09 | Sesión: PLAN-20261109-S170
+Tarea: plan maestro de implementación y registro AUG-152/VAL-34.
+Estado final: COMPLETADA EN ALCANCE DOCUMENTAL; implementación funcional pendiente.
+HEAD padre: d747696416c6d0a67edb558e8ec21e04e1e7eadf; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Archivos modificados:
+- Tareas.txt: nueva AUG-152 y VAL-34.
+- Plan_auditoría/Aug_Tareas.md: ficha AUG-152.
+- Plan_auditoría/Plan_Auditoria.md: sección 105.
+- Plan_auditoría/Consolidacion_Auditoria.md: sección 105.
+- ChangesLogs.txt: registro de tarea.
+- checkpoint.md: este checkpoint.
+- Plan_auditoría/Plan_Maestro_Implementacion.md: nuevo plan por fases.
+Archivos funcionales revisados sin cambios: index.html, ui.js, style.css, api-config.js.
+Inventario: 39 AUD-T registradas; 38/38 unidades principales E1 estáticas completadas en consolidación; 151 IDs AUG únicos; 185 H-AUD distintos referenciados. Estos conteos no indican cuántas tareas siguen abiertas; requiere normalización de estados.
+Inbox: lista/detalle, feedback, reply ligado a item, resolver, eliminar y aprobar/rechazar vídeo; no hay acción API dedicada para iniciar mensaje Desarrollador→usuario; el layout actual requiere rediseño responsive.
+Nueva tarea AUG-152; VAL-34 PLANIFICADA/NO EJECUTADA. Dependencias conservadas: AUG-075–081, AUG-113–121, AUG-147–149.
+Limitaciones: Auditoría.txt no pudo leerse (respuesta vacía); no se ejecutaron browser, Node/lint, Apps Script, HTTP, Drive, Spreadsheet, concurrencia, E2/E3 ni deployments. No se afirma corrección funcional.
+Comparación post-edición: documentos existentes append-only y contenido previo preservado como prefijo; nuevo Plan_Maestro_Implementacion.md. No hay cambios funcionales ajenos.
+Sin cambios en código, CSS/HTML de aplicación, servicios, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge. Filtros rápidos de catálogo continúan cancelados.
+Commit único identificable en historial de GPSpedia2.2.5_work; parent d747696416c6d0a67edb558e8ec21e04e1e7eadf. Siguiente: Fase 1 (identidad/sesiones y XSS), luego diseño/implementación AUG-152.
+================================================================================

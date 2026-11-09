@@ -6528,3 +6528,58 @@ Estado: E1 ESTÁTICA/CONFIGURACIÓN COMPLETADA; CONFIGURACIÓN ADMINISTRATIVA PE
 - AUG-001 ya existía; se amplía sin crear otra tarea. VAL-33 queda planificada, no ejecutada.
 - La tarea «CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE» permanece PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA. No se modificó la configuración ni la rama base.
 ================================================================================
+
+
+
+================================================================================
+NUEVA TAREA CORRECTIVA — AUG-152
+Título: Rediseñar Inbox como centro de conversaciones bidireccionales y notificaciones
+Origen: solicitud de producto del 2026-11-09, complementaria a AUD-T-010/AUD-T-018 y hallazgos ya registrados.
+Prioridad: ALTA.
+Estado: NUEVA; análisis de diseño, implementación y validación pendientes.
+
+Problema y objetivo:
+El Inbox actual permite consultar elementos FEEDBACK, responder a algunos tipos, resolver determinados reportes, eliminar y aprobar/rechazar vídeos. La interfaz tiene lista y detalle, pero no una experiencia completa de conversación. No existe una acción API específica para que el Desarrollador inicie un mensaje nuevo dirigido a un usuario. replyToFeedback está ligada a un elemento de feedback y no sustituye un sistema de mensajes directos.
+
+Alcance:
+- Rediseñar el modal y su desplazamiento interno.
+- Permitir al Desarrollador iniciar mensajes individuales, incluidos mensajes de bienvenida mediante plantillas.
+- Permitir a usuarios iniciar consultas al Desarrollador y continuar el hilo desde la aplicación.
+- Modelar conversaciones con múltiples mensajes, participantes, estados de lectura y trazabilidad.
+- Incorporar notificaciones internas, paginación, búsqueda y vistas de bandeja.
+- Reutilizar controles de seguridad, integridad, caché y auditoría existentes sin duplicar tareas AUG.
+
+Criterios de aceptación:
+1. Modal/scroll: altura máxima ligada al viewport dinámico; encabezado estable; scroll independiente de lista y detalle en escritorio; navegación lista/detalle de una columna en móvil; sin scroll del fondo ni desbordamiento horizontal; preservar selección y posición tras refresco/envío; soporte táctil, ratón, teclado y zoom.
+2. Nuevo mensaje: acción visible «Nuevo mensaje» en Inbox del Desarrollador; destinatario seleccionado desde datos autoritativos de USERS; asunto, categoría, cuerpo y plantillas editables de bienvenida; envío individual; validación; confirmación solo tras persistencia; conservar borrador ante errores recuperables; evitar doble envío. No incluir broadcast por defecto.
+3. Consultas: acceso «Consultar al desarrollador» desde la aplicación; usuario autenticado inicia consulta, ve y responde solo sus hilos; Desarrollador responde desde Inbox; asunto/cuerpo/categoría; adjuntos sujetos a AUG-077/AUG-079, no asumidos como parte de esta implementación.
+4. Modelo: entidades Conversation y Message con IDs estables, conversationId, messageId, senderId, participantes, subject, body, category, createdAt, updatedAt, readAt, archivedAt, status e idempotencyKey. Múltiples mensajes cronológicos con autor/fecha; no sobrescribir un único campo reply. Separar mensajes directos de reportes, sugerencias y aprobaciones de vídeo. Diseñar migración compatible, respaldo y rollback antes de tocar Spreadsheet.
+5. Bandeja: Recibidos, No leídos, Enviados y Archivados; contadores; orden por actividad reciente; búsqueda por asunto/participante/contenido conforme a permisos; paginación/carga incremental; marca de lectura al abrir; archivar/restaurar sin borrado irreversible. Los filtros propios del Inbox no deben reintroducir los filtros rápidos cancelados de la búsqueda del catálogo.
+6. Notificaciones: contador de no leídos y notificaciones internas; evitar duplicados; sincronización acotada y comportamiento offline. «Enviado» significa persistido por backend; «leído» exige readAt registrado al abrir. No declarar «entregado» o tiempo real sin confirmación verificable. Correo/SMS/push externo quedan fuera sin proveedor, consentimiento y autorización.
+7. Seguridad: validar sesión en backend en cada acción; derivar identidad/rol desde AUTH/USERS; autorización por participante; impedir enumeración/acceso cruzado; validar destinatario, tipos, límites, longitud y frecuencia; idempotencia y serialización; texto con APIs DOM/textContent; allowlist si se admite enriquecido; historial inmutable de envío/respuesta/lectura/archivo; no registrar tokens ni datos sensibles; no confirmar escrituras parciales.
+8. Accesibilidad: diálogo semántico, nombre accesible, foco inicial/contención/restauración, Escape, History API, teclado, lector de pantalla, contraste, tema claro/oscuro y responsive.
+9. Compatibilidad: mantener reportes, sugerencias, vídeos y respuestas históricas; rechazar itemType no soportados; no realizar migraciones destructivas sin respaldo, plan y validación.
+
+Dependencias sin duplicación:
+AUG-075 (sesión/actor FEEDBACK); AUG-076 y AUG-114 (XSS Inbox); AUG-077/AUG-079 (adjuntos); AUG-080/AUG-081 (idempotencia/validación); AUG-113 (XSS dashboard); AUG-115 (Rol/Privilegios); AUG-116 (caché Inbox); AUG-119 (auditoría inmutable); AUG-121 (tipos soportados); AUG-147/AUG-148/AUG-149 (sesión y accesibilidad). Estas tareas conservan identidad y alcance; AUG-152 las integra como dependencias, no las sustituye.
+
+Archivos potenciales: index.html, ui.js, main.js, style.css, api-config.js, auth.js/state.js, users.html, Services/feedback.js, Services/users.js, esquema Spreadsheet y pruebas aisladas. Confirmar alcance real en auditoría inicial de implementación.
+
+Validación asociada: VAL-34 — Inbox y mensajería bidireccional. Probar roles/participantes; destinatario válido/inexistente; bienvenida; consulta; respuesta multi-turno; leído/no leído; archivado/restauración; búsqueda/paginación; doble envío/idempotencia; timeout/escritura parcial; XSS; sesión revocada; dos usuarios; responsive 320/360/390/768/1024/1440; scroll; teclado/foco/lector; offline/recuperación; compatibilidad histórica. Solo datos/deployments aislados.
+
+Definición de terminado: contrato, esquema, compatibilidad, seguridad, E2/E3, revisión de código y VAL-34 aprobados; documentación/checkpoint actualizados. No marcar completada con pruebas obligatorias pendientes.
+================================================================================
+
+
+## VAL-34 — Inbox y mensajería bidireccional
+Estado: PLANIFICADA; NO EJECUTADA.
+- Permisos por rol/participante, sesión ausente/expirada/revocada, cambio de rol y acceso cruzado.
+- Nuevo mensaje, bienvenida por plantilla, consulta de usuario, respuesta multi-turno, orden cronológico y conservación del hilo.
+- Enviado/persistido, leído/no leído, archivado/restaurado y contador por participante.
+- Recibidos, enviados, búsqueda, paginación y orden.
+- Doble clic, clave idempotente, payload distinto con la misma clave, timeout tras persistencia, fallo parcial y reconexión.
+- XSS almacenado, HTML/SVG/event handlers, URLs, límites y enumeración de IDs.
+- Viewports 320/360/390/600/768/1024/1440, scroll interno, paneles independientes, móvil, tema claro/oscuro y zoom 200/400 %.
+- Foco inicial/restauración, Escape, teclado, lector de pantalla, nombres de controles, contraste y foco visible.
+- Compatibilidad con feedback histórico, vídeos, caché, dashboard y logout.
+- Evidencias por caso, rol, commit, entorno, datos antes/después y logs sanitizados; solo entornos aislados.
