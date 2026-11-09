@@ -2357,3 +2357,40 @@ No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md. N
 Commit documental único esperado; rama base intacta.
 Siguiente unidad: AUD-T-021 — ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0100
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S101
+Tarea: AUD-T-021 — revalidación ampliada de continuidad E1, ficha imprimible, paginación, imágenes, QR y sanitización.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 2f9b567ecf68d52665818b1e450e93795a03de58 | Árbol: a433fd1a69744fa51b49b0bd7058c9ca5a505717
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; protected=false).
+E1 histórica: 3339694150823f8f8adca6ffbad6211c708a8960 | Continuidad previa S061/CP-0060: b10057cbdb0d6e8fa638571034e95d210e0c947a.
+Alcance: exportVehiclePrintSheet(), integración del modal, ui.js, rich-text.js, style.css, index.html, README y assets referenciados; H-AUD-021-001 a 009; AUG-140 a 146; AUG-096; VAL-30.
+Acción: verificar continuidad E1/CP-0060, SHA de implementación, estado de hallazgos/tareas y matriz de calidad; sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+CHECKPOINT FINAL — AUD-CP-0100
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S101
+Tarea: AUD-T-021 — revalidación ampliada de continuidad y calidad de impresión.
+- Sesión AUD-20261108-S101; checkpoint AUD-CP-0100; E1 histórica 3339694150823f8f8adca6ffbad6211c708a8960 (árbol ebe322745a0458df1dbf749a28517ce97e36eb08); revalidación previa S061/CP-0060 con HEAD b10057cbdb0d6e8fa638571034e95d210e0c947a; HEAD inicial actual 2f9b567ecf68d52665818b1e450e93795a03de58 (árbol a433fd1a69744fa51b49b0bd7058c9ca5a505717); rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios (GitHub informa protected=false).
+- Comparación E1→HEAD: 62 commits, merge-base igual a E1; únicamente ocho archivos documentales modificados (Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md). Comparación CP-0060→HEAD: 40 commits; únicamente los mismos ocho documentos. No hay divergencia funcional.
+- Los artefactos de implementación de impresión permanecen idénticos a E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb, rich-text.js a7180766bb5097be510153edd851f4dfa939912c, style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9, index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a y README.md 4a944ac44602152a1a4ad8e985dcf12e4e33331c. La comparación de árboles confirma que ningún HTML/CSS/JS, asset ni archivo funcional cambió desde E1.
+- H-AUD-021-001 a H-AUD-021-009 permanecen abiertos y sin cambios: margen 5 mm frente a 10 mm/contrato de paginación; falta imagen Check Engine y ubicación del aviso; espera incompleta de recursos y tratamiento de naturalWidth=0; paginación no basada en altura real; tarjetas sin imagen movidas al final con posible pérdida de orden/prioridad; envío de URL de vídeo unlisted a api.qrserver.com; modo Vertical sin diferencia efectiva; interpolación HTML no escapada de metadatos/títulos/URL de imagen; referencia histórica incorrecta en fila maestra.
+- AUG-140 a AUG-145 continúan pendientes; AUG-146 continúa pendiente por trazabilidad; AUG-096 conserva adenda con sinks de impresión. VAL-30 sigue planificada y no ejecutada. No se crean hallazgos ni tareas duplicados. La tarea histórica Bloque 7 permanece COMPLETADA; ello no equivale a certificación funcional.
+- Matriz ampliada: cumplimiento parcial/no certificado frente a Tarea 2.2/Bloque 7 y criterios de impresión; calidad técnica afectada por cálculo de layout basado en aspectos/cantidad en lugar de altura real, recursos no esperados y sanitización parcial; seguridad/privacidad afectada por exposición de URL unlisted y sinks HTML; rendimiento no medido, con espera y reflow sin validación empírica; mantenibilidad afectada por contrato de paginación contradictorio, modos de distribución redundantes y trazabilidad documental errónea.
+- Controles positivos revalidados estáticamente: botón de impresión conectado a exportVehiclePrintSheet; incluye cortes, cables, apertura, metadatos, nota y QR condicional; conserva proporción de imagen; encabezado/pie por página; campos descriptivos parcialmente sanitizados; colaboradores/utilidades/reportes de error no se imprimen.
+- No se ejecutaron navegador, impresión física, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+SHA E1 confirmados:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+Los árboles comparados confirman que no se modificaron otros archivos funcionales ni assets desde E1. H-AUD-021-001 a 009 siguen abiertos; AUG-140 a 146 pendientes; AUG-096 ampliada; VAL-30 planificada/no ejecutada.
+Documentos modificados en este commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, móvil, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+Commit documental único esperado; rama base intacta.
+Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+================================================================================
