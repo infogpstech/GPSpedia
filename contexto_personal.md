@@ -1099,3 +1099,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La rama base no es default (main); la regla debe apuntar explícitamente a GPSpedia2.2.5. El árbol no contiene .github/workflows; no hay checks CI verificables. El repositorio permite merge commit, squash y rebase.
 - H-AUD-039-001 a 004 abiertos. AUG-001 existente ampliada; VAL-33 pendiente. El endpoint detallado de protección devuelve 403 para esta integración.
 - No se cambió configuración ni se realizaron PRs/pushes de prueba. La configuración administrativa permanece pendiente.
+
+
+## Continuidad de auditoría — AUD-T-009 (2026-11-08)
+- Revalidación de E1 en sesión AUD-20261108-S112 / AUD-CP-0111; rama GPSpedia2.2.5_work, HEAD inicial 0561e53dac85d010e57af9cac36320f02f9e14b9; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; 85 commits posteriores; merge-base igual a E1; diff global de ocho documentos; quince archivos del alcance conservan SHA idénticos.
+- H-AUD-009-001 a 003 abiertos; AUG-074 pendiente; adenda AUG-052 y relaciones AUG-051/AUG-022/AUG-065 conservadas. VAL-13/14 pendientes de ejecución real.
+- No se ejecutaron PWA/offline, CacheStorage, IndexedDB, cuota, iOS/iPadOS, instalación, red real ni deployments. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.

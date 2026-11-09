@@ -2747,3 +2747,35 @@ Hallazgos: H-AUD-039-001 (base sin protección), H-AUD-039-002 (sin rulesets), H
 Tareas: AUG-001 ya existe y se amplía; no se crea una tarea duplicada. VAL-33 planificada para verificación administrativa de PR, aprobaciones, bypass, force-push, borrado, checks y método de merge.
 Límites: solo consultas de lectura. No se ejecutaron PRs, push, force-push, borrado, CI, pruebas de permisos individuales ni cambios administrativos. Sin cambios de configuración, ramas, código o datos. Base intacta.
 Siguiente: completar AUG-001 mediante configuración administrativa autorizada; no hay otra auditoría independiente de protección que deba duplicarse.
+
+
+## 62. Continuidad verificada — AUD-T-009 (revalidación E1)
+Sesión AUD-20261108-S112 | Checkpoint AUD-CP-0111 | E1 histórica c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | HEAD inicial 0561e53dac85d010e57af9cac36320f02f9e14b9 | árbol inicial 5f082f6c1d2679da7fb793284f77a19169717838 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática se completó en AUD-20261108-S027 / AUD-CP-0027. Revalidación previa AUD-20261108-S090 / AUD-CP-0089, HEAD 31205e431c84ac917c2971aa7a0a0fa820bc2302.
+Comparación E1→HEAD: 85 commits posteriores, estado ahead, merge-base idéntico a E1 y sin divergencia. El diff global contiene exclusivamente ocho documentos: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ninguno de los quince archivos funcionales/técnicos del alcance aparece en el diff.
+Los quince archivos conservan SHA idénticos a E1:
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- manifest.json 4634b82d1ad767a4fbd2d59a945eb33fb1b668b9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161
+- api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html e41f402675677a4d2783493614737021ec2eade5
+H-AUD-009-001 a 003 permanecen abiertos: grafo ESM de precache incompleto; instalación/registro del Service Worker sin manejo y diagnóstico suficientes; detección de iPadOS con UA de escritorio y metadatos Apple incompletos. H-AUD-037-008 a 012 y H-AUD-038-003/004 siguen como relaciones/antecedentes. AUG-074 continúa pendiente; AUG-052 mantiene su adenda para grafo ESM, atomicidad de cache.addAll(), rechazo de register() y primera recarga offline. AUG-051/AUG-022/AUG-065 conservan sus ámbitos; no se duplican tareas.
+VAL-13 y VAL-14 permanecen pendientes de ejecución real. No se ejecutaron navegador, instalación/actualización PWA, CacheStorage, IndexedDB, cuota/evicción, Android/iOS/iPadOS, Add to Home Screen, red interrumpida, CDN ni deployments. La continuidad Git no certifica comportamiento E2/E3.
+Respaldo documental previo a edición (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: c6108670f431868eac571c2388681aa3bb512ea3
+- Plan_auditoría/Consolidacion_Auditoria.md: bcc1f2503a31ee213e44c1b9a8cc66609ea7d648
+- ChangesLogs.txt: 3121e5373996fedd9eaac565f8b7c8e8a172a567
+- contexto_personal.md: aa3fd8be0863a5aa99157bcdb31a3e9a1057fb74
+- checkpoint.md: c7aab9a55ee486a727e205e8b7e9a436177805b3
+Solo se actualiza documentación de continuidad. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque no hay hallazgos o tareas nuevas y las relaciones ya están registradas. Sin cambios funcionales, Service Worker, manifest, assets, endpoints, contratos, configuración, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes (revalidación de continuidad E1).

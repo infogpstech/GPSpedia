@@ -2705,3 +2705,41 @@ Sin cambios de código, configuración, ramas, permisos, endpoints, workflows, d
 Commit documental único: pendiente de creación; parent 5d4d68a72f663df5d1e25d5396c1f868021d8b70.
 Siguiente: completar AUG-001 mediante configuración administrativa autorizada y ejecutar VAL-33; no existe permiso en esta tarea para cambiar settings.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0111
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S112
+Tarea: AUD-T-009 — revalidación de continuidad E1 de PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS/iPadOS.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 0561e53dac85d010e57af9cac36320f02f9e14b9 | árbol: 5f082f6c1d2679da7fb793284f77a19169717838.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | árbol E1: 9617c2c588190a50fde235bfe2d32b3ebee7b7ba.
+Revalidación previa: AUD-20261108-S090 / AUD-CP-0089, HEAD 31205e431c84ac917c2971aa7a0a0fa820bc2302.
+Alcance: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, api-config.js, add_cortes.html y users.html.
+Estado inicial: E1 estática completada; H-AUD-009-001 a 003 abiertos; AUG-074 pendiente; adenda AUG-052 vigente; AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 relacionados; VAL-13/14 pendientes.
+Fase: revalidación estática de continuidad E1; sin autorización para cambiar archivos funcionales.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: c6108670f431868eac571c2388681aa3bb512ea3
+- Plan_auditoría/Consolidacion_Auditoria.md: bcc1f2503a31ee213e44c1b9a8cc66609ea7d648
+- ChangesLogs.txt: 3121e5373996fedd9eaac565f8b7c8e8a172a567
+- contexto_personal.md: aa3fd8be0863a5aa99157bcdb31a3e9a1057fb74
+- checkpoint.md: c7aab9a55ee486a727e205e8b7e9a436177805b3
+Siguiente acción: comparar E1→HEAD, comprobar SHA de los quince archivos, confirmar hallazgos/tareas/validaciones y rama base; actualizar solo documentación de continuidad.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0111
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S112
+Tarea: AUD-T-009 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-009-001 a 003 abiertos; AUG-074 pendiente; adenda AUG-052 y relaciones existentes conservadas; VAL-13/14 pendientes de ejecución real.
+HEAD padre confirmado: 0561e53dac85d010e57af9cac36320f02f9e14b9; árbol inicial 5f082f6c1d2679da7fb793284f77a19169717838. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los quince archivos funcionales/técnicos del alcance conservan SHA idénticos a E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: precache incompleto del grafo ESM; manejo/diagnóstico insuficiente de fallos de instalación/registro del Service Worker; detección iPadOS/UA escritorio y metadatos Apple incompletos. H-AUD-009-001 a 003 permanecen abiertos.
+Tareas/relaciones: AUG-074 pendiente; adenda AUG-052 vigente; AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 se mantienen como referencias relacionadas. Sin IDs duplicados ni hallazgos nuevos.
+Validaciones no ejecutadas: navegador, instalación/actualización PWA, CacheStorage, IndexedDB real, cuota/evicción, Android/iOS/iPadOS, Add to Home Screen, red interrumpida, CDN, deployments y E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, Service Worker, manifest, assets, endpoints, contratos, configuración, permisos, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+Commit documental único: docs(audit): verify AUD-T-009 continuity; parent 0561e53dac85d010e57af9cac36320f02f9e14b9.
+Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+================================================================================

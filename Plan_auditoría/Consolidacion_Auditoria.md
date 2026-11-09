@@ -1121,3 +1121,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-001 ya existe y se amplía; no se crea una AUG duplicada. VAL-33 planificada/no ejecutada.
 - El endpoint detallado /branches/GPSpedia2.2.5/protection devuelve 403 para esta integración; no se inspeccionaron permisos individuales ni bypasses fuera de metadatos. No se intentaron push, force-push, PR, merge, borrado ni cambios administrativos.
 - No se modificaron ramas, settings, workflows, código, endpoints, permisos ni datos. La base permanece intacta. E1 no certifica la eficacia de reglas aún no configuradas.
+
+
+## 47. AUD-T-009 — continuidad E1 y revalidación PWA/offline/iOS
+- Sesión AUD-20261108-S112; checkpoint AUD-CP-0111; E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; HEAD inicial 0561e53dac85d010e57af9cac36320f02f9e14b9; árbol 5f082f6c1d2679da7fb793284f77a19169717838; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 85 commits posteriores; merge-base igual a E1; diff limitado a ocho documentos. Los quince archivos funcionales/técnicos del alcance conservan SHA exactos de E1.
+- H-AUD-009-001 a 003 permanecen abiertos. Se mantienen AUG-074 y la adenda a AUG-052; AUG-051/AUG-022/AUG-065 y H-AUD-037-008 a 012/H-AUD-038-003/004 permanecen como relaciones existentes, sin duplicación.
+- VAL-13 y VAL-14 pendientes. No se ejecutaron PWA/offline real, CacheStorage, IndexedDB, cuota, iOS/iPadOS, instalación standalone, red interrumpida ni deployments.
+- Solo continuidad estática/documental; sin cambios funcionales, assets, configuración, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
