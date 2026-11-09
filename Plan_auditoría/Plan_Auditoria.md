@@ -4382,3 +4382,55 @@ No se ejecutaron Playwright, navegador, gestos, modales, scroll real, pruebas mu
 Esta sesión es una revalidación estática/documental. No se modifican código, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos y tareas ya están registrados. Sin merge ni despliegue.
 
 **Siguiente unidad:** AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación de continuidad E1).
+
+
+## 110. Continuidad incremental — AUD-T-013: tutoriales, multimedia y carga directa de vídeos YouTube con aprobación
+
+**Sesión:** AUD-20261109-S160  
+**Checkpoint:** AUD-CP-0159  
+**E1 original:** d8a164c2974f4dc472f169442c2b7efb969bf350 (AUD-20261108-S031 / AUD-CP-0031; E1 estática completada).  
+**Revalidación previa:** AUD-20261108-S053 / AUD-CP-0052; HEAD f90be001f1c1bf23e67f144bc5a57d36d4cad58a.  
+**HEAD inicial de esta sesión:** 43d1c082a290d473911d82815a3d3dd0419e6fc5.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-013-001 A 010 ABIERTOS O VINCULADOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/YOUTUBE PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad del flujo de tutoriales y multimedia, carga directa a YouTube, autorización y sesión del uploader, aprobación/rechazo en Inbox, asociación/publicación en Tutorial/PyS/Cortes, persistencia y recuperación de cargas, ciclo de vida del iframe y modal, sanitización de metadatos y compatibilidad con enlaces manuales. Los diez archivos funcionales/técnicos del alcance conservan exactamente los SHA históricos de E1:
+
+- `youtubeUpload.js`: `01559b95d4fff7b03c7833d5903496ab41dbc161`
+- `Services/feedback.js`: `3db189523f6cb849d33550f29971c0ec6f386b3a`
+- `Services/catalog.js`: `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `api-config.js`: `a5c718d01b7da50b4b5e650c3bacd91456f4d670`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `navigation.js`: `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `Estudio_Factibilidad_YouTube.md`: `f5b2774d0ddbfd9862f8c51cae5a31e1481825ee`
+
+Comparación E1→HEAD: 129 commits posteriores, cero detrás y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los diez archivos funcionales/técnicos del alcance aparece en el diff.
+
+Comparación desde la revalidación AUD-CP-0052 / HEAD f90be001f1c1bf23e67f144bc5a57d36d4cad58a: 108 commits posteriores, cero detrás, merge-base idéntico y diff limitado a los mismos ocho documentos. No se observa deriva funcional desde la revalidación previa.
+
+La comparación de la rama de trabajo contra `GPSpedia2.2.5` confirma 356 commits por delante, cero detrás y merge-base en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; la rama base permanece intacta.
+
+### Hallazgos, tareas y relaciones
+
+H-AUD-013-001 a H-AUD-013-010 permanecen abiertos o vinculados, sin cambios de prioridad ni cierre. Se conservan los riesgos registrados sobre credenciales de sesión ausentes en el uploader; persistencia de URL pending antes de aprobación; publicación incompleta para destinos Tutorial/PyS/Cortes; esquema, escritura y autorización del módulo Tutorial; validación insuficiente del tipo/estado en approve/reject; identificador provisional frente al ID real de YouTube; ausencia de recuperación persistente y reanudación HTTP 308; interpolación HTML de título/descripción; ausencia de integración con History API para el modal; y discrepancias de metadatos/contrato y reproducibilidad de pruebas.
+
+AUG-092 a AUG-094 continúan pendientes. Se conservan las adendas de AUG-043 y AUG-068 y la coordinación de AUG-040. VAL-22 permanece planificada. No se detectaron hallazgos nuevos, duplicados, cierres ni cambios de prioridad.
+
+### Verificaciones y límites
+
+Se verificaron la ascendencia E1→HEAD, el merge-base, la lista completa de archivos del diff, la comparación AUD-CP-0052→HEAD, el estado de la rama base y los SHA exactos de los diez archivos del alcance.
+
+No se ejecutaron YouTube API/OAuth/XHR, navegador, Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, cancelación, recuperación HTTP 308, pruebas XSS, permisos/deployment ni E2/E3. La continuidad de hashes no certifica autenticación real, autorización de aprobación, persistencia, recuperación de cargas, publicación ni comportamiento de los overlays.
+
+### Integridad y alcance de cambios
+
+Esta sesión es una revalidación estática/documental. No se modifican código, OAuth scopes, Google Cloud, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los diez hallazgos, las tres tareas y las adendas ya están registrados. Sin merge ni despliegue.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero no existe un patrón normativo verificable en las fuentes consultadas; no se infiere una regla ni se renombran elementos.
+
+**Siguiente unidad:** AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).

@@ -1511,3 +1511,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se ejecutaron navegador, Playwright, gestos, modales, scroll real, multiusuario, concurrencia, HTTP, Apps Script, Spreadsheet, permisos/deployment ni E2/E3. No se certifica integridad funcional dinámica.
 - Solo documentación; sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-013 (2026-11-09)
+- Sesión AUD-20261109-S160 / checkpoint AUD-CP-0159. E1 d8a164c2974f4dc472f169442c2b7efb969bf350; revalidación previa CP-0052/HEAD f90be001f1c1bf23e67f144bc5a57d36d4cad58a; HEAD 43d1c082a290d473911d82815a3d3dd0419e6fc5; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; los diez archivos funcionales/técnicos conservan SHA exactos de E1.
+- CP-0052→HEAD: 108 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; sin deriva funcional desde la revalidación anterior.
+- H-AUD-013-001 a 010 abiertos o vinculados; AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068 y coordinación AUG-040 conservadas. VAL-22 planificada.
+- No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, cancelación, recuperación 308, XSS, permisos/deployment ni E2/E3.
+- Solo documentación; sin cambios funcionales, OAuth, Google Cloud, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge/despliegue.
+- Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).

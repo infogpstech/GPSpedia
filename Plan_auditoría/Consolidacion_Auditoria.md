@@ -1616,3 +1616,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, Playwright, gestos, modales, scroll real, multiusuario, concurrencia, HTTP, Apps Script, Spreadsheet, permisos/deployment ni E2/E3.
 - Solo continuidad estática/documental; sin cambios funcionales, assets, endpoints, contratos, configuración, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
 - Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación (revalidación E1).
+
+
+## 95. AUD-T-013 — continuidad E1 y revalidación del flujo Tutorial/YouTube
+- Sesión AUD-20261109-S160; checkpoint AUD-CP-0159; E1 d8a164c2974f4dc472f169442c2b7efb969bf350; revalidación previa CP-0052/HEAD f90be001f1c1bf23e67f144bc5a57d36d4cad58a; HEAD actual 43d1c082a290d473911d82815a3d3dd0419e6fc5; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff exclusivamente de ocho documentos. Los diez archivos funcionales/técnicos conservan SHA exactos de E1.
+- CP-0052→HEAD: 108 commits posteriores, cero detrás, merge-base idéntico y diff limitado a ocho documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-013-001 a 010 permanecen abiertos o vinculados. AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068 y coordinación AUG-040 conservadas. VAL-22 planificada.
+- Se mantienen riesgos de sesión/credenciales del uploader, URL pending y aprobación, publicación en destinos Tutorial/PyS/Cortes, esquema y autorización Tutorial, guardas de tipo/estado approve/reject, ID provisional, recuperación/308, sink HTML, ausencia de History API y discrepancias de metadatos/contrato.
+- Rama trabajo: 356 commits por delante de base, cero detrás; merge-base d9acc68d889985c2e2f42fe3a02e502efc86ead1. Base intacta.
+- No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, recuperación 308, XSS, permisos/deployment ni E2/E3.
+- Solo continuidad estática/documental; sin cambios funcionales, OAuth, Google Cloud, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+- Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).
