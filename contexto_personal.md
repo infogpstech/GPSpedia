@@ -1521,3 +1521,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, cancelación, recuperación 308, XSS, permisos/deployment ni E2/E3.
 - Solo documentación; sin cambios funcionales, OAuth, Google Cloud, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge/despliegue.
 - Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-014 (2026-11-09)
+- Sesión AUD-20261109-S161 / checkpoint AUD-CP-0160. E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837; revalidación previa CP-0116/HEAD acde0781b7592a73704dab30a58e4208bf29cb31; HEAD 9df536947f798316c2a33b522cc37e8b01faf3d6; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; los siete archivos funcionales conservan SHA exactos de E1.
+- CP-0116→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff de cinco documentos; sin deriva funcional desde la revalidación anterior.
+- H-AUD-014-001 a 003 abiertos; AUG-095 a AUG-097 pendientes; VAL-23 planificada. Controles estáticos conservados; no hay nuevos hallazgos ni cambios de estado.
+- No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia, service worker en dispositivo, actualización offline ni E2/E3.
+- Solo documentación; sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).

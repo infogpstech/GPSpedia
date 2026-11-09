@@ -4725,3 +4725,51 @@ Instrucción de renombrado automático conservada; no hay patrón normativo veri
 Commit documental único: pendiente de crear mediante Git Database API con parent 43d1c082a290d473911d82815a3d3dd0419e6fc5; update_ref force=false y expected_sha=43d1c082a290d473911d82815a3d3dd0419e6fc5. Rama base protegida.
 Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0160
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S161
+Tarea: AUD-T-014 — revalidación incremental de continuidad E1 de texto enriquecido, sanitización, listas y saltos de línea.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base: GPSpedia2.2.5.
+HEAD inicial: 9df536947f798316c2a33b522cc37e8b01faf3d6.
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: deefa3a8ceca4aae892c61d0e99fec73c3e44837 (AUD-20261108-S032/AUD-CP-0032).
+Revalidación previa: AUD-20261108-S117/AUD-CP-0116; HEAD acde0781b7592a73704dab30a58e4208bf29cb31.
+Alcance: rich-text.js, ui.js, add_cortes.html, Services/write.js, Services/feedback.js, style.css y service-worker.js.
+Estado inicial: H-AUD-014-001 a 003 abiertos; AUG-095 a AUG-097 pendientes; VAL-23 planificada.
+Preflight: E1 es ancestro de HEAD (129 commits); CP-0116 es ancestro de HEAD (44 commits); ambos diffs contienen solo documentos; los siete archivos de alcance conservan SHA E1; base intacta.
+Respaldos exactos previos a la actualización documental (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: e1ccd5a7ef439ec865e3061cfb4afa29d2fe336c
+- Plan_auditoría/Consolidacion_Auditoria.md: 090226244c2ad54c454306039038403d5d654b09
+- ChangesLogs.txt: 523d6592dce29a5c1f20288d719cd3748386e4e7
+- contexto_personal.md: 1574338f15acd08464c1bba623d049c7c1c433d3
+- checkpoint.md: 2c71d5ac1d220be1944e2604c022267aa8a8272e
+No se realizarán cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0160
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S161
+Tarea: AUD-T-014 — revalidación de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-014-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE SEGURIDAD PENDIENTE.
+HEAD padre confirmado: 9df536947f798316c2a33b522cc37e8b01faf3d6; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente documental (ocho archivos).
+CP-0116→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico; diff limitado a cinco documentos.
+Siete archivos del alcance conservan SHA idénticos a E1:
+- rich-text.js a7180766bb5097be510153edd851f4dfa939912c
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5
+Hallazgos: H-AUD-014-001 a 003 abiertos. AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin nuevos hallazgos, duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de rama de trabajo y rama base; ascendencia/merge-base E1→HEAD; comparación CP-0116→HEAD; listas completas de archivos de ambos diffs; SHA exactos de los siete archivos.
+No ejecutadas: navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia, service worker en dispositivo, actualización offline ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios.
+Sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Instrucción de renombrado automático conservada; no hay patrón normativo verificable y no se infiere ni aplica.
+Commit documental único: pendiente de crear mediante Git Database API con parent 9df536947f798316c2a33b522cc37e8b01faf3d6; update_ref force=false y expected_sha=9df536947f798316c2a33b522cc37e8b01faf3d6. Rama base protegida.
+Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).
+================================================================================

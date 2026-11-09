@@ -4434,3 +4434,56 @@ Esta sesión es una revalidación estática/documental. No se modifican código,
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero no existe un patrón normativo verificable en las fuentes consultadas; no se infiere una regla ni se renombran elementos.
 
 **Siguiente unidad:** AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).
+
+
+## 111. Continuidad incremental — AUD-T-014: texto enriquecido, sanitización, listas y saltos de línea
+
+**Sesión:** AUD-20261109-S161  
+**Checkpoint:** AUD-CP-0160  
+**E1 original:** deefa3a8ceca4aae892c61d0e99fec73c3e44837 (AUD-20261108-S032 / AUD-CP-0032; E1 estática completada).  
+**Revalidación previa:** AUD-20261108-S117 / AUD-CP-0116; HEAD acde0781b7592a73704dab30a58e4208bf29cb31.  
+**HEAD inicial de esta sesión:** 9df536947f798316c2a33b522cc37e8b01faf3d6.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-014-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE SEGURIDAD PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad del editor compartido, formato enriquecido, listas UL/OL y marcadores, comportamiento de Enter, saltos LF/CRLF, sanitizador, persistencia backend WRITE/FEEDBACK, renderizado en detalle/carrusel/vista alternativa, estilos y precache del service worker. Los siete archivos funcionales del alcance conservan exactamente los SHA históricos de E1:
+
+- `rich-text.js`: `a7180766bb5097be510153edd851f4dfa939912c`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `add_cortes.html`: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- `Services/write.js`: `0c603ce8b56a871a6d9396bd5b047e364f9f580e`
+- `Services/feedback.js`: `3db189523f6cb849d33550f29971c0ec6f386b3a`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `service-worker.js`: `6779c97db87a574149eb44c7e97729ac7f18f4f5`
+
+Comparación E1→HEAD: 129 commits posteriores, cero detrás y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los siete archivos funcionales del alcance aparece en el diff.
+
+Comparación desde la revalidación AUD-CP-0116 / HEAD acde0781b7592a73704dab30a58e4208bf29cb31: 44 commits posteriores, cero detrás, merge-base idéntico y diff limitado a cinco documentos: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No se observa deriva funcional desde la revalidación previa.
+
+La comparación de la rama de trabajo contra `GPSpedia2.2.5` confirma 357 commits por delante, cero detrás y merge-base en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; la rama base permanece intacta.
+
+### Hallazgos, tareas y relaciones
+
+H-AUD-014-001 a H-AUD-014-003 permanecen abiertos, sin cambios de prioridad ni cierre:
+
+- **H-AUD-014-001:** WRITE/FEEDBACK persisten contenido enriquecido recibido sin saneamiento HTML autoritativo antes de almacenar. Evidencia documentada en `Services/write.js` (`handleAddSupplementaryInfoLocked`, campos apertura, cableAlimen/cableAlimen2/cableAlimen3 y notaImportante) y `Services/feedback.js` (`handleAddProblem`, `handleAddSolution`, `handleAddPrevention` y `handleUpdatePysItem`). Relación: AUG-095.
+- **H-AUD-014-002:** dos sinks descriptivos de `ui.js` omiten `sanitizeHtmlContent`: `updateSlide()` inserta `activeCable.content` en `slideText.innerHTML`; la vista sin carrusel inserta `activeContent` en `contentP.innerHTML`. Otros consumidores sí sanitizan, por lo que la aplicación sigue siendo desigual. Relación: AUG-096.
+- **H-AUD-014-003:** el ajuste `gpsepedia_rich_text_mode` estricto/avanzado descrito en el requisito no está conectado. `rich-text.js` conserva una allow-list fija ampliada y `createRichTextToolbar` expone controles ampliados sin leer el modo. Relación: AUG-097.
+
+AUG-095 a AUG-097 continúan pendientes y VAL-23 permanece planificada. Se conservan los controles positivos estáticos: editor compartido, toolbar, listas UL/OL y marcadores, comportamiento de Enter, sanitizador DOMParser con allow-list, filtrado de atributos/URLs/estilos, normalización LF/CRLF y precache de `rich-text.js` en service worker. Su presencia no certifica seguridad ni comportamiento real del navegador. No se detectaron hallazgos nuevos, duplicados, cierres ni cambios de prioridad.
+
+### Verificaciones y límites
+
+Se verificaron la ascendencia E1→HEAD, el merge-base, la lista completa de archivos del diff, la comparación AUD-CP-0116→HEAD, el estado de la rama base y los SHA exactos de los siete archivos del alcance.
+
+No se ejecutaron navegador, DOMParser real, payloads XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia, service worker en dispositivo, actualización offline ni E2/E3. La continuidad de hashes no certifica saneamiento real, persistencia segura, renderizado ni compatibilidad del editor.
+
+### Integridad y alcance de cambios
+
+Esta sesión es una revalidación estática/documental. No se modifican archivos de aplicación, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los tres hallazgos, las tareas y la matriz VAL-23 ya están registrados. Sin merge ni despliegue.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero no existe un patrón normativo verificable en las fuentes consultadas; no se infiere una regla ni se renombran elementos.
+
+**Siguiente unidad:** AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).

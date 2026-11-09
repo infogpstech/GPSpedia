@@ -1628,3 +1628,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, recuperación 308, XSS, permisos/deployment ni E2/E3.
 - Solo continuidad estática/documental; sin cambios funcionales, OAuth, Google Cloud, endpoints, contratos, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
 - Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea (revalidación E1).
+
+
+## 96. AUD-T-014 — continuidad E1 y revalidación de texto enriquecido
+- Sesión AUD-20261109-S161; checkpoint AUD-CP-0160; E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837; revalidación previa CP-0116/HEAD acde0781b7592a73704dab30a58e4208bf29cb31; HEAD actual 9df536947f798316c2a33b522cc37e8b01faf3d6; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff exclusivamente de ocho documentos. Los siete archivos funcionales conservan SHA exactos de E1.
+- CP-0116→HEAD: 44 commits posteriores, cero detrás, merge-base idéntico y diff limitado a cinco documentos; sin deriva funcional desde la revalidación previa.
+- H-AUD-014-001 a 003 permanecen abiertos: saneamiento backend WRITE/FEEDBACK ausente; dos sinks descriptivos en ui.js omiten sanitizeHtmlContent; modo estricto/avanzado gpsepedia_rich_text_mode no conectado.
+- AUG-095 a AUG-097 continúan pendientes; VAL-23 planificada. Controles estáticos conservados: editor/toolbar, UL/OL y marcadores, Enter, allow-list DOMParser, filtrado de atributos/URLs/estilos, LF/CRLF y precache del módulo. Sin nuevos hallazgos, duplicados, cierres o cambios de prioridad.
+- Rama trabajo: 357 commits por delante de base, cero detrás; merge-base d9acc68d889985c2e2f42fe3a02e502efc86ead1. Base intacta.
+- No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia, service worker en dispositivo, actualización offline ni E2/E3.
+- Solo continuidad estática/documental; sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+- Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).
