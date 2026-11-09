@@ -130,3 +130,19 @@ No modificados: archivos legacy, Services, endpoints, deployments, datos product
 Siguiente tarea: DOC-README-2026-002 — verificar política de publicación y contenido real de Services antes de modificar esa sección del README.
 Este checkpoint final es el último documento actualizado antes del único commit.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT FINAL — DOC-README-2026-002
+Fecha: 2026-11-09
+Estado: COMPLETADA — DOCUMENTAL.
+HEAD inicial: 8d296358b3b805a33d2c814406d7efe54d2782bb; rama base inicial: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Archivo de producto modificado: README.md, sección 5.
+Archivos de trazabilidad actualizados: checkpoint.md, Auditoría.txt, Tareas.txt, ChangesLogs.txt, Tareas_pendientes_parte2.txt y tareas_completadas_parte1.txt.
+Hallazgo H-AUD-049 resuelto. El README ya no afirma que las fuentes Services fueron retiradas mientras siguen presentes en la rama de trabajo. Explica su naturaleza temporal durante implementación/corrección y su eliminación al cierre de esa fase. Separa código fuente, deployments y endpoints.
+Aclaración del usuario aplicada como política autorizada. No se eliminaron ni modificaron archivos de Services/. Tampoco se alteraron endpoints, deployments, permisos, ramas o legacy.
+Validaciones: árbol de rama de trabajo/base/main contrastado; sección reemplazada una única vez; contenido no relacionado del README conservado; diff revisado; Code Review documental aprobado. Sintaxis de código y pruebas funcionales: N/A, cambio documental.
+Siguiente tarea del Plan Maestro: DOC-LEGACY-2026-001, revalidar cierres históricos [X] con evidencia de commits, diffs, sintaxis, pruebas y Code Review.
+Este checkpoint final es el último documento actualizado antes del único commit.
+================================================================================

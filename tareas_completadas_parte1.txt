@@ -80,3 +80,16 @@ Validación: búsqueda de referencias en README; diff reconstruido desde respald
 No se modificaron legacy, código, Services, endpoints ni deployments.
 Commit: consultar historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+
+================================================================================
+DOC-README-2026-002 — RECONCILIAR DESCRIPCIÓN DE SERVICES Y MICROSERVICIOS
+Fecha: 2026-11-09.
+Estado: COMPLETADA — DOCUMENTAL.
+Evidencia: README.md, sección 5. Se corrigió la afirmación de que las fuentes ya habían sido retiradas. La documentación indica que Services/ puede contener fuentes temporales durante implementación/corrección y que deben eliminarse al finalizar esa fase. También distingue las fuentes de código de los deployments y endpoints operativos.
+Política confirmada por el usuario: los archivos temporales se eliminan del repositorio al terminar las implementaciones y correcciones.
+Auditoría: H-AUD-049 resuelto documentalmente.
+Alcance: no se modificó ni eliminó ningún archivo de Services/, código, endpoints, deployments o legacy.
+Validación: contraste de README contra árbol de la rama de trabajo, rama base y rama main; diff limitado a la sección 5; Code Review documental aprobado. Sintaxis de código: N/A.
+================================================================================

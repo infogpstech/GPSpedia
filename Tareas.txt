@@ -56,3 +56,12 @@ Revisión: H-AUD-048 resuelto; diff comparado byte por byte contra respaldo exac
 No se tocaron legacy, frontend funcional, Services, endpoints ni deployments.
 Siguiente: DOC-README-2026-002, sujeto a verificar política y contenido real de Services.
 ================================================================================
+
+
+
+================================================================================
+DOC-README-2026-002 — RECONCILIAR SERVICES EN README
+Estado: COMPLETADA — DOCUMENTAL.
+Hallazgo H-AUD-049 resuelto. README refleja la presencia temporal de fuentes Services durante implementación/corrección y su eliminación al finalizar esa fase. Distingue fuente, deployment y endpoint.
+No se borraron ni modificaron archivos de código o deployments. Siguiente paso: DOC-LEGACY-2026-001, revalidación de cierres históricos [X], según Plan Maestro.
+================================================================================

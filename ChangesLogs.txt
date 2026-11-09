@@ -47,3 +47,11 @@ Archivo modificado: README.md. No se modificó código, funcionalidades, legacy 
 Validación documental: búsqueda de referencias, comparación byte por byte contra respaldo exacto y Code Review documental.
 Sintaxis de código: N/A. H-AUD-048 resuelto.
 ================================================================================
+
+
+
+================================================================================
+2026-11-09 — DOC-README-2026-002 — ESTADO TEMPORAL DE SERVICES
+README sección 5 actualizada para reflejar que Services/ contiene fuentes temporales durante implementación y corrección, que se eliminarán del repositorio al concluir esa fase. Se separa explícitamente código fuente de deployments y endpoints independientes.
+H-AUD-049 resuelto. No se borraron ni modificaron archivos Services/, endpoints, deployments o legacy. Cambio exclusivamente documental; revisión y diff aprobados.
+================================================================================

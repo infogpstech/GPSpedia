@@ -100,9 +100,12 @@ La plataforma utiliza una arquitectura desacoplada:
 ---
 
 ## 5. Seguridad y Exclusión de Microservicios
-Por motivos de seguridad operativa y saneamiento del código antes de producción, los archivos correspondientes a los microservicios del backend (**write.js, auth.js, catalog.js, feedback.js**) han sido retirados de este repositorio público.
 
-La lógica de estos componentes se encuentra resguardada de forma privada bajo la administración del proyecto. El repositorio actual contiene la totalidad de la interfaz de usuario y la lógica de integración necesaria para que la plataforma opere contra los endpoints autorizados definidos en la configuración.
+Durante la fase de implementación y corrección, las ramas de trabajo pueden contener temporalmente fuentes de los servicios backend dentro de `Services/`. Estos archivos forman parte del entorno de desarrollo y revisión; su presencia no significa que sus deployments o endpoints hayan sido creados, modificados o publicados desde este repositorio.
+
+Al finalizar las implementaciones y correcciones, las fuentes temporales de `Services/` deberán eliminarse del repositorio como parte del saneamiento previo al cierre y a la entrega. La versión final del repositorio no debe conservar esos archivos de implementación.
+
+Los deployments y endpoints operativos son recursos independientes: se administran y verifican en sus respectivas plataformas y su estado no se deduce de la presencia o ausencia de archivos fuente en GitHub. La configuración de integración del frontend debe apuntar únicamente a los endpoints autorizados.
 
 ---
 ## 6. Novedades y Actualizaciones (v2.2.5)
