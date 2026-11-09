@@ -4114,3 +4114,61 @@ La revalidación es documental. No se modifican código, HTML/CSS de aplicación
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes del proyecto consultadas no definen un patrón normativo verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
 
 **Siguiente unidad:** AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación de continuidad E1).
+
+
+## 105. Continuidad incremental — AUD-T-008: deep links, compartir, enlaces precisos e indicador de red
+
+**Sesión:** AUD-20261109-S155  
+**Checkpoint:** AUD-CP-0154  
+**E1 original:** f3d7558abeef482957582fea08f2041490b54f34 (AUD-20261108-S026 / AUD-CP-0026; auditoría estática E1 completada).  
+**Revalidación anterior de AUD-T-008:** AUD-20261108-S133 / AUD-CP-0132; HEAD 9a961cd812450bf5e3308b2e957c71b1cb438e1d.  
+**HEAD inicial de esta sesión:** b3c624b541e2720088f48227ce93648b418a9177.  
+**Árbol del HEAD inicial:** cb153988e16ec4e7832b0db2d95c8c7fc30b9c97.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-008-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidó la continuidad de deep links, restauración de búsqueda, resolución de enlaces compartidos, Web Share, Clipboard, indicador de conectividad y sus dependencias de catálogo/estado. El alcance funcional conserva los seis archivos definidos en la E1:
+- `ui.js`
+- `main.js`
+- `navigation.js`
+- `index.html`
+- `style.css`
+- `auth.js`
+
+La comparación E1→HEAD confirma 129 commits posteriores, estado ahead, merge-base idéntico a E1 y cero commits detrás. El diff global enumera exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los seis archivos funcionales del alcance aparece en el diff.
+
+Los seis archivos conservan SHA idénticos a E1:
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `navigation.js`: `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `auth.js`: `2dc65f2e5903fc208ca14505053e82203a9dbd86`
+
+La comparación desde la revalidación anterior AUD-CP-0132 / 9a961cd812450bf5e3308b2e957c71b1cb438e1d hasta HEAD actual confirma 22 commits posteriores, merge-base igual al HEAD anterior y únicamente cinco documentos modificados: `ChangesLogs.txt`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `checkpoint.md` y `contexto_personal.md`. No se detecta deriva funcional desde la revalidación anterior.
+
+### Hallazgos, tareas y dependencias
+
+Los hallazgos históricos H-AUD-008-001 a H-AUD-008-004 permanecen abiertos y sin cambios de estado:
+1. El enlace compartido se construye con atributos textuales y no incluye una identidad estable del registro; la resolución depende de una coincidencia global única, por lo que puede ser ambigua o no encontrar la variante correcta.
+2. Web Share no activa fallback ante fallos recuperables; Clipboard no valida completamente la disponibilidad de `navigator.clipboard/writeText` ni cubre todos los errores con feedback.
+3. La decodificación de `#search=` mediante `decodeURIComponent()` no está protegida y la restauración del catálogo depende de polling sin límite, cancelación ni estado terminal.
+4. `#connection-status` es un indicador visual sin semántica accesible suficiente; `navigator.onLine` no acredita disponibilidad backend y la animación no contempla `prefers-reduced-motion`.
+
+AUG-072 y AUG-073 continúan pendientes. AUG-049 conserva su adenda sobre precisión de búsqueda por años/números y autoapertura; AUG-052 conserva la adenda sobre hash malformado, espera terminal y cancelación. H-AUD-037-003, H-AUD-037-006 y H-AUD-037-010 se mantienen como referencias cruzadas, sin duplicación. VAL-12, VAL-14 y VAL-18 siguen pendientes. No se crean hallazgos, tareas ni IDs nuevos; no se cierran ni reclasifican registros.
+
+### Verificaciones y límites
+
+Se verificaron HEAD de ambas ramas, árbol de trabajo, comparación E1→HEAD, comparación AUD-CP-0132→HEAD, merge-base, lista completa de archivos del diff y SHA de los seis archivos funcionales.
+
+No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset real con colisiones, HTTP/health check, Apps Script, pruebas de red, móvil/PWA ni deployments. Tampoco se ejecutaron pruebas E2/E3. La continuidad Git confirma que los archivos del alcance no han cambiado respecto de E1; no certifica comportamiento dinámico, accesibilidad, conectividad real ni resolución de enlaces con datos productivos.
+
+### Integridad y alcance de cambios
+
+La revalidación es documental. No se modifican código, HTML/CSS de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los cuatro hallazgos, las dos tareas y las adendas relacionadas ya están registrados. No se ejecuta merge ni despliegue.
+
+Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero las fuentes normativas consultadas no definen un patrón verificable. No se infiere una regla ni se renombran elementos en esta revalidación.
+
+**Siguiente unidad:** AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación de continuidad E1).

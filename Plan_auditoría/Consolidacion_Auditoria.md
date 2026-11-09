@@ -1557,3 +1557,15 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Solo continuidad documental; sin cambios funcionales, endpoints, contratos, configuración, credenciales, permisos, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Base intacta.
 - La regla de renombrado automático se conserva, pero no existe patrón normativo verificable en las fuentes consultadas; no se inventa ni aplica un formato.
 - Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación E1).
+
+
+## 90. AUD-T-008 — continuidad E1 y revalidación de deep links/compartir/red
+- Sesión AUD-20261109-S155; checkpoint AUD-CP-0154; E1 f3d7558abeef482957582fea08f2041490b54f34; árbol E1 e76c3c4fca2535e9436176ffcbe932691ac8d852; revalidación previa CP-0132/HEAD 9a961cd812450bf5e3308b2e957c71b1cb438e1d; HEAD actual b3c624b541e2720088f48227ce93648b418a9177; árbol actual cb153988e16ec4e7832b0db2d95c8c7fc30b9c97; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, merge-base igual a E1 y diff de ocho documentos. Los seis archivos funcionales del alcance conservan SHA idénticos a E1.
+- CP-0132→HEAD: 22 commits posteriores, merge-base igual al HEAD anterior y solo cinco documentos modificados; no hay deriva funcional desde la revalidación previa.
+- H-AUD-008-001 a 004 permanecen abiertos: enlace compartido sin ID estable/posible ambigüedad; fallback Web Share/Clipboard incompleto; hash malformado y polling de restauración sin límite/cancelación; indicador sin semántica accesible, distinción backend ni movimiento reducido.
+- AUG-072/AUG-073 continúan pendientes; AUG-049/AUG-052 conservan adendas; H-AUD-037-003/006/010 se mantienen como referencias cruzadas. VAL-12/14/18 siguen pendientes. Sin hallazgos nuevos, duplicados, cierres ni cambios de prioridad.
+- No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset real, HTTP/health check, Apps Script, red real, móvil/PWA, deployments ni E2/E3. La continuidad Git no certifica comportamiento funcional.
+- Solo continuidad documental. Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet, merge o despliegue. Rama base intacta.
+- Se conserva la instrucción de renombrado automático; no existe patrón normativo verificable, por lo que no se infiere ni se renombra.
+- Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación de continuidad E1).

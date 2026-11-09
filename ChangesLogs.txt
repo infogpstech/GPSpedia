@@ -5557,3 +5557,16 @@ Sesión AUD-20261108-S098 | Checkpoint AUD-CP-0097 | E1 f9c47bad48fa8050a4acac33
 - checkpoint.md: se añaden los registros inicial y final AUD-CP-0153, con HEAD/base y SHA de respaldo documental.
 - Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; los hallazgos y tareas ya estaban registrados.
 - No se modifican archivos de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin pruebas E2/E3, merge ni despliegue.
+
+
+================================================================================
+2026-11-09 — AUD-T-008 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S155 | Checkpoint AUD-CP-0154 | E1 f3d7558abeef482957582fea08f2041490b54f34 | HEAD b3c624b541e2720088f48227ce93648b418a9177 | árbol cb153988e16ec4e7832b0db2d95c8c7fc30b9c97 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 105 con comparación E1→HEAD, comparación CP-0132→HEAD, SHA de los seis archivos, hallazgos y validaciones pendientes.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 90 con continuidad de H-AUD-008-001 a 004, AUG-072/AUG-073, adendas y validaciones.
+- ChangesLogs.txt: se registra esta revalidación documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-008 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0154 y los SHA de respaldos exactos.
+- No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; los cuatro hallazgos, AUG-072/AUG-073 y adendas ya están registrados.
+- No se modifican archivos funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
+================================================================================

@@ -1457,3 +1457,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Solo documentación; sin cambios de código, assets, endpoints, contratos, configuración, credenciales, permisos ni datos productivos. Sin merge/despliegue.
 - Se mantiene la instrucción de renombrado automático de carpetas/imágenes fuera del formato; las fuentes consultadas no especifican el patrón, por lo que no se inventa ni se renombra.
 - Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-008 (2026-11-09)
+- Sesión AUD-20261109-S155 / checkpoint AUD-CP-0154. E1 f3d7558abeef482957582fea08f2041490b54f34; revalidación previa CP-0132/HEAD 9a961cd812450bf5e3308b2e957c71b1cb438e1d; HEAD actual b3c624b541e2720088f48227ce93648b418a9177; árbol cb153988e16ec4e7832b0db2d95c8c7fc30b9c97; rama base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+- E1→HEAD: 129 commits posteriores, merge-base idéntico y diff de ocho documentos. Los seis archivos funcionales del alcance conservan SHA exactos de E1.
+- CP-0132→HEAD: 22 commits posteriores, merge-base idéntico al HEAD previo y solo cinco documentos de continuidad; no hay deriva funcional desde la revalidación anterior.
+- H-AUD-008-001 a 004 permanecen abiertos; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes; H-AUD-037-003/006/010 relacionados; VAL-12/14/18 pendientes.
+- No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, colisiones de catálogo, HTTP/health check, Apps Script, red real, móvil/PWA, deployments ni E2/E3. No se certifica comportamiento dinámico.
+- Solo documentación; sin cambios de código, assets, endpoints, contratos, HTML/CSS de aplicación, configuración, credenciales, permisos ni datos productivos. Sin merge/despliegue.
+- La regla de renombrado automático se conserva, pero el patrón normativo no está definido; no se inventa ni se aplica.
+- Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación E1).

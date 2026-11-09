@@ -4433,3 +4433,49 @@ La instrucción de renombrado automático se conserva, pero no se identificó un
 Commit documental único: docs(audit): revalidate AUD-T-007 continuity; parent 47e0eb4ca1ab67592b3ba574f547b5d36e9ae935; update_ref force=false y expected_sha=47e0eb4ca1ab67592b3ba574f547b5d36e9ae935. La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0154
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S155
+Tarea: AUD-T-008 — revalidación incremental de continuidad E1.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work | Rama base protegida: GPSpedia2.2.5.
+HEAD inicial confirmado: b3c624b541e2720088f48227ce93648b418a9177; árbol: cb153988e16ec4e7832b0db2d95c8c7fc30b9c97; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: f3d7558abeef482957582fea08f2041490b54f34 (AUD-20261108-S026 / AUD-CP-0026; auditoría estática completada).
+Revalidación previa AUD-T-008: AUD-20261108-S133 / AUD-CP-0132; HEAD 9a961cd812450bf5e3308b2e957c71b1cb438e1d; árbol 707a52c775ea544825da1078144b41d7e007299c.
+Alcance: ui.js, main.js, navigation.js, index.html, style.css y auth.js.
+Estado inicial: H-AUD-008-001 a 004 abiertos; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes; H-AUD-037-003/006/010 relacionados; VAL-12/14/18 pendientes.
+Fase: revalidación estática/documental de continuidad. No se autoriza modificar código, HTML/CSS de aplicación, assets, endpoints, contratos, configuración ni datos productivos.
+Preflight: E1 es ancestro de HEAD (129 commits); CP-0132 es ancestro de HEAD (22 commits); los seis archivos funcionales conservan SHA E1; rama base sin cambios.
+Respaldos exactos previos a la actualización documental (SHA de blob):
+- Plan_auditoría/Plan_Auditoria.md: 2c7b57702ca6d56bbccc669052c7dee4f9133dfb
+- Plan_auditoría/Consolidacion_Auditoria.md: 5a3bd4288fd9ef85e86880c24733669af57c3f1d
+- ChangesLogs.txt: 7c33c2a5361d023f72dbc8d9cc026eb5ce3ea8f4
+- contexto_personal.md: af0c57584fde667045f89d2c3a0339d327256e64
+- checkpoint.md: a9b4526184b1ad1e2a38a6d7c92c0c2448640140
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0154
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S155
+Tarea: AUD-T-008 — revalidación incremental de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-008-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+HEAD padre: b3c624b541e2720088f48227ce93648b418a9177; árbol cb153988e16ec4e7832b0db2d95c8c7fc30b9c97; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores; merge-base idéntico; diff exclusivamente documental (ocho archivos).
+Seis archivos funcionales con SHA idénticos a E1:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+CP-0132→HEAD: 22 commits posteriores; merge-base idéntico; cinco documentos modificados y sin deriva funcional.
+Hallazgos: H-AUD-008-001 a 004 abiertos. AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes; H-AUD-037-003/006/010 relacionados; VAL-12/14/18 pendientes. Sin hallazgos nuevos, duplicados, cierres o cambios de prioridad.
+Verificaciones ejecutadas: HEAD de ambas ramas, árbol E1/HEAD, compare E1→HEAD, compare CP-0132→HEAD, merge-base, diff global y SHA de los seis archivos.
+No ejecutadas: navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, catálogo con colisiones, HTTP/health check, Apps Script, red real, móvil/PWA, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque no hay hallazgos/tareas nuevas.
+Sin cambios funcionales, HTML/CSS de aplicación, assets, endpoints, contratos, configuración, credenciales, permisos, datos productivos, Drive o Spreadsheet. Sin merge ni despliegue.
+La instrucción de renombrado automático se conserva, pero no existe patrón normativo verificable; no se infiere ni se aplica.
+Commit documental único: pendiente de crear mediante Git Database API con parent b3c624b541e2720088f48227ce93648b418a9177; update_ref force=false y expected_sha=b3c624b541e2720088f48227ce93648b418a9177. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS (revalidación E1).
+================================================================================
