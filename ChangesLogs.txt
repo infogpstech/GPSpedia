@@ -5648,3 +5648,18 @@ Sesión AUD-20261109-S161 | Checkpoint AUD-CP-0160 | E1 deefa3a8ceca4aae892c61d0
 - Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; los hallazgos, tareas y validación ya están registrados.
 - No se modifican archivos funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet ni deployments. Sin pruebas E2/E3, merge o despliegue.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — AUD-T-015 — revalidación incremental de continuidad E1
+Sesión AUD-20261109-S162 | Checkpoint AUD-CP-0161 | E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | revalidación previa CP-0117/HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1 | HEAD 445a008dea6c15c3325a7becade69e791dcc2827 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Plan_auditoría/Plan_Auditoria.md: se añade la sección 112 con comparación E1→HEAD, CP-0117→HEAD, SHA de nueve archivos y estado de hallazgos.
+- Plan_auditoría/Consolidacion_Auditoria.md: se añade la sección 97 con H-AUD-015-001 a 004, AUG-098 a 101 y VAL-24.
+- Se reafirma que los filtros rápidos fueron cancelados; no deben reintroducirse. HTML/CSS no conservan controles/reglas identificados, pero main.js mantiene referencias obsoletas toggleFiltersBtn/filtersBar en blur.
+- La limpieza integral de los remanentes queda expresamente pendiente y obligatoria en H-AUD-015-002/AUG-099. No se modifica código en esta revalidación E1.
+- ChangesLogs.txt: se registra esta actualización documental.
+- contexto_personal.md: se actualiza la continuidad AUD-T-015 y la siguiente unidad.
+- checkpoint.md: se añaden checkpoint inicial/final AUD-CP-0161 y SHA de respaldos exactos.
+- Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios; hallazgos/tareas existentes se conservan sin duplicación.
+- Sin cambios funcionales, HTML, CSS, JavaScript, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+================================================================================

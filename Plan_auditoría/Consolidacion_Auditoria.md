@@ -1640,3 +1640,16 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia, service worker en dispositivo, actualización offline ni E2/E3.
 - Solo continuidad estática/documental; sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
 - Siguiente: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).
+
+
+## 97. AUD-T-015 — continuidad E1, búsqueda global y cancelación de filtros rápidos
+- Sesión AUD-20261109-S162; checkpoint AUD-CP-0161; E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695; revalidación previa CP-0117/HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1; HEAD 445a008dea6c15c3325a7becade69e791dcc2827; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff solo de ocho documentos. Los nueve archivos funcionales conservan SHA exactos de E1.
+- CP-0117→HEAD: 66 commits posteriores, cero detrás, merge-base idéntico y diff solo de ocho documentos; sin deriva funcional.
+- Los filtros rápidos están cancelados y retirados: no reintroducir botón/barra ni reactivar su comportamiento. HTML ya no contiene #btn-toggle-filters/#catalog-filters-bar; style.css no conserva selectores coincidentes. main.js mantiene referencias ejecutables obsoletas a toggleFiltersBtn y filtersBar en el callback blur del buscador, con posible ReferenceError.
+- La eliminación integral de remanentes es obligatoria y sigue pendiente en H-AUD-015-002/AUG-099: retirar referencias/accesos/listeners/variables/selectores/estilos/markup/comentarios obsoletos, mantener búsqueda directa y probar blur, limpiar, abrir resultado, modal, atrás y cambio de sección. No reintroducir filtros.
+- H-AUD-015-001 a 004 abiertos: consulta sin escape en innerHTML (AUG-098); referencias residuales a filtros cancelados (AUG-099); estilos de botones no unificados (AUG-100); marcador sintético tratado como marca (AUG-101).
+- H-AUD-037-003 a 006/AUG-049 siguen relacionados; AUG-098 a 101 y VAL-24 pendientes. Sin IDs nuevos ni duplicados.
+- No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3.
+- Solo continuidad documental; no se modifican archivos funcionales, HTML/CSS/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).

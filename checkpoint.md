@@ -4773,3 +4773,54 @@ Instrucción de renombrado automático conservada; no hay patrón normativo veri
 Commit documental único: pendiente de crear mediante Git Database API con parent 9df536947f798316c2a33b522cc37e8b01faf3d6; update_ref force=false y expected_sha=9df536947f798316c2a33b522cc37e8b01faf3d6. Rama base protegida.
 Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0161
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S162
+Tarea: AUD-T-015 — revalidación incremental E1 de búsqueda global, jerarquía, filtros rápidos cancelados y botones.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | Base: GPSpedia2.2.5.
+HEAD inicial: 445a008dea6c15c3325a7becade69e791dcc2827.
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 original: c4f61a1f8dc402c9fec6802032ca7d7f9c304695 (AUD-20261108-S033/AUD-CP-0033).
+Revalidación previa: AUD-20261108-S118/AUD-CP-0117; HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1.
+Alcance: navigation.js, ui.js, main.js, style.css, index.html, users.html, add_cortes.html, Services/catalog.js y VinDifferentialEngine.js.
+Estado inicial: H-AUD-015-001 a 004 abiertos; H-AUD-037-003 a 006 relacionados; AUG-098 a AUG-101 y VAL-24 pendientes. Filtros rápidos cancelados/retirados.
+Preflight: E1 ancestro de HEAD (129 commits); CP-0117 ancestro de HEAD (66 commits); ambos diffs solo documentales; nueve archivos del alcance conservan SHA E1; base intacta.
+Remanente confirmado: main.js mantiene toggleFiltersBtn y filtersBar dentro del callback blur; HTML no contiene sus IDs y style.css no tiene selectores coincidentes. Limpieza obligatoria pendiente en H-AUD-015-002/AUG-099.
+Respaldos exactos previos a la actualización documental:
+- Plan_auditoría/Plan_Auditoria.md: 1bbce1262b665a3e1a0f43ff5c1453eab344c3af
+- Plan_auditoría/Consolidacion_Auditoria.md: ad8a809296818b7f899ad39c8f3ea56dba550234
+- ChangesLogs.txt: 50b085013ed5d346fd6fe9fafda1e05f6da55e3f
+- contexto_personal.md: d72deb1ddd2eef1e2621859d193e1bd02464c9e0
+- checkpoint.md: afc1542cdcc4ad73a391317c573a987d972b17f3
+No se realizarán cambios funcionales en esta revalidación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0161
+Fecha: 2026-11-09 | Sesión: AUD-20261109-S162
+Tarea: AUD-T-015 — revalidación de continuidad E1.
+Estado final: CONTINUIDAD E1 CONFIRMADA; H-AUD-015-001 A 004 ABIERTOS; AUG-098 A 101 Y VAL-24 PENDIENTES. FILTROS RÁPIDOS CANCELADOS; LIMPIEZA DE REMANENTES OBLIGATORIA Y PENDIENTE.
+HEAD padre: 445a008dea6c15c3325a7becade69e791dcc2827; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente de ocho documentos.
+CP-0117→HEAD: 66 commits posteriores, cero detrás, merge-base idéntico; diff exclusivamente de ocho documentos.
+Nueve archivos funcionales conservan SHA exactos de E1:
+- navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+- VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+Hallazgos abiertos: H-AUD-015-001 a 004. H-AUD-037-003 a 006/AUG-049 relacionados. AUG-098 a AUG-101 y VAL-24 pendientes.
+Filtros rápidos: cancelados/retirados definitivamente. HTML sin #btn-toggle-filters/#catalog-filters-bar; CSS sin selectores coincidentes; main.js conserva referencias obsoletas toggleFiltersBtn/filtersBar en blur. Posible ReferenceError por identificador no declarado. La limpieza completa es obligatoria y sigue pendiente en H-AUD-015-002/AUG-099. No reintroducir la función.
+Verificaciones: HEAD de rama de trabajo/base; ascendencia/merge-base E1→HEAD; comparación CP-0117→HEAD; archivos completos de ambos diffs; SHA exactos de nueve archivos; búsqueda estática de identificadores en HTML/CSS/JS.
+No ejecutadas: navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles, deployments ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md sin cambios.
+Sin cambios funcionales, HTML, CSS, JavaScript, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive, Spreadsheet, merge o despliegue.
+Commit documental único: pendiente de crear; parent 445a008dea6c15c3325a7becade69e791dcc2827; update_ref force=false y expected_sha=445a008dea6c15c3325a7becade69e791dcc2827. Rama base protegida.
+Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).
+================================================================================

@@ -1531,3 +1531,15 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, persistencia/concurrencia, service worker en dispositivo, actualización offline ni E2/E3.
 - Solo documentación; sin cambios funcionales, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
 - Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).
+
+
+## Continuidad incremental — AUD-T-015 (2026-11-09)
+- Sesión AUD-20261109-S162 / checkpoint AUD-CP-0161. E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695; revalidación previa CP-0117/HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1; HEAD 445a008dea6c15c3325a7becade69e791dcc2827; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 129 commits posteriores, cero detrás, merge-base idéntico y diff solo de ocho documentos; nueve archivos funcionales conservan SHA exactos de E1.
+- CP-0117→HEAD: 66 commits posteriores, cero detrás, merge-base idéntico y diff de ocho documentos; sin deriva funcional.
+- Los filtros rápidos fueron cancelados y retirados; no reintroducirlos. HTML/CSS no contienen controles/reglas coincidentes, pero main.js conserva referencias ejecutables obsoletas a toggleFiltersBtn/filtersBar dentro del blur.
+- La limpieza completa de remanentes es obligatoria y sigue pendiente en H-AUD-015-002/AUG-099. No se implementa en esta fase de revalidación E1.
+- H-AUD-015-001 a 004 abiertos; AUG-098 a 101 y VAL-24 pendientes. H-AUD-037-003 a 006/AUG-049 conservados como relacionados.
+- Sin pruebas navegador/DOM/XSS/Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3.
+- Solo documentación; sin cambios funcionales, HTML/CSS/JS, servicios, contratos, endpoints, configuración, assets, permisos, credenciales ni datos productivos. Sin merge/despliegue.
+- Siguiente unidad: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).

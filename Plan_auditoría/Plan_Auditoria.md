@@ -4487,3 +4487,69 @@ Esta sesión es una revalidación estática/documental. No se modifican archivos
 Se conserva la instrucción de renombrado automático de carpetas/imágenes que incumplan el formato, pero no existe un patrón normativo verificable en las fuentes consultadas; no se infiere una regla ni se renombran elementos.
 
 **Siguiente unidad:** AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (revalidación E1).
+
+
+## 112. Continuidad incremental — AUD-T-015: búsqueda global, jerarquía y retiro definitivo de filtros rápidos
+
+**Sesión:** AUD-20261109-S162  
+**Checkpoint:** AUD-CP-0161  
+**E1 original:** c4f61a1f8dc402c9fec6802032ca7d7f9c304695 (AUD-20261108-S033 / AUD-CP-0033; E1 estática completada).  
+**Revalidación previa:** AUD-20261108-S118 / AUD-CP-0117; HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1.  
+**HEAD inicial de esta sesión:** 445a008dea6c15c3325a7becade69e791dcc2827.  
+**Rama base GPSpedia2.2.5:** d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-015-001 A 004 ABIERTOS; AUG-098 A 101 Y VAL-24 PENDIENTES. FILTROS RÁPIDOS CANCELADOS; LIMPIEZA DE REMANENTES PENDIENTE.
+
+### Alcance y comparación
+
+Se revalidaron búsqueda global multi-sección, interpretación de modelos numéricos, jerarquía y clasificación de resultados, navegación/autoapertura, carga y actualización PyS, sanitización de consulta, retiro definitivo de filtros rápidos y estandarización universal de botones. Archivos del alcance: `navigation.js`, `ui.js`, `main.js`, `style.css`, `index.html`, `users.html`, `add_cortes.html`, `Services/catalog.js` y `VinDifferentialEngine.js`.
+
+Los nueve archivos conservan exactamente sus SHA de E1:
+
+- `navigation.js`: `39ec9f5ed34f8f81b506222f3b7b02494f866ad0`
+- `ui.js`: `f00f48a42ee9bf0fd200f21959eb741f113363eb`
+- `main.js`: `c15f5462d78fa907d14c71e15970ae29a3b3de77`
+- `style.css`: `dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9`
+- `index.html`: `6dd0b86981e7f92b10b2f7a0a1634bb6395a479a`
+- `users.html`: `e41f402675677a4d2783493614737021ec2eade5`
+- `add_cortes.html`: `8a5e4bf51b3cd602224016a1267f478ce55ee329`
+- `Services/catalog.js`: `253cbe9f873481114e7abff3aa8902c45e2560af`
+- `VinDifferentialEngine.js`: `7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4`
+
+Comparación E1→HEAD: 129 commits posteriores, cero detrás y merge-base idéntico a E1. El diff global contiene exclusivamente ocho documentos: `Auditoría.txt`, `ChangesLogs.txt`, `Plan_auditoría/Aug_Tareas.md`, `Plan_auditoría/Consolidacion_Auditoria.md`, `Plan_auditoría/Plan_Auditoria.md`, `Tareas.txt`, `checkpoint.md` y `contexto_personal.md`. Ninguno de los nueve archivos funcionales del alcance aparece en el diff.
+
+Comparación desde AUD-CP-0117 / HEAD 0a3873072cc253fe9ea134e1712585cc0988fbc1: 66 commits posteriores, cero detrás y merge-base idéntico. El diff contiene únicamente los mismos ocho documentos; no hay deriva funcional desde la revalidación anterior.
+
+La rama de trabajo está 358 commits por delante de `GPSpedia2.2.5`, cero detrás, con merge-base `d9acc68d889985c2e2f42fe3a02e502efc86ead1`. La rama base permanece intacta.
+
+### Cancelación de filtros rápidos y remanentes que deben eliminarse
+
+La decisión es inequívoca y se mantiene: **los filtros rápidos fueron cancelados y retirados del producto. No deben reactivarse, reconstruirse ni considerarse parte de la búsqueda global.** La búsqueda debe operar directamente, sin botón ni barra de filtros rápidos.
+
+La revisión estática confirma que el HTML ya no contiene los controles `#btn-toggle-filters` y `#catalog-filters-bar`, y que `style.css` no contiene selectores o reglas coincidentes con los nombres/identificadores de esos filtros. Sin embargo, `main.js` todavía conserva referencias ejecutables a los identificadores inexistentes `toggleFiltersBtn` y `filtersBar` dentro del callback de `searchInput` en `blur` (bloque del timeout de 250 ms). Si se evalúa la condición `toggleFiltersBtn`, el identificador no declarado puede provocar `ReferenceError`; la referencia a `filtersBar` también es obsoleta.
+
+**Requisito pendiente obligatorio:** eliminar completamente los remanentes de la implementación fallida. La limpieza debe retirar referencias, accesos, listeners, variables, selectores, estilos, markup y comentarios específicos de los filtros cancelados que hayan quedado obsoletos, sin alterar la búsqueda directa ni otras transiciones de navegación. Verificar que no queden referencias a `toggleFiltersBtn`, `filtersBar`, `#btn-toggle-filters` ni `#catalog-filters-bar` en código funcional. Esta limpieza no equivale a reintroducir filtros.
+
+Este defecto ya está registrado como **H-AUD-015-002 / AUG-099**; se conserva el ID y su estado pendiente, sin duplicarlo ni cerrarlo. Los criterios de AUG-099 incluyen retirar referencias/listeners/estilos, mantener la cancelación y validar blur, limpiar búsqueda, abrir resultado, modal, navegación atrás y cambio de sección. La revalidación confirma que el criterio de limpieza aún no está satisfecho.
+
+### Hallazgos y tareas revalidados
+
+H-AUD-015-001 a H-AUD-015-004 permanecen abiertos:
+
+- **H-AUD-015-001 / AUG-098 — Alta:** la consulta de búsqueda se inserta sin escape en `innerHTML` del encabezado/estado vacío; pendiente corregir el sink y probar entradas hostiles.
+- **H-AUD-015-002 / AUG-099 — Media:** referencias residuales a filtros rápidos cancelados en el callback `blur` de `main.js`; pendiente retirar completamente los remanentes descritos arriba.
+- **H-AUD-015-003 / AUG-100 — Media:** el sistema universal de estilos/estados de botones no está consolidado; persisten estilos por componente y reglas locales distintas en `users.html` y `add_cortes.html`.
+- **H-AUD-015-004 / AUG-101 — Media:** marcadores sintéticos Relay/Tutorial/Problema pueden activar renderizado de marca/logo; pendiente separar el tipo de sección de una marca real.
+
+Se conservan las relaciones H-AUD-037-003 a H-AUD-037-006 / AUG-049: autoapertura incorrecta de resultados no-Corte, cobertura/normalización/ranking de búsqueda, solicitudes repetidas y refresco PyS, y ambigüedad de modelos numéricos de cuatro dígitos. No se duplican ni se cierran. AUG-098 a AUG-101 y VAL-24 continúan pendientes.
+
+### Verificaciones y límites
+
+Se verificaron ascendencia y merge-base E1→HEAD, comparación AUD-CP-0117→HEAD, listas completas de archivos de ambos diffs, nueve SHA exactos, ausencia de los identificadores de filtros en HTML/CSS y referencias residuales en `main.js`. La revisión de referencias es estática; no se ejecutó el callback en navegador.
+
+No se ejecutaron navegador, DOM, XSS controlado, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles, accesibilidad ni E2/E3. La continuidad de hashes no certifica comportamiento, ranking, rendimiento ni ausencia de errores en ejecución.
+
+### Integridad y alcance de cambios
+
+Esta sesión es una revalidación E1 estática/documental. No se modifican archivos funcionales, HTML, CSS, JavaScript, servicios, contratos, endpoints, configuración, assets, permisos, credenciales, datos productivos, Drive ni Spreadsheet. `Auditoría.txt`, `Tareas.txt` y `Plan_auditoría/Aug_Tareas.md` permanecen sin cambios porque los hallazgos y AUG-098 a AUG-101 ya están registrados. No se realiza la limpieza funcional en esta fase; queda como trabajo pendiente explícito en H-AUD-015-002/AUG-099. Sin merge ni despliegue.
+
+**Siguiente unidad:** AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive (revalidación E1).
