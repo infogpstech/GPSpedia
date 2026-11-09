@@ -16,10 +16,10 @@ export const API_ENDPOINTS = {
 };
 
 export const ACTION_TO_SERVICE_MAP = {
-    'login': 'AUTH', 'validateSession': 'AUTH', 'logout': 'AUTH',
+    'login': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
-    'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'AUTH', 'changePassword': 'USERS', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
+    'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'FEEDBACK',
     'initYouTubeUpload': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
@@ -70,6 +70,21 @@ export function subscribeServiceMetrics(listener) {
     return () => serviceMetricListeners.delete(listener);
 }
 
+const sessionTouchState=new Map();
+const SESSION_TOUCH_INTERVAL_MS=5*60*1000;
+async function ensureSessionTouched_(token){
+ const now=Date.now();let state=sessionTouchState.get(token);
+ if(state&&state.pending)return state.pending;
+ if(state&&state.lastSuccess&&now-state.lastSuccess<SESSION_TOUCH_INTERVAL_MS)return;
+ if(!state)state={lastSuccess:0,pending:null};
+ const pending=routeAction('touchSession',{sessionToken:token}).then(result=>{
+  if(!result||result.valid!==true)throw new Error('La sesión no es válida o ha expirado.');
+  state.lastSuccess=Date.now();
+  try{const raw=localStorage.getItem('gpsepedia_session');if(raw){const user=JSON.parse(raw);if(user&&user.SessionToken===token){user.SessionLastActivityAt=result.lastActivityAt||new Date().toISOString();localStorage.setItem('gpsepedia_session',JSON.stringify(user));}}}catch(e){console.warn('No se pudo actualizar la actividad local:',e.message);}
+ }).finally(()=>{state.pending=null;sessionTouchState.set(token,state);});
+ state.pending=pending;sessionTouchState.set(token,state);return pending;
+}
+
 // 2. LÓGICA DE RUTEO CENTRAL
 export async function routeAction(action, payload = {}, serviceOverride = null) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
@@ -79,6 +94,8 @@ export async function routeAction(action, payload = {}, serviceOverride = null) 
     const requestStartedAt = Date.now();
     let outcome = "network_error", httpStatus = null;
     try {
+        const token=payload&&typeof payload==='object'&&typeof payload.sessionToken==='string'?payload.sessionToken:'';
+        if(token&&!['login','validateSession','touchSession','logout'].includes(action))await ensureSessionTouched_(token);
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },

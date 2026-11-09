@@ -107,44 +107,24 @@ const COLS_ACTIVE_SESSIONS = {
  * Obtiene la identidad personal desde la sesión activa y el perfil almacenados
  * en Spreadsheet. No utiliza el nombre enviado por el navegador.
  */
-function getAuthenticatedCollaborator(payload) {
-    const userId = String(payload && payload.userId || '').trim();
-    const sessionToken = String(payload && payload.sessionToken || '');
-    if (!userId || !sessionToken.trim()) {
-        throw new Error("Acceso no autorizado: se requiere una sesión válida.");
-    }
-
-    const ss = getSpreadsheet();
-    const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-    const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-    if (!sessionsSheet || !usersSheet) {
-        throw new Error("Acceso no autorizado: sesión no autorizada.");
-    }
-
-    const sessionsData = sessionsSheet.getDataRange().getValues();
-    const activeSession = sessionsData.slice(1).some(row =>
-        String(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1] || '').trim() === userId &&
-        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || '') === sessionToken
-    );
-    if (!activeSession) {
-        throw new Error("Acceso no autorizado: sesión inválida o expirada.");
-    }
-
-    const usersData = usersSheet.getDataRange().getValues();
-    const userRow = usersData.slice(1).find(row =>
-        String(row[COLS_USERS.ID - 1] || '').trim() === userId
-    );
-    if (!userRow) {
-        throw new Error("Acceso no autorizado: usuario de la sesión no encontrado.");
-    }
-
-    const fullName = String(userRow[COLS_USERS.Nombre_Completo - 1] || '').trim();
-    if (!fullName) {
-        throw new Error("El perfil del usuario no tiene un nombre completo registrado.");
-    }
-    return fullName;
+function getSessionExpirationStatus_(row,now=new Date()){
+ if(!row)return{expired:true,reason:'missing_session'};
+ const parse=v=>{if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;};
+ const add=(date,n)=>{const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+n);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;};
+ const created=parse(row[3]),raw=row[5],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parse(raw);
+ if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};
+ if(now.getTime()>=add(created,3).getTime())return{expired:true,reason:'absolute_expiration'};
+ if(now.getTime()>=add(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};
+ return{expired:false};
 }
-
+function getAuthenticatedCollaborator(payload){
+ const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
+ const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
+ const m=sh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()===id&&String(r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]||'')===token);
+ if(m.length!==1||getSessionExpirationStatus_(m[0],new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada o expirada.");
+ const u=uh.getDataRange().getValues().slice(1).find(r=>String(r[COLS_USERS.ID-1]||'').trim()===id);if(!u)throw new Error("Acceso no autorizado: usuario de la sesión no encontrado.");
+ const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;
+}
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================

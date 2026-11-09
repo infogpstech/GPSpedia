@@ -37,7 +37,8 @@ const COLS_ACTIVE_SESSIONS = {
     Usuario: 2,
     ActiveSessions: 3,
     date: 4,
-    Logs: 5
+    Logs: 5,
+    LastActivityAt: 6
 };
 
 // ============================================================================
@@ -106,9 +107,6 @@ function doPost(e) {
             case 'updateUser':
                 response = handleUpdateUser(request.payload);
                 break;
-            case 'changePassword':
-                response = handleChangePassword(request.payload);
-                break;
             case 'updateProfile':
                 response = handleUpdateProfile(request.payload);
                 break;
@@ -126,12 +124,17 @@ function doPost(e) {
 // VERIFICACIÓN DE ROL
 // ============================================================================
 
+function parseSessionDate_(v){if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;}
+function addCalendarMonthsUTC_(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
+function getSessionExpirationStatus_(row,now=new Date()){const created=parseSessionDate_(row[COLS_ACTIVE_SESSIONS.date-1]),raw=row[COLS_ACTIVE_SESSIONS.LastActivityAt-1],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parseSessionDate_(raw);if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};if(now.getTime()>=addCalendarMonthsUTC_(created,3).getTime())return{expired:true,reason:'absolute_expiration'};if(now.getTime()>=addCalendarMonthsUTC_(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};return{expired:false};}
 function getVerifiedSession(sessionToken) {
     if (!sessionToken) throw new Error("Acceso no autorizado: Se requiere token de sesión.");
     const ss = getSpreadsheet(), sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
     if (!sessionsSheet) throw new Error("Hoja de sesiones no encontrada.");
     const sessionRows = sessionsSheet.getDataRange().getValues().slice(1).filter(row => row[2] === sessionToken);
     if (sessionRows.length !== 1) throw new Error("Acceso no autorizado: Sesión inválida, duplicada o expirada.");
+    const expiration=getSessionExpirationStatus_(sessionRows[0],new Date());
+    if(expiration.expired)throw new Error('Acceso no autorizado: Sesión expirada por '+expiration.reason+'.');
     const userId = String(sessionRows[0][0] ?? '').trim();
     if (!userId) throw new Error("Acceso no autorizado: Identidad de sesión inválida.");
     const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
@@ -305,6 +308,7 @@ function handleCreateUser(payload) {
 function handleUpdateUser(payload) {
     const { userId, updates, sessionToken } = payload;
     if (!userId || !updates || !sessionToken) throw new Error("Datos insuficientes para actualizar. Se requiere sessionToken.");
+    if (updates.Password) throw new Error('El restablecimiento administrativo de contraseñas debe realizarse mediante AUTH con el rol Desarrollador.');
 
     const { role: updaterRole } = getVerifiedSession(sessionToken);
     const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
@@ -348,10 +352,6 @@ function handleUpdateUser(payload) {
                     throw new Error(`El rol '${updaterRole}' no puede asignar el privilegio '${updates.Privilegios}'.`);
                 }
             }
-            if (updates.Password) {
-                userSheet.getRange(i + 2, COLS_USERS.Password).setValue(createPasswordHash(updates.Password));
-            }
-
             return { status: 'success', message: 'Usuario actualizado.' };
         }
     }
@@ -385,39 +385,6 @@ function handleUpdateProfile(payload) {
     throw new Error("Usuario no encontrado.");
 }
 
-function handleChangePassword(payload) {
-    const { userId, currentPassword, newPassword, sessionToken } = payload;
-    if (!userId || !currentPassword || !newPassword || !sessionToken) {
-        throw new Error("Datos insuficientes para cambiar la contraseña.");
-    }
-
-    const { userId: authenticatedUserId } = getVerifiedSession(sessionToken);
-
-    if (authenticatedUserId !== String(userId)) {
-        throw new Error("Acceso no autorizado: No puedes cambiar la contraseña de otro usuario.");
-    }
-
-    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-    const data = userSheet.getDataRange().getValues();
-    data.shift();
-
-    for (let i = 0; i < data.length; i++) {
-        // Comparación flexible del ID (soporta string o number)
-        if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
-            const storedPassword = data[i][COLS_USERS.Password - 1];
-            const currentPasswordCheck = verifyStoredPassword(storedPassword, currentPassword);
-
-            if (!currentPasswordCheck.matches) {
-                throw new Error("La contraseña actual es incorrecta.");
-            }
-
-            const newPasswordHash = createPasswordHash(newPassword);
-            userSheet.getRange(i + 2, COLS_USERS.Password).setValue(newPasswordHash);
-            return { status: 'success', message: 'Contraseña actualizada correctamente.' };
-        }
-    }
-    throw new Error("Usuario no encontrado.");
-}
 
 // ============================================================================
 // FUNCIONES AUXILIARES

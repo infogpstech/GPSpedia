@@ -306,3 +306,28 @@ Estado H-AUD-059: RESUELTO EN FUENTES; validación funcional aislada/concurrente
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
 Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+H-AUD-060 — Sesiones sin expiración absoluta ni por inactividad en todos los consumidores
+Fecha: 2026-11-09. Origen: AUG-007 / AUD-T-002.
+Evidencia: Services/Auth.js handleValidateSession() no evaluaba ActiveSessions.date; Services/users.js getVerifiedSession() y los guards de Services/admin.js, Services/feedback.js y Services/write.js solo comprobaban existencia del token. ActiveSessions guardaba la creación, pero no última actividad.
+Riesgo: sesiones podían continuar válidas indefinidamente; aplicar el vencimiento solo en AUTH dejaría rutas protegidas de otros servicios sin la misma barrera.
+Corrección: política aprobada de tres meses calendario absolutos desde ActiveSessions.date y un mes calendario desde ActiveSessions.lastActivityAt. AUTH es el único escritor; crea la columna F de forma idempotente, valida/toca sesiones bajo el ScriptLock común y rechaza/elimina sesiones vencidas. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites. api-config.js invoca touchSession para llamadas autenticadas, con throttle de cinco minutos por token/pestaña. Las sesiones históricas sin lastActivityAt toman date como referencia inicial; timestamps inválidos fallan cerrados.
+Verificación local: sintaxis PASS en los servicios y clientes afectados; pruebas de calendario 8/8 PASS; guards y ruteo integrados. No se ejecutaron deployments ni endpoints productivos.
+Estado: RESUELTO EN FUENTES; validación funcional/concurrente aislada diferida a Beta.
+================================================================================
+
+================================================================================
+H-AUD-061 — Cambio y restablecimiento de contraseña no revocaban todas las sesiones
+Fecha: 2026-11-09. Origen: AUG-007 / AUD-T-002.
+Evidencia: Services/users.js handleChangePassword() actualizaba Users.Password sin revocar ActiveSessions. handleUpdateUser() también aceptaba updates.Password y escribía el hash desde USERS sin invalidar tokens.
+Riesgo: sesiones de otros dispositivos podían continuar autorizadas después de cambiar/restablecer la contraseña.
+Corrección: changePassword se trasladó a AUTH y valida token/identidad/antigüedad, invalida primero todos los tokens de la cuenta bajo el ScriptLock común, actualiza el hash y limpia filas en orden descendente. resetUserPassword se agregó a AUTH y solo acepta un solicitante Desarrollador activo; no permite restablecer la propia cuenta desde el formulario administrativo. USERS rechaza updates.Password y el formulario administrativo enruta el restablecimiento a AUTH. El cambio propio cierra la sesión local y solicita nuevo inicio.
+Verificación local: simulación de revocación selectiva PASS; sintaxis y ruteo PASS. Sin pruebas en Apps Script real.
+Estado: RESUELTO EN FUENTES; validación funcional y fallos parciales diferidos a Beta.
+================================================================================
+
+
+ADENDA AUG-007 — Revocación administrativa resiliente (2026-11-09)
+handleResetUserSessions(), reservado a Desarrollador, ahora invalida primero todos los tokens de las sesiones destino y después elimina las filas en orden descendente. Si la eliminación de filas falla, devuelve cleanupPending e invalidatedSessions; las filas remanentes conservan tokens vacíos y no autorizan solicitudes. También intenta limpiar Users.SessionToken aun cuando la limpieza de filas quede pendiente.

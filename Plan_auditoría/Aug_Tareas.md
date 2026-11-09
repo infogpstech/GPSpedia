@@ -66,3 +66,10 @@ Pruebas locales del generador: 6/6 PASS (inicio sin cuentas, incremento, máximo
 ADENDA DE VERIFICACIÓN — IDs USR Y FILAS CON FÓRMULA — 2026-11-09
 La validación del generador de IDs se amplió a 9/9 PASS: secuencia vacía/inicial, incremento, máximo existente, cuenta desactivada, duplicados, fila con datos sin ID y reutilización de filas vacías que contienen fórmula en Users.ID. Se verificó que la primera cuenta usa USR-0001 incluso si la fila de plantilla ya contiene fórmula; la siguiente recibe USR-0002. La fila nueva se escribe con ID estático y la fórmula queda sustituida en esa fila.
 La copia de prueba de USERS coincide con la fuente de producción, excepto por el Spreadsheet ID aislado. Sintaxis PASS en ambas.
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-007 — 2026-11-09
+Política aprobada e implementada en fuentes: tres meses calendario absolutos y un mes calendario de inactividad. AUTH centraliza el registro de actividad, validación y revocación por cambio/restablecimiento de contraseña; USERS, ADMIN, FEEDBACK y WRITE aplican los límites. Restablecimiento administrativo de contraseña y cierre remoto de sesiones reservados a Desarrollador. Sintaxis y pruebas locales PASS; validación funcional aislada diferida a Beta.
+Siguiente tarea de la ola: AUG-008 — coordinación de validación y sincronización entre pestañas.
+================================================================================

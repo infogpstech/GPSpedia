@@ -529,3 +529,56 @@ Limitaciones: no existen deployments aislados según Services/Test/README.md. No
 Siguiente tarea: continuar con AUG-001 según el orden maestro, después de verificar el commit y la rama.
 Este checkpoint final es la última actualización documental antes del único commit de AUG-005.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUG-007 — 2026-11-09
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work; HEAD inicial: d3e419bd65abefdfc9df89a1078c3c0ee831a917.
+Rama base: GPSpedia2.2.5; HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: AUG-007 — política de expiración y revocación tras cambio de contraseña.
+Decisión aprobada: 3 meses calendario absolutos; 1 mes calendario de inactividad; cambio propio revoca todas las sesiones; restablecimiento administrativo de contraseña y cierre remoto de sesiones requieren Desarrollador.
+Alcance: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, Services/admin.js, Services/feedback.js, Services/write.js, auth.js, api-config.js, users.html, Services/Test/README.md, Spreadsheet/GPSpedia_DB_columnas.md y registros de auditoría/seguimiento.
+Respaldo exacto de fuentes previo a edición (SHA de blobs):
+- Services/Auth.js: 6258f50ca077cb9aace13402d500f8b4eeb86956
+- Services/Test/Auth.js: 4912d9bf3038dd1deb11d247f17c9dd51af721c9
+- Services/users.js: 898ebf13a4bf67f8901c196fe005741d7b477ca3
+- Services/Test/users.js: efe18843dc49b303d1d64ec49634655ea7cd746c
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/feedback.js: 62c5287b4b862f5ca420529cea895df98f73ab33
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- auth.js: 67da2eb1da4f497481aecf416716c1493877be76
+- api-config.js: 4a673b1c06398b7ec6faadc2a92efb63132b7b70
+- users.html: 7fe48910bf9b99b4e6825cd33a772bfc5b58b4b2
+- Services/Test/README.md: e08827a48c47397c00bc3ccd8b124a6aaa24a262
+- Spreadsheet/GPSpedia_DB_columnas.md: 1720d06b19a678096133f6176499c5e3b7327b2b
+- Auditoría.txt: 8b2296c9d829361d99bbb35f8ef045d383bf762e
+- Tareas.txt: 5a77f30c194a3bfad792ccffc6aa5758132699cd
+- Tareas_pendientes_parte1.txt: ee67cdb8b1911ed83ff99f76da592e33261cd9e6
+- tareas_completadas_parte1.txt: dfdfb543050481bffa7adf8210813acc1e17bbd3
+- lista_beta.txt: f5513263bd2677c3be2298d013042561c523424f
+- ChangesLogs.txt: a3eacd86e84267f5700a0567deb497d307706b74
+- checkpoint.md: 9dfa998b842042cadfc7f8b88316a5ed24b6a7a0
+- Plan_auditoría/Aug_Tareas.md: 6be982e2a48c298bad0db822809353c8c82494e7
+- Plan_auditoría/Plan_Maestro_Implementacion.md: 1bccccbf26d11dc1ef193566f5da99c82261130c
+Estado inicial: sin cambios de código escritos en la rama. La exploración preliminar de la tarea había comenzado en la conversación anterior antes de registrar este checkpoint de recuperación; se documenta la desviación de secuencia sin ocultarla. No se modificaron deployments, endpoints, datos productivos ni rama base.
+Hallazgos: H-AUD-060 (ausencia de expiración uniforme/lastActivityAt) y H-AUD-061 (cambio/restablecimiento de contraseña sin revocación integral).
+Próximo paso: implementar la corrección mínima, probar límites calendario, revocación y todos los guards, comparar con respaldos y ejecutar Code Review.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUG-007 — 2026-11-09
+Rama de trabajo: GPSpedia2.2.5_work; HEAD de partida: d3e419bd65abefdfc9df89a1078c3c0ee831a917.
+Rama base: GPSpedia2.2.5; HEAD conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Política aplicada: tres meses calendario absolutos desde ActiveSessions.date y un mes calendario desde lastActivityAt. La fecha de creación permanece inmutable. AUTH crea la columna F de forma idempotente, valida/toca bajo el ScriptLock común y revoca tokens al cambiar/restablecer contraseñas. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites. routeAction renueva actividad autenticada como máximo cada cinco minutos por token/pestaña. Las sesiones históricas sin lastActivityAt usan date como referencia inicial; timestamps inválidos fallan cerrados.
+Cambios de código: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, Services/admin.js, Services/feedback.js, Services/write.js, auth.js, api-config.js y users.html.
+Documentación/esquema: Services/Test/README.md y Spreadsheet/GPSpedia_DB_columnas.md.
+Registros actualizados: Auditoría.txt (H-AUD-060/061), Tareas.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt, lista_beta.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md y Plan_Maestro_Implementacion.md.
+Verificación local: sintaxis PASS en 12 archivos; política calendario 8/8 PASS; simulación de revocación selectiva PASS; copias AUTH/USERS de prueba sincronizadas conservando IDs aislados. Code Review: guards de AUTH/USERS/ADMIN/FEEDBACK/WRITE cubren vencimiento; las escrituras de ActiveSessions permanecen centralizadas en AUTH.
+Limitaciones: no existen deployments aislados verificados; no se ejecutaron Apps Script real, endpoints operativos ni hojas productivas. Migración de columna F, concurrencia real, fallos parciales y UX offline quedan en lista_beta.txt. H-AUD-060 y H-AUD-061: RESUELTOS EN FUENTES.
+Siguiente tarea: AUG-008 — coordinación de validación y sincronización entre pestañas.
+Este checkpoint final es el último documento actualizado antes del único commit de AUG-007.
+================================================================================
+
+
+ADENDA FINAL DE CODE REVIEW — AUG-007
+La revocación remota de sesiones por Desarrollador también invalida los tokens antes de borrar filas. Un fallo posterior de eliminación deja filas sin token, reporta cleanupPending e invalidatedSessions y no conserva sesiones utilizables.

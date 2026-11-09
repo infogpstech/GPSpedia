@@ -251,7 +251,7 @@
                     <label for="role">Rol</label>
                     <select id="role" required></select>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="user-password-group">
                     <label for="user-password">Contraseña</label>
                     <input type="password" id="user-password">
                 </div>
@@ -511,6 +511,9 @@ function openUserModal(user = null) {
         roleSelect.appendChild(option);
     });
     if(user) roleSelect.value = user.Privilegios;
+    const passwordGroup=document.getElementById('user-password-group');
+    const isDeveloper=String(currentUser.Privilegios||'').trim().toLowerCase()==='desarrollador';
+    if(passwordGroup)passwordGroup.style.display=user&&(!isDeveloper||String(user.ID)===String(currentUser.ID))?'none':'block';
 
     modal.style.display = 'block';
     if (window.history && window.history.pushState) {
@@ -536,8 +539,13 @@ async function handleUserFormSubmit(e) {
         submitBtn.disabled = true;
 
         if (userId) {
-            await postToAction('updateUser', { userId, updates: userData, sessionToken: currentUser.SessionToken });
-            alert('Usuario actualizado');
+            const administrativePassword=userData.Password;
+            delete userData.Password;
+            await postToAction('updateUser',{userId,updates:userData,sessionToken:currentUser.SessionToken});
+            if(administrativePassword){
+                await postToAction('resetUserPassword',{targetUserId:userId,newPassword:administrativePassword,sessionToken:currentUser.SessionToken});
+                alert('Usuario actualizado y contraseña restablecida. Todas sus sesiones fueron cerradas.');
+            }else alert('Usuario actualizado');
         } else {
             await postToAction('createUser', { newUser: userData, sessionToken: currentUser.SessionToken });
             alert('Usuario creado');
@@ -637,13 +645,11 @@ async function handleChangePasswordSubmit(e) {
             newPassword,
             sessionToken: currentUser.SessionToken
         });
-        alert('Contraseña actualizada correctamente.');
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
-        } else {
-            document.getElementById('password-modal').style.display = 'none';
-        }
+        localStorage.removeItem(SESSION_KEY);
+        currentUser=null;
         document.getElementById('password-form').reset();
+        alert('Contraseña actualizada. Todas las sesiones fueron cerradas; inicia sesión nuevamente.');
+        window.location.replace('index.html');
     } catch (error) {
         // Error handled in postToAction
     } finally {

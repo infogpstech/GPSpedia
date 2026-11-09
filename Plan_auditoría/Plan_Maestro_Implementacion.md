@@ -258,3 +258,9 @@ Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora recha
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
 Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+ADENDA DE PROGRESO — SEGURIDAD Y SESIONES — 2026-11-09
+AUG-007 queda COMPLETADA EN FUENTES con política aprobada de tres meses calendario absolutos y un mes calendario de inactividad. La validación temporal cubre AUTH, USERS, ADMIN, FEEDBACK y WRITE; cambio/restablecimiento de contraseña revoca sesiones. La validación funcional aislada permanece en Beta. Siguiente secuencia: AUG-008 (coordinación entre pestañas), después AUG-009–013 (validación de identidad y serialización USERS).
+================================================================================

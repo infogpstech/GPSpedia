@@ -11,6 +11,19 @@ import * as offline from './offline.js';
 
 const SESSION_KEY = 'gpsepedia_session';
 
+function addSessionCalendarMonthsUTC(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
+function getLocalSessionExpiry(user,now=new Date()){
+ const created=user&&user.SessionCreatedAt?new Date(user.SessionCreatedAt):null,activity=user&&user.SessionLastActivityAt?new Date(user.SessionLastActivityAt):created;
+ if(!created||Number.isNaN(created.getTime())||!activity||Number.isNaN(activity.getTime()))return null;
+ if(now.getTime()>=addSessionCalendarMonthsUTC(created,3).getTime())return'absolute_expiration';
+ if(now.getTime()>=addSessionCalendarMonthsUTC(activity,1).getTime())return'inactivity_expiration';
+ return null;
+}
+function persistSessionValidation(user,result){
+ if(!result||result.valid!==true)return;
+ try{const latest=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(latest&&latest.SessionToken===user.SessionToken){latest.SessionCreatedAt=result.createdAt||latest.SessionCreatedAt;latest.SessionLastActivityAt=result.lastActivityAt||latest.SessionLastActivityAt;localStorage.setItem(SESSION_KEY,JSON.stringify(latest));}}catch(e){console.warn('No se pudo actualizar la vigencia local:',e.message);}
+}
+
 function handleLoginSuccess(user) {
     localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setState({ currentUser: user });
@@ -180,6 +193,11 @@ export async function checkSession() {
 
     try {
         const user = JSON.parse(sessionData);
+        const localExpiration=getLocalSessionExpiry(user);
+        if(localExpiration){
+            logout(localExpiration==='absolute_expiration'?'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.':'Tu sesión expiró por inactividad. Inicia sesión nuevamente.');
+            return;
+        }
 
         // Phase 3.1: Acceso inmediato si hay sesión local (Non-blocking)
         handleLoginSuccess(user);
@@ -188,6 +206,7 @@ export async function checkSession() {
         // Validar en segundo plano
         if (window.navigator && window.navigator.onLine !== false) {
             apiValidateSession(user.ID, user.SessionToken).then(result => {
+                persistSessionValidation(user,result);
                 // Phase 3.3: Solo cerrar sesión si el servidor confirma EXPLICITAMENTE que es inválida.
                 if (result && result.valid === false) {
                     console.warn("Sesión invalidada por el servidor.");

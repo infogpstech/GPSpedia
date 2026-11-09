@@ -150,3 +150,15 @@ AUTH es el único escritor de ActiveSessions. resetUserSessions se ejecuta en AU
 CORRECCIÓN DE IDENTIFICADORES — AUG-005 / Users.ID
 La referencia histórica a UUID estático queda sustituida para las nuevas cuentas por IDs secuenciales permanentes `USR-0001`, `USR-0002`, etc. La asignación se realiza en USERS bajo su ScriptLock, escaneando los IDs de filas con datos y escribiendo el nuevo ID como valor fijo. Las filas nuevas copian únicamente formato y validaciones, no la fórmula de ID. Los IDs existentes y de cuentas desactivadas se conservan y nunca se reutilizan. La corrección no cambia IDs históricos ni elimina filas.
 ================================================================================
+
+
+================================================================================
+AUG-007 — Política de expiración y revocación de sesiones
+Fecha: 2026-11-09.
+Estado: COMPLETADA EN FUENTES; validación funcional aislada diferida a Beta.
+Política aprobada: tres meses calendario de expiración absoluta y un mes calendario de inactividad. La actividad se registra en ActiveSessions.lastActivityAt; la fecha de creación permanece inmutable en ActiveSessions.date. AUTH centraliza touchSession, validateSession, cambio de contraseña propio y restablecimiento administrativo. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites. El cambio propio y el restablecimiento administrativo invalidan primero los tokens de todas las sesiones; el restablecimiento de otra cuenta requiere Desarrollador.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, Services/admin.js, Services/feedback.js, Services/write.js, auth.js, api-config.js, users.html, Services/Test/README.md y Spreadsheet/GPSpedia_DB_columnas.md.
+Validaciones locales: sintaxis PASS en 12 archivos; política calendario 8/8 PASS; simulación de revocación selectiva PASS; copias AUTH/USERS de prueba conservan sus IDs aislados.
+Limitaciones: no hay deployments aislados configurados según Services/Test/README.md; no se ejecutaron Apps Script real, endpoints live ni hojas productivas. La validación funcional/concurrente y la migración de columna F quedan en Beta.
+H-AUD-060 y H-AUD-061: RESUELTOS EN FUENTES.
+================================================================================

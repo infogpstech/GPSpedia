@@ -25,7 +25,7 @@
 | 6 | `LogosMarca` | 4 |
 | 7 | `Tutorial` | 7 |
 | 8 | `Relay` | 11 |
-| 9 | `ActiveSessions` | 5 |
+| 9 | `ActiveSessions` | 6 |
 | 10 | `Feedbacks` | 9 |
 | 11 | `Contactanos` | 6 |
 | 12 | `Logs` | 4 |
@@ -202,7 +202,7 @@
 ### Hoja `ActiveSessions`
 
 - **Fila de encabezados:** 1
-- **Columnas con encabezado:** 5
+- **Columnas con encabezado:** 6
 
 | Posición | Letra | Encabezado exacto |
 |---:|:---:|---|
@@ -211,6 +211,7 @@
 | 3 | C | `ActiveSessions` |
 | 4 | D | `date` |
 | 5 | E | `Logs` |
+| 6 | F | `lastActivityAt` |
 
 ### Hoja `Feedbacks`
 

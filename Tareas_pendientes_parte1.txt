@@ -1493,3 +1493,13 @@ Implementación verificada:
 Validaciones locales: sintaxis PASS en `Services/Auth.js`, `Services/Test/Auth.js` y `auth.js` (módulo ESM); harness de logout 2/2 PASS; prueba de limpieza de estado en memoria y solicitud remota PASS.
 No se desplegaron servicios ni se llamaron endpoints operativos. La verificación funcional en deployment aislado queda diferida a Beta.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-007 — 2026-11-09
+Decisión aprobada: expiración absoluta de tres meses calendario; expiración por inactividad de un mes calendario; el cambio de contraseña propia revoca todas las sesiones; el restablecimiento administrativo de contraseña y el cierre remoto de sesiones requieren Desarrollador.
+Estado vigente: COMPLETADA EN FUENTES; validación funcional aislada diferida a Beta.
+Implementación: ActiveSessions.date se conserva como creación inmutable y se agrega lastActivityAt (columna F); AUTH es el único escritor y expone touchSession. AUTH, USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites. routeAction actualiza actividad autenticada con throttle de cinco minutos. AUTH centraliza changePassword/resetUserPassword y revoca tokens antes de limpiar filas; USERS ya no escribe contraseñas mediante updateUser.
+Pruebas locales: política calendario 8/8 PASS; simulación de revocación selectiva PASS; sintaxis de todos los archivos de código afectados PASS. No se desplegaron servicios ni se llamaron endpoints operativos.
+H-AUD-060 y H-AUD-061: RESUELTOS EN FUENTES. Pruebas funcionales/concurrentes y migración de la hoja aislada agregadas a lista_beta.txt.
+================================================================================

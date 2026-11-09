@@ -128,3 +128,14 @@ Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, I
 - Probar con fórmulas prellenadas en filas vacías: el servicio reutiliza la primera fila sin datos y sustituye la fórmula por un valor fijo.
 - Confirmar que IDs existentes y de cuentas desactivadas no se reutilizan; probar duplicados y filas con datos sin ID.
 - No editar manualmente IDs de producción ni ejecutar pruebas contra endpoints operativos.
+
+
+### AUG-007 — Expiración absoluta, inactividad y revocación de contraseñas
+- Crear/verificar AUTH, USERS, ADMIN, FEEDBACK y WRITE aislados contra la misma Spreadsheet de prueba.
+- Probar expiración absoluta a los tres meses calendario y por inactividad al mes calendario; cubrir límites exactos, meses de 28/29/30/31 días y fechas de fin de mes.
+- Migrar una hoja ActiveSessions histórica con cinco columnas: confirmar que AUTH agrega lastActivityAt en F solo si el encabezado/datos están libres; probar F ocupada por encabezado desconocido y F con datos sin encabezado; no sobrescribir.
+- Probar sesiones históricas sin lastActivityAt (fallback a date), timestamps inválidos, token duplicado, usuario inactivo y sesión revocada.
+- Probar touchSession y validateSession concurrentes con login/logout/resetUserSessions; comprobar que AUTH es el único escritor de ActiveSessions y que ADMIN/FEEDBACK/WRITE/USERS rechazan sesiones vencidas.
+- Probar llamadas autenticadas desde api-config.js, throttle de cinco minutos, errores de red, expiración y comportamiento offline/local.
+- Cambiar contraseña propia y restablecer contraseña de otra cuenta con Desarrollador; verificar revocación de todas las sesiones, rechazo de otros roles, prohibición de auto-restablecimiento administrativo, limpieza parcial y reintento.
+- No utilizar endpoints operativos ni datos productivos.

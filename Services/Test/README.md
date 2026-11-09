@@ -75,3 +75,14 @@ Antes de desactivar una cuenta, AUTH congela como valores estáticos los IDs cal
 - `Services/users.js` valida sesiones mediante lectura, pero no agrega, modifica ni elimina filas de `ActiveSessions`.
 - El botón Cerrar sesiones de `users.html` invoca `resetUserSessions`, que `api-config.js` enruta a AUTH. AUTH valida el token del Desarrollador, verifica que ambas cuentas estén activas y sean únicas, y elimina las sesiones del usuario objetivo bajo el mismo `ScriptLock` que login/logout.
 - No se ha desplegado ni invocado ningún endpoint operativo desde esta modificación. Las pruebas concurrentes de Apps Script deben ejecutarse únicamente después de configurar los deployments aislados.
+
+
+## Política de expiración de sesiones (AUG-007)
+
+- `ActiveSessions.date` conserva la fecha de creación y no se modifica.
+- `ActiveSessions.lastActivityAt` registra la última actividad autenticada aceptada por AUTH. AUTH crea la columna F de forma idempotente si está libre; no sobrescribe encabezados o datos desconocidos.
+- La expiración absoluta ocurre a los tres meses calendario desde `date`; la expiración por inactividad ocurre al cumplirse un mes calendario desde `lastActivityAt`. Los límites se calculan en UTC y el día se ajusta al último día del mes cuando corresponde.
+- Las sesiones históricas sin `lastActivityAt` usan `date` como última actividad inicial; la migración no renueva su antigüedad.
+- `touchSession` y `validateSession` actualizan `lastActivityAt` solo después de validar token único, usuario activo y vigencia. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites sin escribir en ActiveSessions.
+- `changePassword` y `resetUserPassword` se enrutan a AUTH. Cambiar/restablecer una contraseña invalida primero todos los tokens de la cuenta y luego limpia las filas de sesión. `resetUserPassword` requiere rol Desarrollador y no permite restablecer la propia cuenta desde el formulario administrativo.
+- Probar límites absolutos/de inactividad, meses de 28/29/30/31 días, timestamps inválidos, sesiones históricas sin columna F, actividad, revocación y fallos parciales únicamente en la Spreadsheet aislada.

@@ -30,7 +30,8 @@ const COLS_ACTIVE_SESSIONS = {
     Usuario: 2,
     ActiveSessions: 3,
     date: 4,
-    Logs: 5
+    Logs: 5,
+    LastActivityAt: 6
 };
 
 const SESSION_LIMITS = {
@@ -215,6 +216,15 @@ function doPost(e) {
             case 'validateSession':
                 response = handleValidateSession(request.payload);
                 break;
+            case 'touchSession':
+                response = handleTouchSession(request.payload);
+                break;
+            case 'changePassword':
+                response = handleChangePassword(request.payload);
+                break;
+            case 'resetUserPassword':
+                response = handleResetUserPassword(request.payload);
+                break;
             case 'resetUserSessions':
                 response = handleResetUserSessions(request.payload);
                 break;
@@ -297,6 +307,7 @@ function handleLogin(payload) {
         let oldestSession = null;
         let sessionCount = 0;
         let sessionToken = '';
+        let sessionCreatedAt = '';
         let sessionOperationError = null;
         let sessionDeleteFailed = false;
 
@@ -315,6 +326,7 @@ function handleLogin(payload) {
 
             const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
             if (!activeSessionsSheet) throw new Error("Hoja ActiveSessions no encontrada.");
+            ensureActiveSessionsActivityColumn_(activeSessionsSheet);
 
             const sessionsData = activeSessionsSheet.getDataRange().getValues();
             sessionsData.shift(); // Remove header
@@ -347,7 +359,10 @@ function handleLogin(payload) {
             newSessionRow[COLS_ACTIVE_SESSIONS.ID_Usuario - 1] = userId;
             newSessionRow[COLS_ACTIVE_SESSIONS.Usuario - 1] = username;
             newSessionRow[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] = sessionToken;
-            newSessionRow[COLS_ACTIVE_SESSIONS.date - 1] = new Date().toISOString();
+            sessionCreatedAt = new Date().toISOString();
+            newSessionRow[COLS_ACTIVE_SESSIONS.date - 1] = sessionCreatedAt;
+            newSessionRow[COLS_ACTIVE_SESSIONS.Logs - 1] = '';
+            newSessionRow[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] = sessionCreatedAt;
             activeSessionsSheet.appendRow(newSessionRow);
         } catch (sessionError) {
             sessionOperationError = sessionError;
@@ -377,7 +392,9 @@ function handleLogin(payload) {
             Privilegios: foundUserRow[COLS_USERS.Privilegios - 1],
             Telefono: foundUserRow[COLS_USERS.Telefono - 1],
             Correo_Electronico: foundUserRow[COLS_USERS.Correo_Electronico - 1],
-            SessionToken: sessionToken
+            SessionToken: sessionToken,
+            SessionCreatedAt: sessionCreatedAt,
+            SessionLastActivityAt: sessionCreatedAt
         };
 
         return { status: 'success', user: user };
@@ -396,19 +413,15 @@ function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
-        if (!sessionsSheet || !usersSheet) return { valid: false };
-        const sessionRows = sessionsSheet.getDataRange().getValues().slice(1).filter(row => row[2] === sessionToken);
-        if (sessionRows.length !== 1 || normalizeUserId(sessionRows[0][0]) !== normalizeUserId(userId)) return { valid: false };
-        const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => normalizeUserId(row[0]) === normalizeUserId(userId));
-        if (userRows.length !== 1 || !isActiveAuthUserRecord(userRows[0])) return { valid: false };
-        return { valid: true };
+        return validateAndTouchSession_(sessionToken, userId);
     } catch (error) {
         logToSheet('ERROR', `Error in handleValidateSession: ${error.message}`, { stack: error.stack });
         return { valid: false, error: error.message };
     }
+}
+function handleTouchSession(payload) {
+    try { const token=payload&&payload.sessionToken; if(typeof token!=='string'||!token)return{valid:false}; return validateAndTouchSession_(token); }
+    catch(error){logToSheet('ERROR',`Error in handleTouchSession: ${error.message}`,{stack:error.stack});return{valid:false,error:error.message};}
 }
 
 // Todas las mutaciones de ActiveSessions y las eliminaciones de cuenta se coordinan en AUTH.
@@ -425,6 +438,15 @@ function normalizeRoleName(value) {
 function normalizeUserId(value) {
     return String(value === null || value === undefined ? '' : value).trim();
 }
+
+const SESSION_ABSOLUTE_MONTHS=3, SESSION_IDLE_MONTHS=1;
+function parseSessionDate_(v){if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;}
+function addCalendarMonthsUTC_(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
+function getSessionExpirationStatus_(row,now=new Date()){if(!row)return{expired:true,reason:'missing_session'};const created=parseSessionDate_(row[COLS_ACTIVE_SESSIONS.date-1]),raw=row[COLS_ACTIVE_SESSIONS.LastActivityAt-1],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parseSessionDate_(raw);if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};if(now.getTime()>=addCalendarMonthsUTC_(created,SESSION_ABSOLUTE_MONTHS).getTime())return{expired:true,reason:'absolute_expiration'};if(now.getTime()>=addCalendarMonthsUTC_(activity,SESSION_IDLE_MONTHS).getTime())return{expired:true,reason:'inactivity_expiration'};return{expired:false,createdAt:created,lastActivityAt:activity};}
+function ensureActiveSessionsActivityColumn_(sheet){const col=COLS_ACTIVE_SESSIONS.LastActivityAt;if(sheet.getMaxColumns()<col)sheet.insertColumnsAfter(sheet.getMaxColumns(),col-sheet.getMaxColumns());const header=String(sheet.getRange(1,col).getValue()||'').trim();if(header==='lastActivityAt')return col;if(header!=='')throw new Error('La columna F de ActiveSessions está ocupada por otro encabezado; no se modificó el esquema.');const last=sheet.getLastRow();if(last>1&&sheet.getRange(2,col,last-1,1).getValues().some(r=>r[0]!==null&&r[0]!==undefined&&String(r[0]).trim()!==''))throw new Error('La columna F de ActiveSessions contiene datos sin encabezado; no se modificó el esquema.');sheet.getRange(1,col).setValue('lastActivityAt');SpreadsheetApp.flush();return col;}
+function validateAndTouchSession_(token,expectedUserId=null){const lock=LockService.getScriptLock();let acquired=false;try{lock.waitLock(10000);acquired=true;const ss=SpreadsheetApp.openById(SPREADSHEET_ID),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)return{valid:false,reason:'missing_sheet'};ensureActiveSessionsActivityColumn_(sh);const data=sh.getDataRange().getValues(),matches=[];for(let i=1;i<data.length;i++)if(data[i][COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token)matches.push({rowIndex:i+1,row:data[i]});if(matches.length!==1)return{valid:false,reason:matches.length>1?'duplicate_token':'missing_session'};const session=matches[0],userId=normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario-1]);if(!userId||(expectedUserId!==null&&userId!==normalizeUserId(expectedUserId)))return{valid:false,reason:'identity_mismatch'};const userRows=uh.getDataRange().getValues().slice(1).filter(r=>normalizeUserId(r[COLS_USERS.ID-1])===userId);if(userRows.length!==1||!isActiveAuthUserRecord(userRows[0]))return{valid:false,reason:'inactive_or_ambiguous_user'};const expiry=getSessionExpirationStatus_(session.row,new Date());if(expiry.expired){try{sh.deleteRow(session.rowIndex);}catch(e){console.error('No se pudo retirar la fila expirada:',e.message);}if(userRows[0][COLS_USERS.SessionToken-1]===token){try{const current=uh.getDataRange().getValues().slice(1).map((r,i)=>({r,rowIndex:i+2})).filter(x=>normalizeUserId(x.r[COLS_USERS.ID-1])===userId);if(current.length===1)uh.getRange(current[0].rowIndex,COLS_USERS.SessionToken).clearContent();}catch(e){console.error('No se pudo limpiar Users.SessionToken:',e.message);}}SpreadsheetApp.flush();return{valid:false,reason:expiry.reason};}const lastActivityAt=new Date().toISOString();sh.getRange(session.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(lastActivityAt);SpreadsheetApp.flush();return{valid:true,userId,createdAt:expiry.createdAt.toISOString(),lastActivityAt};}finally{if(acquired)lock.releaseLock();}}
+function revokeAllUserSessionsUnderLock_(sheet,userId){const data=sheet.getDataRange().getValues(),counts=new Map(),rows=[];data.slice(1).forEach(r=>{const t=String(r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]||'');if(t)counts.set(t,(counts.get(t)||0)+1);});for(let i=1;i<data.length;i++){if(normalizeUserId(data[i][COLS_ACTIVE_SESSIONS.ID_Usuario-1])!==normalizeUserId(userId))continue;const t=String(data[i][COLS_ACTIVE_SESSIONS.ActiveSessions-1]||'');if(t&&counts.get(t)>1)throw new Error('La cuenta tiene un token duplicado; no se modificaron contraseña ni sesiones.');rows.push({rowIndex:i+1,token:t});}rows.forEach(x=>{if(x.token)sheet.getRange(x.rowIndex,COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();});SpreadsheetApp.flush();return{rows,revokedSessions:rows.filter(x=>x.token).length};}
+
 function handleResetUserSessions(payload) {
     const targetUserId = payload && payload.targetUserId;
     const sessionToken = payload && payload.sessionToken;
@@ -467,6 +489,8 @@ function handleResetUserSessions(payload) {
                 : 'Acceso no autorizado: sesión inválida o expirada.');
         }
 
+        const requesterExpiration=getSessionExpirationStatus_(requesterMatches[0],new Date());
+        if(requesterExpiration.expired)throw new Error('La sesión del Desarrollador expiró por '+requesterExpiration.reason+'.');
         requesterUserId = normalizeId(requesterMatches[0][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
         if (!requesterUserId) {
             throw new Error('Acceso no autorizado: identidad de sesión inválida.');
@@ -524,6 +548,18 @@ function handleResetUserSessions(payload) {
             }
         }
 
+        // Invalidar primero todos los tokens; si falla la limpieza de filas, ninguna sesión seguirá autorizada.
+        let invalidatedSessions = 0;
+        for (let i = 0; i < targetSessions.length; i++) {
+            const rowIndex = targetSessions[i];
+            const token = sessionsData[rowIndex - 1][COLS_ACTIVE_SESSIONS.ActiveSessions - 1];
+            if (token !== null && token !== undefined && String(token) !== '') {
+                sessionsSheet.getRange(rowIndex, COLS_ACTIVE_SESSIONS.ActiveSessions).clearContent();
+                invalidatedSessions++;
+            }
+        }
+        SpreadsheetApp.flush();
+
         for (let i = targetSessions.length - 1; i >= 0; i--) {
             try {
                 sessionsSheet.deleteRow(targetSessions[i]);
@@ -533,13 +569,11 @@ function handleResetUserSessions(payload) {
                 break;
             }
         }
-        if (!deletionError) {
-            try {
-                usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.SessionToken).clearContent();
-                userSessionTokenCleared = true;
-            } catch (error) {
-                cleanupError = error;
-            }
+        try {
+            usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.SessionToken).clearContent();
+            userSessionTokenCleared = true;
+        } catch (error) {
+            cleanupError = error;
         }
         SpreadsheetApp.flush();
     } finally {
@@ -547,16 +581,21 @@ function handleResetUserSessions(payload) {
     }
 
     if (deletionError) {
-        logToSheet('ERROR', 'Partial user session reset in AUTH.', {
+        logToSheet('ERROR', 'Session tokens invalidated; row cleanup is pending in AUTH.', {
             requesterUserId,
             targetUserId: normalizeId(targetUserId),
+            invalidatedSessions,
             closedSessions,
-            error: deletionError.message
+            userSessionTokenCleared,
+            error: deletionError.message,
+            cleanupError: cleanupError ? cleanupError.message : ''
         });
         return {
             status: 'error',
             closedSessions,
-            message: `La operación se interrumpió después de cerrar ${closedSessions} sesión(es) de ${targetUsername}. Vuelve a intentarlo para revocar las restantes.`
+            invalidatedSessions,
+            cleanupPending: true,
+            message: `Se invalidaron ${invalidatedSessions} sesión(es) de ${targetUsername}; la limpieza de algunas filas quedó pendiente. Vuelve a intentarlo para completar la limpieza.`
         };
     }
 
@@ -572,16 +611,19 @@ function handleResetUserSessions(payload) {
             requesterUserId,
             targetUserId: normalizeId(targetUserId),
             closedSessions,
-            userSessionTokenCleared
+            invalidatedSessions,
+            userSessionTokenCleared,
+            cleanupPending: Boolean(cleanupError)
         });
     }
 
-    const message = closedSessions > 0
-        ? `Se cerraron ${closedSessions} sesión(es) activa(s) de ${targetUsername}.`
+    const message = invalidatedSessions > 0
+        ? `Se invalidaron ${invalidatedSessions} sesión(es) activa(s) de ${targetUsername}.`
         : 'El usuario no tenía sesiones activas.';
     return {
         status: 'success',
         closedSessions,
+        invalidatedSessions,
         userSessionTokenCleared,
         cleanupPending: Boolean(cleanupError),
         message: cleanupError
@@ -625,6 +667,8 @@ function handleDeleteUser(payload) {
                 : 'Sesión inválida o expirada.');
         }
 
+        const requesterExpiration=getSessionExpirationStatus_(requesterSessions[0],new Date());
+        if(requesterExpiration.expired)throw new Error('La sesión del solicitante expiró por '+requesterExpiration.reason+'.');
         requesterUserId = normalizeUserId(requesterSessions[0][COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
         if (!requesterUserId) {
             throw new Error('Identidad de sesión inválida.');
@@ -752,6 +796,40 @@ function handleDeleteUser(payload) {
         closedSessions,
         message: 'Cuenta desactivada y sesiones revocadas.'
     };
+}
+
+
+function handleChangePassword(payload) {
+ const userId=normalizeUserId(payload&&payload.userId),currentPassword=payload&&payload.currentPassword,newPassword=payload&&payload.newPassword,token=payload&&payload.sessionToken;
+ if(!userId||!currentPassword||!newPassword||typeof token!=='string'||!token)throw new Error('Datos insuficientes para cambiar la contraseña.');
+ const lock=LockService.getScriptLock();let acquired=false,revokedSessions=0,cleanupPending=false,cleanupError=null;
+ try{lock.waitLock(10000);acquired=true;const ss=SpreadsheetApp.openById(SPREADSHEET_ID),users=ss.getSheetByName(SHEET_NAMES.USERS),sessions=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);if(!users||!sessions)throw new Error('No se encontraron las hojas Users y ActiveSessions.');ensureActiveSessionsActivityColumn_(sessions);
+ const data=sessions.getDataRange().getValues(),requester=data.slice(1).filter(r=>r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token);if(requester.length!==1||normalizeUserId(requester[0][COLS_ACTIVE_SESSIONS.ID_Usuario-1])!==userId)throw new Error('Acceso no autorizado: sesión inválida o identidad no coincidente.');
+ const expiry=getSessionExpirationStatus_(requester[0],new Date());if(expiry.expired)throw new Error('La sesión expiró por '+expiry.reason+'.');
+ const matches=users.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(x=>normalizeUserId(x.row[COLS_USERS.ID-1])===userId);if(matches.length!==1||!isActiveAuthUserRecord(matches[0].row))throw new Error('No se pudo identificar una cuenta activa y única.');
+ if(!verifyStoredPassword(matches[0].row[COLS_USERS.Password-1],currentPassword).matches)throw new Error('La contraseña actual es incorrecta.');
+ const newHash=createPasswordHash(newPassword),revocation=revokeAllUserSessionsUnderLock_(sessions,userId);revokedSessions=revocation.revokedSessions;users.getRange(matches[0].rowIndex,COLS_USERS.Password).setValue(newHash);
+ try{users.getRange(matches[0].rowIndex,COLS_USERS.SessionToken).clearContent();}catch(e){cleanupPending=true;cleanupError=e;}
+ for(let i=revocation.rows.length-1;i>=0;i--){try{sessions.deleteRow(revocation.rows[i].rowIndex);}catch(e){cleanupPending=true;cleanupError=e;break;}}SpreadsheetApp.flush();
+ }finally{if(acquired)lock.releaseLock();}
+ logToSheet(cleanupPending?'ERROR':'INFO','Own password changed; all session tokens were invalidated.',{userId,revokedSessions,cleanupPending,cleanupError:cleanupError?cleanupError.message:''});
+ return{status:'success',revokedSessions,cleanupPending,message:cleanupPending?'Contraseña actualizada y sesiones invalidadas. La limpieza de algunas filas quedó pendiente.':'Contraseña actualizada. Todas las sesiones fueron cerradas; inicia sesión nuevamente.'};
+}
+function handleResetUserPassword(payload) {
+ const targetId=normalizeUserId(payload&&payload.targetUserId),newPassword=payload&&payload.newPassword,token=payload&&payload.sessionToken;if(!targetId||!newPassword||typeof token!=='string'||!token)throw new Error('Datos insuficientes para restablecer la contraseña.');
+ const lock=LockService.getScriptLock();let acquired=false,requesterId='',revokedSessions=0,cleanupPending=false,cleanupError=null;
+ try{lock.waitLock(10000);acquired=true;const ss=SpreadsheetApp.openById(SPREADSHEET_ID),users=ss.getSheetByName(SHEET_NAMES.USERS),sessions=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);if(!users||!sessions)throw new Error('No se encontraron las hojas Users y ActiveSessions.');ensureActiveSessionsActivityColumn_(sessions);
+ const data=sessions.getDataRange().getValues(),requester=data.slice(1).filter(r=>r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token);if(requester.length!==1)throw new Error('Sesión solicitante inválida o duplicada.');
+ const expiry=getSessionExpirationStatus_(requester[0],new Date());if(expiry.expired)throw new Error('La sesión del solicitante expiró por '+expiry.reason+'.');requesterId=normalizeUserId(requester[0][COLS_ACTIVE_SESSIONS.ID_Usuario-1]);if(requesterId===targetId)throw new Error('Para cambiar tu propia contraseña utiliza la opción Cambiar contraseña del perfil.');
+ const rows=users.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})),actor=rows.filter(x=>normalizeUserId(x.row[COLS_USERS.ID-1])===requesterId),target=rows.filter(x=>normalizeUserId(x.row[COLS_USERS.ID-1])===targetId);
+ if(actor.length!==1||!isActiveAuthUserRecord(actor[0].row)||normalizeRoleName(actor[0].row[COLS_USERS.Privilegios-1])!=='desarrollador')throw new Error('Acceso denegado: solo una cuenta Desarrollador activa puede restablecer contraseñas.');
+ if(target.length!==1||!isActiveAuthUserRecord(target[0].row))throw new Error('La cuenta destino no existe, está desactivada o su ID no es único.');
+ const newHash=createPasswordHash(newPassword),revocation=revokeAllUserSessionsUnderLock_(sessions,targetId);revokedSessions=revocation.revokedSessions;users.getRange(target[0].rowIndex,COLS_USERS.Password).setValue(newHash);
+ try{users.getRange(target[0].rowIndex,COLS_USERS.SessionToken).clearContent();}catch(e){cleanupPending=true;cleanupError=e;}
+ for(let i=revocation.rows.length-1;i>=0;i--){try{sessions.deleteRow(revocation.rows[i].rowIndex);}catch(e){cleanupPending=true;cleanupError=e;break;}}SpreadsheetApp.flush();
+ }finally{if(acquired)lock.releaseLock();}
+ logToSheet(cleanupPending?'ERROR':'INFO','Developer reset a user password; all target session tokens were invalidated.',{requesterId,targetId,revokedSessions,cleanupPending,cleanupError:cleanupError?cleanupError.message:''});
+ return{status:'success',revokedSessions,cleanupPending,message:cleanupPending?'Contraseña restablecida y sesiones invalidadas. La limpieza de algunas filas quedó pendiente.':'Contraseña restablecida. Se cerraron todas las sesiones de la cuenta.'};
 }
 
 function handleLogout(payload) {
