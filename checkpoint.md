@@ -337,3 +337,33 @@ Filtros rápidos: continúan cancelados; no se reintrodujeron ni se tocaron.
 Siguiente acción: completar parser sintáctico integral y revisión independiente; después validar logout contra deployment AUTH aislado.
 Este checkpoint final es el último documento preparado antes del único commit.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — REV-AUG-006-001
+Fecha: 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD confirmado antes de la revisión: 2342701fa31e9a19cfc0e04ff46af4bdc3ccc825
+Rama base: GPSpedia2.2.5; HEAD conservado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Alcance: parser sintáctico de los cuatro archivos de AUG-006, comparación de copias AUTH y revisión estática de concurrencia entre AUTH y USERS.
+Archivos auditados: auth.js, api-config.js, Services/Auth.js, Services/Test/Auth.js, Services/users.js y Services/Test/README.md.
+Restricciones: no modificar la rama base, endpoints, deployments, datos productivos ni filtros rápidos; no desplegar el código mientras existan bloqueos.
+Estado inicial: implementación AUG-006 incorporada; validaciones integrales pendientes; auditoría posterior pendiente.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — REV-AUG-006-001
+Fecha: 2026-11-09
+Estado: REVISIÓN REALIZADA; AUG-006 BLOQUEADA POR H-AUD-056.
+HEAD padre: 2342701fa31e9a19cfc0e04ff46af4bdc3ccc825. Rama base conservada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Sintaxis: PASS en auth.js y api-config.js al analizar el cuerpo completo tras retirar import/export para el harness; PASS en los dos scripts Apps Script completos. La comprobación no demuestra ejecución real ni reemplaza la validación funcional de Apps Script.
+Copia de prueba AUTH: coincide con Services/Auth.js al normalizar el Spreadsheet ID y su comentario de configuración; se conserva el ID aislado.
+Code Review: segunda revisión estática identificó H-AUD-056. Services/Auth.js y Services/users.js mutan ActiveSessions con ScriptLock de proyectos distintos. La operación deleteRow(rowIndex) puede usar un índice obsoleto si USERS elimina una fila concurrentemente, con riesgo de revocar la sesión equivocada o dejar activa la solicitada.
+Corrección documental: se rectifica la conclusión previa de H-AUD-055 que consideraba suficiente el lock AUTH y descartaba coordinar USERS.
+Nueva tarea: AUG-100, centralizar/coordinadar las mutaciones de ActiveSessions. AUG-100 bloquea aprobación y despliegue de AUG-006.
+Pruebas locales previas: backend 7/7 y frontend 4/4 PASS; no cubrían la intercalación entre proyectos. No se ejecutaron pruebas funcionales reales: Services/Test/README.md confirma que AUTH/USERS aislados no están creados ni desplegados.
+No se modificó código durante esta revisión. No se llamaron endpoints productivos, no se modificaron datos, deployments, rama base ni funcionalidades canceladas. Los filtros rápidos continúan cancelados.
+Siguiente acción: diseñar y ejecutar AUG-100 con prueba de intercalado; después repetir revisión independiente y validación funcional aislada para AUG-006.
+Este checkpoint final cierra la revisión documental antes del único commit.
+================================================================================

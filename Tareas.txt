@@ -114,3 +114,22 @@ Archivos: auth.js, api-config.js, Services/Auth.js, Services/Test/Auth.js.
 Pruebas con dobles locales: 7 casos backend y 4 frontend PASS. No se ejecutaron pruebas contra deployments reales; Services/Test/README.md confirma que no están creados/desplegados.
 Pendiente: parser sintáctico integral de los módulos afectados, Code Review independiente y pruebas en deployments aislados AUTH; no marcar como completada hasta superar esos requisitos.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-006
+Fecha: 2026-11-09.
+Estado operativo: IMPLEMENTADA_BLOQUEADA_POR_H-AUD-056; no aprobada para despliegue.
+Sintaxis: PASS en los cuatro archivos afectados mediante parser del cuerpo completo; imports/exports se retiraron para el harness ESM. No equivale a prueba Apps Script.
+Revisión: la segunda revisión estática detectó que AUTH.logout y USERS.resetUserSessions mutan ActiveSessions bajo ScriptLock de proyectos distintos; puede quedar obsoleto el rowIndex y eliminarse otra sesión.
+Hallazgo bloqueante: H-AUD-056. Requisito: centralizar o coordinar todas las mutaciones de ActiveSessions y probar intercalados antes de aprobar AUG-006.
+Entorno: Services/Test/README.md confirma que AUTH/USERS aislados aún no están desplegados. No se probaron endpoints productivos.
+
+AUG-100 — CENTRALIZAR LA MUTACIÓN DE ACTIVASESSIONS ENTRE AUTH Y USERS
+Fecha: 2026-11-09.
+Estado: NUEVA — BLOQUEANTE PARA AUG-006.
+Origen: H-AUD-056.
+Objetivo: evitar carreras entre revocación individual de AUTH y cierre masivo de sesiones de USERS.
+Criterios mínimos: (1) definir una única autoridad de escritura/bloqueo para ActiveSessions; (2) enrutar logout individual y resetUserSessions por esa autoridad, o demostrar un mecanismo de exclusión realmente compartido entre proyectos; (3) impedir que una fila cambie de identidad entre localización y mutación; (4) conservar autorización de reset masivo y revocación por token exacto; (5) mantener idempotencia y preservación de sesiones ajenas; (6) sincronizar copias de prueba sin cambiar sus Spreadsheet IDs; (7) probar intercalados concurrentes entre AUTH/USERS, fila objetivo al inicio/medio/final, mismo usuario/usuarios distintos, token duplicado, reintentos y errores parciales; (8) no usar endpoints productivos ni datos reales para validar.
+Dependencia: resolver AUG-100 antes de aprobar o desplegar AUG-006. El cambio debe auditarse y tener checkpoint propio.
+================================================================================

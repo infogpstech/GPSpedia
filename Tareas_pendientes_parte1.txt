@@ -1439,3 +1439,18 @@ Archivos: auth.js, api-config.js, Services/Auth.js y Services/Test/Auth.js. La c
 Pruebas: 7 casos backend y 4 frontend con dobles locales PASS. No se realizaron pruebas en Apps Script real.
 Pendiente: parser sintáctico integral, Code Review independiente y deployments aislados para validación funcional. No promover a COMPLETADA hasta contar con evidencia.
 ================================================================================
+
+
+### AUG-100 — Centralizar la mutación de ActiveSessions entre AUTH y USERS
+- **Origen:** H-AUD-056, detectado en la revisión posterior de AUG-006. **Prioridad:** Crítica — integridad de sesiones.
+- **Problema:** AUTH.logout y USERS.resetUserSessions modifican la misma hoja ActiveSessions desde proyectos Apps Script separados. Cada proyecto usa su propio ScriptLock; no existe exclusión mutua entre ambos. Una eliminación concurrente puede desplazar filas y hacer que AUTH elimine otra sesión usando un rowIndex obsoleto.
+- **Criterios de aceptación:**
+  1. Centralizar las escrituras de ActiveSessions en una única autoridad de bloqueo, o demostrar un mecanismo interproyecto realmente compartido y exclusivo.
+  2. Hacer que logout individual y resetUserSessions utilicen esa autoridad sin degradar la autorización existente.
+  3. Mantener la identificación exacta por token, la idempotencia y la preservación de sesiones no objetivo.
+  4. Evitar que la identidad de la fila cambie entre lectura y mutación; no aceptar como solución una simple relectura del índice.
+  5. Sincronizar las copias AUTH/USERS de prueba conservando sus Spreadsheet IDs independientes.
+  6. Probar intercalados entre ambos servicios con la fila objetivo al inicio, medio y final; mismo usuario y usuarios distintos; sesiones múltiples; duplicados; reintentos y errores parciales.
+  7. Validar exclusivamente con Spreadsheet y deployments aislados; no llamar endpoints operativos ni modificar datos productivos.
+- **Dependencia:** bloquea la aprobación y el despliegue de AUG-006.
+- **Estado:** NUEVA; diseño, implementación, revisión independiente y pruebas pendientes.

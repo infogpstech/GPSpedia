@@ -207,3 +207,21 @@ Archivos auditados: auth.js, main.js, ui.js, api-config.js, Services/Auth.js, Se
 Acción prevista: añadir acción AUTH logout autenticada exclusivamente por sessionToken; bloquear y localizar la fila exacta; revocarla de forma idempotente; limpiar Users.SessionToken solo si coincide; agregar la ruta AUTH; hacer que auth.logout() retire y presente inmediatamente la sesión local y gestione la respuesta remota en segundo plano; sincronizar Services/Test/Auth.js preservando su Spreadsheet ID. Probar token válido, token ausente, token ya revocado, token duplicado, varias sesiones del mismo usuario, SessionToken más reciente distinto, fallo de limpieza secundaria y fallo de red mediante dobles locales.
 Estado: ABIERTO — AUDITADO; IMPLEMENTACIÓN PENDIENTE.
 ================================================================================
+
+
+================================================================================
+H-AUD-056 — Carrera de concurrencia entre AUTH.logout y USERS.resetUserSessions
+Fecha: 2026-11-09. Tarea afectada: AUG-006. Prioridad: CRÍTICA — integridad de sesiones.
+
+Auditoría estática de GPSpedia2.2.5_work, posterior al commit 2342701fa31e9a19cfc0e04ff46af4bdc3ccc825:
+- Services/Auth.js, handleLogout(): adquiere LockService.getScriptLock() del proyecto AUTH, lee ActiveSessions, guarda el índice de la fila coincidente y posteriormente ejecuta deleteRow(rowIndex).
+- Services/users.js, handleResetUserSessions(): también modifica ActiveSessions; adquiere LockService.getScriptLock() del proyecto USERS, lee la misma hoja y elimina filas mediante deleteRow().
+- Services/Test/README.md exige proyectos Apps Script separados para AUTH y USERS. Por tanto, sus ScriptLock pertenecen a proyectos distintos y no serializan mutuamente las operaciones sobre la misma Spreadsheet.
+- Intercalado reproducible por estructura: AUTH localiza el token en la fila N; antes de su deleteRow(), USERS elimina una fila anterior; la sesión objetivo se desplaza a N-1 y AUTH elimina ahora la fila N, que puede corresponder a otra sesión. La revocación solicitada puede quedar activa y una sesión ajena puede ser eliminada.
+- La revisión previa de H-AUD-055 afirmó que el lock AUTH era suficiente y que no se requería coordinar Services/users.js. Esa conclusión fue incompleta: no consideró resetUserSessions ni el aislamiento de locks entre proyectos.
+
+Impacto: corrupción de ActiveSessions, revocación no fiable y posible cierre de una sesión distinta a la solicitada. El hallazgo bloquea el despliegue y la aprobación de AUG-006.
+Criterio de corrección: centralizar todas las mutaciones de ActiveSessions bajo una única autoridad de bloqueo compartida por las acciones de logout individual y cierre masivo, o implementar un mecanismo de coordinación interproyecto demostrado como realmente exclusivo. No basta con releer el índice antes de deleteRow ni con cambiar el orden de eliminación.
+Pruebas obligatorias: intercalados entre logout y resetUserSessions con la fila objetivo al inicio/medio/final; mismo usuario y usuarios distintos; demostrar que no se elimina una sesión ajena y que la sesión objetivo siempre queda revocada; duplicados e idempotencia; copia AUTH/USERS aislada y deployments de prueba.
+Estado: ABIERTO — BLOQUEANTE para AUG-006. No se modificó código, endpoints, deployments ni datos productivos durante esta revisión.
+================================================================================

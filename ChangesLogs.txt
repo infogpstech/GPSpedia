@@ -101,3 +101,13 @@ No se modificaron Services/users.js, main.js, ui.js, endpoints, deployments ni d
 Verificación local con dobles: 7 casos backend y 4 casos frontend PASS (revocación individual, sesiones múltiples, token más reciente preservado, idempotencia, duplicados, fallo de limpieza secundaria, token ausente y fallo de red). No equivale a prueba en Apps Script real.
 La revisión de sintaxis se limita a los fragmentos modificados ejecutados con Node.js v22. No se ejecutó un parser integral de todos los módulos/archivos afectados. Estado: implementación incorporada, pendiente de revisión sintáctica integral y validación funcional en deployments aislados AUTH.
 ================================================================================
+
+
+================================================================================
+2026-11-09 — REV-AUG-006-001 — REVISIÓN POSTERIOR Y BLOQUEO POR CONCURRENCIA
+- Parser de cuerpo completo: auth.js y api-config.js pasaron tras retirar declaraciones import/export para el harness; Services/Auth.js y Services/Test/Auth.js pasaron como scripts completos. La comprobación no equivale a una validación de ejecución en Apps Script ni a parser nativo ESM.
+- Se confirmó que las copias de AUTH coinciden al normalizar únicamente SPREADSHEET_ID y el comentario de configuración; el ID aislado se conserva.
+- La revisión estática encontró H-AUD-056: AUTH.logout y USERS.resetUserSessions mutan ActiveSessions desde proyectos separados con ScriptLock no compartidos. Un deleteRow concurrente puede invalidar el rowIndex de AUTH y eliminar otra sesión.
+- AUG-006 queda BLOQUEADA hasta centralizar/coordenar todas las mutaciones de ActiveSessions y demostrarlo con pruebas de intercalado. No desplegar la versión actual.
+- Services/Test/README.md confirma que los proyectos de prueba siguen sin crearse/desplegarse. No se llamaron endpoints operativos ni se modificaron datos.
+================================================================================
