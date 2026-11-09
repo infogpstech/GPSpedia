@@ -2631,3 +2631,38 @@ Sin cambios funcionales, HTML/CSS de aplicación, endpoints, configuración, ass
 Commit documental único: pendiente de creación; parent e7eb9147e78c726d175ad3e33ffcc349abfd529b.
 Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0109
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S110
+Tarea: AUD-T-008 — revalidación de continuidad E1 de deep links, compartir, enlaces precisos e indicador de red.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 00a550252fe75efd83c209d2c2c15ef363ab2b4c.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificación).
+E1 histórica: f3d7558abeef482957582fea08f2041490b54f34; E1 estática completada en AUD-20261108-S026 / AUD-CP-0026.
+Alcance: ui.js, main.js, navigation.js, index.html, style.css y auth.js.
+Respaldos exactos de blobs antes de esta documentación:
+- Plan_auditoría/Plan_Auditoria.md: 6213a0bdee29bef47f40777224020d3c06321450
+- Plan_auditoría/Consolidacion_Auditoria.md: 515af23fcfc2b50d131c3a52227f3939e5522e0b
+- ChangesLogs.txt: d0bfb6c63825cc24a79ed9273e602ffe11209117
+- contexto_personal.md: e3a635d54f4eebb334a70242f720d0d29d67b3e3
+- checkpoint.md: c184e089043d99911bc764e2dc1e4adcbdc37bcb
+Estado inicial: E1 estática completada; H-AUD-008-001 a 004 abiertos; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes.
+Fase: revalidación de continuidad E1; sin autorización para cambiar archivos funcionales.
+Siguiente acción: comparar E1→HEAD, verificar SHA de los seis archivos, confirmar hallazgos/tareas y rama base; actualizar solo documentación.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0109
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S110
+Tarea: AUD-T-008 — revalidación de continuidad E1.
+Estado final: COMPLETADA en alcance estático/documental; continuidad E1 confirmada; H-AUD-008-001 a 004 abiertos; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes.
+HEAD padre confirmado: 00a550252fe75efd83c209d2c2c15ef363ab2b4c. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Comparación f3d7558abeef482957582fea08f2041490b54f34→00a550252fe75efd83c209d2c2c15ef363ab2b4c: 84 commits posteriores; merge-base igual a E1; únicamente ocho documentos modificados. Los seis archivos funcionales del alcance mantienen SHA exactos de E1; no hay deriva funcional desde E1.
+Hallazgos revalidados: enlaces compartidos sin ID estable/autoapertura ambigua; fallback Web Share/Clipboard incompleto; hash malformado puede interrumpir la restauración; indicador sin semántica accesible ni comprobación de salud backend. Se mantienen H-AUD-037-003/006/010 como relaciones, sin duplicación.
+Validaciones pendientes: VAL-12, VAL-14 y VAL-18. No se ejecutaron navegador, Web Share, Clipboard, lector de pantalla, URLs malformadas, dataset real, HTTP/health check, Apps Script, red real, móvil/PWA ni deployments.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican porque hallazgos/tareas ya están registrados.
+Sin cambios funcionales, endpoints, contratos, HTML/CSS de aplicación, configuración, assets, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+Commit documental único: pendiente de creación; parent 00a550252fe75efd83c209d2c2c15ef363ab2b4c.
+Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+================================================================================

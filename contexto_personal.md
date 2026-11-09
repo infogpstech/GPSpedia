@@ -1082,3 +1082,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-007-001 a 005 abiertos; AUG-068 a AUG-071 pendientes; adenda AUG-047 vigente. H-AUD-005-008 permanece ampliado sin duplicación.
 - VAL-10 y VAL-17 pendientes. No se certifican secuencias reales de navegador, Android/iOS, PWA, gestos, teclado, submits, deep links ni history.state.
 - Próxima unidad secuencial: AUD-T-008.
+
+
+## Continuidad de auditoría — AUD-T-008
+- Revalidación E1 realizada en sesión AUD-20261108-S110 / checkpoint AUD-CP-0109 sobre GPSpedia2.2.5_work.
+- E1: f3d7558abeef482957582fea08f2041490b54f34; HEAD inicial revalidado: 00a550252fe75efd83c209d2c2c15ef363ab2b4c; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- 84 commits desde E1; el diff contiene únicamente ocho documentos. Los seis archivos funcionales del alcance conservan SHA exactos de E1.
+- H-AUD-008-001 a 004 abiertos; H-AUD-037-003/006/010 relacionados sin duplicación; AUG-072/AUG-073 pendientes; adendas AUG-049/AUG-052 vigentes; VAL-12/14/18 pendientes.
+- No se certifican Web Share, Clipboard, deep links reales, catálogo, accesibilidad, conectividad backend, móvil/PWA ni deployments. No se ejecutaron pruebas E2/E3.
+- Próxima unidad secuencial: AUD-T-009, mediante revalidación de continuidad E1.
