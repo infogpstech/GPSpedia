@@ -3624,6 +3624,11 @@ function renameVinColumnHeader(sheet) {
     return { column: 43, previousHeader: currentHeader, header: "VIN", changed: true };
 }
 
+/**
+ * Recuperación ante interrupciones: escribe y verifica el mapa destino antes de
+ * limpiar los opId de origen. Un reintento reutiliza las asociaciones ya guardadas
+ * y agrega únicamente las faltantes; nunca limpia el origen sin read-back exitoso.
+ */
 function handleMigrateCortesOperationIds(payload, logMessage, developerContext) {
     const lock = LockService.getScriptLock();
     try {
