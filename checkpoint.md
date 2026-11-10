@@ -1148,3 +1148,43 @@ VALIDACIÓN BETA PENDIENTE
 Persistencia del diario, creación/consulta de FeedbackYearApplications, fallos reales de escritura y comportamiento con Spreadsheet/Drive reales; no ejecutados.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — CIERRE DE CONDICIONES FUNCIONALES DE suggestYear — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado: 67d1c634e5f208f6da15b908821f612c057cb157.
+TAREA
+Completar la revisión funcional local de suggestYear dentro de AUG-040, sin iniciar AUG-041 ni otras tareas.
+CONDICIONES REVISADAS
+- Identidad autenticada, actor anónimo no verificable, validación de año/respuesta y límites.
+- Tres aportantes autenticados distintos; deduplicación, reintentos y respuestas contradictorias.
+- Respuestas negativas, positivas, "Modelo confirmado", ampliaciones superiores/inferiores y rango de un solo año.
+- Detección de generaciones coincidentes, rangos inválidos y superposición inclusiva.
+- Diario de aplicación, recuperación de escrituras parciales, una sola operación pendiente por vehículo y recuperación ante respuesta nueva.
+- Conservación de aportes anónimos para revisión manual y limpieza exclusiva de aportes autenticados atendidos.
+HALLAZGOS Y CORRECCIONES NUEVAS
+1. H-AUD-040-011: el cierre marcaba también los aportes anónimos como applied:. Ahora solo se marcan aportes con actor autenticado user:; los anónimos permanecen para revisión manual.
+2. H-AUD-040-012: espacios laterales en marca/modelo/categoría/tipo de encendido podían evitar la detección de una generación coincidente. Se normalizan Unicode, diacríticos y espacios antes de comparar.
+3. H-AUD-040-013: un reintento positivo después de una respuesta negativa existente mostraba un mensaje ambiguo. Ahora informa que no se modificó ni contó como voto positivo.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 44/44 PASS.
+- Las tres nuevas regresiones fallaban antes de las correcciones y pasan después.
+- Parsing de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: PASS.
+- Runtime JavaScript aislado con dobles de Spreadsheet/Drive/Lock/Cache.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-011 a H-AUD-040-013)
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+ESTADO
+Condiciones funcionales locales de suggestYear: COMPLETADAS.
+AUG-040 en su conjunto no se cierra aquí: los criterios restantes relativos a otras acciones FEEDBACK y la coordinación interservicios conservan su propio estado.
+VALIDACIÓN DIFERIDA A BETA
+Apps Script real, Spreadsheet aislado, persistencia real del diario, Drive/OAuth, ejecución HTTP/despliegue y concurrencia física entre FEEDBACK/WRITE/ADMIN. No se ejecutaron ni simularon como integración real.
+No se modificaron frontend, endpoints, deployments, datos productivos ni rama base.
+Siguiente acción: revisar el siguiente criterio pendiente de AUG-040 en una sesión posterior; no comenzar AUG-041.
+================================================================================

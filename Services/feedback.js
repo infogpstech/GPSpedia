@@ -802,6 +802,7 @@ function completeFeedbackYearApplication_(application, context) {
         const rowYear = Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]);
         const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
         if (rowId === String(row[1]) && rowYear === year && rowActorKey &&
+            isVerifiedSuggestionActorKey_(rowActorKey) &&
             isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:")) {
             feedbackSheet.getRange(i + 1, actorColumn).setValue(getAppliedSuggestionActorKey_(rowActorKey));
         }
@@ -813,7 +814,8 @@ function completeFeedbackYearApplication_(application, context) {
         const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
         return String(feedbackRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === String(row[1]) &&
             Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
-            rowActorKey && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
+            isVerifiedSuggestionActorKey_(rowActorKey) &&
+            isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
     });
     if (remaining) throw new Error("La ampliación quedó aplicada, pero no se pudieron marcar todos los aportes; la recuperación permanece pendiente.");
 
@@ -1001,6 +1003,12 @@ function handleSuggestYearLocked(payload) {
             ? { status: "info", message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
             : { status: "success", message: "Respuesta registrada correctamente." };
     }
+    if (alreadyReported && !voteActors.has(actorKey)) {
+        return {
+            status: "info",
+            message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se modificó ni se contó como voto positivo."
+        };
+    }
     if (isAnonymousActor) {
         return { status: "info", message: "La sugerencia anónima quedó registrada para revisión manual; no cuenta para modificar automáticamente el catálogo." };
     }
@@ -1013,10 +1021,12 @@ function handleSuggestYearLocked(payload) {
         return { status: "info", message: "El año " + year + " ya está dentro del rango actual." };
     }
 
-    const marca = String(vehicleRow[COLS_CORTES.marca - 1]).toLowerCase();
-    const modelo = String(vehicleRow[COLS_CORTES.modelo - 1]).toLowerCase();
-    const categoria = String(vehicleRow[COLS_CORTES.categoria - 1]).toLowerCase();
-    const tipoEncendido = String(vehicleRow[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
+    const normalizeIdentity = value => String(value === null || value === undefined ? "" : value)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g, " ");
+    const marca = normalizeIdentity(vehicleRow[COLS_CORTES.marca - 1]);
+    const modelo = normalizeIdentity(vehicleRow[COLS_CORTES.modelo - 1]);
+    const categoria = normalizeIdentity(vehicleRow[COLS_CORTES.categoria - 1]);
+    const tipoEncendido = normalizeIdentity(vehicleRow[COLS_CORTES.tipoEncendido - 1]);
     const normalizeV = value => (value || "").toString().toLowerCase()
         .replace(/[^a-z0-9]/g, " ").split(/\s+/).filter(Boolean).sort().join(" ");
     const versionNormalizada = normalizeV(vehicleRow[COLS_CORTES.versionesAplicables - 1]);
@@ -1025,10 +1035,10 @@ function handleSuggestYearLocked(payload) {
 
     for (const row of allCortesData) {
         if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) continue;
-        const otherMarca = String(row[COLS_CORTES.marca - 1]).toLowerCase();
-        const otherModelo = String(row[COLS_CORTES.modelo - 1]).toLowerCase();
-        const otherCategoria = String(row[COLS_CORTES.categoria - 1]).toLowerCase();
-        const otherTipoEncendido = String(row[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
+        const otherMarca = normalizeIdentity(row[COLS_CORTES.marca - 1]);
+        const otherModelo = normalizeIdentity(row[COLS_CORTES.modelo - 1]);
+        const otherCategoria = normalizeIdentity(row[COLS_CORTES.categoria - 1]);
+        const otherTipoEncendido = normalizeIdentity(row[COLS_CORTES.tipoEncendido - 1]);
         const otherVersion = normalizeV(row[COLS_CORTES.versionesAplicables - 1]);
         if (otherMarca === marca && otherModelo === modelo && otherCategoria === categoria &&
             otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {

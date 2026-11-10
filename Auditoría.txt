@@ -162,3 +162,40 @@ Prueba: se prepara una aplicación pending para 2025 con tres votos previos y se
 Validación local: runFeedbackWriteSecurityTests() 41/41 PASS; parsing de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js PASS.
 Límites: mocks locales; no acredita persistencia real en Apps Script/Spreadsheet/Drive. La integración del diario y los fallos reales de escritura siguen diferidos a Beta.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-011 — BAJA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión funcional integral de suggestYear y de la recuperación de aplicaciones de año.
+Ubicación: Services/feedback.js, completeFeedbackYearApplication_().
+Evidencia: el cierre de una ampliación marcaba como applied: todos los aportes positivos de vehículo/año, incluidos los registros anon:unverified. Esto convertía aportes que no participan en el umbral automático en registros atendidos y los retiraba de la revisión manual.
+Impacto: se perdía la distinción entre validación autenticada y reporte anónimo; el estado del registro sugería falsamente que el aporte anónimo había sido atendido por la ampliación automática.
+Severidad: Baja.
+Corrección: marcar y verificar como atendidos únicamente los aportes con clave de actor autenticada user:. Los aportes anónimos permanecen intactos para revisión manual y no impiden cerrar el diario de la ampliación.
+Prueba: regresión con dos aportes autenticados previos, un aporte anónimo y el tercer usuario autenticado; confirma ampliación, cierre del diario, tres marcas applied:user: y conservación de anon:unverified.
+Validación local: runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ambos archivos JavaScript PASS.
+================================================================================
+
+================================================================================
+H-AUD-040-012 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de detección de colisiones entre generaciones durante suggestYear.
+Ubicación: Services/feedback.js, comparación de marca/modelo/categoría/tipoEncendido dentro de handleSuggestYearLocked().
+Evidencia: los campos de identidad del vehículo se comparaban con toLowerCase() sin trim ni normalización de espacios. Un valor con espacios laterales (por ejemplo, "Toyota  ") no coincidía con "Toyota"; una generación coincidente podía quedar fuera de la detección de superposición y permitir ampliar Cortes sobre años ocupados por otra generación.
+Impacto: riesgo de ampliar automáticamente un rango que se superpone con otra generación del mismo vehículo.
+Severidad: Media.
+Corrección: normalizar marca, modelo, categoría y tipo de encendido con normalización Unicode, eliminación de diacríticos, trim, minúsculas y compactación de espacios antes de comparar. La normalización de versiones se conserva.
+Prueba: regresión con rangos solapados y marca con espacios laterales; verifica que devuelve warning y no modifica el rango.
+Validación local: runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ambos archivos JavaScript PASS.
+================================================================================
+
+================================================================================
+H-AUD-040-013 — BAJA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de reintentos con respuesta contradictoria del mismo aportante/vehículo/año.
+Ubicación: Services/feedback.js, respuesta de alreadyReported en handleSuggestYearLocked().
+Evidencia: si un actor había registrado una respuesta negativa y después reintentaba con "Sí (Funciona)", el backend no reemplazaba la fila ni contaba un voto positivo, pero devolvía "Tu aporte ya estaba registrado" con 0/3, mensaje que podía interpretarse como si la respuesta positiva se hubiera guardado.
+Impacto: resultado ambiguo para el usuario y posible interpretación incorrecta del conteo.
+Severidad: Baja.
+Corrección: cuando ya existe una respuesta para el actor/año pero no hay un voto positivo autenticado de ese actor, devolver status info e indicar expresamente que la respuesta no se modificó ni se contó como voto positivo. No se sobrescribe el historial ni se duplica el aporte.
+Prueba: regresión con respuesta negativa preexistente y reintento positivo; confirma que la fila original permanece intacta y que el mensaje explica el resultado.
+Validación local: runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ambos archivos JavaScript PASS.
+================================================================================

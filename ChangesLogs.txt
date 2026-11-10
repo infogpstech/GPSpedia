@@ -819,3 +819,16 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 41/41 PASS; parsing de ambos archivos JavaScript PASS.
 - AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — CIERRE FUNCIONAL LOCAL DE suggestYear — AUG-040
+- Services/feedback.js: las aplicaciones de año solo marcan como atendidos los aportes autenticados; los anónimos permanecen disponibles para revisión manual.
+- Services/feedback.js: normaliza identidad de marca/modelo/categoría/tipo de encendido antes de comprobar superposición entre generaciones.
+- Services/feedback.js: los reintentos positivos que contradicen una respuesta negativa existente reciben un mensaje explícito; no se altera el historial ni se cuenta el voto.
+- Services/Test/FeedbackWriteSecurity.js: añade regresiones para conservación de aportes anónimos, respuesta contradictoria, validación temprana de identidad/año/respuesta y colisión con espacios laterales.
+- Auditoría.txt: H-AUD-040-011, H-AUD-040-012 y H-AUD-040-013.
+- Validación local: runFeedbackWriteSecurityTests() 44/44 PASS; sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js PASS.
+- Sin cambios de frontend, endpoints, deployments, Spreadsheet/Drive productivos ni rama base.
+- AUG-040 completo en lo referente a suggestYear a nivel local; los demás criterios de FEEDBACK y la coordinación real entre servicios mantienen su propio estado.
+================================================================================

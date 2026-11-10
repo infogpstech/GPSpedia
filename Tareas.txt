@@ -617,3 +617,14 @@ Validación local: 82/82 pruebas aisladas PASS (evidencia de ejecución previame
 Validación diferida a Beta: navegador real, IndexedDB/XHR, cancelación/recarga, OAuth/YouTube API real, Apps Script desplegado y Spreadsheet aislado. Casos requeridos registrados en lista_beta.txt. No se presentan como ejecutados.
 No se modificaron deployments, endpoints, datos productivos ni GPSpedia2.2.5.
 ================================================================================
+
+
+================================================================================
+SUBTAREA AUG-040 — suggestYear: CONDICIONES FUNCIONALES LOCALES
+Fecha: 2026-11-10.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Alcance: identidad autenticada/anónima, validación de entrada, umbral de tres actores verificados, deduplicación, respuestas contradictorias, ampliaciones de rango, colisiones entre generaciones, diario y recuperación de aplicaciones pendientes.
+Correcciones: conservación de aportes anónimos para revisión manual; normalización de identidad de generaciones para evitar colisiones no detectadas por espacios laterales; mensaje explícito para reintentos que intentan cambiar una respuesta negativa por positiva.
+Evidencia: H-AUD-040-011 a H-AUD-040-013; runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ambos archivos JavaScript PASS.
+AUG-040 permanece EN PROGRESO por sus demás acciones FEEDBACK y la validación de coordinación entre servicios. Las pruebas con Apps Script/Spreadsheet/Drive reales y concurrencia física se reservan para Beta.
+================================================================================

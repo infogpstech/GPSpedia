@@ -106,6 +106,28 @@ function runFeedbackWriteSecurityTests() {
                 getSafeSheet = originalGetSafeSheet;
             }
         });
+        test_("suggestYear valida identidad, año y respuesta antes de acceder a las hojas", function() {
+            const oldGet=getSpreadsheet,oldLock=LockService;
+            let sheetAccesses=0;
+            try {
+                getSpreadsheet=()=>{sheetAccesses++;throw new Error("No debe acceder a Spreadsheet para una entrada inválida.");};
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                const valid={userId:"USR-A",userName:"Usuario A",suggestionActorKey:"user:USR-A"};
+                const invalidCases=[
+                    [{...valid,suggestionActorKey:"user:USR-B",vehicleId:"V",newYear:2025,response:"Sí (Funciona)"},"identidad"],
+                    [{...valid,vehicleId:"V",newYear:1979,response:"Sí (Funciona)"},"año proporcionado"],
+                    [{...valid,vehicleId:"V",newYear:2100,response:"Sí (Funciona)"},"año proporcionado"],
+                    [{...valid,vehicleId:"V",newYear:"2025.0",response:"Sí (Funciona)"},"cuatro dígitos"],
+                    [{...valid,vehicleId:"V",newYear:2025,response:"Respuesta desconocida"},"respuesta de validación"],
+                    [{...valid,vehicleId:"V",newYear:2025,response:"Otro año: 2026"},"no coincide"]
+                ];
+                invalidCases.forEach(([payload,message])=>expectThrow_(()=>handleSuggestYear(payload),message));
+                assert_(sheetAccesses===0,"Las entradas inválidas deben rechazarse antes de leer o modificar hojas.");
+            } finally {
+                getSpreadsheet=oldGet;LockService=oldLock;
+            }
+        });
+
         test_("suggestYear rechaza IDs de vehículo duplicados antes de acceder a Feedbacks", function() {
             const originalAssert = assertFeedbackSession;
             const originalGetSpreadsheet = getSpreadsheet;
@@ -378,6 +400,86 @@ function runFeedbackWriteSecurityTests() {
                 assertFeedbackSession=originalAssert;getSpreadsheet=originalGetSpreadsheet;getSafeSheet=originalGetSafeSheet;
                 logUserActivity=originalLog;LockService=originalLock;SpreadsheetApp=originalSpreadsheetApp;
                 movePrimaryVehicleImageToCanonicalFolder=originalMove;
+            }
+        });
+
+        test_("suggestYear conserva aportes anónimos para revisión manual al aplicar tres votos verificados", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            const oldCache=CacheService;
+            const vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-ANON-MIXED";
+            vehicle[COLS_CORTES.marca-1]="Marca";vehicle[COLS_CORTES.modelo-1]="Modelo";
+            vehicle[COLS_CORTES.categoria-1]="Moto";vehicle[COLS_CORTES.versionesAplicables-1]="Versión";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=makeSheet([Array(42).fill(""),vehicle]);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const vote=(id,user,actor)=>[id,user,"VEH-ANON-MIXED","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,actor];
+            const feedback=makeSheet([headers,vote("F-A","A","user:USR-A"),vote("F-B","B","user:USR-B"),vote("F-ANON","Anónimo","anon:unverified")]);
+            feedback.getMaxColumns=()=>10;
+            const baseGetRange=feedback.getRange.bind(feedback);
+            feedback.getRange=(r,c,h,w)=>{
+                const range=baseGetRange(r,c,h,w);
+                range.copyTo=target=>target.setValues(range.getValues());
+                range.clearContent=()=>{
+                    const height=h||1,width=w||1;
+                    for(let i=0;i<height;i++)for(let j=0;j<width;j++)feedback.getRange(r+i,c+j).setValue("");
+                };
+                return range;
+            };
+            const sheets={};
+            try {
+                assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-C")throw Error("Sesión inválida");return {userId:"USR-C",userName:"Usuario C",role:"Tecnico"};};
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:(sheets[n]||null),insertSheet:n=>(sheets[n]=makeSheet([]))});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO||n===SHEET_NAMES.FEEDBACKS?feedback:null;
+                logUserActivity=()=>{};
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};
+                CacheService={getScriptCache:()=>({get(){return null;},put(){}})};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
+                const result=handleSuggestYear({...actor,vehicleId:"VEH-ANON-MIXED",newYear:2025,response:"Sí (Funciona)"});
+                assert_(result.status==="success"&&result.message.includes("3 aportantes distintos"),"Los tres usuarios verificados deben completar la ampliación: "+JSON.stringify(result));
+                assert_(cuts.rows[1][COLS_CORTES.anoHasta-1]===2025,"El rango debe ampliarse con tres votos verificados.");
+                const anonymousRow=feedback.rows.find(row=>row[0]==="F-ANON");
+                assert_(anonymousRow&&anonymousRow[9]==="anon:unverified","El aporte anónimo debe conservar su identidad no verificada para revisión manual.");
+                const verifiedRows=feedback.rows.filter(row=>["F-A","F-B"].includes(row[0])||row[9]==="applied:user:USR-C");
+                assert_(verifiedRows.length===3&&verifiedRows.every(row=>String(row[9]).startsWith("applied:user:")),"Solo los tres aportes verificados deben marcarse como atendidos.");
+                assert_(sheets.FeedbackYearApplications.rows[1][8]==="completed","El diario debe completarse sin exigir marcar aportes anónimos.");
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;CacheService=oldCache;
+            }
+        });
+
+        test_("suggestYear informa cuando un aportante intenta cambiar una respuesta negativa por positiva", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLock=LockService,oldApp=SpreadsheetApp;
+            const vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-CHANGE-ANSWER";
+            vehicle[COLS_CORTES.marca-1]="Marca";vehicle[COLS_CORTES.modelo-1]="Modelo";
+            vehicle[COLS_CORTES.categoria-1]="Moto";vehicle[COLS_CORTES.versionesAplicables-1]="Versión";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=makeSheet([Array(42).fill(""),vehicle]);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const negative=["F-NEG","Usuario A","VEH-CHANGE-ANSWER","Reporte de información no funcional","La información no funciona para el año 2025.","","","",2025,"user:USR-A"];
+            const feedback=makeSheet([headers,negative]);feedback.getMaxColumns=()=>10;
+            try {
+                assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-A")throw Error("Sesión inválida");return {userId:"USR-A",userName:"Usuario A",role:"Tecnico"};};
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:null});
+                getSafeSheet=()=>feedback;
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-A"});
+                const result=handleSuggestYear({...actor,vehicleId:"VEH-CHANGE-ANSWER",newYear:2025,response:"Sí (Funciona)"});
+                assert_(result.status==="info"&&result.message.includes("no se modificó")&&result.message.includes("se contó como voto positivo"),
+                    "Debe aclarar que la respuesta anterior no se reemplazó ni se contó como positiva: "+JSON.stringify(result));
+                assert_(feedback.rows.length===2&&feedback.rows[1][4]===negative[4]&&feedback.rows[1][9]==="user:USR-A",
+                    "El reintento contradictorio no debe sobrescribir ni duplicar la respuesta original.");
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;LockService=oldLock;SpreadsheetApp=oldApp;
             }
         });
 
@@ -841,9 +943,9 @@ function runFeedbackWriteSecurityTests() {
                         clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
                     };},deleteRow(r){this.rows.splice(r-1,1);},insertColumnsAfter(){}};
             }
-            function vehicle(id,from,to) {const r=Array(42).fill("");r[COLS_CORTES.id-1]=id;r[COLS_CORTES.marca-1]="Toyota";r[COLS_CORTES.modelo-1]="Hilux";r[COLS_CORTES.categoria-1]="Pickup";r[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";r[COLS_CORTES.tipoEncendido-1]="Llave";r[COLS_CORTES.anoDesde-1]=from;r[COLS_CORTES.anoHasta-1]=to;return r;}
-            function run(from,to,otherFrom,otherTo,year) {
-                const cuts=sheet([Array(42).fill(""),vehicle("V-1",from,to),vehicle("V-2",otherFrom,otherTo)]);
+            function vehicle(id,from,to,brand) {const r=Array(42).fill("");r[COLS_CORTES.id-1]=id;r[COLS_CORTES.marca-1]=brand||"Toyota";r[COLS_CORTES.modelo-1]="Hilux";r[COLS_CORTES.categoria-1]="Pickup";r[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";r[COLS_CORTES.tipoEncendido-1]="Llave";r[COLS_CORTES.anoDesde-1]=from;r[COLS_CORTES.anoHasta-1]=to;return r;}
+            function run(from,to,otherFrom,otherTo,year,otherBrand) {
+                const cuts=sheet([Array(42).fill(""),vehicle("V-1",from,to),vehicle("V-2",otherFrom,otherTo,otherBrand)]);
                 const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
                 const fb=sheet([headers,
                     ["F1","A","V-1","Confirmación de funcionamiento para año "+year,"Funciona","","","",year,"user:A"],
@@ -876,6 +978,9 @@ function runFeedbackWriteSecurityTests() {
                 assert_(separate.cuts.rows[1][COLS_CORTES.anoDesde-1]===2015);
                 assert_(separate.cuts.rows[2][COLS_CORTES.anoDesde-1]===2025);
                 assert_(!separate.activity.some(a=>a[2]==="suggest_year_collision"));
+                const whitespace=run(2018,2022,2023,2026,2027," Toyota  ");
+                assert_(whitespace.result.status==="warning","Los espacios en los datos de marca no deben permitir eludir la detección de generaciones solapadas: "+JSON.stringify(whitespace.result));
+                assert_(whitespace.cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"La ampliación no debe modificar el catálogo cuando la identidad normalizada coincide.");
             } finally {
                 assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
                 LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
