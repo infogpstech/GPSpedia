@@ -23,35 +23,7 @@ function mountRichTextToolbars(root) {
 }
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-let cachedAnonymousSuggestionReporterId = null;
 
-function getAnonymousSuggestionReporterId() {
-    const storageKey = "gpsepedia_anonymous_suggestion_reporter";
-    const createId = () => {
-        const cryptoApi = window.crypto;
-        if (cryptoApi && typeof cryptoApi.randomUUID === "function") return cryptoApi.randomUUID();
-        if (cryptoApi && typeof cryptoApi.getRandomValues === "function") {
-            const bytes = new Uint8Array(24);
-            cryptoApi.getRandomValues(bytes);
-            return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
-        }
-        return "anon_" + Date.now().toString(36) + "_" +
-            Math.random().toString(36).slice(2) + "_" + Math.random().toString(36).slice(2);
-    };
-    if (cachedAnonymousSuggestionReporterId) return cachedAnonymousSuggestionReporterId;
-    try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored && /^[A-Za-z0-9_-]{20,80}$/.test(stored)) {
-            cachedAnonymousSuggestionReporterId = stored;
-            return stored;
-        }
-        cachedAnonymousSuggestionReporterId = createId();
-        localStorage.setItem(storageKey, cachedAnonymousSuggestionReporterId);
-    } catch (error) {
-        if (!cachedAnonymousSuggestionReporterId) cachedAnonymousSuggestionReporterId = createId();
-    }
-    return cachedAnonymousSuggestionReporterId;
-}
 
 export function cleanColaboradorName(name) {
     if (!name || typeof name !== 'string') return name || '';
@@ -1443,7 +1415,7 @@ function showValidationBanner(item, isOldModel) {
         String(currentUser.ID).trim() !== "0");
     const suggestionActorPayload = isRegisteredUser
         ? { userId: String(currentUser.ID), sessionToken: String(currentUser.SessionToken || "") }
-        : { userId: "0", anonymousReporterId: getAnonymousSuggestionReporterId() };
+        : { userId: "0" };
 
     const renderStep = (content) => {
         banner.innerHTML = '';
