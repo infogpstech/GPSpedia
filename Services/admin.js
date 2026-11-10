@@ -3339,7 +3339,7 @@ function handleMigrateCortesOperationIds(payload, logMessage, developerContext) 
             return {
                 status: "success", dryRun: true, sourceCount: migrationPlan.sourceCount,
                 uniqueOperationIds: migrationPlan.sourceEntries.length,
-                recordsToMigrate: planned.entriesToWrite.length, alreadyPresent: planned.alreadyPresent,
+                recordsToMigrate: planned.entriesToWrite.length, recordsToComplete: planned.entriesToComplete.length, alreadyPresent: planned.alreadyPresent,
                 sourceColumns: migrationPlan.sourceColumns.map(item => item.column),
                 targetSheet: targetInfo.name, fallbackSheetRequired: targetInfo.usingFallback === true,
                 legacyIdempotenciaPreserved: targetInfo.primaryIncompatible === true,
