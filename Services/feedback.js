@@ -1517,9 +1517,10 @@ function handleAddPrevention(payload) {
 }
 
 function handleAddTutorial(payload) {
-    const { tema, videoUrl, descripcion, colaborador } = payload || {};
+    const { tema, videoUrl, descripcion, userName } = payload || {};
     const title = String(tema || "").trim();
     if (!title) throw new Error("El tema del tutorial es obligatorio.");
+    if (!String(userName || "").trim()) throw new Error("La sesión verificada no proporcionó un colaborador válido.");
     if (String(videoUrl || "").trim()) {
         throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
     }
@@ -1540,7 +1541,7 @@ function handleAddTutorial(payload) {
             .filter(value => String(value || "").trim() === title);
         if (existing.length) throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
     }
-    const newRow = [title, "", "", String(descripcion || ""), String(colaborador || "")];
+    const newRow = [title, "", "", String(descripcion || ""), String(userName).trim()];
     sheet.appendRow(newRow);
     SpreadsheetApp.flush();
     const savedRow = sheet.getLastRow();
