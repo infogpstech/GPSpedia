@@ -177,3 +177,54 @@ Commit de cierre: commit único de AUG-042, identificable en el historial de GPS
 Rama base: sin cambios; no se realizó merge.
 Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — CORR-AUG042-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al inicio: ef7bdc926ade691e22fa397a3b68267435d191cf.
+Rama base: GPSpedia2.2.5.
+HEAD confirmado de la base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Última tarea: AUG-042 — COMPLETADA EN VALIDACIÓN LOCAL; commit ef7bdc926ade691e22fa397a3b68267435d191cf.
+Tarea correctiva: CORR-AUG042-001 — Bloquear la continuación de operaciones administrativas tras un cambio de sesión.
+Origen: H-AUD-042-011, detectado en la auditoría post-commit de AUG-042.
+Estado inicial: hallazgo identificado; corrección aún no integrada; no se han modificado archivos ni referencias.
+Alcance funcional: ui.js, exclusivamente initAdminPanelListeners()/btn-admin-clear-selected-logs y openAuditDriveModal()/saveUnusedInventory.
+Archivos documentales: Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Riesgo: los catch de persistencia y de limpieza de registros pueden continuar operaciones privilegiadas después de invalidarse la sesión de origen. Las llamadas posteriores obtienen credenciales desde el estado actual y podrían ejecutarse bajo otra cuenta; también puede mostrarse una notificación obsoleta.
+Respaldo exacto previo a editar:
+- ui.js: blob c6d89feaa2c9cff8706b63c4655a9973238f8e59.
+Dependencias: ninguna modificación backend; se preservan contratos y autorización server-side.
+Fase: checkpoint inicial; auditoría pre-implementación y verificación del alcance de la corrección.
+Siguiente acción: reexaminar los bloques afectados, registrar el hallazgo antes de corregir, implementar guardas de contexto y ejecutar parsing, pruebas aisladas, comparación y Code Review.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — CORR-AUG042-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD previo a la tarea: ef7bdc926ade691e22fa397a3b68267435d191cf.
+Rama base: GPSpedia2.2.5; HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: CORR-AUG042-001 — COMPLETADA EN VALIDACIÓN LOCAL.
+Origen: H-AUD-042-011, derivado de la auditoría post-commit de AUG-042.
+Archivo funcional modificado: ui.js.
+Respaldos exactos:
+- ui.js previo: c6d89feaa2c9cff8706b63c4655a9973238f8e59.
+Cambios:
+1. saveUnusedInventory retorna cuando el catch de persistencia detecta que isCurrentRequest() ya no es vigente; no continúa hacia saveUnusedImagesInventory.
+2. clearSelectedLogs retorna desde cada catch cuando isAdminPanelCurrent_() es falso.
+3. clearSelectedLogs comprueba nuevamente la vigencia antes de actualizar el resumen y emitir la notificación global.
+Verificaciones:
+- Parsing V8 del archivo completo después de retirar declaraciones ES module para análisis parse-only: PASS. Runtime/herramienta: V8 de Code Mode; versión exacta no expuesta.
+- Cuatro reemplazos exactos: 4/4 encontrados una sola vez.
+- Pruebas aisladas con dobles: sesión obsoleta aborta la segunda mutación, suprime notificación y detiene saveUnusedImagesInventory; sesión vigente conserva la secuencia normal.
+- Comparación post-edición contra el blob de respaldo: únicamente cuatro guardas añadidas en ui.js.
+- Code Review y Safety & Side Effects: PASS; no se alteraron contratos, roles, endpoints ni backend.
+Limitaciones: no se ejecutaron navegador real/Playwright, Apps Script, endpoints, deployments, Drive/Spreadsheet productivos ni datos productivos.
+Archivos documentales incluidos: Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Estado final: COMPLETADA EN VALIDACIÓN LOCAL; no quedan validaciones locales obligatorias pendientes.
+Último commit antes de la tarea: ef7bdc926ade691e22fa397a3b68267435d191cf.
+Commit que incorpora este checkpoint: único commit de CORR-AUG042-001, mensaje "fix(auth): abort stale admin operations on session change", SHA verificable en el historial de GPSpedia2.2.5_work.
+Rama base: sin cambios; no se realizó merge.
+Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube. No iniciada.
+================================================================================

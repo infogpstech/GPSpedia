@@ -1181,3 +1181,27 @@ No se ejecutaron navegador real/Playwright, DOM completo, IndexedDB real del nav
 Archivos funcionales modificados: ui.js, offline.js, auth.js, main.js y users.html.
 Siguiente tarea del orden: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
 ================================================================================
+
+================================================================================
+H-AUD-042-011 — ALTA — ABIERTO — OPERACIONES ADMINISTRATIVAS PUEDEN CONTINUAR TRAS CAMBIO DE SESIÓN
+Tarea de origen: AUG-042. Commit auditado: ef7bdc926ade691e22fa397a3b68267435d191cf.
+Ubicación:
+- ui.js, openAuditDriveModal()/saveUnusedInventory(), catch del guardado local previo a saveUnusedImagesInventory (aprox. líneas 5550–5570).
+- ui.js, initAdminPanelListeners(), controlador btn-admin-clear-selected-logs (aprox. líneas 4825–4875).
+Evidencia:
+1. persistState() lanza una excepción cuando isCurrentRequest() deja de ser verdadero. El catch de saveUnusedInventory() registra el error de almacenamiento, pero continúa hacia routeAction('saveUnusedImagesInventory') y obtiene el payload mediante getDeveloperSessionPayload(), que consulta la sesión actual. Si la cuenta A cambia o se cierra y la cuenta B inicia sesión mientras la operación está pendiente, la mutación posterior puede utilizar las credenciales de B.
+2. Los catch de clearActivityLogs() y clearSensitiveLogs() no verifican isAdminPanelCurrent_(). Si la primera acción falla después de invalidarse la sesión, el flujo puede continuar con la segunda acción y obtener credenciales del estado de la cuenta nueva. Al final también puede emitir una notificación global correspondiente a la operación anterior.
+Impacto: riesgo alto de ejecutar una mutación administrativa con la identidad de una sesión distinta a la que inició la operación; además, contaminación visual entre sesiones.
+Criterio verificable: abortar inmediatamente los catch cuando el contexto de sesión/generación ya no sea vigente; impedir que se invoquen acciones posteriores o notificaciones globales desde una operación obsoleta; conservar el manejo normal de errores mientras la sesión original siga vigente.
+================================================================================
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-042-011 — CORR-AUG042-001 — 2026-11-10
+Estado: RESUELTO EN VALIDACIÓN LOCAL.
+- ui.js: saveUnusedInventory aborta en el catch de persistencia cuando isCurrentRequest() ya no es verdadero, antes de construir o enviar la mutación de inventario.
+- ui.js: los dos catch de clearSelectedLogs comprueban isAdminPanelCurrent_() y retornan si la sesión/generación cambió; se añadió una última comprobación antes de actualizar el estado y mostrar la notificación global.
+- Se preserva el manejo de errores y notificaciones para la sesión que inició la operación.
+- Pruebas aisladas con dobles: sesión A invalidada durante persistencia no ejecuta saveUnusedImagesInventory; rechazo de clearActivityLogs con contexto obsoleto no ejecuta clearSensitiveLogs ni muestra toast; sesión vigente conserva el flujo esperado.
+- Parsing V8: PASS. Comparación contra respaldo exacto: únicamente cuatro guardas añadidas en ui.js. Code Review/Safety & Side Effects: PASS.
+- No se ejecutaron navegador real, Apps Script, endpoints, deployments, Drive/Spreadsheet productivos ni datos productivos.
+================================================================================

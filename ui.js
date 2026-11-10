@@ -4837,6 +4837,7 @@ ${elapsedSec}s
                         outcomes.push({ label: "Actividad de usuarios", success: true, message });
                         log(`[EXITO] Actividad de usuarios: ${message}`);
                     } catch (error) {
+                        if (!isAdminPanelCurrent_()) return;
                         outcomes.push({ label: "Actividad de usuarios", success: false, message: error.message });
                         log(`[EXCEPCION] Error al limpiar ActividadUsuario: ${error.message}`, false, true);
                     }
@@ -4853,11 +4854,13 @@ ${elapsedSec}s
                         outcomes.push({ label: "Registro de Logs", success: true, message });
                         log(`[EXITO] Registro de Logs: ${message}`);
                     } catch (error) {
+                        if (!isAdminPanelCurrent_()) return;
                         outcomes.push({ label: "Registro de Logs", success: false, message: error.message });
                         log(`[EXCEPCION] Error al limpiar Logs: ${error.message}`, false, true);
                     }
                 }
 
+                if (!isAdminPanelCurrent_()) return;
                 const succeeded = outcomes.filter(item => item.success).length;
                 const failed = outcomes.length - succeeded;
                 const summary = outcomes.map(item =>
@@ -5554,6 +5557,7 @@ export async function openAuditDriveModal() {
             await persistState('complete');
             if (!isCurrentRequest()) return;
         } catch (storageError) {
+            if (!isCurrentRequest()) return;
             localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
         }
 

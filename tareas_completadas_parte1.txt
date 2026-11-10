@@ -298,3 +298,13 @@ Validación local: sintaxis 5/5 PASS; matriz de roles PASS; AUTH 6/6 PASS con do
 Code Review/Safety & Side Effects PASS. Pruebas reales de navegador, IndexedDB, endpoints, Apps Script y deployments diferidas a Beta.
 Commit único de cierre identificable en el historial de GPSpedia2.2.5_work: "fix(auth): synchronize client role and privileged session state".
 ================================================================================
+
+================================================================================
+CORR-AUG042-001 — COMPLETADA — 2026-11-10
+Corrección de operaciones administrativas asíncronas tras cambio de sesión.
+Archivo funcional: ui.js.
+Criterios: persistencia de auditoría abortada ante contexto obsoleto; clearSelectedLogs abortado en catch obsoletos; ninguna acción secundaria ni notificación global se ejecuta para la sesión anterior.
+Validación local: parsing V8 PASS; cuatro guardas verificadas; harness aislado PASS para cambio de sesión y continuidad de sesión vigente; comparación contra respaldo exacto PASS.
+Code Review/Safety & Side Effects PASS. Validación de navegador, endpoints y Apps Script real no ejecutada.
+Commit: consultar historial de GPSpedia2.2.5_work.
+================================================================================

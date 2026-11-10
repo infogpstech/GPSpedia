@@ -1660,3 +1660,24 @@ Validación diferida a Beta: navegador real/Playwright, IndexedDB real, endpoint
 La ficha original AUG-042 se conserva; esta adenda actualiza su estado sin borrar historial.
 Siguiente tarea: AUG-043.
 ================================================================================
+
+================================================================================
+### CORR-AUG042-001 — Bloquear continuación de operaciones administrativas tras cambio de sesión
+- Origen: H-AUD-042-011. Prioridad: Alta.
+- Archivos: ui.js; saveUnusedInventory y controlador clearSelectedLogs.
+- Criterios: detener mutaciones posteriores cuando el contexto de sesión/generación cambie; no utilizar credenciales de una cuenta nueva para completar una operación iniciada por otra; suprimir notificaciones obsoletas; conservar manejo normal con sesión vigente.
+- Estado inicial: registrada para corrección independiente; un commit propio.
+
+================================================================================
+CORR-AUG042-001 — CIERRE EN VALIDACIÓN LOCAL — 2026-11-10
+Estado: COMPLETADA EN VALIDACIÓN LOCAL.
+Hallazgo: H-AUD-042-011 resuelto.
+Archivo funcional: ui.js.
+Cambios: abortar saveUnusedInventory si el contexto cambia durante la persistencia; abortar clearSelectedLogs en catch obsoletos y antes del resumen/notificación.
+Verificaciones: parsing V8 PASS; cuatro comprobaciones de reemplazo exacto (1/1 cada una); harness aislado PASS para sesión obsoleta y sesión vigente; comparación exacta del contenido confirma únicamente cuatro guardas añadidas.
+Code Review/Safety & Side Effects: PASS. No se modificaron backend, endpoints, permisos, contratos ni servicios.
+No ejecutado: navegador real/Playwright, Apps Script, endpoints, deployments, Drive/Spreadsheet productivos ni datos productivos.
+Commit único: mensaje "fix(auth): abort stale admin operations on session change"; SHA y padre verificables en el historial de GPSpedia2.2.5_work.
+Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+================================================================================
+

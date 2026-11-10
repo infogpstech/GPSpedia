@@ -525,3 +525,30 @@ Validación diferida a Beta: navegador/Playwright, IndexedDB real, endpoints, Ap
 Commit único de cierre: identificable en el historial de GPSpedia2.2.5_work por el mensaje "fix(auth): synchronize client role and privileged session state".
 Siguiente tarea: AUG-043.
 ================================================================================
+
+================================================================================
+CORR-AUG042-001 — BLOQUEAR CONTINUACIÓN DE OPERACIONES ADMINISTRATIVAS TRAS CAMBIO DE SESIÓN
+Estado: REGISTRADA; corrección y verificaciones pendientes.
+Origen: H-AUD-042-011, severidad Alta.
+Alcance: ui.js, openAuditDriveModal()/saveUnusedInventory y initAdminPanelListeners()/btn-admin-clear-selected-logs.
+Criterios:
+1. Si persistState() falla porque el contexto de auditoría dejó de ser vigente, saveUnusedInventory debe detenerse antes de llamar saveUnusedImagesInventory.
+2. Si clearActivityLogs o clearSensitiveLogs falla después de un cambio de sesión/generación, el controlador debe detenerse y no ejecutar la siguiente acción con credenciales de otra cuenta.
+3. No emitir resumen ni notificación global cuando el panel ya no pertenece a la sesión que inició la operación.
+4. Mantener el comportamiento normal de errores y notificaciones cuando la sesión original permanece vigente.
+5. Probar cambio de sesión durante la primera operación, durante persistencia local y durante la segunda operación; comprobar ausencia de mutaciones/notificaciones obsoletas.
+Restricciones: no modificar backend, endpoints, contratos, matriz de permisos, deployments, datos productivos ni rama base. Un único commit mediante Git Database API.
+================================================================================
+
+================================================================================
+CORR-AUG042-001 — CIERRE EN VALIDACIÓN LOCAL — 2026-11-10
+Estado: COMPLETADA EN VALIDACIÓN LOCAL.
+Hallazgo: H-AUD-042-011 resuelto.
+Archivo funcional: ui.js.
+Cambios: abortar saveUnusedInventory si el contexto cambia durante la persistencia; abortar clearSelectedLogs en catch obsoletos y antes del resumen/notificación.
+Verificaciones: parsing V8 PASS; cuatro comprobaciones de reemplazo exacto (1/1 cada una); harness aislado PASS para sesión obsoleta y sesión vigente; comparación exacta del contenido confirma únicamente cuatro guardas añadidas.
+Code Review/Safety & Side Effects: PASS. No se modificaron backend, endpoints, permisos, contratos ni servicios.
+No ejecutado: navegador real/Playwright, Apps Script, endpoints, deployments, Drive/Spreadsheet productivos ni datos productivos.
+Commit único: mensaje "fix(auth): abort stale admin operations on session change"; SHA y padre verificables en el historial de GPSpedia2.2.5_work.
+Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+================================================================================

@@ -488,3 +488,11 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - users.html (540–718): handleUserFormSubmit; snapshot y revalidación de identidad/token en operaciones asíncronas; limpieza Drive en auto-cambio de rol; cierre local y logout remoto de mejor esfuerzo si no se confirma la revocación.
 - Sin cambios en servicios backend, permisos FEEDBACK, endpoints, configuración de deployments ni rama base.
 ================================================================================
+
+================================================================================
+2026-11-10 — CORR-AUG042-001 — ABORTAR OPERACIONES ADMINISTRATIVAS OBSOLETAS
+- ui.js:5032: se añadió una guarda de contexto en el catch de persistState dentro de saveUnusedInventory, para detener el flujo antes de saveUnusedImagesInventory cuando la sesión deja de ser vigente.
+- ui.js:4841: se añadió comprobación isAdminPanelCurrent_() en el catch de clearActivityLogs.
+- ui.js:4858: se añadió comprobación isAdminPanelCurrent_() en el catch de clearSensitiveLogs.
+- ui.js:4864: se añadió una comprobación final de vigencia antes de actualizar el resumen y emitir la notificación global.
+================================================================================
