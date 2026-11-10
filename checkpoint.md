@@ -328,3 +328,18 @@ No se modificó la rama base.
 ================================================================================
 
 Verificación final AUG-036: Services/Test/VinTestigoIntegrity.js 14/14 PASS; parsing V8 ADMIN/WRITE/UI/test PASS; helpers de columna VIN, AT:AV y parser ADMIN/WRITE idénticos; paridad frontend/backend y rechazo de entradas inválidas confirmados. HEAD anterior a este checkpoint: c31a0ed60907a51149225947364a45f218da6002.
+
+
+================================================================================
+CHECKPOINT — AUG-037 — 2026-11-10
+Rama: GPSpedia2.2.5_work.
+Tarea: AUG-037 — completada en validación lógica local; integración real Drive/Spreadsheet pendiente de Beta.
+Mecanismo durable: hoja ImageUploadLedger creada bajo demanda, con token único, operationKey, folderId, MIME, tamaño, SHA-256, fileId/URL, estado y referencias de Cortes. Se registra y verifica pending antes de crear archivo Drive; luego se verifican metadatos Drive y fila ledger.
+Integridad: al reutilizar, se recalculan bytes y hash; se valida operación, carpeta, MIME, tamaño, contenido y token. Límite 10 MB por imagen. Si no se puede persistir ledger, no se crea el archivo.
+Enlace: markImageUploadLinked actualiza ledger y verifica read-back; la descripción Drive es complementaria. Si el marcado falla, el guardado no se bloquea y el registro pending puede reconciliarse.
+Reconciliación: ADMIN reconcilePendingImageUploads, dry-run por defecto, confirm:true, paginación máxima 100; clasifica linked, pending_unreferenced, orphan_candidate, file_missing y requires_review. No elimina archivos.
+Cambios: Services/admin.js, Services/write.js, Services/Coordinator.js, api-config.js, Services/Test/ImageUploadLedger.js, Services/Test/SharedMutationCoordinator.js, README.md, Spreadsheet/GPSpedia_DB_columnas.md, Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, ChangesLogs.txt y lista_beta.txt.
+Pruebas: ImageUploadLedger 18/18 PASS; SharedMutationCoordinator 25/25 PASS; parsing V8 ADMIN/WRITE/Coordinator/API/tests PASS; helpers de carga ADMIN/WRITE idénticos.
+Límites: no se ejecutó Drive real, Spreadsheet real, Apps Script desplegado ni concurrencia física. La prueba integral en copias aisladas queda pendiente de Beta. No se modificaron datos productivos.
+No se modificó la rama base GPSpedia2.2.5.
+================================================================================
