@@ -1404,36 +1404,48 @@ function markImageUploadLinked(imageUrl) {
     try {
         const file = DriveApp.getFileById(fileId);
         const metadata = parseImageUploadDescription_(file.getDescription());
-        if (!metadata || metadata.v !== "2" || !metadata.token || !metadata.operationKey) return false;
+        if (!metadata || metadata.v !== "2" || !metadata.token || !metadata.operationKey ||
+            !metadata.folderId || !metadata.mimeType || !metadata.contentHash || !metadata.sizeBytes) {
+            return false;
+        }
+
+        const expected = {
+            token: String(metadata.token),
+            operationKey: String(metadata.operationKey),
+            folderId: String(metadata.folderId),
+            mimeType: String(metadata.mimeType),
+            sizeBytes: Number(metadata.sizeBytes),
+            contentHash: String(metadata.contentHash)
+        };
+        const folder = DriveApp.getFolderById(expected.folderId);
+        verifyImageUploadFile_(file, folder, expected);
 
         const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
-        let record = findImageUploadLedgerRecord_(ledgerSheet, metadata.token);
+        let record = findImageUploadLedgerRecord_(ledgerSheet, expected.token);
         if (!record) {
             const timestamp = new Date().toISOString();
-            const reconstructedValues = [
-                metadata.token, metadata.operationKey, metadata.folderId, metadata.mimeType,
-                Number(metadata.sizeBytes), metadata.contentHash, fileId,
-                "https://drive.google.com/uc?export=view&id=" + fileId, "pending",
-                "", "", "", "[]", metadata.name || file.getName(), timestamp, timestamp,
-                "Registro reconstruido desde metadatos Drive v2."
-            ];
-            record = saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex: 0, values: reconstructedValues });
+            record = saveImageUploadLedgerRecord_(ledgerSheet, {
+                rowIndex: 0,
+                values: [
+                    expected.token, expected.operationKey, expected.folderId, expected.mimeType,
+                    expected.sizeBytes, expected.contentHash, fileId,
+                    "https://drive.google.com/uc?export=view&id=" + fileId, "pending",
+                    "", "", "", "[]", metadata.name || file.getName(), timestamp, timestamp,
+                    "Registro reconstruido desde metadatos Drive v2."
+                ]
+            });
         }
+
         const values = record.values;
         if (String(values[6] || "").trim() && String(values[6]).trim() !== fileId) {
             throw new Error("El token de carga ya está asociado a otro fileId en ImageUploadLedger.");
         }
-        const expected = {
-            token: String(values[0]), operationKey: String(values[1]), folderId: String(values[2]),
-            mimeType: String(values[3]), sizeBytes: Number(values[4]), contentHash: String(values[5])
-        };
-        if (metadata.operationKey !== expected.operationKey || metadata.folderId !== expected.folderId ||
-            metadata.contentHash !== expected.contentHash) {
+        if (String(values[1]) !== expected.operationKey || String(values[2]) !== expected.folderId ||
+            String(values[3]) !== expected.mimeType || Number(values[4]) !== expected.sizeBytes ||
+            String(values[5]) !== expected.contentHash) {
             throw new Error("Los metadatos Drive no coinciden con ImageUploadLedger.");
         }
 
-        const folder = DriveApp.getFolderById(expected.folderId);
-        verifyImageUploadFile_(file, folder, expected);
         const references = getImageUploadReferences_(fileId);
         if (!references.length) return false;
 
@@ -1452,11 +1464,7 @@ function markImageUploadLinked(imageUrl) {
         try {
             const originalName = String(values[13] || "");
             if (originalName && file.getName() !== originalName) file.setName(originalName);
-            const linkedDescription = buildImageUploadDescription_({
-                operationKey: expected.operationKey, token: expected.token, folderId: expected.folderId,
-                mimeType: expected.mimeType, sizeBytes: expected.sizeBytes, contentHash: expected.contentHash,
-                fileName: originalName
-            }, "linked", JSON.stringify(references));
+            const linkedDescription = buildImageUploadDescription_(expected, "linked", JSON.stringify(references));
             file.setDescription(linkedDescription);
             if (String(file.getDescription() || "") !== linkedDescription) {
                 Logger.log("ImageUploadLedger quedó linked, pero Drive no confirmó la descripción final para " + fileId + ".");
