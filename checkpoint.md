@@ -1490,3 +1490,45 @@ No ejecutado: Apps Script real, Sheets/Drive, endpoints, navegador, deployments,
 Siguiente tarea: AUG-042, Ciclo B, después de verificar este commit correctivo y confirmar que la rama base continúa en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 El SHA del commit que incorpora este checkpoint se identifica en el historial Git de GPSpedia2.2.5_work; no se incluye aquí para evitar referencia circular.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — CORR-FEEDBACK-SESSION-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work.
+HEAD inicial confirmado: 8c1983c8e9fd1441854717a26654a2bd531172a3.
+Rama base protegida: GPSpedia2.2.5.
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea anterior: AUG-042, Ciclo B iniciado; detenido antes de implementación por dependencia de autorización FEEDBACK.
+Tarea correctiva independiente: CORR-FEEDBACK-SESSION-001 — exigir unicidad global de sessionToken y perfil Users único en FEEDBACK.
+Hallazgo inicial: H-AUD-042-001. Services/feedback.js:assertFeedbackSession filtra ActiveSessions por userId+sessionToken y obtiene el primer perfil Users mediante find(). Esto difiere de AUTH.validateAndTouchSession_, que busca el token globalmente, exige una coincidencia y compara el ID propietario; una duplicación de token entre cuentas puede habilitar autenticación cruzada. La selección no única de Users añade ambigüedad de identidad.
+Impacto: riesgo de suplantación entre cuentas y acceso indebido a Inbox, actividad y acciones FEEDBACK privilegiadas (incluida aprobación/rechazo), si existen filas duplicadas.
+Origen/relación: Ciclo B de AUG-042; backend FEEDBACK es autoridad para Inbox y approve/reject. H-AUD-059 anterior se limitó a rechazo de tombstones/roles inactivos y no cubrió unicidad global; no duplicar ni reabrir ese hallazgo.
+Alcance candidato: Services/feedback.js:assertFeedbackSession; doPost actionPermissions; resolveSuggestionYearActor y sus consumidores; Auditoría.txt; Tareas.txt; ChangesLogs.txt; checkpoint.md.
+Criterio verificable: token buscado globalmente y exactamente una fila; ID de esa fila coincide con userId solicitado; Users contiene exactamente un perfil para ese ID; mantener validación de expiración, tombstone, rol activo y allowedRoles; identidad y rol se derivan exclusivamente del perfil único.
+Estado inicial: hallazgo identificado; no se ha modificado código ni documentación de auditoría. Implementación pendiente.
+Respaldo exacto previo a editar: Services/feedback.js blob 4484a9129eb24e32208c0d47fa3af543d82a9df3.
+Rama base intacta. No se invocaron endpoints ni datos productivos.
+Siguiente acción: auditar el guard, router, todas las acciones/call sites y el contrato de AUTH; registrar H-AUD-042-001 antes de corregir.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-FEEDBACK-SESSION-001 — 2026-11-10
+Estado: COMPLETADA EN FUENTES; commit único correctivo creado y publicación/verificación pendiente.
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. HEAD padre confirmado: 8c1983c8e9fd1441854717a26654a2bd531172a3.
+Rama base: GPSpedia2.2.5. HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se modificó.
+Tarea bloqueante: CORR-FEEDBACK-SESSION-001. Origen H-AUD-042-001 durante Ciclo B de AUG-042.
+Archivo funcional:
+- Services/feedback.js — respaldo 4484a9129eb24e32208c0d47fa3af543d82a9df3; blob corregido 162bbb8f6ce564de3e0d50c7b5b4f4101cf32896. assertFeedbackSession busca token globalmente; exige una sola coincidencia, titularidad exacta y perfil Users único; conserva expiración, tombstone, roles, allowedRoles y ruta anónima.
+Registros:
+- Auditoría.txt — blob b31af7c0b6e7d36429e593e6a29317595c24879f más adenda de cierre.
+- Tareas.txt — blob 5f45bb0055af66d4c0678c254b5cc2b2e5e5d378 más adenda de cierre.
+- ChangesLogs.txt — actualizado en el blob generado para este cierre.
+- checkpoint.md — checkpoint inicial/final incluido; última actualización documental del commit.
+Verificaciones: 16/16 pruebas aisladas de la función real PASS; sintaxis/parsing del archivo completo PASS; comparación inversa contra respaldo PASS; Code Review/Safety & Side Effects PASS. Se probó la matriz Developer/Gefe/Supervisor/Jefe/Technician, tokens duplicados/cruzados, perfil ambiguo, tombstone, expiración, allowedRoles null y excepción anónima.
+No ejecutado: Apps Script real, Spreadsheet/Drive, endpoints, deployments, concurrencia física ni datos productivos. Beta no ejecutada.
+AUG-042 quedó pausada antes de implementación por H-AUD-042-001. Siguiente acción después de verificar el commit correctivo: reanudar Ciclo B de AUG-042 con checkpoint inicial actualizado sobre el nuevo HEAD. No se ha modificado código de AUG-042.
+El SHA del commit que incorpora este checkpoint se identifica en el historial Git de GPSpedia2.2.5_work; no se incluye aquí para evitar referencia circular.
+================================================================================

@@ -384,3 +384,26 @@ Archivos funcionales: Services/write.js y Services/admin.js. Verificaciones aisl
 No se modificaron endpoints, deployments, datos productivos, esquema de Sheets ni rama base. Validación en Apps Script/deployments y Beta no ejecutada.
 Siguiente tarea: iniciar Ciclo B de AUG-042 — sincronizar el rol y limpiar el estado privilegiado en el cliente — únicamente después de verificar el commit correctivo y confirmar la rama base intacta.
 ================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-SESSION-001 — CORRECCIÓN DE GUARD FEEDBACK — 2026-11-10
+Estado: EN CURSO; bloquea iniciar implementación de AUG-042 hasta publicar/verificar el commit correctivo.
+Origen: H-AUD-042-001, detectado durante Ciclo B de AUG-042.
+Alcance: Services/feedback.js:assertFeedbackSession únicamente, más pruebas aisladas y registros documentales.
+Criterios: token globalmente único en ActiveSessions; titularidad userId exacta; perfil Users único; conservar expiración, tombstone, roles activos, allowedRoles y excepción anónima suggestYear userId="0".
+Verificaciones: casos positivos/negativos de token duplicado/cruzado, perfil duplicado, tombstone, rol no válido, expiración, allowedRoles y ruta anónima; sintaxis del archivo completo; comparación contra respaldo; Code Review/Safety & Side Effects.
+Restricciones: no modificar actionPermissions, handlers FEEDBACK, datos, hojas, endpoints, deployments, copias inexistentes de prueba ni rama base. Un único commit mediante Git Database API.
+Respaldo exacto previo a editar: Services/feedback.js blob 4484a9129eb24e32208c0d47fa3af543d82a9df3.
+Siguiente paso: terminar auditoría del guard/router/call sites, después implementar únicamente la validación de unicidad global y perfil único.
+================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-SESSION-001 — CIERRE — 2026-11-10
+Estado: COMPLETADA EN FUENTES; commit correctivo pendiente de publicación/verificación al momento de este registro.
+H-AUD-042-001 RESUELTO. FEEDBACK exige token global único, titularidad userId exacta y perfil Users único. Se mantienen expiración, tombstone, roles activos, allowedRoles y excepción anónima suggestYear userId="0".
+Archivo funcional: Services/feedback.js. Pruebas aisladas de la función real: 16/16 PASS; sintaxis completa PASS; comparación inversa PASS; Code Review/Safety & Side Effects PASS.
+No se modificaron actionPermissions, handlers, endpoints, deployments, datos productivos, esquema ni rama base.
+La corrección elimina el bloqueo de autorización backend para AUG-042. Reanudar AUG-042 únicamente después de verificar este commit y crear un checkpoint inicial actualizado sobre el nuevo HEAD.
+================================================================================

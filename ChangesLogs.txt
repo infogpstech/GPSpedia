@@ -390,3 +390,14 @@ CORR-AUG039-001 — CORRECCIÓN DE VALIDACIÓN DE SESIONES — 2026-11-10
 - checkpoint.md: incorpora checkpoint inicial/final, respaldos, pruebas, Code Review y siguiente tarea.
 Verificaciones: 13/13 casos aislados PASS; sintaxis de ambos archivos PASS; comparación inversa PASS. No se ejecutaron Apps Script real, endpoints, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-SESSION-001 — ALINEACIÓN DE GUARD FEEDBACK — 2026-11-10
+- Services/feedback.js:52–63: assertFeedbackSession busca sessionToken globalmente en ActiveSessions, exige una sola fila y titularidad userId coincidente; Users debe contener un único perfil para ese ID.
+- Se mantienen expiración, rechazo de tombstones/roles inválidos, allowedRoles y excepción anónima suggestYear userId="0".
+- Auditoría.txt: H-AUD-042-001 registrado y resuelto.
+- Tareas.txt: CORR-FEEDBACK-SESSION-001 registrado y cerrado como tarea correctiva independiente.
+- checkpoint.md: checkpoint inicial/final, respaldo, pruebas, Code Review y siguiente tarea AUG-042.
+Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparación inversa PASS. No se ejecutaron endpoints, deployments ni datos productivos.
+================================================================================

@@ -951,3 +951,39 @@ Code Review / Safety & Side Effects: PASS. Se alinea la unicidad de token de WRI
 No ejecutado: Apps Script real, Sheets/Drive, endpoints, navegador, deployments, concurrencia física ni datos productivos. No se afirma validación Beta.
 La tarea correctiva queda cerrada localmente y su commit único debe verificarse antes de iniciar AUG-042.
 ================================================================================
+
+
+================================================================================
+H-AUD-042-001 — ALTA — ABIERTO — 2026-11-10
+Origen: Ciclo B de AUG-042; dependencia de autorización del módulo Inbox/FEEDBACK.
+Ubicación: Services/feedback.js:assertFeedbackSession(), líneas 52–62; consumidores: resolveSuggestionYearActor() (línea 84) y doPost/actionPermissions (línea 309).
+Referencia de autoridad: Services/Auth.js:validateAndTouchSession_(), que busca el token en todas las filas de ActiveSessions y exige exactamente una coincidencia, verificando después el ID propietario.
+Evidencia:
+1. assertFeedbackSession() busca ActiveSessions por la combinación userId+sessionToken; un token repetido en otra cuenta no aumenta el número de coincidencias del ID solicitado.
+2. El guard obtiene el primer perfil Users por ID mediante find(), sin exigir que ese ID sea único.
+3. doPost aplica este guard antes de ejecutar las acciones protegidas de Inbox, actividad, aprobación/rechazo de vídeo y otras acciones incluidas en actionPermissions; resolveSuggestionYearActor() también lo usa para usuarios autenticados.
+4. Si un mismo token se encuentra duplicado en filas de distintas cuentas, un cliente que conoce el token y envía el userId de la fila duplicada puede hacer que FEEDBACK resuelva el rol de esa cuenta, incluso si el token originalmente pertenece a otra cuenta.
+5. H-AUD-059 ya corrigió el rechazo de tombstones/roles inactivos, pero no corrigió la unicidad global del token ni la unicidad del perfil Users; no duplicar ni reabrir H-AUD-059.
+Impacto: posible autenticación cruzada y elevación de privilegios en FEEDBACK; afecta directamente a la autoridad backend de Inbox y approve/reject utilizada por AUG-042.
+Criterio verificable:
+- Buscar sessionToken globalmente en ActiveSessions y exigir exactamente una fila cuyo ID coincida con userId.
+- Exigir exactamente un perfil Users para ese ID.
+- Mantener expiración, rechazo de username vacío/tombstone, lista de roles activos y allowedRoles.
+- Mantener la excepción explícita de suggestYear anónimo con userId "0"; los usuarios autenticados deben pasar por el guard.
+- Rechazar antes del switch y antes de cualquier mutación ante token ausente/duplicado/cruzado o perfil ambiguo.
+Dependencia: bloquea AUG-042 porque FEEDBACK es autoridad de getFeedbackItems, getActivityLogs, reply/resolve/delete y approve/reject; no se debe confiar solo en guardas frontend.
+Tarea correctiva independiente: CORR-FEEDBACK-SESSION-001.
+================================================================================
+
+
+================================================================================
+CIERRE CORRECTIVO — H-AUD-042-001 — 2026-11-10
+Estado: RESUELTO mediante CORR-FEEDBACK-SESSION-001.
+Services/feedback.js:assertFeedbackSession() (líneas 52–63) ahora busca el sessionToken globalmente en ActiveSessions y exige exactamente una coincidencia cuyo ID coincida con userId; después exige exactamente un perfil Users para ese ID.
+Se conserva: expiración de sesión; rechazo de username vacío/tombstone; conjunto de roles activos; allowedRoles y sus matrices; userName derivado del perfil; excepción anónima de suggestYear con userId "0".
+El guard continúa ejecutándose antes del switch y de los handlers FEEDBACK. No se modificaron actionPermissions, handlers, payloads, Sheets, endpoints ni el flujo anónimo.
+Pruebas aisladas sobre la función real: 16/16 PASS. Incluye Developer/Gefe/Supervisor para approve/reject; Jefe permitido en Inbox pero excluido de approve/reject; Technician permitido con allowedRoles null y rechazado en Inbox; token duplicado entre cuentas y dentro de una cuenta; identidad cruzada; Users duplicado; tombstone; rol inválido; sesión expirada; token vacío; excepción anónima.
+Sintaxis/parsing del archivo completo Services/feedback.js: PASS. Comparación inversa contra el respaldo exacto: PASS; solo cambió assertFeedbackSession(). Code Review/Safety & Side Effects: PASS.
+No ejecutado: Apps Script real, Spreadsheet/Drive, HTTP/endpoints, deployments, concurrencia física ni datos productivos. Validación Beta sigue diferida.
+AUG-042 queda desbloqueable después de verificar el commit único de esta corrección.
+================================================================================

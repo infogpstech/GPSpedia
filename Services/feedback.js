@@ -50,15 +50,15 @@ function getSessionExpirationStatus_(row,now=new Date()){
  return{expired:false};
 }
 function assertFeedbackSession(payload,allowedRoles){
- const id=payload&&payload.userId,token=payload&&payload.sessionToken;if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
+ const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"");if(!id||!token.trim())throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
- const m=sh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===String(id).trim()&&String(r[2]||"").trim()===String(token).trim());
- if(m.length!==1||getSessionExpirationStatus_(m[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada o expirada.");
- const u=uh.getDataRange().getValues().slice(1).find(r=>String(r[0]||"").trim()===String(id).trim());if(!u)throw new Error("Acceso denegado: sesión no autorizada.");
- const role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'];
+ const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>r[2]===token);
+ if(tokenMatches.length!==1||String(tokenMatches[0][0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
+ const u=userMatches[0],role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'];
  if(!username||username.toLowerCase().startsWith('__deleted__:')||!active.includes(normalized))throw new Error("Acceso denegado: sesión no autorizada.");
  if(Array.isArray(allowedRoles)&&!allowedRoles.some(x=>normalizeFeedbackRole(x)===normalized))throw new Error("Acceso denegado: sesión no autorizada.");
- return{userId:String(id),role,userName:String(u[6]||u[1]||"Usuario")};
+ return{userId:id,role,userName:String(u[6]||u[1]||"Usuario")};
 }
 
 /** Identidad de aportantes de validación de año; el identificador anónimo es seudónimo, no identidad civil. */
