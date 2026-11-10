@@ -31,7 +31,7 @@ function runImageUploadLedgerTests() {
     function fakeLedgerSheet_(rows) {
         const data = (rows || []).map(row => row.slice());
         function range_(row, column, rowCount, columnCount) {
-            return {
+            const range = {
                 getValues: () => Array.from({ length: rowCount }, (_, r) =>
                     Array.from({ length: columnCount }, (_, c) => ((data[row - 1 + r] || [])[column - 1 + c] ?? ""))),
                 getDisplayValues: () => Array.from({ length: rowCount }, (_, r) =>
@@ -39,8 +39,11 @@ function runImageUploadLedgerTests() {
                 setValues: values => values.forEach((line, r) => line.forEach((value, c) => {
                     data[row - 1 + r] = data[row - 1 + r] || [];
                     data[row - 1 + r][column - 1 + c] = value;
-                }))
+                })),
+                setFontWeight: () => range,
+                setBackground: () => range
             };
+            return range;
         }
         return {
             getLastRow: () => data.length,
@@ -146,6 +149,37 @@ function runImageUploadLedgerTests() {
             getFiles: () => iterator_([file, fakeFile_("file-2", [1, 2, 3], "image/png", "folder-1", description)])
         };
         expectThrow_(() => findExistingImageUpload(two, "temp.png", expected, token), "varios archivos");
+    });
+    run_("crea y verifica el esquema ImageUploadLedger", function() {
+        const originalGetSpreadsheet = getSpreadsheet;
+        const sheet = fakeLedgerSheet_([]);
+        getSpreadsheet = () => ({
+            getSheetByName: () => null,
+            insertSheet: () => sheet
+        });
+        try {
+            const result = getOrCreateImageUploadLedgerSheet_();
+            assert_(result === sheet && sheet._data[0].join("|") === IMAGE_UPLOAD_LEDGER_HEADERS.join("|"));
+        } finally {
+            getSpreadsheet = originalGetSpreadsheet;
+        }
+    });
+    run_("rechaza esquema o tokens duplicados del ledger", function() {
+        const originalGetSpreadsheet = getSpreadsheet;
+        const badHeader = fakeLedgerSheet_([["wrong"].concat(IMAGE_UPLOAD_LEDGER_HEADERS.slice(1))]);
+        getSpreadsheet = () => ({ getSheetByName: () => badHeader });
+        try { expectThrow_(() => getOrCreateImageUploadLedgerSheet_(), "no coincide"); }
+        finally { getSpreadsheet = originalGetSpreadsheet; }
+
+        const values = Array(IMAGE_UPLOAD_LEDGER_HEADERS.length).fill("");
+        values[0] = "token-dup";
+        const duplicate = fakeLedgerSheet_([IMAGE_UPLOAD_LEDGER_HEADERS, values, values]);
+        getSpreadsheet = () => ({ getSheetByName: () => duplicate });
+        try { expectThrow_(() => getOrCreateImageUploadLedgerSheet_(), "tokens duplicados"); }
+        finally { getSpreadsheet = originalGetSpreadsheet; }
+    });
+    run_("el límite por imagen está definido en 10 MB", function() {
+        assert_(IMAGE_UPLOAD_MAX_BYTES === 10 * 1024 * 1024);
     });
     run_("busca un token único en ImageUploadLedger", function() {
         const values = Array(IMAGE_UPLOAD_LEDGER_HEADERS.length).fill("");
