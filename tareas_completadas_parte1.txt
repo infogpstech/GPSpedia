@@ -260,3 +260,12 @@ Límite de verificación: el agente no realizó la configuración ni pudo consul
 No se modificaron reglas de GitHub, rama base, código, endpoints ni deployments desde esta sesión.
 Siguiente tarea: AUG-004 — Matriz de cancelación, sustitución y continuidad de requisitos.
 ================================================================================
+
+
+================================================================================
+AUG-004 — Matriz de cancelación, sustitución y continuidad de requisitos — 2026-11-09
+Estado: COMPLETADA — DOCUMENTAL.
+Entregable: Plan_auditoría/Matriz_Continuidad_Requisitos.md.
+Se clasificaron tareas históricas por continuidad, cancelación, retirada, parcialidad, sustitución y absorción. Tarea 1.6 y los filtros de Tarea 15 están cancelados; la estandarización universal de botones continúa vigente/parcial en AUG-100; los remanentes de filtros permanecen en AUG-099. No se reescribieron partes legacy ni se duplicaron tareas.
+Validación documental y Code Review aprobados. Sintaxis de código: N/A. No se ejecutaron pruebas funcionales de aplicación ni Beta por ser un entregable documental.
+================================================================================

@@ -1230,3 +1230,36 @@ Pruebas de código y sintaxis: N/A, no se modificó código. Pruebas de protecci
 Code Review documental: se verificó coherencia entre el cierre, la limitación de verificación y el orden siguiente; sin cambios fuera del alcance.
 Este checkpoint final es la última actualización documental antes del único commit.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-004 — 2026-11-09
+Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD 7aa7b6e3489af412fe8caa8dbcd529328ab243a8; árbol 5b15bcc8770f6089c4ab29cca531004b57c018cf; padre 06419beab039e554da26c9922aebb6393bbc5120. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Alcance documental: Matriz_Continuidad_Requisitos.md (nuevo), Consolidacion_Auditoria.md, Tareas_pendientes_parte1.txt, Tareas.txt, Auditoría.txt, ChangesLogs.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Fuentes: cuatro partes Tareas_legacy, tres ChangesLogs_legacy, dos Aug_Tareas_legacy, registros activos, Plan Maestro, Normas y código actual consultado.
+Revisión preliminar de solo lectura antes del checkpoint: cancelación de filtros y separación de Tarea 15; sin modificaciones previas. Riesgos: [X] histórico no certifica continuidad actual; preservar legacy; no duplicar AUG/AUD-T.
+Respaldos exactos: Tareas_pendientes_parte1.txt=a1e962b2902feb9d1445c5386aac6616ea001596; Tareas.txt=917d0abef74e64fd7d6f6f1601d041f19f87ea79; Auditoría.txt=96b55841aa154303e10e1b1446d6cf0c49f9105e; ChangesLogs.txt=a83952d2b755179695bd6c85001ecea4a51a22a4; checkpoint.md=4424c96977d40d291ca0af2ddadf06b0cda3a587; Consolidacion_Auditoria.md=c6e98c3c4a8c59f7da00a4c2ce047068cd187595; tareas_completadas_parte1.txt=a9a31ab881886271f01381a50f7ce46592476f53.
+Pruebas aplicables: integridad documental, referencias, consistencia de estados, Markdown, límite Unicode y Code Review. Sintaxis de código N/A; no ejecutar Beta. No se modificó código.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUG-004 — 2026-11-09
+La matriz y los registros se actualizaron append-only. Blobs nuevos:
+Plan_auditoría/Matriz_Continuidad_Requisitos.md=e449438c11ec3cd0013014647af5a9131ac1768f
+Plan_auditoría/Consolidacion_Auditoria.md=ad39c40dd0c59340f19f3467cb76a5c4e797b5b3
+Tareas_pendientes_parte1.txt=377b55c592a053cd2fe94e57f2e5df65ccadd1a8
+Tareas.txt=c46ec818f5af8fc749257cc6b7687677ddacffd0
+Auditoría.txt=976e252aece17783eddc5f74b4cfc88c652a50d2
+ChangesLogs.txt=bdafb1901d2080c059d0e19aef8997eae198f220
+tareas_completadas_parte1.txt=7359b125eca230a1ad03669e380c2d0c43882aac
+Longitudes:
+Plan_auditoría/Matriz_Continuidad_Requisitos.md=8897
+Plan_auditoría/Consolidacion_Auditoria.md=1389
+Tareas_pendientes_parte1.txt=170896
+Tareas.txt=33863
+Auditoría.txt=105736
+ChangesLogs.txt=35293
+tareas_completadas_parte1.txt=28660
+Validación: todos los documentos dentro de 180000 caracteres; entradas previas preservadas por concatenación exacta; matriz clasifica las tareas históricas y enlaza las brechas a sus AUG/AUD-T propietarios; no se duplican ni renumeran IDs; Code Review documental aprobado. Sintaxis de código N/A. No se ejecutaron pruebas funcionales de aplicación ni Beta. La rama base no se modifica.
+Este checkpoint es el último documento antes del commit único.
+================================================================================

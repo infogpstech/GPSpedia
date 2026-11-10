@@ -323,3 +323,15 @@ AUG-001 — CIERRE ADMINISTRATIVO — 2026-11-09
 - checkpoint.md: se registraron checkpoint inicial, evidencia, limitaciones, respaldos, revisión y checkpoint final.
 - No se modificaron código, archivos Services, endpoints, deployments, reglas de GitHub ni rama base. El agente no ejecutó ni verificó la configuración de protección; el cierre se basa en la confirmación del propietario.
 ================================================================================
+
+
+================================================================================
+AUG-004 — MATRIZ DE CONTINUIDAD DE REQUISITOS — 2026-11-09
+- Nuevo Plan_auditoría/Matriz_Continuidad_Requisitos.md: clasificación de tareas/subtareas históricas, cancelaciones, requisitos vigentes/parciales, sustituciones, absorciones y referencias AUG/AUD-T.
+- Plan_auditoría/Consolidacion_Auditoria.md: índice y resultado AUG-004.
+- Tareas_pendientes_parte1.txt y Tareas.txt: registros de cierre documental append-only.
+- tareas_completadas_parte1.txt: cierre de AUG-004.
+- Auditoría.txt: resultado, evidencia de commits/código y límites.
+- checkpoint.md: checkpoint inicial/final, respaldos y verificaciones.
+- Sin cambios de código funcional, configuración, endpoints, deployments ni datos productivos. Sin pruebas funcionales de aplicación/Beta.
+================================================================================

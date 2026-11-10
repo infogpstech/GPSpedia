@@ -741,3 +741,18 @@ El propietario del repositorio confirma expresamente que la protección técnica
 Estado administrativo de AUG-001: COMPLETADA por confirmación del propietario. No se crea un hallazgo nuevo ni se repite AUD-T-039. Esta adenda conserva la evidencia histórica y hace explícito el origen de la actualización de estado.
 Siguiente tarea de Fase 0: AUG-004, según Plan_auditoría/Plan_Maestro_Implementacion.md, sección 14.3.
 ================================================================================
+
+
+================================================================================
+RESULTADO DOCUMENTAL — AUG-004: MATRIZ DE CANCELACIÓN, SUSTITUCIÓN Y CONTINUIDAD
+Fecha: 2026-11-09 | HEAD de referencia: 7aa7b6e3489af412fe8caa8dbcd529328ab243a8
+Estado: COMPLETADA — DOCUMENTAL.
+ALCANCE: cuatro partes inmutables Tareas_legacy, tres partes ChangesLogs_legacy, dos partes Aug_Tareas_legacy, registros activos, Plan Maestro, Normas y código actual consultado. Entregable: Plan_auditoría/Matriz_Continuidad_Requisitos.md.
+DECISIONES:
+- Tarea 1.6: cancelada/retirada. Commit e5b19116; HTML/CSS/Navigation no contienen los controles. main.js conserva referencias obsoletas toggleFiltersBtn/filtersBar en líneas 123–125; AUG-099 permanece como corrección de limpieza.
+- Tarea 15: requisito compuesto. Filtros cancelados/duplicados de Tarea 1.6; estandarización universal de botones vigente/parcial. Commit ded75b6; AUD-T-015/H-AUD-015-003/AUG-100 son canónicos.
+- Tarea 1.7: toolbar Inbox presente en ui.js actual, commit histórico e5b19116; sanitización backend separada en AUG-095–097.
+- Tarea 14: búsqueda global presente, brechas en AUG-049/AUG-101; sink de consulta en AUG-098.
+- VIN, modal (+), PyS, impresión, administración, sesiones, Drive, FEEDBACK y YouTube enlazados a AUG/AUD-T propietarios sin duplicación. Las partes 3/4 que son auditorías, VAL o rectificaciones se clasifican como artefactos de control.
+LIMITACIONES: no se modificó código, servicios, endpoints, configuración, datos, Drive, Spreadsheet ni deployments. No se ejecutaron pruebas funcionales de aplicación ni Beta; no aplican a este entregable documental. Se verificaron fuentes, commits, SHA y referencias.
+================================================================================
