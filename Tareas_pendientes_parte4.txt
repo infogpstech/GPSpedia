@@ -1927,3 +1927,10 @@ Se normaliza como AUG-155 y se vincula con H-AUD-033-008 a H-AUD-033-012. La dep
 CIERRE DE TAREA — COORDINACIÓN COMPARTIDA — AUG-155 — 2026-11-10
 La tarea general queda COMPLETADA EN VALIDACIÓN LOCAL bajo AUG-155. La dependencia UTILITIES se retiró por confirmación del usuario y no se integró. La autoridad compartida cubre AUTH, USERS, WRITE, ADMIN y FEEDBACK. AUG-034 sigue siendo una tarea distinta para la ventana de migración VIN/Idempotencia.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN POSTERIOR — AUG-036 — CONTRATO FIJO DE COLUMNAS TESTIGO
+Fecha: 2026-11-10
+La implementación anterior descrita en esta sección agregaba los encabezados testigo al final de la hoja. AUG-036 corrige esa decisión: activaTestigo1, activaTestigo2 y activaTestigo3 se ubican obligatoriamente en AT:AV (46–48), incluso si existen columnas adicionales. No se desplazan ni reasignan columnas posteriores. Encabezados duplicados/fuera de posición, celdas objetivo ocupadas o datos sin encabezado detienen la operación. Validación lógica 14/14; Spreadsheet aislada pendiente de Beta.
+================================================================================
