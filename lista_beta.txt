@@ -255,3 +255,5 @@ AUG-155 — VALIDACIÓN DIFERIDA A BETA — COORDINADOR INTERPROYECTOS
 - Probar restauración de Spreadsheet/Drive, backups consistentes, organización de imágenes, reemplazo/recuperación/borrado/movimiento y snapshots de referencias en copias aisladas.
 - No ejecutar contra datos productivos. Esta validación no se considera ejecutada por la suite local 17/17 ni por los dobles de wrappers.
 ================================================================================
+
+- AUG-034: en copias aisladas, ejecutar solicitudes reales simultáneas WRITE addOrUpdateCut/addVinToVehicle, ADMIN addOrUpdateCut y ADMIN migrateCortesOperationIds (dry-run y confirmación). Verificar reserva de drenaje, rechazo de nuevas mutaciones, finalización de operaciones previas, diagnóstico de acciones activas, expiración de reserva abandonada (60 s), expiración de mantenimiento activo (45 min) y recuperación tras interrupción parcial de la migración. No usar datos productivos.
