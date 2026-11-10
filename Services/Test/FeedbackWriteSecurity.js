@@ -106,6 +106,42 @@ function runFeedbackWriteSecurityTests() {
                 getSafeSheet = originalGetSafeSheet;
             }
         });
+        test_("suggestYear rechaza IDs de vehículo duplicados antes de acceder a Feedbacks", function() {
+            const originalAssert = assertFeedbackSession;
+            const originalGetSpreadsheet = getSpreadsheet;
+            const originalGetSafeSheet = getSafeSheet;
+            const originalLock = LockService;
+            const cutsRows = [Array(42).fill("")];
+            const first = Array(42).fill("");
+            first[COLS_CORTES.id - 1] = "VEH-DUP-01";
+            first[COLS_CORTES.anoDesde - 1] = 2018;
+            first[COLS_CORTES.anoHasta - 1] = 2022;
+            cutsRows.push(first, first.slice());
+            const cuts = makeSheet(cutsRows);
+            let feedbackAccessed = false;
+            try {
+                assertFeedbackSession = function(payload) {
+                    if (!payload || payload.sessionToken !== "TEST_SESSION") throw new Error("Sesión inválida.");
+                    return { userId: "USR-TEST-01", userName: "Usuario verificado", role: "Tecnico" };
+                };
+                getSpreadsheet = () => ({ getSheetByName: name => name === SHEET_NAMES.CORTES ? cuts : null });
+                getSafeSheet = () => { feedbackAccessed = true; throw new Error("No debe acceder a Feedbacks."); };
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                const authorized = authorizeFeedbackAction_("suggestYear", { sessionToken: "TEST_SESSION", userId: "USR-TEST-01" });
+                expectThrow_(() => handleSuggestYear({
+                    ...authorized, vehicleId: "VEH-DUP-01", newYear: 2025, response: "Sí (Funciona)"
+                }), "ID duplicado");
+                assert_(!feedbackAccessed, "No debe consultar ni modificar Feedbacks ante un ID ambiguo.");
+                assert_(cuts.rows[1][COLS_CORTES.anoHasta - 1] === 2022);
+                assert_(cuts.rows[2][COLS_CORTES.anoHasta - 1] === 2022);
+            } finally {
+                assertFeedbackSession = originalAssert;
+                getSpreadsheet = originalGetSpreadsheet;
+                getSafeSheet = originalGetSafeSheet;
+                LockService = originalLock;
+            }
+        });
+
         test_("El actor anónimo ignora el identificador fabricable del navegador", function() {
             const actor = resolveSuggestionYearActor({ userId: "0", anonymousReporterId: "fabricado" });
             assert_(actor.suggestionActorKey === "anon:unverified");

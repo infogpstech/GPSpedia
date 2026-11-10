@@ -669,3 +669,12 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Alcance del cierre: validación de handleAddProblem. Hardening FEEDBACK global permanece EN PROGRESO.
 - Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — INTEGRIDAD DE suggestYear
+- Services/feedback.js: handleSuggestYearLocked exige que el ID del vehículo coincida con una única fila de Cortes; rechaza IDs duplicados antes de consultar Feedbacks o modificar rangos.
+- Services/Test/FeedbackWriteSecurity.js: prueba de regresión para ID duplicado, sin acceso a Feedbacks y sin cambios en los rangos ambiguos.
+- Validación local: runFeedbackWriteSecurityTests() 28/28 PASS; parsing/sintaxis de los dos archivos JavaScript modificados 2/2 PASS.
+- Alcance: resuelto el defecto de selección ambigua de vehículo. La revisión funcional de suggestYear continúa en la siguiente iteración.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================

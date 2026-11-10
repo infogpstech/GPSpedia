@@ -616,3 +616,34 @@ Validaciones diferidas a Beta: navegador real, Apps Script desplegado, Spreadshe
 Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
 Siguiente iteración: continuar con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: INTEGRIDAD DE suggestYear — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5 (sin modificaciones).
+HEAD previo: f1996d2e8cc44d7969f0a2d990ee561b58f9428e.
+Tarea en continuidad: revisión de contratos y comportamiento de suggestYear dentro de AUG-040. No se inicia otra tarea.
+
+PROBLEMA RESUELTO
+handleSuggestYearLocked seleccionaba la primera fila de Cortes coincidente con vehicleId sin comprobar unicidad. Un ID duplicado podía dirigir el aporte y una eventual ampliación del rango a una fila ambigua.
+Corrección: exige exactamente una coincidencia y rechaza IDs duplicados antes de acceder a Feedbacks o mutar Cortes.
+Prueba: un ID duplicado produce rechazo; Feedbacks no se consulta y ambos rangos permanecen intactos.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 28/28 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- La prueba usa dobles aislados; no acredita integración con Spreadsheet/Drive reales.
+
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-001; historial rotado en Auditoria_Archive/).
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Este checkpoint cierra únicamente el defecto de ID duplicado en suggestYear. La revisión funcional de suggestYear permanece EN PROGRESO; no se declara cerrado AUG-040 ni el hardening FEEDBACK general.
+Validación Beta pendiente: Apps Script desplegado, Spreadsheet/Drive reales y comportamiento en infraestructura real. No se ejecutaron ni simularon.
+Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
+Siguiente iteración: continuar con los casos funcionales de suggestYear (deduplicación por actor, anonimato y umbral de tres aportantes verificados), un hallazgo a la vez.
+================================================================================

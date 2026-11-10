@@ -707,10 +707,13 @@ function handleSuggestYearLocked(payload) {
     const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!cortesSheet) throw new Error("Hoja Cortes no encontrada.");
     const allCortesData = cortesSheet.getDataRange().getValues().slice(1);
-    const vehicleRowIndex = allCortesData.findIndex(row =>
-        String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId
-    );
-    if (vehicleRowIndex === -1) throw new Error("Vehículo no encontrado para registrar la sugerencia.");
+    const matchingVehicleIndexes = [];
+    allCortesData.forEach((row, index) => {
+        if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) matchingVehicleIndexes.push(index);
+    });
+    if (matchingVehicleIndexes.length === 0) throw new Error("Vehículo no encontrado para registrar la sugerencia.");
+    if (matchingVehicleIndexes.length > 1) throw new Error("El vehículo tiene un ID duplicado; no se registró la sugerencia de año.");
+    const vehicleRowIndex = matchingVehicleIndexes[0];
     const vehicleRow = allCortesData[vehicleRowIndex];
 
     const sheet = getSafeSheet(SHEET_NAMES.SUGERENCIAS_ANO);

@@ -1,0 +1,642 @@
+# Registro activo de hallazgos — GPSpedia
+
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de registrar hallazgos o modificar el proyecto.
+
+Este archivo conserva hallazgos, evidencia y estados; no establece procedimientos de desarrollo. El historial anterior permanece en `Olds/Documentacion_Legacy/`; consultar su manifiesto para localizarlo.
+
+================================================================================
+H-AUD-043 — Ausencia de rotación y límite de tamaño en registros documentales
+Fecha: 2026-11-09. Origen: auditoría pre-implementación DOC-MIG-2026-001, HEAD 63fbee17260ce850d8dcaeae363288559c49715e.
+Severidad: P2 — integridad documental y trazabilidad.
+Evidencia: siete documentos superaban 180,000 caracteres Unicode: ChangesLogs.txt (489574); Tareas.txt (572076); checkpoint.md (558767); contexto_personal.md (211313); Plan_Auditoria.md (541314); Aug_Tareas.md (185173); Consolidacion_Auditoria.md (244536). No existía política común de append-only, rotación ni manifiesto.
+Impacto: riesgo de truncamiento, sobrescritura y pérdida de trazabilidad.
+Corrección: preservar los originales en partes legacy numeradas, crear registros activos y establecer DOC-NORM-2026-001.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-MIG-2026-001; reconstrucción exacta documentada en el manifiesto.
+================================================================================
+
+================================================================================
+H-AUD-044 — Desincronización del Plan Maestro y del contexto operativo
+Fecha: 2026-11-09. Origen: DOC-REG-2026-002; HEAD d18e9f1a1a356782322104e5b0425c931fd77a1e.
+Severidad: P2 — trazabilidad y gobierno documental.
+Evidencia: Plan_Maestro_Implementacion.md conserva HEAD inicial d747696416c6d0a67edb558e8ec21e04e1e7eadf, mientras GitHub confirma d18e9f1a1a356782322104e5b0425c931fd77a1e; el registro AUG incluye AUG-152 y 151 IDs únicos porque AUG-015 está ausente; Tareas.txt activo es un registro resumido y el historial se conserva en Olds/Documentacion_Legacy; el plan menciona VAL-01 a VAL-33 mientras AUG-152 define VAL-34. Contexto de trabajo.md conserva instrucciones de una rama antigua y crear una rama nueva, contradictorias con contexto_personal.md y la rama vigente.
+Impacto: riesgo de ejecutar tareas sobre referencias incorrectas, contar mal el backlog o duplicar trabajo.
+Corrección: adenda de sincronización al Plan Maestro; aclaración vigente en Contexto de trabajo.md; registros independientes de pendientes/completadas/Beta; referencias añadidas a los registros activos.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-REG-2026-002.
+================================================================================
+H-AUD-045 — README anuncia filtros rápidos de catálogo cancelados
+Fecha: 2026-11-09. Origen: DOC-REG-2026-002.
+Severidad: P2 — contradicción funcional/documental.
+Evidencia: README.md enumera una barra de filtros rápidos colapsable por categoría y año; el Plan Maestro y la instrucción operativa vigente declaran cancelada esa implementación y ordenan eliminar sus remanentes.
+Impacto: induce a esperar o reintroducir una funcionalidad retirada.
+Corrección requerida: revisar y actualizar README.md y referencias activas para declarar la cancelación; verificar que no se describan como disponibles. No modificar legacy ni reintroducir código.
+Estado: ABIERTO; tarea DOC-README-2026-001.
+================================================================================
+H-AUD-046 — README describe los microservicios como retirados pese a existir carpeta Services
+Fecha: 2026-11-09. Origen: DOC-REG-2026-002.
+Severidad: P1 — precisión documental y posible exposición de fuentes.
+Evidencia: README.md afirma que write.js, auth.js, catalog.js y feedback.js fueron retirados; el árbol actual de GPSpedia2.2.5_work contiene Services/ con archivos de esos servicios y utilidades.
+Impacto: la documentación no refleja el contenido real y no permite determinar si la presencia de fuentes corresponde a una política autorizada.
+Corrección requerida: verificar visibilidad, política de publicación y contenido esperado; después actualizar README o tomar medidas autorizadas. No eliminar archivos ni cambiar permisos por inferencia.
+Estado: ABIERTO; tarea DOC-README-2026-002.
+================================================================================
+
+
+
+================================================================================
+H-AUD-047 — Plan Maestro sin propiedad única de tareas ni ruta uniforme a requisitos
+Fecha: 2026-11-09. Tarea: DOC-PLAN-2026-003.
+Severidad: P2 — riesgo de secuenciación y trazabilidad.
+Evidencia: las secciones 4–7 del Plan Maestro citan AUG en varias fases (por ejemplo AUG-018–027, AUG-033–041, AUG-064, AUG-075–082, AUG-095–105, AUG-106–112 y AUG-122–139) sin declarar siempre si son ejecución, dependencia o referencia. Los archivos independientes de pendientes contienen las fichas completas, pero el Plan Maestro no ofrece un mapa uniforme hacia ellos. Las partes 3–4 son registros históricos abiertos/parciales y requieren reconciliación, no ejecución directa.
+Impacto: riesgo de repetir implementaciones, saltar dependencias o trabajar con resúmenes en lugar de los requisitos completos.
+Corrección: adenda 14 del Plan Maestro con propiedad única por fase, olas internas, bloqueos, rutas exactas de requisitos y procedimiento obligatorio por tarea.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-PLAN-2026-003. No se modificó código ni legacy.
+================================================================================
+
+
+
+================================================================================
+H-AUD-048 — README anuncia filtros rápidos cancelados como funcionalidad activa
+Fecha: 2026-11-09. Tarea: DOC-README-2026-001. Severidad: P2.
+Evidencia: README.md, sección 5, línea 96 del archivo auditado en HEAD 7c21387c8122ce84321e7e2318e750902c509010. El texto anuncia una “Barra de Filtros Rápidos Colapsable” por Categoría y Año e identifica el botón #btn-toggle-filters.
+Impacto: la documentación presenta como disponible una funcionalidad cancelada y puede inducir a reintroducirla.
+Criterio de corrección: retirar la afirmación de disponibilidad y sustituirla por una nota explícita de cancelación; conservar el resto de novedades; no tocar código ni legacy.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-README-2026-001. La revisión posterior confirma que solo cambió la línea prevista.
+================================================================================
+
+
+================================================================================
+H-AUD-049 — README describe como retiradas fuentes backend presentes temporalmente en la fase de implementación
+Fecha: 2026-11-09. Tarea: DOC-README-2026-002. Severidad: P2 documental.
+Evidencia: README.md, sección 5, en HEAD 8d296358b3b805a33d2c814406d7efe54d2782bb, afirma que write.js, auth.js, catalog.js y feedback.js fueron retirados del repositorio público y que la lógica se encuentra resguardada de forma privada. El árbol de la rama de trabajo contiene siete archivos JS bajo Services/. La rama base contiene seis; la rama main no contiene Services/.
+Causa/contexto confirmado por el usuario: el repositorio está en fase de implementación y las fuentes temporales se eliminan del repositorio una vez terminadas las implementaciones y correcciones.
+Impacto: la descripción no representa el estado temporal del repositorio y mezcla exclusión final, código fuente, deployments y endpoints.
+Corrección: README sección 5 actualizada en el commit 8b2bec3 para aclarar que Services/ contiene fuentes temporales durante implementación/corrección y que deben retirarse al cierre de esa fase; distingue fuentes de deployments y endpoints independientes. No se borraron archivos en esa tarea.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-README-2026-002; el texto de README está corregido y verificado en el commit 8b2bec3.
+================================================================================
+
+
+================================================================================
+H-AUD-050 — Omisión de auditoría y checkpoint inicial en el commit de DOC-README-2026-002
+Fecha: 2026-11-09. Tarea correctiva: DOC-TRACE-2026-001. Severidad: P2 — cumplimiento del procedimiento y trazabilidad.
+Evidencia: el diff y la lista de archivos del commit 8b2bec3b1e16cb06d5dc9dde95c10a024f9f5fb3 muestran seis archivos modificados y excluyen Auditoría.txt. El diff de checkpoint.md incorpora el checkpoint final de DOC-README-2026-002, pero no el checkpoint inicial. El checkpoint inicial sí fue preparado como blob 434759c9f0a3b886ae17f427f8249b513693313c y el borrador de H-AUD-049 como blob 731136558e71014801ef96b4f98f3cb6e12346aa, pero ambos quedaron fuera del árbol del commit original.
+Impacto: el checkpoint final afirmó que Auditoría.txt había sido actualizado y que el checkpoint inicial se había incorporado, aunque Git no contiene esos cambios en dicho commit. El cierre original no cumplió íntegramente el procedimiento obligatorio.
+Corrección: conservar intacto el commit original; recuperar e incorporar explícitamente el checkpoint inicial con nota de incorporación tardía; registrar H-AUD-049 y este hallazgo; documentar la tarea correctiva y verificar su commit independiente.
+Estado: RESUELTO DOCUMENTALMENTE EN DOC-TRACE-2026-001, sujeto a verificación del commit correctivo.
+================================================================================
+
+
+================================================================================
+H-AUD-051 — Marcas históricas [X] sin evidencia suficiente para promoción a completadas vigentes
+Fecha: 2026-11-09. Tarea: DOC-LEGACY-2026-001. Severidad: P2 — trazabilidad y control de calidad.
+
+Evidencia del inventario:
+- Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt, líneas 517–2273: 20 encabezados principales con marca histórica [X] (TAREA 1–3 y 5–21). TAREA 4 conserva [~].
+- tareas_completadas_parte1.txt, líneas 35–54, reproduce esas 20 marcas dentro de la sección histórica de tareas no promovidas; la norma interna ya establece que una marca [X] no constituye cierre vigente.
+- Se identificaron commits relacionados con las tareas: T1 2251d499; T2 97eef18; T3 14bbd04; T5 d72a1e6; T6 7f57e2f; T7 09c7a44; T8 7714b98; T9 64d8d04; T10 f93ad12; T11 2af2af; T12 6f2fc4f; T13 692e23c; T14/T15 ded75b6; retirada de filtros e Inbox 1.6/1.7 e5b191; T16 4b136cd, 28f4ace y a9b15e5; T17 aa57c4; T18 27760cf y a1c910; T19 19ff4f; T20 d9476ab; T21 0e0058d. Los commits acreditan cambios en archivos, no por sí solos el cumplimiento de todos los criterios ni la revisión formal.
+- Las auditorías E1 posteriores no equivalen a pruebas funcionales: AUD-T-017 registra siete hallazgos abiertos y VAL-26 planificada; AUD-T-018 nueve hallazgos y VAL-27 planificada; AUD-T-019 catorce hallazgos y VAL-28 planificada; AUD-T-020 cuatro hallazgos abiertos y VAL-29 planificada; AUD-T-021 nueve hallazgos y VAL-30 no ejecutada; AUD-T-022 cuatro hallazgos y VAL-31 no ejecutada; AUD-T-001 conserva dos hallazgos abiertos y VAL-32 no ejecutada. AUD-T-002 figura como auditada parcialmente.
+- TAREA 19 especifica las pruebas 31–38, pero la matriz VAL-28 se encuentra planificada, no ejecutada.
+- Los registros complementarios de distribución e impresión de ficha técnica en la parte_001 (líneas 2196–2266) declaran pendientes de validación visual en navegador y PDF real; esos estados no acreditan cierre funcional.
+- TAREA 15 combina la retirada de filtros rápidos con la estandarización universal de botones. Los filtros están cancelados/retirados y no deben restaurarse; la auditoría E1 conserva hallazgos y VAL-24 pendiente para los criterios restantes de botones.
+- Services/Test/README.md indica que los proyectos Apps Script de prueba no han sido creados ni desplegados desde el repositorio; la validación funcional solo comienza después de crear y comprobar los deployments aislados.
+- Los workflows de la rama consultados corresponden únicamente a “pages build and deployment”; no se encontró workflow de pruebas. PR #129 está cerrado/mergeado y no tiene registros de revisión asociados en la consulta; no se encontró Code Review formal individual asociado a los commits de las tareas. Algunos mensajes de commit afirman pruebas/validaciones (por ejemplo e5b191 y 19ff4f), pero no se localizó informe reproducible ni artefacto de pruebas asociado.
+
+Comprobación sintáctica estática del snapshot actual GPSpedia2.2.5_work, realizada después del checkpoint inicial:
+- Herramienta: constructor Function del runtime JavaScript V8 disponible en Code Mode; versión exacta de V8 no expuesta.
+- PASS_SCRIPT: Services/admin.js, Services/users.js, Services/write.js, Services/feedback.js y lightbox.js.
+- PASS_BODY_ONLY: ui.js, main.js, navigation.js y api-config.js después de retirar temporalmente declaraciones import/export. Este resultado no valida la gramática completa del módulo ESM.
+- Scripts inline: add_cortes.html y users.html, un bloque cada uno, PASS. index.html no contiene scripts inline.
+- style.css: balance de llaves PASS (545 apertura / 545 cierre); no equivale a validación completa con parser CSS.
+- HTML: no se ejecutó un parser HTML; estructura y DOM no certificados.
+- No se encontraron errores en las comprobaciones limitadas anteriores. No se considera satisfecha la revisión sintáctica completa de todos los snapshots históricos ni de la gramática ESM/HTML/CSS.
+
+Impacto: aceptar las 20 marcas [X] como completadas vigentes implicaría afirmar pruebas y revisión que no están respaldadas por evidencia reproducible. Las marcas originales se preservan como historia, pero ninguna se promueve en esta revalidación. TAREA 4 permanece parcial.
+
+Acción: mantener DOC-LEGACY-2026-001 en estado PARCIAL; no alterar ni reescribir Olds/Documentacion_Legacy/; conservar la lista histórica como no promovida; completar con analizador ESM/HTML/CSS apropiado, pruebas funcionales reproducibles y Code Review por alcance antes de cualquier promoción.
+Estado: ABIERTO — NO PROMOVER [X].
+================================================================================
+
+================================================================================
+H-AUD-052 — Formalización tardía del checkpoint inicial de DOC-LEGACY-2026-001
+Fecha: 2026-11-09. Tarea: DOC-LEGACY-2026-001. Severidad: P2 — cumplimiento del procedimiento.
+
+Evidencia: la exploración preliminar del repositorio comenzó antes de confirmar que el checkpoint inicial específico de DOC-LEGACY-2026-001 estuviera persistido. El blob 434759c9f0a3b886ae17f427f8249b513693313c corresponde a un snapshot previo de checkpoint.md y no contiene el checkpoint de esta tarea. El checkpoint inicial específico se formalizó posteriormente en el blob 6e16091fded2fe27a8db0675dedb89dec83170a2, con nota explícita del retraso.
+Impacto: la secuencia exploratoria inicial no cumplió el orden checkpoint → auditoría.
+Corrección: se reinició la auditoría formal después de crear el checkpoint específico; HEAD, rama base, inventario legacy, commits/diffs, fuentes actuales, sintaxis estática, pruebas y registros de revisión se volvieron a consultar. No se modificó ningún archivo de producto ni legacy antes de la formalización.
+Estado: DESVIACIÓN DOCUMENTADA; ciclo formal reiniciado desde el checkpoint. No se afirma que la exploración preliminar hubiera cumplido el procedimiento.
+================================================================================
+
+
+================================================================================
+H-AUD-053 — Eliminación de cuentas no revoca sesiones y AUTH valida solo ActiveSessions
+Fecha: 2026-11-09. Tarea: AUG-005. Origen: H-AUD-001; AUD-T-002; adendas H-AUD-024-004 y H-AUD-024-010. Prioridad: Alta — seguridad de sesión.
+
+Auditoría de solo lectura sobre GPSpedia2.2.5_work, HEAD 1cad8d604c2147b632030dc3d33df85b826eac1f:
+- Services/users.js: doPost enruta deleteUser a handleDeleteUser. getVerifiedSession ya exige que el token exista en ActiveSessions y que su ID corresponda a un usuario presente en Users. En contraste, handleDeleteUser elimina únicamente la fila Users; no elimina filas ActiveSessions ni limpia/reconcilia el token de referencia. No adquiere ScriptLock, aunque handleResetUserSessions y handleCreateUser sí lo hacen.
+- Services/Auth.js: doPost enruta validateSession a handleValidateSession. Esta función confirma únicamente la coincidencia userId + sessionToken en ActiveSessions; no consulta Users. Por tanto, un token huérfano de una cuenta eliminada puede seguir recibiendo valid:true.
+- users.html: renderUserTable presenta el botón Eliminar también para la fila del usuario Desarrollador autenticado; deleteUser no bloquea la autodeleción ni comunica el efecto sobre sesiones.
+- auth.js: checkSession consume apiValidateSession y cierra la sesión local cuando AUTH devuelve valid:false. No requiere cambio para consumir la respuesta actual.
+- api-config.js: deleteUser ya está asignada a USERS y validateSession a AUTH; routeAction transporta status:error y no requiere cambio de ruteo.
+- Services/Test/users.js y Services/Test/Auth.js son copias de sus fuentes, con SPREADSHEET_ID distinto para la hoja aislada; deben mantenerse sincronizadas con los cambios funcionales sin alterar ese ID.
+- Services/Test/README.md declara que los proyectos Apps Script de prueba no se han creado ni desplegado. No existen deployments de prueba verificables desde el repositorio; no se autoriza probar contra endpoints live.
+
+Riesgos y límites:
+- AUTH y USERS son proyectos Apps Script separados. Sus ScriptLock no se comparten; la coordinación total de login concurrente y eliminación requiere tratar la dependencia de concurrencia registrada en AUG-010/AUG-117. La comprobación de existencia en AUTH debe garantizar que, después de eliminar una cuenta, las validaciones posteriores rechacen sus tokens aunque quede una fila residual por una carrera entre proyectos.
+- La ficha AUG-117 conserva como alcance posterior la protección de la última cuenta Desarrollador, el registro de auditoría y los controles de operaciones destructivas/degradación. No duplicar esa implementación aquí.
+- La política explícita de AUG-005 para autodeleción será impedir que el Desarrollador autenticado elimine su propia cuenta; el backend será autoritativo y la interfaz no mostrará esa acción para su propia fila.
+
+Archivos auditados en alcance: Services/users.js, Services/Auth.js, users.html, auth.js, api-config.js, Services/Test/users.js, Services/Test/Auth.js y Services/Test/README.md. No se modificó ningún archivo de código durante la auditoría.
+
+Acción prevista: hacer que deleteUser invalide y elimine las sesiones de la cuenta antes de borrar su fila; serializar la operación dentro de USERS; hacer que AUTH compruebe también la existencia del usuario; impedir autodeleción del Desarrollador en backend e interfaz; sincronizar las copias aisladas conservando su Spreadsheet ID. Probar idempotencia, cuenta inexistente, sesiones múltiples, token huérfano, usuario válido, sesión inválida y autodeleción con dobles locales. La validación funcional en Apps Script real queda bloqueada hasta disponer de los deployments aislados indicados en Services/Test/README.md.
+Estado: ABIERTO — HALLAZGO AUDITADO; IMPLEMENTACIÓN PENDIENTE.
+================================================================================
+
+
+================================================================================
+H-AUD-054 — Riesgo de reindexación de Users.ID al eliminar físicamente una fila
+Fecha: 2026-11-09. Tarea relacionada: AUG-005. Prioridad: CRÍTICA — integridad de identidad y sesiones.
+Origen: revisión de efectos colaterales posterior a H-AUD-053; auditoría de Services/users.js y Services/admin.js en HEAD 1cad8d604c2147b632030dc3d33df85b826eac1f.
+
+Evidencia:
+- Services/users.js, handleCreateUser(): copia la fila anterior completa con copyTo() y el comentario del código indica expresamente que hereda todas las fórmulas, incluida la columna ID. El archivo no revela cuál es la fórmula efectiva de Users.ID.
+- Services/admin.js, handleCreateSheet(): cuando se proporciona idFormula, asigna a la primera columna la fórmula indicada o '=ROW()-1'. Esta función es genérica; no demuestra por sí sola que la hoja Users utilice esa fórmula.
+- Services/users.js, handleDeleteUser(): elimina físicamente la fila de Users mediante deleteRow(). ActiveSessions mantiene ID_Usuario como referencia.
+- No hay en el repositorio una copia verificable de la fórmula efectiva de Users!A2 ni una exportación de la hoja que permita comprobar si los IDs son valores fijos o fórmulas dependientes de la fila.
+- La búsqueda de integración mostró Google Drive deshabilitado por el administrador (DISABLED_BY_ADMIN / NOT_AVAILABLE); no se pudo consultar el Spreadsheet operativo ni su copia.
+
+Riesgo:
+Si Users.ID depende del número de fila (por ejemplo, ROW()-1), borrar una fila puede recalcular los IDs de las cuentas posteriores. Sus registros ActiveSessions y otros datos que referencien esos IDs conservarían valores anteriores; una sesión residual podría quedar asociada a una cuenta distinta o las sesiones legítimas podrían invalidarse. Limpiar primero las sesiones del usuario objetivo no resuelve la reindexación de las demás cuentas. No se afirma que la fórmula real sea ROW()-1: precisamente falta verificarla.
+
+Decisión de seguridad:
+- BLOQUEAR la integración de cualquier borrado físico de filas de Users dentro de AUG-005 hasta verificar la fórmula real y la estabilidad de los identificadores.
+- No incorporar los blobs preliminares de código creados durante la evaluación; no forman parte de ningún árbol, commit ni ref de la rama.
+- No probar ni modificar los endpoints operativos ni la hoja productiva.
+- Confirmar en una copia aislada si cada ID es valor fijo o fórmula; si depende de fila, diseñar primero una estrategia de IDs inmutables y revisar los consumidores/referencias antes de reanudar la eliminación.
+- Mantener como requisitos pendientes la revocación de todas las sesiones y el rechazo AUTH de cuentas inexistentes; no marcar AUG-005 como implementada.
+
+Relación con H-AUD-053: este hallazgo bloquea la acción de borrado físico descrita allí hasta resolver la integridad de Users.ID. La auditoría de seguridad de sesiones sigue siendo válida; el plan de corrección debe ajustarse al esquema real.
+Estado: ABIERTO — BLOQUEANTE; AUG-005 BLOQUEADA POR VERIFICACIÓN DE ESQUEMA.
+================================================================================
+
+
+================================================================================
+H-AUD-055 — Logout solo local; AUTH no ofrece revocación individual de sesión
+Fecha: 2026-11-09. Tarea: AUG-006. Origen: H-AUD-002 y adenda H-AUD-024-008. Prioridad: Alta — seguridad de sesión.
+
+Auditoría de solo lectura sobre GPSpedia2.2.5_work, HEAD bbd9992acd83063f480e56652a60a8223c764a68:
+- auth.js, logout(): elimina SESSION_KEY y muestra la pantalla de acceso; no conserva el SessionToken antes de eliminarlo ni realiza una llamada backend. La función es síncrona y sus consumidores actuales no esperan una promesa.
+- main.js: el consumidor de interfaz localizado cierra el menú lateral y llama auth.logout(). auth.js también invoca logout() cuando validateSession confirma una sesión inválida, ante errores explícitos de expiración y ante error crítico de inicialización. La futura revocación debe ser idempotente para estos caminos.
+- ui.js, showLoginScreen(reason): presenta el motivo en login-error; showGlobalError(message) dispone de toast para informar una incidencia posterior sin impedir el cierre local.
+- api-config.js: ACTION_TO_SERVICE_MAP asigna login y validateSession a AUTH, pero no existe acción logout. routeAction() ya serializa acciones, convierte errores HTTP/API en rechazos y registra métricas locales; no requiere cambiar su contrato.
+- Services/Auth.js, doPost(): solo enruta login y validateSession. handleValidateSession() consulta ActiveSessions. No existe manejador que retire un único token.
+- Services/Auth.js, handleLogin(): crea una fila por sesión en ActiveSessions y sobrescribe Users.SessionToken con el token más reciente. SESSION_LIMITS permite varias sesiones para ciertos roles. Por ello, revocar una sesión antigua no debe limpiar el SessionToken más reciente; el campo solo se limpia cuando coincide exactamente con el token revocado.
+- AUTH contiene los nombres/índices de ambas hojas Users y ActiveSessions; puede realizar ambas operaciones dentro del mismo proyecto y ScriptLock. No se requiere modificar Services/users.js ni coordinar el ScriptLock de otro proyecto.
+- Services/Test/Auth.js es la copia del servicio AUTH y conserva un SPREADSHEET_ID independiente. Debe recibir el mismo cambio funcional sin alterar ese identificador.
+- Services/Test/README.md declara que los proyectos Apps Script aislados aún no se han creado/desplegado. No hay evidencia de deployment de prueba disponible; no se probarán endpoints operativos.
+- Revisión de consumidores del árbol actual: main.js es el consumidor de interfaz de auth.logout(); los demás usos están dentro de auth.js. Las llamadas actuales son compatibles con mantener logout() síncrona y lanzar la petición remota en segundo plano.
+
+Riesgos y criterios de diseño:
+- El token es credencial bearer; el backend debe localizar la sesión por el token exacto, sin confiar en userId/rol enviados por el cliente.
+- La operación debe ejecutarse bajo LockService.getScriptLock() del proyecto AUTH, compartido con su login. No se afirmará que este lock coordina USERS u otros proyectos.
+- Debe eliminarse únicamente la fila cuyo ActiveSessions coincida exactamente con el token. Si el token aparece duplicado, detenerse y reportar inconsistencia en lugar de afectar sesiones adicionales.
+- Users.SessionToken se limpia solo si el valor de la fila del usuario asociado coincide exactamente con el token. Así no se borra la referencia a una sesión más reciente.
+- Una revocación ya realizada debe responder idempotentemente como alreadyRevoked. El cierre local debe ocurrir antes de esperar la red; los errores remotos deben informar que la revocación quedó sin confirmar, nunca afirmar éxito.
+- No persistir el token revocado en una nueva clave local ni registrar el token en Logs/console.
+
+Archivos auditados: auth.js, main.js, ui.js, api-config.js, Services/Auth.js, Services/Test/Auth.js y Services/Test/README.md. No se modificó código durante la auditoría.
+
+Acción prevista: añadir acción AUTH logout autenticada exclusivamente por sessionToken; bloquear y localizar la fila exacta; revocarla de forma idempotente; limpiar Users.SessionToken solo si coincide; agregar la ruta AUTH; hacer que auth.logout() retire y presente inmediatamente la sesión local y gestione la respuesta remota en segundo plano; sincronizar Services/Test/Auth.js preservando su Spreadsheet ID. Probar token válido, token ausente, token ya revocado, token duplicado, varias sesiones del mismo usuario, SessionToken más reciente distinto, fallo de limpieza secundaria y fallo de red mediante dobles locales.
+Estado: ABIERTO — AUDITADO; IMPLEMENTACIÓN PENDIENTE.
+================================================================================
+
+
+================================================================================
+H-AUD-056 — Carrera de concurrencia entre AUTH.logout y USERS.resetUserSessions
+Fecha: 2026-11-09. Tarea afectada: AUG-006. Prioridad: CRÍTICA — integridad de sesiones.
+
+Auditoría estática de GPSpedia2.2.5_work, posterior al commit 2342701fa31e9a19cfc0e04ff46af4bdc3ccc825:
+- Services/Auth.js, handleLogout(): adquiere LockService.getScriptLock() del proyecto AUTH, lee ActiveSessions, guarda el índice de la fila coincidente y posteriormente ejecuta deleteRow(rowIndex).
+- Services/users.js, handleResetUserSessions(): también modifica ActiveSessions; adquiere LockService.getScriptLock() del proyecto USERS, lee la misma hoja y elimina filas mediante deleteRow().
+- Services/Test/README.md exige proyectos Apps Script separados para AUTH y USERS. Por tanto, sus ScriptLock pertenecen a proyectos distintos y no serializan mutuamente las operaciones sobre la misma Spreadsheet.
+- Intercalado reproducible por estructura: AUTH localiza el token en la fila N; antes de su deleteRow(), USERS elimina una fila anterior; la sesión objetivo se desplaza a N-1 y AUTH elimina ahora la fila N, que puede corresponder a otra sesión. La revocación solicitada puede quedar activa y una sesión ajena puede ser eliminada.
+- La revisión previa de H-AUD-055 afirmó que el lock AUTH era suficiente y que no se requería coordinar Services/users.js. Esa conclusión fue incompleta: no consideró resetUserSessions ni el aislamiento de locks entre proyectos.
+
+Impacto: corrupción de ActiveSessions, revocación no fiable y posible cierre de una sesión distinta a la solicitada. El hallazgo bloquea el despliegue y la aprobación de AUG-006.
+Criterio de corrección: centralizar todas las mutaciones de ActiveSessions bajo una única autoridad de bloqueo compartida por las acciones de logout individual y cierre masivo, o implementar un mecanismo de coordinación interproyecto demostrado como realmente exclusivo. No basta con releer el índice antes de deleteRow ni con cambiar el orden de eliminación.
+Pruebas obligatorias: intercalados entre logout y resetUserSessions con la fila objetivo al inicio/medio/final; mismo usuario y usuarios distintos; demostrar que no se elimina una sesión ajena y que la sesión objetivo siempre queda revocada; duplicados e idempotencia; copia AUTH/USERS aislada y deployments de prueba.
+Estado: ABIERTO — BLOQUEANTE para AUG-006. No se modificó código, endpoints, deployments ni datos productivos durante esta revisión.
+================================================================================
+
+
+================================================================================
+ADENDA H-AUD-056 — INVENTARIO COMPLETO DE MUTACIONES DE ACTIVESESSIONS
+Fecha: 2026-11-09. Tarea correctiva: AUG-153.
+
+La inspección ampliada del árbol de trabajo incluyó los 21 archivos JavaScript/Apps Script vigentes fuera de Olds:
+- AUTH: handleLogin agrega sesiones y puede eliminar la más antigua por límite; handleLogout elimina el token invocante. Ambas operaciones usan LockService.getScriptLock() del proyecto AUTH.
+- USERS: handleResetUserSessions eliminaba las sesiones de un usuario bajo el ScriptLock del proyecto USERS, que es distinto al de AUTH.
+- admin.js, write.js y feedback.js consultan ActiveSessions para autorización, pero en los puntos examinados no escriben en esa hoja. Los demás módulos del inventario no contienen referencias a ActiveSessions.
+- Services/Test/Auth.js y Services/Test/users.js son copias de prueba; cada proyecto Apps Script es independiente y sus locks tampoco se comparten con los proyectos live.
+
+Por tanto, la carrera no se limita a logout: el reset remoto de USERS también podía intercalarse con la eliminación por límite o el append de handleLogin en AUTH. La solución adoptada en AUG-153 traslada resetUserSessions a AUTH, enruta la acción desde api-config.js a AUTH y elimina el handler de escritura de USERS y su copia de prueba. De este modo, login, logout y resetUserSessions quedan bajo el mismo ScriptLock del proyecto AUTH. Los consumidores restantes de ActiveSessions permanecen en lectura.
+
+La limpieza de Users.SessionToken sigue siendo un efecto secundario de resetUserSessions. Los riesgos de reindexación/borrado de filas de Users identificados en H-AUD-053/H-AUD-054 y AUG-005 permanecen fuera del alcance y no se consideran resueltos por esta tarea.
+
+Estado: CORRECCIÓN INCORPORADA EN FUENTES; cierre de H-AUD-056 pendiente de parser integral y pruebas en deployments aislados con intercalados login/logout/reset. No se probaron endpoints productivos ni se modificaron datos.
+================================================================================
+
+
+================================================================================
+H-AUD-057 — COLISIÓN DE IDENTIFICADOR AUG-100 EN LOS REGISTROS ACTIVOS
+Fecha: 2026-11-09. Prioridad: Media — trazabilidad y gobierno documental.
+Evidencia:
+- Tareas_pendientes_parte2.txt asigna AUG-100 al sistema universal de estilos y estados de botones; el Plan Maestro 14.2 identifica parte2 como fuente canónica para AUG-100 a AUG-152.
+- Tareas_pendientes_parte1.txt y Tareas.txt contienen una entrada posterior que asigna AUG-100 a centralizar las mutaciones de ActiveSessions.
+- Aug_Tareas.md y el Plan Maestro no registraban una segunda tarea AUG-100.
+
+Impacto: dos trabajos distintos comparten ID, lo que puede provocar ejecución duplicada, referencias incorrectas y cierres atribuidos a la tarea equivocada.
+Corrección: conservar AUG-100 para el sistema universal de botones; no reescribir los registros históricos. Reasignar la tarea de centralización a AUG-153 en Tareas_pendientes_parte2.txt y agregar adendas trazables en Tareas.txt, Tareas_pendientes_parte1.txt, Aug_Tareas.md y Plan_Maestro_Implementacion.md.
+Estado: RESUELTO DOCUMENTALMENTE mediante la adenda de AUG-153; la entrada histórica duplicada se conserva y queda invalidada para ejecución.
+================================================================================
+
+
+================================================================================
+CIERRE TÉCNICO — AUG-005 / H-AUD-053 / H-AUD-054
+Fecha: 2026-11-09. Implementación revisada sobre HEAD padre c3bc6df232eed42e9cc015e3b3453a77d2c9b5c0.
+Code Review identificó un riesgo de carrera: handleLogin podía leer credenciales antes del ScriptLock AUTH y crear una sesión después de que deleteUser desactivara la cuenta. Se corrigió revalidando dentro del lock que exista exactamente una fila con el ID y que la cuenta siga activa antes de agregar la sesión.
+Implementación: deleteUser se enruta a AUTH y comparte el ScriptLock de login/logout/resetUserSessions. La eliminación es lógica: se conserva fila e ID; Nombre_Usuario se sustituye por __deleted__:<UUID> y se limpian contraseña, rol, contacto, nombre completo y SessionToken. No se ejecuta deleteRow() en Users. AUTH desactiva primero, revoca sesiones en orden descendente y permite reintento ante fallo parcial; sesiones residuales se rechazan. AUTH validateSession comprueba token único, userId coincidente y usuario único/activo. USERS getVerifiedSession también exige token/usuario únicos y activos; getUsers filtra desactivados. createUser asigna UUID estático y reserva el prefijo __deleted__:. UI oculta Eliminar para el usuario autenticado; backend impide autodeleción.
+Copias de prueba AUTH/USERS sincronizadas conservando Spreadsheet IDs. No se añadieron URLs de prueba a api-config.js.
+Pruebas con dobles locales: 13/13 PASS (conservación de fila/ID, revocación multi-sesión, preservación de terceros, rechazo de token residual, autodeleción, RBAC, tokens/IDs duplicados, fallo parcial/reintento, idempotencia, lock liberado y revalidación de login bajo lock). Sintaxis: PASS en cuatro scripts Apps Script; PASS en api-config.js tras retirar exportaciones ESM para el harness; PASS en script inline users.html. Copias de prueba coinciden al normalizar solo Spreadsheet ID/comentario.
+Limitación: Services/Test/README.md confirma que no hay deployments aislados. No se ejecutaron pruebas funcionales en Apps Script ni endpoints live, ni se modificaron hojas/datos. Las pruebas funcionales y concurrentes aisladas se difieren a Beta.
+H-AUD-053: RESUELTO EN FUENTES. H-AUD-054: RESUELTO POR DISEÑO al no borrar físicamente filas y asignar UUID estáticos a cuentas nuevas; no se asumió la fórmula histórica. AUG-005: COMPLETADA EN FUENTES; lógica y sintaxis PASS; validación real diferida a Beta.
+No se modificaron rama base, endpoints operativos, deployments, datos productivos, archivos legacy ni filtros rápidos cancelados.
+================================================================================
+
+
+ADENDA DE VERIFICACIÓN — AUG-005
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 13/13 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+
+
+================================================================================
+H-AUD-058 — Carrera de login con desactivación de cuenta (revisión de AUG-005)
+Fecha: 2026-11-09. Origen: Code Review de la implementación de AUG-005.
+Evidencia: Services/Auth.js, handleLogin(), validaba credenciales antes de adquirir el ScriptLock; sin revalidación dentro del lock podía crear una sesión si deleteUser desactivaba la cuenta durante esa ventana.
+Riesgo: una cuenta recién desactivada podría recibir una nueva sesión posterior a la revocación masiva.
+Corrección: revalidar dentro del ScriptLock AUTH que el ID corresponde a una única cuenta activa antes de mutar ActiveSessions y crear el token. deleteUser, login, logout y resetUserSessions comparten el mismo lock AUTH.
+Verificación: prueba estática del orden del guard y caso lógico local PASS dentro de la batería 13/13. No se ejecutó intercalado real en deployment Apps Script; queda en la validación Beta.
+Estado: RESUELTO EN FUENTES; validación funcional concurrente diferida a Beta. No requiere tarea AUG separada porque forma parte de la seguridad transaccional de AUG-005.
+================================================================================
+
+
+================================================================================
+H-AUD-059 — Sesiones residuales tras fallo parcial de eliminación lógica
+Fecha: 2026-11-09. Origen: Code Review/reinicio de AUG-005.
+Evidencia: Services/admin.js assertDeveloperSession() valida ActiveSessions y existencia de Users, pero no excluye tombstones; Services/feedback.js assertFeedbackSession() y Services/write.js getAuthenticatedCollaborator() siguen el mismo patrón de comprobar sesión y fila de usuario sin verificar el prefijo __deleted__:. Por tanto, si AUTH marcara la cuenta como desactivada antes de terminar de retirar todas las sesiones y fallara la limpieza, esos consumidores podrían aceptar un token residual.
+Riesgo: una cuenta marcada como eliminada podría conservar acceso a operaciones de ADMIN/FEEDBACK/WRITE mediante una fila de sesión residual.
+Corrección requerida: dentro del lock AUTH, inutilizar primero los tokens de todas las sesiones destino en ActiveSessions; después eliminar filas de sesión en orden descendente. Solo cuando todas las sesiones hayan sido retiradas se congelarán los IDs históricos y se marcará la cuenta como tombstone. Ante fallo parcial, las filas restantes tendrán token vacío y no serán aceptadas por los demás servicios; la cuenta permanecerá activa hasta completar el reintento, sin afirmar que la eliminación terminó.
+Alcance auditado: Services/Auth.js, Services/admin.js, Services/feedback.js, Services/write.js, Services/users.js y copias de prueba. No se encontró otro escritor de ActiveSessions fuera de AUTH; ADMIN/FEEDBACK/WRITE son consumidores.
+Estado: ABIERTO DURANTE REINICIO; corrección incluida en AUG-005, no se crea AUG adicional.
+================================================================================
+
+
+RESOLUCIÓN DE H-AUD-059 — 2026-11-09
+El contraste completo de consumidores determinó que ADMIN ya rechaza tombstones porque exige rol Desarrollador, y WRITE rechaza el registro porque la desactivación limpia Nombre_Completo. FEEDBACK era el único consumidor que podía aceptar un usuario tombstone cuando allowedRoles era null. Se actualizó Services/feedback.js assertFeedbackSession() para exigir username no reservado y rol activo conocido antes de autorizar cualquier acción, independientemente de allowedRoles. AUTH y USERS ya rechazan tombstones. Por ello, la estrategia de desactivar primero y revocar después mantiene el rechazo de sesiones residuales incluso ante fallo parcial.
+Prueba local de FEEDBACK para usuario tombstone y rol inválido: PASS; cuenta activa: PASS. Sintaxis completa de Services/feedback.js: PASS. No se modificó Services/admin.js ni Services/write.js porque sus validaciones existentes ya rechazan el registro desactivado por rol vacío/nombre completo vacío.
+Estado H-AUD-059: RESUELTO EN FUENTES; validación funcional aislada/concurrente diferida a Beta.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+================================================================================
+H-AUD-060 — Sesiones sin expiración absoluta ni por inactividad en todos los consumidores
+Fecha: 2026-11-09. Origen: AUG-007 / AUD-T-002.
+Evidencia: Services/Auth.js handleValidateSession() no evaluaba ActiveSessions.date; Services/users.js getVerifiedSession() y los guards de Services/admin.js, Services/feedback.js y Services/write.js solo comprobaban existencia del token. ActiveSessions guardaba la creación, pero no última actividad.
+Riesgo: sesiones podían continuar válidas indefinidamente; aplicar el vencimiento solo en AUTH dejaría rutas protegidas de otros servicios sin la misma barrera.
+Corrección: política aprobada de tres meses calendario absolutos desde ActiveSessions.date y un mes calendario desde ActiveSessions.lastActivityAt. AUTH es el único escritor; crea la columna F de forma idempotente, valida/toca sesiones bajo el ScriptLock común y rechaza/elimina sesiones vencidas. USERS, ADMIN, FEEDBACK y WRITE aplican los mismos límites. api-config.js invoca touchSession para llamadas autenticadas, con throttle de cinco minutos por token/pestaña. Las sesiones históricas sin lastActivityAt toman date como referencia inicial; timestamps inválidos fallan cerrados.
+Verificación local: sintaxis PASS en los servicios y clientes afectados; pruebas de calendario 8/8 PASS; guards y ruteo integrados. No se ejecutaron deployments ni endpoints productivos.
+Estado: RESUELTO EN FUENTES; validación funcional/concurrente aislada diferida a Beta.
+================================================================================
+
+================================================================================
+H-AUD-061 — Cambio y restablecimiento de contraseña no revocaban todas las sesiones
+Fecha: 2026-11-09. Origen: AUG-007 / AUD-T-002.
+Evidencia: Services/users.js handleChangePassword() actualizaba Users.Password sin revocar ActiveSessions. handleUpdateUser() también aceptaba updates.Password y escribía el hash desde USERS sin invalidar tokens.
+Riesgo: sesiones de otros dispositivos podían continuar autorizadas después de cambiar/restablecer la contraseña.
+Corrección: changePassword se trasladó a AUTH y valida token/identidad/antigüedad, invalida primero todos los tokens de la cuenta bajo el ScriptLock común, actualiza el hash y limpia filas en orden descendente. resetUserPassword se agregó a AUTH y solo acepta un solicitante Desarrollador activo; no permite restablecer la propia cuenta desde el formulario administrativo. USERS rechaza updates.Password y el formulario administrativo enruta el restablecimiento a AUTH. El cambio propio cierra la sesión local y solicita nuevo inicio.
+Verificación local: simulación de revocación selectiva PASS; sintaxis y ruteo PASS. Sin pruebas en Apps Script real.
+Estado: RESUELTO EN FUENTES; validación funcional y fallos parciales diferidos a Beta.
+================================================================================
+
+
+ADENDA AUG-007 — Revocación administrativa resiliente (2026-11-09)
+handleResetUserSessions(), reservado a Desarrollador, ahora invalida primero todos los tokens de las sesiones destino y después elimina las filas en orden descendente. Si la eliminación de filas falla, devuelve cleanupPending e invalidatedSessions; las filas remanentes conservan tokens vacíos y no autorizan solicitudes. También intenta limpiar Users.SessionToken aun cuando la limpieza de filas quede pendiente.
+
+
+================================================================================
+RESOLUCIÓN EN FUENTES — AUG-008 / H-AUD-062 / H-AUD-063 — 2026-11-09
+Correcciones implementadas:
+- auth.js sustituye el lock localStorage no atómico por Web Locks API con nombre compartido, adquisición exclusiva y límite de espera de cinco segundos. La validación queda dentro de la promesa del lock y se libera al resolver o fallar.
+- api-config.js permite pasar AbortSignal a routeAction y validateSession. auth.js cancela la petición de validación tras ocho segundos para no dejar una operación de red huérfana reteniendo el lock.
+- La marca SessionValidatedAt, almacenada junto a la sesión local y válida diez segundos para el mismo userId/token, evita que pestañas en cola repitan la validación recién completada. Se documenta como optimización de coordinación, nunca como autorización; el backend continúa validando cada operación protegida.
+- checkSession no retorna por un lock local que deje el splash sin transición: presenta primero el estado de la sesión local y luego coordina la validación. Si el lock no se adquiere en cinco segundos, conserva el estado visual y registra el timeout; las acciones siguen sujetas al backend.
+- La respuesta de validación se compara con la sesión actualmente almacenada. logout acepta una sesión esperada y no limpia ni revoca otra sesión que haya sustituido a la original. handleLoginSuccess puede actualizar el estado sin reescribir una sesión leída antes de una carrera.
+- auth.js escucha cambios de gpsepedia_session y reconcilia el estado de cada pestaña. users.html y add_cortes.html redirigen a index.html si la sesión compartida desaparece o cambia de identidad/token; las actualizaciones del perfil con el mismo token no expulsan al usuario.
+Archivos funcionales: auth.js, api-config.js, users.html y add_cortes.html.
+Verificación local: sintaxis PASS en los cuatro archivos; simulación con dos contextos y Web Locks: una sola llamada de validación y la segunda pestaña reutiliza el resultado; respuesta inválida tardía de token A después de guardar token B: B permanece y no se solicita logout remoto; logout obsoleto A frente a B: rechazado; evento de eliminación de sesión: estado en memoria limpiado y pantalla de login mostrada.
+Limitaciones: no se ejecutaron pruebas en navegador real, Apps Script real, deployments aislados, endpoints operativos ni datos productivos. En navegadores sin Web Locks se ejecuta validación segura sin lock compartido; puede haber validaciones redundantes, pero no se asume atomicidad de localStorage. Las pruebas reales de pestañas y el comportamiento sin Web Locks quedan en Beta.
+Estado H-AUD-062/H-AUD-063: RESUELTOS EN FUENTES; verificación funcional multi-pestaña diferida a Beta.
+================================================================================
+
+
+CODE REVIEW FINAL — AUG-008 — 2026-11-09
+Revisión del diff contra los respaldos exactos previos a edición: PASS. auth.js contiene únicamente el reemplazo del lock localStorage, coordinación/timeout/caché de validación, reconciliación storage, protección de sesión esperada y el ajuste de arranque; api-config.js solo agrega requestOptions.signal y lo expone en validateSession; users.html y add_cortes.html solo agregan la reconciliación del evento storage. No se modificaron main.js, index.html, servicios Apps Script, deployments, endpoints ni hojas/datos.
+Comprobaciones de integridad: la clave session_validation_lock y su limpieza fueron retiradas; no se usa localStorage como lock; Web Locks mantiene el lock hasta que la promesa de validación resuelve/rechaza; el timeout aborta la petición cuando AbortController está disponible y limita la espera cuando no lo está; todas las rutas antiguas de routeAction mantienen sus tres argumentos compatibles; SessionValidatedAt es solo caché de coordinación y no autorización.
+Casos lógicos repetidos sobre la versión final: 1 validación compartida entre dos contextos; resultado obsoleto A no cierra B; logout manual de pestaña A no elimina B; evento de eliminación limpia estado; fallback sin AbortController retorna timeout. Todos PASS.
+Resultado: Code Review aprobado en alcance de fuentes. No se declara verificación funcional en navegador ni deployment.
+================================================================================
+
+
+================================================================================
+H-AUD-064 — USERS convierte valores no textuales en nombres de usuario durante la creación
+Fecha: 2026-11-09. Tarea: AUG-009. Origen: revisión pre-implementación posterior a AUG-008; HEAD 9867bd10b1bfccd5e02bdf95d2696988abd2c22a.
+Severidad: P2 — validación de identidad e integridad de cuentas.
+Evidencia: Services/users.js, handleCreateUser(), obtiene el nombre mediante String(newUser.Nombre_Usuario || '').trim(). Esto rechaza cadenas vacías/espacios y el prefijo reservado __deleted__: ya está bloqueado, pero también convierte números u objetos JSON a cadenas (por ejemplo, 123 o [object Object]) en vez de rechazar un campo que no sea texto. users.html solo declara input type=text y required; estos controles pueden omitirse mediante llamada directa a createUser. Services/Test/users.js contiene la misma lógica funcional y conserva un Spreadsheet ID aislado. El login normaliza mediante trim().toLowerCase(), y la comprobación de duplicados de creación usa la misma normalización básica.
+Política verificable en las fuentes: Nombre_Usuario debe ser una cadena de texto, se recortan espacios externos, no puede quedar vacío, no puede iniciar con el prefijo reservado __deleted__: y la unicidad se compara con trim()+toLowerCase(). No se encontró una regla aprobada de longitud ni una lista blanca de caracteres; no se inventan restricciones adicionales ni se cambia la compatibilidad de cuentas existentes.
+Impacto: llamadas directas pueden crear cuentas a partir de valores de tipo incorrecto que la interfaz no produciría; no existe un contrato backend explícito de tipo para la identidad.
+Corrección requerida: validar el tipo original antes de normalizar; mantener rechazo de vacío/prefijo reservado y la comparación normalizada de duplicados; sincronizar la copia aislada de USERS; comprobar doPost/createUser directamente sin depender del formulario.
+Alcance relacionado: AUG-009. No duplicar AUG-010 (serialización de otras mutaciones USERS) ni AUD-T-033 (coordinación entre proyectos).
+Estado: ABIERTO; corrección dentro de AUG-009.
+================================================================================
+
+
+
+RESOLUCIÓN — H-AUD-064 / AUG-009 — 2026-11-09
+Se incorporó normalizeUsername_() antes de cualquier coerción: el backend exige tipo string, aplica trim(), rechaza vacío y el prefijo reservado __deleted__:. La comparación de duplicados permanece trim()+toLowerCase(), igual que la búsqueda de login. No se añadieron límites de longitud ni lista blanca de caracteres porque no existe una decisión aprobada en las fuentes.
+Se sincronizó la función en Services/users.js y Services/Test/users.js, preservando el Spreadsheet ID de prueba. La UI no se considera barrera de seguridad y no requirió cambio.
+Verificación final: sintaxis PASS en ambos servicios; 11 casos directos de doPost PASS por servicio (22/22 funcionales): campo ausente, null, número, objeto, vacío, solo espacios, prefijo reservado, duplicado con trim, duplicado por mayúsculas, texto válido recortado y texto Unicode válido. Total de comprobaciones incluyendo sintaxis 24/24 PASS. No se ejecutó Apps Script real ni deployment aislado.
+Estado H-AUD-064: RESUELTO EN FUENTES; prueba real de endpoint aislado diferida a Beta.
+================================================================================
+
+
+================================================================================
+REVALIDACIÓN AUG-010 — H-AUD-006 / ADENDA AUD-T-023 — 2026-11-09
+HEAD auditado: 1b76256c660e13ea5f3db5328da50df24f18afb1. Rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Alcance: serialización de las mutaciones de USERS y concurrencia de contraseña AUTH indicada en la adenda AUD-T-023. Auditoría estática completa antes de editar; no se modificó código.
+
+Inventario vigente de USERS:
+- doPost expone getUsers (lectura), createUser, updateUser y updateProfile.
+- handleCreateUser ya usa LockService.getScriptLock(), waitLock(30000) y finally para liberar; generación de ID, detección de duplicados y escrituras ocurren dentro de la sección crítica.
+- handleUpdateUser y handleUpdateProfile leen Users/ActiveSessions y escriben Users sin adquirir ScriptLock. Sus lecturas de sesión/rol y escrituras no quedan serializadas frente a otras mutaciones del mismo proyecto USERS.
+- handleResetUserSessions, handleDeleteUser y handleChangePassword ya no pertenecen a USERS. El router api-config.js los asigna a AUTH; Services/Auth.js es el escritor de ActiveSessions. handleResetUserSessions y handleDeleteUser usan ScriptLock AUTH; handleChangePassword y handleResetUserPassword también usan ScriptLock AUTH.
+- handleUpdateUser rechaza updates.Password; users.html elimina Password del objeto updateUser y, si se proporcionó una contraseña administrativa, envía resetUserPassword por separado a AUTH. El cambio propio de contraseña se envía a AUTH mediante changePassword. No existe una ruta vigente para modificar Password desde USERS.
+
+Hallazgos:
+1. H-AUD-006 continúa vigente parcialmente: createUser está serializado, pero updateUser/updateProfile no lo están. La corrección local debe adquirir el lock antes de validar sesión/rol y mantenerlo hasta completar la lectura y escritura; timeout definido de 30 segundos, igual que createUser; liberar en finally.
+2. H-AUD-065 — P2: handleUpdateUser escribe Nombre_Completo antes de validar que el nuevo Privilegios esté permitido. Un payload con nombre válido y rol no autorizado puede devolver error después de haber cambiado el nombre. Validar todos los campos/roles antes de la primera escritura.
+3. H-AUD-023-002 permanece vigente en AUTH: handleLogin migra una contraseña legacy escribiendo Users.Password antes de adquirir el lock usado para crear la sesión. Si changePassword/resetUserPassword actualiza el hash entre la lectura inicial y esa escritura, una migración atrasada puede sobrescribir el hash nuevo. La adenda AUD-T-023 a AUG-010 exige revalidar el valor vigente y serializar esa migración con las mutaciones de contraseña AUTH.
+4. AUD-T-033 revalidado: los ScriptLock de proyectos Apps Script separados no se comparten; no existe coordinador interproyectos vigente. AUG-034 conserva el diseño/implementación del coordinador compartido y está pendiente. AUG-010 no debe fingir que el lock local de USERS protege frente a AUTH/ADMIN/WRITE/FEEDBACK ni duplicar AUG-034. La parte local USERS y la sección crítica de contraseña dentro de AUTH sí pueden serializarse dentro de sus respectivos proyectos.
+
+Copias y consumidores:
+- Services/Test/users.js y Services/Test/Auth.js mantienen lógica funcional equivalente a producción; solo difieren en el Spreadsheet ID aislado y comentarios de identificación de prueba. Mantener ambos IDs independientes al sincronizar.
+- users.html llama updateUser, updateProfile, createUser, changePassword y resetUserPassword con los payloads/rutas correspondientes. api-config.js mapea updateUser/updateProfile/createUser a USERS y changePassword/resetUserPassword/resetUserSessions/deleteUser a AUTH; no requiere cambio de ruteo.
+- Services/Test/README.md confirma que AUTH y USERS son proyectos Apps Script distintos y que no hay deployments aislados creados/verificados. No llamar endpoints live ni cambiar api-config.js para pruebas.
+
+Alcance de implementación propuesto: serializar updateUser y updateProfile bajo el lock local USERS; validar Privilegios antes de cualquier escritura; mantener createUser como está salvo la batería de regresión; mover la migración legacy de AUTH dentro del mismo lock que revalida credenciales y crea sesión, de modo que no sobrescriba un hash más reciente. No implementar aquí coordinación entre proyectos, eliminación/revocación de sesiones, cambios de rol en sesiones ni KDF (AUG-034/AUG-016/AUG-011 a 014 mantienen esos alcances).
+
+Archivos auditados íntegramente/referencias: Services/users.js, Services/Test/users.js, Services/Auth.js, Services/Test/Auth.js, users.html, api-config.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Plan_Maestro_Implementacion.md y registros legacy de AUD-T-033/AUG-034. No se ejecutaron Apps Script real, HTTP, deployments, Sheets reales ni concurrencia real.
+Estado: AUDITORÍA COMPLETADA; implementación aún no iniciada.
+================================================================================
+
+
+================================================================================
+H-AUD-066 — Escritura parcial en updateUser ante fallo de la segunda columna — 2026-11-09
+Severidad: P2 — consistencia de perfil/rol.
+Evidencia reproducida después de implementar el lock local: updateUser escribe Nombre_Completo y luego Privilegios en dos llamadas separadas. En un harness con fallo inyectado en la escritura de Privilegios, la API devuelve status=error, el nombre ya quedó actualizado y el rol permanece sin cambio; el ScriptLock se libera correctamente.
+La validación previa evita escrituras cuando el rol es inválido, pero no convierte dos escrituras físicas de Sheets en una transacción ni revierte una primera escritura si falla la segunda. No se debe afirmar atomicidad.
+Alcance: recuperación/compensación de escrituras parciales; separado de la serialización de solicitudes de AUG-010. Se crea AUG-154 para evaluar una estrategia segura de compensación/estado parcial y pruebas de fallo físico, sin asumir un lock compartido entre proyectos.
+Estado: ABIERTO; fuera del alcance de AUG-010.
+================================================================================
+
+
+================================================================================
+H-AUD-067 — Límite de sesiones calculado con rol leído antes del lock AUTH — 2026-11-09
+Severidad: P2 — aplicación del límite de sesiones por rol.
+Evidencia de revisión: handleLogin() leía el rol para calcular SESSION_LIMITS antes de adquirir el ScriptLock y después volvía a leer la cuenta dentro del lock. Un cambio de rol ocurrido entre ambas lecturas podía hacer que la creación de sesión aplicara el límite anterior.
+Corrección AUG-010: sessionLimit ahora se calcula con el rol de la fila revalidada dentro de la sección crítica AUTH. El lock sigue siendo local al proyecto AUTH; un cambio de rol ocurrido después de esa lectura desde USERS no queda coordinado hasta AUG-034.
+Prueba de intercalado con dobles: se cambió el rol de Desarrollador a Tecnico entre la lectura inicial y el lock; login aplicó el límite Tecnico de dos sesiones, conservó la sesión más reciente y creó la nueva (PASS en producción y copia aislada).
+Estado: RESUELTO EN FUENTES, con límite interproyectos expresamente pendiente de AUG-034.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN Y VERIFICACIÓN FINAL — AUG-010 — 2026-11-09
+H-AUD-006: resuelto en el alcance local de USERS; createUser/updateUser/updateProfile quedan serializados por el ScriptLock del proyecto USERS. La coordinación AUTH↔USERS no se considera resuelta y permanece en AUG-034.
+H-AUD-065: RESUELTO; updateUser valida el nuevo Privilegios antes de cualquier escritura.
+H-AUD-023-002 (adenda AUD-T-023): RESUELTO en el alcance AUTH; login revalida la contraseña actual bajo el mismo ScriptLock que changePassword/resetUserPassword y migra solo si la credencial presentada todavía coincide.
+H-AUD-067: RESUELTO; el límite de sesiones usa el rol revalidado dentro del lock AUTH.
+H-AUD-066: ABIERTO y derivado a AUG-154; no se oculta que updateUser puede dejar una primera escritura aplicada si falla la segunda.
+Verificación final: sintaxis 4/4 PASS; harness USERS 14/14 PASS; createUser fallo/reintento 2/2 PASS; AUTH migración legacy normal, cambio propio intercalado, reset administrativo intercalado y límite de sesión con rol revalidado: 8/8 PASS. Total funcional local 24/24; sintaxis 4/4. Doble de prueba aislado y producción comparten lógica; se preservan Spreadsheet IDs distintos.
+No se ejecutó Apps Script real, deployment aislado, HTTP ni endpoints operativos; no se accedió ni modificó ninguna Spreadsheet real. Concurrencia real y coordinación interproyectos no se certifican.
+================================================================================
+
+
+================================================================================
+H-AUD-068 — Contador de intentos sin identidad individual por solicitud — 2026-11-09
+Severidad: P2 — consistencia del límite de intentos y bloqueo temporal.
+Tarea propietaria: AUG-012. Origen relacionado: H-AUD-023-004.
+
+Evidencia en Services/Auth.js y Services/Test/Auth.js (lógica equivalente; la copia conserva un Spreadsheet ID independiente):
+- beginLoginAttempt() (líneas 96–126) incrementa un único campo state.attempts antes de verificar las credenciales. El ScriptLock serializa el read-modify-write, pero el contador no identifica qué solicitud creó cada incremento.
+- resetLoginAttempts() (128–135) elimina toda la clave del usuario. Si otra autenticación sigue pendiente o ya completó un fallo concurrente, un login válido puede borrar ese estado ajeno.
+- rollbackLoginAttempt() (137–156) resta uno al contador agregado sin identificar la reserva que se revierte. Si una solicitud termina con error de infraestructura después de que otra ya registró credenciales inválidas, puede descontar el fallo de la segunda.
+- handleLogin() (250–422) conserva solo attemptReserved como booleano. No hay token por solicitud que permita finalizar exclusivamente la reserva propia. Las credenciales inválidas dejan el incremento en el contador; los errores de infraestructura llaman rollback; una credencial válida llama reset antes de la gestión de sesión.
+- Intercalado reproducible por la lógica: A y B reservan; B falla por credenciales inválidas; A termina por error de infraestructura; rollback de A decrementa el total y puede borrar el fallo de B. En otro orden, B falla y A valida credenciales; reset de A elimina también el fallo concurrente de B.
+
+Dependencias y efectos colaterales:
+- LockService.getScriptLock() protege las operaciones del contador, pero no atribuye propiedad a cada incremento. El mismo lock también es utilizado por logToSheet(), gestión de sesiones y mutaciones de contraseña; no debe mantenerse mientras se llama a logToSheet() ni introducirse una adquisición anidada.
+- CacheService.getScriptCache() es almacenamiento temporal de mejor esfuerzo; puede desalojar entradas antes del TTL. El contador y el bloqueo de 15 minutos no son durables ni pueden garantizarse frente a una expulsión de caché.
+- La búsqueda de referencias internas confirma que beginLoginAttempt/resetLoginAttempts/rollbackLoginAttempt se utilizan dentro de handleLogin en estos archivos; no se identificaron consumidores adicionales en el árbol del repositorio.
+- Services/Test/Auth.js difiere de producción únicamente en el Spreadsheet ID de prueba; al sincronizar la corrección debe preservarse esa diferencia.
+
+Corrección delimitada para AUG-012:
+- Asignar un identificador único a cada reserva y guardar por separado fallos completados y reservas pendientes.
+- Login válido: retirar solo su reserva y reiniciar fallos previos, preservando otras reservas pendientes.
+- Credenciales inválidas: retirar solo su reserva y registrar un fallo.
+- Error de infraestructura: retirar solo su reserva, sin incrementar ni descontar fallos ajenos.
+- Mantener el máximo de cinco intentos y el bloqueo nominal de 900 segundos; limpiar reservas abandonadas por antigüedad.
+- Documentar que CacheService puede perder el estado antes del TTL.
+
+Estado: AUDITORÍA COMPLETADA; no se modificó código durante la auditoría. No se ejecutó concurrencia real de Apps Script ni se verificaron deployments/endpoints. La validación de esta tarea se realizará con pruebas locales deterministas; la limitación de CacheService permanece explícita.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN H-AUD-068 — AUG-012 — 2026-11-09
+Estado: RESUELTO EN FUENTES.
+- Services/Auth.js y Services/Test/Auth.js: se sustituyó el contador agregado sin identidad por reservas individuales con UUID. El estado separa failedAttempts de pendingAttempts y limpia reservas con más de 900 segundos.
+- beginLoginAttempt devuelve el ID de la reserva. resetLoginAttempts elimina solo la reserva propia y reinicia fallos previos sin borrar reservas concurrentes. registerFailedLoginAttempt elimina la reserva propia y suma un fallo. rollbackLoginAttempt elimina solo la reserva propia y no decrementa fallos ajenos.
+- handleLogin conserva el ID y finaliza según resultado: credenciales inválidas registran fallo; errores de infraestructura revierten la reserva; credenciales válidas reinician el contador como antes.
+- Se mantiene compatibilidad de lectura con el estado anterior { attempts, lockedUntil }. No se modificaron SHA-256, formatos de contraseña, credenciales, sesiones, roles, rutas ni IDs de Spreadsheet.
+- Revisión de diffs contra los blobs originales: PASS; únicamente se modificaron helpers del contador y sus callsites directos en handleLogin. Services/Test/Auth.js conserva su Spreadsheet ID independiente y coincide con producción en toda la lógica restante.
+- Sintaxis: 2/2 PASS. Pruebas deterministas de helpers: 18/18 PASS (9 por fuente), incluyendo intercalados de fallo/éxito/error de infraestructura, cinco fallos, bloqueo, expiración, rollback de la quinta reserva, limpieza de reservas obsoletas y migración de estado previo. Pruebas de handleLogin: 4/4 PASS (credenciales inválidas y error de infraestructura en producción/copia de prueba). Total funcional local: 22/22 PASS.
+- Límite conservado: CacheService es temporal y puede desalojar entradas antes del TTL; el bloqueo de 15 minutos es de mejor esfuerzo. La concurrencia real y el deployment aislado quedan diferidos a Beta; no se ejecutaron Apps Script real, HTTP, deployments ni hojas productivas.
+================================================================================
+
+
+================================================================================
+H-AUD-069 — Purga de Logs por índices obsoletos ante inserciones concurrentes AUTH — 2026-11-09
+Severidad: P2 — integridad de registros y conservación de evidencia.
+Tarea propietaria: AUG-013. Origen relacionado: H-AUD-023-005 / AUD-T-025.
+
+Evidencia auditada en HEAD 78ea93bec15f7a7a622abf9e5dc9bb854f151b5f:
+- Services/feedback.js, handleClearSensitiveLogs() (líneas 1673–1707): lee Logs una sola vez mediante getRange(2, 1, lastRow - 1, lastColumn), calcula filas absolutas en rowsToDelete y luego ejecuta deleteRow() en orden descendente. No adquiere LockService ni vuelve a identificar cada registro antes de borrarlo.
+- Services/Auth.js, logToSheet() (líneas 249–269): adquiere LockService.getScriptLock(), inserta una fila nueva en la posición 2 mediante insertRowBefore(2), escribe cuatro columnas y libera el lock en finally.
+- Services/Test/README.md confirma que AUTH y USERS se instalan en proyectos Apps Script separados. El ScriptLock de AUTH no coordina el proyecto FEEDBACK; agregar otro ScriptLock en FEEDBACK no resolvería la carrera.
+- Intercalado reproducible por la estructura: FEEDBACK lee y guarda la fila 5 como sensible; AUTH inserta una nueva fila 2; el registro sensible se desplaza a fila 6, pero FEEDBACK elimina la fila 5 anterior, que puede ser un registro no sensible. La iteración descendente solo protege frente a las eliminaciones de FEEDBACK, no frente a inserciones externas posteriores a la lectura.
+- api-config.js, ACTION_TO_SERVICE_MAP (línea 24) y clearSensitiveLogs() (líneas 170–171) enrutan actualmente la acción a FEEDBACK; ui.js invoca la misma acción con getDeveloperSessionPayload(). FEEDBACK la restringe a Desarrollador en actionPermissions, pero esa autorización no coordina las filas con AUTH.
+- En el inventario de fuentes activas revisadas, AUTH es el escritor de Logs mediante logToSheet y FEEDBACK es el servicio que ejecuta la purga. ADMIN protege la hoja Logs frente a determinadas operaciones destructivas de hojas; la coordinación general de mantenimiento entre servicios permanece en AUG-034/AUD-T-033.
+- La detección histórica actual reconoce claves JSON password, sheetPassword, currentPassword, newPassword, fromSheet y fromClient en Details; username cuando Message es exactamente handleLogin started.; y Message exactamente Password comparison. La regla debe preservarse y verificarse contra fixtures históricos, sin ampliar el borrado a registros no clasificados.
+
+Dependencias y efectos colaterales:
+- AUTH registra dos eventos de doPost antes de despachar la acción; logToSheet libera su lock antes de que el handler comience. El handler de purga no deberá llamar logToSheet mientras mantenga el lock; cualquier resultado se registra después de liberar.
+- La operación debe revalidar en AUTH el sessionToken, userId, expiración, unicidad de sesión/cuenta y rol Desarrollador dentro del mismo lock que protege logToSheet. No confiar en el rol enviado por FEEDBACK o el navegador.
+- FEEDBACK debe dejar de ejecutar deleteRow sobre Logs; la ruta frontend de clearSensitiveLogs se reasignará a AUTH. No se necesita asumir lock compartido entre proyectos: ambas mutaciones quedan bajo el lock local de AUTH.
+- La copia Services/Test/Auth.js mantiene un Spreadsheet ID distinto. Las pruebas de purga deben ejecutarse contra esa copia y no contra la hoja productiva. No existe una copia FEEDBACK de prueba y no será necesaria si la acción se enruta directamente a AUTH.
+
+Corrección delimitada para AUG-013:
+- Añadir clearSensitiveLogs al router AUTH y ejecutar autenticación de Desarrollador, lectura, clasificación y borrado descendente dentro de su ScriptLock.
+- Mantener la detección histórica existente y comprobar que tras la purga no queden filas clasificadas como sensibles ni se eliminen registros no sensibles.
+- Reasignar clearSensitiveLogs en api-config.js a AUTH; retirar el permiso, case y handler destructivo de FEEDBACK para impedir que un consumidor antiguo siga ejecutando una purga no coordinada.
+- Sincronizar Services/Test/Auth.js, documentar la prueba aislada y registrar que la coordinación general de restauraciones/mantenimiento ADMIN↔otros servicios permanece en AUG-034.
+
+Validación requerida: sintaxis de fuentes; pruebas de autorización (sesión ausente, token inválido/duplicado/expirado, usuario/rol no válido); fixtures de cada formato histórico y registros seguros; simulación de inserción AUTH durante la sección crítica; verificación de que el lock se libera en éxito/error; comparación de las dos fuentes AUTH y de la ruta api-config. La concurrencia real en Apps Script y el deployment aislado no se pueden certificar desde este entorno y deberán quedar en Beta.
+Estado: AUDITORÍA PRE-IMPLEMENTACIÓN COMPLETADA; hallazgo registrado antes de editar. No se modificó código durante la auditoría.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN H-AUD-069 — AUG-013 — 2026-11-09
+Estado: RESUELTO EN FUENTES; validación real aislada pendiente en Beta.
+- Services/Auth.js y Services/Test/Auth.js: se añadió clearSensitiveLogs al router AUTH. La función valida userId, token único, correspondencia de identidad, expiración, cuenta activa y rol Desarrollador dentro del ScriptLock AUTH; lee y elimina únicamente registros clasificados como sensibles mientras conserva el mismo lock utilizado por logToSheet().
+- La clasificación histórica se mantiene: claves JSON password, sheetPassword, currentPassword, newPassword, fromSheet y fromClient en Details; username cuando Message es exactamente handleLogin started.; y Message exactamente Password comparison. Los fixtures locales confirmaron la eliminación de esos ocho registros y la conservación de dos registros seguros.
+- El borrado se realiza en orden descendente dentro de la sección crítica. Si una eliminación o flush falla, la función libera el lock, informa status=error, deletedCount y cleanupPending, y no comunica una purga completa. El registro de resultado se escribe después de liberar el lock; no existe adquisición anidada.
+- api-config.js ahora enruta clearSensitiveLogs a AUTH. ui.js conserva getDeveloperSessionPayload(), que envía userId y sessionToken. Services/feedback.js ya no declara el permiso, la ruta ni la función que borraba Logs por índices; tampoco mantiene SHEET_NAMES.LOGS.
+- Services/Test/Auth.js replica la lógica de producción y conserva el Spreadsheet ID aislado. Services/Test/README.md documenta la prueba directa en AUTH de prueba.
+- Revisión de diffs contra los blobs originales: PASS. La reconstrucción inversa confirmó que los cambios de Auth.js, Test/Auth.js, feedback.js y api-config.js se limitan al alcance AUG-013; el README conserva intacto su contenido previo y añade la sección AUG-013. La lógica de las dos fuentes AUTH es equivalente salvo el Spreadsheet ID.
+- Sintaxis: 4/4 PASS (AUTH producción, AUTH prueba, FEEDBACK y cuerpo de api-config tras retirar import/export ESM para la comprobación limitada). Pruebas funcionales locales iniciales: 18/18 PASS, incluyendo fixtures, autorización, dispatch, inserción intercalada, preservación de logs seguros y fallo parcial en ambas fuentes.
+- La simulación de inserción AUTH durante el borrado confirmó que logToSheet no puede entrar a la sección crítica hasta que termine la purga; la escritura de resultado se produce después de liberar el lock.
+- Límite: no se ejecutó Apps Script real, deployment aislado, HTTP ni Spreadsheet real. La concurrencia real y el posible timeout del logger durante purgas prolongadas quedan para Beta. La coordinación general de restauraciones/mantenimiento ADMIN↔otros servicios sigue en AUG-034; esta tarea solo resuelve la carrera entre logToSheet AUTH y clearSensitiveLogs.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
+Se ampliaron las pruebas con seis escenarios: reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost, en producción simulada y copia de prueba. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+
+================================================================================
+H-AUD-070 — Desalineación de longitud mínima de contraseña entre UI y AUTH
+Fecha: 2026-11-09. Origen: AUG-014 / H-AUD-023-008. HEAD de auditoría: 057852fc12582da55c1ffb03331c2b83dd9ea81e.
+Severidad: P3 — consistencia de validación y experiencia de usuario.
+Evidencia:
+- users.html, handleChangePasswordSubmit(), líneas 633–645: compara confirmación y valida newPassword.length < 8 sin eliminar espacios externos.
+- Services/Auth.js y Services/Test/Auth.js, normalizePassword() líneas 53–55 y createPasswordHash() líneas 61–68: aplican String(...).trim() antes de comprobar mínimo de 8 caracteres.
+- Services/Auth.js y Services/Test/Auth.js, handleChangePassword() líneas 1043–1057: el valor recibido se pasa a createPasswordHash(), por lo que el backend vuelve a normalizar y validar.
+- api-config.js línea 19 enruta changePassword a AUTH; users.html invoca routeAction mediante postToAction(). La copia AUTH de prueba mantiene la misma lógica de normalización salvo el Spreadsheet ID.
+Impacto: una contraseña con espacios externos puede superar o no superar la comprobación visual de forma distinta a la validación real del servidor; el usuario recibe el error del backend aunque la UI haya aceptado el formulario. En el sentido inverso, la UI puede rechazar una contraseña que el backend considera válida después de normalizarla.
+Hallazgo adicional del mismo alcance: users.html línea 653 contiene el texto «reincie sesión».
+Corrección acotada: cambiar la comprobación del cliente a la longitud de newPassword.trim(), mantener el envío del valor original y conservar la validación obligatoria del backend; corregir únicamente «reincie» a «reinicie».
+Riesgos/dependencias: no alterar comparación de confirmación, flujo de cambio de contraseña, token/sesiones, roles, backend, hashing ni formato sha256$. AUG-011 permanece omitida por decisión expresa del usuario.
+Estado: REGISTRADO ANTES DE IMPLEMENTAR; auditoría completada.
+================================================================================
+
+RESOLUCIÓN H-AUD-070 — AUG-014 — 2026-11-09
+Estado: RESUELTO EN FUENTES.
+- users.html, handleChangePasswordSubmit(): la comprobación de longitud mínima ahora utiliza newPassword.trim().length, igual que normalizePassword() en AUTH. El valor original continúa enviándose a changePassword y el backend conserva su normalización y validación obligatoria.
+- users.html: se corrigió «reincie sesión» por «reinicie sesión».
+- Services/Auth.js y Services/Test/Auth.js no se modificaron. Ambas copias conservan normalizePassword() y createPasswordHash() con mínimo de 8 caracteres después de trim(); su lógica es equivalente salvo el Spreadsheet ID.
+- api-config.js no se modificó; changePassword continúa enrutado a AUTH.
+- Comparación contra el blob original de users.html: reconstrucción inversa exacta PASS; únicamente dos líneas cambiadas (642 y 653).
+- Sintaxis del módulo JavaScript inline de users.html: 1/1 PASS.
+- Pruebas funcionales locales del handler real extraído de users.html: 8 escenarios PASS (7/8 caracteres, espacios externos, tabulaciones, preservación del valor original, confirmación distinta y texto corregido). Pruebas de normalización y mínimo backend en AUTH producción y copia de prueba: 2/2 PASS. Total de escenarios funcionales: 10/10 PASS.
+- No se ejecutó navegador real, deployment, HTTP ni hoja de cálculo. La prueba local no sustituye una validación visual integrada en navegador.
+- No se modificaron hashing SHA-256, prefijo sha256$, credenciales, sesiones, roles, validación backend ni otras rutas.
+
+
+================================================================================
+AUDITORÍA PRE-IMPLEMENTACIÓN — AUG-016 — 2026-11-09
+HEAD auditado: 5be28707b2a8ab91dfbe8850713089bbe841bcc2.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5 (HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Alcance: ciclo de creación, validación, revocación y recuperación de sesiones; intercalados login/cierre remoto; efectos de cambios de Privilegios sobre sesiones y estado del cliente. Auditoría diagnóstica realizada sin editar código.
+
+Inventario y coordinación:
+- Services/Auth.js concentra doPost para login, validateSession, touchSession, logout, resetUserSessions, changePassword, resetUserPassword y deleteUser.
+- Desde AUG-153, AUTH es el único escritor de ActiveSessions para login, logout, resetUserSessions y deleteUser. Las operaciones usan LockService.getScriptLock() del proyecto AUTH; el orden de adquisición serializa esos escritores dentro de ese proyecto.
+- api-config.js enruta resetUserSessions y deleteUser a AUTH. Services/users.js ya no expone una mutación de ActiveSessions; getVerifiedSession() consulta la sesión y el perfil desde USERS.
+- Services/Test/README.md confirma que AUTH y USERS son proyectos Apps Script separados y que no hay deployments aislados creados/verificados. Sus ScriptLock no son compartidos.
+- Services/Auth.js y Services/Test/Auth.js coinciden en toda la lógica; única diferencia de contenido: SPREADSHEET_ID (línea 9). Services/users.js y Services/Test/users.js solo difieren en SPREADSHEET_ID y dos líneas vacías finales.
+- AUG-153 resolvió en fuentes la carrera entre escritores de ActiveSessions que antes vivían en AUTH y USERS. No demuestra concurrencia real de Apps Script ni resuelve escrituras de Users ejecutadas desde el proyecto USERS.
+
+Hallazgos:
+H-AUD-071 — Alta — Creación de sesión con escrituras secuenciales no recuperadas.
+- Services/Auth.js handleLogin(), líneas 581, 589 y 599: cuando se alcanza el límite, elimina primero la sesión más antigua; después escribe Users.SessionToken con setValue() y finalmente agrega la nueva sesión con appendRow(). Si falla setValue() o appendRow() después de eliminar la anterior, la sesión previa ya no existe y el login termina en error; si una escritura se confirmó antes de producirse el error, el estado físico puede no coincidir con la respuesta.
+- handleLogin() no recibe/guarda una clave de idempotencia de la solicitud. Si el servidor crea la sesión pero se pierde la respuesta HTTP, un reintento puede crear otra sesión; para Desarrollador el límite configurado es Infinity.
+- El recuento de sesiones en handleLogin() considera todas las filas del usuario sin filtrar ActiveSessions vacío. Las filas residuales con token ya invalidado por una limpieza parcial pueden contarse como sesiones activas y provocar la eliminación de una fila que ya no autoriza.
+Impacto: pérdida de una sesión anterior ante fallo posterior, referencias incompletas, duplicación por reintento y aplicación incorrecta del límite cuando existen filas residuales.
+
+H-AUD-072 — Alta — Recuperación incompleta de resetUserSessions ante fallos parciales.
+- Services/Auth.js handleResetUserSessions(), líneas 691–825: invalida tokens mediante clearContent() secuencial y luego elimina filas en orden descendente. El bucle de invalidación no captura el fallo por fila ni construye un resultado parcial; una excepción intermedia sale por finally y doPost responde error genérico, aunque algunas sesiones puedan haber quedado invalidadas.
+- El fallo de deleteRow() sí se captura y devuelve status=error/cleanupPending; un reintento vuelve a localizar las filas restantes por ID de usuario. La operación es reintentable en ese caso, pero no existe una transacción de Spreadsheet.
+- Tras AUG-153, login y resetUserSessions usan el mismo ScriptLock AUTH. Un login que termina antes del reset queda dentro de la instantánea y puede ser revocado; uno que se ejecuta después queda ordenado después del reset. Esta serialización local resuelve el antiguo cruce de escritores, sin demostrar atomicidad de las escrituras físicas.
+Impacto: respuesta insuficiente ante invalidación parcial y limpieza física pendiente; las sesiones cuyo token ya fue borrado no autorizan, pero sus filas pueden permanecer.
+
+H-AUD-073 — Alta — Revocación de sesiones y mutación de contraseña pueden quedar parcialmente aplicadas.
+- Services/Auth.js revokeAllUserSessionsUnderLock_(), línea 689, limpia tokens en varias llamadas clearContent() y ejecuta flush(). Un fallo intermedio puede dejar solo parte de las sesiones invalidadas.
+- handleChangePassword(), líneas 1043–1057, revoca primero los tokens y luego escribe el nuevo hash. Si la revocación parcial falla, el flujo sale antes de cambiar la contraseña; si se invalida el token propio antes de una falla posterior, el usuario ya no puede reintentar con esa sesión.
+- handleResetUserPassword(), líneas 1059–1075, aplica el mismo orden para la cuenta objetivo. La limpieza de SessionToken y deleteRow() tienen manejo parcial, pero el resultado no constituye una transacción ni cubre una escritura de contraseña cuyo resultado sea ambiguo.
+Impacto: la respuesta puede no describir el estado final de contraseña/sesiones; el cambio propio puede requerir volver a iniciar sesión antes de reintentar. No debe afirmarse atomicidad.
+
+H-AUD-074 — Alta — Cambio de Privilegios no sincronizado con el ciclo de sesión ni con el perfil del cliente.
+- Services/users.js handleUpdateUser(), líneas 331–380, actualiza Privilegios bajo el ScriptLock local de USERS y no revoca las sesiones del usuario objetivo.
+- AUTH validateAndTouchSession_(), línea 688, lee la cuenta activa pero solo devuelve valid, userId, createdAt y lastActivityAt; no devuelve Privilegios ni perfil actualizado.
+- auth.js getRecentValidation()/validateSessionCoordinated(), líneas 36–89, conserva una validación local reciente durante 10 segundos. api-config.js ensureSessionTouched_(), líneas 73–85, limita touchSession a una llamada cada cinco minutos y solo actualiza SessionLastActivityAt.
+- AUTH y USERS son proyectos separados; sus ScriptLock no se excluyen mutuamente. El backend de cada servicio puede volver a leer el rol vigente para autorizar acciones, pero la interfaz puede conservar controles visuales correspondientes al rol anterior.
+Impacto: permisos visuales obsoletos después de un cambio de rol. La política no está definida en los registros: invalidar todas las sesiones del objetivo o propagar un perfil actualizado. Resolverlo de forma concurrente requiere definir la autoridad de escritura y el protocolo interproyectos de AUD-T-033/AUG-034; no se puede asumir que agregar otro ScriptLock lo resuelve.
+
+Controles existentes y límites:
+- handleLogout() elimina la fila por token y luego limpia Users.SessionToken solo si coincide. Si la limpieza falla, el reintento detecta el token residual y puede limpiar la referencia; la operación es idempotente respecto de la revocación del token.
+- handleDeleteUser() desactiva primero la cuenta y después elimina sesiones; si deleteRow falla, la cuenta permanece desactivada y AUTH rechaza sesiones residuales. El reintento puede completar la limpieza.
+- validateAndTouchSession_() revalida token único, identidad, cuenta activa y expiración bajo el lock AUTH; el cambio de LastActivityAt se escribe separadamente y no es transaccional.
+- No se ejecutaron Apps Script real, deployments aislados, HTTP, Sheets reales ni pruebas de concurrencia entre proyectos. No se modificaron endpoints operativos ni datos productivos.
+
+Decisión de auditoría:
+- H-AUD-071, H-AUD-072 y H-AUD-073 requieren diseño de recuperación/idempotencia y pruebas de fallo físico antes de modificar las mutaciones.
+- H-AUD-074 requiere una decisión explícita sobre el efecto de cambiar Privilegios y una arquitectura que serialice la mutación de rol con AUTH o invalide las sesiones bajo una autoridad común. AUG-034/AUD-T-033 sigue pendiente y es dependencia bloqueante para declarar resuelta la coordinación interproyectos.
+- La auditoría de AUG-016 queda completada; la implementación se marca BLOQUEADA hasta resolver la dependencia de coordinación/política. No se modificó código.
+================================================================================
+
+
+================================================================================
+REANUDACIÓN Y DECISIÓN DE DISEÑO — AUG-016 — 2026-11-09
+HEAD de reanudación: e2a6b41abb4bc4e4f355ad98593a01f29cd7897b.
+Aprobación expresa del usuario: cualquier cambio de Privilegios revocará todas las sesiones del usuario afectado; el usuario deberá iniciar sesión nuevamente en todos sus dispositivos.
+
+Aclaración de dependencia:
+- Services/Auth.js y Services/users.js usan el mismo Spreadsheet ID de DB V2.0. Son proyectos Apps Script distintos, por lo que sus ScriptLock siguen siendo independientes.
+- AUG-034/AUD-T-033 se refiere a la coordinación de escritores de Cortes/Drive entre WRITE, ADMIN, FEEDBACK y UTILITIES. Se mantiene como tarea global independiente y no se declara resuelta ni necesaria para el cambio de rol si toda la acción updateUser se enruta a AUTH.
+- La acción updateUser tiene un único consumidor frontend localizado en users.html (formulario de gestión). api-config.js actualmente la envía a USERS. Services/users.js y su copia de prueba contienen el único handler que modifica Privilegios; AUTH ya controla login, ActiveSessions, resetUserSessions y deleteUser.
+- Diseño aprobado para implementar: trasladar updateUser completa (Nombre_Completo y Privilegios) a AUTH; validar actor/token/expiración/roles dentro del mismo ScriptLock AUTH que protege login y ActiveSessions; registrar un marcador durable de revocación pendiente antes de escribir un rol; invalidar todas las sesiones del objetivo y verificar lectura posterior; mantener el marcador si queda alguna escritura pendiente; impedir que AUTH valide o cree nuevas sesiones para una cuenta con revocación pendiente; permitir que el mismo updateUser reintente completar la revocación aun si el rol ya coincide. La UI cerrará la sesión local si el usuario modifica su propio rol.
+- No se afirmará atomicidad. Si el borrado físico de filas falla después de limpiar los tokens, la autorización queda revocada y la limpieza de filas se reintenta; si no se puede confirmar la invalidación de todos los tokens, la operación reportará pendiente/error y conservará el marcador.
+- Para H-AUD-071, se añadirá un requestId de login generado y retenido en sessionStorage hasta que auth.js persista la sesión. AUTH conservará la relación requestId→userId/token/estado en ScriptProperties, bajo el lock, y reconciliará reintentos antes de crear otra sesión. La creación de fila y la escritura Users.SessionToken se verificarán mediante lectura posterior; la sesión más antigua se invalidará solo después de confirmar la nueva sesión. Las filas con token vacío no cuentan en SESSION_LIMITS.
+- Para H-AUD-072/H-AUD-073, la invalidación se hará mediante escritura consolidada de la columna ActiveSessions, lectura de verificación y reporte explícito de tokens pendientes. Nunca se borrará una fila cuyo token no se haya confirmado vacío. Si el cambio de contraseña no puede confirmar la revocación total, no cambiará el hash; si la escritura del hash falla, leerá el valor persistido para distinguir éxito confirmado de fallo/resultado ambiguo. La recuperación será mediante reintento o nuevo login con la contraseña que se confirme como vigente; no se afirmará transacción atómica.
+- No se cambiará el esquema SHA-256 ni el formato sha256$; AUG-011 sigue omitida. No se desplegarán servicios ni se accederá a hojas productivas.
+
+Auditoría complementaria:
+- H-AUD-071 confirmado: handleLogin cuenta todas las filas del usuario, incluso tokens vacíos; elimina la fila antigua antes de escribir SessionToken y appendRow; no distingue reintentos de la misma solicitud.
+- H-AUD-072 confirmado: resetUserSessions no captura/lee de vuelta cada clearContent; un fallo intermedio puede propagar error genérico después de invalidaciones parciales; deleteRow se captura y puede reintentarse.
+- H-AUD-073 confirmado: changePassword/resetUserPassword usan clearContent secuencial; no verifican read-back del hash después de setValue; las filas se borran después de invalidar tokens.
+- H-AUD-074 actualizado: decisión del usuario ya tomada; revocar todas las sesiones. Se resolverá la antigua ruta USERS trasladando el handler y su consumidor al servicio AUTH bajo una única autoridad local.
+- Riesgo de auto-cambio de rol: users.html permite que Desarrollador edite su propio Privilegios. Después de revocar su token, el formulario no debe conservar la sesión visual; debe borrar estado local y volver a index.html.
+Estado de auditoría: COMPLETADA PARA IMPLEMENTACIÓN. Todos los respaldos exactos deben obtenerse antes de editar; la implementación se limita a los archivos identificados y sus copias de prueba.
+================================================================================
+
+
