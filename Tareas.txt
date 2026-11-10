@@ -638,3 +638,13 @@ CORR-SUGGESTYEAR-CLIENT-CONFIRM-001 — CONFIRMAR REGISTRO BACKEND ANTES DE CACH
 - Criterios: esperar confirmación backend; no guardar caché si falla o devuelve recorded:false; permitir reintento; esperar «Modelo confirmado» antes de avanzar.
 - Estado: EN PROGRESO; suite cliente aprobada, suite FEEDBACK integral pendiente.
 ================================================================================
+
+
+================================================================================
+CIERRE — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Criterios locales: confirmación backend antes de caché; respuestas info requieren recorded:true; errores/no registro no crean caché; reintento disponible; «Modelo confirmado» espera la respuesta backend.
+Pruebas: ValidationCacheConfirmation 7/7 PASS; runFeedbackWriteSecurityTests 44/44 PASS; parsing 5/5 PASS; revisión del diff PASS.
+Validación Beta pendiente: navegador/Playwright, IndexedDB real, endpoints y Apps Script desplegado.
+Siguiente iteración: continuar con la siguiente condición pendiente de AUG-040 según checkpoint y Tareas.txt. No iniciar AUG-041.
+================================================================================

@@ -1222,3 +1222,23 @@ La implementación quedó publicada en GPSpedia2.2.5_work:
 La tarea sigue EN PROGRESO porque falta ejecutar la suite FEEDBACK integral y el parsing completo de los módulos remotos en el runner local correspondiente. No iniciar AUG-041 ni otra tarea.
 Siguiente iteración: continuar exclusivamente CORR-SUGGESTYEAR-CLIENT-CONFIRM-001 y completar esas validaciones antes de cerrar.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. HEAD de partida para el cierre documental: 930959c460eab649d3f45db3f41862719ab3b1fb.
+Rama base: GPSpedia2.2.5, HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: confirmar el registro backend de suggestYear antes de guardar la caché local.
+Commits funcionales:
+- ab5e049c51123cfc08063c65f8b8f20698058329 — confirmación cliente y contrato recorded.
+- 09c5e3646ad3cdfd8dc83fa760215779c309684b — recorded:false también en recuperación cuando el actor ya tenía un aporte.
+Validación local:
+- runFeedbackWriteSecurityTests(): 44/44 PASS con LockService/CacheService simulados.
+- ValidationCacheConfirmation: 7/7 PASS.
+- Parsing de ui.js, Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, validationSubmission.js y ValidationCacheConfirmation.js: 5/5 PASS.
+- Revisión del diff remoto: 10 archivos, solo cambios relacionados con la tarea y sus registros.
+Resultado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Validación Beta pendiente: navegador/Playwright, IndexedDB real, endpoints y Apps Script desplegado. No se ejecutaron deployments ni datos productivos.
+Siguiente iteración: seleccionar y resolver una sola condición pendiente de AUG-040 según Tareas.txt/checkpoint. No iniciar AUG-041.
+================================================================================

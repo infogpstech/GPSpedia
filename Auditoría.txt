@@ -216,3 +216,12 @@ Límites: navegador/Playwright, IndexedDB real, endpoints, Apps Script desplegad
 
 ADENDA H-AUD-040-014 — 2026-11-10
 La revisión post-commit confirmó que la rama de recuperación donde el actor ya tenía un aporte previo también devuelve una respuesta success derivada de la operación recuperada, aunque la solicitud actual no se inserta. Se añade recorded:false a esa respuesta para impedir que el cliente interprete la recuperación como registro de la respuesta actual. La suite cliente sigue siendo 7/7 PASS; la suite FEEDBACK integral permanece pendiente de ejecución.
+
+
+ADENDA DE VALIDACIÓN — H-AUD-040-014 — 2026-11-10
+Validación local posterior a la corrección:
+- runFeedbackWriteSecurityTests(): 44/44 PASS, ejecutada con LockService y CacheService simulados; sin Apps Script ni servicios externos.
+- ValidationCacheConfirmation: 7/7 PASS.
+- Parsing completo de los cuerpos de ui.js (declaraciones de módulo retiradas para el parser V8), Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, validationSubmission.js y ValidationCacheConfirmation.js: 5/5 PASS.
+- Revisión del diff remoto: los cambios se limitan a la confirmación cliente, las respuestas recorded y sus pruebas/registros.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE. Navegador/Playwright, IndexedDB real, endpoints y Apps Script desplegado quedan diferidos a Beta.
