@@ -1,8 +1,8 @@
-CHANGE LOG ACTIVO — GPSpedia
-Historial anterior preservado en `Olds/Documentacion_Legacy/`. No editar las partes legacy. Consultar `Olds/Documentacion_Legacy/README.md` para inventario, SHA original y reconstrucción.
+# Registro de cambios — GPSpedia
 
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de registrar cambios o modificar el proyecto.
 
-**Regla:** no borrar, truncar, sobrescribir ni reordenar entradas; agregar cada entrada al final. Verificar antes que el resultado no supere 180,000 caracteres Unicode. Si excede, rotar según `Plan_auditoría/Normas_Gestion_Documental.md`.
+Este archivo conserva el historial factual de modificaciones; no establece procedimientos ni reglas de desarrollo. El historial anterior permanece en `Olds/Documentacion_Legacy/`.
 
 ================================================================================
 2026-11-09 — DOC-MIG-2026-001 — MIGRACIÓN DOCUMENTAL
