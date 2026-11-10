@@ -535,3 +535,12 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Suite Services/Test/IdempotenciaIntegrity.js: 13 casos lógicos; documentación de reconciliación no destructiva.
 - Sin cambios en endpoints, api-config.js, Utilities.js, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-036 — CONTRATO VIN/TESTIGO Y PARSERS
+- ADMIN/WRITE: AT:AV fijo para activaTestigo1..3; preflight de VIN y testigo; rechazo de encabezados duplicados, fuera de posición, ocupados o datos sin encabezado; preservación de columnas posteriores.
+- VIN: encabezado único; parser y serializer equivalentes en UI/ADMIN/WRITE; JSON canónico con slots vacíos y compatibilidad heredada con coma, /, barra inversa y punto y coma.
+- Suite Services/Test/VinTestigoIntegrity.js: 14 casos lógicos; README y esquema físico actualizados.
+- Sin cambios en endpoints, api-config.js, deployments ni datos productivos.
+================================================================================
