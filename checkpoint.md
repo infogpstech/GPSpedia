@@ -307,7 +307,9 @@ CHECKPOINT — AUG-035 — 2026-11-10
 Rama: GPSpedia2.2.5_work. HEAD inicial de la tarea: 4f859f62dc561799722f749f723acb4b9c22be50.
 Tarea: AUG-035 — completada en validación lógica local; pruebas de Spreadsheet aislada diferidas a Beta.
 Cambios: ADMIN/WRITE validan encabezados y filas; rechazan duplicados incluso con asociación igual; validan opId, vehicleId, slotIndex, timestamp y status; verifican escrituras y preservan completed; recuperación exige una fila Cortes única por vehicleId; migración verifica asociación y estado completed antes de limpiar origen, y completa registros pending existentes antes de la verificación. Dry-run informa cuántos registros requieren completarse.
-Pruebas: suite Services/Test/IdempotenciaIntegrity.js 12/12 PASS; parsing V8 de admin.js, write.js y harness PASS.
+Pruebas: suite Services/Test/IdempotenciaIntegrity.js 13/13 PASS; parsing V8 de admin.js, write.js y harness PASS.
 Límites: no se ejecutó Spreadsheet real, deployment, endpoint ni datos productivos. Fallos parciales, interrupción y concurrencia real se prueban en Beta.
 No se modificó la rama base.
 ================================================================================
+
+Ajuste final: se añadió rechazo explícito de hojas con menos de cinco columnas cuando contienen registros; se amplió la suite a 13/13 PASS. HEAD previo al checkpoint final: 8aec6a0acf6aaac19e9e9e9b0193047ba2a63ac4.
