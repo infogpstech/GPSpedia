@@ -116,6 +116,39 @@ function runFeedbackWriteSecurityTests() {
             assert_(actor.userId === "USR-TEST-01" && actor.suggestionActorKey === "user:USR-TEST-01");
             assert_(isVerifiedSuggestionActorKey_(actor.suggestionActorKey));
         });
+        test_("addSolution rechaza texto vacío o solo espacios antes de modificar PyS", function() {
+            const originalGetSafeSheet = getSafeSheet;
+            const originalLog = logUserActivity;
+            const originalSpreadsheetApp = SpreadsheetApp;
+            const rows = [
+                ["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion"],
+                ["isue-001", "Falla", "Detalle", "", ""]
+            ];
+            const sheet = makeSheet(rows);
+            let activityCount = 0;
+            try {
+                getSafeSheet = () => sheet;
+                logUserActivity = () => { activityCount++; };
+                SpreadsheetApp = { flush: function() {} };
+                expectThrow_(() => handleAddSolution({
+                    problemId: "isue-001", solucion: "   \n  ", userId: "USR-TEST-01", userName: "Usuario verificado"
+                }), "requeridos");
+                assert_(rows[1][3] === "" && rows[1][4] === "", "La entrada vacía no debe marcar el problema como solucionado.");
+                assert_(activityCount === 0, "La entrada vacía no debe generar actividad.");
+                const result = handleAddSolution({
+                    problemId: "isue-001", solucion: "  Solución válida  ", userId: "USR-TEST-01", userName: "Usuario verificado"
+                });
+                assert_(result.status === "success");
+                assert_(rows[1][3] === "x" && rows[1][4] === "Solución válida",
+                    "La solución válida debe persistirse sin espacios externos.");
+                assert_(activityCount === 1);
+            } finally {
+                getSafeSheet = originalGetSafeSheet;
+                logUserActivity = originalLog;
+                SpreadsheetApp = originalSpreadsheetApp;
+            }
+        });
+
         test_("addProblem rechaza una imagen ausente", function() {
             expectThrow_(() => handleAddProblem({
                 titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
