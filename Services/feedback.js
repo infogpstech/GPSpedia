@@ -1376,6 +1376,42 @@ function handleGetActivityLogs(payload) {
 
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
+function buildCutSuggestionRequestFingerprint_(details, proposedValues, imgBase64) {
+    const source = JSON.stringify({
+        details: String(details || ""),
+        proposedValues: proposedValues || {},
+        image: String(imgBase64 || "")
+    });
+    let hashA = 2166136261, hashB = 2246822519;
+    for (let i = 0; i < source.length; i++) {
+        const code = source.charCodeAt(i);
+        hashA = Math.imul(hashA ^ code, 16777619) >>> 0;
+        hashB = Math.imul(hashB ^ (code + i), 3266489917) >>> 0;
+    }
+    return source.length + ":" + hashA.toString(16) + ":" + hashB.toString(16);
+}
+
+function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, userId) {
+    if (!sheet || sheet.getLastRow() < 2 || reportId === "N/A") return null;
+    const rows = sheet.getDataRange().getValues();
+    const matches = [];
+    rows.slice(1).forEach((row, index) => {
+        const raw = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+        if (!raw.trim().startsWith("{")) return;
+        let record;
+        try { record = JSON.parse(raw); } catch (error) { return; }
+        if (!record || record.subType !== "suggestion_cut") return;
+        if (String(record.reportId || "N/A") === reportId &&
+            String(record.vehicleId || "").trim() === vehicleId &&
+            Number(record.corteIndex) === corteIndex &&
+            String(record.userId || "") === userId) {
+            matches.push({ rowNumber: index + 2, record: record });
+        }
+    });
+    if (matches.length > 1) throw new Error("La sugerencia asociada al reporte ya aparece duplicada; se conserva el estado para revisión.");
+    return matches.length ? matches[0] : null;
+}
+
 function handleSuggestCutChange(payload) {
     const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
@@ -1385,54 +1421,78 @@ function handleSuggestCutChange(payload) {
         throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
     const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
-    const normalizedReportId = String(reportId || "N/A");
+    const normalizedReportId = String(reportId || "N/A").trim() || "N/A";
+    const normalizedUserId = String(userId);
     const normalizedDetails = String(details || "");
-    const createdAt = new Date().toISOString();
-    let imageUrl = "";
-    if (imgBase64) {
-        try {
-            const folderName = "SugerenciasCortes";
-            const folders = DriveApp.getFoldersByName(folderName);
-            let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-            const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${normalizedVehicleId}_corte${normalizedCorteIndex}_${Date.now()}.jpg`);
-            const file = folder.createFile(blob);
-            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-            imageUrl = file.getUrl();
-        } catch(e) {
-            console.error("Error subiendo imagen de sugerencia:", e);
+    const requestFingerprint = buildCutSuggestionRequestFingerprint_(normalizedDetails, normalizedProposedValues, imgBase64);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+        const existing = findCutSuggestionByRequest_(sheet, normalizedReportId, normalizedVehicleId, normalizedCorteIndex, normalizedUserId);
+        if (existing) {
+            if (!existing.record.requestFingerprint || existing.record.requestFingerprint !== requestFingerprint) {
+                throw new Error("El identificador del reporte ya fue utilizado con datos distintos; no se creó otra sugerencia.");
+            }
+            return {
+                status: "success",
+                message: "La sugerencia ya estaba registrada; se devolvió el registro existente.",
+                reportId: normalizedReportId,
+                alreadySuggested: true,
+                suggestionData: existing.record
+            };
         }
+
+        const createdAt = new Date().toISOString();
+        let imageUrl = "";
+        if (imgBase64) {
+            try {
+                const folderName = "SugerenciasCortes";
+                const folders = DriveApp.getFoldersByName(folderName);
+                let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+                const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${normalizedVehicleId}_corte${normalizedCorteIndex}_${Date.now()}.jpg`);
+                const file = folder.createFile(blob);
+                file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+                imageUrl = file.getUrl();
+            } catch(e) {
+                console.error("Error subiendo imagen de sugerencia:", e);
+            }
+        }
+        // La sugerencia se conserva como registro independiente en Feedbacks; no modifica Cortes.
+        const lastRow = sheet.getLastRow();
+        const newRowNumber = lastRow + 1;
+        const FORMULA_ROW = 2;
+        const lastCol = sheet.getLastColumn() || 8;
+        if (lastRow >= FORMULA_ROW) {
+            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+            formulaRange.copyTo(newRowRange);
+            if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+        }
+        const suggestionRecord = {
+            subType: "suggestion_cut", schemaVersion: 2,
+            reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
+            userId: normalizedUserId, userName: String(userName), createdAt,
+            imageUrl: imageUrl || "", details: normalizedDetails,
+            proposedValues: normalizedProposedValues, requestFingerprint,
+            status: "pendiente_revision"
+        };
+        const problemDesc = JSON.stringify(suggestionRecord);
+        const values = [[String(userName), normalizedVehicleId, problemDesc]];
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
+        if (COLS_FEEDBACKS['Se resolvio']) sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
+        SpreadsheetApp.flush();
+        logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, problemDesc);
+        return {
+            status: "success",
+            message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
+            reportId: normalizedReportId,
+            suggestionData: suggestionRecord
+        };
+    } finally {
+        lock.releaseLock();
     }
-    // La sugerencia se conserva como registro independiente en Feedbacks; no modifica Cortes.
-    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    const lastRow = sheet.getLastRow();
-    const newRowNumber = lastRow + 1;
-    const FORMULA_ROW = 2;
-    const lastCol = sheet.getLastColumn() || 8;
-    if (lastRow >= FORMULA_ROW) {
-        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-        formulaRange.copyTo(newRowRange);
-        if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-    }
-    const suggestionRecord = {
-        subType: "suggestion_cut", schemaVersion: 2,
-        reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
-        userId: String(userId), userName: String(userName), createdAt,
-        imageUrl: imageUrl || "", details: normalizedDetails,
-        proposedValues: normalizedProposedValues, status: "pendiente_revision"
-    };
-    const problemDesc = JSON.stringify(suggestionRecord);
-    const values = [[String(userName), normalizedVehicleId, problemDesc]];
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-    if (COLS_FEEDBACKS['Se resolvio']) sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
-    SpreadsheetApp.flush();
-    logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, problemDesc);
-    return {
-        status: "success",
-        message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
-        reportId: normalizedReportId,
-        suggestionData: suggestionRecord
-    };
 }
 
 function parseModelosAsociados(rawVal) {
