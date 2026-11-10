@@ -467,7 +467,10 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Origen:** H-AUD-030-006, H-AUD-030-007 y H-AUD-030-008. **Prioridad:** Media.
 - **Problema:** la documentación fija testigo en AT:AV pero el código agrega campos después de la última columna usada; la resolución runtime de VIN acepta el primer encabezado aunque haya duplicados; frontend/backend difieren en delimitadores heredados de VIN.
 - **Criterios de aceptación:** definir y documentar si AT:AV es posición obligatoria o si los campos se ubican dinámicamente; detectar encabezados duplicados de VIN/testigo y detener escrituras ambiguas; unificar parser y serialización frontend/backend; mantener el JSON como formato canónico y especificar compatibilidad heredada; probar hojas con columnas adicionales, encabezados duplicados, VIN JSON, delimitadores heredados y datos inválidos.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA EN VALIDACIÓN LÓGICA LOCAL (2026-11-10); validación funcional con Spreadsheet aislada pendiente de Beta.
+- **Decisión de esquema:** `activaTestigo1..3` ocupan obligatoriamente AT:AV (46–48); AR:AS permanecen reservadas. Las columnas posteriores no alteran la ubicación. Si hay encabezados duplicados, ubicación distinta, columnas objetivo ocupadas o datos sin encabezado, la escritura se detiene sin reasignar información.
+- **VIN:** el encabezado `VIN` se resuelve por nombre y debe ser único. JSON Array es el formato canónico y conserva posiciones vacías; se admiten cadenas heredadas separadas por coma, `/`, `\\` o `;`. JSON mal formado, tokens inválidos, duplicados o más de tres posiciones se rechazan.
+- **Resultado:** ADMIN, WRITE y frontend comparten reglas equivalentes de parseo/serialización; se eliminaron los parsers divergentes del modal y se añadió cobertura de columnas adicionales y encabezados ambiguos.
 
 
 ### Adenda AUD-T-031 — ampliación de coordinación interservicios
