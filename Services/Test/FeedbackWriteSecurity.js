@@ -381,6 +381,96 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear recupera la aplicación pendiente del vehículo antes de aceptar otro año", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            let failFirstRangeWrite=true;
+            function sheet(rows,maxColumns,isCuts) {
+                return {
+                    rows,getLastRow(){return this.rows.length;},
+                    getLastColumn(){return Math.max(maxColumns||0,...this.rows.map(r=>r.length));},
+                    getMaxColumns(){return maxColumns||this.getLastColumn();},
+                    getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};},
+                    getRange(r,c,h=1,w=1) {
+                        const self=this;
+                        return {
+                            getValue(){return (self.rows[r-1]||[])[c-1]??"";},
+                            getValues(){return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>(self.rows[r-1+i]||[])[c-1+j]??""));},
+                            setValue(v){
+                                if(isCuts&&r===2&&c===COLS_CORTES.anoHasta&&Number(v)===2025&&failFirstRangeWrite){
+                                    failFirstRangeWrite=false;throw Error("fallo simulado antes de aplicar el primer rango");
+                                }
+                                while(self.rows.length<r)self.rows.push([]);
+                                while(self.rows[r-1].length<c)self.rows[r-1].push("");
+                                self.rows[r-1][c-1]=v;
+                            },
+                            setValues(vs){vs.forEach((line,i)=>line.forEach((v,j)=>{
+                                while(self.rows.length<r+i)self.rows.push([]);
+                                while(self.rows[r-1+i].length<c+j)self.rows[r-1+i].push("");
+                                self.rows[r-1+i][c-1+j]=v;
+                            }));},
+                            copyTo(target){target.setValues(this.getValues());},
+                            clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
+                        };
+                    },
+                    insertColumnsAfter(after,count){maxColumns=(maxColumns||this.getLastColumn())+count;this.rows.forEach(row=>{while(row.length<maxColumns)row.push("");});}
+                };
+            }
+            const vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-MULTI-PENDING";
+            vehicle[COLS_CORTES.marca-1]="Toyota";vehicle[COLS_CORTES.modelo-1]="Hilux";
+            vehicle[COLS_CORTES.categoria-1]="Pickup";vehicle[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=sheet([Array(42).fill(""),vehicle],42,true);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const feedback=sheet([headers,
+                ["F-A","A","VEH-MULTI-PENDING","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,"user:USR-A"],
+                ["F-B","B","VEH-MULTI-PENDING","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,"user:USR-B"],
+                ["F-C","C","VEH-MULTI-PENDING","Confirmación de funcionamiento para año 2026","La información funciona para el año 2026.","","","",2026,"user:USR-E"],
+                ["F-D","D","VEH-MULTI-PENDING","Confirmación de funcionamiento para año 2026","La información funciona para el año 2026.","","","",2026,"user:USR-F"]
+            ],10,false);
+            const ledgerSheets={},activities=[];
+            try {
+                assertFeedbackSession=p=>{
+                    const users={"SESSION-25":{userId:"USR-C",userName:"Usuario C",role:"Tecnico"},
+                        "SESSION-26":{userId:"USR-D",userName:"Usuario D",role:"Tecnico"}};
+                    if(!p||!users[p.sessionToken])throw Error("Sesión inválida");
+                    return users[p.sessionToken];
+                };
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:(ledgerSheets[n]||null),
+                    insertSheet:n=>(ledgerSheets[n]=sheet([],12,false))});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO||n===SHEET_NAMES.FEEDBACKS?feedback:null;
+                logUserActivity=(id,name,type)=>activities.push(type);
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const actor25=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-25"});
+                let firstError="";
+                try { handleSuggestYear({...actor25,vehicleId:"VEH-MULTI-PENDING",newYear:2025,response:"Sí (Funciona)"}); }
+                catch(error) { firstError=error.message; }
+                assert_(firstError.includes("fallo simulado"),"Debe quedar pendiente la primera ampliación: "+firstError);
+                const ledger=ledgerSheets.FeedbackYearApplications;
+                assert_(ledger&&ledger.rows.length===2&&ledger.rows[1][8]==="pending","Debe existir una operación pendiente para 2025.");
+                const actor26=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-26"});
+                const second=handleSuggestYear({...actor26,vehicleId:"VEH-MULTI-PENDING",newYear:2026,response:"Sí (Funciona)"});
+                assert_(second.status==="info"&&second.recovered===true&&second.message.includes("año 2026 no se registró"),
+                    "Primero debe recuperarse la aplicación anterior e informar que se reenvíe la nueva sugerencia: "+JSON.stringify(second));
+                assert_(ledger.rows.length===2&&ledger.rows[1][8]==="completed","No debe crearse una segunda operación mientras se recupera la primera.");
+                assert_(cuts.rows[1][COLS_CORTES.anoHasta-1]===2025,"La primera ampliación debe quedar completada antes de procesar 2026.");
+                assert_(feedback.rows.slice(1).filter(row=>row[9]==="user:USR-D"&&Number(row[8])===2026).length===0,
+                    "La solicitud del segundo año no debe registrarse durante la recuperación.");
+                const retry=handleSuggestYear({...actor26,vehicleId:"VEH-MULTI-PENDING",newYear:2026,response:"Sí (Funciona)"});
+                assert_(retry.status==="success"&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2026,
+                    "Al reenviar, la segunda ampliación debe procesarse secuencialmente: "+JSON.stringify(retry));
+                assert_(ledger.rows.length===3&&ledger.rows[1][8]==="completed"&&ledger.rows[2][8]==="completed",
+                    "Ambas operaciones secuenciales deben quedar completadas.");
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
+            }
+        });
+
         test_("suggestYear recupera una ampliación cuando falla la primera marca de voto atendido", function() {
             const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
             const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;

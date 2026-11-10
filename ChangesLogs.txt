@@ -799,3 +799,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Services/Test/FeedbackWriteSecurity.js: agrega regresión para rango de un solo año y fallo simulado entre escrituras.
 - Validación local: runFeedbackWriteSecurityTests() 39/39 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — SERIALIZACIÓN DE APLICACIONES PENDIENTES POR VEHÍCULO
+- Services/feedback.js: detecta aplicaciones pendientes por vehículo, independientemente del año; recupera la operación anterior antes de procesar otra sugerencia y solicita reenviar la nueva solicitud si corresponde a otro año.
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión con fallo de escritura en una ampliación y una nueva sugerencia para otro año; verifica recuperación secuencial y ausencia de operaciones pendientes simultáneas.
+- Auditoría.txt: registra H-AUD-040-009.
+- Validación local: runFeedbackWriteSecurityTests() 40/40 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; validación de Spreadsheet/Apps Script reales diferida a Beta.
+================================================================================

@@ -133,3 +133,18 @@ ADENDA TÉCNICA — H-AUD-040-008 — 2026-11-10
 En la revisión de recuperación se cubrió también el caso de un vehículo cuyo anoHasta está vacío (equivale a anoDesde). Al ampliar el límite inferior, primero se materializa el límite superior anterior y después se modifica anoDesde. Si falla la segunda escritura, el diario pending permite reanudar desde el rango previo semánticamente equivalente sin perder el límite superior.
 Prueba adicional: fallo simulado entre ambas escrituras en un rango de un solo año; el reintento conserva el límite superior original, completa la ampliación inferior y marca los votos. Suite local actualizada: 39/39 PASS; sintaxis 2/2 PASS.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-009 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de recuperación de aplicaciones pendientes en AUG-040.
+Ubicación: Services/feedback.js, findPendingFeedbackYearApplication_() y handleSuggestYearLocked().
+Evidencia: el diario se consultaba por vehículo y año. Si una aplicación de un año quedaba pending por un fallo de escritura, una nueva sugerencia del mismo vehículo para otro año no encontraba esa operación y podía crear una segunda aplicación. Al completar la segunda ampliación, el rango del catálogo dejaba de coincidir con el rango previo o el objetivo de la primera; su recuperación posterior terminaba en revisión manual y no podía continuar automáticamente.
+Impacto: más de una aplicación pending para el mismo vehículo podía generar un estado de catálogo ambiguo y dejar una operación sin recuperación automática.
+Severidad: Media.
+Corrección: la búsqueda de pendientes ahora se limita al vehículo, sin filtrar por año. Si existe una operación pendiente, se recupera antes de aceptar otra sugerencia. Si la nueva solicitud corresponde a otro año, se informa que no fue registrada y que debe reenviarse después de completar la recuperación. Si ya existen varias operaciones pendientes para el vehículo, se detiene el flujo y se solicita revisión manual.
+Prueba: se simula el fallo de la primera ampliación de 2025 antes de modificar el catálogo; después se solicita 2026 para el mismo vehículo. La operación 2025 se recupera primero, la solicitud 2026 no se registra en ese intento y, al reenviarla, se procesa secuencialmente. Se comprueba que no coexisten operaciones pendientes.
+Validación local: runFeedbackWriteSecurityTests() 40/40 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
+Límites: pruebas aisladas con dobles locales; no representan Apps Script/Spreadsheet/Drive reales. Persistencia y recuperación en Beta quedan pendientes.
+Estado: corregido y validado localmente; integración real diferida a Beta.
+================================================================================

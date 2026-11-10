@@ -1086,3 +1086,34 @@ Regresión agregada: fallo simulado entre ambas escrituras; recuperación comple
 La condición de recuperación de escrituras parciales queda COMPLETADA CON VALIDACIÓN DIFERIDA tras publicar este ajuste. AUG-040 sigue EN PROGRESO; próxima iteración: una sola condición pendiente de suggestYear.
 Validación Beta pendiente: Spreadsheet real, creación del diario, persistencia y fallos reales de escritura; no ejecutados.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: UNA SOLA APLICACIÓN PENDIENTE POR VEHÍCULO — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 0f48adc4f07ce0580c80175d4a46c26a8587d855.
+TAREA ÚNICA
+Evitar que una sugerencia de otro año inicie una segunda ampliación mientras el mismo vehículo conserva una aplicación de año pending.
+HALLAZGO Y CORRECCIÓN
+La búsqueda anterior filtraba por vehículo y año. Si una ampliación quedaba pendiente por un fallo de escritura, una nueva solicitud para otro año del mismo vehículo podía crear otra aplicación. Al aplicar la segunda, el rango del catálogo podía quedar fuera del estado anterior y del objetivo de la primera, impidiendo su recuperación automática.
+La búsqueda ahora detecta cualquier operación pending del vehículo. La operación anterior se recupera antes de procesar una nueva solicitud. Si el año solicitado es distinto, se devuelve status info indicando que esa sugerencia no se registró y debe reenviarse. La función también bloquea estados históricos con varias operaciones pendientes para el mismo vehículo, derivándolos a revisión manual.
+PRUEBA DE REGRESIÓN
+Se simula una falla al intentar aplicar la ampliación de 2025, antes de modificar el catálogo. Luego se solicita 2026 para el mismo vehículo. La prueba verifica que primero se completa 2025, que la solicitud 2026 no se registra durante la recuperación y que, al reenviarla, se procesa secuencialmente. No quedan aplicaciones pendientes simultáneas.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 40/40 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Runtime JavaScript aislado con dobles; no acredita integración real con Apps Script/Spreadsheet/Drive.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-009)
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 permanece EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
+VALIDACIÓN BETA PENDIENTE
+Persistencia y consulta del diario en Spreadsheet real, recuperación ante fallos reales y comportamiento de la hoja Feedbacks en Apps Script; no ejecutados.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

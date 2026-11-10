@@ -700,7 +700,7 @@ function getFeedbackYearApplicationsSheet_(createIfMissing) {
     return sheet;
 }
 
-function findPendingFeedbackYearApplication_(vehicleId, year) {
+function findPendingFeedbackYearApplication_(vehicleId) {
     const sheet = getFeedbackYearApplicationsSheet_(false);
     if (!sheet) return null;
     const rows = sheet.getDataRange().getValues();
@@ -708,12 +708,12 @@ function findPendingFeedbackYearApplication_(vehicleId, year) {
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (String(row[1] || "").trim() === String(vehicleId) &&
-            Number(row[2]) === Number(year) && String(row[8] || "").trim() === "pending") {
+            String(row[8] || "").trim() === "pending") {
             matches.push({ rowIndex: i + 1, row });
         }
     }
     if (matches.length > 1) {
-        throw new Error("Hay varias aplicaciones de año pendientes para el mismo vehículo y año; requiere revisión manual.");
+        throw new Error("Hay varias aplicaciones de año pendientes para el mismo vehículo; requiere revisión manual.");
     }
     if (!matches.length) return null;
     const row = matches[0].row;
@@ -926,8 +926,9 @@ function handleSuggestYearLocked(payload) {
     const matchesActorAndSuggestion = row =>
         String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === normalizedVehicleId &&
         Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year;
-    const pendingApplication = findPendingFeedbackYearApplication_(normalizedVehicleId, year);
+    const pendingApplication = findPendingFeedbackYearApplication_(normalizedVehicleId);
     if (pendingApplication) {
+        const pendingYear = Number(pendingApplication.row[2]);
         const recovered = completeFeedbackYearApplication_(pendingApplication, {
             cortesSheet,
             vehicleRowIndex: vehicleRowIndex + 2,
@@ -937,6 +938,15 @@ function handleSuggestYearLocked(payload) {
             userId,
             userName
         });
+        if (pendingYear !== year) {
+            return {
+                ...recovered,
+                status: "info",
+                recovered: true,
+                message: "Se recuperó la ampliación pendiente del año " + pendingYear +
+                    ". La sugerencia para el año " + year + " no se registró; vuelve a enviarla."
+            };
+        }
         return {
             ...recovered,
             recovered: true,
