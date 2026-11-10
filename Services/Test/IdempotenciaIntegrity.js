@@ -12,5 +12,8 @@ function runIdempotenciaIntegrityTests(){
  run("vehicleId vacío",()=>throws(()=>readIdempotenciaEntries_(sheet([IDEMPOTENCIA_HEADERS,["OP-a","",1,"10/11/2026","completed"]]),false),"vehicleId"));
  run("vehicleId duplicado en Cortes",()=>{COLS_CORTES.id=1;throws(()=>findUniqueCortesVehicleRow_({getDataRange:()=>({getValues:()=>[["id"],[7],[7]]})},"7","OP-a"),"aparece en 2 filas");});
  run("vehicleId único en Cortes",()=>{COLS_CORTES.id=1;assert(findUniqueCortesVehicleRow_({getDataRange:()=>({getValues:()=>[["id"],[7],[8]]})},"7","OP-a").rowIndex===2);});
+
+ run("migración completa un registro pending existente",()=>{const p=getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"7",slotIndex:1,status:"pending",rowIndex:3}]]));assert(p.entriesToComplete.length===1&&p.entriesToComplete[0].rowIndex===3&&p.entriesToWrite.length===0);});
+ run("migración rechaza asociación incompatible",()=>{let e;try{getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"8",slotIndex:1,status:"completed",rowIndex:3}]]));}catch(x){e=x;}assert(!!e&&String(e.message||e).includes("asociación diferente"));});
  return{status:failed?"FAIL":"PASS",passed,failed,results:out};
 }
