@@ -312,6 +312,71 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear rechaza rangos de catálogo inválidos antes de aplicar una ampliación", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            function sheet(rows) {
+                return {rows,getLastRow(){return this.rows.length;},getLastColumn(){return Math.max(10,...this.rows.map(r=>r.length));},getMaxColumns(){return this.getLastColumn();},
+                    getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};},
+                    getRange(r,c,h=1,w=1){const self=this;return {
+                        getValue(){return (self.rows[r-1]||[])[c-1]??"";},
+                        getValues(){return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>(self.rows[r-1+i]||[])[c-1+j]??""));},
+                        setValue(v){while(self.rows.length<r)self.rows.push([]);while(self.rows[r-1].length<c)self.rows[r-1].push("");self.rows[r-1][c-1]=v;},
+                        setValues(vs){vs.forEach((line,i)=>line.forEach((v,j)=>{while(self.rows.length<r+i)self.rows.push([]);while(self.rows[r-1+i].length<c+j)self.rows[r-1+i].push("");self.rows[r-1+i][c-1+j]=v;}));},
+                        copyTo(target){target.setValues(this.getValues());},
+                        clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
+                    };},deleteRow(r){this.rows.splice(r-1,1);},insertColumnsAfter(){}
+                };
+            }
+            function vehicle(id,from,to) {
+                const r=Array(42).fill("");r[COLS_CORTES.id-1]=id;r[COLS_CORTES.marca-1]="Toyota";
+                r[COLS_CORTES.modelo-1]="Hilux";r[COLS_CORTES.categoria-1]="Pickup";
+                r[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";r[COLS_CORTES.tipoEncendido-1]="Llave";
+                r[COLS_CORTES.anoDesde-1]=from;r[COLS_CORTES.anoHasta-1]=to;return r;
+            }
+            function feedbackFixture() {
+                const h=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+                return sheet([h,
+                    ["F1","A","V-INVALID","Confirmación de funcionamiento para año 2027","Funciona","","","",2027,"user:A"],
+                    ["F2","B","V-INVALID","Confirmación de funcionamiento para año 2027","Funciona","","","",2027,"user:B"]]);
+            }
+            try {
+                assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-C")throw Error("Sesión inválida");return {userId:"C",userName:"Usuario C",role:"Tecnico"};};
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};SpreadsheetApp={flush(){}};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                let feedbackAccess=0,activities=[];
+                const targetInvalid=sheet([Array(42).fill(""),vehicle("V-INVALID",2025,2020)]);
+                const fbTarget=feedbackFixture();
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?targetInvalid:null});
+                getSafeSheet=n=>{if(n===SHEET_NAMES.SUGERENCIAS_ANO){feedbackAccess++;return fbTarget;}return null;};
+                logUserActivity=(...args)=>activities.push(args);
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
+                let targetError="";
+                try {handleSuggestYear({...actor,vehicleId:"V-INVALID",newYear:2027,response:"Sí (Funciona)"});}
+                catch(error){targetError=error.message;}
+                assert_(targetError.includes("rango de años del vehículo es inválido"),"Debe rechazar el rango objetivo invertido.");
+                assert_(feedbackAccess===0,"No debe acceder a Feedbacks si el rango objetivo es inválido.");
+                assert_(fbTarget.rows.length===3,"No debe registrar un voto con rango objetivo inválido.");
+                assert_(targetInvalid.rows[1][COLS_CORTES.anoDesde-1]===2025&&targetInvalid.rows[1][COLS_CORTES.anoHasta-1]===2020,"No debe alterar el rango inválido.");
+
+                const cuts=sheet([Array(42).fill(""),vehicle("V-INVALID",2018,2022),vehicle("V-PEER",2025,2020)]);
+                const fb=feedbackFixture();
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:null});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO?fb:null;
+                activities=[];
+                const result=handleSuggestYear({...actor,vehicleId:"V-INVALID",newYear:2027,response:"Sí (Funciona)"});
+                assert_(result.status==="warning"&&result.message.includes("rango de años inválido"),"Una generación coincidente inválida debe derivarse a revisión manual: "+JSON.stringify(result));
+                assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2018&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"No debe modificar el rango objetivo.");
+                assert_(cuts.rows[2][COLS_CORTES.anoDesde-1]===2025&&cuts.rows[2][COLS_CORTES.anoHasta-1]===2020,"No debe modificar el rango ajeno inválido.");
+                assert_(fb.rows.length===4,"Debe conservar el tercer aporte para revisión.");
+                assert_(activities.some(a=>a[2]==="suggest_year_range_review"),"Debe registrar la revisión de integridad del rango.");
+                assert_(!activities.some(a=>a[2]==="apply_year_suggestion"),"No debe registrar aplicación automática.");
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
+            }
+        });
+
         test_("suggestYear registra aportes anónimos sin sumarlos al umbral de tres usuarios verificados", function() {
             const originalAssert=assertFeedbackSession, originalGetSpreadsheet=getSpreadsheet;
             const originalGetSafeSheet=getSafeSheet, originalLog=logUserActivity;

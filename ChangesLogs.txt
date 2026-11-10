@@ -715,3 +715,12 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - AUG-040 permanece EN PROGRESO; esta condición queda completada localmente con integración real diferida a Beta.
 - Sin deployments, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — VALIDACIÓN DE RANGOS DE AÑOS EN suggestYear
+- Services/feedback.js: valida estrictamente los años del rango objetivo (formato de cuatro dígitos, 1980–2099 y orden ascendente) antes de acceder a Feedbacks. Los rangos inválidos de generaciones equivalentes provocan revisión manual y bloquean la ampliación automática.
+- Services/Test/FeedbackWriteSecurity.js: regresión para rango objetivo invertido (rechazo sin acceso/escritura en Feedbacks) y rango invertido de otra generación equivalente (voto conservado, revisión manual y sin mutaciones en Cortes).
+- Validación local: runFeedbackWriteSecurityTests() 33/33 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; esta condición queda completada localmente con integración real diferida a Beta.
+- Sin deployments, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================

@@ -715,6 +715,19 @@ function handleSuggestYearLocked(payload) {
     if (matchingVehicleIndexes.length > 1) throw new Error("El vehículo tiene un ID duplicado; no se registró la sugerencia de año.");
     const vehicleRowIndex = matchingVehicleIndexes[0];
     const vehicleRow = allCortesData[vehicleRowIndex];
+    const parseCatalogYear = value => {
+        const text = String(value === null || value === undefined ? "" : value).trim();
+        if (!/^[0-9]{4}$/.test(text)) return NaN;
+        const parsed = Number(text);
+        return parsed >= 1980 && parsed <= 2099 ? parsed : NaN;
+    };
+    const rawAnoDesde = vehicleRow[COLS_CORTES.anoDesde - 1];
+    const rawAnoHasta = vehicleRow[COLS_CORTES.anoHasta - 1];
+    const anoDesde = parseCatalogYear(rawAnoDesde);
+    const anoHasta = String(rawAnoHasta === null || rawAnoHasta === undefined ? "" : rawAnoHasta).trim() === "" ? anoDesde : parseCatalogYear(rawAnoHasta);
+    if (!Number.isFinite(anoDesde) || !Number.isFinite(anoHasta) || anoHasta < anoDesde) {
+        throw new Error("El rango de años del vehículo es inválido; no se registró la sugerencia.");
+    }
 
     const sheet = getSafeSheet(SHEET_NAMES.SUGERENCIAS_ANO);
     if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
@@ -796,8 +809,6 @@ function handleSuggestYearLocked(payload) {
         return { status: "success", message: prefix + " Votos de usuarios verificados: " + voteCount + "/3." };
     }
 
-    const anoDesde = parseInt(vehicleRow[COLS_CORTES.anoDesde - 1], 10);
-    const anoHasta = parseInt(vehicleRow[COLS_CORTES.anoHasta - 1] || anoDesde, 10);
     if (year >= anoDesde && year <= anoHasta) {
         return { status: "info", message: "El año " + year + " ya está dentro del rango actual." };
     }
@@ -821,8 +832,14 @@ function handleSuggestYearLocked(payload) {
         const otherVersion = normalizeV(row[COLS_CORTES.versionesAplicables - 1]);
         if (otherMarca === marca && otherModelo === modelo && otherCategoria === categoria &&
             otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {
-            const otherAnoDesde = parseInt(row[COLS_CORTES.anoDesde - 1], 10);
-            const otherAnoHasta = parseInt(row[COLS_CORTES.anoHasta - 1] || otherAnoDesde, 10);
+            const otherAnoDesde = parseCatalogYear(row[COLS_CORTES.anoDesde - 1]);
+            const rawOtherAnoHasta = row[COLS_CORTES.anoHasta - 1];
+            const otherAnoHasta = String(rawOtherAnoHasta === null || rawOtherAnoHasta === undefined ? "" : rawOtherAnoHasta).trim() === "" ? otherAnoDesde : parseCatalogYear(rawOtherAnoHasta);
+            if (!Number.isFinite(otherAnoDesde) || !Number.isFinite(otherAnoHasta) || otherAnoHasta < otherAnoDesde) {
+                logUserActivity(userId, userName, "suggest_year_range_review", normalizedVehicleId,
+                    "La generación coincidente con ID " + row[COLS_CORTES.id - 1] + " tiene un rango de años inválido; se requiere revisión manual.");
+                return { status: "warning", message: "No se pudo validar la separación entre generaciones porque otra fila coincidente tiene un rango de años inválido. Se requiere revisión manual." };
+            }
             if (proposedAnoDesde <= otherAnoHasta && proposedAnoHasta >= otherAnoDesde) {
                 logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
                     "Rango propuesto " + proposedAnoDesde + "-" + proposedAnoHasta +

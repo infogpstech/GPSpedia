@@ -785,3 +785,41 @@ Siguiente iteración: revisar una única condición funcional pendiente de sugge
 Validaciones reales de Apps Script/Spreadsheet/Drive diferidas a Beta; no ejecutadas.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: VALIDACIÓN DE RANGOS EXISTENTES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre: cf0d9f657b2cf2d015dbe1a0a02700636fa7d921.
+
+TAREA ÚNICA
+Validar que los rangos de años existentes en Cortes sean utilizables y coherentes antes de permitir que suggestYear amplíe automáticamente un vehículo o descarte colisiones con generaciones equivalentes.
+
+HALLAZGO Y CORRECCIÓN
+Se detectó que parseInt() aceptaba valores parciales y que comparaciones con NaN no activaban la protección de colisiones. Un rango objetivo invertido/inválido podía permitir que se guardaran aportes sin una actualización efectiva; un rango inválido en otra generación coincidente podía hacer que la comprobación de intersección la ignorara y permitiera una ampliación sin certeza de que no existiera solapamiento.
+Se añadió validación estricta de años de catálogo: cuatro dígitos y límites 1980–2099; año final vacío conserva el comportamiento previo de usar el año inicial. Se rechazan rangos objetivo inválidos o invertidos antes de acceder a Feedbacks y registrar el aporte. Si una generación equivalente tiene un rango inválido/invertido, se conserva el aporte que alcanzó el umbral, se registra suggest_year_range_review y se devuelve revisión manual sin modificar ningún rango.
+
+PRUEBA DE REGRESIÓN
+Services/Test/FeedbackWriteSecurity.js agrega escenarios para:
+1. Rango objetivo invertido: rechazo antes de acceder a Feedbacks, sin registrar voto ni modificar Cortes.
+2. Rango de otra generación equivalente invertido: revisión manual, tercer voto conservado y ningún cambio automático en Cortes.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 33/33 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Suite ejecutada con mocks locales; no representa integración real con Apps Script/Spreadsheet/Drive.
+
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Validación de integridad de rangos existentes: COMPLETADA CON VALIDACIÓN DIFERIDA.
+AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una única condición funcional pendiente de suggestYear.
+Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

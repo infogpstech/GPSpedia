@@ -31,3 +31,15 @@ Prueba: Services/Test/FeedbackWriteSecurity.js cubre ampliación que atraviesa o
 Validación local: runFeedbackWriteSecurityTests() 32/32 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
 Límites: no se ejecutó Apps Script desplegado, Spreadsheet real, Drive real ni datos productivos. La integración real permanece diferida a Beta.
 ================================================================================
+
+================================================================================
+H-AUD-040-003 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de integridad de rangos de catálogo durante AUG-040.
+Ubicación: Services/feedback.js, handleSuggestYearLocked(), lectura del rango objetivo y comparación de generaciones equivalentes.
+Evidencia: la lógica anterior usaba parseInt() y no validaba formato, límites ni orden de los años. Un rango objetivo invertido o mal formado podía aceptar aportes que no serían aplicables; en una generación equivalente, valores inválidos se convertían en NaN y las comparaciones de colisión resultaban falsas, permitiendo una ampliación sin descartar de forma segura el solapamiento.
+Impacto: sugerencias sin aplicación efectiva y riesgo de ampliar el rango ignorando una generación equivalente cuyo rango no puede verificarse.
+Corrección: validar años de catálogo como cuatro dígitos dentro de 1980–2099 y exigir anoHasta >= anoDesde. Rechazar el rango objetivo inválido antes de registrar la sugerencia. Si una generación equivalente tiene un rango inválido, conservar los aportes y derivar a revisión manual sin mutar Cortes.
+Prueba: Services/Test/FeedbackWriteSecurity.js verifica rechazo temprano del rango objetivo invertido y revisión manual al encontrar otra generación equivalente con rango invertido; comprueba ausencia de cambios en Cortes y conservación del tercer voto.
+Validación local: runFeedbackWriteSecurityTests() 33/33 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
+Límites: no se ejecutó Apps Script desplegado, Spreadsheet real, Drive real ni datos productivos. La integración real permanece diferida a Beta.
+================================================================================
