@@ -1681,3 +1681,10 @@ Commit único: mensaje "fix(auth): abort stale admin operations on session chang
 Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
 ================================================================================
 
+
+================================================================================
+### DOC-TRACE-042-001 — Corregir referencia de línea en ChangesLogs
+- Origen: revisión de trazabilidad posterior a CORR-AUG042-001.
+- Alcance: documentación append-only; corregir mediante adenda ui.js:5032 a ui.js:5561.
+- Estado: COMPLETADA EN VALIDACIÓN DOCUMENTAL; no se modificó código.
+================================================================================

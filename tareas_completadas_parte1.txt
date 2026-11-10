@@ -308,3 +308,8 @@ Validación local: parsing V8 PASS; cuatro guardas verificadas; harness aislado 
 Code Review/Safety & Side Effects PASS. Validación de navegador, endpoints y Apps Script real no ejecutada.
 Commit: consultar historial de GPSpedia2.2.5_work.
 ================================================================================
+
+================================================================================
+DOC-TRACE-042-001 — COMPLETADA — 2026-11-10
+Se añadió adenda append-only que corrige la ubicación de saveUnusedInventory a ui.js:5561 y confirma las referencias ui.js:4841, 4858 y 4864. Sin cambios funcionales.
+================================================================================

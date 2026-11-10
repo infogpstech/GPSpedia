@@ -552,3 +552,12 @@ No ejecutado: navegador real/Playwright, Apps Script, endpoints, deployments, Dr
 Commit único: mensaje "fix(auth): abort stale admin operations on session change"; SHA y padre verificables en el historial de GPSpedia2.2.5_work.
 Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
 ================================================================================
+
+================================================================================
+DOC-TRACE-042-001 — CORREGIR REFERENCIA DE LÍNEA EN CHANGELOGS
+Estado: REGISTRADA Y COMPLETADA EN VALIDACIÓN DOCUMENTAL.
+Origen: verificación post-commit de CORR-AUG042-001.
+Alcance: ChangesLogs.txt y adenda de trazabilidad en Auditoría.txt.
+Criterio: conservar el registro append-only original y añadir una corrección explícita con la ubicación real ui.js:5561; verificar las otras referencias de la misma entrada.
+Restricciones: no modificar código, no reescribir historial, un único commit mediante Git Database API.
+================================================================================

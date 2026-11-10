@@ -228,3 +228,32 @@ Commit que incorpora este checkpoint: único commit de CORR-AUG042-001, mensaje 
 Rama base: sin cambios; no se realizó merge.
 Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube. No iniciada.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — DOC-TRACE-042-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial: 03a3c20cf4b418149b4b6e7b90a5cb26e8fc0412.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: DOC-TRACE-042-001 — Corregir referencia de línea en ChangesLogs de CORR-AUG042-001.
+Origen: revisión de trazabilidad posterior al commit CORR-AUG042-001.
+Hallazgo documental: ChangesLogs.txt registró ui.js:5032 para el catch de persistState/saveUnusedInventory; la ubicación real verificada en el archivo publicado es ui.js:5561. Se conserva el registro original append-only y se agregará una adenda correctiva.
+Alcance: únicamente documentación de trazabilidad; no se modifica código.
+Respaldo exacto: ChangesLogs.txt blob 6cb0ec3fbf629bc2fd0b943fe3532ad99d5eb0ba.
+Estado inicial: sin modificaciones ni referencias actualizadas.
+Siguiente acción: añadir adenda correctiva, registrar la tarea y generar un único commit documental.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — DOC-TRACE-042-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial: 03a3c20cf4b418149b4b6e7b90a5cb26e8fc0412.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Tarea: DOC-TRACE-042-001 — COMPLETADA EN VALIDACIÓN DOCUMENTAL.
+Cambios: adenda append-only en ChangesLogs.txt que corrige ui.js:5032 a ui.js:5561; adenda en Auditoría.txt; registros de tarea y checkpoint.
+Respaldo: ChangesLogs.txt previo 6cb0ec3fbf629bc2fd0b943fe3532ad99d5eb0ba.
+Verificación: ui.js publicado confirma saveUnusedInventory en línea 5561 y clearSelectedLogs en 4841, 4858 y 4864. No se modificó código ni comportamiento.
+Commit único: mensaje "docs: correct CORR-AUG042 source line reference"; SHA verificable en historial.
+Siguiente tarea: AUG-043, no iniciada.
+================================================================================

@@ -1205,3 +1205,9 @@ Estado: RESUELTO EN VALIDACIÓN LOCAL.
 - Parsing V8: PASS. Comparación contra respaldo exacto: únicamente cuatro guardas añadidas en ui.js. Code Review/Safety & Side Effects: PASS.
 - No se ejecutaron navegador real, Apps Script, endpoints, deployments, Drive/Spreadsheet productivos ni datos productivos.
 ================================================================================
+
+================================================================================
+ADENDA DOCUMENTAL — DOC-TRACE-042-001 — 2026-11-10
+Se detectó una referencia de línea incorrecta en el registro CORR-AUG042-001 de ChangesLogs.txt: se indicó ui.js:5032 para saveUnusedInventory, pero la ubicación publicada y verificada es ui.js:5561. El registro original se conserva por política append-only; esta adenda establece la referencia correcta. Las demás referencias de la misma entrada se verificaron: ui.js:4841, 4858 y 4864.
+No se modificó código ni comportamiento funcional.
+================================================================================
