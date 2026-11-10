@@ -345,3 +345,21 @@ AUG-003 — CIERRE DOCUMENTAL DEL ENTREGABLE DE AUDITORÍA — 2026-11-09
 - checkpoint.md: checkpoint inicial/final y respaldos exactos.
 - No se modificó código ni se ejecutaron pruebas funcionales, endpoints, deployments o Beta.
 ================================================================================
+
+
+================================================================================
+AUG-147 — CIERRE DE IMPLEMENTACIÓN Y PRUEBAS LOCALES — 2026-11-10
+- auth.js:330–374: logout envía userId+sessionToken a AUTH y maneja explícitamente el caso sin userId; conserva la protección contra cierres obsoletos y elimina solo gpsepedia_session.
+- Services/Auth.js:539–563: vincula la revocación de login requests a la identidad esperada y evita escrituras si encuentra una identidad cruzada.
+- Services/Auth.js:1195: pasa userId al saneamiento de login request en expiración.
+- Services/Auth.js:1660–1775: exige el par userId+sessionToken, verifica titularidad antes de mutar, rechaza tokens duplicados/cuentas ambiguas y conserva LockService/finally.
+- Services/Test/Auth.js:539–563, 1195, 1660–1775: mantiene paridad de los cambios AUTH en la copia de pruebas.
+- ui.js:3220–3305: añade resetSessionUi_ para cerrar overlays/menú/lightboxes, limpiar datos privilegiados y estado transitorio, y ocultar accesos de rol.
+- ui.js:3412–3416: protege openDevTools frente a invocaciones sin sesión Developer.
+- ui.js:6378–6401: showLoginScreen limpia currentUser, navegación, estado UI y likes transitorios.
+- ui.js:6409–6412: aplica limpieza completa al cambiar de cuenta, token o rol.
+- Auditoría.txt: registra resolución de H-AUD-022-001 y evidencia de pruebas/Code Review.
+- Tareas.txt y Tareas_pendientes_parte2.txt: registran cierre de AUG-147 con Beta diferida.
+- checkpoint.md: checkpoint inicial, auditoría, respaldos, implementación, pruebas locales, Code Review y checkpoint final.
+Resultado local: 32/32 PASS. Sin pruebas funcionales de Beta, endpoints operativos, cambios de deployment ni modificaciones de datos productivos.
+================================================================================

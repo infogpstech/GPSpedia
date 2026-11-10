@@ -528,3 +528,13 @@ Estado: NUEVA; pendiente. Hallazgo H-AUD-066 identificado durante las pruebas de
 
 ADENDA DE RANGO — 2026-11-09
 Con AUG-154, el rango operativo de esta parte queda extendido a AUG-100–AUG-154. AUG-015 continúa ausente y no se crea ni reutiliza.
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-147 — 2026-11-10
+Estado: COMPLETADA — implementación y todas las pruebas locales aprobadas (32/32 PASS).
+Se implementó la validación del par userId+sessionToken en AUTH, limpieza acotada de sesiones/identidad, revocación de login request vinculada al usuario, cierre de overlays y limpieza de estado/controles privilegiados. Services/Test/Auth.js quedó sincronizado. AUTH/ADMIN ya rechazaban tokens revocados y sus controles se conservaron.
+Pruebas locales: sintaxis, revocación, identidad cruzada, duplicados, idempotencia, expiración, cierre remoto, cambio de cuenta, overlays, rol Developer y ruteo: 32/32 PASS.
+Beta pendiente: pruebas funcionales reales, integración, concurrencia física LockService y deployments. No se ejecutaron endpoints operativos ni se modificaron datos productivos.
+La ficha original AUG-147 se conserva; esta adenda actualiza su estado sin borrar historial.
+================================================================================

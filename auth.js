@@ -336,6 +336,7 @@ export function logout(reason = null, expectedSession = null) {
     }
 
     const session = guardedSession || currentSession;
+    const userId = session ? String(session.ID || session.id || '').trim() : '';
     const sessionToken = session && typeof session.SessionToken === 'string' ? session.SessionToken : null;
 
     // Nunca borrar una sesión que haya sustituido a la que originó esta operación.
@@ -347,8 +348,13 @@ export function logout(reason = null, expectedSession = null) {
     showLoginScreen(reason);
 
     if (!sessionToken) return true;
+    if (!userId) {
+        console.warn('La sesión local se cerró, pero no se pudo solicitar la revocación remota porque falta userId.');
+        showGlobalError('La sesión local se cerró, pero no se pudo solicitar la revocación remota: falta la identidad de la cuenta.');
+        return true;
+    }
 
-    routeAction('logout', { sessionToken })
+    routeAction('logout', { userId, sessionToken })
         .then(result => {
             if (result && (result.revoked === true || result.alreadyRevoked === true)) {
                 if (result.userSessionTokenMatched === true && result.userSessionTokenCleared !== true) {

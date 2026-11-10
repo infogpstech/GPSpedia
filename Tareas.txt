@@ -331,3 +331,14 @@ Continuidad: Services/Utilities.js no cambió desde el HEAD auditado 32b4898e967
 Límite obligatorio: esta marca cierra únicamente la auditoría del contrato/alcance. NO significa que exista un lock compartido, que Utilities coordine otros proyectos ni que haya validación E2/E3/Beta. La implementación del coordinador y sus pruebas locales/aisladas permanecen en AUG-034. No asumir que ScriptLock de AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES es compartido.
 La dependencia AUG-010 puede serializar mutaciones dentro del proyecto USERS y AUTH dentro de su propio proyecto; la coordinación entre proyectos permanece separada en AUG-034.
 ================================================================================
+
+
+================================================================================
+AUG-147 — REVOCACIÓN Y LIMPIEZA COMPLETA AL CERRAR SESIÓN — 2026-11-10
+Estado: COMPLETADA — implementación incorporada y todas las pruebas locales aprobadas (32/32 PASS).
+Se exige userId+sessionToken en AUTH, se valida titularidad antes de revocar/limpiar, se sincroniza la copia Services/Test/Auth.js, se cierra la UI privilegiada y los overlays, se limpia estado transitorio y se bloquea la apertura del panel Developer sin rol.
+AUTH y ADMIN ya rechazan tokens revocados; se conservaron esos controles sin duplicarlos.
+La limpieza elimina la credencial gpsepedia_session, no la caché offline ni las preferencias locales.
+Pruebas funcionales integrales, navegador real, concurrencia LockService y validación de servicios desplegados quedan pendientes exclusivamente para Beta. No se ejecutaron contra producción.
+Siguiente tarea: conforme al orden de Fase 1, continuar con la siguiente tarea pendiente de la Ola 2; antes de iniciarla, aplicar el ciclo de auditoría de la implementación AUG-147.
+================================================================================

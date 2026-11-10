@@ -766,3 +766,60 @@ Continuidad verificada: compare 32b4898e967aea45a9372aa127cb0735aed99fc5→7aa7b
 Separación obligatoria: la auditoría AUG-003 queda cerrada; la implementación del coordinador interproyectos, su recuperación y sus pruebas siguen pendientes en AUG-034. No se afirma validación funcional, E2/E3, deployment ni Beta.
 No se modificó código, Utilities, servicios, endpoints, configuración, datos ni deployments.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PRE-IMPLEMENTACIÓN — AUG-147 — 2026-11-10
+Revalidación del hallazgo de origen: H-AUD-022-001. Se conserva el identificador histórico de la ficha AUG-147; no se crea ni renumera un ID.
+Estado: HALLAZGOS ABIERTOS DENTRO DEL ALCANCE.
+
+1. AUTH no vincula el cierre al par de identidad enviado por el cliente.
+Evidencia: auth.js:329–367 obtiene el token y llama routeAction('logout', { sessionToken }); no incluye userId. Services/Auth.js:1653–1741 y Services/Test/Auth.js:1653–1741 validan el token y revocan la fila que lo contiene bajo ScriptLock, pero no exigen un userId del solicitante ni comparan la identidad recibida con ID_Usuario. Si no existe fila activa, el flujo también puede limpiar Users.SessionToken por coincidencia del token sin validar una identidad solicitada. La implementación ya elimina la fila de ActiveSessions y limpia el puntero coincidente; esa parte se conserva y no se duplica AUG-006.
+Impacto: la operación no demuestra que el par userId+sessionToken corresponda a la misma sesión solicitante, aunque el token sea secreto y único en condiciones normales.
+Criterio de corrección: exigir userId no vacío junto con sessionToken; bajo el mismo ScriptLock localizar el token, comprobar que ID_Usuario coincide antes de cualquier mutación y limitar la limpieza del puntero a esa misma cuenta. El caso idempotente sin fila activa no debe modificar registros de otra identidad. Mantener la liberación del lock en finally y el manejo de limpieza pendiente.
+
+2. El cierre de sesión no elimina todas las superficies de UI privilegiada ni los overlays externos al contenedor.
+Evidencia: ui.js:6283–6300 showLoginScreen oculta .container, .footer y welcome-message, pero no cierra .info-modal, #terms-modal, #modalDetalle, #lightbox, #replaced-image-lightbox, #side-menu ni #menu-overlay; tampoco oculta #dev-tools-btn, #inbox-btn y #dashboard-btn ni limpia #menu-username. index.html:32–61, 163–210, 212–480, 483–543 y 548 en adelante confirma que esos elementos son hermanos externos a .container. main.js:554–557 cierra el menú únicamente en el clic manual del botón de logout; las expiraciones y eventos storage llaman showLoginScreen sin ese paso.
+Impacto: después de un cierre remoto o expiración pueden permanecer visibles overlays y accesos de la cuenta anterior, incluido el panel de desarrollador.
+Criterio de corrección: centralizar una limpieza de sesión que cierre los overlays identificados sin alterar flujos de navegación ajenos, cierre side-menu sin añadir otro back(), oculte accesos por rol y elimine etiquetas de identidad visibles. La limpieza debe ejecutarse desde el punto común de retorno a login.
+
+3. La limpieza del estado cliente se limita a currentUser y a dos vistas de rol.
+Evidencia: auth.js:343–347 limpia currentUser y gpsepedia_session; state.js:6–28 conserva navigationState/uiState/likedCortes/searchHistory/viewedItems. ui.js:3204–3217 resetRoleScopedViews_ solo limpia Inbox/Dashboard y su caché; showLoginScreen no la invoca ni reinicia el contexto de UI.
+Impacto: pueden persistir estados transitorios y datos DOM de la sesión anterior mientras se muestra login o antes de la siguiente autenticación.
+Criterio de corrección: limpiar el estado transitorio de navegación/UI y las vistas/cachés privilegiadas al cerrar sesión. Eliminar la credencial local de sesión, pero conservar explícitamente la caché de catálogo/offline, preferencias de tema, aceptación de términos y otros datos locales no autenticadores que no pertenezcan al alcance; no purgar IndexedDB ni todo localStorage.
+
+Controles existentes verificados y no modificables salvo regresión demostrada:
+- api-config.js:18–25 enruta logout a AUTH; routeAction excluye logout de touchSession para permitir la revocación.
+- AUTH validateAndTouchSession_ rechaza tokens ausentes, duplicados, de otra identidad, expirados o de usuario inactivo.
+- ADMIN assertDeveloperSession exige userId+sessionToken coincidentes con una única fila ActiveSessions, vigencia y rol Desarrollador; el router lo aplica antes de toda acción salvo ping. Un token revocado al retirar su fila es rechazado.
+- Services/Test/Auth.js mantiene la misma implementación de handleLogout y validateAndTouchSession_ que Services/Auth.js en las secciones auditadas.
+- users.html y add_cortes.html reaccionan al evento storage eliminando su contexto y redirigiendo a index.html; no se detectó necesidad de ampliar su alcance en esta tarea.
+- window.state/window.ui se exponen para integración del frontend; no son un límite de autorización. La autorización efectiva debe permanecer en AUTH/ADMIN. No se elimina esa exposición por no ser necesaria para AUG-147.
+
+Archivos auditados: auth.js; Services/Auth.js; Services/Test/Auth.js; api-config.js; state.js; ui.js; main.js; index.html; users.html; add_cortes.html; Services/admin.js; lightbox.js. Revisión enfocada en flujo logout, validación de sesión, consumidores de storage, apertura/cierre de overlays y acceso a herramientas privilegiadas.
+Fuera de alcance: políticas de expiración, coordinación multi-pestaña, centralización de ActiveSessions, cambios de roles/cuentas, refactor de globals, caché de catálogo y pruebas Beta. No se detectaron regresiones nuevas en esos controles durante esta auditoría estática.
+No se modificó código durante la auditoría. La implementación no ha comenzado. Se requiere respaldo exacto de cada archivo que vaya a modificarse antes de editar.
+================================================================================
+
+
+================================================================================
+CIERRE DE HALLAZGO — H-AUD-022-001 / AUG-147 — 2026-11-10
+Estado: RESUELTO EN CÓDIGO; implementación y pruebas locales aprobadas. Validación funcional integral en Beta: PENDIENTE por política del propietario.
+
+Correcciones incorporadas:
+- auth.js:330–374: logout envía userId y sessionToken; si falta userId, mantiene el cierre local, no intenta una revocación remota no autenticada y comunica que la revocación queda pendiente. Solo elimina gpsepedia_session; no purga preferencias ni caché offline.
+- Services/Auth.js:539–563: la revocación de registros de login pendientes queda vinculada al userId y valida todas las coincidencias antes de escribir, evitando mutaciones parciales por identidad cruzada.
+- Services/Auth.js:1195: la limpieza de login request al expirar una sesión transmite el userId derivado de ActiveSessions.
+- Services/Auth.js:1660–1775: handleLogout exige userId+sessionToken, comprueba correspondencia antes de mutar, rechaza tokens duplicados y cuentas ambiguas, limita la limpieza de Users.SessionToken a la misma cuenta y conserva el ScriptLock con liberación en finally.
+- Services/Test/Auth.js:539–563, 1195 y 1660–1775: copia de prueba sincronizada con AUTH de producción.
+- ui.js:3220–3305: resetSessionUi_ cierra modales, overlays, menú lateral, lightboxes y consola; limpia datos privilegiados y etiquetas de identidad; oculta accesos de rol.
+- ui.js:3412–3416: openDevTools exige contexto autenticado con rol Desarrollador, incluso si se invoca directamente desde window.ui.
+- ui.js:6378–6401: showLoginScreen reinicia currentUser, navegación, estado de UI y likes transitorios antes de presentar login.
+- ui.js:6409–6412: un cambio de cuenta/token/rol ejecuta la misma limpieza antes de mostrar la nueva sesión.
+
+Controles preservados: AUTH continúa rechazando tokens ausentes/revocados, expirados, duplicados o de identidad distinta. ADMIN continúa exigiendo userId+sessionToken, sesión activa, vigencia y rol Desarrollador. No se modificó el router ADMIN porque su control ya cubría el criterio. users.html y add_cortes.html conservan sus listeners storage y redirección existentes.
+
+Pruebas locales ejecutadas: 32/32 PASS. Incluyen sintaxis de los cuatro archivos modificados; logout válido; identidad cruzada; token duplicado; puntero stale; cuenta duplicada; idempotencia; fallos de invalidación del login request; liberación del lock; expiración; rechazo de token revocado en AUTH y ADMIN; logout desde cliente; sesión obsoleta; cierre remoto por storage; limpieza de overlays/estado; cambio de cuenta; protección de apertura del panel Developer; paridad Services/Auth.js–Services/Test/Auth.js y ruteo AUTH.
+
+Code Review y Safety & Side Effects: revisión de todas las funciones modificadas y de sus consumidores; diff inverso confirmó que los cambios funcionales quedan limitados a los bloques descritos. No se detectaron hallazgos bloqueantes ni efectos colaterales pendientes dentro del alcance. Se conserva catálogo/cache IndexedDB, historial local, preferencias de tema y aceptación de términos; se elimina únicamente la credencial de sesión. Los escenarios reales de navegador, integración con servicios desplegados, concurrencia física de LockService y pruebas funcionales integrales quedan exclusivamente para Beta. No se invocaron endpoints operativos ni se modificaron deployments o datos productivos.
+================================================================================

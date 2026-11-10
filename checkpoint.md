@@ -1289,3 +1289,74 @@ tareas_completadas_parte1.txt=0cad08e0dccdac1a7bfbc6c8a27d8edd11741721
 checkpoint.md=c1ce313f509f665dc08ff3a1fddd289f2fc54a58
 Revisión: entradas anteriores preservadas por append-only; el cierre se limita a auditoría estática E1; ausencia del coordinador y límites cross-project quedan expresos; AUG-034 permanece pendiente. Todos los archivos dentro del límite 180000. No se modificó código. No se ejecutaron pruebas funcionales/Beta. La rama base permanece intacta. Este checkpoint es el último documento antes del commit único.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-147 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work. HEAD inicial confirmado: b121a04f3a9439c6afbf40eb808d021bec9ef2ff. Rama base: GPSpedia2.2.5. HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: AUG-147 — Revocar sesión en servidor y limpiar estado/overlays al cerrar sesión.
+Alcance: autenticación y revocación remota por userId+sessionToken; limpieza del estado de cliente y almacenamiento local; cierre de modales/overlays; ocultación de accesos por rol; rechazo de token revocado en AUTH y ADMIN. No duplicar AUG-006, AUG-007, AUG-008, AUG-016 ni AUG-017; respetar la centralización de ActiveSessions en AUTH (AUG-153).
+Estado inicial: tarea pendiente; no existe implementación de AUG-147 incorporada al HEAD actual. La afirmación conversacional anterior sobre cambios preparados en cuatro archivos no se considera evidencia de cambios publicados.
+Ciclo A — tarea anterior: AUG-003 fue un entregable exclusivamente documental de cierre de auditoría estática E1. Se verificó el commit b121a04f3a9439c6afbf40eb808d021bec9ef2ff, su padre 0b083a6d120de5f78a24210ee9a1cb30c878dabe y el diff de seis registros documentales append-only; no contiene cambios de código. El entregable se limita expresamente a la auditoría E1 y mantiene AUG-034 pendiente. No se identificaron discrepancias de alcance ni hallazgos correctivos nuevos; no se auditaron los informes de auditoría como código.
+Dependencias de Fase 1 verificadas en registros: AUG-005, AUG-006, AUG-007, AUG-008, AUG-014, AUG-016, AUG-017 y AUG-153 figuran con cierre local o de fuentes; las validaciones integrales de Beta permanecen diferidas y no bloquean el cierre local conforme al criterio del propietario. AUG-147 es la siguiente tarea propietaria de Ola 1 según Plan Maestro 14.3.
+Archivos auditados: auth.js, Services/Auth.js, Services/Test/Auth.js, api-config.js, state.js, ui.js, main.js, index.html, users.html, add_cortes.html, Services/admin.js y lightbox.js.
+Hallazgos de auditoría registrados en Auditoría.txt mediante blob 913aaaabc4cbdf0d6440dd52be1ddfc8e83191aa, vinculados al hallazgo de origen H-AUD-022-001: (1) logout no exige userId junto con sessionToken; (2) showLoginScreen no cierra overlays externos ni oculta accesos privilegiados; (3) la limpieza de estado se limita a currentUser y vistas Inbox/Dashboard. AUTH y ADMIN ya rechazan tokens revocados; se preservan sus controles. users.html/add_cortes.html ya redirigen ante evento storage.
+Respaldos exactos creados antes de editar:
+auth.js=bd34f7ef7be85ac065b40596bd4868603666f462
+ui.js=ca8a0f4861025419a78a93bd61810b96185f5367
+Services/Auth.js=4a1aa0d7aa0f1f806adad0f525999587115a7ee8
+Services/Test/Auth.js=5ef26bb337846934bd897bea6477a55a23b7d181
+Auditoría.txt=86df54d4b2687b6539fd178740a0322f8e8cedde
+ChangesLogs.txt=dbb32784829f9167e0ed8dbd29996ad1761fff66
+Tareas.txt=3130bd1d60a464caddbbab9efc0facd0ee8501fa
+Tareas_pendientes_parte2.txt=1f3aa074e71b3875c2bfb5b8f125c27791612779
+tareas_completadas_parte1.txt=0cad08e0dccdac1a7bfbc6c8a27d8edd11741721
+checkpoint.md=49c2d695e2058799dfb37efc1e8193692ccf7bdc
+Riesgos: Zona Segura de autenticación/sesiones y navegación privilegiada; no modificar sin autorización y auditoría rigurosa. No duplicar escrituras de ActiveSessions fuera de AUTH. No alterar políticas de expiración ni coordinación multi-pestaña ya aprobadas. No ejecutar endpoints, servicios, datos ni deployments operativos. Pruebas funcionales integrales exclusivamente en Beta; cierre de esta implementación depende de todas las pruebas locales aplicables aprobadas.
+Cambios implementados al inicio: ninguno. Estado de implementación: no iniciada. Respaldos exactos listados arriba.
+Siguiente acción: iniciar implementación mínima de los hallazgos registrados; preservar los controles existentes de expiración, revocación y coordinación multi-pestaña.
+Este checkpoint inicial forma parte del único commit de AUG-147; no se crea commit intermedio.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-147 — 2026-11-10
+Estado: IMPLEMENTACIÓN COMPLETADA; TODAS LAS PRUEBAS LOCALES APROBADAS; publicación mediante el commit único de esta tarea pendiente de verificación.
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. HEAD padre esperado: b121a04f3a9439c6afbf40eb808d021bec9ef2ff.
+Rama base: GPSpedia2.2.5. HEAD base de referencia: d9acc68d889985c2e2f42fe3a02e502efc86ead1. La rama base no se modificó.
+
+Archivos funcionales modificados (solo cuatro):
+- auth.js — blob final 49b2c5e4c3aa44d034d6ed5f43391f5661fa248f; líneas 330–374.
+- ui.js — blob final 590179e70b21135ced9b111099fa518711d17ae1; resetSessionUi_ líneas 3220–3305; openDevTools 3412–3416; showLoginScreen 6378–6401; cambio de contexto showApp 6409–6412.
+- Services/Auth.js — blob final 9e8bdb2b9fbf34636e8a2c3bafa65b5c942193da; helper 539–563; validateAndTouchSession_ 1195; handleLogout 1660–1775.
+- Services/Test/Auth.js — blob final d77112db393f4a146cf27406a8a81a8620902c2a; mismas secciones que AUTH de producción.
+No se modificaron api-config.js, state.js, main.js, index.html, users.html, add_cortes.html, Services/admin.js ni lightbox.js; se auditaron y sus controles existentes se conservaron.
+
+Resultado de implementación:
+- Logout cliente transmite userId+sessionToken; ante userId faltante no intenta revocación remota sin identidad y comunica el estado pendiente.
+- AUTH valida el par bajo ScriptLock y no revoca/limpia una sesión perteneciente a otra cuenta; rechaza tokens duplicados, identidades ambiguas y registros de login asociados a otra identidad.
+- La revocación de login request también queda vinculada al userId, incluida la ruta de expiración. El lock se libera en finally.
+- Services/Test/Auth.js está sincronizado con los cambios de producción.
+- showLoginScreen cierra overlays y vistas privilegiadas, limpia identidad y estado transitorio, oculta accesos por rol y retorna a login. Los cambios de cuenta/token/rol ejecutan la misma limpieza.
+- openDevTools bloquea la apertura directa sin sesión de rol Desarrollador.
+- Se elimina solo la clave de sesión local; se preservan catálogo/cache offline, historial local, preferencias de tema y aceptación de términos.
+
+Pruebas locales: 32/32 PASS.
+Cobertura: sintaxis de auth.js, ui.js, Services/Auth.js y Services/Test/Auth.js; logout válido; token/identidad cruzados; tokens duplicados; IDs de cuenta duplicados; punteros stale; reintentos idempotentes; fallos de revocación de login request; liberación del lock; expiración; rechazo de token revocado en AUTH y ADMIN; payload del cliente; cierres obsoletos; cierre remoto por evento storage; cierre de overlays/lightboxes/menú; limpieza de DOM privilegiado y estado; cambio de cuenta; control de apertura del panel Developer; paridad producción/pruebas y ruteo AUTH.
+
+Code Review y Safety & Side Effects: revisión estática línea por línea de los bloques modificados y consumidores relevantes. La reversión analítica de los cambios confirma que los cambios funcionales están limitados al alcance descrito. Se retiró un selector de limpieza sin correspondencia en el DOM antes de la validación final. No quedan observaciones bloqueantes ni regresiones locales conocidas. Los controles de expiración, sesiones, AUTH/ADMIN y coordinación multi-pestaña ya aprobados se conservaron.
+
+Registros documentales finales (append-only):
+- Auditoría.txt — blob c7dee04a21554e5c97bed137d3691cfb26365864; H-AUD-022-001 cerrado.
+- ChangesLogs.txt — blob a08c98551fb2efd17e1fc9d6c93a8e9010dfabf6.
+- Tareas.txt — blob 5f9d0f5310761366b61b4dfb39fb0bd5622533cc.
+- Tareas_pendientes_parte2.txt — blob c2bbbb25ccfef52dffcd592f205f64205dc31af4; adenda de cierre AUG-147.
+Todos los registros conservan el contenido previo como prefijo y permanecen por debajo de 180,000 caracteres.
+
+Límites: no se ejecutaron pruebas funcionales reales de navegador, endpoints operativos, integraciones desplegadas, concurrencia física de LockService ni datos productivos. Esas pruebas quedan exclusivamente para la versión Beta según instrucción del propietario. La implementación se cierra con base en las pruebas locales aprobadas; Beta sigue pendiente y no se declara ejecutada.
+
+Siguiente paso: publicar un único commit de AUG-147 mediante Git Database API, con parent_sha b121a04f3a9439c6afbf40eb808d021bec9ef2ff, actualizar exclusivamente GPSpedia2.2.5_work con force:false/expected_sha igual al HEAD padre y verificar el commit, archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca intacta.
+Este es el último registro documental de la tarea antes de su único commit.
+================================================================================

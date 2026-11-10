@@ -3216,6 +3216,93 @@ function resetRoleScopedViews_() {
     inboxCacheData = null;
 }
 
+function resetSessionUi_() {
+    resetRoleScopedViews_();
+    closeSideMenu(true);
+
+    document.querySelectorAll('.info-modal').forEach(modal => {
+        modal.style.display = 'none';
+    });
+
+    const termsModal = document.getElementById('terms-modal');
+    if (termsModal) termsModal.style.display = 'none';
+
+    const detailModal = document.getElementById('modalDetalle');
+    if (detailModal) {
+        detailModal.classList.remove('visible');
+        detailModal.querySelectorAll('iframe').forEach(iframe => {
+            try {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
+            } catch (error) {}
+            iframe.src = '';
+            iframe.remove();
+        });
+    }
+    const detailContent = document.getElementById('detalleCompleto');
+    if (detailContent) detailContent.replaceChildren();
+
+    if (typeof window.cerrarLightbox === 'function') window.cerrarLightbox(true);
+    const lightbox = document.getElementById('lightbox');
+    if (lightbox) lightbox.classList.remove('visible');
+
+    const replacedImageLightbox = document.getElementById('replaced-image-lightbox');
+    if (replacedImageLightbox) replacedImageLightbox.style.display = 'none';
+    const lightboxImage = document.getElementById('lightboxImg');
+    if (lightboxImage) lightboxImage.src = '';
+    const replacedImage = document.getElementById('replaced-image-lightbox-image');
+    if (replacedImage) replacedImage.src = '';
+    const replacedImageTitle = document.getElementById('replaced-image-lightbox-title');
+    if (replacedImageTitle) replacedImageTitle.textContent = '';
+
+    const roleAccessIds = ['dev-tools-btn', 'inbox-btn', 'dashboard-btn', 'logout-button'];
+    roleAccessIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = 'none';
+    });
+
+    const menuUsername = document.getElementById('menu-username');
+    if (menuUsername) menuUsername.textContent = '';
+    const welcomeMessage = document.getElementById('welcome-message');
+    if (welcomeMessage) welcomeMessage.style.display = 'none';
+
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = '';
+        const searchContainer = searchInput.closest('.search-container');
+        if (searchContainer) searchContainer.classList.remove('has-text');
+        if (searchInput.parentElement) searchInput.parentElement.classList.remove('has-text');
+    }
+    document.body.classList.remove('search-active');
+
+    if (Array.isArray(window.modalNavStack)) window.modalNavStack.length = 0;
+
+    const transientAdminIds = [
+        'dev-console-log', 'dev-terminal-input', 'backup-resource-input',
+        'logo-brand-name-input', 'replaced-images-list-container',
+        'audit-drive-results-container', 'audit-drive-summary',
+        'replaced-images-folder-status', 'selected-logo-file-name',
+        'vin-migration-status', 'vin-recalculate-status', 'vin-diagnostic-status',
+        'service-health-detail', 'service-traffic-chart', 'debug-log'
+    ];
+    transientAdminIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        if (element.tagName === 'INPUT') element.value = '';
+        else element.replaceChildren();
+    });
+    const logoFileInput = document.getElementById('logo-file-input');
+    if (logoFileInput) logoFileInput.value = '';
+
+    const debugConsole = document.getElementById('debug-console');
+    if (debugConsole) debugConsole.style.display = 'none';
+    const devProgress = document.getElementById('dev-progress-container');
+    if (devProgress) devProgress.style.display = 'none';
+
+    lastShownAppContextKey = null;
+}
+
 function setupModal(modalId, openFn) {
     return async (...args) => {
         const modal = document.getElementById(modalId);
@@ -3312,13 +3399,19 @@ export const openInbox = setupModal('inbox-modal', async () => {
 });
 
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
-export const openDevTools = setupModal('dev-tools-modal', () => {
+const openDevToolsModal_ = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
     if (window.triggerAdminPanelPing) {
         window.triggerAdminPanelPing();
     }
 });
+
+export const openDevTools = (...args) => {
+    const sessionContext = getUiSessionContext_();
+    if (!sessionContext || sessionContext.role !== 'desarrollador') return;
+    return openDevToolsModal_(...args);
+};
 
 function initAdminPanelListeners() {
     const consoleLog = document.getElementById('dev-console-log');
@@ -6281,10 +6374,17 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 }
 
 export function showLoginScreen(reason = null) {
+    resetSessionUi_();
+    setState({
+        currentUser: null,
+        navigationState: { level: 'categorias', categoria: null, marca: null, modelo: null },
+        uiState: { isModalOpen: false, isSearchActive: false },
+        likedCortes: []
+    });
+
     document.getElementById('splash-screen').style.display = 'none';
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
-    document.getElementById('welcome-message').style.display = 'none';
     document.getElementById('login-modal').style.display = 'flex';
 
     const loginError = document.getElementById('login-error');
@@ -6305,7 +6405,7 @@ export function showApp(user) {
         ? `${appContext.userId}|${appContext.sessionToken}|${appContext.role}`
         : '';
     if (lastShownAppContextKey !== appContextKey) {
-        resetRoleScopedViews_();
+        resetSessionUi_();
         lastShownAppContextKey = appContextKey;
     }
 
