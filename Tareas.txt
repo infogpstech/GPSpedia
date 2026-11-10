@@ -565,3 +565,27 @@ Validación local: sintaxis 10/10; lógica 17/17; wrappers 7/7; cobertura de pol
 Límites: sin Apps Script real, endpoints, deployments, HTTP, Spreadsheet/Drive reales ni concurrencia real. Configuración y validación integrada diferidas a Beta. No se modificaron api-config.js, endpoints, Utilities ni datos productivos.
 Siguiente tarea bloqueante: AUG-034 — ventana segura de migración VIN/Idempotencia sobre el coordinador compartido.
 ================================================================================
+
+
+================================================================================
+AUG-043 — EN PROGRESO — 2026-11-10
+Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+
+Avance implementado en GPSpedia2.2.5_work:
+- FEEDBACK valida destinos únicos y existentes para Corte, PyS y Tutorial; separa opVideoId del ID real de YouTube; valida URL/ID; recupera la solicitud por propietario; evita solicitudes pendientes duplicadas; revalida el destino antes de registrar la solicitud.
+- La aprobación publica en el destino correcto y verifica la escritura; el rechazo retira únicamente el enlace pendiente correspondiente. Tutorial conserva miniaturas personalizadas y la URL se escribe después de preparar/verificar la miniatura.
+- Altas y ediciones de PyS/Tutorial no admiten enlaces directos que eludan aprobación. El tema del Tutorial no puede cambiar mientras exista una solicitud pendiente.
+- youtubeUpload.js exige currentUser.ID y SessionToken, valida sesión, conserva operación/archivo en IndexedDB, transfiere bloques reanudables, consulta Range/308, recupera respuesta perdida y no crea una solicitud hasta recibir un ID real de YouTube.
+- ui.js transmite credenciales en los callsites protegidos; elimina la entrada manual de URL en openAddVideoModal y conecta la carga para Corte, PyS y Tutorial. api-config.js incluye getVideoApprovalByOperation.
+- Se agregaron suites aisladas para estado, sesión, inicialización, idempotencia, publicación/rechazo, contratos de alta/edición y cliente resumable.
+
+Validación local: 82/82 pruebas PASS; sintaxis de Services/feedback.js, youtubeUpload.js, ui.js y api-config.js PASS; revisión estática de callsites addVehicleToProblem (2), removeVehicleFromProblem (2), updatePysItem (1) y updateTutorialItem (1) confirma envío de getSessionPayload_().
+
+Pendiente antes del cierre:
+- Revisión del diff completo y publicación/verificación del commit en la rama autorizada.
+- Prueba de integración en navegador real (modal, IndexedDB, XHR, cancelación y recarga).
+- Prueba en proyecto Apps Script/Spreadsheet aislado y verificación de OAuth/YouTube API con credenciales de prueba.
+- No se ejecutaron deployments, YouTube real, HTTP, Apps Script real, Drive/Spreadsheet productivos ni operaciones sobre datos productivos.
+
+La tarea permanece EN PROGRESO; no se marca completada hasta terminar revisión/publicación y las verificaciones locales pendientes. La validación de infraestructura real se documentará como diferida a Beta.
+================================================================================
