@@ -343,3 +343,5 @@ Pruebas: ImageUploadLedger 18/18 PASS; SharedMutationCoordinator 25/25 PASS; par
 Límites: no se ejecutó Drive real, Spreadsheet real, Apps Script desplegado ni concurrencia física. La prueba integral en copias aisladas queda pendiente de Beta. No se modificaron datos productivos.
 No se modificó la rama base GPSpedia2.2.5.
 ================================================================================
+
+Cierre final AUG-037: HEAD previo a este checkpoint 17c52c09e20701f76fdd39c48cdf50c6ad0439da. Pruebas finales: ImageUploadLedger 18/18 PASS; SharedMutationCoordinator 25/25 PASS; VinTestigoIntegrity 14/14 PASS; parsing V8 ADMIN/WRITE/Coordinator/API/UI/tests PASS; helpers compartidos ADMIN/WRITE idénticos; paridad parser VIN frontend/backend PASS. Acción reconcilePendingImageUploads verificada en router ADMIN, api-config y política maintenance. ImageUploadLedger se persiste antes de folder.createFile; dry-run no crea hoja ni modifica archivos; no existe ninguna ruta de borrado en la reconciliación. Rama base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
