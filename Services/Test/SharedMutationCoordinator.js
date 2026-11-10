@@ -19,7 +19,7 @@ function runSharedMutationCoordinatorTests() {
         if (expectedText) assert_(String(thrown.message || thrown).includes(expectedText), "Error inesperado: " + String(thrown.message || thrown));
     }
 
-    function createRuntime_() {
+    function createRuntime_(sleepHook) {
         const store = {};
         let clock = 1700000000000;
         let sequence = 0;
@@ -44,7 +44,7 @@ function runSharedMutationCoordinatorTests() {
             lockService: lockService,
             now: () => clock,
             uuid: uuid,
-            sleep: milliseconds => { clock += milliseconds; }
+            sleep: milliseconds => { clock += milliseconds; if (typeof sleepHook === "function") sleepHook(milliseconds); }
         });
 
         function request(action, service, operation, extra) {
@@ -86,10 +86,10 @@ function runSharedMutationCoordinatorTests() {
         }
     }
 
-    function acquire_(runtime, service, operation, requestId) {
+    function acquire_(runtime, service, operation, requestId, waitMs) {
         return runtime.request("acquire", service, operation, {
             requestId: requestId || runtime.uuid(),
-            waitMs: 0
+            waitMs: waitMs === undefined ? 0 : waitMs
         });
     }
 
@@ -183,6 +183,108 @@ function runSharedMutationCoordinatorTests() {
         const auth = acquire_(r, "AUTH", "login");
         assert_(auth.status === "error" && auth.code === "busy", "Mantenimiento debe bloquear nuevas mutaciones.");
         release_(r, "ADMIN", "restoreDatabase", acquired.token);
+    });
+
+    test_("La migración reserva mantenimiento, drena operaciones activas y bloquea nuevas mutaciones", function() {
+        let runtime;
+        let writeLease;
+        let blockedDuringDrain = false;
+        let rejectedDuringDrain = false;
+        let sleepCount = 0;
+        runtime = createRuntime_(() => {
+            sleepCount++;
+            const attempt = acquire_(runtime, "ADMIN", "addOrUpdateCut");
+            blockedDuringDrain = attempt.status === "error" && attempt.code === "busy";
+            const leases = JSON.parse(runtime.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+            const reservation = leases.find(lease => lease.operation === "migrateCortesOperationIds");
+            try {
+                runtime.request("validate", "ADMIN", "migrateCortesOperationIds", { token: reservation.token });
+            } catch (error) {
+                rejectedDuringDrain = String(error.message || error).includes("drenando");
+            }
+            if (sleepCount === 1) release_(runtime, "WRITE", "addOrUpdateCut", writeLease.token);
+        });
+        writeLease = acquire_(runtime, "WRITE", "addOrUpdateCut");
+        const migration = acquire_(runtime, "ADMIN", "migrateCortesOperationIds", runtime.uuid(), 1000);
+        assert_(blockedDuringDrain, "Una nueva mutación ADMIN debe quedar bloqueada desde que se reserva la ventana.");
+        assert_(rejectedDuringDrain, "La reserva no debe autorizar el handler antes de drenar.");
+        assert_(migration.status === "success", "La migración debe iniciar después de que finalice la operación activa.");
+        const adminWrite = acquire_(runtime, "ADMIN", "addOrUpdateCut");
+        const write = acquire_(runtime, "WRITE", "addOrUpdateCut");
+        const vin = acquire_(runtime, "WRITE", "addVinToVehicle");
+        assert_([adminWrite, write, vin].every(result => result.status === "error" && result.code === "busy"),
+            "La migración debe bloquear mutaciones ADMIN y WRITE durante la ventana exclusiva.");
+        release_(runtime, "ADMIN", "migrateCortesOperationIds", migration.token);
+    });
+
+    test_("La migración también drena una alta ADMIN que ya estaba en curso", function() {
+        let runtime;
+        let adminLease;
+        runtime = createRuntime_(() => release_(runtime, "ADMIN", "addOrUpdateCut", adminLease.token));
+        adminLease = acquire_(runtime, "ADMIN", "addOrUpdateCut");
+        const migration = acquire_(runtime, "ADMIN", "migrateCortesOperationIds", runtime.uuid(), 1000);
+        assert_(migration.status === "success", "La migración debe esperar a que finalice una alta ADMIN previa.");
+        release_(runtime, "ADMIN", "migrateCortesOperationIds", migration.token);
+    });
+
+    test_("La espera de mantenimiento identifica operaciones activas y libera la reserva al agotar el plazo", function() {
+        const r = createRuntime_();
+        const write = acquire_(r, "WRITE", "addOrUpdateCut");
+        const migration = acquire_(r, "ADMIN", "migrateCortesOperationIds", r.uuid(), 250);
+        assert_(migration.status === "error" && migration.code === "busy", "La migración debe detenerse si la operación activa no termina.");
+        assert_(migration.message.includes("WRITE/addOrUpdateCut"), "La respuesta debe identificar el servicio y acción que impiden el mantenimiento.");
+        const stored = JSON.parse(r.properties.getProperty("GPSpedia_SHARED_MUTATION_LEASES"));
+        assert_(!stored.some(lease => lease.maintenance && lease.operation === "migrateCortesOperationIds"),
+            "La reserva de mantenimiento debe retirarse cuando la migración no logra drenar.");
+        const independent = acquire_(r, "FEEDBACK", "reportProblem");
+        assert_(independent.status === "success", "Al cancelar la reserva, operaciones independientes deben poder continuar.");
+        release_(r, "FEEDBACK", "reportProblem", independent.token);
+        release_(r, "WRITE", "addOrUpdateCut", write.token);
+    });
+
+    test_("Una reserva de drenaje abandonada se recupera a los 60 segundos", function() {
+        const r = createRuntime_();
+        r.properties.setProperty("GPSpedia_SHARED_MUTATION_LEASES", JSON.stringify([{
+            token: r.uuid() + r.uuid(), service: "ADMIN", operation: "migrateCortesOperationIds",
+            requestId: r.uuid(), readResources: [], writeResources: [], maintenance: true,
+            nestedActions: {}, phase: "draining", createdAt: 1700000000000,
+            expiresAt: 1700000060000
+        }]));
+        r.advance(60001);
+        const write = acquire_(r, "WRITE", "addOrUpdateCut");
+        assert_(write.status === "success", "Una reserva de drenaje abandonada debe expirar sin bloquear indefinidamente.");
+        release_(r, "WRITE", "addOrUpdateCut", write.token);
+    });
+
+    test_("Las leases existentes sin campo phase siguen siendo compatibles", function() {
+        const r = createRuntime_();
+        const token = r.uuid() + r.uuid();
+        r.properties.setProperty("GPSpedia_SHARED_MUTATION_LEASES", JSON.stringify([{
+            token: token, service: "WRITE", operation: "addOrUpdateCut",
+            requestId: r.uuid(), readResources: ["USERS", "ACTIVE_SESSIONS"],
+            writeResources: ["CORTES", "DRIVE", "IDEMPOTENCIA"], maintenance: false,
+            nestedActions: {}, createdAt: 1700000000000,
+            expiresAt: 1700000000000 + 45 * 60 * 1000
+        }]));
+        const blocked = acquire_(r, "FEEDBACK", "suggestYear");
+        assert_(blocked.status === "error" && blocked.code === "busy", "La lease antigua debe seguir protegiendo sus recursos.");
+        const valid = r.request("validate", "WRITE", "addOrUpdateCut", { token: token });
+        assert_(valid.status === "success" && valid.valid, "La lease antigua debe seguir validándose durante una actualización.");
+    });
+
+    test_("Una lease de mantenimiento interrumpida se recupera al expirar", function() {
+        const r = createRuntime_();
+        const migration = acquire_(r, "ADMIN", "migrateCortesOperationIds");
+        assert_(migration.status === "success", "La migración debe adquirir mantenimiento cuando no hay operaciones activas.");
+        r.advance(45 * 60 * 1000 + 1);
+        const write = acquire_(r, "WRITE", "addOrUpdateCut");
+        assert_(write.status === "success", "La expiración debe liberar una ventana de mantenimiento abandonada.");
+        release_(r, "WRITE", "addOrUpdateCut", write.token);
+    });
+
+    test_("La política de migración VIN exige mantenimiento exclusivo", function() {
+        const policy = coordinatorPolicy_("ADMIN", "migrateCortesOperationIds");
+        assert_(policy.maintenance === true, "La migración debe declararse como mantenimiento exclusivo.");
     });
 
     test_("ADMIN addOrUpdateCut autoriza solo allocateVehicleId anidado", function() {
