@@ -733,3 +733,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 34/34 PASS; parsing/sintaxis de los dos archivos JavaScript 2/2 PASS.
 - AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — AMPLIACIÓN INFERIOR «ES MÁS ANTIGUO» EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega una regresión de flujo con tres aportantes verificados para la respuesta «Es más antiguo».
+- Comprueba la ampliación del límite inferior y que la limpieza retire solo los votos inferiores atendidos, conservando aportes de otro año, respuestas negativas y otro vehículo.
+- No se modificó Services/feedback.js: el flujo existente supera la prueba dirigida.
+- Validación local: runFeedbackWriteSecurityTests() 35/35 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
+================================================================================

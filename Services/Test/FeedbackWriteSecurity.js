@@ -324,6 +324,68 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear amplía el límite inferior con tres aportantes «Es más antiguo» y limpia solo esos votos", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            function sheet(rows,maxColumns) {
+                return {
+                    rows,getLastRow(){return this.rows.length;},
+                    getLastColumn(){return Math.max(maxColumns||0,...this.rows.map(r=>r.length));},
+                    getMaxColumns(){return maxColumns||this.getLastColumn();},
+                    getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};},
+                    getRange(r,c,h=1,w=1) {const self=this;return {
+                        getValue(){return (self.rows[r-1]||[])[c-1]??"";},
+                        getValues(){return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>(self.rows[r-1+i]||[])[c-1+j]??""));},
+                        setValue(v){while(self.rows.length<r)self.rows.push([]);while(self.rows[r-1].length<c)self.rows[r-1].push("");self.rows[r-1][c-1]=v;},
+                        setValues(vs){vs.forEach((line,i)=>line.forEach((v,j)=>{while(self.rows.length<r+i)self.rows.push([]);while(self.rows[r-1+i].length<c+j)self.rows[r-1+i].push("");self.rows[r-1+i][c-1+j]=v;}));},
+                        copyTo(target){target.setValues(this.getValues());},
+                        clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
+                    };},
+                    deleteRow(r){this.rows.splice(r-1,1);},
+                    insertColumnsAfter(after,count){maxColumns=(maxColumns||this.getLastColumn())+count;this.rows.forEach(row=>{while(row.length<maxColumns)row.push("");});}
+                };
+            }
+            const vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-OLDER-01";
+            vehicle[COLS_CORTES.marca-1]="Toyota";vehicle[COLS_CORTES.modelo-1]="Hilux";
+            vehicle[COLS_CORTES.categoria-1]="Pickup";vehicle[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=sheet([Array(42).fill(""),vehicle],42);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const lowerProblem="Sugerencia de ampliar rango inferior al año 2015";
+            const lowerAnswer="El usuario indicó que corresponde a un modelo anterior.";
+            const feedback=sheet([headers,
+                ["F-OLD-A","A","VEH-OLDER-01",lowerProblem,lowerAnswer,"","","",2015,"user:USR-A"],
+                ["F-OLD-B","B","VEH-OLDER-01",lowerProblem,lowerAnswer,"","","",2015,"user:USR-B"],
+                ["F-OTHER-YEAR","Otro","VEH-OLDER-01","Sugerencia de ampliar rango inferior al año 2014",lowerAnswer,"","","",2014,"user:USR-X"],
+                ["F-NEGATIVE","Negativo","VEH-OLDER-01","Modelo sin generaciones recientes registradas","El usuario indicó que la información no fue útil.","","","",2015,"user:USR-N"],
+                ["F-OTHER-VEHICLE","Otro vehículo","VEH-OTHER","Sugerencia de ampliar rango inferior al año 2015",lowerAnswer,"","","",2015,"user:USR-Y"]
+            ],10);
+            let activities=[];
+            try {
+                assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-C")throw Error("Sesión inválida");return {userId:"USR-C",userName:"Usuario C",role:"Tecnico"};};
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:null});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO||n===SHEET_NAMES.FEEDBACKS?feedback:null;
+                logUserActivity=(...args)=>activities.push(args);
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
+                const result=handleSuggestYear({...actor,vehicleId:"VEH-OLDER-01",newYear:2015,response:"Es más antiguo"});
+                assert_(result.status==="success"&&result.message.includes("3 aportantes distintos"),"El tercer voto «Es más antiguo» debe alcanzar el umbral: "+JSON.stringify(result));
+                assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2015&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"Debe ampliar únicamente el límite inferior a 2015.");
+                const remainingIds=feedback.rows.slice(1).map(row=>row[0]);
+                assert_(remainingIds.length===3,"Deben permanecer los tres registros ajenos al ciclo atendido: "+JSON.stringify(remainingIds));
+                assert_(remainingIds.includes("F-OTHER-YEAR")&&remainingIds.includes("F-NEGATIVE")&&remainingIds.includes("F-OTHER-VEHICLE"),"La limpieza no debe eliminar votos de otro año, respuestas negativas ni otro vehículo.");
+                assert_(!remainingIds.includes("F-OLD-A")&&!remainingIds.includes("F-OLD-B"),"Los dos votos inferiores atendidos deben eliminarse.");
+                assert_(activities.some(a=>a[2]==="apply_year_suggestion"),"Debe registrarse la aplicación del rango.");
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
+            }
+        });
+
         test_("suggestYear valida la superposición del rango completo frente a otras generaciones", function() {
             const oldAssert=assertFeedbackSession, oldGet=getSpreadsheet, oldSafe=getSafeSheet;
             const oldLog=logUserActivity, oldLock=LockService, oldApp=SpreadsheetApp, oldMove=movePrimaryVehicleImageToCanonicalFolder;

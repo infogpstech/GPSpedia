@@ -854,3 +854,34 @@ Siguiente iteración: revisar una única condición funcional pendiente de sugge
 Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
 No se modificó lógica de producción, Auditoría.txt, endpoints, deployments, datos productivos ni rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: RESPUESTA «ES MÁS ANTIGUO» — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida: 6f858ca86ad76589df939f83301694652c6df0b3.
+
+TAREA ÚNICA
+Verificar el flujo de tres aportantes verificados que responden «Es más antiguo», la ampliación del límite inferior y la limpieza selectiva de votos atendidos.
+
+RESULTADO
+No se detectó defecto de producción. Se agregó una prueba aislada que comprueba la ampliación de 2018–2022 a 2015–2022 al alcanzar tres aportantes distintos y verifica que se eliminen los votos inferiores atendidos sin borrar registros de otro año, respuestas negativas ni otro vehículo.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 35/35 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Prueba ejecutada con mocks locales; no acredita integración real con Apps Script/Spreadsheet/Drive.
+
+ARCHIVOS
+- Services/Test/FeedbackWriteSecurity.js
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA.
+AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una única condición funcional pendiente de suggestYear.
+Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
+Sin despliegues, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================
