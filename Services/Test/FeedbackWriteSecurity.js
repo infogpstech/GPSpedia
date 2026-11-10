@@ -150,11 +150,50 @@ function runFeedbackWriteSecurityTests() {
             }), "fallo controlado");
             assert_(trashed === true, "El archivo no vinculado debe enviarse a papelera.");
         });
-        test_("reportProblem devuelve el mismo resultado ante un reintento idéntico", function() {
+        test_("reportProblem crea un reporte una vez y reutiliza el resultado al reintentar", function() {
             const reportId = "REP-1731260000000-abc123";
-            const metadata = { reportId, userId: "USR-TEST-01", vehicleId: "VEH-1", corteIndex: 2, activaTestigoMotor: true };
-            const row = ["REP-ROW-1", "Usuario verificado", "VEH-1", "Falla intermitente", "", "", "", "", "", JSON.stringify(metadata)];
-            const sheet = makeSheet([Array(10).fill("header"), row]);
+            const rows = [Array(10).fill("header"), ["REP-TEMPLATE", "", "", "", "", "", "", "", "", ""]];
+            const sheet = {
+                rows,
+                getLastRow: function() { return this.rows.length; },
+                getLastColumn: function() { return 10; },
+                getRange: function(row, column, numRows, numColumns) {
+                    const self = this;
+                    const rowCount = numRows === undefined ? 1 : numRows;
+                    const columnCount = numColumns === undefined ? 1 : numColumns;
+                    return {
+                        getValue: function() { return self.rows[row - 1] ? self.rows[row - 1][column - 1] : undefined; },
+                        getValues: function() {
+                            return Array.from({ length: rowCount }, (_, r) =>
+                                Array.from({ length: columnCount }, (_, c) =>
+                                    self.rows[row - 1 + r] ? self.rows[row - 1 + r][column - 1 + c] : undefined
+                                )
+                            );
+                        },
+                        setValue: function(value) {
+                            while (self.rows.length < row) self.rows.push(Array(10).fill(""));
+                            self.rows[row - 1][column - 1] = value;
+                        },
+                        setValues: function(values) {
+                            values.forEach((line, r) => line.forEach((value, c) => {
+                                while (self.rows.length < row + r) self.rows.push(Array(10).fill(""));
+                                self.rows[row - 1 + r][column - 1 + c] = value;
+                            }));
+                        },
+                        copyTo: function(target) {
+                            const values = this.getValues();
+                            target.setValues(values);
+                        },
+                        clearContent: function() {
+                            for (let r = 0; r < rowCount; r++) {
+                                for (let c = 0; c < columnCount; c++) {
+                                    if (self.rows[row - 1 + r]) self.rows[row - 1 + r][column - 1 + c] = "";
+                                }
+                            }
+                        }
+                    };
+                }
+            };
             const originalEnsure = ensureReportMetadataColumn;
             const originalLog = logUserActivity;
             let logCalls = 0;
@@ -164,14 +203,20 @@ function runFeedbackWriteSecurityTests() {
                 LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
                 SpreadsheetApp = { flush: function() {} };
                 logUserActivity = () => { logCalls++; };
-                const result = handleReportProblem({
+                const payload = {
                     vehicleId: "VEH-1", problemText: "Falla intermitente",
                     userId: "USR-TEST-01", userName: "Usuario verificado",
                     reportId, corteIndex: 2, activaTestigoMotor: true
-                });
-                assert_(result.status === "success" && result.alreadyReported === true && result.reportId === reportId);
-                assert_(sheet.rows.length === 2, "El reintento no debe crear una segunda fila.");
-                assert_(logCalls === 0, "El reintento no debe duplicar el registro de actividad.");
+                };
+                const first = handleReportProblem(payload);
+                assert_(first.status === "success" && first.alreadyReported === false && first.reportId === reportId);
+                assert_(sheet.rows.length === 3, "El primer envío debe crear una sola fila.");
+                const savedMetadata = JSON.parse(sheet.rows[2][9]);
+                assert_(savedMetadata.userId === "USR-TEST-01", "La metadata debe conservar la identidad validada.");
+                const retry = handleReportProblem(payload);
+                assert_(retry.status === "success" && retry.alreadyReported === true && retry.reportId === reportId);
+                assert_(sheet.rows.length === 3, "El reintento no debe crear una segunda fila.");
+                assert_(logCalls === 1, "El reintento no debe duplicar el registro de actividad.");
             } finally {
                 ensureReportMetadataColumn = originalEnsure;
                 logUserActivity = originalLog;
