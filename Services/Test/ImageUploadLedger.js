@@ -49,6 +49,7 @@ function runImageUploadLedgerTests() {
             getLastRow: () => data.length,
             getLastColumn: () => Math.max(0, ...data.map(row => row.length)),
             getRange: range_,
+            setFrozenRows: () => {},
             _data: data
         };
     }
