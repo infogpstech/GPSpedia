@@ -1994,6 +1994,14 @@ function saveAdminImageUploadOperation(sheet, operation) {
     const rowIndex = operation.rowIndex || (sheet.getLastRow() + 1);
     sheet.getRange(rowIndex, 1, 1, ADMIN_IMAGE_UPLOAD_HEADERS.length).setValues([operation.values]);
     SpreadsheetApp.flush();
+    const verified = sheet.getRange(rowIndex, 1, 1, ADMIN_IMAGE_UPLOAD_HEADERS.length).getValues()[0];
+    ADMIN_IMAGE_UPLOAD_HEADERS.forEach((header, index) => {
+        const actual = String(verified[index] === null || verified[index] === undefined ? "" : verified[index]);
+        const expected = String(operation.values[index] === null || operation.values[index] === undefined ? "" : operation.values[index]);
+        if (actual !== expected) {
+            throw new Error("No se pudo verificar por lectura posterior el campo " + header + " del ledger AdminImageUploads, fila " + rowIndex + ".");
+        }
+    });
     operation.rowIndex = rowIndex;
     return operation;
 }
