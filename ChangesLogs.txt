@@ -809,3 +809,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 40/40 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
 - AUG-040 permanece EN PROGRESO; validación de Spreadsheet/Apps Script reales diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — RESPUESTA NO REGISTRADA DURANTE RECUPERACIÓN DE suggestYear
+- Services/feedback.js: al recuperar una aplicación pendiente del mismo vehículo/año, distingue los reintentos de aportantes ya registrados de las respuestas nuevas; informa que la respuesta nueva no se registró y debe reenviarse.
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión con un cuarto aportante durante la recuperación; verifica cierre del diario, actualización del rango, ausencia de inserción falsa y mensaje explícito.
+- Auditoría.txt: registra H-AUD-040-010.
+- Validación local: runFeedbackWriteSecurityTests() 41/41 PASS; parsing de ambos archivos JavaScript PASS.
+- AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
+================================================================================

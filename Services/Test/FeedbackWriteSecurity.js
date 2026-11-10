@@ -381,6 +381,65 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear informa si una nueva respuesta del mismo año no se registró durante la recuperación pendiente", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            function sheet(rows,maxColumns) {
+                return {
+                    rows,
+                    getLastRow(){return this.rows.length;},
+                    getLastColumn(){return Math.max(maxColumns||0,...this.rows.map(r=>r.length));},
+                    getMaxColumns(){return maxColumns||this.getLastColumn();},
+                    getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};},
+                    getRange(r,c,h=1,w=1) {
+                        const self=this;
+                        return {
+                            getValue(){return (self.rows[r-1]||[])[c-1]??"";},
+                            getValues(){return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>(self.rows[r-1+i]||[])[c-1+j]??""));},
+                            setValue(v){while(self.rows.length<r)self.rows.push([]);while(self.rows[r-1].length<c)self.rows[r-1].push("");self.rows[r-1][c-1]=v;},
+                            setValues(vs){vs.forEach((line,i)=>line.forEach((v,j)=>{while(self.rows.length<r+i)self.rows.push([]);while(self.rows[r-1+i].length<c+j)self.rows[r-1+i].push("");self.rows[r-1+i][c-1+j]=v;}));},
+                            copyTo(target){target.setValues(this.getValues());},
+                            clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
+                        };
+                    }
+                };
+            }
+            const vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-PENDING-SAME";
+            vehicle[COLS_CORTES.marca-1]="Toyota";vehicle[COLS_CORTES.modelo-1]="Hilux";
+            vehicle[COLS_CORTES.categoria-1]="Pickup";vehicle[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=sheet([Array(42).fill(""),vehicle],42);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const vote=(id,user,actor)=>[id,user,"VEH-PENDING-SAME","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,actor];
+            const feedback=sheet([headers,vote("F-A","A","user:USR-A"),vote("F-B","B","user:USR-B"),vote("F-C","C","user:USR-C")],10);
+            const ledgerHeaders=["operationId","vehicleId","year","previousFrom","previousTo","targetFrom","targetTo","voteCount","status","activityAttempted","createdAt","updatedAt"];
+            const ledger=sheet([ledgerHeaders,["YSA-PENDING","VEH-PENDING-SAME",2025,2018,2022,2018,2025,3,"pending",true,"2026-11-10T00:00:00.000Z","2026-11-10T00:00:00.000Z"]],12);
+            try {
+                assertFeedbackSession=p=>{
+                    if(!p||p.sessionToken!=="SESSION-D")throw Error("Sesión inválida");
+                    return {userId:"USR-D",userName:"Usuario D",role:"Tecnico"};
+                };
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:(n==="FeedbackYearApplications"?ledger:null)});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO||n===SHEET_NAMES.FEEDBACKS?feedback:null;
+                logUserActivity=()=>{};
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-D"});
+                const result=handleSuggestYear({...actor,vehicleId:"VEH-PENDING-SAME",newYear:2025,response:"Sí (Funciona)"});
+                assert_(ledger.rows[1][8]==="completed","La aplicación pendiente debe recuperarse.");
+                assert_(cuts.rows[1][COLS_CORTES.anoHasta-1]===2025,"El rango debe quedar actualizado.");
+                assert_(!feedback.rows.some(r=>r[9]==="user:USR-D"),"La respuesta nueva no debe insertarse durante la recuperación.");
+                assert_(result.status==="info"&&result.recovered===true&&result.message.includes("no se registró")&&result.message.includes("vuelve a enviarla"),
+                    "Debe informarse que la respuesta actual no se registró y debe reenviarse: "+JSON.stringify(result));
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
+            }
+        });
+
         test_("suggestYear recupera la aplicación pendiente del vehículo antes de aceptar otro año", function() {
             const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
             const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;

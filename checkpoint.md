@@ -1117,3 +1117,34 @@ VALIDACIÓN BETA PENDIENTE
 Persistencia y consulta del diario en Spreadsheet real, recuperación ante fallos reales y comportamiento de la hoja Feedbacks en Apps Script; no ejecutados.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: RESPUESTA NUEVA DURANTE RECUPERACIÓN PENDIENTE — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 45a4f291f150ae43564e98f95d25f354384a5ae9.
+TAREA ÚNICA
+Evitar que una nueva respuesta de un aportante se descarte sin aviso cuando se recupera una aplicación pending del mismo vehículo y año.
+HALLAZGO Y CORRECCIÓN
+Se reprodujo que un cuarto aportante podía enviar una respuesta para el mismo año mientras existía una aplicación pending. El handler completaba la aplicación anterior y devolvía el mensaje de recuperación como éxito, aunque no había insertado la respuesta del nuevo actor. Ahora se verifica si el actor ya había aportado, incluyendo la marca applied:; si no existe un aporte previo, la recuperación se completa y se informa que la respuesta actual no se registró y debe reenviarse. Los reintentos de aportantes ya registrados conservan el comportamiento anterior.
+PRUEBA DE REGRESIÓN
+Se preparó una aplicación pending para 2025 con tres aportes previos y se envió una respuesta de un cuarto actor. La prueba confirma que el rango se actualiza, el diario pasa a completed, no se inserta un voto falso y el mensaje solicita reenviar la respuesta.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 41/41 PASS.
+- Parsing de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: PASS.
+- La regresión falló antes de la corrección y pasó después; suite completa posterior: 41/41 PASS.
+- Entorno JavaScript aislado con dobles; no acredita integración real con Apps Script/Spreadsheet/Drive.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-010)
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
+VALIDACIÓN BETA PENDIENTE
+Persistencia del diario, creación/consulta de FeedbackYearApplications, fallos reales de escritura y comportamiento con Spreadsheet/Drive reales; no ejecutados.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

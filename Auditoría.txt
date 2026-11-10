@@ -148,3 +148,17 @@ Validación local: runFeedbackWriteSecurityTests() 40/40 PASS; parsing/sintaxis 
 Límites: pruebas aisladas con dobles locales; no representan Apps Script/Spreadsheet/Drive reales. Persistencia y recuperación en Beta quedan pendientes.
 Estado: corregido y validado localmente; integración real diferida a Beta.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-010 — BAJA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de respuestas nuevas durante la recuperación de aplicaciones pendientes en AUG-040.
+Ubicación: Services/feedback.js, handleSuggestYearLocked(), rama pendingApplication.
+Evidencia: al recuperar una aplicación pendiente del mismo vehículo y año, la función devolvía el mensaje de recuperación como éxito aunque el actor que inició la solicitud actual no tuviera un aporte registrado para ese año. La recuperación se completaba, pero la nueva respuesta no se insertaba ni se informaba que debía reenviarse.
+Impacto: el usuario podía interpretar que su respuesta nueva quedó registrada cuando únicamente se recuperó una ampliación anterior; el aporte se perdía silenciosamente.
+Severidad: Baja.
+Corrección: comprobar si el actor actual ya tiene un aporte para el vehículo/año, incluyendo la marca applied: de un aporte atendido. Si no existe, completar la recuperación y responder explícitamente que la respuesta actual no se registró y debe reenviarse. Los reintentos de actores ya registrados conservan el mensaje de recuperación.
+Prueba: se prepara una aplicación pending para 2025 con tres votos previos y se envía una respuesta de un cuarto actor. Se verifica que el rango y el diario se recuperan, que no se inserta falsamente el nuevo voto y que la respuesta informa la necesidad de reenviarlo.
+Validación local: runFeedbackWriteSecurityTests() 41/41 PASS; parsing de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js PASS.
+Límites: mocks locales; no acredita persistencia real en Apps Script/Spreadsheet/Drive. La integración del diario y los fallos reales de escritura siguen diferidos a Beta.
+================================================================================

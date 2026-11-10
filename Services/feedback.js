@@ -938,14 +938,18 @@ function handleSuggestYearLocked(payload) {
             userId,
             userName
         });
-        if (pendingYear !== year) {
-            return {
-                ...recovered,
-                status: "info",
-                recovered: true,
-                message: "Se recuperó la ampliación pendiente del año " + pendingYear +
+        const appliedActorKey = getAppliedSuggestionActorKey_(actorKey);
+        const currentActorAlreadyReported = existingData.some(row =>
+            matchesActorAndSuggestion(row) &&
+            [actorKey, appliedActorKey].includes(String(row[actorColumn - 1] || "").trim())
+        );
+        if (pendingYear !== year || !currentActorAlreadyReported) {
+            const message = pendingYear !== year
+                ? "Se recuperó la ampliación pendiente del año " + pendingYear +
                     ". La sugerencia para el año " + year + " no se registró; vuelve a enviarla."
-            };
+                : "Se recuperó la ampliación pendiente del año " + pendingYear +
+                    ". Tu respuesta para ese año no se registró; vuelve a enviarla.";
+            return { ...recovered, status: "info", recovered: true, message };
         }
         return {
             ...recovered,
