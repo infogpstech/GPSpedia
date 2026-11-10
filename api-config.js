@@ -18,7 +18,7 @@ export const API_ENDPOINTS = {
 export const ACTION_TO_SERVICE_MAP = {
     'login': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
-    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
+    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
@@ -32,6 +32,24 @@ export const ACTION_TO_SERVICE_MAP = {
     'getReplacedImages': 'ADMIN', 'getDriveStorage': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN', 'saveUnusedImagesInventory': 'ADMIN',
     'getCortesImageFolders': 'ADMIN', 'createCortesImageFolder': 'ADMIN', 'moveReplacedImage': 'ADMIN', 'getReplacedImageDownloadUrl': 'ADMIN',
     'logFrontend': 'LEGACY'
+};
+
+/**
+ * Rutas directas históricas conservadas por compatibilidad. No son el destino
+ * canónico de routeAction: los clientes actuales usan ACTION_TO_SERVICE_MAP.
+ * ADMIN exige sesión Desarrollador antes de despachar estas tres acciones.
+ */
+export const SERVICE_COMPATIBILITY_ACTIONS = {
+    CATALOG: ['getSuggestion'],
+    ADMIN: ['checkOperation', 'addOrUpdateCut', 'addSupplementaryInfo']
+};
+
+/**
+ * Acciones cuyo dispatcher pertenece a un proyecto Apps Script externo al repo.
+ * logFrontend sigue siendo consumida directamente por users.html (remoteLog).
+ */
+export const EXTERNAL_ACTIONS = {
+    logFrontend: { service: 'LEGACY', consumer: 'users.html: remoteLog', source: 'deployment externo no versionado en este repositorio' }
 };
 
 const SERVICE_METRIC_WINDOW_MS = 15 * 60 * 1000;
@@ -89,8 +107,8 @@ async function ensureSessionTouched_(token){
 export async function routeAction(action, payload = {}, serviceOverride = null, requestOptions = {}) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);
-    let targetUrl = API_ENDPOINTS[service];
-    if (!targetUrl) targetUrl = API_ENDPOINTS.LEGACY;
+    const targetUrl = API_ENDPOINTS[service];
+    if (!targetUrl) throw new Error(`Servicio no configurado: ${service}`);
     const requestStartedAt = Date.now();
     let outcome = "network_error", httpStatus = null;
     try {

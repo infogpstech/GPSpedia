@@ -205,10 +205,6 @@ function doPostInternal_(e) {
     try {
         const request = JSON.parse(e.postData.contents);
         switch (request.action) {
-            case 'getHeaders':
-                const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-                response = { status: 'success', headers: cortesSheet.getRange(1, 1, 1, cortesSheet.getLastColumn()).getValues()[0] };
-                break;
             case 'checkVehicle':
                 response = handleCheckVehicle(request.payload);
                 break;

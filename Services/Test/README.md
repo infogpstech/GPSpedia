@@ -240,3 +240,12 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 - Acciones públicas: `getPysData` (solo lectura) y `sendContactForm` (longitudes/correo validados y máximo 10 envíos por hora). `suggestYear` admite aportes anónimos limitados a 30 por hora; no cuentan para modificar automáticamente el catálogo y quedan para revisión manual.
 - Las escrituras `recordLike`, `reportProblem`, `addProblem`, `addSolution`, `addPrevention` y `suggestCutChange` requieren sesión activa; el backend reemplaza userId/userName/userRole con datos de Users. Las demás acciones deben estar declaradas; las no declaradas se rechazan.
 - `FeedbackLikes` se crea bajo demanda; su esquema está en `Spreadsheet/GPSpedia_DB_columnas.md`. No ejecutar contra hojas productivas.
+
+## Mapa central de acciones y dispatchers (AUG-044)
+
+- `Services/Test/ActionDispatchContract.js` — ejecutar `runActionDispatchContractTests(sources)` pasando el contenido de `api-config.js`, `Services/Auth.js`, `Services/users.js`, `Services/catalog.js`, `Services/write.js`, `Services/feedback.js`, `Services/admin.js`, `Services/Utilities.js` y `users.html`. Compara las acciones mapeadas, los dispatchers, endpoints y compatibilidades sin llamar servicios.
+- `getHeaders` se retiró del dispatcher WRITE por no tener consumidor ni entrada en el mapa. `addCorte` se retiró del mapa porque no existe handler ni consumidor; `migrateYearRanges` ya se había retirado en AUG-041 y `assignCollaborator` en AUG-040.
+- Compatibilidades directas conservadas: CATALOG/getSuggestion y ADMIN/checkOperation, ADMIN/addOrUpdateCut y ADMIN/addSupplementaryInfo. El mapa canónico dirige esas acciones a WRITE; las rutas ADMIN conservan la validación de sesión Desarrollador.
+- `logFrontend` es la única acción LEGACY declarada: `users.html` la envía mediante `remoteLog` al SCRIPT_URL que coincide con API_ENDPOINTS.LEGACY. El código del deployment no está versionado aquí y debe verificarse en Beta.
+- `routeAction` ya no redirige silenciosamente servicios desconocidos a LEGACY; falla con error de servicio no configurado.
+- La suite usa fuentes estáticas y no invoca endpoints, deployments ni datos productivos.

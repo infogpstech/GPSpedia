@@ -325,3 +325,10 @@ Validación local: FeedbackWriteSecurity 47/47; VideoApprovalState 13/13; YouTub
 Pendiente Beta: navegador/IndexedDB/XHR reales, OAuth/YouTube API, Apps Script y Spreadsheet aislados, concurrencia física y flujo integrado de aprobación/rechazo. Sin endpoints, deployments ni datos productivos.
 Commit: consultar historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+AUG-044 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-10
+Se reconciliaron ACTION_TO_SERVICE_MAP y los dispatchers AUTH, USERS, CATALOG, WRITE, FEEDBACK, ADMIN y UTILITIES. addCorte y getHeaders fueron retirados; migrateYearRanges y assignCollaborator ya estaban retirados. Se documentaron cuatro rutas de compatibilidad directa y la dependencia externa logFrontend/LEGACY. routeAction falla cerrado ante servicios sin endpoint.
+Validación local: ActionDispatchContract 11/11 PASS; parsing 5/5 PASS; servicio desconocido rechazado antes de fetch. LEGACY queda pendiente de verificación en Beta.
+================================================================================

@@ -937,3 +937,13 @@ AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de Y
 - Auditoría.txt, Tareas.txt, tareas_completadas_parte1.txt, checkpoint.md: registro de H-AUD-043-001 y cierre de AUG-043.
 - No se modificaron los contratos backend, api-config.js, ui.js, youtubeUpload.js, endpoints, deployments ni datos productivos; la auditoría confirmó que las rutas protegidas ya transmiten la sesión y que FEEDBACK obtiene el rol desde Users.
 ================================================================================
+
+
+================================================================================
+AUG-044 — Reconciliar mapa central de acciones y dispatchers — 2026-11-10
+- api-config.js: retirada addCorte; compatibilidades directas y dependencia externa logFrontend documentadas; routeAction deja de redirigir servicios desconocidos a LEGACY.
+- Services/write.js: retirado getHeaders del dispatcher por ausencia de consumidor.
+- Services/catalog.js y Services/admin.js: documentadas las rutas directas históricas duplicadas fuera del mapa canónico.
+- Services/Test/ActionDispatchContract.js: nueva prueba estática de correspondencia entre mapa, endpoints, dispatchers, compatibilidades y LEGACY.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, ChangesLogs.txt, Tareas.txt, tareas_completadas_parte1.txt y checkpoint.md: documentación, evidencia y cierre de AUG-044.
+================================================================================

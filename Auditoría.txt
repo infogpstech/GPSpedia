@@ -347,3 +347,22 @@ Impacto: contrato visual engañoso y una ruta manual no respaldada por una acci�
 Corrección: se retiró el input manual; el callback ya no copia videoUrl a un campo de captura, muestra el estado de solicitud pendiente y deshabilita el botón para impedir un segundo envío desde la misma vista. openAddVideoModal ya utilizaba exclusivamente openYouTubeUploadModal. Los handlers backend conservan la publicación únicamente en approveVideo.
 Validación: YouTubeAddCortesContract 4/4 PASS; pruebas existentes de aprobación/subida y seguridad 131/131 PASS; parsing de los módulos y script afectado PASS. Validación real de navegador, OAuth/YouTube, Apps Script y Spreadsheet aislados queda diferida a Beta.
 ================================================================================
+
+
+================================================================================
+H-AUD-044-001 — MEDIA — CORREGIDO Y VALIDADO LOCALMENTE — 2026-11-10
+Origen: AUG-044; observación histórica H-AUD-035-005.
+Evidencia:
+- ACTION_TO_SERVICE_MAP incluía addCorte sin handler ni consumidor; getHeaders existía únicamente en el dispatcher WRITE, sin mapa ni consumidor.
+- getSuggestion se conservaba también en CATALOG aunque su ruta canónica estaba en WRITE. ADMIN exponía checkOperation, addOrUpdateCut y addSupplementaryInfo además de las rutas canónicas WRITE.
+- logFrontend es consumida por users.html mediante remoteLog y SCRIPT_URL coincide con API_ENDPOINTS.LEGACY; el código del deployment LEGACY no está versionado en este repositorio.
+- assignCollaborator ya estaba retirado y no figura en el mapa ni dispatchers (H-AUD-040-017); migrateYearRanges ya estaba retirado del mapa (H-AUD-041-003).
+Impacto: rutas obsoletas o duplicadas sin contrato explícito; el fallback de routeAction podía enviar a LEGACY un servicio no configurado, ocultando errores de enrutamiento.
+Corrección:
+- Se retiró addCorte del mapa y getHeaders del dispatcher WRITE.
+- Se declararon en SERVICE_COMPATIBILITY_ACTIONS las rutas directas históricas CATALOG/getSuggestion y ADMIN/checkOperation, ADMIN/addOrUpdateCut y ADMIN/addSupplementaryInfo. El mapa central conserva WRITE como destino canónico; ADMIN sigue validando sesión Desarrollador antes del dispatch.
+- EXTERNAL_ACTIONS documenta logFrontend, su consumidor y la dependencia no versionada LEGACY.
+- routeAction ahora falla cerrado si el servicio no tiene endpoint; ya no redirige automáticamente a LEGACY.
+Validación: ActionDispatchContract 11/11 PASS; parsing de api-config.js, Services/write.js, Services/catalog.js, Services/admin.js y Services/Test/ActionDispatchContract.js PASS; prueba de routeAction con serviceOverride desconocido rechaza sin realizar fetch. Sin llamadas a endpoints ni servicios externos.
+Pendiente Beta: verificar el deployment LEGACY y su contrato real de logFrontend; no se asumió ni simuló su dispatcher.
+================================================================================

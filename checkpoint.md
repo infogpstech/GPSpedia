@@ -1484,3 +1484,23 @@ Pendiente Beta: navegador/Playwright, IndexedDB real, XHR, OAuth/YouTube API, Ap
 Commit de cierre: fix(youtube): remove manual corte video links before approval. Padre esperado: 4f971d131d088362323d12f456e56d34465ae20d; SHA resultante verificable en HEAD de la rama tras publicación.
 Siguiente tarea: AUG-044. No iniciada.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-044 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre antes de AUG-044: 9270073bf228c7a334251f3b96505a9a6287b393.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea: AUG-044 — COMPLETADA CON VALIDACIÓN DIFERIDA.
+Cambios funcionales:
+- api-config.js: ACTION_TO_SERVICE_MAP retira addCorte; SERVICE_COMPATIBILITY_ACTIONS declara CATALOG/getSuggestion y ADMIN/checkOperation, ADMIN/addOrUpdateCut, ADMIN/addSupplementaryInfo; EXTERNAL_ACTIONS declara logFrontend/LEGACY y users.html remoteLog; routeAction rechaza servicio sin endpoint en lugar de usar fallback LEGACY.
+- Services/write.js: se retira getHeaders del dispatcher; no tenía consumidor ni mapa.
+- Services/catalog.js y Services/admin.js: las rutas directas históricas duplicadas quedan comentadas y documentadas; no cambia su lógica ni autorización.
+- migrateYearRanges y assignCollaborator permanecen retiradas por AUG-041/AUG-040.
+Pruebas: ActionDispatchContract 11/11 PASS; parsing de api-config.js, write.js, catalog.js, admin.js y ActionDispatchContract.js 5/5 PASS; routeAction con serviceOverride desconocido rechaza sin fetch.
+Archivos previstos: api-config.js, Services/write.js, Services/catalog.js, Services/admin.js, Services/Test/ActionDispatchContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, ChangesLogs.txt, Tareas.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Pendiente Beta: verificar el deployment LEGACY/logFrontend; el código fuente de ese servicio no está en el repositorio. No se ejecutaron endpoints, deployments ni datos productivos.
+Commit de cierre: fix(api): reconcile action map and service dispatchers. SHA resultante se verificará en HEAD de la rama tras publicación.
+Siguiente tarea: AUG-045. No iniciada.
+================================================================================

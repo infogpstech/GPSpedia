@@ -130,6 +130,7 @@ function doPost(e) {
       case 'getDropdownData':
         result = handleGetDropdownData();
         break;
+      // Compatibilidad para llamadas directas históricas; routeAction usa WRITE.
       case 'getSuggestion':
         result = handleGetSuggestion(payload);
         break;

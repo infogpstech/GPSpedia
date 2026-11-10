@@ -737,6 +737,7 @@ function doPostInternal_(e) {
             case 'uploadAdminImage':
                 response = handleUploadAdminImage(payload, logMessage);
                 break;
+            // Compatibilidad directa histórica; el mapa canónico dirige esta acción a WRITE.
             case 'checkOperation':
                 response = handleCheckOperation(payload);
                 break;
@@ -746,9 +747,11 @@ function doPostInternal_(e) {
             case 'reconcilePendingImageUploads':
                 response = handleReconcilePendingImageUploads(payload, logMessage);
                 break;
+            // Compatibilidad directa histórica; requiere sesión Desarrollador en doPostInternal_.
             case 'addOrUpdateCut':
                 response = handleAddOrUpdateCut(payload, logMessage, developerContext);
                 break;
+            // Compatibilidad directa histórica; requiere sesión Desarrollador en doPostInternal_.
             case 'addSupplementaryInfo':
                 response = handleAddSupplementaryInfo(payload, logMessage);
                 break;

@@ -615,7 +615,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   4. Verificar el destino y contrato LEGACY/logFrontend; documentar la fuente del servicio o mantenerlo explícitamente como dependencia externa.
   5. Agregar pruebas estáticas/automatizadas que comparen ACTION_TO_SERVICE_MAP con los dispatchers y detecten rutas sin handler, handlers sin mapa y destinos incorrectos.
 - **Relación:** AUD-T-035; AUG-040 (assignCollaborator); AUG-041 (Utilities/migrateYearRanges); AUD-T-026/AUG-024 (health check y endpoints).
-- **Estado:** NUEVA; decisión de alcance, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; contratos y pruebas locales aprobados, dependencia LEGACY externa documentada para Beta.
 
 ### Adenda AUD-T-035 — AUG-040: integridad de imagen en alta PYS
 - **Evidencia:** Services/feedback.js, handleAddProblem(). El formulario UI marca imagen required, pero el backend no exige imgBase64; el catch de Drive permite continuar y guardar imageUrl vacío con status success.

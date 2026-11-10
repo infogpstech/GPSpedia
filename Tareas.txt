@@ -748,3 +748,16 @@ Validación diferida a Beta: navegador/Playwright, IndexedDB real, XHR y OAuth/Y
 No se modificó la rama base GPSpedia2.2.5 ni sus referencias. La ficha original del backlog se conserva; este cierre actualiza su estado sin reescribir el historial.
 Siguiente tarea identificada: AUG-044. No iniciada en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-044 — CIERRE — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Mapa central: 79 acciones; todos los destinos configurados y handlers canónicos verificados.
+Dispatchers: AUTH 10, USERS 3, CATALOG 4, WRITE 9, FEEDBACK 25, ADMIN 30, UTILITIES 1. Las cuatro rutas directas duplicadas quedan declaradas en SERVICE_COMPATIBILITY_ACTIONS y no alteran el destino canónico WRITE. logFrontend es la única acción LEGACY y está declarada como dependencia externa; users.html usa el mismo URL que API_ENDPOINTS.LEGACY.
+Decisiones: addCorte retirado del mapa por ausencia de handler/consumidor; getHeaders retirado de WRITE por ausencia de mapa/consumidor; migrateYearRanges ya retirado en AUG-041; assignCollaborator ya retirado en AUG-040. Se conserva CATALOG/getSuggestion y tres rutas ADMIN como compatibilidad directa documentada. routeAction falla cerrado ante servicios sin endpoint.
+Pruebas locales: ActionDispatchContract 11/11 PASS; parsing 5/5 PASS; routeAction con servicio desconocido rechaza antes de fetch. Diff revisado.
+Pendiente Beta: obtener y verificar el código/contrato del deployment LEGACY/logFrontend. No se ejecutaron endpoints, deployments ni datos productivos.
+Rama base GPSpedia2.2.5 sin cambios.
+Siguiente tarea identificada: AUG-045. No iniciada en esta iteración.
+================================================================================
