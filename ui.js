@@ -154,82 +154,192 @@ export function showSavingIndicator(status, message = "") {
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        const result = await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
-        if (result && result.folderSyncWarning) {
-            showSavingIndicator("warning", "Guardado; revisa la organización de la imagen principal");
-        } else {
-            showSavingIndicator("success", "Guardado correctamente");
+        const result = await routeAction("updateVehicleField", { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
+        if (!result || result.status !== "success") {
+            throw new Error(result && result.message || "El servicio no confirmó la restauración del campo.");
         }
-    } catch (e) {
-        console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
+        if (result.folderSyncWarning) showSavingIndicator("warning", "Guardado; revisa la organización de la imagen principal");
+        else showSavingIndicator("success", "Guardado correctamente");
+        return true;
+    } catch (error) {
+        console.error("Error guardando silenciosamente el campo " + fieldName + ":", error);
         showSavingIndicator("error", "Error al guardar");
+        return false;
+    }
+}
+
+function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl) {
+    const cleanVehicleId = String(vehicleId);
+    if (!originalItemBackup) {
+        const storedBackup = localStorage.getItem("gpsepedia_edit_backup");
+        if (storedBackup) {
+            try { originalItemBackup = JSON.parse(storedBackup); } catch (error) {}
+        }
+    }
+    if (originalItemBackup && String(originalItemBackup.id) === cleanVehicleId) {
+        originalItemBackup[fieldName] = String(imageUrl || "");
+        try {
+            localStorage.setItem("gpsepedia_edit_backup", JSON.stringify(originalItemBackup));
+        } catch (error) {
+            console.error("No se pudo persistir la nueva base de descarte:", error);
+            return false;
+        }
+    }
+    if (editedItemBuffer && String(editedItemBuffer.id) === cleanVehicleId) {
+        editedItemBuffer[fieldName] = String(imageUrl || "");
+    }
+    return true;
+}
+
+async function removePendingAdminImageUploadConfirmed_(operation) {
+    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+    const removed = await offline.removeAdminImageUploadPendingOperation(
+        operation.vehicleId, operation.fieldName, operation.id
+    );
+    if (removed === true) {
+        pendingAdminImageUploads.delete(key);
+        return true;
+    }
+    const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName);
+    if (!latest || latest.available !== true) return false;
+    if (latest.operation) {
+        pendingAdminImageUploads.set(key, latest.operation);
+        return false;
+    }
+    pendingAdminImageUploads.delete(key);
+    return true;
+}
+
+async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
+    const cleanVehicleId = String(vehicleId);
+    if (!pendingAdminImageUploadsLoaded.has(cleanVehicleId)) {
+        const loaded = await loadPendingAdminImageUploads(cleanVehicleId);
+        if (!loaded) throw new Error("No se pudo consultar IndexedDB; no se descartaron cambios para evitar perder el estado de un reemplazo.");
+    }
+
+    const operations = Array.from(pendingAdminImageUploads.entries())
+        .filter(([key]) => key.startsWith(cleanVehicleId + "::"))
+        .map(([, operation]) => operation);
+
+    for (const operation of operations) {
+        const status = await routeAction("getAdminImageUploadStatus", {
+            ...getDeveloperSessionPayload(),
+            vehicleId: operation.vehicleId,
+            fieldName: operation.fieldName,
+            opId: operation.id
+        });
+        if (!status || status.status !== "success") {
+            throw new Error("No se pudo consultar el estado del reemplazo " + operation.id + "; no se descartaron cambios.");
+        }
+
+        const operationStatus = String(status.operationStatus || "not_found");
+        const currentUrl = String(status.currentImageUrl || "");
+        if (operationStatus === "linked") {
+            if (currentUrl === String(status.newImageUrl || "") && status.fileIntegrity !== "valid") {
+                throw new Error("El reemplazo está vinculado, pero el archivo no superó la verificación de integridad. Requiere revisión antes de descartar.");
+            }
+            const imageTarget = { src: "", removeAttribute: () => {} };
+            await submitAdminImageUploadOperation(operation, imageTarget);
+            const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+            if (pendingAdminImageUploads.has(key)) {
+                throw new Error("El reemplazo está confirmado, pero no se pudo limpiar su operación local. No se completó el descarte.");
+            }
+            continue;
+        }
+
+        if (operationStatus === "cancelled" || operationStatus === "not_found") {
+            if (!commitAdminImageReplacementBaseline_(cleanVehicleId, operation.fieldName, currentUrl)) {
+                throw new Error("No se pudo guardar la referencia activa confirmada antes de limpiar el intento local.");
+            }
+            const removed = await removePendingAdminImageUploadConfirmed_(operation);
+            if (!removed) throw new Error("No se pudo confirmar la limpieza del intento local; no se completó el descarte.");
+            continue;
+        }
+
+        throw new Error(
+            operationStatus === "requires_review"
+                ? "Existe un reemplazo marcado para revisión. Resuélvelo antes de descartar los demás cambios."
+                : "Existe un reemplazo todavía pendiente en el servidor. No se declaró cancelado ni se descartaron cambios."
+        );
     }
 }
 
 async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
-    if (!vehicleId) {
-        vehicleId = editedItemBuffer?.id || originalItemBackup?.id;
-    }
+    if (!vehicleId) vehicleId = editedItemBuffer?.id || originalItemBackup?.id;
 
-    // Si no tenemos backup local en memoria, intentar recuperarlo desde localStorage
     if (!originalItemBackup) {
-        const storedBackup = localStorage.getItem('gpsepedia_edit_backup');
+        const storedBackup = localStorage.getItem("gpsepedia_edit_backup");
         if (storedBackup) {
-            originalItemBackup = JSON.parse(storedBackup);
+            try { originalItemBackup = JSON.parse(storedBackup); } catch (error) {}
         }
     }
 
     if (!saveChanges && originalItemBackup) {
-        // Revertir todos los cambios realizados silenciosamente
-        const fieldsToRestore = Object.keys(originalItemBackup).filter(key => {
-            return JSON.stringify(originalItemBackup[key]) !== JSON.stringify(editedItemBuffer[key]);
-        });
+        try {
+            // Un reemplazo confirmado es irreversible desde «Descartar cambios».
+            await resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId);
 
-        if (fieldsToRestore.length > 0) {
+            const backupSnapshot = JSON.parse(JSON.stringify(originalItemBackup));
+            const fieldsToRestore = Object.keys(backupSnapshot).filter(key =>
+                JSON.stringify(backupSnapshot[key]) !== JSON.stringify(editedItemBuffer && editedItemBuffer[key])
+            );
             for (const field of fieldsToRestore) {
-                await saveFieldSilently(vehicleId, field, originalItemBackup[field]);
+                await saveFieldSilently(vehicleId, field, backupSnapshot[field]);
             }
-        }
 
-        inEditMode = false;
-        window.inEditMode = false;
-        const restoredItem = { ...originalItemBackup };
-        originalItemBackup = null;
-        editedItemBuffer = null;
-        localStorage.removeItem('gpsepedia_edit_backup');
+            const response = await routeAction("getCatalogData");
+            if (!response || !response.data || !Array.isArray(response.data.cortes)) {
+                throw new Error("No se pudo leer el catálogo para verificar la restauración.");
+            }
+            const updatedItem = response.data.cortes.find(item => String(item.id) === String(vehicleId));
+            if (!updatedItem) throw new Error("El vehículo ya no aparece en el catálogo; no se confirmó el descarte.");
 
-        if (!skipReopen) {
-            mostrarDetalleModal(restoredItem);
-        } else {
-            document.getElementById("modalDetalle").classList.remove("visible");
+            const mismatches = fieldsToRestore.filter(field =>
+                JSON.stringify(updatedItem[field]) !== JSON.stringify(backupSnapshot[field])
+            );
+            if (mismatches.length) {
+                editedItemBuffer = { ...updatedItem };
+                throw new Error("No se confirmó por lectura posterior la restauración de: " + mismatches.join(", ") + ". Puedes reintentar el descarte.");
+            }
+
+            setState({ catalogData: response.data });
+            inEditMode = false;
+            window.inEditMode = false;
+            originalItemBackup = null;
+            editedItemBuffer = null;
+            localStorage.removeItem("gpsepedia_edit_backup");
+            showSavingIndicator("success", "Cambios descartados; los reemplazos de imagen ya confirmados se conservaron.");
+
+            if (!skipReopen) mostrarDetalleModal(updatedItem);
+            else document.getElementById("modalDetalle").classList.remove("visible");
+        } catch (error) {
+            console.error("No se pudo completar el descarte verificado:", error);
+            showSavingIndicator("error", error && error.message || "No se pudo verificar el descarte.");
+            return false;
         }
     } else {
         inEditMode = false;
         window.inEditMode = false;
         originalItemBackup = null;
         editedItemBuffer = null;
-        localStorage.removeItem('gpsepedia_edit_backup');
+        localStorage.removeItem("gpsepedia_edit_backup");
 
         if (!skipReopen) {
-            // Forzar sincronización silenciosa para refrescar el catálogo
-            routeAction('getCatalogData').then(res => {
-                if (res && res.data) {
-                    setState({ catalogData: res.data });
-                    const updatedItem = res.data.cortes.find(c => String(c.id) === String(vehicleId));
+            routeAction("getCatalogData").then(response => {
+                if (response && response.data) {
+                    setState({ catalogData: response.data });
+                    const updatedItem = response.data.cortes.find(item => String(item.id) === String(vehicleId));
                     if (updatedItem) mostrarDetalleModal(updatedItem);
                 }
             });
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
-            routeAction('getCatalogData').then(res => {
-                if (res && res.data) {
-                    setState({ catalogData: res.data });
-                }
+            routeAction("getCatalogData").then(response => {
+                if (response && response.data) setState({ catalogData: response.data });
             });
         }
     }
 }
-
 function getAdminImageUploadPendingKey(vehicleId, fieldName) {
     return String(vehicleId) + "::" + String(fieldName);
 }
