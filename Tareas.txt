@@ -648,3 +648,15 @@ Pruebas: ValidationCacheConfirmation 7/7 PASS; runFeedbackWriteSecurityTests 44/
 Validación Beta pendiente: navegador/Playwright, IndexedDB real, endpoints y Apps Script desplegado.
 Siguiente iteración: continuar con la siguiente condición pendiente de AUG-040 según checkpoint y Tareas.txt. No iniciar AUG-041.
 ================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-LIKE-COUNTER-SYNC-001 — SINCRONIZAR CONTADOR DE recordLike CON BACKEND
+- Origen: H-AUD-040-015; criterio 3 de AUG-040.
+- Objetivo: impedir que los reintentos idempotentes aumenten el contador local cuando el backend no realizó un nuevo incremento.
+- Alcance: Services/feedback.js, ui.js, likeState.js, pruebas y registros.
+- Criterios: cada respuesta exitosa expone el contador confirmado; el cliente lo aplica como valor absoluto; no incrementa localmente; las respuestas inválidas no alteran el contador.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Evidencia local: runFeedbackWriteSecurityTests() 44/44 PASS; LikeClientCounter 6/6 PASS; parsing 5/5 PASS; diff revisado.
+- Beta pendiente: navegador real, endpoints desplegados, Apps Script/Spreadsheet reales y concurrencia física.
+================================================================================

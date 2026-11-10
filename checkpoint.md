@@ -1242,3 +1242,29 @@ Resultado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Validación Beta pendiente: navegador/Playwright, IndexedDB real, endpoints y Apps Script desplegado. No se ejecutaron deployments ni datos productivos.
 Siguiente iteración: seleccionar y resolver una sola condición pendiente de AUG-040 según Tareas.txt/checkpoint. No iniciar AUG-041.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre antes de publicación: fb094ec34767bdec1983efede7fb8fbdbb4925a7.
+Tarea única: corregir la desincronización del contador local de recordLike durante reintentos idempotentes.
+Hallazgo H-AUD-040-015:
+- El backend impedía duplicar el like, pero ui.js ignoraba la respuesta y aumentaba el contador local cada vez que la promesa se resolvía.
+- Un reintento tras perder la respuesta inicial podía aumentar la UI sin aumentar Cortes.
+Cambios:
+- Services/feedback.js devuelve likeCount confirmado para like nuevo, duplicado y recuperado.
+- ui.js aplica el contador absoluto del servidor; se elimina el incremento local.
+- likeState.js centraliza la actualización de likedCortes y catalogData sin duplicar la marca local.
+- Services/Test/FeedbackWriteSecurity.js comprueba likeCount en los tres caminos backend.
+- Services/Test/LikeClientCounter.js añade seis regresiones cliente.
+Validación local:
+- runFeedbackWriteSecurityTests(): 44/44 PASS.
+- LikeClientCounter: 6/6 PASS.
+- Parsing de ui.js, Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, likeState.js y Services/Test/LikeClientCounter.js: 5/5 PASS.
+- Revisión del diff: PASS; sin cambios ajenos a la tarea.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Beta pendiente: navegador real, XHR, endpoints desplegados, Apps Script/Spreadsheet reales y concurrencia física. No se ejecutaron deployments ni se modificaron datos productivos.
+Siguiente iteración: continuar con el siguiente criterio pendiente de AUG-040, una tarea a la vez. No iniciar AUG-041.
+================================================================================

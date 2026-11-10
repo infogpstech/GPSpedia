@@ -225,3 +225,11 @@ Validación local posterior a la corrección:
 - Parsing completo de los cuerpos de ui.js (declaraciones de módulo retiradas para el parser V8), Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, validationSubmission.js y ValidationCacheConfirmation.js: 5/5 PASS.
 - Revisión del diff remoto: los cambios se limitan a la confirmación cliente, las respuestas recorded y sus pruebas/registros.
 Estado: CORREGIDO Y VALIDADO LOCALMENTE. Navegador/Playwright, IndexedDB real, endpoints y Apps Script desplegado quedan diferidos a Beta.
+
+
+ADENDA DE VALIDACIÓN — H-AUD-040-015 — 2026-11-10
+- runFeedbackWriteSecurityTests(): 44/44 PASS con dobles locales de LockService, CacheService, SpreadsheetApp y DriveApp.
+- LikeClientCounter: 6/6 PASS; ejecutada en V8 con assert/console aislados.
+- Parsing de los cuerpos completos de ui.js (declaraciones de módulo retiradas para parser V8), Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, likeState.js y Services/Test/LikeClientCounter.js: 5/5 PASS.
+- Revisión del diff del commit candidato: cambios limitados al contrato likeCount, sincronización del contador cliente, helper, pruebas y registros.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE. Navegador real, XHR, endpoints desplegados y Apps Script/Spreadsheet reales diferidos a Beta.
