@@ -178,3 +178,5 @@ La integración real entre proyectos, la contención de leases bajo concurrencia
 `Services/Test/IdempotenciaIntegrity.js` contiene pruebas lógicas con dobles en memoria. Cargar `Services/admin.js` y el archivo de pruebas en un proyecto temporal, y ejecutar `runIdempotenciaIntegrityTests()`. La batería valida encabezados vacíos con datos, duplicados opId incluso con asociación idéntica, opId/vehicleId/slotIndex/timestamp/status y unicidad de vehicleId en Cortes.
 
 La reconciliación es no destructiva: ninguna ruta automática fusiona, sobrescribe ni elimina filas duplicadas. El error identifica opId y filas; se conservan los originales y se comparan asociación, fecha y estado antes de cualquier corrección manual documentada. La migración solo limpia origen tras verificar cada opId, asociación y estado completed. Fallos reales de Spreadsheet, interrupción y concurrencia se validan en una copia aislada antes de Beta.
+
+La suite también comprueba que una hoja con menos de cinco columnas y registros se rechaza sin intentar leer fuera del rango ni repararla.
