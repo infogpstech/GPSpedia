@@ -532,3 +532,29 @@ Validaciones diferidas a Beta: Apps Script desplegado, Spreadsheet/Drive reales,
 Sin despliegues, cambios de endpoints, datos productivos ni modificaciones a la rama base.
 Siguiente acción: continuar en la próxima iteración con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: VALIDACIÓN DE SOLUCIÓN PyS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Problema resuelto: handleAddSolution aceptaba una cadena compuesta únicamente por espacios. El handler podía marcar el problema como solucionado aunque el campo de solución quedara vacío en términos prácticos.
+Corrección en Services/feedback.js:
+- Normaliza la solución con String(...).trim() antes de validar.
+- Rechaza contenido vacío/solo espacios antes de consultar o modificar la hoja PyS.
+- Aplica el límite de 700 caracteres al texto normalizado y persiste ese valor normalizado.
+Regresión en Services/Test/FeedbackWriteSecurity.js:
+- Verifica que espacios y saltos de línea sean rechazados sin modificar la fila ni registrar actividad.
+- Verifica que una solución válida con espacios externos se almacene normalizada.
+Validación local:
+- runFeedbackWriteSecurityTests(): 24/24 PASS.
+- Sintaxis/parsing: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, Services/Coordinator.js, api-config.js y ui.js — 5/5 PASS.
+- Diff revisado: solo cambia validación/persistencia de handleAddSolution y su prueba correspondiente.
+Commits:
+- 9b079a8f17403782b9847a1eb8de6a95ee7b9f59 — fix(feedback): reject blank problem solutions.
+- 23a072f717f5a7ff1f168d02081557a1ea1a3228 — test(feedback): cover blank solution rejection.
+Estado general del hardening FEEDBACK: EN PROGRESO. Este checkpoint cierra únicamente la validación de handleAddSolution; el siguiente handler pendiente se revisará en la siguiente iteración.
+Validaciones diferidas a Beta: navegador real, Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API y concurrencia de infraestructura. No se ejecutaron ni se simularon.
+Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
+Siguiente acción: continuar en la próxima iteración con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
+================================================================================
