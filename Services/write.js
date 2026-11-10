@@ -1180,10 +1180,10 @@ function getOrCreateImageUploadLedgerSheet_() {
     if (!sheet) sheet = ss.insertSheet(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
 
     if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) {
-        sheet.getRange(1, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length)
-            .setValues([IMAGE_UPLOAD_LEDGER_HEADERS])
-            .setFontWeight("bold")
-            .setBackground("#f0f4f8");
+        const headerRange = sheet.getRange(1, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length);
+        headerRange.setValues([IMAGE_UPLOAD_LEDGER_HEADERS]);
+        headerRange.setFontWeight("bold");
+        headerRange.setBackground("#f0f4f8");
         sheet.setFrozenRows(1);
         SpreadsheetApp.flush();
     }
@@ -1196,6 +1196,18 @@ function getOrCreateImageUploadLedgerSheet_() {
     if (IMAGE_UPLOAD_LEDGER_HEADERS.some((header, index) => headers[index] !== header)) {
         throw new Error("La estructura de ImageUploadLedger no coincide con el contrato esperado; no se creó ningún archivo Drive.");
     }
+    const tokenValues = sheet.getLastRow() > 1
+        ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat()
+        : [];
+    const seenTokens = new Set();
+    tokenValues.forEach(value => {
+        const token = String(value || "").trim();
+        if (!token) return;
+        if (seenTokens.has(token)) {
+            throw new Error("ImageUploadLedger contiene tokens duplicados; no se continuará con cargas ni reconciliaciones.");
+        }
+        seenTokens.add(token);
+    });
     return sheet;
 }
 
