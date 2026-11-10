@@ -1263,3 +1263,29 @@ tareas_completadas_parte1.txt=28660
 Validación: todos los documentos dentro de 180000 caracteres; entradas previas preservadas por concatenación exacta; matriz clasifica las tareas históricas y enlaza las brechas a sus AUG/AUD-T propietarios; no se duplican ni renumeran IDs; Code Review documental aprobado. Sintaxis de código N/A. No se ejecutaron pruebas funcionales de aplicación ni Beta. La rama base no se modifica.
 Este checkpoint es el último documento antes del commit único.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — CIERRE DEL ENTREGABLE DE AUDITORÍA AUG-003 — 2026-11-09
+Repositorio: infogpstech/GPSpedia; rama: GPSpedia2.2.5_work; HEAD inicial: 0b083a6d120de5f78a24210ee9a1cb30c878dabe; rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: reconciliar el estado documental de AUG-003 (auditoría de contrato/alcance Utilities) con el informe AUD-T-033 existente. No implementar el coordinador interproyectos: ese trabajo pertenece a AUG-034 y permanece pendiente.
+Evidencia: AUD-T-033, sesión AUD-20261107-S014/checkpoint AUD-CP-0014, documenta auditoría estática E1 completa, ausencia de protocolo compartido, hallazgos abiertos, ausencia de lock en Services/Utilities.js y falta de migrateYearRanges/callsites. La comparación del commit auditado 32b4898e967aea45a9372aa127cb0735aed99fc5 contra HEAD 7aa7b6e3489af412fe8caa8dbcd529328ab243a8 muestra 205 commits posteriores, pero Services/Utilities.js no cambió; su SHA actual es 1d99373e58c4f0c7ffec06e1db9b53a30d282e33. La revalidación de AUD-T-033 en Auditoría.txt confirma que los ScriptLock de proyectos distintos no se comparten y que AUG-034 sigue pendiente.
+Alcance documental: Tareas_pendientes_parte1.txt, Tareas.txt, Auditoría.txt, ChangesLogs.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Riesgo/limitación: cerrar AUG-003 solo como entregable de auditoría E1 con limitaciones explícitas; no afirmar que exista coordinador ni que haya validación funcional o interproyectos. AUG-034 continúa como implementación pendiente. AUG-010 puede resolver su lock local USERS, pero no debe asumir exclusión AUTH↔USERS.
+Respaldos exactos: Tareas_pendientes_parte1.txt=377b55c592a053cd2fe94e57f2e5df65ccadd1a8; Tareas.txt=c46ec818f5af8fc749257cc6b7687677ddacffd0; Auditoría.txt=976e252aece17783eddc5f74b4cfc88c652a50d2; ChangesLogs.txt=bdafb1901d2080c059d0e19aef8997eae198f220; checkpoint.md=86caf741a3f7a3c7b9c686a6e10cd4624e2ead35; tareas_completadas_parte1.txt=7359b125eca230a1ad03669e380c2d0c43882aac.
+Pruebas: revisión de continuidad del archivo Utilities, comparación de commits, verificación de referencias y consistencia documental. No se modifica código ni se ejecutan pruebas funcionales/Beta.
+Estado inicial: respaldos exactos creados; ningún archivo editado.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-003 AUDIT — 2026-11-09
+Blobs nuevos:
+Tareas_pendientes_parte1.txt=7180a20bfbd2abdc9a6e6e9a932c053ae2f5fc32
+Tareas.txt=3130bd1d60a464caddbbab9efc0facd0ee8501fa
+Auditoría.txt=86df54d4b2687b6539fd178740a0322f8e8cedde
+ChangesLogs.txt=dbb32784829f9167e0ed8dbd29996ad1761fff66
+tareas_completadas_parte1.txt=0cad08e0dccdac1a7bfbc6c8a27d8edd11741721
+checkpoint.md=c1ce313f509f665dc08ff3a1fddd289f2fc54a58
+Revisión: entradas anteriores preservadas por append-only; el cierre se limita a auditoría estática E1; ausencia del coordinador y límites cross-project quedan expresos; AUG-034 permanece pendiente. Todos los archivos dentro del límite 180000. No se modificó código. No se ejecutaron pruebas funcionales/Beta. La rama base permanece intacta. Este checkpoint es el último documento antes del commit único.
+================================================================================

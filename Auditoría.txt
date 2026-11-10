@@ -756,3 +756,13 @@ DECISIONES:
 - VIN, modal (+), PyS, impresión, administración, sesiones, Drive, FEEDBACK y YouTube enlazados a AUG/AUD-T propietarios sin duplicación. Las partes 3/4 que son auditorías, VAL o rectificaciones se clasifican como artefactos de control.
 LIMITACIONES: no se modificó código, servicios, endpoints, configuración, datos, Drive, Spreadsheet ni deployments. No se ejecutaron pruebas funcionales de aplicación ni Beta; no aplican a este entregable documental. Se verificaron fuentes, commits, SHA y referencias.
 ================================================================================
+
+
+================================================================================
+CIERRE DE AUDITORÍA — AUG-003 / AUD-T-033 — 2026-11-09
+Estado: ENTREGABLE DE AUDITORÍA ESTÁTICA E1 COMPLETADO CON LIMITACIONES DOCUMENTADAS.
+Fuente: AUD-T-033, sesión AUD-20261107-S014, checkpoint AUD-CP-0014. La revisión identificó Services/Utilities.js (U mayúscula), su única acción migrateTimestamps, AUTH: NONE, ausencia de lock, limpieza/reconstrucción de Hoja 1, acción migrateYearRanges ausente, ausencia de callsites frontend encontrados y deployment no verificado. Se documentó que no hay protocolo compartido y que los ScriptLock de proyectos Apps Script distintos no se excluyen mutuamente.
+Continuidad verificada: compare 32b4898e967aea45a9372aa127cb0735aed99fc5→7aa7b6e3489af412fe8caa8dbcd529328ab243a8 (205 commits); Services/Utilities.js no aparece en el diff y mantiene SHA 1d99373e58c4f0c7ffec06e1db9b53a30d282e33.
+Separación obligatoria: la auditoría AUG-003 queda cerrada; la implementación del coordinador interproyectos, su recuperación y sus pruebas siguen pendientes en AUG-034. No se afirma validación funcional, E2/E3, deployment ni Beta.
+No se modificó código, Utilities, servicios, endpoints, configuración, datos ni deployments.
+================================================================================

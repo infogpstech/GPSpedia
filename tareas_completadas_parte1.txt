@@ -269,3 +269,12 @@ Entregable: Plan_auditoría/Matriz_Continuidad_Requisitos.md.
 Se clasificaron tareas históricas por continuidad, cancelación, retirada, parcialidad, sustitución y absorción. Tarea 1.6 y los filtros de Tarea 15 están cancelados; la estandarización universal de botones continúa vigente/parcial en AUG-100; los remanentes de filtros permanecen en AUG-099. No se reescribieron partes legacy ni se duplicaron tareas.
 Validación documental y Code Review aprobados. Sintaxis de código: N/A. No se ejecutaron pruebas funcionales de aplicación ni Beta por ser un entregable documental.
 ================================================================================
+
+
+================================================================================
+AUG-003 — Auditar el contrato y alcance real de Services/Utilities.js — 2026-11-09
+Estado: COMPLETADA COMO ENTREGABLE DE AUDITORÍA ESTÁTICA E1, CON LIMITACIONES EXPLÍCITAS.
+Evidencia: AUD-T-033/AUD-20261107-S014/AUD-CP-0014 identifica el contrato actual de Utilities, la ausencia de lock/protocolo compartido, la acción migrateYearRanges ausente, los callsites encontrados y la limitación de deployment. Utilities.js no cambió en los 205 commits posteriores hasta el HEAD auditado.
+No equivale a implementar un coordinador interproyectos ni a aprobar pruebas funcionales. AUG-034 conserva la implementación, recuperación y pruebas locales/aisladas del coordinador como pendiente.
+Validación: continuidad Git y revisión documental PASS. Sin cambios de código ni pruebas Beta.
+================================================================================

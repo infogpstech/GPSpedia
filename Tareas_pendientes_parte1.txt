@@ -1626,3 +1626,13 @@ Se reconciliaron las cuatro partes legacy de Tareas.txt, ChangesLogs, auditoría
 Decisión principal: Tarea 1.6 y la parte de filtros de Tarea 15 están canceladas; la estandarización de botones de Tarea 15 sigue vigente/parcial en AUG-100. Los remanentes de filtros permanecen en AUG-099.
 Validación documental: fuentes/SHA y referencias AUG/AUD-T contrastadas; Markdown y límites revisados. Sintaxis de código: N/A. No se ejecutaron pruebas funcionales de aplicación ni Beta por tratarse de un entregable documental.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-003 — 2026-11-09
+Estado: COMPLETADA COMO ENTREGABLE DE AUDITORÍA ESTÁTICA E1, CON LIMITACIONES EXPLÍCITAS.
+Evidencia: AUD-T-033 (AUD-20261107-S014/AUD-CP-0014) documenta los consumidores/escritores identificados, la fuente Services/Utilities.js, su contrato real, ausencia de lock/protocolo compartido, acción migrateYearRanges ausente, ausencia de callsites frontend encontrados y falta de verificación de deployments. La revalidación en Auditoría.txt confirma que los ScriptLock de proyectos separados no se comparten y que no existe coordinador interproyectos vigente.
+Continuidad: Services/Utilities.js no cambió desde el HEAD auditado 32b4898e967aea45a9372aa127cb0735aed99fc5 hasta 7aa7b6e3489af412fe8caa8dbcd529328ab243a8 (205 commits posteriores; archivo ausente del diff). SHA actual: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33.
+Límite obligatorio: esta marca cierra únicamente la auditoría del contrato/alcance. NO significa que exista un lock compartido, que Utilities coordine otros proyectos ni que haya validación E2/E3/Beta. La implementación del coordinador y sus pruebas locales/aisladas permanecen en AUG-034. No asumir que ScriptLock de AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES es compartido.
+La dependencia AUG-010 puede serializar mutaciones dentro del proyecto USERS y AUTH dentro de su propio proyecto; la coordinación entre proyectos permanece separada en AUG-034.
+================================================================================
