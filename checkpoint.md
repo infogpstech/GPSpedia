@@ -312,6 +312,4 @@ Límites: no se ejecutó Spreadsheet real, deployment, endpoint ni datos product
 No se modificó la rama base.
 ================================================================================
 
-Ajuste final: se añadió rechazo explícito de hojas con menos de cinco columnas cuando contienen registros; se amplió la suite a 13/13 PASS. HEAD previo al checkpoint final: 8aec6a0acf6aaac19e9e9e9b0193047ba2a63ac4.
-
-Revisión final posterior al formateo y al control de columnas incompletas: suite lógica 13/13 PASS; parsing V8 de ADMIN, WRITE y harness PASS. HEAD previo a este cierre: 08c31e6526716c00da04bd269c8be941f65c5aea.
+Revisión final: suite lógica 13/13 PASS; parsing V8 de ADMIN, WRITE y harness PASS. HEAD anterior a este checkpoint: 83aaf46b8e8f859434cf4ba541af74b7cdc4a146.
