@@ -71,7 +71,6 @@ function runFeedbackWriteSecurityTests() {
         test_("El alta de tutorial usa el colaborador derivado de la sesión", function() {
             const originalAssert = assertFeedbackSession;
             const originalGetSafeSheet = getSafeSheet;
-            const originalSpreadsheetApp = SpreadsheetApp;
             const rows = [["Tema", "Imagen", "Video", "Descripción", "Colaborador"]];
             const sheet = {
                 getLastRow: () => rows.length,
@@ -104,7 +103,6 @@ function runFeedbackWriteSecurityTests() {
             } finally {
                 assertFeedbackSession = originalAssert;
                 getSafeSheet = originalGetSafeSheet;
-                SpreadsheetApp = originalSpreadsheetApp;
             }
         });
         test_("El actor anónimo ignora el identificador fabricable del navegador", function() {
