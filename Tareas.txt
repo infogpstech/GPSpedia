@@ -699,6 +699,6 @@ CORR-FEEDBACK-ASSIGN-COLLABORATOR-RETIRE-001 — RETIRAR HANDLER SIN CONSUMIDOR 
 - Alcance: confirmar consumidores/rutas de assignCollaborator, retirar el handler obsoleto y añadir regresión que impida su reintroducción accidental.
 - Evidencia: no existe acción en la política FEEDBACK ni caso en el dispatcher; no hay consumidores en los módulos frontend ni servicios activos inspeccionados. La acción se rechaza como no declarada.
 - Cambios: eliminado handleAssignCollaborator() de Services/feedback.js; FeedbackWriteSecurity comprueba que el símbolo no exista y que la acción siga rechazada.
-- Estado: EN PROGRESO — corrección de fuentes publicada; pendiente ejecutar suite FEEDBACK integral, parsing completo y revisión final del diff en runner local.
+- Estado: COMPLETADA — runFeedbackWriteSecurityTests() 44/44 PASS en runner JavaScript aislado; parsing de los dos archivos 2/2 PASS; diff revisado (seis archivos dentro del alcance, sin cambios ajenos). La ejecución no fue dentro de Apps Script desplegado.
 - Sin cambios de endpoints, deployments, datos productivos ni rama base.
 ================================================================================
