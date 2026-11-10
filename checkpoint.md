@@ -1340,3 +1340,35 @@ Validación:
 Estado: COMPLETADA.
 Siguiente iteración: retomar el siguiente criterio pendiente de AUG-040. No iniciar AUG-041 ni otra tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — CORR-FEEDBACK-ASSIGN-COLLABORATOR-RETIRE-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD al iniciar esta corrección: 27fd4d913d55b736d24d1c0ae5c73168931313eb.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea única: retirar handleAssignCollaborator() porque no tiene consumidor vigente y no está habilitado en la política ni en el dispatcher FEEDBACK.
+Evidencia:
+- Búsqueda en módulos frontend activos y servicios activos inspeccionados: no se encontraron callsites.
+- FEEDBACK_ACTION_PERMISSIONS y FEEDBACK_PUBLIC_ACTIONS no declaran assignCollaborator.
+- doPostInternal_ no contiene un case para assignCollaborator; authorizeFeedbackAction_ rechaza la acción no declarada.
+- Las referencias restantes eran pruebas negativas y documentación.
+Cambios publicados secuencialmente (la integración GitHub disponible genera un commit por archivo):
+- 006acc4b5083b8631337bbcff1fa93e7d71b9eba — retirar handleAssignCollaborator() de Services/feedback.js.
+- 79065bc70f646cb4fd46ab743cd5100d3b2440b0 — ampliar FeedbackWriteSecurity para comprobar que el handler no exista y que la acción continúe rechazada.
+- 4719563a96445ece59769913d73f472e56c5be3b — registrar H-AUD-040-017.
+- 91d558c1a46c73eb4e27c6fbeaad99160cc5314f — registrar cambios en ChangesLogs.txt.
+- 6a75726466f18396abf1804a0c7952380b395b10 — registrar la subtarea y su estado en Tareas.txt.
+Verificación remota de fuente:
+- Services/feedback.js ya no contiene el handler ni referencias a assignCollaborator.
+- FeedbackWriteSecurity.js contiene la aserción typeof handleAssignCollaborator === "undefined" y conserva el rechazo por acción no declarada.
+- Los registros de auditoría, cambios y tareas contienen la entrada correspondiente.
+Validación pendiente:
+- Ejecutar runFeedbackWriteSecurityTests() en el runner local.
+- Ejecutar parsing completo de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js.
+- Revisar el diff final completo y confirmar que no existan cambios ajenos.
+Estas validaciones no se ejecutaron en esta sesión y la tarea permanece EN PROGRESO; no se declara completada.
+No se modificaron endpoints, deployments, datos productivos ni la rama base.
+Siguiente iteración: completar únicamente las validaciones locales pendientes de esta corrección. No iniciar AUG-041 ni otra tarea.
+================================================================================
