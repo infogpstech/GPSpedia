@@ -431,3 +431,30 @@ Validación diferida a Beta: navegador real/DOM, IndexedDB y XHR reales, cancela
 Sin despliegues, cambios de endpoints, datos productivos ni modificaciones a la rama base.
 Siguiente acción: continuar con la siguiente tarea autorizada del plan, respetando sus dependencias; AUG-043 no requiere más trabajo local.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING DE ACCIONES FEEDBACK — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5 (sin modificaciones; comparación remota: rama de trabajo ahead 586, behind 0).
+Contexto: continuación de trabajo sobre contratos de escritura FEEDBACK y validación de identidad. No se declara cerrada una tarea funcional ni se modifica el estado histórico de AUG-043.
+
+CAMBIOS FUNCIONALES PUBLICADOS EN LA RAMA DE TRABAJO
+1. Services/feedback.js: política explícita de acciones permitidas; autenticación y sustitución de identidad del cliente por identidad derivada de sesión; rechazo de acciones no declaradas; retiro del dispatcher assignCollaborator; limitación de frecuencia del formulario público; separación entre sugerencias anónimas y votos verificados; ledger de likes con bloqueo, idempotencia y recuperación; validaciones y manejo compensatorio de persistencia de imagen PyS; validación de unicidad de problema y longitud de solución/prevención.
+2. api-config.js: wrappers recordLike y reportProblem transmiten el payload de sesión y normalizan los argumentos.
+3. ui.js: los callsites de likes, reportes y contribuciones PyS envían getSessionPayload_(); se retiró la identidad autorreportada de la carga de alta PyS.
+4. Services/Coordinator.js: recordLike reserva también el recurso FEEDBACK; se retiró la política del dispatcher assignCollaborator.
+
+VALIDACIÓN LOCAL EJECUTADA EN ESTA ITERACIÓN
+- Parsing/sintaxis JavaScript con new Function: Services/feedback.js, api-config.js, ui.js y Services/Coordinator.js — 4/4 PASS.
+- Comprobación estática: la acción assignCollaborator ya no aparece en los cuatro archivos inspeccionados; el autorizador explícito está presente; recordLike incluye FEEDBACK en recursos coordinados; los callsites principales transmiten payload de sesión.
+- No se ejecutó todavía la suite Services/Test/FeedbackWriteSecurity.js ni pruebas de comportamiento específicas de los cambios de esta iteración. No declarar cobertura funcional completa.
+
+PENDIENTES / SIGUIENTE ACCIÓN
+1. Leer y ejecutar/ajustar Services/Test/FeedbackWriteSecurity.js con dobles aislados para las nuevas rutas, verificando autorización, identidad falsificada, roles, anonimato, rate limit, ledger idempotente/recuperación, IDs duplicados y compensación ante fallos de imagen.
+2. Revisar contratos y llamadores de todas las acciones FEEDBACK afectadas, incluidos reportProblem, recordLike, addProblem, addSolution, addPrevention, suggestCutChange y suggestYear; confirmar que no se retiró una acción todavía consumida fuera de los archivos inspeccionados.
+3. Revisar diff funcional completo y efectos colaterales, corregir hallazgos reproducibles y repetir pruebas afectadas.
+4. Mantener como validaciones Beta las dependencias reales de Apps Script/Spreadsheet/Drive, navegador y servicios externos; no desplegar ni tocar datos productivos.
+
+Estado: EN PROGRESO. La evidencia actual confirma parsing y verificaciones estáticas limitadas; aún no permite cerrar el hardening. Rama base y datos productivos sin cambios.
+================================================================================
