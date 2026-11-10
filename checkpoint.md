@@ -1443,3 +1443,50 @@ Siguiente tarea: AUG-042, conforme al Plan Maestro. Antes de iniciarla, auditar 
 Siguiente paso de publicación: un único commit AUG-039 mediante Git Database API con parent_sha a1e1ae16869c09b94f6784ba3d877a184af5fab1; actualizar exclusivamente GPSpedia2.2.5_work con force:false/expected_sha igual al HEAD padre y verificar commit, padre, archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca intacta.
 Este es el último registro documental de AUG-039 antes de su único commit.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT INICIAL — CORR-AUG039-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work.
+HEAD de trabajo confirmado: 24cccd4e5d1f79c90a6999e40da9edead783aa7c.
+Rama base protegida: GPSpedia2.2.5.
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea anterior auditada: AUG-039 — autorización y minimización de datos en WRITE.
+Commit de origen: 24cccd4e5d1f79c90a6999e40da9edead783aa7c; padre: a1e1ae16869c09b94f6784ba3d877a184af5fab1.
+Tarea correctiva independiente: CORR-AUG039-001 — alinear validación de unicidad global del token y unicidad/estado del perfil entre WRITE, ADMIN y AUTH.
+Hallazgo inicial: H-AUD-039-006. WRITE.getAuthenticatedCollaborator filtra ActiveSessions por userId+sessionToken en lugar de buscar el token globalmente como AUTH.validateAndTouchSession_. ADMIN.assertDeveloperSession repite la búsqueda por par y selecciona el primer perfil Users por ID. Un token duplicado entre cuentas puede superar el guard local usando el userId de la fila duplicada; un ID Users ambiguo puede seleccionar un perfil Developer no representativo.
+Impacto: posible autenticación cruzada entre cuentas y elevación de privilegios en endpoints protegidos, si existen filas duplicadas de token/ID.
+Alcance candidato: Services/write.js:getAuthenticatedCollaborator; Services/admin.js:assertDeveloperSession; pruebas locales aisladas; Auditoría.txt; ChangesLogs.txt; Tareas.txt; checkpoint.md.
+Criterio de corrección: localizar el sessionToken en toda ActiveSessions y exigir exactamente una coincidencia cuyo ID sea el userId solicitado; exigir exactamente un perfil Users activo y no tombstone; conservar expiración, rol Developer, nombre y respuestas actuales. Fail closed ante duplicados/ambigüedad.
+Estado inicial: diagnóstico de Ciclo A identificó el hallazgo; no se ha modificado código ni documentación de auditoría. Implementación pendiente.
+Rama base: sin modificaciones. No se invocaron endpoints ni datos productivos.
+Archivos funcionales y respaldos previos a editar (blob SHA del HEAD actual):
+- Services/write.js: acc0a4b9587c42acfca2ef1172945cdd55b6f1de.
+- Services/admin.js: 7e2fbc8718004019268b9a3b2cf4da69acb93d1a.
+Siguiente acción: auditar de forma completa las funciones/dispatchers/consumidores relacionados y sus dependencias; registrar H-AUD-039-006; después generar respaldos exactos y corregir únicamente los guards de sesión.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-AUG039-001 — 2026-11-10
+Estado: COMPLETADA EN FUENTES; commit único correctivo creado y publicación/verificación pendiente.
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. HEAD padre confirmado: 24cccd4e5d1f79c90a6999e40da9edead783aa7c.
+Rama base: GPSpedia2.2.5. HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se modificó.
+Origen: Ciclo A de AUG-039; H-AUD-039-006.
+Archivos funcionales modificados:
+- Services/write.js — respaldo acc0a4b9587c42acfca2ef1172945cdd55b6f1de; blob corregido 8c443ae0866191fc0c9885f6f06652d9dc3f528a. getAuthenticatedCollaborator busca token globalmente, exige una sola fila y titularidad userId coincidente.
+- Services/admin.js — respaldo 7e2fbc8718004019268b9a3b2cf4da69acb93d1a; blob corregido 8becc72e9bfa143e30674d802557b50b90b1c351. assertDeveloperSession exige token global único, titularidad, Users único/activo y rol Developer server-side.
+Hallazgo: H-AUD-039-006 cerrado en Auditoría.txt.
+Registros:
+- Auditoría.txt — blob 11499f115995122144e4c389d81196ebfc60239a.
+- Tareas.txt — blob 7957b58eaf445dd8690be5595098277b28498bce.
+- ChangesLogs.txt — blob d93ec8f31cdad80f7caf9ed4c6ae6dc5720c2f38.
+- checkpoint.md — checkpoint inicial y final incluidos; esta actualización es el último documento del commit.
+Verificaciones: 13/13 casos aislados sobre funciones reales PASS; sintaxis/parsing de ambos archivos completos PASS; comparación inversa contra respaldos exactos PASS; Code Review/Safety & Side Effects PASS. Solo se modificaron las dos funciones objetivo y los cuatro registros documentales enumerados.
+No ejecutado: Apps Script real, Sheets/Drive, endpoints, navegador, deployments, concurrencia física ni datos productivos. Beta no ejecutada ni declarada.
+Siguiente tarea: AUG-042, Ciclo B, después de verificar este commit correctivo y confirmar que la rama base continúa en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+El SHA del commit que incorpora este checkpoint se identifica en el historial Git de GPSpedia2.2.5_work; no se incluye aquí para evitar referencia circular.
+================================================================================

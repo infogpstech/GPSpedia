@@ -81,13 +81,14 @@ function getSessionExpirationStatus_(row,now=new Date()){
  return{expired:false};
 }
 function assertDeveloperSession(payload){
- const id=payload&&payload.userId,token=payload&&payload.sessionToken;if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
+ const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
- const m=sh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===String(id).trim()&&String(r[2]||"").trim()===String(token).trim());
- if(m.length!==1||getSessionExpirationStatus_(m[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada o expirada.");
- const u=uh.getDataRange().getValues().slice(1).find(r=>String(r[0]||"").trim()===String(id).trim());if(!u)throw new Error("Acceso denegado: sesión no autorizada.");
+ const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>String(r[2]||"").trim()===token);
+ if(tokenMatches.length!==1||String(tokenMatches[0][0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
+ const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
+ const u=userMatches[0],username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
  const role=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();if(role!=="desarrollador")throw new Error("Acceso denegado: sesión no autorizada.");
- const fullName=String(u[6]||"").trim();return{userId:String(id),role:"Desarrollador",fullName,userName:fullName||String(u[1]||"Usuario")};
+ const fullName=String(u[6]||"").trim();return{userId:id,role:"Desarrollador",fullName,userName:fullName||username};
 }
 function extractDriveFileIds(value) {
     const text = String(value || "");

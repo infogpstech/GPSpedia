@@ -379,3 +379,14 @@ AUG-039 — IMPLEMENTACIÓN Y CIERRE LOCAL — 2026-11-10
 - checkpoint.md: registra ciclo A de AUG-147, checkpoint inicial AUG-039, respaldos, auditoría, implementación, pruebas locales, Code Review y checkpoint final.
 Resultado: 34/34 verificaciones locales PASS. Sin pruebas funcionales Beta, endpoints operativos, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+CORR-AUG039-001 — CORRECCIÓN DE VALIDACIÓN DE SESIONES — 2026-11-10
+- Services/write.js:122–131: getAuthenticatedCollaborator busca sessionToken globalmente en ActiveSessions y exige una única coincidencia cuyo ID corresponda a userId.
+- Services/admin.js:83–91: assertDeveloperSession exige token global único, titularidad coincidente, perfil Users único/activo y rol Developer de ese perfil.
+- Auditoría.txt: registra y cierra H-AUD-039-006 con evidencia, impacto, criterio y verificaciones.
+- Tareas.txt: registra y cierra CORR-AUG039-001 como tarea correctiva independiente.
+- checkpoint.md: incorpora checkpoint inicial/final, respaldos, pruebas, Code Review y siguiente tarea.
+Verificaciones: 13/13 casos aislados PASS; sintaxis de ambos archivos PASS; comparación inversa PASS. No se ejecutaron Apps Script real, endpoints, deployments ni datos productivos.
+================================================================================

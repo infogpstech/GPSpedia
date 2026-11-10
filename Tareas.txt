@@ -362,3 +362,25 @@ No se vinculó opId al actor por la incompatibilidad/migración del esquema lega
 Pruebas funcionales integrales, navegador real, concurrencia física de LockService y validación de servicios desplegados quedan exclusivamente para Beta. No se ejecutaron contra producción.
 Siguiente tarea según Plan Maestro: AUG-042. Antes de iniciarla se auditará el entregable AUG-039 conforme al Ciclo A; los cambios ya aprobados de AUG-039 no se revertirán como si fueran cambios fuera de alcance de AUG-042.
 ================================================================================
+
+
+================================================================================
+CORR-AUG039-001 — CORRECCIÓN POST-COMMIT DE AUG-039 — 2026-11-10
+Estado: EN CURSO; bloquea iniciar AUG-042 hasta publicar y verificar el commit correctivo.
+Origen: H-AUD-039-006, detectado durante Ciclo A del commit AUG-039 24cccd4e5d1f79c90a6999e40da9edead783aa7c.
+Alcance: alinear los guards de sesión de Services/write.js y Services/admin.js con la unicidad global del token y la resolución única/activa de Users ya exigidas por AUTH.
+Criterios: token global con exactamente una fila; titularidad userId verificada; perfil Users único y activo; ADMIN requiere Developer de ese único perfil; rechazar duplicados, identidad cruzada, tombstones y perfiles ambiguos.
+Verificaciones requeridas: casos positivos y negativos de token único/duplicado/cruzado, Users único/duplicado/tombstone, rol Developer/no Developer y expiración; sintaxis de ambos archivos; regresión de endpoints WRITE/ADMIN y consumidores existentes; Code Review/Safety & Side Effects.
+Restricciones: no modificar endpoints, deployments, datos productivos, esquema de Sheets, UI ni la rama base. Un único commit correctivo mediante Git Database API.
+Siguiente paso: completar auditoría de los guards/dispatchers y respaldar Services/write.js y Services/admin.js antes de editarlos.
+================================================================================
+
+
+================================================================================
+CORR-AUG039-001 — CIERRE — 2026-11-10
+Estado: COMPLETADA EN FUENTES; commit correctivo pendiente de publicación/verificación en el momento de este registro.
+H-AUD-039-006 RESUELTO. WRITE y ADMIN exigen token globalmente único, titularidad userId exacta y rechazan sesiones duplicadas/cruzadas. ADMIN exige además un único perfil Users activo, username no tombstone y rol Developer server-side.
+Archivos funcionales: Services/write.js y Services/admin.js. Verificaciones aisladas de funciones reales: 13/13 PASS; sintaxis de ambos archivos: PASS; comparación inversa contra respaldos: PASS; Code Review/Safety & Side Effects: PASS.
+No se modificaron endpoints, deployments, datos productivos, esquema de Sheets ni rama base. Validación en Apps Script/deployments y Beta no ejecutada.
+Siguiente tarea: iniciar Ciclo B de AUG-042 — sincronizar el rol y limpiar el estado privilegiado en el cliente — únicamente después de verificar el commit correctivo y confirmar la rama base intacta.
+================================================================================

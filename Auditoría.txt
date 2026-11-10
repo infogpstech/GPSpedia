@@ -915,3 +915,39 @@ Code Review / Safety & Side Effects: revisión de todas las funciones modificada
 
 Límites: no se ejecutaron pruebas funcionales reales de navegador, endpoints operativos, integración con deployments ni datos productivos. Todas las pruebas funcionales integrales quedan reservadas para Beta. No se modificaron deployments ni se invocaron endpoints productivos.
 ================================================================================
+
+
+================================================================================
+H-AUD-039-006 — ALTA — ABIERTO — 2026-11-10
+Origen: Ciclo A de auditoría post-commit de AUG-039, commit 24cccd4e5d1f79c90a6999e40da9edead783aa7c.
+Ubicación:
+- Services/write.js:getAuthenticatedCollaborator(), líneas 122–129.
+- Services/admin.js:assertDeveloperSession(), líneas 83–89.
+- Referencia de autoridad: Services/Auth.js:validateAndTouchSession_(), línea 1194.
+Evidencia:
+1. AUTH busca el sessionToken en todas las filas de ActiveSessions y exige exactamente una coincidencia; después compara el ID propietario con expectedUserId.
+2. WRITE filtra ActiveSessions simultáneamente por userId y sessionToken. Un mismo token repetido en otra cuenta no aumenta el conteo de coincidencias y puede aceptarse con el userId de esa segunda fila.
+3. ADMIN repite la búsqueda por userId+token; además, selecciona el primer registro Users por ID mediante find(), sin exigir unicidad ni comprobar username activo/tombstone.
+4. En consecuencia, una duplicación de token entre cuentas puede permitir autenticación cruzada; un ID Users duplicado puede hacer que ADMIN seleccione un perfil Developer no representativo.
+Impacto: inconsistencia entre la autoridad AUTH y los guards WRITE/ADMIN; riesgo de suplantación entre cuentas y elevación de privilegios ante datos duplicados o inconsistentes.
+Criterio verificable de corrección:
+- En WRITE y ADMIN, buscar el token globalmente en ActiveSessions y exigir exactamente una fila; exigir que su ID coincida con el userId solicitado.
+- En ADMIN, exigir exactamente un perfil Users para ese ID, username no vacío y no tombstone, y rol Developer obtenido exclusivamente de esa fila.
+- Rechazar de forma cerrada tokens ausentes/duplicados/cruzados, perfiles ausentes/duplicados/eliminados y roles no Developer.
+- Conservar la política de expiración, el guard global ADMIN, el contrato de respuestas y las acciones válidas de usuarios Developer.
+Dependencias: esquema ActiveSessions (ID_Usuario columna A, ActiveSessions columna C) y Users (ID A, Nombre_Usuario B, Privilegios D, Nombre_Completo G). AUTH es la referencia de unicidad global y estado activo. No requiere lock compartido entre proyectos.
+Tarea correctiva vinculada: CORR-AUG039-001. No reabrir ni reauditar informes AUD-T históricos.
+================================================================================
+
+
+================================================================================
+CIERRE CORRECTIVO — H-AUD-039-006 — 2026-11-10
+Estado: RESUELTO mediante CORR-AUG039-001.
+Services/write.js:getAuthenticatedCollaborator (líneas 122–131): la búsqueda de ActiveSessions ahora se realiza globalmente por sessionToken; se exige exactamente una fila y que el ID propietario coincida con userId. Se conserva la comprobación de expiración, el perfil Users único/activo, roles reconocidos y nombre completo.
+Services/admin.js:assertDeveloperSession (líneas 83–91): la búsqueda de ActiveSessions ahora se realiza globalmente por token; se exige exactamente una fila cuyo ID coincida. Users se resuelve mediante filtro y se exige exactamente un perfil; username debe estar presente y no ser tombstone; el rol Developer procede exclusivamente de ese perfil. Se conserva el guard global anterior al dispatch y el contrato developerContext.
+Verificación aislada de las funciones reales con dobles de Sheets: 13/13 PASS. WRITE: sesión válida con rol operativo, token duplicado entre cuentas, identidad cruzada, Users duplicado, tombstone y sesión expirada. ADMIN: Developer válido, token duplicado, identidad cruzada, Users duplicado, tombstone, rol no Developer y sesión expirada.
+Sintaxis/parsing de los archivos completos Services/write.js y Services/admin.js: PASS mediante compilación sin ejecución. Comparación inversa contra los respaldos exactos: PASS; únicamente cambió la función objetivo de cada archivo.
+Code Review / Safety & Side Effects: PASS. Se alinea la unicidad de token de WRITE/ADMIN con AUTH.validateAndTouchSession_; no se modifican expiración, esquema, endpoints, router, permisos válidos, payloads, UI ni datos. Las cuentas ambiguas o tombstone ahora fallan cerradas.
+No ejecutado: Apps Script real, Sheets/Drive, endpoints, navegador, deployments, concurrencia física ni datos productivos. No se afirma validación Beta.
+La tarea correctiva queda cerrada localmente y su commit único debe verificarse antes de iniciar AUG-042.
+================================================================================
