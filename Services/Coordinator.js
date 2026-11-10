@@ -6,6 +6,7 @@
 const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.0";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
+const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
 const SHARED_MUTATION_MAX_WAIT_MS = 15000;
 const SHARED_MUTATION_MAX_ACTIVE_LEASES = 20;
 const SHARED_MUTATION_MAX_STATE_LENGTH = 8000;
@@ -56,7 +57,7 @@ function coordinatorPolicy_(service, operation) {
             addLogo: { read: identityRead, write: ["LOGOS", "DRIVE"] },
             updateVehicleField: { read: identityRead, write: ["CORTES", "DRIVE"] },
             uploadAdminImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY"] },
-            migrateCortesOperationIds: { read: identityRead, write: ["CORTES", "IDEMPOTENCIA"] },
+            migrateCortesOperationIds: { maintenance: true }, // Dry-run y confirmación comparten la ventana exclusiva.
             addOrUpdateCut: {
                 read: identityRead,
                 write: ["CORTES", "DRIVE", "IDEMPOTENCIA"],
@@ -167,7 +168,8 @@ function createSharedMutationCoordinator_(dependencies) {
                 typeof lease.requestId !== "string" || !Array.isArray(lease.readResources) ||
                 !Array.isArray(lease.writeResources) || typeof lease.maintenance !== "boolean" ||
                 typeof lease.expiresAt !== "number" || !lease.nestedActions ||
-                typeof lease.nestedActions !== "object") {
+                typeof lease.nestedActions !== "object" ||
+                (lease.phase !== undefined && lease.phase !== "active" && lease.phase !== "draining")) {
                 throw new Error("El estado del coordinador contiene una lease inválida; las operaciones permanecen bloqueadas.");
             }
             if (![...lease.readResources, ...lease.writeResources].every(item => typeof item === "string")) {
@@ -206,8 +208,65 @@ function createSharedMutationCoordinator_(dependencies) {
         return false;
     }
 
+    function describeOperations_(leases, excludeToken) {
+        const labels = [];
+        (leases || []).forEach(lease => {
+            if (!lease || lease.token === excludeToken) return;
+            labels.push(String(lease.service) + "/" + String(lease.operation));
+        });
+        return Array.from(new Set(labels)).sort();
+    }
+
+    function busyOutcome_(leases, excludeToken, maintenanceRequest) {
+        const activeOperations = describeOperations_(leases, excludeToken);
+        let message;
+        if (maintenanceRequest) {
+            message = activeOperations.length
+                ? "Mantenimiento en espera; deben finalizar estas operaciones: " + activeOperations.join(", ") + "."
+                : "Otra ventana de mantenimiento está activa.";
+        } else if ((leases || []).some(lease => lease && lease.maintenance)) {
+            message = "El sistema está en una ventana de mantenimiento; la operación fue detenida por seguridad.";
+        } else {
+            message = activeOperations.length
+                ? "El recurso está ocupado por operaciones activas: " + activeOperations.join(", ") + "."
+                : "El coordinador alcanzó el límite seguro de operaciones simultáneas.";
+        }
+        return { kind: "busy", activeOperations: activeOperations, message: message };
+    }
+
+    function settleMaintenanceTimeout_(service, operation, requestId) {
+        return withCoordinatorLock_(() => {
+            const current = readLeases_();
+            const pruned = pruneExpiredLeases_(current, now());
+            const index = pruned.leases.findIndex(lease =>
+                lease.service === service && lease.operation === operation &&
+                lease.requestId === requestId && lease.maintenance === true);
+            if (index === -1) {
+                if (pruned.changed) saveLeases_(pruned.leases);
+                return busyOutcome_(pruned.leases, null, true);
+            }
+            const ownLease = pruned.leases[index];
+            if (ownLease.phase !== "draining") {
+                if (pruned.changed) saveLeases_(pruned.leases);
+                return { kind: "success", token: ownLease.token, expiresAt: ownLease.expiresAt };
+            }
+            const active = pruned.leases.filter(lease => lease.token !== ownLease.token);
+            if (!active.length) {
+                ownLease.phase = "active";
+                ownLease.expiresAt = now() + SHARED_MUTATION_LEASE_TTL_MS;
+                saveLeases_(pruned.leases);
+                return { kind: "success", token: ownLease.token, expiresAt: ownLease.expiresAt };
+            }
+            const busy = busyOutcome_(active, null, true);
+            pruned.leases.splice(index, 1);
+            saveLeases_(pruned.leases);
+            return busy;
+        });
+    }
+
     function acquire_(service, operation, payload) {
         const policy = coordinatorPolicy_(service, operation);
+        const maintenanceRequest = policy.maintenance === true;
         const requestId = String(payload.requestId || "").trim();
         if (!/^[A-Za-z0-9_-]{20,80}$/.test(requestId)) {
             throw new Error("Identificador de solicitud inválido para el coordinador.");
@@ -230,16 +289,65 @@ function createSharedMutationCoordinator_(dependencies) {
                     if (existing.operation !== operation) {
                         throw new Error("El identificador de solicitud ya pertenece a otra operación.");
                     }
+                    if (maintenanceRequest) {
+                        if (existing.maintenance !== true) {
+                            throw new Error("El identificador de solicitud ya pertenece a una lease no exclusiva.");
+                        }
+                        if (existing.phase === "draining") {
+                            const active = leases.filter(lease => lease.token !== existing.token);
+                            if (!active.length) {
+                                existing.phase = "active";
+                                existing.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
+                                saveLeases_(leases);
+                                return { kind: "success", token: existing.token, expiresAt: existing.expiresAt };
+                            }
+                            if (pruned.changed) saveLeases_(leases);
+                            return busyOutcome_(active, null, true);
+                        }
+                    } else if (existing.phase === "draining") {
+                        throw new Error("La lease de mantenimiento aún no está activa.");
+                    }
                     if (pruned.changed) saveLeases_(leases);
                     return { kind: "success", token: existing.token, expiresAt: existing.expiresAt };
                 }
 
-                const conflict = leases.some(lease => hasConflict_(policy, lease));
-                if (conflict || leases.length >= SHARED_MUTATION_MAX_ACTIVE_LEASES) {
-                    if (pruned.changed) saveLeases_(leases);
-                    return { kind: "busy" };
+                if (maintenanceRequest) {
+                    const otherMaintenance = leases.find(lease => lease.maintenance === true);
+                    if (otherMaintenance) {
+                        if (pruned.changed) saveLeases_(leases);
+                        return busyOutcome_(leases, null, true);
+                    }
+                    const token = uuid() + uuid();
+                    const lease = {
+                        token: token,
+                        service: service,
+                        operation: operation,
+                        requestId: requestId,
+                        readResources: policy.readResources,
+                        writeResources: policy.writeResources,
+                        maintenance: true,
+                        nestedActions: policy.nestedActions,
+                        phase: "draining",
+                        createdAt: currentTime,
+                        expiresAt: currentTime + SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS
+                    };
+                    leases.push(lease);
+                    const active = leases.filter(item => item.token !== token);
+                    if (!active.length) {
+                        lease.phase = "active";
+                        lease.expiresAt = currentTime + SHARED_MUTATION_LEASE_TTL_MS;
+                        saveLeases_(leases);
+                        return { kind: "success", token: token, expiresAt: lease.expiresAt };
+                    }
+                    saveLeases_(leases);
+                    return busyOutcome_(active, null, true);
                 }
 
+                const conflicts = leases.filter(lease => hasConflict_(policy, lease));
+                if (conflicts.length || leases.length >= SHARED_MUTATION_MAX_ACTIVE_LEASES) {
+                    if (pruned.changed) saveLeases_(leases);
+                    return busyOutcome_(conflicts.length ? conflicts : leases, null, false);
+                }
                 const token = uuid() + uuid();
                 const lease = {
                     token: token,
@@ -250,6 +358,7 @@ function createSharedMutationCoordinator_(dependencies) {
                     writeResources: policy.writeResources,
                     maintenance: policy.maintenance,
                     nestedActions: policy.nestedActions,
+                    phase: "active",
                     createdAt: currentTime,
                     expiresAt: currentTime + SHARED_MUTATION_LEASE_TTL_MS
                 };
@@ -262,10 +371,23 @@ function createSharedMutationCoordinator_(dependencies) {
                 return { status: "success", token: outcome.token, expiresAt: outcome.expiresAt };
             }
             if (now() >= deadline) {
+                if (maintenanceRequest) {
+                    const finalOutcome = settleMaintenanceTimeout_(service, operation, requestId);
+                    if (finalOutcome.kind === "success") {
+                        return { status: "success", token: finalOutcome.token, expiresAt: finalOutcome.expiresAt };
+                    }
+                    return {
+                        status: "error",
+                        code: "busy",
+                        activeOperations: finalOutcome.activeOperations || [],
+                        message: finalOutcome.message || "No se pudo completar el drenaje de operaciones antes de iniciar mantenimiento."
+                    };
+                }
                 return {
                     status: "error",
                     code: "busy",
-                    message: "El recurso solicitado está ocupado por otra operación. Reintenta cuando finalice."
+                    activeOperations: outcome.activeOperations || [],
+                    message: outcome.message || "El recurso solicitado está ocupado por otra operación. Reintenta cuando finalice."
                 };
             }
             sleep(250);
@@ -306,6 +428,7 @@ function createSharedMutationCoordinator_(dependencies) {
             const lease = pruned.leases.find(item => item.token === token);
             if (pruned.changed) saveLeases_(pruned.leases);
             if (!lease) throw new Error("La autorización interna de coordinación no es válida o expiró.");
+            if (lease.phase === "draining") throw new Error("La ventana de mantenimiento aún está drenando operaciones y no autoriza acciones.");
 
             const isOwnerAction = lease.service === service && lease.operation === operation;
             const allowedNested = Array.isArray(lease.nestedActions[service])
