@@ -972,13 +972,15 @@ function handleRecordLike(payload) {
         });
         if (found.length > 1) throw new Error("El like tiene registros duplicados en FeedbackLikes; requiere revisión.");
         const counterCell = cuts.getRange(vehicle.rowIndex, utilCol);
-        const rawCount = Number(counterCell.getValue()), currentCount = Number.isFinite(rawCount) && rawCount >= 0 ? rawCount : 0;
+        const rawCountValue = counterCell.getValue();
+        const currentCount = rawCountValue === "" || rawCountValue === null || rawCountValue === undefined ? 0 : Number(rawCountValue);
+        if (!Number.isSafeInteger(currentCount) || currentCount < 0) throw new Error("El contador de likes del corte no es un entero válido; requiere revisión.");
         if (found.length === 1) {
             const existing = found[0], status = String(existing.row[5] || "");
             if (status === "completed") return { status: "success", alreadyLiked: true, message: "Este usuario ya había registrado su like." };
             if (status !== "pending") throw new Error("El registro previo del like tiene un estado desconocido.");
             const previous = Number(existing.row[3]), target = Number(existing.row[4]);
-            if (!Number.isFinite(previous) || target !== previous + 1) throw new Error("El registro pendiente del like tiene contadores inválidos.");
+            if (!Number.isSafeInteger(previous) || previous < 0 || !Number.isSafeInteger(target) || target !== previous + 1) throw new Error("El registro pendiente del like tiene contadores inválidos.");
             if (currentCount === previous) counterCell.setValue(target);
             else if (currentCount !== target) throw new Error("El contador cambió fuera del intento pendiente; requiere reconciliación manual.");
             SpreadsheetApp.flush();
