@@ -1166,6 +1166,97 @@ function getOrCreateSubFolder(parentFolder, name) {
     return findOrCreateSubFolder(parentFolder, name);
 }
 
+const IMAGE_UPLOAD_LEDGER_SHEET_NAME = "ImageUploadLedger";
+const IMAGE_UPLOAD_LEDGER_HEADERS = [
+    "token", "operationKey", "folderId", "mimeType", "sizeBytes", "contentHash",
+    "fileId", "fileUrl", "state", "referenceSheet", "referenceRow", "referenceColumns",
+    "referencesJson", "fileName", "createdAt", "updatedAt", "lastError"
+];
+const IMAGE_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+
+function getOrCreateImageUploadLedgerSheet_() {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
+    if (!sheet) sheet = ss.insertSheet(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
+
+    if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) {
+        sheet.getRange(1, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length)
+            .setValues([IMAGE_UPLOAD_LEDGER_HEADERS])
+            .setFontWeight("bold")
+            .setBackground("#f0f4f8");
+        sheet.setFrozenRows(1);
+        SpreadsheetApp.flush();
+    }
+
+    if (sheet.getLastColumn() < IMAGE_UPLOAD_LEDGER_HEADERS.length) {
+        throw new Error("La hoja ImageUploadLedger tiene una estructura incompleta; no se creó ningún archivo Drive.");
+    }
+    const headers = sheet.getRange(1, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length)
+        .getDisplayValues()[0].map(value => String(value || "").trim());
+    if (IMAGE_UPLOAD_LEDGER_HEADERS.some((header, index) => headers[index] !== header)) {
+        throw new Error("La estructura de ImageUploadLedger no coincide con el contrato esperado; no se creó ningún archivo Drive.");
+    }
+    return sheet;
+}
+
+function findImageUploadLedgerRecord_(sheet, token) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const tokens = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues().flat();
+    const matches = [];
+    tokens.forEach((value, index) => {
+        if (String(value || "").trim() === token) matches.push(index + 2);
+    });
+    if (matches.length > 1) {
+        throw new Error("El token de carga aparece duplicado en ImageUploadLedger; se detuvo la operación por integridad.");
+    }
+    if (!matches.length) return null;
+    return {
+        rowIndex: matches[0],
+        values: sheet.getRange(matches[0], 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues()[0]
+    };
+}
+
+function findImageUploadLedgerOperationKey_(sheet, operationKey) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return [];
+    const values = sheet.getRange(2, 2, lastRow - 1, 1).getDisplayValues().flat();
+    const matches = [];
+    values.forEach((value, index) => {
+        if (String(value || "").trim() === operationKey) matches.push(index + 2);
+    });
+    return matches.map(rowIndex => ({
+        rowIndex: rowIndex,
+        values: sheet.getRange(rowIndex, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues()[0]
+    }));
+}
+
+function saveImageUploadLedgerRecord_(sheet, record) {
+    if (!record || !Array.isArray(record.values) ||
+        record.values.length !== IMAGE_UPLOAD_LEDGER_HEADERS.length) {
+        throw new Error("No se pudo guardar ImageUploadLedger: estructura de registro inválida.");
+    }
+    const rowIndex = record.rowIndex || sheet.getLastRow() + 1;
+    sheet.getRange(rowIndex, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length).setValues([record.values]);
+    SpreadsheetApp.flush();
+
+    const verified = sheet.getRange(rowIndex, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues()[0];
+    [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(index => {
+        if (String(verified[index] === null || verified[index] === undefined ? "" : verified[index]) !==
+            String(record.values[index] === null || record.values[index] === undefined ? "" : record.values[index])) {
+            throw new Error("No se pudo verificar la persistencia del registro de ImageUploadLedger en la fila " + rowIndex + ".");
+        }
+    });
+    record.rowIndex = rowIndex;
+    return record;
+}
+
+function calculateImageUploadContentHash_(bytes) {
+    return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bytes)
+        .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2))
+        .join("");
+}
+
 function buildImageUploadOperationKey(opId, vehicleId, fieldName) {
     const operationId = String(opId || "").trim() || "legacy";
     return operationId + "|" + String(vehicleId || "").trim() + "|" + String(fieldName || "").trim();
@@ -1177,55 +1268,200 @@ function buildImageUploadToken(operationKey, blob, folder, mimeType) {
     return digest.slice(0, 16).map(byte => ((byte + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 
-function findExistingImageUpload(folder, temporaryFilename, expectedSize, token) {
-    const matches = [];
-    const byTemporaryName = folder.getFilesByName(temporaryFilename);
-    while (byTemporaryName.hasNext()) matches.push(byTemporaryName.next());
-    if (!matches.length) {
-        const files = folder.getFiles();
-        while (files.hasNext()) {
-            const file = files.next();
-            if (String(file.getDescription() || "").indexOf("token=" + token + "|") !== -1) matches.push(file);
+function parseImageUploadDescription_(description) {
+    const raw = String(description || "");
+    if (!raw.startsWith("GPSpediaImageUpload|")) return null;
+    const metadata = {};
+    raw.split("|").slice(1).forEach(part => {
+        const separator = part.indexOf("=");
+        if (separator < 1) return;
+        const key = part.slice(0, separator);
+        const value = part.slice(separator + 1);
+        try { metadata[key] = decodeURIComponent(value); }
+        catch (error) { metadata[key] = value; }
+    });
+    return metadata;
+}
+
+function buildImageUploadDescription_(record, state, referencesJson) {
+    return "GPSpediaImageUpload|v=2" +
+        "|operationKey=" + encodeURIComponent(String(record.operationKey || "")) +
+        "|token=" + String(record.token || "") +
+        "|folderId=" + String(record.folderId || "") +
+        "|mimeType=" + encodeURIComponent(String(record.mimeType || "")) +
+        "|sizeBytes=" + String(record.sizeBytes || "") +
+        "|contentHash=" + String(record.contentHash || "") +
+        "|state=" + String(state || "pending") +
+        "|name=" + encodeURIComponent(String(record.fileName || "")) +
+        "|references=" + encodeURIComponent(String(referencesJson || "[]"));
+}
+
+function getImageUploadFileId_(value) {
+    const text = String(value || "");
+    const match = text.match(/[?&]id=([a-zA-Z0-9_-]+)/) || text.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : "";
+}
+
+function verifyImageUploadFile_(file, folder, expected) {
+    if (!file || file.isTrashed()) throw new Error("El archivo asociado a la carga no existe o está en la papelera.");
+    const actualMime = String(file.getMimeType() || "").trim().toLowerCase();
+    if (actualMime !== String(expected.mimeType || "").trim().toLowerCase()) {
+        throw new Error("El archivo Drive recuperado no coincide con el MIME esperado.");
+    }
+    const bytes = file.getBlob().getBytes();
+    if (!bytes || !bytes.length || Number(file.getSize()) !== Number(expected.sizeBytes)) {
+        throw new Error("El tamaño del archivo Drive recuperado no coincide con el payload.");
+    }
+    const contentHash = calculateImageUploadContentHash_(bytes);
+    if (contentHash !== String(expected.contentHash || "")) {
+        throw new Error("El contenido del archivo Drive recuperado no coincide con el hash del payload.");
+    }
+    const parents = file.getParents();
+    let inExpectedFolder = false;
+    while (parents.hasNext()) {
+        if (String(parents.next().getId()) === String(expected.folderId || folder && folder.getId())) {
+            inExpectedFolder = true;
         }
     }
+    if (!inExpectedFolder) throw new Error("El archivo Drive recuperado no pertenece a la carpeta esperada.");
+
+    const expectedToken = buildImageUploadToken(expected.operationKey, file.getBlob(), folder, expected.mimeType);
+    if (expectedToken !== String(expected.token || "")) {
+        throw new Error("El token de operación no coincide con el contenido, la carpeta y el MIME recuperados.");
+    }
+
+    const metadata = parseImageUploadDescription_(file.getDescription());
+    if (metadata) {
+        if (metadata.token && metadata.token !== expected.token) throw new Error("El archivo contiene un token de otra operación.");
+        if (metadata.operationKey && metadata.operationKey !== expected.operationKey) throw new Error("El archivo contiene otra operación.");
+        if (metadata.folderId && metadata.folderId !== expected.folderId) throw new Error("El archivo contiene otra carpeta de destino.");
+        if (metadata.mimeType && metadata.mimeType !== expected.mimeType) throw new Error("El archivo contiene otro MIME.");
+        if (metadata.sizeBytes && Number(metadata.sizeBytes) !== Number(expected.sizeBytes)) throw new Error("El archivo contiene otro tamaño declarado.");
+        if (metadata.contentHash && metadata.contentHash !== expected.contentHash) throw new Error("El archivo contiene otro hash declarado.");
+    }
+    return true;
+}
+
+function findExistingImageUpload(folder, temporaryFilename, expected, token) {
+    const matches = [];
+    const byName = folder.getFilesByName(temporaryFilename);
+    while (byName.hasNext()) matches.push(byName.next());
+    const files = folder.getFiles();
+    while (files.hasNext()) {
+        const file = files.next();
+        const metadata = parseImageUploadDescription_(file.getDescription());
+        if (metadata && metadata.token === token) matches.push(file);
+    }
+
     const unique = new Map();
     matches.forEach(file => unique.set(file.getId(), file));
-    if (unique.size > 1) throw new Error("Se encontraron varios archivos para la misma operación de imagen; no se creó otro archivo.");
+    if (unique.size > 1) {
+        throw new Error("Se encontraron varios archivos para la misma operación de imagen; no se creó ni reutilizó ninguno.");
+    }
     if (!unique.size) return null;
+
     const file = Array.from(unique.values())[0];
-    if (file.isTrashed()) throw new Error("El archivo de imagen asociado a esta operación está en la papelera.");
-    if (!String(file.getMimeType() || "").startsWith("image/")) throw new Error("El archivo existente asociado a la operación no es una imagen.");
-    if (Number(file.getSize()) !== Number(expectedSize)) throw new Error("El archivo existente de la operación no coincide con el contenido recibido.");
+    verifyImageUploadFile_(file, folder, expected);
     return file;
 }
 
+function getImageUploadReferences_(fileId) {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet || sheet.getLastRow() < 2) return [];
+    const fields = [
+        ["imagenVehiculo", COLS_CORTES.imagenVehiculo],
+        ["imgCorte1", COLS_CORTES.imgCorte1],
+        ["imgCorte2", COLS_CORTES.imgCorte2],
+        ["imgCorte3", COLS_CORTES.imgCorte3],
+        ["imgApertura", COLS_CORTES.imgApertura],
+        ["imgCableAlimen", COLS_CORTES.imgCableAlimen],
+        ["imgCableAlimen2", COLS_CORTES.imgCableAlimen2],
+        ["imgCableAlimen3", COLS_CORTES.imgCableAlimen3]
+    ].filter(item => Number(item[1]) > 0);
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const references = [];
+    rows.forEach((row, offset) => {
+        fields.forEach(field => {
+            if (getImageUploadFileId_(row[field[1] - 1]) === fileId) {
+                references.push({
+                    sheet: SHEET_NAMES.CORTES,
+                    row: offset + 2,
+                    field: field[0],
+                    column: field[1],
+                    url: String(row[field[1] - 1] || "")
+                });
+            }
+        });
+    });
+    return references;
+}
+
 function markImageUploadLinked(imageUrl) {
-    const value = String(imageUrl || "");
-    const match = value.match(/[?&]id=([a-zA-Z0-9_-]+)/) || value.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (!match) return false;
+    const fileId = getImageUploadFileId_(imageUrl);
+    if (!fileId) return false;
     try {
-        const file = DriveApp.getFileById(match[1]);
-        const description = String(file.getDescription() || "");
-        if (!description.startsWith("GPSpediaImageUpload|")) return false;
-        const nameMatch = description.match(/(?:^|\|)name=([^|]*)/);
-        if (nameMatch) {
-            const originalName = decodeURIComponent(nameMatch[1]);
-            if (originalName && file.getName() !== originalName) file.setName(originalName);
+        const file = DriveApp.getFileById(fileId);
+        const metadata = parseImageUploadDescription_(file.getDescription());
+        if (!metadata || metadata.v !== "2" || !metadata.token || !metadata.operationKey) return false;
+
+        const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
+        const record = findImageUploadLedgerRecord_(ledgerSheet, metadata.token);
+        if (!record) return false;
+        const values = record.values;
+        const expected = {
+            token: String(values[0]), operationKey: String(values[1]), folderId: String(values[2]),
+            mimeType: String(values[3]), sizeBytes: Number(values[4]), contentHash: String(values[5])
+        };
+        if (metadata.operationKey !== expected.operationKey || metadata.folderId !== expected.folderId ||
+            metadata.contentHash !== expected.contentHash) {
+            throw new Error("Los metadatos Drive no coinciden con ImageUploadLedger.");
         }
-        const linkedDescription = description.replace("|state=pending", "|state=linked");
-        if (linkedDescription !== description) file.setDescription(linkedDescription);
+
+        const folder = DriveApp.getFolderById(expected.folderId);
+        verifyImageUploadFile_(file, folder, expected);
+        const references = getImageUploadReferences_(fileId);
+        if (!references.length) return false;
+
+        values[6] = fileId;
+        values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
+        values[8] = "linked";
+        values[9] = SHEET_NAMES.CORTES;
+        values[10] = references[0].row;
+        values[11] = references.map(item => item.field).join(",");
+        values[12] = JSON.stringify(references);
+        values[14] = values[14] || new Date().toISOString();
+        values[15] = new Date().toISOString();
+        values[16] = "";
+        saveImageUploadLedgerRecord_(ledgerSheet, record);
+
+        try {
+            const originalName = String(values[13] || "");
+            if (originalName && file.getName() !== originalName) file.setName(originalName);
+            const linkedDescription = buildImageUploadDescription_({
+                operationKey: expected.operationKey, token: expected.token, folderId: expected.folderId,
+                mimeType: expected.mimeType, sizeBytes: expected.sizeBytes, contentHash: expected.contentHash,
+                fileName: originalName
+            }, "linked", JSON.stringify(references));
+            file.setDescription(linkedDescription);
+            if (String(file.getDescription() || "") !== linkedDescription) {
+                Logger.log("ImageUploadLedger quedó linked, pero Drive no confirmó la descripción final para " + fileId + ".");
+            }
+        } catch (descriptionError) {
+            Logger.log("ImageUploadLedger quedó linked; no se pudo actualizar la descripción Drive: " + descriptionError.message);
+        }
         return true;
     } catch (error) {
-        Logger.log("No se pudo marcar la imagen como vinculada a Spreadsheet: " + error.message);
+        Logger.log("No se pudo reconciliar la carga de imagen " + fileId + ": " + error.message);
         return false;
     }
 }
 
-
-
 function uploadImageToDrive(imageData, filename, folder, operationKey) {
     if (!imageData) return "";
     if (!folder || typeof folder.getId !== "function") throw new Error("No se encontró una carpeta válida para guardar la imagen.");
+
     let blob;
     let mimeType = "";
     if (/^https?:\/\//i.test(String(imageData))) {
@@ -1233,34 +1469,119 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
         const responseCode = response.getResponseCode();
         if (responseCode < 200 || responseCode >= 300) throw new Error("No se pudo descargar la imagen de origen. HTTP " + responseCode + ".");
         blob = response.getBlob();
-        mimeType = String(blob.getContentType() || "");
-        if (!mimeType.startsWith("image/")) throw new Error("La URL de origen no devolvió un archivo de imagen válido.");
+        mimeType = String(blob.getContentType() || "").split(";")[0].trim().toLowerCase();
     } else if (typeof imageData === "string" && imageData.startsWith("data:image/")) {
         const parts = imageData.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/i);
         if (!parts) throw new Error("Los datos Base64 de la imagen tienen un formato inválido.");
-        mimeType = parts[1];
+        mimeType = String(parts[1] || "").toLowerCase();
         const decodedData = Utilities.base64Decode(parts[2]);
         if (!decodedData || !decodedData.length) throw new Error("La imagen recibida está vacía.");
         blob = Utilities.newBlob(decodedData, mimeType);
     } else {
         throw new Error("El formato de imagen recibido no es compatible.");
     }
-    if (!blob.getBytes().length) throw new Error("La imagen recibida está vacía.");
+
+    const bytes = blob.getBytes();
+    if (!bytes || !bytes.length) throw new Error("La imagen recibida está vacía.");
+    if (!mimeType.startsWith("image/")) throw new Error("El MIME recibido no corresponde a una imagen.");
+    if (bytes.length > IMAGE_UPLOAD_MAX_BYTES) {
+        throw new Error("La imagen supera el límite de 10 MB por archivo.");
+    }
+
+    const contentHash = calculateImageUploadContentHash_(bytes);
+    let stableOperationKey = String(operationKey || "").trim();
+    if (!stableOperationKey) stableOperationKey = "legacy|" + folder.getId() + "|" + String(filename || "") + "|" + contentHash;
+    else if (stableOperationKey.startsWith("legacy|")) stableOperationKey += "|" + contentHash;
 
     const extension = getExtensionFromMimeType(mimeType);
-    const originalFilename = filename + extension;
-    const token = buildImageUploadToken(operationKey || (folder.getId() + "|" + filename), blob, folder, mimeType);
+    const originalFilename = String(filename || "imagen") + extension;
+    const token = buildImageUploadToken(stableOperationKey, blob, folder, mimeType);
     const temporaryFilename = "__GPSpediaUpload_" + token + extension;
-    blob.setName(temporaryFilename);
-    const file = findExistingImageUpload(folder, temporaryFilename, blob.getBytes().length, token) || folder.createFile(blob);
+    const expected = {
+        token: token, operationKey: stableOperationKey, folderId: String(folder.getId()),
+        mimeType: mimeType, sizeBytes: bytes.length, contentHash: contentHash
+    };
 
-    const savedOriginalName = originalFilename;
-    const previousDescription = String(file.getDescription() || "");
-    const description = "GPSpediaImageUpload|token=" + token + "|state=pending|name=" + encodeURIComponent(savedOriginalName);
-    if (previousDescription !== description) file.setDescription(description);
-    return "https://drive.google.com/uc?export=view&id=" + file.getId();
+    // La reserva durable se confirma antes de crear o reutilizar un archivo Drive.
+    const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
+    let record = findImageUploadLedgerRecord_(ledgerSheet, token);
+    if (record) {
+        const old = record.values;
+        if (String(old[1]) !== expected.operationKey || String(old[2]) !== expected.folderId ||
+            String(old[3]) !== expected.mimeType || Number(old[4]) !== expected.sizeBytes ||
+            String(old[5]) !== expected.contentHash) {
+            throw new Error("El token ya está registrado con otra operación, carpeta, MIME, tamaño o contenido.");
+        }
+        if (String(old[8]) === "requires_review") {
+            throw new Error("La carga tiene estado requires_review; no se reutilizó el archivo.");
+        }
+    } else {
+        if (!stableOperationKey.startsWith("legacy|")) {
+            const previousOperations = findImageUploadLedgerOperationKey_(ledgerSheet, stableOperationKey);
+            if (previousOperations.some(item => String(item.values[0]) !== token)) {
+                throw new Error("El opId/campo ya está asociado a otro contenido; no se creó un segundo archivo.");
+            }
+        }
+        const timestamp = new Date().toISOString();
+        record = {
+            rowIndex: 0,
+            values: [
+                token, stableOperationKey, expected.folderId, mimeType, bytes.length, contentHash,
+                "", "", "pending", "", "", "", "[]", originalFilename, timestamp, timestamp, ""
+            ]
+        };
+        saveImageUploadLedgerRecord_(ledgerSheet, record);
+    }
+
+    let file = null;
+    if (String(record.values[6] || "").trim()) {
+        try {
+            file = DriveApp.getFileById(String(record.values[6]).trim());
+        } catch (lookupError) {
+            file = null;
+        }
+        if (!file) {
+            file = findExistingImageUpload(folder, temporaryFilename, expected, token);
+            if (!file) {
+                record.values[8] = "file_missing";
+                record.values[16] = "El ID registrado no está disponible y no se encontró el token en la carpeta.";
+                record.values[15] = new Date().toISOString();
+                saveImageUploadLedgerRecord_(ledgerSheet, record);
+                throw new Error("El archivo de esta operación no está disponible; se conservó el registro para reconciliación.");
+            }
+        } else {
+            verifyImageUploadFile_(file, folder, expected);
+        }
+    } else {
+        file = findExistingImageUpload(folder, temporaryFilename, expected, token);
+    }
+
+    if (!file) {
+        blob.setName(temporaryFilename);
+        file = folder.createFile(blob);
+    }
+    verifyImageUploadFile_(file, folder, expected);
+
+    const url = "https://drive.google.com/uc?export=view&id=" + file.getId();
+    const description = buildImageUploadDescription_({
+        operationKey: stableOperationKey, token: token, folderId: expected.folderId,
+        mimeType: mimeType, sizeBytes: bytes.length, contentHash: contentHash,
+        fileName: originalFilename
+    }, "pending", "[]");
+    file.setDescription(description);
+    if (String(file.getDescription() || "") !== description) {
+        throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga; el registro pending se conservó.");
+    }
+
+    record.values[6] = file.getId();
+    record.values[7] = url;
+    if (String(record.values[8]) !== "linked") record.values[8] = "pending";
+    record.values[13] = originalFilename;
+    record.values[15] = new Date().toISOString();
+    record.values[16] = "";
+    saveImageUploadLedgerRecord_(ledgerSheet, record);
+    return url;
 }
-
 
 function getExtensionFromMimeType(mimeType) {
     const mimeMap = {
