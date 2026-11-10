@@ -402,12 +402,19 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
 
     const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
     const currentImageUrl = response.superseded
-        ? (response.currentImageUrl === null || response.currentImageUrl === undefined
-            ? String(response.imageUrl) : String(response.currentImageUrl))
+        ? String(response.currentImageUrl || "")
         : String(response.imageUrl);
-    if (editedItemBuffer) editedItemBuffer[operation.fieldName] = currentImageUrl;
     if (currentImageUrl) imgElement.src = currentImageUrl;
     else imgElement.removeAttribute("src");
+
+    const baselinePersisted = commitAdminImageReplacementBaseline_(
+        operation.vehicleId, operation.fieldName, currentImageUrl
+    );
+    if (!baselinePersisted) {
+        pendingAdminImageUploads.set(key, operation);
+        showSavingIndicator("warning", "El servidor confirmó la imagen, pero no se pudo guardar la nueva base local. El intento se conserva para reconciliarlo antes de descartar.");
+        return;
+    }
 
     const removed = await offline.removeAdminImageUploadPendingOperation(
         operation.vehicleId, operation.fieldName, operation.id
@@ -436,7 +443,6 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
         showSavingIndicator("success", "Imagen guardada");
     }
 }
-
 function convertImageToEditable(imgElement, vehicleId, fieldName) {
     imgElement.style.cursor = "pointer";
     imgElement.style.border = "2px dashed #007bff";
