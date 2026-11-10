@@ -675,6 +675,10 @@ function isVerifiedSuggestionActorKey_(actorKey) {
     return /^user:[A-Za-z0-9_.-]{1,100}$/.test(String(actorKey || ""));
 }
 
+function getAppliedSuggestionActorKey_(actorKey) {
+    return "applied:" + String(actorKey || "").trim();
+}
+
 function handleSuggestYearLocked(payload) {
     const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
@@ -764,9 +768,18 @@ function handleSuggestYearLocked(payload) {
     }
 
     const existingData = sheet.getDataRange().getValues().slice(1);
-    const alreadyReported = existingData.some(row =>
+    const matchesActorAndSuggestion = row =>
         String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === normalizedVehicleId &&
-        Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
+        Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year;
+    const alreadyApplied = existingData.some(row =>
+        matchesActorAndSuggestion(row) &&
+        String(row[actorColumn - 1] || "").trim() === getAppliedSuggestionActorKey_(actorKey)
+    );
+    if (alreadyApplied) {
+        return { status: "info", message: "Esta sugerencia ya fue atendida; no se registró nuevamente." };
+    }
+    const alreadyReported = existingData.some(row =>
+        matchesActorAndSuggestion(row) &&
         String(row[actorColumn - 1] || "").trim() === actorKey
     );
 
@@ -891,8 +904,9 @@ function handleSuggestYearLocked(payload) {
                 const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
                 const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
                 const rowActorKey = String(row[actorColumn - 1] || "").trim();
-                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey && isPositiveYearSuggestionRow(row)) {
-                    feedbackSheet.deleteRow(i + 1);
+                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey &&
+                    isPositiveYearSuggestionRow(row) && !rowActorKey.startsWith("applied:")) {
+                    feedbackSheet.getRange(i + 1, actorColumn).setValue(getAppliedSuggestionActorKey_(rowActorKey));
                 }
             }
         }

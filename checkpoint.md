@@ -922,3 +922,39 @@ Siguiente iteración: revisar una sola condición funcional pendiente de suggest
 Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
 Sin despliegues, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: IDEMPOTENCIA TRAS AMPLIACIÓN — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 5d2dd63d54cd9bda0df4ca0681b2437cd2fa0814.
+TAREA ÚNICA
+Corregir el reintento de una sugerencia positiva después de que sus aportes ya alcanzaron el umbral y la ampliación fue aplicada.
+HALLAZGO
+La limpieza eliminaba las filas que también servían para deduplicar al actor. Un reintento posterior podía insertar de nuevo el aporte y registrar actividad duplicada.
+CORRECCIÓN
+- Se conservan las filas atendidas y se marca la clave de actor con el prefijo applied: en la columna suggestionActorKey ya existente.
+- Los actores marcados dejan de contar como aportantes verificados activos.
+- Un reintento del mismo actor, vehículo y año se reconoce antes de insertar; devuelve estado informativo y no registra actividad.
+- No se modifica el esquema de Feedbacks ni se agregan columnas.
+PRUEBAS DE REGRESIÓN
+- Ampliación superior con «Modelo confirmado»: tres aportes marcados; reintento del tercer actor no crea filas ni actividad.
+- Ampliación inferior y combinación de respuestas positivas: los aportes atendidos se marcan; negativos, otros años y otros vehículos se conservan.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 36/36 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Pruebas aisladas con mocks ejecutadas en entorno JavaScript local del agente.
+VALIDACIÓN BETA PENDIENTE
+Apps Script desplegado, Spreadsheet/Drive reales, navegador, despliegues, concurrencia física y datos productivos. No ejecutados ni simulados; no bloquean el cierre local.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-005)
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear. No iniciar AUG-041 ni otra tarea.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

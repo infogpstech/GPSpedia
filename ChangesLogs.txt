@@ -750,3 +750,6 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Services/Test/FeedbackWriteSecurity.js: añade regresión mixta que verifica la eliminación de ambos tipos de aporte y la conservación de respuestas negativas, otros años y otros vehículos.
 - Auditoría.txt: registra el hallazgo H-AUD-040-004.
 ================================================================================
+
+
+[2026-11-10] AUG-040 / suggestYear — Corrección de reintentos posteriores a una ampliación. Se conserva cada aporte positivo atendido con el prefijo applied: en suggestionActorKey, excluyéndolo del umbral y reconociéndolo en reintentos posteriores. Se evita insertar filas y actividad duplicadas. Archivos: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, Auditoría.txt y checkpoint.md.

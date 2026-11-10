@@ -66,3 +66,25 @@ Validación:
 - Pruebas aisladas con mocks; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
 Estado: CORREGIDO Y VALIDADO LOCALMENTE.
 ================================================================================
+
+================================================================================
+ID del hallazgo: H-AUD-040-005
+Título: Los reintentos posteriores a una ampliación vuelven a registrar aportes ya atendidos
+Fecha: 2026-11-10
+Severidad: Media
+Archivo: Services/feedback.js — handleSuggestYearLocked(), deduplicación y limpieza posterior a la ampliación.
+Evidencia:
+- Al alcanzar el umbral, la limpieza eliminaba las filas positivas que habían participado en la ampliación.
+- Si el cliente repetía la misma solicitud después de que la operación ya había aplicado el rango, la fila ya no existía para deduplicar al actor.
+- El handler podía insertar una nueva fila y generar actividad adicional, aunque la solicitud anterior ya se había aplicado correctamente.
+Impacto: reintentos de una operación exitosa podían producir registros y actividad duplicados y perder la trazabilidad del aporte atendido.
+Corrección:
+- En vez de eliminar el registro atendido, conservarlo y marcar su suggestionActorKey con el prefijo applied:.
+- Las claves marcadas dejan de cumplir el patrón de aportante verificado y, por tanto, no vuelven a sumar para el umbral.
+- Antes de insertar, detectar la marca aplicada para el mismo vehículo, año y actor; responder que ya fue atendida sin insertar ni generar actividad.
+- Se conserva el historial en la misma columna existente; no se agrega ni altera el esquema de la hoja.
+Prueba: el flujo aislado alcanza el umbral, aplica el rango, marca los tres aportes y repite la solicitud del tercer actor. Verifica respuesta informativa, ausencia de nueva fila y ausencia de actividad duplicada. Las pruebas de ampliación inferior y mixta verifican que los aportes atendidos se marquen y que los registros ajenos se conserven.
+Validación local: runFeedbackWriteSecurityTests() 36/36 PASS; sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
+Límites: mocks locales; Apps Script real, Spreadsheet/Drive, navegador, deployments y datos productivos no ejecutados. Validación de integración diferida a Beta.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE.
+================================================================================

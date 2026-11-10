@@ -315,8 +315,15 @@ function runFeedbackWriteSecurityTests() {
                 const result=handleSuggestYear({...actor,vehicleId:"VEH-MODEL-CONFIRM",newYear:2025,response:"Modelo confirmado"});
                 assert_(result.status==="success"&&result.message.includes("3 aportantes distintos"),"El tercer aporte Modelo confirmado debe alcanzar el umbral: "+JSON.stringify(result));
                 assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2018&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2025,"Debe ampliar el rango hasta el año confirmado.");
-                assert_(feedback.rows.length===1,"Al aplicar el rango deben limpiarse los tres aportes positivos ya atendidos.");
-                assert_(activityCount===2,"Debe registrar el aporte nuevo y la aplicación del rango.");
+                assert_(feedback.rows.length===4,"Los tres aportes atendidos deben conservarse como marcas de deduplicación.");
+                const appliedActors=feedback.rows.slice(1).map(row=>row[9]);
+                assert_(appliedActors.includes("applied:user:USR-A")&&appliedActors.includes("applied:user:USR-B")&&appliedActors.includes("applied:user:USR-C"),
+                    "Los tres aportes aplicados deben quedar marcados sin seguir contando como votos activos.");
+                const retry=handleSuggestYear({...actor,vehicleId:"VEH-MODEL-CONFIRM",newYear:2025,response:"Modelo confirmado"});
+                assert_(retry.status==="info"&&retry.message.includes("ya fue atendida"),
+                    "El reintento después de la ampliación debe reconocerse como ya atendido: "+JSON.stringify(retry));
+                assert_(feedback.rows.length===4,"El reintento posterior no debe insertar otra fila.");
+                assert_(activityCount===2,"El reintento posterior no debe generar actividad duplicada.");
             } finally {
                 assertFeedbackSession=originalAssert;getSpreadsheet=originalGetSpreadsheet;getSafeSheet=originalGetSafeSheet;
                 logUserActivity=originalLog;LockService=originalLock;SpreadsheetApp=originalSpreadsheetApp;
@@ -376,9 +383,11 @@ function runFeedbackWriteSecurityTests() {
                 assert_(result.status==="success"&&result.message.includes("3 aportantes distintos"),"El tercer voto «Es más antiguo» debe alcanzar el umbral: "+JSON.stringify(result));
                 assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2015&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"Debe ampliar únicamente el límite inferior a 2015.");
                 const remainingIds=feedback.rows.slice(1).map(row=>row[0]);
-                assert_(remainingIds.length===3,"Deben permanecer los tres registros ajenos al ciclo atendido: "+JSON.stringify(remainingIds));
-                assert_(remainingIds.includes("F-OTHER-YEAR")&&remainingIds.includes("F-NEGATIVE")&&remainingIds.includes("F-OTHER-VEHICLE"),"La limpieza no debe eliminar votos de otro año, respuestas negativas ni otro vehículo.");
-                assert_(!remainingIds.includes("F-OLD-A")&&!remainingIds.includes("F-OLD-B"),"Los dos votos inferiores atendidos deben eliminarse.");
+                assert_(remainingIds.length===6,"Los registros originales deben conservarse con marcas de atención, además del voto nuevo: "+JSON.stringify(remainingIds));
+                assert_(remainingIds.includes("F-OTHER-YEAR")&&remainingIds.includes("F-NEGATIVE")&&remainingIds.includes("F-OTHER-VEHICLE"),"La atención no debe alterar votos de otro año, respuestas negativas ni otro vehículo.");
+                const appliedRows=feedback.rows.slice(1).filter(row=>String(row[9]||"").startsWith("applied:"));
+                assert_(appliedRows.length===3&&appliedRows.some(row=>row[9]==="applied:user:USR-A")&&appliedRows.some(row=>row[9]==="applied:user:USR-B")&&appliedRows.some(row=>row[9]==="applied:user:USR-C"),
+                    "Los tres aportes que alcanzaron el umbral deben marcarse como atendidos.");
                 assert_(activities.some(a=>a[2]==="apply_year_suggestion"),"Debe registrarse la aplicación del rango.");
             } finally {
                 assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
@@ -438,9 +447,11 @@ function runFeedbackWriteSecurityTests() {
                 assert_(result.status==="success","La ampliación inferior debe aplicarse: "+JSON.stringify(result));
                 assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2015&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"Debe ampliar el límite inferior a 2015.");
                 const remaining=feedback.rows.slice(1).map(row=>row[0]);
-                assert_(remaining.length===3,"Deben quedar únicamente los registros que no participaron en la ampliación: "+JSON.stringify(remaining));
-                assert_(remaining.includes("F-NEGATIVE")&&remaining.includes("F-DIFFERENT-YEAR")&&remaining.includes("F-OTHER-VEHICLE"),"La limpieza debe conservar respuestas negativas, otros años y otros vehículos.");
-                assert_(!remaining.includes("F-LOW-A")&&!remaining.includes("F-LOW-B")&&!remaining.includes("F-OTHER-YEAR"),"Debe limpiar todos los aportes positivos que contaron para el año 2015.");
+                assert_(remaining.length===6,"Los seis registros deben conservarse para mantener la deduplicación y el historial: "+JSON.stringify(remaining));
+                assert_(remaining.includes("F-NEGATIVE")&&remaining.includes("F-DIFFERENT-YEAR")&&remaining.includes("F-OTHER-VEHICLE"),"La atención debe conservar respuestas negativas, otros años y otros vehículos.");
+                const appliedRows=feedback.rows.slice(1).filter(row=>String(row[9]||"").startsWith("applied:"));
+                assert_(appliedRows.length===3&&appliedRows.some(row=>row[9]==="applied:user:USR-A")&&appliedRows.some(row=>row[9]==="applied:user:USR-B")&&appliedRows.some(row=>row[9]==="applied:user:USR-C"),
+                    "Debe marcar los aportes positivos mixtos que alcanzaron el umbral.");
             } finally {
                 assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
                 LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
