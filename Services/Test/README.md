@@ -189,3 +189,10 @@ Reglas de validación aplicadas: `opId` debe cumplir `OP-` seguido de 1–100 ca
 `Services/Test/VinTestigoIntegrity.js` contiene pruebas lógicas con dobles en memoria. Cargar `Services/admin.js` y el archivo de pruebas en un proyecto temporal, y ejecutar `runVinTestigoIntegrityTests()`. Verifica AT:AV fijas con columnas adicionales, creación desde AS, encabezados testigo/VIN duplicados o fuera de posición, datos sin encabezado, JSON canónico, posiciones vacías, delimitadores heredados, opId heredados y entradas inválidas.
 
 Regla de esquema: `activaTestigo1..3` deben estar en AT:AV. `VIN` se resuelve por encabezado único y puede estar en otra posición; la migración controlada lo establece en AQ. El JSON array es canónico y preserva slots vacíos. Para compatibilidad histórica se admiten cadenas delimitadas por coma, `/`, `\\` y `;`; no se reinterpretan JSON mal formados ni se aceptan tokens inválidos, duplicados o más de tres posiciones. Las pruebas mock no sustituyen la validación de una copia real de Spreadsheet.
+
+
+## Ledger de cargas generales (AUG-037)
+
+`Services/Test/ImageUploadLedger.js` contiene 18 pruebas lógicas con dobles en memoria. Cargar `Services/admin.js` y el archivo de pruebas en un proyecto temporal, y ejecutar `runImageUploadLedgerTests()`. Verifica metadatos v2, extracción de fileId, hash, carpeta, MIME, tamaño, reutilización por token, duplicados, esquema/registro del ledger, límite 10 MB, clasificación de referencias y fallo cerrado cuando Spreadsheet no permite persistir el intento.
+
+La acción ADMIN `reconcilePendingImageUploads` ejecuta simulación por defecto. Para aplicar estados se requiere confirm:true; procesa hasta 100 filas por llamada y devuelve nextStartRow cuando hay más. Los estados pending_unreferenced y orphan_candidate no autorizan borrar archivos. file_missing y requires_review se conservan para revisión. La prueba real con Drive y Spreadsheet aislados sigue siendo obligatoria antes de Beta.
