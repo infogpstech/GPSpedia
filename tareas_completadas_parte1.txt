@@ -3,13 +3,7 @@ Fecha de corte: 2026-11-09
 Repositorio: infogpstech/GPSpedia
 Rama de trabajo: GPSpedia2.2.5_work
 
-NORMAS INTERNAS
-1. Registro independiente y append-only. No borrar, reordenar ni sobrescribir cierres; las rectificaciones se agregan como adendas.
-2. Una tarea de implementación solo ingresa aquí después de revisar sintácticamente todos los archivos modificados con analizador apropiado y registrar herramienta, versión, archivos y resultado.
-3. La sintaxis aprobada es necesaria, pero no suficiente: deben completarse pruebas funcionales/de regresión aplicables, comparación post-edición, Code Review, revisión de efectos colaterales y verificación del commit único.
-4. No convertir «implementada», «revisada estáticamente», «validada parcialmente» o una marca histórica [X] en COMPLETADA por sí solas.
-5. Para tareas documentales, declarar sintaxis de código N/A y validar estructura, integridad, referencias, límite de caracteres y revisión documental.
-6. Máximo 180,000 caracteres Unicode; rotar sin pérdida conforme a Plan_auditoría/Normas_Gestion_Documental.md.
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
 
 ## TAREAS QUE CUMPLEN LA COMPUERTA
 
