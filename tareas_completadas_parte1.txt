@@ -313,3 +313,12 @@ Commit: consultar historial de GPSpedia2.2.5_work.
 DOC-TRACE-042-001 — COMPLETADA — 2026-11-10
 Se añadió adenda append-only que corrige la ubicación de saveUnusedInventory a ui.js:5561 y confirma las referencias ui.js:4841, 4858 y 4864. Sin cambios funcionales.
 ================================================================================
+
+
+================================================================================
+AUG-155 — COMPLETADA — 2026-11-10
+Coordinador compartido de mutaciones entre AUTH, USERS, WRITE, ADMIN y FEEDBACK.
+Sintaxis 10/10 PASS; suite lógica 17/17 PASS; wrappers 7/7 PASS; políticas 61/61 cubiertas; paridad AUTH/USERS producción-prueba PASS; Code Review/Safety & Side Effects PASS.
+No se ejecutaron deployments, HTTP, Apps Script real, Spreadsheet/Drive reales ni concurrencia real. La configuración y validación integrada quedan diferidas a Beta. UTILITIES excluido por estar retirado del flujo activo. AUG-034 permanece como tarea independiente.
+Commit único: consultar historial de GPSpedia2.2.5_work.
+================================================================================

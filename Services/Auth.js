@@ -425,7 +425,41 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.TEXT);
 }
 
+
+function isSharedMutationAction_(action) {
+    return ["login","validateSession","touchSession","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].includes(action);
+}
+
 function doPost(e) {
+    let request;
+    try {
+        request = JSON.parse(e && e.postData && e.postData.contents || "{}");
+    } catch (error) {
+        return doPostInternal_(e);
+    }
+    if (!request || typeof request !== "object") return doPostInternal_(e);
+    const action = String(request.action || "");
+    if (!isSharedMutationAction_(action)) return doPostInternal_(e);
+
+    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    const nestedToken = String(payload.__sharedMutationToken || "").trim();
+    try {
+        return withSharedMutationLease_("AUTH", action, function(token) {
+            
+            const wrappedEvent = Object.assign({}, e || {}, {
+                postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
+            });
+            return doPostInternal_(wrappedEvent);
+        }, nestedToken ? { nestedToken: nestedToken } : undefined);
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            status: "error",
+            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+        })).setMimeType(ContentService.MimeType.TEXT);
+    }
+}
+
+function doPostInternal_(e) {
     let response;
     try {
         logToSheet('INFO', 'doPost received a request.');
@@ -898,6 +932,12 @@ function parseRoleRevocationMarker_(raw) {
 function parseSharedRoleRevocationMarker_(value) {const raw=String(value||'');if(!raw.startsWith(ROLE_REVOCATION_SHARED_PREFIX))return null;return parseRoleRevocationMarker_(raw.slice(ROLE_REVOCATION_SHARED_PREFIX.length));}
 function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.invalid&&normalizeUserId(a.userId)===normalizeUserId(b.userId)&&String(a.oldRole)===String(b.oldRole)&&String(a.newRole)===String(b.newRole)&&Number(a.markedAt)===Number(b.markedAt));}
 function migrateLegacyRoleRevocationMarkersToSharedState_() {
+    return withSharedMutationLease_("AUTH", "migrateLegacyRoleRevocationMarkersToSharedState", function() {
+        return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
+    });
+}
+
+function migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_() {
  const lock=LockService.getScriptLock();let acquired=false;
  try {
   lock.waitLock(10000);acquired=true;const properties=PropertiesService.getScriptProperties(),all=properties.getProperties();

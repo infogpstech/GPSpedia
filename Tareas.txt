@@ -561,3 +561,13 @@ Alcance: ChangesLogs.txt y adenda de trazabilidad en Auditoría.txt.
 Criterio: conservar el registro append-only original y añadir una corrección explícita con la ubicación real ui.js:5561; verificar las otras referencias de la misma entrada.
 Restricciones: no modificar código, no reescribir historial, un único commit mediante Git Database API.
 ================================================================================
+
+
+================================================================================
+AUG-155 — COMPLETADA EN VALIDACIÓN LOCAL — 2026-11-10
+Coordinador compartido de mutaciones entre AUTH, USERS, WRITE, ADMIN y FEEDBACK.
+Cambios: autoridad de leases independiente, cliente servidor-a-servidor, políticas de recursos deny-by-default, mantenimiento exclusivo, expiración/recuperación y anidamiento ADMIN→WRITE. Se conservaron los dispatchers, validaciones de sesión/rol y locks locales.
+Validación local: sintaxis 10/10; lógica 17/17; wrappers 7/7; cobertura de políticas 61/61; paridad de copias AUTH/USERS PASS; Code Review/Safety & Side Effects PASS.
+Límites: sin Apps Script real, endpoints, deployments, HTTP, Spreadsheet/Drive reales ni concurrencia real. Configuración y validación integrada diferidas a Beta. No se modificaron api-config.js, endpoints, Utilities ni datos productivos.
+Siguiente tarea bloqueante: AUG-034 — ventana segura de migración VIN/Idempotencia sobre el coordinador compartido.
+================================================================================

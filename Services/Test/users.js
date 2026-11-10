@@ -95,7 +95,41 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.TEXT);
 }
 
+
+function isSharedMutationAction_(action) {
+    return ["createUser","updateProfile"].includes(action);
+}
+
 function doPost(e) {
+    let request;
+    try {
+        request = JSON.parse(e && e.postData && e.postData.contents || "{}");
+    } catch (error) {
+        return doPostInternal_(e);
+    }
+    if (!request || typeof request !== "object") return doPostInternal_(e);
+    const action = String(request.action || "");
+    if (!isSharedMutationAction_(action)) return doPostInternal_(e);
+
+    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    const nestedToken = String(payload.__sharedMutationToken || "").trim();
+    try {
+        return withSharedMutationLease_("USERS", action, function(token) {
+            
+            const wrappedEvent = Object.assign({}, e || {}, {
+                postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
+            });
+            return doPostInternal_(wrappedEvent);
+        }, nestedToken ? { nestedToken: nestedToken } : undefined);
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            status: "error",
+            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+        })).setMimeType(ContentService.MimeType.TEXT);
+    }
+}
+
+function doPostInternal_(e) {
     let response;
     try {
         const request = JSON.parse(e.postData.contents);

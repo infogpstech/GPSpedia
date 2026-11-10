@@ -1688,3 +1688,20 @@ Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de
 - Alcance: documentación append-only; corregir mediante adenda ui.js:5032 a ui.js:5561.
 - Estado: COMPLETADA EN VALIDACIÓN DOCUMENTAL; no se modificó código.
 ================================================================================
+
+
+================================================================================
+### AUG-155 — Coordinador compartido de mutaciones entre servicios
+- **Origen:** tarea pendiente «Coordinación compartida de mutaciones entre servicios» y H-AUD-033-008 a H-AUD-033-012. **Prioridad:** Alta.
+- **Objetivo:** excluir mutaciones incompatibles entre proyectos Apps Script que comparten Cortes, Drive, Feedbacks y datos de sesión/usuarios.
+- **Alcance:** crear autoridad independiente de leases; integrar AUTH, USERS, WRITE, ADMIN y FEEDBACK; cubrir escrituras Cortes/Drive, imágenes, actividad, sesiones y usuarios; mantener una lease durante toda la operación y permitir ADMIN→WRITE anidado sin deadlock; conservar validaciones y locks locales.
+- **Criterios:** acquire/validate/release, propietario, requestId idempotente, expiración/recuperación, estado corrupto fail-closed, deny-by-default, recursos de lectura/escritura, mantenimiento exclusivo, rechazo de token UI, pruebas locales de conflictos/no conflictos, expiración, reintentos, liberación ante excepción y acciones anidadas. No modificar endpoints ni desplegar; configurar mediante ScriptProperties en etapa de integración.
+- **Exclusiones:** UTILITIES no está en uso según confirmación del usuario; no se integra. AUG-034 (migración VIN/Idempotencia), AUG-040 (seguridad lógica FEEDBACK) y AUG-043 (YouTube) permanecen independientes.
+- **Estado:** IMPLEMENTACIÓN PENDIENTE; auditoría E1 registrada en H-AUD-033-008 a H-AUD-033-012.
+================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-155 — 2026-11-10
+Estado: COMPLETADA EN VALIDACIÓN LOCAL. H-AUD-033-008 a H-AUD-033-012 resueltos en fuentes mediante coordinador independiente e integración AUTH/USERS/WRITE/ADMIN/FEEDBACK. Sintaxis 10/10 PASS; suite lógica 17/17 PASS; wrappers 7/7 PASS; cobertura de políticas 61/61; paridad AUTH/USERS producción-prueba PASS; Code Review/Safety & Side Effects PASS. No hubo deployments, HTTP, Apps Script real ni datos productivos. Configuración y concurrencia real diferidas a Beta. AUG-034 permanece como tarea distinta para migración VIN/Idempotencia.
+================================================================================

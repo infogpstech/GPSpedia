@@ -110,3 +110,22 @@ Alcance local completado en fuentes: createUser/updateUser/updateProfile seriali
 
 ADENDA FINAL DE PRUEBAS — AUG-010 — 2026-11-09
 Recuento final 24/24 funcionales locales PASS y 4/4 sintaxis PASS. AUTH incluye migración legacy, intercalados de cambio propio/reset administrativo y límite de sesiones calculado desde el rol revalidado dentro del lock. H-AUD-067 resuelto; H-AUD-066 permanece en AUG-154. Validación real aislada y coordinación interproyectos pendientes de Beta/AUG-034.
+
+
+================================================================================
+AUG-155 — Coordinador compartido de mutaciones entre servicios
+Estado: PENDIENTE DE IMPLEMENTACIÓN.
+Alcance: autoridad de leases independiente e integración AUTH/USERS/WRITE/ADMIN/FEEDBACK; recursos compartidos Cortes, Drive, Feedbacks, Activity, Users, ActiveSessions, Logs, Idempotencia, inventario de imágenes y Logos; exclusión de mantenimiento y llamadas anidadas ADMIN→WRITE.
+Criterios: adquisición/validación/liberación, propietario/requestId, expiración/recuperación, deny-by-default, pruebas aisladas de concurrencia lógica, timeout, error, reintento y anidamiento. Sin despliegue ni cambios de endpoints en esta tarea.
+UTILITIES excluido por confirmación del usuario: servicio retirado del flujo activo. AUG-034, AUG-040 y AUG-043 permanecen separados.
+Origen: tarea general de coordinación y H-AUD-033-008 a H-AUD-033-012.
+================================================================================
+
+
+================================================================================
+CIERRE LOCAL — AUG-155 — 2026-11-10
+Estado: COMPLETADA EN VALIDACIÓN LOCAL; integración entre deployments diferida a Beta.
+Se implementó Coordinator.js y SharedMutationClient.js; AUTH/USERS/WRITE/ADMIN/FEEDBACK adquieren leases para sus mutaciones compartidas. Recursos y acciones deny-by-default, exclusividad de mantenimiento, expiración de 45 minutos, liberación y anidamiento ADMIN→WRITE validado para allocateVehicleId/freezeCortesIds. UTILITIES excluido por retiro confirmado.
+Validación: sintaxis 10/10, pruebas lógicas 17/17, wrappers 7/7, cobertura de políticas 61/61, paridad de copias y Code Review PASS. Sin deployments ni operaciones productivas.
+Siguiente: AUG-034 — ventana segura de migración VIN/Idempotencia.
+================================================================================

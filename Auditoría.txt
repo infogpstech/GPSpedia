@@ -1211,3 +1211,58 @@ ADENDA DOCUMENTAL — DOC-TRACE-042-001 — 2026-11-10
 Se detectó una referencia de línea incorrecta en el registro CORR-AUG042-001 de ChangesLogs.txt: se indicó ui.js:5032 para saveUnusedInventory, pero la ubicación publicada y verificada es ui.js:5561. El registro original se conserva por política append-only; esta adenda establece la referencia correcta. Las demás referencias de la misma entrada se verificaron: ui.js:4841, 4858 y 4864.
 No se modificó código ni comportamiento funcional.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA DE IMPLEMENTACIÓN — AUG-155 — 2026-11-10
+Sesión: COORD-20261110-S001 | Origen: tarea pendiente «Coordinación compartida de mutaciones entre servicios».
+
+ALCANCE EXAMINADO
+Services/write.js, Services/admin.js, Services/feedback.js, Services/Auth.js, Services/users.js, api-config.js y las copias de prueba Services/Test/Auth.js y Services/Test/users.js. Se revisaron los dispatchers, los handlers que mutan Cortes/Drive/Feedbacks/Users/ActiveSessions/Logs y las rutas de llamadas ADMIN→WRITE. También se contrastaron AUG-034, AUG-039, AUG-040 y AUG-043 para evitar mezclar sus criterios propios.
+
+HALLAZGOS
+- H-AUD-033-008 (ALTA): los ScriptLock de proyectos Apps Script separados no proporcionan exclusión mutua entre WRITE, ADMIN, FEEDBACK, AUTH y USERS. Los locks locales existentes solo serializan dentro de cada proyecto.
+- H-AUD-033-009 (ALTA): ADMIN contiene mutaciones de Cortes/Drive y operaciones de restauración, reorganización, normalización, inventario y movimiento de imágenes que no comparten un bloqueo con WRITE/FEEDBACK. Las operaciones por lotes pueden usar snapshots de referencias que quedan obsoletos mientras otro proyecto escribe.
+- H-AUD-033-010 (ALTA): FEEDBACK ejecuta escrituras que afectan Cortes/Drive/Feedbacks; recordLike y suggestYear usan locks locales, mientras approveVideo, assignCollaborator y otras mutaciones no participan en una autoridad común.
+- H-AUD-033-011 (ALTA): ADMIN→WRITE solicita allocateVehicleId y freezeCortesIds como llamadas independientes. No existe una lease de propietario que abarque la operación ADMIN completa y autorice únicamente la acción WRITE anidada; una coordinación no reentrante podría producir deadlock.
+- H-AUD-033-012 (MEDIA): AUTH/USERS modifican o revocan identidad, rol y sesiones que se consultan durante mutaciones protegidas en otros proyectos. Sin un protocolo compartido, el cambio puede intercalarse con una operación que ya validó su sesión.
+
+CRITERIOS DE CORRECCIÓN
+Implementar una autoridad independiente y un cliente servidor-a-servidor con secretos en ScriptProperties, leases con propietario/requestId/expiración/liberación, limpieza de expiradas, política deny-by-default de operaciones/recursos, bloqueo exclusivo de mantenimiento y validación de acciones anidadas ADMIN→WRITE. Integrar únicamente los dispatchers mutadores de AUTH, USERS, WRITE, ADMIN y FEEDBACK, conservando sus validaciones de sesión/rol y locks locales. Cubrir recursos Cortes, Drive, Feedbacks, Activity, Users, ActiveSessions, Logs, Idempotencia, inventario de imágenes y Logos. No aceptar tokens desde la UI ni modificar api-config.js/endpoints.
+
+DECISIÓN DE ALCANCE
+El usuario confirmó que el servicio UTILITIES dejó de utilizarse y que Services/Utilities.js ya no representa un servicio activo. Por tanto, UTILITIES y sus migraciones se excluyen del coordinador AUG-155. La alineación/retirada de rutas históricas de UTILITIES queda separada; no se presume que el deployment antiguo esté activo ni se modifica en esta tarea.
+AUG-034 permanece como tarea independiente para la ventana segura de migración VIN/Idempotencia sobre el coordinador ya implementado. AUG-040 conserva la lógica de identidad/deduplicación/aprobación FEEDBACK; AUG-043 conserva el ciclo de aprobación de YouTube.
+
+LÍMITES DE AUDITORÍA
+E1 estática de fuentes y contratos. No se ejecutaron Apps Script, endpoints, deployments, navegador, Drive/Spreadsheet reales ni pruebas de concurrencia real. No se modificó código ni configuración durante esta auditoría. La validación de integración desplegada se difiere a Beta.
+================================================================================
+
+
+================================================================================
+RESULTADO DE IMPLEMENTACIÓN Y REVISIÓN — AUG-155 — 2026-11-10
+
+CAMBIOS FUNCIONALES
+- Se agregó Services/Coordinator.js como autoridad independiente. Mantiene leases en ScriptProperties, protege el estado con ScriptLock del proyecto coordinador, registra propietario/operación/requestId, aplica políticas de recursos, expiración de 45 minutos, liberación y recuperación de leases vencidas; el estado corrupto falla cerrado.
+- Se agregó Services/SharedMutationClient.js para llamadas servidor-a-servidor autenticadas mediante secretos por servicio. No se incluyeron secretos en el repositorio.
+- Se integraron los routers mutadores de AUTH, USERS, WRITE, ADMIN y FEEDBACK. Las acciones no declaradas no adquieren lease; las lecturas permanecen fuera del coordinador.
+- AUTH coordina también validateSession/touchSession porque validateAndTouchSession_ puede modificar/reconciliar Users y ActiveSessions. USERS coordina createUser/updateProfile.
+- ADMIN mantiene una lease durante addOrUpdateCut y reorganizeDatabase. WRITE valida el token interno y acepta únicamente allocateVehicleId bajo addOrUpdateCut y freezeCortesIds bajo reorganizeDatabase. No se confía en tokens del navegador.
+- Se conservaron los dispatchers originales y los locks locales. Services/Test/Auth.js y Services/Test/users.js conservan equivalencia con producción salvo su Spreadsheet ID independiente.
+- Se agregaron Services/COORDINATOR_SETUP.md y Services/Test/SharedMutationCoordinator.js; se amplió Services/Test/README.md con configuración aislada.
+
+VALIDACIÓN LOCAL
+- Parsing V8 mediante new Function: 10/10 archivos JavaScript PASS (Coordinator, SharedMutationClient, suite de pruebas y siete archivos de servicios/copias).
+- Suite aislada del coordinador: 17/17 PASS, incluidos secretos inválidos, deny-by-default, conflictos/no conflictos de recursos, mantenimiento exclusivo, AUTH/USERS, anidamiento ADMIN→WRITE, requestId idempotente, expiración, liberación, estado corrupto y fail-closed.
+- Pruebas de integración de wrappers con dobles: 7/7 PASS; mutaciones coordinadas, lecturas fuera de lease, propagación de token ADMIN→WRITE, token anidado y rechazo fail-closed.
+- Cobertura de política: 61/61 acciones mutadoras registradas (AUTH 10, USERS 2, WRITE 5, ADMIN 23, FEEDBACK 21); UTILITIES se rechaza.
+- Paridad AUTH/USERS producción-prueba: PASS, excepto el Spreadsheet ID aislado previsto.
+- Comparación contra respaldos exactos: solo wrappers de coordinación en los siete archivos de servicio, wrapper de migración manual AUTH y propagación del token en las dos llamadas ADMIN→WRITE. No se detectaron cambios ajenos.
+- Code Review/Safety & Side Effects: PASS. No se modificaron api-config.js, endpoints existentes, Services/Utilities.js, IDs de Spreadsheet, Drive, datos productivos ni deployments.
+
+LÍMITES Y VALIDACIÓN DIFERIDA A BETA
+No se ejecutaron Apps Script, HTTP, deployments, navegador, Spreadsheet/Drive reales ni concurrencia real entre proyectos. La suite local prueba la lógica de leases con dobles y la integración de wrappers; no demuestra que los proyectos desplegados compartan la misma URL/secreto ni que la concurrencia real haya sido probada. La configuración de ScriptProperties, contención bajo solicitudes simultáneas, interrupción abrupta, restauración, backups y movimientos de imágenes deben validarse en proyectos y copias aisladas antes de producción. El coordinador debe desplegarse y configurarse antes de actualizar los servicios consumidores.
+
+CIERRE
+AUG-155 queda COMPLETADA EN VALIDACIÓN LOCAL conforme a DOC-NORM-2026-001 §7. La validación real entre deployments se difiere a Beta. AUG-034 continúa separada para la ventana segura de migración VIN/Idempotencia; AUG-040 y AUG-043 conservan sus criterios propios.
+================================================================================

@@ -257,3 +257,20 @@ Verificación: ui.js publicado confirma saveUnusedInventory en línea 5561 y cle
 Commit único: mensaje "docs: correct CORR-AUG042 source line reference"; SHA verificable en historial.
 Siguiente tarea: AUG-043, no iniciada.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-155 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial confirmado: f48be93725392623d98d53cb20c51164b5102077.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificada.
+Tarea: AUG-155 — COMPLETADA EN VALIDACIÓN LOCAL.
+Archivos funcionales: Services/Coordinator.js (nuevo), Services/SharedMutationClient.js (nuevo), Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, Services/write.js, Services/admin.js y Services/feedback.js.
+Documentación/pruebas: Services/COORDINATOR_SETUP.md, Services/Test/SharedMutationCoordinator.js, Services/Test/README.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, Tareas_pendientes_parte4.txt, tareas_completadas_parte1.txt, lista_beta.txt y Plan_auditoría/Aug_Tareas.md.
+Cambios: leases interproyectos con secretos por servicio, deny-by-default, recursos de lectura/escritura, mantenimiento exclusivo, expiración de 45 minutos, liberación/recuperación y nested actions ADMIN→WRITE. No se modificó api-config.js, endpoints, Services/Utilities.js ni deployments.
+Verificaciones: parsing 10/10 PASS; suite lógica 17/17 PASS; pruebas de wrappers con dobles 7/7 PASS; cobertura 61/61 acciones mutadoras; paridad AUTH/USERS producción-prueba PASS; comparación contra respaldos PASS; Code Review/Safety & Side Effects PASS.
+Limitaciones: sin ejecución real de Apps Script, HTTP, deployments, navegador, Spreadsheet/Drive ni concurrencia real. Configuración de ScriptProperties y pruebas integradas quedan diferidas a Beta. El coordinador debe desplegarse/configurarse antes de actualizar los servicios consumidores.
+Commit único: mensaje "feat(services): add shared mutation coordinator"; SHA y padre verificables en el historial de GPSpedia2.2.5_work.
+Siguiente tarea bloqueante: AUG-034 — ventana segura de migración VIN/Idempotencia. No iniciar AUG-040/AUG-043 antes de resolver las dependencias previas.
+================================================================================

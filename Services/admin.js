@@ -17,11 +17,13 @@ let spreadsheet = null;
 const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec";
 
 /** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
-function callWriteServiceAction(action, payload) {
+function callWriteServiceAction(action, payload, sharedMutationToken) {
+    if (!sharedMutationToken) throw new Error("La llamada interna a WRITE requiere una lease compartida válida.");
+    const requestPayload = Object.assign({}, payload || {}, { __sharedMutationToken: sharedMutationToken });
     const response = UrlFetchApp.fetch(WRITE_SERVICE_URL, {
         method: "post",
         contentType: "text/plain",
-        payload: JSON.stringify({ action, payload }),
+        payload: JSON.stringify({ action, payload: requestPayload }),
         muteHttpExceptions: true,
         followRedirects: true
     });
@@ -39,23 +41,23 @@ function callWriteServiceAction(action, payload) {
     return result;
 }
 
-function requestNextVehicleIdFromWriteService(payload) {
+function requestNextVehicleIdFromWriteService(payload, sharedMutationToken) {
     const result = callWriteServiceAction("allocateVehicleId", {
         userId: payload && payload.userId,
         sessionToken: payload && payload.sessionToken
-    });
+    }, sharedMutationToken);
     const vehicleId = Number(result.vehicleId);
     if (!Number.isSafeInteger(vehicleId) || vehicleId < 1) throw new Error("WRITE devolvió un ID de vehículo inválido.");
     return vehicleId;
 }
 
-function requestCortesIdFreezeFromWriteService(payload, backupId) {
+function requestCortesIdFreezeFromWriteService(payload, backupId, sharedMutationToken) {
     return callWriteServiceAction("freezeCortesIds", {
         userId: payload && payload.userId,
         sessionToken: payload && payload.sessionToken,
         backupId,
         confirm: true
-    });
+    }, sharedMutationToken);
 }
 
 
@@ -573,7 +575,41 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.TEXT);
 }
 
+
+function isSharedMutationAction_(action) {
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl"].includes(action);
+}
+
 function doPost(e) {
+    let request;
+    try {
+        request = JSON.parse(e && e.postData && e.postData.contents || "{}");
+    } catch (error) {
+        return doPostInternal_(e);
+    }
+    if (!request || typeof request !== "object") return doPostInternal_(e);
+    const action = String(request.action || "");
+    if (!isSharedMutationAction_(action)) return doPostInternal_(e);
+
+    const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
+    const nestedToken = String(payload.__sharedMutationToken || "").trim();
+    try {
+        return withSharedMutationLease_("ADMIN", action, function(token) {
+            request.payload = Object.assign({}, payload, { __sharedMutationToken: token });
+            const wrappedEvent = Object.assign({}, e || {}, {
+                postData: Object.assign({}, e && e.postData || {}, { contents: JSON.stringify(request) })
+            });
+            return doPostInternal_(wrappedEvent);
+        }, nestedToken ? { nestedToken: nestedToken } : undefined);
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({
+            status: "error",
+            message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+        })).setMimeType(ContentService.MimeType.TEXT);
+    }
+}
+
+function doPostInternal_(e) {
     let response;
     const logs = [];
 
@@ -970,7 +1006,7 @@ function handleReorganizeDatabase(payload, logMessage, developerContext) {
     logMessage("Reorganización DB", "Ejecutando copia de seguridad preventiva antes de reorganizar...");
     const backupInfo = handleBackupDatabase(payload, logMessage, developerContext);
     logMessage("Reorganización DB", "Estabilizando los IDs de Cortes antes de cambiar el orden de las filas...");
-    const idFreezeResult = requestCortesIdFreezeFromWriteService(payload, backupInfo.backupId);
+    const idFreezeResult = requestCortesIdFreezeFromWriteService(payload, backupInfo.backupId, payload && payload.__sharedMutationToken);
     logMessage("Reorganización DB", `IDs estabilizados: ${idFreezeResult.formulasToFreeze || 0} fórmulas convertidas y ${idFreezeResult.emptyFormulaRowsToClear || 0} fórmulas vacías retiradas.`);
 
     logMessage("Reorganización DB", "Iniciando reordenamiento alfabético por marca en la hoja Cortes...");
@@ -2501,7 +2537,7 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
 
         // ADMIN solicita el ID al asignador central de WRITE; nunca genera uno localmente.
         try {
-            newId = requestNextVehicleIdFromWriteService(payload);
+            newId = requestNextVehicleIdFromWriteService(payload, payload && payload.__sharedMutationToken);
             sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
             SpreadsheetApp.flush();
             if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {

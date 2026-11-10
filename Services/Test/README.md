@@ -151,3 +151,21 @@ Prueba adicional AUTH: cambiar el rol de la cuenta después de la lectura inicia
 - Un logout, reset de sesiones, cambio de rol, cambio/restablecimiento de contraseña o eliminación de cuenta invalida los requestId vinculados a las sesiones/cuenta. Un reintento con un requestId revocado se rechaza y obliga a iniciar un intento nuevo.
 - Los requestId pendientes que superan 24 horas se reconcilian: si dejaron una fila de sesión activa, se invalida antes de retirar el registro.
 - No se asume atomicidad de SpreadsheetApp. Cada mutación relevante se verifica por lectura posterior; si no puede confirmarse, se conserva el estado pendiente y se permite reintentar.
+
+
+## Coordinación compartida entre servicios (AUG-155)
+
+Las copias AUTH/USERS de este directorio también requieren el cliente `Services/SharedMutationClient.js` cuando se prueben con la integración AUG-155. No deben conectarse al coordinador productivo.
+
+Para pruebas aisladas:
+
+1. Crear un proyecto Apps Script independiente para el coordinador de pruebas y copiar `Services/Coordinator.js`.
+2. Desplegarlo como aplicación web en un entorno separado. El coordinador no abre Spreadsheet ni Drive.
+3. Configurar en el coordinador los secretos de prueba `GPSpedia_COORDINATOR_SECRET_AUTH` y `GPSpedia_COORDINATOR_SECRET_USERS`; usar valores aleatorios de al menos 32 caracteres y no guardarlos en el repositorio.
+4. Incluir `Services/SharedMutationClient.js` en los proyectos AUTH y USERS de prueba.
+5. En cada proyecto de servicio, configurar `GPSpedia_COORDINATOR_URL` con la URL /exec del coordinador de prueba y `GPSpedia_COORDINATOR_SECRET` con el secreto correspondiente.
+6. Mantener la Spreadsheet de pruebas y los deployments separados de producción. No modificar `api-config.js` para apuntar a los servicios de prueba.
+
+El archivo `Services/Test/SharedMutationCoordinator.js` contiene pruebas lógicas aisladas. Para ejecutarlas, cargarlo junto con `Coordinator.js` y `SharedMutationClient.js` en un proyecto temporal de pruebas y ejecutar `runSharedMutationCoordinatorTests()`. La batería utiliza dobles en memoria y no accede a servicios externos.
+
+La integración real entre proyectos, la contención de leases bajo concurrencia de Apps Script y la configuración de deployments se validan posteriormente en Beta. La falta de configuración del coordinador hace que las mutaciones fallen cerradas; por ello, el coordinador de cada entorno debe desplegarse y configurarse antes de actualizar sus servicios consumidores.

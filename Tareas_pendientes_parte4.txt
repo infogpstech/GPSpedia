@@ -1924,3 +1924,15 @@ Fecha 2026-11-08 | Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033
 Estado: E1 ESTÁTICA COMPLETADA; H-AUD-015-001 a H-AUD-015-004 documentados; VAL-24 pendiente.
 
 ALCANCE
+
+
+================================================================================
+ADENDA DE RECONCILIACIÓN — TAREA «COORDINACIÓN COMPARTIDA DE MUTACIONES ENTRE SERVICIOS» — 2026-11-10
+Se normaliza como AUG-155 y se vincula con H-AUD-033-008 a H-AUD-033-012. La dependencia de fuente/deployment UTILITIES queda retirada por confirmación expresa del usuario: ese servicio dejó de utilizarse y no forma parte de los servicios activos. AUG-155 cubre AUTH, USERS, WRITE, ADMIN y FEEDBACK. AUG-034 sigue siendo una tarea distinta para la ventana segura de migración VIN/Idempotencia. La entrada original se conserva íntegra por política append-only.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — COORDINACIÓN COMPARTIDA — AUG-155 — 2026-11-10
+La tarea general queda COMPLETADA EN VALIDACIÓN LOCAL bajo AUG-155. La dependencia UTILITIES se retiró por confirmación del usuario y no se integró. La autoridad compartida cubre AUTH, USERS, WRITE, ADMIN y FEEDBACK. AUG-034 sigue siendo una tarea distinta para la ventana de migración VIN/Idempotencia.
+================================================================================

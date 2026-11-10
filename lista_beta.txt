@@ -248,3 +248,16 @@ AUG-016 — Casos Beta adicionales tras implementación local (pendientes de dep
 - Verificar que api-config.js enruta updateUser a AUTH y que el deployment USERS rechaza directamente esa acción.
 - Verificar que producción y prueba mantienen Spreadsheet IDs independientes; ejecutar todo exclusivamente con las hojas y deployments de prueba.
 ================================================================================
+
+
+================================================================================
+AUG-155 — VALIDACIÓN DIFERIDA A BETA — COORDINADOR INTERPROYECTOS
+- Crear deployment aislado de Coordinator.js y configurar secretos únicos AUTH/USERS/WRITE/ADMIN/FEEDBACK en ScriptProperties; nunca reutilizar secretos ni URL de producción en pruebas.
+- Incluir SharedMutationClient.js en cada proyecto de servicio aislado y configurar GPSpedia_COORDINATOR_URL/GPSpedia_COORDINATOR_SECRET antes de desplegar los routers consumidores.
+- Verificar solicitudes simultáneas reales entre proyectos: WRITE alta de corte/VIN, ADMIN actualización/reemplazo/restauración/movimiento de imagen, FEEDBACK recordLike/suggestYear/approveVideo y cambios de sesión/rol AUTH/USERS.
+- Verificar exclusividad de backupDatabase, restoreDatabase, reorganizeDatabase, createSheet/addColumn y restoreAllTrashedImages; confirmar que no inicia una mutación nueva mientras exista mantenimiento.
+- Verificar llamadas anidadas ADMIN→WRITE para allocateVehicleId y freezeCortesIds, que la lease permanezca activa durante toda la reorganización y que no ocurra deadlock.
+- Forzar expiración, terminación abrupta, pérdida de respuesta de acquire/release, reintentos con el mismo requestId, estado central corrupto y error de UrlFetchApp; comprobar fail-closed y recuperación tras 45 minutos.
+- Probar restauración de Spreadsheet/Drive, backups consistentes, organización de imágenes, reemplazo/recuperación/borrado/movimiento y snapshots de referencias en copias aisladas.
+- No ejecutar contra datos productivos. Esta validación no se considera ejecutada por la suite local 17/17 ni por los dobles de wrappers.
+================================================================================

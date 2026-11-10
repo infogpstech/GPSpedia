@@ -503,3 +503,15 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Referencias verificadas del controlador clearSelectedLogs: ui.js:4841, 4858 y 4864.
 - Cambio exclusivamente documental; sin modificaciones funcionales.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-155 — COORDINADOR COMPARTIDO DE MUTACIONES
+- Services/Coordinator.js:1-367: autoridad de leases interproyectos, políticas deny-by-default, recursos compartidos, mantenimiento exclusivo, expiración, liberación, recuperación y autorización de acciones anidadas.
+- Services/SharedMutationClient.js:1-104: cliente servidor-a-servidor autenticado mediante secretos de ScriptProperties. Services/COORDINATOR_SETUP.md:1-45 documenta configuración y despliegue por entorno.
+- Services/Auth.js:429-461 y 934-940; Services/Test/Auth.js:429-461 y 934-940: coordinación de acciones mutadoras/validación de sesión y migración manual de marcadores legacy.
+- Services/users.js:99-131 y Services/Test/users.js:99-131: coordinación de createUser y updateProfile.
+- Services/write.js:159-191; Services/admin.js:579-611, 20-61, 1009 y 2540; Services/feedback.js:284-316: coordinación de mutaciones compartidas y propagación de lease ADMIN→WRITE para allocateVehicleId/freezeCortesIds.
+- Services/Test/SharedMutationCoordinator.js:1-270 contiene la suite aislada; Services/Test/README.md:156-172 documenta su configuración.
+- No se modificaron api-config.js, endpoints existentes, Services/Utilities.js, deployments ni datos productivos. UTILITIES se excluyó por estar retirado del flujo activo.
+================================================================================
