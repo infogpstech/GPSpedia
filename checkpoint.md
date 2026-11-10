@@ -585,3 +585,34 @@ Validaciones diferidas a Beta: navegador real, Apps Script desplegado, Spreadshe
 Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
 Siguiente iteración: continuar con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: VALIDACIÓN DE ALTA DE PROBLEMAS PyS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Problema reproducible: handleAddProblem comprobaba título, descripción y solución por truthiness, permitiendo que cadenas compuestas solo por espacios o saltos de línea superaran la validación. Además, los textos se persistían sin normalizar.
+Corrección en Services/feedback.js:
+- Normaliza título, descripción, solución y prevención con String(...).trim() antes de validar.
+- Rechaza título o descripción vacíos tras normalización.
+- Cuando sinSolucion es falso, exige una solución no vacía tras normalización.
+- Aplica límites de longitud a los valores normalizados.
+- Persiste los textos normalizados y usa el título normalizado para registrar la actividad.
+Pruebas en Services/Test/FeedbackWriteSecurity.js:
+- Rechazo de título, descripción y solución compuestos solo por espacios/saltos de línea.
+- Verificación de que título, descripción, solución y prevención se almacenan normalizados en PyS.
+- Verificación de que el título normalizado se utiliza en el registro de actividad.
+Validación local:
+- runFeedbackWriteSecurityTests(): 27/27 PASS.
+- Parsing/sintaxis con new Function: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js y Services/Coordinator.js — 3/3 PASS.
+- Durante la preparación se corrigieron fixtures y mocks que no representaban correctamente saltos de línea y globals ausentes; la suite completa se ejecutó nuevamente y aprobó.
+Commits:
+- b88e8e4125d0b915e25a825a006d7a21736d3360 — fix(feedback): normalize problem fields before validation.
+- 1d58e1af647e3798589232559281313c46e17103 — test(feedback): cover problem text normalization.
+- 52a55b636319f5fc25a41f547e935e0eebecd79a — test(feedback): correct problem validation fixtures.
+- 42270e98b1479e853f0f37a19ef991b1f217c406 — test(feedback): isolate problem upload fixtures.
+Estado general del hardening FEEDBACK: EN PROGRESO. Este checkpoint cierra únicamente la validación de handleAddProblem; los demás handlers continúan pendientes de revisión individual.
+Validaciones diferidas a Beta: navegador real, Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API y concurrencia de infraestructura. No se ejecutaron ni se simularon.
+Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
+Siguiente iteración: continuar con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
+================================================================================
