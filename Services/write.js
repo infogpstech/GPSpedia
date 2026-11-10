@@ -1464,7 +1464,7 @@ function markImageUploadLinked(imageUrl) {
         try {
             const originalName = String(values[13] || "");
             if (originalName && file.getName() !== originalName) file.setName(originalName);
-            const linkedDescription = buildImageUploadDescription_(expected, "linked", JSON.stringify(references));
+            const linkedDescription = buildImageUploadDescription_({ ...expected, fileName: String(values[13] || "") }, "linked", JSON.stringify(references));
             file.setDescription(linkedDescription);
             if (String(file.getDescription() || "") !== linkedDescription) {
                 Logger.log("ImageUploadLedger quedó linked, pero Drive no confirmó la descripción final para " + fileId + ".");
