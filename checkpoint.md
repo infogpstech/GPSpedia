@@ -1,5 +1,7 @@
 # Checkpoint activo — GPSpedia
 
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de modificar el proyecto o registrar cambios. Este archivo es únicamente un registro de continuidad y no define procedimientos adicionales.
+
 El historial previo de `checkpoint.md` se conserva íntegro en:
 `Olds/Documentacion_Legacy/checkpoint_legacy_parte_005.md`
 
