@@ -679,3 +679,35 @@ Siguiente iteración: comprobar aportes anónimos y que nunca se sumen al umbral
 Validación de Apps Script/Spreadsheet/Drive reales diferida a Beta; no ejecutada.
 Sin deployments, cambios de endpoints ni modificaciones de la rama base.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: EXCLUSIÓN DE APORTES ANÓNIMOS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida: 8c021ff6c021c3b2e023dca02366312348985720.
+
+TAREA ÚNICA
+Comprobar que un aporte anónimo no se sume al umbral automático de tres usuarios verificados.
+
+RESULTADO
+La lógica existente ya excluye las claves anon:unverified del Set de aportantes verificados y devuelve el flujo anónimo a revisión manual antes de la sección que actualiza Cortes.
+Se añadió una prueba de regresión de flujo con dos aportes positivos de usuarios verificados y un tercer aporte anónimo para el mismo vehículo y año.
+La prueba confirma que el aporte anónimo se persiste con su clave no verificada, genera actividad, devuelve el mensaje de revisión manual y no amplía el rango de años. No se detectó defecto de producción; no se modificó Services/feedback.js.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 30/30 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Prueba con mocks locales; no representa integración real con Apps Script/Spreadsheet/Drive.
+
+ARCHIVOS
+- Services/Test/FeedbackWriteSecurity.js
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Subtarea de exclusión de aportes anónimos del umbral: COMPLETADA CON VALIDACIÓN DIFERIDA.
+AUG-040 y la revisión de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar la condición exacta del umbral de tres aportantes verificados distintos y el momento en que se aplica la ampliación, como una sola tarea.
+Validaciones de integración Apps Script/Spreadsheet/Drive reales pendientes de Beta; no ejecutadas.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones a la rama base.
+================================================================================

@@ -192,6 +192,65 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear registra aportes anónimos sin sumarlos al umbral de tres usuarios verificados", function() {
+            const originalAssert=assertFeedbackSession, originalGetSpreadsheet=getSpreadsheet;
+            const originalGetSafeSheet=getSafeSheet, originalLog=logUserActivity;
+            const originalLock=LockService, originalSpreadsheetApp=SpreadsheetApp, originalCache=CacheService;
+            function runtimeSheet(rows,maxColumns) {
+                return {
+                    rows:rows,
+                    getLastRow:function(){return this.rows.length;},
+                    getLastColumn:function(){return Math.max(maxColumns||0,...this.rows.map(row=>row.length));},
+                    getMaxColumns:function(){return maxColumns||this.getLastColumn();},
+                    getDataRange:function(){const self=this;return {getValues:()=>self.rows.map(row=>row.slice())};},
+                    getRange:function(row,column,rowCount,columnCount){
+                        const self=this,height=rowCount||1,width=columnCount||1;
+                        return {
+                            getValue:()=>((self.rows[row-1]||[])[column-1]===undefined?"":self.rows[row-1][column-1]),
+                            getValues:()=>Array.from({length:height},(_,r)=>Array.from({length:width},(_,c)=>((self.rows[row-1+r]||[])[column-1+c]===undefined?"":self.rows[row-1+r][column-1+c]))),
+                            setValue:value=>{while(self.rows.length<row)self.rows.push([]);while(self.rows[row-1].length<column)self.rows[row-1].push("");self.rows[row-1][column-1]=value;},
+                            setValues:values=>values.forEach((line,r)=>line.forEach((value,c)=>{while(self.rows.length<row+r)self.rows.push([]);while(self.rows[row-1+r].length<column+c)self.rows[row-1+r].push("");self.rows[row-1+r][column-1+c]=value;})),
+                            copyTo:target=>{const source=Array.from({length:height},(_,r)=>Array.from({length:width},(_,c)=>((self.rows[row-1+r]||[])[column-1+c]===undefined?"":self.rows[row-1+r][column-1+c])));target.setValues(source);},
+                            clearContent:function(){for(let r=0;r<height;r++)for(let c=0;c<width;c++)if(self.rows[row-1+r])self.rows[row-1+r][column-1+c]="";}
+                        };
+                    },
+                    insertColumnsAfter:function(after,count){maxColumns=(maxColumns||this.getLastColumn())+count;this.rows.forEach(line=>{while(line.length<maxColumns)line.push("");});}
+                };
+            }
+            const cutHeader=Array(42).fill(""),vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-ANON-THRESHOLD";
+            vehicle[COLS_CORTES.marca-1]="Marca";vehicle[COLS_CORTES.modelo-1]="Modelo";
+            vehicle[COLS_CORTES.categoria-1]="Moto";vehicle[COLS_CORTES.versionesAplicables-1]="Versión";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=runtimeSheet([cutHeader,vehicle],42);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const voteA=["F-001","Usuario A","VEH-ANON-THRESHOLD","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,"user:USR-A"];
+            const voteB=["F-002","Usuario B","VEH-ANON-THRESHOLD","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,"user:USR-B"];
+            const feedbackSheet=runtimeSheet([headers,voteA,voteB],10);
+            let activityCount=0;
+            try {
+                assertFeedbackSession=function(){throw new Error("No debe requerirse sesión para el actor anónimo.");};
+                getSpreadsheet=()=>({getSheetByName:name=>name===SHEET_NAMES.CORTES?cuts:null});
+                getSafeSheet=name=>name===SHEET_NAMES.SUGERENCIAS_ANO?feedbackSheet:null;
+                logUserActivity=function(){activityCount++;};
+                LockService={getScriptLock:()=>({waitLock:function(){},releaseLock:function(){}})};
+                SpreadsheetApp={flush:function(){}};
+                CacheService={getScriptCache:()=>({get:()=>null,put:function(){}})};
+                const actor=authorizeFeedbackAction_("suggestYear",{userId:"0",userName:"Anónimo",anonymousReporterId:"cliente-fabricado"});
+                assert_(actor.suggestionActorKey==="anon:unverified","El actor anónimo debe recibir una clave no verificada.");
+                const result=handleSuggestYear({...actor,vehicleId:"VEH-ANON-THRESHOLD",newYear:2025,response:"Sí (Funciona)"});
+                assert_(feedbackSheet.rows.length===4,"El aporte anónimo debe quedar registrado como una fila adicional.");
+                assert_(feedbackSheet.rows[3][9]==="anon:unverified","La fila anónima debe conservar la clave no verificada.");
+                assert_(result.status==="info"&&result.message.includes("no cuenta para modificar automáticamente"),"Debe informar que el aporte anónimo requiere revisión manual.");
+                assert_(cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"Dos usuarios verificados más un anónimo no deben alcanzar el umbral automático.");
+                assert_(activityCount===1,"El aporte anónimo registrado debe generar una actividad.");
+            } finally {
+                assertFeedbackSession=originalAssert;getSpreadsheet=originalGetSpreadsheet;getSafeSheet=originalGetSafeSheet;
+                logUserActivity=originalLog;LockService=originalLock;SpreadsheetApp=originalSpreadsheetApp;CacheService=originalCache;
+            }
+        });
+
         test_("El actor anónimo ignora el identificador fabricable del navegador", function() {
             const actor = resolveSuggestionYearActor({ userId: "0", anonymousReporterId: "fabricado" });
             assert_(actor.suggestionActorKey === "anon:unverified");

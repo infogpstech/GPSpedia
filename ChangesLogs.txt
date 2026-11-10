@@ -687,3 +687,12 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - No se modificó lógica de producción porque la deduplicación existente pasó la prueba.
 - AUG-040 continúa EN PROGRESO; siguiente iteración revisará aportes anónimos y su exclusión del umbral.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — EXCLUSIÓN DE APORTES ANÓNIMOS EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega prueba con dos aportantes verificados y un tercero anónimo para el mismo vehículo/año.
+- Comprueba persistencia de anon:unverified, respuesta de revisión manual, registro de actividad y ausencia de ampliación del rango en Cortes.
+- No se modificó lógica de producción: la implementación ya excluye actores anónimos del conteo y retorna antes de la actualización automática.
+- Validación local: runFeedbackWriteSecurityTests() 30/30 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 continúa EN PROGRESO; siguiente iteración revisará el umbral exacto de tres aportantes verificados distintos.
+================================================================================
