@@ -1208,3 +1208,17 @@ ADENDA POST-COMMIT — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001
 La revisión del diff identificó una segunda rama de recuperación pendiente: cuando el actor ya tenía un aporte para el mismo vehículo/año, el backend devolvía el resultado success de la recuperación sin indicar que la solicitud actual no se insertó. Se corrigió con recorded:false para que ui.js no guarde una respuesta nueva en validationCache. Esta adenda se publicará como commit correctivo sobre el commit inicial, sin reescribir historial.
 Siguiente paso: ejecutar la suite FEEDBACK integral y parsing completo en la siguiente iteración. No iniciar otra tarea.
 ================================================================================
+
+
+================================================================================
+PUBLICACIÓN VERIFICADA — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001 — 2026-11-10
+La implementación quedó publicada en GPSpedia2.2.5_work:
+- Commit inicial: ab5e049c51123cfc08063c65f8b8f20698058329.
+- Commit correctivo: 09c5e3646ad3cdfd8dc83fa760215779c309684b.
+- HEAD confirmado al cierre de publicación: 09c5e3646ad3cdfd8dc83fa760215779c309684b.
+- La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación desde e564a633: dos commits, cambios limitados a ui.js, validationSubmission.js, Services/feedback.js, pruebas cliente/FEEDBACK y registros.
+- Suite cliente ValidationCacheConfirmation: 7/7 PASS.
+La tarea sigue EN PROGRESO porque falta ejecutar la suite FEEDBACK integral y el parsing completo de los módulos remotos en el runner local correspondiente. No iniciar AUG-041 ni otra tarea.
+Siguiente iteración: continuar exclusivamente CORR-SUGGESTYEAR-CLIENT-CONFIRM-001 y completar esas validaciones antes de cerrar.
+================================================================================
