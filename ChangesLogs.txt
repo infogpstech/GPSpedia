@@ -659,3 +659,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Alcance del cierre: validación de handleAddPrevention. Hardening FEEDBACK global permanece EN PROGRESO.
 - Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — VALIDACIÓN DE ALTA DE PROBLEMAS PyS
+- Services/feedback.js: handleAddProblem normaliza título, descripción, solución y prevención antes de validar; rechaza título/descripción vacíos y solución vacía cuando corresponde; persiste los textos normalizados y usa el título normalizado en la actividad.
+- Services/Test/FeedbackWriteSecurity.js: regresiones para campos requeridos/solución con espacios y verificación de normalización en la fila PyS y en la actividad.
+- Commits de implementación y pruebas: b88e8e4125d0b915e25a825a006d7a21736d3360, 1d58e1af647e3798589232559281313c46e17103, 52a55b636319f5fc25a41f547e935e0eebecd79a y 42270e98b1479e853f0f37a19ef991b1f217c406.
+- Alcance del cierre: validación de handleAddProblem. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
