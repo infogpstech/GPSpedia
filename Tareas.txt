@@ -679,3 +679,15 @@ CORR-FEEDBACK-VIDEO-APPROVAL-RETRY-001 — RECUPERACIÓN IDEMPOTENTE DE approveV
 - Observación preexistente fuera de alcance: VideoApprovalContracts 3/8 falla porque fixtures envían colaborador y handleAddTutorial exige userName; no corregido en esta tarea.
 - Beta pendiente: Apps Script/Spreadsheet aislado, endpoints desplegados, respuesta HTTP perdida real y concurrencia entre proyectos.
 ================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-VIDEO-CONTRACT-FIXTURES-001 — ALINEAR FIXTURES CON EL CONTRATO VIGENTE DE TUTORIALES
+- Origen: tres fallos reproducibles en Services/Test/VideoApprovalContracts.js durante la validación del flujo de aprobación de YouTube.
+- Evidencia: los tres casos de handleAddTutorial omitían userName o enviaban colaborador; el handler exige userName y rechaza antes de evaluar el resto del caso.
+- Alcance: corregir únicamente los tres payloads de prueba y documentar el nombre del runner.
+- Criterios: los casos deben alcanzar la condición que pretenden probar; no modificar Services/feedback.js ni el contrato de producción.
+- Estado: COMPLETADA.
+- Validación: baseline 5/8; después del ajuste 8/8; parsing de suite y servicio 2/2.
+- Sin cambios de lógica de producción, permisos, endpoints, deployments ni datos productivos.
+================================================================================

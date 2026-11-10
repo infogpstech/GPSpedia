@@ -1316,3 +1316,27 @@ Validación Beta pendiente: Apps Script/Spreadsheet aislado, endpoints desplegad
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Siguiente iteración: continuar con una sola condición pendiente de AUG-040. No iniciar AUG-041 ni tareas ajenas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-FEEDBACK-VIDEO-CONTRACT-FIXTURES-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre antes de la tarea: 3a97fdd8d763c3bd92c5bea767cd7cba27e62072.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea única: corregir tres fixtures obsoletos en VideoApprovalContracts para que prueben las condiciones previstas.
+Hallazgo:
+- La suite tenía 3/8 fallos porque tres casos de handleAddTutorial omitían userName o enviaban colaborador.
+- El handler vigente exige userName y rechazaba los payloads antes de llegar a las aserciones de URL directa/título duplicado/alta válida.
+Cambios:
+- Se corrigieron exclusivamente los tres payloads de prueba para enviar userName.
+- README documenta el runner runVideoApprovalCreationContractTests().
+- Services/feedback.js no se modificó.
+Validación:
+- Baseline previo: 5/8 PASS, 3/8 FAIL, reproducido sobre los archivos remotos.
+- Después de la corrección: VideoApprovalContracts 8/8 PASS.
+- Parsing de Services/feedback.js y Services/Test/VideoApprovalContracts.js: 2/2 PASS.
+- Revisión del diff: únicamente tres fixtures, documentación del runner y registros.
+Estado: COMPLETADA.
+Siguiente iteración: retomar el siguiente criterio pendiente de AUG-040. No iniciar AUG-041 ni otra tarea.
+================================================================================

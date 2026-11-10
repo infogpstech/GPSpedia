@@ -878,3 +878,11 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - Services/Test/README.md: documenta la cobertura añadida.
 - Auditoría.txt: H-AUD-040-016.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — PRUEBAS YOUTUBE — ALINEAR FIXTURES DEL CONTRATO DE TUTORIALES
+- Services/Test/VideoApprovalContracts.js: los tres casos de handleAddTutorial ahora envían userName conforme al contrato del handler.
+- Services/Test/README.md: documenta el runner runVideoApprovalCreationContractTests().
+- No se modificó código funcional.
+================================================================================

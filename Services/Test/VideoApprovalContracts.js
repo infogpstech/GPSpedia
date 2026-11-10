@@ -24,20 +24,20 @@ function runVideoApprovalCreationContractTests() {
         run_("crea tutorial sin publicar enlace",()=>{
             const sheet=sheet_([["Tema","Imagen","Video","Descripción","Colaborador"]]);
             getSafeSheet=name=>name==="Tutoriales"?sheet:null;
-            const result=handleAddTutorial({tema:"Desarme de consola",videoUrl:"",descripcion:"Detalle",colaborador:"Técnico"});
+            const result=handleAddTutorial({tema:"Desarme de consola",videoUrl:"",descripcion:"Detalle",userName:"Técnico"});
             assert_(result.status==="success"&&result.referenceId==="Desarme de consola");
             assert_(sheet.data.length===2&&sheet.data[1][2]==="");
         });
         run_("rechaza enlace directo en alta de Tutorial",()=>{
             const sheet=sheet_([["Tema","Imagen","Video","Descripción","Colaborador"]]);
             getSafeSheet=name=>name==="Tutoriales"?sheet:null;
-            expect_(()=>handleAddTutorial({tema:"Tema",videoUrl:"https://www.youtube.com/watch?v=abcdefghijk"}),"flujo de aprobación");
+            expect_(()=>handleAddTutorial({tema:"Tema",videoUrl:"https://www.youtube.com/watch?v=abcdefghijk",userName:"Técnico"}),"flujo de aprobación");
             assert_(sheet.data.length===1);
         });
         run_("rechaza título duplicado en Tutorial",()=>{
             const sheet=sheet_([["Tema","Imagen","Video","Descripción","Colaborador"],["Tema existente","","","",""]]);
             getSafeSheet=name=>name==="Tutoriales"?sheet:null;
-            expect_(()=>handleAddTutorial({tema:"Tema existente",videoUrl:""}),"Ya existe");
+            expect_(()=>handleAddTutorial({tema:"Tema existente",videoUrl:"",userName:"Técnico"}),"Ya existe");
             assert_(sheet.data.length===2);
         });
         run_("crea PyS con ID estable y vídeo vacío",()=>{
