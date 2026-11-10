@@ -886,17 +886,12 @@ function handleSuggestYearLocked(payload) {
         const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (feedbackSheet) {
             const feedbackValues = feedbackSheet.getDataRange().getValues();
-            const isActuallyLowerUpdate = year < anoDesde;
             for (let i = feedbackValues.length - 1; i >= 1; i--) {
                 const row = feedbackValues[i];
                 const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
                 const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
                 const rowActorKey = String(row[actorColumn - 1] || "").trim();
-                const rowProblem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
-                const isMatchingPositive = isActuallyLowerUpdate
-                    ? rowProblem.includes("Sugerencia de ampliar rango inferior")
-                    : isPositiveYearSuggestionRow(row);
-                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey && isMatchingPositive) {
+                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey && isPositiveYearSuggestionRow(row)) {
                     feedbackSheet.deleteRow(i + 1);
                 }
             }

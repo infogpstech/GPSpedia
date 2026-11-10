@@ -43,3 +43,26 @@ Prueba: Services/Test/FeedbackWriteSecurity.js verifica rechazo temprano del ran
 Validación local: runFeedbackWriteSecurityTests() 33/33 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
 Límites: no se ejecutó Apps Script desplegado, Spreadsheet real, Drive real ni datos productivos. La integración real permanece diferida a Beta.
 ================================================================================
+
+================================================================================
+ID del hallazgo: H-AUD-040-004
+Título: Limpieza incompleta de aportes positivos tras una ampliación inferior
+Fecha: 2026-11-10
+Severidad: Baja
+Archivo: Services/feedback.js — handleSuggestYearLocked(), limpieza posterior a la actualización del rango.
+Evidencia:
+- El umbral de tres aportantes considera positivos tanto «Es más antiguo» como «Otro año: YYYY» mediante isPositiveYearSuggestionRow().
+- Cuando el año sugerido es inferior al rango actual, la limpieza filtraba exclusivamente filas cuyo Problema contenía «Sugerencia de ampliar rango inferior».
+- Una fila positiva «Sugerencia de ampliar rango al año YYYY» podía participar en el umbral y permanecer en Feedbacks después de aplicar la ampliación.
+Impacto:
+- Los aportes positivos ya atendidos no se depuraban de forma coherente; podían quedar registros obsoletos y volver a participar en evaluaciones posteriores.
+Corrección:
+- Unificar la limpieza para ambos sentidos de ampliación y eliminar únicamente filas del mismo vehículo y año, con actor registrado y clasificadas como positivas por isPositiveYearSuggestionRow().
+- Conservar respuestas negativas, aportes de otros años y registros de otros vehículos.
+Validación:
+- Prueba de regresión reproduce el defecto antes de la corrección y pasa tras el cambio.
+- Suite local de FeedbackWriteSecurity: 35/35 PASS.
+- Sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Pruebas aisladas con mocks; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE.
+================================================================================

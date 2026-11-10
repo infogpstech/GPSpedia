@@ -743,3 +743,10 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 35/35 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
 - AUG-040 permanece EN PROGRESO; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
 ================================================================================
+
+================================================================================
+2026-11-10 — FIX FEEDBACK — LIMPIEZA DE APORTES POSITIVOS EN AMPLIACIONES INFERIORES
+- Services/feedback.js: unifica el criterio de limpieza tras ampliar el rango hacia años inferiores; ahora retira todos los aportes positivos del mismo vehículo y año que participaron en el umbral, independientemente de si se registraron como «Es más antiguo» u «Otro año».
+- Services/Test/FeedbackWriteSecurity.js: añade regresión mixta que verifica la eliminación de ambos tipos de aporte y la conservación de respuestas negativas, otros años y otros vehículos.
+- Auditoría.txt: registra el hallazgo H-AUD-040-004.
+================================================================================

@@ -885,3 +885,40 @@ Siguiente iteración: revisar una única condición funcional pendiente de sugge
 Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
 Sin despliegues, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: LIMPIEZA DE VOTOS EN AMPLIACIÓN INFERIOR — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida: 24cf056cfd7ea690a51819e180ab5092f2356196.
+
+TAREA ÚNICA
+Corregir la limpieza incompleta de aportes positivos cuando suggestYear amplía el límite inferior mediante una combinación de respuestas «Es más antiguo» y «Otro año: YYYY».
+
+HALLAZGO Y CORRECCIÓN
+Se reprodujo que una fila positiva «Otro año: 2015» podía contar para alcanzar el umbral de tres aportantes junto con votos «Es más antiguo», pero permanecer en Feedbacks después de aplicar la ampliación inferior. La limpieza inferior filtraba solo el texto específico «Sugerencia de ampliar rango inferior», a diferencia de la clasificación positiva usada para el conteo.
+Se unificó la limpieza para ambos sentidos de ampliación: ahora elimina filas del mismo vehículo y año con actor registrado que isPositiveYearSuggestionRow() clasifique como positivas. Conserva respuestas negativas, votos de otros años y otros vehículos.
+Hallazgo documentado: H-AUD-040-004.
+
+PRUEBA DE REGRESIÓN
+Se agregó una prueba mixta con dos votos «Es más antiguo», un voto «Otro año» para el mismo año y registros distractores negativos, de otro año y de otro vehículo. La prueba se ejecutó primero contra el código anterior y reprodujo el defecto; tras la corrección verifica la limpieza selectiva.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 35/35 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Suite con mocks locales; no acredita integración real con Apps Script/Spreadsheet/Drive.
+
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA tras las pruebas locales.
+AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear.
+Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
+Sin despliegues, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================
