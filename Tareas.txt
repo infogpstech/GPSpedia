@@ -500,3 +500,8 @@ Conclusiones a preservar:
 - FEEDBACK actionPermissions es la autoridad backend y no debe relajarse.
 Siguiente paso: implementar los seis hallazgos dentro de AUG-042, pruebas aisladas de matriz de roles, limpieza, cambio de cuenta, revocación remota, logout con modales y fallos de red; un único commit funcional de AUG-042.
 ================================================================================
+
+================================================================================
+AUG-042 — ADENDA DE ALCANCE — 2026-11-09
+Se incorpora offline.js para corregir H-AUD-042-010: el estado persistente de auditoría Drive usa una clave IndexedDB global y no identifica al propietario. La solución debe aislar el estado por userId y limpiarlo al cerrar sesión/cambiar cuenta/rol, sin perder continuidad en una recarga normal de la misma cuenta.
+================================================================================

@@ -1129,3 +1129,11 @@ Criterio: antes de mostrar resultados de logout, verificar que no exista una ses
 
 Alcance AUG-042 ampliado a auth.js, ui.js, main.js y users.html. Se auditaron además state.js, index.html, api-config.js, Services/Auth.js y Services/feedback.js: state.js ya limpia currentUser; showApp ya asigna visibilidad por rol; renderInboxDetail usa Privilegios y respeta Desarrollador/Gefe/Supervisor; AUTH ya revoca todas las sesiones ante cambio de Privilegios; FEEDBACK actionPermissions mantiene Jefe solo Inbox y excluye Jefe de Dashboard/getActivityLogs/approve/reject; api-config enruta logout/validateSession/updateUser correctamente. Estos controles existentes deben preservarse.
 ================================================================================
+
+================================================================================
+H-AUD-042-010 — ALTA — ABIERTO — ESTADO DE AUDITORÍA DRIVE EN INDEXEDDB SIN AISLAMIENTO DE CUENTA
+Ubicación: offline.js:DRIVE_AUDIT_STATE_KEY/saveDriveAuditState/getDriveAuditState (aprox. líneas 113–172); ui.js:openAuditDriveModal.
+Evidencia: la auditoría de Drive se persiste en IndexedDB bajo la clave global driveAudit:last, sin ownerId. Cualquier cuenta Desarrollador que inicie sesión posteriormente en el mismo navegador puede recuperar archivos, IDs, rutas y resultados de la auditoría anterior.
+Impacto: exposición local entre cuentas y recuperación de información privilegiada de una sesión anterior, incluso después de cerrar sesión o recargar la aplicación.
+Criterio: vincular el estado a userId, recuperar solo el estado del mismo usuario, eliminar la clave global heredada no aislada y borrar el estado de la cuenta anterior al logout/cambio de cuenta/rol. Mantener persistencia para la misma cuenta durante recarga normal.
+================================================================================

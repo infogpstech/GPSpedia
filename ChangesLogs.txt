@@ -461,3 +461,10 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Se confirma que AUTH ya revoca todas las sesiones al cambiar Privilegios, showApp ya implementa visibilidad por rol, renderInboxDetail ya usa Privilegios y FEEDBACK conserva la matriz aprobada. Se preservan.
 - Alcance funcional: auth.js, ui.js, main.js, users.html. No se modificó código durante la auditoría.
 ================================================================================
+
+================================================================================
+2026-11-09 — AMPLIACIÓN DE AUDITORÍA AUG-042
+- H-AUD-042-010: DriveAuditState se guarda en IndexedDB con clave global driveAudit:last, sin ownerId; otra cuenta Desarrollador puede recuperar resultados anteriores.
+- Se amplía alcance a offline.js para aislar persistencia por userId y limpiar estado anterior en logout/cambio de cuenta/rol.
+- Respaldo previo: offline.js blob c68e8698c74ef45a1c9bb534c6b2be77df817c34.
+================================================================================

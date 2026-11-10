@@ -102,3 +102,12 @@ Respaldo exacto adicional previo a editar:
 El alcance funcional queda: auth.js, ui.js, main.js y users.html. Se preservan state.js, index.html, api-config.js, Services/Auth.js y Services/feedback.js sin cambios salvo que una nueva evidencia justifique ampliar alcance y se registre antes de editar.
 No se ha modificado código funcional; implementación aún pendiente.
 ================================================================================
+
+================================================================================
+ADENDA DE ALCANCE — PERSISTENCIA LOCAL — AUG-042 — 2026-11-09
+Hallazgo adicional: H-AUD-042-010. offline.js persiste DriveAuditState en IndexedDB con clave global, sin propietario; puede filtrarse entre cuentas en el mismo navegador.
+Archivo funcional adicional: offline.js.
+Respaldo exacto previo a editar: c68e8698c74ef45a1c9bb534c6b2be77df817c34.
+Criterio: DriveAuditState se guarda/lee por userId; se elimina la clave global heredada no aislada; el estado de la cuenta anterior se borra al logout/cambio de cuenta/rol, conservándose en una recarga normal de la misma cuenta.
+No se ha modificado offline.js; implementación pendiente.
+================================================================================
