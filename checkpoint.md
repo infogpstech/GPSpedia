@@ -503,3 +503,32 @@ Validaciones diferidas a Beta: Apps Script desplegado, Spreadsheet/Drive reales,
 Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones de la rama base.
 Siguiente acción: continuar en la próxima iteración con la revisión de los handlers de escritura FEEDBACK restantes, un hallazgo por vez.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: IDEMPOTENCIA DE SUGERENCIAS DE CORTES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Problema resuelto: handleSuggestCutChange no detectaba reintentos de una misma solicitud. Una respuesta perdida podía producir filas duplicadas en Feedbacks y repetir el registro de actividad.
+Corrección en Services/feedback.js:
+- Se añadió una huella determinista de la solicitud que incluye detalles, valores propuestos e imagen enviada.
+- Bajo bloqueo de script, el handler busca una sugerencia previa por reportId, vehículo, corte e identidad validada antes de crear archivos o escribir.
+- Un reintento equivalente devuelve el registro existente con alreadySuggested=true, sin nueva fila, archivo ni actividad.
+- La reutilización de la misma clave con contenido diferente se rechaza. Si ya hay varias filas coincidentes, se rechaza de forma segura para revisión.
+- Las solicitudes históricas sin reportId utilizable (N/A) conservan el comportamiento previo y no se agrupan artificialmente.
+Pruebas añadidas en Services/Test/FeedbackWriteSecurity.js:
+- Reintento idéntico sin duplicar fila ni actividad.
+- Rechazo de reutilización del reportId con contenido diferente.
+- Rechazo de claves duplicadas preexistentes.
+Validación local ejecutada desde los archivos recuperados de la rama:
+- runFeedbackWriteSecurityTests(): 23/23 PASS.
+- Sintaxis/parsing de Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, Services/Coordinator.js, api-config.js y ui.js: 5/5 PASS.
+- Revisión del diff funcional: el chequeo de duplicados precede a la carga de imagen y a las escrituras; el bloqueo se libera en finally.
+Commits de implementación y regresión:
+- 43a122d4af3ad388d264fc8650d31daf5b289301 — fix(feedback): make cut suggestions idempotent.
+- 37c21be876eb38a2edb6e245861e88a83dfc6a6c — test(feedback): cover cut suggestion retry idempotency.
+Estado general del hardening FEEDBACK: EN PROGRESO. Este checkpoint cierra únicamente la idempotencia de suggestCutChange; continúa pendiente revisar los demás handlers y sus efectos de escritura.
+Validaciones diferidas a Beta: Apps Script desplegado, Spreadsheet/Drive reales, navegador real y concurrencia de infraestructura. No se ejecutaron ni se simularon.
+Sin despliegues, cambios de endpoints, datos productivos ni modificaciones a la rama base.
+Siguiente acción: continuar en la próxima iteración con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
+================================================================================
