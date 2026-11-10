@@ -36,8 +36,8 @@ function coordinatorPolicy_(service, operation) {
             updateProfile: { read: ["ACTIVE_SESSIONS"], write: ["USERS"] }
         },
         WRITE: {
-            addOrUpdateCut: { read: identityRead, write: ["CORTES", "DRIVE", "IDEMPOTENCIA"] },
-            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE"] },
+            addOrUpdateCut: { read: identityRead, write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
+            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
             addVinToVehicle: { read: identityRead, write: ["CORTES"] },
             allocateVehicleId: { read: identityRead, write: ["CORTES"] },
             freezeCortesIds: { read: identityRead, write: ["CORTES"] }
@@ -58,9 +58,10 @@ function coordinatorPolicy_(service, operation) {
             updateVehicleField: { read: identityRead, write: ["CORTES", "DRIVE"] },
             uploadAdminImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY"] },
             migrateCortesOperationIds: { maintenance: true }, // Dry-run y confirmación comparten la ventana exclusiva.
+            reconcilePendingImageUploads: { maintenance: true },
             addOrUpdateCut: {
                 read: identityRead,
-                write: ["CORTES", "DRIVE", "IDEMPOTENCIA"],
+                write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
                 nestedActions: { WRITE: ["allocateVehicleId"] }
             },
             addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE"] },
