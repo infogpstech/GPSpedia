@@ -4,16 +4,7 @@ Fuente: Aug_Tareas legacy, IDs AUG-100 a AUG-152 y adendas.
 Estado operativo: PENDIENTE DE REVALIDACIÓN; conservar los estados originales como antecedente.
 
 
-NORMAS INTERNAS
-1. Este registro contiene tareas pendientes o pendientes de revalidación; no autoriza por sí solo a implementar.
-2. Conservar IDs originales. No duplicar, renumerar, eliminar ni sobrescribir requisitos; agregar adendas fechadas y vinculadas.
-3. No marcar una implementación como COMPLETADA hasta revisar sintácticamente todos los archivos modificados con analizador apropiado y registrar herramienta/versión, archivos y resultado.
-4. La revisión sintáctica es necesaria, no suficiente: cumplir pruebas funcionales/regresión aplicables, comparación con respaldos, Code Review, revisión de efectos colaterales y verificación del commit único.
-5. Estados permitidos: PENDIENTE_DE_AUDITORÍA, PENDIENTE_DE_IMPLEMENTACIÓN, IMPLEMENTADA_PENDIENTE_DE_SINTAXIS, SINTAXIS_APROBADA_PENDIENTE_DE_VALIDACIÓN, BLOQUEADA y PENDIENTE_DE_RECONCILIACIÓN. Solo usar COMPLETADA al superar toda la compuerta.
-6. Reconciliar equivalencias antes de ejecutar registros legacy; no duplicar trabajo.
-7. Máximo 180,000 caracteres Unicode por archivo; rotar sin pérdida conforme a Normas_Gestion_Documental.md.
-8. No reintroducir filtros rápidos cancelados. AUG-015 está ausente en la fuente; no inferirlo ni reutilizarlo.
-
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
 
 ### AUG-100 — Consolidar un sistema universal de estilos y estados de botones
 - Origen: H-AUD-015-003. AUD-T-015/Tarea 15. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
