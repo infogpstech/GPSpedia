@@ -617,3 +617,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Alcance del cierre: únicamente identidad del colaborador al crear tutoriales. Hardening FEEDBACK global permanece EN PROGRESO.
 - Sin despliegues, cambios de endpoints, ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE REPORTES
+- Services/feedback.js: handleReportProblem consulta reportMetadata por reportId; reintentos idénticos devuelven el resultado existente sin insertar otra fila ni duplicar actividad. Conflictos de contenido o identificadores ya duplicados se rechazan. Nuevos registros guardan userId validado en metadata.
+- Services/Test/FeedbackWriteSecurity.js: cobertura del ciclo creación/reintento, conflicto de datos y duplicados preexistentes.
+- Validación: suite FEEDBACK 20/20 PASS; sintaxis 6/6 archivos PASS; matriz estática de dispatcher, autorización, ACTION_TO_SERVICE_MAP y Coordinator sin discrepancias.
+- Alcance del cierre: idempotencia de reportProblem. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
