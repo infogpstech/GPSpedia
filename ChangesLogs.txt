@@ -300,3 +300,15 @@ AUG-016 — Normalización del estado de cierre local — 2026-11-09
 - checkpoint.md: registró la revisión posterior del commit, las verificaciones locales y AUG-017 como siguiente tarea.
 - No se modificó código, endpoints, deployments, hojas ni datos.
 ================================================================================
+
+
+================================================================================
+AUG-017 — Controles de navegación y coherencia de Inbox/Dashboard — 2026-11-09
+- ui.js: añadió normalización única de Privilegios y contexto userId/SessionToken/rol; showApp asigna explícitamente display de Inbox y Dashboard, incluye Jefe solo en Inbox y limpia modales/DOM/caché al cambiar de contexto.
+- ui.js: openInbox, openDashboard y loadAndRenderInbox descartan respuestas exitosas o errores si la sesión/rol que originó la petición ya no es vigente.
+- ui.js: renderInboxDetail usa Privilegios para decidir approve/reject y registra el listener de reply solo cuando existe el botón; las acciones de vídeo conservan el listener de borrar.
+- Auditoría.txt: registró H-AUD-024-007 ampliado y H-AUD-075/H-AUD-076; añadió su resolución.
+- Tareas.txt, Tareas_pendientes_parte1.txt y tareas_completadas_parte1.txt: registraron el cierre local de AUG-017.
+- checkpoint.md: registró auditoría, respaldo, pruebas locales y límites de validación.
+- No se modificaron backend FEEDBACK, AUTH, endpoints, deployments ni datos productivos.
+================================================================================

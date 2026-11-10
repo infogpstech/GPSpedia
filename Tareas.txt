@@ -294,3 +294,12 @@ Ciclo A de revisión del commit 9bb6d87e: no se identificaron defectos nuevos bl
 Las pruebas que requieren Apps Script desplegado, navegador real, HTTP, Sheets reales o concurrencia entre ejecuciones se conservan en lista_beta.txt para la fase Beta.
 Siguiente tarea: AUG-017 — restablecer controles de navegación y coherencia de Inbox/Dashboard al cambiar de cuenta o rol.
 ================================================================================
+
+
+================================================================================
+AUG-017 — CIERRE — 2026-11-09
+Estado: COMPLETADA LOCALMENTE.
+H-AUD-024-007, H-AUD-075 y H-AUD-076 RESUELTOS. ui.js asigna visibilidad explícita por rol; Inbox admite Jefe y Dashboard lo excluye; renderInboxDetail usa Privilegios; vistas/caché se limpian al cambiar userId/token/rol; respuestas asíncronas obsoletas se descartan; replyBtn es opcional para video_approval.
+Pruebas: sintaxis 1/1 PASS; harness 32/32 PASS; matriz FEEDBACK 7/7 PASS; total 33/33 PASS. No se modificó backend ni endpoints. Pruebas integradas quedan para Beta.
+Siguiente tarea: continuar con la siguiente tarea pendiente de la secuencia de seguridad/identidad, sin reabrir AUG-016/AUG-017 por pruebas Beta.
+================================================================================

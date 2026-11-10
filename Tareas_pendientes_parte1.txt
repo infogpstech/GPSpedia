@@ -1600,3 +1600,10 @@ Siguiente acción: ejecutar matriz Beta de AUG-016 en deployments AUTH/USERS ais
 RECTIFICACIÓN DE ESTADO — AUG-016 — 2026-11-09
 AUG-016 queda COMPLETADA en el entorno local conforme a DOC-NORM-2026-001, sección 7. La validación local está aprobada; las pruebas de deployment, integración y concurrencia real se mantienen DIFERIDAS A BETA y no mantienen abierta la implementación. El registro de cierre se conserva en tareas_completadas_parte1.txt. H-AUD-066/AUG-154 continúa independiente.
 ================================================================================
+
+
+================================================================================
+CIERRE LOCAL — AUG-017 — 2026-11-09
+Estado: COMPLETADA por implementación y pruebas locales aprobadas. H-AUD-024-007, H-AUD-075 y H-AUD-076 resueltos en fuentes. La matriz backend FEEDBACK no se modificó. Validación integrada/navegador/deployment queda diferida a Beta y no mantiene abierta esta tarea.
+Evidencia: ui.js syntax 1/1 PASS; harness local 32/32 PASS; matriz backend 7/7 PASS. Único archivo funcional modificado: ui.js.
+================================================================================

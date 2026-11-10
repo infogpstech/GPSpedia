@@ -241,3 +241,12 @@ ADENDA DE CIERRE — AUG-016 — 2026-11-09
 Estado: COMPLETADA — validación local aprobada. VALIDACIÓN DIFERIDA A BETA es una etapa posterior de integración y no una condición pendiente para esta tarea.
 Evidencia: sintaxis 7/7 PASS; harness AUTH 15/15 PASS; integraciones 4/4 PASS; equivalencia producción/prueba PASS; pruebas locales adicionales de expiración y revocación 6/6 PASS y contratos/ruteo 8/8 PASS. Revisión del commit 9bb6d87e sin hallazgos nuevos bloqueantes en el alcance. AUG-154/H-AUD-066 permanece independiente.
 ================================================================================
+
+
+================================================================================
+AUG-017 — Restablecer controles de navegación al cambiar de cuenta/rol — 2026-11-09
+Estado: COMPLETADA por validación local aprobada.
+Hallazgos resueltos: H-AUD-024-007, H-AUD-075 y H-AUD-076.
+ui.js asigna explícitamente visibilidad de Inbox/Dashboard por rol; incluye Jefe solo en Inbox; toma el rol desde Privilegios; cierra y limpia las vistas/caché al cambiar identidad/token/rol; descarta respuestas asíncronas de una sesión anterior; protege el listener replyBtn para elementos video_approval.
+Validación local: sintaxis 1/1 PASS; harness funcional 32/32 PASS; matriz backend FEEDBACK 7/7 PASS; total 33/33 PASS. No se modificó la matriz backend ni otros archivos funcionales. Pruebas integradas quedan diferidas a Beta.
+================================================================================

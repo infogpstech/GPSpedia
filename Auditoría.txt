@@ -696,3 +696,40 @@ Riesgos y límites:
 - AUG-011 continúa omitida; no se cambió SHA-256 ni el formato sha256$.
 Estado: H-AUD-071–074 RESUELTOS EN FUENTES; AUG-016 IMPLEMENTADA LOCALMENTE. Falta únicamente la validación Beta en deployments aislados antes de declarar el ciclo operativo verificado.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE IMPLEMENTACIÓN — AUG-017 — 2026-11-09
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD auditado: 751a3f199f6e2ca2cdbf53f4d8084d4387e0f60a.
+Alcance: ui.js (showApp, setupModal, openInbox, openDashboard, renderInboxDetail, loadAndRenderInbox e inboxCacheData); main.js (listeners Inbox/Dashboard y popstate); auth.js (handleLoginSuccess y cambio de sesión); state.js; api-config.js (getFeedbackItems/getActivityLogs/approveVideo/rejectVideo); Services/feedback.js (assertFeedbackSession/actionPermissions); index.html (DOM de Inbox/Dashboard).
+Ciclo A — AUG-016, commit 9bb6d87e50b69177220be58a1399db5b0d113d63: revisión posterior sin defectos nuevos bloqueantes dentro de su alcance. H-AUD-066/AUG-154 permanece independiente.
+
+H-AUD-024-007 — CONFIRMADO Y AMPLIADO:
+1. showApp() solo asignaba display='flex' para roles autorizados y no asignaba 'none' para los demás; el estado visual de una cuenta anterior podía persistir.
+2. FEEDBACK permite getFeedbackItems a Desarrollador, Gefe, Jefe y Supervisor; showApp omitía Jefe. getActivityLogs permite Desarrollador, Gefe y Supervisor; Jefe debe seguir excluido de Dashboard.
+3. renderInboxDetail() consultaba currentUser.Rol, mientras AUTH entrega el rol en currentUser.Privilegios; la UI podía ocultar aprobación/rechazo a usuarios autorizados.
+4. showApp() no cerraba ni limpiaba Inbox/Dashboard, sus contenedores ni inboxCacheData al cambiar userId/sesión/rol. Las cargas asíncronas tampoco descartaban respuestas obsoletas.
+5. La matriz FEEDBACK existente se mantiene: Inbox/reply/resolve/delete permite Jefe; Dashboard y approve/reject no permiten Jefe.
+
+H-AUD-075 — SEVERIDAD MEDIA — ERROR AL RENDERIZAR ELEMENTOS DE VÍDEO EN INBOX:
+Ubicación: ui.js renderInboxDetail(), listener de inbox-reply-btn.
+Los elementos video_approval no generan inbox-reply-btn, pero el código llamaba replyBtn.addEventListener sin comprobar null. Esto provocaba TypeError y evitaba el cableado posterior de acciones, incluido borrar.
+
+H-AUD-076 — SEVERIDAD MEDIA — RESPUESTAS ASÍNCRONAS OBSOLETAS:
+Ubicación: ui.js openInbox(), openDashboard() y loadAndRenderInbox().
+Las respuestas de getFeedbackItems/getActivityLogs se aplicaban al DOM/caché sin comprobar que userId, SessionToken y rol siguieran vigentes. Una respuesta tardía podía repoblar una vista limpiada o sobrescribir una carga de otra sesión.
+
+No se modificó código durante la auditoría. Respaldo exacto previo a edición: ui.js blob f00f48a42ee9bf0fd200f21959eb741f113363eb. Los contratos backend se auditaron y no requerían cambios.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN DE HALLAZGOS — AUG-017 — 2026-11-09
+H-AUD-024-007 — RESUELTO EN FUENTES: showApp asigna display='flex' o 'none' en cada llamada; Inbox se muestra a Desarrollador/Gefe/Jefe/Supervisor y Dashboard solo a Desarrollador/Gefe/Supervisor. La UI utiliza Privilegios. Los cambios de contexto cierran y limpian inbox-modal/dashboard-modal, lista, detalle, activity-logs e inboxCacheData.
+H-AUD-075 — RESUELTO EN FUENTES: replyBtn se conecta únicamente si existe; los elementos video_approval conservan sus listeners de aprobar/rechazar según rol y borrar según la acción disponible.
+H-AUD-076 — RESUELTO EN FUENTES: openInbox, openDashboard y loadAndRenderInbox capturan userId/SessionToken/rol y descartan respuestas exitosas o errores cuando el contexto cambió.
+Archivos funcionales modificados: ui.js únicamente. main.js, auth.js, state.js, api-config.js, Services/feedback.js e index.html permanecen sin cambios. No se alteró la matriz de autorización backend.
+Validación local final: sintaxis ui.js 1/1 PASS; harness funcional 32/32 PASS (matriz showApp por seis roles, cambios de identidad/token/rol, limpieza de modales/DOM/caché, éxito y error asíncrono obsoleto en Inbox/Dashboard/loadAndRenderInbox, botones approve/reject/delete por rol y replyBtn opcional); matriz estática FEEDBACK 7/7 PASS. Total: 33/33 comprobaciones locales PASS.
+No se ejecutaron navegador real, Apps Script desplegado, HTTP, Sheets reales ni Beta. No son requisitos de cierre local; se reservan para la fase Beta global.
+Estado: AUG-017 COMPLETADA LOCALMENTE. H-AUD-024-007, H-AUD-075 y H-AUD-076 resueltos en fuentes.
+================================================================================

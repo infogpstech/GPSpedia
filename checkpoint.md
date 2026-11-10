@@ -1150,3 +1150,33 @@ No se modificaron endpoints, deployments, datos productivos ni rama base. No se 
 Siguiente tarea: AUG-017 — restablecer controles de navegación al cambiar de cuenta/rol. Su auditoría e implementación se iniciarán después de verificar este commit.
 Este checkpoint es la última actualización documental del commit de normalización de estado AUG-016.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-017 — 2026-11-09
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work. Rama base protegida: GPSpedia2.2.5.
+HEAD inicial: 751a3f199f6e2ca2cdbf53f4d8084d4387e0f60a. Commit padre: 9bb6d87e50b69177220be58a1399db5b0d113d63. HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Ciclo A: AUG-016 revisada y COMPLETADA localmente; no se encontraron defectos nuevos bloqueantes dentro de su alcance. H-AUD-066/AUG-154 permanece independiente.
+Tarea: AUG-017 — Restablecer controles de navegación al cambiar de cuenta/rol.
+Alcance funcional: ui.js showApp, openInbox, openDashboard, renderInboxDetail, loadAndRenderInbox e inboxCacheData. Dependencias auditadas sin modificación prevista: main.js, auth.js, state.js, api-config.js, Services/feedback.js e index.html.
+Hallazgos: H-AUD-024-007 confirmado/ampliado; H-AUD-075 listener replyBtn nulo en video_approval; H-AUD-076 respuestas asíncronas obsoletas.
+Respaldo exacto ui.js previo: f00f48a42ee9bf0fd200f21959eb741f113363eb.
+Política: Inbox para Desarrollador/Gefe/Jefe/Supervisor; Dashboard y aprobación/rechazo de vídeo para Desarrollador/Gefe/Supervisor. Backend FEEDBACK permanece autoridad y no se modifica.
+Plan: visibilidad explícita, limpieza de vistas/caché por cambio de userId/token/rol, guardas de contexto después de await y listener replyBtn condicional.
+Pruebas locales: sintaxis 1/1; matriz UI y contexto; limpieza DOM/caché; respuestas tardías de éxito/error; roles de botones de vídeo; listener de respuesta para mensajes normales; permisos FEEDBACK. No se requieren pruebas Beta para cerrar esta implementación.
+No se modificaron archivos funcionales antes de completar la auditoría. No se tocaron endpoints, deployments, hojas ni datos productivos.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-017 — 2026-11-09
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD inicial: 751a3f199f6e2ca2cdbf53f4d8084d4387e0f60a. HEAD base verificado antes del commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Respaldo ui.js previo: f00f48a42ee9bf0fd200f21959eb741f113363eb. Blob final ui.js: ca8a0f4861025419a78a93bd61810b96185f5367.
+Ciclo A AUG-016 completado y normalizado; AUG-017 implementada en ui.js únicamente.
+H-AUD-024-007, H-AUD-075 y H-AUD-076 resueltos. Inbox incluye Jefe; Dashboard no. approve/reject usa Privilegios y coincide con FEEDBACK. Los modales Inbox/Dashboard y sus contenidos/caché se limpian ante cambio de identidad/token/rol. Las respuestas asíncronas de sesiones anteriores se descartan tanto en éxito como en error. Los elementos video_approval no intentan registrar un listener en replyBtn inexistente.
+Validación local final: parser/sintaxis 1/1 PASS; harness funcional 32/32 PASS; matriz backend 7/7 PASS; total 33/33 PASS. Los casos cubren seis roles, cambios de identidad/token/rol, limpieza de DOM/caché, respuestas tardías de Inbox/Dashboard/loadAndRenderInbox y acciones de vídeo.
+Code Review: solo ui.js modificado funcionalmente; main.js, auth.js, state.js, api-config.js, Services/feedback.js e index.html sin cambios. Matriz de autorización backend sin cambios. No se tocaron endpoints, deployments ni datos.
+No se ejecutaron navegador real, HTTP, Apps Script real, Sheets reales ni pruebas Beta. La validación integrada queda para la fase Beta y no condiciona el cierre local.
+Estado: AUG-017 COMPLETADA LOCALMENTE. Este checkpoint es la última actualización documental antes del único commit de AUG-017.
+================================================================================

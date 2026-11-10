@@ -3175,6 +3175,47 @@ function renderRelayInfoModal(relayInfo) {
     }
 }
 
+let inboxCacheData = null;
+
+function normalizeUiRole_(role) {
+    return String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+}
+
+function getUiSessionContext_(user = getState().currentUser) {
+    if (!user) return null;
+    return {
+        userId: String(user.ID || user.id || '').trim(),
+        sessionToken: String(user.SessionToken || ''),
+        role: normalizeUiRole_(user.Privilegios)
+    };
+}
+
+function isCurrentUiSessionContext_(expected) {
+    if (!expected) return false;
+    const current = getUiSessionContext_();
+    return Boolean(current &&
+        current.userId === expected.userId &&
+        current.sessionToken === expected.sessionToken &&
+        current.role === expected.role);
+}
+
+let lastShownAppContextKey = null;
+
+function resetRoleScopedViews_() {
+    const inboxModal = document.getElementById('inbox-modal');
+    const dashboardModal = document.getElementById('dashboard-modal');
+    const inboxList = document.getElementById('inbox-list');
+    const inboxDetail = document.getElementById('inbox-detail');
+    const activityLogs = document.getElementById('activity-logs');
+
+    if (inboxModal) inboxModal.style.display = 'none';
+    if (dashboardModal) dashboardModal.style.display = 'none';
+    if (inboxList) inboxList.innerHTML = '';
+    if (inboxDetail) inboxDetail.innerHTML = '';
+    if (activityLogs) activityLogs.innerHTML = '';
+    inboxCacheData = null;
+}
+
 function setupModal(modalId, openFn) {
     return async (...args) => {
         const modal = document.getElementById(modalId);
@@ -3207,6 +3248,9 @@ function setupModal(modalId, openFn) {
 }
 
 export const openDashboard = setupModal('dashboard-modal', async () => {
+    const requestContext = getUiSessionContext_();
+    if (!requestContext) return;
+
     const modal = document.getElementById('dashboard-modal');
     modal.style.display = 'flex';
     const logContainer = document.getElementById('activity-logs');
@@ -3214,6 +3258,7 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
 
     try {
         const result = await getActivityLogs(getDeveloperSessionPayload());
+        if (!isCurrentUiSessionContext_(requestContext)) return;
         if (result.status === 'success') {
             logContainer.innerHTML = '';
             result.data.forEach(log => {
@@ -3228,11 +3273,15 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
             });
         }
     } catch (error) {
+        if (!isCurrentUiSessionContext_(requestContext)) return;
         logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar actividad</td></tr>';
     }
 });
 
 export const openInbox = setupModal('inbox-modal', async () => {
+    const requestContext = getUiSessionContext_();
+    if (!requestContext) return;
+
     const modal = document.getElementById('inbox-modal');
     modal.style.display = 'flex';
     const listContainer = document.getElementById('inbox-list');
@@ -3242,6 +3291,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
 
     try {
         const result = await getFeedbackItems(getDeveloperSessionPayload());
+        if (!isCurrentUiSessionContext_(requestContext)) return;
 
         if (result.status === 'success') {
             const data = result.data || result.messages || result.items || [];
@@ -3255,6 +3305,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
             listContainer.innerHTML = `<p style="color:red;">Error: ${result.message || 'No se pudieron cargar los mensajes.'}</p>`;
         }
     } catch (error) {
+        if (!isCurrentUiSessionContext_(requestContext)) return;
         console.error("Error fetching feedback items:", error);
         listContainer.innerHTML = `<p style="color:red;">Error de conexión al cargar mensajes.</p>`;
     }
@@ -5575,8 +5626,8 @@ export function renderInboxDetail(item) {
     }
 
     const isVideoItem = item.type === 'video_approval';
-    const userRole = currentUser ? currentUser.Rol : '';
-    const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+    const userRole = currentUser ? String(currentUser.Privilegios || '').trim() : '';
+    const canApprove = ['desarrollador', 'gefe', 'supervisor'].includes(normalizeUiRole_(userRole));
     const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
     const reportMetadataHtml = reportMetadata ? `
         <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
@@ -5711,22 +5762,24 @@ export function renderInboxDetail(item) {
     }
 
     const replyBtn = document.getElementById('inbox-reply-btn');
-    replyBtn.addEventListener('click', async () => {
-        const replyText = document.getElementById('inbox-reply-textarea').value;
-        if (!replyText.trim()) {
-            showGlobalError("La respuesta no puede estar vacía.");
-            return;
-        }
-        try {
-            replyBtn.classList.add('btn-loading');
-            await replyToFeedback(item.id, item.type, replyText, userName, getDeveloperSessionPayload());
-            openInbox();
-        } catch (error) {
-            showGlobalError(`Error al enviar respuesta: ${error.message}`);
-        } finally {
-            replyBtn.classList.remove('btn-loading');
-        }
-    });
+    if (replyBtn) {
+        replyBtn.addEventListener('click', async () => {
+            const replyText = document.getElementById('inbox-reply-textarea').value;
+            if (!replyText.trim()) {
+                showGlobalError("La respuesta no puede estar vacía.");
+                return;
+            }
+            try {
+                replyBtn.classList.add('btn-loading');
+                await replyToFeedback(item.id, item.type, replyText, userName, getDeveloperSessionPayload());
+                openInbox();
+            } catch (error) {
+                showGlobalError(`Error al enviar respuesta: ${error.message}`);
+            } finally {
+                replyBtn.classList.remove('btn-loading');
+            }
+        });
+    }
 
     const resolveBtn = document.getElementById('inbox-resolve-btn');
     if (resolveBtn) {
@@ -6247,6 +6300,15 @@ export function showLoginScreen(reason = null) {
 }
 
 export function showApp(user) {
+    const appContext = getUiSessionContext_(user);
+    const appContextKey = appContext
+        ? `${appContext.userId}|${appContext.sessionToken}|${appContext.role}`
+        : '';
+    if (lastShownAppContextKey !== appContextKey) {
+        resetRoleScopedViews_();
+        lastShownAppContextKey = appContextKey;
+    }
+
     const splash = document.getElementById('splash-screen');
     splash.style.opacity = '0';
     setTimeout(() => {
@@ -6295,23 +6357,19 @@ export function showApp(user) {
     }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
-    const userRole = String((user && user.Privilegios) || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim()
-        .toLowerCase();
+    const userRole = normalizeUiRole_(user && user.Privilegios);
     if (devToolsBtn) {
         devToolsBtn.style.display = userRole === 'desarrollador' ? 'flex' : 'none';
     }
 
     const inboxBtn = document.getElementById('inbox-btn');
-    if (inboxBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
-        inboxBtn.style.display = 'flex';
+    if (inboxBtn) {
+        inboxBtn.style.display = ['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');
-    if (dashboardBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
-        dashboardBtn.style.display = 'flex';
+    if (dashboardBtn) {
+        dashboardBtn.style.display = ['desarrollador', 'gefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
     }
 
     // Protección de renderizado: No mostrar el catálogo si los datos no están listos.
@@ -9218,8 +9276,6 @@ window.applyRichColor = function(targetId, color) {
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
 };
 
-let inboxCacheData = null;
-
 /* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
 export function exportVehiclePrintSheet(item) {
     if (!item) return;
@@ -10131,6 +10187,9 @@ export function exportVehiclePrintSheet(item) {
 }
 
 export async function loadAndRenderInbox() {
+    const requestContext = getUiSessionContext_();
+    if (!requestContext) return;
+
     const listContainer = document.getElementById('inbox-list');
     if (!listContainer) return;
 
@@ -10142,11 +10201,13 @@ export async function loadAndRenderInbox() {
 
     try {
         const res = await getFeedbackItems(getDeveloperSessionPayload());
+        if (!isCurrentUiSessionContext_(requestContext)) return;
         if (res && res.data) {
             inboxCacheData = res.data;
             renderInboxList(inboxCacheData);
         }
     } catch(err) {
+        if (!isCurrentUiSessionContext_(requestContext)) return;
         console.error("Error cargando inbox:", err);
         if (!inboxCacheData) {
             listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
