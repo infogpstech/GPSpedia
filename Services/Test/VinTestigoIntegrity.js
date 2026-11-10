@@ -125,6 +125,15 @@ function runVinTestigoIntegrityTests() {
         headers[42] = "VIN";
         assert_(getVinColumnIndex(fakeSheet_(headers, [], 50)) === 43);
     });
+    run_("ensureTestigoColumns no modifica AT:AV si VIN está duplicado", function() {
+        const headers = Array(50).fill("");
+        headers[0] = "id";
+        headers[42] = "VIN";
+        headers[48] = "vin";
+        const sheet = fakeSheet_(headers, [], 50);
+        expectThrow_(() => ensureTestigoColumns(sheet, true), "duplicados");
+        assert_(sheet._data[0][45] === "" && sheet._data[0][46] === "" && sheet._data[0][47] === "");
+    });
     run_("rechaza encabezados VIN duplicados", function() {
         const headers = Array(50).fill("");
         headers[42] = "VIN";
