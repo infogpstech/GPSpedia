@@ -3290,8 +3290,18 @@ function markImageUploadLinked(imageUrl) {
         if (!metadata || metadata.v !== "2" || !metadata.token || !metadata.operationKey) return false;
 
         const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
-        const record = findImageUploadLedgerRecord_(ledgerSheet, metadata.token);
-        if (!record) return false;
+        let record = findImageUploadLedgerRecord_(ledgerSheet, metadata.token);
+        if (!record) {
+            const timestamp = new Date().toISOString();
+            const reconstructedValues = [
+                metadata.token, metadata.operationKey, metadata.folderId, metadata.mimeType,
+                Number(metadata.sizeBytes), metadata.contentHash, fileId,
+                "https://drive.google.com/uc?export=view&id=" + fileId, "pending",
+                "", "", "", "[]", metadata.name || file.getName(), timestamp, timestamp,
+                "Registro reconstruido desde metadatos Drive v2."
+            ];
+            record = saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex: 0, values: reconstructedValues });
+        }
         const values = record.values;
         if (String(values[6] || "").trim() && String(values[6]).trim() !== fileId) {
             throw new Error("El token de carga ya está asociado a otro fileId en ImageUploadLedger.");
