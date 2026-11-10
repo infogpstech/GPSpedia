@@ -181,6 +181,65 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("addProblem rechaza campos obligatorios y solución compuestos solo por espacios", function() {
+            const base = {
+                titulo: "Falla", descripcion: "Detalle", sinSolucion: false,
+                solucion: "Solución", imgBase64: "data:image/jpeg;base64,AA==",
+                userId: "USR-TEST-01", userName: "Usuario verificado"
+            };
+            expectThrow_(() => handleAddProblem({ ...base, titulo: "   " }), "Título y descripción");
+            expectThrow_(() => handleAddProblem({ ...base, descripcion: "  \\n " }), "Título y descripción");
+            expectThrow_(() => handleAddProblem({ ...base, solucion: "  \\n " }), "Debe proporcionar una solución");
+        });
+
+        test_("addProblem normaliza los textos antes de guardarlos en PyS", function() {
+            const originalGetSafeSheet = getSafeSheet;
+            const originalLog = logUserActivity;
+            const originalLock = LockService;
+            const originalSpreadsheetApp = SpreadsheetApp;
+            const originalDriveApp = DriveApp;
+            const originalUtilities = Utilities;
+            const sheet = makeSheet([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
+            let activityTitle = "";
+            const file = {
+                setSharing: function() {},
+                getUrl: () => "https://drive.google.test/file/problem-image",
+                setTrashed: function() {}
+            };
+            try {
+                getSafeSheet = () => sheet;
+                logUserActivity = (userId, userName, action, id, title) => { activityTitle = title; };
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                SpreadsheetApp = { flush: function() {} };
+                DriveApp = {
+                    getFoldersByName: () => ({ hasNext: () => true, next: () => ({ createFile: () => file }) }),
+                    Access: { ANYONE_WITH_LINK: "anyone" },
+                    Permission: { VIEW: "view" }
+                };
+                Utilities = { base64Decode: () => [1], newBlob: () => ({}) };
+                const result = handleAddProblem({
+                    titulo: "  Falla eléctrica  ", descripcion: "  Detalle del problema  ",
+                    sinSolucion: false, solucion: "  Revisar conexión  ", prevenir: "  Aislar el cable  ",
+                    imgBase64: "data:image/jpeg;base64,AA==", userId: "USR-TEST-01",
+                    userName: "Usuario verificado"
+                });
+                assert_(result.status === "success");
+                assert_(sheet.rows.length === 2);
+                assert_(sheet.rows[1][1] === "Falla eléctrica");
+                assert_(sheet.rows[1][2] === "Detalle del problema");
+                assert_(sheet.rows[1][4] === "Revisar conexión");
+                assert_(sheet.rows[1][5] === "Aislar el cable");
+                assert_(activityTitle === "Falla eléctrica");
+            } finally {
+                getSafeSheet = originalGetSafeSheet;
+                logUserActivity = originalLog;
+                LockService = originalLock;
+                SpreadsheetApp = originalSpreadsheetApp;
+                DriveApp = originalDriveApp;
+                Utilities = originalUtilities;
+            }
+        });
+
         test_("addProblem rechaza una imagen ausente", function() {
             expectThrow_(() => handleAddProblem({
                 titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
