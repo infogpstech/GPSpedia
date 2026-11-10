@@ -886,3 +886,13 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - Services/Test/README.md: documenta el runner runVideoApprovalCreationContractTests().
 - No se modificó código funcional.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-040 / H-AUD-040-017 — RETIRAR HANDLER OBSOLETO assignCollaborator
+- Services/feedback.js: eliminado handleAssignCollaborator(), sin consumidores ni ruta en dispatcher/política FEEDBACK.
+- Services/Test/FeedbackWriteSecurity.js: la prueba de acción no declarada también comprueba que el handler no exista.
+- Auditoría.txt: documenta evidencia, severidad y corrección en H-AUD-040-017.
+- No se modificaron contratos vigentes, endpoints, deployments ni datos productivos.
+- Parsing completo y suite FEEDBACK integral pendientes de ejecución local.
+================================================================================
