@@ -1613,8 +1613,9 @@ function handleAddSolution(payload) {
 
 function handleAddPrevention(payload) {
     const { problemId, prevenir, userId, userName } = payload || {};
-    if (!problemId || !prevenir || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
-    if (String(prevenir).length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
+    const normalizedPrevention = String(prevenir || "").trim();
+    if (!problemId || !normalizedPrevention || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
+    if (normalizedPrevention.length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
@@ -1622,7 +1623,7 @@ function handleAddPrevention(payload) {
     const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
     const matches = ids.map((id, index) => ({ id, index })).filter(item => String(item.id) === String(problemId));
     if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID duplicado." : "Problema no encontrado.");
-    sheet.getRange(matches[0].index + 2, 6).setValue(prevenir);
+    sheet.getRange(matches[0].index + 2, 6).setValue(normalizedPrevention);
     SpreadsheetApp.flush();
     try { logUserActivity(userId, userName, "add_prevention", problemId, "Se agregó una prevención."); }
     catch (logError) { console.error("No se pudo registrar la actividad de prevención:", logError); }
