@@ -3293,6 +3293,9 @@ function markImageUploadLinked(imageUrl) {
         const record = findImageUploadLedgerRecord_(ledgerSheet, metadata.token);
         if (!record) return false;
         const values = record.values;
+        if (String(values[6] || "").trim() && String(values[6]).trim() !== fileId) {
+            throw new Error("El token de carga ya está asociado a otro fileId en ImageUploadLedger.");
+        }
         const expected = {
             token: String(values[0]), operationKey: String(values[1]), folderId: String(values[2]),
             mimeType: String(values[3]), sizeBytes: Number(values[4]), contentHash: String(values[5])
@@ -3514,7 +3517,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
     const lastRow = ledgerSheet.getLastRow();
     const requestedStart = Number(payload && payload.startRow);
     const startRow = Number.isInteger(requestedStart) && requestedStart >= 2 ? requestedStart : 2;
-    const requestedLimit = Number(payload && payload.limit);
+    const requestedLimit = payload && payload.limit !== undefined ? Number(payload.limit) : 50;
     const limit = Number.isInteger(requestedLimit) ? Math.max(1, Math.min(100, requestedLimit)) : 50;
     const confirm = !!(payload && payload.confirm === true);
     if (lastRow < 2 || startRow > lastRow) {
@@ -3630,6 +3633,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
         items.push(item);
     });
 
+    items.forEach(item => { if (item.fileId) ledgerFileIds.add(item.fileId); });
     const untrackedReferences = Array.from(allReferenceIds).filter(fileId => !ledgerFileIds.has(fileId));
     const nextStartRow = startRow + count <= lastRow ? startRow + count : null;
     if (logMessage) logMessage("Reconciliación de cargas",
