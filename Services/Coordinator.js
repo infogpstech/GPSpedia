@@ -76,7 +76,7 @@ function coordinatorPolicy_(service, operation) {
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] }
         },
         FEEDBACK: {
-            recordLike: { read: feedbackRead, write: ["CORTES", "ACTIVITY"] },
+            recordLike: { read: feedbackRead, write: ["CORTES", "FEEDBACK", "ACTIVITY"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
             addSolution: { read: feedbackRead, write: feedbackWrite },
@@ -86,7 +86,6 @@ function coordinatorPolicy_(service, operation) {
             updatePysItem: { read: feedbackRead, write: feedbackWrite },
             updateTutorialItem: { read: feedbackRead, write: feedbackWrite },
             suggestCutChange: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
-            assignCollaborator: { read: feedbackRead, write: ["CORTES", ...feedbackWrite] },
             suggestYear: { read: feedbackRead, write: ["CORTES", ...feedbackWrite] },
             addTutorial: { read: feedbackRead, write: feedbackWrite },
             sendContactForm: { write: ["FEEDBACK"] },
