@@ -22,7 +22,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
-    'initYouTubeUpload': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
+    'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
     'ping': 'ADMIN', 'migrateCortesOperationIds': 'ADMIN', 'reconcilePendingImageUploads': 'ADMIN',
