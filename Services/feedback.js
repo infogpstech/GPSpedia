@@ -951,7 +951,7 @@ function handleSuggestYearLocked(payload) {
                     ". La sugerencia para el año " + year + " no se registró; vuelve a enviarla."
                 : "Se recuperó la ampliación pendiente del año " + pendingYear +
                     ". Tu respuesta para ese año no se registró; vuelve a enviarla.";
-            return { ...recovered, status: "info", recovered: true, message };
+            return { ...recovered, status: "info", recovered: true, recorded: false, message };
         }
         return {
             ...recovered,
@@ -965,7 +965,7 @@ function handleSuggestYearLocked(payload) {
         String(row[actorColumn - 1] || "").trim() === getAppliedSuggestionActorKey_(actorKey)
     );
     if (alreadyApplied) {
-        return { status: "info", message: "Esta sugerencia ya fue atendida; no se registró nuevamente." };
+        return { status: "info", recorded: false, message: "Esta sugerencia ya fue atendida; no se registró nuevamente." };
     }
     const alreadyReported = existingData.some(row =>
         matchesActorAndSuggestion(row) &&
@@ -1000,17 +1000,18 @@ function handleSuggestYearLocked(payload) {
 
     if (!isPositive) {
         return alreadyReported
-            ? { status: "info", message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
+            ? { status: "info", recorded: false, message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
             : { status: "success", message: "Respuesta registrada correctamente." };
     }
     if (alreadyReported && !voteActors.has(actorKey)) {
         return {
             status: "info",
+            recorded: false,
             message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se modificó ni se contó como voto positivo."
         };
     }
     if (isAnonymousActor) {
-        return { status: "info", message: "La sugerencia anónima quedó registrada para revisión manual; no cuenta para modificar automáticamente el catálogo." };
+        return { status: "info", recorded: true, message: "La sugerencia anónima quedó registrada para revisión manual; no cuenta para modificar automáticamente el catálogo." };
     }
     if (voteCount < 3) {
         const prefix = alreadyReported ? "Tu aporte ya estaba registrado." : "Sugerencia registrada.";
@@ -1018,7 +1019,7 @@ function handleSuggestYearLocked(payload) {
     }
 
     if (year >= anoDesde && year <= anoHasta) {
-        return { status: "info", message: "El año " + year + " ya está dentro del rango actual." };
+        return { status: "info", recorded: true, message: "El año " + year + " ya está dentro del rango actual." };
     }
 
     const normalizeIdentity = value => String(value === null || value === undefined ? "" : value)

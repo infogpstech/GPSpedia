@@ -8,6 +8,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
+import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
@@ -1425,24 +1426,80 @@ function showValidationBanner(item, isOldModel) {
         banner.appendChild(wrapper);
     };
 
-    const registerAndClose = (response, suggestedYear = null) => {
-        // Registro silencioso en backend y luego caché
-        suggestYear(item.id, suggestedYear || currentYear, response, suggestionActorPayload).catch(console.error);
-        offline.saveValidationResponse(item.id, response);
-
-        const thanks = document.createElement('div');
-        thanks.className = 'validation-message';
-        thanks.textContent = 'Gracias por tu aporte.';
-        renderStep(thanks);
-
-        setTimeout(() => {
-            banner.style.maxHeight = '0';
-            banner.style.margin = '0';
-            banner.style.padding = '0';
-            banner.style.opacity = '0';
-            banner.style.border = 'none';
-            setTimeout(() => banner.remove(), 400);
-        }, 1500);
+    let registrationInProgress = false;
+    const closeBanner = () => {
+        banner.style.maxHeight = '0';
+        banner.style.margin = '0';
+        banner.style.padding = '0';
+        banner.style.opacity = '0';
+        banner.style.border = 'none';
+        setTimeout(() => banner.remove(), 400);
+    };
+    const registerAndClose = async (response, suggestedYear = null) => {
+        if (registrationInProgress) return;
+        registrationInProgress = true;
+        const pending = document.createElement('div');
+        pending.className = 'validation-message';
+        pending.textContent = 'Registrando tu aporte...';
+        renderStep(pending);
+        try {
+            const submission = await confirmValidationBeforeCache(
+                () => suggestYear(item.id, suggestedYear || currentYear, response, suggestionActorPayload),
+                () => offline.saveValidationResponse(item.id, response)
+            );
+            if (!submission.recorded) {
+                registrationInProgress = false;
+                const content = document.createDocumentFragment();
+                const message = document.createElement('div');
+                message.className = 'validation-message';
+                message.textContent = submission.response.message || 'El servidor no registró esta respuesta.';
+                content.appendChild(message);
+                const actions = document.createElement('div');
+                actions.className = 'validation-actions';
+                const retryButton = document.createElement('button');
+                retryButton.className = 'validation-btn';
+                retryButton.textContent = 'Reintentar';
+                retryButton.onclick = () => registerAndClose(response, suggestedYear);
+                const closeButton = document.createElement('button');
+                closeButton.className = 'validation-btn secondary';
+                closeButton.textContent = 'Cerrar';
+                closeButton.onclick = closeBanner;
+                actions.appendChild(retryButton);
+                actions.appendChild(closeButton);
+                content.appendChild(actions);
+                renderStep(content);
+                return;
+            }
+            const thanks = document.createElement('div');
+            thanks.className = 'validation-message';
+            thanks.textContent = submission.cacheSaved === false
+                ? 'Tu aporte fue registrado, pero no se pudo guardar la validación en este dispositivo.'
+                : (submission.response.message || 'Gracias por tu aporte.');
+            renderStep(thanks);
+            setTimeout(closeBanner, submission.cacheSaved === false ? 3000 : 1500);
+        } catch (error) {
+            console.error('No se pudo confirmar la validación con el servidor:', error);
+            registrationInProgress = false;
+            const content = document.createDocumentFragment();
+            const message = document.createElement('div');
+            message.className = 'validation-message';
+            message.textContent = 'No se pudo confirmar el registro. Tu respuesta no se guardó localmente; puedes reintentar.';
+            content.appendChild(message);
+            const actions = document.createElement('div');
+            actions.className = 'validation-actions';
+            const retryButton = document.createElement('button');
+            retryButton.className = 'validation-btn';
+            retryButton.textContent = 'Reintentar';
+            retryButton.onclick = () => registerAndClose(response, suggestedYear);
+            const closeButton = document.createElement('button');
+            closeButton.className = 'validation-btn secondary';
+            closeButton.textContent = 'Cerrar';
+            closeButton.onclick = closeBanner;
+            actions.appendChild(retryButton);
+            actions.appendChild(closeButton);
+            content.appendChild(actions);
+            renderStep(content);
+        }
     };
 
     const showStep1 = () => {
@@ -1633,10 +1690,25 @@ function showValidationBanner(item, isOldModel) {
         const btnSi = document.createElement('button');
         btnSi.className = 'validation-btn';
         btnSi.textContent = 'Sí';
-        btnSi.onclick = () => {
-            // Primero registrar que se trata de una generación más reciente
-            suggestYear(item.id, currentYear, 'Modelo confirmado', suggestionActorPayload).catch(console.error);
-            showStepInput();
+        btnSi.onclick = async () => {
+            if (btnSi.disabled) return;
+            btnSi.disabled = true;
+            msg.textContent = 'Registrando confirmación...';
+            try {
+                const submission = await confirmValidationBeforeCache(
+                    () => suggestYear(item.id, currentYear, 'Modelo confirmado', suggestionActorPayload)
+                );
+                if (!submission.recorded) {
+                    msg.textContent = submission.response.message || 'La confirmación no se registró. Puedes intentarlo nuevamente.';
+                    btnSi.disabled = false;
+                    return;
+                }
+                showStepInput();
+            } catch (error) {
+                console.error('No se pudo confirmar el modelo con el servidor:', error);
+                msg.textContent = 'No se pudo confirmar el registro. Comprueba la conexión e inténtalo nuevamente.';
+                btnSi.disabled = false;
+            }
         };
 
         const btnNo = document.createElement('button');

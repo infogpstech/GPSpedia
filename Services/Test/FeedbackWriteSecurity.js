@@ -474,7 +474,7 @@ function runFeedbackWriteSecurityTests() {
                 SpreadsheetApp={flush(){}};
                 const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-A"});
                 const result=handleSuggestYear({...actor,vehicleId:"VEH-CHANGE-ANSWER",newYear:2025,response:"Sí (Funciona)"});
-                assert_(result.status==="info"&&result.message.includes("no se modificó")&&result.message.includes("se contó como voto positivo"),
+                assert_(result.status==="info"&&result.recorded===false&&result.message.includes("no se modificó")&&result.message.includes("se contó como voto positivo"),
                     "Debe aclarar que la respuesta anterior no se reemplazó ni se contó como positiva: "+JSON.stringify(result));
                 assert_(feedback.rows.length===2&&feedback.rows[1][4]===negative[4]&&feedback.rows[1][9]==="user:USR-A",
                     "El reintento contradictorio no debe sobrescribir ni duplicar la respuesta original.");
@@ -534,7 +534,7 @@ function runFeedbackWriteSecurityTests() {
                 assert_(ledger.rows[1][8]==="completed","La aplicación pendiente debe recuperarse.");
                 assert_(cuts.rows[1][COLS_CORTES.anoHasta-1]===2025,"El rango debe quedar actualizado.");
                 assert_(!feedback.rows.some(r=>r[9]==="user:USR-D"),"La respuesta nueva no debe insertarse durante la recuperación.");
-                assert_(result.status==="info"&&result.recovered===true&&result.message.includes("no se registró")&&result.message.includes("vuelve a enviarla"),
+                assert_(result.status==="info"&&result.recorded===false&&result.recovered===true&&result.message.includes("no se registró")&&result.message.includes("vuelve a enviarla"),
                     "Debe informarse que la respuesta actual no se registró y debe reenviarse: "+JSON.stringify(result));
             } finally {
                 assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;

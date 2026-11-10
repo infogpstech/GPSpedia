@@ -216,6 +216,11 @@ Services/Test/YouTubeUploadClient.js contiene pruebas del cliente resumable (Ind
 Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR en navegador, IndexedDB real, Apps Script desplegado ni copias aisladas de Google Sheets. Esas verificaciones permanecen diferidas a Beta; no se deben presentar como ejecutadas.
 
 
+## Confirmación de validación antes de caché local (CORR-SUGGESTYEAR-CLIENT-CONFIRM-001)
+
+- `Services/Test/ValidationCacheConfirmation.js` — ejecutar con `node --experimental-default-type=module Services/Test/ValidationCacheConfirmation.js`. Verifica orden backend→caché, estados confirmados, respuestas info no registradas, fallos de red, estados desconocidos y fallos de IndexedDB.
+- La suite no necesita navegador ni accede a servicios externos.
+
 ## Seguridad e integridad de escrituras FEEDBACK (AUG-040)
 
 - `Services/Test/FeedbackWriteSecurity.js` — ejecutar `runFeedbackWriteSecurityTests()` junto con `Services/feedback.js` en un proyecto temporal V8. Usa dobles en memoria para autorización, identidad de actor, política pública, deduplicación de likes, recuperación de contadores y rechazo de altas PyS sin imagen.

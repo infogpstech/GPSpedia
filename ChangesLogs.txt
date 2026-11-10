@@ -832,3 +832,16 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Sin cambios de frontend, endpoints, deployments, Spreadsheet/Drive productivos ni rama base.
 - AUG-040 completo en lo referente a suggestYear a nivel local; los demás criterios de FEEDBACK y la coordinación real entre servicios mantienen su propio estado.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — CORRECCIÓN CLIENTE — CONFIRMAR suggestYear ANTES DE GUARDAR CACHÉ LOCAL
+- ui.js: espera confirmación backend antes de guardar validationCache; evita envíos simultáneos, permite reintentar y distingue fallos de caché local.
+- ui.js: «Modelo confirmado» espera respuesta backend antes de avanzar.
+- validationSubmission.js: centraliza el contrato de confirmación y evita caché ante respuestas no registradas.
+- Services/feedback.js: agrega recorded:false/true para distinguir respuestas informativas no registradas y aceptadas.
+- Services/Test/FeedbackWriteSecurity.js: refuerza regresiones de respuesta contradictoria y recuperación pendiente.
+- Services/Test/ValidationCacheConfirmation.js y Services/Test/README.md: pruebas cliente.
+- Auditoría.txt: H-AUD-040-014.
+- Validación cliente: 7/7 PASS; suite FEEDBACK integral pendiente.
+================================================================================

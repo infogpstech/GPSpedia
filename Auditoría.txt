@@ -199,3 +199,16 @@ Corrección: cuando ya existe una respuesta para el actor/año pero no hay un vo
 Prueba: regresión con respuesta negativa preexistente y reintento positivo; confirma que la fila original permanece intacta y que el mensaje explica el resultado.
 Validación local: runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ambos archivos JavaScript PASS.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-014 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión del flujo cliente de validación colaborativa después del cierre funcional local de suggestYear.
+Ubicación: ui.js, showValidationBanner(), registerAndClose() y flujo «Modelo confirmado»; Services/feedback.js, respuestas de handleSuggestYearLocked().
+Evidencia: registerAndClose() iniciaba suggestYear() sin esperar su respuesta y guardaba inmediatamente validationCache de IndexedDB. Un fallo de red/sesión podía dejar la validación oculta localmente sin aporte en Feedbacks. «Modelo confirmado» avanzaba sin esperar. Las respuestas info no distinguían estructuralmente entre un aporte aceptado y una solicitud no registrada.
+Impacto: pérdida silenciosa de aportes, caché inconsistente y avance de interfaz sin confirmación.
+Severidad: Media.
+Corrección: helper confirmValidationBeforeCache espera la respuesta backend; los estados info solo autorizan caché con recorded:true; las ramas no registradas devuelven recorded:false. Se agregan espera, protección contra envíos simultáneos y reintento/cierre. «Modelo confirmado» espera antes de avanzar.
+Pruebas: suite cliente 7/7; aserciones FEEDBACK actualizadas para recuperación pendiente y respuesta contradictoria.
+Límites: navegador/Playwright, IndexedDB real, endpoints, Apps Script desplegado y datos productivos diferidos a Beta.
+================================================================================

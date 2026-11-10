@@ -1188,3 +1188,16 @@ Apps Script real, Spreadsheet aislado, persistencia real del diario, Drive/OAuth
 No se modificaron frontend, endpoints, deployments, datos productivos ni rama base.
 Siguiente acción: revisar el siguiente criterio pendiente de AUG-040 en una sesión posterior; no comenzar AUG-041.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work.
+HEAD padre: e564a633ade12695847c939d0fd1a78646292eec. Rama base: GPSpedia2.2.5, HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea única: confirmar el registro backend de suggestYear antes de escribir caché local. Hallazgo H-AUD-040-014.
+Cambios: ui.js espera confirmación antes de guardar validationCache, evita envíos simultáneos y ofrece reintento/cierre; «Modelo confirmado» espera antes de avanzar. validationSubmission.js valida estados; info requiere recorded:true. Services/feedback.js distingue recorded:false/true. Se agregan pruebas cliente y aserciones FEEDBACK.
+Validación: suite cliente 7/7 PASS; helper/suite y fragmentos UI parseados. Parsing completo de ui.js/feedback.js y suite FEEDBACK integral pendientes por falta del runner completo en este entorno.
+No se modificaron endpoints, deployments, datos productivos ni rama base.
+Estado EN PROGRESO hasta completar las validaciones locales pendientes.
+Siguiente iteración: continuar esta corrección únicamente; ejecutar suite FEEDBACK integral, parsing completo y revisión del diff. No iniciar AUG-041 ni otra tarea.
+================================================================================
