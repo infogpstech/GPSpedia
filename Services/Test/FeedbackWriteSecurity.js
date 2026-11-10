@@ -262,6 +262,50 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear excluye respuestas negativas del umbral y conserva esos registros al aplicar la ampliación", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            function runtimeSheet(rows,maxColumns) {
+                return {rows,getLastRow(){return this.rows.length;},getLastColumn(){return Math.max(maxColumns||0,...this.rows.map(r=>r.length));},
+                    getMaxColumns(){return maxColumns||this.getLastColumn();},getDataRange(){const self=this;return {getValues:()=>self.rows.map(r=>r.slice())};},
+                    getRange(row,column,height,width){const self=this,h=height||1,w=width||1;return {
+                        getValue(){return (self.rows[row-1]||[])[column-1]??"";},
+                        getValues(){return Array.from({length:h},(_,r)=>Array.from({length:w},(_,c)=>(self.rows[row-1+r]||[])[column-1+c]??""));},
+                        setValue(value){while(self.rows.length<row)self.rows.push([]);while(self.rows[row-1].length<column)self.rows[row-1].push("");self.rows[row-1][column-1]=value;},
+                        setValues(values){values.forEach((line,r)=>line.forEach((value,c)=>{while(self.rows.length<row+r)self.rows.push([]);while(self.rows[row-1+r].length<column+c)self.rows[row-1+r].push("");self.rows[row-1+r][column-1+c]=value;}));},
+                        copyTo(target){target.setValues(this.getValues());},
+                        clearContent(){for(let r=0;r<h;r++)for(let c=0;c<w;c++)if(self.rows[row-1+r])self.rows[row-1+r][column-1+c]="";}
+                    };},insertColumnsAfter(after,count){maxColumns=(maxColumns||this.getLastColumn())+count;this.rows.forEach(r=>{while(r.length<maxColumns)r.push("");});}};
+            }
+            const cutHeader=Array(42).fill(""),vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-NEGATIVE-01";vehicle[COLS_CORTES.marca-1]="Marca";vehicle[COLS_CORTES.modelo-1]="Modelo";
+            vehicle[COLS_CORTES.categoria-1]="Moto";vehicle[COLS_CORTES.versionesAplicables-1]="Versión";vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]=2022;
+            const cuts=runtimeSheet([cutHeader,vehicle],42),headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const voteA=["F-A","A","VEH-NEGATIVE-01","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,"user:USR-A"];
+            const voteB=["F-B","B","VEH-NEGATIVE-01","Confirmación de funcionamiento para año 2025","La información funciona para el año 2025.","","","",2025,"user:USR-B"];
+            const feedback=runtimeSheet([headers,voteA,voteB],10),activities=[];
+            try {
+                assertFeedbackSession=payload=>{const users={"SESSION-C":{userId:"USR-C",userName:"Usuario C",role:"Tecnico"},"SESSION-D":{userId:"USR-D",userName:"Usuario D",role:"Tecnico"}};if(!payload||!users[payload.sessionToken])throw new Error("Sesión inválida.");return users[payload.sessionToken];};
+                getSpreadsheet=()=>({getSheetByName:name=>name===SHEET_NAMES.CORTES?cuts:null});getSafeSheet=name=>name===SHEET_NAMES.SUGERENCIAS_ANO?feedback:null;
+                logUserActivity=(id,name,type)=>activities.push(type);LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const actorC=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
+                const negative=handleSuggestYear({...actorC,vehicleId:"VEH-NEGATIVE-01",newYear:2025,response:"No funciona"});
+                assert_(negative.status==="success","La respuesta negativa debe registrarse sin error.");
+                assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2018&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"Dos positivos y un negativo no deben ampliar el rango.");
+                assert_(activities.filter(type=>type==="apply_year_suggestion").length===0,"Una respuesta negativa no debe disparar la aplicación.");
+                const negativeRow=feedback.rows.find(row=>row[2]==="VEH-NEGATIVE-01"&&String(row[4]).includes("no funciona"));
+                assert_(negativeRow&&negativeRow[9]==="user:USR-C","El voto negativo debe persistirse con su actor.");
+                const actorD=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-D"});
+                const positive=handleSuggestYear({...actorD,vehicleId:"VEH-NEGATIVE-01",newYear:2025,response:"Sí (Funciona)"});
+                assert_(positive.status==="success"&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2025,"El tercer positivo verificado debe completar el umbral.");
+                const savedNegative=feedback.rows.find(row=>row[2]==="VEH-NEGATIVE-01"&&String(row[4]).includes("no funciona"));
+                assert_(savedNegative&&savedNegative[9]==="user:USR-C","La ampliación no debe marcar como atendido el voto negativo.");
+                assert_(activities.filter(type=>type==="apply_year_suggestion").length===1,"La ampliación debe registrarse una sola vez.");
+            } finally {assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;}
+        });
+
         test_("suggestYear cuenta Modelo confirmado como aporte positivo y limpia sus votos tras ampliar el rango", function() {
             const originalAssert=assertFeedbackSession,originalGetSpreadsheet=getSpreadsheet;
             const originalGetSafeSheet=getSafeSheet,originalLog=logUserActivity;

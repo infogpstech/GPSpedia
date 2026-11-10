@@ -753,3 +753,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 
 
 [2026-11-10] AUG-040 / suggestYear — Corrección de reintentos posteriores a una ampliación. Se conserva cada aporte positivo atendido con el prefijo applied: en suggestionActorKey, excluyéndolo del umbral y reconociéndolo en reintentos posteriores. Se evita insertar filas y actividad duplicadas. Archivos: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, Auditoría.txt y checkpoint.md.
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — EXCLUSIÓN DE RESPUESTAS NEGATIVAS EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión que comprueba que una respuesta «No funciona» no suma al umbral de tres aportantes verificados y permanece conservada cuando una ampliación posterior sí alcanza el umbral.
+- Se confirma que dos aportes positivos y uno negativo no modifican Cortes; el tercer aporte positivo permite ampliar el rango y solo los aportes positivos atendidos quedan marcados.
+- No se modificó Services/feedback.js: la lógica existente excluye respuestas negativas y supera la prueba dirigida.
+- Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
+================================================================================

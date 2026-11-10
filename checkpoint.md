@@ -958,3 +958,30 @@ Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 y la revisió
 Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear. No iniciar AUG-041 ni otra tarea.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: EXCLUSIÓN DE RESPUESTAS NEGATIVAS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 958f7d898109d8eedfbb09a8291be198e50dfb6e.
+TAREA ÚNICA
+Verificar que las respuestas negativas no sumen al umbral de tres aportantes verificados y no sean marcadas como aportes positivos atendidos.
+RESULTADO
+No se detectó defecto de producción. La lógica de handleSuggestYearLocked() ya clasifica las respuestas negativas fuera de isPositiveYearSuggestionRow(), retorna antes de evaluar la ampliación cuando la respuesta actual no es positiva y la limpieza posterior solo marca filas positivas.
+Se agregó una prueba de regresión que parte de dos aportes positivos y registra un tercer aporte «No funciona»: confirma que el rango no cambia. Después registra un tercer aporte positivo distinto: confirma la ampliación y que el voto negativo permanece intacto, sin prefijo applied:.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 37/37 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Prueba aislada con mocks locales; no representa integración real con Apps Script/Spreadsheet/Drive.
+ARCHIVOS
+- Services/Test/FeedbackWriteSecurity.js
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
+VALIDACIÓN BETA PENDIENTE
+Apps Script/Spreadsheet/Drive reales, navegador, deployments, concurrencia física y datos productivos no ejecutados ni simulados.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================
