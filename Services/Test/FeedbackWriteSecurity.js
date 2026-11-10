@@ -197,8 +197,8 @@ function runFeedbackWriteSecurityTests() {
             const originalLog = logUserActivity;
             const originalLock = typeof LockService === "undefined" ? null : LockService;
             const originalSpreadsheetApp = SpreadsheetApp;
-            const originalDriveApp = DriveApp;
-            const originalUtilities = Utilities;
+            const originalDriveApp = typeof DriveApp === "undefined" ? null : DriveApp;
+            const originalUtilities = typeof Utilities === "undefined" ? null : Utilities;
             const sheet = makeSheet([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
             let activityTitle = "";
             const file = {
@@ -235,8 +235,8 @@ function runFeedbackWriteSecurityTests() {
                 logUserActivity = originalLog;
                 if (originalLock) LockService = originalLock; else LockService = undefined;
                 SpreadsheetApp = originalSpreadsheetApp;
-                DriveApp = originalDriveApp;
-                Utilities = originalUtilities;
+                if (originalDriveApp) DriveApp = originalDriveApp; else DriveApp = undefined;
+                if (originalUtilities) Utilities = originalUtilities; else Utilities = undefined;
             }
         });
 
