@@ -639,7 +639,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl"].includes(action);
 }
 
 function doPost(e) {
@@ -742,6 +742,9 @@ function doPostInternal_(e) {
                 break;
             case 'migrateCortesOperationIds':
                 response = handleMigrateCortesOperationIds(payload, logMessage, developerContext);
+                break;
+            case 'reconcilePendingImageUploads':
+                response = handleReconcilePendingImageUploads(payload, logMessage);
                 break;
             case 'addOrUpdateCut':
                 response = handleAddOrUpdateCut(payload, logMessage, developerContext);
@@ -3463,6 +3466,179 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
     record.values[16] = "";
     saveImageUploadLedgerRecord_(ledgerSheet, record);
     return url;
+}
+
+function getImageUploadReferenceMap_() {
+    const map = new Map();
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet || sheet.getLastRow() < 2) return map;
+    const fields = [
+        ["imagenVehiculo", COLS_CORTES.imagenVehiculo],
+        ["imgCorte1", COLS_CORTES.imgCorte1],
+        ["imgCorte2", COLS_CORTES.imgCorte2],
+        ["imgCorte3", COLS_CORTES.imgCorte3],
+        ["imgApertura", COLS_CORTES.imgApertura],
+        ["imgCableAlimen", COLS_CORTES.imgCableAlimen],
+        ["imgCableAlimen2", COLS_CORTES.imgCableAlimen2],
+        ["imgCableAlimen3", COLS_CORTES.imgCableAlimen3]
+    ].filter(item => Number(item[1]) > 0);
+    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+    rows.forEach((row, offset) => fields.forEach(field => {
+        const fileId = getImageUploadFileId_(row[field[1] - 1]);
+        if (!fileId) return;
+        if (!map.has(fileId)) map.set(fileId, []);
+        map.get(fileId).push({
+            sheet: SHEET_NAMES.CORTES, row: offset + 2, field: field[0],
+            column: field[1], url: String(row[field[1] - 1] || "")
+        });
+    }));
+    return map;
+}
+
+function classifyImageUploadReconciliation_(previousState, fileState, referenceCount) {
+    if (fileState === "missing") return "file_missing";
+    if (fileState === "altered") return "requires_review";
+    if (previousState === "requires_review") return "requires_review";
+    if (Number(referenceCount) > 0) return "linked";
+    if (previousState === "linked" || previousState === "orphan_candidate") return "orphan_candidate";
+    return "pending_unreferenced";
+}
+
+function handleReconcilePendingImageUploads(payload, logMessage) {
+    const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
+    const lastRow = ledgerSheet.getLastRow();
+    const requestedStart = Number(payload && payload.startRow);
+    const startRow = Number.isInteger(requestedStart) && requestedStart >= 2 ? requestedStart : 2;
+    const requestedLimit = Number(payload && payload.limit);
+    const limit = Number.isInteger(requestedLimit) ? Math.max(1, Math.min(100, requestedLimit)) : 50;
+    const confirm = !!(payload && payload.confirm === true);
+    if (lastRow < 2 || startRow > lastRow) {
+        return { status: "success", dryRun: !confirm, processed: 0, message: "No hay registros de cargas generales pendientes de reconciliación." };
+    }
+
+    const count = Math.min(limit, lastRow - startRow + 1);
+    const records = ledgerSheet.getRange(startRow, 1, count, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues();
+    const referenceMap = getImageUploadReferenceMap_();
+    const ledgerFileIds = new Set();
+    const allReferenceIds = new Set();
+    const items = [];
+    const counts = { linked: 0, pending_unreferenced: 0, orphan_candidate: 0, file_missing: 0, requires_review: 0, errors: 0 };
+
+    ledgerSheet.getRange(2, 7, lastRow - 1, 1).getDisplayValues().flat()
+        .forEach(value => { if (String(value || "").trim()) ledgerFileIds.add(String(value).trim()); });
+    referenceMap.forEach((references, fileId) => allReferenceIds.add(fileId));
+
+    records.forEach((values, offset) => {
+        const rowIndex = startRow + offset;
+        const token = String(values[0] || "").trim();
+        const operationKey = String(values[1] || "").trim();
+        const folderId = String(values[2] || "").trim();
+        const mimeType = String(values[3] || "").trim();
+        const sizeBytes = Number(values[4]);
+        const contentHash = String(values[5] || "").trim();
+        let fileId = String(values[6] || "").trim();
+        const previousState = String(values[8] || "pending").trim();
+        const item = { rowIndex, token, operationKey, fileId, previousState, state: previousState, referenceCount: 0, reason: "" };
+
+        try {
+            if (!token || !operationKey || !folderId || !mimeType || !Number.isFinite(sizeBytes) || !contentHash) {
+                throw new Error("El registro no contiene token, operación, carpeta, MIME, tamaño o hash completos.");
+            }
+            const folder = DriveApp.getFolderById(folderId);
+            if (String(folder.getId()) !== folderId) throw new Error("La carpeta del registro no coincide con el ID persistido.");
+            const expected = { token, operationKey, folderId, mimeType, sizeBytes, contentHash };
+            let file = null;
+            if (fileId) {
+                try { file = DriveApp.getFileById(fileId); } catch (lookupError) { file = null; }
+            }
+            if (!file) {
+                const extension = getExtensionFromMimeType(mimeType);
+                file = findExistingImageUpload(folder, "__GPSpediaUpload_" + token + extension, expected, token);
+                if (file) fileId = file.getId();
+            }
+
+            let fileState = "valid";
+            if (!file) {
+                fileState = "missing";
+                item.reason = "No se encontró el archivo en Drive ni en la carpeta registrada.";
+            } else {
+                try { verifyImageUploadFile_(file, folder, expected); }
+                catch (verifyError) { fileState = "altered"; item.reason = verifyError.message; }
+            }
+
+            const references = fileId ? (referenceMap.get(fileId) || []) : [];
+            item.fileId = fileId;
+            item.referenceCount = references.length;
+            const nextState = classifyImageUploadReconciliation_(previousState, fileState, references.length);
+            item.state = nextState;
+            if (!item.reason && !references.length && fileState === "valid") {
+                item.reason = previousState === "linked"
+                    ? "El archivo existe, pero ya no se encontró una referencia en Cortes; se conserva para revisión."
+                    : "El archivo existe, pero todavía no se encontró una referencia en Cortes; no se elimina.";
+            } else if (!item.reason && references.length) {
+                item.reason = "La referencia de Spreadsheet se verificó por ID de Drive.";
+            }
+
+            if (confirm) {
+                values[6] = fileId;
+                if (file) values[7] = "https://drive.google.com/uc?export=view&id=" + fileId;
+                values[8] = nextState;
+                values[9] = references.length ? SHEET_NAMES.CORTES : "";
+                values[10] = references.length ? references[0].row : "";
+                values[11] = references.map(reference => reference.field).join(",");
+                values[12] = JSON.stringify(references);
+                values[15] = new Date().toISOString();
+                values[16] = item.reason;
+                saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex, values });
+
+                if (file && nextState === "linked") {
+                    try {
+                        const originalName = String(values[13] || "");
+                        if (originalName && file.getName() !== originalName) file.setName(originalName);
+                        const description = buildImageUploadDescription_({
+                            operationKey, token, folderId, mimeType, sizeBytes,
+                            contentHash, fileName: originalName
+                        }, "linked", JSON.stringify(references));
+                        file.setDescription(description);
+                        if (String(file.getDescription() || "") !== description) {
+                            item.descriptionWarning = "La fila ledger quedó linked, pero Drive no confirmó la descripción.";
+                        }
+                    } catch (descriptionError) {
+                        item.descriptionWarning = descriptionError.message;
+                    }
+                }
+            }
+        } catch (error) {
+            item.state = "requires_review";
+            item.reason = error.message;
+            if (confirm) {
+                values[8] = "requires_review";
+                values[15] = new Date().toISOString();
+                values[16] = error.message;
+                try { saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex, values }); }
+                catch (saveError) { item.saveError = saveError.message; }
+            }
+        }
+
+        counts[item.state] = (counts[item.state] || 0) + 1;
+        if (item.saveError) counts.errors++;
+        items.push(item);
+    });
+
+    const untrackedReferences = Array.from(allReferenceIds).filter(fileId => !ledgerFileIds.has(fileId));
+    const nextStartRow = startRow + count <= lastRow ? startRow + count : null;
+    if (logMessage) logMessage("Reconciliación de cargas",
+        (confirm ? "Aplicados" : "Simulados") + " " + items.length + " registros; no se eliminó ningún archivo.");
+    return {
+        status: "success", dryRun: !confirm, processed: items.length,
+        startRow, nextStartRow, truncated: nextStartRow !== null,
+        counts, untrackedReferenceCount: untrackedReferences.length,
+        untrackedReferenceFileIds: untrackedReferences.slice(0, 50),
+        items: items.slice(0, 100),
+        message: confirm
+            ? "Reconciliación aplicada. Los archivos sin referencia o con integridad dudosa se conservaron."
+            : "Simulación completada. Usa confirm:true para aplicar los estados propuestos; no se borran archivos."
+    };
 }
 
 function getExtensionFromMimeType(mimeType) {
