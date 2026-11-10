@@ -557,3 +557,16 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 ================================================================================
 
 2026-11-10 — AUG-037 — AJUSTE DE CIERRE: reconstrucción controlada del ledger desde metadatos Drive v2 tras verificar el archivo; detección de tokens duplicados; dry-run sin crear hoja ni modificar archivos.
+
+
+================================================================================
+2026-11-10 — AUG-043 — AVANCE DE CONTRATOS Y APROBACIÓN DE YOUTUBE
+- Services/feedback.js: autenticación de acciones protegidas; consulta de operación por propietario; validación de ID/URL real; idempotencia; destinos únicos Corte/PyS/Tutorial; prevención de duplicados; publicación y rechazo con verificación de escritura; bloqueo de enlaces directos en altas/ediciones PyS/Tutorial.
+- youtubeUpload.js: operación estable opVideoId, sesión currentUser.ID/SessionToken, persistencia de archivo y estado en IndexedDB, carga por bloques reanudables, consulta 308/Range, recuperación de respuesta perdida y rechazo de respuesta final sin ID real.
+- ui.js: credenciales en los callsites de asociación/desvinculación y edición; flujo de carga para Corte/PyS/Tutorial; retirada de la URL manual de openAddVideoModal; campos de vídeo de edición solo lectura.
+- api-config.js: ruta getVideoApprovalByOperation hacia FEEDBACK.
+- Services/Test: suites de estado, sesión, inicialización, idempotencia, publicación/rechazo, contratos y cliente resumable; README actualizado.
+- Validación local: 82/82 pruebas aisladas PASS; parsing/sintaxis 4/4 PASS; revisión estática de los callsites protegidos PASS.
+- Estado: EN PROGRESO. Pendiente revisión/publicación y validación de integración en navegador y proyecto Apps Script/Spreadsheet aislado.
+- No ejecutados: YouTube OAuth/API real, XHR/IndexedDB de navegador real, Apps Script desplegado, HTTP, Drive/Spreadsheet productivos, deployments ni datos productivos.
+================================================================================
