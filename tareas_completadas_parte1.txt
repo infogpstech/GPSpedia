@@ -287,3 +287,14 @@ Verificaciones locales: 34/34 PASS. Code Review/Safety & Side Effects PASS; camb
 Decisión opId/actor: no migrar esquema legacy en esta tarea; riesgo residual documentado en Auditoría.txt.
 Siguiente tarea del orden maestro: AUG-042, previa auditoría post-commit de AUG-039.
 ================================================================================
+
+
+================================================================================
+AUG-042 — COMPLETADA — 2026-11-10
+Sincronización de sesión/rol y limpieza del estado privilegiado del cliente.
+Archivos: ui.js, offline.js, auth.js, main.js y users.html.
+Criterios locales: guardas por rol y validación remota; invalidación de modales/cachés/generaciones; revalidación por foco/visibilidad/online/intervalo; normalización de Privilegios; auto-cambio de rol fail-closed; descarte de respuestas de logout obsoletas; estado Drive aislado por cuenta con marcador persistente y control de concurrencia.
+Validación local: sintaxis 5/5 PASS; matriz de roles PASS; AUTH 6/6 PASS con dobles; pruebas de logout obsoleto, guardas, single-flight, Inbox/Admin y persistencia/limpieza Drive simulada PASS.
+Code Review/Safety & Side Effects PASS. Pruebas reales de navegador, IndexedDB, endpoints, Apps Script y deployments diferidas a Beta.
+Commit único de cierre identificable en el historial de GPSpedia2.2.5_work: "fix(auth): synchronize client role and privileged session state".
+================================================================================

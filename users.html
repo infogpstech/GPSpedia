@@ -299,6 +299,7 @@
     </div>
 <script type="module">
 import { routeAction } from './api-config.js';
+import * as offline from './offline.js';
 // COMPONENT VERSION: 3.9.1
 // --- LÓGICA DE DEPURACIÓN REMOTA ---
 function remoteLog(level, message, data = {}) {
@@ -548,6 +549,28 @@ async function handleUserFormSubmit(e) {
         Privilegios: document.getElementById('role').value,
         Password: document.getElementById('user-password').value,
     };
+    const submittingSession = currentUser ? {
+        userId: String(currentUser.ID || currentUser.id || ''),
+        sessionToken: String(currentUser.SessionToken || '')
+    } : null;
+    const isSubmittingSessionCurrent = () => {
+        if (!submittingSession || !currentUser ||
+            String(currentUser.ID || currentUser.id || '') !== submittingSession.userId ||
+            String(currentUser.SessionToken || '') !== submittingSession.sessionToken) return false;
+        try {
+            const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+            return Boolean(stored &&
+                String(stored.ID || stored.id || '') === submittingSession.userId &&
+                String(stored.SessionToken || '') === submittingSession.sessionToken);
+        } catch (storageError) {
+            return false;
+        }
+    };
+    if (!isSubmittingSessionCurrent()) {
+        alert('La sesión activa cambió o dejó de estar disponible. Inicia sesión nuevamente antes de continuar.');
+        window.location.replace('index.html');
+        return;
+    }
 
     try {
         submitBtn.classList.add('btn-loading');
@@ -559,21 +582,48 @@ async function handleUserFormSubmit(e) {
             const updateResult = await postToAction('updateUser', {
                 userId,
                 updates: userData,
-                sessionToken: currentUser.SessionToken
+                sessionToken: submittingSession.sessionToken
             });
+            if (!isSubmittingSessionCurrent()) return;
             if (updateResult.selfSessionRevoked) {
+                let storedSession = null;
+                try { storedSession = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (storageError) {}
+                const sameSubmittingSession = submittingSession && currentUser && storedSession &&
+                    String(currentUser.ID || currentUser.id || '') === submittingSession.userId &&
+                    String(currentUser.SessionToken || '') === submittingSession.sessionToken &&
+                    String(storedSession.ID || storedSession.id || '') === submittingSession.userId &&
+                    String(storedSession.SessionToken || '') === submittingSession.sessionToken;
+                if (!sameSubmittingSession) {
+                    alert('La sesión que inició la operación ya no es la sesión activa. No se modificó la sesión actual.');
+                    return;
+                }
+                try {
+                    const cleared = await offline.clearDriveAuditState(submittingSession.userId);
+                    if (!cleared) remoteLog('warn', 'La limpieza del estado de auditoría Drive quedó pendiente tras el cambio de rol propio.');
+                } catch (clearError) {
+                    remoteLog('warn', 'No se pudo confirmar la limpieza del estado de auditoría Drive tras el cambio de rol propio.');
+                }
+                if (!isSubmittingSessionCurrent()) return;
                 localStorage.removeItem(SESSION_KEY);
                 currentUser = null;
+                if (window.state && typeof window.state.setState === 'function' && typeof window.state.getState === 'function') {
+                    const stateUser = window.state.getState().currentUser;
+                    if (stateUser && String(stateUser.SessionToken || '') === String(storedSession.SessionToken || '')) {
+                        window.state.setState({ currentUser: null });
+                    }
+                }
                 alert(updateResult.message || 'Tu rol cambió y todas tus sesiones fueron cerradas. Inicia sesión nuevamente.');
                 window.location.replace('index.html');
                 return;
             }
             if(administrativePassword){
-                await postToAction('resetUserPassword',{targetUserId:userId,newPassword:administrativePassword,sessionToken:currentUser.SessionToken});
+                await postToAction('resetUserPassword',{targetUserId:userId,newPassword:administrativePassword,sessionToken:submittingSession.sessionToken});
+                if (!isSubmittingSessionCurrent()) return;
                 alert('Usuario actualizado y contraseña restablecida. Todas sus sesiones fueron cerradas.');
             }else alert(updateResult.message || 'Usuario actualizado');
         } else {
-            await postToAction('createUser', { newUser: userData, sessionToken: currentUser.SessionToken });
+            await postToAction('createUser', { newUser: userData, sessionToken: submittingSession && submittingSession.sessionToken });
+            if (!isSubmittingSessionCurrent()) return;
             alert('Usuario creado');
         }
         if (window.history && window.history.state && window.history.state.modalOpen) {
@@ -581,27 +631,84 @@ async function handleUserFormSubmit(e) {
         } else {
             document.getElementById('user-modal').style.display = 'none';
         }
+        if (!isSubmittingSessionCurrent()) return;
         await fetchUsers();
+        if (!isSubmittingSessionCurrent()) return;
     } catch (error) {
-        // Si se intentó cambiar el rol de la cuenta actual, comprobar si la sesión quedó revocada.
-        if (userId && currentUser &&
-            String(userId) === String(currentUser.ID || currentUser.id) &&
-            userData.Privilegios !== currentUser.Privilegios) {
+        const sessionSnapshot = submittingSession;
+        if (!isSubmittingSessionCurrent()) return;
+        const isSelfRoleChange = Boolean(userId && sessionSnapshot &&
+            String(userId) === sessionSnapshot.userId &&
+            userData.Privilegios !== currentUser.Privilegios);
+        if (isSelfRoleChange && sessionSnapshot.sessionToken) {
+            let validation;
+            let validationFailed = false;
             try {
-                const validation = await postToAction('validateSession', {
-                    userId: currentUser.ID || currentUser.id,
-                    sessionToken: currentUser.SessionToken
+                validation = await postToAction('validateSession', {
+                    userId: sessionSnapshot.userId,
+                    sessionToken: sessionSnapshot.sessionToken
                 });
-                if (!validation || validation.valid !== true) {
-                    localStorage.removeItem(SESSION_KEY);
-                    currentUser = null;
-                    window.location.replace('index.html');
-                    return;
-                }
             } catch (validationError) {
-                // No se elimina la sesión local sin una respuesta que confirme su revocación.
+                validationFailed = true;
+            }
+            if (!isSubmittingSessionCurrent()) return;
+            const stillSameSession = currentUser &&
+                String(currentUser.ID || currentUser.id || '') === sessionSnapshot.userId &&
+                String(currentUser.SessionToken || '') === sessionSnapshot.sessionToken;
+            if (!stillSameSession) return;
+            let storedSession = null;
+            try { storedSession = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (storageError) {}
+            if (!storedSession ||
+                String(storedSession.ID || storedSession.id || '') !== sessionSnapshot.userId ||
+                String(storedSession.SessionToken || '') !== sessionSnapshot.sessionToken) return;
+            if (validationFailed) {
+                // Cerrar localmente y solicitar logout remoto de mejor esfuerzo: no conservar controles privilegiados.
+                try { await offline.clearDriveAuditState(sessionSnapshot.userId); } catch (clearError) {}
+                if (!isSubmittingSessionCurrent()) return;
+                try {
+                    const logoutRequest = routeAction('logout', {
+                        userId: sessionSnapshot.userId,
+                        sessionToken: sessionSnapshot.sessionToken
+                    });
+                    if (logoutRequest && typeof logoutRequest.catch === 'function') logoutRequest.catch(() => {});
+                } catch (logoutError) {}
+                try {
+                    const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+                    if (stored && String(stored.ID || stored.id || '') === sessionSnapshot.userId &&
+                        String(stored.SessionToken || '') === sessionSnapshot.sessionToken) localStorage.removeItem(SESSION_KEY);
+                } catch (storageError) {}
+                currentUser = null;
+                if (window.state && typeof window.state.setState === 'function' && typeof window.state.getState === 'function') {
+                    const stateUser = window.state.getState().currentUser;
+                    if (stateUser && String(stateUser.SessionToken || '') === sessionSnapshot.sessionToken) {
+                        window.state.setState({ currentUser: null });
+                    }
+                }
+                alert('No se pudo confirmar el cambio de rol por un fallo de conexión. La sesión se cerró localmente y la revocación remota quedó pendiente; inicia sesión nuevamente cuando se restablezca la conexión.');
+                window.location.replace('index.html');
+                return;
+            }
+            if (!validation || validation.valid !== true) {
+                try { await offline.clearDriveAuditState(sessionSnapshot.userId); } catch (clearError) {}
+                if (!isSubmittingSessionCurrent()) return;
+                try {
+                    const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+                    if (stored && String(stored.ID || stored.id || '') === sessionSnapshot.userId &&
+                        String(stored.SessionToken || '') === sessionSnapshot.sessionToken) localStorage.removeItem(SESSION_KEY);
+                } catch (storageError) {}
+                currentUser = null;
+                if (window.state && typeof window.state.setState === 'function' && typeof window.state.getState === 'function') {
+                    const stateUser = window.state.getState().currentUser;
+                    if (stateUser && String(stateUser.SessionToken || '') === sessionSnapshot.sessionToken) {
+                        window.state.setState({ currentUser: null });
+                    }
+                }
+                alert('Tu rol cambió y la sesión anterior fue revocada. Inicia sesión nuevamente.');
+                window.location.replace('index.html');
+                return;
             }
         }
+        alert(error && error.message ? error.message : 'No se pudo completar la operación del usuario.');
     } finally {
         submitBtn.classList.remove('btn-loading');
         submitBtn.disabled = false;

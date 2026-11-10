@@ -10,6 +10,7 @@ import { showLoginScreen, showApp, showGlobalError } from './ui.js';
 import * as offline from './offline.js';
 
 const SESSION_KEY = 'gpsepedia_session';
+let logoutGeneration_ = 0;
 const VALIDATION_LOCK_NAME = 'gpsepedia-session-validation';
 const VALIDATION_CACHE_TTL_MS = 10000;
 const VALIDATION_TIMEOUT_MS = 8000;
@@ -50,10 +51,10 @@ function persistSessionValidation(user,result){
   localStorage.setItem(SESSION_KEY,JSON.stringify(latest));
  }catch(e){console.warn('No se pudo actualizar la vigencia local:',e.message);}
 }
-async function validateSessionCoordinated(user){
+async function validateSessionCoordinated(user, force = false){
  const validate=async()=>{
   if(!isCurrentSession(user))return{stale:true};
-  if(getRecentValidation(user))return{valid:true,cached:true};
+  if(!force && getRecentValidation(user))return{valid:true,cached:true};
   const requestController=typeof AbortController!=='undefined'?new AbortController():null;
   let timer=null,result;
   try{
@@ -108,6 +109,7 @@ function handleSessionStorageChange(event){
 if(typeof window!=='undefined')window.addEventListener('storage',handleSessionStorageChange);
 
 function handleLoginSuccess(user, persist = true) {
+    logoutGeneration_ += 1;
     if (persist) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setState({ currentUser: user });
     showApp(user); // Muestra la UI principal inmediatamente
@@ -217,6 +219,45 @@ function processCatalogData(catalogData) {
     }
 }
 
+
+/**
+ * Revalida la sesión actual contra AUTH. Devuelve true si sigue vigente,
+ * false si se confirmó su invalidez y null si no fue posible verificarla.
+ */
+export async function validateActiveSession(force = false) {
+    const user = readStoredSession();
+    if (!user || !isCurrentSession(user)) {
+        if (!user) {
+            setState({ currentUser: null });
+            showLoginScreen();
+        }
+        return false;
+    }
+    const memoryUser = getState().currentUser;
+    if (!sameSession(memoryUser, user)) handleLoginSuccess(user, false);
+    const expiration = getLocalSessionExpiry(user);
+    if (expiration) {
+        logout(expiration === 'absolute_expiration'
+            ? 'Tu sesión alcanzó su vigencia máxima. Inicia sesión nuevamente.'
+            : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
+        return false;
+    }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
+    try {
+        const result = await validateSessionCoordinated(user, force === true);
+        if (!isCurrentSession(user)) return false;
+        if (result && result.valid === true) return true;
+        if (result && result.valid === false) {
+            logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user);
+            return false;
+        }
+        return null;
+    } catch (error) {
+        if (!isCurrentSession(user)) return false;
+        console.warn('No se pudo revalidar la sesión activa:', error && error.message ? error.message : error);
+        return null;
+    }
+}
 
 export async function checkSession() {
     // Rehidratar datos auxiliares sin bloquear el flujo de autenticación.
@@ -341,6 +382,7 @@ export function logout(reason = null, expectedSession = null) {
 
     // Nunca borrar una sesión que haya sustituido a la que originó esta operación.
     if (guardedSession && !isCurrentSession(guardedSession)) return false;
+    const logoutGeneration = ++logoutGeneration_;
     setState({ currentUser: null });
     if (!guardedSession || sameSession(readStoredSession(), guardedSession)) {
         localStorage.removeItem(SESSION_KEY);
@@ -354,8 +396,11 @@ export function logout(reason = null, expectedSession = null) {
         return true;
     }
 
+    const shouldReportLogoutResult = () => logoutGeneration === logoutGeneration_ &&
+        !readStoredSession() && !getState().currentUser;
     routeAction('logout', { userId, sessionToken })
         .then(result => {
+            if (!shouldReportLogoutResult()) return;
             if (result && (result.revoked === true || result.alreadyRevoked === true)) {
                 if (result.userSessionTokenMatched === true && result.userSessionTokenCleared !== true) {
                     console.warn('La sesión fue revocada, pero no se pudo limpiar Users.SessionToken.');
@@ -367,6 +412,7 @@ export function logout(reason = null, expectedSession = null) {
             showGlobalError('Cierre local completado, pero no se pudo confirmar la revocación en el servidor. La revocación queda pendiente.');
         })
         .catch(error => {
+            if (!shouldReportLogoutResult()) return;
             console.warn('La sesión local se cerró; la revocación backend quedó pendiente:', error.message);
             showGlobalError('La sesión se cerró en este dispositivo, pero no se pudo confirmar su revocación en el servidor. Puede seguir activa en otros dispositivos.');
         });

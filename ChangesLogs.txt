@@ -477,3 +477,14 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Se decidió no integrar código incompleto; commit de checkpoint exclusivamente documental.
 - HEAD padre: c9154bdc37cf37e89551b2347ea628a7d682c92c. No se modificó rama base.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-042 — SINCRONIZACIÓN DE ROL Y ESTADO PRIVILEGIADO DEL CLIENTE
+- ui.js: normalización/contexto/guardas 3181–3227; cola de limpieza Drive 3235–3254; resetSessionUi_ 3313–3419; openers Dashboard/Inbox/DevTools 3450–3530; initAdminPanelListeners 3544–4988; openReplacedImagesModal 5002–5372; openAuditDriveModal 5372–5855; renderInboxList 5855–5930; renderInboxDetail 5930–6159; loadAndRenderInbox 10537–10570. Incluye guardas por sesión/rol/generación, limpieza de vistas y control de respuestas asíncronas.
+- offline.js (145–266): DriveAuditState por userId, validación ownerId, eliminación de clave global, marcador persistente y generación de limpieza por cuenta; fail-closed ante fallos de almacenamiento y verificación de generación tras lecturas/escrituras.
+- auth.js: validateSessionCoordinated 54–92; handleLoginSuccess 111–118; validateActiveSession 227–262; logout 370–426. Validación forzada y descarte de respuestas de logout obsoletas.
+- main.js: ciclo de revalidación 19–62; instalación en initializeApp línea 886. Eventos focus/visibilitychange/online, single-flight, intervalo visible y aviso de red pendiente.
+- users.html (540–718): handleUserFormSubmit; snapshot y revalidación de identidad/token en operaciones asíncronas; limpieza Drive en auto-cambio de rol; cierre local y logout remoto de mejor esfuerzo si no se confirma la revocación.
+- Sin cambios en servicios backend, permisos FEEDBACK, endpoints, configuración de deployments ni rama base.
+================================================================================

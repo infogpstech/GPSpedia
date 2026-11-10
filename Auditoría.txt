@@ -1143,3 +1143,41 @@ Criterio: vincular el estado a userId, recuperar solo el estado del mismo usuari
 CHECKPOINT DE AVANCE — AUG-042 — 2026-11-10
 Se conserva abierto el conjunto H-AUD-042-004 a H-AUD-042-010. El borrador de ui.js incorpora propuestas de guardas de sesión/rol y control de respuestas asíncronas, pero no se considera evidencia de resolución hasta completar revisión por función, pruebas de comportamiento y Code Review. H-AUD-042-010 continúa abierto: el diseño propuesto para offline.js debe probar aislamiento por propietario, continuidad de la misma cuenta y limpieza al cambio/logout, incluidos fallos de IndexedDB y operaciones concurrentes. No se cierran hallazgos en este checkpoint.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-042 — 2026-11-10
+Estado: COMPLETADA EN VALIDACIÓN LOCAL.
+HEAD previo: 784b8fb2de99b996dbf73e7befea3cec03f98142.
+Rama base verificada: GPSpedia2.2.5, HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+HALLAZGOS RESUELTOS
+- H-AUD-042-004: Dashboard, Inbox, DevTools, historial de imágenes y auditoría Drive validan sesión remota y rol antes de abrirse. Se protegieron también las rutas de carga/renderizado de Inbox. La autorización backend FEEDBACK permanece sin cambios.
+- H-AUD-042-005: resetSessionUi_ invalida generaciones, cancela suscripción de métricas, restablece listeners/funciones globales, reconstruye modales desde plantillas limpias y limpia vistas/cachés privilegiados. Se añadieron guardas de generación/contexto a respuestas asíncronas de DevTools, imágenes, auditoría Drive e Inbox. Inbox usa generaciones independientes para bandeja y detalle.
+- H-AUD-042-006: auth.js expone validateActiveSession(force); main.js revalida al recuperar foco, visibilidad y conexión, además de un intervalo de cinco minutos en pestaña visible. Si la red impide confirmar la sesión, muestra estado pendiente y bloquea nuevas aperturas privilegiadas.
+- H-AUD-042-007: los consumidores UI usan exclusivamente Privilegios normalizado por normalizeUiRole_(); se retiraron alternativas heredadas basadas en Rol. Desarrollador/Gefe/Supervisor conservan aprobación y Dashboard; Jefe puede consultar Inbox, sin Dashboard ni aprobación.
+- H-AUD-042-008: ante fallo de red al confirmar un auto-cambio de rol, users.html limpia estado Drive, cierra la sesión local, intenta logout remoto de mejor esfuerzo, informa que la revocación remota queda pendiente y redirige al inicio de sesión. Se comprueba identidad/token antes y después de cada espera para no afectar una sesión posterior.
+- H-AUD-042-009: logout usa generación de operación y solo la incrementa después de validar que la sesión solicitante siga vigente. Las respuestas then/catch obsoletas no notifican ni afectan una sesión posterior.
+- H-AUD-042-010: offline.js particiona DriveAuditState por userId, valida ownerId, elimina la clave global heredada y usa marcadores persistentes y generaciones de limpieza por cuenta. Los fallos de IndexedDB/localStorage bloquean recuperación; los marcadores permiten reintentar tras recarga. La misma cuenta conserva estado durante recarga normal si no hubo logout/cambio de rol.
+
+CODE REVIEW Y SAFETY & SIDE EFFECTS
+La revisión manual detectó y corrigió: respuestas asíncronas de Inbox sin generación propia; limpieza Drive que podía quedar bloqueada tras un fallo temporal; falta de limpieza Drive desde users.html en auto-cambio de rol; y avance del contador de logout antes de rechazar una solicitud obsoleta. Cada observación provocó reauditoría de los módulos/funciones afectados y repetición de las verificaciones pertinentes.
+Code Review final: PASS.
+Safety & Side Effects: PASS. No se debilitaron permisos server-side; no se modificaron Services/Auth.js, Services/feedback.js, api-config.js ni state.js. Los guards frontend son aditivos y fallan de forma cerrada ante sesión/rol/red no verificables. No se añadieron cambios fuera del alcance.
+
+VALIDACIONES LOCALES
+- Parsing de ui.js, offline.js, auth.js, main.js y script de users.html: 5/5 PASS mediante parser JavaScript V8; imports/exports se retiraron únicamente para comprobación parse-only.
+- Matriz de roles Desarrollador, Gefe, Jefe, Supervisor y Técnico: PASS.
+- Guardas de sesión/rol: acceso permitido, rol no autorizado, red pendiente y cambio de sesión durante await: PASS.
+- AUTH: sesión válida, revocada, timeout, error de red, sincronización de estado en memoria y sesión ausente: 6/6 PASS con dobles.
+- Logout: rechazo de logout obsoleto, no avance de generación, respuesta vieja ignorada y resultado de logout vigente notificado: PASS con dobles.
+- DriveAuditState simulado: aislamiento A/B, continuidad misma cuenta, limpieza, marcador persistente ante fallo, bloqueo de lectura/escritura, reintento y carreras de lectura/escritura: PASS.
+- main.js: single-flight, listeners/intervalo únicos y aviso de validación pendiente: PASS con dobles.
+- Inbox/Admin: generaciones de vista/detalle/panel y guardas posteriores a operaciones asíncronas: PASS por pruebas de lógica y revisión estática.
+
+VALIDACIÓN DIFERIDA A BETA
+No se ejecutaron navegador real/Playwright, DOM completo, IndexedDB real del navegador, endpoints operativos, Apps Script, deployments, Drive/Spreadsheet productivos ni pruebas multi-dispositivo. Estas verificaciones quedan diferidas a Beta; no se presentan como pruebas ejecutadas.
+
+Archivos funcionales modificados: ui.js, offline.js, auth.js, main.js y users.html.
+Siguiente tarea del orden: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+================================================================================

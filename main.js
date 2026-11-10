@@ -16,6 +16,45 @@ import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from '
 let deferredPrompt;
 let searchBlurTimeout;
 let isBackGestureBlurring = false;
+let sessionRevalidationInstalled_ = false;
+let sessionRevalidationInFlight_ = null;
+let lastSessionValidationWarningAt_ = 0;
+function revalidateSessionOnResume_() {
+    if (sessionRevalidationInFlight_) return sessionRevalidationInFlight_;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
+    const currentUser = state.getState().currentUser;
+    if (!currentUser || !currentUser.SessionToken || typeof auth.validateActiveSession !== 'function') return null;
+    sessionRevalidationInFlight_ = auth.validateActiveSession(true)
+        .then(result => {
+            if (result === null && Date.now() - lastSessionValidationWarningAt_ > 60000) {
+                lastSessionValidationWarningAt_ = Date.now();
+                ui.showGlobalError('La verificación de sesión está pendiente por falta de conexión. No se abrirán nuevas vistas privilegiadas hasta poder confirmar la sesión.');
+            }
+            return result;
+        })
+        .catch(error => {
+            console.warn('No se pudo revalidar la sesión al recuperar actividad:', error);
+            if (Date.now() - lastSessionValidationWarningAt_ > 60000) {
+                lastSessionValidationWarningAt_ = Date.now();
+                ui.showGlobalError('La verificación de sesión está pendiente por un error de conexión. Las vistas privilegiadas permanecerán bloqueadas.');
+            }
+            return null;
+        })
+        .finally(() => { sessionRevalidationInFlight_ = null; });
+    return sessionRevalidationInFlight_;
+}
+function installSessionRevalidation_() {
+    if (sessionRevalidationInstalled_) return;
+    sessionRevalidationInstalled_ = true;
+    window.addEventListener('focus', revalidateSessionOnResume_);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') revalidateSessionOnResume_();
+    });
+    window.addEventListener('online', revalidateSessionOnResume_);
+    window.setInterval(() => {
+        if (document.visibilityState !== 'hidden') revalidateSessionOnResume_();
+    }, 5 * 60 * 1000);
+}
 
 /**
  * Main function to initialize the application.
@@ -844,6 +883,7 @@ async function initializeApp() {
     // Se asegura que todo esté inicializado antes de validar la sesión
     setTimeout(async () => {
         await auth.checkSession();
+        installSessionRevalidation_();
 
         // --- LÓGICA DE DEEP LINKING PARA BÚSQUEDA ---
         const hash = window.location.hash;

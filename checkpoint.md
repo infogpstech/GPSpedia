@@ -144,3 +144,36 @@ Pendiente al reanudar:
 No ejecutado: pruebas reales de navegador, Apps Script, Sheets/Drive, endpoints, despliegues, concurrencia física ni datos productivos.
 No se modificó la rama base. No se modificaron sus referencias.
 ================================================================================
+================================================================================
+CHECKPOINT INICIAL — AUG-042 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial: 784b8fb2de99b996dbf73e7befea3cec03f98142.
+Rama base: GPSpedia2.2.5.
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Última tarea anterior: CORR-AUTH-ROLE-REVOCATION-GUARDS-001, commit c29dbd553abbdfa31b614e3ab55a1d34340caebf; revisión post-commit sin bloqueo registrado.
+Tarea activa: AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente.
+Estado inicial: implementación parcial preparada en un blob temporal de ui.js; H-AUD-042-004 a H-AUD-042-010 abiertos. No se modificó la rama base.
+Alcance: ui.js, offline.js, auth.js, main.js y users.html, con registros append-only. No se modifican Services/Auth.js ni Services/feedback.js.
+Restricciones: un único commit para AUG-042; Git Database API; force=false y expected_sha del HEAD inicial; sin merge ni publicación en la rama base.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUG-042 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD previo a la tarea: 784b8fb2de99b996dbf73e7befea3cec03f98142.
+Rama base: GPSpedia2.2.5.
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: AUG-042 — COMPLETADA EN VALIDACIÓN LOCAL.
+Última tarea anterior: CORR-AUTH-ROLE-REVOCATION-GUARDS-001, commit c29dbd553abbdfa31b614e3ab55a1d34340caebf.
+Archivos funcionales: ui.js, offline.js, auth.js, main.js y users.html.
+Registros incluidos en el commit: Auditoría.txt, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Hallazgos cerrados localmente: H-AUD-042-004 a H-AUD-042-010.
+Validación: sintaxis 5/5 PASS; matriz de roles PASS; guardas de sesión/rol PASS; AUTH 6/6 PASS con dobles; logout obsoleto PASS; aislamiento/limpieza Drive simulados PASS; revalidación single-flight PASS; generaciones Inbox/Admin PASS; Code Review y Safety & Side Effects PASS.
+Limitaciones: no se ejecutaron navegador real/Playwright, IndexedDB real, endpoints, Apps Script, deployments, Drive/Spreadsheet productivos ni pruebas multi-dispositivo. Se registran como VALIDACIÓN DIFERIDA A BETA.
+Riesgos abiertos de AUG-042: ninguno identificado en la revisión local final. Las validaciones integradas de Beta permanecen pendientes.
+Commit de cierre: commit único de AUG-042, identificable en el historial de GPSpedia2.2.5_work por el mensaje "fix(auth): synchronize client role and privileged session state"; padre esperado 784b8fb2de99b996dbf73e7befea3cec03f98142.
+Rama base: sin cambios; no se realizó merge.
+Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+================================================================================

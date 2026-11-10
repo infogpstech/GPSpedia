@@ -110,7 +110,8 @@ async function performOp(storeName, mode, callback) {
 // --- ADMINISTRATIVE LOCAL STATE ---
 
 const ADMIN_LOCAL_STATE_STORE = 'adminLocalState';
-const DRIVE_AUDIT_STATE_KEY = 'driveAudit:last';
+const DRIVE_AUDIT_STATE_LEGACY_KEY = 'driveAudit:last';
+const DRIVE_AUDIT_STATE_KEY_PREFIX = 'driveAudit:user:'
 const REPLACED_IMAGES_VIEW_KEY = 'replacedImages:view';
 
 async function performAdminStateOp(mode, callback) {
@@ -138,17 +139,56 @@ async function performAdminStateOp(mode, callback) {
 }
 
 /**
- * Guarda el último estado de auditoría sin incluir credenciales ni tokens de sesión.
- * El cursor de Drive puede expirar en el servidor; la copia local conserva los resultados.
+ * La auditoría local de Drive pertenece a una cuenta concreta.
+ * Nunca se recupera el registro legado global porque no contiene ownerId.
  */
-export async function saveDriveAuditState(state) {
-    if (!state || typeof state !== 'object' || !Array.isArray(state.files)) return null;
+function getDriveAuditStateKey(userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    return ownerId ? DRIVE_AUDIT_STATE_KEY_PREFIX + encodeURIComponent(ownerId) : '';
+}
+
+function getDriveAuditClearPendingKey(userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    return ownerId ? 'driveAudit:pending-clear:' + encodeURIComponent(ownerId) : '';
+}
+
+function getDriveAuditClearGenerationKey(userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    return ownerId ? 'driveAudit:clear-generation:' + encodeURIComponent(ownerId) : '';
+}
+
+function getDriveAuditClearGeneration(userId) {
+    const generationKey = getDriveAuditClearGenerationKey(userId);
+    if (!generationKey) return null;
+    try {
+        const raw = localStorage.getItem(generationKey);
+        if (raw === null) return 0;
+        const value = Number(raw);
+        return Number.isSafeInteger(value) && value >= 0 ? value : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+export function hasPendingDriveAuditClear(userId) {
+    const pendingKey = getDriveAuditClearPendingKey(userId);
+    if (!pendingKey) return true;
+    try {
+        return localStorage.getItem(pendingKey) === '1';
+    } catch (error) {
+        return true;
+    }
+}
+export async function saveDriveAuditState(state, userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    const key = getDriveAuditStateKey(ownerId);
+    if (!key || !state || typeof state !== 'object' || !Array.isArray(state.files)) return null;
+    if (hasPendingDriveAuditClear(ownerId) && !(await clearDriveAuditState(ownerId))) return null;
+    const generation = getDriveAuditClearGeneration(ownerId);
+    if (generation === null) return null;
     const entry = {
-        key: DRIVE_AUDIT_STATE_KEY,
-        files: state.files,
-        cursor: state.cursor || null,
-        complete: state.complete === true,
-        status: String(state.status || 'partial'),
+        key, ownerId, files: state.files, cursor: state.cursor || null,
+        complete: state.complete === true, status: String(state.status || 'partial'),
         totalAnalyzed: Math.max(0, Number(state.totalAnalyzed) || 0),
         foldersVisited: Math.max(0, Number(state.foldersVisited) || 0),
         batches: Math.max(0, Number(state.batches) || 0),
@@ -162,14 +202,65 @@ export async function saveDriveAuditState(state) {
         lastError: String(state.lastError || ''),
         updatedAt: Date.now()
     };
-    const result = await performAdminStateOp('readwrite', store => store.put(entry));
-    return result === null ? null : DRIVE_AUDIT_STATE_KEY;
+    const result = await performAdminStateOp('readwrite', store => {
+        store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
+        return store.put(entry);
+    });
+    if (result === null) return null;
+    const latestGeneration = getDriveAuditClearGeneration(ownerId);
+    if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) {
+        await clearDriveAuditState(ownerId);
+        return null;
+    }
+    return key;
 }
-
-export async function getDriveAuditState() {
-    const entry = await performAdminStateOp('readonly', store => store.get(DRIVE_AUDIT_STATE_KEY));
-    if (!entry || entry.key !== DRIVE_AUDIT_STATE_KEY || !Array.isArray(entry.files)) return null;
+export async function getDriveAuditState(userId) {
+    const key = getDriveAuditStateKey(userId);
+    if (!key) return null;
+    const ownerId = String(userId).trim();
+    if (hasPendingDriveAuditClear(ownerId)) {
+        const cleared = await clearDriveAuditState(ownerId);
+        if (!cleared) return null;
+        return null;
+    }
+    const generation = getDriveAuditClearGeneration(ownerId);
+    if (generation === null) return null;
+    const entry = await performAdminStateOp('readwrite', store => {
+        store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
+        return store.get(key);
+    });
+    const latestGeneration = getDriveAuditClearGeneration(ownerId);
+    if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) {
+        await clearDriveAuditState(ownerId);
+        return null;
+    }
+    if (!entry || entry.key !== key || entry.ownerId !== ownerId || !Array.isArray(entry.files)) return null;
     return entry;
+}
+export async function clearDriveAuditState(userId) {
+    const key = getDriveAuditStateKey(userId);
+    const pendingKey = getDriveAuditClearPendingKey(userId);
+    if (!key || !pendingKey) return false;
+    const generationKey = getDriveAuditClearGenerationKey(userId);
+    try {
+        const currentGeneration = getDriveAuditClearGeneration(userId);
+        if (!generationKey || currentGeneration === null || currentGeneration >= Number.MAX_SAFE_INTEGER) return false;
+        localStorage.setItem(pendingKey, '1');
+        localStorage.setItem(generationKey, String(currentGeneration + 1));
+    } catch (error) {
+        return false;
+    }
+    const result = await performAdminStateOp('readwrite', store => {
+        store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
+        return store.delete(key);
+    });
+    if (result === null) return false;
+    try {
+        localStorage.removeItem(pendingKey);
+    } catch (error) {
+        return false;
+    }
+    return true;
 }
 
 export async function saveReplacedImagesView(view) {

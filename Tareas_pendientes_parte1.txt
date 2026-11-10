@@ -1649,3 +1649,14 @@ La ficha original se conserva; esta adenda actualiza el estado sin borrar histor
 
 [ADENDA DE ESTADO — AUG-042 — 2026-11-09]
 Reanudada en Ciclo B tras cierre y auditoría post-commit de H-AUD-042-001, H-AUD-042-002 y H-AUD-042-003. Correcciones verificadas: 400f5531d3f2192098d8d510c47ddead2db28546, b201198410ead781281badaee02cff9804b0cbad y c29dbd553abbdfa31b614e3ab55a1d34340caebf. Dependencias AUG-006/AUG-016/AUG-017 completadas en fuentes. Política vigente: cualquier cambio de Privilegios revoca todas las sesiones y exige nuevo inicio de sesión; Jefe solo Inbox, no Dashboard/activity. Auditoría de fuentes pendiente; no se ha modificado código.
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-042 — 2026-11-10
+Estado: COMPLETADA — implementación y validaciones locales aprobadas.
+H-AUD-042-004 a H-AUD-042-010 resueltos en alcance local. Cambios funcionales: ui.js, offline.js, auth.js, main.js y users.html.
+Verificaciones: parsing 5/5; matriz de roles; guardas de sesión/rol; AUTH 6/6 con dobles; logout obsoleto; aislamiento, persistencia y limpieza Drive con IndexedDB simulado; revalidación single-flight; generaciones Inbox/Admin. Code Review/Safety & Side Effects PASS.
+Validación diferida a Beta: navegador real/Playwright, IndexedDB real, endpoints, Apps Script, deployments y pruebas multi-dispositivo.
+La ficha original AUG-042 se conserva; esta adenda actualiza su estado sin borrar historial.
+Siguiente tarea: AUG-043.
+================================================================================

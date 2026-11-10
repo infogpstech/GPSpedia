@@ -1755,10 +1755,9 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
     headerDiv.appendChild(printBtn);
 
-    const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+    const userRole = getUiSessionContext_()?.role || null;
 
-    if (userRole === 'Desarrollador') {
+    if (userRole === 'desarrollador') {
         if (inEditMode) {
             // Botón Restablecer (↩️)
             const resetBtn = document.createElement("button");
@@ -2642,9 +2641,9 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     cardWrapper.appendChild(card);
 
     const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const userRole = getUiSessionContext_()?.role || null;
     // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al desarrollador
-    const canEdit = userRole === 'Desarrollador';
+    const canEdit = userRole === 'desarrollador';
 
     if (canEdit && vehicleToUnlink) {
         const removeBtn = document.createElement("button");
@@ -3176,6 +3175,8 @@ function renderRelayInfoModal(relayInfo) {
 }
 
 let inboxCacheData = null;
+let inboxViewGeneration_ = 0;
+let inboxDetailGeneration_ = 0;
 
 function normalizeUiRole_(role) {
     return String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -3183,11 +3184,10 @@ function normalizeUiRole_(role) {
 
 function getUiSessionContext_(user = getState().currentUser) {
     if (!user) return null;
-    return {
-        userId: String(user.ID || user.id || '').trim(),
-        sessionToken: String(user.SessionToken || ''),
-        role: normalizeUiRole_(user.Privilegios)
-    };
+    const userId = String(user.ID || user.id || '').trim();
+    const sessionToken = String(user.SessionToken || '').trim();
+    if (!userId || !sessionToken) return null;
+    return { userId, sessionToken, role: normalizeUiRole_(user.Privilegios) };
 }
 
 function isCurrentUiSessionContext_(expected) {
@@ -3199,9 +3199,103 @@ function isCurrentUiSessionContext_(expected) {
         current.role === expected.role);
 }
 
+async function ensureUiSessionRole_(allowedRoles) {
+    const expected = getUiSessionContext_();
+    if (!expected || !Array.isArray(allowedRoles) || !allowedRoles.includes(expected.role)) return null;
+    const authApi = typeof window !== 'undefined' ? window.auth : null;
+    if (!authApi || typeof authApi.validateActiveSession !== 'function') {
+        showGlobalError('No se pudo verificar la sesión actual. Inicia sesión nuevamente.');
+        return null;
+    }
+    let valid = false;
+    try {
+        valid = await authApi.validateActiveSession(true);
+    } catch (error) {
+        console.warn('No se pudo revalidar la sesión antes de abrir una vista privilegiada:', error);
+        showGlobalError('No se pudo verificar la sesión con el servidor. La vista protegida permanecerá cerrada.');
+        return null;
+    }
+    if (valid !== true) {
+        if (valid === null) showGlobalError('No se pudo verificar la sesión con el servidor. La vista protegida permanecerá cerrada.');
+        return null;
+    }
+    const current = getUiSessionContext_();
+    if (!current || !isCurrentUiSessionContext_(expected) || !allowedRoles.includes(current.role)) return null;
+    return current;
+}
+
+function getSessionPayload_() {
+    const context = getUiSessionContext_();
+    if (!context) throw new Error('No hay una sesión activa válida.');
+    return { userId: context.userId, sessionToken: context.sessionToken };
+}
+
 let lastShownAppContextKey = null;
+let lastShownAppContext = null;
+let pendingDriveAuditClear_ = Promise.resolve(true);
+const pendingDriveAuditClearOwners_ = new Set();
+
+function processPendingDriveAuditClears_() {
+    if (pendingDriveAuditClearOwners_.size === 0) return Promise.resolve(true);
+    pendingDriveAuditClear_ = pendingDriveAuditClear_.catch(() => false).then(async () => {
+        while (pendingDriveAuditClearOwners_.size > 0) {
+            const ownerId = pendingDriveAuditClearOwners_.values().next().value;
+            const result = await offline.clearDriveAuditState(ownerId);
+            if (result !== true) throw new Error('IndexedDB no confirmó la limpieza del estado de auditoría.');
+            pendingDriveAuditClearOwners_.delete(ownerId);
+        }
+        return true;
+    }).catch(error => {
+        console.warn('No se pudo limpiar el estado de auditoría local de una cuenta anterior:', error.message);
+        return false;
+    });
+    return pendingDriveAuditClear_;
+}
+let adminPanelGeneration_ = 0;
+let replacedImagesModalGeneration_ = 0;
+let auditDriveModalGeneration_ = 0;
+let replacedImagesLightboxKeyHandler_ = null;
+let privilegedModalTemplates_ = null;
+const PRIVILEGED_MODAL_IDS_ = ['dev-tools-modal', 'replaced-images-modal', 'inbox-modal', 'dashboard-modal', 'audit-drive-modal'];
+
+function capturePrivilegedModalTemplates_() {
+    if (privilegedModalTemplates_) return;
+    privilegedModalTemplates_ = new Map();
+    PRIVILEGED_MODAL_IDS_.forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal) privilegedModalTemplates_.set(id, modal.cloneNode(true));
+    });
+}
+
+function restorePrivilegedModalTemplates_() {
+    capturePrivilegedModalTemplates_();
+    PRIVILEGED_MODAL_IDS_.forEach(id => {
+        const current = document.getElementById(id);
+        const template = privilegedModalTemplates_.get(id);
+        if (!current || !template || !current.parentNode) return;
+        const replacement = template.cloneNode(true);
+        replacement.style.display = 'none';
+        replacement.querySelectorAll('[data-listener-set]').forEach(element => element.removeAttribute('data-listener-set'));
+        current.replaceWith(replacement);
+    });
+}
+
+function closeReplacedImagesLightbox_() {
+    if (replacedImagesLightboxKeyHandler_) {
+        document.removeEventListener('keydown', replacedImagesLightboxKeyHandler_);
+        replacedImagesLightboxKeyHandler_ = null;
+    }
+    const lightbox = document.getElementById('replaced-image-lightbox');
+    if (lightbox) lightbox.style.display = 'none';
+    const image = document.getElementById('replaced-image-lightbox-image');
+    if (image) image.src = '';
+    const title = document.getElementById('replaced-image-lightbox-title');
+    if (title) title.textContent = '';
+}
 
 function resetRoleScopedViews_() {
+    inboxViewGeneration_ += 1;
+    inboxDetailGeneration_ += 1;
     const inboxModal = document.getElementById('inbox-modal');
     const dashboardModal = document.getElementById('dashboard-modal');
     const inboxList = document.getElementById('inbox-list');
@@ -3217,6 +3311,24 @@ function resetRoleScopedViews_() {
 }
 
 function resetSessionUi_() {
+    capturePrivilegedModalTemplates_();
+    const previousContext = lastShownAppContext;
+    if (previousContext && previousContext.userId && typeof offline.clearDriveAuditState === 'function') {
+        pendingDriveAuditClearOwners_.add(String(previousContext.userId));
+        processPendingDriveAuditClears_();
+    }
+    lastShownAppContext = null;
+    isDriveAuditRunning = false;
+    adminPanelGeneration_ += 1;
+    replacedImagesModalGeneration_ += 1;
+    auditDriveModalGeneration_ += 1;
+    if (typeof window.adminServiceMetricsUnsubscribe === 'function') {
+        try { window.adminServiceMetricsUnsubscribe(); } catch (error) {}
+    }
+    window.adminServiceMetricsUnsubscribe = null;
+    window.adminListenersAttached = false;
+    window.triggerAdminPanelPing = null;
+    closeReplacedImagesLightbox_();
     resetRoleScopedViews_();
     closeSideMenu(true);
 
@@ -3300,6 +3412,7 @@ function resetSessionUi_() {
     const devProgress = document.getElementById('dev-progress-container');
     if (devProgress) devProgress.style.display = 'none';
 
+    restorePrivilegedModalTemplates_();
     lastShownAppContextKey = null;
 }
 
@@ -3334,7 +3447,7 @@ function setupModal(modalId, openFn) {
     };
 }
 
-export const openDashboard = setupModal('dashboard-modal', async () => {
+const openDashboardModal_ = setupModal('dashboard-modal', async () => {
     const requestContext = getUiSessionContext_();
     if (!requestContext) return;
 
@@ -3344,7 +3457,7 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
     logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
 
     try {
-        const result = await getActivityLogs(getDeveloperSessionPayload());
+        const result = await getActivityLogs(getSessionPayload_());
         if (!isCurrentUiSessionContext_(requestContext)) return;
         if (result.status === 'success') {
             logContainer.innerHTML = '';
@@ -3365,9 +3478,18 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
     }
 });
 
-export const openInbox = setupModal('inbox-modal', async () => {
+export async function openDashboard() {
+    const context = await ensureUiSessionRole_(['desarrollador', 'gefe', 'supervisor']);
+    if (!context) return;
+    return openDashboardModal_();
+}
+
+const openInboxModal_ = setupModal('inbox-modal', async () => {
     const requestContext = getUiSessionContext_();
     if (!requestContext) return;
+    const generation = ++inboxViewGeneration_;
+    inboxDetailGeneration_ += 1;
+    const isCurrentInboxRequest = () => generation === inboxViewGeneration_ && isCurrentUiSessionContext_(requestContext);
 
     const modal = document.getElementById('inbox-modal');
     modal.style.display = 'flex';
@@ -3377,8 +3499,8 @@ export const openInbox = setupModal('inbox-modal', async () => {
     detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
 
     try {
-        const result = await getFeedbackItems(getDeveloperSessionPayload());
-        if (!isCurrentUiSessionContext_(requestContext)) return;
+        const result = await getFeedbackItems(getSessionPayload_());
+        if (!isCurrentInboxRequest()) return;
 
         if (result.status === 'success') {
             const data = result.data || result.messages || result.items || [];
@@ -3392,11 +3514,17 @@ export const openInbox = setupModal('inbox-modal', async () => {
             listContainer.innerHTML = `<p style="color:red;">Error: ${result.message || 'No se pudieron cargar los mensajes.'}</p>`;
         }
     } catch (error) {
-        if (!isCurrentUiSessionContext_(requestContext)) return;
+        if (!isCurrentInboxRequest()) return;
         console.error("Error fetching feedback items:", error);
         listContainer.innerHTML = `<p style="color:red;">Error de conexión al cargar mensajes.</p>`;
     }
 });
+
+export async function openInbox() {
+    const context = await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor']);
+    if (!context) return;
+    return openInboxModal_();
+}
 
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 const openDevToolsModal_ = setupModal('dev-tools-modal', () => {
@@ -3407,13 +3535,18 @@ const openDevToolsModal_ = setupModal('dev-tools-modal', () => {
     }
 });
 
-export const openDevTools = (...args) => {
-    const sessionContext = getUiSessionContext_();
-    if (!sessionContext || sessionContext.role !== 'desarrollador') return;
+export async function openDevTools(...args) {
+    const sessionContext = await ensureUiSessionRole_(['desarrollador']);
+    if (!sessionContext) return;
     return openDevToolsModal_(...args);
-};
+}
 
 function initAdminPanelListeners() {
+    const panelSessionContext_ = getUiSessionContext_();
+    const panelGeneration_ = adminPanelGeneration_;
+    const isAdminPanelCurrent_ = () => Boolean(panelSessionContext_ &&
+        panelGeneration_ === adminPanelGeneration_ &&
+        isCurrentUiSessionContext_(panelSessionContext_));
     const consoleLog = document.getElementById('dev-console-log');
     if (!consoleLog) return; // Evitar inicializaciones duplicadas si no está en el DOM
 
@@ -3427,6 +3560,7 @@ function initAdminPanelListeners() {
 
     // Helper para logs
     function log(msg, isWarning = false, isError = false) {
+        if (!isAdminPanelCurrent_()) return;
         const time = new Date().toLocaleTimeString();
         const p = document.createElement('div');
         p.style.marginBottom = "4px";
@@ -3673,6 +3807,7 @@ function initAdminPanelListeners() {
         container.appendChild(legend);
     }
     function renderServiceDashboard() {
+        if (!isAdminPanelCurrent_()) return;
         renderServiceCards();
         renderServiceDetail();
         renderServiceTrafficChart();
@@ -3687,6 +3822,7 @@ function initAdminPanelListeners() {
         log("[SALUD] Ejecutando diagnóstico independiente de cada servicio...");
         try {
             serviceHealthResults = await checkAllServicesHealth();
+            if (!isAdminPanelCurrent_()) return;
             if (!selectedServiceKey || !serviceHealthResults[selectedServiceKey]) selectedServiceKey = Object.keys(serviceHealthResults)[0] || null;
             renderServiceDashboard();
             log("[SALUD] Diagnóstico de servicios completado.");
@@ -3702,6 +3838,7 @@ function initAdminPanelListeners() {
     if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
     if (!window.adminServiceMetricsUnsubscribe) {
         window.adminServiceMetricsUnsubscribe = subscribeServiceMetrics(() => {
+            if (!isAdminPanelCurrent_()) return;
             renderServiceTrafficChart();
             if (selectedServiceKey) renderServiceDetail();
         });
@@ -3709,6 +3846,7 @@ function initAdminPanelListeners() {
 
     // Conectividad automática e inicio
     window.triggerAdminPanelPing = async function() {
+        if (!isAdminPanelCurrent_()) return;
         consoleLog.innerHTML = ''; // Limpiar consola al abrir
         log("Sistema administrativo iniciado correctamente.");
         log("Comprobando disponibilidad del microservicio...");
@@ -3716,6 +3854,7 @@ function initAdminPanelListeners() {
         const pingStartTime = Date.now();
         try {
             const res = await routeAction('ping');
+            if (!isAdminPanelCurrent_()) return;
             const latency = Date.now() - pingStartTime;
             if (res && res.status === 'success') {
                 log("Microservicio activo.");
@@ -3733,6 +3872,7 @@ function initAdminPanelListeners() {
 
     // Helper para progreso
     function setProgress(percent) {
+        if (!isAdminPanelCurrent_()) return;
         const container = document.getElementById('dev-progress-container');
         const bar = document.getElementById('dev-progress-bar');
         const text = document.getElementById('dev-progress-text');
@@ -3750,6 +3890,7 @@ function initAdminPanelListeners() {
     async function playLogs(logs) {
         if (!logs || logs.length === 0) return;
         for (const item of logs) {
+            if (!isAdminPanelCurrent_()) return;
             log(item.message, item.isWarning, item.isError);
             if (item.percentage !== undefined) {
                 setProgress(item.percentage);
@@ -3771,6 +3912,7 @@ function initAdminPanelListeners() {
             setProgress(5);
             try {
                 const res = await routeAction(action, { ...payload, ...getDeveloperSessionPayload() });
+                if (!isAdminPanelCurrent_()) return null;
                 setProgress(50);
                 if (res.status === 'success') {
                     if (res.logs) {
@@ -3847,10 +3989,12 @@ ${elapsedSec}s
         let totalErroresArchivo = 0;
 
         while (!finished) {
+            if (!isAdminPanelCurrent_()) return null;
             loopCount++;
             log(`[LOTE] Ejecutando lote ${loopCount}...`);
             try {
                 const res = await routeAction(action, { limit, reset: payload.reset, processId, ...getDeveloperSessionPayload() });
+                if (!isAdminPanelCurrent_()) return null;
                 if (res.status === 'warning') {
                     errorCount++;
                     log(`[ADVERTENCIA] ${res.message || 'La operación se detuvo por una condición de seguridad.'}`, false, true);
@@ -4067,6 +4211,7 @@ ${elapsedSec}s
                 currentFolderId: currentTerminalFolderId,
                 ...getDeveloperSessionPayload()
             });
+            if (!isAdminPanelCurrent_()) return;
 
             if (res && res.status === 'success') {
                 if (res.currentFolder) {
@@ -4199,6 +4344,7 @@ ${elapsedSec}s
         setBackupButtonBusy(button, true);
         try {
             const response = await runAction(action);
+            if (!isAdminPanelCurrent_()) return;
             if (!response) {
                 setBackupResourceHint('No se confirmó la creación del respaldo. Consulta la consola para revisar el resultado.', true);
                 return;
@@ -4268,6 +4414,7 @@ ${elapsedSec}s
         setBackupButtonBusy(button, true);
         try {
             const response = await runAction(action, { backupId });
+            if (!isAdminPanelCurrent_()) return;
             if (response && response.status === 'success') {
                 setBackupResourceHint(resourceType === 'spreadsheet'
                     ? 'La restauración de Spreadsheet finalizó. El enlace utilizado se conserva en el campo.'
@@ -4682,6 +4829,7 @@ ${elapsedSec}s
                 if (clearActivitySelected) {
                     try {
                         const result = await clearActivityLogs(keepLastWeek, getDeveloperSessionPayload());
+                        if (!isAdminPanelCurrent_()) return;
                         if (result && result.status && result.status !== 'success') {
                             throw new Error(result.message || "La operación no terminó correctamente.");
                         }
@@ -4697,6 +4845,7 @@ ${elapsedSec}s
                 if (clearSensitiveSelected) {
                     try {
                         const result = await clearSensitiveLogs(getDeveloperSessionPayload());
+                        if (!isAdminPanelCurrent_()) return;
                         if (result && result.status && result.status !== 'success') {
                             throw new Error(result.message || "La operación no terminó correctamente.");
                         }
@@ -4808,6 +4957,7 @@ ${elapsedSec}s
         if (driveStorageStatus) driveStorageStatus.textContent = 'Consultando el almacenamiento global de Google Drive...';
         try {
             const response = await routeAction('getDriveStorage', getDeveloperSessionPayload());
+            if (!isAdminPanelCurrent_()) return;
             if (!response || response.status !== 'success') throw new Error(response && response.message ? response.message : 'Respuesta no válida del monitor.');
             if (driveStorageUsed) driveStorageUsed.textContent = formatStorageBytes(response.driveUsedBytes);
             if (driveStorageAccountUsed) driveStorageAccountUsed.textContent = formatStorageBytes(response.accountUsedBytes);
@@ -4850,8 +5000,12 @@ function getDeveloperSessionPayload() {
  * TAREA 2: Modal de Gestión y Consulta del Inventario e Historial de Imágenes
  */
 export async function openReplacedImagesModal() {
+    const requestContext = await ensureUiSessionRole_(['desarrollador']);
+    if (!requestContext) return;
+    const generation = ++replacedImagesModalGeneration_;
+    const isCurrentRequest = () => generation === replacedImagesModalGeneration_ && isCurrentUiSessionContext_(requestContext);
     const modal = document.getElementById('replaced-images-modal');
-    if (!modal) return;
+    if (!modal || !isCurrentRequest()) return;
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-replaced-images-modal');
@@ -4872,25 +5026,14 @@ export async function openReplacedImagesModal() {
 
     let cachedReplaced = [];
     let currentView = await offline.getReplacedImagesView();
+    if (!isCurrentRequest()) return;
     currentView = currentView === 'list' ? 'list' : 'grid';
     let folders = [];
-    let lightboxKeyHandler = null;
 
-    const closeLightbox = () => {
-        if (!lightbox) return;
-        lightbox.style.display = 'none';
-        if (lightboxImage) {
-            lightboxImage.src = '';
-            lightboxImage.classList.remove('is-zoomed');
-        }
-        if (lightboxKeyHandler) {
-            document.removeEventListener('keydown', lightboxKeyHandler);
-            lightboxKeyHandler = null;
-        }
-    };
+    const closeLightbox = () => closeReplacedImagesLightbox_();
 
     const openLightbox = (rep) => {
-        if (!lightbox || !lightboxImage) return;
+        if (!isCurrentRequest() || !lightbox || !lightboxImage) return;
         closeLightbox();
         lightboxImage.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_LARGE);
         lightboxImage.alt = rep.nombre_archivo || 'Imagen de Google Drive';
@@ -4901,10 +5044,10 @@ export async function openReplacedImagesModal() {
         lightboxImage.classList.remove('is-zoomed');
         if (lightboxTitle) lightboxTitle.textContent = rep.nombre_archivo || 'Vista ampliada';
         lightbox.style.display = 'flex';
-        lightboxKeyHandler = (event) => {
+        replacedImagesLightboxKeyHandler_ = (event) => {
             if (event.key === 'Escape') closeLightbox();
         };
-        document.addEventListener('keydown', lightboxKeyHandler);
+        document.addEventListener('keydown', replacedImagesLightboxKeyHandler_);
     };
 
     if (lightbox) lightbox.onclick = closeLightbox;
@@ -4916,6 +5059,7 @@ export async function openReplacedImagesModal() {
         if (!folderSelect) return;
         try {
             const response = await routeAction('getCortesImageFolders', getDeveloperSessionPayload());
+            if (!isCurrentRequest()) return;
             folders = Array.isArray(response.folders) ? response.folders : [];
             const previousSelection = preferredFolderId || folderSelect.value;
             folderSelect.innerHTML = '';
@@ -4929,6 +5073,7 @@ export async function openReplacedImagesModal() {
             folderSelect.value = selectionExists ? previousSelection : response.rootFolderId;
             if (folderStatus) folderStatus.textContent = folders.length + ' carpetas disponibles dentro de Cortes.';
         } catch (error) {
+            if (!isCurrentRequest()) return;
             if (folderStatus) folderStatus.textContent = 'No se pudieron consultar las carpetas: ' + error.message;
         }
     };
@@ -4939,6 +5084,7 @@ export async function openReplacedImagesModal() {
         }
         try {
             const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
+            if (!isCurrentRequest()) return;
             cachedReplaced = response && Array.isArray(response.data)
                 ? response.data.filter((item) => {
                     const type = item.tipo_registro || (item.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
@@ -4950,6 +5096,7 @@ export async function openReplacedImagesModal() {
                 : [];
             renderList(filterInput ? filterInput.value : '');
         } catch (error) {
+            if (!isCurrentRequest()) return;
             if (listContainer) listContainer.textContent = 'Error al cargar el inventario e historial: ' + error.message;
         }
     };
@@ -4965,15 +5112,17 @@ export async function openReplacedImagesModal() {
     };
 
     const runButtonAction = async (button, busyLabel, operation) => {
+        if (!isCurrentRequest()) return;
         const original = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>' + busyLabel + '</span>';
         try {
             await operation();
+            if (!isCurrentRequest()) return;
         } catch (error) {
-            alert(error.message || String(error));
+            if (isCurrentRequest()) alert(error.message || String(error));
         } finally {
-            if (button.isConnected) {
+            if (button.isConnected && isCurrentRequest()) {
                 button.disabled = false;
                 button.innerHTML = original;
             }
@@ -4981,7 +5130,7 @@ export async function openReplacedImagesModal() {
     };
 
     const renderList = (filterText = '') => {
-        if (!listContainer) return;
+        if (!isCurrentRequest() || !listContainer) return;
         listContainer.innerHTML = '';
         listContainer.className = 'replaced-images-list view-' + currentView;
         const query = String(filterText || '').toLowerCase().trim();
@@ -5096,6 +5245,7 @@ export async function openReplacedImagesModal() {
                     const response = await routeAction('getReplacedImageDownloadUrl', {
                         ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
                     });
+                    if (!isCurrentRequest()) return;
                     const anchor = document.createElement('a');
                     anchor.href = response.downloadUrl;
                     anchor.rel = 'noopener noreferrer';
@@ -5123,6 +5273,7 @@ export async function openReplacedImagesModal() {
                         id_reemplazo: rep.id_reemplazo,
                         targetFolderId: folderSelect.value
                     });
+                    if (!isCurrentRequest()) return;
                     mostrarNotificacion(response.message || 'Imagen movida correctamente.', 'success');
                     await loadData();
                 });
@@ -5137,6 +5288,7 @@ export async function openReplacedImagesModal() {
                         const response = await routeAction('recoverReplacedImage', {
                             ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
                         });
+                        if (!isCurrentRequest()) return;
                         mostrarNotificacion(response.message || 'Imagen histórica restablecida.', 'success');
                         await loadData();
                     });
@@ -5153,6 +5305,7 @@ export async function openReplacedImagesModal() {
                     const response = await routeAction('deleteReplacedImage', {
                         ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
                     });
+                    if (!isCurrentRequest()) return;
                     mostrarNotificacion(response.message || 'Imagen enviada a papelera.', 'success');
                     await loadData();
                 });
@@ -5170,11 +5323,16 @@ export async function openReplacedImagesModal() {
         if (listViewBtn) listViewBtn.setAttribute('aria-pressed', String(view === 'list'));
         if (gridViewBtn) gridViewBtn.setAttribute('aria-pressed', String(view === 'grid'));
         await offline.saveReplacedImagesView(view);
+        if (!isCurrentRequest()) return;
         renderList(filterInput ? filterInput.value : '');
     };
 
     if (closeBtn) closeBtn.onclick = () => {
+        replacedImagesModalGeneration_ += 1;
+        cachedReplaced = [];
+        folders = [];
         closeLightbox();
+        if (listContainer) listContainer.replaceChildren();
         modal.style.display = 'none';
     };
     if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
@@ -5194,8 +5352,10 @@ export async function openReplacedImagesModal() {
                 name: name,
                 parentFolderId: folderSelect ? folderSelect.value : ''
             });
+            if (!isCurrentRequest()) return;
             if (newFolderInput) newFolderInput.value = '';
             await loadFolders(response.folderId);
+            if (!isCurrentRequest()) return;
             mostrarNotificacion('Carpeta creada: ' + response.folderPath, 'success');
         });
     };
@@ -5210,8 +5370,28 @@ export async function openReplacedImagesModal() {
  * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
  */
 export async function openAuditDriveModal() {
+    const requestContext = await ensureUiSessionRole_(['desarrollador']);
+    if (!requestContext) return;
+    const cleared = await processPendingDriveAuditClears_();
+    if (cleared !== true) {
+        showGlobalError('No se pudo limpiar el estado de auditoría anterior. El historial no se abrirá para evitar mezclar cuentas.');
+        return;
+    }
+    if (typeof offline.hasPendingDriveAuditClear === 'function' &&
+        offline.hasPendingDriveAuditClear(requestContext.userId)) {
+        const ownerCleared = await offline.clearDriveAuditState(requestContext.userId);
+        if (ownerCleared !== true) {
+            showGlobalError('La limpieza pendiente de esta cuenta no pudo completarse. El historial permanecerá bloqueado.');
+            return;
+        }
+    }
+    if (!isCurrentUiSessionContext_(requestContext)) return;
+    const generation = ++auditDriveModalGeneration_;
+    const panelGeneration = adminPanelGeneration_;
+    const isCurrentRequest = () => generation === auditDriveModalGeneration_ &&
+        panelGeneration === adminPanelGeneration_ && isCurrentUiSessionContext_(requestContext);
     const modal = document.getElementById('audit-drive-modal');
-    if (!modal) return;
+    if (!modal || !isCurrentRequest()) return;
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
@@ -5221,7 +5401,10 @@ export async function openAuditDriveModal() {
     const startButton = document.getElementById('btn-audit-drive-start');
     const resumeButton = document.getElementById('btn-audit-drive-resume');
     if (!summaryEl || !container) return;
-    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+    if (closeBtn) closeBtn.onclick = () => {
+        auditDriveModalGeneration_ += 1;
+        modal.style.display = 'none';
+    };
 
     summaryEl.innerHTML = `
         <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
@@ -5263,6 +5446,7 @@ export async function openAuditDriveModal() {
     let isRunning = false;
 
     const appendFiles = (files) => {
+        if (!isCurrentRequest()) return;
         files.filter(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')
             .forEach(file => {
             const row = document.createElement('div');
@@ -5297,6 +5481,7 @@ export async function openAuditDriveModal() {
     };
 
     const updateSummary = (statusText) => {
+        if (!isCurrentRequest()) return;
         const counts = {
             inUse: allFiles.filter(file => file.classification === 'En uso').length,
             historical: allFiles.filter(file => file.classification === 'Histórica').length,
@@ -5324,6 +5509,7 @@ export async function openAuditDriveModal() {
     };
 
     const persistState = async (status, extra = {}) => {
+        if (!isCurrentRequest()) throw new Error('La sesión cambió; se detuvo la persistencia de la auditoría.');
         const state = {
             files: allFiles,
             cursor: cursor,
@@ -5342,12 +5528,16 @@ export async function openAuditDriveModal() {
             lastError: ''
         };
         Object.assign(state, extra);
-        const saved = await offline.saveDriveAuditState(state);
+        const saved = await offline.saveDriveAuditState(state, requestContext.userId);
+        if (!isCurrentRequest()) {
+            await offline.clearDriveAuditState(requestContext.userId);
+            throw new Error('La sesión cambió; se eliminó el estado de auditoría de la cuenta anterior.');
+        }
         if (!saved) throw new Error('IndexedDB no confirmó la persistencia del progreso de auditoría.');
     };
 
     const saveUnusedInventory = async (alreadyRunning = false) => {
-        if (inventoryStatus === 'saved') return;
+        if (!isCurrentRequest() || inventoryStatus === 'saved') return;
         if (isDriveAuditRunning && !alreadyRunning) return;
 
         const ownsRun = !alreadyRunning;
@@ -5362,6 +5552,7 @@ export async function openAuditDriveModal() {
         let localPersistenceWarning = '';
         try {
             await persistState('complete');
+            if (!isCurrentRequest()) return;
         } catch (storageError) {
             localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
         }
@@ -5375,6 +5566,7 @@ export async function openAuditDriveModal() {
                 ...getDeveloperSessionPayload(),
                 files: unusedFiles
             });
+            if (!isCurrentRequest()) return;
             if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId) {
                 throw new Error(inventoryResult && inventoryResult.message
                     ? inventoryResult.message
@@ -5396,6 +5588,7 @@ export async function openAuditDriveModal() {
                     auditId: inventoryResult.auditId,
                     files: batch
                 });
+                if (!isCurrentRequest()) return;
                 if (!organizationResult || organizationResult.status !== 'success') {
                     throw new Error(organizationResult && organizationResult.message
                         ? organizationResult.message
@@ -5408,6 +5601,7 @@ export async function openAuditDriveModal() {
                 inventoryMessage = 'Inventario registrado. Organización: ' + movedCount + ' movidas, ' +
                     alreadyOrganizedCount + ' ya organizadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
                 await persistState('complete');
+            if (!isCurrentRequest()) return;
             }
 
             inventoryStatus = 'saved';
@@ -5416,6 +5610,7 @@ export async function openAuditDriveModal() {
                 alreadyOrganizedCount + ' ya estaban allí, ' + failedCount + ' con error y ' +
                 blockedCount + ' bloqueadas. Revisa el detalle de organización en el inventario.';
         } catch (inventoryError) {
+            if (!isCurrentRequest()) return;
             inventoryStatus = 'error';
             inventoryMessage = 'Auditoría COMPLETA, pero el registro u organización del inventario quedó parcial: ' +
                 inventoryError.message + '. Puedes volver a ejecutar la actualización; los movimientos confirmados no se repetirán.';
@@ -5423,13 +5618,14 @@ export async function openAuditDriveModal() {
 
         try {
             await persistState('complete');
+            if (!isCurrentRequest()) return;
         } catch (storageError) {
             localPersistenceWarning += ' No se pudo confirmar el guardado local del resultado de inventario: ' +
                 storageError.message;
         }
         updateSummary(inventoryMessage + localPersistenceWarning);
 
-        if (ownsRun) {
+        if (ownsRun && isCurrentRequest()) {
             isRunning = false;
             isDriveAuditRunning = false;
             updateControls();
@@ -5437,6 +5633,7 @@ export async function openAuditDriveModal() {
     };
 
     const updateControls = () => {
+        if (!isCurrentRequest()) return;
         const hasResumableCursor = !complete && !!cursor && !resumeUnavailable;
         if (startButton) startButton.disabled = isRunning || isDriveAuditRunning;
         if (resumeButton) {
@@ -5447,6 +5644,7 @@ export async function openAuditDriveModal() {
     };
 
     const restoreState = (state) => {
+        if (!isCurrentRequest()) return;
         allFiles.length = 0;
         if (Array.isArray(state.files)) allFiles.push(...state.files);
         cursor = state.cursor || null;
@@ -5477,7 +5675,7 @@ export async function openAuditDriveModal() {
     };
 
     const runAudit = async (resume) => {
-        if (isRunning || isDriveAuditRunning) return;
+        if (!isCurrentRequest() || isRunning || isDriveAuditRunning) return;
         isRunning = true;
         isDriveAuditRunning = true;
         updateControls();
@@ -5504,18 +5702,20 @@ export async function openAuditDriveModal() {
                 savedState = null;
                 updateSummary('Preparando una auditoría nueva...');
                 await persistState('running');
+                if (!isCurrentRequest()) return;
             }
 
             const seenCursorSignatures = new Set();
             if (cursor) seenCursorSignatures.add(JSON.stringify(cursor));
 
-            while (!complete) {
+            while (!complete && isCurrentRequest()) {
                 const previousTotal = totalAnalyzed;
                 const previousFolders = foldersVisited;
                 const response = await routeAction('auditDriveImagesInCortes', {
                     ...getDeveloperSessionPayload(),
                     cursor: cursor
                 });
+                if (!isCurrentRequest()) return;
 
                 if (!response || response.status !== 'success' || !Array.isArray(response.files)) {
                     throw new Error(response && response.message ? response.message : 'Respuesta inválida del servicio de auditoría.');
@@ -5568,6 +5768,7 @@ export async function openAuditDriveModal() {
                     : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.');
 
                 await persistState(complete ? 'complete' : 'running');
+                if (!isCurrentRequest()) return;
             }
 
             if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
@@ -5575,6 +5776,7 @@ export async function openAuditDriveModal() {
             }
             await saveUnusedInventory(true);
         } catch (error) {
+            if (!isCurrentRequest()) return;
             const errorMessage = error && error.message ? error.message : String(error);
             const cursorExpired = !complete &&
                 /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|inicia una auditoría nueva/i.test(errorMessage);
@@ -5594,9 +5796,11 @@ export async function openAuditDriveModal() {
             }
             updateSummary(statusMessage);
         } finally {
-            isRunning = false;
-            isDriveAuditRunning = false;
-            updateControls();
+            if (isCurrentRequest()) {
+                isRunning = false;
+                isDriveAuditRunning = false;
+                updateControls();
+            }
         }
     };
 
@@ -5604,11 +5808,13 @@ export async function openAuditDriveModal() {
     if (resumeButton) resumeButton.onclick = () => runAudit(true);
 
     try {
-        savedState = await offline.getDriveAuditState();
+        savedState = await offline.getDriveAuditState(requestContext.userId);
+        if (!isCurrentRequest()) return;
     } catch (storageError) {
         savedState = null;
     }
 
+    if (!isCurrentRequest()) return;
     if (savedState) {
         restoreState(savedState);
         updateControls();
@@ -5616,8 +5822,10 @@ export async function openAuditDriveModal() {
             updateSummary('La auditoría continúa ejecutándose en esta sesión; no inicies otra solicitud.');
         } else if (complete && inventoryStatus !== 'saved') {
             await saveUnusedInventory(false);
+            if (!isCurrentRequest()) return;
         }
     } else {
+        if (!isCurrentRequest()) return;
         container.innerHTML = '';
         updateSummary('No existe un inventario local guardado. Iniciando auditoría nueva...');
         await runAudit(false);
@@ -5646,6 +5854,19 @@ export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
 
 export function renderInboxList(items) {
     const listContainer = document.getElementById('inbox-list');
+    if (!listContainer) return;
+    const context = getUiSessionContext_();
+    const generation = inboxViewGeneration_;
+    const isCurrentInboxView = () => Boolean(context &&
+        generation === inboxViewGeneration_ &&
+        isCurrentUiSessionContext_(context) &&
+        ['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role));
+    if (!isCurrentInboxView()) {
+        listContainer.replaceChildren();
+        const detail = document.getElementById('inbox-detail');
+        if (detail) detail.replaceChildren();
+        return;
+    }
     listContainer.innerHTML = '';
     if (items.length === 0) {
         listContainer.innerHTML = '<p>No hay mensajes.</p>';
@@ -5685,6 +5906,7 @@ export function renderInboxList(items) {
             </div>
         `;
         itemDiv.addEventListener('click', () => {
+            if (!isCurrentInboxView()) return;
             document.querySelectorAll('.inbox-item.active').forEach(el => el.classList.remove('active'));
             itemDiv.classList.add('active');
             renderInboxDetail(item);
@@ -5707,6 +5929,19 @@ export function createInboxRichTextToolbar(targetId) {
 
 export function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
+    const context = getUiSessionContext_();
+    const viewGeneration = inboxViewGeneration_;
+    const detailGeneration = ++inboxDetailGeneration_;
+    const isCurrentInboxDetail = () => Boolean(context &&
+        viewGeneration === inboxViewGeneration_ &&
+        detailGeneration === inboxDetailGeneration_ &&
+        isCurrentUiSessionContext_(context) &&
+        ['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role));
+    if (!detailContainer) return;
+    if (!isCurrentInboxDetail()) {
+        detailContainer.replaceChildren();
+        return;
+    }
     const { currentUser, catalogData } = getState();
     const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
 
@@ -5814,11 +6049,13 @@ export function renderInboxDetail(item) {
                 try {
                     approveVideoBtn.disabled = true;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
-                    await approveVideo(item.id, userName, userRole, getDeveloperSessionPayload());
+                    await approveVideo(item.id, userName, userRole, getSessionPayload_());
+                    if (!isCurrentInboxDetail()) return;
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
                     openInbox();
                 } catch (err) {
+                    if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al aprobar vídeo: ${err.message}`);
                     approveVideoBtn.disabled = false;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-check"></i> Aprobar Vídeo`;
@@ -5835,11 +6072,13 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    await rejectVideo(item.id, userName, reason, userRole, getDeveloperSessionPayload());
+                    await rejectVideo(item.id, userName, reason, userRole, getSessionPayload_());
+                    if (!isCurrentInboxDetail()) return;
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo rechazado.", "info");
                     openInbox();
                 } catch (err) {
+                    if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al rechazar vídeo: ${err.message}`);
                     rejectVideoBtn.disabled = false;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> Rechazar Vídeo`;
@@ -5864,9 +6103,11 @@ export function renderInboxDetail(item) {
             }
             try {
                 replyBtn.classList.add('btn-loading');
-                await replyToFeedback(item.id, item.type, replyText, userName, getDeveloperSessionPayload());
+                await replyToFeedback(item.id, item.type, replyText, userName, getSessionPayload_());
+                if (!isCurrentInboxDetail()) return;
                 openInbox();
             } catch (error) {
+                if (!isCurrentInboxDetail()) return;
                 showGlobalError(`Error al enviar respuesta: ${error.message}`);
             } finally {
                 replyBtn.classList.remove('btn-loading');
@@ -5879,10 +6120,12 @@ export function renderInboxDetail(item) {
         resolveBtn.addEventListener('click', async () => {
              try {
                 resolveBtn.classList.add('btn-loading');
-                await markAsResolved(item.id, getDeveloperSessionPayload());
+                await markAsResolved(item.id, getSessionPayload_());
+                if (!isCurrentInboxDetail()) return;
                 inboxCacheData = null;
                 openInbox();
             } catch (error) {
+                if (!isCurrentInboxDetail()) return;
                 showGlobalError(`Error al resolver: ${error.message}`);
             } finally {
                 resolveBtn.classList.remove('btn-loading');
@@ -5897,11 +6140,13 @@ export function renderInboxDetail(item) {
                 try {
                     deleteBtn.disabled = true;
                     deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
-                    await deleteFeedbackItem(item.id, item.type, getDeveloperSessionPayload());
+                    await deleteFeedbackItem(item.id, item.type, getSessionPayload_());
+                    if (!isCurrentInboxDetail()) return;
                     inboxCacheData = null;
                     mostrarNotificacion("Mensaje eliminado con éxito", "success");
                     openInbox();
                 } catch (error) {
+                    if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al eliminar mensaje: ${error.message}`);
                     deleteBtn.disabled = false;
                     deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Borrar Mensaje`;
@@ -6407,6 +6652,7 @@ export function showApp(user) {
     if (lastShownAppContextKey !== appContextKey) {
         resetSessionUi_();
         lastShownAppContextKey = appContextKey;
+        lastShownAppContext = appContext;
     }
 
     const splash = document.getElementById('splash-screen');
@@ -6693,8 +6939,8 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     cont.innerHTML = "";
 
     const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
-    const isDeveloper = userRole === 'Desarrollador';
+    const userRole = getUiSessionContext_()?.role || null;
+    const isDeveloper = userRole === 'desarrollador';
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
@@ -8811,8 +9057,8 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
     }
 
     const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
-    const isDeveloper = userRole === 'Desarrollador';
+    const userRole = getUiSessionContext_()?.role || null;
+    const isDeveloper = userRole === 'desarrollador';
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
@@ -9113,7 +9359,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                     modelosAsociadosIds = rawModelos.split(/[,\/\\;]+/).map(id => id.trim()).filter(Boolean);
                 }
             }
-            const canEditPys = userRole === 'Desarrollador';
+            const canEditPys = userRole === 'desarrollador';
 
             modelosAsociadosIds.forEach(vId => {
                 const v = cortes.find(c => String(c.id) === String(vId));
@@ -10289,8 +10535,11 @@ export function exportVehiclePrintSheet(item) {
 }
 
 export async function loadAndRenderInbox() {
-    const requestContext = getUiSessionContext_();
+    const requestContext = await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor']);
     if (!requestContext) return;
+    const generation = ++inboxViewGeneration_;
+    inboxDetailGeneration_ += 1;
+    const isCurrentInboxRequest = () => generation === inboxViewGeneration_ && isCurrentUiSessionContext_(requestContext);
 
     const listContainer = document.getElementById('inbox-list');
     if (!listContainer) return;
@@ -10303,13 +10552,13 @@ export async function loadAndRenderInbox() {
 
     try {
         const res = await getFeedbackItems(getDeveloperSessionPayload());
-        if (!isCurrentUiSessionContext_(requestContext)) return;
+        if (!isCurrentInboxRequest()) return;
         if (res && res.data) {
             inboxCacheData = res.data;
             renderInboxList(inboxCacheData);
         }
     } catch(err) {
-        if (!isCurrentUiSessionContext_(requestContext)) return;
+        if (!isCurrentInboxRequest()) return;
         console.error("Error cargando inbox:", err);
         if (!inboxCacheData) {
             listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';

@@ -512,3 +512,16 @@ CHECKPOINT DE AVANCE — AUG-042 — 2026-11-10
 HEAD de trabajo al checkpoint: c9154bdc37cf37e89551b2347ea628a7d682c92c.
 H-AUD-042-010 documentado y alcance ampliado a offline.js. Se preparó borrador ui.js (blob e86ce5d6c3218aa05002b0d94a87f9a425bb9a48; parsing aislado PASS), sin integrar ni validar funcionalmente. Se preparó diseño de aislamiento de DriveAuditState por userId y revalidación de sesión en main.js, todavía no integrados. No se cierran hallazgos ni se declara completada AUG-042. Próximo paso: continuar implementación y pruebas; no publicar cambios funcionales hasta superar comparación con respaldos, pruebas y Code Review.
 ================================================================================
+
+
+================================================================================
+AUG-042 — COMPLETADA — 2026-11-10
+Sincronización de rol y limpieza del estado privilegiado en el cliente.
+Archivos funcionales: ui.js, offline.js, auth.js, main.js y users.html.
+Hallazgos H-AUD-042-004 a H-AUD-042-010: resueltos en validación local; evidencia y límites registrados en Auditoría.txt.
+Validaciones locales: sintaxis 5/5 PASS; matriz de roles PASS; guardas de sesión/rol PASS; AUTH 6/6 PASS con dobles; logout obsoleto PASS; aislamiento/limpieza Drive simulados PASS; revalidación single-flight PASS; generaciones Inbox/Admin PASS.
+Code Review y Safety & Side Effects: PASS.
+Validación diferida a Beta: navegador/Playwright, IndexedDB real, endpoints, Apps Script, deployments y pruebas multi-dispositivo. No se ejecutaron operaciones productivas.
+Commit único de cierre: identificable en el historial de GPSpedia2.2.5_work por el mensaje "fix(auth): synchronize client role and privileged session state".
+Siguiente tarea: AUG-043.
+================================================================================
