@@ -458,3 +458,21 @@ PENDIENTES / SIGUIENTE ACCIÓN
 
 Estado: EN PROGRESO. La evidencia actual confirma parsing y verificaciones estáticas limitadas; aún no permite cerrar el hardening. Rama base y datos productivos sin cambios.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: IDENTIDAD EN ALTA DE TUTORIAL — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD funcional previo al checkpoint: f7bc64d362f531b4813cf696a7152d946c130a46.
+Problema resuelto en esta iteración: el handler handleAddTutorial utilizaba el campo colaborador enviado por el navegador, aunque la acción ya exigía una sesión de Desarrollador. Esto permitía que un cliente autenticado registrara un nombre de colaborador falsificado.
+Corrección: Services/feedback.js ahora requiere userName derivado por authorizeFeedbackAction_ desde la sesión validada y lo utiliza como colaborador persistido; ignora el campo colaborador suministrado por el cliente.
+Prueba añadida: Services/Test/FeedbackWriteSecurity.js verifica que, aun enviando nombres falsificados en userName/colaborador, la fila guarda exclusivamente el nombre derivado de la sesión verificada.
+Validación local ejecutada tras la corrección:
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Suite aislada runFeedbackWriteSecurityTests(): 17/17 PASS.
+- El primer intento de la nueva prueba falló por una referencia al mock SpreadsheetApp no inicializado; se corrigió el fixture y se repitió la suite completa, que aprobó 17/17.
+Estado global del hardening FEEDBACK: EN PROGRESO. Este checkpoint cierra únicamente el defecto de identidad de colaborador en alta de tutorial; no declara terminada la revisión de los demás contratos, llamadores, autorización, ledger, ni compensaciones.
+No ejecutado: navegador real, Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API, concurrencia física ni datos productivos. No se desplegó ni se modificó la rama base.
+Siguiente iteración: continuar la revisión de contratos y llamadores de las acciones FEEDBACK afectadas, sin abrir una tarea distinta. El siguiente hallazgo se tratará de forma independiente y tendrá su propio checkpoint/commit cuando quede resuelto.
+================================================================================
