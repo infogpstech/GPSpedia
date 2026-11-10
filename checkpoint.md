@@ -1532,3 +1532,30 @@ No ejecutado: Apps Script real, Spreadsheet/Drive, endpoints, deployments, concu
 AUG-042 quedó pausada antes de implementación por H-AUD-042-001. Siguiente acción después de verificar el commit correctivo: reanudar Ciclo B de AUG-042 con checkpoint inicial actualizado sobre el nuevo HEAD. No se ha modificado código de AUG-042.
 El SHA del commit que incorpora este checkpoint se identifica en el historial Git de GPSpedia2.2.5_work; no se incluye aquí para evitar referencia circular.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — CICLO A CERRADO / NUEVA CORRECCIÓN REGISTRADA — 2026-11-09
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD auditado antes de este commit documental: 400f5531d3f2192098d8d510c47ddead2db28546.
+Árbol del HEAD auditado: 5f194e81829512c9a1b5d29213c76dc4158fa1af.
+Commit auditado: fix(feedback): enforce global session token uniqueness.
+Padre: 8c1983c8e9fd1441854717a26654a2bd531172a3.
+Rama base: GPSpedia2.2.5. HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1. La configuración de protección de rama queda bajo responsabilidad del propietario, conforme a su confirmación expresa; no constituye bloqueo del agente.
+Archivos del commit anterior: Services/feedback.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+Ciclo A completado: revisión post-commit de Services/feedback.js, assertFeedbackSession(), expiración, resolución de Users, actionPermissions, consumidores autenticados, orden de guard antes del switch y excepción anónima suggestYear. No se detectó regresión introducida por CORR-FEEDBACK-SESSION-001. Se confirma que H-AUD-042-001 está resuelto.
+Hallazgo nuevo: H-AUD-042-002 — ALTA — revocación de rol pendiente no compartida entre AUTH y FEEDBACK. AUTH usa ScriptProperties del proyecto AUTH y bloquea sus propias sesiones con validateAndTouchSession_(); FEEDBACK es endpoint/proyecto independiente y no puede leer ese marcador. Si una escritura de revocación falla y queda un token en ActiveSessions, FEEDBACK puede aceptar la sesión residual con el rol anterior aún presente en Users. Detalle y criterios completos en Auditoría.txt.
+Tarea correctiva independiente: CORR-FEEDBACK-ROLE-REVOCATION-001. Estado: registrada; auditoría pre-implementación pendiente. AUG-042 permanece bloqueada hasta verificar la corrección.
+Rectificación de hipótesis: no se intentará leer ScriptProperties de AUTH desde FEEDBACK. El diseño debe apoyarse en estado compartido o consulta segura a la autoridad AUTH.
+Respaldos exactos de documentación antes de esta edición:
+- Auditoría.txt: 10f34ea49ad3564e1048da5bb563ed7756b719cc.
+- Tareas.txt: 0745370e2cf89366bce3851e18ba46c8c1cb70d4.
+- ChangesLogs.txt: a50b2282d53d49313344161cdca29ce98c84275f.
+- checkpoint.md: 7316f11c138fa366f30ae975b507ea1e14e7c62b.
+Fuentes funcionales inspeccionadas sin modificación:
+- Services/Auth.js: 9e8bdb2b9fbf34636e8a2c3bafa65b5c942193da.
+- Services/feedback.js: 162bbb8f6ce564de3e0d50c7b5b4f4101cf32896.
+Verificaciones heredadas de CORR-FEEDBACK-SESSION-001: 16/16 pruebas aisladas, sintaxis completa, comparación inversa y Code Review/Safety & Side Effects reportados PASS. No se ejecutaron Apps Script real, endpoints, deployments, navegador, concurrencia física ni datos productivos.
+Estado de esta edición: solo registros documentales append-only; no hay cambios funcionales. No se han editado aún los archivos de la tarea correctiva.
+Siguiente paso: auditar Services/Auth.js, Services/feedback.js, api-config.js, contratos de Sheets y opciones de coordinación de CORR-FEEDBACK-ROLE-REVOCATION-001; fijar alcance, respaldar archivos funcionales y recién entonces implementar. No reanudar AUG-042 antes del cierre de la corrección.
+================================================================================

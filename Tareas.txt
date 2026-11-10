@@ -407,3 +407,24 @@ Archivo funcional: Services/feedback.js. Pruebas aisladas de la función real: 1
 No se modificaron actionPermissions, handlers, endpoints, deployments, datos productivos, esquema ni rama base.
 La corrección elimina el bloqueo de autorización backend para AUG-042. Reanudar AUG-042 únicamente después de verificar este commit y crear un checkpoint inicial actualizado sobre el nuevo HEAD.
 ================================================================================
+
+================================================================================
+ADENDA DE VERIFICACIÓN — CORR-FEEDBACK-SESSION-001 — 2026-11-09
+Estado: COMMIT PUBLICADO Y VERIFICADO.
+Commit único: 400f5531d3f2192098d8d510c47ddead2db28546, rama GPSpedia2.2.5_work; padre 8c1983c8e9fd1441854717a26654a2bd531172a3. El HEAD de la rama coincide con el commit. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Archivos del commit: Services/feedback.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+El estado "publicación/verificación pendiente" de la entrada de cierre anterior era temporal y queda rectificado por esta adenda append-only. H-AUD-042-001 queda resuelto y su corrección publicada. El Ciclo A posterior detectó H-AUD-042-002, que se gestiona en una tarea correctiva independiente y mantiene AUG-042 bloqueada.
+================================================================================
+
+
+================================================================================
+CORR-FEEDBACK-ROLE-REVOCATION-001 — REVOCACIÓN PENDIENTE COMPARTIDA ENTRE AUTH Y FEEDBACK
+Estado: PENDIENTE DE AUDITORÍA PRE-IMPLEMENTACIÓN.
+Origen: H-AUD-042-002, Ciclo A post-commit de CORR-FEEDBACK-SESSION-001.
+Objetivo: impedir que FEEDBACK acepte sesiones residuales de una cuenta cuyo cambio/revocación de rol está pendiente en AUTH.
+Alcance candidato: Services/Auth.js, Services/feedback.js, api-config.js y documentación/pruebas estrictamente necesarias; el alcance final se fija después de auditar alternativas y contratos.
+Criterios: estado de revocación consultable de forma segura entre microservicios; escritura del estado pendiente antes de revocar; rechazo fail-closed en FEEDBACK mientras exista pendiente o no pueda verificarse; limpieza del marcador solo tras confirmar revocación y rol; conservación de la política de sesión y matriz RBAC actuales.
+Restricciones: no asumir que ScriptProperties o ScriptLock se comparten entre proyectos; no modificar deployments, endpoints productivos, datos productivos ni rama base sin autorización; no reanudar AUG-042 hasta cerrar esta corrección.
+Pruebas requeridas: token residual con revocación pendiente; lectura/escritura fallida; reintentos; varias sesiones; cambio de rol completado; usuario sin pendiente; regresión de roles/allowedRoles y ruta anónima; sintaxis completa; comparación contra respaldos; Code Review/Safety & Side Effects.
+Siguiente paso: auditar Services/Auth.js, Services/feedback.js, api-config.js, contratos de Sheets y alternativas de coordinación antes de elegir e implementar el mecanismo compartido. No se ha modificado código funcional.
+================================================================================

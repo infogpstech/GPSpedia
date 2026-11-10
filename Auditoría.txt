@@ -987,3 +987,33 @@ Sintaxis/parsing del archivo completo Services/feedback.js: PASS. Comparación i
 No ejecutado: Apps Script real, Spreadsheet/Drive, HTTP/endpoints, deployments, concurrencia física ni datos productivos. Validación Beta sigue diferida.
 AUG-042 queda desbloqueable después de verificar el commit único de esta corrección.
 ================================================================================
+
+================================================================================
+H-AUD-042-002 — ALTA — ABIERTO — 2026-11-09
+Origen: Ciclo A post-commit de CORR-FEEDBACK-SESSION-001, commit 400f5531d3f2192098d8d510c47ddead2db28546; revisión de la dependencia de revocación de rol entre AUTH y FEEDBACK antes de reanudar AUG-042.
+Ubicación:
+- Services/Auth.js:886–891, roleRevocationPropertyKey_() y hasPendingRoleRevocation_().
+- Services/Auth.js:895–987, revokeAllUserSessionsUnderLock_() y reconcileRoleRevocationUnderLock_().
+- Services/Auth.js:1054–1164, handleUpdateUser().
+- Services/Auth.js:1194, validateAndTouchSession_().
+- Services/feedback.js:9, 52–63 y 281–370, configuración, assertFeedbackSession() y dispatch protegido.
+- api-config.js: API_ENDPOINTS.AUTH y API_ENDPOINTS.FEEDBACK.
+Evidencia:
+1. AUTH guarda el estado pendiente de cambio/revocación de rol en PropertiesService.getScriptProperties(), mediante roleRevocationPropertyKey_() y hasPendingRoleRevocation_(). El marcador se establece antes de iniciar la revocación y se conserva cuando reconcileRoleRevocationUnderLock_() detecta tokens pendientes, errores o estado no confirmado.
+2. AUTH.validateAndTouchSession_() consulta ese marcador y rechaza la sesión con role_changed_reauthentication_required o role_revocation_pending mientras la revocación siga pendiente.
+3. AUTH aplica el nuevo rol en Users solo después de confirmar que los tokens de la cuenta quedaron vacíos. Si la escritura consolidada de ActiveSessions falla y algún token permanece, la reconciliación retorna pending y el cambio de rol no se completa.
+4. FEEDBACK es un microservicio desplegado en un endpoint independiente de AUTH (api-config.js define URLs distintas). Services/feedback.js consulta el mismo Spreadsheet, pero no utiliza PropertiesService ni dispone de acceso al ScriptProperties del proyecto AUTH; el marcador de AUTH no es un estado compartido entre ambos proyectos.
+5. assertFeedbackSession() valida token global único, titularidad, expiración y perfil/rol de Users, pero no consulta una señal compartida de revocación pendiente ni llama a AUTH.validateAndTouchSession_(). Si una sesión residual conserva su token en ActiveSessions durante una revocación pendiente, Users conserva todavía el rol anterior y FEEDBACK puede aceptar esa sesión y ejecutar acciones protegidas según ese rol.
+6. El guard se ejecuta antes del switch para las acciones incluidas en actionPermissions; la exposición incluye las acciones protegidas de Inbox, actividad y aprobación/rechazo de vídeo. La excepción anónima suggestYear no debe alterarse.
+Impacto: inconsistencia de autorización entre microservicios durante fallos parciales de revocación. Una sesión residual que AUTH ya considera no válida por revocación pendiente puede seguir siendo aceptada por FEEDBACK hasta que el token se invalide o la reconciliación finalice. El riesgo depende de que permanezca un token utilizable; no se afirma que ocurra en toda modificación de rol.
+Criterio verificable de corrección:
+- FEEDBACK debe rechazar de forma cerrada una sesión de una cuenta con revocación/cambio de rol pendiente, incluso cuando una fila residual de ActiveSessions conserve el token.
+- La señal de pendiente debe ser realmente compartida entre proyectos o la validación debe consultar de forma fiable la autoridad AUTH; no depender de ScriptProperties/ScriptLock como si fueran compartidos.
+- El estado pendiente debe persistirse antes de intentar revocar tokens y no retirarse hasta confirmar la revocación y la aplicación/confirmación del nuevo rol.
+- Ante fallo o ambigüedad al consultar el estado de revocación, FEEDBACK debe fallar cerrado antes del switch y de cualquier mutación protegida.
+- Conservar unicidad global del token, titularidad, expiración, Users único/activo, roles activos, allowedRoles y la ruta anónima suggestYear userId="0".
+- Probar estado normal, revocación pendiente con token residual, fallo de lectura/escritura, reintento/reconciliación exitosa, varias sesiones y ausencia de efectos en acciones no relacionadas.
+Dependencia: bloquea AUG-042 porque FEEDBACK es autoridad backend de Inbox y de approve/reject; no reanudar la sincronización del rol en el cliente mientras exista esta inconsistencia.
+Tarea correctiva independiente: CORR-FEEDBACK-ROLE-REVOCATION-001.
+Nota de precisión: la hipótesis preliminar de leer el marcador de AUTH directamente desde FEEDBACK no es viable debido al aislamiento de ScriptProperties entre los endpoints independientes. El hallazgo se registra por la falta de una señal de revocación compartida, no por la mera ausencia de acceso al marcador local.
+================================================================================

@@ -401,3 +401,13 @@ CORR-FEEDBACK-SESSION-001 — ALINEACIÓN DE GUARD FEEDBACK — 2026-11-10
 - checkpoint.md: checkpoint inicial/final, respaldo, pruebas, Code Review y siguiente tarea AUG-042.
 Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparación inversa PASS. No se ejecutaron endpoints, deployments ni datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-09 — CICLO A / CORR-FEEDBACK-SESSION-001 — VERIFICACIÓN Y NUEVO HALLAZGO
+- Verificado el commit 400f5531d3f2192098d8d510c47ddead2db28546 en GPSpedia2.2.5_work; coincide con HEAD y tiene como padre 8c1983c8e9fd1441854717a26654a2bd531172a3. Rama base GPSpedia2.2.5 confirmada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Ciclo A: se revisó Services/feedback.js, assertFeedbackSession(), sus consumidores autenticados, el guard previo al switch y la preservación de la ruta anónima. No se detectó regresión introducida por el cambio de unicidad global.
+- Se contrastó la revocación de rol en Services/Auth.js con FEEDBACK y api-config.js. H-AUD-042-002 registra que AUTH mantiene el marcador en ScriptProperties propio mientras puede quedar un token residual en la hoja compartida; FEEDBACK no puede leer ScriptProperties del proyecto AUTH y no consulta una señal compartida.
+- La hipótesis preliminar de leer directamente el marcador de AUTH desde FEEDBACK se descarta por aislamiento entre microservicios; la corrección deberá usar un mecanismo compartido o validar con la autoridad AUTH.
+- Nueva tarea correctiva independiente: CORR-FEEDBACK-ROLE-REVOCATION-001. AUG-042 permanece bloqueada hasta resolverla.
+- No se modificó código funcional ni se ejecutaron Apps Script real, Sheets/Drive productivos, endpoints, navegador, deployments o concurrencia física.
+================================================================================
