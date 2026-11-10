@@ -131,7 +131,7 @@ function runFeedbackWriteSecurityTests() {
                 logUserActivity = () => { activityCount++; };
                 SpreadsheetApp = { flush: function() {} };
                 expectThrow_(() => handleAddPrevention({
-                    problemId: "isue-001", prevenir: "   \\n  ", userId: "USR-TEST-01", userName: "Usuario verificado"
+                    problemId: "isue-001", prevenir: "   \n  ", userId: "USR-TEST-01", userName: "Usuario verificado"
                 }), "requeridos");
                 assert_(rows[1][5] === "", "La prevención vacía no debe modificar la fila.");
                 assert_(activityCount === 0, "La prevención vacía no debe generar actividad.");
