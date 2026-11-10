@@ -64,7 +64,7 @@ function coordinatorPolicy_(service, operation) {
                 write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
                 nestedActions: { WRITE: ["allocateVehicleId"] }
             },
-            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE"] },
+            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
             createSheet: { maintenance: true },
             addColumn: { maintenance: true },
             driveCommand: { read: identityRead, write: ["DRIVE"] },
