@@ -334,7 +334,10 @@ function doPostInternal_(e) {
             updatePysItem: ["Desarrollador"],
             updateTutorialItem: ["Desarrollador"],
             initYouTubeUpload: null,
+            getVideoApprovalByOperation: null,
             submitVideoForApproval: null,
+            addTutorial: ["Desarrollador"],
+            addProblem: null,
             addVehicleToProblem: null
         };
 
@@ -421,6 +424,9 @@ function doPostInternal_(e) {
                 break;
             case 'initYouTubeUpload':
                 response = handleInitYouTubeUpload(payload);
+                break;
+            case 'getVideoApprovalByOperation':
+                response = handleGetVideoApprovalByOperation(payload);
                 break;
             case 'submitVideoForApproval':
                 response = handleSubmitVideoForApproval(payload);
@@ -1414,8 +1420,8 @@ function handleAddProblem(payload) {
     if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solucion si no marca 'Sin solucion'.");
     if (solucion && solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
     if (prevenir && prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
-    if (videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
-        throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
+    if (String(videoUrl || "").trim()) {
+        throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
     }
 
     const lock = LockService.getScriptLock();
@@ -1514,28 +1520,38 @@ function handleAddPrevention(payload) {
 }
 
 function handleAddTutorial(payload) {
-    const { tema, videoUrl, descripcion, colaborador } = payload;
-    if (!tema || !videoUrl) throw new Error("Tema y enlace de vídeo son obligatorios.");
-    if (!videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
-        throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
+    const { tema, videoUrl, descripcion, colaborador } = payload || {};
+    const title = String(tema || "").trim();
+    if (!title) throw new Error("El tema del tutorial es obligatorio.");
+    if (String(videoUrl || "").trim()) {
+        throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
     }
 
-    const sheet = getSafeSheet("Tutoriales") || getSpreadsheet().insertSheet("Tutoriales");
+    const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial") || getSpreadsheet().insertSheet("Tutoriales");
+    const expectedHeaders = ["Tema", "Imagen", "Video", "Descripción", "Colaborador"];
     if (sheet.getLastRow() === 0) {
-        sheet.getRange(1, 1, 1, 5).setValues([["Tema", "Imagen", "Video", "Descripción", "Colaborador"]]);
+        sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+        SpreadsheetApp.flush();
     }
-
-    const newRow = [
-        tema,
-        `https://img.youtube.com/vi/${extractYouTubeId(videoUrl)}/hqdefault.jpg`,
-        videoUrl,
-        descripcion || "",
-        colaborador || ""
-    ];
-
+    const headers = sheet.getRange(1, 1, 1, Math.max(expectedHeaders.length, sheet.getLastColumn())).getDisplayValues()[0];
+    if (expectedHeaders.some((header, index) => String(headers[index] || "").trim() !== header)) {
+        throw new Error("El esquema A:E de Tutoriales no coincide; no se modificó la hoja.");
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow >= 2) {
+        const existing = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues().flat()
+            .filter(value => String(value || "").trim() === title);
+        if (existing.length) throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
+    }
+    const newRow = [title, "", "", String(descripcion || ""), String(colaborador || "")];
     sheet.appendRow(newRow);
     SpreadsheetApp.flush();
-    return { status: "success", message: "Tutorial registrado con éxito." };
+    const savedRow = sheet.getLastRow();
+    const saved = sheet.getRange(savedRow, 1, 1, expectedHeaders.length).getValues()[0];
+    if (String(saved[0] || "").trim() !== title || String(saved[2] || "").trim() !== "") {
+        throw new Error("No se pudo verificar el registro del tutorial sin vídeo.");
+    }
+    return { status: "success", referenceId: title, message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
 }
 
 function extractYouTubeId(url) {
@@ -1710,11 +1726,19 @@ function handleClearActivityLogs(payload) {
  * Inicializa la sesión de subida de vídeo a YouTube (Resumable Upload)
  */
 function handleInitYouTubeUpload(payload) {
-    const { title, description, contentType, referenceId, fileName, fileSize, fileType, userName, userId } = payload;
+    const { title, description, contentType, referenceId, fileName, fileSize, fileType, opVideoId } = payload;
     if (!title) throw new Error("El título del vídeo es obligatorio.");
-
-    // Generar un ID local de operación para idempotencia
-    const opVideoId = 'yt_' + Utilities.getUuid().slice(0, 8);
+    if (!['corte', 'pys', 'tutorial'].includes(String(contentType || ''))) throw new Error("Tipo de contenido no válido para la subida.");
+    if (!String(referenceId || '').trim()) throw new Error("Debes guardar primero el contenido para asociar el vídeo a un destino válido.");
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(String(opVideoId || ''))) throw new Error("Identificador de operación de vídeo inválido.");
+    const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada; no se iniciará una subida sin poder registrar la aprobación.");
+    const pendingForTarget = findPendingVideoApprovalForTarget_(feedbackSheet, contentType, referenceId);
+    if (pendingForTarget) throw new Error("Ya existe una solicitud de vídeo pendiente para este contenido; no se iniciará otra subida.");
+    const destination = getVideoApprovalTarget_({ contentType, referenceId });
+    if (!destination.record) throw new Error("El registro de destino no existe; guarda el contenido antes de subir el vídeo.");
+    const existingDestinationVideo = String(destination.sheet.getRange(destination.record.rowIndex, destination.videoColumn).getValue() || "").trim();
+    if (existingDestinationVideo) throw new Error("El contenido ya tiene un vídeo asociado; no se iniciará una segunda subida.");
 
     // Configuración permanente y obligatoria de publicación de YouTube:
     const metadata = {
@@ -1753,187 +1777,388 @@ function handleInitYouTubeUpload(payload) {
         };
 
         const res = UrlFetchApp.fetch(youtubeEndpoint, options);
+        const responseCode = Number(res.getResponseCode());
         const headers = res.getAllHeaders();
-        // La API de YouTube devuelve el endpoint de subida reanudable en la cabecera Location
+        // Solo se acepta una sesión creada por el endpoint oficial de YouTube.
         uploadUrl = headers['Location'] || headers['location'] || null;
-
-        if (!uploadUrl && res.getResponseCode() >= 400) {
-            Logger.log("Aviso YouTube API Init: " + res.getContentText());
+        if (responseCode < 200 || responseCode >= 300) {
+            throw new Error("YouTube rechazó la inicialización de la sesión (HTTP " + responseCode + ").");
+        }
+        if (!uploadUrl || !/^https:\/\/www\.googleapis\.com\/upload\/youtube\/v3\/videos\?upload_id=/.test(String(uploadUrl))) {
+            uploadUrl = null;
+            throw new Error("YouTube no devolvió una URL de sesión reanudable válida.");
         }
     } catch (e) {
+        uploadUrl = null;
         Logger.log("Aviso de inicialización OAuth YouTube: " + e.message);
     }
 
-    // Si la sesión resumable no pudo ser provista directamente por falta de credenciales Cloud en el sandbox,
-    // se entrega el opVideoId como identificador de sesión.
+    // Sin URL oficial de sesión no se autoriza la transferencia; opVideoId nunca sustituye videoId.
     return {
-        status: 'success',
-        opVideoId: opVideoId,
-        videoId: videoId || opVideoId,
+        status: uploadUrl ? 'success' : 'error',
+        opVideoId: String(opVideoId),
         uploadUrl: uploadUrl,
-        message: uploadUrl ? 'Sesión Resumable de YouTube obtenida.' : 'Sesión de subida inicializada.'
+        message: uploadUrl ? 'Sesión Resumable de YouTube obtenida.' : 'YouTube no devolvió una URL de sesión reanudable; no se inició la transferencia.'
     };
 }
 
 /**
  * Registra la solicitud de aprobación de un vídeo subido a YouTube
  */
+function findVideoApprovalByOperation_(sheet, opVideoId) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const rows = sheet.getRange(2, 1, lastRow - 1, Math.max(COLS_FEEDBACKS.Problema, sheet.getLastColumn())).getValues();
+    const matches = [];
+    rows.forEach((row, index) => {
+        let data = null;
+        try { data = JSON.parse(String(row[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+        if (data && data.subType === "video_approval" && String(data.opVideoId || "") === String(opVideoId)) {
+            matches.push({ rowIndex: index + 2, row: row, data: data });
+        }
+    });
+    if (matches.length > 1) throw new Error("El identificador de operación ya está duplicado en Feedbacks; requiere revisión.");
+    return matches[0] || null;
+}
+
+function findPendingVideoApprovalForTarget_(sheet, contentType, referenceId) {
+    const targetType = String(contentType || "");
+    const targetId = String(referenceId || "").trim();
+    if (!targetType || !targetId) throw new Error("Se requiere tipo e ID de destino para consultar solicitudes pendientes.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const rows = sheet.getRange(2, 1, lastRow - 1, Math.max(COLS_FEEDBACKS.Problema, sheet.getLastColumn())).getValues();
+    const matches = [];
+    rows.forEach((row, index) => {
+        let data = null;
+        try { data = JSON.parse(String(row[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+        if (data && data.subType === "video_approval" && data.status === "pending" &&
+            String(data.contentType || "") === targetType && String(data.referenceId || "") === targetId) {
+            matches.push({ rowIndex: index + 2, row: row, data: data });
+        }
+    });
+    if (matches.length > 1) throw new Error("El destino ya tiene varias solicitudes de vídeo pendientes; requiere revisión.");
+    return matches[0] || null;
+}
+
+function handleGetVideoApprovalByOperation(payload) {
+    const { opVideoId, userId } = payload || {};
+    const operationId = String(opVideoId || "").trim();
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) throw new Error("Identificador de operación de vídeo inválido.");
+    if (!String(userId || "").trim()) throw new Error("La sesión no proporcionó una identidad válida.");
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const record = findVideoApprovalByOperation_(sheet, operationId);
+    if (!record) return { status: "success", found: false, opVideoId: operationId };
+    if (String(record.data.createdByUserId || "") !== String(userId)) {
+        throw new Error("La operación de vídeo no pertenece al usuario autenticado.");
+    }
+    return {
+        status: "success",
+        found: true,
+        id: String(record.row[COLS_FEEDBACKS.ID - 1] || ""),
+        opVideoId: operationId,
+        approvalStatus: String(record.data.status || ""),
+        contentType: String(record.data.contentType || ""),
+        referenceId: String(record.data.referenceId || ""),
+        videoUrl: String(record.data.videoUrl || "")
+    };
+}
+
 function handleSubmitVideoForApproval(payload) {
-    const { title, description, contentType, referenceId, metadata, videoId, videoUrl, userName, userId } = payload;
-    if (!title || !videoUrl) throw new Error("Título y URL del vídeo son obligatorios.");
+    const { title, description, contentType, referenceId, metadata, videoId, videoUrl, userName, userId, opVideoId } = payload || {};
+    const operationId = String(opVideoId || "").trim();
+    const actualVideoId = String(videoId || "").trim();
+    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(actualVideoId)
+        ? "https://www.youtube.com/watch?v=" + actualVideoId : "";
+    if (!title || !String(title).trim()) throw new Error("El título del vídeo es obligatorio.");
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) throw new Error("Identificador de operación de vídeo inválido.");
+    if (!["corte", "pys", "tutorial"].includes(String(contentType || ""))) throw new Error("Tipo de contenido no válido para aprobación.");
+    if (!String(referenceId || "").trim()) throw new Error("La solicitud no tiene un destino guardado para asociar el vídeo.");
+    if (!canonicalUrl || String(videoUrl || "").trim() !== canonicalUrl) throw new Error("YouTube no confirmó un ID real o la URL no coincide con el vídeo.");
+    if (!String(userId || "").trim()) throw new Error("La sesión no proporcionó una identidad válida.");
 
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    if (!sheet) throw new Error(`Hoja ${SHEET_NAMES.FEEDBACKS} no encontrada.`);
+    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const existing = findVideoApprovalByOperation_(sheet, operationId);
+    if (existing) {
+        const data = existing.data;
+        const sameOperation = String(data.createdByUserId || "") === String(userId) &&
+            String(data.contentType || "") === String(contentType) &&
+            String(data.referenceId || "") === String(referenceId || "") &&
+            String(data.videoId || "") === actualVideoId &&
+            String(data.videoUrl || "") === canonicalUrl &&
+            String(data.title || "") === String(title).trim() &&
+            String(data.description || "") === String(description || "");
+        if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra solicitud.");
+        return {
+            status: "success", id: String(existing.row[COLS_FEEDBACKS.ID - 1] || ""),
+            opVideoId: operationId, videoUrl: canonicalUrl,
+            approvalStatus: String(data.status || "pending"),
+            message: "La solicitud de aprobación ya existía; se devolvió el registro original."
+        };
+    }
 
-    const newId = 'vid-' + Utilities.getUuid().slice(0, 8);
+    const pendingForTarget = findPendingVideoApprovalForTarget_(sheet, contentType, referenceId);
+    if (pendingForTarget) {
+        throw new Error("Ya existe una solicitud de vídeo pendiente para este contenido. Revisa la bandeja de aprobación antes de enviar otra.");
+    }
+    const destination = getVideoApprovalTarget_({ contentType, referenceId });
+    if (!destination.record) throw new Error("El registro de destino ya no existe; no se creó la solicitud.");
+    const currentDestinationVideo = String(destination.sheet.getRange(destination.record.rowIndex, destination.videoColumn).getValue() || "").trim();
+    if (currentDestinationVideo) throw new Error("El destino ya tiene un vídeo asociado; no se creó una solicitud duplicada.");
+
+    const newId = "vid-" + Utilities.getUuid().slice(0, 8);
     const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
-
-    // Construir metadatos estructurados para el Inbox
     const videoApprovalPayload = {
-        subType: 'video_approval',
-        title: title,
-        description: description || '',
-        videoUrl: videoUrl,
-        videoId: videoId,
-        contentType: contentType || 'corte',
-        referenceId: referenceId || null,
-        metadata: metadata || {},
-        status: 'pending',
+        subType: "video_approval",
+        opVideoId: operationId,
+        createdByUserId: String(userId),
+        title: String(title).trim(),
+        description: String(description || ""),
+        videoUrl: canonicalUrl,
+        videoId: actualVideoId,
+        contentType: String(contentType),
+        referenceId: referenceId === undefined || referenceId === null || referenceId === "" ? null : String(referenceId),
+        metadata: metadata && typeof metadata === "object" ? metadata : {},
+        status: "pending",
         date: dateStr
     };
-
     const newRowNumber = sheet.getLastRow() + 1;
-    // Guardar en la hoja Feedbacks aprovechando columnas estándar
-    // ID: newId, Usuario: userName, ID_vehiculo: referenceId, Problema: JSON video payload, Respuesta: 'pending', Se resolvio: false
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(newId);
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario).setValue(userName || 'Colaborador');
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID_vehiculo).setValue(referenceId || '');
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoApprovalPayload));
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Respuesta).setValue('pending');
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
-
+    const newRow = [
+        newId, String(userName || "Colaborador"), referenceId || "",
+        JSON.stringify(videoApprovalPayload), "pending", false, "", "", ""
+    ];
+    sheet.getRange(newRowNumber, 1, 1, COLS_FEEDBACKS.anoSugerido).setValues([newRow]);
     SpreadsheetApp.flush();
 
+    const saved = findVideoApprovalByOperation_(sheet, operationId);
+    if (!saved || String(saved.row[COLS_FEEDBACKS.ID - 1] || "") !== newId) {
+        throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
+    }
     return {
-        status: 'success',
-        id: newId,
-        videoUrl: videoUrl,
-        approvalStatus: 'pending',
-        message: 'Vídeo enviado para aprobación interna.'
+        status: "success", id: newId, opVideoId: operationId,
+        videoUrl: canonicalUrl, approvalStatus: "pending",
+        message: "Vídeo enviado para aprobación interna."
     };
 }
 
 /**
  * Aprueba una solicitud de vídeo y lo asocia al elemento correspondiente en GPSpedia
  */
-function handleApproveVideo(payload) {
-    const { itemId, approverName, userRole } = payload;
-    if (!itemId) throw new Error("ID de la solicitud requerido.");
-
-    // Validación estricta de permisos de rol (Desarrollador, Gefe, Supervisor)
-    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
-    if (!userRole || !allowedRoles.includes(userRole)) {
-        throw new Error("No tienes permisos suficientes para aprobar vídeos.");
+function findPendingVideoApproval_(sheet, itemId) {
+    const requestId = String(itemId || "").trim();
+    if (!requestId) throw new Error("ID de la solicitud requerido.");
+    const rows = sheet.getDataRange().getValues();
+    const matches = [];
+    for (let index = 1; index < rows.length; index++) {
+        if (String(rows[index][COLS_FEEDBACKS.ID - 1] || "").trim() === requestId) {
+            matches.push({ rowIndex: index + 1, row: rows[index] });
+        }
     }
-
-    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    if (!sheet) throw new Error("Hoja no encontrada.");
-
-    const data = sheet.getDataRange().getValues();
-    let rowIndex = -1;
+    if (matches.length !== 1) {
+        throw new Error(matches.length > 1
+            ? "El ID de solicitud aparece más de una vez; requiere revisión."
+            : "Solicitud de vídeo no encontrada.");
+    }
     let videoData = null;
+    try { videoData = JSON.parse(String(matches[0].row[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+    if (!videoData || typeof videoData !== "object" || Array.isArray(videoData)) {
+        throw new Error("El contenido de la solicitud no es un JSON de vídeo válido.");
+    }
+    if (videoData.subType !== "video_approval") {
+        throw new Error("El registro no corresponde a una solicitud de aprobación de vídeo.");
+    }
+    if (videoData.status !== "pending") {
+        throw new Error("La solicitud ya no está pendiente; no se permiten transiciones repetidas.");
+    }
+    const videoId = String(videoData.videoId || "").trim();
+    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(videoId)
+        ? "https://www.youtube.com/watch?v=" + videoId : "";
+    if (!canonicalUrl || String(videoData.videoUrl || "").trim() !== canonicalUrl) {
+        throw new Error("La solicitud contiene un ID o enlace de YouTube inconsistente.");
+    }
+    if (!["corte", "pys", "tutorial"].includes(String(videoData.contentType || ""))) {
+        throw new Error("La solicitud contiene un tipo de contenido desconocido.");
+    }
+    if (!String(videoData.referenceId || "").trim()) throw new Error("La solicitud no tiene un destino guardado para asociar el vídeo.");
+    if (videoData.opVideoId && !/^[A-Za-z0-9_-]{20,80}$/.test(String(videoData.opVideoId))) {
+        throw new Error("La solicitud contiene un identificador de operación inválido.");
+    }
+    return { rowIndex: matches[0].rowIndex, row: matches[0].row, videoData: videoData };
+}
 
-    for (let i = 1; i < data.length; i++) {
-        if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(itemId)) {
-            rowIndex = i + 1;
-            try {
-                videoData = JSON.parse(data[i][COLS_FEEDBACKS.Problema - 1]);
-            } catch (e) {
-                videoData = null;
-            }
-            break;
+
+function findUniqueVideoTargetRow_(sheet, id, idColumn, label) {
+    if (!sheet) throw new Error("No se encontró el destino " + label + " de la solicitud.");
+    const data = sheet.getDataRange().getValues();
+    const matches = [];
+    for (let index = 1; index < data.length; index++) {
+        if (String(data[index][idColumn - 1] || "").trim() === String(id).trim()) {
+            matches.push({ rowIndex: index + 1, row: data[index] });
         }
     }
-
-    if (rowIndex === -1 || !videoData) {
-        throw new Error("Solicitud de vídeo no encontrada.");
+    if (matches.length !== 1) {
+        throw new Error(matches.length > 1
+            ? "El destino " + label + " aparece más de una vez; no se modificó."
+            : "No se encontró el destino " + label + " de la solicitud.");
     }
+    return matches[0];
+}
 
-    // Actualizar estado en Feedbacks
-    videoData.status = 'approved';
-    videoData.approvedBy = approverName || 'Supervisor';
-    videoData.approvalDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+function getVideoApprovalTarget_(videoData) {
+    const referenceId = String(videoData.referenceId || "").trim();
+    if (!referenceId) throw new Error("La solicitud no tiene un destino válido.");
+    if (videoData.contentType === "corte") {
+        const sheet = getSafeSheet(SHEET_NAMES.CORTES);
+        if (!sheet) throw new Error("Hoja Cortes no encontrada.");
+        const width = Math.max(COLS_CORTES.videoGuiaDesarmeUrl, sheet.getLastColumn());
+        const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0];
+        if (String(headers[COLS_CORTES.id - 1] || "").trim() !== "id" ||
+            String(headers[COLS_CORTES.videoGuiaDesarmeUrl - 1] || "").trim() !== "videoGuiaDesarmeUrl") {
+            throw new Error("El esquema de Cortes no permite identificar con seguridad el campo del vídeo.");
+        }
+        return { type: "corte", sheet, record: findUniqueVideoTargetRow_(sheet, referenceId, COLS_CORTES.id, "Cortes"), videoColumn: COLS_CORTES.videoGuiaDesarmeUrl };
+    }
+    if (videoData.contentType === "pys") {
+        const sheet = getSafeSheet("pys");
+        if (!sheet) throw new Error("Hoja pys no encontrada.");
+        const headers = sheet.getRange(1, 1, 1, Math.max(10, sheet.getLastColumn())).getDisplayValues()[0];
+        if (String(headers[0] || "").trim() !== "id_problem" || String(headers[7] || "").trim() !== "Video") {
+            throw new Error("El esquema de pys no coincide con las columnas id_problem/Video esperadas.");
+        }
+        return { type: "pys", sheet, record: findUniqueVideoTargetRow_(sheet, referenceId, 1, "PyS"), videoColumn: 8 };
+    }
+    if (videoData.contentType === "tutorial") {
+        const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial");
+        if (!sheet) throw new Error("Hoja de tutoriales no encontrada.");
+        const headers = sheet.getRange(1, 1, 1, Math.max(5, sheet.getLastColumn())).getDisplayValues()[0].map(value => String(value || "").trim());
+        const expected = ["Tema", "Imagen", "Video", "Descripción", "Colaborador"];
+        if (expected.some((header, index) => headers[index] !== header)) {
+            throw new Error("El esquema A:E de Tutoriales no coincide; no se modificó el destino.");
+        }
+        return { type: "tutorial", sheet, record: findUniqueVideoTargetRow_(sheet, referenceId, 1, "Tutoriales"), videoColumn: 3, imageColumn: 2 };
+    }
+    throw new Error("Tipo de destino de vídeo no reconocido.");
+}
 
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoData));
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Respuesta).setValue('approved');
-    sheet.getRange(rowIndex, COLS_FEEDBACKS['Se resolvio']).setValue(true);
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Responde).setValue(approverName || 'Supervisor');
-
-    // Asociar el vídeo aprobado a la entidad correspondiente si es corte de vehículo
-    if (videoData.contentType === 'corte' && videoData.referenceId) {
-        const cortesSheet = getSafeSheet(SHEET_NAMES.CORTES);
-        if (cortesSheet) {
-            const cortesData = cortesSheet.getDataRange().getValues();
-            for (let j = 1; j < cortesData.length; j++) {
-                if (String(cortesData[j][COLS_CORTES.id - 1]) === String(videoData.referenceId)) {
-                    cortesSheet.getRange(j + 1, COLS_CORTES.videoGuiaDesarmeUrl).setValue(videoData.videoUrl);
-                    break;
-                }
-            }
+function publishApprovedVideo_(videoData) {
+    const target = getVideoApprovalTarget_(videoData);
+    if (!target.record) throw new Error("El registro de destino ya no existe; no se publicó el vídeo.");
+    const url = String(videoData.videoUrl || "").trim();
+    const current = String(target.record.row[target.videoColumn - 1] || "").trim();
+    if (current && current !== url) throw new Error("El destino ya contiene otro vídeo; no se sobrescribió.");
+    let expectedImage = null;
+    if (target.type === "tutorial") {
+        const imageColumn = target.imageColumn;
+        const currentImage = String(target.record.row[imageColumn - 1] || "").trim();
+        if (!currentImage) {
+            expectedImage = "https://img.youtube.com/vi/" + String(videoData.videoId) + "/hqdefault.jpg";
+            target.sheet.getRange(target.record.rowIndex, imageColumn).setValue(expectedImage);
         }
     }
-
+    // La URL del vídeo es el punto de publicación: se escribe después de preparar la miniatura.
+    if (current !== url) target.sheet.getRange(target.record.rowIndex, target.videoColumn).setValue(url);
     SpreadsheetApp.flush();
-    return { status: 'success', message: 'Vídeo aprobado y publicado en GPSpedia.', videoUrl: videoData.videoUrl };
+    const savedVideo = String(target.sheet.getRange(target.record.rowIndex, target.videoColumn).getValue() || "").trim();
+    if (savedVideo !== url) throw new Error("La escritura del vídeo no pudo verificarse en el destino.");
+    if (expectedImage !== null) {
+        const savedImage = String(target.sheet.getRange(target.record.rowIndex, target.imageColumn).getValue() || "").trim();
+        if (savedImage !== expectedImage) throw new Error("La miniatura del tutorial no pudo verificarse; la publicación requiere revisión.");
+    }
+    return { targetType: target.type, rowIndex: target.record.rowIndex };
+}
+
+function removeRejectedVideoFromDestination_(videoData) {
+    const target = getVideoApprovalTarget_(videoData);
+    if (!target.record) throw new Error("El registro de destino ya no existe; no se pudo verificar el rechazo.");
+    const url = String(videoData.videoUrl || "").trim();
+    const current = String(target.record.row[target.videoColumn - 1] || "").trim();
+    if (current === url) target.sheet.getRange(target.record.rowIndex, target.videoColumn).setValue("");
+    if (target.type === "tutorial") {
+        const imageColumn = target.imageColumn;
+        const thumbnail = "https://img.youtube.com/vi/" + String(videoData.videoId) + "/hqdefault.jpg";
+        const currentImage = String(target.record.row[imageColumn - 1] || "").trim();
+        if (currentImage === thumbnail) target.sheet.getRange(target.record.rowIndex, imageColumn).setValue("");
+    }
+    SpreadsheetApp.flush();
+    const savedVideo = String(target.sheet.getRange(target.record.rowIndex, target.videoColumn).getValue() || "").trim();
+    if (savedVideo === url) throw new Error("El enlace rechazado continúa visible en el destino.");
+    return { targetType: target.type, rowIndex: target.record.rowIndex };
+}
+
+function handleApproveVideo(payload) {
+    const { itemId, userName, userRole } = payload || {};
+    const allowedRoles = ["Desarrollador", "Gefe", "Supervisor"];
+    if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para aprobar vídeos.");
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const approvalRecord = findPendingVideoApproval_(sheet, itemId);
+    const rowIndex = approvalRecord.rowIndex;
+    const videoData = approvalRecord.videoData;
+
+    // Publicar primero en el destino y verificar; si el registro de aprobación falla,
+    // el reintento encuentra la misma URL y completa el estado sin duplicar ni sobrescribir.
+    const targetResult = publishApprovedVideo_(videoData);
+    const actorName = String(userName || "Supervisor");
+    videoData.status = "approved";
+    videoData.approvedBy = actorName;
+    videoData.approvalDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 4).setValues([[
+        JSON.stringify(videoData), "approved", true, actorName
+    ]]);
+    SpreadsheetApp.flush();
+
+    const saved = sheet.getRange(rowIndex, 1, 1, COLS_FEEDBACKS.Responde).getValues()[0];
+    let savedPayload = null;
+    try { savedPayload = JSON.parse(String(saved[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+    if (!savedPayload || savedPayload.status !== "approved" ||
+        String(saved[COLS_FEEDBACKS.Respuesta - 1] || "") !== "approved" ||
+        saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true) {
+        throw new Error("El destino fue actualizado, pero no se pudo confirmar el estado de aprobación. Reintenta la misma solicitud.");
+    }
+    return {
+        status: "success",
+        message: "Vídeo aprobado y publicado en GPSpedia.",
+        videoUrl: videoData.videoUrl,
+        targetType: targetResult.targetType
+    };
 }
 
 /**
- * Rechaza una solicitud de vídeo
+ * Rechaza una solicitud de vídeo y elimina únicamente el enlace pendiente exacto si ya estuviera publicado.
  */
 function handleRejectVideo(payload) {
-    const { itemId, rejecterName, reason, userRole } = payload;
-    if (!itemId) throw new Error("ID de la solicitud requerido.");
-
-    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
-    if (!userRole || !allowedRoles.includes(userRole)) {
-        throw new Error("No tienes permisos suficientes para rechazar vídeos.");
-    }
-
+    const { itemId, userName, reason, userRole } = payload || {};
+    const allowedRoles = ["Desarrollador", "Gefe", "Supervisor"];
+    if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para rechazar vídeos.");
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    if (!sheet) throw new Error("Hoja no encontrada.");
+    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const approvalRecord = findPendingVideoApproval_(sheet, itemId);
+    const rowIndex = approvalRecord.rowIndex;
+    const videoData = approvalRecord.videoData;
 
-    const data = sheet.getDataRange().getValues();
-    let rowIndex = -1;
-    let videoData = null;
-
-    for (let i = 1; i < data.length; i++) {
-        if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(itemId)) {
-            rowIndex = i + 1;
-            try {
-                videoData = JSON.parse(data[i][COLS_FEEDBACKS.Problema - 1]);
-            } catch (e) {
-                videoData = null;
-            }
-            break;
-        }
-    }
-
-    if (rowIndex === -1 || !videoData) {
-        throw new Error("Solicitud de vídeo no encontrada.");
-    }
-
-    videoData.status = 'rejected';
-    videoData.rejectedBy = rejecterName || 'Supervisor';
-    videoData.rejectReason = reason || 'Rechazado por el supervisor';
+    const targetResult = removeRejectedVideoFromDestination_(videoData);
+    const actorName = String(userName || "Supervisor");
+    const rejectionReason = String(reason || "Rechazado por el supervisor").trim().slice(0, 500);
+    videoData.status = "rejected";
+    videoData.rejectedBy = actorName;
+    videoData.rejectReason = rejectionReason;
     videoData.rejectionDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
-
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoData));
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Respuesta).setValue('rejected: ' + (reason || 'Rechazado'));
-    sheet.getRange(rowIndex, COLS_FEEDBACKS['Se resolvio']).setValue(true);
-    sheet.getRange(rowIndex, COLS_FEEDBACKS.Responde).setValue(rejecterName || 'Supervisor');
-
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema, 1, 4).setValues([[
+        JSON.stringify(videoData), "rejected: " + rejectionReason, true, actorName
+    ]]);
     SpreadsheetApp.flush();
-    return { status: 'success', message: 'Vídeo rechazado.', statusState: 'rejected' };
+
+    const saved = sheet.getRange(rowIndex, 1, 1, COLS_FEEDBACKS.Responde).getValues()[0];
+    let savedPayload = null;
+    try { savedPayload = JSON.parse(String(saved[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
+    if (!savedPayload || savedPayload.status !== "rejected" ||
+        !String(saved[COLS_FEEDBACKS.Respuesta - 1] || "").startsWith("rejected:") ||
+        saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true) {
+        throw new Error("El enlace pendiente se retiró del destino, pero no se pudo confirmar el rechazo. Reintenta la misma solicitud.");
+    }
+    return { status: "success", message: "Vídeo rechazado.", statusState: "rejected", targetType: targetResult.targetType };
 }
 
 /* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
@@ -1957,10 +2182,17 @@ function handleUpdatePysItem(payload) {
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
 
     const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-    const index = ids.findIndex(id => String(id) === String(problemId));
-    if (index === -1) throw new Error("Problema no encontrado.");
+    const matches = [];
+    ids.forEach((id, index) => { if (String(id) === String(problemId)) matches.push(index + 2); });
+    if (matches.length !== 1) {
+        throw new Error(matches.length > 1 ? "El ID del problema está duplicado; no se modificó." : "Problema no encontrado.");
+    }
 
-    const rowIndex = index + 2;
+    const rowIndex = matches[0];
+    const currentVideo = String(sheet.getRange(rowIndex, 8).getValue() || "").trim();
+    if (videoUrl !== undefined && String(videoUrl || "").trim() !== currentVideo) {
+        throw new Error("El vídeo de PyS solo puede cambiarse mediante una solicitud de aprobación de YouTube.");
+    }
     if (titulo !== undefined) sheet.getRange(rowIndex, 2).setValue(titulo);
     if (descripcion !== undefined) sheet.getRange(rowIndex, 3).setValue(descripcion);
     if (solucion !== undefined) {
@@ -1968,7 +2200,6 @@ function handleUpdatePysItem(payload) {
         sheet.getRange(rowIndex, 4).setValue(solucion ? "x" : "");
     }
     if (prevenir !== undefined) sheet.getRange(rowIndex, 6).setValue(prevenir);
-    if (videoUrl !== undefined) sheet.getRange(rowIndex, 8).setValue(videoUrl);
 
     SpreadsheetApp.flush();
     return {
@@ -1996,27 +2227,30 @@ function handleUpdateTutorialItem(payload) {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay tutoriales registrados.");
 
-    const searchKey = originalTema || tema;
+    const searchKey = String(originalTema || tema || "").trim();
     const values = sheet.getRange(2, 1, lastRow - 1, Math.max(5, sheet.getLastColumn())).getValues();
-    let rowIndex = -1;
-
+    const matches = [];
     for (let i = 0; i < values.length; i++) {
-        if (String(values[i][0]) === String(searchKey) || String(values[i][1]) === String(searchKey)) {
-            rowIndex = i + 2;
-            break;
+        if (String(values[i][0] || "").trim() === searchKey) matches.push(i + 2);
+    }
+    if (matches.length !== 1) {
+        throw new Error(matches.length > 1
+            ? "El tema del tutorial aparece más de una vez; no se modificó."
+            : "Tutorial no encontrado.");
+    }
+    const rowIndex = matches[0];
+    if (tema !== undefined && String(tema).trim() !== String(searchKey).trim()) {
+        const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        if (feedbackSheet && findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", searchKey)) {
+            throw new Error("No se puede cambiar el tema mientras exista una solicitud de vídeo pendiente para este tutorial.");
         }
     }
 
-    if (rowIndex === -1) throw new Error("Tutorial no encontrado.");
-
+    const currentVideo = String(sheet.getRange(rowIndex, 3).getValue() || "").trim();
+    if (videoUrl !== undefined && String(videoUrl || "").trim() !== currentVideo) {
+        throw new Error("El vídeo del tutorial solo puede cambiarse mediante una solicitud de aprobación de YouTube.");
+    }
     if (tema !== undefined) sheet.getRange(rowIndex, 1).setValue(tema);
-    if (videoUrl !== undefined) {
-        sheet.getRange(rowIndex, 3).setValue(videoUrl);
-        const ytid = extractYouTubeId(videoUrl);
-        if (ytid) {
-            sheet.getRange(rowIndex, 2).setValue(`https://img.youtube.com/vi/${ytid}/hqdefault.jpg`);
-        }
-    }
     if (descripcion !== undefined) sheet.getRange(rowIndex, 4).setValue(descripcion);
 
     SpreadsheetApp.flush();
