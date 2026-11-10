@@ -666,3 +666,16 @@ PUBLICACIÓN VERIFICADA — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - Commit de registro/checkpoint: 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
 - Commit de implementación y pruebas: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
 - Rama base GPSpedia2.2.5 sin modificaciones.
+
+
+================================================================================
+CORR-FEEDBACK-VIDEO-APPROVAL-RETRY-001 — RECUPERACIÓN IDEMPOTENTE DE approveVideo
+- Origen: H-AUD-040-016; AUG-040, criterio 5.
+- Objetivo: permitir recuperar una confirmación perdida cuando la aprobación ya se completó, sin repetir escrituras ni aceptar un destino divergente.
+- Alcance: Services/feedback.js, Services/Test/VideoApprovalPublishing.js, Services/Test/README.md y registros.
+- Criterios: reintento aprobado valida metadatos/estado de Feedbacks y URL exacta en destino único; devuelve éxito idempotente sin mutar; destino/estado inconsistente falla cerrado; rechazo y estados no pendientes conservan su política.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Validación local: publicación 18/18; estado 13/13; sesión 10/10; YouTubeApproval 15/15; inicialización 8/8; FEEDBACK 44/44; coordinador 27/27; parsing 2/2; revisión de diff PASS.
+- Observación preexistente fuera de alcance: VideoApprovalContracts 3/8 falla porque fixtures envían colaborador y handleAddTutorial exige userName; no corregido en esta tarea.
+- Beta pendiente: Apps Script/Spreadsheet aislado, endpoints desplegados, respuesta HTTP perdida real y concurrencia entre proyectos.
+================================================================================

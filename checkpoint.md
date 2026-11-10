@@ -1281,3 +1281,38 @@ PUBLICACIÓN VERIFICADA — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001 — 2026-11-10
 Estado final: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Siguiente iteración: continuar con el siguiente criterio pendiente de AUG-040, una tarea a la vez. No iniciar AUG-041.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-FEEDBACK-VIDEO-APPROVAL-RETRY-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre antes de la tarea: b1da040e3a5fce6eeb8742aea94c7515f5f555a5.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea única: recuperación idempotente de approveVideo cuando la aprobación ya se completó y se perdió la respuesta.
+Hallazgo H-AUD-040-016:
+- approveVideo publicaba el destino, marcaba Feedbacks como approved y verificaba ambas escrituras.
+- Si la respuesta se perdía después del éxito total, el reintento era rechazado por findPendingVideoApproval_() porque el estado ya no era pending.
+- La suite cubría fallo parcial de escritura, no pérdida de respuesta tras éxito completo.
+Cambios:
+- findPendingVideoApproval_() acepta approved solo cuando handleApproveVideo lo solicita expresamente; otros consumidores conservan el requisito pending.
+- handleApproveVideo valida el estado de respuesta, resolución, aprobador/fecha y coincidencia de aprobador en Feedbacks.
+- Relee el destino único y exige que conserve exactamente el videoUrl aprobado.
+- Si todo coincide, devuelve success/alreadyApproved=true sin volver a escribir Feedbacks ni destino.
+- Si el registro o destino diverge, falla cerrado. No se modificó handleRejectVideo.
+Prueba de regresión: dos casos añadidos; ambos fallaban antes de la corrección. Cobertura de reintento en Cortes, PyS y Tutoriales y rechazo ante destino alterado.
+Validación local:
+- VideoApprovalPublishing 18/18 PASS.
+- VideoApprovalState 13/13 PASS.
+- VideoApprovalSessions 10/10 PASS.
+- YouTubeApproval 15/15 PASS.
+- YouTubeApprovalInit 8/8 PASS.
+- runFeedbackWriteSecurityTests 44/44 PASS.
+- SharedMutationCoordinator 27/27 PASS.
+- Parsing de los dos archivos JavaScript modificados: 2/2 PASS.
+- Diff revisado: solo handler, regresiones y documentación de la tarea.
+Observación preexistente fuera de alcance: VideoApprovalContracts 5/8 por fixtures con colaborador mientras handleAddTutorial exige userName; no se corrigió ni se incorporó a esta tarea.
+Validación Beta pendiente: Apps Script/Spreadsheet aislado, endpoints desplegados, pérdida de respuesta HTTP real y concurrencia física. No se ejecutaron deployments ni datos productivos.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Siguiente iteración: continuar con una sola condición pendiente de AUG-040. No iniciar AUG-041 ni tareas ajenas.
+================================================================================

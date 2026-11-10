@@ -238,3 +238,17 @@ Estado: CORREGIDO Y VALIDADO LOCALMENTE. Navegador real, XHR, endpoints desplega
 PUBLICACIÓN VERIFICADA — H-AUD-040-015 — 2026-11-10
 La corrección funcional quedó publicada en GPSpedia2.2.5_work mediante el commit 34ab8e03b09889c5cc3edf71453f507dc3017fe9. El checkpoint y el estado de la tarea se registraron en 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
 Relectura desde la rama remota: 44/44 pruebas backend, 6/6 pruebas cliente y parsing 5/5 PASS. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+================================================================================
+H-AUD-040-016 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de recuperación del flujo approveVideo dentro de AUG-040, criterio 5 de publicación.
+Ubicación: Services/feedback.js, findPendingVideoApproval_() y handleApproveVideo().
+Evidencia: approveVideo publica y verifica el vídeo en Cortes/PyS/Tutoriales y después marca Feedbacks como approved. Si ambas escrituras terminan correctamente pero la respuesta HTTP se pierde, un reintento encuentra el estado approved y findPendingVideoApproval_() lo rechaza como transición repetida. La operación ya está completa, pero el cliente no puede recuperar una confirmación idempotente. La suite existente cubría fallo parcial de escritura de Feedbacks, pero no pérdida de respuesta después del éxito total.
+Impacto: resultado ambiguo para el aprobador y reintento incapaz de confirmar una operación ya completada.
+Severidad: Media.
+Corrección: handleApproveVideo permite consultar estado approved solo en el camino de aprobación; valida Respuesta=approved, Se resolvio=true, aprobador/fecha consistentes y que el destino único conserve exactamente el mismo videoUrl. Si todo coincide, devuelve success con alreadyApproved=true sin escribir ni hacer flush. Si el estado o destino no coincide, falla cerrado y requiere revisión. handleRejectVideo y llamadas normales a findPendingVideoApproval_() conservan el rechazo de estados no pendientes.
+Regresión: la prueba añadida fallaba antes del cambio y pasa después; cubre reintento en los tres tipos de destino sin reescrituras y discrepancia posterior del destino.
+Validación local: publicación 18/18, estado 13/13, sesión 10/10, YouTubeApproval 15/15, inicialización 8/8, FEEDBACK 44/44 y coordinador compartido 27/27 PASS. VideoApprovalContracts mantiene tres fallos de fixture preexistentes: handleAddTutorial recibe colaborador en lugar de userName; fuera de este alcance.
+Límites: Apps Script real, endpoints, deployments, HTTP y Spreadsheet aislado no ejecutados; integración y concurrencia física diferidas a Beta.
+================================================================================

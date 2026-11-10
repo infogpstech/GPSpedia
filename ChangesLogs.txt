@@ -869,3 +869,12 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - Registro/checkpoint de tarea: 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
 - Implementación y pruebas: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
 - HEAD de implementación verificado: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+
+
+================================================================================
+2026-11-10 — CORRECCIÓN FEEDBACK — RECUPERAR REINTENTO DE APROBACIÓN YA COMPLETADA
+- Services/feedback.js: handleApproveVideo reconoce una solicitud ya aprobada solo si el estado de Feedbacks y el vídeo del destino coinciden; devuelve alreadyApproved=true sin volver a escribir.
+- Services/Test/VideoApprovalPublishing.js: regresiones para pérdida de respuesta tras éxito completo en Cortes, PyS y Tutoriales, y para destino alterado después de aprobar.
+- Services/Test/README.md: documenta la cobertura añadida.
+- Auditoría.txt: H-AUD-040-016.
+================================================================================

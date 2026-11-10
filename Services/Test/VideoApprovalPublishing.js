@@ -109,6 +109,26 @@ function runVideoApprovalPublishingTests() {
             const retry=handleApproveVideo(actor_("vid-1"));
             assert_(retry.status==="success"&&JSON.parse(e.feedback.data[1][3]).status==="approved");
         }));
+        run_("reintento tras respuesta perdida confirma aprobación existente sin reescribir los tres destinos",()=> {
+            ["corte","pys","tutorial"].forEach(type=>withEnv_(type,{},e=>{
+                const first=handleApproveVideo(actor_("vid-1"));
+                const target=type==="corte"?e.cuts:type==="pys"?e.pys:e.tutorial;
+                const savedAfterFirst=JSON.stringify(e.feedback.data[1]);
+                const targetAfterFirst=JSON.stringify(target.data[1]);
+                const retry=handleApproveVideo(actor_("vid-1"));
+                assert_(first.status==="success","La primera aprobación debía completarse para "+type+".");
+                assert_(retry.status==="success"&&retry.alreadyApproved===true&&retry.targetType===type,"El reintento debía confirmar la aprobación previa de "+type+".");
+                assert_(JSON.stringify(e.feedback.data[1])===savedAfterFirst,"El reintento no debía reescribir Feedbacks para "+type+".");
+                assert_(JSON.stringify(target.data[1])===targetAfterFirst,"El reintento no debía modificar el destino de "+type+".");
+            }));
+        });
+        run_("no confirma aprobación previa si el destino ya no contiene el mismo vídeo",()=>withEnv_("pys",{},e=>{
+            handleApproveVideo(actor_("vid-1"));
+            e.pys.data[1][7]="https://www.youtube.com/watch?v=zzzzzzzzzzz";
+            const approvedRow=JSON.stringify(e.feedback.data[1]);
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"destino no conserva");
+            assert_(JSON.stringify(e.feedback.data[1])===approvedRow,"No debía alterar el estado aprobado inconsistente.");
+        }));
         run_("rechazo retira el enlace pendiente exacto de Corte",()=>withEnv_("corte",{currentUrl:videoUrl},e=>{
             const r=handleRejectVideo({...actor_("vid-1"),reason:"No cumple"});
             assert_(r.status==="success"&&e.cuts.data[1][9]===""&&JSON.parse(e.feedback.data[1][3]).status==="rejected");

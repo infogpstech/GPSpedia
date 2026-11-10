@@ -205,7 +205,7 @@ Las pruebas del flujo de aprobación se ejecutan con Services/feedback.js y las 
 - Services/Test/VideoApprovalState.js — valida el estado y la forma de las solicitudes.
 - Services/Test/YouTubeApproval.js — creación idempotente, recuperación por opVideoId, titularidad, duplicados y URL/ID real.
 - Services/Test/YouTubeApprovalInit.js — metadatos fijos, destino existente, respuesta HTTP y URL oficial de sesión.
-- Services/Test/VideoApprovalPublishing.js — aprobación/rechazo en Cortes, PyS y Tutoriales; unicidad del destino, miniaturas, reintentos y preservación de enlaces previos.
+- Services/Test/VideoApprovalPublishing.js — aprobación/rechazo en Cortes, PyS y Tutoriales; unicidad del destino, miniaturas, reintentos tras fallos parciales, reintento después de perder la respuesta de una aprobación completada y verificación de que no se sobrescriba un destino alterado.
 - Services/Test/VideoApprovalContracts.js — altas sin vídeo, bloqueo de enlaces directos y protección de cambios fuera del flujo de aprobación.
 - Services/Test/VideoApprovalSessions.js — sesión ausente, inválida, expirada, revocada, token cruzado, duplicidad de token/perfil y rol no permitido.
 

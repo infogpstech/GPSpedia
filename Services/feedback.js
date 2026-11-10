@@ -2281,7 +2281,7 @@ function handleSubmitVideoForApproval(payload) {
 /**
  * Aprueba una solicitud de vídeo y lo asocia al elemento correspondiente en GPSpedia
  */
-function findPendingVideoApproval_(sheet, itemId) {
+function findPendingVideoApproval_(sheet, itemId, options) {
     const requestId = String(itemId || "").trim();
     if (!requestId) throw new Error("ID de la solicitud requerido.");
     const rows = sheet.getDataRange().getValues();
@@ -2304,7 +2304,8 @@ function findPendingVideoApproval_(sheet, itemId) {
     if (videoData.subType !== "video_approval") {
         throw new Error("El registro no corresponde a una solicitud de aprobación de vídeo.");
     }
-    if (videoData.status !== "pending") {
+    const allowApprovedRetry = options && options.allowApprovedRetry === true;
+    if (videoData.status !== "pending" && !(allowApprovedRetry && videoData.status === "approved")) {
         throw new Error("La solicitud ya no está pendiente; no se permiten transiciones repetidas.");
     }
     const videoId = String(videoData.videoId || "").trim();
@@ -2428,9 +2429,33 @@ function handleApproveVideo(payload) {
     if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para aprobar vídeos.");
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
-    const approvalRecord = findPendingVideoApproval_(sheet, itemId);
+    const approvalRecord = findPendingVideoApproval_(sheet, itemId, { allowApprovedRetry: true });
     const rowIndex = approvalRecord.rowIndex;
     const videoData = approvalRecord.videoData;
+
+    if (videoData.status === "approved") {
+        const responseState = String(approvalRecord.row[COLS_FEEDBACKS.Respuesta - 1] || "").trim();
+        const responder = String(approvalRecord.row[COLS_FEEDBACKS.Responde - 1] || "").trim();
+        const resolved = approvalRecord.row[COLS_FEEDBACKS["Se resolvio"] - 1] === true;
+        if (responseState !== "approved" || !resolved ||
+            !String(videoData.approvedBy || "").trim() ||
+            !String(videoData.approvalDate || "").trim() ||
+            responder !== String(videoData.approvedBy).trim()) {
+            throw new Error("La solicitud figura aprobada, pero su registro de aprobación está incompleto; requiere revisión.");
+        }
+        const target = getVideoApprovalTarget_(videoData);
+        const publishedUrl = String(target.record.row[target.videoColumn - 1] || "").trim();
+        if (publishedUrl !== String(videoData.videoUrl || "").trim()) {
+            throw new Error("La solicitud figura aprobada, pero el destino no conserva el mismo vídeo; requiere revisión.");
+        }
+        return {
+            status: "success",
+            alreadyApproved: true,
+            message: "La solicitud ya estaba aprobada y el vídeo continúa publicado en el destino.",
+            videoUrl: videoData.videoUrl,
+            targetType: target.type
+        };
+    }
 
     // Publicar primero en el destino y verificar; si el registro de aprobación falla,
     // el reintento encuentra la misma URL y completa el estado sin duplicar ni sobrescribir.
