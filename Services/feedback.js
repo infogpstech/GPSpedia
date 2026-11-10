@@ -1592,8 +1592,9 @@ function handleAddProblem(payload) {
 
 function handleAddSolution(payload) {
     const { problemId, solucion, userId, userName } = payload || {};
-    if (!problemId || !solucion || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
-    if (String(solucion).length > 700) throw new Error("La solución no puede superar 700 caracteres.");
+    const normalizedSolution = String(solucion || "").trim();
+    if (!problemId || !normalizedSolution || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
+    if (normalizedSolution.length > 700) throw new Error("La solución no puede superar 700 caracteres.");
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
@@ -1603,7 +1604,7 @@ function handleAddSolution(payload) {
     if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID duplicado." : "Problema no encontrado.");
     const row = matches[0].index + 2;
     sheet.getRange(row, 4).setValue("x");
-    sheet.getRange(row, 5).setValue(solucion);
+    sheet.getRange(row, 5).setValue(normalizedSolution);
     SpreadsheetApp.flush();
     try { logUserActivity(userId, userName, "add_solution", problemId, "Se agregó una solución."); }
     catch (logError) { console.error("No se pudo registrar la actividad de solución:", logError); }
