@@ -182,3 +182,10 @@ La reconciliación es no destructiva: ninguna ruta automática fusiona, sobrescr
 La suite también comprueba que una hoja con menos de cinco columnas y registros se rechaza sin intentar leer fuera del rango ni repararla.
 
 Reglas de validación aplicadas: `opId` debe cumplir `OP-` seguido de 1–100 caracteres alfanuméricos, guion o guion bajo; `vehicleId` no puede estar vacío, superar 80 caracteres ni contener controles; `slotIndex` debe ser 1, 2 o 3; `timestamp` debe ser una fecha válida (`Date`, epoch positivo o texto parseable, incluidos `dd/MM/yyyy` y `dd/MM/yyyy HH:mm:ss`); `status` solo admite `pending` o `completed`. Una hoja con menos de cinco columnas y registros también se rechaza, sin intentar leer o reparar rangos incompletos.
+
+
+## Contrato VIN y columnas de testigo (AUG-036)
+
+`Services/Test/VinTestigoIntegrity.js` contiene pruebas lógicas con dobles en memoria. Cargar `Services/admin.js` y el archivo de pruebas en un proyecto temporal, y ejecutar `runVinTestigoIntegrityTests()`. Verifica AT:AV fijas con columnas adicionales, creación desde AS, encabezados testigo/VIN duplicados o fuera de posición, datos sin encabezado, JSON canónico, posiciones vacías, delimitadores heredados, opId heredados y entradas inválidas.
+
+Regla de esquema: `activaTestigo1..3` deben estar en AT:AV. `VIN` se resuelve por encabezado único y puede estar en otra posición; la migración controlada lo establece en AQ. El JSON array es canónico y preserva slots vacíos. Para compatibilidad histórica se admiten cadenas delimitadas por coma, `/`, `\\` y `;`; no se reinterpretan JSON mal formados ni se aceptan tokens inválidos, duplicados o más de tres posiciones. Las pruebas mock no sustituyen la validación de una copia real de Spreadsheet.
