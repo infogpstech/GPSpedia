@@ -6,8 +6,7 @@ El registro histórico de tareas derivadas se conserva en:
 Los IDs AUG existentes permanecen reservados; no duplicar ni renumerar. Las tareas y adendas nuevas se agregan al final. Coordinar estados vigentes con Plan_Maestro_Implementacion.md.
 
 
-**Regla:** no borrar, truncar, sobrescribir ni reordenar entradas; agregar cada entrada al final. Verificar antes que el resultado no supere 180,000 caracteres Unicode. Si excede, rotar según `Plan_auditoría/Normas_Gestion_Documental.md`.
-
+Normativa única: [NORMAS_DESAROLLO.md](../NORMAS_DESAROLLO.md). Este índice no define procedimientos; conserva referencias y estados de tareas.
 
 
 ## Índices operativos de tareas — 2026-11-09
@@ -17,10 +16,7 @@ La lista operativa independiente con requisitos se distribuye en:
 - Tareas_pendientes_parte2.txt (AUG-100 a AUG-152 y adendas).
 - Tareas_pendientes_parte3.txt y parte4.txt (registros legacy abiertos/parciales pendientes de reconciliación).
 Los cierres demostrados se registran en tareas_completadas_parte1.txt. Las funcionalidades diferidas se registran en lista_beta.txt.
-Compuerta: no marcar implementaciones
-
-**Rectificación de compuerta — 2026-11-09:** el cierre de una tarea de implementación depende de requisitos y validaciones locales aprobadas. La ausencia de deployments, endpoints operativos o pruebas integradas de Beta no impide marcarla COMPLETADA si la evidencia local satisface sus criterios. Esas validaciones se etiquetan **VALIDACIÓN DIFERIDA A BETA** y se ejecutan después de terminar las implementaciones. Norma canónica: `Plan_auditoría/Normas_Gestion_Documental.md`, sección 7. Esta rectificación prevalece sobre interpretaciones anteriores que condicionaban el cierre a Beta.
- como completadas sin revisión sintáctica registrada y validaciones obligatorias. AUG-015 continúa ausente; no crear ni reutilizar ese ID.
+La condición de cierre de tareas y las validaciones exigibles se rigen exclusivamente por NORMAS_DESAROLLO.md. Este índice no duplica esos criterios. AUG-015 continúa ausente; no crear ni reutilizar ese ID.
 
 
 ================================================================================
