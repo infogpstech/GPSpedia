@@ -8,6 +8,7 @@
 // ============================================================================
 const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs"; // <-- ACTUALIZADO A DB V2.0
 const DRIVE_FOLDER_ID = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
+const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 let spreadsheet = null;
 
 function getSpreadsheet() {
@@ -55,7 +56,8 @@ function assertFeedbackSession(payload,allowedRoles){
  const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>r[2]===token);
  if(tokenMatches.length!==1||String(tokenMatches[0][0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
- const u=userMatches[0],role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'];
+ const u=userMatches[0];if(String(u[7]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
+ const role=String(u[3]||"").trim(),username=String(u[1]||"").trim(),normalized=normalizeFeedbackRole(role),active=['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'];
  if(!username||username.toLowerCase().startsWith('__deleted__:')||!active.includes(normalized))throw new Error("Acceso denegado: sesión no autorizada.");
  if(Array.isArray(allowedRoles)&&!allowedRoles.some(x=>normalizeFeedbackRole(x)===normalized))throw new Error("Acceso denegado: sesión no autorizada.");
  return{userId:id,role,userName:String(u[6]||u[1]||"Usuario")};

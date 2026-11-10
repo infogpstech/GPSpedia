@@ -428,3 +428,28 @@ Restricciones: no asumir que ScriptProperties o ScriptLock se comparten entre pr
 Pruebas requeridas: token residual con revocación pendiente; lectura/escritura fallida; reintentos; varias sesiones; cambio de rol completado; usuario sin pendiente; regresión de roles/allowedRoles y ruta anónima; sintaxis completa; comparación contra respaldos; Code Review/Safety & Side Effects.
 Siguiente paso: auditar Services/Auth.js, Services/feedback.js, api-config.js, contratos de Sheets y alternativas de coordinación antes de elegir e implementar el mecanismo compartido. No se ha modificado código funcional.
 ================================================================================
+
+================================================================================
+CORR-FEEDBACK-ROLE-REVOCATION-001 — ADENDA DE ALCANCE Y CIERRE EN FUENTES — 2026-11-09
+Estado: IMPLEMENTADA EN FUENTES; commit único pendiente de publicación/verificación.
+Hallazgo: H-AUD-042-002. El alcance se amplió, tras inventariar todos los consumidores, a AUTH, FEEDBACK, USERS, ADMIN y WRITE, además de las copias de prueba pertinentes. Es una única causa raíz: la señal local de revocación de AUTH no era visible para los demás proyectos Apps Script.
+Archivos funcionales modificados:
+- Services/Auth.js: marcador compartido en Users.SessionToken; reconciliación desde estado compartido; validación estricta de marcador; migración de marcadores legacy mediante migrateLegacyRoleRevocationMarkersToSharedState_().
+- Services/Test/Auth.js: espejo de AUTH conservando el Spreadsheet de prueba.
+- Services/feedback.js: assertFeedbackSession rechaza el marcador antes de cualquier acción protegida; la ruta anónima suggestYear permanece intacta.
+- Services/users.js y Services/Test/users.js: getVerifiedSession rechaza el marcador.
+- Services/admin.js: assertDeveloperSession rechaza el marcador.
+- Services/write.js: getAuthenticatedCollaborator rechaza el marcador.
+- Services/Test/README.md: documenta el estado compartido y la migración previa a despliegue.
+Diseño: se reutiliza Users.SessionToken (columna H existente), sin cambio de esquema. AUTH escribe y verifica el marcador compartido antes de iniciar la revocación; mantiene el marcador si alguna fase no se confirma. Los consumidores rechazan cualquier valor con prefijo __role_revocation_pending__: antes de despachar la operación. AUTH limpia el marcador únicamente después de confirmar sesiones revocadas, rol persistido y eliminación del marcador local.
+Migración: antes de desplegar los consumidores actualizados en Beta, ejecutar migrateLegacyRoleRevocationMarkersToSharedState_() desde el proyecto AUTH para reflejar posibles marcadores ScriptProperties heredados. La migración no fue ejecutada en el proyecto productivo ni en datos reales.
+Verificaciones aisladas:
+- Sintaxis/parsing: 7/7 archivos JavaScript PASS.
+- Copias AUTH/Test Auth y USERS/Test users: paridad exacta salvo ID de Spreadsheet de prueba PASS.
+- Guards: FEEDBACK, USERS, ADMIN y WRITE rechazan marcador pendiente y aceptan sesión normal (8 casos PASS).
+- AUTH: detección de marcador, ausencia de marcador, fallo cerrado, validación de sesión pendiente, revocación parcial, reintento exitoso, recuperación desde marcador compartido, marcador corrupto/conflictivo, fallo de escritura, fallo de borrado/limpieza y estado sin marcador PASS.
+- Migración legacy aislada PASS; orden de escritura del marcador compartido antes de la propiedad local PASS; guard FEEDBACK antes del switch y guard ADMIN antes del dispatch PASS.
+No ejecutado: Apps Script real, Sheets/Drive, HTTP/endpoints, deployments, navegador, concurrencia física ni datos productivos.
+Límite: una solicitud ya autorizada por otro proyecto antes de persistir el marcador no puede cancelarse retroactivamente; no se afirma atomicidad entre ScriptLocks de proyectos independientes.
+Siguiente paso: verificar el commit único, auditar esta corrección en Ciclo A y, si no aparecen hallazgos nuevos, reanudar AUG-042 Ciclo B.
+================================================================================

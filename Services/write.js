@@ -97,8 +97,10 @@ const COLS_USERS = {
     ID: 1,
     Nombre_Usuario: 2,
     Privilegios: 4,
-    Nombre_Completo: 7
+    Nombre_Completo: 7,
+    SessionToken: 8
 };
+const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 
 const COLS_ACTIVE_SESSIONS = {
     ID_Usuario: 1,
@@ -126,7 +128,8 @@ function getAuthenticatedCollaborator(payload){
   if(tokenMatches.length!==1||String(tokenMatches[0][COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada, cruzada o expirada.");
   const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_USERS.ID-1]||'').trim()===id);
   if(userMatches.length!==1)throw new Error("Acceso no autorizado: el perfil de usuario no es único.");
-  const u=userMatches[0],username=String(u[COLS_USERS.Nombre_Usuario-1]||'').trim();
+  const u=userMatches[0];if(String(u[COLS_USERS.SessionToken-1]||'').startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
+  const username=String(u[COLS_USERS.Nombre_Usuario-1]||'').trim();
   const role=String(u[COLS_USERS.Privilegios-1]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   if(!username||username.startsWith('__deleted__:')||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
   const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;

@@ -1559,3 +1559,45 @@ Verificaciones heredadas de CORR-FEEDBACK-SESSION-001: 16/16 pruebas aisladas, s
 Estado de esta edición: solo registros documentales append-only; no hay cambios funcionales. No se han editado aún los archivos de la tarea correctiva.
 Siguiente paso: auditar Services/Auth.js, Services/feedback.js, api-config.js, contratos de Sheets y opciones de coordinación de CORR-FEEDBACK-ROLE-REVOCATION-001; fijar alcance, respaldar archivos funcionales y recién entonces implementar. No reanudar AUG-042 antes del cierre de la corrección.
 ================================================================================
+
+================================================================================
+CHECKPOINT FINAL — CORR-FEEDBACK-ROLE-REVOCATION-001 — 2026-11-09
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre antes de la tarea: dd3e85d746a6233aac01f3f5829cfb764df47547.
+Árbol padre: 75b7c2f6fc47516eebf82ae335533a3dc3124a69.
+Rama base: GPSpedia2.2.5. HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: CORR-FEEDBACK-ROLE-REVOCATION-001, origen H-AUD-042-002. Ciclo A previo de CORR-FEEDBACK-SESSION-001 completado; H-AUD-042-001 resuelto y commit 400f5531d3f2192098d8d510c47ddead2db28546 verificado. El commit documental dd3e85d746a6233aac01f3f5829cfb764df47547 registró el hallazgo y checkpoint inicial de esta corrección.
+Respaldos exactos previos a editar (blob SHA del árbol padre):
+- Services/Auth.js: 9e8bdb2b9fbf34636e8a2c3bafa65b5c942193da.
+- Services/Test/Auth.js: d77112db393f4a146cf27406a8a81a8620902c2a.
+- Services/feedback.js: 162bbb8f6ce564de3e0d50c7b5b4f4101cf32896.
+- Services/users.js: 4977c1b87f65d5fd02101ba546b8afa68f2320e5.
+- Services/Test/users.js: 4ecb882ea95f1e9c9bf3239d71e86e84cb2b76e5.
+- Services/admin.js: 8becc72e9bfa143e30674d802557b50b90b1c351.
+- Services/write.js: 8c443ae0866191fc0c9885f6f06652d9dc3f528a.
+- Services/Test/README.md: 9ad6cd3b7a74250fb083bf0d1391daea03de4f66.
+- Auditoría.txt: 6d3239ff268abb28844ef19bb0a6b88e50402f11.
+- Tareas.txt: 09e3c274106abb646bb5cff5c1e5f77b35bae8f2.
+- ChangesLogs.txt: 0282e3489e2f57a63ea9f2da69fb01dbc706947c.
+- checkpoint.md: ba30b949ba60a390ec30b9d0e1d09c2d30a952a0.
+Archivos funcionales modificados: Services/Auth.js, Services/Test/Auth.js, Services/feedback.js, Services/users.js, Services/Test/users.js, Services/admin.js, Services/write.js y Services/Test/README.md. Registros append-only: Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+Implementación:
+1. AUTH usa ROLE_REVOCATION_SHARED_PREFIX='__role_revocation_pending__:' en Users.SessionToken, columna H existente. El marcador JSON contiene userId, markedAt, oldRole y newRole; se valida estructura, timestamp y roles permitidos.
+2. handleUpdateUser escribe y verifica el marcador compartido antes de persistir el marcador local e iniciar revocación. La reconciliación puede recuperarse desde el marcador compartido si falta la propiedad local.
+3. El marcador permanece mientras haya tokens/login requests pendientes, rol no confirmado, propiedad local no eliminada o puntero no limpiado. Se limpia solo después de confirmar las etapas.
+4. migrateLegacyRoleRevocationMarkersToSharedState_() refleja los marcadores locales existentes a Users.SessionToken. Requiere ejecución manual en el proyecto AUTH de Beta antes de desplegar las versiones consumidoras; no fue ejecutada sobre datos productivos.
+5. FEEDBACK, USERS, ADMIN y WRITE comprueban el prefijo compartido en sus guards backend antes del dispatch. Las rutas anónimas y las matrices RBAC no cambian.
+6. AUTH/Test Auth y USERS/Test users mantienen paridad de fuente salvo ID de Spreadsheet; los test apuntan a su base aislada.
+Verificaciones:
+- Sintaxis/parsing de 7 archivos JavaScript modificados: PASS.
+- Paridad de Auth/Test Auth y Users/Test users: PASS.
+- FEEDBACK, USERS, ADMIN y WRITE: marcador pendiente rechazado y sesión normal aceptada (8 casos aislados PASS).
+- AUTH: detección de marcador, sesión normal, fail-closed ante hoja no disponible, validación de sesión pendiente, revocación parcial mantiene marcador/rol anterior, retry actualiza rol y limpia ambos marcadores, recuperación desde marcador compartido, marcador corrupto/conflictivo, escritura de marcador fallida, fallo al borrar propiedad y fallo al limpiar puntero mantienen bloqueo; estado sin marcador no inicia revocación.
+- Migración legacy aislada PASS; escritura compartida precede a propiedad local; guards FEEDBACK y ADMIN permanecen antes de dispatch/switch.
+- Code Review/Safety & Side Effects: PASS para el alcance aislado. No se modificó esquema, endpoints, api-config, actionPermissions, roles, expiración, tombstones, ni datos productivos.
+No ejecutado: Apps Script real, Sheets/Drive, HTTP/endpoints, deployments, navegador, concurrencia física ni datos productivos. No se afirma validación Beta.
+Límite residual: solicitudes que ya superaron el guard de otro proyecto antes de que el marcador se persista no pueden cancelarse retroactivamente; los ScriptLocks de proyectos independientes no son compartidos. Las nuevas solicitudes que leen Users después de confirmar el marcador quedan rechazadas.
+Estado del checkpoint: revisión y pruebas locales/aisladas completadas; checkpoint final listo para el commit único de la tarea. El SHA del commit resultante se consulta en el historial de GPSpedia2.2.5_work.
+Siguiente paso obligatorio: verificar el commit, ejecutar Ciclo A post-commit de esta corrección y, si no aparecen hallazgos nuevos, reanudar AUG-042 Ciclo B. No desplegar antes de ejecutar la migración legacy en Beta.
+================================================================================

@@ -1017,3 +1017,23 @@ Dependencia: bloquea AUG-042 porque FEEDBACK es autoridad backend de Inbox y de 
 Tarea correctiva independiente: CORR-FEEDBACK-ROLE-REVOCATION-001.
 Nota de precisión: la hipótesis preliminar de leer el marcador de AUTH directamente desde FEEDBACK no es viable debido al aislamiento de ScriptProperties entre los endpoints independientes. El hallazgo se registra por la falta de una señal de revocación compartida, no por la mera ausencia de acceso al marcador local.
 ================================================================================
+
+================================================================================
+ADENDA DE ALCANCE Y CIERRE TÉCNICO — H-AUD-042-002 — 2026-11-09
+Inventario ampliado de consumidores autenticados:
+- Services/feedback.js: assertFeedbackSession(), incluido el flujo autenticado de suggestYear y las acciones protegidas antes del switch.
+- Services/users.js: getVerifiedSession().
+- Services/admin.js: assertDeveloperSession(), antes del dispatch.
+- Services/write.js: getAuthenticatedCollaborator(), antes de las operaciones protegidas.
+Los cuatro servicios usan el mismo Spreadsheet que AUTH y consultan ActiveSessions/Users. Ninguno tenía acceso al ScriptProperties del proyecto AUTH ni verificaba un estado compartido de revocación. Services/catalog.js y Services/Utilities.js no presentaron consumidores de sesión en el inventario revisado. El hallazgo se mantiene como una sola causa raíz; no se crean hallazgos duplicados por servicio.
+Corrección implementada en fuentes:
+1. AUTH escribe y confirma primero un marcador compartido con prefijo __role_revocation_pending__: en Users.SessionToken (columna H existente), antes de iniciar la revocación de sesiones. Conserva el marcador local de ScriptProperties como respaldo.
+2. AUTH reintenta la reconciliación desde el marcador compartido si el marcador local falta; el marcador compartido se mantiene ante fallos de revocación, escritura del rol, eliminación del marcador local o limpieza del puntero.
+3. FEEDBACK, USERS, ADMIN y WRITE rechazan la cuenta si el puntero contiene el marcador compartido. Las comprobaciones ocurren en los guards backend antes de despachar acciones protegidas.
+4. Se añadió migrateLegacyRoleRevocationMarkersToSharedState_() en AUTH para reflejar marcadores locales pendientes creados por versiones anteriores. Debe ejecutarse en el proyecto AUTH de Beta antes de desplegar las versiones consumidoras; no se ejecutó en datos reales.
+5. Se mantuvieron las copias de prueba Services/Test/Auth.js y Services/Test/users.js alineadas con sus fuentes, conservando el ID de Spreadsheet de prueba.
+Se conserva: unicidad global del token, titularidad, expiración, perfiles únicos/activos, roles y allowedRoles, tombstones, permisos de acciones, endpoints y excepción anónima suggestYear userId="0". No se añadió una columna ni hoja; se reutilizó Users.SessionToken.
+Validación aislada: guards FEEDBACK/USERS/ADMIN/WRITE rechazan marcador y aceptan sesión normal; AUTH detecta marcador y falla cerrado; reconciliación parcial mantiene el marcador y el rol anterior; reintento exitoso actualiza rol y limpia ambos marcadores; recuperación desde marcador compartido; marcador corrupto/conflictivo y fallos de escritura/limpieza mantienen el bloqueo; migración legacy validada. Sintaxis de los siete archivos JavaScript modificados: PASS; paridad de las dos copias de prueba: PASS.
+Límite residual: una solicitud de otro microservicio que ya hubiera superado su guard antes de que AUTH escriba el marcador no puede cancelarse retroactivamente. Los proyectos no comparten ScriptLock; no se afirma atomicidad de solicitudes ya en curso. Las nuevas solicitudes que lean Users después de confirmar el marcador quedan rechazadas.
+Estado: H-AUD-042-002 RESUELTO EN FUENTES; pendiente de commit/verificación y auditoría Ciclo A post-commit. AUG-042 no se reanuda hasta completar ese Ciclo A.
+================================================================================

@@ -411,3 +411,14 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Nueva tarea correctiva independiente: CORR-FEEDBACK-ROLE-REVOCATION-001. AUG-042 permanece bloqueada hasta resolverla.
 - No se modificó código funcional ni se ejecutaron Apps Script real, Sheets/Drive productivos, endpoints, navegador, deployments o concurrencia física.
 ================================================================================
+
+================================================================================
+2026-11-09 — CORR-FEEDBACK-ROLE-REVOCATION-001 — IMPLEMENTACIÓN
+- Se amplió el alcance tras inventariar todos los guards autenticados: AUTH, FEEDBACK, USERS, ADMIN y WRITE.
+- AUTH: Users.SessionToken ahora puede contener el marcador compartido __role_revocation_pending__: con metadatos JSON. Se escribe y confirma antes de revocar sesiones; se conserva ante fallos y se elimina después de confirmar revocación, rol y marcador local. Se añadió migración aislada de marcadores ScriptProperties legacy.
+- FEEDBACK, USERS, ADMIN y WRITE: los guards backend rechazan el marcador compartido antes de despachar acciones protegidas. No se alteraron las matrices RBAC, expiración, unicidad del token, actionPermissions ni la ruta anónima.
+- Se actualizaron Services/Test/Auth.js y Services/Test/users.js como espejos de prueba, manteniendo su Spreadsheet independiente. Services/Test/README.md documenta la migración requerida.
+- Sin cambios de esquema: se reutiliza la columna Users.SessionToken existente. No se modificaron endpoints, api-config, deployments ni datos.
+- Verificaciones: sintaxis 7/7; paridad de copias PASS; guards FEEDBACK/USERS/ADMIN/WRITE 8 casos PASS; pruebas de AUTH para detección, fail-closed, revocación parcial, retry, marcador corrupto/conflictivo y fallos de limpieza PASS; migración legacy PASS; orden de guardas PASS.
+- No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos. Las solicitudes ya en curso antes de persistir el marcador no se cancelan retroactivamente.
+================================================================================

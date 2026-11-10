@@ -31,6 +31,8 @@ const COLS_USERS = {
     Nombre_Completo: 7,
     SessionToken: 8
 };
+const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
+function hasPendingRoleRevocationForUser_(userRow) { return String(userRow && userRow[COLS_USERS.SessionToken - 1] || '').startsWith(ROLE_REVOCATION_SHARED_PREFIX); }
 
 const COLS_ACTIVE_SESSIONS = {
     ID_Usuario: 1,
@@ -138,6 +140,7 @@ function getVerifiedSession(sessionToken) {
     if (!usersSheet) throw new Error("Hoja de usuarios no encontrada.");
     const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => String(row[0] ?? '').trim() === userId);
     if (userRows.length !== 1 || !isActiveUserRecord(userRows[0])) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
+    if (hasPendingRoleRevocationForUser_(userRows[0])) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
     return { userId, role: userRows[0][3] };
 }
 

@@ -80,13 +80,15 @@ function getSessionExpirationStatus_(row,now=new Date()){
  if(now.getTime()>=add(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};
  return{expired:false};
 }
+const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 function assertDeveloperSession(payload){
  const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
  const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>String(r[2]||"").trim()===token);
  if(tokenMatches.length!==1||String(tokenMatches[0][0]||"").trim()!==id||getSessionExpirationStatus_(tokenMatches[0],new Date()).expired)throw new Error("Acceso denegado: sesión inválida, duplicada, cruzada o expirada.");
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
- const u=userMatches[0],username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
+ const u=userMatches[0];if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
+ const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
  const role=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();if(role!=="desarrollador")throw new Error("Acceso denegado: sesión no autorizada.");
  const fullName=String(u[6]||"").trim();return{userId:id,role:"Desarrollador",fullName,userName:fullName||username};
 }
