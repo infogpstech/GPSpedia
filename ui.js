@@ -436,30 +436,47 @@ export function parseEquipmentVersions(rawStr) {
     return result;
 }
 
+export function normalizeVinCollectionValue(value, context) {
+    if (value === null || value === undefined) return "";
+    if (typeof value !== "string") throw new Error((context || "VIN") + ": cada elemento debe ser texto.");
+    const normalized = value.trim().toUpperCase();
+    if (!normalized || normalized.startsWith("OP-") || normalized.startsWith("OP_") || normalized.includes("IDOPERACION")) return "";
+    if (!/^[A-Z0-9]{1,18}$/.test(normalized)) throw new Error((context || "VIN") + ": identificador inválido «" + normalized + "».");
+    return normalized;
+}
+export function normalizeVinCollectionArray(values, context) {
+    if (!Array.isArray(values)) throw new Error((context || "VIN") + ": se esperaba una colección.");
+    if (values.length > 3) throw new Error((context || "VIN") + ": máximo tres posiciones.");
+    const normalized = values.map(value => normalizeVinCollectionValue(value, context));
+    const seen = new Set();
+    normalized.forEach(value => {
+        if (!value) return;
+        if (seen.has(value)) throw new Error((context || "VIN") + ": identificador duplicado «" + value + "».");
+        seen.add(value);
+    });
+    return normalized;
+}
 export function parseVinCollection(rawVin) {
-    if (!rawVin) return [];
-    let list = [];
-    if (Array.isArray(rawVin)) {
-        list = rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-    } else {
-        const str = String(rawVin).trim();
-        if (str.startsWith("[") && str.endsWith("]")) {
-            try {
-                const parsed = JSON.parse(str);
-                if (Array.isArray(parsed)) {
-                    list = parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-                }
-            } catch (e) {}
-        }
-        if (list.length === 0) {
-            list = str
-                .split(/[,/\\\\]+/)
-                .map(v => v.trim().toUpperCase())
-                .filter(Boolean);
-        }
+    if (rawVin === null || rawVin === undefined || rawVin === "") return [];
+    if (Array.isArray(rawVin)) return normalizeVinCollectionArray(rawVin, "Colección VIN");
+    const text = String(rawVin).trim();
+    if (!text) return [];
+    if (text.startsWith("[") || text.endsWith("]")) {
+        let parsed;
+        try { parsed = JSON.parse(text); }
+        catch (error) { throw new Error("La colección VIN contiene JSON mal formado; no se interpretó como texto heredado."); }
+        if (!Array.isArray(parsed)) throw new Error("El formato JSON de VIN debe ser un array.");
+        return normalizeVinCollectionArray(parsed, "Colección VIN JSON");
     }
-    // Filtrar estrictamente cualquier ID de operación de idempotencia ("OP-...") o tokens no válidos
-    return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
+    const values = text.split(/[,/\\;]+/)
+        .map(value => normalizeVinCollectionValue(value, "Colección VIN heredada"))
+        .filter(Boolean);
+    if (values.length > 3) throw new Error("La colección VIN heredada supera el máximo de tres identificadores.");
+    return normalizeVinCollectionArray(values, "Colección VIN heredada");
+}
+export function serializeVinCollection(vinArray) {
+    const normalized = normalizeVinCollectionArray(vinArray, "Serialización VIN");
+    return normalized.some(Boolean) ? JSON.stringify(normalized) : "";
 }
 
 export function mapVersionsWithVins(versionesStr, vinRaw) {
@@ -7529,27 +7546,8 @@ export function openExpandMenuModal(item) {
         return 3;
     }
 
-    function parseVinCollectionFrontend(rawVin) {
-        if (!rawVin) return [];
-        const str = String(rawVin).trim();
-        if (!str) return [];
-        let list = [];
-        if (str.startsWith("[") && str.endsWith("]")) {
-            try {
-                const arr = JSON.parse(str);
-                if (Array.isArray(arr)) {
-                    list = arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-                }
-            } catch (e) {}
-        }
-        if (list.length === 0) {
-            list = str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
-        }
-        return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
-    }
-
     const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
-    const registeredVins = parseVinCollectionFrontend(item.vin);
+    const registeredVins = parseVinCollection(item.vin);
     // Permitir agregar VIN si aún hay cupo o para asociar una nueva versión de equipamiento (hasta un tope de 3)
     const canAddVin = registeredVins.length < maxVinAllowed || registeredVins.length < 3;
 
@@ -7770,9 +7768,9 @@ export function openAddVinModal(item) {
             });
             if (res.status === 'success') {
                 if (res.vinCollection) {
-                    item.vin = JSON.stringify(res.vinCollection);
+                    item.vin = serializeVinCollection(res.vinCollection);
                 } else if (res.vinPrefix) {
-                    item.vin = res.vinPrefix;
+                    item.vin = serializeVinCollection([res.vinPrefix]);
                 }
                 if (res.versionesAplicables) {
                     item.versionesAplicables = res.versionesAplicables;
