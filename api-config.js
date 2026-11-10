@@ -212,17 +212,16 @@ export async function getActivityLogs(sessionPayload = {}) {
     return await routeAction('getActivityLogs', sessionPayload);
 }
 
-export async function recordLike(vehicleId, corteIndex, userId, userName) {
-    return await routeAction('recordLike', { vehicleId, corteIndex, userId, userName });
+export async function recordLike(vehicleId, corteIndex, sessionPayload = {}) {
+    return await routeAction("recordLike", { ...sessionPayload, vehicleId, corteIndex });
 }
 
-export async function reportProblem(vehicleId, problemDescription, userId, userName, reportContext = {}) {
+export async function reportProblem(vehicleId, problemDescription, reportContext = {}, sessionPayload = {}) {
     const context = reportContext && typeof reportContext === "object" ? reportContext : {};
-    return await routeAction('reportProblem', {
+    return await routeAction("reportProblem", {
+        ...sessionPayload,
         vehicleId,
         problemText: problemDescription,
-        userId,
-        userName,
         reportId: context.reportId,
         corteIndex: context.corteIndex,
         activaTestigoMotor: context.activaTestigoMotor
