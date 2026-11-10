@@ -412,3 +412,7 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - El merge-base con GPSpedia2.2.5 permanece d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó la rama base.
 - Relectura desde la rama remota: 82/82 pruebas aisladas PASS; sintaxis de los cuatro módulos principales PASS; contenido de módulos, suites y registros verificado.
 - AUG-043 continúa EN PROGRESO: falta la prueba de integración en navegador real y la validación con OAuth/YouTube API y proyecto Apps Script/Spreadsheet aislado. No se desplegó ni se modificaron datos productivos.
+
+
+CORRECCIÓN DE CONTINUIDAD — 2026-11-10
+La nota de checkpoint inmediatamente anterior que indicaba que aún no se habían ejecutado las suites corresponde al estado previo a esta continuación y queda superada por la validación registrada arriba: 82/82 pruebas aisladas PASS y sintaxis de los cuatro módulos principales PASS. Las validaciones que siguen pendientes son exclusivamente la integración en navegador real (DOM/IndexedDB/XHR), OAuth/YouTube API real y proyecto Apps Script/Spreadsheet aislado. HEAD verificado antes de esta corrección: 8701038e33dbd29acb7918c58f81e9fa1991577e. La tarea AUG-043 permanece EN PROGRESO; no se ha desplegado ni se han tocado datos productivos.
