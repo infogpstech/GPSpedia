@@ -301,7 +301,7 @@ Las columnas 1–42 conservan exactamente los encabezados del inventario de la c
 | 47 | AU | `activaTestigo2` | Indicador del segundo corte |
 | 48 | AV | `activaTestigo3` | Indicador del tercer corte |
 
-**Nota sobre las columnas 46–48:** WRITE y ADMIN las administran mediante `ensureTestigoColumns`. En la copia recibida, que termina en la columna 45, se agregarán después de las dos columnas reservadas cuando se ejecute por primera vez una operación que requiera esos campos. La acción de migración VIN no las crea por sí sola.
+**Contrato obligatorio AT:AV:** `activaTestigo1`, `activaTestigo2` y `activaTestigo3` se ubican siempre en las columnas 46–48, respectivamente. WRITE y ADMIN crean únicamente las columnas físicas faltantes hasta AV y escriben esos encabezados en AT:AV; no los agregan al final de la última columna usada. Las columnas existentes después de AV se conservan sin desplazamiento. Si un encabezado testigo aparece duplicado o fuera de su posición, si AT:AV contienen otros encabezados o si hay datos bajo un encabezado vacío, la operación se detiene sin reasignar ni sobrescribir datos. AR:AS permanecen reservadas.
 
 ### Nueva hoja `Idempotencia`
 
