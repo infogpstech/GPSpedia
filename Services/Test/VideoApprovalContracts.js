@@ -3,6 +3,7 @@
 function runVideoApprovalCreationContractTests() {
     const results=[];let passed=0,failed=0;
     const oldGetSafe=getSafeSheet,oldFlush=SpreadsheetApp.flush,oldLock=LockService.getScriptLock;
+    const oldDrive=typeof DriveApp==="undefined"?null:DriveApp,oldUtilities=typeof Utilities==="undefined"?null:Utilities,oldLog=logUserActivity;
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
@@ -15,7 +16,7 @@ function runVideoApprovalCreationContractTests() {
             setValue(v){data[r-1]=data[r-1]||[];data[r-1][c-1]=v;},
             setValues(values){values.forEach((row,i)=>{data[r-1+i]=data[r-1+i]||[];row.forEach((v,j)=>data[r-1+i][c-1+j]=v);});}
         };}
-        return{data,getLastRow:()=>data.length,getLastColumn:()=>Math.max(0,...data.map(row=>row.length)),getRange:range_,appendRow(row){data.push(row.slice());}};
+        return{data,getLastRow:()=>data.length,getLastColumn:()=>Math.max(0,...data.map(row=>row.length)),getRange:range_,getDataRange:()=>range_(1,1,data.length,Math.max(1,Math.max(0,...data.map(row=>row.length)))),appendRow(row){data.push(row.slice());}};
     }
     try{
         LockService.getScriptLock=()=>({waitLock:()=>{},releaseLock:()=>{}});
@@ -42,7 +43,12 @@ function runVideoApprovalCreationContractTests() {
         run_("crea PyS con ID estable y vídeo vacío",()=>{
             const sheet=sheet_([["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"]]);
             getSafeSheet=name=>name==="pys"?sheet:null;
-            const result=handleAddProblem({titulo:"Falla técnica",descripcion:"Detalle",sinSolucion:true,solucion:"",prevenir:"",videoUrl:"",alcance:"general",modelosAsociados:[]});
+            const file={setSharing:()=>{},getUrl:()=>"https://drive.test/file/pys-1",setTrashed:()=>{}};
+            const folder={createFile:()=>file};
+            DriveApp={getFoldersByName:()=>({hasNext:()=>true,next:()=>folder}),Access:{ANYONE_WITH_LINK:"anyone"},Permission:{VIEW:"view"}};
+            Utilities={base64Decode:()=>[1],newBlob:()=>({})};
+            logUserActivity=()=>{};
+            const result=handleAddProblem({titulo:"Falla técnica",descripcion:"Detalle",sinSolucion:true,solucion:"",prevenir:"",videoUrl:"",alcance:"general",modelosAsociados:[],imgBase64:"data:image/jpeg;base64,AA==",userId:"USR-TEST",userName:"Técnico"});
             assert_(result.status==="success"&&result.problemId&&sheet.data[1][0]===result.problemId&&sheet.data[1][7]==="");
         });
         run_("bloquea cambio directo del vídeo de PyS",()=>{
@@ -68,11 +74,12 @@ function runVideoApprovalCreationContractTests() {
         run_("rechaza enlace directo en alta de PyS",()=>{
             const sheet=sheet_([["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"]]);
             getSafeSheet=name=>name==="pys"?sheet:null;
-            expect_(()=>handleAddProblem({titulo:"Falla",descripcion:"Detalle",sinSolucion:true,videoUrl:"https://youtu.be/abcdefghijk"}),"flujo de aprobación");
+            expect_(()=>handleAddProblem({titulo:"Falla",descripcion:"Detalle",sinSolucion:true,imgBase64:"data:image/jpeg;base64,AA==",userId:"USR-TEST",userName:"Técnico",videoUrl:"https://youtu.be/abcdefghijk"}),"flujo de aprobación");
             assert_(sheet.data.length===1);
         });
     }finally{
         getSafeSheet=oldGetSafe;SpreadsheetApp.flush=oldFlush;LockService.getScriptLock=oldLock;
+        if(oldDrive)DriveApp=oldDrive;if(oldUtilities)Utilities=oldUtilities;logUserActivity=oldLog;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
