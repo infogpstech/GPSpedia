@@ -1,8 +1,8 @@
-REGISTRO ACTIVO DE HALLAZGOS — GPSpedia
-Historial anterior preservado en `Olds/Documentacion_Legacy/`. No editar las partes legacy. Consultar `Olds/Documentacion_Legacy/README.md` para inventario, SHA original y reconstrucción.
+# Registro activo de hallazgos — GPSpedia
 
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de registrar hallazgos o modificar el proyecto.
 
-**Regla:** no borrar, truncar, sobrescribir ni reordenar entradas; agregar cada entrada al final. Verificar antes que el resultado no supere 180,000 caracteres Unicode. Si excede, rotar según `Plan_auditoría/Normas_Gestion_Documental.md`.
+Este archivo conserva hallazgos, evidencia y estados; no establece procedimientos de desarrollo. El historial anterior permanece en `Olds/Documentacion_Legacy/`; consultar su manifiesto para localizarlo.
 
 ================================================================================
 H-AUD-043 — Ausencia de rotación y límite de tamaño en registros documentales
