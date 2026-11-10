@@ -378,6 +378,17 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => missingClient.withLease("WRITE", "addVinToVehicle", () => "no"), "no está configurada");
     });
 
+    test_("FEEDBACK recordLike reserves CORTES, FEEDBACK ledger and ACTIVITY", function() {
+        const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
+        assert_(policy.writeResources.includes("CORTES"), "recordLike debe reservar Cortes.");
+        assert_(policy.writeResources.includes("FEEDBACK"), "recordLike debe reservar FeedbackLikes.");
+        assert_(policy.writeResources.includes("ACTIVITY"), "recordLike debe reservar Activity.");
+    });
+
+    test_("FEEDBACK ya no habilita assignCollaborator obsoleto", function() {
+        expectThrow_(() => coordinatorPolicy_("FEEDBACK", "assignCollaborator"), "política");
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }
