@@ -1410,6 +1410,9 @@ function markImageUploadLinked(imageUrl) {
         const record = findImageUploadLedgerRecord_(ledgerSheet, metadata.token);
         if (!record) return false;
         const values = record.values;
+        if (String(values[6] || "").trim() && String(values[6]).trim() !== fileId) {
+            throw new Error("El token de carga ya está asociado a otro fileId en ImageUploadLedger.");
+        }
         const expected = {
             token: String(values[0]), operationKey: String(values[1]), folderId: String(values[2]),
             mimeType: String(values[3]), sizeBytes: Number(values[4]), contentHash: String(values[5])
