@@ -276,3 +276,27 @@ Limitaciones: sin ejecución real de Apps Script, HTTP, deployments, navegador, 
 Commit único: mensaje "feat(services): add shared mutation coordinator"; SHA y padre verificables en el historial de GPSpedia2.2.5_work.
 Siguiente tarea bloqueante: AUG-034 — ventana segura de migración VIN/Idempotencia. No iniciar AUG-040/AUG-043 antes de resolver las dependencias previas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-034 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial de la tarea: c3143270a965d61bee30a1d52022d2205f02b2dc.
+Rama base: GPSpedia2.2.5; HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea: AUG-034 — COMPLETADA EN VALIDACIÓN LOCAL.
+Objetivo: ventana segura de migración VIN/Idempotencia entre ADMIN y WRITE.
+Cambios:
+1. Services/Coordinator.js declara migrateCortesOperationIds como mantenimiento exclusivo, tanto para dry-run como para confirmación.
+2. El coordinador crea una reserva phase=draining que bloquea nuevas mutaciones mientras se liberan las leases previas. El handler solo recibe autorización cuando el drenaje termina.
+3. Si vence el tiempo de espera, la reserva se retira, la migración no comienza y se informa la lista mínima de servicios/acciones activas.
+4. La reserva abandonada durante el drenaje expira en 60 segundos; el mantenimiento ya activo expira en 45 minutos. Se conserva compatibilidad con leases previas sin phase.
+5. Se documentó la recuperación de la migración: persistir destino, flush, verificar por lectura y solo después limpiar origen; un reintento reutiliza las entradas ya registradas.
+
+Archivos modificados: Services/Coordinator.js, Services/Test/SharedMutationCoordinator.js, Services/COORDINATOR_SETUP.md, Services/admin.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Validación: sintaxis/parsing de archivos JS modificados PASS; suite aislada 24/24 PASS; revisión estática de wrapper ADMIN/WRITE y secuencia de recuperación PASS.
+Limitaciones: no se ejecutaron Apps Script real, UrlFetch entre proyectos, deployments, Sheets reales ni concurrencia física. La prueba integrada entre proyectos y la ejecución de migración en Spreadsheet aislada quedan diferidas a Beta. No se realizó migración ni se modificaron datos productivos.
+Hallazgo nuevo H-AUD-155-001 resuelto; AUG-034 cerrada localmente.
+Siguiente tarea de integridad: AUG-035 — integridad estricta y reconciliación de la hoja Idempotencia.
+No se modificó la rama base.
+================================================================================
