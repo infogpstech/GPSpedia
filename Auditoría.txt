@@ -1266,3 +1266,29 @@ No se ejecutaron Apps Script, HTTP, deployments, navegador, Spreadsheet/Drive re
 CIERRE
 AUG-155 queda COMPLETADA EN VALIDACIÓN LOCAL conforme a DOC-NORM-2026-001 §7. La validación real entre deployments se difiere a Beta. AUG-034 continúa separada para la ventana segura de migración VIN/Idempotencia; AUG-040 y AUG-043 conservan sus criterios propios.
 ================================================================================
+
+
+================================================================================
+H-AUD-155-001 — P2 — RESUELTO EN AUG-034 — 2026-11-10
+ASUNTO: la lease de mantenimiento no reservaba la ventana mientras esperaba el drenaje.
+
+EVIDENCIA
+En la implementación previa de Services/Coordinator.js, acquire_() aplicaba hasConflict_() a una operación maintenance=true y devolvía busy inmediatamente si existían leases activas. No registraba una reserva de mantenimiento. Durante el intervalo entre intentos, nuevas mutaciones podían adquirir leases y prolongar o intercalar la operación de mantenimiento. Por tanto, la política existente de mantenimiento exclusivo no garantizaba un drenaje estable para migrateCortesOperationIds.
+
+CORRECCIÓN
+- migrateCortesOperationIds se declara maintenance=true; tanto el dry-run como confirm:true adquieren la misma ventana exclusiva.
+- El coordinador registra primero una lease phase=draining. Desde ese momento, las nuevas operaciones quedan bloqueadas mientras las leases anteriores terminan.
+- El token de reserva no autoriza ejecutar el handler hasta que no queden leases previas. Al completar el drenaje pasa a phase=active y recibe TTL de 45 minutos.
+- Si se agota el plazo de espera, la reserva se elimina y se devuelve una lista mínima de servicio/acción activas; no se inicia la migración.
+- Una reserva de drenaje abandonada expira a los 60 segundos. Una lease activa abandonada expira a los 45 minutos. Las leases previas sin phase se interpretan como activas para compatibilidad.
+- La migración conserva el orden destino→flush→read-back→limpieza de origen; los reintentos reconocen opId ya guardados y completan los faltantes antes de limpiar.
+
+VALIDACIÓN LOCAL
+- Sintaxis/parsing V8 de Coordinator.js, SharedMutationCoordinator.js y admin.js: PASS.
+- Suite aislada de coordinación: 24/24 PASS. Incluye alta WRITE en curso, alta ADMIN en curso, reserva/drenaje, bloqueo de mutaciones nuevas, rechazo de token durante phase=draining, identificación de operaciones activas, timeout y retirada de reserva, expiración de reserva abandonada, expiración de mantenimiento activo y compatibilidad con leases previas.
+- Revisión estática de ADMIN/WRITE: migrateCortesOperationIds ya estaba protegido por withSharedMutationLease_ en el router ADMIN; las altas de WRITE y ADMIN ya adquieren leases con recursos CORTES/IDEMPOTENCIA. La reserva exclusiva ahora las drena antes de permitir la migración.
+- Revisión estática de recuperación: destino se escribe y verifica antes de limpiar las columnas de origen; los reintentos reconocen las entradas ya persistidas. No se afirma atomicidad de Spreadsheet.
+
+LÍMITES
+No se ejecutaron Apps Script real, UrlFetch entre proyectos, deployments, Sheets reales ni concurrencia física. La integración con coordinador desplegado, configuración de ScriptProperties, simultaneidad real y pruebas de interrupción en copias aisladas quedan diferidas a Beta. No se modificaron endpoints, api-config.js, Spreadsheet/Drive productivos ni la rama base.
+================================================================================
