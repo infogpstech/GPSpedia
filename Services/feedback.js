@@ -1449,70 +1449,69 @@ function handleAddProblem(payload) {
         imageUrl = String(imageFile.getUrl() || "").trim();
         if (!imageUrl) throw new Error("Drive no devolvió la URL de la imagen creada.");
 
-        const models = alcance === "especifico" && Array.isArray(modelosAsociados) ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean))) : [];
-        const newRow = [problemId, titulo, descripcion, sinSolucion ? "" : "x", sinSolucion ? "" : (solucion || ""), prevenir || "", imageUrl, "", userName, models.length ? JSON.stringify(models) : ""];
-        try {
-            sheet.appendRow(newRow);
-            SpreadsheetApp.flush();
-            const persisted = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId && String(row[6] || "").trim() === imageUrl);
-            if (persisted.length !== 1) throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
-        } catch (writeError) {
+        const models = alcance === "especifico" && Array.isArray(modelosAsociados)
+            ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean))) : [];
+        sheet.appendRow([problemId, titulo, descripcion, sinSolucion ? "" : "x", sinSolucion ? "" : (solucion || ""), prevenir || "", imageUrl, "", userName, models.length ? JSON.stringify(models) : ""]);
+        SpreadsheetApp.flush();
+        const persisted = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId && String(row[6] || "").trim() === imageUrl);
+        if (persisted.length !== 1) throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
+        try { logUserActivity(userId, userName, "add_problem", problemId, titulo); }
+        catch (logError) { console.error("No se pudo registrar la actividad de alta PyS:", logError); }
+        return { status: "success", message: "Problema registrado correctamente.", problemId };
+    } catch (error) {
+        if (imageFile) {
             let matchingRows = [];
-            try { matchingRows = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId); } catch (readError) {}
+            try { matchingRows = sheet ? sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId) : []; }
+            catch (readError) { throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para revisión. Detalle: " + error.message); }
             if (matchingRows.length === 1 && String(matchingRows[0][6] || "").trim() === imageUrl) {
                 return { status: "success", message: "Problema registrado y verificado tras una respuesta parcial.", problemId, recovered: true };
             }
             if (matchingRows.length > 0) throw new Error("Existe un registro PyS parcial o ambiguo; la imagen se conserva para revisión.");
             try { imageFile.setTrashed(true); SpreadsheetApp.flush(); }
             catch (cleanupError) { throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; requiere revisión manual."); }
-            throw writeError;
         }
-        try { logUserActivity(userId, userName, "add_problem", problemId, titulo); } catch (logError) { console.error("No se pudo registrar la actividad de alta PyS:", logError); }
-        return { status: "success", message: "Problema registrado correctamente.", problemId };
+        throw error;
     } finally {
         lock.releaseLock();
     }
 }
 
 function handleAddSolution(payload) {
-    const { problemId, solucion } = payload;
-    if (!problemId || !solucion) throw new Error("problemId y solucion son requeridos.");
-    if (solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
-
+    const { problemId, solucion, userId, userName } = payload || {};
+    if (!problemId || !solucion || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
+    if (String(solucion).length > 700) throw new Error("La solución no puede superar 700 caracteres.");
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
-    const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-    const index = data.findIndex(id => id.toString() === problemId.toString());
-    if (index === -1) throw new Error("Problema no encontrado.");
-
-    const row = index + 2;
-    sheet.getRange(row, 4).setValue("x"); // Se soluciono
-    sheet.getRange(row, 5).setValue(solucion); // Solucion
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const matches = ids.map((id, index) => ({ id, index })).filter(item => String(item.id) === String(problemId));
+    if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID duplicado." : "Problema no encontrado.");
+    const row = matches[0].index + 2;
+    sheet.getRange(row, 4).setValue("x");
+    sheet.getRange(row, 5).setValue(solucion);
     SpreadsheetApp.flush();
-
-    return { status: "success", message: "Solucion agregada con exito." };
+    try { logUserActivity(userId, userName, "add_solution", problemId, "Se agregó una solución."); }
+    catch (logError) { console.error("No se pudo registrar la actividad de solución:", logError); }
+    return { status: "success", message: "Solución agregada con éxito." };
 }
 
 function handleAddPrevention(payload) {
-    const { problemId, prevenir } = payload;
-    if (!problemId || !prevenir) throw new Error("problemId y prevenir son requeridos.");
-    if (prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
-
+    const { problemId, prevenir, userId, userName } = payload || {};
+    if (!problemId || !prevenir || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
+    if (String(prevenir).length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
-    const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-    const index = data.findIndex(id => id.toString() === problemId.toString());
-    if (index === -1) throw new Error("Problema no encontrado.");
-
-    const row = index + 2;
-    sheet.getRange(row, 6).setValue(prevenir); // Prevenir
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const matches = ids.map((id, index) => ({ id, index })).filter(item => String(item.id) === String(problemId));
+    if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID duplicado." : "Problema no encontrado.");
+    sheet.getRange(matches[0].index + 2, 6).setValue(prevenir);
     SpreadsheetApp.flush();
-
-    return { status: "success", message: "Prevencion agregada con exito." };
+    try { logUserActivity(userId, userName, "add_prevention", problemId, "Se agregó una prevención."); }
+    catch (logError) { console.error("No se pudo registrar la actividad de prevención:", logError); }
+    return { status: "success", message: "Prevención agregada con éxito." };
 }
 
 function handleAddTutorial(payload) {
