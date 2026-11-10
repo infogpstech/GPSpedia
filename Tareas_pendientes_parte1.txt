@@ -1636,3 +1636,13 @@ Continuidad: Services/Utilities.js no cambió desde el HEAD auditado 32b4898e967
 Límite obligatorio: esta marca cierra únicamente la auditoría del contrato/alcance. NO significa que exista un lock compartido, que Utilities coordine otros proyectos ni que haya validación E2/E3/Beta. La implementación del coordinador y sus pruebas locales/aisladas permanecen en AUG-034. No asumir que ScriptLock de AUTH, USERS, WRITE, ADMIN, FEEDBACK o UTILITIES es compartido.
 La dependencia AUG-010 puede serializar mutaciones dentro del proyecto USERS y AUTH dentro de su propio proyecto; la coordinación entre proyectos permanece separada en AUG-034.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-039 — 2026-11-10
+Estado: COMPLETADA — implementación y todas las verificaciones locales aprobadas (34/34 PASS).
+Hallazgos H-AUD-039-001 a H-AUD-039-005 resueltos. Se exige sesión válida en WRITE, perfil Users único/activo, Developer server-side para allocateVehicleId, respuesta checkOperation mínima y credenciales en los consumidores UI/stage3. ADMIN mantiene su guard global y silentRegister su override.
+La decisión de no vincular opId al actor, con riesgo residual y justificación, queda documentada en Auditoría.txt. AUG-034 no fue adelantada ni se asumió lock compartido.
+Beta: pruebas funcionales reales pendientes; no se ejecutaron endpoints productivos, deployments ni datos operativos.
+La ficha original se conserva; esta adenda actualiza el estado sin borrar historial.
+================================================================================

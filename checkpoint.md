@@ -1360,3 +1360,86 @@ Límites: no se ejecutaron pruebas funcionales reales de navegador, endpoints op
 Siguiente paso: publicar un único commit de AUG-147 mediante Git Database API, con parent_sha b121a04f3a9439c6afbf40eb808d021bec9ef2ff, actualizar exclusivamente GPSpedia2.2.5_work con force:false/expected_sha igual al HEAD padre y verificar el commit, archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca intacta.
 Este es el último registro documental de la tarea antes de su único commit.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUG-039 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work. HEAD inicial: a1e1ae16869c09b94f6784ba3d877a184af5fab1.
+Rama base: GPSpedia2.2.5. HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Tarea actual: AUG-039 — Completar autorización y minimización de datos en WRITE.
+Estado inicial: NUEVA; implementación no iniciada. Los comentarios preliminares de sesiones anteriores son antecedentes, no sustituyen la auditoría formal.
+
+Ciclo A — auditoría de la tarea anterior AUG-147:
+- Commit publicado: a1e1ae16869c09b94f6784ba3d877a184af5fab1; único padre b121a04f3a9439c6afbf40eb808d021bec9ef2ff.
+- Se verificaron los nueve archivos del commit y sus blob SHA; cuatro eran funcionales y cinco documentales.
+- Archivos funcionales auditados: auth.js, ui.js, Services/Auth.js y Services/Test/Auth.js. Se comprobó la correspondencia entre cambios reales, checkpoint, ChangesLogs y 32/32 pruebas locales aprobadas.
+- No se detectaron defectos nuevos, regresiones ni hallazgos bloqueantes. No se requiere tarea correctiva. No se reauditaron informes de auditoría.
+- La rama base permaneció en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Orden y estado de fases:
+- Fase 1 Ola 1 cerrada localmente, incluida AUG-147.
+- Ola 2: AUG-009, AUG-010, AUG-012 y AUG-013 completadas. AUG-011 expresamente OMITIDA por decisión del usuario del 2026-11-09; no reactivar sin nueva autorización.
+- Plan Maestro 14.3 sitúa AUG-039 como primera tarea de Ola 3. AUG-042 continúa pendiente y es la siguiente tarea después de AUG-039.
+- AUG-003 cerró solo como auditoría estática E1. AUG-034 continúa pendiente, pero no bloquea la autorización local de WRITE; no se implementará coordinación compartida ni se supondrá que ScriptLock de proyectos distintos es común.
+
+Alcance AUG-039 auditado:
+1. Exigir sesión válida userId+sessionToken y perfil activo/único en Users antes de mutar Cortes/Drive con addSupplementaryInfo.
+2. Exigir sesión en WRITE checkOperation y devolver solo metadata mínima; conservar el guard Developer global en ADMIN.
+3. Restringir allocateVehicleId a Developer verificado en servidor, antes y después del lock y antes de incrementar el contador.
+4. Añadir contexto de sesión a las tres llamadas addSupplementaryInfo de ui.js y al handleStage3Submit de add_cortes.html; preservar serviceOverride ADMIN para silentRegister.
+5. Preservar handleAddOrUpdateCut, handleAddVinToVehicle y freezeCortesIds; no confiar en identidad/nombre/rol del cliente.
+6. Decisión opId/actor: no migrar el esquema A:E legacy en esta tarea; checkOperation autenticado y con metadata mínima. opId no es credencial. Riesgo residual y justificación documentados en Auditoría.txt.
+
+Archivos candidatos auditados: Services/write.js, Services/admin.js, ui.js, add_cortes.html y api-config.js; se revisaron también los contratos de AUTH y el consumidor ADMIN del asignador central. No se identificó dependencia de AUG-034 para los cambios de autorización de esta tarea.
+
+Criterio de pruebas del propietario: pruebas funcionales reales exclusivamente en Beta. La implementación solo se cierra con todas las verificaciones locales aplicables aprobadas; las pruebas Beta se registran como pendientes, nunca como ejecutadas.
+
+Respaldo exacto de checkpoint.md antes de esta edición: SHA 57aae86afa048b82e2adadbbc93e32008ed5c2b5. Al inicio de AUG-039 no había cambios de código. La auditoría formal se documentó antes de modificar código en Auditoría.txt; respaldos exactos de los cuatro archivos funcionales se generaron antes de editarlos.
+Siguiente acción: implementar exclusivamente los hallazgos H-AUD-039-001 a H-AUD-039-005, ejecutar pruebas locales, revisión de regresión y Code Review; actualizar registros y publicar un único commit de AUG-039.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-039 — 2026-11-10
+Estado: IMPLEMENTACIÓN COMPLETADA; TODAS LAS VERIFICACIONES LOCALES APROBADAS (34/34); publicación mediante commit único de esta tarea pendiente de verificación.
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. HEAD padre esperado: a1e1ae16869c09b94f6784ba3d877a184af5fab1.
+Rama base: GPSpedia2.2.5. HEAD base de referencia: d9acc68d889985c2e2f42fe3a02e502efc86ead1. No se modificó.
+
+Archivos funcionales modificados (cuatro):
+- Services/write.js — blob final acc0a4b9587c42acfca2ef1172945cdd55b6f1de; respaldo exacto 295662b2db8f88db19e641c19179a7c3588e8c3c. Cambios: COLS_USERS 96–101; getAuthenticatedCollaborator 122–133; handleAllocateVehicleId 264–276; assertDeveloperForIdMaintenance 278–294; handleAddSupplementaryInfo/Locked 777–788 y cuerpo protegido posterior; handleCheckOperation 1542–1570.
+- Services/admin.js — blob final 7e2fbc8718004019268b9a3b2cf4da69acb93d1a; respaldo exacto 5338b0fe1dfd21e3e98d4aeb86d1145c36ae16fb. handleCheckOperation 3678–3705 minimiza respuesta; guard global Developer intacto.
+- ui.js — blob final 84580f0dd47ae5db01b33c02742aae70e56ff52a; respaldo exacto 590179e70b21135ced9b111099fa518711d17ae1. Añade getDeveloperSessionPayload a las tres llamadas: 7982–7987, 8074–8076 y 8212–8218.
+- add_cortes.html — blob final 46356f37ad012fa1e5fddf3164a6829afaa431d8; respaldo exacto 078b077a9fe3219532cadd37d04078e5d4012abb. handleStage3Submit añade userId/sessionToken en 1313–1321; serviceOverride ADMIN permanece.
+No se modificaron api-config.js, AUTH, ADMIN router global, Users, endpoints ni deployments. El contrato de ruteo WRITE/ADMIN se conservó.
+
+Implementación y controles:
+- getAuthenticatedCollaborator valida userId+sessionToken contra ActiveSessions, expiración, perfil Users único, username no eliminado, rol activo reconocido por AUTH y nombre completo derivado del servidor.
+- addSupplementaryInfo valida antes del lock y revalida en handleAddSupplementaryInfoLocked después de adquirirlo, antes de acceder a Cortes/Drive. El lock se libera en finally.
+- checkOperation WRITE requiere sesión; WRITE/ADMIN devuelven solo status, exists, pending/operationStatus y vehicleId/timestamp para operación completada. No devuelven rowData, slotIndex ni filesStatus.
+- allocateVehicleId exige rol Developer obtenido de Users antes y después del lock, antes de incrementar. Perfiles duplicados se rechazan.
+- Los tres consumidores ui.js y la etapa 3 de add_cortes transmiten credenciales. silentRegister conserva serviceOverride ADMIN y assertDeveloperSession.
+- Los controles existentes addOrUpdateCut, addVinToVehicle y freezeCortesIds se conservaron. No se adelantó AUG-043 ni AUG-034.
+- opId no se vinculó al actor en esta tarea; el esquema legacy A:E y la compatibilidad de recuperación se mantienen. checkOperation no confía en opId como credencial y requiere sesión; el riesgo residual de consulta de metadata mínima por un colaborador autenticado que obtenga el opId queda documentado.
+
+Verificaciones locales: 34/34 PASS.
+Cobertura: sintaxis de Services/write.js, Services/admin.js, ui.js y script de add_cortes.html; sesiones válidas/ausentes/expiradas/revocadas/cruzadas/duplicadas; perfiles Users ausentes/duplicados/eliminados/roles inválidos; rol Developer y rechazo de rol cliente falsificado; doble validación y liberación de lock; rechazo de allocateVehicleId antes de mutación; addSupplementaryInfo antes/después de lock; checkOperation autenticado y respuesta mínima en WRITE/ADMIN; payloads UI/stage3; ruteo, ADMIN guard y controles existentes de cortes/VIN/freeze.
+
+Code Review / Safety & Side Effects: revisión de funciones modificadas y consumidores. La reversión analítica de cada archivo funcional reprodujo exactamente su respaldo original, confirmando que no se introdujeron cambios ajenos al alcance. No quedan hallazgos bloqueantes ni regresiones locales conocidas. La verificación de perfil activo/único replica el contrato de AUTH; perfiles válidos mantienen el flujo. La doble validación reduce la ventana de revocación previa al inicio, pero no afirma atomicidad entre proyectos distintos. No se elimina caché offline ni preferencias.
+
+Registros documentales append-only:
+- Auditoría.txt — blob e7e1d1cb27f869e64caefbfb5c344bc732107521; H-AUD-039-001 a H-AUD-039-005 cerrados.
+- ChangesLogs.txt — blob f70542b0a39d40658184357c782c791163c1686c.
+- Tareas.txt — blob 5671ddaebfab22dd2bf90a5bc90609862cc67d16.
+- Tareas_pendientes_parte1.txt — blob 0a35fc4f281c035e981b059bc55409b52cdc4e39.
+- tareas_completadas_parte1.txt — blob 0ac77c5ab9c983e9abca44da46366a5ce77370a3.
+Todos los documentos conservan el contenido previo como prefijo y permanecen por debajo de 180,000 caracteres.
+
+Límites: no se ejecutaron pruebas funcionales reales de navegador, integraciones desplegadas, concurrencia física de LockService ni datos productivos. Las pruebas funcionales integrales quedan exclusivamente para Beta; no se declara que hayan sido ejecutadas. No se modificaron deployments.
+
+Siguiente tarea: AUG-042, conforme al Plan Maestro. Antes de iniciarla, auditar el entregable AUG-039 como Ciclo A; no revertir cambios previos aprobados de AUG-039 por considerarlos fuera del alcance de AUG-042. AUG-011 permanece omitida por decisión del usuario; AUG-034 sigue pendiente sin bloquear AUG-042 por sí misma.
+
+Siguiente paso de publicación: un único commit AUG-039 mediante Git Database API con parent_sha a1e1ae16869c09b94f6784ba3d877a184af5fab1; actualizar exclusivamente GPSpedia2.2.5_work con force:false/expected_sha igual al HEAD padre y verificar commit, padre, archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca intacta.
+Este es el último registro documental de AUG-039 antes de su único commit.
+================================================================================

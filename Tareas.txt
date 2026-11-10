@@ -342,3 +342,23 @@ La limpieza elimina la credencial gpsepedia_session, no la caché offline ni las
 Pruebas funcionales integrales, navegador real, concurrencia LockService y validación de servicios desplegados quedan pendientes exclusivamente para Beta. No se ejecutaron contra producción.
 Siguiente tarea: conforme al orden de Fase 1, continuar con la siguiente tarea pendiente de la Ola 2; antes de iniciarla, aplicar el ciclo de auditoría de la implementación AUG-147.
 ================================================================================
+
+
+================================================================================
+AUG-039 — AUDITORÍA PREIMPLEMENTACIÓN — 2026-11-10
+Estado: AUDITORÍA COMPLETADA; IMPLEMENTACIÓN PENDIENTE en el momento del registro.
+Hallazgos en alcance: H-AUD-039-001 a H-AUD-039-005 (Auditoría.txt). Se identificaron controles existentes de AUTH, ADMIN, addOrUpdateCut, addVinToVehicle y freezeCortesIds que debían conservarse.
+Decisión opId/actor: no ampliar el esquema A:E de Idempotencia en esta tarea; checkOperation exige sesión y devuelve metadata mínima. opId no se considera credencial. Riesgo residual y justificación documentados en Auditoría.txt.
+AUG-034 no bloquea AUG-039: no se implementa coordinación compartida ni se asume un lock común entre proyectos.
+Siguiente paso al cierre de auditoría: respaldar archivos funcionales e implementar cambios mínimos con pruebas locales; Beta queda reservada.
+================================================================================
+
+
+================================================================================
+AUG-039 — CIERRE — 2026-11-10
+Estado: COMPLETADA — implementación y todas las verificaciones locales aprobadas (34/34 PASS).
+WRITE ahora valida userId+sessionToken y el perfil activo/único; addSupplementaryInfo valida antes/después del lock; checkOperation requiere sesión y minimiza respuesta; allocateVehicleId exige Developer verificado en servidor. UI y add_cortes transmiten credenciales; silentRegister conserva ADMIN. Los controles existentes de cortes, VIN y freeze se preservaron.
+No se vinculó opId al actor por la incompatibilidad/migración del esquema legacy; decisión y riesgo residual constan en Auditoría.txt.
+Pruebas funcionales integrales, navegador real, concurrencia física de LockService y validación de servicios desplegados quedan exclusivamente para Beta. No se ejecutaron contra producción.
+Siguiente tarea según Plan Maestro: AUG-042. Antes de iniciarla se auditará el entregable AUG-039 conforme al Ciclo A; los cambios ya aprobados de AUG-039 no se revertirán como si fueran cambios fuera de alcance de AUG-042.
+================================================================================

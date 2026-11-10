@@ -7980,6 +7980,7 @@ export function openAddAperturaModal(item) {
 
         try {
             await routeAction("addSupplementaryInfo", {
+                ...getDeveloperSessionPayload(),
                 vehicleId: item.id,
                 apertura: content.querySelector("#add-apertura-detalles").value,
                 imgApertura: imgBase64
@@ -8071,7 +8072,7 @@ export function openAddFeedModal(item) {
         }
 
         try {
-            await routeAction("addSupplementaryInfo", payload);
+            await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
             alert("Cable de alimentación agregado con éxito.");
             modal.remove();
             const catRes = await routeAction("getCatalogData");
@@ -8210,6 +8211,7 @@ export function openAddVideoModal(item) {
 
         try {
             await routeAction("addSupplementaryInfo", {
+                ...getDeveloperSessionPayload(),
                 vehicleId: item.id,
                 fieldName: "videoGuiaDesarmeUrl",
                 fieldValue: url

@@ -3676,44 +3676,31 @@ function handleMigrateCortesOperationIds(payload, logMessage, developerContext) 
 }
 
 function handleCheckOperation(payload) {
-    const { opId } = payload;
+    const { opId } = payload || {};
     if (!opId) throw new Error("ID de operación requerido.");
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const match = findRowByOpId(sheet, opId);
-    if (match && match.status !== "completed") {
-        return { status: "success", exists: false, pending: true, operationStatus: match.status,
-            vehicleId: mapRowToObject(match.rowValues, COLS_CORTES).id, timestamp: match.timestamp || "" };
+    if (!match) {
+        return { status: "success", exists: false, pending: false };
     }
-    if (match) {
-        const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
-        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
-
-        let slotIndex = 1;
-        if (matchedColName.includes("1") || match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
-        else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
-        else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
-
-        const filesStatus = {
-            imagenVehiculo: checkFileIdValid(rowObj.imagenVehiculo),
-            imgCorte1: checkFileIdValid(rowObj[`imgCorte${slotIndex}`])
-        };
-
+    if (match.status !== "completed") {
         return {
-            status: 'success',
-            exists: true,
-            operationStatus: "completed",
-            vehicleId: rowObj.id,
-            timestamp: rowObj.timestamp,
-            slotIndex: slotIndex,
-            filesStatus: filesStatus,
-            rowData: rowObj
+            status: "success",
+            exists: false,
+            pending: true,
+            operationStatus: match.status
         };
     }
+
+    const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
     return {
-        status: 'success',
-        exists: false
+        status: "success",
+        exists: true,
+        pending: false,
+        operationStatus: "completed",
+        vehicleId: rowObj.id,
+        timestamp: rowObj.timestamp
     };
 }
 

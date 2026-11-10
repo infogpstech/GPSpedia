@@ -363,3 +363,19 @@ AUG-147 — CIERRE DE IMPLEMENTACIÓN Y PRUEBAS LOCALES — 2026-11-10
 - checkpoint.md: checkpoint inicial, auditoría, respaldos, implementación, pruebas locales, Code Review y checkpoint final.
 Resultado local: 32/32 PASS. Sin pruebas funcionales de Beta, endpoints operativos, cambios de deployment ni modificaciones de datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-039 — IMPLEMENTACIÓN Y CIERRE LOCAL — 2026-11-10
+- Services/write.js:96–133: amplía el mapeo Users y endurece getAuthenticatedCollaborator para exigir sesión única/no expirada, perfil único, username activo y rol reconocido por AUTH.
+- Services/write.js:264–294: allocateVehicleId exige Developer antes y después del lock; el perfil/rol se resuelve de forma única desde Users. assertDeveloperForIdMaintenance mantiene finally en el consumidor.
+- Services/write.js:777–788: addSupplementaryInfo valida antes del lock y vuelve a validar en handleAddSupplementaryInfoLocked antes de acceder a Cortes/Drive.
+- Services/write.js:1542–1570: checkOperation exige sesión en WRITE y devuelve metadata mínima, sin rowData, slotIndex ni filesStatus.
+- Services/admin.js:3678–3705: checkOperation ADMIN conserva el guard global Developer y elimina rowData/slotIndex/filesStatus de la respuesta.
+- ui.js:7982–7987, 8074–8076, 8212–8218: las tres llamadas addSupplementaryInfo transmiten userId/sessionToken mediante getDeveloperSessionPayload; no se alteró el contrato de vídeo fuera de AUG-043.
+- add_cortes.html:1313–1321: handleStage3Submit transmite state.userId/sessionToken y conserva serviceOverride ADMIN para silentRegister.
+- Auditoría.txt: cierra H-AUD-039-001 a H-AUD-039-005 y documenta decisión opId/actor, pruebas y Safety & Side Effects.
+- Tareas.txt, Tareas_pendientes_parte1.txt y tareas_completadas_parte1.txt: registran cierre de AUG-039.
+- checkpoint.md: registra ciclo A de AUG-147, checkpoint inicial AUG-039, respaldos, auditoría, implementación, pruebas locales, Code Review y checkpoint final.
+Resultado: 34/34 verificaciones locales PASS. Sin pruebas funcionales Beta, endpoints operativos, deployments ni datos productivos.
+================================================================================

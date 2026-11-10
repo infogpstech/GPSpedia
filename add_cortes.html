@@ -1311,6 +1311,8 @@
             const imgCableAlimenVal = await fileToBase64(document.getElementById('imgCableAlimen').files[0]);
 
             const payload = {
+                userId: state.userId,
+                sessionToken: state.sessionToken,
                 vehicleId: state.selectedVehicleId,
                 apertura: document.getElementById('apertura').value,
                 notaImportante: document.getElementById('notaImportante').value,

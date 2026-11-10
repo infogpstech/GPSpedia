@@ -95,6 +95,8 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
 
 const COLS_USERS = {
     ID: 1,
+    Nombre_Usuario: 2,
+    Privilegios: 4,
     Nombre_Completo: 7
 };
 
@@ -118,12 +120,16 @@ function getSessionExpirationStatus_(row,now=new Date()){
  return{expired:false};
 }
 function getAuthenticatedCollaborator(payload){
- const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
- const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
- const m=sh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()===id&&String(r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]||'')===token);
- if(m.length!==1||getSessionExpirationStatus_(m[0],new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada o expirada.");
- const u=uh.getDataRange().getValues().slice(1).find(r=>String(r[COLS_USERS.ID-1]||'').trim()===id);if(!u)throw new Error("Acceso no autorizado: usuario de la sesión no encontrado.");
- const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;
+  const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
+  const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
+  const m=sh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_ACTIVE_SESSIONS.ID_Usuario-1]||'').trim()===id&&String(r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]||'')===token);
+  if(m.length!==1||getSessionExpirationStatus_(m[0],new Date()).expired)throw new Error("Acceso no autorizado: sesión inválida, duplicada o expirada.");
+  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[COLS_USERS.ID-1]||'').trim()===id);
+  if(userMatches.length!==1)throw new Error("Acceso no autorizado: el perfil de usuario no es único.");
+  const u=userMatches[0],username=String(u[COLS_USERS.Nombre_Usuario-1]||'').trim();
+  const role=String(u[COLS_USERS.Privilegios-1]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  if(!username||username.startsWith('__deleted__:')||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
+  const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;
 }
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
@@ -256,11 +262,12 @@ function getNextCortesVehicleIdLocked(sheet) {
 
 /** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
 function handleAllocateVehicleId(payload) {
-    getAuthenticatedCollaborator(payload);
+    assertDeveloperForIdMaintenance(payload);
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
     catch (error) { throw new Error("No se pudo obtener el bloqueo central de IDs. Intente nuevamente."); }
     try {
+        assertDeveloperForIdMaintenance(payload);
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         return { status: "success", vehicleId: getNextCortesVehicleIdLocked(sheet) };
     } finally {
@@ -274,9 +281,16 @@ function assertDeveloperForIdMaintenance(payload) {
     const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     if (!usersSheet) throw new Error("No se encontró la hoja Users.");
     const rows = usersSheet.getDataRange().getValues();
-    const user = rows.slice(1).find(row => String(row[COLS_USERS.ID - 1] || "").trim() === userId);
-    const role = String(user && user[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    if (role !== "desarrollador") throw new Error("La conversión de IDs requiere privilegio Desarrollador.");
+    const userMatches = rows.slice(1).filter(row =>
+        String(row[COLS_USERS.ID - 1] || "").trim() === userId);
+    if (userMatches.length !== 1) {
+        throw new Error("No se pudo resolver un perfil único para el mantenimiento de IDs.");
+    }
+    const role = String(userMatches[0][COLS_USERS.Privilegios - 1] || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    if (role !== "desarrollador") {
+        throw new Error("El mantenimiento de IDs de Cortes requiere privilegio Desarrollador.");
+    }
 }
 
 function verifyCortesIdsBackup(value) {
@@ -761,6 +775,7 @@ function handleCheckVehicle(payload) {
 }
 
 function handleAddSupplementaryInfo(payload) {
+    getAuthenticatedCollaborator(payload);
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
     catch (error) { throw new Error("No se pudo bloquear el registro de información suplementaria. Intente nuevamente."); }
@@ -769,6 +784,7 @@ function handleAddSupplementaryInfo(payload) {
 }
 
 function handleAddSupplementaryInfoLocked(payload) {
+    getAuthenticatedCollaborator(payload);
     const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, cableAlimen2, imgCableAlimen2, cableAlimen3, imgCableAlimen3, notaImportante, timestamp } = payload;
     if (!vehicleId) {
         throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
@@ -1524,44 +1540,32 @@ function findRowByOpId(sheet, opId) {
 
 /* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */
 function handleCheckOperation(payload) {
-    const { opId } = payload;
+    getAuthenticatedCollaborator(payload);
+    const { opId } = payload || {};
     if (!opId) throw new Error("ID de operación requerido.");
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const match = findRowByOpId(sheet, opId);
-    if (match && match.status !== "completed") {
-        return { status: "success", exists: false, pending: true, operationStatus: match.status,
-            vehicleId: mapRowToObject(match.rowValues, COLS_CORTES).id, timestamp: match.timestamp || "" };
+    if (!match) {
+        return { status: "success", exists: false, pending: false };
     }
-    if (match) {
-        const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
-        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-        const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
-
-        let slotIndex = 1;
-        if (matchedColName.includes("1") || match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
-        else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
-        else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
-
-        const filesStatus = {
-            imagenVehiculo: checkFileIdValid(rowObj.imagenVehiculo),
-            imgCorte1: checkFileIdValid(rowObj[`imgCorte${slotIndex}`])
-        };
-
+    if (match.status !== "completed") {
         return {
-            status: 'success',
-            exists: true,
-            operationStatus: "completed",
-            vehicleId: rowObj.id,
-            timestamp: rowObj.timestamp,
-            slotIndex: slotIndex,
-            filesStatus: filesStatus,
-            rowData: rowObj
+            status: "success",
+            exists: false,
+            pending: true,
+            operationStatus: match.status
         };
     }
+
+    const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
     return {
-        status: 'success',
-        exists: false
+        status: "success",
+        exists: true,
+        pending: false,
+        operationStatus: "completed",
+        vehicleId: rowObj.id,
+        timestamp: rowObj.timestamp
     };
 }
 

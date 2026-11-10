@@ -823,3 +823,95 @@ Pruebas locales ejecutadas: 32/32 PASS. Incluyen sintaxis de los cuatro archivos
 
 Code Review y Safety & Side Effects: revisión de todas las funciones modificadas y de sus consumidores; diff inverso confirmó que los cambios funcionales quedan limitados a los bloques descritos. No se detectaron hallazgos bloqueantes ni efectos colaterales pendientes dentro del alcance. Se conserva catálogo/cache IndexedDB, historial local, preferencias de tema y aceptación de términos; se elimina únicamente la credencial de sesión. Los escenarios reales de navegador, integración con servicios desplegados, concurrencia física de LockService y pruebas funcionales integrales quedan exclusivamente para Beta. No se invocaron endpoints operativos ni se modificaron deployments o datos productivos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREIMPLEMENTACIÓN — AUG-039 — 2026-11-10
+Origen declarado: H-AUD-032-001, H-AUD-032-002, H-AUD-032-003. Referencias relacionadas: AUD-T-032, AUD-T-024/AUG-016, AUD-T-033/AUG-003 y AUD-T-035 (esta última referencia no aparece como unidad independiente en el Auditoría.txt activo; el contrato se verificó directamente en los consumidores actuales).
+Estado de las unidades nuevas: ABIERTAS; implementación aún no iniciada.
+
+H-AUD-039-001 — ALTA — ABIERTO
+Origen: AUG-039 / H-AUD-032-001.
+Ubicación: Services/write.js:763–844, handleAddSupplementaryInfo y handleAddSupplementaryInfoLocked.
+Evidencia: el router WRITE despacha addSupplementaryInfo directamente a handleAddSupplementaryInfo. El wrapper adquiere ScriptLock y llama a la función interna; esta desestructura payload y accede a Cortes, crea/consulta carpetas Drive y escribe texto, imágenes y timestamp sin llamar a getAuthenticatedCollaborator. El helper existente valida userId/sessionToken contra ActiveSessions, expiración y existencia del usuario, pero resuelve Users con find() y no rechaza perfiles duplicados o inactivos, a diferencia de AUTH.validateAndTouchSession_.
+Impacto: una llamada directa al endpoint puede mutar Cortes/Drive sin sesión; la resolución ambigua o un perfil marcado como eliminado no debe aceptarse como identidad válida.
+Criterio de corrección: exigir getAuthenticatedCollaborator antes de adquirir el lock y volver a validar al entrar en la sección protegida después de obtenerlo, antes de cualquier lectura con efecto o mutación; endurecer la resolución del perfil para exigir una única fila Users activa con username y rol reconocidos según AUTH. Si falla la validación no debe existir escritura en Sheets/Drive. Mantener finally para liberar el lock.
+Dependencias: ActiveSessions y Users de la misma base; no requiere un lock compartido entre proyectos para este control de inicio de operación. No afirmar atomicidad frente a una revocación posterior a la segunda validación.
+
+H-AUD-039-002 — ALTA — ABIERTO
+Origen: AUG-039 / H-AUD-032-002.
+Ubicación: Services/write.js:1526–1565, handleCheckOperation; Services/admin.js:3678–3718, handleCheckOperation.
+Evidencia: WRITE consulta Idempotencia/Cortes sin validar sesión. Ambas implementaciones devuelven rowData completo; también calculan slotIndex/filesStatus. Los consumidores actuales de add_cortes.html solo utilizan exists y, cuando existe una operación completada, vehicleId/timestamp; no consumen rowData, slotIndex ni filesStatus. El router ADMIN ejecuta assertDeveloperSession(payload) antes del switch para todas las acciones salvo ping, pero su respuesta conserva la exposición de rowData.
+Impacto: lectura no autenticada de datos completos de Cortes por WRITE y exposición innecesaria incluso para consultas ADMIN autenticadas.
+Criterio de corrección: exigir getAuthenticatedCollaborator(payload) al inicio de WRITE; conservar intacto el guard global ADMIN; devolver únicamente status, exists, pending/operationStatus cuando aplique y vehicleId/timestamp solo para una operación completada que el consumidor deba recuperar. Omitir rowData, slotIndex y filesStatus al no existir consumidor que los necesite.
+Dependencias: conservar compatibilidad con los consumidores actuales de add_cortes.html y la ruta serviceOverride ADMIN para silentRegister.
+
+H-AUD-039-003 — ALTA — ABIERTO
+Origen: AUG-039 / H-AUD-032-003.
+Ubicación: Services/write.js:257–280, handleAllocateVehicleId y assertDeveloperForIdMaintenance.
+Evidencia: handleAllocateVehicleId llama a getAuthenticatedCollaborator, pero no verifica rol y luego incrementa el contador bajo ScriptLock. Existe assertDeveloperForIdMaintenance, usado por freezeCortesIds, que resuelve el rol desde Users; el consumidor ADMIN requestNextVehicleIdFromWriteService ya transmite userId/sessionToken y el router ADMIN también exige Developer, pero WRITE es un endpoint independiente y debe defenderse por sí mismo. El helper de rol usa find() y no rechaza un ID de usuario ambiguo.
+Impacto: cualquier colaborador con sesión válida puede reservar IDs mediante una llamada directa a WRITE; una resolución ambigua del perfil puede seleccionar un rol no representativo.
+Criterio de corrección: exigir assertDeveloperForIdMaintenance en servidor antes de entrar al lock y revalidarlo dentro del lock, inmediatamente antes de leer/incrementar el contador; exigir una única fila Users para el ID y obtener el rol de esa fila; liberar lock en finally. No aceptar rol ni nombre enviados por el cliente.
+Dependencias: conservar el consumidor ADMIN existente y el comportamiento de freezeCortesIds.
+
+H-AUD-039-004 — MEDIA — ABIERTO
+Origen: AUG-039 / H-AUD-032-001.
+Ubicación: ui.js:7982–7986, 8074–8075 y 8212–8216.
+Evidencia: las tres llamadas de addSupplementaryInfo (apertura, alimentación y enlace de vídeo) no transmiten userId/sessionToken. getDeveloperSessionPayload ya existe en ui.js y devuelve ambos valores desde currentUser. La llamada de vídeo envía fieldName/fieldValue, campos no implementados por el handler WRITE; esa semántica pertenece a una tarea distinta y no debe alterarse en AUG-039.
+Impacto: al exigir autenticación en WRITE, estos consumidores fallarían por no incluir el contexto de sesión.
+Criterio de corrección: añadir getDeveloperSessionPayload() a los tres payloads sin cambiar la semántica de los campos existentes ni adelantar la implementación del enlace de vídeo.
+
+H-AUD-039-005 — MEDIA — ABIERTO
+Origen: AUG-039 / H-AUD-032-001.
+Ubicación: add_cortes.html:1313–1337, handleStage3Submit.
+Evidencia: el payload de addSupplementaryInfo no incluye state.userId/state.sessionToken. Las llamadas previas a checkOperation sí incluyen ambos. El flujo silentRegister selecciona serviceOverride ADMIN y el router ADMIN exige assertDeveloperSession(payload).
+Impacto: el paso final fallaría al incorporar la validación de WRITE; el flujo silentRegister no podría acreditar su sesión Developer ante ADMIN.
+Criterio de corrección: incluir userId: state.userId y sessionToken: state.sessionToken en el payload de etapa 3; mantener serviceOverride sin alteración.
+
+DECISIÓN DE DISEÑO — VINCULACIÓN opId/ACTOR
+La vinculación de opId al actor creador NO se incorpora en AUG-039. Evidencia: IDEMPOTENCIA_HEADERS mantiene esquema A:E (opId, vehicleId, slotIndex, timestamp, status); recordOpId/findRowByOpId y las rutas duplicadas ADMIN dependen de ese contrato; add_cortes.html genera OP-Date.now()-Math.random() y los registros legacy pueden localizarse en campos colaborador. Añadir actor requeriría migración de Idempotencia e Idempotencia_Cortes, cambios de compatibilidad/recuperación y sincronización WRITE/ADMIN, ampliando riesgo y alcance. opId no se tratará como credencial ni sustituirá autenticación: cada checkOperation exige sesión válida y devuelve solo metadata mínima. Riesgo residual aceptado: un colaborador autenticado que obtenga un opId podrá consultar su estado mínimo; si se requiere privacidad estricta por propietario, deberá abrirse una tarea separada de vinculación/migración.
+
+CONTROLES EXISTENTES PRESERVADOS
+- handleAddOrUpdateCutLocked ya llama getAuthenticatedCollaborator antes de las mutaciones.
+- handleAddVinToVehicleLocked ya llama getAuthenticatedCollaborator antes de consultar/modificar Cortes.
+- freezeCortesIds ya llama assertDeveloperForIdMaintenance bajo lock.
+- ADMIN doPost ejecuta assertDeveloperSession(payload) antes del dispatch (excepto ping); no duplicar ese control en los handlers.
+- api-config.js enruta addSupplementaryInfo/checkOperation/allocateVehicleId a WRITE por defecto; serviceOverride ADMIN se conserva para silentRegister.
+- add_cortes.html ya transmite credenciales en checkOperation; solo stage3 requiere actualización.
+- AUG-034 sigue pendiente, pero no bloquea esta tarea: AUG-039 no implementará coordinación compartida ni asumirá que los ScriptLock de proyectos distintos son excluyentes.
+================================================================================
+
+
+RECTIFICACIÓN DE REFERENCIA — AUG-039 — 2026-11-10
+La expresión del generador opId se transcribe literalmente como código: `'OP-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9).toUpperCase()` (add_cortes.html:377). La referencia resumida en la decisión de diseño anterior debe leerse como una descripción de Date.now() y Math.random(), no como una cadena literal distinta.
+
+
+================================================================================
+CIERRE DE HALLAZGOS — AUG-039 — 2026-11-10
+Estado: COMPLETADA — implementación incorporada y todas las verificaciones locales aprobadas (34/34 PASS). Pruebas funcionales integrales en Beta: PENDIENTES por instrucción del propietario.
+
+H-AUD-039-001 — RESUELTO
+Services/write.js:122–133 y 777–788. getAuthenticatedCollaborator ahora exige sesión única y no expirada en ActiveSessions, perfil Users único, username válido no eliminado, rol reconocido según AUTH y nombre completo server-side. addSupplementaryInfo valida antes de adquirir el lock y vuelve a validar al entrar al handler protegido después de obtenerlo; la segunda validación ocurre antes de acceder a Cortes/Drive. El lock se libera en finally. No hay escrituras si la sesión falta, no corresponde, está duplicada, expirada o fue revocada mientras se esperaba el lock.
+
+H-AUD-039-002 — RESUELTO
+Services/write.js:1542–1570 y Services/admin.js:3678–3705. WRITE exige getAuthenticatedCollaborator antes de leer. ADMIN conserva el assertDeveloperSession global previo al dispatch. Ambas respuestas checkOperation omiten rowData, slotIndex y filesStatus; solo devuelven status/exists/pending/operationStatus y, para operación completada, vehicleId/timestamp que consume add_cortes.html.
+
+H-AUD-039-003 — RESUELTO
+Services/write.js:264–294. allocateVehicleId exige assertDeveloperForIdMaintenance antes del lock y vuelve a validar después de adquirirlo, antes de consultar/incrementar el contador. El rol se obtiene de Users, el perfil debe ser único y el lock se libera en finally. La misma verificación única del perfil se conserva para freezeCortesIds. El proxy ADMIN ya transmitía userId/sessionToken y no requirió cambios.
+
+H-AUD-039-004 — RESUELTO
+ui.js:7982–7987, 8074–8076 y 8212–8218. Las tres llamadas addSupplementaryInfo transmiten getDeveloperSessionPayload() (userId/sessionToken). La semántica fieldName/fieldValue de la llamada de vídeo no se modificó; sigue fuera del alcance de AUG-039 y permanece vinculada a AUG-043.
+
+H-AUD-039-005 — RESUELTO
+add_cortes.html:1313–1321. handleStage3Submit transmite state.userId/state.sessionToken. Se conservó serviceOverride ADMIN para silentRegister y el control assertDeveloperSession del router ADMIN.
+
+Decisión opId/actor aplicada: no se añadió columna de actor ni se migró el esquema A:E de Idempotencia/Idempotencia_Cortes. Cada checkOperation exige ahora sesión válida y responde con metadata mínima; opId no se trata como credencial. Se conserva el riesgo residual documentado: un colaborador autenticado que obtenga un opId puede consultar el estado mínimo de esa operación. La vinculación por actor requerirá una tarea independiente con migración/compatibilidad legacy y actualización coordinada de WRITE/ADMIN.
+
+Controles de regresión preservados: handleAddOrUpdateCutLocked y handleAddVinToVehicleLocked continúan usando getAuthenticatedCollaborator; freezeCortesIds continúa usando assertDeveloperForIdMaintenance; ADMIN sigue validando Developer globalmente; api-config mantiene el ruteo WRITE por defecto y el override ADMIN de silentRegister. No se alteró la semántica de los campos de vídeo no soportados.
+
+Pruebas locales: 34/34 PASS. Incluyen sintaxis de Services/write.js, Services/admin.js, ui.js y script de add_cortes.html; validación de sesión ausente, expirada, revocada, cruzada y duplicada; perfiles Users ausentes, duplicados, eliminados y roles inválidos; rol Developer vs colaborador; rol cliente falsificado; doble validación y liberación de lock; rechazo de asignación antes de mutar; checkOperation autenticado y respuestas mínimas en WRITE/ADMIN; payloads de ui.js y stage3; ruteo y guardas existentes; paridad de controles previos.
+
+Code Review / Safety & Side Effects: revisión de todas las funciones modificadas y consumidores. La reversión analítica de cada archivo funcional a su respaldo reprodujo exactamente el contenido original, confirmando que no hubo cambios fuera del alcance. No quedan hallazgos bloqueantes ni regresiones locales conocidas. La validación de rol/usuario ahora replica los roles activos que reconoce AUTH; usuarios válidos conservan el flujo. La revalidación después del lock reduce la ventana de revocación previa al inicio, sin afirmar coordinación atómica entre proyectos distintos. AUG-034 sigue pendiente y no fue adelantada.
+
+Límites: no se ejecutaron pruebas funcionales reales de navegador, endpoints operativos, integración con deployments ni datos productivos. Todas las pruebas funcionales integrales quedan reservadas para Beta. No se modificaron deployments ni se invocaron endpoints productivos.
+================================================================================

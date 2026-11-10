@@ -278,3 +278,12 @@ Evidencia: AUD-T-033/AUD-20261107-S014/AUD-CP-0014 identifica el contrato actual
 No equivale a implementar un coordinador interproyectos ni a aprobar pruebas funcionales. AUG-034 conserva la implementación, recuperación y pruebas locales/aisladas del coordinador como pendiente.
 Validación: continuidad Git y revisión documental PASS. Sin cambios de código ni pruebas Beta.
 ================================================================================
+
+
+================================================================================
+AUG-039 — COMPLETADA — 2026-11-10
+Autorización y minimización de datos en WRITE: sesión y perfil activo/único validados server-side; addSupplementaryInfo protegido antes/después del lock; checkOperation autenticado y con respuesta mínima en WRITE/ADMIN; allocateVehicleId limitado a Developer verificado; consumidores ui.js y add_cortes transmiten credenciales; silentRegister conserva ADMIN.
+Verificaciones locales: 34/34 PASS. Code Review/Safety & Side Effects PASS; cambios funcionales limitados a Services/write.js, Services/admin.js, ui.js y add_cortes.html. Pruebas funcionales Beta pendientes y no ejecutadas.
+Decisión opId/actor: no migrar esquema legacy en esta tarea; riesgo residual documentado en Auditoría.txt.
+Siguiente tarea del orden maestro: AUG-042, previa auditoría post-commit de AUG-039.
+================================================================================
