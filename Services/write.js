@@ -34,7 +34,8 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
+    activaTestigo1: 46, activaTestigo2: 47, activaTestigo3: 48
 };
 
 /**
@@ -42,19 +43,18 @@ const COLS_CORTES = {
  * Retorna 0 cuando la hoja no dispone de esa columna.
  */
 function getVinColumnIndex(sheet) {
-    if (!sheet) return 0;
-    const lastColumn = sheet.getLastColumn();
-    if (lastColumn < 1) return 0;
-    const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
-    const index = headers.findIndex(value => String(value || "").trim().toLowerCase() === "vin");
-    return index >= 0 ? index + 1 : 0;
+    if (!sheet || sheet.getLastColumn() < 1) return 0;
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const matches = [];
+    headers.forEach((value, index) => {
+        if (String(value || "").trim().toLowerCase() === "vin") matches.push(index + 1);
+    });
+    if (matches.length > 1) {
+        throw new Error("La hoja «Cortes» contiene encabezados VIN duplicados en las columnas " + matches.join(", ") + "; no se realizó ninguna escritura.");
+    }
+    return matches.length === 1 ? matches[0] : 0;
 }
 
-
-/**
- * Comprueba y agrega al final de «Cortes» las columnas de activación del testigo.
- * Los índices se resuelven desde los encabezados para conservar columnas adicionales existentes.
- */
 function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
     if (!sheet) throw new Error('No se encontró la hoja «Cortes».');
     const lock = lockAlreadyHeld ? null : LockService.getScriptLock();
@@ -64,53 +64,63 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
             lock.waitLock(30000);
             lockAcquired = true;
         }
-        let lastColumn = sheet.getLastColumn();
+        const targetColumns = [46, 47, 48]; // AT:AV es el contrato físico obligatorio.
+        const headerNames = ["activaTestigo1", "activaTestigo2", "activaTestigo3"];
+        const lastColumn = sheet.getLastColumn();
         if (lastColumn < 1) throw new Error('La hoja «Cortes» no contiene encabezados.');
-        const maxColumns = sheet.getMaxColumns();
-        if (maxColumns < 45) {
-            sheet.insertColumnsAfter(maxColumns, 45 - maxColumns);
-        }
-        lastColumn = Math.max(lastColumn, 45);
-        const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
-        ['activaTestigo1', 'activaTestigo2', 'activaTestigo3'].forEach(headerName => {
-            let headerIndex = headers.findIndex(value => String(value || '').trim() === headerName);
-            if (headerIndex === -1) {
-                sheet.insertColumnAfter(lastColumn);
-                lastColumn++;
-                sheet.getRange(1, lastColumn).setValue(headerName);
-                headers.push(headerName);
-                headerIndex = lastColumn - 1;
+
+        const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+        headerNames.forEach((name, index) => {
+            const matches = [];
+            currentHeaders.forEach((value, column) => {
+                if (String(value || "").trim().toLowerCase() === name.toLowerCase()) matches.push(column + 1);
+            });
+            if (matches.length > 1) {
+                throw new Error("El encabezado " + name + " está duplicado en las columnas " + matches.join(", ") + ".");
             }
-            COLS_CORTES[headerName] = headerIndex + 1;
+            if (matches.length === 1 && matches[0] !== targetColumns[index]) {
+                throw new Error("El encabezado " + name + " está en la columna " + matches[0] +
+                    "; el contrato requiere la columna " + targetColumns[index] + " (" +
+                    ["AT", "AU", "AV"][index] + "). No se desplazaron datos.");
+            }
         });
+
+        const maxColumns = sheet.getMaxColumns();
+        if (maxColumns < 48) sheet.insertColumnsAfter(maxColumns, 48 - maxColumns);
+
+        const lastRow = sheet.getLastRow();
+        const targetHeaders = sheet.getRange(1, 46, 1, 3).getValues()[0];
+        for (let index = 0; index < headerNames.length; index++) {
+            const current = String(targetHeaders[index] || "").trim();
+            if (current && current.toLowerCase() !== headerNames[index].toLowerCase()) {
+                throw new Error("La columna " + ["AT", "AU", "AV"][index] + " ya contiene el encabezado «" +
+                    current + "»; no se sobrescribió.");
+            }
+            if (!current && lastRow > 1) {
+                const values = sheet.getRange(2, targetColumns[index], lastRow - 1, 1).getValues();
+                if (values.some(row => row[0] !== "" && row[0] !== null && row[0] !== undefined)) {
+                    throw new Error("La columna " + ["AT", "AU", "AV"][index] +
+                        " contiene datos sin encabezado; no se reasignó.");
+                }
+            }
+        }
+
+        for (let index = 0; index < headerNames.length; index++) {
+            if (String(targetHeaders[index] || "").trim() !== headerNames[index]) {
+                sheet.getRange(1, targetColumns[index]).setValue(headerNames[index]);
+            }
+            COLS_CORTES[headerNames[index]] = targetColumns[index];
+        }
         return {
-            activaTestigo1: COLS_CORTES.activaTestigo1,
-            activaTestigo2: COLS_CORTES.activaTestigo2,
-            activaTestigo3: COLS_CORTES.activaTestigo3
+            activaTestigo1: 46,
+            activaTestigo2: 47,
+            activaTestigo3: 48
         };
     } finally {
         if (lockAcquired) lock.releaseLock();
     }
 }
 
-const COLS_USERS = {
-    ID: 1,
-    Nombre_Usuario: 2,
-    Privilegios: 4,
-    Nombre_Completo: 7,
-    SessionToken: 8
-};
-const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
-
-const COLS_ACTIVE_SESSIONS = {
-    ID_Usuario: 1,
-    ActiveSessions: 3
-};
-
-/**
- * Obtiene la identidad personal desde la sesión activa y el perfil almacenados
- * en Spreadsheet. No utiliza el nombre enviado por el navegador.
- */
 function getSessionExpirationStatus_(row,now=new Date()){
  if(!row)return{expired:true,reason:'missing_session'};
  const parse=v=>{if(v===null||v===undefined||String(v).trim()==='')return null;const d=v instanceof Date?new Date(v.getTime()):new Date(v);return Number.isNaN(d.getTime())?null:d;};
@@ -1851,18 +1861,65 @@ function countEquipmentVersions(versionesStr) {
   return 3; // Máximo 3
 }
 
-function parseVinCollection(rawVin) {
-   if (!rawVin) return [];
-   const str = String(rawVin).trim();
-   if (!str) return [];
-   if (str.startsWith("[") && str.endsWith("]")) {
-     try {
-       const arr = JSON.parse(str);
-       if (Array.isArray(arr)) return arr.map(value => String(value || "").trim().toUpperCase());
-     } catch (e) {}
-   }
-   return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+function normalizeVinCollectionValue_(value, context) {
+    if (value === null || value === undefined) return "";
+    if (typeof value !== "string") {
+        throw new Error((context || "VIN") + ": cada elemento debe ser texto.");
+    }
+    const normalized = value.trim().toUpperCase();
+    if (!normalized || normalized.startsWith("OP-") || normalized.startsWith("OP_") ||
+        normalized.includes("IDOPERACION")) return "";
+    if (!/^[A-Z0-9]{1,18}$/.test(normalized)) {
+        throw new Error((context || "VIN") + ": identificador heredado inválido «" + normalized + "».");
+    }
+    return normalized;
 }
+
+function normalizeVinCollectionArray_(values, context) {
+    if (!Array.isArray(values)) throw new Error((context || "VIN") + ": se esperaba una colección.");
+    if (values.length > 3) throw new Error((context || "VIN") + ": la colección no puede superar tres posiciones.");
+    const normalized = values.map(value => normalizeVinCollectionValue_(value, context));
+    const seen = new Set();
+    normalized.forEach(value => {
+        if (!value) return;
+        if (seen.has(value)) throw new Error((context || "VIN") + ": el VIN «" + value + "» está duplicado en la misma colección.");
+        seen.add(value);
+    });
+    return normalized;
+}
+
+function parseVinCollection(rawVin) {
+    if (rawVin === null || rawVin === undefined || rawVin === "") return [];
+    if (Array.isArray(rawVin)) return normalizeVinCollectionArray_(rawVin, "Colección VIN");
+
+    const text = String(rawVin).trim();
+    if (!text) return [];
+    if (text.startsWith("[") || text.endsWith("]")) {
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch (error) {
+            throw new Error("La colección VIN contiene JSON mal formado; no se interpretó como texto heredado.");
+        }
+        if (!Array.isArray(parsed)) throw new Error("El formato JSON de VIN debe ser un array.");
+        return normalizeVinCollectionArray_(parsed, "Colección VIN JSON");
+    }
+
+    return text.split(/[,/\\;]+/)
+        .map(value => normalizeVinCollectionValue_(value, "Colección VIN heredada"))
+        .filter(Boolean)
+        .slice(0, 3);
+}
+
+function serializeVinCollection(vinArray) {
+    const normalized = normalizeVinCollectionArray_(vinArray, "Serialización VIN");
+    return normalized.some(Boolean) ? JSON.stringify(normalized) : "";
+}
+
+function parseVinCollectionForAdmin(rawVin) {
+    return parseVinCollection(rawVin);
+}
+
 function serializeVinCollection(vinArray) {
    if (!Array.isArray(vinArray) || vinArray.length === 0) return "";
    const normalized = vinArray.map(value => String(value || "").trim().toUpperCase());
