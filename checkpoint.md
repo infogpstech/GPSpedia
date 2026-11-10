@@ -326,3 +326,5 @@ Pruebas: suite lógica 14/14 PASS; parsing V8 ADMIN/WRITE/UI/test PASS; helpers 
 Límites: no se ejecutó Spreadsheet real, Apps Script, navegador ni deployments. La integración real y pruebas de escritura/lectura quedan en Beta.
 No se modificó la rama base.
 ================================================================================
+
+Verificación final AUG-036: Services/Test/VinTestigoIntegrity.js 14/14 PASS; parsing V8 ADMIN/WRITE/UI/test PASS; helpers de columna VIN, AT:AV y parser ADMIN/WRITE idénticos; paridad frontend/backend y rechazo de entradas inválidas confirmados. HEAD anterior a este checkpoint: c31a0ed60907a51149225947364a45f218da6002.
