@@ -1372,3 +1372,26 @@ Estas validaciones no se ejecutaron en esta sesión y la tarea permanece EN PROG
 No se modificaron endpoints, deployments, datos productivos ni la rama base.
 Siguiente iteración: completar únicamente las validaciones locales pendientes de esta corrección. No iniciar AUG-041 ni otra tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CORR-FEEDBACK-ASSIGN-COLLABORATOR-RETIRE-001 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+Rama base: GPSpedia2.2.5 (sin modificaciones).
+HEAD al inicio de esta iteración: e61c17454da5d3149ac1fbbf0a272c0c6d225c23.
+Tarea única: retirar handleAssignCollaborator() sin consumidor vigente y validar la regresión.
+Resultado:
+- runFeedbackWriteSecurityTests(): 44/44 PASS en runner JavaScript aislado.
+- El runner requirió dobles mínimos de LockService y CacheService, que son servicios disponibles en Apps Script. La suite usa dobles en memoria y no accede a hojas ni Drive reales.
+- Parsing completo de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- La prueba confirma que authorizeFeedbackAction_ rechaza assignCollaborator y que handleAssignCollaborator no existe.
+- Diff comparado desde el inicio de la tarea: seis archivos, todos dentro del alcance (Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md); sin cambios ajenos.
+- No se ejecutó código en el despliegue productivo de Apps Script ni se modificaron datos productivos, endpoints o deployments.
+Commits de esta iteración:
+- 864648756eacd080f4241864d87d95227c4d203c — auditoría actualizada con resultados.
+- efae40900225ce265752d13e6bb0fa4e98de7bb0 — changelog de validación.
+- b725221d304b332e3c24324824adc2f669503ed3 — tarea marcada COMPLETADA.
+Estado: COMPLETADA. No quedan validaciones pendientes dentro del alcance de esta corrección.
+Siguiente iteración: continuar con el siguiente criterio pendiente de AUG-040, una sola tarea. No iniciar AUG-041 sin cerrar primero AUG-040.
+================================================================================
