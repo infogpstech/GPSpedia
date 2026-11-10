@@ -1268,3 +1268,16 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Beta pendiente: navegador real, XHR, endpoints desplegados, Apps Script/Spreadsheet reales y concurrencia física. No se ejecutaron deployments ni se modificaron datos productivos.
 Siguiente iteración: continuar con el siguiente criterio pendiente de AUG-040, una tarea a la vez. No iniciar AUG-041.
 ================================================================================
+
+
+================================================================================
+PUBLICACIÓN VERIFICADA — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001 — 2026-11-10
+- Commit de registro inicial, auditoría, tarea y checkpoint: 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
+- Commit de implementación y pruebas: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+- HEAD de trabajo verificado: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+- Relectura remota: runFeedbackWriteSecurityTests 44/44 PASS; LikeClientCounter 6/6 PASS; parsing 5/5 PASS.
+- Comparación desde HEAD previo fb094ec34767bdec1983efede7fb8fbdbb4925a7: 2 commits, 9 archivos modificados/añadidos, únicamente alcance de la corrección y registros.
+- Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, intacta.
+Estado final: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Siguiente iteración: continuar con el siguiente criterio pendiente de AUG-040, una tarea a la vez. No iniciar AUG-041.
+================================================================================

@@ -863,3 +863,9 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Revisión post-commit: diff limitado a 10 archivos del alcance; rama base intacta.
 - La corrección queda COMPLETADA CON VALIDACIÓN DIFERIDA. Navegador real, IndexedDB real, endpoints y Apps Script desplegado quedan para Beta.
 ================================================================================
+
+
+ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
+- Registro/checkpoint de tarea: 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
+- Implementación y pruebas: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+- HEAD de implementación verificado: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.

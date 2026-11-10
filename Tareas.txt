@@ -660,3 +660,9 @@ CORR-FEEDBACK-LIKE-COUNTER-SYNC-001 — SINCRONIZAR CONTADOR DE recordLike CON B
 - Evidencia local: runFeedbackWriteSecurityTests() 44/44 PASS; LikeClientCounter 6/6 PASS; parsing 5/5 PASS; diff revisado.
 - Beta pendiente: navegador real, endpoints desplegados, Apps Script/Spreadsheet reales y concurrencia física.
 ================================================================================
+
+
+PUBLICACIÓN VERIFICADA — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
+- Commit de registro/checkpoint: 105ac7bd15e5699edd18a4e6a6cc4227082bb8eb.
+- Commit de implementación y pruebas: 34ab8e03b09889c5cc3edf71453f507dc3017fe9.
+- Rama base GPSpedia2.2.5 sin modificaciones.
