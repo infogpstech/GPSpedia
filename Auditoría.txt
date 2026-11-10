@@ -336,3 +336,14 @@ Pruebas locales: UtilitiesSecurity 12/12 PASS; parsing 2/2 PASS; diff revisado.
 Código exacto del deployment UTILITIES no accesible desde el repositorio; comparación del deployment y pruebas Apps Script/Spreadsheet aisladas quedan pendientes de Beta.
 No se ejecutó endpoint ni se accedió a datos productivos.
 ================================================================================
+
+
+================================================================================
+H-AUD-043-001 — MEDIA — RESUELTO EN VALIDACIÓN LOCAL — 2026-11-10
+Origen: AUG-043, criterio 6.
+Ubicación: add_cortes.html, acordeón #video-accordion y callback onSuccess de btn-addcorte-upload-video.
+Evidencia: el formulario ofrecía el campo manual videoGuiaUrl y, al completar el flujo de subida, copiaba data.videoUrl en ese campo. El valor no era consumido por el guardado de etapa 3 ni por handleAddSupplementaryInfo; no se encontró una escritura backend de esa URL por esta ruta. La interfaz, sin embargo, sugería una asociación directa y mezclaba la URL de una solicitud aún pendiente con el formulario.
+Impacto: contrato visual engañoso y una ruta manual no respaldada por una acción backend; riesgo de reintroducir publicación fuera del flujo de aprobación en cambios futuros. No se encontró evidencia de que esta ruta publicara el vídeo antes de aprobarlo.
+Corrección: se retiró el input manual; el callback ya no copia videoUrl a un campo de captura, muestra el estado de solicitud pendiente y deshabilita el botón para impedir un segundo envío desde la misma vista. openAddVideoModal ya utilizaba exclusivamente openYouTubeUploadModal. Los handlers backend conservan la publicación únicamente en approveVideo.
+Validación: YouTubeAddCortesContract 4/4 PASS; pruebas existentes de aprobación/subida y seguridad 131/131 PASS; parsing de los módulos y script afectado PASS. Validación real de navegador, OAuth/YouTube, Apps Script y Spreadsheet aislados queda diferida a Beta.
+================================================================================

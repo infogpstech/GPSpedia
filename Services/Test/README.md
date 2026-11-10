@@ -208,6 +208,7 @@ Las pruebas del flujo de aprobación se ejecutan con Services/feedback.js y las 
 - Services/Test/VideoApprovalPublishing.js — aprobación/rechazo en Cortes, PyS y Tutoriales; unicidad del destino, miniaturas, reintentos tras fallos parciales, reintento después de perder la respuesta de una aprobación completada y verificación de que no se sobrescriba un destino alterado.
 - Services/Test/VideoApprovalContracts.js — ejecutar runVideoApprovalCreationContractTests(); valida altas sin vídeo, bloqueo de enlaces directos y protección de cambios fuera del flujo de aprobación.
 - Services/Test/VideoApprovalSessions.js — sesión ausente, inválida, expirada, revocada, token cruzado, duplicidad de token/perfil y rol no permitido.
+- Services/Test/YouTubeAddCortesContract.js — ejecutar `runYouTubeAddCortesContractTests(addCortesHtml)` desde el runner local; verifica que Cortes no exponga entrada manual, no copie la URL pendiente al formulario y conserve el flujo de aprobación con bloqueo de doble envío.
 
 Cada suite expone una función run...Tests() y usa dobles en memoria. No modifica hojas ni datos productivos. Cargar primero Services/feedback.js y después el archivo de prueba en un proyecto temporal de Apps Script V8; ejecutar la función indicada en el archivo.
 

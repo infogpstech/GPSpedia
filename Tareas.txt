@@ -728,3 +728,23 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - UtilitiesSecurity 12/12 PASS; parsing 2/2 PASS; diff revisado.
 - Beta pendiente: fuente exacta del deployment, Apps Script/Spreadsheet aislados, concurrencia física, timeout real, permisos de hojas y recuperación tras interrupción.
 ================================================================================
+
+
+================================================================================
+AUG-043 — CIERRE — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Alineación verificada:
+- Los callsites de addVehicleToProblem, removeVehicleFromProblem, updatePysItem y updateTutorialItem envían userId/sessionToken mediante getSessionPayload_().
+- youtubeUpload.js utiliza currentUser.ID y SessionToken, valida la sesión antes de iniciar y transmite ambas credenciales en consulta, inicialización, renovación y submit.
+- opVideoId se conserva en sessionStorage/IndexedDB y acompaña la operación; submitVideoForApproval es idempotente por operación y rechaza asociaciones incompatibles.
+- Solo se crea la solicitud después de recibir un videoId real de 11 caracteres y una URL canónica de YouTube.
+- FEEDBACK valida la sesión en backend, deriva userRole del perfil Users y aplica la matriz de permisos; los cambios directos de vídeo en PyS/Tutorial y las altas con URL directa se rechazan.
+- La publicación en Cortes, PyS y Tutoriales ocurre en approveVideo; rejectVideo retira el enlace del destino. openAddVideoModal ya era upload-only.
+Hallazgo H-AUD-043-001 corregido: add_cortes.html ya no ofrece el campo manual videoGuiaUrl ni copia la URL pendiente al formulario; presenta el estado pendiente y bloquea el botón tras el envío.
+Archivos: add_cortes.html, Services/Test/YouTubeAddCortesContract.js, Services/Test/README.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Validación local: FeedbackWriteSecurity 47/47; VideoApprovalState 13/13; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalContracts 8/8; VideoApprovalSessions 10/10; VideoApprovalPublishing 18/18; YouTubeUploadClient 12/12; YouTubeAddCortesContract 4/4. Total: 135/135 PASS.
+Parsing V8/JavaScript: ui.js, youtubeUpload.js, Services/feedback.js y script de add_cortes.html: 4/4 PASS. Diff revisado y limitado al formulario, regresión y registros.
+Validación diferida a Beta: navegador/Playwright, IndexedDB real, XHR y OAuth/YouTube API, Apps Script FEEDBACK desplegado, Spreadsheet aislado, concurrencia física y confirmación de publicación/rechazo en los tres destinos. No se ejecutaron deployments, endpoints operativos ni datos productivos.
+No se modificó la rama base GPSpedia2.2.5 ni sus referencias. La ficha original del backlog se conserva; este cierre actualiza su estado sin reescribir el historial.
+Siguiente tarea identificada: AUG-044. No iniciada en esta iteración.
+================================================================================

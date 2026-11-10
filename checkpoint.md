@@ -1463,3 +1463,24 @@ BETA PENDIENTE
 - No usar endpoints, hojas ni datos productivos.
 No se modificaron endpoints, deployments ni datos productivos. No se tocó GPSpedia2.2.5.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-043 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre antes de AUG-043: 4f971d131d088362323d12f456e56d34465ae20d.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea: AUG-043 — COMPLETADA CON VALIDACIÓN DIFERIDA.
+Hallazgo nuevo: H-AUD-043-001, campo manual videoGuiaUrl en add_cortes.html y copia de URL pendiente al formulario.
+Cambio funcional único: add_cortes.html elimina la entrada manual y la asignación de URL pendiente; tras una solicitud exitosa muestra el estado pendiente y deshabilita el botón.
+Contratos revisados sin cambio funcional:
+- ui.js: 2 callsites addVehicleToProblem, 2 removeVehicleFromProblem, 1 updatePysItem y 1 updateTutorialItem; todos transmiten getSessionPayload_().
+- youtubeUpload.js: currentUser.ID/SessionToken, validación previa, opVideoId persistente y transmitido, ID final real, submit idempotente.
+- FEEDBACK: sesión y rol autoritativos en backend; política protegida y publicación exclusiva mediante approveVideo. Los rechazos limpian el destino.
+Archivos incluidos: add_cortes.html; Services/Test/YouTubeAddCortesContract.js; Services/Test/README.md; Auditoría.txt; ChangesLogs.txt; Tareas.txt; tareas_completadas_parte1.txt; checkpoint.md.
+Pruebas locales: 131/131 suites existentes PASS + 4/4 contrato estático de Cortes PASS = 135/135 PASS. Parsing de ui.js, youtubeUpload.js, Services/feedback.js y script de add_cortes.html: 4/4 PASS. Diff revisado.
+Pendiente Beta: navegador/Playwright, IndexedDB real, XHR, OAuth/YouTube API, Apps Script/Spreadsheet aislados, concurrencia física y flujo de extremo a extremo. No ejecutado en esta iteración.
+Commit de cierre: fix(youtube): remove manual corte video links before approval. Padre esperado: 4f971d131d088362323d12f456e56d34465ae20d; SHA resultante verificable en HEAD de la rama tras publicación.
+Siguiente tarea: AUG-044. No iniciada.
+================================================================================

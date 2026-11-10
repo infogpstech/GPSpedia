@@ -927,3 +927,13 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - Auditoría.txt, Tareas.txt, Tareas_pendientes_parte1.txt, lista_beta.txt y checkpoint.md: registros de cierre.
 - No se modificaron endpoints, deployments ni datos productivos. La fuente del deployment exacto y la integración real quedan pendientes de Beta.
 ================================================================================
+
+
+================================================================================
+AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube — 2026-11-10
+- add_cortes.html: se retiró el campo manual videoGuiaUrl; la confirmación de subida ya no copia la URL pendiente al formulario y muestra el estado de aprobación, deshabilitando el botón tras el envío.
+- Services/Test/YouTubeAddCortesContract.js: nueva regresión estática del formulario de Cortes.
+- Services/Test/README.md: documentación del runner y alcance de la regresión.
+- Auditoría.txt, Tareas.txt, tareas_completadas_parte1.txt, checkpoint.md: registro de H-AUD-043-001 y cierre de AUG-043.
+- No se modificaron los contratos backend, api-config.js, ui.js, youtubeUpload.js, endpoints, deployments ni datos productivos; la auditoría confirmó que las rutas protegidas ya transmiten la sesión y que FEEDBACK obtiene el rol desde Users.
+================================================================================

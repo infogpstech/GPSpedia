@@ -316,3 +316,12 @@ Sintaxis 10/10 PASS; suite lógica 17/17 PASS; wrappers 7/7 PASS; políticas 61/
 No se ejecutaron deployments, HTTP, Apps Script real, Spreadsheet/Drive reales ni concurrencia real. La configuración y validación integrada quedan diferidas a Beta. UTILITIES excluido por estar retirado del flujo activo. AUG-034 permanece como tarea independiente.
 Commit único: consultar historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+AUG-043 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-10
+Alineados los contratos de sesión/rol y el flujo de aprobación YouTube. Se retiró la entrada manual de videoGuiaUrl en add_cortes.html y se evitó copiar al formulario la URL aún pendiente. El backend ya exigía sesión, obtenía el rol desde Users, conservaba opVideoId, validaba el ID real de YouTube y publicaba únicamente al aprobar.
+Validación local: FeedbackWriteSecurity 47/47; VideoApprovalState 13/13; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalContracts 8/8; VideoApprovalSessions 10/10; VideoApprovalPublishing 18/18; YouTubeUploadClient 12/12; YouTubeAddCortesContract 4/4. Total 135/135 PASS; parsing 4/4 PASS.
+Pendiente Beta: navegador/IndexedDB/XHR reales, OAuth/YouTube API, Apps Script y Spreadsheet aislados, concurrencia física y flujo integrado de aprobación/rechazo. Sin endpoints, deployments ni datos productivos.
+Commit: consultar historial de GPSpedia2.2.5_work.
+================================================================================
