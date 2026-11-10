@@ -1863,18 +1863,12 @@ function countEquipmentVersions(versionesStr) {
 
 function normalizeVinCollectionValue_(value, context) {
     if (value === null || value === undefined) return "";
-    if (typeof value !== "string") {
-        throw new Error((context || "VIN") + ": cada elemento debe ser texto.");
-    }
+    if (typeof value !== "string") throw new Error((context || "VIN") + ": cada elemento debe ser texto.");
     const normalized = value.trim().toUpperCase();
-    if (!normalized || normalized.startsWith("OP-") || normalized.startsWith("OP_") ||
-        normalized.includes("IDOPERACION")) return "";
-    if (!/^[A-Z0-9]{1,18}$/.test(normalized)) {
-        throw new Error((context || "VIN") + ": identificador heredado inválido «" + normalized + "».");
-    }
+    if (!normalized || normalized.startsWith("OP-") || normalized.startsWith("OP_") || normalized.includes("IDOPERACION")) return "";
+    if (!/^[A-Z0-9]{1,18}$/.test(normalized)) throw new Error((context || "VIN") + ": identificador heredado inválido «" + normalized + "».");
     return normalized;
 }
-
 function normalizeVinCollectionArray_(values, context) {
     if (!Array.isArray(values)) throw new Error((context || "VIN") + ": se esperaba una colección.");
     if (values.length > 3) throw new Error((context || "VIN") + ": la colección no puede superar tres posiciones.");
@@ -1887,44 +1881,32 @@ function normalizeVinCollectionArray_(values, context) {
     });
     return normalized;
 }
-
 function parseVinCollection(rawVin) {
     if (rawVin === null || rawVin === undefined || rawVin === "") return [];
     if (Array.isArray(rawVin)) return normalizeVinCollectionArray_(rawVin, "Colección VIN");
-
     const text = String(rawVin).trim();
     if (!text) return [];
     if (text.startsWith("[") || text.endsWith("]")) {
         let parsed;
-        try {
-            parsed = JSON.parse(text);
-        } catch (error) {
-            throw new Error("La colección VIN contiene JSON mal formado; no se interpretó como texto heredado.");
-        }
+        try { parsed = JSON.parse(text); }
+        catch (error) { throw new Error("La colección VIN contiene JSON mal formado; no se interpretó como texto heredado."); }
         if (!Array.isArray(parsed)) throw new Error("El formato JSON de VIN debe ser un array.");
         return normalizeVinCollectionArray_(parsed, "Colección VIN JSON");
     }
-
-    return text.split(/[,/\\;]+/)
+    const values = text.split(/[,/\\;]+/)
         .map(value => normalizeVinCollectionValue_(value, "Colección VIN heredada"))
-        .filter(Boolean)
-        .slice(0, 3);
+        .filter(Boolean);
+    if (values.length > 3) throw new Error("La colección VIN heredada supera el máximo de tres identificadores.");
+    return normalizeVinCollectionArray_(values, "Colección VIN heredada");
 }
-
 function serializeVinCollection(vinArray) {
     const normalized = normalizeVinCollectionArray_(vinArray, "Serialización VIN");
     return normalized.some(Boolean) ? JSON.stringify(normalized) : "";
 }
-
 function parseVinCollectionForAdmin(rawVin) {
     return parseVinCollection(rawVin);
 }
 
-function serializeVinCollection(vinArray) {
-   if (!Array.isArray(vinArray) || vinArray.length === 0) return "";
-   const normalized = vinArray.map(value => String(value || "").trim().toUpperCase());
-   return normalized.some(Boolean) ? JSON.stringify(normalized) : "";
-}
 function addVinToAvailableSlot(existingCollection, vinPrefix, maxAllowed, requestedIndex) {
    const prefix = String(vinPrefix || "").trim().toUpperCase();
    const limit = Math.max(1, Math.min(3, Math.floor(Number(maxAllowed) || 1)));
