@@ -9,6 +9,8 @@
 **HEAD de base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
 **Estado:** planificación documental; no se declara ninguna corrección funcional implementada.
 
+**Normativa única vigente:** [NORMAS_DESAROLLO.md](../NORMAS_DESAROLLO.md). Este documento es planificación y backlog, no una fuente normativa adicional.
+
 ## 1. Objetivo y reglas
 
 Resolver los hallazgos ya registrados en E1 y las tareas AUG existentes sin repetir auditorías, auditar informes, crear IDs duplicados ni cerrar observaciones sin evidencia. Priorizar seguridad, identidad, integridad de datos y prevención de pérdida/corrupción antes de ampliar funciones. Los IDs, criterios y adendas originales permanecen en sus registros fuente.
@@ -126,7 +128,7 @@ Los criterios complementarios se alinean conceptualmente con WCAG 2.2 AA, el pat
 ## 9. Definition of Done
 
 ## 10. Norma vigente de cierre local y Beta — 2026-11-09
-La norma canónica de cierre está en `Plan_auditoría/Normas_Gestion_Documental.md`, sección 7. **COMPLETADA** depende del cumplimiento de requisitos y validaciones locales, no de la ejecución de deployments o pruebas de Beta. La falta de despliegue no mantiene abierta una tarea que ya pasó sus pruebas locales. Las validaciones de despliegue e integración se ejecutan en Beta después de completar las implementaciones previstas. Todo defecto descubierto entonces genera su propio hallazgo/tarea correctiva, sin reabrir automáticamente la tarea original.
+La norma canónica de cierre está en `NORMAS_DESAROLLO.md`, sección 7. **COMPLETADA** depende del cumplimiento de requisitos y validaciones locales, no de la ejecución de deployments o pruebas de Beta. La falta de despliegue no mantiene abierta una tarea que ya pasó sus pruebas locales. Las validaciones de despliegue e integración se ejecutan en Beta después de completar las implementaciones previstas. Todo defecto descubierto entonces genera su propio hallazgo/tarea correctiva, sin reabrir automáticamente la tarea original.
 
 Checkpoint inicial; confirmar refs; revisar archivos funcionales (no informes); registrar solo hallazgos nuevos; respaldos exactos; cambio mínimo; pruebas unitarias/contrato/integración/browser según aplique; comparación post-edición; Code Review/Safety & Side Effects; checkpoint final; un commit mediante Git Database API; verificar archivos y rama base intacta.
 
@@ -135,7 +137,7 @@ Iniciar Fase 1 con identidad/sesiones y XSS. Después diseñar el modelo y contr
 
 
 ## 11. Compuerta obligatoria entre tareas
-Se incorpora como norma de cumplimiento obligatorio el anexo `Plan_auditoría/Protocolo_Ciclo_Continuo.md`, complementario a `Proceso de desarollo.md`.
+Se incorpora como norma de cumplimiento obligatorio el anexo `NORMAS_DESAROLLO.md`, complementario a `NORMAS_DESAROLLO.md`.
 
 Secuencia exigida:
 1. Validar el último checkpoint y HEAD.
@@ -150,7 +152,7 @@ Una sesión puede contener dos commits solo cuando corresponden a dos tareas dis
 
 ## 12. Gobierno documental y rotación
 
-Es obligatoria la norma `Plan_auditoría/Normas_Gestion_Documental.md`. Los registros son append-only: las entradas anteriores no se borran, editan, sustituyen ni reordenan; cada entrada nueva se agrega al final. El máximo es 180,000 caracteres Unicode por archivo. Antes de excederlo, rotar a `Olds/Documentacion_Legacy/` con sufijo `_legacy_parte_NNN`, crear el documento activo canónico y mantener un manifiesto verificable. Los documentos que ya excedan el límite se dividen en partes secuenciales sin pérdida. Las partes legacy son inmutables y no se reauditan.
+Es obligatoria la norma `NORMAS_DESAROLLO.md`. Los registros son append-only: las entradas anteriores no se borran, editan, sustituyen ni reordenan; cada entrada nueva se agrega al final. El máximo es 180,000 caracteres Unicode por archivo. Antes de excederlo, rotar a `Olds/Documentacion_Legacy/` con sufijo `_legacy_parte_NNN`, crear el documento activo canónico y mantener un manifiesto verificable. Los documentos que ya excedan el límite se dividen en partes secuenciales sin pérdida. Las partes legacy son inmutables y no se reauditan.
 
 
 
@@ -182,9 +184,9 @@ Cada ejecución debe abrir la ficha completa y sus adendas en el archivo indicad
 | H-AUD-### y hallazgos | `Auditoría.txt` y, para antecedentes históricos, `Olds/Documentacion_Legacy/Auditoría_legacy_parte_001.txt` | Describe evidencia del problema; no sustituye los criterios de aceptación de la tarea AUG. |
 | DOC-README-2026-001/002 | `Tareas_pendientes_parte2.txt`, sección «TAREAS DOCUMENTALES ABIERTAS» | Correcciones de README y política de publicación. |
 | Funcionalidades pospuestas a Beta | `lista_beta.txt` | No ejecutar antes de superar la compuerta Beta; cada elemento debe convertirse en una tarea formal con requisitos y pruebas. |
-| Normas de documentación y estados | `Plan_auditoría/Normas_Gestion_Documental.md` | Estados, append-only, rotación y límite documental. |
-| Procedimiento obligatorio de cada tarea | `Proceso de desarollo.md` | Orden de auditoría, implementación, verificaciones, Code Review y commit único. |
-| Compuerta entre tareas | `Plan_auditoría/Protocolo_Ciclo_Continuo.md` | Validación de checkpoint/HEAD y resolución de bloqueos previos. |
+| Normas de documentación y estados | `NORMAS_DESAROLLO.md` | Estados, append-only, rotación y límite documental. |
+| Procedimiento obligatorio de cada tarea | `NORMAS_DESAROLLO.md` | Orden de auditoría, implementación, verificaciones, Code Review y commit único. |
+| Compuerta entre tareas | `NORMAS_DESAROLLO.md` | Validación de checkpoint/HEAD y resolución de bloqueos previos. |
 | Procedimiento Git autorizado | `Contexto de trabajo.md` | Git Database API, un árbol, un commit y update_ref con expected SHA. |
 
 ### 14.2. Regla de asignación única
@@ -217,10 +219,11 @@ Las fases se ejecutan en este orden. Dentro de cada fase, respetar las olas y de
 - No implementar rich text ni renderizado HTML nuevo antes de cerrar sanitización autoritativa y sinks relacionados.
 - No migrar Spreadsheet/Drive sin respaldo verificable, staging, rollback y prueba de fallo parcial.
 - No ejecutar Beta hasta superar íntegramente la compuerta de `lista_beta.txt`.
-- No empezar la siguiente tarea si el checkpoint, HEAD, Code Review o hallazgos bloqueantes de la tarea anterior no cumplen `Plan_auditoría/Protocolo_Ciclo_Continuo.md`.
+- No empezar la siguiente tarea si el checkpoint, HEAD, Code Review o hallazgos bloqueantes de la tarea anterior no cumplen `NORMAS_DESAROLLO.md`.
 
-### 14.5. Procedimiento obligatorio dentro de cada tarea
-El orden de trabajo no se sustituye por esta matriz. Para cada tarea individual se debe seguir, sin saltos, `Proceso de desarollo.md`: checkpoint inicial; auditoría diagnóstica archivo/función/línea sin editar; registro en Auditoría.txt; creación de respaldo exacto; implementación mínima; pruebas funcionales; comparación contra respaldo; eliminación de temporales después de Code Review y antes del commit; revisión de integridad/efectos colaterales; revisión final línea/función/archivo; ChangesLogs.txt; actualización de Tareas.txt y del registro independiente correspondiente; checkpoint final como último documento antes del único commit; un commit Git Database API; verificación de commit, parent, HEAD de trabajo y rama base intacta. Toda observación de Code Review que requiera cambios reinicia el ciclo completo.
+### 14.5. Normativa de ejecución
+
+Aplicar exclusivamente [NORMAS_DESAROLLO.md](../NORMAS_DESAROLLO.md). Este plan organiza el backlog y sus dependencias; no reproduce ni modifica las normas de desarrollo.
 
 ### 14.6. Control de estado y ubicación de cierres
 - Pendientes y requisitos: `Tareas_pendientes_parte1.txt` a `Tareas_pendientes_parte4.txt`.
