@@ -711,3 +711,37 @@ Siguiente iteración: revisar la condición exacta del umbral de tres aportantes
 Validaciones de integración Apps Script/Spreadsheet/Drive reales pendientes de Beta; no ejecutadas.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones a la rama base.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: UMBRAL DE TRES APORTANTES VERIFICADOS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre: 6a61f788ba513de3e3b1cb8318ca191b0453aafb.
+
+TAREA ÚNICA
+Verificar que dos aportantes verificados distintos no amplíen el rango y que el tercer aportante distinto sí permita la actualización cuando la sugerencia positiva y las demás condiciones son válidas.
+
+RESULTADO
+No se encontró defecto en la condición de producción. El flujo cuenta claves de actor verificadas en un Set, exige al menos tres y solo después evalúa si el año está fuera del rango y si existe colisión con otro vehículo.
+Se agregó una prueba de regresión que:
+- parte de dos aportes positivos de usuarios verificados distintos;
+- reintenta con uno de esos usuarios y confirma conteo 2/3, sin nueva fila/actividad y sin modificar Cortes;
+- registra el aporte de un tercer usuario distinto y confirma ampliación del rango 2018–2025.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 31/31 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Prueba con mocks locales; no acredita integración real con Apps Script/Spreadsheet/Drive.
+
+ARCHIVOS
+- Services/Test/FeedbackWriteSecurity.js
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Subtarea del umbral exacto: COMPLETADA CON VALIDACIÓN DIFERIDA.
+AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: continuar la revisión de la siguiente condición funcional de suggestYear, sin iniciar otra tarea.
+Validaciones de Apps Script/Spreadsheet/Drive reales diferidas a Beta; no ejecutadas.
+Sin despliegues, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

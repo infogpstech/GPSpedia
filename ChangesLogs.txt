@@ -696,3 +696,12 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 30/30 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
 - AUG-040 continúa EN PROGRESO; siguiente iteración revisará el umbral exacto de tres aportantes verificados distintos.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — UMBRAL DE TRES APORTANTES EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega prueba de flujo para dos aportantes verificados distintos y reintento de uno de ellos (2/3, sin ampliar rango), seguido del aporte de un tercer usuario distinto (3/3, ampliación del rango).
+- No se modificó Services/feedback.js: la lógica existente cuenta actores verificados distintos y aplica la actualización solo al alcanzar tres, después de validar rango y colisiones.
+- Validación local: runFeedbackWriteSecurityTests() 31/31 PASS; parsing/sintaxis de los dos archivos JavaScript 2/2 PASS.
+- Subtarea del umbral completada; AUG-040 permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
