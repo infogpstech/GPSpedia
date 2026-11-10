@@ -845,3 +845,11 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Auditoría.txt: H-AUD-040-014.
 - Validación cliente: 7/7 PASS; suite FEEDBACK integral pendiente.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AJUSTE POST-COMMIT — RESPUESTA ACTUAL DURANTE RECUPERACIÓN PENDIENTE
+- Services/feedback.js: la rama de recuperación con aporte previo del mismo actor también devuelve recorded:false, porque no registra la respuesta enviada en el intento actual.
+- Auditoría.txt y checkpoint.md: adenda de trazabilidad.
+- La suite FEEDBACK integral continúa pendiente; no se declara cerrada la corrección.
+================================================================================

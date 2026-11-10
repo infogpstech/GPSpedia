@@ -1201,3 +1201,10 @@ No se modificaron endpoints, deployments, datos productivos ni rama base.
 Estado EN PROGRESO hasta completar las validaciones locales pendientes.
 Siguiente iteración: continuar esta corrección únicamente; ejecutar suite FEEDBACK integral, parsing completo y revisión del diff. No iniciar AUG-041 ni otra tarea.
 ================================================================================
+
+
+================================================================================
+ADENDA POST-COMMIT — CORR-SUGGESTYEAR-CLIENT-CONFIRM-001
+La revisión del diff identificó una segunda rama de recuperación pendiente: cuando el actor ya tenía un aporte para el mismo vehículo/año, el backend devolvía el resultado success de la recuperación sin indicar que la solicitud actual no se insertó. Se corrigió con recorded:false para que ui.js no guarde una respuesta nueva en validationCache. Esta adenda se publicará como commit correctivo sobre el commit inicial, sin reescribir historial.
+Siguiente paso: ejecutar la suite FEEDBACK integral y parsing completo en la siguiente iteración. No iniciar otra tarea.
+================================================================================

@@ -956,6 +956,7 @@ function handleSuggestYearLocked(payload) {
         return {
             ...recovered,
             recovered: true,
+            recorded: false,
             message: "Se recuperó una ampliación pendiente. " + recovered.message
         };
     }

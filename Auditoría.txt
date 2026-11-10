@@ -212,3 +212,7 @@ Corrección: helper confirmValidationBeforeCache espera la respuesta backend; lo
 Pruebas: suite cliente 7/7; aserciones FEEDBACK actualizadas para recuperación pendiente y respuesta contradictoria.
 Límites: navegador/Playwright, IndexedDB real, endpoints, Apps Script desplegado y datos productivos diferidos a Beta.
 ================================================================================
+
+
+ADENDA H-AUD-040-014 — 2026-11-10
+La revisión post-commit confirmó que la rama de recuperación donde el actor ya tenía un aporte previo también devuelve una respuesta success derivada de la operación recuperada, aunque la solicitud actual no se inserta. Se añade recorded:false a esa respuesta para impedir que el cliente interprete la recuperación como registro de la respuesta actual. La suite cliente sigue siendo 7/7 PASS; la suite FEEDBACK integral permanece pendiente de ejecución.
