@@ -64,32 +64,18 @@ function assertFeedbackSession(payload,allowedRoles){
 }
 
 /** Identidad de aportantes de validación de año; el identificador anónimo es seudónimo, no identidad civil. */
-function createAnonymousSuggestionActorKey(reporterId) {
-    const normalizedId = String(reporterId || "").trim();
-    if (!normalizedId) return "anon:unidentified";
-    if (!/^[A-Za-z0-9_-]{20,80}$/.test(normalizedId)) {
-        throw new Error("El identificador anónimo de aportante no tiene un formato válido.");
-    }
-    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizedId, Utilities.Charset.UTF_8);
-    const hash = digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
-    return "anon:" + hash;
+function createAnonymousSuggestionActorKey() {
+    // El identificador del navegador no acredita una persona.
+    return "anon:unverified";
 }
 
 function resolveSuggestionYearActor(payload) {
     const requestedUserId = String(payload && payload.userId !== undefined ? payload.userId : "").trim();
     if (requestedUserId === "0") {
-        return {
-            userId: "0", userName: "Anónimo", userRole: "Anónimo",
-            suggestionActorKey: createAnonymousSuggestionActorKey(payload.anonymousReporterId)
-        };
+        return { userId: "0", userName: "Anónimo", userRole: "Anónimo", suggestionActorKey: createAnonymousSuggestionActorKey() };
     }
     const actor = assertFeedbackSession(payload, null);
-    return {
-        userId: actor.userId,
-        userName: actor.userName,
-        userRole: actor.role,
-        suggestionActorKey: "user:" + actor.userId
-    };
+    return { userId: actor.userId, userName: actor.userName, userRole: actor.role, suggestionActorKey: "user:" + actor.userId };
 }
 
 function ensureSuggestionActorColumn(sheet) {
@@ -282,7 +268,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","assignCollaborator","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo"].includes(action);
+    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo"].includes(action);
 }
 
 function doPost(e) {
@@ -314,6 +300,34 @@ function doPost(e) {
     }
 }
 
+const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
+    recordLike: null, reportProblem: null, addProblem: null, addSolution: null, addPrevention: null,
+    addVehicleToProblem: null, removeVehicleFromProblem: ["Desarrollador"], updatePysItem: ["Desarrollador"],
+    updateTutorialItem: ["Desarrollador"], suggestCutChange: null, addTutorial: ["Desarrollador"],
+    getFeedbackItems: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+    replyToFeedback: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+    markAsResolved: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+    deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+    getActivityLogs: ["Desarrollador", "Gefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
+    initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
+    approveVideo: ["Desarrollador", "Gefe", "Supervisor"], rejectVideo: ["Desarrollador", "Gefe", "Supervisor"]
+});
+const FEEDBACK_PUBLIC_ACTIONS = new Set(["getPysData", "sendContactForm"]);
+function authorizeFeedbackAction_(action, payload) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    if (action === "suggestYear") return { ...source, ...resolveSuggestionYearActor(source) };
+    if (Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS, action)) {
+        const actor = assertFeedbackSession(source, FEEDBACK_ACTION_PERMISSIONS[action]);
+        const authorized = { ...source, userId: actor.userId, userName: actor.userName, userRole: actor.role };
+        if (action === "replyToFeedback") authorized.responderName = actor.userName;
+        if (action === "approveVideo") authorized.approverName = actor.userName;
+        if (action === "rejectVideo") authorized.rejecterName = actor.userName;
+        return authorized;
+    }
+    if (FEEDBACK_PUBLIC_ACTIONS.has(action)) return action === "sendContactForm" ? { ...source, userId: "N/A" } : source;
+    throw new Error("Acción no declarada en la política de FEEDBACK: " + String(action || ""));
+}
+
 function doPostInternal_(e) {
     let response;
     try {
@@ -321,41 +335,7 @@ function doPostInternal_(e) {
         const action = request.action;
         let payload = request.payload || {};
 
-        const actionPermissions = {
-            getFeedbackItems: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-            replyToFeedback: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-            markAsResolved: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-            deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
-            getActivityLogs: ["Desarrollador", "Gefe", "Supervisor"],
-            clearActivityLogs: ["Desarrollador"],
-            approveVideo: ["Desarrollador", "Gefe", "Supervisor"],
-            rejectVideo: ["Desarrollador", "Gefe", "Supervisor"],
-            removeVehicleFromProblem: ["Desarrollador"],
-            updatePysItem: ["Desarrollador"],
-            updateTutorialItem: ["Desarrollador"],
-            initYouTubeUpload: null,
-            getVideoApprovalByOperation: null,
-            submitVideoForApproval: null,
-            addTutorial: ["Desarrollador"],
-            addProblem: null,
-            addVehicleToProblem: null
-        };
-
-        if (action === "suggestYear") {
-            const actor = resolveSuggestionYearActor(payload);
-            payload = { ...payload, ...actor };
-        } else if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) {
-            const actor = assertFeedbackSession(payload, actionPermissions[action]);
-            payload = {
-                ...payload,
-                userId: actor.userId,
-                userName: actor.userName,
-                userRole: actor.role
-            };
-            if (action === "replyToFeedback") payload.responderName = actor.userName;
-            if (action === "approveVideo") payload.approverName = actor.userName;
-            if (action === "rejectVideo") payload.rejecterName = actor.userName;
-        }
+        payload = authorizeFeedbackAction_(action, payload);
 
         switch (action) {
             case 'recordLike':
@@ -390,9 +370,6 @@ function doPostInternal_(e) {
                 break;
             case 'suggestCutChange':
                 response = handleSuggestCutChange(payload);
-                break;
-            case 'assignCollaborator':
-                response = handleAssignCollaborator(payload);
                 break;
             case 'suggestYear':
                 response = handleSuggestYear(payload);
@@ -694,19 +671,21 @@ function handleSuggestYear(payload) {
     }
 }
 
+function isVerifiedSuggestionActorKey_(actorKey) {
+    return /^user:[A-Za-z0-9_.-]{1,100}$/.test(String(actorKey || ""));
+}
+
 function handleSuggestYearLocked(payload) {
     const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
     const normalizedResponse = String(response || "").trim();
     const actorKey = String(suggestionActorKey || "").trim();
 
-    if (!normalizedVehicleId || !userId || !userName || !actorKey) {
-        throw new Error("Faltan datos verificados para registrar la sugerencia de año.");
-    }
-    if (!/^user:[A-Za-z0-9_.-]{1,100}$/.test(actorKey) &&
-        !/^anon:(?:[a-f0-9]{64}|unidentified)$/.test(actorKey)) {
-        throw new Error("La identidad del aportante no tiene un formato válido.");
-    }
+    if (!normalizedVehicleId || !userId || !userName || !actorKey) throw new Error("Faltan datos verificados para registrar la sugerencia de año.");
+    const isAnonymousActor = String(userId) === "0" && actorKey === "anon:unverified";
+    const isVerifiedActor = actorKey === "user:" + String(userId);
+    if (!isAnonymousActor && !isVerifiedActor) throw new Error("La identidad del aportante no coincide con la sesión validada.");
+    if (isAnonymousActor) enforceFeedbackRateLimit_("anonymous_year_suggestion", 30, 3600);
 
     const yearText = String(newYear === null || newYear === undefined ? "" : newYear).trim();
     if (!/^\d{4}$/.test(yearText)) throw new Error("El año debe contener exactamente cuatro dígitos.");
@@ -797,7 +776,7 @@ function handleSuggestYearLocked(payload) {
         const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
         const rowActorKey = String(row[actorColumn - 1] || "").trim();
         if (rowId === normalizedVehicleId && rowYear === year &&
-            rowActorKey && isPositiveYearSuggestionRow(row)) voteActors.add(rowActorKey);
+            isVerifiedSuggestionActorKey_(rowActorKey) && isPositiveYearSuggestionRow(row)) voteActors.add(rowActorKey);
     });
     const voteCount = voteActors.size;
 
@@ -806,9 +785,12 @@ function handleSuggestYearLocked(payload) {
             ? { status: "info", message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
             : { status: "success", message: "Respuesta registrada correctamente." };
     }
+    if (isAnonymousActor) {
+        return { status: "info", message: "La sugerencia anónima quedó registrada para revisión manual; no cuenta para modificar automáticamente el catálogo." };
+    }
     if (voteCount < 3) {
         const prefix = alreadyReported ? "Tu aporte ya estaba registrado." : "Sugerencia registrada.";
-        return { status: "success", message: prefix + " Votos distintos confirmados: " + voteCount + "/3." };
+        return { status: "success", message: prefix + " Votos de usuarios verificados: " + voteCount + "/3." };
     }
 
     const anoDesde = parseInt(vehicleRow[COLS_CORTES.anoDesde - 1], 10);
@@ -949,43 +931,73 @@ function logUserActivity(userId, userName, activityType, associatedId, details) 
     }
 }
 
-function handleRecordLike(payload) {
-    const { vehicleId, corteIndex, userId, userName } = payload;
-    if (!vehicleId || !corteIndex || !userId || !userName) {
-        throw new Error("Faltan datos para registrar el 'like' (vehicleId, corteIndex, userId, userName).");
+function ensureFeedbackLikesSheet_() {
+    const headers = ["actorKey", "vehicleId", "corteIndex", "previousCount", "targetCount", "status", "createdAt"];
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("FeedbackLikes");
+    if (!sheet) sheet = ss.insertSheet("FeedbackLikes");
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        SpreadsheetApp.flush();
     }
-
+    const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0].map(value => String(value || "").trim());
+    if (headers.some((header, index) => actual[index] !== header)) throw new Error("El esquema de FeedbackLikes no coincide con el contrato esperado.");
+    return sheet;
+}
+function handleRecordLike(payload) {
+    const vehicleId = String(payload && payload.vehicleId || "").trim();
+    const corteIndex = Number(payload && payload.corteIndex);
+    const userId = String(payload && payload.userId || "").trim();
+    const userName = String(payload && payload.userName || "").trim();
+    if (!vehicleId || !userId || !userName || !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) throw new Error("Faltan datos verificados para registrar el like.");
+    const actorKey = "user:" + userId;
     const lock = LockService.getScriptLock();
-    lock.waitLock(15000); // Wait up to 15 seconds for the lock
-
+    lock.waitLock(15000);
     try {
-        const sheet = getSafeSheet(SHEET_NAMES.CORTES);
-        const ids = sheet.getRange(2, COLS_CORTES.id, sheet.getLastRow() - 1, 1).getValues().flat();
-        const rowIndex = ids.findIndex(id => id == vehicleId);
-
-        if (rowIndex === -1) {
-            throw new Error("No se encontró el vehículo con el ID proporcionado.");
+        const cuts = getSafeSheet(SHEET_NAMES.CORTES);
+        if (!cuts) throw new Error("Hoja Cortes no encontrada.");
+        const rows = cuts.getDataRange().getValues();
+        const matches = [];
+        for (let i = 1; i < rows.length; i++) {
+            if (String(rows[i][COLS_CORTES.id - 1] || "").trim() === vehicleId) matches.push({ row: rows[i], rowIndex: i + 1 });
         }
+        if (matches.length !== 1) throw new Error(matches.length ? "El vehículo tiene un ID duplicado; no se registró el like." : "No se encontró el vehículo.");
+        const vehicle = matches[0];
+        const typeCol = COLS_CORTES["tipoCorte" + corteIndex], utilCol = COLS_CORTES["utilCorte" + corteIndex];
+        if (!typeCol || !utilCol || !String(vehicle.row[typeCol - 1] || "").trim()) throw new Error("El corte seleccionado no existe en el vehículo.");
 
-        const actualRow = rowIndex + 2;
-        const utilColName = `utilCorte${corteIndex}`;
-        const utilCol = COLS_CORTES[utilColName];
-
-        if (!utilCol) {
-            throw new Error(`Índice de corte inválido: ${corteIndex}`);
+        const ledger = ensureFeedbackLikesSheet_(), ledgerRows = ledger.getDataRange().getValues().slice(1), found = [];
+        ledgerRows.forEach((row, index) => {
+            if (String(row[0] || "").trim() === actorKey && String(row[1] || "").trim() === vehicleId && Number(row[2]) === corteIndex) found.push({ row, rowIndex: index + 2 });
+        });
+        if (found.length > 1) throw new Error("El like tiene registros duplicados en FeedbackLikes; requiere revisión.");
+        const counterCell = cuts.getRange(vehicle.rowIndex, utilCol);
+        const rawCount = Number(counterCell.getValue()), currentCount = Number.isFinite(rawCount) && rawCount >= 0 ? rawCount : 0;
+        if (found.length === 1) {
+            const existing = found[0], status = String(existing.row[5] || "");
+            if (status === "completed") return { status: "success", alreadyLiked: true, message: "Este usuario ya había registrado su like." };
+            if (status !== "pending") throw new Error("El registro previo del like tiene un estado desconocido.");
+            const previous = Number(existing.row[3]), target = Number(existing.row[4]);
+            if (!Number.isFinite(previous) || target !== previous + 1) throw new Error("El registro pendiente del like tiene contadores inválidos.");
+            if (currentCount === previous) counterCell.setValue(target);
+            else if (currentCount !== target) throw new Error("El contador cambió fuera del intento pendiente; requiere reconciliación manual.");
+            SpreadsheetApp.flush();
+            if (Number(counterCell.getValue()) !== target) throw new Error("No se pudo confirmar el contador del like.");
+            ledger.getRange(existing.rowIndex, 6).setValue("completed");
+            SpreadsheetApp.flush();
+            try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + target); } catch (logError) { console.error(logError); }
+            return { status: "success", recovered: true, message: "Like recuperado y confirmado." };
         }
-
-        const cell = sheet.getRange(actualRow, utilCol);
-        let currentValue = cell.getValue();
-        if (typeof currentValue !== 'number' || isNaN(currentValue)) {
-            currentValue = 0;
-        }
-
-        cell.setValue(currentValue + 1);
-
-        logUserActivity(userId, userName, 'like', vehicleId, `Like en corte ${corteIndex}. Nuevo total: ${currentValue + 1}`);
-
-        return { status: 'success', message: 'Like registrado correctamente.' };
+        const target = currentCount + 1;
+        ledger.appendRow([actorKey, vehicleId, corteIndex, currentCount, target, "pending", new Date().toISOString()]);
+        SpreadsheetApp.flush();
+        counterCell.setValue(target);
+        SpreadsheetApp.flush();
+        if (Number(counterCell.getValue()) !== target) throw new Error("No se pudo confirmar el contador del like.");
+        ledger.getRange(ledger.getLastRow(), 6).setValue("completed");
+        SpreadsheetApp.flush();
+        try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + target); } catch (logError) { console.error(logError); }
+        return { status: "success", alreadyLiked: false, message: "Like registrado correctamente." };
     } finally {
         lock.releaseLock();
     }
@@ -1065,37 +1077,33 @@ function handleReportProblem(payload) {
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
     return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
 }
+function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
+    const cache = CacheService.getScriptCache();
+    const bucket = Math.floor(Date.now() / (windowSeconds * 1000));
+    const key = "feedback-rate:" + scope + ":" + bucket;
+    const current = Number(cache.get(key) || 0);
+    if (!Number.isFinite(current) || current < 0) throw new Error("El control de frecuencia no devolvió un estado válido.");
+    if (current >= limit) throw new Error("Se alcanzó el límite temporal de solicitudes. Intenta nuevamente más tarde.");
+    cache.put(key, String(current + 1), windowSeconds);
+}
 function handleSendContactForm(payload) {
-    const { name, email, message, userId } = payload;
-    if (!name || !email || !message) {
-        throw new Error("Faltan datos para enviar el formulario de contacto (name, email, message).");
-    }
-
+    const name = String(payload && payload.name || "").trim();
+    const email = String(payload && payload.email || "").trim();
+    const message = String(payload && payload.message || "").trim();
+    if (!name || !email || !message) throw new Error("Faltan datos para enviar el formulario de contacto.");
+    if (name.length > 100 || email.length > 254 || message.length > 3000) throw new Error("El formulario de contacto supera la longitud permitida.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("La dirección de correo no tiene un formato válido.");
+    enforceFeedbackRateLimit_("public_contact", 10, 3600);
     const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
-    const lastRow = sheet.getLastRow();
-    const newRowNumber = lastRow + 1;
-    const FORMULA_ROW = 2;
-    const lastCol = sheet.getLastColumn() || 6;
-
-    if (lastRow >= FORMULA_ROW) {
-        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-        formulaRange.copyTo(newRowRange);
-        if (lastCol > 1) {
-            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-        }
+    if (!sheet) throw new Error("Hoja Contactanos no encontrada.");
+    const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1, lastCol = sheet.getLastColumn() || 6;
+    if (lastRow >= 2) {
+        sheet.getRange(2, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
+        if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
     }
-
-    const values = [[
-        userId || 'N/A',
-        `Contacto de ${name}`,
-        `De: ${email}\n\n${message}`
-    ]];
-    sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID, 1, values[0].length).setValues(values);
-
+    sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID, 1, 3).setValues([["N/A", "Contacto de " + name, "De: " + email + "\n\n" + message]]);
     SpreadsheetApp.flush();
-
-    return { status: 'success', message: 'Formulario de contacto enviado.' };
+    return { status: "success", message: "Formulario de contacto enviado." };
 }
 
 // ============================================================================
@@ -1411,67 +1419,55 @@ function handleGetPysData() {
 
 /* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */
 function handleAddProblem(payload) {
-    const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload;
-    if (!titulo || !descripcion) {
-        throw new Error("Titulo y descripcion son obligatorios.");
-    }
-    if (titulo.length > 30) throw new Error("El titulo no puede superar 30 caracteres.");
-    if (descripcion.length > 700) throw new Error("La descripcion no puede superar 700 caracteres.");
-    if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solucion si no marca 'Sin solucion'.");
-    if (solucion && solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
-    if (prevenir && prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
-    if (String(videoUrl || "").trim()) {
-        throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
-    }
+    const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload || {};
+    if (!titulo || !descripcion) throw new Error("Título y descripción son obligatorios.");
+    if (String(titulo).length > 30 || String(descripcion).length > 700) throw new Error("Título o descripción superan la longitud permitida.");
+    if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solución si no marca 'Sin solución'.");
+    if (solucion && String(solucion).length > 700) throw new Error("La solución no puede superar 700 caracteres.");
+    if (prevenir && String(prevenir).length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
+    if (!userId || !userName) throw new Error("La sesión verificada no proporcionó un colaborador válido.");
+    if (typeof imgBase64 !== "string" || !imgBase64.trim()) throw new Error("La imagen del problema es obligatoria.");
+    if (String(videoUrl || "").trim()) throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
-
+    let imageFile = null, imageUrl = "", problemId = "", sheet = null;
     try {
-        const sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
-        if (sheet.getLastRow() === 0) {
-            sheet.getRange(1, 1, 1, 10).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
-        }
-
+        sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
+        if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, 10).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
         const lastRow = sheet.getLastRow();
-        const nextIdNum = lastRow > 1 ? lastRow : 1;
-        const problemId = "isue-" + String(nextIdNum).padStart(3, "0");
+        problemId = "isue-" + String(lastRow > 1 ? lastRow : 1).padStart(3, "0");
+        const existingIds = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat().map(value => String(value || "").trim()) : [];
+        if (existingIds.includes(problemId)) throw new Error("El ID calculado del problema ya existe; no se creó un registro duplicado.");
 
-        let imageUrl = "";
-        if (imgBase64) {
-            try {
-                const folderName = "Problemas y Soluciones";
-                const folders = DriveApp.getFoldersByName(folderName);
-                let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-                const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `${problemId}_${Date.now()}.jpg`);
-                const file = folder.createFile(blob);
-                file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-                imageUrl = file.getUrl();
-            } catch(e) { console.error("Error guardando imagen PYS:", e); }
+        const folders = DriveApp.getFoldersByName("Problemas y Soluciones");
+        const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder("Problemas y Soluciones");
+        const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/i, "")), "image/jpeg", problemId + "_" + Date.now() + ".jpg");
+        imageFile = folder.createFile(blob);
+        if (!imageFile) throw new Error("Drive no confirmó la creación de la imagen.");
+        imageFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        imageUrl = String(imageFile.getUrl() || "").trim();
+        if (!imageUrl) throw new Error("Drive no devolvió la URL de la imagen creada.");
+
+        const models = alcance === "especifico" && Array.isArray(modelosAsociados) ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean))) : [];
+        const newRow = [problemId, titulo, descripcion, sinSolucion ? "" : "x", sinSolucion ? "" : (solucion || ""), prevenir || "", imageUrl, "", userName, models.length ? JSON.stringify(models) : ""];
+        try {
+            sheet.appendRow(newRow);
+            SpreadsheetApp.flush();
+            const persisted = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId && String(row[6] || "").trim() === imageUrl);
+            if (persisted.length !== 1) throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
+        } catch (writeError) {
+            let matchingRows = [];
+            try { matchingRows = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId); } catch (readError) {}
+            if (matchingRows.length === 1 && String(matchingRows[0][6] || "").trim() === imageUrl) {
+                return { status: "success", message: "Problema registrado y verificado tras una respuesta parcial.", problemId, recovered: true };
+            }
+            if (matchingRows.length > 0) throw new Error("Existe un registro PyS parcial o ambiguo; la imagen se conserva para revisión.");
+            try { imageFile.setTrashed(true); SpreadsheetApp.flush(); }
+            catch (cleanupError) { throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; requiere revisión manual."); }
+            throw writeError;
         }
-
-        let modelosArr = [];
-        if (alcance === 'especifico' && Array.isArray(modelosAsociados)) {
-            modelosArr = Array.from(new Set(modelosAsociados.map(String).filter(Boolean)));
-        }
-
-        const newRow = [
-            problemId,
-            titulo,
-            descripcion,
-            sinSolucion ? "" : "x",
-            sinSolucion ? "" : (solucion || ""),
-            prevenir || "",
-            imageUrl,
-            videoUrl || "",
-            userName || "",
-            modelosArr.length > 0 ? JSON.stringify(modelosArr) : ""
-        ];
-
-        sheet.appendRow(newRow);
-        SpreadsheetApp.flush();
-        if (userId && userName) logUserActivity(userId, userName, "add_problem", problemId, titulo);
-
+        try { logUserActivity(userId, userName, "add_problem", problemId, titulo); } catch (logError) { console.error("No se pudo registrar la actividad de alta PyS:", logError); }
         return { status: "success", message: "Problema registrado correctamente.", problemId };
     } finally {
         lock.releaseLock();
