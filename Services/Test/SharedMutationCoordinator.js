@@ -384,6 +384,14 @@ function runSharedMutationCoordinatorTests() {
         assert_(policy.writeResources.includes("FEEDBACK"), "recordLike debe reservar FeedbackLikes.");
         assert_(policy.writeResources.includes("ACTIVITY"), "recordLike debe reservar Activity.");
     });
+    test_("FEEDBACK suggestYear y approveVideo reservan Cortes, Feedback y Activity", function() {
+        ["suggestYear", "approveVideo"].forEach(function(action) {
+            const policy = coordinatorPolicy_("FEEDBACK", action);
+            ["CORTES", "FEEDBACK", "ACTIVITY"].forEach(function(resource) {
+                assert_(policy.writeResources.includes(resource), action + " debe reservar " + resource + ".");
+            });
+        });
+    });
 
     test_("FEEDBACK ya no habilita assignCollaborator obsoleto", function() {
         expectThrow_(() => coordinatorPolicy_("FEEDBACK", "assignCollaborator"), "política");

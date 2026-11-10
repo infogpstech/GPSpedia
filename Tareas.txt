@@ -702,3 +702,17 @@ CORR-FEEDBACK-ASSIGN-COLLABORATOR-RETIRE-001 — RETIRAR HANDLER SIN CONSUMIDOR 
 - Estado: COMPLETADA — runFeedbackWriteSecurityTests() 44/44 PASS en runner JavaScript aislado; parsing de los dos archivos 2/2 PASS; diff revisado (seis archivos dentro del alcance, sin cambios ajenos). La ejecución no fue dentro de Apps Script desplegado.
 - Sin cambios de endpoints, deployments, datos productivos ni rama base.
 ================================================================================
+
+
+================================================================================
+CIERRE — AUG-040 — ASEGURAR LAS ESCRITURAS DE FEEDBACK SOBRE CORTES
+Fecha: 2026-11-10.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Criterios 1–6 cerrados: política explícita de acciones y rechazo por defecto; retiro de assignCollaborator; sesión e identidad autoritativa e idempotencia de recordLike; separación de aportes anónimos y verificados en suggestYear; aprobación/rechazo de vídeo con coordinación, verificación de destino y recuperación; cobertura de POST directo, identidad, roles, duplicados, destinos y contención interservicios.
+Hallazgos: H-AUD-040-001 a H-AUD-040-018 corregidos y validados localmente.
+Pruebas: FeedbackWriteSecurity 47/47; VideoApprovalPublishing 18/18; VideoApprovalState 13/13; VideoApprovalSessions 10/10; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalContracts 8/8; SharedMutationCoordinator 28/28; LikeClientCounter 6/6; ValidationCacheConfirmation 7/7. Total 160/160 PASS.
+Parsing V8: 17/17 PASS. Diff de cierre limitado a pruebas y registros; no se cambió lógica de producción.
+Beta pendiente: Apps Script desplegado, Sheets/Drive reales, OAuth/YouTube API, navegador/IndexedDB/XHR, HTTP real y concurrencia física interservicios. Los escenarios FEEDBACK ya constan en lista_beta.txt.
+Sin cambios de endpoints, deployments, datos productivos ni rama base GPSpedia2.2.5.
+Siguiente tarea del plan: AUG-041. No se inició en esta iteración.
+================================================================================

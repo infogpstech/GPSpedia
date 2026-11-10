@@ -270,3 +270,27 @@ Verificación de fuente: el handler ya no aparece en Services/feedback.js; la pr
 Validación ejecutada en runner JavaScript aislado con dobles mínimos de LockService y CacheService: runFeedbackWriteSecurityTests() = 44/44 PASS; parsing completo de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js = 2/2 PASS. La suite no accede a hojas ni Drive reales. Revisión GitHub del diff: seis archivos dentro del alcance, sin cambios ajenos. No equivale a una ejecución dentro del entorno desplegado de Apps Script.
 Sin cambios de endpoints, deployments, datos productivos ni rama base.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-018 — BAJA — CORREGIDO Y VALIDADO LOCALMENTE — 2026-11-10
+Origen: revisión final de cobertura de peticiones directas, criterio 6 de AUG-040.
+Ubicación: Services/Test/FeedbackWriteSecurity.js, entrada pública doPost() y dispatcher doPostInternal_().
+Evidencia: la suite cubría authorizeFeedbackAction_ y los handlers, pero no ejercitaba directamente el recorrido POST completo, incluida la reserva FEEDBACK del coordinador, antes de despachar la acción.
+Impacto: una regresión en el wrapper/dispatcher podía pasar inadvertida aunque las funciones de autorización aisladas siguieran aprobando.
+Corrección: se agregaron tres regresiones de POST directo. Comprueban que recordLike entra por el coordinador FEEDBACK y sustituye userId/userName/userRole por la identidad autenticada; que una sesión inválida y un rol falsificado para approveVideo se rechazan antes de ejecutar el handler; y que assignCollaborator se rechaza como acción no declarada.
+Validación local: runFeedbackWriteSecurityTests() 47/47 PASS; runSharedMutationCoordinatorTests() 28/28 PASS; parsing de la suite y los módulos afectados PASS.
+Límites: ContentService y coordinador se sustituyen por dobles en memoria. No acredita ejecución en Apps Script desplegado ni concurrencia física entre proyectos; esas pruebas permanecen en Beta.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE.
+================================================================================
+
+
+================================================================================
+CIERRE CONSOLIDADO — AUG-040 — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Criterios 1–6 cerrados: política explícita de acciones y rechazo por defecto; retiro de assignCollaborator; sesión e identidad autoritativa e idempotencia de recordLike; separación de aportes anónimos y verificados en suggestYear; aprobación/rechazo de vídeo con coordinación, verificación de destino y recuperación; cobertura de POST directo, identidad falsificada, sesión/rol, duplicados, destinos y contención interservicios.
+Hallazgos H-AUD-040-001 a H-AUD-040-018: corregidos y validados localmente; no quedan hallazgos abiertos en AUG-040.
+Validación: FeedbackWriteSecurity 47/47; VideoApprovalPublishing 18/18; VideoApprovalState 13/13; VideoApprovalSessions 10/10; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalContracts 8/8; SharedMutationCoordinator 28/28; LikeClientCounter 6/6; ValidationCacheConfirmation 7/7. Total 160/160 PASS. Parsing V8 17/17 PASS.
+Validación diferida a Beta: Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API, navegador/IndexedDB/XHR, errores HTTP reales y concurrencia física entre proyectos. Los casos FEEDBACK recordLike/suggestYear/approveVideo ya están registrados en lista_beta.txt. No se simularon ni se presentan como ejecutados.
+Sin cambios de endpoints, deployments, datos productivos ni rama base.
+================================================================================

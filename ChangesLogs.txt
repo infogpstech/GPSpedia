@@ -905,3 +905,14 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - La prueba confirma que assignCollaborator sigue rechazada por la política y que handleAssignCollaborator no existe.
 - Revisión GitHub del diff: seis archivos dentro del alcance; sin cambios ajenos. No equivale a validación en Apps Script desplegado.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — CIERRE AUG-040 — COBERTURA DIRECTA Y VALIDACIÓN LOCAL
+- Services/Test/FeedbackWriteSecurity.js: tres regresiones nuevas que recorren doPost() para identidad falsificada, sesión inválida, rol falsificado en approveVideo, coordinación FEEDBACK y rechazo de assignCollaborator.
+- Services/Test/SharedMutationCoordinator.js: regresión explícita de reservas CORTES/FEEDBACK/ACTIVITY para suggestYear y approveVideo.
+- Services/Test/README.md: documentación de la cobertura directa y de las políticas coordinadas.
+- Auditoría.txt: H-AUD-040-018 y cierre consolidado de AUG-040.
+- Validación: 160/160 pruebas aisladas PASS; parsing V8 17/17 PASS; diff de cierre limitado a pruebas y registros.
+- No se modificó lógica de producción, endpoints, deployments, datos productivos ni la rama base. Apps Script real, navegador, OAuth/YouTube API, Sheets/Drive reales y concurrencia física quedan diferidos a Beta.
+================================================================================

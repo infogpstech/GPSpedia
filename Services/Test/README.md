@@ -229,7 +229,8 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 ## Seguridad e integridad de escrituras FEEDBACK (AUG-040)
 
 - `Services/Test/FeedbackWriteSecurity.js` — ejecutar `runFeedbackWriteSecurityTests()` junto con `Services/feedback.js` en un proyecto temporal V8. Usa dobles en memoria para autorización, identidad de actor, política pública, deduplicación de likes, recuperación de contadores y rechazo de altas PyS sin imagen.
-- `Services/Test/SharedMutationCoordinator.js` comprueba que `recordLike` reserve `CORTES`, `FEEDBACK` y `ACTIVITY`, y que `assignCollaborator` ya no esté habilitada.
+  También prueba peticiones POST directas: sustitución de identidad, sesión inválida, rol falsificado en `approveVideo`, coordinación FEEDBACK y rechazo de `assignCollaborator`.
+- `Services/Test/SharedMutationCoordinator.js` comprueba la contención interservicios y que `recordLike`, `suggestYear` y `approveVideo` reserven `CORTES`, `FEEDBACK` y `ACTIVITY`; también confirma que `assignCollaborator` ya no esté habilitada.
 - Acciones públicas: `getPysData` (solo lectura) y `sendContactForm` (longitudes/correo validados y máximo 10 envíos por hora). `suggestYear` admite aportes anónimos limitados a 30 por hora; no cuentan para modificar automáticamente el catálogo y quedan para revisión manual.
 - Las escrituras `recordLike`, `reportProblem`, `addProblem`, `addSolution`, `addPrevention` y `suggestCutChange` requieren sesión activa; el backend reemplaza userId/userName/userRole con datos de Users. Las demás acciones deben estar declaradas; las no declaradas se rechazan.
 - `FeedbackLikes` se crea bajo demanda; su esquema está en `Spreadsheet/GPSpedia_DB_columnas.md`. No ejecutar contra hojas productivas.

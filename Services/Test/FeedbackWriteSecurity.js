@@ -18,6 +18,32 @@ function runFeedbackWriteSecurityTests() {
         try { callback(); passed++; results.push({ name, status: "PASS" }); }
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     }
+ 
+    function withDirectPostHarness_(callback) {
+        const oldContentService = typeof ContentService === "undefined" ? undefined : ContentService;
+        const oldSharedLease = typeof withSharedMutationLease_ === "undefined" ? undefined : withSharedMutationLease_;
+        const oldRecordLike = handleRecordLike;
+        const oldApproveVideo = handleApproveVideo;
+        const leaseCalls = [];
+        ContentService = {
+            MimeType: { TEXT: "text/plain" },
+            createTextOutput: function(content) {
+                return { content, setMimeType: function() { return this; } };
+            }
+        };
+        withSharedMutationLease_ = function(service, action, run) {
+            leaseCalls.push({ service, action });
+            return run("TEST_SHARED_LEASE");
+        };
+        try {
+            return callback({ leaseCalls });
+        } finally {
+            handleRecordLike = oldRecordLike;
+            handleApproveVideo = oldApproveVideo;
+            ContentService = oldContentService;
+            withSharedMutationLease_ = oldSharedLease;
+        }
+    }
 
     const oldAssert = assertFeedbackSession;
     const oldGetSpreadsheet = getSpreadsheet;
@@ -53,6 +79,68 @@ function runFeedbackWriteSecurityTests() {
             expectThrow_(() => authorizeFeedbackAction_("unknownAction", {}), "no declarada");
             expectThrow_(() => authorizeFeedbackAction_("assignCollaborator", { sessionToken: "TEST_SESSION" }), "no declarada");
             assert_(typeof handleAssignCollaborator === "undefined", "El handler obsoleto debe estar retirado.");
+        });
+        test_("POST directo coordina recordLike y sustituye la identidad falsificada", function() {
+            withDirectPostHarness_(function(runtime) {
+                let received = null;
+                handleRecordLike = function(payload) {
+                    received = payload;
+                    return { status: "success", likeCount: 1 };
+                };
+                const output = doPost({ postData: { contents: JSON.stringify({
+                    action: "recordLike",
+                    payload: { vehicleId: "VEH-POST", corteIndex: 1,
+                        userId: "ADMIN-FALSO", userName: "Nombre Falso",
+                        userRole: "Desarrollador", sessionToken: "TEST_SESSION" }
+                }) } });
+                const response = JSON.parse(output.content);
+                assert_(response.status === "success", "La petición válida debía completar el handler.");
+                assert_(received && received.userId === "USR-TEST-01" &&
+                    received.userName === "Usuario verificado" && received.userRole === "Tecnico",
+                    "El dispatcher debe reemplazar la identidad del cliente por la sesión.");
+                assert_(runtime.leaseCalls.length === 1 &&
+                    runtime.leaseCalls[0].service === "FEEDBACK" &&
+                    runtime.leaseCalls[0].action === "recordLike",
+                    "recordLike debe pasar por el coordinador FEEDBACK.");
+            });
+        });
+        test_("POST directo rechaza sesión inválida y rol falsificado antes del handler", function() {
+            withDirectPostHarness_(function(runtime) {
+                let likeCalled = false;
+                let approvalCalled = false;
+                handleRecordLike = function() { likeCalled = true; return { status: "success" }; };
+                handleApproveVideo = function() { approvalCalled = true; return { status: "success" }; };
+                const invalidSession = doPost({ postData: { contents: JSON.stringify({
+                    action: "recordLike",
+                    payload: { vehicleId: "VEH-POST", corteIndex: 1, sessionToken: "BAD_SESSION" }
+                }) } });
+                const invalidBody = JSON.parse(invalidSession.content);
+                assert_(invalidBody.status === "error" && !likeCalled,
+                    "Una sesión inválida debe rechazarse antes de ejecutar recordLike.");
+                const forgedRole = doPost({ postData: { contents: JSON.stringify({
+                    action: "approveVideo",
+                    payload: { itemId: "VIDEO-1", userId: "USR-TEST-01",
+                        userRole: "Desarrollador", sessionToken: "TEST_SESSION" }
+                }) } });
+                const roleBody = JSON.parse(forgedRole.content);
+                assert_(roleBody.status === "error" && !approvalCalled,
+                    "El rol enviado por el cliente no debe autorizar approveVideo.");
+                assert_(runtime.leaseCalls.some(call => call.service === "FEEDBACK" && call.action === "approveVideo"),
+                    "approveVideo debe pasar por el coordinador FEEDBACK.");
+            });
+        });
+        test_("POST directo rechaza assignCollaborator retirado", function() {
+            withDirectPostHarness_(function() {
+                const output = doPost({ postData: { contents: JSON.stringify({
+                    action: "assignCollaborator",
+                    payload: { vehicleId: "VEH-POST", collaborator: "Falso", sessionToken: "TEST_SESSION" }
+                }) } });
+                const response = JSON.parse(output.content);
+                assert_(response.status === "error" &&
+                    String(response.message || "").includes("no declarada"),
+                    "La ruta pública debe rechazar la acción retirada.");
+                assert_(typeof handleAssignCollaborator === "undefined");
+            });
         });
         test_("recordLike exige sesión y sustituye identidad falsificada", function() {
             expectThrow_(() => authorizeFeedbackAction_("recordLike", { userId: "ADMIN-FALSO" }), "Sesión inválida");

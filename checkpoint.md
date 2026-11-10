@@ -1395,3 +1395,41 @@ Commits de esta iteración:
 Estado: COMPLETADA. No quedan validaciones pendientes dentro del alcance de esta corrección.
 Siguiente iteración: continuar con el siguiente criterio pendiente de AUG-040, una sola tarea. No iniciar AUG-041 sin cerrar primero AUG-040.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-040 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD padre confirmado al iniciar el cierre: 000606dd2e81e524f72e7321699b06b510ff62c1.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin modificaciones.
+Tarea: AUG-040 — Asegurar las escrituras de FEEDBACK sobre Cortes.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Trabajo final de cobertura:
+- Services/Test/FeedbackWriteSecurity.js: tres pruebas nuevas de entrada POST al wrapper doPost() con dobles; validan coordinación FEEDBACK, identidad de sesión frente a datos falsificados, rechazo de sesión inválida, rol falsificado en approveVideo y rechazo de assignCollaborator.
+- Services/Test/SharedMutationCoordinator.js: prueba explícita de que suggestYear y approveVideo reservan CORTES, FEEDBACK y ACTIVITY.
+- Services/Test/README.md actualizado para describir ambas coberturas.
+- H-AUD-040-018 registra el vacío de cobertura del dispatcher y su corrección. H-AUD-040-001 a H-AUD-040-018 quedan cerrados.
+
+VALIDACIÓN LOCAL
+- FeedbackWriteSecurity: 47/47 PASS.
+- VideoApprovalPublishing: 18/18 PASS.
+- VideoApprovalState: 13/13 PASS.
+- VideoApprovalSessions: 10/10 PASS.
+- YouTubeApproval: 15/15 PASS.
+- YouTubeApprovalInit: 8/8 PASS.
+- VideoApprovalContracts: 8/8 PASS.
+- SharedMutationCoordinator: 28/28 PASS.
+- LikeClientCounter: 6/6 PASS.
+- ValidationCacheConfirmation: 7/7 PASS.
+- Total: 160/160 PASS.
+- Parsing V8 de 17 módulos y suites relacionados: 17/17 PASS.
+- Revisión del diff del cierre: únicamente suites de prueba y registros; no se modificó lógica de producción.
+- Rama de trabajo estaba exactamente en 000606dd2e81e524f72e7321699b06b510ff62c1 antes de publicar; rama base confirmada en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+VALIDACIÓN DIFERIDA A BETA
+Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API, navegador/IndexedDB/XHR, errores HTTP reales y concurrencia física entre proyectos. Los escenarios FEEDBACK recordLike/suggestYear/approveVideo ya están registrados en lista_beta.txt. No se simularon ni se declararon ejecutados.
+No se modificaron endpoints, deployments ni datos productivos.
+Siguiente tarea autorizada: AUG-041. No se inició durante este cierre.
+================================================================================
