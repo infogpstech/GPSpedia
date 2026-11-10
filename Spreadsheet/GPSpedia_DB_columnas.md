@@ -403,3 +403,17 @@ Antes de desactivar una cuenta, AUTH convierte en valores estáticos los IDs cal
 ## Hoja técnica adicional — ImageUploadLedger
 
 Se crea bajo demanda por WRITE/ADMIN antes de crear un archivo general en Drive. Encabezados exactos: token, operationKey, folderId, mimeType, sizeBytes, contentHash, fileId, fileUrl, state, referenceSheet, referenceRow, referenceColumns, referencesJson, fileName, createdAt, updatedAt, lastError. El token debe ser único. El ledger enlaza operación, archivo y referencia de Cortes; contentHash es SHA-256 completo. Estados de reconciliación: pending, linked, pending_unreferenced, orphan_candidate, file_missing y requires_review. Los archivos nunca se eliminan automáticamente por quedar sin referencia o presentar integridad dudosa. Límite de carga general: 10 MB por imagen.
+
+
+## Hoja técnica adicional — FeedbackLikes (AUG-040)
+
+Se crea bajo demanda por FEEDBACK al registrar el primer like autenticado. Conserva una fila por combinación única de actor, vehículo y corte para impedir incrementos duplicados y recuperar una escritura interrumpida.
+
+Encabezados exactos: `actorKey`, `vehicleId`, `corteIndex`, `previousCount`, `targetCount`, `status`, `createdAt`.
+
+- `actorKey`: identidad derivada en backend con formato `user:<Users.ID>`; no se acepta una identidad enviada como prueba por el navegador.
+- `previousCount` y `targetCount`: permiten reanudar el incremento sin repetirlo después de una respuesta perdida.
+- `status`: `pending` antes de confirmar el contador de Cortes; `completed` después de verificarlo por lectura.
+- Una hoja existente con encabezados incompatibles o filas duplicadas bloquea la operación; no se reescribe ni se corrige automáticamente.
+
+La hoja se añade de forma independiente y no altera las columnas históricas de Cortes o Feedbacks.
