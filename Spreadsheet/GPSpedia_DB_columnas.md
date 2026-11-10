@@ -398,3 +398,8 @@ La columna `Users.ID` es una clave de identidad y no debe depender de la posici�
 
 ### Conservación de identificadores históricos
 Antes de desactivar una cuenta, AUTH convierte en valores estáticos los IDs calculados de las filas existentes y aborta ante IDs vacíos/duplicados. Esto preserva las referencias históricas aunque las fórmulas originales dependieran de la fila u otros campos. Las cuentas nuevas utilizan UUID estáticos; las filas de cuenta no se eliminan físicamente.
+
+
+## Hoja técnica adicional — ImageUploadLedger
+
+Se crea bajo demanda por WRITE/ADMIN antes de crear un archivo general en Drive. Encabezados exactos: token, operationKey, folderId, mimeType, sizeBytes, contentHash, fileId, fileUrl, state, referenceSheet, referenceRow, referenceColumns, referencesJson, fileName, createdAt, updatedAt, lastError. El token debe ser único. El ledger enlaza operación, archivo y referencia de Cortes; contentHash es SHA-256 completo. Estados de reconciliación: pending, linked, pending_unreferenced, orphan_candidate, file_missing y requires_review. Los archivos nunca se eliminan automáticamente por quedar sin referencia o presentar integridad dudosa. Límite de carga general: 10 MB por imagen.
