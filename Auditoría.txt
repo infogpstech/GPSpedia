@@ -1292,3 +1292,13 @@ VALIDACIÓN LOCAL
 LÍMITES
 No se ejecutaron Apps Script real, UrlFetch entre proyectos, deployments, Sheets reales ni concurrencia física. La integración con coordinador desplegado, configuración de ScriptProperties, simultaneidad real y pruebas de interrupción en copias aisladas quedan diferidas a Beta. No se modificaron endpoints, api-config.js, Spreadsheet/Drive productivos ni la rama base.
 ================================================================================
+
+
+================================================================================
+H-AUD-035-001 — AUG-035 — RESUELTO EN VALIDACIÓN LÓGICA LOCAL — 2026-11-10
+Hallazgos: el mapa toleraba opId duplicados con asociación igual; la inicialización podía reparar encabezados sin verificar la columna; registro y recuperación aceptaban coincidencias ambiguas; recuperación por vehicleId tomaba la primera fila; migración podía limpiar origen con destino pending.
+Corrección: encabezados A:E y contenido validados antes de reparar; validación de opId/vehicleId/slotIndex/timestamp/status; cualquier duplicado se rechaza sin fusionar ni borrar; recordOpId verifica escritura y no degrada completed; findRowByOpId exige una fila Cortes única; migración verifica opId, asociación y completed antes de limpiar origen, y completa/verifica registros pending.
+Validación lógica: 12/12 PASS. Parsing V8 de admin.js, write.js y harness: PASS. Revisión estática: persistencia y read-back preceden a la limpieza de origen.
+Límites: Spreadsheet aislada, fallos parciales reales, interrupción y concurrencia quedan pendientes de Beta. No se modificaron datos ni deployments productivos.
+Reconciliación: conservar duplicados; comparar filas, asociación, timestamp y estado; documentar decisión antes de corrección manual. No hay fusión o borrado automático.
+================================================================================
