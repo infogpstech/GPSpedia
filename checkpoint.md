@@ -1433,3 +1433,33 @@ Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API, navegador/I
 No se modificaron endpoints, deployments ni datos productivos.
 Siguiente tarea autorizada: AUG-041. No se inició durante este cierre.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-041 — 2026-11-10
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work.
+HEAD padre confirmado: a922b0c6e79b02475393c498fb4fb9ff6da824ec.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea única: AUG-041 — Asegurar y alinear el servicio UTILITIES.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Cambios:
+- Services/Utilities.js versión 1.4.0. doPost acepta solo migrateTimestamps y valida sesión backend única/vigente, usuario activo, ausencia de revocación pendiente y rol Desarrollador real desde Users. No confía en rol del payload.
+- La migración se serializa con ScriptLock del proyecto UTILITIES.
+- Hoja 1 no se limpia antes del resultado. Se genera staging, se verifica por lectura, se renombra el destino previo a backup, se promueve staging y se verifica el destino. Si falla la promoción, se elimina el resultado parcial y se restaura el backup; estados ambiguos requieren revisión manual.
+- migrateYearRanges se eliminó de ACTION_TO_SERVICE_MAP por falta de handler y consumidores vigentes. migrateTimestamps se conserva protegida.
+- No se añadió ni se atribuyó a Utilities el rol de coordinador interproyectos.
+Hallazgos H-AUD-041-001 a H-AUD-041-003: corregidos y validados localmente.
+
+VALIDACIÓN LOCAL
+- UtilitiesSecurity: 12/12 PASS con dobles en memoria.
+- Parsing V8 de Services/Utilities.js y Services/Test/UtilitiesSecurity.js: 2/2 PASS.
+- Diff revisado: Utilities, api-config, suite, README y registros de AUG-041.
+- No se ejecutó Apps Script desplegado, Spreadsheet/Drive real ni endpoint productivo.
+
+BETA PENDIENTE
+- Obtener/comparar el código exacto del deployment UTILITIES (no accesible desde el repositorio actual).
+- Ejecutar en deployment y Spreadsheet aislados: sesiones inválidas/roles, dos ejecuciones concurrentes, timeout/interrupción después de staging, origen vacío, destino incompatible, permisos rename/delete y recuperación física.
+- No usar endpoints, hojas ni datos productivos.
+No se modificaron endpoints, deployments ni datos productivos. No se tocó GPSpedia2.2.5.
+================================================================================

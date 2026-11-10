@@ -268,3 +268,13 @@ AUG-155 — VALIDACIÓN DIFERIDA A BETA — COORDINADOR INTERPROYECTOS
 ================================================================================
 - AUG-043 — Validación integrada del ciclo de aprobación y subida reanudable de YouTube. En Beta, usar cuentas/credenciales de prueba y copias aisladas, nunca datos productivos. Verificar: (1) flujo completo desde Corte, PyS y Tutorial; (2) modal, selección de archivo, cancelación, recarga y recuperación desde IndexedDB real; (3) XHR resumable con respuestas 308/Range, pérdida de respuesta, expiración y renovación de sesión; (4) OAuth y YouTube API real, creación de vídeo no listado e ID devuelto; (5) Apps Script FEEDBACK y Spreadsheet aislado para solicitud, idempotencia, autorización, aprobación/rechazo y escritura/read-back en los tres destinos; (6) concurrencia/reintentos y ausencia de solicitudes duplicadas o publicación en destino incorrecto. La tarea está cerrada en validación local; esta lista no representa pruebas ya ejecutadas.
 ================================================================================
+
+
+================================================================================
+AUG-041 — UTILITIES — VALIDACIÓN DIFERIDA A BETA
+- Obtener la fuente exacta del deployment UTILITIES y compararla con Services/Utilities.js 1.4.0 antes de actualizar el deployment.
+- En deployment y Spreadsheet aislados, probar sesión ausente/inválida/expirada, rol no Desarrollador, revocación pendiente y dos ejecuciones concurrentes.
+- Inyectar timeout/interrupción después de staging y durante promoción; verificar backup, hojas staging y reintento.
+- Probar origen vacío, destino incompatible/protegido, permisos copyTo/rename/delete y limpieza del backup.
+- No llamar endpoints operativos ni usar hojas, Drive o datos productivos.
+================================================================================

@@ -916,3 +916,14 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - Validación: 160/160 pruebas aisladas PASS; parsing V8 17/17 PASS; diff de cierre limitado a pruebas y registros.
 - No se modificó lógica de producción, endpoints, deployments, datos productivos ni la rama base. Apps Script real, navegador, OAuth/YouTube API, Sheets/Drive reales y concurrencia física quedan diferidos a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-041 — ASEGURAR Y ALINEAR UTILITIES
+- Services/Utilities.js: versión 1.4.0; autorización server-side para Desarrollador, serialización local y reemplazo de Hoja 1 mediante staging verificado, backup y rollback.
+- api-config.js: retirado el mapeo migrateYearRanges sin handler ni consumidores; migrateTimestamps permanece enrutada y protegida.
+- Services/Test/UtilitiesSecurity.js: suite aislada para autorización, staging, errores, rollback, lock, origen vacío, destino incompatible y recuperación.
+- Services/Test/README.md: documentado el runner y sus límites.
+- Auditoría.txt, Tareas.txt, Tareas_pendientes_parte1.txt, lista_beta.txt y checkpoint.md: registros de cierre.
+- No se modificaron endpoints, deployments ni datos productivos. La fuente del deployment exacto y la integración real quedan pendientes de Beta.
+================================================================================

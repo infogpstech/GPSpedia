@@ -294,3 +294,45 @@ Validación: FeedbackWriteSecurity 47/47; VideoApprovalPublishing 18/18; VideoAp
 Validación diferida a Beta: Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API, navegador/IndexedDB/XHR, errores HTTP reales y concurrencia física entre proyectos. Los casos FEEDBACK recordLike/suggestYear/approveVideo ya están registrados en lista_beta.txt. No se simularon ni se presentan como ejecutados.
 Sin cambios de endpoints, deployments, datos productivos ni rama base.
 ================================================================================
+
+
+================================================================================
+H-AUD-041-001 — ALTA — CORREGIDO Y VALIDADO LOCALMENTE — 2026-11-10
+Ubicación: Services/Utilities.js, doPost().
+Evidencia: migrateTimestamps aceptaba solicitudes sin comprobar userId, sessionToken, ActiveSessions ni rol vigente de Users.
+Impacto: un invocante que conociera el endpoint podía ejecutar una escritura sobre Hoja 1.
+Corrección: sesión única/vigente, usuario activo, sin revocación pendiente y Privilegios Desarrollador verificado desde Users; no se confía en el rol del payload.
+Validación: POST sin sesión, rol no autorizado, sesión duplicada/expirada y revocación pendiente PASS.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE.
+================================================================================
+
+
+================================================================================
+H-AUD-041-002 — ALTA — CORREGIDO Y VALIDADO LOCALMENTE — 2026-11-10
+Ubicación: Services/Utilities.js, replaceUtilitiesTargetSafely_().
+Evidencia: clearContents() se ejecutaba sobre Hoja 1 antes de escribir el resultado.
+Impacto: un fallo de Drive, Spreadsheet o timeout podía dejar el destino vacío/parcial y perder la salida confirmada.
+Corrección: staging verificado, backup del destino anterior, promoción verificada y rollback; estados ambiguos fallan cerrados.
+Validación: fallos inyectados en staging/promoción, rollback, backup interrumpido y lectura posterior PASS.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE.
+================================================================================
+
+
+================================================================================
+H-AUD-041-003 — MEDIA — CORREGIDO Y VALIDADO LOCALMENTE — 2026-11-10
+Ubicación: api-config.js, ACTION_TO_SERVICE_MAP.
+Evidencia: migrateYearRanges estaba mapeada sin handler y no se encontraron consumidores vigentes.
+Corrección: se retiró el mapeo migrateYearRanges; migrateTimestamps se conserva protegida por sesión Desarrollador.
+Validación: búsqueda de consumidores y prueba de rechazo directo de migrateYearRanges PASS.
+Estado: CORREGIDO Y VALIDADO LOCALMENTE.
+================================================================================
+
+
+================================================================================
+AUG-041 — CIERRE DE VALIDACIÓN LOCAL — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Services/Utilities.js actualizado a 1.4.0; doPost protegido por sesión backend de Desarrollador. migrateYearRanges retirado del mapa por ausencia de handler y consumidores vigentes. Hoja 1 se reemplaza tras staging verificado; promoción releída y rollback disponible. LockService serializa ejecuciones del mismo deployment; no se declara coordinación interproyectos.
+Pruebas locales: UtilitiesSecurity 12/12 PASS; parsing 2/2 PASS; diff revisado.
+Código exacto del deployment UTILITIES no accesible desde el repositorio; comparación del deployment y pruebas Apps Script/Spreadsheet aisladas quedan pendientes de Beta.
+No se ejecutó endpoint ni se accedió a datos productivos.
+================================================================================

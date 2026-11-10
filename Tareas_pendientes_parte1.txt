@@ -559,7 +559,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Probar llamadas no autorizadas, dos ejecuciones simultáneas, timeout/fallo después de staging, origen vacío y destino incompatible.
   6. No tratar este servicio como coordinador hasta que exista un protocolo interproyectos demostrado.
 - **Relación:** AUG-003 (auditoría completada), AUG-034/AUD-T-033 (coordinación).
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Implementación y pruebas locales cerradas; comparación del deployment exacto e integración real pendientes de Beta.
 
 ### Adenda AUD-T-034 — ampliación de AUG-006, AUG-016 y AUG-017
 

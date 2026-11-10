@@ -716,3 +716,15 @@ Beta pendiente: Apps Script desplegado, Sheets/Drive reales, OAuth/YouTube API, 
 Sin cambios de endpoints, deployments, datos productivos ni rama base GPSpedia2.2.5.
 Siguiente tarea del plan: AUG-041. No se inició en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-041 — ASEGURAR Y ALINEAR EL SERVICIO UTILITIES
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- migrateYearRanges retirado de ACTION_TO_SERVICE_MAP: no existe handler y no hay consumidores vigentes.
+- migrateTimestamps se conserva como mantenimiento de Desarrollador; el backend valida sesión activa única, perfil no revocado y rol real en Users.
+- Hoja 1 se reemplaza solo después de preparar y leer de vuelta staging; el backup anterior se conserva hasta verificar el destino promovido. Fallos de promoción activan rollback; estados ambiguos se detienen para reconciliación.
+- LockService serializa ejecuciones del mismo proyecto; no se declara coordinación entre proyectos.
+- UtilitiesSecurity 12/12 PASS; parsing 2/2 PASS; diff revisado.
+- Beta pendiente: fuente exacta del deployment, Apps Script/Spreadsheet aislados, concurrencia física, timeout real, permisos de hojas y recuperación tras interrupción.
+================================================================================

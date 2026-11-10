@@ -226,6 +226,11 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 - `Services/Test/LikeClientCounter.js` — ejecutar con `node --experimental-default-type=module Services/Test/LikeClientCounter.js`. Verifica likes nuevos, reintentos idempotentes, recuperación, deduplicación de estado local y preservación del contador ante respuestas inválidas.
 - La suite no requiere navegador ni servicios externos.
 
+## Seguridad y recuperación del servicio UTILITIES (AUG-041)
+
+- `Services/Test/UtilitiesSecurity.js` — cargar junto con `Services/Utilities.js` en un runner V8 e invocar `runUtilitiesSecurityTests()`. Usa dobles en memoria para sesión/rol, staging, verificación, promoción, rollback, lock ocupado, origen vacío, destino incompatible y recuperación de respaldo interrumpido.
+- No accede a Apps Script desplegado, Spreadsheet ni Drive reales. La comparación del deployment publicado y la integración física se reservan para Beta.
+
 ## Seguridad e integridad de escrituras FEEDBACK (AUG-040)
 
 - `Services/Test/FeedbackWriteSecurity.js` — ejecutar `runFeedbackWriteSecurityTests()` junto con `Services/feedback.js` en un proyecto temporal V8. Usa dobles en memoria para autorización, identidad de actor, política pública, deduplicación de likes, recuperación de contadores y rechazo de altas PyS sin imagen.
