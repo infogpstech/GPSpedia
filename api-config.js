@@ -232,7 +232,6 @@ export async function suggestYear(vehicleId, newYear, responseText, actorPayload
     const actor = actorPayload && typeof actorPayload === "object" ? {
         userId: actorPayload.userId,
         sessionToken: actorPayload.sessionToken,
-        anonymousReporterId: actorPayload.anonymousReporterId
     } : {};
     return await routeAction("suggestYear", { ...actor, vehicleId, newYear, response: responseText });
 }
