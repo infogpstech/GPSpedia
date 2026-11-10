@@ -404,3 +404,11 @@ Pendiente: ejecutar parsing y suites aisladas disponibles; integración real con
 Siguiente acción: continuar validación reproducible de AUG-043, corregir solo hallazgos demostrados y actualizar el estado después de ejecutar las suites.
 Nota: blobs preparados en iteraciones anteriores no constituyen cambios publicados por sí solos. Solo el contenido presente en el árbol de esta rama es fuente válida; no aplicar blobs antiguos sin reconciliar el diff.
 ================================================================================
+
+
+PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
+- La implementación, las siete suites de prueba y los registros de avance quedaron publicados en GPSpedia2.2.5_work mediante 15 commits secuenciales de un archivo, cada uno verificado como hijo directo del HEAD previo.
+- HEAD de trabajo verificado tras la publicación: abe3b642f4e41c55c9660c91af5d4c71d820947b.
+- El merge-base con GPSpedia2.2.5 permanece d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó la rama base.
+- Relectura desde la rama remota: 82/82 pruebas aisladas PASS; sintaxis de los cuatro módulos principales PASS; contenido de módulos, suites y registros verificado.
+- AUG-043 continúa EN PROGRESO: falta la prueba de integración en navegador real y la validación con OAuth/YouTube API y proyecto Apps Script/Spreadsheet aislado. No se desplegó ni se modificaron datos productivos.
