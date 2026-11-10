@@ -505,3 +505,10 @@ Siguiente paso: implementar los seis hallazgos dentro de AUG-042, pruebas aislad
 AUG-042 — ADENDA DE ALCANCE — 2026-11-09
 Se incorpora offline.js para corregir H-AUD-042-010: el estado persistente de auditoría Drive usa una clave IndexedDB global y no identifica al propietario. La solución debe aislar el estado por userId y limpiarlo al cerrar sesión/cambiar cuenta/rol, sin perder continuidad en una recarga normal de la misma cuenta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-042 — 2026-11-10
+HEAD de trabajo al checkpoint: c9154bdc37cf37e89551b2347ea628a7d682c92c.
+H-AUD-042-010 documentado y alcance ampliado a offline.js. Se preparó borrador ui.js (blob e86ce5d6c3218aa05002b0d94a87f9a425bb9a48; parsing aislado PASS), sin integrar ni validar funcionalmente. Se preparó diseño de aislamiento de DriveAuditState por userId y revalidación de sesión en main.js, todavía no integrados. No se cierran hallazgos ni se declara completada AUG-042. Próximo paso: continuar implementación y pruebas; no publicar cambios funcionales hasta superar comparación con respaldos, pruebas y Code Review.
+================================================================================

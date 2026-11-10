@@ -468,3 +468,12 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Se amplía alcance a offline.js para aislar persistencia por userId y limpiar estado anterior en logout/cambio de cuenta/rol.
 - Respaldo previo: offline.js blob c68e8698c74ef45a1c9bb534c6b2be77df817c34.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — CHECKPOINT DE AVANCE AUG-042 / CICLO B
+- Registrado estado de implementación: borrador ui.js preparado (blob e86ce5d6c3218aa05002b0d94a87f9a425bb9a48), parsing aislado PASS; pendiente revisión y pruebas funcionales.
+- Ampliación de auditoría H-AUD-042-010 sobre persistencia IndexedDB global de DriveAuditState y alcance a offline.js.
+- Se decidió no integrar código incompleto; commit de checkpoint exclusivamente documental.
+- HEAD padre: c9154bdc37cf37e89551b2347ea628a7d682c92c. No se modificó rama base.
+================================================================================

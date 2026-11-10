@@ -1137,3 +1137,9 @@ Evidencia: la auditoría de Drive se persiste en IndexedDB bajo la clave global 
 Impacto: exposición local entre cuentas y recuperación de información privilegiada de una sesión anterior, incluso después de cerrar sesión o recargar la aplicación.
 Criterio: vincular el estado a userId, recuperar solo el estado del mismo usuario, eliminar la clave global heredada no aislada y borrar el estado de la cuenta anterior al logout/cambio de cuenta/rol. Mantener persistencia para la misma cuenta durante recarga normal.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-042 — 2026-11-10
+Se conserva abierto el conjunto H-AUD-042-004 a H-AUD-042-010. El borrador de ui.js incorpora propuestas de guardas de sesión/rol y control de respuestas asíncronas, pero no se considera evidencia de resolución hasta completar revisión por función, pruebas de comportamiento y Code Review. H-AUD-042-010 continúa abierto: el diseño propuesto para offline.js debe probar aislamiento por propietario, continuidad de la misma cuenta y limpieza al cambio/logout, incluidos fallos de IndexedDB y operaciones concurrentes. No se cierran hallazgos en este checkpoint.
+================================================================================

@@ -111,3 +111,36 @@ Respaldo exacto previo a editar: c68e8698c74ef45a1c9bb534c6b2be77df817c34.
 Criterio: DriveAuditState se guarda/lee por userId; se elimina la clave global heredada no aislada; el estado de la cuenta anterior se borra al logout/cambio de cuenta/rol, conservándose en una recarga normal de la misma cuenta.
 No se ha modificado offline.js; implementación pendiente.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-042 / CICLO B — 2026-11-10 05:10 (HONDURAS)
+Rama: GPSpedia2.2.5_work
+HEAD confirmado al iniciar checkpoint: c9154bdc37cf37e89551b2347ea628a7d682c92c.
+Commit padre: c9154bdc37cf37e89551b2347ea628a7d682c92c.
+Tarea activa: AUG-042 — sincronización del rol y limpieza del estado privilegiado en el cliente.
+
+Auditoría:
+- Se mantiene H-AUD-042-004 a H-AUD-042-009 abierto, conforme a los criterios previamente registrados.
+- Se incorporó H-AUD-042-010: DriveAuditState usa una clave IndexedDB global sin ownerId, permitiendo recuperar datos entre cuentas del mismo navegador.
+- Se amplió formalmente el alcance a offline.js. Respaldo exacto: c68e8698c74ef45a1c9bb534c6b2be77df817c34.
+
+Avance de implementación preparado, aún no integrado en la rama:
+- ui.js: borrador de guardas de sesión/rol en aperturas privilegiadas, captura y restauración de plantillas de modales, invalidación de generaciones de solicitudes y protección de respuestas asíncronas. Blob preparado: e86ce5d6c3218aa05002b0d94a87f9a425bb9a48. Verificación realizada hasta ahora: parsing/sintaxis aislada PASS; revisión funcional, pruebas y Code Review pendientes.
+- offline.js: se preparó una propuesta de persistencia por userId y eliminación de la clave global heredada; aún no se incorpora ni se considera validada.
+- main.js: se inició el diseño de revalidación al recuperar foco/visibilidad y conexión; no se incorpora ni se considera validado.
+- auth.js y users.html: sin cambios funcionales integrados en esta etapa.
+
+Decisión de checkpoint:
+No se publican cambios funcionales incompletos. Este commit registra el estado verificable y conserva el punto de reanudación. No se declara AUG-042 completada ni se cierran hallazgos.
+Pendiente al reanudar:
+1. Recuperar y revisar el borrador ui.js contra el respaldo exacto y completar los guards de todas las funciones privilegiadas.
+2. Implementar offline.js con ownerId y limpieza segura al cambiar de cuenta/rol/logout; cubrir fallos IndexedDB y carreras.
+3. Completar main.js sin crear temporizadores duplicados ni revalidaciones simultáneas.
+4. Resolver H-AUD-042-007 en todos los consumidores de rol y completar H-AUD-042-008/009 en users.html/auth.js según evidencia y alcance.
+5. Ejecutar pruebas aisladas de matriz de roles, cambio de cuenta, logout, respuestas tardías, revalidación y persistencia; sintaxis, comparación con respaldos y Code Review/Safety & Side Effects.
+6. Actualizar documentación y checkpoint final antes del único commit funcional de AUG-042.
+
+No ejecutado: pruebas reales de navegador, Apps Script, Sheets/Drive, endpoints, despliegues, concurrencia física ni datos productivos.
+No se modificó la rama base. No se modificaron sus referencias.
+================================================================================
