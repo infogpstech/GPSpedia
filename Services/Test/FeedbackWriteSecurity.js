@@ -26,6 +26,8 @@ function runFeedbackWriteSecurityTests() {
     const oldCache = typeof CacheService === "undefined" ? null : CacheService;
     const oldLock = typeof LockService === "undefined" ? null : LockService;
     const oldSpreadsheetApp = typeof SpreadsheetApp === "undefined" ? null : SpreadsheetApp;
+    const oldDriveApp = typeof DriveApp === "undefined" ? null : DriveApp;
+    const oldUtilities = typeof Utilities === "undefined" ? null : Utilities;
 
     try {
         assertFeedbackSession = function(payload, allowedRoles) {
@@ -80,6 +82,34 @@ function runFeedbackWriteSecurityTests() {
                 titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
                 userId: "USR-1", userName: "Usuario"
             }), "imagen del problema es obligatoria");
+        });
+        test_("Si falla la escritura PyS, el archivo creado se compensa", function() {
+            let trashed = false;
+            const sheet = {
+                getLastRow: () => 1,
+                getDataRange: () => ({ getValues: () => [["header"]] }),
+                appendRow: () => { throw new Error("fallo controlado de appendRow"); }
+            };
+            getSafeSheet = () => sheet;
+            LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+            SpreadsheetApp = { flush: function() {} };
+            const file = {
+                setSharing: function() {},
+                getUrl: () => "https://drive.google.test/file/dummy",
+                setTrashed: function(value) { trashed = value; }
+            };
+            const folder = { createFile: () => file };
+            DriveApp = {
+                getFoldersByName: () => ({ hasNext: () => true, next: () => folder }),
+                Access: { ANYONE_WITH_LINK: "anyone" },
+                Permission: { VIEW: "view" }
+            };
+            Utilities = { base64Decode: () => [1], newBlob: () => ({}) };
+            expectThrow_(() => handleAddProblem({
+                titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
+                imgBase64: "data:image/jpeg;base64,AA==", userId: "USR-1", userName: "Usuario"
+            }), "fallo controlado");
+            assert_(trashed === true, "El archivo no vinculado debe enviarse a papelera.");
         });
         test_("El límite de frecuencia público se aplica en el servidor", function() {
             const store = {};
@@ -188,6 +218,8 @@ function runFeedbackWriteSecurityTests() {
         if (oldCache) CacheService = oldCache;
         if (oldLock) LockService = oldLock;
         if (oldSpreadsheetApp) SpreadsheetApp = oldSpreadsheetApp;
+        if (oldDriveApp) DriveApp = oldDriveApp;
+        if (oldUtilities) Utilities = oldUtilities;
     }
 
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
