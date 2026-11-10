@@ -49,9 +49,10 @@ function runFeedbackWriteSecurityTests() {
             const payload = { value: "test" };
             assert_(authorizeFeedbackAction_("getPysData", payload) === payload);
         });
-        test_("Acciones no declaradas y assignCollaborator se rechazan", function() {
+        test_("Acciones no declaradas se rechazan y assignCollaborator está retirado", function() {
             expectThrow_(() => authorizeFeedbackAction_("unknownAction", {}), "no declarada");
             expectThrow_(() => authorizeFeedbackAction_("assignCollaborator", { sessionToken: "TEST_SESSION" }), "no declarada");
+            assert_(typeof handleAssignCollaborator === "undefined", "El handler obsoleto debe estar retirado.");
         });
         test_("recordLike exige sesión y sustituye identidad falsificada", function() {
             expectThrow_(() => authorizeFeedbackAction_("recordLike", { userId: "ADMIN-FALSO" }), "Sesión inválida");
