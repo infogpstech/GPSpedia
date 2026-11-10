@@ -67,6 +67,46 @@ function runFeedbackWriteSecurityTests() {
         test_("Aprobación mantiene la restricción de rol", function() {
             expectThrow_(() => authorizeFeedbackAction_("approveVideo", { sessionToken: "TEST_SESSION" }), "Rol no autorizado");
         });
+
+        test_("El alta de tutorial usa el colaborador derivado de la sesión", function() {
+            const originalAssert = assertFeedbackSession;
+            const originalGetSafeSheet = getSafeSheet;
+            const originalSpreadsheetApp = SpreadsheetApp;
+            const rows = [["Tema", "Imagen", "Video", "Descripción", "Colaborador"]];
+            const sheet = {
+                getLastRow: () => rows.length,
+                getLastColumn: () => 5,
+                getRange: (row, column, rowCount, columnCount) => ({
+                    getDisplayValues: () => Array.from({ length: rowCount }, (_, r) =>
+                        Array.from({ length: columnCount }, (_, c) => String((rows[row - 1 + r] || [])[column - 1 + c] || ""))),
+                    getValues: () => Array.from({ length: rowCount }, (_, r) =>
+                        Array.from({ length: columnCount }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] || ""))
+                }),
+                appendRow: row => rows.push(row.slice())
+            };
+            try {
+                assertFeedbackSession = function(payload, allowedRoles) {
+                    if (!allowedRoles || !allowedRoles.includes("Desarrollador")) throw new Error("Rol no autorizado.");
+                    return { userId: "USR-DEV", userName: "Desarrollador verificado", role: "Desarrollador" };
+                };
+                getSafeSheet = () => sheet;
+                SpreadsheetApp = { flush: function() {} };
+                const authorized = authorizeFeedbackAction_("addTutorial", {
+                    sessionToken: "TEST_SESSION", userId: "ADMIN-FALSO",
+                    userName: "Nombre falso", colaborador: "Colaborador falso"
+                });
+                handleAddTutorial({
+                    ...authorized, tema: "Tutorial de prueba", descripcion: "Descripción",
+                    colaborador: "Colaborador falsificado"
+                });
+                assert_(rows[1][4] === "Desarrollador verificado",
+                    "El colaborador guardado debe proceder de la sesión, no del navegador.");
+            } finally {
+                assertFeedbackSession = originalAssert;
+                getSafeSheet = originalGetSafeSheet;
+                SpreadsheetApp = originalSpreadsheetApp;
+            }
+        });
         test_("El actor anónimo ignora el identificador fabricable del navegador", function() {
             const actor = resolveSuggestionYearActor({ userId: "0", anonymousReporterId: "fabricado" });
             assert_(actor.suggestionActorKey === "anon:unverified");
