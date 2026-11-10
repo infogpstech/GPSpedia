@@ -1302,3 +1302,14 @@ Validación lógica: 13/13 PASS. Parsing V8 de admin.js, write.js y harness: PAS
 Límites: Spreadsheet aislada, fallos parciales reales, interrupción y concurrencia quedan pendientes de Beta. No se modificaron datos ni deployments productivos.
 Reconciliación: conservar duplicados; comparar filas, asociación, timestamp y estado; documentar decisión antes de corrección manual. No hay fusión o borrado automático.
 ================================================================================
+
+
+================================================================================
+H-AUD-036-001 — AUG-036 — RESUELTO EN VALIDACIÓN LÓGICA LOCAL — 2026-11-10
+Hallazgos: ensureTestigoColumns ubicaba los campos después de getLastColumn(), por lo que AT:AV no se garantizaba cuando existían columnas posteriores; getVinColumnIndex seleccionaba el primer encabezado VIN sin detectar duplicados; los parsers de frontend/ADMIN/WRITE diferían en delimitadores y preservación de posiciones JSON.
+Decisión: AT:AV (46–48) es posición física obligatoria para activaTestigo1..3. AQ/VIN continúa resolviéndose por encabezado único; la migración controlada lo fija en la columna 43. AR:AS permanecen reservadas.
+Corrección: ADMIN y WRITE prevalidan VIN y encabezados testigo antes de modificar el esquema; detectan duplicados, posiciones incorrectas, encabezados ocupados y datos bajo encabezados vacíos. Las columnas posteriores a AV se conservan sin desplazamiento.
+VIN: JSON array canónico, slots vacíos preservados, serialización común; compatibilidad heredada con separadores coma, diagonal, diagonal inversa y punto y coma. Se rechazan JSON mal formado, tokens inválidos, duplicados y colecciones mayores de tres elementos. UI, ADMIN y WRITE aplican reglas equivalentes.
+Validación: Services/Test/VinTestigoIntegrity.js 14/14 PASS; parsing V8 de ADMIN, WRITE, UI y suite PASS; paridad de parseo/serialización frontend/backend comprobada con casos JSON, heredados y corruptos.
+Límites: pruebas mock; no se ejecutó Spreadsheet real, Apps Script, navegador ni deployments. La validación con hoja aislada y operaciones WRITE/ADMIN queda pendiente de Beta. No se modificaron datos productivos.
+================================================================================
