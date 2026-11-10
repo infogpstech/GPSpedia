@@ -282,6 +282,18 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "WRITE", "addOrUpdateCut", write.token);
     });
 
+    test_("La reconciliación de cargas usa mantenimiento exclusivo y las altas reservan el ledger", function() {
+        const reconciliation = coordinatorPolicy_("ADMIN", "reconcilePendingImageUploads");
+        const adminCut = coordinatorPolicy_("ADMIN", "addOrUpdateCut");
+        const adminSupplementary = coordinatorPolicy_("ADMIN", "addSupplementaryInfo");
+        const writeCut = coordinatorPolicy_("WRITE", "addOrUpdateCut");
+        const writeSupplementary = coordinatorPolicy_("WRITE", "addSupplementaryInfo");
+        assert_(reconciliation.maintenance === true, "La reconciliación debe drenar operaciones activas.");
+        [adminCut, adminSupplementary, writeCut, writeSupplementary].forEach(policy => {
+            assert_(policy.writeResources.includes("IMAGE_UPLOAD_LEDGER"), "La acción debe reservar IMAGE_UPLOAD_LEDGER.");
+        });
+    });
+
     test_("La política de migración VIN exige mantenimiento exclusivo", function() {
         const policy = coordinatorPolicy_("ADMIN", "migrateCortesOperationIds");
         assert_(policy.maintenance === true, "La migración debe declararse como mantenimiento exclusivo.");
