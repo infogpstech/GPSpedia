@@ -196,3 +196,21 @@ Regla de esquema: `activaTestigo1..3` deben estar en AT:AV. `VIN` se resuelve po
 `Services/Test/ImageUploadLedger.js` contiene 18 pruebas lógicas con dobles en memoria. Cargar `Services/admin.js` y el archivo de pruebas en un proyecto temporal, y ejecutar `runImageUploadLedgerTests()`. Verifica metadatos v2, extracción de fileId, hash, carpeta, MIME, tamaño, reutilización por token, duplicados, esquema/registro del ledger, límite 10 MB, clasificación de referencias y fallo cerrado cuando Spreadsheet no permite persistir el intento.
 
 La acción ADMIN `reconcilePendingImageUploads` ejecuta simulación por defecto. Para aplicar estados se requiere confirm:true; procesa hasta 100 filas por llamada y devuelve nextStartRow cuando hay más. Los estados pending_unreferenced y orphan_candidate no autorizan borrar archivos. file_missing y requires_review se conservan para revisión. La prueba real con Drive y Spreadsheet aislados sigue siendo obligatoria antes de Beta.
+
+
+## Aprobación y subida reanudable de YouTube (AUG-043)
+
+Las pruebas del flujo de aprobación se ejecutan con Services/feedback.js y las suites aisladas siguientes:
+
+- Services/Test/VideoApprovalState.js — valida el estado y la forma de las solicitudes.
+- Services/Test/YouTubeApproval.js — creación idempotente, recuperación por opVideoId, titularidad, duplicados y URL/ID real.
+- Services/Test/YouTubeApprovalInit.js — metadatos fijos, destino existente, respuesta HTTP y URL oficial de sesión.
+- Services/Test/VideoApprovalPublishing.js — aprobación/rechazo en Cortes, PyS y Tutoriales; unicidad del destino, miniaturas, reintentos y preservación de enlaces previos.
+- Services/Test/VideoApprovalContracts.js — altas sin vídeo, bloqueo de enlaces directos y protección de cambios fuera del flujo de aprobación.
+- Services/Test/VideoApprovalSessions.js — sesión ausente, inválida, expirada, revocada, token cruzado, duplicidad de token/perfil y rol no permitido.
+
+Cada suite expone una función run...Tests() y usa dobles en memoria. No modifica hojas ni datos productivos. Cargar primero Services/feedback.js y después el archivo de prueba en un proyecto temporal de Apps Script V8; ejecutar la función indicada en el archivo.
+
+Services/Test/YouTubeUploadClient.js contiene pruebas del cliente resumable (IndexedDB, 308, consulta de progreso, respuesta final sin ID, pérdida de respuesta, sesión expirada y cancelación). Es una suite de entorno navegador: para ejecutarla, concatenar youtubeUpload.js y el archivo de prueba en un runner JavaScript que inyecte window, sessionStorage, XMLHttpRequest y console simulados. No se ejecuta directamente en Apps Script porque el módulo depende de APIs del navegador.
+
+Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR en navegador, IndexedDB real, Apps Script desplegado ni copias aisladas de Google Sheets. Esas verificaciones permanecen diferidas a Beta; no se deben presentar como ejecutadas.
