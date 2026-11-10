@@ -476,3 +476,30 @@ Estado global del hardening FEEDBACK: EN PROGRESO. Este checkpoint cierra única
 No ejecutado: navegador real, Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API, concurrencia física ni datos productivos. No se desplegó ni se modificó la rama base.
 Siguiente iteración: continuar la revisión de contratos y llamadores de las acciones FEEDBACK afectadas, sin abrir una tarea distinta. El siguiente hallazgo se tratará de forma independiente y tendrá su propio checkpoint/commit cuando quede resuelto.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: IDEMPOTENCIA DE REPORTES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD funcional/documental al completar esta iteración: 3b345eb28aa46ef3622a48dc77d52ba5aeed7f28 (último commit de pruebas; el checkpoint y changelog se publican inmediatamente después).
+Problema resuelto: handleReportProblem aceptaba reportId para vincular el reporte con sugerencias posteriores, pero no consultaba si ese identificador ya estaba registrado. Un reintento tras una respuesta perdida podía insertar otra fila y duplicar el evento de actividad.
+Corrección en Services/feedback.js:
+- Se añadió findReportByReportId_ para buscar coincidencias en la metadata persistida.
+- Un reintento con el mismo reportId y los mismos datos/actor devuelve éxito con alreadyReported=true, sin insertar otra fila ni repetir la actividad.
+- Reutilizar el identificador con datos distintos se rechaza; si ya existen varias filas con el mismo reportId, la operación falla de forma segura y conserva el estado para revisión.
+- Los nuevos registros incluyen userId validado en reportMetadata.
+Pruebas en Services/Test/FeedbackWriteSecurity.js:
+- Ciclo completo de creación inicial y reintento idéntico.
+- Rechazo de reutilización de reportId con contenido diferente.
+- Rechazo de reportId duplicado preexistente.
+Validación local ejecutada:
+- Suite runFeedbackWriteSecurityTests(): 20/20 PASS.
+- Parsing/sintaxis: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, api-config.js, ui.js, youtubeUpload.js y Services/Coordinator.js — 6/6 PASS (los módulos cliente se analizaron tras retirar únicamente las declaraciones import/export para validación de sintaxis).
+- Matriz de contratos: todas las acciones despachadas tienen política de autorización o declaración pública explícita (suggestYear conserva su resolución especial de actor); todas las políticas tienen dispatcher; todas las acciones FEEDBACK están en ACTION_TO_SERVICE_MAP; todas las acciones compartidas tienen política en Coordinator.js. Sin discrepancias.
+- Revisión de los callsites principales: transmisión de sesión verificada para reportes, likes, PyS, sugerencias, tutoriales y flujo de aprobación de vídeo.
+Estado general del hardening FEEDBACK: EN PROGRESO. Esta iteración cierra únicamente la idempotencia de reportProblem; continúa pendiente la revisión del resto de handlers y efectos de escritura.
+Validaciones diferidas a Beta: Apps Script desplegado, Spreadsheet/Drive reales, navegador real, OAuth/YouTube API y concurrencia de infraestructura real. No se simularon ni se declararon ejecutadas.
+Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones de la rama base.
+Siguiente acción: continuar en la próxima iteración con la revisión de los handlers de escritura FEEDBACK restantes, un hallazgo por vez.
+================================================================================
