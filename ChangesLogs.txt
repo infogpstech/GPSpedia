@@ -763,3 +763,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
 - AUG-040 permanece EN PROGRESO; integración real con Apps Script/Spreadsheet/Drive diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE AVISOS DE COLISIÓN EN suggestYear
+- Services/feedback.js: evita registrar de nuevo suggest_year_collision cuando el mismo aportante reintenta una sugerencia ya registrada.
+- Services/Test/FeedbackWriteSecurity.js: extiende la regresión de superposición para repetir la solicitud y comprobar que el aviso warning persiste sin duplicar el evento de actividad.
+- Auditoría.txt: documenta H-AUD-040-006.
+- Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
+================================================================================

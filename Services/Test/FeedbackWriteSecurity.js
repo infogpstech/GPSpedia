@@ -530,7 +530,7 @@ function runFeedbackWriteSecurityTests() {
                 logUserActivity=(...args)=>activity.push(args);
                 const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
                 const result=handleSuggestYear({...actor,vehicleId:"V-1",newYear:year,response:"Sí (Funciona)"});
-                return {cuts,fb,activity,result};
+                return {cuts,fb,activity,result,actor};
             }
             try {
                 assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-C")throw Error("Sesión inválida");return {userId:"C",userName:"Usuario C",role:"Tecnico"};};
@@ -541,6 +541,10 @@ function runFeedbackWriteSecurityTests() {
                 assert_(collision.cuts.rows[1][COLS_CORTES.anoHasta-1]===2022);
                 assert_(collision.fb.rows.length===4,"Debe conservar los aportes para revisión.");
                 assert_(collision.activity.some(a=>a[2]==="suggest_year_collision"));
+                const collisionEventsBeforeRetry=collision.activity.filter(a=>a[2]==="suggest_year_collision").length;
+                const retry=handleSuggestYear({...collision.actor,vehicleId:"V-1",newYear:2027,response:"Sí (Funciona)"});
+                assert_(retry.status==="warning","El reintento debe conservar la advertencia de colisión.");
+                assert_(collision.activity.filter(a=>a[2]==="suggest_year_collision").length===collisionEventsBeforeRetry,"El reintento idéntico no debe duplicar actividad de colisión.");
                 const separate=run(2020,2024,2025,2030,2015);
                 assert_(separate.result.status==="success","Rangos separados no deben bloquearse: "+JSON.stringify(separate.result));
                 assert_(separate.cuts.rows[1][COLS_CORTES.anoDesde-1]===2015);

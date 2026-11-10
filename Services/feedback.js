@@ -854,10 +854,12 @@ function handleSuggestYearLocked(payload) {
                 return { status: "warning", message: "No se pudo validar la separación entre generaciones porque otra fila coincidente tiene un rango de años inválido. Se requiere revisión manual." };
             }
             if (proposedAnoDesde <= otherAnoHasta && proposedAnoHasta >= otherAnoDesde) {
-                logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
-                    "Rango propuesto " + proposedAnoDesde + "-" + proposedAnoHasta +
-                    " se superpone con rango de vehículo ID " + row[COLS_CORTES.id - 1] +
-                    " (" + otherAnoDesde + "-" + otherAnoHasta + ")");
+                if (!alreadyReported) {
+                    logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
+                        "Rango propuesto " + proposedAnoDesde + "-" + proposedAnoHasta +
+                        " se superpone con rango de vehículo ID " + row[COLS_CORTES.id - 1] +
+                        " (" + otherAnoDesde + "-" + otherAnoHasta + ")");
+                }
                 return {
                     status: "warning",
                     message: "La ampliación del rango " + proposedAnoDesde + "-" + proposedAnoHasta +

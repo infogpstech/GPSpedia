@@ -88,3 +88,16 @@ Validación local: runFeedbackWriteSecurityTests() 36/36 PASS; sintaxis de Servi
 Límites: mocks locales; Apps Script real, Spreadsheet/Drive, navegador, deployments y datos productivos no ejecutados. Validación de integración diferida a Beta.
 Estado: CORREGIDO Y VALIDADO LOCALMENTE.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-006 — BAJA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de idempotencia de la ruta de colisión durante AUG-040.
+Ubicación: Services/feedback.js, handleSuggestYearLocked(), rama de colisión entre rangos de generaciones equivalentes.
+Evidencia: cuando un actor ya había registrado su aporte positivo y la ampliación propuesta se superponía con otra generación, cada reintento del mismo actor volvía a registrar suggest_year_collision. La fila se deduplicaba, pero el evento de actividad no.
+Impacto: los reintentos idénticos podían inflar el historial de actividad y dificultar distinguir nuevas aportaciones de reintentos.
+Corrección: registrar suggest_year_collision únicamente cuando la solicitud actual añade un aporte nuevo (!alreadyReported). Los reintentos conservan la respuesta warning y no generan otra actividad de colisión.
+Prueba: la regresión de superposición repite la solicitud del mismo actor y verifica que se mantiene warning sin incrementar el número de eventos suggest_year_collision. La ruta de rango separado continúa aplicándose.
+Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
+Límites: pruebas con mocks locales; Apps Script/Spreadsheet/Drive reales y validación Beta no ejecutadas.
+================================================================================

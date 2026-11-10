@@ -985,3 +985,33 @@ VALIDACIÓN BETA PENDIENTE
 Apps Script/Spreadsheet/Drive reales, navegador, deployments, concurrencia física y datos productivos no ejecutados ni simulados.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: IDEMPOTENCIA DE AVISOS DE COLISIÓN — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 07a0e1e8b52ca3402af81b15ec273f1ef9d1919a.
+TAREA ÚNICA
+Evitar que el mismo aportante genere eventos de actividad duplicados al reintentar una sugerencia cuyo rango propuesto colisiona con otra generación equivalente.
+HALLAZGO Y CORRECCIÓN
+Se reprodujo que el aporte se deduplicaba, pero la rama de colisión registraba suggest_year_collision en cada reintento. Ahora el evento se registra solo si el intento añade un aporte nuevo (!alreadyReported). El reintento conserva el estado warning y el mensaje de revisión manual, sin crear actividad duplicada. Hallazgo H-AUD-040-006.
+PRUEBA DE REGRESIÓN
+Se amplió el escenario de superposición: tras el primer warning se repite la misma solicitud del mismo actor y se verifica que el warning continúa y el número de eventos suggest_year_collision no aumenta. El escenario de rangos separados sigue permitiendo la ampliación.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 37/37 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Pruebas aisladas con mocks locales; no representan integración real con Apps Script/Spreadsheet/Drive.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-006)
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 permanece EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
+VALIDACIÓN BETA PENDIENTE
+Apps Script/Spreadsheet/Drive reales, navegador, deployments, concurrencia física y datos productivos no ejecutados ni simulados.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================
