@@ -4,16 +4,7 @@ Fuente: registros legacy de Tareas_legacy_parte_001.txt a parte_004.txt; entrada
 Registros incluidos: 13.
 
 
-NORMAS INTERNAS
-1. Estos registros son requisitos históricos abiertos o parciales extraídos de Tareas_legacy; no se consideran tareas nuevas ni se ejecutan sin reconciliación con el backlog AUG y el código vigente.
-2. Conservar IDs, texto y adendas originales; no eliminar, resumir ni sobrescribir requisitos. Las correcciones se agregan como notas nuevas.
-3. No marcar una implementación como COMPLETADA sin revisión sintáctica exitosa de todos los archivos modificados, con herramienta/versión/resultado registrados.
-4. La sintaxis aprobada no sustituye pruebas funcionales, regresión, comparación con respaldos, Code Review, revisión de efectos colaterales ni commit único verificado.
-5. Si un requisito está implementado pero no supera la compuerta, mantenerlo abierto como SINTAXIS_APROBADA_PENDIENTE_DE_VALIDACIÓN o IMPLEMENTADA_PENDIENTE_DE_SINTAXIS.
-6. Máximo 180,000 caracteres Unicode; rotar secuencialmente conforme a Normas_Gestion_Documental.md.
-7. Las partes fuente Olds/Documentacion_Legacy son inmutables.
-
-
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
 
 ================================================================================
 CLASIFICACIÓN OPERATIVA: PENDIENTE_DE_RECONCILIACIÓN. Fuente legacy, línea aproximada 4118. Verificar vigencia y equivalencias AUG antes de ejecutar; no duplicar trabajo.
