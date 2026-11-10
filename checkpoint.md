@@ -313,3 +313,16 @@ No se modificó la rama base.
 ================================================================================
 
 Revisión final: suite lógica 13/13 PASS; parsing V8 de ADMIN, WRITE y harness PASS. HEAD anterior a este checkpoint: 83aaf46b8e8f859434cf4ba541af74b7cdc4a146.
+
+
+================================================================================
+CHECKPOINT — AUG-036 — 2026-11-10
+Rama: GPSpedia2.2.5_work.
+Tarea: AUG-036 — completada en validación lógica local; prueba con Spreadsheet aislada pendiente de Beta.
+Decisión de esquema: activaTestigo1..3 ocupan obligatoriamente AT:AV (46–48). AR:AS permanecen reservadas. Las columnas posteriores a AV se conservan; no se agregan testigos al final de la última columna usada.
+VIN: resolución por encabezado único; la migración conserva AQ como posición objetivo. JSON array es canónico y preserva posiciones vacías; compatibilidad heredada con coma, /, barra inversa y punto y coma. UI/ADMIN/WRITE usan reglas equivalentes y serialización JSON común. JSON mal formado, tokens inválidos, duplicados y más de tres valores se rechazan.
+Cambios: Services/admin.js, Services/write.js, ui.js; Services/Test/VinTestigoIntegrity.js; README.md; Spreadsheet/GPSpedia_DB_columnas.md; Services/Test/README.md; Tareas_pendientes_parte1.txt; Auditoría.txt; ChangesLogs.txt; lista_beta.txt.
+Pruebas: suite lógica 14/14 PASS; parsing V8 ADMIN/WRITE/UI/test PASS; helpers VIN y testigo ADMIN/WRITE idénticos; paridad de parser/serializer UI/backend PASS.
+Límites: no se ejecutó Spreadsheet real, Apps Script, navegador ni deployments. La integración real y pruebas de escritura/lectura quedan en Beta.
+No se modificó la rama base.
+================================================================================
