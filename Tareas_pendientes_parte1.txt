@@ -482,7 +482,11 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Problema:** las cargas generales reutilizan archivos por token/nombre, MIME y tamaño sin volver a verificar los bytes; markImageUploadLinked() puede fallar sin bloquear el éxito; no se encontró un proceso que reconcilie archivos pending con referencias de Spreadsheet o detecte huérfanos recuperables.
 - **Criterios de aceptación:** recalcular hash del archivo recuperado y compararlo con el payload/token esperado; verificar operación, carpeta, MIME, tamaño y contenido; confirmar por lectura posterior el registro durable y el estado de Drive; definir un ledger o mecanismo durable para relacionar operación↔archivo↔referencia; reconciliar pending en los casos referencia presente, referencia ausente, archivo faltante, archivo alterado y respuesta perdida; evitar borrar archivos sin evidencia; definir límites de tamaño y comportamiento cuando la persistencia local del intento no esté disponible; probar WRITE y ADMIN en copias aisladas.
 - **Relación:** AUD-T-031, AUD-T-033/AUG-034 y tareas de recuperación de add_cortes.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA EN VALIDACIÓN LÓGICA LOCAL (2026-11-10); validación funcional con Drive/Spreadsheet aislados pendiente de Beta.
+- **Ledger durable:** ImageUploadLedger se crea bajo demanda y persiste token, operationKey, carpeta, MIME, tamaño, SHA-256, fileId/URL, estado y referencia de Cortes. El intento pending se verifica antes de crear el archivo Drive.
+- **Integridad:** al reutilizar un archivo se recalculan bytes y hash, y se verifican operación, carpeta, MIME, tamaño y token. Límite: 10 MB por imagen. Si el ledger no puede persistir, la carga falla antes de crear el archivo.
+- **Reconciliación:** ADMIN dispone de reconcilePendingImageUploads; por defecto ejecuta dry-run y admite confirm:true, paginación de hasta 100 filas. Clasifica linked, pending_unreferenced, orphan_candidate, file_missing y requires_review. No elimina archivos; markImageUploadLinked puede fallar sin bloquear el guardado porque el ledger pending queda recuperable.
+- **Resultado:** respuesta perdida con referencia presente se reconcilia a linked; referencias ausentes se conservan como pendientes/huérfanas; archivos faltantes o alterados quedan identificados para revisión.
 
 ### AUG-038 — Compensación coherente de reemplazos in-modal y descarte de edición
 - **Origen:** H-AUD-031-001, H-AUD-031-004, H-AUD-031-007 y H-AUD-031-008. **Prioridad:** Alta.
