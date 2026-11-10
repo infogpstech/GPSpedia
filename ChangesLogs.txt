@@ -515,3 +515,14 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Services/Test/SharedMutationCoordinator.js:1-270 contiene la suite aislada; Services/Test/README.md:156-172 documenta su configuración.
 - No se modificaron api-config.js, endpoints existentes, Services/Utilities.js, deployments ni datos productivos. UTILITIES se excluyó por estar retirado del flujo activo.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-034 — VENTANA SEGURA DE MIGRACIÓN VIN/IDEMPOTENCIA
+- Services/Coordinator.js: mantenimiento exclusivo con reserva phase=draining; bloquea nuevas mutaciones, espera el cierre de leases previas, informa operaciones activas al agotar el plazo y recupera reservas abandonadas a los 60 segundos. migrateCortesOperationIds se declara mantenimiento exclusivo para simulación y confirmación.
+- Services/Test/SharedMutationCoordinator.js: suite ampliada a 24 pruebas, con drenaje concurrente WRITE/ADMIN, bloqueo durante la reserva, timeout, expiración y compatibilidad con leases previas.
+- Services/admin.js: documentado el orden de recuperación destino→verificación→limpieza de origen.
+- Services/COORDINATOR_SETUP.md y Services/Test/README.md: documentan el protocolo y sus pruebas.
+- Tareas_pendientes_parte1.txt, Auditoría.txt, lista_beta.txt y checkpoint.md: estado, evidencia, límites y validación diferida.
+- Sin cambios en endpoints, api-config.js, Services/Utilities.js, datos productivos ni deployments.
+================================================================================
