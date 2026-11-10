@@ -3626,7 +3626,7 @@ function handleReconcilePendingImageUploads(payload, logMessage) {
                 values[11] = references.map(reference => reference.field).join(",");
                 values[12] = JSON.stringify(references);
                 values[15] = new Date().toISOString();
-                values[16] = item.reason;
+                values[16] = (nextState === "file_missing" || nextState === "requires_review") ? item.reason : "";
                 saveImageUploadLedgerRecord_(ledgerSheet, { rowIndex, values });
 
                 if (file && nextState === "linked") {
