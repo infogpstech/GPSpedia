@@ -555,3 +555,5 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Límite: 10 MB por imagen; falla cerrada antes de Drive si no puede persistir el intento.
 - Pruebas: ImageUploadLedger 18/18; SharedMutationCoordinator 25/25. Sin despliegues ni datos productivos.
 ================================================================================
+
+2026-11-10 — AUG-037 — AJUSTE DE CIERRE: reconstrucción controlada del ledger desde metadatos Drive v2 tras verificar el archivo; detección de tokens duplicados; dry-run sin crear hoja ni modificar archivos.
