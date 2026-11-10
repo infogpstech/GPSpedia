@@ -1062,3 +1062,17 @@ Criterio verificable:
 Tarea correctiva independiente: CORR-AUTH-ROLE-REVOCATION-GUARDS-001.
 Dependencia: debe cerrarse antes de reanudar AUG-042, conforme al protocolo de ciclo continuo y para dejar consistente el rechazo de sesiones pendientes dentro de AUTH.
 ================================================================================
+
+================================================================================
+CIERRE — H-AUD-042-003 — RESUELTO EN FUENTES — 2026-11-09
+Services/Auth.js incorpora assertRequesterRoleRevocationClear_(), que consulta el marcador local/compartido mediante hasPendingRoleRevocation_(). Si existe estado pendiente, intenta reconciliar bajo el ScriptLock de AUTH y rechaza siempre la solicitud actual: si la reconciliación sigue pendiente, mantiene el bloqueo; si termina, exige nueva autenticación porque el token solicitante ya fue revocado.
+La comprobación se ejecuta antes de evaluar el permiso final o realizar mutaciones en:
+- handleClearSensitiveLogs: antes de purgar Logs.
+- handleResetUserSessions: antes de cerrar sesiones de la cuenta destino.
+- handleDeleteUser: antes de desactivar/eliminar la cuenta destino.
+- handleResetUserPassword: antes de restablecer la contraseña o revocar las sesiones del destino.
+Se conserva: validación de token, identidad, expiración, perfil activo/único, rol, restricciones de destino, flujo de logout y matriz de permisos. Services/Test/Auth.js refleja el mismo cambio conservando el Spreadsheet de prueba.
+Pruebas aisladas: los cuatro handlers rechazan al solicitante pendiente antes de cualquier mutación (4/4); el helper permite solicitante normal y rechaza tanto si la reconciliación permanece pendiente como si finaliza y exige reautenticación (3/3). Rutas de los cuatro handlers confirmadas en el router (4/4). Sintaxis/parsing de Auth.js y Test/Auth.js (2/2) y paridad exacta salvo ID de Spreadsheet (PASS).
+No ejecutado: Apps Script real, Spreadsheet/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos. No se afirma validación Beta.
+Estado: H-AUD-042-003 RESUELTO EN FUENTES; pendiente de commit/verificación y Ciclo A post-commit. AUG-042 permanece bloqueada hasta cerrar este ciclo.
+================================================================================

@@ -431,3 +431,13 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Se registra CORR-AUTH-ROLE-REVOCATION-GUARDS-001 como tarea correctiva independiente. No se modificó código durante esta auditoría.
 - Se requiere rotar checkpoint.md por proximidad al límite documental; el contenido completo previo se conserva íntegro como parte legacy 005 y el archivo activo pasa a ser un índice con checkpoint inicial de la nueva tarea.
 ================================================================================
+
+================================================================================
+2026-11-09 — CORR-AUTH-ROLE-REVOCATION-GUARDS-001 — IMPLEMENTACIÓN
+- AUTH: helper assertRequesterRoleRevocationClear_() verifica marcador local/compartido del solicitante, intenta reconciliar bajo ScriptLock y rechaza la llamada actual incluso si la reconciliación termina, requiriendo reautenticación.
+- Aplicado antes de operaciones privilegiadas en handleClearSensitiveLogs, handleResetUserSessions, handleDeleteUser y handleResetUserPassword.
+- Services/Test/Auth.js sincronizado, conservando el ID de Spreadsheet de prueba.
+- Se preservan token/identidad/expiración, perfiles activos, roles, restricciones de destino, matriz de permisos y logout.
+- Verificaciones: sintaxis 2/2, paridad Test/Auth PASS, 4/4 handlers sin mutación con solicitante pendiente, helper 3/3, rutas 4/4.
+- No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos.
+================================================================================

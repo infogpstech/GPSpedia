@@ -466,3 +466,17 @@ Pruebas: cuatro handlers con marcador local, compartido, usuario normal, sesión
 Restricciones: no modificar deployments, endpoints, datos productivos, Spreadsheet de producción ni rama base. Un commit único por tarea mediante Git Database API.
 Siguiente paso: auditar cada handler y sus rutas/call sites, respaldar Auth.js y Test/Auth.js, implementar y verificar. AUG-042 permanece bloqueada hasta cerrar esta corrección y auditarla post-commit.
 ================================================================================
+
+================================================================================
+CORR-AUTH-ROLE-REVOCATION-GUARDS-001 — CIERRE EN FUENTES — 2026-11-09
+Estado: IMPLEMENTADA EN FUENTES; commit único pendiente de publicación/verificación.
+Hallazgo origen: H-AUD-042-003. Cuatro handlers internos de AUTH validaban manualmente token/identidad/expiración/rol sin consultar revocación pendiente del solicitante.
+Archivos funcionales:
+- Services/Auth.js: helper assertRequesterRoleRevocationClear_(); aplicado a handleClearSensitiveLogs, handleResetUserSessions, handleDeleteUser y handleResetUserPassword. El helper consulta el estado local/compartido, intenta reconciliar bajo el lock y rechaza siempre la solicitud actual; si la reconciliación termina, exige reautenticación.
+- Services/Test/Auth.js: espejo de AUTH con el Spreadsheet de prueba.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md: adendas append-only y checkpoint final.
+Verificaciones: sintaxis 2/2 PASS; paridad Auth/Test Auth PASS; 4/4 handlers rechazan solicitante pendiente antes de mutar; helper 3/3 (sin marcador, reconciliación pendiente y reconciliación completada con reautenticación); rutas 4/4 presentes en el router. Code Review/Safety & Side Effects PASS para el alcance aislado.
+No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos.
+No se alteraron: matrices de permisos, contratos/payloads, validación de sesión, lógica de destino, ruta de logout, endpoints ni deployments.
+Siguiente paso: verificar commit único y ejecutar Ciclo A post-commit. Si no aparecen hallazgos nuevos, reanudar AUG-042 Ciclo B.
+================================================================================

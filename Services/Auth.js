@@ -336,6 +336,7 @@ function handleClearSensitiveLogs(payload) {
         if (requesterUsers.length !== 1 || !isActiveAuthUserRecord(requesterUsers[0])) {
             throw new Error("Acceso denegado: no se pudo identificar una cuenta activa y única.");
         }
+        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, userId);
         if (normalizeRoleName(requesterUsers[0][COLS_USERS.Privilegios - 1]) !== "desarrollador") {
             throw new Error("Acceso denegado: la purga de Logs está reservada a Desarrollador.");
         }
@@ -927,6 +928,21 @@ function hasPendingRoleRevocation_(userId,usersSheetOverride=null) {
 }
 
 
+function assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterUserId) {
+    if (!hasPendingRoleRevocation_(requesterUserId, usersSheet)) return;
+    let reconciliation;
+    try {
+        reconciliation = reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, requesterUserId);
+    } catch (error) {
+        throw new Error('Acceso denegado: no se pudo verificar o completar la revocación de rol del solicitante. ' + error.message);
+    }
+    if (reconciliation && reconciliation.pending) {
+        throw new Error('Acceso denegado: el solicitante tiene una revocación de rol pendiente. Reintenta cuando finalice y vuelve a iniciar sesión.');
+    }
+    throw new Error('Acceso denegado: la sesión del solicitante fue invalidada por un cambio de rol. Inicia sesión nuevamente.');
+}
+
+
 // Invalida primero los tokens con una escritura consolidada y verifica el estado leído.
 // No presupone atomicidad: cualquier token que permanezca se informa como pendiente.
 function revokeAllUserSessionsUnderLock_(sheet, userId) {
@@ -1225,6 +1241,7 @@ function handleResetUserSessions(payload) {
         const expiry = getSessionExpirationStatus_(requesterMatches[0].row, new Date());
         if (expiry.expired) throw new Error('La sesión del solicitante expiró por ' + expiry.reason + '.');
         requesterUserId = normalizeUserId(requesterMatches[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterUserId);
 
         const users = usersSheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ row, rowIndex: index + 2 }));
@@ -1335,6 +1352,7 @@ function handleDeleteUser(payload) {
         if (!requesterUserId) {
             throw new Error('Identidad de sesión inválida.');
         }
+        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterUserId);
 
         const usersData = usersSheet.getDataRange().getValues();
         const requesterRows = [];
@@ -1609,6 +1627,7 @@ function handleResetUserPassword(payload) {
         const expiry = getSessionExpirationStatus_(requester[0].row, new Date());
         if (expiry.expired) throw new Error('La sesión del solicitante expiró por ' + expiry.reason + '.');
         requesterId = normalizeUserId(requester[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, requesterId);
         if (requesterId === targetId) throw new Error('Para cambiar tu propia contraseña utiliza la opción Cambiar contraseña del perfil.');
 
         const users = usersSheet.getDataRange().getValues().slice(1)
