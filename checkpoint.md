@@ -558,3 +558,30 @@ Validaciones diferidas a Beta: navegador real, Apps Script desplegado, Spreadshe
 Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
 Siguiente acción: continuar en la próxima iteración con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE AVANCE — HARDENING FEEDBACK: VALIDACIÓN DE PREVENCIÓN PyS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Problema resuelto: handleAddPrevention aceptaba una cadena compuesta solo por espacios o saltos de línea; podía escribir una prevención vacía en términos prácticos y registrar actividad.
+Corrección en Services/feedback.js:
+- Normaliza prevenir mediante String(...).trim() antes de validar.
+- Rechaza el contenido vacío antes de consultar o modificar la hoja PyS.
+- Aplica el límite de 700 caracteres al contenido normalizado y persiste ese valor.
+Prueba en Services/Test/FeedbackWriteSecurity.js:
+- Comprueba que una prevención vacía no modifica la fila ni genera actividad.
+- Comprueba que una prevención válida se guarda sin espacios externos.
+Validación local ejecutada:
+- runFeedbackWriteSecurityTests(): 25/25 PASS.
+- Parsing/sintaxis con new Function: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js y Services/Coordinator.js — 3/3 PASS.
+- La primera ejecución de la nueva prueba detectó un literal de fixture incorrectamente escapado; se corrigió y se repitió la suite completa, que aprobó 25/25.
+Commits:
+- 11a2e04f045990da404762fab2e07eeff2608789 — fix(feedback): reject blank problem prevention.
+- 555b8fc15657c42621ca2198ff8d0efcce201081 — test(feedback): cover blank prevention rejection.
+- 1d2892985fe76e43d80a1853d130c43985cfc8c1 — test(feedback): fix prevention whitespace fixture.
+Estado general del hardening FEEDBACK: EN PROGRESO. Este checkpoint cierra únicamente la validación de handleAddPrevention; el resto de handlers continúa pendiente de revisión individual.
+Validaciones diferidas a Beta: navegador real, Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube API y concurrencia de infraestructura. No se ejecutaron ni se simularon.
+Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
+Siguiente iteración: continuar con el siguiente handler de escritura FEEDBACK, un hallazgo por vez.
+================================================================================
