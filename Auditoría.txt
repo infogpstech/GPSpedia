@@ -252,3 +252,21 @@ Regresión: la prueba añadida fallaba antes del cambio y pasa después; cubre r
 Validación local: publicación 18/18, estado 13/13, sesión 10/10, YouTubeApproval 15/15, inicialización 8/8, FEEDBACK 44/44 y coordinador compartido 27/27 PASS. VideoApprovalContracts mantiene tres fallos de fixture preexistentes: handleAddTutorial recibe colaborador en lugar de userName; fuera de este alcance.
 Límites: Apps Script real, endpoints, deployments, HTTP y Spreadsheet aislado no ejecutados; integración y concurrencia física diferidas a Beta.
 ================================================================================
+
+
+================================================================================
+H-AUD-040-017 — BAJA — CORREGIDO EN FUENTES; VALIDACIÓN LOCAL PENDIENTE — 2026-11-10
+Origen: continuación de AUG-040, criterio 2 (assignCollaborator).
+Ubicación: Services/feedback.js, handleAssignCollaborator(); Services/Test/FeedbackWriteSecurity.js.
+Evidencia:
+- La acción no figura en FEEDBACK_ACTION_PERMISSIONS ni en FEEDBACK_PUBLIC_ACTIONS.
+- doPostInternal_ no contiene un caso assignCollaborator; authorizeFeedbackAction_ rechaza la acción como no declarada.
+- No se encontraron consumidores en los módulos frontend activos ni llamadas en los demás servicios activos inspeccionados.
+- Las únicas referencias activas restantes estaban en pruebas negativas y documentación; el handler conservado era código muerto y, si se invocara directamente desde una futura ruta, escribiría el nombre recibido en Cortes sin autorización ni coordinación.
+Impacto: código obsoleto que puede inducir a reactivar accidentalmente una ruta de escritura insegura y mantener una implementación sin consumidor.
+Severidad: Baja, porque la acción ya estaba fuera de la política y del dispatcher.
+Corrección: se retiró handleAssignCollaborator() de Services/feedback.js. La prueba de autorización ahora comprueba además que el handler no exista; se conserva la prueba de rechazo de la acción no declarada.
+Verificación de fuente: el handler ya no aparece en Services/feedback.js; la prueba contiene la aserción typeof handleAssignCollaborator === "undefined"; la política y el dispatcher siguen sin habilitar la acción.
+Pendiente: ejecutar runFeedbackWriteSecurityTests(), parsing completo de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js y revisar el diff final en el runner local. No se afirma que estas validaciones se hayan ejecutado en esta sesión.
+Sin cambios de endpoints, deployments, datos productivos ni rama base.
+================================================================================
