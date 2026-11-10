@@ -2791,6 +2791,7 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
                 const res = await routeAction('removeVehicleFromProblem', {
                     problemId: item.id_problem || item.id,
                     vehicleId: vehicleToUnlink.id,
+                    ...getSessionPayload_(),
                     userRole
                 });
                 if (res && res.status === 'success') {
@@ -3317,7 +3318,7 @@ function normalizeUiRole_(role) {
 
 function getUiSessionContext_(user = getState().currentUser) {
     if (!user) return null;
-    const userId = String(user.ID || user.id || '').trim();
+    const userId = String(user.ID || '').trim();
     const sessionToken = String(user.SessionToken || '').trim();
     if (!userId || !sessionToken) return null;
     return { userId, sessionToken, role: normalizeUiRole_(user.Privilegios) };
@@ -7160,6 +7161,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
         const videoInput = document.createElement("input");
         videoInput.type = "url";
         videoInput.value = item.Video || "";
+        videoInput.readOnly = true;
         videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
 
         const descLabel = document.createElement("label");
@@ -7176,6 +7178,23 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
         form.appendChild(temaInput);
         form.appendChild(videoLabel);
         form.appendChild(videoInput);
+        const uploadTutorialVideoBtn = document.createElement("button");
+        uploadTutorialVideoBtn.type = "button";
+        uploadTutorialVideoBtn.className = "btn btn-primary";
+        uploadTutorialVideoBtn.textContent = item.Video ? "El tutorial ya tiene un vídeo" : "Solicitar subida de vídeo";
+        uploadTutorialVideoBtn.disabled = Boolean(item.Video);
+        uploadTutorialVideoBtn.onclick = () => openYouTubeUploadModal({
+            initialTitle: item.Tema || "Tutorial técnico",
+            initialDescription: item.Detalles || item.Descripcion || "",
+            contentType: "tutorial",
+            referenceId: item.Tema,
+            metadata: { tema: item.Tema },
+            onSuccess: async () => {
+                const fresh = await routeAction("getCatalogData");
+                if (fresh && fresh.data) setState({ catalogData: fresh.data });
+            }
+        });
+        form.appendChild(uploadTutorialVideoBtn);
         form.appendChild(descLabel);
         form.appendChild(createRichTextToolbar("edit-tutorial-desc-textarea"));
         form.appendChild(descInput);
@@ -7199,6 +7218,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
                         tema: newTema,
                         videoUrl: newVideo,
                         descripcion: newDesc,
+                        ...getSessionPayload_(),
                         userRole
                     });
                     if (res && res.status === 'success') {
@@ -7708,7 +7728,14 @@ export function openExpandMenuModal(item) {
     if (feedBtn) feedBtn.onclick = () => { modal.remove(); openAddFeedModal(item); };
 
     const videoBtn = content.querySelector("#btn-exp-video");
-    if (videoBtn) videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+    if (videoBtn) {
+        if (String(item.videoGuiaDesarmeUrl || item.Video || "").trim()) {
+            videoBtn.disabled = true;
+            videoBtn.textContent = "Vídeo ya asociado";
+        } else {
+            videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+        }
+    }
 
     const vinBtn = content.querySelector("#btn-exp-vin");
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
@@ -8502,49 +8529,34 @@ export function openAddVideoModal(item) {
     const content = document.createElement("div");
     content.className = "info-modal-content";
     content.style.maxWidth = "500px";
-
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
         <h2><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Vídeo Guía de Desarme</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
-
-        <div style="display:flex; flex-direction:column; gap:14px;">
-            <div style="display:flex; gap:10px;">
-                <button type="button" id="btn-toggle-manual-link" class="btn btn-secondary" style="flex:1; font-size:0.88rem; padding:8px 10px;">
-                    <i class="fa-solid fa-link"></i> Enlace de YouTube
-                </button>
-                <button type="button" id="btn-open-yt-upload" class="btn btn-primary" style="flex:1; font-size:0.88rem; padding:8px 10px; background-color:#ff0000; border-color:#ff0000;">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo
-                </button>
-            </div>
-
-            <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px; margin-top:4px;">
-                <div class="form-group">
-                    <label>Enlace de YouTube</label>
-                    <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
-                </div>
-                <div class="modal-btn-compact-container">
-                    <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Guardar Enlace</button>
-                </div>
-            </form>
-        </div>
+        <p id="vehicle-video-context" style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;"></p>
+        <p style="font-size:0.9em; margin-bottom:14px;">Los vídeos se suben como no listados y solo se muestran en la ficha después de aprobarse.</p>
+        <button type="button" id="btn-open-yt-upload" class="btn btn-primary" style="width:100%; background-color:#ff0000; border-color:#ff0000;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Subir vídeo a YouTube
+        </button>
     `;
-
-    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
-
+    content.querySelector("#vehicle-video-context").textContent = [item.marca, item.modelo].filter(Boolean).join(" ");
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
-    // Opción Subir Vídeo directamente a YouTube
-    content.querySelector("#btn-open-yt-upload").onclick = () => {
+    const uploadButton = content.querySelector("#btn-open-yt-upload");
+    const existingVideo = String(item.videoGuiaDesarmeUrl || item.Video || "").trim();
+    if (existingVideo) {
+        uploadButton.disabled = true;
+        uploadButton.textContent = "Este contenido ya tiene un vídeo asociado";
+    }
+    uploadButton.onclick = () => {
         const meta = buildVehicleVideoMetadata(item);
         modal.remove();
         openYouTubeUploadModal({
             initialTitle: meta.title,
             initialDescription: meta.description,
-            contentType: 'corte',
+            contentType: "corte",
             referenceId: item.id,
             metadata: {
                 marca: item.marca,
@@ -8554,45 +8566,13 @@ export function openAddVideoModal(item) {
                 anoHasta: item.anoHasta,
                 tipoEncendido: item.tipoEncendido
             },
-            onSuccess: () => {
-                alert("La solicitud de vídeo ha sido enviada para aprobación interna. Aparecerá en este modelo una vez aprobada.");
+            onSuccess: async () => {
+                const fresh = await routeAction("getCatalogData");
+                if (fresh && fresh.data) setState({ catalogData: fresh.data });
             }
         });
     };
-
-    const form = content.querySelector("#add-video-form");
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const url = content.querySelector("#add-video-url").value.trim();
-        if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
-            showGlobalError("Por favor ingresa un enlace válido de YouTube.");
-            return;
-        }
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
-
-        try {
-            await routeAction("addSupplementaryInfo", {
-                ...getDeveloperSessionPayload(),
-                vehicleId: item.id,
-                fieldName: "videoGuiaDesarmeUrl",
-                fieldValue: url
-            });
-            alert("Vídeo agregado con éxito.");
-            modal.remove();
-            const catRes = await routeAction("getCatalogData");
-            if (catRes && catRes.data) setState({ catalogData: catRes.data });
-        } catch (err) {
-            console.error(err);
-            showGlobalError("Error: " + err.message);
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Guardar Enlace";
-        }
-    };
 }
-
 
 /* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */
 export async function renderPysSection() {
@@ -8735,18 +8715,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
                 <label>Cómo Prevenir (Opcional, Máx 700 caracteres)</label>
                 <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
-            <div class="form-group">
-                <label>Vídeo Explicativo de YouTube (Opcional)</label>
-                <div style="display:flex; gap:6px; margin-bottom:6px;">
-                    <button type="button" id="btn-pys-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
-                    </button>
-                </div>
-                <input type="url" id="pys-video" placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
-                <small id="pys-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
-                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
-                </small>
-            </div>
+
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
         </form>
     `;
@@ -8847,40 +8816,10 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
         if (chkSinSolucion.checked) txtSolucion.value = "";
     };
 
-    // Botón Subir Vídeo a YouTube para PyS (Tarea 8.4 y Requisito 9)
-    const btnUploadPysYt = content.querySelector("#btn-pys-upload-yt");
-    if (btnUploadPysYt) {
-        btnUploadPysYt.onclick = () => {
-            const rawTitle = content.querySelector("#pys-titulo").value.trim() || 'Problema Técnico';
-            const rawDesc = content.querySelector("#pys-detalle").value.trim() || (txtSolucion ? txtSolucion.value.trim() : '');
-
-            openYouTubeUploadModal({
-                initialTitle: rawTitle,
-                initialDescription: rawDesc,
-                contentType: 'pys',
-                referenceId: null,
-                metadata: {
-                    alcance: alcanceSelect.value,
-                    modelosAsociados: Array.from(selectedVehicleIds)
-                },
-                onSuccess: (data) => {
-                    const videoInput = content.querySelector("#pys-video");
-                    if (videoInput) videoInput.value = data.videoUrl;
-                    const badge = content.querySelector("#pys-video-badge");
-                    if (badge) badge.style.display = 'block';
-                }
-            });
-        };
-    }
-
     const form = content.querySelector("#add-pys-form");
     form.onsubmit = async (e) => {
         e.preventDefault()
-        const pysVid = content.querySelector("#pys-video").value.trim();
-        if (pysVid && !pysVid.includes("youtube.com") && !pysVid.includes("youtu.be")) {
-            showGlobalError("Por favor ingresa una URL válida de YouTube para el vídeo.");
-            return;
-        };
+
         const { currentUser } = getState();
         if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
 
@@ -8904,7 +8843,8 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             sinSolucion: chkSinSolucion.checked,
             solucion: txtSolucion.value.trim(),
             prevenir: content.querySelector("#pys-prevenir").value.trim(),
-            videoUrl: content.querySelector("#pys-video").value.trim(),
+            videoUrl: "",
+            ...getSessionPayload_(),
             alcance: alcanceSelect.value,
             modelosAsociados: Array.from(selectedVehicleIds),
             imgBase64,
@@ -8913,10 +8853,23 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
         };
 
         try {
-            await routeAction("addProblem", payload);
-            alert("Problema registrado con éxito.");
+            const created = await routeAction("addProblem", payload);
+            if (!created || created.status !== "success" || !created.problemId) throw new Error("El servidor no confirmó el ID del problema creado.");
             modal.remove();
             renderPysSection();
+            if (confirm("El problema se registró sin vídeo. ¿Deseas subir ahora un vídeo para enviarlo a aprobación?")) {
+                openYouTubeUploadModal({
+                    initialTitle: payload.titulo,
+                    initialDescription: payload.descripcion,
+                    contentType: "pys",
+                    referenceId: created.problemId,
+                    metadata: { alcance: payload.alcance, modelosAsociados: payload.modelosAsociados },
+                    onSuccess: async () => {
+                        const fresh = await routeAction("getPysData");
+                        if (fresh && Array.isArray(fresh.data)) setState({ pysData: fresh.data });
+                    }
+                });
+            }
             if (preAssociatedVehicle && preAssociatedVehicle.id) {
                 const panel = document.getElementById("detalleCompleto");
                 if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle);
@@ -9080,7 +9033,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         try {
             let lastUpdatedList = [...alreadyAssociatedIds];
             for (const vId of newlySelectedIds) {
-                const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: vId });
+                const res = await routeAction('addVehicleToProblem', { ...getSessionPayload_(), problemId, vehicleId: vId });
                 if (res && res.status === 'success' && res.modelosAsociados) {
                     lastUpdatedList = res.modelosAsociados;
                 } else {
@@ -9313,6 +9266,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         const videoInput = document.createElement("input");
         videoInput.type = "url";
         videoInput.value = item.Video || "";
+        videoInput.readOnly = true;
         videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
 
         form.appendChild(titleLabel);
@@ -9332,6 +9286,23 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
 
         form.appendChild(videoLabel);
         form.appendChild(videoInput);
+        const uploadPysVideoBtn = document.createElement("button");
+        uploadPysVideoBtn.type = "button";
+        uploadPysVideoBtn.className = "btn btn-primary";
+        uploadPysVideoBtn.textContent = item.Video ? "El problema ya tiene un vídeo" : "Solicitar subida de vídeo";
+        uploadPysVideoBtn.disabled = Boolean(item.Video);
+        uploadPysVideoBtn.onclick = () => openYouTubeUploadModal({
+            initialTitle: item.Problema || "Problema técnico",
+            initialDescription: item.Descripcion || item.Solucion || "",
+            contentType: "pys",
+            referenceId: item.id_problem || item.id,
+            metadata: { problemId: item.id_problem || item.id },
+            onSuccess: async () => {
+                const fresh = await routeAction("getPysData");
+                if (fresh && Array.isArray(fresh.data)) setState({ pysData: fresh.data });
+            }
+        });
+        form.appendChild(uploadPysVideoBtn);
         cont.appendChild(form);
 
         const saveBtn = controlsContainer.querySelector("#btn-save-pys-edit");
@@ -9357,6 +9328,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                         solucion: newSol,
                         prevenir: newPrev,
                         videoUrl: newVideo,
+                        ...getSessionPayload_(),
                         userRole
                     });
                     if (res && res.status === 'success') {
@@ -9510,6 +9482,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                             const res = await routeAction('removeVehicleFromProblem', {
                                 problemId: item.id_problem,
                                 vehicleId: v.id,
+                                ...getSessionPayload_(),
                                 userRole
                             });
                             if (res && res.status === 'success') {
@@ -9636,18 +9609,6 @@ export function openAddTutorialModal() {
                 <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
-                <label>Vídeo del Tutorial</label>
-                <div style="display:flex; gap:6px; margin-bottom:6px;">
-                    <button type="button" id="btn-tut-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
-                    </button>
-                </div>
-                <input type="url" id="tut-video" required placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
-                <small id="tut-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
-                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
-                </small>
-            </div>
-            <div class="form-group">
                 <label>Descripción / Detalles (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" data-rich-target="tut-desc"></div>
                 <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
@@ -9663,31 +9624,6 @@ export function openAddTutorialModal() {
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
-    // Botón Subir Vídeo a YouTube para Tutoriales (Tarea 8.4 y Requisito 10)
-    const btnUploadTutYt = content.querySelector("#btn-tut-upload-yt");
-    if (btnUploadTutYt) {
-        btnUploadTutYt.onclick = () => {
-            const rawTitle = content.querySelector("#tut-tema").value.trim() || 'Tutorial Técnico';
-            const rawDesc = content.querySelector("#tut-desc").value.trim() || '';
-
-            openYouTubeUploadModal({
-                initialTitle: rawTitle,
-                initialDescription: rawDesc,
-                contentType: 'tutorial',
-                referenceId: null,
-                metadata: {
-                    tema: rawTitle
-                },
-                onSuccess: (data) => {
-                    const videoInput = content.querySelector("#tut-video");
-                    if (videoInput) videoInput.value = data.videoUrl;
-                    const badge = content.querySelector("#tut-video-badge");
-                    if (badge) badge.style.display = 'block';
-                }
-            });
-        };
-    }
-
     const form = content.querySelector("#add-tutorial-form");
     form.onsubmit = async (e) => {
         e.preventDefault();
@@ -9700,17 +9636,29 @@ export function openAddTutorialModal() {
 
         const payload = {
             tema: content.querySelector("#tut-tema").value.trim(),
-            videoUrl: content.querySelector("#tut-video").value.trim(),
+            videoUrl: "",
             descripcion: content.querySelector("#tut-desc").value.trim(),
+            ...getSessionPayload_(),
             colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
         };
 
         try {
-            await addTutorial(payload);
-            alert("Tutorial registrado con éxito.");
+            const created = await addTutorial(payload);
+            if (!created || created.status !== "success" || !created.referenceId) throw new Error("El servidor no confirmó el destino del tutorial.");
             modal.remove();
             const res = await routeAction("getCatalogData");
             if (res && res.data) setState({ catalogData: res.data });
+            openYouTubeUploadModal({
+                initialTitle: payload.tema,
+                initialDescription: payload.descripcion,
+                contentType: "tutorial",
+                referenceId: created.referenceId,
+                metadata: { tema: payload.tema },
+                onSuccess: async () => {
+                    const fresh = await routeAction("getCatalogData");
+                    if (fresh && fresh.data) setState({ catalogData: fresh.data });
+                }
+            });
         } catch(err) {
             console.error(err);
             showGlobalError("Error al registrar tutorial: " + err.message);
@@ -10800,6 +10748,7 @@ export async function openAssociateExistingProblemModal(vehicle) {
                 addBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
                 try {
                     const res = await routeAction("addVehicleToProblem", {
+                        ...getSessionPayload_(),
                         problemId: p.id_problem,
                         vehicleId: vehicle.id
                     });
