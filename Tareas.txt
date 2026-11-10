@@ -606,3 +606,14 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - El merge-base con GPSpedia2.2.5 permanece d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó la rama base.
 - Relectura desde la rama remota: 82/82 pruebas aisladas PASS; sintaxis de los cuatro módulos principales PASS; contenido de módulos, suites y registros verificado.
 - AUG-043 continúa EN PROGRESO: falta la prueba de integración en navegador real y la validación con OAuth/YouTube API y proyecto Apps Script/Spreadsheet aislado. No se desplegó ni se modificaron datos productivos.
+
+
+================================================================================
+CIERRE — AUG-043 — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Objetivo: alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+Resultado: implementación publicada en GPSpedia2.2.5_work; aprobación previa a publicación para Corte, PyS y Tutorial; destinos y esquemas verificados; opVideoId separado del ID real de YouTube; recuperación por propietario e idempotencia; validación de sesión/rol desde backend; publicación y rechazo con verificación; cliente resumable con persistencia local y recuperación.
+Validación local: 82/82 pruebas aisladas PASS (evidencia de ejecución previamente registrada y suites sin cambios); parsing revalidado en esta sesión 11/11 archivos PASS (Services/feedback.js, youtubeUpload.js, ui.js, api-config.js y siete suites); revisión estática del alcance sin defectos reproducibles.
+Validación diferida a Beta: navegador real, IndexedDB/XHR, cancelación/recarga, OAuth/YouTube API real, Apps Script desplegado y Spreadsheet aislado. Casos requeridos registrados en lista_beta.txt. No se presentan como ejecutados.
+No se modificaron deployments, endpoints, datos productivos ni GPSpedia2.2.5.
+================================================================================
