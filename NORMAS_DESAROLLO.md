@@ -99,7 +99,8 @@ Solo registrar un hallazgo si existe evidencia. Si no hay hallazgos, no inventar
 ## 9. Commits y ramas
 
 - Trabajar en `GPSpedia2.2.5_work`; no escribir ni fusionar en `GPSpedia2.2.5` sin autorización expresa.
-- Agrupar en un commit los cambios de una misma tarea lógica, incluidos sus registros necesarios. No crear commits intermedios por archivo o por etapa.
+- Agrupar los cambios de una misma tarea lógica en un solo commit siempre que la herramienta de publicación lo permita. No crear commits intermedios por archivo o por etapa.
+- Si la integración disponible solo permite guardar un archivo por operación y cada operación genera su propio commit, se permite publicar los archivos de forma secuencial; verificar el resultado de cada operación y no reescribir el historial para simular una agrupación.
 - Antes de publicar, verificar HEAD y rama; crear el commit sobre el HEAD confirmado y actualizar únicamente la rama autorizada mediante una operación condicionada al SHA esperado.
 - No forzar actualizaciones ni reescribir historial. Si el SHA esperado no coincide, detenerse, consultar el estado y reconciliar.
 - Después de publicar, verificar SHA, padre, archivos incluidos y HEAD remoto. Confirmar que la rama base permanece intacta.
