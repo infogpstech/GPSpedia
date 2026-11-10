@@ -485,6 +485,7 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
         const headerNames = ["activaTestigo1", "activaTestigo2", "activaTestigo3"];
         const lastColumn = sheet.getLastColumn();
         if (lastColumn < 1) throw new Error('La hoja «Cortes» no contiene encabezados.');
+        getVinColumnIndex(sheet); // Rechaza encabezados VIN duplicados antes de modificar AT:AV.
 
         const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
         headerNames.forEach((name, index) => {
