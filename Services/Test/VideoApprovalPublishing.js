@@ -1,0 +1,146 @@
+const TUTORIAL_HEADERS = ["Tema", "Imagen", "Video", "Descripción", "Colaborador"];
+
+// Pruebas aisladas de publicación, rechazo y recuperación de vídeos aprobados.
+// Requiere cargar Services/feedback.js.
+function runVideoApprovalPublishingTests() {
+    const results=[];let passed=0,failed=0;
+    const oldGetSafe=getSafeSheet,oldUuid=Utilities.getUuid,oldFormat=Utilities.formatDate,oldTimezone=Session.getScriptTimeZone,oldFlush=SpreadsheetApp.flush;
+    function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
+    function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
+    function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
+    function makeSheet_(rows,options){
+        options=options||{};const data=rows.map(r=>r.slice());
+        function range_(r,c,n,m){
+            return{
+                getValues(){
+                    const out=[];for(let i=0;i<(n||1);i++){const line=[];for(let j=0;j<(m||1);j++){const v=(data[r-1+i]||[])[c-1+j];line.push(v===undefined||v===null?"":v);}out.push(line);}return out;
+                },
+                getDisplayValues(){return this.getValues().map(line=>line.map(v=>String(v)));},
+                getValue(){const v=(data[r-1]||[])[c-1];return v===undefined||v===null?"":v;},
+                setValue(v){if(options.failSetValueAtColumn===c)throw Error("simulated setValue failure");data[r-1]=data[r-1]||[];data[r-1][c-1]=v;},
+                setValues(values){
+                    if(options.failNextSetValues){options.failNextSetValues=false;throw Error("simulated write failure");}
+                    values.forEach((line,i)=>{data[r-1+i]=data[r-1+i]||[];line.forEach((v,j)=>data[r-1+i][c-1+j]=v);});
+                }
+            };
+        }
+        return{data,getLastRow:()=>data.length,getLastColumn:()=>Math.max(0,...data.map(r=>r.length)),getRange:range_,getDataRange:()=>range_(1,1,data.length,Math.max(1,Math.max(0,...data.map(r=>r.length))))};
+    }
+    const videoId="abcdefghijk",videoUrl="https://www.youtube.com/watch?v="+videoId,opVideoId="v".repeat(32);
+    function approval_(type,ref){return{subType:"video_approval",opVideoId,createdByUserId:"owner-1",title:"Video",description:"",videoId,videoUrl,contentType:type,referenceId:ref,status:"pending",metadata:{}};}
+    function env_(type,options){
+        options=options||{};
+        const feedbackRows=[["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido"]];
+        const approval=approval_(type,options.referenceId||({corte:"veh-1",pys:"pys-1",tutorial:"Tutorial demo"}[type]));
+        const requestRow=["vid-1","Owner",approval.referenceId,JSON.stringify(approval),"pending",false,"","",""];
+        if(!options.noRequest)feedbackRows.push(requestRow);
+        if(options.duplicateRequest)feedbackRows.push(requestRow.slice());
+        const feedback=makeSheet_(feedbackRows,{failNextSetValues:!!options.failFeedbackWrite});
+        const cutHeaders=new Array(45).fill("");cutHeaders[0]="id";cutHeaders[9]="videoGuiaDesarmeUrl";
+        const cuts=makeSheet_([cutHeaders,(()=>{const row=new Array(45).fill("");row[0]="veh-1";row[9]=options.currentUrl||"";return row;})()]);
+        const pysHeaders=["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"];
+        const pys=makeSheet_([pysHeaders,["pys-1","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
+        const tutHeaders=["Tema","Imagen","Video","Descripción","Colaborador"];
+        const tutorial=makeSheet_([tutHeaders,["Tutorial demo",options.currentImage||"",options.currentUrl||"","","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?2:null});
+        const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutoriales":tutorial };
+        if(options.missingTarget)delete map[type==="corte"?SHEET_NAMES.CORTES:type==="pys"?"pys":"Tutoriales"];
+        if(options.duplicateTarget){
+            const target=type==="corte"?cuts:type==="pys"?pys:tutorial;
+            target.data.push(target.data[1].slice());
+        }
+        getSafeSheet=name=>map[name]||null;
+        return{feedback,cuts,pys,tutorial,approval,restore:()=>{getSafeSheet=oldGetSafe;}};
+    }
+    function withEnv_(type,options,fn){const e=env_(type,options);try{fn(e);}finally{e.restore();}}
+    function actor_(itemId){return{itemId,userName:"Aprobador",userRole:"Desarrollador"};}
+    try{
+        run_("mantiene vacíos los tres destinos hasta la aprobación",()=>{
+            ["corte","pys","tutorial"].forEach(type=>{
+                withEnv_(type,{noRequest:true},e=>{
+                    const referenceId={corte:"veh-1",pys:"pys-1",tutorial:"Tutorial demo"}[type];
+                    const result=handleSubmitVideoForApproval({
+                        opVideoId:"q".repeat(32),userId:"owner-1",userName:"Owner",
+                        title:"Video",description:"",contentType:type,referenceId,
+                        videoId,videoUrl,metadata:{}
+                    });
+                    const target=type==="corte"?e.cuts.data[1][9]:type==="pys"?e.pys.data[1][7]:e.tutorial.data[1][2];
+                    assert_(result.status==="success"&&target==="","El destino "+type+" se publicó antes de aprobar.");
+                });
+            });
+        });
+        run_("aprueba Corte y verifica URL en Cortes antes de cerrar solicitud",()=>withEnv_("corte",{},e=>{
+            const r=handleApproveVideo(actor_("vid-1"));
+            const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
+            assert_(r.status==="success"&&e.cuts.data[1][9]===videoUrl&&saved.status==="approved"&&e.feedback.data[1][4]==="approved");
+        }));
+        run_("aprueba PyS en columna Video de pys",()=>withEnv_("pys",{},e=>{
+            const r=handleApproveVideo(actor_("vid-1"));
+            const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
+            assert_(r.targetType==="pys"&&e.pys.data[1][7]===videoUrl&&saved.status==="approved");
+        }));
+        run_("aprueba Tutorial por ID y genera miniatura solo si está vacía",()=>withEnv_("tutorial",{},e=>{
+            const r=handleApproveVideo(actor_("vid-1"));
+            const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
+            assert_(r.targetType==="tutorial"&&e.tutorial.data[1][2]===videoUrl&&e.tutorial.data[1][1]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg"&&saved.status==="approved");
+        }));
+        run_("si falla la miniatura, no publica la URL del Tutorial",()=>withEnv_("tutorial",{failTutorialImageWrite:true},e=>{
+            let error=null;try{handleApproveVideo(actor_("vid-1"));}catch(x){error=x;}
+            assert_(!!error&&e.tutorial.data[1][2]===""&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+        }));
+        run_("preserva miniatura personalizada del Tutorial",()=>withEnv_("tutorial",{currentImage:"imagen-propia"},e=>{
+            handleApproveVideo(actor_("vid-1"));
+            assert_(e.tutorial.data[1][1]==="imagen-propia"&&e.tutorial.data[1][2]===videoUrl);
+        }));
+        run_("no sobrescribe un vídeo diferente en el destino",()=>withEnv_("corte",{currentUrl:"https://www.youtube.com/watch?v=zzzzzzzzzzz"},e=>{
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"otro vídeo");
+            assert_(e.cuts.data[1][9]==="https://www.youtube.com/watch?v=zzzzzzzzzzz"&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+        }));
+        run_("no aprueba si el destino no existe",()=>withEnv_("pys",{missingTarget:true},e=>{
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"no encontrada");
+            assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
+        }));
+        run_("no aprueba si el destino es ambiguo",()=>withEnv_("pys",{duplicateTarget:true},e=>{
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"más de una vez");
+            assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
+        }));
+        run_("reintento completa estado tras fallo de escritura de Feedbacks",()=>withEnv_("corte",{failFeedbackWrite:true},e=>{
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"simulated write failure");
+            assert_(e.cuts.data[1][9]===videoUrl&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+            const retry=handleApproveVideo(actor_("vid-1"));
+            assert_(retry.status==="success"&&JSON.parse(e.feedback.data[1][3]).status==="approved");
+        }));
+        run_("rechazo retira el enlace pendiente exacto de Corte",()=>withEnv_("corte",{currentUrl:videoUrl},e=>{
+            const r=handleRejectVideo({...actor_("vid-1"),reason:"No cumple"});
+            assert_(r.status==="success"&&e.cuts.data[1][9]===""&&JSON.parse(e.feedback.data[1][3]).status==="rejected");
+        }));
+        run_("rechazo retira enlace y miniatura pendientes de Tutorial",()=>withEnv_("tutorial",{currentImage:"https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg",currentUrl:videoUrl},e=>{
+            const r=handleRejectVideo({...actor_("vid-1"),reason:"No cumple"});
+            assert_(r.status==="success"&&e.tutorial.data[1][2]===""&&e.tutorial.data[1][1]===""&&JSON.parse(e.feedback.data[1][3]).status==="rejected");
+        }));
+        run_("rechazo retira el enlace pendiente de PyS",()=>withEnv_("pys",{currentUrl:videoUrl},e=>{
+            const r=handleRejectVideo({...actor_("vid-1"),reason:"No cumple"});
+            assert_(r.status==="success"&&e.pys.data[1][7]===""&&JSON.parse(e.feedback.data[1][3]).status==="rejected");
+        }));
+        run_("rechazo conserva un vídeo anterior diferente",()=>withEnv_("pys",{currentUrl:"https://www.youtube.com/watch?v=zzzzzzzzzzz"},e=>{
+            handleRejectVideo(actor_("vid-1"));
+            assert_(e.pys.data[1][7]==="https://www.youtube.com/watch?v=zzzzzzzzzzz"&&JSON.parse(e.feedback.data[1][3]).status==="rejected");
+        }));
+        run_("rechazo reintenta después de fallo al actualizar Feedbacks",()=>withEnv_("pys",{currentUrl:videoUrl,failFeedbackWrite:true},e=>{
+            expect_(()=>handleRejectVideo(actor_("vid-1")),"simulated write failure");
+            assert_(e.pys.data[1][7]===""&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+            handleRejectVideo(actor_("vid-1"));
+            assert_(JSON.parse(e.feedback.data[1][3]).status==="rejected");
+        }));
+        run_("rechaza solicitud duplicada antes de publicar",()=>withEnv_("corte",{duplicateRequest:true},e=>{
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"más de una vez");
+            assert_(e.cuts.data[1][9]==="");
+        }));
+    }finally{
+        getSafeSheet=oldGetSafe;
+        Utilities.getUuid=oldUuid;
+        Utilities.formatDate=oldFormat;
+        Session.getScriptTimeZone=oldTimezone;
+        SpreadsheetApp.flush=oldFlush;
+    }
+    return{status:failed===0?"PASS":"FAIL",passed,failed,results};
+}
