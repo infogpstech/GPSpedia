@@ -485,6 +485,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Estado:** COMPLETADA EN VALIDACIÓN LÓGICA LOCAL (2026-11-10); validación funcional con Drive/Spreadsheet aislados pendiente de Beta.
 - **Ledger durable:** ImageUploadLedger se crea bajo demanda y persiste token, operationKey, carpeta, MIME, tamaño, SHA-256, fileId/URL, estado y referencia de Cortes. El intento pending se verifica antes de crear el archivo Drive.
 - **Integridad:** al reutilizar un archivo se recalculan bytes y hash, y se verifican operación, carpeta, MIME, tamaño y token. Límite: 10 MB por imagen. Si el ledger no puede persistir, la carga falla antes de crear el archivo.
+- **Recuperación y control:** markImageUploadLinked verifica el archivo antes de reconstruir una fila faltante desde metadatos Drive v2; el ledger rechaza tokens duplicados. El dry-run no crea la hoja ni modifica archivos.
 - **Reconciliación:** ADMIN dispone de reconcilePendingImageUploads; por defecto ejecuta dry-run y admite confirm:true, paginación de hasta 100 filas. Clasifica linked, pending_unreferenced, orphan_candidate, file_missing y requires_review. No elimina archivos; markImageUploadLinked puede fallar sin bloquear el guardado porque el ledger pending queda recuperable.
 - **Resultado:** respuesta perdida con referencia presente se reconcilia a linked; referencias ausentes se conservan como pendientes/huérfanas; archivos faltantes o alterados quedan identificados para revisión.
 
