@@ -50,7 +50,11 @@ Seleccionar verificaciones según el impacto real del cambio. Como mínimo:
 - Para cambios visuales, validar los estados y tamaños afectados cuando exista entorno disponible.
 - Para cambios documentales, comprobar estructura, enlaces, referencias y preservación del contenido histórico.
 
-Una prueba no disponible debe declararse como no ejecutada, indicando el motivo y el entorno que haría falta. La validación local puede cerrar una tarea si satisface sus criterios reproducibles; las pruebas que dependan de deployments o infraestructura se registran como validación diferida, no como ejecutadas.
+Una prueba no disponible debe declararse como no ejecutada, indicando el motivo y el entorno que haría falta.
+
+**Criterio obligatorio de finalización local:** una tarea se considera **COMPLETADA** cuando las validaciones locales pertinentes se ejecutan y aprueban. Estas incluyen, según el alcance, sintaxis/parsing, pruebas unitarias y de lógica, contratos, virtualización o simulación de dependencias, pruebas de regresión y anti-regresión, seguridad estática y revisión del diff. Deben cubrirse los riesgos relevantes del cambio con pruebas reproducibles en el entorno local disponible.
+
+**Validaciones diferidas a Beta:** ninguna tarea debe quedar bloqueada ni permanecer abierta únicamente porque requiera validación de integración con navegador real, despliegues o servicios externos, proyectos Apps Script, hojas Spreadsheet aisladas, credenciales/OAuth, YouTube API real, infraestructura de terceros o pruebas de campo. Estas validaciones se registran explícitamente como pendientes para la versión Beta y se ejecutan en el entorno Beta de campo real. No se deben simular ni presentar como realizadas. Solo un defecto reproducible en las pruebas locales, un riesgo crítico verificable o una dependencia local indispensable puede impedir el cierre de la tarea.
 
 La revisión de código debe concentrarse en el diff y sus efectos. Si aparece una observación, corregirla y repetir las pruebas afectadas. No reiniciar toda la auditoría por una corrección localizada, salvo que la corrección cambie sustancialmente el diseño, el alcance o las dependencias.
 
@@ -111,12 +115,12 @@ Solo registrar un hallazgo si existe evidencia. Si no hay hallazgos, no inventar
 Una tarea puede cerrarse cuando:
 1. el resultado solicitado está implementado;
 2. el diff no contiene cambios ajenos;
-3. las verificaciones aplicables se ejecutaron y aprobaron;
-4. las limitaciones y validaciones diferidas están identificadas;
-5. los registros necesarios describen fielmente el resultado;
+3. las validaciones locales pertinentes (sintaxis, lógica, virtualización/simulación, regresión y anti-regresión, contratos y demás pruebas reproducibles aplicables) se ejecutaron y aprobaron;
+4. las validaciones que requieren navegador real, despliegues, Apps Script/Spreadsheet aislados, OAuth, APIs externas o infraestructura de terceros están identificadas como pendientes de Beta, sin bloquear el cierre local;
+5. los registros necesarios describen fielmente el resultado y distinguen las pruebas locales aprobadas de las validaciones Beta aún no ejecutadas;
 6. el commit y la rama de trabajo se verificaron.
 
-Usar estados claros: **PENDIENTE**, **EN PROGRESO**, **BLOQUEADA**, **COMPLETADA** o **COMPLETADA CON VALIDACIÓN DIFERIDA**. No confundir ausencia de deployment con fallo de validación local.
+Usar estados claros: **PENDIENTE**, **EN PROGRESO**, **BLOQUEADA**, **COMPLETADA** o **COMPLETADA CON VALIDACIÓN DIFERIDA**. Una tarea con todas sus pruebas locales aprobadas se marca **COMPLETADA CON VALIDACIÓN DIFERIDA** cuando queden verificaciones reservadas para Beta. No usar **BLOQUEADA** por la sola ausencia de un deployment, credencial o servicio externo.
 
 ---
 
