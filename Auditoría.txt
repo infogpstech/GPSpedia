@@ -1324,3 +1324,5 @@ Límites: 10 MB por imagen. Si ImageUploadLedger no está disponible, la carga f
 Validación: Services/Test/ImageUploadLedger.js 18/18 PASS; SharedMutationCoordinator 25/25 PASS; parsing V8 ADMIN/WRITE/Coordinator/API/tests PASS; helpers de carga ADMIN/WRITE idénticos.
 Límites de validación: no se ejecutó Drive real, Spreadsheet real, Apps Script desplegado ni concurrencia física. La prueba integral en copias aisladas queda pendiente de Beta. No se modificaron datos productivos.
 ================================================================================
+
+AUG-037 — AJUSTE DE CIERRE: se añadió reconstrucción de una fila ledger faltante desde metadata Drive v2, solo después de verificar carpeta, MIME, tamaño, hash y token. El esquema rechaza tokens duplicados. El dry-run no crea la hoja ni modifica archivos. Validación final: ImageUploadLedger 18/18; SharedMutationCoordinator 25/25.
