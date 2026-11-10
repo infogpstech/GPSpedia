@@ -22,6 +22,7 @@ function runFeedbackWriteSecurityTests() {
     const oldAssert = assertFeedbackSession;
     const oldGetSpreadsheet = getSpreadsheet;
     const oldGetSafeSheet = getSafeSheet;
+    const oldEnsureReportMetadataColumn = ensureReportMetadataColumn;
     const oldLog = logUserActivity;
     const oldCache = typeof CacheService === "undefined" ? null : CacheService;
     const oldLock = typeof LockService === "undefined" ? null : LockService;
@@ -149,6 +150,74 @@ function runFeedbackWriteSecurityTests() {
             }), "fallo controlado");
             assert_(trashed === true, "El archivo no vinculado debe enviarse a papelera.");
         });
+        test_("reportProblem devuelve el mismo resultado ante un reintento idéntico", function() {
+            const reportId = "REP-1731260000000-abc123";
+            const metadata = { reportId, userId: "USR-TEST-01", vehicleId: "VEH-1", corteIndex: 2, activaTestigoMotor: true };
+            const row = ["REP-ROW-1", "Usuario verificado", "VEH-1", "Falla intermitente", "", "", "", "", "", JSON.stringify(metadata)];
+            const sheet = makeSheet([Array(10).fill("header"), row]);
+            const originalEnsure = ensureReportMetadataColumn;
+            const originalLog = logUserActivity;
+            let logCalls = 0;
+            try {
+                getSafeSheet = () => sheet;
+                ensureReportMetadataColumn = () => 10;
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                SpreadsheetApp = { flush: function() {} };
+                logUserActivity = () => { logCalls++; };
+                const result = handleReportProblem({
+                    vehicleId: "VEH-1", problemText: "Falla intermitente",
+                    userId: "USR-TEST-01", userName: "Usuario verificado",
+                    reportId, corteIndex: 2, activaTestigoMotor: true
+                });
+                assert_(result.status === "success" && result.alreadyReported === true && result.reportId === reportId);
+                assert_(sheet.rows.length === 2, "El reintento no debe crear una segunda fila.");
+                assert_(logCalls === 0, "El reintento no debe duplicar el registro de actividad.");
+            } finally {
+                ensureReportMetadataColumn = originalEnsure;
+                logUserActivity = originalLog;
+            }
+        });
+        test_("reportProblem rechaza reutilizar un reportId con datos distintos", function() {
+            const reportId = "REP-1731260000001-def456";
+            const metadata = { reportId, userId: "USR-TEST-01", vehicleId: "VEH-1", corteIndex: 2, activaTestigoMotor: true };
+            const row = ["REP-ROW-2", "Usuario verificado", "VEH-1", "Falla original", "", "", "", "", "", JSON.stringify(metadata)];
+            const sheet = makeSheet([Array(10).fill("header"), row]);
+            const originalEnsure = ensureReportMetadataColumn;
+            try {
+                getSafeSheet = () => sheet;
+                ensureReportMetadataColumn = () => 10;
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                expectThrow_(() => handleReportProblem({
+                    vehicleId: "VEH-1", problemText: "Texto modificado",
+                    userId: "USR-TEST-01", userName: "Usuario verificado",
+                    reportId, corteIndex: 2, activaTestigoMotor: true
+                }), "ya pertenece a un reporte distinto");
+                assert_(sheet.rows.length === 2, "El conflicto no debe crear otra fila.");
+            } finally {
+                ensureReportMetadataColumn = originalEnsure;
+            }
+        });
+        test_("reportProblem bloquea reportId duplicados preexistentes", function() {
+            const reportId = "REP-1731260000002-ghi789";
+            const metadata = { reportId, userId: "USR-TEST-01", vehicleId: "VEH-1", corteIndex: 2, activaTestigoMotor: true };
+            const row = ["REP-ROW-3", "Usuario verificado", "VEH-1", "Falla original", "", "", "", "", "", JSON.stringify(metadata)];
+            const sheet = makeSheet([Array(10).fill("header"), row.slice(), row.slice()]);
+            const originalEnsure = ensureReportMetadataColumn;
+            try {
+                getSafeSheet = () => sheet;
+                ensureReportMetadataColumn = () => 10;
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                expectThrow_(() => handleReportProblem({
+                    vehicleId: "VEH-1", problemText: "Falla original",
+                    userId: "USR-TEST-01", userName: "Usuario verificado",
+                    reportId, corteIndex: 2, activaTestigoMotor: true
+                }), "aparece duplicado");
+                assert_(sheet.rows.length === 3, "El estado duplicado debe permanecer intacto para revisión.");
+            } finally {
+                ensureReportMetadataColumn = originalEnsure;
+            }
+        });
+
         test_("El límite de frecuencia público se aplica en el servidor", function() {
             const store = {};
             CacheService = { getScriptCache: () => ({
@@ -258,6 +327,7 @@ function runFeedbackWriteSecurityTests() {
         assertFeedbackSession = oldAssert;
         getSpreadsheet = oldGetSpreadsheet;
         getSafeSheet = oldGetSafeSheet;
+        ensureReportMetadataColumn = oldEnsureReportMetadataColumn;
         logUserActivity = oldLog;
         if (oldCache) CacheService = oldCache;
         if (oldLock) LockService = oldLock;
