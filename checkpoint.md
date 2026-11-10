@@ -345,3 +345,46 @@ No se modificó la rama base GPSpedia2.2.5.
 ================================================================================
 
 Cierre final AUG-037: HEAD previo a este checkpoint 17c52c09e20701f76fdd39c48cdf50c6ad0439da. Pruebas finales: ImageUploadLedger 18/18 PASS; SharedMutationCoordinator 25/25 PASS; VinTestigoIntegrity 14/14 PASS; parsing V8 ADMIN/WRITE/Coordinator/API/UI/tests PASS; helpers compartidos ADMIN/WRITE idénticos; paridad parser VIN frontend/backend PASS. Acción reconcilePendingImageUploads verificada en router ADMIN, api-config y política maintenance. ImageUploadLedger se persiste antes de folder.createFile; dry-run no crea hoja ni modifica archivos; no existe ninguna ruta de borrado en la reconciliación. Rama base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-043 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar esta continuación: 0e37540a567de1f977631268fcff56a1267070f6.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin modificaciones.
+Tarea: AUG-043 — EN PROGRESO.
+Fuente normativa: NORMAS_DESAROLLO.md.
+
+IMPLEMENTACIÓN
+1. FEEDBACK: se agregaron consultas seguras por opVideoId/propietario, idempotencia de submitVideoForApproval, validación de destino/ID/URL, prevención de solicitudes pendientes duplicadas y revalidación del destino antes de crear la solicitud.
+2. Destinos: Corte usa id/videoGuiaDesarmeUrl; PyS usa id_problem/Video; Tutoriales usa Tema único y columnas A:E verificadas. La aprobación publica el enlace en el destino correcto; el rechazo retira únicamente el enlace pendiente. La miniatura propia del tutorial se conserva y la URL se escribe después de preparar la miniatura.
+3. Seguridad: addTutorial requiere Desarrollador; addProblem y acciones de contribución requieren sesión válida; se mantiene la matriz backend para aprobación/rechazo y edición. Las altas/ediciones PyS/Tutorial rechazan URLs directas; no se permite renombrar un tutorial con solicitud pendiente.
+4. Cliente: youtubeUpload.js usa currentUser.ID/SessionToken, valida la sesión, persiste opVideoId y archivo en IndexedDB, transfiere bloques reanudables y consulta el estado remoto después de interrupciones. Una respuesta final sin ID real detiene el flujo y conserva el registro para recuperación.
+5. UI: se corrigieron callsites de asociación/desvinculación y edición; se retiró la entrada manual de URL de openAddVideoModal; Corte, PyS y Tutorial usan el flujo de aprobación. api-config.js mapea getVideoApprovalByOperation a FEEDBACK.
+
+ARCHIVOS FUNCIONALES
+Services/feedback.js, youtubeUpload.js, ui.js, api-config.js.
+
+PRUEBAS AÑADIDAS
+Services/Test/VideoApprovalState.js, YouTubeApproval.js, YouTubeApprovalInit.js, VideoApprovalPublishing.js, VideoApprovalContracts.js, VideoApprovalSessions.js y YouTubeUploadClient.js; Services/Test/README.md actualizado.
+
+VALIDACIÓN LOCAL
+- Estado: 13/13 PASS.
+- Submit/idempotencia/propiedad: 16/16 PASS.
+- Inicialización YouTube: 8/8 PASS.
+- Aprobación/rechazo Corte/PyS/Tutorial: 16/16 PASS.
+- Contratos de altas/ediciones: 8/8 PASS.
+- Sesión/autorización: 10/10 PASS.
+- Cliente resumable: 12/12 PASS.
+- Total: 82/82 pruebas PASS.
+- Sintaxis/parsing de Services/feedback.js, youtubeUpload.js, ui.js y api-config.js: 4/4 PASS.
+- Revisión estática de callsites protegidos: addVehicleToProblem 2/2, removeVehicleFromProblem 2/2, updatePysItem 1/1 y updateTutorialItem 1/1 con getSessionPayload_().
+
+LÍMITES Y PENDIENTES
+- No se ejecutó YouTube OAuth/API real, XHR/IndexedDB de navegador real, Apps Script desplegado, HTTP, Drive/Spreadsheet productivos ni concurrencia física.
+- Pendiente: revisar el diff completo, publicar en GPSpedia2.2.5_work con SHA esperado y verificar el commit/HEAD remoto; después ejecutar prueba de integración en navegador y proyecto Apps Script/Spreadsheet aislado.
+- La tarea permanece EN PROGRESO. No se modificó la rama base ni datos productivos.
+================================================================================
+
+Nota documental: Tareas_pendientes_parte1.txt (181,717 caracteres) y Auditoría.txt (185,934 caracteres) ya superan el umbral de rotación de 180,000. No se añadieron entradas a esos archivos; el estado de AUG-043 se registra en Tareas.txt y este checkpoint. Programar rotación documental independiente antes de nuevas adendas en esos registros.
