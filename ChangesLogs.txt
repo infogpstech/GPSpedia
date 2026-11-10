@@ -532,6 +532,6 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 2026-11-10 — AUG-035 — INTEGRIDAD ESTRICTA DE IDEMPOTENCIA
 - ADMIN/WRITE: validación de esquema y registros, detección de duplicados, read-back de registro, estado completed terminal y recuperación por vehicleId único.
 - Migración: valida opId, asociación y status; completa/verifica entradas pending existentes; verifica completed antes de limpiar origen; dry-run informa registros a completar.
-- Suite Services/Test/IdempotenciaIntegrity.js: 12 casos lógicos; documentación de reconciliación no destructiva.
+- Suite Services/Test/IdempotenciaIntegrity.js: 13 casos lógicos; documentación de reconciliación no destructiva.
 - Sin cambios en endpoints, api-config.js, Utilities.js, deployments ni datos productivos.
 ================================================================================
