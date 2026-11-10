@@ -3505,6 +3505,11 @@ function classifyImageUploadReconciliation_(previousState, fileState, referenceC
 }
 
 function handleReconcilePendingImageUploads(payload, logMessage) {
+    const existingLedgerSheet = getSpreadsheet().getSheetByName(IMAGE_UPLOAD_LEDGER_SHEET_NAME);
+    if (!existingLedgerSheet) {
+        return { status: "success", dryRun: !(payload && payload.confirm === true), processed: 0,
+            message: "ImageUploadLedger todavía no existe; no hay cargas registradas para reconciliar." };
+    }
     const ledgerSheet = getOrCreateImageUploadLedgerSheet_();
     const lastRow = ledgerSheet.getLastRow();
     const requestedStart = Number(payload && payload.startRow);
