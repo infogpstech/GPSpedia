@@ -234,3 +234,10 @@ Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/T
 Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia de AUTH prod/test y USERS prod/test PASS.
 No se ejecutaron deployments aislados, navegador real, HTTP real, Spreadsheet real ni pruebas reales de concurrencia. Beta sigue pendiente. AUG-034/AUD-T-033 no fue modificada; AUG-011 sigue omitida; SHA-256/sha256$ se conserva.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-016 — 2026-11-09
+Estado: COMPLETADA — validación local aprobada. VALIDACIÓN DIFERIDA A BETA es una etapa posterior de integración y no una condición pendiente para esta tarea.
+Evidencia: sintaxis 7/7 PASS; harness AUTH 15/15 PASS; integraciones 4/4 PASS; equivalencia producción/prueba PASS; pruebas locales adicionales de expiración y revocación 6/6 PASS y contratos/ruteo 8/8 PASS. Revisión del commit 9bb6d87e sin hallazgos nuevos bloqueantes en el alcance. AUG-154/H-AUD-066 permanece independiente.
+================================================================================

@@ -284,3 +284,13 @@ Validación local: sintaxis 7/7 PASS; harness funcional 15/15 PASS; integracione
 Sin Apps Script real, deployments, navegador, HTTP, Sheets reales ni datos productivos. AUG-034 permanece independiente; AUG-011 continúa omitida y hashing SHA-256/sha256$ sin cambios.
 Pendiente: matriz Beta en deployments AUTH/USERS aislados; no declarar verificación operativa hasta completarla.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE LOCAL — AUG-016 — 2026-11-09
+Estado normalizado: COMPLETADA. La implementación satisface los criterios locales y las verificaciones locales están aprobadas. La validación de integración/despliegue queda DIFERIDA A BETA y no condiciona el cierre de la implementación.
+Evidencia local: parser/sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones adicionales 4/4 PASS; equivalencia AUTH producción/prueba y USERS producción/prueba PASS. Revisión adicional de expiración y revocación con dobles locales: 6/6 PASS. Contratos de ruteo, autoridad AUTH y política de expiración: 8/8 PASS.
+Ciclo A de revisión del commit 9bb6d87e: no se identificaron defectos nuevos bloqueantes dentro del alcance de AUG-016. H-AUD-066 continúa como tarea independiente AUG-154; no se considera resuelta por este cierre.
+Las pruebas que requieren Apps Script desplegado, navegador real, HTTP, Sheets reales o concurrencia entre ejecuciones se conservan en lista_beta.txt para la fase Beta.
+Siguiente tarea: AUG-017 — restablecer controles de navegación y coherencia de Inbox/Dashboard al cambiar de cuenta o rol.
+================================================================================

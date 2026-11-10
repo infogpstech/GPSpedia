@@ -1137,3 +1137,16 @@ Riesgos pendientes:
 
 Documentación finalizada. Este checkpoint es la última acción documental antes del único commit de AUG-016.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE NORMALIZADO — AUG-016 — 2026-11-09
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Commit revisado: 9bb6d87e50b69177220be58a1399db5b0d113d63. Padre: e2a6b41abb4bc4e4f355ad98593a01f29cd7897b. HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Ciclo A: revisión de la implementación de AUTH/USERS, ruteo, requestId, expiración, revocación, cambio de rol y consumidores de sesión. Sin hallazgos nuevos bloqueantes dentro del alcance. H-AUD-066/AUG-154 permanece como deuda independiente.
+Validación local reejecutada: sintaxis/parsing 7/7 PASS; equivalencia AUTH prod/test y USERS prod/test 2/2 PASS; contratos de ruteo, handler único AUTH, política de expiración 8/8 PASS; pruebas locales con dobles para límites de expiración y revocación 6/6 PASS. Se conserva además la evidencia del commit de harness funcional AUTH 15/15 PASS e integraciones 4/4 PASS.
+Estado final: AUG-016 COMPLETADA por validación local aprobada. Las pruebas con deployments, navegador real, HTTP, Sheets reales y concurrencia de Apps Script quedan DIFERIDAS A BETA; no condicionan el cierre local.
+No se modificaron endpoints, deployments, datos productivos ni rama base. No se ejecutó ninguna operación contra servicios operativos.
+Siguiente tarea: AUG-017 — restablecer controles de navegación al cambiar de cuenta/rol. Su auditoría e implementación se iniciarán después de verificar este commit.
+Este checkpoint es la última actualización documental del commit de normalización de estado AUG-016.
+================================================================================

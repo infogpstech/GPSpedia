@@ -1594,3 +1594,9 @@ Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integra
 No se ejecutaron deployments aislados, navegador real, HTTP real, Spreadsheet real ni concurrencia de Apps Script. AUG-034/AUD-T-033 sigue como tarea global separada de Cortes/Drive; no fue modificada. AUG-011 sigue omitida; SHA-256/sha256$ sin cambios.
 Siguiente acción: ejecutar matriz Beta de AUG-016 en deployments AUTH/USERS aislados y confirmar revocación multi-dispositivo, fallos de escritura, reintentos e intercalados.
 ================================================================================
+
+
+================================================================================
+RECTIFICACIÓN DE ESTADO — AUG-016 — 2026-11-09
+AUG-016 queda COMPLETADA en el entorno local conforme a DOC-NORM-2026-001, sección 7. La validación local está aprobada; las pruebas de deployment, integración y concurrencia real se mantienen DIFERIDAS A BETA y no mantienen abierta la implementación. El registro de cierre se conserva en tareas_completadas_parte1.txt. H-AUD-066/AUG-154 continúa independiente.
+================================================================================
