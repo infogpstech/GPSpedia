@@ -1037,3 +1037,28 @@ Validación aislada: guards FEEDBACK/USERS/ADMIN/WRITE rechazan marcador y acept
 Límite residual: una solicitud de otro microservicio que ya hubiera superado su guard antes de que AUTH escriba el marcador no puede cancelarse retroactivamente. Los proyectos no comparten ScriptLock; no se afirma atomicidad de solicitudes ya en curso. Las nuevas solicitudes que lean Users después de confirmar el marcador quedan rechazadas.
 Estado: H-AUD-042-002 RESUELTO EN FUENTES; pendiente de commit/verificación y auditoría Ciclo A post-commit. AUG-042 no se reanuda hasta completar ese Ciclo A.
 ================================================================================
+
+================================================================================
+H-AUD-042-003 — ALTA — ABIERTO — 2026-11-09
+Origen: Ciclo A post-commit de CORR-FEEDBACK-ROLE-REVOCATION-001, commit b201198410ead781281badaee02cff9804b0cbad.
+Ubicación:
+- Services/Auth.js:handleClearSensitiveLogs(), aproximadamente líneas 289–350.
+- Services/Auth.js:handleResetUserSessions(), aproximadamente líneas 1201–1238.
+- Services/Auth.js:handleDeleteUser(), aproximadamente líneas 1297–1370.
+- Services/Auth.js:handleResetUserPassword(), aproximadamente líneas 1584–1620.
+Evidencia:
+1. Los cuatro handlers localizan directamente la sesión solicitante en ActiveSessions, validan unicidad/identidad/expiración y consultan Users para confirmar que el perfil está activo y conserva el rol privilegiado.
+2. Ninguno consulta hasPendingRoleRevocation_(requesterUserId) ni rechaza el marcador compartido en Users.SessionToken antes de ejecutar la operación privilegiada.
+3. handleClearSensitiveLogs puede purgar registros; handleResetUserSessions puede cerrar sesiones de otras cuentas; handleDeleteUser puede desactivar/eliminar otras cuentas; handleResetUserPassword puede restablecer contraseñas de otras cuentas.
+4. Si el solicitante tiene una revocación de rol pendiente y su token residual no pudo invalidarse, Users conserva el rol anterior hasta completar la reconciliación. Los guards de FEEDBACK/USERS/ADMIN/WRITE ya rechazan el marcador compartido, pero estos cuatro handlers internos de AUTH no lo consultan y pueden aceptar el token residual.
+5. handleUpdateUser y handleChangePassword sí verifican el estado pendiente del solicitante. handleLogout no se considera bypass privilegiado porque su única operación es cerrar la sesión solicitante.
+Impacto: una cuenta cuya revocación/cambio de rol está pendiente puede conservar temporalmente acceso a operaciones privilegiadas de AUTH, aunque validateAndTouchSession_() ya rechace su sesión.
+Criterio verificable:
+- Cada uno de los cuatro handlers debe comprobar el estado pendiente del solicitante mediante el marcador local/compartido antes de evaluar permisos o realizar cualquier mutación.
+- Si existe marcador, intentar reconciliar bajo el ScriptLock de AUTH y rechazar la solicitud actual exigiendo nueva autenticación, incluso si la reconciliación finaliza durante esa llamada.
+- Ante error o ambigüedad al leer el estado, fallar cerrado.
+- Mantener los controles existentes de identidad, token global, expiración, rol y permisos; no alterar el tratamiento de la cuenta destino ni la operación segura de logout.
+- Probar los cuatro handlers con marcador local, marcador compartido, sesión normal, sesión expirada/cruzada y fallo de reconciliación; comprobar que no se ejecuta la mutación cuando el solicitante está pendiente.
+Tarea correctiva independiente: CORR-AUTH-ROLE-REVOCATION-GUARDS-001.
+Dependencia: debe cerrarse antes de reanudar AUG-042, conforme al protocolo de ciclo continuo y para dejar consistente el rechazo de sesiones pendientes dentro de AUTH.
+================================================================================

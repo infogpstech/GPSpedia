@@ -422,3 +422,12 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Verificaciones: sintaxis 7/7; paridad de copias PASS; guards FEEDBACK/USERS/ADMIN/WRITE 8 casos PASS; pruebas de AUTH para detección, fail-closed, revocación parcial, retry, marcador corrupto/conflictivo y fallos de limpieza PASS; migración legacy PASS; orden de guardas PASS.
 - No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos. Las solicitudes ya en curso antes de persistir el marcador no se cancelan retroactivamente.
 ================================================================================
+
+================================================================================
+2026-11-09 — CICLO A / CORR-FEEDBACK-ROLE-REVOCATION-001 — NUEVO HALLAZGO
+- Verificado commit b201198410ead781281badaee02cff9804b0cbad en GPSpedia2.2.5_work; el padre es dd3e85d746a6233aac01f3f5829cfb764df47547. La rama base continúa en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- La auditoría post-commit confirmó los guards compartidos en FEEDBACK, USERS, ADMIN y WRITE, así como la escritura previa del marcador por AUTH.
+- Se detectó H-AUD-042-003: cuatro handlers privilegiados de AUTH validan manualmente sesión y rol, pero no consultan el estado pendiente del solicitante: purga de Logs, reset de sesiones, eliminación de usuarios y restablecimiento administrativo de contraseñas.
+- Se registra CORR-AUTH-ROLE-REVOCATION-GUARDS-001 como tarea correctiva independiente. No se modificó código durante esta auditoría.
+- Se requiere rotar checkpoint.md por proximidad al límite documental; el contenido completo previo se conserva íntegro como parte legacy 005 y el archivo activo pasa a ser un índice con checkpoint inicial de la nueva tarea.
+================================================================================

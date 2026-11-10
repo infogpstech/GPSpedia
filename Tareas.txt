@@ -453,3 +453,16 @@ No ejecutado: Apps Script real, Sheets/Drive, HTTP/endpoints, deployments, naveg
 Límite: una solicitud ya autorizada por otro proyecto antes de persistir el marcador no puede cancelarse retroactivamente; no se afirma atomicidad entre ScriptLocks de proyectos independientes.
 Siguiente paso: verificar el commit único, auditar esta corrección en Ciclo A y, si no aparecen hallazgos nuevos, reanudar AUG-042 Ciclo B.
 ================================================================================
+
+================================================================================
+CORR-AUTH-ROLE-REVOCATION-GUARDS-001 — GUARDS DE SOLICITANTE EN HANDLERS PRIVILEGIADOS AUTH
+Estado: REGISTRADA; auditoría/implementación pendientes.
+Origen: H-AUD-042-003, detectado en Ciclo A post-commit de CORR-FEEDBACK-ROLE-REVOCATION-001.
+Objetivo: impedir que una sesión residual de un solicitante con cambio/revocación de rol pendiente ejecute handlers privilegiados internos de AUTH.
+Alcance candidato: Services/Auth.js y Services/Test/Auth.js; Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md. No se prevén cambios a FEEDBACK/USERS/ADMIN/WRITE, porque sus guards ya consultan el marcador compartido.
+Handlers: handleClearSensitiveLogs, handleResetUserSessions, handleDeleteUser y handleResetUserPassword.
+Criterios: consultar el marcador local/compartido del solicitante antes de permisos y mutaciones; intentar reconciliación bajo el lock de AUTH y rechazar la solicitud actual requiriendo nueva autenticación; fail-closed ante error/ambigüedad; conservar identidad, expiración, permisos, destino y logout.
+Pruebas: cuatro handlers con marcador local, compartido, usuario normal, sesión expirada/cruzada y reconciliación fallida; confirmar ausencia de mutación ante estado pendiente; sintaxis completa, comparación contra respaldo, Code Review/Safety & Side Effects.
+Restricciones: no modificar deployments, endpoints, datos productivos, Spreadsheet de producción ni rama base. Un commit único por tarea mediante Git Database API.
+Siguiente paso: auditar cada handler y sus rutas/call sites, respaldar Auth.js y Test/Auth.js, implementar y verificar. AUG-042 permanece bloqueada hasta cerrar esta corrección y auditarla post-commit.
+================================================================================

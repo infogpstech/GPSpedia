@@ -90,3 +90,10 @@ Las partes son inmutables. Concatenarlas en orden reproduce exactamente el archi
 - Integridad: división exacta sin pérdida.
 
 Consultar `Plan_auditoría/Normas_Gestion_Documental.md`. Los nombres activos canónicos se conservan como registros nuevos o índices. No reutilizar IDs históricos.
+
+## checkpoint.md — rotación incremental 2026-11-09
+- SHA del archivo fuente rotado: `1d1a10d689a992c4671a5865e32bf607ee93c7f7`
+- Caracteres Unicode: 178396.
+- Partes: 1.
+  - `Olds/Documentacion_Legacy/checkpoint_legacy_parte_005.md`: 178396 caracteres; blob `1d1a10d689a992c4671a5865e32bf607ee93c7f7`.
+- Integridad: copia exacta del blob fuente, sin corrección, normalización ni pérdida. El archivo activo `checkpoint.md` se conserva como índice y nuevo registro de continuidad.
