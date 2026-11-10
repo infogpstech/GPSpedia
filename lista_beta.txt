@@ -2,13 +2,7 @@ GPSpedia — Lista de funcionalidades para la etapa Beta
 Fecha de elaboración: 2026-11-09
 Estado: PLANIFICACIÓN; no autoriza implementación anticipada.
 
-NORMAS INTERNAS
-1. Este documento contiene funcionalidades candidatas para implementar, integrar o validar una vez que GPSpedia alcance el estado Beta definido en el Plan Maestro.
-2. No sustituye Tareas_pendientes*. Las dependencias de seguridad, identidad, integridad, recuperación y despliegue deben resolverse antes.
-3. Cada funcionalidad deberá convertirse en una tarea con alcance, dependencias, criterios de aceptación y pruebas antes de implementarse.
-4. No marcar una funcionalidad como completada sin revisión sintáctica de todos los archivos modificados, pruebas funcionales aplicables, Code Review y verificación del commit.
-5. Mantener este listado append-only; las decisiones nuevas se agregan como adendas. Máximo 180,000 caracteres Unicode.
-6. Los filtros rápidos de catálogo están cancelados definitivamente y quedan excluidos de la Beta.
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
 
 ## COMPUERTA DE ENTRADA A BETA
 No iniciar estas funcionalidades hasta que:
