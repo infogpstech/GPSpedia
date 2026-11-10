@@ -262,6 +262,56 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear valida la superposición del rango completo frente a otras generaciones", function() {
+            const oldAssert=assertFeedbackSession, oldGet=getSpreadsheet, oldSafe=getSafeSheet;
+            const oldLog=logUserActivity, oldLock=LockService, oldApp=SpreadsheetApp, oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            function sheet(rows) {
+                return {rows,getLastRow(){return this.rows.length;},getLastColumn(){return Math.max(10,...this.rows.map(r=>r.length));},getMaxColumns(){return this.getLastColumn();},
+                    getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};},
+                    getRange(r,c,h=1,w=1) {const self=this;return {
+                        getValue(){return (self.rows[r-1]||[])[c-1]??"";},
+                        getValues(){return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>(self.rows[r-1+i]||[])[c-1+j]??""));},
+                        setValue(v){while(self.rows.length<r)self.rows.push([]);while(self.rows[r-1].length<c)self.rows[r-1].push("");self.rows[r-1][c-1]=v;},
+                        setValues(vs){vs.forEach((line,i)=>line.forEach((v,j)=>{while(self.rows.length<r+i)self.rows.push([]);while(self.rows[r-1+i].length<c+j)self.rows[r-1+i].push("");self.rows[r-1+i][c-1+j]=v;}));},
+                        copyTo(target){target.setValues(this.getValues());},
+                        clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
+                    };},deleteRow(r){this.rows.splice(r-1,1);},insertColumnsAfter(){}};
+            }
+            function vehicle(id,from,to) {const r=Array(42).fill("");r[COLS_CORTES.id-1]=id;r[COLS_CORTES.marca-1]="Toyota";r[COLS_CORTES.modelo-1]="Hilux";r[COLS_CORTES.categoria-1]="Pickup";r[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";r[COLS_CORTES.tipoEncendido-1]="Llave";r[COLS_CORTES.anoDesde-1]=from;r[COLS_CORTES.anoHasta-1]=to;return r;}
+            function run(from,to,otherFrom,otherTo,year) {
+                const cuts=sheet([Array(42).fill(""),vehicle("V-1",from,to),vehicle("V-2",otherFrom,otherTo)]);
+                const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+                const fb=sheet([headers,
+                    ["F1","A","V-1","Confirmación de funcionamiento para año "+year,"Funciona","","","",year,"user:A"],
+                    ["F2","B","V-1","Confirmación de funcionamiento para año "+year,"Funciona","","","",year,"user:B"]]);
+                const activity=[];
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:null});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO?fb:null;
+                logUserActivity=(...args)=>activity.push(args);
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
+                const result=handleSuggestYear({...actor,vehicleId:"V-1",newYear:year,response:"Sí (Funciona)"});
+                return {cuts,fb,activity,result};
+            }
+            try {
+                assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-C")throw Error("Sesión inválida");return {userId:"C",userName:"Usuario C",role:"Tecnico"};};
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};SpreadsheetApp={flush(){}};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const collision=run(2018,2022,2023,2026,2027);
+                assert_(collision.result.status==="warning","Debe detectar la superposición atravesada: "+JSON.stringify(collision.result));
+                assert_(collision.cuts.rows[1][COLS_CORTES.anoHasta-1]===2022);
+                assert_(collision.fb.rows.length===4,"Debe conservar los aportes para revisión.");
+                assert_(collision.activity.some(a=>a[2]==="suggest_year_collision"));
+                const separate=run(2020,2024,2025,2030,2015);
+                assert_(separate.result.status==="success","Rangos separados no deben bloquearse: "+JSON.stringify(separate.result));
+                assert_(separate.cuts.rows[1][COLS_CORTES.anoDesde-1]===2015);
+                assert_(separate.cuts.rows[2][COLS_CORTES.anoDesde-1]===2025);
+                assert_(!separate.activity.some(a=>a[2]==="suggest_year_collision"));
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
+            }
+        });
+
         test_("suggestYear registra aportes anónimos sin sumarlos al umbral de tres usuarios verificados", function() {
             const originalAssert=assertFeedbackSession, originalGetSpreadsheet=getSpreadsheet;
             const originalGetSafeSheet=getSafeSheet, originalLog=logUserActivity;

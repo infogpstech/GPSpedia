@@ -809,6 +809,8 @@ function handleSuggestYearLocked(payload) {
     const normalizeV = value => (value || "").toString().toLowerCase()
         .replace(/[^a-z0-9]/g, " ").split(/\s+/).filter(Boolean).sort().join(" ");
     const versionNormalizada = normalizeV(vehicleRow[COLS_CORTES.versionesAplicables - 1]);
+    const proposedAnoDesde = Math.min(year, anoDesde);
+    const proposedAnoHasta = Math.max(year, anoHasta);
 
     for (const row of allCortesData) {
         if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) continue;
@@ -821,14 +823,16 @@ function handleSuggestYearLocked(payload) {
             otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {
             const otherAnoDesde = parseInt(row[COLS_CORTES.anoDesde - 1], 10);
             const otherAnoHasta = parseInt(row[COLS_CORTES.anoHasta - 1] || otherAnoDesde, 10);
-            if (year <= otherAnoHasta) {
+            if (proposedAnoDesde <= otherAnoHasta && proposedAnoHasta >= otherAnoDesde) {
                 logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
-                    "Año " + year + " colisiona con rango de vehículo ID " + row[COLS_CORTES.id - 1]);
+                    "Rango propuesto " + proposedAnoDesde + "-" + proposedAnoHasta +
+                    " se superpone con rango de vehículo ID " + row[COLS_CORTES.id - 1] +
+                    " (" + otherAnoDesde + "-" + otherAnoHasta + ")");
                 return {
                     status: "warning",
-                    message: "La sugerencia para el año " + year +
-                        " no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (" +
-                        otherAnoDesde + "-" + otherAnoHasta + "). Se requiere revisión manual."
+                    message: "La ampliación del rango " + proposedAnoDesde + "-" + proposedAnoHasta +
+                        " se superpone con otra generación registrada (" + otherAnoDesde + "-" + otherAnoHasta +
+                        "). Se requiere revisión manual."
                 };
             }
         }

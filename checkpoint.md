@@ -745,3 +745,43 @@ Siguiente iteración: continuar la revisión de la siguiente condición funciona
 Validaciones de Apps Script/Spreadsheet/Drive reales diferidas a Beta; no ejecutadas.
 Sin despliegues, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: INTERSECCIÓN DE RANGOS ENTRE GENERACIONES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre: 6f6abc0201c99995c076e1cc0f81bf141681f020.
+
+TAREA ÚNICA
+Verificar y corregir la protección contra colisiones cuando una sugerencia amplía el rango de años de un vehículo que comparte marca, modelo, categoría, encendido y versión con otra generación.
+
+HALLAZGO Y CORRECCIÓN
+Se detectó que handleSuggestYearLocked() comprobaba únicamente si el año solicitado era menor o igual al límite superior de otra generación. Esa comparación no verificaba la intersección del rango completo que resultaría de la ampliación:
+- podía permitir una ampliación superior que atravesara el rango de otra generación;
+- podía bloquear una ampliación inferior aun cuando el rango resultante quedara separado de otra generación situada por encima.
+Se corrigió calculando el intervalo propuesto [min(year, anoDesde), max(year, anoHasta)] y comprobando la intersección inclusiva con el intervalo de cada generación coincidente. Si existe intersección, conserva los aportes, registra suggest_year_collision y devuelve revisión manual sin modificar Cortes. Si no existe intersección, la ampliación continúa.
+
+PRUEBA DE REGRESIÓN
+Se añadió una prueba con dos escenarios:
+1. Rango objetivo 2018–2022, otra generación 2023–2026 y propuesta 2027: detecta que el rango resultante atraviesa la otra generación; no modifica rangos ni elimina votos y registra colisión.
+2. Rango objetivo 2020–2024, otra generación 2025–2030 y propuesta 2015: no hay intersección; permite ampliar el límite inferior y conserva intacta la otra generación.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 32/32 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Pruebas con mocks locales; no acreditan integración real con Apps Script, Spreadsheet o Drive.
+
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+La condición de intersección de rangos queda COMPLETADA CON VALIDACIÓN DIFERIDA tras las pruebas locales.
+AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una única condición funcional pendiente de suggestYear; no iniciar otra tarea en esta iteración.
+Validaciones reales de Apps Script/Spreadsheet/Drive diferidas a Beta; no ejecutadas.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

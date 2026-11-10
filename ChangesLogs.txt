@@ -705,3 +705,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Subtarea del umbral completada; AUG-040 permanece EN PROGRESO.
 - Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — INTERSECCIÓN DE RANGOS EN suggestYear
+- Services/feedback.js: la protección de colisiones compara ahora el intervalo completo propuesto con el intervalo de cada generación coincidente, en lugar de comparar únicamente el año solicitado con el límite superior ajeno.
+- La intersección envía la sugerencia a revisión manual sin modificar rangos ni eliminar votos; los intervalos separados pueden ampliarse automáticamente.
+- Services/Test/FeedbackWriteSecurity.js: regresión para una ampliación superior que atraviesa otra generación y una ampliación inferior cuyo intervalo resultante no se superpone con una generación posterior.
+- Validación local: runFeedbackWriteSecurityTests() 32/32 PASS; parsing/sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; esta condición queda completada localmente con integración real diferida a Beta.
+- Sin deployments, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================

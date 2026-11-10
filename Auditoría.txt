@@ -19,3 +19,15 @@ Prueba: Services/Test/FeedbackWriteSecurity.js verifica rechazo de ID duplicado,
 Validación local: runFeedbackWriteSecurityTests() 28/28 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
 Límites: no se ejecutó Apps Script desplegado, Spreadsheet real, Drive real ni datos productivos. La integración real permanece diferida a Beta.
 ================================================================================
+
+================================================================================
+H-AUD-040-002 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de la protección de colisiones de handleSuggestYear durante AUG-040.
+Ubicación: Services/feedback.js, handleSuggestYearLocked(), comparación con rangos de otras generaciones coincidentes.
+Evidencia: la condición anterior evaluaba únicamente year <= otherAnoHasta. No comprobaba la intersección del intervalo completo que resultaría de ampliar el rango objetivo. Por ello, una ampliación superior podía atravesar el rango de otra generación sin activar revisión manual; en sentido contrario, una ampliación inferior podía bloquearse aunque el intervalo propuesto quedara separado de una generación posterior.
+Impacto: posible solapamiento de rangos de generaciones del mismo vehículo lógico o rechazo automático innecesario de una sugerencia válida.
+Corrección: calcular proposedAnoDesde/proposedAnoHasta y exigir intersección inclusiva entre el intervalo propuesto y el intervalo de la otra generación antes de bloquear la actualización.
+Prueba: Services/Test/FeedbackWriteSecurity.js cubre ampliación que atraviesa otra generación (bloqueada y conservada para revisión) y ampliación separada (permitida sin alterar la otra generación).
+Validación local: runFeedbackWriteSecurityTests() 32/32 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
+Límites: no se ejecutó Apps Script desplegado, Spreadsheet real, Drive real ni datos productivos. La integración real permanece diferida a Beta.
+================================================================================
