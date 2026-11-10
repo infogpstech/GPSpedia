@@ -1,14 +1,8 @@
-REGISTRO ACTIVO DE TAREAS — GPSpedia
+# Registro activo de tareas — GPSpedia
 
-Historial previo:
-- `Olds/Documentacion_Legacy/Tareas_legacy_parte_001.txt` (179911 caracteres)
-- `Olds/Documentacion_Legacy/Tareas_legacy_parte_002.txt` (179928 caracteres)
-- `Olds/Documentacion_Legacy/Tareas_legacy_parte_003.txt` (179810 caracteres)
-- `Olds/Documentacion_Legacy/Tareas_legacy_parte_004.txt` (32427 caracteres)
-Los IDs y el contenido históricos permanecen reservados y conservados. Consultar `Olds/Documentacion_Legacy/README.md`.
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de modificar tareas, implementar requisitos o registrar cambios.
 
-**Regla:** append-only. No borrar, truncar, sobrescribir ni reordenar entradas. Agregar tareas y adendas al final. Máximo 180,000 caracteres Unicode; rotar antes de exceder conforme a `Plan_auditoría/Normas_Gestion_Documental.md`.
-Procedimiento vigente: `Proceso de desarollo.md` y `Plan_auditoría/Protocolo_Ciclo_Continuo.md`.
+Este archivo contiene estados y referencias de tareas; no duplica normas generales. El historial previo y los IDs reservados se conservan en `Olds/Documentacion_Legacy/`.
 
 ================================================================================
 TAREA DOC-MIG-2026-001 — MIGRACIÓN Y ROTACIÓN DOCUMENTAL
