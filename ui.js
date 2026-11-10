@@ -9,6 +9,7 @@ import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAs
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { confirmValidationBeforeCache } from './validationSubmission.js';
+import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
@@ -3220,20 +3221,10 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             utilBtn.classList.add('liked');
             utilBtn.style.backgroundColor = '#28a745';
 
-            recordLike(vehicleId, cutData.index, getSessionPayload_()).then(() => {
-                // Persistir en el estado local de la sesión
+            recordLike(vehicleId, cutData.index, getSessionPayload_()).then(response => {
+                // Sincronizar con el contador confirmado por el servidor; no incrementar localmente.
                 const currentState = getState();
-                const newLiked = [...(currentState.likedCortes || []), likeKey];
-
-                // Actualizar contador localmente para respuesta inmediata en la UI
-                const newCatalog = { ...currentState.catalogData };
-                const vehicle = newCatalog.cortes.find(c => String(c.id) === String(vehicleId));
-                if (vehicle) {
-                    const countKey = `utilCorte${cutData.index}`;
-                    vehicle[countKey] = (parseInt(vehicle[countKey]) || 0) + 1;
-                }
-
-                setState({ likedCortes: newLiked, catalogData: newCatalog });
+                setState(applyConfirmedLikeState(currentState, vehicleId, cutData.index, response));
             }).catch(err => {
                 console.error("Error reporting like:", err);
                 utilBtn.classList.remove('liked');

@@ -1554,9 +1554,9 @@ function runFeedbackWriteSecurityTests() {
         test_("Los likes son idempotentes por actor, vehículo y corte", function() {
             const runtime = createLikeRuntime_("VEH-1", false);
             const first = handleRecordLike({ vehicleId: "VEH-1", corteIndex: 1, userId: "USR-1", userName: "Uno" });
-            assert_(first.status === "success" && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
+            assert_(first.status === "success" && first.likeCount === 1 && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
             const duplicate = handleRecordLike({ vehicleId: "VEH-1", corteIndex: 1, userId: "USR-1", userName: "Uno" });
-            assert_(duplicate.alreadyLiked && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
+            assert_(duplicate.alreadyLiked && duplicate.likeCount === 1 && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
             handleRecordLike({ vehicleId: "VEH-1", corteIndex: 1, userId: "USR-2", userName: "Dos" });
             assert_(runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 2);
             assert_(runtime.sheets.FeedbackLikes.rows[1][5] === "completed" && runtime.sheets.FeedbackLikes.rows[2][5] === "completed");
@@ -1570,7 +1570,7 @@ function runFeedbackWriteSecurityTests() {
             ]);
             runtime.sheets.FeedbackLikes = ledger;
             const result = handleRecordLike({ vehicleId: "VEH-2", corteIndex: 1, userId: "USR-1", userName: "Uno" });
-            assert_(result.recovered && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
+            assert_(result.recovered && result.likeCount === 1 && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
             assert_(ledger.rows[1][5] === "completed");
         });
         test_("Un contador inválido bloquea el like sin sobrescribirlo", function() {

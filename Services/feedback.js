@@ -1196,7 +1196,7 @@ function handleRecordLike(payload) {
         if (!Number.isSafeInteger(currentCount) || currentCount < 0) throw new Error("El contador de likes del corte no es un entero válido; requiere revisión.");
         if (found.length === 1) {
             const existing = found[0], status = String(existing.row[5] || "");
-            if (status === "completed") return { status: "success", alreadyLiked: true, message: "Este usuario ya había registrado su like." };
+            if (status === "completed") return { status: "success", alreadyLiked: true, likeCount: currentCount, message: "Este usuario ya había registrado su like." };
             if (status !== "pending") throw new Error("El registro previo del like tiene un estado desconocido.");
             const previous = Number(existing.row[3]), target = Number(existing.row[4]);
             if (!Number.isSafeInteger(previous) || previous < 0 || !Number.isSafeInteger(target) || target !== previous + 1) throw new Error("El registro pendiente del like tiene contadores inválidos.");
@@ -1207,7 +1207,7 @@ function handleRecordLike(payload) {
             ledger.getRange(existing.rowIndex, 6).setValue("completed");
             SpreadsheetApp.flush();
             try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + target); } catch (logError) { console.error(logError); }
-            return { status: "success", recovered: true, message: "Like recuperado y confirmado." };
+            return { status: "success", recovered: true, likeCount: target, message: "Like recuperado y confirmado." };
         }
         const target = currentCount + 1;
         ledger.appendRow([actorKey, vehicleId, corteIndex, currentCount, target, "pending", new Date().toISOString()]);
@@ -1218,7 +1218,7 @@ function handleRecordLike(payload) {
         ledger.getRange(ledger.getLastRow(), 6).setValue("completed");
         SpreadsheetApp.flush();
         try { logUserActivity(userId, userName, "like", vehicleId, "Like en corte " + corteIndex + ". Nuevo total: " + target); } catch (logError) { console.error(logError); }
-        return { status: "success", alreadyLiked: false, message: "Like registrado correctamente." };
+        return { status: "success", alreadyLiked: false, likeCount: target, message: "Like registrado correctamente." };
     } finally {
         lock.releaseLock();
     }
