@@ -1180,3 +1180,53 @@ Code Review: solo ui.js modificado funcionalmente; main.js, auth.js, state.js, a
 No se ejecutaron navegador real, HTTP, Apps Script real, Sheets reales ni pruebas Beta. La validación integrada queda para la fase Beta y no condiciona el cierre local.
 Estado: AUG-017 COMPLETADA LOCALMENTE. Este checkpoint es la última actualización documental antes del único commit de AUG-017.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — CIERRE ADMINISTRATIVO AUG-001 — 2026-11-09
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial verificado: 06419beab039e554da26c9922aebb6393bbc5120
+Commit padre: 751a3f199f6e2ca2cdbf53f4d8084d4387e0f60a
+Rama base: GPSpedia2.2.5
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tarea: registrar como completada AUG-001 conforme a la confirmación expresa del propietario de que la protección técnica de la rama base ya está configurada.
+Alcance documental: Tareas_pendientes_parte1.txt, Tareas.txt, Auditoría.txt, ChangesLogs.txt, tareas_completadas_parte1.txt y checkpoint.md.
+Ciclo previo: AUG-017 quedó completada en el HEAD actual. Se revisó el estado de la secuencia documental: DOC-README-2026-001/002 constan completadas; AUG-003 tiene resultado de auditoría AUD-T-033 cerrado; AUG-004 sigue siendo la siguiente tarea propietaria de Fase 0.
+Auditoría pre-cambio: AUG-001 registra una observación histórica protected=false. El propietario confirma que la configuración fue resuelta posteriormente. La conexión disponible no permite al agente ejecutar ni verificar independientemente la configuración; se documentará esa limitación sin atribuir al agente la acción ni afirmar verificación técnica propia. No se crea un hallazgo nuevo ni se repite AUD-T-039.
+Riesgos: la evidencia de cierre es la confirmación expresa del propietario; la verificación técnica independiente no está disponible desde los permisos de esta sesión. No modificar rama base ni reglas de GitHub.
+Respaldos exactos creados como blobs Git antes de editar:
+Tareas_pendientes_parte1.txt=4997130cfa273694b2cea95040dd0d1ed04d0250
+Tareas.txt=29edd1ad50ac493b373994b87e7f148d1768d12a
+Auditoría.txt=977a3c01afafa8d9cf2701390053cdc0d893cfc7
+ChangesLogs.txt=d318c9a69ec34b362dd441192d4c888a019ef39e
+checkpoint.md=700b027200b168cae27d1bd15cf16bdcfa054b61
+tareas_completadas_parte1.txt=51f2b655b7a8d198db15bc471ae77f5d9fdbc017
+Estado inicial: HEAD y rama base confirmados; revisión documental completada; respaldos exactos creados; no se ha modificado ningún archivo.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — CIERRE ADMINISTRATIVO AUG-001 — 2026-11-09
+Repositorio: infogpstech/GPSpedia; rama de trabajo: GPSpedia2.2.5_work; rama base: GPSpedia2.2.5.
+HEAD inicial y parent del nuevo commit: 06419beab039e554da26c9922aebb6393bbc5120. HEAD base verificado antes de publicación: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+AUG-001: COMPLETADA por confirmación expresa del propietario de que la protección técnica de la rama base ya fue configurada. El agente no realizó ni verificó independientemente esa configuración; la limitación quedó explícita en los registros.
+Archivos documentales actualizados: Tareas_pendientes_parte1.txt, Tareas.txt, Auditoría.txt, ChangesLogs.txt, tareas_completadas_parte1.txt y checkpoint.md. No se modificó código, Services, endpoints, deployments, reglas de GitHub ni rama base.
+Respaldos exactos previos:
+Tareas_pendientes_parte1.txt=4997130cfa273694b2cea95040dd0d1ed04d0250
+Tareas.txt=29edd1ad50ac493b373994b87e7f148d1768d12a
+Auditoría.txt=977a3c01afafa8d9cf2701390053cdc0d893cfc7
+ChangesLogs.txt=d318c9a69ec34b362dd441192d4c888a019ef39e
+checkpoint.md=700b027200b168cae27d1bd15cf16bdcfa054b61
+tareas_completadas_parte1.txt=51f2b655b7a8d198db15bc471ae77f5d9fdbc017
+Blobs nuevos:
+Tareas_pendientes_parte1.txt=a1e962b2902feb9d1445c5386aac6616ea001596
+Tareas.txt=917d0abef74e64fd7d6f6f1601d041f19f87ea79
+Auditoría.txt=96b55841aa154303e10e1b1446d6cf0c49f9105e
+ChangesLogs.txt=a83952d2b755179695bd6c85001ecea4a51a22a4
+tareas_completadas_parte1.txt=a9a31ab881886271f01381a50f7ce46592476f53
+Revisión: adendas agregadas al final sin alterar entradas anteriores; no se generó ID de hallazgo nuevo; se conservó AUD-T-039 como evidencia histórica; la siguiente tarea queda identificada como AUG-004 según Fase 0, sección 14.3 del Plan Maestro. Los archivos permanecen dentro del límite documental de 180,000 caracteres Unicode.
+Pruebas de código y sintaxis: N/A, no se modificó código. Pruebas de protección GitHub: no ejecutadas por falta de permisos de lectura administrativa; el cierre se basa en confirmación del propietario.
+Code Review documental: se verificó coherencia entre el cierre, la limitación de verificación y el orden siguiente; sin cambios fuera del alcance.
+Este checkpoint final es la última actualización documental antes del único commit.
+================================================================================

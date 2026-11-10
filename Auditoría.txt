@@ -733,3 +733,11 @@ Validación local final: sintaxis ui.js 1/1 PASS; harness funcional 32/32 PASS (
 No se ejecutaron navegador real, Apps Script desplegado, HTTP, Sheets reales ni Beta. No son requisitos de cierre local; se reservan para la fase Beta global.
 Estado: AUG-017 COMPLETADA LOCALMENTE. H-AUD-024-007, H-AUD-075 y H-AUD-076 resueltos en fuentes.
 ================================================================================
+
+
+================================================================================
+ADENDA DE ESTADO — AUG-001 / AUD-T-039 — 2026-11-09
+El propietario del repositorio confirma expresamente que la protección técnica de la rama base ya fue configurada y que AUG-001 está resuelta. La observación de AUD-T-039 sobre protected=false documenta el estado consultado en un corte anterior a esta confirmación. El agente no dispone en esta sesión de permisos administrativos para configurar ni verificar de forma independiente las reglas actuales; no se afirma que el agente haya realizado esa acción.
+Estado administrativo de AUG-001: COMPLETADA por confirmación del propietario. No se crea un hallazgo nuevo ni se repite AUD-T-039. Esta adenda conserva la evidencia histórica y hace explícito el origen de la actualización de estado.
+Siguiente tarea de Fase 0: AUG-004, según Plan_auditoría/Plan_Maestro_Implementacion.md, sección 14.3.
+================================================================================

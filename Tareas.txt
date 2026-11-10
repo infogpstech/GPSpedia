@@ -303,3 +303,11 @@ H-AUD-024-007, H-AUD-075 y H-AUD-076 RESUELTOS. ui.js asigna visibilidad explíc
 Pruebas: sintaxis 1/1 PASS; harness 32/32 PASS; matriz FEEDBACK 7/7 PASS; total 33/33 PASS. No se modificó backend ni endpoints. Pruebas integradas quedan para Beta.
 Siguiente tarea: continuar con la siguiente tarea pendiente de la secuencia de seguridad/identidad, sin reabrir AUG-016/AUG-017 por pruebas Beta.
 ================================================================================
+
+
+================================================================================
+AUG-001 — CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE — 2026-11-09
+Estado: COMPLETADA por confirmación expresa del propietario.
+El propietario confirma que la protección técnica de la rama base fue configurada. La acción administrativa corresponde al propietario y se realizó fuera del entorno del agente. El agente no ejecutó la configuración ni verificó independientemente las reglas actuales; el cierre queda respaldado por la confirmación expresa del propietario. La observación previa de protected=false pertenece a un corte anterior.
+Siguiente tarea: AUG-004 — Matriz de cancelación, sustitución y continuidad de requisitos, conforme al orden maestro de Fase 0.
+================================================================================
