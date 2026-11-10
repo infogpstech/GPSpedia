@@ -3176,7 +3176,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             utilBtn.classList.add('liked');
             utilBtn.style.backgroundColor = '#28a745';
 
-            recordLike(vehicleId, cutData.index, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
+            recordLike(vehicleId, cutData.index, getSessionPayload_()).then(() => {
                 // Persistir en el estado local de la sesión
                 const currentState = getState();
                 const newLiked = [...(currentState.likedCortes || []), likeKey];
@@ -7407,13 +7407,12 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             const res = await reportProblem(
                 vehicleId,
                 fullProblemText,
-                currentUser.ID,
-                currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
                 {
                     reportId,
                     corteIndex: Number(corteNum),
                     activaTestigoMotor
-                }
+                },
+                getSessionPayload_()
             );
 
             const confirmedReportId = res && res.reportId ? res.reportId : reportId;
@@ -7629,8 +7628,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             reportId: reportRef,
             vehicleId,
             corteIndex: validCorteNum,
-            userId: currentUser.ID,
-            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            ...getSessionPayload_(),
             details: content.querySelector("#sug-detalles").value.trim(),
             imgBase64,
             proposedValues
@@ -8848,8 +8846,6 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             alcance: alcanceSelect.value,
             modelosAsociados: Array.from(selectedVehicleIds),
             imgBase64,
-            userId: currentUser.ID,
-            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
         };
 
         try {
@@ -9547,7 +9543,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         addSolBtn.onclick = () => {
             const solText = window.prompt("Introduce la solución a este problema (máx 700 caracteres):");
             if (solText && solText.trim()) {
-                routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
+                routeAction("addSolution", { ...getSessionPayload_(), problemId: item.id_problem, solucion: solText.trim() }).then(() => {
                     alert("Solución agregada con éxito.");
                     document.getElementById("modalDetalle").classList.remove("visible");
                     renderPysSection();
@@ -9565,7 +9561,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         addPrevBtn.onclick = () => {
             const prevText = window.prompt("Introduce recomendación preventiva (máx 100 caracteres):");
             if (prevText && prevText.trim()) {
-                routeAction("addPrevention", { problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
+                routeAction("addPrevention", { ...getSessionPayload_(), problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
                     alert("Prevención agregada con éxito.");
                     document.getElementById("modalDetalle").classList.remove("visible");
                     renderPysSection();
