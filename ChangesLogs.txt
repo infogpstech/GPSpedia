@@ -596,3 +596,14 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - No se encontraron defectos reproducibles durante la revisión del alcance. No se ejecutaron navegador real, IndexedDB/XHR real, OAuth/YouTube API, Apps Script desplegado ni Spreadsheet aislado; quedan reservados para Beta.
 - Sin despliegues, endpoints, datos productivos ni rama base modificados.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING DE ACCIONES FEEDBACK — AVANCE
+- Services/feedback.js: política explícita de autorización por acción, identidad derivada de sesión, rechazo de acciones no declaradas, control de frecuencia para contacto público, separación de aportes anónimos y votos verificados, ledger idempotente para likes y validaciones de persistencia PyS.
+- api-config.js y ui.js: transmisión del payload de sesión en los callsites de escritura FEEDBACK; normalización de wrappers de like y reporte.
+- Services/Coordinator.js: recordLike incluye el recurso FEEDBACK dentro de la coordinación compartida; retiro de la acción obsoleta assignCollaborator.
+- Validación ejecutada: parsing/sintaxis de los cuatro archivos funcionales modificados, 4/4 PASS; verificaciones estáticas limitadas PASS.
+- Pendiente: ejecutar y ampliar Services/Test/FeedbackWriteSecurity.js, revisar todos los llamadores/contratos afectados y completar code review. Estado EN PROGRESO; no se afirma cierre funcional.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
