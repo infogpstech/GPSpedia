@@ -1241,7 +1241,7 @@ function saveImageUploadLedgerRecord_(sheet, record) {
     SpreadsheetApp.flush();
 
     const verified = sheet.getRange(rowIndex, 1, 1, IMAGE_UPLOAD_LEDGER_HEADERS.length).getValues()[0];
-    [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach(index => {
+    IMAGE_UPLOAD_LEDGER_HEADERS.forEach((header, index) => {
         if (String(verified[index] === null || verified[index] === undefined ? "" : verified[index]) !==
             String(record.values[index] === null || record.values[index] === undefined ? "" : record.values[index])) {
             throw new Error("No se pudo verificar la persistencia del registro de ImageUploadLedger en la fila " + rowIndex + ".");
@@ -1563,11 +1563,13 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
     verifyImageUploadFile_(file, folder, expected);
 
     const url = "https://drive.google.com/uc?export=view&id=" + file.getId();
+    const finalState = String(record.values[8]) === "linked" ? "linked" : "pending";
+    const existingReferences = String(record.values[12] || "[]");
     const description = buildImageUploadDescription_({
         operationKey: stableOperationKey, token: token, folderId: expected.folderId,
         mimeType: mimeType, sizeBytes: bytes.length, contentHash: contentHash,
         fileName: originalFilename
-    }, "pending", "[]");
+    }, finalState, existingReferences);
     file.setDescription(description);
     if (String(file.getDescription() || "") !== description) {
         throw new Error("Drive no confirmó por lectura posterior los metadatos de la carga; el registro pending se conservó.");
