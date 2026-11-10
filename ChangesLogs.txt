@@ -678,3 +678,12 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Alcance: resuelto el defecto de selección ambigua de vehículo. La revisión funcional de suggestYear continúa en la siguiente iteración.
 - Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — REGRESIÓN DE DEDUPLICACIÓN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: prueba de flujo para reintento del mismo usuario verificado; comprueba ausencia de segunda fila, conteo 1/3 y que el rango no se amplíe.
+- La prueba confirma que la identidad proviene de la sesión y no del nombre enviado por el cliente.
+- Validación local: runFeedbackWriteSecurityTests() 29/29 PASS; sintaxis de los dos archivos JavaScript 2/2 PASS.
+- No se modificó lógica de producción porque la deduplicación existente pasó la prueba.
+- AUG-040 continúa EN PROGRESO; siguiente iteración revisará aportes anónimos y su exclusión del umbral.
+================================================================================

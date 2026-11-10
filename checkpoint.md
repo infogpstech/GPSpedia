@@ -647,3 +647,35 @@ Validación Beta pendiente: Apps Script desplegado, Spreadsheet/Drive reales y c
 Sin despliegues, cambios de endpoints, operaciones sobre datos productivos ni modificaciones a la rama base.
 Siguiente iteración: continuar con los casos funcionales de suggestYear (deduplicación por actor, anonimato y umbral de tres aportantes verificados), un hallazgo a la vez.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: DEDUPLICACIÓN POR APORTANTE — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida: 382e1d3e9d3b47554c2b4ca7004c326a32f00f1c.
+
+TAREA ÚNICA DE ESTA ITERACIÓN
+Validar que un reintento de suggestYear del mismo usuario autenticado no cree otra fila ni incremente el conteo de aportantes.
+
+RESULTADO
+Se añadió una prueba de flujo con Feedbacks aislada que ya contiene un aporte positivo del mismo actor, vehículo y año. La prueba ejecuta authorizeFeedbackAction_ y handleSuggestYear.
+Comprueba que la identidad proviene de la sesión validada aunque el cliente envíe un nombre falso; el reintento no inserta otra fila; la clave persistida corresponde al usuario autenticado; el conteo permanece en 1/3; y Cortes no amplía el rango con un único aportante.
+No se encontró defecto en la deduplicación implementada; se completó la cobertura reproducible del contrato.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 29/29 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- La prueba usa mocks locales; no acredita integración con Spreadsheet/Drive reales.
+
+ARCHIVOS
+- Services/Test/FeedbackWriteSecurity.js
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Subtarea de deduplicación por aportante: COMPLETADA localmente.
+AUG-040 y la revisión de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: comprobar aportes anónimos y que nunca se sumen al umbral automático, como una única tarea.
+Validación de Apps Script/Spreadsheet/Drive reales diferida a Beta; no ejecutada.
+Sin deployments, cambios de endpoints ni modificaciones de la rama base.
+================================================================================
