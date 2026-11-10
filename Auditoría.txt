@@ -255,7 +255,7 @@ Límites: Apps Script real, endpoints, deployments, HTTP y Spreadsheet aislado n
 
 
 ================================================================================
-H-AUD-040-017 — BAJA — CORREGIDO EN FUENTES; VALIDACIÓN LOCAL PENDIENTE — 2026-11-10
+H-AUD-040-017 — BAJA — CORREGIDO Y VALIDADO EN SUITE AISLADA — 2026-11-10
 Origen: continuación de AUG-040, criterio 2 (assignCollaborator).
 Ubicación: Services/feedback.js, handleAssignCollaborator(); Services/Test/FeedbackWriteSecurity.js.
 Evidencia:
@@ -267,6 +267,6 @@ Impacto: código obsoleto que puede inducir a reactivar accidentalmente una ruta
 Severidad: Baja, porque la acción ya estaba fuera de la política y del dispatcher.
 Corrección: se retiró handleAssignCollaborator() de Services/feedback.js. La prueba de autorización ahora comprueba además que el handler no exista; se conserva la prueba de rechazo de la acción no declarada.
 Verificación de fuente: el handler ya no aparece en Services/feedback.js; la prueba contiene la aserción typeof handleAssignCollaborator === "undefined"; la política y el dispatcher siguen sin habilitar la acción.
-Pendiente: ejecutar runFeedbackWriteSecurityTests(), parsing completo de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js y revisar el diff final en el runner local. No se afirma que estas validaciones se hayan ejecutado en esta sesión.
+Validación ejecutada en runner JavaScript aislado con dobles mínimos de LockService y CacheService: runFeedbackWriteSecurityTests() = 44/44 PASS; parsing completo de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js = 2/2 PASS. La suite no accede a hojas ni Drive reales. Revisión GitHub del diff: seis archivos dentro del alcance, sin cambios ajenos. No equivale a una ejecución dentro del entorno desplegado de Apps Script.
 Sin cambios de endpoints, deployments, datos productivos ni rama base.
 ================================================================================
