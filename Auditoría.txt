@@ -101,3 +101,13 @@ Prueba: la regresión de superposición repite la solicitud del mismo actor y ve
 Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
 Límites: pruebas con mocks locales; Apps Script/Spreadsheet/Drive reales y validación Beta no ejecutadas.
 ================================================================================
+
+
+H-AUD-040-007 — Idempotencia de avisos por rango inválido en suggestYear
+Ubicación: Services/feedback.js, handleSuggestYearLocked(), rama que detecta una generación coincidente con rango de años inválido.
+Evidencia: después de registrar el aporte, cada reintento del mismo actor y vehículo/año volvía a ejecutar logUserActivity("suggest_year_range_review"), aunque alreadyReported ya era true.
+Impacto: duplica el historial de actividad y presenta reintentos como eventos independientes de revisión.
+Severidad: Baja.
+Corrección: registrar el evento de revisión solo cuando el intento añade un aporte nuevo (!alreadyReported); mantener siempre la respuesta warning y la revisión manual.
+Prueba: repetir la misma sugerencia del mismo actor ante una generación equivalente con rango inválido; el warning debe persistir y el número de eventos suggest_year_range_review no debe aumentar.
+Estado: corregido y validado localmente con prueba aislada; integración real diferida a Beta.

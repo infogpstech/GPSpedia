@@ -773,3 +773,11 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 37/37 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
 - AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE AVISOS POR RANGO INVÁLIDO EN suggestYear
+- Services/feedback.js: el evento suggest_year_range_review solo se registra cuando el aportante añade un voto nuevo; los reintentos del mismo actor conservan el warning sin duplicar actividad.
+- Services/Test/FeedbackWriteSecurity.js: regresión que repite la solicitud ante una generación equivalente con rango inválido y comprueba que no aumenta el conteo del evento de revisión.
+- Hallazgo H-AUD-040-007 registrado en Auditoría.txt.
+================================================================================

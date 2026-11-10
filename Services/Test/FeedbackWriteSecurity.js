@@ -614,6 +614,11 @@ function runFeedbackWriteSecurityTests() {
                 assert_(cuts.rows[2][COLS_CORTES.anoDesde-1]===2025&&cuts.rows[2][COLS_CORTES.anoHasta-1]===2020,"No debe modificar el rango ajeno inválido.");
                 assert_(fb.rows.length===4,"Debe conservar el tercer aporte para revisión.");
                 assert_(activities.some(a=>a[2]==="suggest_year_range_review"),"Debe registrar la revisión de integridad del rango.");
+                const reviewEventsBeforeRetry=activities.filter(a=>a[2]==="suggest_year_range_review").length;
+                const retry=handleSuggestYear({...actor,vehicleId:"V-INVALID",newYear:2027,response:"Sí (Funciona)"});
+                assert_(retry.status==="warning","El reintento debe conservar la advertencia de rango inválido.");
+                assert_(activities.filter(a=>a[2]==="suggest_year_range_review").length===reviewEventsBeforeRetry,
+                    "El reintento del mismo aportante no debe duplicar la actividad de revisión de rango.");
                 assert_(!activities.some(a=>a[2]==="apply_year_suggestion"),"No debe registrar aplicación automática.");
             } finally {
                 assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;

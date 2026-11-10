@@ -849,8 +849,10 @@ function handleSuggestYearLocked(payload) {
             const rawOtherAnoHasta = row[COLS_CORTES.anoHasta - 1];
             const otherAnoHasta = String(rawOtherAnoHasta === null || rawOtherAnoHasta === undefined ? "" : rawOtherAnoHasta).trim() === "" ? otherAnoDesde : parseCatalogYear(rawOtherAnoHasta);
             if (!Number.isFinite(otherAnoDesde) || !Number.isFinite(otherAnoHasta) || otherAnoHasta < otherAnoDesde) {
-                logUserActivity(userId, userName, "suggest_year_range_review", normalizedVehicleId,
-                    "La generación coincidente con ID " + row[COLS_CORTES.id - 1] + " tiene un rango de años inválido; se requiere revisión manual.");
+                if (!alreadyReported) {
+                    logUserActivity(userId, userName, "suggest_year_range_review", normalizedVehicleId,
+                        "La generación coincidente con ID " + row[COLS_CORTES.id - 1] + " tiene un rango de años inválido; se requiere revisión manual.");
+                }
                 return { status: "warning", message: "No se pudo validar la separación entre generaciones porque otra fila coincidente tiene un rango de años inválido. Se requiere revisión manual." };
             }
             if (proposedAnoDesde <= otherAnoHasta && proposedAnoHasta >= otherAnoDesde) {

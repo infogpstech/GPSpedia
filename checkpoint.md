@@ -1015,3 +1015,34 @@ VALIDACIÓN BETA PENDIENTE
 Apps Script/Spreadsheet/Drive reales, navegador, deployments, concurrencia física y datos productivos no ejecutados ni simulados.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: IDEMPOTENCIA DE AVISOS POR RANGO INVÁLIDO — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 172050e79d8fa88ffb055d5df0de0f8f0f00eeb8.
+TAREA ÚNICA
+Evitar que el mismo aportante duplique eventos de actividad al reintentar una sugerencia cuyo vehículo equivalente tiene un rango de años inválido.
+HALLAZGO Y CORRECCIÓN
+La rama de revisión manual registraba suggest_year_range_review en cada reintento, incluso cuando alreadyReported indicaba que el actor ya había aportado. Ahora el evento solo se registra cuando el intento añade un aporte nuevo; la respuesta warning y la derivación a revisión manual se mantienen.
+PRUEBA DE REGRESIÓN
+Se amplió la prueba de rangos inválidos: tras el primer warning se repite la solicitud del mismo actor; se comprueba que el warning persiste y el conteo de suggest_year_range_review no aumenta. Se mantienen las verificaciones de no modificación de rangos y ausencia de aplicación automática.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 37/37 PASS, incluyendo la regresión de reintento por rango inválido.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Suite ejecutada en runtime JavaScript aislado con dobles de LockService, SpreadsheetApp y CacheService; no representa integración real con Apps Script/Spreadsheet/Drive.
+- Revisión del cambio: el guard usa alreadyReported ya calculado, no altera la respuesta warning ni las escrituras de voto/rango; sin cambios ajenos al alcance.
+VALIDACIÓN BETA PENDIENTE
+Apps Script/Spreadsheet/Drive reales, navegador, despliegues, concurrencia física y datos productivos; no ejecutados ni simulados.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-007)
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 permanece EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================
