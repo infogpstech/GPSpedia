@@ -627,3 +627,14 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Alcance del cierre: idempotencia de reportProblem. Hardening FEEDBACK global permanece EN PROGRESO.
 - Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDEMPOTENCIA DE SUGERENCIAS DE CORTES
+- Services/feedback.js: handleSuggestCutChange identifica reintentos por reportId, vehículo, corte e identidad validada; compara una huella de detalles, valores propuestos e imagen. Los reintentos idénticos reutilizan el registro y no repiten fila ni actividad. Los conflictos de contenido y duplicados preexistentes se rechazan.
+- Services/Test/FeedbackWriteSecurity.js: tres regresiones para reintento idéntico, reutilización con contenido diferente y duplicados históricos.
+- Validación local: suite FeedbackWriteSecurity 23/23 PASS; sintaxis de cinco archivos funcionales/de prueba 5/5 PASS.
+- Alcance del cierre: idempotencia de suggestCutChange. Hardening FEEDBACK global permanece EN PROGRESO.
+- Commits funcional y de pruebas: 43a122d4af3ad388d264fc8650d31daf5b289301 y 37c21be876eb38a2edb6e245861e88a83dfc6a6c.
+- Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
