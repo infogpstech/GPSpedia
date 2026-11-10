@@ -429,27 +429,6 @@ function doPostInternal_(e) {
 // ============================================================================
 
 
-function handleAssignCollaborator(payload) {
-    const { vehicleId, corteIndex, userName } = payload;
-    if (!vehicleId || !corteIndex || !userName) {
-        throw new Error("Faltan datos para asignar colaborador.");
-    }
-    const sheet = getSafeSheet(SHEET_NAMES.CORTES);
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
-
-    for (let i = 0; i < data.length; i++) {
-        if (data[i][0] == vehicleId) {
-            const rowIndex = i + 2;
-            const colName = `colaboradorCorte${corteIndex}`;
-            const col = COLS_CORTES[colName];
-            if (!col) throw new Error("Índice de corte inválido.");
-
-            sheet.getRange(rowIndex, col).setValue(userName);
-            return { status: 'success', message: 'Colaborador asignado.' };
-        }
-    }
-    throw new Error("Vehículo no encontrado.");
-}
 
 
 // ============================================================================
