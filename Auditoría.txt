@@ -613,3 +613,86 @@ Decisión de auditoría:
 - H-AUD-074 requiere una decisión explícita sobre el efecto de cambiar Privilegios y una arquitectura que serialice la mutación de rol con AUTH o invalide las sesiones bajo una autoridad común. AUG-034/AUD-T-033 sigue pendiente y es dependencia bloqueante para declarar resuelta la coordinación interproyectos.
 - La auditoría de AUG-016 queda completada; la implementación se marca BLOQUEADA hasta resolver la dependencia de coordinación/política. No se modificó código.
 ================================================================================
+
+
+================================================================================
+REANUDACIÓN Y DECISIÓN DE DISEÑO — AUG-016 — 2026-11-09
+HEAD de reanudación: e2a6b41abb4bc4e4f355ad98593a01f29cd7897b.
+Aprobación expresa del usuario: cualquier cambio de Privilegios revocará todas las sesiones del usuario afectado; el usuario deberá iniciar sesión nuevamente en todos sus dispositivos.
+
+Aclaración de dependencia:
+- Services/Auth.js y Services/users.js usan el mismo Spreadsheet ID de DB V2.0. Son proyectos Apps Script distintos, por lo que sus ScriptLock siguen siendo independientes.
+- AUG-034/AUD-T-033 se refiere a la coordinación de escritores de Cortes/Drive entre WRITE, ADMIN, FEEDBACK y UTILITIES. Se mantiene como tarea global independiente y no se declara resuelta ni necesaria para el cambio de rol si toda la acción updateUser se enruta a AUTH.
+- La acción updateUser tiene un único consumidor frontend localizado en users.html (formulario de gestión). api-config.js actualmente la envía a USERS. Services/users.js y su copia de prueba contienen el único handler que modifica Privilegios; AUTH ya controla login, ActiveSessions, resetUserSessions y deleteUser.
+- Diseño aprobado para implementar: trasladar updateUser completa (Nombre_Completo y Privilegios) a AUTH; validar actor/token/expiración/roles dentro del mismo ScriptLock AUTH que protege login y ActiveSessions; registrar un marcador durable de revocación pendiente antes de escribir un rol; invalidar todas las sesiones del objetivo y verificar lectura posterior; mantener el marcador si queda alguna escritura pendiente; impedir que AUTH valide o cree nuevas sesiones para una cuenta con revocación pendiente; permitir que el mismo updateUser reintente completar la revocación aun si el rol ya coincide. La UI cerrará la sesión local si el usuario modifica su propio rol.
+- No se afirmará atomicidad. Si el borrado físico de filas falla después de limpiar los tokens, la autorización queda revocada y la limpieza de filas se reintenta; si no se puede confirmar la invalidación de todos los tokens, la operación reportará pendiente/error y conservará el marcador.
+- Para H-AUD-071, se añadirá un requestId de login generado y retenido en sessionStorage hasta que auth.js persista la sesión. AUTH conservará la relación requestId→userId/token/estado en ScriptProperties, bajo el lock, y reconciliará reintentos antes de crear otra sesión. La creación de fila y la escritura Users.SessionToken se verificarán mediante lectura posterior; la sesión más antigua se invalidará solo después de confirmar la nueva sesión. Las filas con token vacío no cuentan en SESSION_LIMITS.
+- Para H-AUD-072/H-AUD-073, la invalidación se hará mediante escritura consolidada de la columna ActiveSessions, lectura de verificación y reporte explícito de tokens pendientes. Nunca se borrará una fila cuyo token no se haya confirmado vacío. Si el cambio de contraseña no puede confirmar la revocación total, no cambiará el hash; si la escritura del hash falla, leerá el valor persistido para distinguir éxito confirmado de fallo/resultado ambiguo. La recuperación será mediante reintento o nuevo login con la contraseña que se confirme como vigente; no se afirmará transacción atómica.
+- No se cambiará el esquema SHA-256 ni el formato sha256$; AUG-011 sigue omitida. No se desplegarán servicios ni se accederá a hojas productivas.
+
+Auditoría complementaria:
+- H-AUD-071 confirmado: handleLogin cuenta todas las filas del usuario, incluso tokens vacíos; elimina la fila antigua antes de escribir SessionToken y appendRow; no distingue reintentos de la misma solicitud.
+- H-AUD-072 confirmado: resetUserSessions no captura/lee de vuelta cada clearContent; un fallo intermedio puede propagar error genérico después de invalidaciones parciales; deleteRow se captura y puede reintentarse.
+- H-AUD-073 confirmado: changePassword/resetUserPassword usan clearContent secuencial; no verifican read-back del hash después de setValue; las filas se borran después de invalidar tokens.
+- H-AUD-074 actualizado: decisión del usuario ya tomada; revocar todas las sesiones. Se resolverá la antigua ruta USERS trasladando el handler y su consumidor al servicio AUTH bajo una única autoridad local.
+- Riesgo de auto-cambio de rol: users.html permite que Desarrollador edite su propio Privilegios. Después de revocar su token, el formulario no debe conservar la sesión visual; debe borrar estado local y volver a index.html.
+Estado de auditoría: COMPLETADA PARA IMPLEMENTACIÓN. Todos los respaldos exactos deben obtenerse antes de editar; la implementación se limita a los archivos identificados y sus copias de prueba.
+================================================================================
+
+
+================================================================================
+RESOLUCIÓN DE HALLAZGOS E IMPLEMENTACIÓN — AUG-016 — 2026-11-09
+HEAD base de implementación: e2a6b41abb4bc4e4f355ad98593a01f29cd7897b.
+Política aprobada por el usuario: todo cambio de Privilegios revoca todas las sesiones del usuario afectado, con nuevo inicio de sesión obligatorio.
+
+H-AUD-071 — RESUELTO EN FUENTES:
+- AUTH recibe requestId por login. api-config.js genera/retiene el identificador en sessionStorage por pestaña y auth.js lo elimina solo después de persistir la sesión local.
+- AUTH persiste requestId→userId/token/estado en ScriptProperties (retención de 24 h), antes de mutar Sheets. Un reintento recupera el mismo token y no duplica filas.
+- Se verifica appendRow por lectura posterior; se verifica Users.SessionToken y se conserva el puntero más reciente en replay. La sesión nueva se confirma antes de invalidar las antiguas.
+- SESSION_LIMITS cuenta solo tokens no vacíos y no expirados. Los tokens antiguos/expirados se invalidan y se verifica la lectura posterior antes de borrar filas.
+- Logout, reset de sesiones, cambio de rol, cambio/restablecimiento de contraseña y eliminación de cuenta marcan los requestId relacionados como revocados. Una solicitud revocada no puede recrear la sesión. Los requestId pendientes vencidos se reconcilian antes de eliminar su registro.
+
+H-AUD-072 — RESUELTO EN FUENTES:
+- La revocación de tokens se realiza con una escritura consolidada de la columna ActiveSessions y lectura de verificación.
+- Si queda algún token no vacío, la operación no borra filas ni declara éxito; informa error/pendiente y permite reintento.
+- Solo se borran filas cuyos tokens se confirmaron vacíos. Un fallo de deleteRow deja tokens no autorizantes y limpieza física reintentable.
+- resetUserSessions conserva la serialización de AUTH y tombstonea los requestId antes de invalidar tokens.
+
+H-AUD-073 — RESUELTO EN FUENTES:
+- changePassword y resetUserPassword validan y generan el nuevo hash antes de revocar sesiones.
+- Si no se confirma la revocación completa de sesiones y requestId, no se escribe el nuevo hash.
+- La escritura del hash se verifica por lectura posterior; si el resultado es ambiguo, el error indica que debe probarse la contraseña nueva y, si no funciona, la anterior. No se declara atomicidad.
+- Las referencias Users.SessionToken y las filas residuales se limpian después de invalidar los tokens y su estado se verifica.
+
+H-AUD-074 — RESUELTO EN FUENTES:
+- updateUser fue trasladada íntegramente a AUTH (Nombre_Completo y Privilegios); api-config.js enruta updateUser a AUTH y USERS ya no publica el handler.
+- AUTH valida actor, cuenta, rol y sesión bajo el mismo ScriptLock que login y ActiveSessions.
+- Se guarda un marcador durable de revocación pendiente con oldRole/newRole. El nuevo rol solo se aplica después de confirmar que todos los tokens y requestId previos fueron invalidados. Si hay fallo parcial, el rol conserva el valor anterior y el marcador se reintenta; una solicitud distinta no puede reemplazar la pendiente.
+- AUTH reconcilia el marcador en login y validateSession; una cuenta con marcador pendiente no recibe una sesión nueva ni conserva la sesión validada.
+- Si el actor modifica su propio rol, users.html borra la sesión local y redirige a index.html. Si el intento devuelve error, la interfaz comprueba la validez de la sesión para evitar mantener una sesión local ya revocada.
+- AUTH producción/prueba conservan lógica idéntica; solo difiere el Spreadsheet ID. USERS producción/prueba conservan lógica idéntica; solo difiere el Spreadsheet ID.
+
+Archivos de código modificados:
+- Services/Auth.js y Services/Test/Auth.js: requestId, reconciliación de login, revocación verificada, tombstones, cambios de rol y contraseña, resetUserSessions y logout.
+- Services/users.js y Services/Test/users.js: retirada de updateUser para que no exista una segunda ruta de escritura de Privilegios.
+- api-config.js: updateUser→AUTH y requestId de login.
+- auth.js: completar/limpiar requestId después de persistir la sesión.
+- users.html: cierre de sesión local ante auto-cambio de rol y comprobación si el intento de cambio devuelve error.
+- Services/Test/README.md y lista_beta.txt: procedimiento y casos de validación aislada.
+
+Verificación local:
+- Parser/sintaxis: AUTH prod, AUTH test, USERS prod, USERS test, api-config.js, auth.js y script de users.html: 7/7 PASS.
+- Harness funcional AUTH: 15/15 escenarios PASS (cambio de rol, auto-cambio, revocación parcial y reintento, conflicto de solicitud pendiente, replay login, puntero de sesión, append ambiguo, límites con tokens vacíos, resetUserSessions, tombstones de requestId, cambio/restablecimiento de contraseña y logout).
+- Integración handleLogin: 1/1 PASS (replay real del handler con mismo token y sin fila duplicada).
+- Flujo api-config login requestId/sessionStorage: 1/1 PASS (reutiliza ID después de fallo de red, se limpia tras persistir y genera uno nuevo en el siguiente login).
+- Reconciliación de solicitudes/sesiones vencidas: 2/2 PASS (limpieza de pending vencido y tombstone de sesión expirada).
+- Equivalencia de AUTH prod/test sin Spreadsheet ID: PASS. Equivalencia USERS prod/test sin Spreadsheet ID: PASS.
+- No se ejecutaron deployments aislados, navegador real, HTTP real, Spreadsheet real, pruebas de concurrencia de Apps Script ni datos productivos. Por tanto, la validación Beta sigue pendiente.
+
+Riesgos y límites:
+- Google Sheets no se trata como transaccional. Se usan verificaciones de lectura, marcadores persistentes, tombstones e idempotencia; los fallos de infraestructura pueden mantener una operación pendiente hasta un reintento.
+- El estado visual de pestañas/dispositivos se actualiza al validar o al ejecutar acciones protegidas; el backend continúa siendo autoridad y rechaza tokens revocados.
+- AUG-034/AUD-T-033 (coordinación global Cortes/Drive entre WRITE, ADMIN, FEEDBACK y UTILITIES) sigue separada y no fue modificada.
+- AUG-011 continúa omitida; no se cambió SHA-256 ni el formato sha256$.
+Estado: H-AUD-071–074 RESUELTOS EN FUENTES; AUG-016 IMPLEMENTADA LOCALMENTE. Falta únicamente la validación Beta en deployments aislados antes de declarar el ciclo operativo verificado.
+================================================================================

@@ -19,7 +19,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'login': 'AUTH', 'validateSession': 'AUTH', 'touchSession': 'AUTH', 'changePassword': 'AUTH', 'resetUserPassword': 'AUTH', 'logout': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
-    'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
+    'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
     'initYouTubeUpload': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
@@ -135,8 +135,45 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
 }
 
 // 3. FUNCIONES DE CONVENIENCIA (HELPERS)
+function createLoginRequestId_() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+    }
+    return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2) + '_' + Math.random().toString(36).slice(2);
+}
+
+function loginRequestStorageKey_(username) {
+    return 'gpsepedia_pending_login_' + encodeURIComponent(String(username || '').trim().toLowerCase());
+}
+
 export async function login(username, password) {
-    return await routeAction('login', { username, password });
+    const key = loginRequestStorageKey_(username);
+    let requestId = '';
+    try { requestId = sessionStorage.getItem(key) || ''; } catch (error) {}
+    if (!requestId) {
+        requestId = createLoginRequestId_();
+        try { sessionStorage.setItem(key, requestId); } catch (error) {}
+    }
+    try {
+        const result = await routeAction('login', { username, password, requestId });
+        return { ...result, loginRequestId: requestId };
+    } catch (error) {
+        if (String(error && error.message || '').includes('LOGIN_REQUEST_ALREADY_REVOKED')) {
+            try { sessionStorage.removeItem(key); } catch (storageError) {}
+        }
+        throw error;
+    }
+}
+
+export function completeLoginRequest(username, requestId) {
+    if (!requestId) return;
+    const key = loginRequestStorageKey_(username);
+    try {
+        if (sessionStorage.getItem(key) === requestId) sessionStorage.removeItem(key);
+    } catch (error) {}
 }
 
 export async function validateSession(userId, sessionToken, signal = null) {

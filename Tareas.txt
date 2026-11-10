@@ -272,3 +272,15 @@ Archivos auditados: Services/Auth.js, Services/Test/Auth.js, Services/users.js, 
 No se modificó código ni se ejecutaron pruebas funcionales, Apps Script real, deployments, HTTP o Sheets. No se tocaron endpoints operativos ni datos productivos.
 Siguiente acción: resolver dependencia/política; reanudar implementación de recuperación con pruebas de fallos setValue/appendRow/deleteRow, reintentos e intercalados exclusivamente en copia aislada.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — AUG-016 — 2026-11-09
+Estado: IMPLEMENTADA LOCALMENTE; validación Beta pendiente.
+La política aprobada establece que cualquier cambio de Privilegios revoca todas las sesiones del usuario afectado. updateUser se trasladó a AUTH bajo el mismo ScriptLock de login/ActiveSessions. El rol se aplica únicamente después de confirmar la revocación total; los fallos parciales mantienen marcador durable y son reintentables.
+Se resolvieron en fuentes H-AUD-071–074: idempotencia/reconciliación de login mediante requestId; revocación verificada; tombstones de requestId en logout/reset/cambio de rol/password/delete; escritura de hash con read-back; cierre local en auto-cambio de rol.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, api-config.js, auth.js, users.html, Services/Test/README.md y lista_beta.txt.
+Validación local: sintaxis 7/7 PASS; harness funcional 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia prod/test PASS.
+Sin Apps Script real, deployments, navegador, HTTP, Sheets reales ni datos productivos. AUG-034 permanece independiente; AUG-011 continúa omitida y hashing SHA-256/sha256$ sin cambios.
+Pendiente: matriz Beta en deployments AUTH/USERS aislados; no declarar verificación operativa hasta completarla.
+================================================================================

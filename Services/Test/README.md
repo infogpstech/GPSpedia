@@ -133,3 +133,21 @@ Prueba adicional AUTH: cambiar el rol de la cuenta después de la lectura inicia
 - Fixtures requeridos: claves JSON `password`, `sheetPassword`, `currentPassword`, `newPassword`, `fromSheet`, `fromClient`; `username` en `handleLogin started.`; `Password comparison`; y registros no sensibles que deben conservarse.
 - Ejecutar inserciones AUTH durante la purga y comprobar que esperan al mismo ScriptLock o se ejecutan después; no usar endpoints ni hojas productivas.
 - La coordinación general de operaciones ADMIN/WRITE/FEEDBACK sobre recursos compartidos continúa pendiente en AUG-034.
+
+
+## Mutación de roles y recuperación de sesiones (AUG-016)
+
+- `updateUser` se enruta exclusivamente a AUTH. AUTH valida al actor, actualiza Nombre_Completo/Privilegios y, cuando cambia Privilegios, revoca todas las sesiones objetivo bajo el mismo ScriptLock que serializa login y ActiveSessions.
+- USERS y su copia de prueba ya no exponen el handler `updateUser`; los cambios de rol no deben escribirse desde ese proyecto.
+- AUTH usa ScriptProperties para conservar el requestId de login durante reintentos. La clave permanece en sessionStorage del navegador hasta que auth.js persiste la sesión local. No reutilizar un requestId en una operación distinta.
+- La revocación de rol utiliza un marcador durable por userId. Si una escritura no puede confirmarse, AUTH mantiene el marcador, rechaza validaciones de esa cuenta y reintenta la reconciliación en login/validación.
+- La revocación de sesiones se confirma leyendo ActiveSessions después de limpiar tokens. Una fila física que no se pudo borrar pero conserva token vacío no autoriza y puede limpiarse en un reintento.
+- Las pruebas deben ejecutarse solo contra los deployments AUTH/USERS aislados y la Spreadsheet indicada arriba. No cambiar api-config.js a URLs de prueba ni invocar endpoints operativos.
+
+
+### Idempotencia y tombstones de solicitudes
+
+- Los requestId de login se conservan en ScriptProperties durante 24 horas. Un reintento con el mismo requestId recupera el mismo token y no crea otra fila.
+- Un logout, reset de sesiones, cambio de rol, cambio/restablecimiento de contraseña o eliminación de cuenta invalida los requestId vinculados a las sesiones/cuenta. Un reintento con un requestId revocado se rechaza y obliga a iniciar un intento nuevo.
+- Los requestId pendientes que superan 24 horas se reconcilian: si dejaron una fila de sesión activa, se invalida antes de retirar el registro.
+- No se asume atomicidad de SpreadsheetApp. Cada mutación relevante se verifica por lectura posterior; si no puede confirmarse, se conserva el estado pendiente y se permite reintentar.

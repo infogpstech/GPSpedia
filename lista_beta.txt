@@ -229,3 +229,22 @@ No ejecutar hasta que AUD-T-033/AUG-034 y la política de cambio de Privilegios 
 - Probar tokens duplicados, IDs duplicados, usuario desactivado, sesión expirada, actor no autorizado, sesiones objetivo al inicio/medio/final y preservación de otras cuentas.
 - No usar hojas productivas, cuentas reales ni deployments operativos.
 ================================================================================
+
+
+================================================================================
+AUG-016 — Casos Beta adicionales tras implementación local (pendientes de deployment aislado)
+- Login: enviar dos veces el mismo requestId y comprobar que se devuelve el mismo SessionToken sin duplicar filas.
+- Simular appendRow que confirma la fila y luego lanza error; reintentar el mismo requestId y comprobar reconciliación sin duplicado.
+- Simular setValue de Users.SessionToken antes/después de escritura; comprobar reintento con el mismo token.
+- Simular requestId pendiente vencido (>24 h) con fila activa; comprobar que se invalida/elimina antes de retirar el registro.
+- Logout, resetUserSessions, cambio de rol, cambio/restablecimiento de contraseña y deleteUser deben marcar como revocados los requestId asociados. Reintentar un requestId revocado no puede recrear la sesión.
+- Cambio de Privilegios de otro usuario: todos sus tokens se invalidan antes de aplicar el nuevo rol; la sesión del actor se conserva.
+- Auto-cambio de Privilegios: el navegador elimina la sesión local y redirige a index.html; comprobar propagación del evento storage a otras pestañas y rechazo backend de tokens de otros dispositivos.
+- Fallo parcial al invalidar sesiones por cambio de rol: el rol debe permanecer sin cambios, el marcador debe persistir, login/validación debe reintentar y la misma solicitud debe completar; un cambio de rol distinto no debe sobreescribir la operación pendiente.
+- Fallos en resetUserSessions: verificar que no se eliminen filas con token no confirmado vacío; reintentar hasta completar.
+- Fallos en changePassword/resetUserPassword: contraseña no debe cambiar si no se confirma la revocación total; escritura de hash ambigua debe verificarse por lectura posterior; comprobar qué contraseña permite login.
+- Fallos de deleteRow después de token vacío: confirmar que el token no autoriza y que la limpieza física es reintentable.
+- Verificar que tokens vacíos y sesiones expiradas no se cuenten en SESSION_LIMITS; verificar que sesiones de otras cuentas no cambien.
+- Verificar que api-config.js enruta updateUser a AUTH y que el deployment USERS rechaza directamente esa acción.
+- Verificar que producción y prueba mantienen Spreadsheet IDs independientes; ejecutar todo exclusivamente con las hojas y deployments de prueba.
+================================================================================

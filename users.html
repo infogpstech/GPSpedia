@@ -556,11 +556,22 @@ async function handleUserFormSubmit(e) {
         if (userId) {
             const administrativePassword=userData.Password;
             delete userData.Password;
-            await postToAction('updateUser',{userId,updates:userData,sessionToken:currentUser.SessionToken});
+            const updateResult = await postToAction('updateUser', {
+                userId,
+                updates: userData,
+                sessionToken: currentUser.SessionToken
+            });
+            if (updateResult.selfSessionRevoked) {
+                localStorage.removeItem(SESSION_KEY);
+                currentUser = null;
+                alert(updateResult.message || 'Tu rol cambió y todas tus sesiones fueron cerradas. Inicia sesión nuevamente.');
+                window.location.replace('index.html');
+                return;
+            }
             if(administrativePassword){
                 await postToAction('resetUserPassword',{targetUserId:userId,newPassword:administrativePassword,sessionToken:currentUser.SessionToken});
                 alert('Usuario actualizado y contraseña restablecida. Todas sus sesiones fueron cerradas.');
-            }else alert('Usuario actualizado');
+            }else alert(updateResult.message || 'Usuario actualizado');
         } else {
             await postToAction('createUser', { newUser: userData, sessionToken: currentUser.SessionToken });
             alert('Usuario creado');
@@ -572,7 +583,25 @@ async function handleUserFormSubmit(e) {
         }
         await fetchUsers();
     } catch (error) {
-        // Error handled in postToAction
+        // Si se intentó cambiar el rol de la cuenta actual, comprobar si la sesión quedó revocada.
+        if (userId && currentUser &&
+            String(userId) === String(currentUser.ID || currentUser.id) &&
+            userData.Privilegios !== currentUser.Privilegios) {
+            try {
+                const validation = await postToAction('validateSession', {
+                    userId: currentUser.ID || currentUser.id,
+                    sessionToken: currentUser.SessionToken
+                });
+                if (!validation || validation.valid !== true) {
+                    localStorage.removeItem(SESSION_KEY);
+                    currentUser = null;
+                    window.location.replace('index.html');
+                    return;
+                }
+            } catch (validationError) {
+                // No se elimina la sesión local sin una respuesta que confirme su revocación.
+            }
+        }
     } finally {
         submitBtn.classList.remove('btn-loading');
         submitBtn.disabled = false;

@@ -104,9 +104,6 @@ function doPost(e) {
             case 'createUser':
                 response = handleCreateUser(request.payload);
                 break;
-            case 'updateUser':
-                response = handleUpdateUser(request.payload);
-                break;
             case 'updateProfile':
                 response = handleUpdateProfile(request.payload);
                 break;
@@ -328,59 +325,6 @@ function handleCreateUser(payload) {
         if (lockAcquired) lock.releaseLock();
     }
 }
-function handleUpdateUser(payload) {
-    const { userId, updates, sessionToken } = payload;
-    if (!userId || !updates || !sessionToken) throw new Error("Datos insuficientes para actualizar. Se requiere sessionToken.");
-    if (updates.Password) throw new Error('El restablecimiento administrativo de contraseñas debe realizarse mediante AUTH con el rol Desarrollador.');
-
-    return withUsersMutationLock_(() => {
-        const { role: updaterRole } = getVerifiedSession(sessionToken);
-        const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-        const data = userSheet.getDataRange().getValues();
-        data.shift();
-
-        for (let i = 0; i < data.length; i++) {
-            if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
-                const userToUpdateRole = data[i][COLS_USERS.Privilegios - 1];
-
-                /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */
-                // RBAC strict enforcement
-                const canUpdate = {
-                    'Desarrollador': () => true,
-                    'Gefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
-                    'Jefe': (targetRole) => ['Supervisor', 'Tecnico'].includes(targetRole),
-                    'Supervisor': (targetRole) => targetRole === 'Tecnico'
-                };
-
-                if (!canUpdate[updaterRole] || !canUpdate[updaterRole](userToUpdateRole)) {
-                    throw new Error(`Rol '${updaterRole}' no tiene permisos para modificar a un '${userToUpdateRole}'.`);
-                }
-
-                // PROHIBIDO cambiar nombre de usuario; updates.Nombre_Usuario se ignora.
-                const allowedRoles = {
-                    'Desarrollador': ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
-                    'Gefe': ['Supervisor', 'Tecnico'],
-                    'Jefe': ['Supervisor', 'Tecnico'],
-                    'Supervisor': ['Tecnico']
-                };
-                if (updates.Privilegios && !allowedRoles[updaterRole].includes(updates.Privilegios)) {
-                    throw new Error(`El rol '${updaterRole}' no puede asignar el privilegio '${updates.Privilegios}'.`);
-                }
-
-                // Validar todo antes de escribir para evitar cambios parciales por rechazo RBAC.
-                if (updates.Nombre_Completo) {
-                    userSheet.getRange(i + 2, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
-                }
-                if (updates.Privilegios) {
-                    userSheet.getRange(i + 2, COLS_USERS.Privilegios).setValue(updates.Privilegios);
-                }
-                return { status: 'success', message: 'Usuario actualizado.' };
-            }
-        }
-        throw new Error("Usuario no encontrado para actualizar.");
-    });
-}
-
 function handleUpdateProfile(payload) {
     const { userId, updates, sessionToken } = payload;
     if (!userId || !updates || !sessionToken) throw new Error("Datos insuficientes.");

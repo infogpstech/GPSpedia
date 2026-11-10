@@ -265,3 +265,28 @@ AUG-016 — Auditoría del ciclo de sesión — 2026-11-09
 - checkpoint.md: añadió checkpoint inicial y cierre de auditoría de AUG-016.
 - No se modificaron archivos de código, endpoints, deployments ni datos. No se ejecutaron pruebas funcionales ni validaciones en Apps Script real.
 ================================================================================
+
+
+================================================================================
+AUG-016 — Implementación de consistencia y recuperación del ciclo de sesión — 2026-11-09
+- Services/Auth.js: añadió requestId idempotente de login en ScriptProperties; reconciliación de appendRow/Users.SessionToken; conteo solo de sesiones no vacías/no expiradas; revocación consolidada de tokens con lectura de verificación; tombstones de solicitudes; recuperación de operaciones pendientes; actualización de rol bajo ScriptLock AUTH; aplicación del rol solo después de revocar sesiones; comprobación de hash después de setValue; logout invalida token antes de eliminar fila; resetUserSessions solo borra filas con token confirmado vacío.
+- Services/Test/Auth.js: replica la lógica de AUTH y conserva su Spreadsheet ID de prueba independiente.
+- Services/users.js y Services/Test/users.js: retiraron el handler updateUser para eliminar la segunda ruta de escritura de Privilegios.
+- api-config.js: enruta updateUser a AUTH; crea/retiene requestId de login en sessionStorage por pestaña.
+- auth.js: limpia el requestId solo después de persistir la sesión local.
+- users.html: cierra la sesión local y redirige a index.html cuando el usuario cambia su propio rol; comprueba validación tras un error de auto-cambio.
+- Services/Test/README.md: documenta autoridad AUTH, requestId, tombstones y pruebas aisladas.
+- Auditoría.txt: resolución H-AUD-071–074, decisión de política y límites de atomicidad.
+- lista_beta.txt: añade matriz Beta de fallo de escritura, reintentos, requestId, rol y multi-dispositivo.
+- Tareas_pendientes_parte1.txt, Tareas.txt y tareas_completadas_parte1.txt: actualizan estado a implementada localmente, Beta pendiente.
+- checkpoint.md: registra checkpoint inicial/reanudación y checkpoint final antes del commit.
+
+Líneas principales (líneas actuales después de los cambios):
+- Services/Auth.js: doPost/updateUser 426; requestId/limpieza/tombstones 477–571; recuperación de login 572–698; handleLogin 699–888; revocación de sesiones 889–980; reconciliación de rol 981–1047; handleUpdateUser 1048–1188; resetUserSessions 1189–1284; deleteUser 1285–1490; changePassword 1491–1571; resetUserPassword 1572–1652; logout 1653–1742.
+- Services/Test/Auth.js: mismos bloques y líneas que AUTH de producción; solo cambia SPREADSHEET_ID.
+- Services/users.js y Services/Test/users.js: doPost 96; updateUser fue retirado; handleUpdateProfile comienza en 328.
+- api-config.js: ACTION_TO_SERVICE_MAP 18; createLoginRequestId_ 138; login 152; completeLoginRequest 171.
+- auth.js: import de completeLoginRequest 8; limpieza del requestId tras handleLoginSuccess 319.
+- users.html: handleUserFormSubmit 539; llamada updateUser 559; auto-revocación y redirección 564.
+Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia producción/prueba PASS. No se ejecutaron deployments, HTTP, navegador, Sheets reales ni concurrencia de Apps Script.
+================================================================================

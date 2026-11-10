@@ -1077,3 +1077,63 @@ Riesgos pendientes: creación de sesión parcialmente confirmada; recuperación 
 Siguiente acción concreta: resolver AUG-034/AUD-T-033 y la política de cambio de rol; después reanudar AUG-016 desde auditoría/diseño de recuperación, con checkpoint propio y pruebas aisladas.
 Este checkpoint final es la última actualización documental inmediatamente anterior al único commit de AUG-016.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-016 — 2026-11-09
+Estado: IMPLEMENTADA LOCALMENTE; auditoría y Code Review completados. Validación Beta pendiente.
+Repositorio: infogpstech/GPSpedia
+Rama autorizada: GPSpedia2.2.5_work
+HEAD padre confirmado: e2a6b41abb4bc4e4f355ad98593a01f29cd7897b
+Árbol padre confirmado: 1780bad79f12d3d8ae4279e6080535ca04715a24
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Política aprobada: cualquier cambio de Privilegios revoca todas las sesiones del usuario afectado; requiere nuevo inicio de sesión.
+
+Implementación:
+- AUTH centraliza updateUser; USERS ya no publica esa mutación.
+- El rol nuevo solo se aplica después de confirmar invalidación de tokens y requestId anteriores. Marcador durable oldRole/newRole permite reintento; fallos parciales mantienen el rol anterior.
+- Login usa requestId idempotente en ScriptProperties con retención 24 h; sessionStorage lo conserva por pestaña hasta persistir la sesión. Reintentos recuperan el mismo token; solicitudes revocadas no pueden recrear sesiones.
+- Logout, resetUserSessions, cambio/restablecimiento de contraseña, cambio de rol y deleteUser tombstonean requestId relacionados.
+- Revocación consolidada de tokens con lectura posterior; no se borran filas con token no confirmado vacío. Filas residuales sin token no autorizan y se pueden limpiar después.
+- SESSION_LIMITS ignora tokens vacíos y sesiones expiradas; login reconcilia solicitudes pendientes vencidas.
+- Cambio de contraseña valida/genera hash antes de revocar; verifica hash después de setValue. SHA-256 y formato sha256$ permanecen sin cambios.
+- Auto-cambio de rol limpia la sesión local y redirige a index.html.
+
+Archivos incluidos en el único commit AUG-016 (15):
+1. Services/Auth.js
+2. Services/Test/Auth.js
+3. Services/users.js
+4. Services/Test/users.js
+5. api-config.js
+6. auth.js
+7. users.html
+8. Services/Test/README.md
+9. Auditoría.txt
+10. Tareas_pendientes_parte1.txt
+11. Tareas.txt
+12. tareas_completadas_parte1.txt
+13. ChangesLogs.txt
+14. lista_beta.txt
+15. checkpoint.md
+
+Verificación local:
+- Sintaxis/parser: 7/7 PASS (AUTH prod/test, USERS prod/test, api-config.js, auth.js, script users.html).
+- Harness funcional AUTH: 15/15 PASS.
+- Integraciones adicionales: 4/4 PASS (handleLogin idempotente; api-config requestId/sessionStorage; reconciliación de requestId pendiente vencido; tombstone de sesión expirada).
+- AUTH producción/prueba idénticos salvo Spreadsheet ID: PASS.
+- USERS producción/prueba idénticos salvo Spreadsheet ID: PASS.
+- Revisión de alcance: solo funciones de sesión/rol/login/contraseña, routing de updateUser, manejo de requestId y documentación relacionada.
+- Tareas_pendientes_parte1.txt: 167,672 caracteres, dentro del máximo de 180,000.
+- No se modificaron endpoints operativos, deployments, Spreadsheet IDs productivos ni datos reales.
+
+Validación no realizada:
+- No se ejecutaron Apps Script real, deployments aislados, navegador real, HTTP, Sheets reales ni pruebas de concurrencia reales. La matriz Beta está registrada en lista_beta.txt y debe ejecutarse antes de declarar el ciclo operativo verificado.
+- AUG-034/AUD-T-033 sigue pendiente como coordinación global independiente. AUG-011 sigue expresamente omitida.
+
+Riesgos pendientes:
+- SpreadsheetApp no es transaccional; los marcadores, tombstones, lecturas de verificación e idempotencia permiten recuperar fallos, pero operaciones de infraestructura pueden quedar pendientes hasta un reintento.
+- La revocación visual en otros dispositivos depende de la siguiente validación/acción; el backend rechaza los tokens revocados.
+
+Documentación finalizada. Este checkpoint es la última acción documental antes del único commit de AUG-016.
+================================================================================

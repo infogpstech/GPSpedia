@@ -221,3 +221,16 @@ Hallazgo H-AUD-070 resuelto. Archivo funcional: users.html. La longitud mínima 
 No se modificaron Services/Auth.js, Services/Test/Auth.js ni api-config.js. Se conservaron la validación backend, SHA-256 y el prefijo sha256$.
 Validación: sintaxis del módulo inline 1/1 PASS; pruebas funcionales locales 10/10 PASS; reconstrucción inversa exacta contra el respaldo PASS; solo dos líneas modificadas (642 y 653). No se ejecutaron navegador real, deployment, HTTP ni Sheets.
 ================================================================================
+
+
+================================================================================
+AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión
+Fecha: 2026-11-09. Estado: IMPLEMENTADA LOCALMENTE; validación Beta pendiente.
+Aprobación del usuario: cualquier cambio de Privilegios revoca todas las sesiones del usuario afectado y exige un nuevo inicio de sesión.
+H-AUD-071–074 resueltos en fuentes. AUTH centraliza updateUser y aplica el nuevo rol solo después de confirmar que todos los tokens y requestId previos fueron invalidados. Se mantiene marcador durable y reintento si la revocación es parcial. Auto-cambio de rol elimina sesión local.
+Login usa requestId idempotente en ScriptProperties con retención 24 h; api-config.js conserva el ID por pestaña hasta persistir sesión. Los reintentos recuperan el mismo token; logout/reset/rol/password/delete tombstonean solicitudes previas y no permiten recrear sesiones revocadas. Tokens vacíos/expirados no cuentan para SESSION_LIMITS.
+resetUserSessions, changePassword, resetUserPassword y logout invalidan tokens y verifican por lectura posterior; no borran filas con tokens no confirmados vacíos. El hash se verifica tras setValue y no se cambia si la revocación completa no está confirmada.
+Archivos: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, api-config.js, auth.js y users.html. Documentación: Auditoría.txt, Tareas_pendientes_parte1.txt, Tareas.txt, ChangesLogs.txt, lista_beta.txt, Services/Test/README.md y checkpoint.md.
+Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia de AUTH prod/test y USERS prod/test PASS.
+No se ejecutaron deployments aislados, navegador real, HTTP real, Spreadsheet real ni pruebas reales de concurrencia. Beta sigue pendiente. AUG-034/AUD-T-033 no fue modificada; AUG-011 sigue omitida; SHA-256/sha256$ se conserva.
+================================================================================

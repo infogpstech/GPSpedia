@@ -1582,3 +1582,15 @@ Bloqueo: H-AUD-074 requiere definir si un cambio de Privilegios invalida todas l
 No se modificó código, api-config.js, endpoints, deployments ni datos. No se ejecutaron Apps Script real, HTTP ni hojas reales.
 Siguiente acción: resolver la política de cambio de rol y la arquitectura de coordinación de AUG-034; después diseñar/implementar la recuperación de mutaciones AUTH en una nueva ejecución auditada de AUG-016 y validar únicamente en deployments aislados.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUG-016 — 2026-11-09
+Estado actualizado: IMPLEMENTADA LOCALMENTE; validación Beta pendiente. Esta actualización sustituye el estado BLOQUEADA de la adenda anterior; conserva el historial de auditoría.
+Decisión del usuario: todo cambio de Privilegios revoca todas las sesiones del usuario afectado y exige nuevo login.
+H-AUD-071–074: RESUELTOS EN FUENTES. AUTH centraliza updateUser; el rol solo se aplica después de confirmar la revocación de todas las sesiones y requestId. Login usa requestId idempotente y recuperable; reset/logout/password/rol/delete tombstonean solicitudes previas. Revocaciones y hashes se verifican por lectura posterior; fallos parciales se reportan y reintentan.
+Archivos de código: Services/Auth.js, Services/Test/Auth.js, Services/users.js, Services/Test/users.js, api-config.js, auth.js y users.html. Servicios de prueba y producción mantienen IDs de Spreadsheet independientes.
+Validación local: sintaxis 7/7 PASS; harness funcional AUTH 15/15 PASS; integraciones handleLogin, sessionStorage y reconciliación vencida 4/4 PASS; equivalencia prod/test PASS.
+No se ejecutaron deployments aislados, navegador real, HTTP real, Spreadsheet real ni concurrencia de Apps Script. AUG-034/AUD-T-033 sigue como tarea global separada de Cortes/Drive; no fue modificada. AUG-011 sigue omitida; SHA-256/sha256$ sin cambios.
+Siguiente acción: ejecutar matriz Beta de AUG-016 en deployments AUTH/USERS aislados y confirmar revocación multi-dispositivo, fallos de escritura, reintentos e intercalados.
+================================================================================

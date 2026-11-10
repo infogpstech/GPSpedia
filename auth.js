@@ -5,7 +5,7 @@
 // - Update the user state.
 
 import { setState, getState } from './state.js';
-import { routeAction, fetchCatalogData, login as apiLogin, validateSession as apiValidateSession } from './api-config.js';
+import { routeAction, fetchCatalogData, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError } from './ui.js';
 import * as offline from './offline.js';
 
@@ -316,6 +316,7 @@ export async function login(username, password) {
         const result = await apiLogin(username, password);
         if (result && result.user) {
             handleLoginSuccess(result.user);
+            completeLoginRequest(username, result.loginRequestId);
             loadInitialData(); // Carga en segundo plano sin bloquear
         } else {
             throw new Error("Respuesta de login inválida.");
