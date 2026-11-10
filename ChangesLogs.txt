@@ -544,3 +544,14 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Suite Services/Test/VinTestigoIntegrity.js: 14 casos lógicos; README y esquema físico actualizados.
 - Sin cambios en endpoints, api-config.js, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AUG-037 — LEDGER Y RECONCILIACIÓN DE CARGAS GENERALES
+- ADMIN/WRITE: ImageUploadLedger con persistencia previa a Drive y verificación posterior; reutilización por token solo tras recalcular SHA-256 y comprobar operación, carpeta, MIME, tamaño y contenido.
+- markImageUploadLinked actualiza ledger durable y deja la descripción Drive como metadata complementaria; un fallo no bloquea el guardado y deja pending recuperable.
+- ADMIN: acción reconcilePendingImageUploads, dry-run por defecto, confirm:true, paginación y clasificación de pendientes/huérfanos/faltantes/alterados. No elimina archivos.
+- Coordinator: IMAGE_UPLOAD_LEDGER reservado por mutaciones WRITE/ADMIN; reconciliación usa mantenimiento exclusivo.
+- Límite: 10 MB por imagen; falla cerrada antes de Drive si no puede persistir el intento.
+- Pruebas: ImageUploadLedger 18/18; SharedMutationCoordinator 25/25. Sin despliegues ni datos productivos.
+================================================================================
