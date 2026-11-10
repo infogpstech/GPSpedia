@@ -171,3 +171,10 @@ El archivo `Services/Test/SharedMutationCoordinator.js` contiene pruebas lógica
 La suite lógica también cubre la reserva de mantenimiento, drenaje de leases existentes, bloqueo de nuevas mutaciones durante la espera, diagnóstico de operaciones activas, expiración de reservas abandonadas y compatibilidad con leases previas sin campo `phase`. `migrateCortesOperationIds` se declara como mantenimiento exclusivo en ADMIN.
 
 La integración real entre proyectos, la contención de leases bajo concurrencia de Apps Script y la configuración de deployments se validan posteriormente en Beta. La falta de configuración del coordinador hace que las mutaciones fallen cerradas; por ello, el coordinador de cada entorno debe desplegarse y configurarse antes de actualizar sus servicios consumidores.
+
+
+## Integridad de Idempotencia (AUG-035)
+
+`Services/Test/IdempotenciaIntegrity.js` contiene pruebas lógicas con dobles en memoria. Cargar `Services/admin.js` y el archivo de pruebas en un proyecto temporal, y ejecutar `runIdempotenciaIntegrityTests()`. La batería valida encabezados vacíos con datos, duplicados opId incluso con asociación idéntica, opId/vehicleId/slotIndex/timestamp/status y unicidad de vehicleId en Cortes.
+
+La reconciliación es no destructiva: ninguna ruta automática fusiona, sobrescribe ni elimina filas duplicadas. El error identifica opId y filas; se conservan los originales y se comparan asociación, fecha y estado antes de cualquier corrección manual documentada. La migración solo limpia origen tras verificar cada opId, asociación y estado completed. Fallos reales de Spreadsheet, interrupción y concurrencia se validan en una copia aislada antes de Beta.
