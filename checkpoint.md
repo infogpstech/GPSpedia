@@ -93,3 +93,12 @@ Respaldos exactos previos a auditar/modificar:
 - checkpoint.md: 0ea880525c52d766af0dfa4bb72a7a8e321fe078.
 Estado inicial: solamente se ha confirmado el contexto y registrado el checkpoint. No se ha modificado código funcional. Siguiente acción: auditoría de frontend y contratos backend, archivo por archivo, línea por línea y función por función; registrar hallazgos antes de implementar.
 ================================================================================
+
+================================================================================
+ADENDA DE ALCANCE — AUG-042 / CICLO B — 2026-11-09
+La auditoría inicial registró H-AUD-042-004 a H-AUD-042-009. Se incorpora users.html al alcance funcional para resolver el fallo de validación de red durante el cambio de rol propio.
+Respaldo exacto adicional previo a editar:
+- users.html: 45d4b8727b10112edfb560710af06534b93a28f8.
+El alcance funcional queda: auth.js, ui.js, main.js y users.html. Se preservan state.js, index.html, api-config.js, Services/Auth.js y Services/feedback.js sin cambios salvo que una nueva evidencia justifique ampliar alcance y se registre antes de editar.
+No se ha modificado código funcional; implementación aún pendiente.
+================================================================================

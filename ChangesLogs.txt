@@ -449,3 +449,15 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Se reanuda AUG-042 Ciclo B. Dependencias AUG-006, AUG-016 y AUG-017 completadas localmente. Se conserva la política de cambio de Privilegios = revocación de todas las sesiones y nuevo login; Jefe solo Inbox; Dashboard/activity fuera de Jefe.
 - No se modificó código funcional en esta etapa de reanudación.
 ================================================================================
+
+================================================================================
+2026-11-09 — AUDITORÍA INICIAL AUG-042 / CICLO B
+- H-AUD-042-004: openDashboard/openInbox/openReplacedImagesModal no verifican el rol en la propia función; la visibilidad de botones no protege llamadas directas desde window.ui.
+- H-AUD-042-005: resetSessionUi_ limpia contenedores, pero deja listeners/cierres/cachés del panel admin y de imágenes reemplazadas; respuestas asíncronas pueden repoblar UI tras cambio de sesión.
+- H-AUD-042-006: no existe revalidación remota al recuperar foco/visibilidad ni periódica; una sesión revocada remotamente puede conservar UI hasta recarga.
+- H-AUD-042-007: tres consumidores UI aún aceptan Rol como fallback, aunque AUTH entrega Privilegios.
+- H-AUD-042-008: el catch de cambio de rol propio en users.html queda vacío si validateSession falla por red; conserva estado local sin aviso pendiente.
+- H-AUD-042-009: respuesta asíncrona de logout puede mostrar un aviso de una sesión anterior después de login con otra cuenta.
+- Se confirma que AUTH ya revoca todas las sesiones al cambiar Privilegios, showApp ya implementa visibilidad por rol, renderInboxDetail ya usa Privilegios y FEEDBACK conserva la matriz aprobada. Se preservan.
+- Alcance funcional: auth.js, ui.js, main.js, users.html. No se modificó código durante la auditoría.
+================================================================================

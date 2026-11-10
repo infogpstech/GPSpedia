@@ -1088,3 +1088,44 @@ Auditoría de Services/Auth.js y Services/Test/Auth.js:
 Verificaciones post-commit: diff limitado a Auth.js, Test/Auth.js y registros; sintaxis 2/2 PASS; paridad Test/Auth PASS; pruebas aisladas de handlers 4/4 y helper 3/3 PASS; rutas 4/4 presentes. La comparación inversa tras retirar el helper y sus cuatro llamadas reproduce exactamente los blobs de respaldo de Auth.js y Test/Auth.js.
 Resultado: sin hallazgos nuevos en Ciclo A. H-AUD-042-003 RESUELTO Y AUDITADO. Se autoriza reanudar AUG-042 Ciclo B.
 ================================================================================
+
+================================================================================
+CICLO B — AUDITORÍA INICIAL AUG-042 — 2026-11-09
+H-AUD-042-004 — ALTA — ABIERTO — GUARDAS FRONTEND AUSENTES EN FUNCIONES GLOBALES
+Ubicación: ui.js:openDashboard (aprox. 3337), openInbox (aprox. 3360), openReplacedImagesModal (aprox. 4852); setupModal (aprox. 6450).
+Evidencia: setupModal solo abre/cierra el modal y no verifica rol. openDashboard/openInbox no validan roles antes de mostrar el modal. openReplacedImagesModal muestra el modal antes de comprobar siquiera que exista una sesión y no verifica rol Desarrollador. La visibilidad de botones en showApp no impide llamadas directas mediante window.ui.
+Impacto: cualquier cuenta autenticada puede invocar las funciones y abrir vistas que su rol no debe usar; el backend sigue rechazando operaciones no autorizadas, pero la interfaz muestra controles y datos de error indebidos.
+Criterio: validar sesión vigente en servidor y rol en cada función de apertura; DevTools e historial de imágenes solo Desarrollador; Inbox Desarrollador/Gefe/Jefe/Supervisor; Dashboard Desarrollador/Gefe/Supervisor. Mantener actionPermissions backend como autoridad.
+
+H-AUD-042-005 — ALTA — ABIERTO — ESTADO PRIVILEGIADO Y CACHÉS NO SE INVALIDAN COMPLETAMENTE
+Ubicación: ui.js:resetSessionUi_ (aprox. 3219), initAdminPanelListeners (aprox. 3390), openReplacedImagesModal (aprox. 4852); elementos dev-tools-modal, replaced-images-modal, replaced-image-lightbox, audit-drive-modal.
+Evidencia: resetSessionUi_ limpia algunos contenedores, pero no restablece window.adminListenersAttached, window.adminServiceMetricsUnsubscribe ni window.triggerAdminPanelPing. initAdminPanelListeners conserva en cierres verifiedDatabaseBackupId, vinMigrationPreview, serviceHealthResults y listeners. openReplacedImagesModal conserva cachedReplaced/folders y un listener keydown global; sus respuestas asíncronas no verifican el contexto de sesión. Un resultado pendiente puede actualizar elementos por ID después de logout/cambio de cuenta, y el siguiente Desarrollador puede heredar estado/cachés del anterior.
+Impacto: reaparición de detalles, resultados, identificadores de respaldo y estado privilegiado de una sesión anterior.
+Criterio: invalidar generaciones de solicitudes, cancelar/desuscribir métricas, retirar listeners globales, reiniciar cierres/cachés y reconstruir los modales privilegiados desde plantillas limpias; toda respuesta asíncrona debe comprobar el contexto antes de renderizar. Limpiar también lightbox/listeners y modal de auditoría.
+
+H-AUD-042-006 — ALTA — ABIERTO — REVOCACIÓN REMOTA NO DETECTADA DURANTE UNA PESTAÑA ACTIVA
+Ubicación: auth.js:checkSession()/validateSessionCoordinated(); main.js:initializeApp().
+Evidencia: checkSession() se invoca al iniciar la aplicación y ante ciertos eventos storage; no hay revalidación al recuperar foco/visibilidad ni durante uso prolongado. VALIDATION_CACHE_TTL_MS es 10 segundos. Si otra sesión revoca el token en el servidor mientras esta pestaña permanece abierta, la UI puede conservar controles privilegiados hasta recargar o provocar otra validación.
+Impacto: el backend rechaza operaciones protegidas, pero la interfaz local mantiene una representación obsoleta del rol/sesión.
+Criterio: añadir revalidación ligera y forzada al recuperar visibilidad/foco/online y con intervalo moderado mientras la pestaña esté visible; invalidación remota debe invocar logout token-aware y limpiar el estado. Si no se puede validar por red, mostrar estado pendiente y no abrir nuevos modales privilegiados.
+
+H-AUD-042-007 — MEDIA — ABIERTO — CAMPO DE ROL INCONSISTENTE EN UI
+Ubicación: ui.js aprox. líneas 2645, 6696 y 8814.
+Evidencia: tres consumidores leen localStorage y aplican Privilegios || Rol, mientras AUTH entrega Privilegios como contrato vigente. renderInboxDetail y getUiSessionContext_ ya usan Privilegios.
+Impacto: un campo Rol heredado o obsoleto puede activar controles locales con un valor distinto al rol autoritativo.
+Criterio: usar exclusivamente Privilegios, normalizado con normalizeUiRole_(), en todos los guards y controles de rol; conservar la matriz de aprobación FEEDBACK.
+
+H-AUD-042-008 — ALTA — ABIERTO — CAMBIO DE ROL PROPIO SIN ESTADO PENDIENTE ANTE FALLO DE RED
+Ubicación: users.html:handleUserFormSubmit(), líneas aproximadas 585–603.
+Evidencia: cuando se intenta cambiar el propio Privilegios y falla updateUser, la página valida la sesión; si validateSession también lanza error de red, el catch queda vacío y conserva currentUser/localStorage sin mostrar que la revocación no pudo confirmarse.
+Impacto: la página de gestión puede conservar controles con rol anterior aunque el backend haya aplicado el cambio y revocado la sesión; no se informa el estado pendiente.
+Criterio: ante imposibilidad de confirmar el estado, cerrar localmente la sesión, intentar logout remoto de mejor esfuerzo y mostrar explícitamente que la revocación remota está pendiente; no conservar controles privilegiados.
+
+H-AUD-042-009 — MEDIA — ABIERTO — RESPUESTA ASÍNCRONA DE LOGOUT PUEDE CONTAMINAR LA SIGUIENTE SESIÓN
+Ubicación: auth.js:logout(), líneas aproximadas 357–372.
+Evidencia: las ramas then/catch de routeAction('logout') muestran errores sin comprobar que la sesión que originó la respuesta siga siendo la sesión local vigente. Si se inicia otra cuenta antes de que falle la petición anterior, puede aparecer un aviso de revocación de la cuenta anterior en la nueva sesión.
+Impacto: estado visual incorrecto entre cuentas y confusión sobre cuál sesión tiene revocación pendiente.
+Criterio: antes de mostrar resultados de logout, verificar que no exista una sesión posterior distinta; nunca mutar ni notificar sobre una cuenta nueva desde una respuesta obsoleta.
+
+Alcance AUG-042 ampliado a auth.js, ui.js, main.js y users.html. Se auditaron además state.js, index.html, api-config.js, Services/Auth.js y Services/feedback.js: state.js ya limpia currentUser; showApp ya asigna visibilidad por rol; renderInboxDetail usa Privilegios y respeta Desarrollador/Gefe/Supervisor; AUTH ya revoca todas las sesiones ante cambio de Privilegios; FEEDBACK actionPermissions mantiene Jefe solo Inbox y excluye Jefe de Dashboard/getActivityLogs/approve/reject; api-config enruta logout/validateSession/updateUser correctamente. Estos controles existentes deben preservarse.
+================================================================================

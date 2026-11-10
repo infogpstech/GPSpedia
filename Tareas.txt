@@ -487,3 +487,16 @@ CORR-AUTH-ROLE-REVOCATION-GUARDS-001: commit c29dbd553abbdfa31b614e3ab55a1d34340
 AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente: REANUDADA, Ciclo B. Dependencias AUG-006, AUG-016 y AUG-017 confirmadas como completadas en fuentes y con validación local aprobada; integración Beta sigue diferida. Política vigente aprobada: cualquier cambio de Privilegios revoca todas las sesiones del usuario afectado y exige nuevo inicio de sesión. Jefe puede usar Inbox, pero no Dashboard/getActivityLogs; aprobación/rechazo se limita a Desarrollador, Gefe y Supervisor según FEEDBACK.
 Estado inicial de esta reanudación: auditoría frontend/backend pendiente; no se ha modificado código funcional. Criterios completos y evidencia histórica permanecen en Tareas_pendientes_parte1.txt y AUD-T-034.
 ================================================================================
+
+================================================================================
+AUG-042 — ADENDA DE AUDITORÍA INICIAL — 2026-11-09
+Hallazgos abiertos registrados: H-AUD-042-004 a H-AUD-042-009.
+Alcance funcional ampliado: auth.js, ui.js, main.js y users.html. Se auditaron sin cambio: state.js, index.html, api-config.js, Services/Auth.js y Services/feedback.js.
+Conclusiones a preservar:
+- logout ya limpia currentUser en state y localStorage, solicita revocación AUTH y muestra revocación pendiente ante fallo; no cambiar la semántica token-aware de AUG-006.
+- handleUpdateUser ya revoca todas las sesiones del usuario afectado antes de aplicar el nuevo rol; cualquier cambio de Privilegios exige nuevo login.
+- showApp ya muestra Inbox a Desarrollador/Gefe/Jefe/Supervisor y Dashboard solo a Desarrollador/Gefe/Supervisor.
+- renderInboxDetail ya usa Privilegios y solo muestra aprobar/rechazar a Desarrollador/Gefe/Supervisor.
+- FEEDBACK actionPermissions es la autoridad backend y no debe relajarse.
+Siguiente paso: implementar los seis hallazgos dentro de AUG-042, pruebas aisladas de matriz de roles, limpieza, cambio de cuenta, revocación remota, logout con modales y fallos de red; un único commit funcional de AUG-042.
+================================================================================
