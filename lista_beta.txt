@@ -257,3 +257,5 @@ AUG-155 — VALIDACIÓN DIFERIDA A BETA — COORDINADOR INTERPROYECTOS
 ================================================================================
 
 - AUG-034: en copias aisladas, ejecutar solicitudes reales simultáneas WRITE addOrUpdateCut/addVinToVehicle, ADMIN addOrUpdateCut y ADMIN migrateCortesOperationIds (dry-run y confirmación). Verificar reserva de drenaje, rechazo de nuevas mutaciones, finalización de operaciones previas, diagnóstico de acciones activas, expiración de reserva abandonada (60 s), expiración de mantenimiento activo (45 min) y recuperación tras interrupción parcial de la migración. No usar datos productivos.
+
+- AUG-035: en copia aislada de Spreadsheet, probar encabezados vacíos/incompatibles y columnas con datos; opId duplicados con asociación igual/distinta; campos corruptos; transición pending→completed; escritura parcial, read-back fallido y reintentos; vehicleId duplicado y coincidencias heredadas múltiples. Verificar que el origen nunca se limpia ante una validación fallida y que los duplicados permanecen intactos para reconciliación manual. No usar datos productivos.
