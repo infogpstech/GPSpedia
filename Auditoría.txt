@@ -1076,3 +1076,15 @@ Pruebas aisladas: los cuatro handlers rechazan al solicitante pendiente antes de
 No ejecutado: Apps Script real, Spreadsheet/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos. No se afirma validación Beta.
 Estado: H-AUD-042-003 RESUELTO EN FUENTES; pendiente de commit/verificación y Ciclo A post-commit. AUG-042 permanece bloqueada hasta cerrar este ciclo.
 ================================================================================
+
+================================================================================
+CICLO A POST-COMMIT — CORR-AUTH-ROLE-REVOCATION-GUARDS-001 — 2026-11-09
+Commit verificado: c29dbd553abbdfa31b614e3ab55a1d34340caebf; padre 898ff2f2085f891e3de4a62dea5d3674637c0c6d.
+Auditoría de Services/Auth.js y Services/Test/Auth.js:
+- assertRequesterRoleRevocationClear_() consulta estado local/compartido y reconcilia bajo el lock ya adquirido por cada handler.
+- Los cuatro callsites están antes de permisos finales y mutaciones: handleClearSensitiveLogs, handleResetUserSessions, handleDeleteUser y handleResetUserPassword.
+- Si el marcador sigue pendiente, la llamada se rechaza; si la reconciliación termina, también se rechaza la llamada actual porque el token quedó revocado y se exige reautenticación.
+- Logout permanece permitido como operación segura de cierre. Los guards de handleUpdateUser y handleChangePassword ya existían y no se duplicaron.
+Verificaciones post-commit: diff limitado a Auth.js, Test/Auth.js y registros; sintaxis 2/2 PASS; paridad Test/Auth PASS; pruebas aisladas de handlers 4/4 y helper 3/3 PASS; rutas 4/4 presentes. La comparación inversa tras retirar el helper y sus cuatro llamadas reproduce exactamente los blobs de respaldo de Auth.js y Test/Auth.js.
+Resultado: sin hallazgos nuevos en Ciclo A. H-AUD-042-003 RESUELTO Y AUDITADO. Se autoriza reanudar AUG-042 Ciclo B.
+================================================================================

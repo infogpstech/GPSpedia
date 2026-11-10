@@ -480,3 +480,10 @@ No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador,
 No se alteraron: matrices de permisos, contratos/payloads, validación de sesión, lógica de destino, ruta de logout, endpoints ni deployments.
 Siguiente paso: verificar commit único y ejecutar Ciclo A post-commit. Si no aparecen hallazgos nuevos, reanudar AUG-042 Ciclo B.
 ================================================================================
+
+================================================================================
+VERIFICACIÓN Y REANUDACIÓN — 2026-11-09
+CORR-AUTH-ROLE-REVOCATION-GUARDS-001: commit c29dbd553abbdfa31b614e3ab55a1d34340caebf publicado y verificado; Ciclo A post-commit PASS sin hallazgos nuevos. H-AUD-042-003 cerrado.
+AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente: REANUDADA, Ciclo B. Dependencias AUG-006, AUG-016 y AUG-017 confirmadas como completadas en fuentes y con validación local aprobada; integración Beta sigue diferida. Política vigente aprobada: cualquier cambio de Privilegios revoca todas las sesiones del usuario afectado y exige nuevo inicio de sesión. Jefe puede usar Inbox, pero no Dashboard/getActivityLogs; aprobación/rechazo se limita a Desarrollador, Gefe y Supervisor según FEEDBACK.
+Estado inicial de esta reanudación: auditoría frontend/backend pendiente; no se ha modificado código funcional. Criterios completos y evidencia histórica permanecen en Tareas_pendientes_parte1.txt y AUD-T-034.
+================================================================================

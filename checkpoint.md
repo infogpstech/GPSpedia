@@ -60,3 +60,36 @@ No ejecutado: Apps Script real, Spreadsheet/Drive, HTTP/endpoints, deployments, 
 Estado del checkpoint: implementación y pruebas aisladas completas; checkpoint final listo para el commit único. El SHA del commit resultante se verifica en el historial de GPSpedia2.2.5_work.
 Siguiente paso: verificar el commit y ejecutar Ciclo A post-commit. Si no aparecen hallazgos nuevos, reanudar AUG-042 Ciclo B.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUG-042 / CICLO B — 2026-11-09
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado: c29dbd553abbdfa31b614e3ab55a1d34340caebf.
+Rama base: GPSpedia2.2.5. HEAD confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Auditoría de corrección previa: CORR-AUTH-ROLE-REVOCATION-GUARDS-001, commit c29dbd553abbdfa31b614e3ab55a1d34340caebf verificado; Ciclo A post-commit PASS sin hallazgos nuevos. H-AUD-042-003 cerrado. También están cerradas/auditadas las correcciones de FEEDBACK SESSION (400f553...) y marcador compartido (b201198...).
+Tarea reanudada: AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente.
+Origen: H-AUD-034-001 a H-AUD-034-004; prioridad Alta. Criterios:
+1. Limpiar currentUser/SessionToken en memoria y cerrar/resetear dev-tools-modal, replaced-images-modal, inbox-modal y dashboard-modal ante logout, invalidación o cambio de cuenta; vaciar listas, consola, detalles y caches sensibles.
+2. Integrar con AUG-006 para revocar la sesión invocante en ActiveSessions. window.state/window.ui no deben reutilizar el token anterior tras cierre local.
+3. Actualizar rol desde servidor o invalidar sesiones al cambiar Privilegios; comportamiento aprobado: todo cambio de Privilegios revoca todas las sesiones del usuario afectado y exige nuevo login, incluido auto-cambio; otras sesiones/dispositivos deben ser rechazados al validar.
+4. Guardas frontend para abrir panel, historial, Inbox y Dashboard según rol vigente, manteniendo backend como autoridad.
+5. Unificar campo de rol AUTH/UI/renderInboxDetail. Matriz approve/reject: Desarrollador, Gefe y Supervisor permitidos; Jefe no permitido. Jefe puede Inbox; Dashboard/getActivityLogs fuera de Jefe.
+6. Matriz: logout con modal abierto; Developer→Técnico y Supervisor→Jefe en misma instancia; ascenso de rol; sesión remota revocada; login consecutivo de dos cuentas; llamada directa a funciones globales; Jefe/Inbox.
+Dependencias: AUG-006, AUG-016, AUG-017 completadas en fuentes; Beta pendiente. AUD-T-024 y AUD-T-034.
+Respaldos exactos previos a auditar/modificar:
+- auth.js: 49b2c5e4c3aa44d034d6ed5f43391f5661fa248f.
+- ui.js: 84580f0dd47ae5db01b33c02742aae70e56ff52a.
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+- api-config.js: db150e80ba2fec87acbc4baad9014dd30816caf9.
+- Services/Auth.js: 70d2334f115a5b8eeb1e42a7ec28e0d67153ce21.
+- Services/Test/Auth.js: 1fb7b72689667e7fba32ac518b20bba6a7b26c63.
+- Services/feedback.js: 51cc6147c580e9a72648c559982349ce8244dc12.
+- Tareas_pendientes_parte1.txt: 0a35fc4f281c035e981b059bc55409b52cdc4e39.
+- Tareas.txt: e54d503273e93235c6edd0638e984d494a5f6950.
+- Auditoría.txt: 25d761c5f78b9f5a01ab61f6a292e42b754b803d.
+- ChangesLogs.txt: 3415ea6bcf7c26197ea8b27efc2e997a41c45f3e.
+- checkpoint.md: 0ea880525c52d766af0dfa4bb72a7a8e321fe078.
+Estado inicial: solamente se ha confirmado el contexto y registrado el checkpoint. No se ha modificado código funcional. Siguiente acción: auditoría de frontend y contratos backend, archivo por archivo, línea por línea y función por función; registrar hallazgos antes de implementar.
+================================================================================

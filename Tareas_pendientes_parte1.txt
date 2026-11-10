@@ -1646,3 +1646,6 @@ La decisión de no vincular opId al actor, con riesgo residual y justificación,
 Beta: pruebas funcionales reales pendientes; no se ejecutaron endpoints productivos, deployments ni datos operativos.
 La ficha original se conserva; esta adenda actualiza el estado sin borrar historial.
 ================================================================================
+
+[ADENDA DE ESTADO — AUG-042 — 2026-11-09]
+Reanudada en Ciclo B tras cierre y auditoría post-commit de H-AUD-042-001, H-AUD-042-002 y H-AUD-042-003. Correcciones verificadas: 400f5531d3f2192098d8d510c47ddead2db28546, b201198410ead781281badaee02cff9804b0cbad y c29dbd553abbdfa31b614e3ab55a1d34340caebf. Dependencias AUG-006/AUG-016/AUG-017 completadas en fuentes. Política vigente: cualquier cambio de Privilegios revoca todas las sesiones y exige nuevo inicio de sesión; Jefe solo Inbox, no Dashboard/activity. Auditoría de fuentes pendiente; no se ha modificado código.

@@ -441,3 +441,11 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Verificaciones: sintaxis 2/2, paridad Test/Auth PASS, 4/4 handlers sin mutación con solicitante pendiente, helper 3/3, rutas 4/4.
 - No ejecutado: Apps Script real, Sheets/Drive, endpoints, deployments, navegador, concurrencia física ni datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-09 — VERIFICACIÓN POST-COMMIT Y REANUDACIÓN AUG-042
+- Commit c29dbd553abbdfa31b614e3ab55a1d34340caebf verificado en GPSpedia2.2.5_work; padre 898ff2f2085f891e3de4a62dea5d3674637c0c6d; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- Ciclo A de CORR-AUTH-ROLE-REVOCATION-GUARDS-001: PASS sin nuevos hallazgos; Auth/Test Auth sintaxis y paridad PASS; handlers 4/4 bloqueados antes de mutación; comparación inversa contra respaldos exacta.
+- Se reanuda AUG-042 Ciclo B. Dependencias AUG-006, AUG-016 y AUG-017 completadas localmente. Se conserva la política de cambio de Privilegios = revocación de todas las sesiones y nuevo login; Jefe solo Inbox; Dashboard/activity fuera de Jefe.
+- No se modificó código funcional en esta etapa de reanudación.
+================================================================================
