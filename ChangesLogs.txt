@@ -896,3 +896,12 @@ ADENDA DE PUBLICACIÓN — 2026-11-10 — CORR-FEEDBACK-LIKE-COUNTER-SYNC-001
 - No se modificaron contratos vigentes, endpoints, deployments ni datos productivos.
 - Parsing completo y suite FEEDBACK integral pendientes de ejecución local.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — VALIDACIÓN CORR-FEEDBACK-ASSIGN-COLLABORATOR-RETIRE-001
+- runFeedbackWriteSecurityTests(): 44/44 PASS en runner JavaScript aislado con dobles mínimos de LockService y CacheService.
+- Parsing completo: Services/feedback.js y Services/Test/FeedbackWriteSecurity.js, 2/2 PASS.
+- La prueba confirma que assignCollaborator sigue rechazada por la política y que handleAssignCollaborator no existe.
+- Revisión GitHub del diff: seis archivos dentro del alcance; sin cambios ajenos. No equivale a validación en Apps Script desplegado.
+================================================================================
