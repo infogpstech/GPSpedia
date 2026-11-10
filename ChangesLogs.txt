@@ -607,3 +607,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Pendiente: ejecutar y ampliar Services/Test/FeedbackWriteSecurity.js, revisar todos los llamadores/contratos afectados y completar code review. Estado EN PROGRESO; no se afirma cierre funcional.
 - Sin despliegues, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — IDENTIDAD DE COLABORADOR EN TUTORIALES
+- Services/feedback.js: handleAddTutorial ya no persiste el campo colaborador recibido del cliente; exige y guarda userName procedente de la sesión verificada.
+- Services/Test/FeedbackWriteSecurity.js: nueva regresión que falsifica userName/colaborador y comprueba que se conserva el nombre real de la sesión.
+- Validación local: sintaxis 2/2 PASS; suite FeedbackWriteSecurity 17/17 PASS. Se corrigió el fixture de SpreadsheetApp tras un primer fallo de la prueba y se repitió el conjunto completo.
+- Alcance del cierre: únicamente identidad del colaborador al crear tutoriales. Hardening FEEDBACK global permanece EN PROGRESO.
+- Sin despliegues, cambios de endpoints, ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
+================================================================================
