@@ -460,7 +460,8 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Problema:** la lectura del mapa de migración no valida status ni unicidad de opId; la inicialización puede completar encabezados vacíos sobre columnas con datos; el registro/runtime acepta duplicados con la misma asociación; la recuperación devuelve la primera fila de Cortes para un vehicleId sin exigir unicidad.
 - **Criterios de aceptación:** validar encabezados y contenido antes de reparar; detenerse si una columna sin encabezado contiene datos; validar opId, vehicleId, slotIndex, timestamp y status con reglas documentadas; detectar duplicados incluso cuando la asociación coincide; no limpiar columnas heredadas hasta verificar todas las filas destino y sus estados; definir reconciliación no destructiva de duplicados; exigir exactamente una fila Cortes por vehicleId al recuperar; probar corrupción, duplicados, pending, status desconocido, asociaciones incompatibles, fallo parcial y reintentos en Spreadsheet aislada.
 - **Relación:** AUD-T-030, AUD-T-031 para idempotencia de archivos, AUD-T-033 para coordinación.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA EN VALIDACIÓN LÓGICA LOCAL (2026-11-10); pruebas de Spreadsheet aislada y concurrencia pendientes de Beta.
+- **Resultado:** validación estricta de encabezados y registros; detección de opId duplicados incluso con asociación idéntica; validación de opId, vehicleId, slotIndex, timestamp y status; registro verificado y estado completed terminal; recuperación exige una única fila Cortes por vehicleId; migración verifica asociación y estado completed antes de limpiar origen. Los duplicados se preservan para reconciliación manual no destructiva.
 
 ### AUG-036 — Contrato unívoco de columnas VIN/testigo y parsers compatibles
 - **Origen:** H-AUD-030-006, H-AUD-030-007 y H-AUD-030-008. **Prioridad:** Media.
