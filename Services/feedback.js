@@ -746,6 +746,12 @@ function completeFeedbackYearApplication_(application, context) {
     const currentTo = String(rawCurrentTo === null || rawCurrentTo === undefined ? "" : rawCurrentTo).trim() === ""
         ? currentFrom : parseCatalogYear(rawCurrentTo);
     if (currentFrom === previousFrom && currentTo === previousTo) {
+        // Un anoHasta vacío equivale a anoDesde. Si se amplía hacia atrás,
+        // primero se fija el límite superior anterior para no desplazarlo al nuevo anoDesde.
+        if (fromChanged && String(rawCurrentTo === null || rawCurrentTo === undefined ? "" : rawCurrentTo).trim() === "") {
+            cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoHasta).setValue(previousTo);
+            SpreadsheetApp.flush();
+        }
         const targetColumn = fromChanged ? COLS_CORTES.anoDesde : COLS_CORTES.anoHasta;
         cortesSheet.getRange(vehicleRowIndex, targetColumn).setValue(fromChanged ? targetFrom : targetTo);
         SpreadsheetApp.flush();

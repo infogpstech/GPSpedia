@@ -126,3 +126,10 @@ Validación local: runFeedbackWriteSecurityTests() 38/38 PASS; parsing/sintaxis 
 Límites: ejecución aislada con mocks locales; no representa Apps Script/Spreadsheet/Drive reales. La creación de FeedbackYearApplications y la recuperación en el entorno Beta quedan pendientes de validación.
 Estado: corregido y validado localmente; integración real diferida a Beta.
 ================================================================================
+
+
+================================================================================
+ADENDA TÉCNICA — H-AUD-040-008 — 2026-11-10
+En la revisión de recuperación se cubrió también el caso de un vehículo cuyo anoHasta está vacío (equivale a anoDesde). Al ampliar el límite inferior, primero se materializa el límite superior anterior y después se modifica anoDesde. Si falla la segunda escritura, el diario pending permite reanudar desde el rango previo semánticamente equivalente sin perder el límite superior.
+Prueba adicional: fallo simulado entre ambas escrituras en un rango de un solo año; el reintento conserva el límite superior original, completa la ampliación inferior y marca los votos. Suite local actualizada: 39/39 PASS; sintaxis 2/2 PASS.
+================================================================================

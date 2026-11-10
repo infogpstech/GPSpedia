@@ -1076,3 +1076,13 @@ VALIDACIÓN BETA PENDIENTE
 Creación automática de FeedbackYearApplications, persistencia del diario, fallos reales de escritura, concurrencia física y comportamiento con Spreadsheet/Drive reales; no ejecutados ni simulados.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-040 suggestYear: RANGO DE UN SOLO AÑO — 2026-11-10
+HEAD padre de esta adenda: 0203513d48796119c77657e69de4063daeee1dbf.
+Durante la revisión del diario de recuperación se detectó que un anoHasta vacío representa el mismo año que anoDesde. Para una ampliación inferior, el límite superior anterior se materializa primero; después se escribe el nuevo anoDesde. Si falla la segunda escritura, la operación permanece pending y el reintento continúa desde el rango semánticamente equivalente.
+Regresión agregada: fallo simulado entre ambas escrituras; recuperación completa sin perder el límite superior. runFeedbackWriteSecurityTests(): 39/39 PASS. Sintaxis de ambos archivos JavaScript: 2/2 PASS.
+La condición de recuperación de escrituras parciales queda COMPLETADA CON VALIDACIÓN DIFERIDA tras publicar este ajuste. AUG-040 sigue EN PROGRESO; próxima iteración: una sola condición pendiente de suggestYear.
+Validación Beta pendiente: Spreadsheet real, creación del diario, persistencia y fallos reales de escritura; no ejecutados.
+================================================================================

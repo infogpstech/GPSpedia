@@ -791,3 +791,11 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Validación local: runFeedbackWriteSecurityTests() 38/38 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
 - AUG-040 permanece EN PROGRESO; creación de la hoja de diario y recuperación en Apps Script/Spreadsheet reales diferidas a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — AJUSTE DE RECUPERACIÓN — RANGO DE UN SOLO AÑO EN suggestYear
+- Services/feedback.js: al ampliar hacia años anteriores cuando anoHasta está vacío, materializa primero el límite superior previo y luego cambia anoDesde; el diario permite recuperar un fallo entre ambas escrituras.
+- Services/Test/FeedbackWriteSecurity.js: agrega regresión para rango de un solo año y fallo simulado entre escrituras.
+- Validación local: runFeedbackWriteSecurityTests() 39/39 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+================================================================================

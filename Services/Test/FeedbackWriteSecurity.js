@@ -462,6 +462,90 @@ function runFeedbackWriteSecurityTests() {
             }
         });
 
+        test_("suggestYear conserva el límite superior implícito al ampliar hacia atrás desde un año único y recupera una escritura parcial", function() {
+            const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
+            const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
+            let failLowerWrite=true;
+            function runtimeSheet(rows,maxColumns,isCuts) {
+                return {
+                    rows,getLastRow(){return this.rows.length;},
+                    getLastColumn(){return Math.max(maxColumns||0,...this.rows.map(r=>r.length));},
+                    getMaxColumns(){return maxColumns||this.getLastColumn();},
+                    getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};},
+                    getRange(r,c,h=1,w=1) {
+                        const self=this;
+                        return {
+                            getValue(){return (self.rows[r-1]||[])[c-1]??"";},
+                            getValues(){return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>(self.rows[r-1+i]||[])[c-1+j]??""));},
+                            setValue(v){
+                                if(isCuts&&r===2&&c===COLS_CORTES.anoDesde&&Number(v)===2015&&failLowerWrite){
+                                    failLowerWrite=false;
+                                    throw new Error("fallo simulado al ampliar anoDesde");
+                                }
+                                while(self.rows.length<r)self.rows.push([]);
+                                while(self.rows[r-1].length<c)self.rows[r-1].push("");
+                                self.rows[r-1][c-1]=v;
+                            },
+                            setValues(vs){vs.forEach((line,i)=>line.forEach((v,j)=>{
+                                while(self.rows.length<r+i)self.rows.push([]);
+                                while(self.rows[r-1+i].length<c+j)self.rows[r-1+i].push("");
+                                self.rows[r-1+i][c-1+j]=v;
+                            }));},
+                            copyTo(target){target.setValues(this.getValues());},
+                            clearContent(){for(let i=0;i<h;i++)for(let j=0;j<w;j++)if(self.rows[r-1+i])self.rows[r-1+i][c-1+j]="";}
+                        };
+                    },
+                    insertColumnsAfter(after,count){maxColumns=(maxColumns||this.getLastColumn())+count;this.rows.forEach(row=>{while(row.length<maxColumns)row.push("");});}
+                };
+            }
+            const vehicle=Array(42).fill("");
+            vehicle[COLS_CORTES.id-1]="VEH-SINGLE-YEAR-LOWER";
+            vehicle[COLS_CORTES.marca-1]="Toyota";vehicle[COLS_CORTES.modelo-1]="Hilux";
+            vehicle[COLS_CORTES.categoria-1]="Pickup";vehicle[COLS_CORTES.versionesAplicables-1]="2.4 Diesel";
+            vehicle[COLS_CORTES.tipoEncendido-1]="Llave";
+            vehicle[COLS_CORTES.anoDesde-1]=2018;vehicle[COLS_CORTES.anoHasta-1]="";
+            const cuts=runtimeSheet([Array(42).fill(""),vehicle],42,true);
+            const headers=["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido","suggestionActorKey"];
+            const problem="Sugerencia de ampliar rango inferior al año 2015";
+            const answer="El usuario indicó que corresponde a un modelo anterior.";
+            const feedback=runtimeSheet([headers,
+                ["F-A","A","VEH-SINGLE-YEAR-LOWER",problem,answer,"","","",2015,"user:USR-A"],
+                ["F-B","B","VEH-SINGLE-YEAR-LOWER",problem,answer,"","","",2015,"user:USR-B"]
+            ],10,false);
+            const yearApplicationSheets={},activities=[];
+            try {
+                assertFeedbackSession=p=>{if(!p||p.sessionToken!=="SESSION-C")throw Error("Sesión inválida");return {userId:"USR-C",userName:"Usuario C",role:"Tecnico"};};
+                getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:(yearApplicationSheets[n]||null),
+                    insertSheet:n=>(yearApplicationSheets[n]=runtimeSheet([],12,false))});
+                getSafeSheet=n=>n===SHEET_NAMES.SUGERENCIAS_ANO||n===SHEET_NAMES.FEEDBACKS?feedback:null;
+                logUserActivity=(id,name,type)=>activities.push(type);
+                LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+                SpreadsheetApp={flush(){}};
+                movePrimaryVehicleImageToCanonicalFolder=()=>({skipped:true});
+                const actor=authorizeFeedbackAction_("suggestYear",{sessionToken:"SESSION-C"});
+                let firstError="";
+                try { handleSuggestYear({...actor,vehicleId:"VEH-SINGLE-YEAR-LOWER",newYear:2015,response:"Es más antiguo"}); }
+                catch(error) { firstError=error.message; }
+                assert_(firstError.includes("fallo simulado"),"Debe reproducirse el fallo después de fijar el límite superior: "+firstError);
+                assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2018&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2018,
+                    "El primer paso debe materializar el rango previo sin cambiar su significado.");
+                const ledger=yearApplicationSheets.FeedbackYearApplications;
+                assert_(ledger&&ledger.rows[1][8]==="pending","La operación debe seguir pendiente después del fallo.");
+                const retry=handleSuggestYear({...actor,vehicleId:"VEH-SINGLE-YEAR-LOWER",newYear:2015,response:"Es más antiguo"});
+                assert_(retry.status==="success"&&retry.recovered===true,"El reintento debe completar la ampliación: "+JSON.stringify(retry));
+                assert_(cuts.rows[1][COLS_CORTES.anoDesde-1]===2015&&cuts.rows[1][COLS_CORTES.anoHasta-1]===2018,
+                    "La ampliación inferior debe conservar el límite superior original.");
+                assert_(feedback.rows.slice(1).length===3&&feedback.rows.slice(1).every(row=>String(row[9]).startsWith("applied:")),
+                    "La recuperación debe marcar los tres votos positivos.");
+                assert_(ledger.rows[1][8]==="completed","El diario debe cerrarse tras confirmar rango y votos.");
+                assert_(activities.filter(type=>type==="apply_year_suggestion").length===1,
+                    "La recuperación no debe duplicar la actividad de aplicación.");
+            } finally {
+                assertFeedbackSession=oldAssert;getSpreadsheet=oldGet;getSafeSheet=oldSafe;logUserActivity=oldLog;
+                LockService=oldLock;SpreadsheetApp=oldApp;movePrimaryVehicleImageToCanonicalFolder=oldMove;
+            }
+        });
+
         test_("suggestYear amplía el límite inferior con tres aportantes «Es más antiguo» y limpia solo esos votos", function() {
             const oldAssert=assertFeedbackSession,oldGet=getSpreadsheet,oldSafe=getSafeSheet;
             const oldLog=logUserActivity,oldLock=LockService,oldApp=SpreadsheetApp,oldMove=movePrimaryVehicleImageToCanonicalFolder;
