@@ -679,6 +679,155 @@ function getAppliedSuggestionActorKey_(actorKey) {
     return "applied:" + String(actorKey || "").trim();
 }
 
+function getFeedbackYearApplicationsSheet_(createIfMissing) {
+    const headers = [
+        "operationId", "vehicleId", "year", "previousFrom", "previousTo",
+        "targetFrom", "targetTo", "voteCount", "status", "activityAttempted",
+        "createdAt", "updatedAt"
+    ];
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("FeedbackYearApplications");
+    if (!sheet && !createIfMissing) return null;
+    if (!sheet) sheet = ss.insertSheet("FeedbackYearApplications");
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        SpreadsheetApp.flush();
+    }
+    const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0].map(value => String(value || "").trim());
+    if (headers.some((header, index) => actual[index] !== header)) {
+        throw new Error("El esquema de FeedbackYearApplications no coincide con el contrato esperado.");
+    }
+    return sheet;
+}
+
+function findPendingFeedbackYearApplication_(vehicleId, year) {
+    const sheet = getFeedbackYearApplicationsSheet_(false);
+    if (!sheet) return null;
+    const rows = sheet.getDataRange().getValues();
+    const matches = [];
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (String(row[1] || "").trim() === String(vehicleId) &&
+            Number(row[2]) === Number(year) && String(row[8] || "").trim() === "pending") {
+            matches.push({ rowIndex: i + 1, row });
+        }
+    }
+    if (matches.length > 1) {
+        throw new Error("Hay varias aplicaciones de año pendientes para el mismo vehículo y año; requiere revisión manual.");
+    }
+    if (!matches.length) return null;
+    const row = matches[0].row;
+    const numeric = row.slice(2, 8).map(Number);
+    if (!String(row[0] || "").trim() || !numeric.every(Number.isFinite) ||
+        numeric[0] < 1980 || numeric[0] > 2099 ||
+        numeric[1] < 1980 || numeric[1] > 2099 || numeric[2] < numeric[1] || numeric[2] > 2099 ||
+        numeric[3] < 1980 || numeric[3] > 2099 || numeric[4] < numeric[3] || numeric[4] > 2099 ||
+        numeric[5] < 3 || ![true, false, "TRUE", "FALSE", ""].includes(row[9])) {
+        throw new Error("La aplicación pendiente de año contiene datos inválidos; requiere revisión manual.");
+    }
+    return { sheet, rowIndex: matches[0].rowIndex, row };
+}
+
+function completeFeedbackYearApplication_(application, context) {
+    const { cortesSheet, vehicleRowIndex, feedbackSheet, actorColumn, parseCatalogYear, userId, userName } = context;
+    const row = application.row;
+    const previousFrom = Number(row[3]), previousTo = Number(row[4]);
+    const targetFrom = Number(row[5]), targetTo = Number(row[6]);
+    const year = Number(row[2]), voteCount = Number(row[7]);
+    const fromChanged = previousFrom !== targetFrom;
+    const toChanged = previousTo !== targetTo;
+    if (fromChanged === toChanged || targetFrom !== Math.min(previousFrom, year) ||
+        targetTo !== Math.max(previousTo, year)) {
+        throw new Error("La aplicación pendiente no describe una ampliación válida; requiere revisión manual.");
+    }
+
+    const currentFrom = parseCatalogYear(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoDesde).getValue());
+    const rawCurrentTo = cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoHasta).getValue();
+    const currentTo = String(rawCurrentTo === null || rawCurrentTo === undefined ? "" : rawCurrentTo).trim() === ""
+        ? currentFrom : parseCatalogYear(rawCurrentTo);
+    if (currentFrom === previousFrom && currentTo === previousTo) {
+        const targetColumn = fromChanged ? COLS_CORTES.anoDesde : COLS_CORTES.anoHasta;
+        cortesSheet.getRange(vehicleRowIndex, targetColumn).setValue(fromChanged ? targetFrom : targetTo);
+        SpreadsheetApp.flush();
+    } else if (currentFrom !== targetFrom || currentTo !== targetTo) {
+        throw new Error("El rango del catálogo cambió fuera de la aplicación pendiente; requiere revisión manual.");
+    }
+
+    const confirmedFrom = parseCatalogYear(cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoDesde).getValue());
+    const rawConfirmedTo = cortesSheet.getRange(vehicleRowIndex, COLS_CORTES.anoHasta).getValue();
+    const confirmedTo = String(rawConfirmedTo === null || rawConfirmedTo === undefined ? "" : rawConfirmedTo).trim() === ""
+        ? confirmedFrom : parseCatalogYear(rawConfirmedTo);
+    if (confirmedFrom !== targetFrom || confirmedTo !== targetTo) {
+        throw new Error("No se pudo confirmar el rango de años aplicado; la operación permanece pendiente.");
+    }
+
+    let folderSyncWarning = false, folderSyncMessage = "";
+    try {
+        const updatedVehicleRow = cortesSheet.getRange(
+            vehicleRowIndex, 1, 1, cortesSheet.getLastColumn()
+        ).getValues()[0];
+        const folderSyncResult = movePrimaryVehicleImageToCanonicalFolder(
+            cortesSheet, vehicleRowIndex, updatedVehicleRow
+        );
+        folderSyncWarning = Boolean(folderSyncResult && folderSyncResult.warning);
+        folderSyncMessage = folderSyncResult && folderSyncResult.reason ? folderSyncResult.reason : "";
+    } catch (folderError) {
+        folderSyncWarning = true;
+        folderSyncMessage = folderError.message;
+        Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " + folderError.message);
+    }
+
+    const ledger = application.sheet;
+    const activityAttempted = row[9] === true || String(row[9]).toUpperCase() === "TRUE";
+    if (!activityAttempted) {
+        ledger.getRange(application.rowIndex, 10).setValue(true);
+        SpreadsheetApp.flush();
+        logUserActivity(userId, userName, "apply_year_suggestion", String(row[1]),
+            "Rango actualizado a " + targetFrom + "-" + targetTo +
+            " basado en " + voteCount + " aportantes distintos para el año " + year +
+            (folderSyncWarning ? ". Advertencia de carpeta: " + folderSyncMessage : "."));
+        row[9] = true;
+    }
+
+    const feedbackValues = feedbackSheet.getDataRange().getValues();
+    for (let i = feedbackValues.length - 1; i >= 1; i--) {
+        const feedbackRow = feedbackValues[i];
+        const rowId = String(feedbackRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+        const rowYear = Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]);
+        const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
+        if (rowId === String(row[1]) && rowYear === year && rowActorKey &&
+            isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:")) {
+            feedbackSheet.getRange(i + 1, actorColumn).setValue(getAppliedSuggestionActorKey_(rowActorKey));
+        }
+    }
+    SpreadsheetApp.flush();
+
+    const verifiedRows = feedbackSheet.getDataRange().getValues();
+    const remaining = verifiedRows.slice(1).some(feedbackRow => {
+        const rowActorKey = String(feedbackRow[actorColumn - 1] || "").trim();
+        return String(feedbackRow[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === String(row[1]) &&
+            Number(feedbackRow[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
+            rowActorKey && isPositiveYearSuggestionRow(feedbackRow) && !rowActorKey.startsWith("applied:");
+    });
+    if (remaining) throw new Error("La ampliación quedó aplicada, pero no se pudieron marcar todos los aportes; la recuperación permanece pendiente.");
+
+    ledger.getRange(application.rowIndex, 9).setValue("completed");
+    ledger.getRange(application.rowIndex, 12).setValue(new Date().toISOString());
+    SpreadsheetApp.flush();
+    if (String(ledger.getRange(application.rowIndex, 9).getValue() || "").trim() !== "completed") {
+        throw new Error("No se pudo confirmar el cierre de la aplicación de año; permanece pendiente.");
+    }
+
+    return {
+        status: "success",
+        recovered: false,
+        folderSyncWarning,
+        message: "¡Gracias! Con " + voteCount + " aportantes distintos, el catálogo se ha actualizado a " +
+            targetFrom + "-" + targetTo + "." +
+            (folderSyncWarning ? " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " + folderSyncMessage : "")
+    };
+}
+
 function handleSuggestYearLocked(payload) {
     const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
@@ -771,6 +920,24 @@ function handleSuggestYearLocked(payload) {
     const matchesActorAndSuggestion = row =>
         String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === normalizedVehicleId &&
         Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year;
+    const pendingApplication = findPendingFeedbackYearApplication_(normalizedVehicleId, year);
+    if (pendingApplication) {
+        const recovered = completeFeedbackYearApplication_(pendingApplication, {
+            cortesSheet,
+            vehicleRowIndex: vehicleRowIndex + 2,
+            feedbackSheet: sheet,
+            actorColumn,
+            parseCatalogYear,
+            userId,
+            userName
+        });
+        return {
+            ...recovered,
+            recovered: true,
+            message: "Se recuperó una ampliación pendiente. " + recovered.message
+        };
+    }
+
     const alreadyApplied = existingData.some(row =>
         matchesActorAndSuggestion(row) &&
         String(row[actorColumn - 1] || "").trim() === getAppliedSuggestionActorKey_(actorKey)
@@ -877,50 +1044,33 @@ function handleSuggestYearLocked(payload) {
     if (year > anoHasta) { newAnoHasta = year; updated = true; }
 
     if (updated) {
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(newAnoDesde);
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(newAnoHasta);
-        let folderSyncWarning = false, folderSyncMessage = "";
-        try {
-            const updatedVehicleRow = cortesSheet.getRange(
-                vehicleRowIndex + 2, 1, 1, cortesSheet.getLastColumn()
-            ).getValues()[0];
-            const folderSyncResult = movePrimaryVehicleImageToCanonicalFolder(
-                cortesSheet, vehicleRowIndex + 2, updatedVehicleRow
-            );
-            folderSyncWarning = Boolean(folderSyncResult && folderSyncResult.warning);
-            folderSyncMessage = folderSyncResult && folderSyncResult.reason ? folderSyncResult.reason : "";
-        } catch (folderError) {
-            folderSyncWarning = true;
-            folderSyncMessage = folderError.message;
-            Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " + folderError.message);
-        }
+        const ledger = getFeedbackYearApplicationsSheet_(true);
+        const operationId = "YSA-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1000000000).toString(36);
+        const operationRow = ledger.getLastRow() + 1;
+        const createdAt = new Date().toISOString();
+        ledger.getRange(operationRow, 1, 1, 12).setValues([[
+            operationId, normalizedVehicleId, year, anoDesde, anoHasta,
+            newAnoDesde, newAnoHasta, voteCount, "pending", false, createdAt, createdAt
+        ]]);
         SpreadsheetApp.flush();
-        logUserActivity(userId, userName, "apply_year_suggestion", normalizedVehicleId,
-            "Rango actualizado a " + newAnoDesde + "-" + newAnoHasta +
-            " basado en " + voteCount + " aportantes distintos para el año " + year +
-            (folderSyncWarning ? ". Advertencia de carpeta: " + folderSyncMessage : "."));
-
-        const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-        if (feedbackSheet) {
-            const feedbackValues = feedbackSheet.getDataRange().getValues();
-            for (let i = feedbackValues.length - 1; i >= 1; i--) {
-                const row = feedbackValues[i];
-                const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
-                const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
-                const rowActorKey = String(row[actorColumn - 1] || "").trim();
-                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey &&
-                    isPositiveYearSuggestionRow(row) && !rowActorKey.startsWith("applied:")) {
-                    feedbackSheet.getRange(i + 1, actorColumn).setValue(getAppliedSuggestionActorKey_(rowActorKey));
-                }
-            }
-        }
-        return {
-            status: "success",
-            folderSyncWarning,
-            message: "¡Gracias! Con " + voteCount + " aportantes distintos, el catálogo se ha actualizado a " +
-                newAnoDesde + "-" + newAnoHasta + "." +
-                (folderSyncWarning ? " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " + folderSyncMessage : "")
+        const application = {
+            sheet: ledger,
+            rowIndex: operationRow,
+            row: ledger.getRange(operationRow, 1, 1, 12).getValues()[0]
         };
+        if (String(application.row[0] || "") !== operationId ||
+            String(application.row[8] || "") !== "pending") {
+            throw new Error("No se pudo confirmar el registro de recuperación de la ampliación; el catálogo no fue modificado.");
+        }
+        return completeFeedbackYearApplication_(application, {
+            cortesSheet,
+            vehicleRowIndex: vehicleRowIndex + 2,
+            feedbackSheet: sheet,
+            actorColumn,
+            parseCatalogYear,
+            userId,
+            userName
+        });
     }
     return { status: "info", message: "No se realizaron cambios." };
 }

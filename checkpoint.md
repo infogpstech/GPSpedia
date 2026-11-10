@@ -1046,3 +1046,33 @@ Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 permanece EN 
 Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE DE CONDICIÓN — AUG-040 suggestYear: RECUPERACIÓN DE ESCRITURAS PARCIALES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre confirmado: 75d8b4ebcba9fc0ec3c9bacbeb1a390baf4f5360.
+TAREA ÚNICA
+Recuperar de forma segura una ampliación de años cuando el rango del catálogo se actualiza, pero falla la marcación de los votos positivos como atendidos.
+HALLAZGO Y CORRECCIÓN
+Se reprodujo el fallo: el rango quedaba ampliado, fallaba la primera marca applied: y el reintento salía al detectar que el año ya estaba dentro del rango, dejando votos activos. Se incorporó el diario FeedbackYearApplications. La operación pending se persiste antes de modificar el catálogo; guarda el rango anterior y el objetivo. En reintentos solo se acepta el rango anterior o el objetivo exacto; cambios externos intermedios se bloquean para revisión manual. Se modifica un único límite, se verifica el resultado, se reintentan las marcas positivas y se cierra el diario tras comprobarlas. El indicador activityAttempted evita repetir el evento de aplicación en una recuperación.
+PRUEBA DE REGRESIÓN
+La prueba falla deliberadamente en la primera marca después de actualizar el rango. Confirma el estado pending, repite la solicitud y verifica que se marcan los tres votos, se conserva el rango objetivo, el diario pasa a completed y apply_year_suggestion no se duplica.
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 38/38 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Suite ejecutada en runtime JavaScript aislado con dobles; no acredita integración real con Apps Script/Spreadsheet/Drive.
+ARCHIVOS
+- Services/feedback.js
+- Services/Test/FeedbackWriteSecurity.js
+- Auditoría.txt (H-AUD-040-008)
+- ChangesLogs.txt
+- checkpoint.md
+ESTADO
+Esta condición queda COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una sola condición funcional pendiente de suggestYear; no iniciar AUG-041 ni otra tarea.
+VALIDACIÓN BETA PENDIENTE
+Creación automática de FeedbackYearApplications, persistencia del diario, fallos reales de escritura, concurrencia física y comportamiento con Spreadsheet/Drive reales; no ejecutados ni simulados.
+Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
+================================================================================

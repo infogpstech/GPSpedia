@@ -781,3 +781,13 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - Services/Test/FeedbackWriteSecurity.js: regresión que repite la solicitud ante una generación equivalente con rango inválido y comprueba que no aumenta el conteo del evento de revisión.
 - Hallazgo H-AUD-040-007 registrado en Auditoría.txt.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — RECUPERACIÓN DE ESCRITURAS PARCIALES EN suggestYear
+- Services/feedback.js: incorpora el diario FeedbackYearApplications para registrar la ampliación antes de modificar el catálogo; reanuda operaciones pendientes, verifica el rango esperado y completa las marcas applied: sin repetir la actividad de aplicación.
+- Services/Test/FeedbackWriteSecurity.js: agrega una regresión que simula el fallo en la primera marca después de ampliar el rango y comprueba la recuperación en el reintento.
+- Auditoría.txt: registra H-AUD-040-008.
+- Validación local: runFeedbackWriteSecurityTests() 38/38 PASS; sintaxis de ambos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; creación de la hoja de diario y recuperación en Apps Script/Spreadsheet reales diferidas a Beta.
+================================================================================

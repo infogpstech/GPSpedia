@@ -111,3 +111,18 @@ Severidad: Baja.
 Corrección: registrar el evento de revisión solo cuando el intento añade un aporte nuevo (!alreadyReported); mantener siempre la respuesta warning y la revisión manual.
 Prueba: repetir la misma sugerencia del mismo actor ante una generación equivalente con rango inválido; el warning debe persistir y el número de eventos suggest_year_range_review no debe aumentar.
 Estado: corregido y validado localmente con prueba aislada; integración real diferida a Beta.
+
+
+================================================================================
+H-AUD-040-008 — MEDIA — CORREGIDO EN FUENTES — 2026-11-10
+Origen: revisión de recuperación de escrituras parciales en AUG-040.
+Ubicación: Services/feedback.js, handleSuggestYearLocked(), actualización del rango y marcación de aportes positivos atendidos.
+Evidencia: el rango del catálogo se actualizaba antes de marcar individualmente los votos positivos con applied:. Si una escritura de marca fallaba, el rango podía quedar ampliado y las filas restantes continuar activas. En el reintento, la comprobación de que el año ya estaba dentro del rango terminaba la función antes de completar la limpieza. El fallo en la primera marca no dejaba siquiera un prefijo applied: que permitiera inferir la operación incompleta.
+Impacto: aportes que ya participaron en una ampliación podían permanecer activos, volver a contarse o generar registros redundantes en intentos posteriores.
+Severidad: Media.
+Corrección: se incorporó el diario FeedbackYearApplications. Antes de cambiar el catálogo se registra una operación pending con el rango anterior y el objetivo. La recuperación acepta únicamente que el catálogo conserve el rango anterior o que ya tenga exactamente el objetivo; cualquier otro estado se deriva a revisión manual. Se actualiza solo el límite que cambia, se reintentan las marcas positivas idempotentemente, se registra el intento de actividad para evitar duplicarlo y se cierra el diario después de verificar todas las marcas.
+Prueba: regresión que provoca un fallo simulado en la primera marca después de aplicar el rango, confirma que la operación queda pending y repite la solicitud. El reintento completa las tres marcas, conserva el rango, cierra el diario y no duplica apply_year_suggestion.
+Validación local: runFeedbackWriteSecurityTests() 38/38 PASS; parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js 2/2 PASS.
+Límites: ejecución aislada con mocks locales; no representa Apps Script/Spreadsheet/Drive reales. La creación de FeedbackYearApplications y la recuperación en el entorno Beta quedan pendientes de validación.
+Estado: corregido y validado localmente; integración real diferida a Beta.
+================================================================================
