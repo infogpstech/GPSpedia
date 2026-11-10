@@ -188,14 +188,14 @@ function runFeedbackWriteSecurityTests() {
                 userId: "USR-TEST-01", userName: "Usuario verificado"
             };
             expectThrow_(() => handleAddProblem({ ...base, titulo: "   " }), "Título y descripción");
-            expectThrow_(() => handleAddProblem({ ...base, descripcion: "  \\n " }), "Título y descripción");
-            expectThrow_(() => handleAddProblem({ ...base, solucion: "  \\n " }), "Debe proporcionar una solución");
+            expectThrow_(() => handleAddProblem({ ...base, descripcion: "  \n " }), "Título y descripción");
+            expectThrow_(() => handleAddProblem({ ...base, solucion: "  \n " }), "Debe proporcionar una solución");
         });
 
         test_("addProblem normaliza los textos antes de guardarlos en PyS", function() {
             const originalGetSafeSheet = getSafeSheet;
             const originalLog = logUserActivity;
-            const originalLock = LockService;
+            const originalLock = typeof LockService === "undefined" ? null : LockService;
             const originalSpreadsheetApp = SpreadsheetApp;
             const originalDriveApp = DriveApp;
             const originalUtilities = Utilities;
@@ -233,7 +233,7 @@ function runFeedbackWriteSecurityTests() {
             } finally {
                 getSafeSheet = originalGetSafeSheet;
                 logUserActivity = originalLog;
-                LockService = originalLock;
+                if (originalLock) LockService = originalLock; else LockService = undefined;
                 SpreadsheetApp = originalSpreadsheetApp;
                 DriveApp = originalDriveApp;
                 Utilities = originalUtilities;
