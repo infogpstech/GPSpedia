@@ -300,3 +300,14 @@ Hallazgo nuevo H-AUD-155-001 resuelto; AUG-034 cerrada localmente.
 Siguiente tarea de integridad: AUG-035 — integridad estricta y reconciliación de la hoja Idempotencia.
 No se modificó la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-035 — 2026-11-10
+Rama: GPSpedia2.2.5_work. HEAD inicial de la tarea: 4f859f62dc561799722f749f723acb4b9c22be50.
+Tarea: AUG-035 — completada en validación lógica local; pruebas de Spreadsheet aislada diferidas a Beta.
+Cambios: ADMIN/WRITE validan encabezados y filas; rechazan duplicados incluso con asociación igual; validan opId, vehicleId, slotIndex, timestamp y status; verifican escrituras y preservan completed; recuperación exige una fila Cortes única por vehicleId; migración verifica asociación y estado completed antes de limpiar origen, y completa registros pending existentes antes de la verificación. Dry-run informa cuántos registros requieren completarse.
+Pruebas: suite Services/Test/IdempotenciaIntegrity.js 12/12 PASS; parsing V8 de admin.js, write.js y harness PASS.
+Límites: no se ejecutó Spreadsheet real, deployment, endpoint ni datos productivos. Fallos parciales, interrupción y concurrencia real se prueban en Beta.
+No se modificó la rama base.
+================================================================================
