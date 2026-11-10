@@ -570,3 +570,11 @@ Verificaciones: 16/16 pruebas aisladas PASS; sintaxis completa PASS; comparació
 - Estado: EN PROGRESO. Pendiente revisión/publicación y validación de integración en navegador y proyecto Apps Script/Spreadsheet aislado.
 - No ejecutados: YouTube OAuth/API real, XHR/IndexedDB de navegador real, Apps Script desplegado, HTTP, Drive/Spreadsheet productivos, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-10 — CHECKPOINT AUG-043 — CONTINUIDAD Y VALIDACIÓN PENDIENTE
+- checkpoint.md: registra estado, evidencia publicada, límites de validación y siguiente acción.
+- Tareas.txt: actualiza AUG-043 a EN PROGRESO con sus validaciones pendientes.
+- Este commit es documental; no modifica código funcional ni la rama base.
+================================================================================

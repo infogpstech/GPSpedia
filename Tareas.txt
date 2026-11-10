@@ -589,3 +589,12 @@ Pendiente antes del cierre:
 
 La tarea permanece EN PROGRESO; no se marca completada hasta terminar revisión/publicación y las verificaciones locales pendientes. La validación de infraestructura real se documentará como diferida a Beta.
 ================================================================================
+
+
+================================================================================
+AUG-043 — ALINEAR CONTRATOS Y CICLO DE APROBACIÓN DE YOUTUBE
+Estado: EN PROGRESO.
+Implementación y suites de cobertura publicadas en GPSpedia2.2.5_work. Incluye aprobación previa a publicación, validación del destino, operación idempotente y transferencia resumable.
+Validación pendiente: ejecutar parsing y suites aisladas según Services/Test/README.md. No se ejecutaron aquí OAuth/YouTube API real, XHR/IndexedDB de navegador real, Apps Script desplegado ni Google Sheets aislado; integración real diferida a Beta.
+Siguiente acción: ejecutar las pruebas disponibles, revisar fallos y completar la cobertura cliente antes de cerrar AUG-043.
+================================================================================

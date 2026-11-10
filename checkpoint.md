@@ -388,3 +388,19 @@ LÍMITES Y PENDIENTES
 ================================================================================
 
 Nota documental: Tareas_pendientes_parte1.txt (181,717 caracteres) y Auditoría.txt (185,934 caracteres) ya superan el umbral de rotación de 180,000. No se añadieron entradas a esos archivos; el estado de AUG-043 se registra en Tareas.txt y este checkpoint. Programar rotación documental independiente antes de nuevas adendas en esos registros.
+
+
+================================================================================
+CHECKPOINT — AUG-043 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD confirmado antes de este checkpoint: 655a6ffc20c5b956c9d96d233a1a1cdd7c0fb2fc (docs(video): record AUG-043 progress and validation).
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificada.
+Tarea: AUG-043 — alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+Estado: EN PROGRESO; la implementación y la cobertura automatizada se encuentran publicadas en commits previos de la rama de trabajo. Este checkpoint no declara la tarea completada.
+Alcance visible: workflow backend de aprobación/publicación para Cortes, PyS y Tutoriales; inicialización de sesión resumable con validación de destino y URL oficial; idempotencia mediante opVideoId y consulta de solicitud previa; cliente de transferencia reanudable por bloques con persistencia local; suites de aprobación y cliente documentadas en Services/Test/README.md.
+Validación: en esta iteración se verificaron rama, HEAD, árbol remoto, archivos de continuidad y separación de la rama base. No se ejecutaron las suites, navegador real, IndexedDB real, OAuth/YouTube API, Apps Script desplegado ni Google Sheets aislado. No se afirma que esas validaciones hayan pasado.
+Pendiente: ejecutar parsing y suites aisladas disponibles; integración real con YouTube OAuth/API, XHR/IndexedDB de navegador, Apps Script y copias aisladas de Sheets en Beta.
+Siguiente acción: continuar validación reproducible de AUG-043, corregir solo hallazgos demostrados y actualizar el estado después de ejecutar las suites.
+Nota: blobs preparados en iteraciones anteriores no constituyen cambios publicados por sí solos. Solo el contenido presente en el árbol de esta rama es fuente válida; no aplicar blobs antiguos sin reconciliar el diff.
+================================================================================
