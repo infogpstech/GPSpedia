@@ -1619,6 +1619,25 @@ function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
     return matches[0];
 }
 
+function findUniqueCortesVehicleRow_(cortesSheet, vehicleId, opId) {
+    if (!cortesSheet) throw new Error("No se encontró la hoja Cortes para recuperar el opId " + opId + ".");
+    const cleanVehicleId = normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación " + opId);
+    const data = cortesSheet.getDataRange().getValues();
+    const matches = [];
+    for (let rowOffset = 1; rowOffset < data.length; rowOffset++) {
+        const rawId = data[rowOffset][COLS_CORTES.id - 1];
+        if (isBlankIdempotenciaValue_(rawId)) continue;
+        if (normalizeIdempotenciaVehicleId_(rawId, "Cortes fila " + (rowOffset + 1)) === cleanVehicleId) {
+            matches.push({ rowIndex: rowOffset + 1, rowValues: data[rowOffset] });
+        }
+    }
+    if (matches.length !== 1) {
+        throw new Error("No se puede recuperar el opId " + opId + ": vehicleId " + cleanVehicleId +
+            " aparece en " + matches.length + " filas de Cortes; se requiere exactamente una. No se modificó.");
+    }
+    return matches[0];
+}
+
 function findRowByOpId(sheet, opId) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
@@ -1647,7 +1666,6 @@ function findRowByOpId(sheet, opId) {
     const headers = data[0] || [];
     const vinColumn = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
     const operationColumns = [];
-
     headers.forEach((header, index) => {
         const normalized = String(header || "").trim().toLowerCase();
         const legacyVinColumn = vinColumn > 0 && index + 1 === vinColumn &&
@@ -1657,45 +1675,54 @@ function findRowByOpId(sheet, opId) {
         }
     });
 
-    const matches = [];
-    const seen = new Set();
-    data.slice(1).forEach((row, rowOffset) => {
-        const rowIndex = rowOffset + 2;
+    const directMatches = [];
+    data.slice(1).forEach((row, offset) => {
         operationColumns.forEach(column => {
-            if (String(row[column] || "").trim() !== cleanOpId) return;
-            const key = rowIndex + ":" + (column + 1);
-            if (!seen.has(key)) {
-                seen.add(key);
-                matches.push({ rowIndex: rowIndex, rowValues: row, colIndex: column + 1 });
-            }
-        });
-        row.forEach((value, column) => {
-            if (typeof value !== "string" || (value !== cleanOpId && !value.includes("[" + cleanOpId + "]"))) return;
-            const key = rowIndex + ":" + (column + 1);
-            if (!seen.has(key)) {
-                seen.add(key);
-                matches.push({ rowIndex: rowIndex, rowValues: row, colIndex: column + 1 });
+            if (String(row[column] || "").trim() === cleanOpId) {
+                directMatches.push({ rowIndex: offset + 2, rowValues: row, colIndex: column + 1 });
             }
         });
     });
 
-    if (matches.length > 1) {
+    let match = null;
+    if (directMatches.length > 1) {
         throw new Error("El opId heredado " + cleanOpId +
-            " aparece en varias celdas de Cortes; no se eligió ni limpió ninguna coincidencia.");
+            " aparece en varias columnas de operación de Cortes; no se eligió ni limpió ninguna coincidencia.");
     }
-    if (matches.length === 1) {
-        const match = matches[0];
-        return {
-            rowIndex: match.rowIndex,
-            rowValues: match.rowValues,
-            colIndex: match.colIndex,
-            slotIndex: null,
-            timestamp: match.rowValues[COLS_CORTES.timestamp - 1] || "",
-            status: "completed",
-            fromIdempotenciaSheet: false
-        };
+    if (directMatches.length === 1) {
+        match = directMatches[0];
+    } else {
+        const taggedMatches = [];
+        data.slice(1).forEach((row, offset) => {
+            row.forEach((value, column) => {
+                if (typeof value === "string" &&
+                    (value === cleanOpId || value.includes("[" + cleanOpId + "]"))) {
+                    taggedMatches.push({ rowIndex: offset + 2, rowValues: row, colIndex: column + 1 });
+                }
+            });
+        });
+        if (taggedMatches.length > 1) {
+            throw new Error("El opId heredado " + cleanOpId +
+                " aparece en varias celdas de Cortes; no se eligió ni limpió ninguna coincidencia.");
+        }
+        if (taggedMatches.length === 1) match = taggedMatches[0];
     }
-    return null;
+
+    if (!match) return null;
+    const vehicleId = match.rowValues[COLS_CORTES.id - 1];
+    const unique = findUniqueCortesVehicleRow_(cortesSheet, vehicleId, cleanOpId);
+    if (unique.rowIndex !== match.rowIndex) {
+        throw new Error("La fila heredada del opId " + cleanOpId + " no coincide con la única fila de su vehicleId.");
+    }
+    return {
+        rowIndex: unique.rowIndex,
+        rowValues: unique.rowValues,
+        colIndex: match.colIndex,
+        slotIndex: null,
+        timestamp: unique.rowValues[COLS_CORTES.timestamp - 1] || "",
+        status: "completed",
+        fromIdempotenciaSheet: false
+    };
 }
 
 function handleCheckOperation(payload) {
