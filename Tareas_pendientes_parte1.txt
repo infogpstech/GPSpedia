@@ -452,7 +452,8 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Problema:** los ScriptLock de WRITE y ADMIN pertenecen a proyectos Apps Script distintos. La migración VIN se ejecuta en ADMIN mientras las mutaciones de Cortes/opId se ejecutan en WRITE; no existe exclusión mutua compartida.
 - **Criterios de aceptación:** diseñar un protocolo compartido de mantenimiento que impida iniciar nuevas mutaciones y permita identificar/drenar operaciones en curso; aplicarlo de forma consistente en WRITE y ADMIN; evitar que la migración lea y modifique el mapa de idempotencia mientras cambia; definir recuperación si el proceso se interrumpe; probar alta WRITE, alta ADMIN y migración concurrentes en copias aisladas; no declarar atomicidad entre proyectos sin evidencia.
 - **Relación:** AUD-T-033/AUG-003; no duplicar la tarea general de coordinación interservicios.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA EN VALIDACIÓN LOCAL (2026-11-10); concurrencia real entre deployments diferida a Beta.
+- **Resultado:** la migración ADMIN adquiere una reserva exclusiva de drenaje; las nuevas mutaciones quedan bloqueadas mientras terminan las leases previas. Si el drenaje vence, se informa qué operaciones siguen activas y se retira la reserva sin ejecutar la migración. La migración mantiene escritura destino → flush → lectura de verificación → limpieza de origen; el reintento reconoce opId ya persistidos.
 
 ### AUG-035 — Integridad estricta y reconciliación de la hoja Idempotencia
 - **Origen:** H-AUD-030-002, H-AUD-030-003, H-AUD-030-004 y H-AUD-030-005. **Prioridad:** Alta.
