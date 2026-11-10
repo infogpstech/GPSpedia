@@ -1313,3 +1313,14 @@ VIN: JSON array canónico, slots vacíos preservados, serialización común; com
 Validación: Services/Test/VinTestigoIntegrity.js 14/14 PASS; parsing V8 de ADMIN, WRITE, UI y suite PASS; paridad de parseo/serialización frontend/backend comprobada con casos JSON, heredados y corruptos.
 Límites: pruebas mock; no se ejecutó Spreadsheet real, Apps Script, navegador ni deployments. La validación con hoja aislada y operaciones WRITE/ADMIN queda pendiente de Beta. No se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+H-AUD-037-001 — AUG-037 — RESUELTO EN VALIDACIÓN LÓGICA LOCAL — 2026-11-10
+Hallazgos: las cargas generales podían reutilizar un archivo por nombre/token, MIME y tamaño sin recalcular el contenido; markImageUploadLinked() actualizaba solo la descripción Drive y podía devolver false sin dejar una referencia durable de operación; no había proceso para reconciliar pending.
+Corrección: ImageUploadLedger se persiste y verifica antes de crear archivos. Registra token, operationKey, folderId, MIME, size, SHA-256, fileId/URL, estado y referencias de Cortes. La reutilización verifica bytes, hash, operación, carpeta, MIME, tamaño y token. La descripción Drive v2 conserva metadatos y referencias; el ledger es la fuente durable.
+Reconciliación: ADMIN reconcilePendingImageUploads usa dry-run por defecto, confirm:true para aplicar, paginación de 1–100 filas (50 por defecto) y estados linked, pending_unreferenced, orphan_candidate, file_missing y requires_review. La respuesta perdida con referencia presente pasa a linked; referencias ausentes permanecen pendientes/huérfanas; archivo faltante/alterado queda identificado. No se elimina ningún archivo.
+Límites: 10 MB por imagen. Si ImageUploadLedger no está disponible, la carga falla antes de crear el archivo. markImageUploadLinked no bloquea el guardado si falla; el registro pending queda para reconciliación.
+Validación: Services/Test/ImageUploadLedger.js 18/18 PASS; SharedMutationCoordinator 25/25 PASS; parsing V8 ADMIN/WRITE/Coordinator/API/tests PASS; helpers de carga ADMIN/WRITE idénticos.
+Límites de validación: no se ejecutó Drive real, Spreadsheet real, Apps Script desplegado ni concurrencia física. La prueba integral en copias aisladas queda pendiente de Beta. No se modificaron datos productivos.
+================================================================================
