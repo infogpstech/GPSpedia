@@ -205,6 +205,12 @@ function runFeedbackWriteSecurityTests() {
             assert_(result.recovered && runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === 1);
             assert_(ledger.rows[1][5] === "completed");
         });
+        test_("Un contador inválido bloquea el like sin sobrescribirlo", function() {
+            const runtime = createLikeRuntime_("VEH-3", false);
+            runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] = "dato-inválido";
+            expectThrow_(() => handleRecordLike({ vehicleId: "VEH-3", corteIndex: 1, userId: "USR-1", userName: "Uno" }), "contador de likes");
+            assert_(runtime.cuts.rows[1][COLS_CORTES.utilCorte1 - 1] === "dato-inválido", "El contador inválido no debe sobrescribirse.");
+        });
         test_("Un ID de vehículo duplicado bloquea el like", function() {
             const runtime = createLikeRuntime_("DUP", true);
             expectThrow_(() => handleRecordLike({ vehicleId: "DUP", corteIndex: 1, userId: "USR-1", userName: "Uno" }), "ID duplicado");
