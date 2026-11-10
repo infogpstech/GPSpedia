@@ -335,6 +335,88 @@ function runFeedbackWriteSecurityTests() {
             return { cuts, sheets };
         }
 
+        test_("suggestCutChange devuelve el registro existente ante un reintento idéntico", function() {
+            const originalGetSafeSheet = getSafeSheet;
+            const originalLog = logUserActivity;
+            const originalLock = LockService;
+            const originalSpreadsheetApp = SpreadsheetApp;
+            const rows = [Array(8).fill("header")];
+            const sheet = makeSheet(rows);
+            let activityCount = 0;
+            try {
+                getSafeSheet = () => sheet;
+                logUserActivity = () => { activityCount++; };
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                SpreadsheetApp = { flush: function() {} };
+                const payload = {
+                    reportId: "REP-CUT-001", vehicleId: "VEH-CUT-1", corteIndex: 2,
+                    userId: "USR-TEST-01", userName: "Usuario verificado",
+                    details: "Ubicación del cable", proposedValues: { tipo: "Relay", activaTestigo: true }
+                };
+                const first = handleSuggestCutChange(payload);
+                const retry = handleSuggestCutChange(payload);
+                assert_(first.status === "success" && !first.alreadySuggested);
+                assert_(retry.status === "success" && retry.alreadySuggested);
+                assert_(sheet.rows.length === 2, "El reintento no debe insertar otra fila.");
+                assert_(activityCount === 1, "El reintento no debe duplicar la actividad.");
+            } finally {
+                getSafeSheet = originalGetSafeSheet;
+                logUserActivity = originalLog;
+                LockService = originalLock;
+                SpreadsheetApp = originalSpreadsheetApp;
+            }
+        });
+        test_("suggestCutChange rechaza reutilizar reportId con contenido distinto", function() {
+            const originalGetSafeSheet = getSafeSheet;
+            const originalLog = logUserActivity;
+            const originalLock = LockService;
+            const originalSpreadsheetApp = SpreadsheetApp;
+            const sheet = makeSheet([Array(8).fill("header")]);
+            let activityCount = 0;
+            try {
+                getSafeSheet = () => sheet;
+                logUserActivity = () => { activityCount++; };
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                SpreadsheetApp = { flush: function() {} };
+                const payload = {
+                    reportId: "REP-CUT-002", vehicleId: "VEH-CUT-2", corteIndex: 1,
+                    userId: "USR-TEST-01", userName: "Usuario verificado",
+                    details: "Detalle original", proposedValues: { tipo: "Relay" }
+                };
+                handleSuggestCutChange(payload);
+                expectThrow_(() => handleSuggestCutChange({ ...payload, details: "Detalle alterado" }), "datos distintos");
+                assert_(sheet.rows.length === 2 && activityCount === 1);
+            } finally {
+                getSafeSheet = originalGetSafeSheet;
+                logUserActivity = originalLog;
+                LockService = originalLock;
+                SpreadsheetApp = originalSpreadsheetApp;
+            }
+        });
+        test_("suggestCutChange bloquea reportId con registros duplicados preexistentes", function() {
+            const originalGetSafeSheet = getSafeSheet;
+            const originalLock = LockService;
+            const record = {
+                subType: "suggestion_cut", reportId: "REP-CUT-DUP",
+                vehicleId: "VEH-CUT-3", corteIndex: 3, userId: "USR-TEST-01",
+                requestFingerprint: "fingerprint"
+            };
+            const row = Array(8).fill("");
+            row[COLS_FEEDBACKS.Problema - 1] = JSON.stringify(record);
+            try {
+                getSafeSheet = () => makeSheet([Array(8).fill("header"), row.slice(), row.slice()]);
+                LockService = { getScriptLock: () => ({ waitLock: function() {}, releaseLock: function() {} }) };
+                expectThrow_(() => handleSuggestCutChange({
+                    reportId: "REP-CUT-DUP", vehicleId: "VEH-CUT-3", corteIndex: 3,
+                    userId: "USR-TEST-01", userName: "Usuario verificado",
+                    details: "Detalle", proposedValues: {}
+                }), "aparece duplicada");
+            } finally {
+                getSafeSheet = originalGetSafeSheet;
+                LockService = originalLock;
+            }
+        });
+
         test_("Los likes son idempotentes por actor, vehículo y corte", function() {
             const runtime = createLikeRuntime_("VEH-1", false);
             const first = handleRecordLike({ vehicleId: "VEH-1", corteIndex: 1, userId: "USR-1", userName: "Uno" });
