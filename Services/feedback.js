@@ -1534,11 +1534,15 @@ function handleGetPysData() {
 /* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */
 function handleAddProblem(payload) {
     const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload || {};
-    if (!titulo || !descripcion) throw new Error("Título y descripción son obligatorios.");
-    if (String(titulo).length > 30 || String(descripcion).length > 700) throw new Error("Título o descripción superan la longitud permitida.");
-    if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solución si no marca 'Sin solución'.");
-    if (solucion && String(solucion).length > 700) throw new Error("La solución no puede superar 700 caracteres.");
-    if (prevenir && String(prevenir).length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
+    const normalizedTitle = String(titulo || "").trim();
+    const normalizedDescription = String(descripcion || "").trim();
+    const normalizedSolution = String(solucion || "").trim();
+    const normalizedPrevention = String(prevenir || "").trim();
+    if (!normalizedTitle || !normalizedDescription) throw new Error("Título y descripción son obligatorios.");
+    if (normalizedTitle.length > 30 || normalizedDescription.length > 700) throw new Error("Título o descripción superan la longitud permitida.");
+    if (!sinSolucion && !normalizedSolution) throw new Error("Debe proporcionar una solución si no marca 'Sin solución'.");
+    if (normalizedSolution.length > 700) throw new Error("La solución no puede superar 700 caracteres.");
+    if (normalizedPrevention.length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
     if (!userId || !userName) throw new Error("La sesión verificada no proporcionó un colaborador válido.");
     if (typeof imgBase64 !== "string" || !imgBase64.trim()) throw new Error("La imagen del problema es obligatoria.");
     if (String(videoUrl || "").trim()) throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
@@ -1565,11 +1569,11 @@ function handleAddProblem(payload) {
 
         const models = alcance === "especifico" && Array.isArray(modelosAsociados)
             ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean))) : [];
-        sheet.appendRow([problemId, titulo, descripcion, sinSolucion ? "" : "x", sinSolucion ? "" : (solucion || ""), prevenir || "", imageUrl, "", userName, models.length ? JSON.stringify(models) : ""]);
+        sheet.appendRow([problemId, normalizedTitle, normalizedDescription, sinSolucion ? "" : "x", sinSolucion ? "" : normalizedSolution, normalizedPrevention, imageUrl, "", userName, models.length ? JSON.stringify(models) : ""]);
         SpreadsheetApp.flush();
         const persisted = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId && String(row[6] || "").trim() === imageUrl);
         if (persisted.length !== 1) throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
-        try { logUserActivity(userId, userName, "add_problem", problemId, titulo); }
+        try { logUserActivity(userId, userName, "add_problem", problemId, normalizedTitle); }
         catch (logError) { console.error("No se pudo registrar la actividad de alta PyS:", logError); }
         return { status: "success", message: "Problema registrado correctamente.", problemId };
     } catch (error) {
