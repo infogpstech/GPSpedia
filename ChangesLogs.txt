@@ -724,3 +724,12 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 - AUG-040 permanece EN PROGRESO; esta condición queda completada localmente con integración real diferida a Beta.
 - Sin deployments, cambios de endpoints ni operaciones sobre Apps Script, Drive, Spreadsheet o datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-10 — HARDENING FEEDBACK — REGRESIÓN DE «MODELO CONFIRMADO» EN suggestYear
+- Services/Test/FeedbackWriteSecurity.js: agrega prueba de flujo para dos votos positivos previos y un tercer aporte «Modelo confirmado».
+- Comprueba que el clasificador suma el tercer aporte, alcanza 3/3, amplía el rango y elimina los tres votos positivos atendidos.
+- No se modificó lógica de producción: la respuesta persistida ya coincide con el criterio de isPositiveYearSuggestionRow.
+- Validación local: runFeedbackWriteSecurityTests() 34/34 PASS; parsing/sintaxis de los dos archivos JavaScript 2/2 PASS.
+- AUG-040 permanece EN PROGRESO; integración real diferida a Beta.
+================================================================================

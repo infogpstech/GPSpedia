@@ -823,3 +823,34 @@ Siguiente iteración: revisar una única condición funcional pendiente de sugge
 Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
 Sin deployments, cambios de endpoints, datos productivos ni modificaciones de la rama base.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE AVANCE — AUG-040 suggestYear: CLASIFICACIÓN DE «MODELO CONFIRMADO» — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre: efda0849df6f07d51bbf15f7ab2890d6898c68e0.
+
+TAREA ÚNICA
+Verificar que la respuesta «Modelo confirmado» se clasifique como aporte positivo, cuente para el umbral de tres usuarios verificados y sea retirada del registro una vez aplicada la ampliación.
+
+RESULTADO
+La revisión de los textos exactos confirmó que la respuesta persistida por handleSuggestYear coincide con el fragmento que espera isPositiveYearSuggestionRow. No se encontró defecto de producción y Services/feedback.js permanece sin cambios.
+Se agregó una prueba de regresión de flujo con dos votos positivos previos y un tercer usuario que responde «Modelo confirmado». La prueba confirma el conteo 3/3, la ampliación del rango del vehículo y la limpieza de los tres aportes positivos ya atendidos en Feedbacks.
+
+VALIDACIÓN LOCAL
+- runFeedbackWriteSecurityTests(): 34/34 PASS.
+- Parsing/sintaxis de Services/feedback.js y Services/Test/FeedbackWriteSecurity.js: 2/2 PASS.
+- Ejecución con mocks locales; no representa integración real con Apps Script/Spreadsheet/Drive.
+
+ARCHIVOS
+- Services/Test/FeedbackWriteSecurity.js
+- ChangesLogs.txt
+- checkpoint.md
+
+ESTADO Y CONTINUIDAD
+Clasificación y ciclo de «Modelo confirmado»: COMPLETADA CON VALIDACIÓN DIFERIDA.
+AUG-040 y la revisión funcional de suggestYear permanecen EN PROGRESO.
+Siguiente iteración: revisar una única condición funcional pendiente de suggestYear.
+Integración real con Apps Script/Spreadsheet/Drive diferida a Beta; no ejecutada.
+No se modificó lógica de producción, Auditoría.txt, endpoints, deployments, datos productivos ni rama base.
+================================================================================
