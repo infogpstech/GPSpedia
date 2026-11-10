@@ -1005,6 +1005,28 @@ function handleRecordLike(payload) {
     }
 }
 
+function findReportByReportId_(sheet, reportId, metadataColumn) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return null;
+    const lastColumn = Math.max(metadataColumn, COLS_FEEDBACKS.Problema);
+    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const matches = [];
+    rows.forEach((row, index) => {
+        let metadata = null;
+        try {
+            const parsed = JSON.parse(String(row[metadataColumn - 1] || ""));
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) metadata = parsed;
+        } catch (error) {}
+        if (metadata && String(metadata.reportId || "") === String(reportId)) {
+            matches.push({ rowIndex: index + 2, row, metadata });
+        }
+    });
+    if (matches.length > 1) {
+        throw new Error("El identificador del reporte aparece duplicado en Feedbacks; requiere revisión.");
+    }
+    return matches[0] || null;
+}
+
 function handleReportProblem(payload) {
     const { vehicleId, problemText, userId, userName } = payload;
     if (!vehicleId || !problemText || !userId || !userName) {
@@ -1037,47 +1059,77 @@ function handleReportProblem(payload) {
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     let generatedReportId = "";
+    let duplicateReport = false;
     try {
         const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         const metadataColumn = reportContext ? ensureReportMetadataColumn(sheet) : 0;
-        const lastRow = sheet.getLastRow();
-        const newRowNumber = lastRow + 1;
-        const FORMULA_ROW = 2;
-        const lastCol = reportContext
-            ? Math.max(sheet.getLastColumn(), metadataColumn, 8)
-            : (sheet.getLastColumn() || 8);
-
-        if (lastRow >= FORMULA_ROW) {
-            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-            formulaRange.copyTo(newRowRange);
-            if (lastCol > 1) {
-                sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+        if (reportContext) {
+            const existing = findReportByReportId_(sheet, reportContext.reportId, metadataColumn);
+            if (existing) {
+                const sameReport =
+                    String(existing.row[COLS_FEEDBACKS.Usuario - 1] || "") === String(userName) &&
+                    String(existing.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(vehicleId) &&
+                    String(existing.row[COLS_FEEDBACKS.Problema - 1] || "") === String(problemText) &&
+                    String(existing.metadata.vehicleId || "") === String(vehicleId) &&
+                    Number(existing.metadata.corteIndex) === reportContext.corteIndex &&
+                    existing.metadata.activaTestigoMotor === reportContext.activaTestigoMotor &&
+                    (!existing.metadata.userId || String(existing.metadata.userId) === String(userId));
+                if (!sameReport) {
+                    throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
+                }
+                generatedReportId = reportContext.reportId;
+                duplicateReport = true;
             }
         }
 
-        const values = [[userName, vehicleId, problemText]];
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
+        if (!duplicateReport) {
+            const lastRow = sheet.getLastRow();
+            const newRowNumber = lastRow + 1;
+            const FORMULA_ROW = 2;
+            const lastCol = reportContext
+                ? Math.max(sheet.getLastColumn(), metadataColumn, 8)
+                : (sheet.getLastColumn() || 8);
 
-        if (reportContext) {
-            const metadata = {
-                reportId: reportContext.reportId,
-                vehicleId: String(vehicleId),
-                corteIndex: reportContext.corteIndex,
-                activaTestigoMotor: reportContext.activaTestigoMotor
-            };
-            sheet.getRange(newRowNumber, metadataColumn).setValue(JSON.stringify(metadata));
+            if (lastRow >= FORMULA_ROW) {
+                const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+                const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+                formulaRange.copyTo(newRowRange);
+                if (lastCol > 1) {
+                    sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+                }
+            }
+
+            const values = [[userName, vehicleId, problemText]];
+            sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
+
+            if (reportContext) {
+                const metadata = {
+                    reportId: reportContext.reportId,
+                    userId: String(userId),
+                    vehicleId: String(vehicleId),
+                    corteIndex: reportContext.corteIndex,
+                    activaTestigoMotor: reportContext.activaTestigoMotor
+                };
+                sheet.getRange(newRowNumber, metadataColumn).setValue(JSON.stringify(metadata));
+            }
+            SpreadsheetApp.flush();
+
+            const idVal = sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).getValue();
+            generatedReportId = reportContext ? reportContext.reportId : `REP-${idVal || Date.now()}`;
         }
-        SpreadsheetApp.flush();
-
-        const idVal = sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).getValue();
-        generatedReportId = reportContext ? reportContext.reportId : `REP-${idVal || Date.now()}`;
     } finally {
         lock.releaseLock();
     }
 
-    logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
-    return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
+    if (!duplicateReport) {
+        logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
+    }
+    return {
+        status: 'success',
+        message: duplicateReport ? 'El reporte ya estaba registrado; se devolvió el identificador existente.' : 'Problema reportado.',
+        reportId: generatedReportId,
+        alreadyReported: duplicateReport
+    };
 }
 function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
     const cache = CacheService.getScriptCache();
