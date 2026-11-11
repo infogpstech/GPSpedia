@@ -2354,10 +2354,13 @@ function addVinToAvailableSlot(existingCollection, vinPrefix, maxAllowed, reques
 
 /* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */
 function extractVinPrefix(vinStr) {
-  if (!vinStr) return "";
-  const cleaned = String(vinStr).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-  if (cleaned.length <= 5) return "";
-  return cleaned.substring(0, cleaned.length - 5);
+    if (vinStr === null || vinStr === undefined || String(vinStr).trim() === "") return "";
+    if (typeof vinStr !== "string") throw new Error("El VIN debe enviarse como texto.");
+    const cleaned = vinStr.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!cleaned) throw new Error("El VIN no contiene caracteres alfanuméricos válidos.");
+    if (cleaned.length > 18) throw new Error("El VIN normalizado no puede superar 18 caracteres.");
+    if (cleaned.length <= 5) throw new Error("El VIN debe contener más de cinco caracteres; los últimos cinco se reservan para el número serial.");
+    return cleaned.substring(0, cleaned.length - 5);
 }
 
 function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
@@ -2394,7 +2397,7 @@ function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
 }
 
 function handleCheckVinDuplicate(payload) {
-  const { vin, currentVehicleId } = payload;
+  const { vin, currentVehicleId } = payload || {};
   const prefix = extractVinPrefix(vin);
   if (!prefix) {
     return { status: 'success', duplicate: false };

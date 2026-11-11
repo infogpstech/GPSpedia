@@ -442,9 +442,13 @@ function addVinToAvailableSlot(existingCollection, vinPrefix, maxAllowed, reques
 }
 
 function extractVinPrefixForAdmin(vinRaw) {
-    if (!vinRaw) return "";
-    const cleaned = String(vinRaw).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-    return cleaned.length > 5 ? cleaned.substring(0, cleaned.length - 5) : "";
+    if (vinRaw === null || vinRaw === undefined || String(vinRaw).trim() === "") return "";
+    if (typeof vinRaw !== "string") throw new Error("El VIN debe enviarse como texto.");
+    const cleaned = vinRaw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!cleaned) throw new Error("El VIN no contiene caracteres alfanuméricos válidos.");
+    if (cleaned.length > 18) throw new Error("El VIN normalizado no puede superar 18 caracteres.");
+    if (cleaned.length <= 5) throw new Error("El VIN debe contener más de cinco caracteres; los últimos cinco se reservan para el número serial.");
+    return cleaned.substring(0, cleaned.length - 5);
 }
 
 function countEquipmentVersionsForAdmin(rawVersions) {
@@ -1904,6 +1908,62 @@ function handleAddLogo(payload, logMessage) {
     };
 }
 
+function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue) {
+    if (typeof rawValue !== "string" && !Array.isArray(rawValue)) throw new Error("La colección VIN debe enviarse como texto o arreglo.");
+    const collection = parseVinCollectionForAdmin(rawValue);
+    const existing = parseVinCollectionForAdmin(rowValues[getVinColumnIndex(sheet) - 1]);
+    const versionParts = String(rowValues[COLS_CORTES.versionesAplicables - 1] || "").split(/[,/\\;]+/).map(value => value.trim()).filter(Boolean);
+    if (versionParts.length > 3) throw new Error("El vehículo contiene más de tres versiones; revisa su configuración antes de editar la colección VIN.");
+    const maxAllowed = Math.max(1, versionParts.length);
+    if (collection.slice(maxAllowed).some(Boolean)) throw new Error("La colección VIN contiene identificadores fuera de las posiciones permitidas por las versiones registradas.");
+    for (let index = 0; index < 3; index++) {
+        const previous = existing[index] || "", next = collection[index] || "";
+        if (previous && next !== previous) throw new Error("No se permite reemplazar, eliminar ni mover un VIN ya asociado a una versión. Solo pueden completarse posiciones vacías.");
+        if (!previous && next) {
+            const duplicate = findVinDuplicateForAdmin(sheet, next, vehicleId);
+            if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
+        }
+    }
+    return serializeVinCollection(collection);
+}
+function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage) {
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo obtener el bloqueo para editar la colección VIN. Intenta nuevamente."); }
+    try {
+        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        const vinColumnIndex = getVinColumnIndex(sheet);
+        if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene un encabezado VIN único.");
+        const lastRow = sheet.getLastRow();
+        if (lastRow < 2) throw new Error("No se encontraron vehículos registrados.");
+        const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+        const rowIndex = ids.findIndex(id => String(id) === String(vehicleId));
+        if (rowIndex < 0) throw new Error("No se encontró el vehículo con ID '" + vehicleId + "'.");
+        const actualRow = rowIndex + 2;
+        const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const serialized = prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue);
+        const previousValue = sheet.getRange(actualRow, vinColumnIndex).getValue();
+        let attempted = false;
+        try {
+            attempted = true;
+            sheet.getRange(actualRow, vinColumnIndex).setValue(serialized);
+            SpreadsheetApp.flush();
+            const persisted = parseVinCollectionForAdmin(sheet.getRange(actualRow, vinColumnIndex).getValue());
+            if (JSON.stringify(persisted) !== JSON.stringify(parseVinCollectionForAdmin(serialized))) throw new Error("La colección VIN no coincide con el valor solicitado después de guardar.");
+        } catch (writeError) {
+            if (attempted) {
+                try {
+                    sheet.getRange(actualRow, vinColumnIndex).setValue(previousValue);
+                    SpreadsheetApp.flush();
+                    if (String(sheet.getRange(actualRow, vinColumnIndex).getValue() || "") !== String(previousValue || "")) throw new Error("La reversión no pudo verificarse.");
+                } catch (rollbackError) { throw new Error("Falló la escritura de VIN y también la reversión: " + writeError.message + "; " + rollbackError.message); }
+            }
+            throw writeError;
+        }
+        logMessage("Edición In-Modal", "Colección VIN actualizada y verificada para el vehículo ID: " + vehicleId + ".");
+        return { status: "success", normalizedValue: serialized, message: "La colección VIN fue guardada y verificada correctamente." };
+    } finally { lock.releaseLock(); }
+}
+
 /**
  * Actualizar de manera silenciosa una celda en Google Sheets por ID de vehículo y columna/campo
  */
@@ -1913,6 +1973,7 @@ function handleUpdateVehicleField(payload, logMessage) {
     if (!isAdminModalEditField_(fieldName)) {
         throw new Error("El campo '" + fieldName + "' no forma parte de la edición del modal de detalle.");
     }
+    if (fieldName === "vin") return handleUpdateVehicleVinCollection_(vehicleId, value, logMessage);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const colIndex = fieldName === "vin" ? getVinColumnIndex(sheet) : COLS_CORTES[fieldName];
     if (!colIndex) throw new Error("El campo '" + fieldName + "' no existe en el esquema del catálogo.");

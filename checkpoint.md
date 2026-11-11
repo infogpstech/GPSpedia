@@ -311,3 +311,25 @@ Validación local:
 Validación Beta pendiente: eventos reales del navegador, IndexedDB real, Apps Script/Spreadsheet y pruebas de campo. No se modificaron servicios ni datos productivos.
 AUG-058 queda cerrada. No se inicia otra tarea en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-059 — CIERRE — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD inicial de esta iteración: 0cccf68663a68c2dd6eaba2d92b6a293ac79ec33. Rama base `GPSpedia2.2.5` sin cambios.
+
+Cambios:
+- Validadores equivalentes WRITE/ADMIN: entrada textual, normalización alfanumérica en mayúsculas, longitud normalizada de 6 a 18 y extracción de prefijo sin descartar entradas cortas.
+- `handleCheckVinDuplicate`, `handleAddVinToVehicleLocked` y las rutas addOrUpdate WRITE/ADMIN rechazan entradas inválidas antes de modificar registros. Se mantienen flujos de vehículo nuevo/existente y la lógica de slots.
+- Edición ADMIN VIN separada de mapa fijo de columnas: encabezado dinámico, colección JSON canónica, duplicados intervehículo, límite por versiones, no reemplazo/eliminación/desplazamiento de VIN existentes, bloqueo y verificación post-escritura con reversión.
+- UI de Agregar VIN valida longitud. El editor restaura el valor anterior si falla el guardado. add_cortes valida longitud y no continúa cuando falla la verificación de duplicados.
+
+Pruebas:
+- VinAuthoritativeValidation 12/12 PASS.
+- AdminModalEditSecurity 13/13 PASS.
+- VinTestigoIntegrity 14/14 PASS.
+- Parsing V8 WRITE/ADMIN/ui/add_cortes PASS.
+- AddCutOperationIntegrity: 24/27 en fuente base y modificada; tres escenarios de respuesta perdida fallan en ambas versiones y se consideran preexistentes. No se marcan como aprobados.
+
+Validación Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados y concurrencia real. No se modificaron datos productivos. AUG-059 cerrada; no se inicia AUG-060 en esta iteración.
+================================================================================

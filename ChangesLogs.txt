@@ -1699,3 +1699,13 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Nueva suite `Services/Test/AddCutOperationRecoveryConcurrency.js`: 9/9 PASS; parsing V8 del módulo frontend PASS.
 - Navegador, IndexedDB real y eventos del ciclo de vida quedan pendientes para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-059 — COMPLETAR EDICIÓN Y VALIDACIÓN AUTORITATIVA DE VIN
+- WRITE/ADMIN: rechazo explícito de VIN normalizado <=5 o >18 caracteres; no se descarta silenciosamente un prefijo vacío.
+- ADMIN: edición de colección VIN por encabezado dinámico, JSON canónico, validación de duplicados y slots por versión; bloquea reemplazo/desplazamiento y verifica persistencia con reversión.
+- UI: validación en modal Agregar VIN y add_cortes; el editor restaura el valor anterior si el backend no confirma; add_cortes falla cerrado si falla el chequeo de duplicados.
+- Nueva suite `Services/Test/VinAuthoritativeValidation.js`: 12/12 PASS. Regresiones: AdminModalEditSecurity 13/13; VinTestigoIntegrity 14/14; parsing V8 PASS.
+- AddCutOperationIntegrity: 24/27 en base y modificada; mismos tres fallos previos de recuperación por respuesta perdida, documentados sin atribución a AUG-059.
+================================================================================

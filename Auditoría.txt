@@ -510,3 +510,24 @@ Resolución:
 Validación local: AddCutOperationRecoveryConcurrency 9/9 PASS. Incluye disparadores concurrentes, checkOperation lento, evento durante submit en etapas 1–3, visibilitychange durante recuperación, snapshots pending/completed y solapamiento de loading. Parsing V8 del módulo frontend PASS.
 Límites: no se ejecutaron eventos reales de navegador, IndexedDB real, Apps Script ni pruebas de campo; quedan para Beta.
 ================================================================================
+
+
+================================================================================
+AUG-059 — CIERRE DE EDICIÓN Y VALIDACIÓN AUTORITATIVA VIN — 2026-11-11
+Origen: H-AUD-004-002 y H-AUD-004-003; AUD-T-004; sesión AUD-20261107-S022 / AUD-CP-0022.
+
+Resolución:
+- WRITE `extractVinPrefix()` y ADMIN `extractVinPrefixForAdmin()` normalizan a mayúsculas y alfanuméricos, rechazan valores que tras normalizar no superen cinco caracteres y rechazan más de 18. Los últimos cinco continúan reservados para el serial; un valor de seis caracteres produce un prefijo de un carácter.
+- `handleCheckVinDuplicate` ya no convierte silenciosamente una entrada corta en `duplicate:false`; el rechazo ocurre antes de consultar Sheets. `handleAddVinToVehicleLocked` y las rutas `handleAddOrUpdateCut` WRITE/ADMIN consumen los mismos validadores estrictos. Se conservan las rutas de vehículo nuevo/existente y las reglas de inserción por slot.
+- `handleUpdateVehicleField` deriva `vin` a un flujo específico que localiza el encabezado VIN dinámicamente. La colección se parsea/serializa como JSON canónico; se verifican duplicados entre vehículos, límite de tres posiciones y asociación con versiones. Los VIN ya asignados no pueden reemplazarse, eliminarse ni moverse; solo se completan slots vacíos. La escritura se verifica después de flush y se intenta revertir ante fallo.
+- `ui.js` valida el VIN del modal Agregar VIN y restaura el valor anterior del editor si ADMIN no confirma el guardado. `add_cortes.html` valida longitud y falla cerrado si no puede confirmar el chequeo de duplicados; no envía una operación con VIN inválido o sin verificación.
+
+Validación local:
+- `VinAuthoritativeValidation.js`: 12/12 PASS.
+- `AdminModalEditSecurity.js`: 13/13 PASS.
+- `VinTestigoIntegrity.js`: 14/14 PASS.
+- Parsing V8 de WRITE, ADMIN, `ui.js` y módulo `add_cortes.html`: PASS.
+- `AddCutOperationIntegrity.js`: 24/27 tanto con la fuente base previa como con la fuente modificada. Los mismos tres escenarios de recuperación por respuesta perdida fallan en ambas; se documentan como fallos preexistentes, sin atribuirlos a AUG-059 ni declararlos aprobados.
+
+Pendiente para Beta: navegador real, Apps Script/Spreadsheet desplegados y concurrencia de servicios reales. No se modificaron datos productivos.
+================================================================================

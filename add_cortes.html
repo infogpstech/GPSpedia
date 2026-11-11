@@ -727,8 +727,16 @@
                         if (warningEl) warningEl.style.display = 'none';
                         return;
                     }
+                    const normalizedVin = vinVal.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                    if (!normalizedVin || normalizedVin.length <= 5 || normalizedVin.length > 18) {
+                        if (warningEl) { warningEl.textContent = !normalizedVin || normalizedVin.length <= 5
+                            ? "El VIN debe contener más de cinco caracteres; los últimos cinco se reservan para el número serial."
+                            : "El VIN normalizado no puede superar 18 caracteres."; warningEl.style.display = "block"; }
+                        return;
+                    }
                     try {
                         const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: state.selectedVehicleId });
+                        if (!res || !["success", "duplicate"].includes(res.status)) throw new Error(res && res.message || "No se pudo validar el VIN.");
                         if (res.duplicate) {
                             warningEl.style.display = 'block';
                             warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
@@ -1042,8 +1050,17 @@
             try {
                 const vinInput = document.getElementById('vinInput');
                 if (vinInput && vinInput.value.trim()) {
+                    const normalizedVin = vinInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+                    if (!normalizedVin || normalizedVin.length <= 5 || normalizedVin.length > 18) {
+                        const warningEl = document.getElementById('vinDuplicateWarning');
+                        if (warningEl) { warningEl.textContent = !normalizedVin || normalizedVin.length <= 5
+                            ? "El VIN debe contener más de cinco caracteres; los últimos cinco se reservan para el número serial."
+                            : "El VIN normalizado no puede superar 18 caracteres."; warningEl.style.display = "block"; }
+                        alert("El VIN ingresado no cumple con la longitud permitida."); return;
+                    }
                     try {
                         const checkVin = await routeAction('checkVinDuplicate', { vin: vinInput.value.trim(), currentVehicleId: state.selectedVehicleId });
+                        if (!checkVin || !["success", "duplicate"].includes(checkVin.status)) throw new Error(checkVin && checkVin.message || "No se pudo validar el VIN.");
                         if (checkVin.duplicate) {
                             const warningEl = document.getElementById('vinDuplicateWarning');
                             if (warningEl) {
@@ -1065,7 +1082,10 @@
                             }
                             return;
                         }
-                    } catch (err) { console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError'); }
+                    } catch (err) {
+                        console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError');
+                        throw new Error(err && err.message || "No se pudo validar el VIN. El registro no se enviará.");
+                    }
                 }
                 getCurrentSessionForOwner(state.userId);
                 const opId = await getOrGenerateOpId();

@@ -27,7 +27,8 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - **Problema:** el editor envía fieldName='vin', pero el backend consulta un mapa fijo que no contiene esa columna dinámica. Los puntos de entrada no validan maxlength=18 en servidor y pueden descartar silenciosamente un valor corto.
 - **Criterios de aceptación:** resolver VIN dinámicamente o retirar el control no soportado; validar máximo 18 en backend; rechazar explícitamente valores normalizados de cinco caracteres o menos; mantener normalización, duplicados, slots y asociación de versiones en todos los puntos de entrada; probar edición, altas, vehículo nuevo/existente y payload directo manipulado.
 - **Relación:** AUD-T-004; AUD-T-030/AUG-036 para esquema/parsers.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Cierre:** WRITE y ADMIN rechazan VIN normalizado de 5 o menos y superior a 18; ADMIN edita la colección mediante encabezado VIN dinámico, JSON canónico, duplicados, slots/versiones y escritura verificada con reversión. Formularios validan longitud y add_cortes no continúa si falla la comprobación de duplicados. Evidencia en `Services/Test/VinAuthoritativeValidation.js` y `checkpoint.md`.
 
 ### AUG-060 — Preservar posiciones y normalizar la presentación de VIN por versión
 - **Hallazgo origen:** H-AUD-004-001.

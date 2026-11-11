@@ -613,3 +613,11 @@ Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes
 - `Services/Test/AddCutOperationRecoveryConcurrency.js`: ejecutar `runAddCutOperationRecoveryConcurrencyTests({ frontend })`.
 - Cubre single-flight entre init/online/visibilitychange, checkOperation lento, reanudación después de submit en etapas 1–3, restauración de snapshots pending, conservación de completed no confirmado y contador de loading compartido.
 - Validación local: 9/9 PASS en runtime V8 adaptado; parsing V8 del módulo frontend PASS. Navegador real, eventos del ciclo de vida e IndexedDB real quedan para Beta.
+
+
+## AUG-059 — Validación autoritativa de colecciones VIN
+- Ejecutar `runVinAuthoritativeValidationTests({ write, admin, ui, addCuts })` con las fuentes vigentes de `Services/write.js`, `Services/admin.js`, `ui.js` y el módulo de `add_cortes.html`.
+- Cubre longitudes normalizadas 5/6/18/19, separadores, payloads directos, consulta de duplicados, edición de colección en columna VIN dinámica, JSON canónico, duplicados entre vehículos, slots/versiones, prohibición de reemplazo/desplazamiento y reversión ante fallo de persistencia.
+- Validación local AUG-059: 12/12 PASS; `AdminModalEditSecurity`: 13/13 PASS; `VinTestigoIntegrity`: 14/14 PASS. Parsing V8 de WRITE/ADMIN/ui/add_cortes: PASS.
+- `AddCutOperationIntegrity` se comprobó contra la fuente base y la modificada: ambas dan 24/27; los mismos tres escenarios de recuperación por respuesta perdida fallan también en la base, por lo que no se atribuyen a AUG-059. No se declaran aprobados.
+- Navegador real, Apps Script/Spreadsheet desplegados y concurrencia multi-servicio quedan para Beta.

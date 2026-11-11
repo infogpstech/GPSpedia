@@ -2354,9 +2354,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         vinInput.placeholder = 'ej. ["1HGCM82633A", "2HGCM82633B"]';
         vinInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
         vinInput.onblur = async () => {
-            if (vinInput.value.trim() !== editedItemBuffer.vin) {
-                editedItemBuffer.vin = vinInput.value.trim();
-                await saveFieldSilently(activeItem.id, 'vin', vinInput.value.trim());
+            const nextValue = vinInput.value.trim();
+            if (nextValue !== String(editedItemBuffer.vin || "").trim()) {
+                const saved = await saveFieldSilently(activeItem.id, 'vin', nextValue);
+                if (saved) editedItemBuffer.vin = nextValue;
+                else vinInput.value = editedItemBuffer.vin || "";
             }
         };
 
@@ -8041,14 +8043,21 @@ export function openAddVinModal(item) {
         });
     }
 
+    const getVinInputError = value => {
+        const normalized = String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (!normalized) return "Ingresa un VIN válido.";
+        if (normalized.length <= 5) return "El VIN debe contener más de cinco caracteres; los últimos cinco se reservan para el número serial.";
+        if (normalized.length > 18) return "El VIN normalizado no puede superar 18 caracteres.";
+        return "";
+    };
     vinInput.addEventListener('blur', async () => {
         const vinVal = vinInput.value.trim();
-        if (!vinVal) {
-            warningEl.style.display = 'none';
-            return;
-        }
+        if (!vinVal) { warningEl.style.display = 'none'; return; }
+        const validationError = getVinInputError(vinVal);
+        if (validationError) { warningEl.textContent = validationError; warningEl.style.display = 'block'; return; }
         try {
             const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: item.id });
+            if (!res || !["success", "duplicate"].includes(res.status)) throw new Error(res && res.message || "No se pudo validar el VIN.");
             if (res.duplicate) {
                 warningEl.style.display = 'block';
                 warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
@@ -8063,7 +8072,8 @@ export function openAddVinModal(item) {
     form.onsubmit = async (e) => {
         e.preventDefault();
         const vinVal = vinInput.value.trim();
-        if (!vinVal) return;
+        const validationError = getVinInputError(vinVal);
+        if (validationError) { warningEl.textContent = validationError; warningEl.style.display = "block"; vinInput.focus(); return; }
 
         let selectedTrim = null;
         let isNewTrim = false;
