@@ -1236,3 +1236,14 @@ AUG-050 — CIERRE DE INTEGRACIÓN DEL MOTOR DIFERENCIAL VIN — 2026-11-11
 - Validación de ejecución Node CLI y navegador real pendiente; no se afirma prueba ejecutada.
 - Sin cambio de DB_VERSION, stores, datos locales, endpoints ni servicios productivos. AUG-051 continúa en progreso.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — AISLAMIENTO DE HISTORIAL Y VALIDACIÓN LOCAL POR CUENTA (ITERACIÓN 2)
+- offline.js: searchHistory, viewedItems y validationCache usan claves compuestas por userId e identificador; las operaciones sin propietario fallan cerradas.
+- Las consultas potencialmente correspondientes a VIN no se guardan; los registros heredados sin propietario no se muestran y los términos heredados potencialmente VIN se eliminan al consultar.
+- auth.js: la actividad se rehidrata después de validar la sesión y se limpia al cerrar sesión, perderla o cambiar de cuenta.
+- navigation.js y ui.js: lectores/escritores pasan userId y verifican la cuenta antes de actualizar la interfaz.
+- Services/Test/IndexedDBTransactions.js: tres escenarios nuevos de aislamiento multi-cuenta y privacidad VIN.
+- Sin cambio de DB_VERSION, stores, contratos del catálogo, endpoints, servicios productivos ni datos remotos.
+================================================================================
