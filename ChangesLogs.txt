@@ -1266,3 +1266,10 @@ Se añadió expiración de 30 días para miniaturas persistentes. Las lecturas d
 Archivos: offline.js; Services/Test/IndexedDBTransactions.js; Services/Test/README.md; checkpoint.md; ChangesLogs.txt; Tareas.txt.
 La suite incorpora un caso de expiración, eliminación y regeneración. No se modificó DB_VERSION ni la estructura de stores. LRU, cuota, memoria RAM, ObjectURL y concurrencia permanecen pendientes.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CORRECCIÓN DE ITERACIÓN 4
+Se corrigió el mock IndexedDB de delete en Services/Test/IndexedDBTransactions.js y se incorporó la limpieza oportunista TTL también al iniciar compresión. Se conserva el TTL de 30 días y el alcance de la iteración.
+Validación: parsing sintáctico V8 de offline.js y de la suite aprobado. La ejecución funcional completa no pudo completarse en el entorno de herramientas disponible; requiere Node CLI local. No se declara la suite como aprobada.
+================================================================================
