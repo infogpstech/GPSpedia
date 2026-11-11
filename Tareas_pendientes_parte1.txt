@@ -792,7 +792,7 @@ AUG-051 — ampliar criterios:
   7. Resolver addCutPending: conservar comprobación userId y evitar bloqueo indefinido por operaciones de otra cuenta con la misma vehicleId.
   8. Probar logout, cambio de cuenta, sesión invalidada, dos cuentas Desarrollador, operación pendiente/confirmada, reintento, recarga, dos pestañas, expiración y fallo de almacenamiento.
 - **Relación:** AUD-T-038; AUD-T-031; AUD-T-034/AUG-042; AUG-051.
-- **Estado:** EN PROGRESO. Iteración 1: COMPLETADA CON VALIDACIÓN DIFERIDA. addCutPending particionado por ownerId/vehicleId, migración segura de claves legadas y comprobación de sesión antes de reintentar; cinco escenarios 5/5 PASS en runtime V8 adaptado, incluido no persistir SessionToken. Pendiente: gpsepedia_pending_operation, política/aislamiento de reemplazos ADMIN, gpsepedia_edit_backup, retención/limpieza y sanitización completa de logs/errores.
+- **Estado:** EN PROGRESO. Iteración 1: COMPLETADA CON VALIDACIÓN DIFERIDA (addCutPending aislado por ownerId/vehicleId; 5 escenarios PASS). Iteración 2: COMPLETADA CON VALIDACIÓN DIFERIDA (gpsepedia_pending_operation particionado por ownerId, verificación de sesión antes de recuperación/reintento, migración de legado con owner explícito y cuarentena de legado sin owner; 7 pruebas locales PASS; tokens/credenciales excluidos y logs sensibles sanitizados). Pendiente: adminImageUploadPending y decisión explícita de privacidad ADMIN, gpsepedia_edit_backup, retención/expiración y limpieza global, y pruebas Beta de navegador/cambio de cuenta entre pestañas.
 
 ### AUG-054 — Autenticar checkOperation y minimizar su respuesta
 - **Hallazgo origen:** H-AUD-038-005. **Prioridad:** Alta.

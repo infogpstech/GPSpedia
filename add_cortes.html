@@ -333,6 +333,7 @@
     <script type="module">
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from './api-config.js';
+        import { createPendingOperationStore } from './pendingOperationStore.js';
         import './lightbox.js';
         import { openYouTubeUploadModal } from './youtubeUpload.js';
         import { createRichTextToolbar, applyRichTextFormat, applyRichTextColor } from './rich-text.js';
@@ -356,20 +357,21 @@
             isNewVehicleFlow: false
         };
 
+        function getPendingOperationStore() { return createPendingOperationStore(localStorage, state.userId); }
+        function getCurrentSessionForOwner(expectedOwnerId) {
+            let session;
+            try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+            catch (_) { throw new Error('SESSION_UNAVAILABLE'); }
+            const userId = String(session && (session.ID || session.id) || '').trim();
+            const sessionToken = String(session && session.SessionToken || '');
+            if (!userId || userId !== String(expectedOwnerId || '').trim() || !sessionToken) throw new Error('SESSION_OWNER_MISMATCH');
+            state.userId = userId; state.sessionToken = sessionToken;
+            return { userId, sessionToken };
+        }
         function getOrGenerateOpId() {
             if (state.opId) return state.opId;
-            const pending = localStorage.getItem('gpsepedia_pending_operation');
-            if (pending) {
-                try {
-                    const parsed = JSON.parse(pending);
-                    if (parsed && parsed.id) {
-                        state.opId = parsed.id;
-                        return state.opId;
-                    }
-                } catch (e) {
-                    console.error("Error parsing pending op for opId", e);
-                }
-            }
+            const pending = getPendingOperationStore().read().operation;
+            if (pending && pending.id) { state.opId = pending.id; return state.opId; }
             state.opId = 'OP-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9).toUpperCase();
             return state.opId;
         }
@@ -378,93 +380,45 @@
 
         /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */
         async function checkAndRecoverPendingOperation() {
-            const pendingStr = localStorage.getItem('gpsepedia_pending_operation');
-            if (!pendingStr) return;
-
-            let pendingOp;
-            try {
-                pendingOp = JSON.parse(pendingStr);
-            } catch (e) {
-                console.error("Error parsing pending operation", e);
-                localStorage.removeItem('gpsepedia_pending_operation');
-                return;
-            }
-
-            if (!pendingOp || (pendingOp.status !== 'processing' && pendingOp.status !== 'failed')) {
-                return;
-            }
-
-            // Esperar a que init() recupere la sesión antes de consultar operaciones protegidas.
             if (!state.userId || !state.sessionToken) return;
-
-            if (!navigator.onLine) {
-                console.log("Device is offline. Will attempt recovery when connection is restored.");
-                return;
-            }
-
-            console.log("Found interrupted operation. Attempting automatic silent recovery...", pendingOp);
+            let pendingOp;
+            try { getCurrentSessionForOwner(state.userId); pendingOp = getPendingOperationStore().read().operation; }
+            catch (error) { console.warn("No se pudo leer el snapshot pendiente; recuperación omitida.", error && error.name || 'StorageError'); return; }
+            if (!pendingOp || pendingOp.ownerId !== state.userId || !['processing','failed'].includes(pendingOp.status)) return;
+            if (!navigator.onLine) { console.log("Dispositivo sin conexión; recuperación pendiente."); return; }
             toggleLoading(true);
-
-            const silentVal = pendingOp.formData.silentRegister || false;
-            const serviceOverride = silentVal ? 'ADMIN' : null;
-
+            const silentVal = !!(pendingOp.formData && pendingOp.formData.silentRegister);
             try {
-                const checkRes = await routeAction('checkOperation', {
-                    opId: pendingOp.id,
-                    userId: state.userId,
-                    sessionToken: state.sessionToken
-                }, serviceOverride);
-
-                if (checkRes.exists) {
-                    console.log("Operation already completed on the server!", checkRes);
-
-                    localStorage.removeItem('gpsepedia_pending_operation');
-                    state.selectedVehicleId = checkRes.vehicleId;
-                    state.timestamp = checkRes.timestamp;
-
+                const session = getCurrentSessionForOwner(pendingOp.ownerId);
+                const checkRes = await routeAction('checkOperation', { opId:pendingOp.id, userId:session.userId, sessionToken:session.sessionToken }, silentVal ? 'ADMIN' : null);
+                getCurrentSessionForOwner(pendingOp.ownerId);
+                if (checkRes && checkRes.exists) {
+                    console.log("Operación pendiente confirmada en el servidor.");
+                    try { getPendingOperationStore().remove(pendingOp.id); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }
+                    state.opId = null; state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
                     alert("Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
                     proceedToStage3(checkRes.vehicleId);
                 } else {
-                    console.log("Operation was not executed on the server. Restoring form data for user...", pendingOp);
-
-                    state.selectedVehicleId = pendingOp.vehicleId;
-                    state.vehicleInfo = pendingOp.vehicleInfo;
-
+                    console.log("Operación no confirmada; se restaurarán los datos de la cuenta propietaria.");
+                    state.opId = pendingOp.id; state.selectedVehicleId = pendingOp.vehicleId; state.vehicleInfo = pendingOp.vehicleInfo || {};
                     const form2 = document.getElementById('form-stage-2');
                     if (form2) {
-                        document.getElementById('tipoCorte1').value = pendingOp.formData.tipoCorte1 || '';
-                        document.getElementById('configRelay1').value = pendingOp.formData.configRelay1 || '';
-                        document.getElementById('ubicacionCorte1').value = pendingOp.formData.ubicacionCorte1 || '';
-                        document.getElementById('colorCableCorte1').value = pendingOp.formData.colorCableCorte1 || '';
-                        if (document.getElementById('silentRegister')) {
-                            document.getElementById('silentRegister').checked = pendingOp.formData.silentRegister || false;
-                        }
-                        if (document.getElementById('testigoMotor')) {
-                            document.getElementById('testigoMotor').checked = pendingOp.formData.testigoMotor || false;
-                        }
-
+                        const data = pendingOp.formData || {};
+                        document.getElementById('tipoCorte1').value = data.tipoCorte1 || '';
+                        document.getElementById('configRelay1').value = data.configRelay1 || '';
+                        document.getElementById('ubicacionCorte1').value = data.ubicacionCorte1 || '';
+                        document.getElementById('colorCableCorte1').value = data.colorCableCorte1 || '';
+                        if (document.getElementById('silentRegister')) document.getElementById('silentRegister').checked = !!data.silentRegister;
+                        if (document.getElementById('testigoMotor')) document.getElementById('testigoMotor').checked = !!data.testigoMotor;
                         if (pendingOp.files) {
-                            if (pendingOp.files.imagenVehiculo) {
-                                state.restoredFiles.imagenVehiculo = pendingOp.files.imagenVehiculo;
-                                const previewVeh = document.getElementById('imagenVehiculo_preview');
-                                if (previewVeh) previewVeh.src = pendingOp.files.imagenVehiculo;
-                            }
-                            if (pendingOp.files.imgCorte1) {
-                                state.restoredFiles.imgCorte1 = pendingOp.files.imgCorte1;
-                                const previewCorte = document.getElementById('imgCorte1_preview');
-                                if (previewCorte) previewCorte.src = pendingOp.files.imgCorte1;
-                            }
+                            if (pendingOp.files.imagenVehiculo) { state.restoredFiles.imagenVehiculo=pendingOp.files.imagenVehiculo; const p=document.getElementById('imagenVehiculo_preview'); if(p)p.src=pendingOp.files.imagenVehiculo; }
+                            if (pendingOp.files.imgCorte1) { state.restoredFiles.imgCorte1=pendingOp.files.imgCorte1; const p=document.getElementById('imgCorte1_preview'); if(p)p.src=pendingOp.files.imgCorte1; }
                         }
-
-                        toggleNoRecomendado();
-                        showPhase(2);
+                        toggleNoRecomendado(); showPhase(2);
                     }
                 }
-            } catch (error) {
-                console.error("Automatic recovery check failed", error);
-            } finally {
-                toggleLoading(false);
-            }
+            } catch (error) { console.warn("Falló la comprobación de recuperación pendiente.", error && error.name || 'RecoveryError'); }
+            finally { toggleLoading(false); }
         }
 
         window.addEventListener('online', checkAndRecoverPendingOperation);
@@ -931,6 +885,8 @@
         async function handleStage2Submit(e) {
             e.preventDefault();
             if (isSubmittingStage2) return;
+            try { getCurrentSessionForOwner(state.userId); }
+            catch (_) { alert("Tu sesión cambió o expiró. Inicia sesión nuevamente antes de guardar."); window.location.replace('index.html'); return; }
             isSubmittingStage2 = true;
 
             console.log("[PING-PONG][1] Inicio de handleStage2Submit: Formulario enviado.");
@@ -1023,6 +979,7 @@
 
             const pendingOp = {
                 id: opId,
+                ownerId: state.userId,
                 stage: 2,
                 vehicleId: state.selectedVehicleId,
                 vehicleInfo: { ...state.vehicleInfo },
@@ -1045,31 +1002,24 @@
             // Save to localStorage before calling API (safe against QuotaExceededError)
             console.log("[PING-PONG][4] Intentando persistir operación pendiente en localStorage...");
             try {
-                localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
-                console.log("[PING-PONG][4a] Persistencia en localStorage exitosa.");
-            } catch (storageError) {
-                console.warn("[PING-PONG][4b] Advertencia: No se pudo guardar en localStorage por exceder la cuota (QuotaExceededError), continuando el guardado en servidor de todos modos.", storageError);
-            }
+                const saved = getPendingOperationStore().write(pendingOp);
+                if (!saved.saved) console.warn("No se pudo verificar el snapshot pendiente:", saved.reason);
+                else console.log("[PING-PONG][4a] Snapshot guardado para su propietario.");
+            } catch (storageError) { console.warn("[PING-PONG][4b] No se pudo guardar el snapshot pendiente:", storageError && storageError.name || 'StorageError'); }
 
             try {
                 // First, check if operation already exists on the server to prevent duplicates!
                 console.log("[PING-PONG][5] Comprobando duplicados en el servidor con checkOperation...");
-                const checkRes = await routeAction('checkOperation', {
-                    opId,
-                    userId: state.userId,
-                    sessionToken: state.sessionToken
-                }, serviceOverride);
+                const activeSession = getCurrentSessionForOwner(pendingOp.ownerId);
+                const checkRes = await routeAction('checkOperation', { opId, userId:activeSession.userId, sessionToken:activeSession.sessionToken }, serviceOverride);
+                getCurrentSessionForOwner(pendingOp.ownerId);
                 console.log(`[PING-PONG][5a] Respuesta de checkOperation recibida. Existe en el servidor: ${checkRes.exists}`);
 
                 let result;
                 if (checkRes.exists) {
                     console.log("[PING-PONG][5b] Operación ya detectada en el servidor como completada. Recuperando silenciosamente...");
 
-                    try {
-                        localStorage.removeItem('gpsepedia_pending_operation');
-                    } catch (cleanError) {
-                        console.error("No se pudo limpiar localStorage", cleanError);
-                    }
+                    try { getPendingOperationStore().remove(opId); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }
                     state.opId = null;
                     state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                     state.selectedVehicleId = checkRes.vehicleId;
@@ -1084,9 +1034,10 @@
                 }
 
                 console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
+                const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
                 result = await routeAction('addOrUpdateCut', {
-                    userId: state.userId,
-                    sessionToken: state.sessionToken,
+                    userId: submitSession.userId,
+                    sessionToken: submitSession.sessionToken,
                     vehicleId: state.selectedVehicleId,
                     vehicleData: state.selectedVehicleId ? null : { ...state.vehicleInfo, imagenVehiculo: base64Veh },
                     cutData: {
@@ -1105,11 +1056,7 @@
                 console.log("[PING-PONG][7] addOrUpdateCut completado exitosamente con el servidor.", result);
 
                 // Clean up operation upon success
-                try {
-                    localStorage.removeItem('gpsepedia_pending_operation');
-                } catch (cleanError) {
-                    console.error("No se pudo limpiar localStorage", cleanError);
-                }
+                try { getPendingOperationStore().remove(opId); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }
                 state.opId = null; // Clear so next registration gets a new ID
                 state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
 
@@ -1121,12 +1068,10 @@
                 alert("Corte guardado exitosamente.");
                 proceedToStage3(result.vehicleId);
             } catch(error) {
-                console.error("[PING-PONG][ERROR] Ocurrió un error durante la comunicación/procesamiento de guardado:", error);
+                console.error("[PING-PONG][ERROR] Falló el guardado de la operación.", error && error.name || 'OperationError');
                 pendingOp.status = 'failed';
-                pendingOp.error = error.message;
-                try {
-                    localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
-                } catch (err) {}
+                pendingOp.error = 'No se pudo confirmar el guardado.';
+                try { getPendingOperationStore().write(pendingOp); } catch (_) { console.warn("No se pudo actualizar el snapshot pendiente."); }
 
                 const isNetworkError = !navigator.onLine ||
                                        (error.message && (
@@ -1139,7 +1084,7 @@
                 if (isNetworkError) {
                     alert("Se ha detectado una interrupción en la conexión de red o un error de comunicación ('Fail to fetch'). Tu progreso y archivos se han guardado localmente de forma segura en tu dispositivo. El sistema intentará completar y reanudar la operación automáticamente cuando se restablezca la conexión, o bien puedes pulsar 'Continuar' nuevamente para reintentarlo.");
                 } else {
-                    alert(`Error al guardar el corte: ${error.message}`);
+                    alert("No se pudo completar el guardado. Revisa tu conexión e inténtalo nuevamente.");
                 }
             } finally {
                 console.log("[PING-PONG][9] Finalización de handleStage2Submit: Limpiando cargadores.");

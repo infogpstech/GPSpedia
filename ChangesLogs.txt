@@ -1,4 +1,13 @@
 ================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 2 — AISLAMIENTO DE gpsepedia_pending_operation
+- Se agregó pendingOperationStore.js con clave por propietario, verificación de escritura, lectura/eliminación owner-bound y sanitización recursiva de tokens/credenciales.
+- add_cortes.html ahora vincula snapshots a ownerId, verifica la sesión vigente antes de recuperar y reintentar, y evita registrar snapshots, respuestas completas o mensajes de error potencialmente sensibles.
+- Los snapshots legados se migran solo con owner explícito; los registros sin propietario, corruptos o en conflicto se conservan en cuarentena.
+- Se agregó Services/Test/PendingOperationIsolation.js con siete regresiones.
+Archivos: add_cortes.html, pendingOperationStore.js, Services/Test/PendingOperationIsolation.js, Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-051 — ANÁLISIS ITERACIÓN 7 — DEPENDENCIA PARA LÍMITE RAM
 Se inspeccionó la caché de miniaturas en ui.js. memoryUrlCache es un Map sin límite que conserva URLs blob; eliminar entradas del Map sin revocar las URLs no libera los Blob asociados. Se documentó el ciclo de vida seguro de ObjectURL como prerrequisito para implementar un límite RAM real. No hubo cambios funcionales ni pruebas de memoria.
 Archivos: checkpoint.md, Tareas.txt, ChangesLogs.txt.
