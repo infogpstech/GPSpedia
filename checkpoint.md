@@ -349,6 +349,6 @@ Validación local:
 - Se cubren colecciones JSON y heredadas, slots inicial/intermedio/final, límite de tres posiciones, asociación por versión, prefijos almacenados, VIN completos heredados y una sola versión.
 
 Pendiente para Beta: validación visual en navegador real y comprobación con datos reales representativos. No se modificaron servicios, endpoints ni datos productivos.
-Commits de publicación secuencial: el HEAD final se verificará después de actualizar este checkpoint.
+Los archivos se publicaron secuencialmente mediante commits independientes, conforme al mecanismo disponible.
 AUG-060 queda cerrada. No se inicia AUG-061 en esta iteración.
 ================================================================================
