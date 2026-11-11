@@ -237,3 +237,13 @@ Se creó Catalog_Read_Strategy.md y se enlazó desde README.md. Hallazgos: getCa
 Decisión: conservar getCatalogData para el catálogo principal; reservar getNavigationData para una futura carga inicial ligera solo después de reducir rangos leídos y definir consumidor; mantener getDropdownData para formularios; no adoptar paginación en esta tarea. No se modificaron código backend, endpoints, contratos ni despliegues. No se hicieron mediciones productivas de Spreadsheet.
 Siguiente: AUG-052, criterio 5 (pruebas de primera instalación, actualización de Service Worker, arranque offline, deep links sin sesión/sin catálogo, API lenta/caída y catálogos representativos). Las pruebas que requieren navegador real/Apps Script/Spreadsheet productivo se registrarán para Beta; ejecutar localmente las simulaciones reproducibles disponibles.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 5 — 2026-11-11 — AISLAMIENTO ADMINIMAGEUPLOADPENDING
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 230b7b7e8d9294781cf3ec33e29e12823d7475d0. Rama base: GPSpedia2.2.5; sin modificaciones.
+Política aplicada: los reemplazos ADMIN son privados por iniciador. Cada snapshot se particiona por ownerId/vehicleId/fieldName; ownerId es identidad estable y no se guardan SessionToken ni credenciales. UI y capa IndexedDB exigen coincidencia exacta del propietario para recuperar, reintentar o eliminar. Los registros legados sin owner y los registros con owner incongruente se mueven a cuarentena; nunca se adjudican a la cuenta que consulta primero. No se aplica TTL automático a operaciones con resultado remoto incierto.
+Prueba añadida: Services/Test/AdminImageUploadIsolation.js (9 escenarios de identidad, claves, whitelist y privacidad); instrucciones en Services/Test/README.md. Validación de navegador/IndexedDB real, recarga, cambio de cuenta y dos pestañas queda pendiente de Beta. No se modificaron backend, endpoints ni datos productivos.
+Siguiente iteración: continuar AUG-053 con las pruebas locales pendientes del criterio 8 y revisar integración de las identidades/roles habilitados para edición del modal. No iniciar AUG-054 ni otra tarea.
+================================================================================

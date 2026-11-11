@@ -1489,3 +1489,10 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Lectura, escritura y eliminación verifican ownerId; el envío comprueba nuevamente la cuenta propietaria y usa la sesión vigente sin persistir SessionToken.
 - Se añadieron cinco regresiones a Services/Test/IndexedDBTransactions.js.
 - Validación de iteración: parsing V8 de offline.js, ui.js y suite PASS; cinco escenarios addCutPending ejecutados contra las funciones reales con IndexedDB simulado: 5/5 PASS, incluida ausencia de SessionToken en el snapshot persistido. Node CLI literal y IndexedDB/navegador real no ejecutados; quedan para Beta.
+
+
+================================================================================
+AUG-053 — ITERACIÓN 5 — 2026-11-11 — AISLAMIENTO DE ADMINIMAGEUPLOADPENDING
+Se particionaron los snapshots pendientes por ownerId, vehicleId y fieldName. El ownerId se guarda como identidad estable y se excluyen SessionToken/credenciales mediante whitelist. La recuperación, el reintento y la eliminación comprueban el propietario; la UI limita su mapa y estado de carga al propietario y vehículo activos. Los registros legados sin propietario y los snapshots con propietario incongruente se trasladan a cuarentena sin adjudicación automática. Se conserva la política sin TTL para operaciones de resultado incierto.
+Archivos: adminImageUploadIsolation.js, offline.js, ui.js, Services/Test/AdminImageUploadIsolation.js y Services/Test/README.md. Validación de navegador/IndexedDB real, recarga, cambio de cuenta y dos pestañas queda pendiente de Beta; no se modificaron backend, endpoints ni datos productivos.
+================================================================================

@@ -190,35 +190,27 @@ function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl) {
 }
 
 async function removePendingAdminImageUploadConfirmed_(operation) {
-    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
-    const removed = await offline.removeAdminImageUploadPendingOperation(
-        operation.vehicleId, operation.fieldName, operation.id
-    );
-    if (removed === true) {
-        pendingAdminImageUploads.delete(key);
-        return true;
-    }
-    const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName);
+    const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
+    const removed = await offline.removeAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName, operation.id, operation.ownerId);
+    if (removed === true) { pendingAdminImageUploads.delete(key); return true; }
+    const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName, operation.ownerId);
     if (!latest || latest.available !== true) return false;
-    if (latest.operation) {
-        pendingAdminImageUploads.set(key, latest.operation);
-        return false;
-    }
-    pendingAdminImageUploads.delete(key);
-    return true;
+    if (latest.operation) { pendingAdminImageUploads.set(key, latest.operation); return false; }
+    pendingAdminImageUploads.delete(key); return true;
 }
 
 async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
-    const cleanVehicleId = String(vehicleId);
-    if (!pendingAdminImageUploadsLoaded.has(cleanVehicleId)) {
-        const loaded = await loadPendingAdminImageUploads(cleanVehicleId);
+    const editSession = getCurrentEditOwnerContext_();
+    if (!editSession || !editSession.userId) throw new Error("No se pudo verificar el propietario de los reemplazos pendientes.");
+    const ownerId = String(editSession.userId), cleanVehicleId = String(vehicleId);
+    const ownerVehicleKey = getAdminImageUploadOwnerVehicleKey(ownerId, cleanVehicleId);
+    if (!pendingAdminImageUploadsLoaded.has(ownerVehicleKey)) {
+        const loaded = await loadPendingAdminImageUploads(cleanVehicleId, ownerId);
         if (!loaded) throw new Error("No se pudo consultar IndexedDB; no se descartaron cambios para evitar perder el estado de un reemplazo.");
     }
-
     const operations = Array.from(pendingAdminImageUploads.entries())
-        .filter(([key]) => key.startsWith(cleanVehicleId + "::"))
+        .filter(([key, operation]) => key.startsWith(ownerVehicleKey + "::") && String(operation.ownerId || "") === ownerId)
         .map(([, operation]) => operation);
-
     for (const operation of operations) {
         const status = await routeAction("getAdminImageUploadStatus", {
             ...getDeveloperSessionPayload(),
@@ -238,7 +230,7 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
             }
             const imageTarget = { src: "", removeAttribute: () => {} };
             await submitAdminImageUploadOperation(operation, imageTarget);
-            const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+            const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
             if (pendingAdminImageUploads.has(key)) {
                 throw new Error("El reemplazo está confirmado, pero no se pudo limpiar su operación local. No se completó el descarte.");
             }
@@ -377,29 +369,28 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
     return true;
 }
 
-function getAdminImageUploadPendingKey(vehicleId, fieldName) {
-    return String(vehicleId) + "::" + String(fieldName);
+function getAdminImageUploadOwnerVehicleKey(ownerId, vehicleId) {
+    return encodeURIComponent(String(ownerId)) + "::" + encodeURIComponent(String(vehicleId));
 }
-
-async function loadPendingAdminImageUploads(vehicleId) {
-    const cleanVehicleId = String(vehicleId);
-    ADMIN_IMAGE_UPLOAD_FIELDS.forEach(fieldName => pendingAdminImageUploads.delete(getAdminImageUploadPendingKey(cleanVehicleId, fieldName)));
-    pendingAdminImageUploadsLoaded.delete(cleanVehicleId);
-
+function getAdminImageUploadPendingKey(ownerId, vehicleId, fieldName) {
+    return getAdminImageUploadOwnerVehicleKey(ownerId, vehicleId) + "::" + String(fieldName);
+}
+async function loadPendingAdminImageUploads(vehicleId, ownerId) {
+    const cleanVehicleId = String(vehicleId), cleanOwnerId = String(ownerId || "");
+    if (!cleanOwnerId) return false;
+    const ownerVehicleKey = getAdminImageUploadOwnerVehicleKey(cleanOwnerId, cleanVehicleId);
+    ADMIN_IMAGE_UPLOAD_FIELDS.forEach(fieldName => pendingAdminImageUploads.delete(getAdminImageUploadPendingKey(cleanOwnerId, cleanVehicleId, fieldName)));
+    pendingAdminImageUploadsLoaded.delete(ownerVehicleKey);
     const results = await Promise.all(ADMIN_IMAGE_UPLOAD_FIELDS.map(fieldName =>
-        offline.getAdminImageUploadPendingOperation(cleanVehicleId, fieldName)
+        offline.getAdminImageUploadPendingOperation(cleanVehicleId, fieldName, cleanOwnerId)
     ));
     if (results.some(result => !result || result.available !== true)) return false;
-
     results.forEach((result, index) => {
-        if (result.operation) {
-            pendingAdminImageUploads.set(
-                getAdminImageUploadPendingKey(cleanVehicleId, ADMIN_IMAGE_UPLOAD_FIELDS[index]),
-                result.operation
-            );
+        if (result.operation && String(result.operation.ownerId || "") === cleanOwnerId) {
+            pendingAdminImageUploads.set(getAdminImageUploadPendingKey(cleanOwnerId, cleanVehicleId, ADMIN_IMAGE_UPLOAD_FIELDS[index]), result.operation);
         }
     });
-    pendingAdminImageUploadsLoaded.add(cleanVehicleId);
+    pendingAdminImageUploadsLoaded.add(ownerVehicleKey);
     return true;
 }
 
@@ -424,6 +415,10 @@ function readAdminImageAsDataUrl(file) {
 }
 
 async function submitAdminImageUploadOperation(operation, imgElement) {
+    const editSession = getCurrentEditOwnerContext_();
+    if (!editSession || !operation || String(operation.ownerId || "") !== String(editSession.userId || "")) {
+        throw new Error("El reemplazo pendiente pertenece a otra cuenta o no tiene un propietario verificable.");
+    }
     const response = await routeAction("uploadAdminImage", {
         ...getDeveloperSessionPayload(),
         vehicleId: operation.vehicleId,
@@ -437,7 +432,7 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
         throw new Error("El servicio no confirmó el reemplazo de imagen.");
     }
 
-    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+    const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
     const currentImageUrl = response.superseded
         ? String(response.currentImageUrl || "")
         : String(response.imageUrl);
@@ -454,11 +449,13 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
     }
 
     const removed = await offline.removeAdminImageUploadPendingOperation(
-        operation.vehicleId, operation.fieldName, operation.id
+        operation.vehicleId, operation.fieldName, operation.id, operation.ownerId
     );
     let cleanupConfirmed = removed === true;
     if (!cleanupConfirmed) {
-        const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName);
+        const latest = await offline.getAdminImageUploadPendingOperation(
+            operation.vehicleId, operation.fieldName, operation.ownerId
+        );
         if (latest && latest.available === true) {
             if (latest.operation) pendingAdminImageUploads.set(key, latest.operation);
             else {
@@ -490,10 +487,16 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
         e.preventDefault();
         e.stopPropagation();
         const cleanVehicleId = String(vehicleId);
-        const pendingKey = getAdminImageUploadPendingKey(cleanVehicleId, fieldName);
-
+        const editSession = getCurrentEditOwnerContext_();
+        if (!editSession || !editSession.userId) {
+            showSavingIndicator("error", "No se pudo verificar la cuenta propietaria del reemplazo.");
+            return;
+        }
+        const ownerId = String(editSession.userId);
+        const ownerVehicleKey = getAdminImageUploadOwnerVehicleKey(ownerId, cleanVehicleId);
+        const pendingKey = getAdminImageUploadPendingKey(ownerId, cleanVehicleId, fieldName);
         if (uploadInProgress) return;
-        if (!pendingAdminImageUploadsLoaded.has(cleanVehicleId)) {
+        if (!pendingAdminImageUploadsLoaded.has(ownerVehicleKey)) {
             showSavingIndicator("error", "No se pudo verificar el estado local del reemplazo. Vuelve a activar el modo de edición.");
             return;
         }
@@ -532,6 +535,7 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                 const fileData = await readAdminImageAsDataUrl(file);
                 const operation = {
                     id: createAdminImageUploadOperationId(),
+                    ownerId: ownerId,
                     vehicleId: cleanVehicleId,
                     fieldName: fieldName,
                     fileData: fileData,
@@ -2043,7 +2047,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                     inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
                     return;
                 }
-                const pendingImagesLoaded = await loadPendingAdminImageUploads(cleanVehicleId);
+                const pendingImagesLoaded = await loadPendingAdminImageUploads(cleanVehicleId, editSession.userId);
                 if (!isCurrentUiSessionContext_(editSession)) {
                     inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
                     return;

@@ -5,6 +5,7 @@
 // - Provide a clean API for offline data access.
 
 import { thumbnailCompressionQueue } from './thumbnailCompressionQueue.js';
+import { getAdminImageUploadPendingKey, getLegacyAdminImageUploadPendingKey, getQuarantinedAdminImageUploadPendingKey, createAdminImageUploadPendingSnapshot, isAdminImageUploadPendingOwnedBy } from './adminImageUploadIsolation.js';
 
 const DB_NAME = 'GPSpedia_DB';
 const DB_VERSION = 4; // Añade persistencia local del inventario administrativo.
@@ -314,135 +315,67 @@ export async function getReplacedImagesView() {
 }
 
 
-const ADMIN_IMAGE_UPLOAD_PENDING_PREFIX = "adminImageUploadPending:";
-const ADMIN_IMAGE_UPLOAD_FIELDS = new Set([
-    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
-    "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
-]);
-
-function getAdminImageUploadPendingKey(vehicleId, fieldName) {
-    const cleanVehicleId = String(vehicleId === null || vehicleId === undefined ? "" : vehicleId).trim();
-    const cleanFieldName = String(fieldName || "").trim();
-    if (!cleanVehicleId || !ADMIN_IMAGE_UPLOAD_FIELDS.has(cleanFieldName)) return "";
-    return ADMIN_IMAGE_UPLOAD_PENDING_PREFIX + encodeURIComponent(cleanVehicleId) + ":" + encodeURIComponent(cleanFieldName);
-}
-
-/**
- * Recupera un reemplazo pendiente sin tratar un fallo de IndexedDB como ausencia de operación.
- */
-export async function getAdminImageUploadPendingOperation(vehicleId, fieldName) {
-    const key = getAdminImageUploadPendingKey(vehicleId, fieldName);
-    if (!key) return { available: true, operation: null };
-    const entry = await performAdminStateOp("readonly", store => store.get(key));
-    if (entry === null) return { available: false, operation: null };
-    return {
-        available: true,
-        operation: entry && entry.key === key && entry.operation ? entry.operation : null
-    };
-}
-
-/**
- * Persiste el payload antes de enviarlo. No almacena userId, sessionToken ni credenciales.
- * Una operación distinta no puede reemplazar una carga pendiente del mismo vehículo/campo.
- */
-export async function saveAdminImageUploadPendingOperation(operation) {
-    if (!operation || typeof operation !== "object" ||
-        !/^[A-Za-z0-9_-]{20,80}$/.test(String(operation.id || "")) ||
-        operation.vehicleId === null || operation.vehicleId === undefined ||
-        !ADMIN_IMAGE_UPLOAD_FIELDS.has(String(operation.fieldName || "")) ||
-        typeof operation.fileData !== "string" || !/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(operation.fileData) ||
-        !String(operation.filename || "").trim() ||
-        !/^image\//i.test(String(operation.mimeType || ""))) {
-        return { saved: false, error: true };
+const ADMIN_IMAGE_UPLOAD_FIELDS = new Set(["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
+export async function getAdminImageUploadPendingOperation(vehicleId,fieldName,ownerId){
+ const owner=String(ownerId??"").trim(),key=getAdminImageUploadPendingKey(owner,vehicleId,fieldName),legacyKey=getLegacyAdminImageUploadPendingKey(vehicleId,fieldName);
+ if(!key||!legacyKey)return {available:false,operation:null};
+ try{
+  const database=await initDB();
+  return await new Promise((resolve,reject)=>{
+   const tx=database.transaction([ADMIN_LOCAL_STATE_STORE],"readwrite"),store=tx.objectStore(ADMIN_LOCAL_STATE_STORE);
+   let ownerEntry,legacyEntry,ownerReady=false,legacyReady=false,result={available:false,operation:null};
+   const finish=()=>{
+    if(!ownerReady||!legacyReady)return;
+    if(legacyEntry&&legacyEntry.operation){
+     const legacy=legacyEntry.operation,q=getQuarantinedAdminImageUploadPendingKey(vehicleId,fieldName,legacy.id,"owner-missing");
+     if(q){store.put({key:q,operation:legacy,reason:"owner-missing",quarantinedAt:Date.now()});store.delete(legacyKey);}
     }
-
-    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
-    if (!key) return { saved: false, error: true };
-    const savedOperation = {
-        id: String(operation.id),
-        vehicleId: String(operation.vehicleId),
-        fieldName: String(operation.fieldName),
-        fileData: operation.fileData,
-        filename: String(operation.filename),
-        mimeType: String(operation.mimeType),
-        createdAt: Number(operation.createdAt) || Date.now()
-    };
-
-    try {
-        const database = await initDB();
-        return await new Promise((resolve, reject) => {
-            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], "readwrite");
-            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
-            let result = { saved: false, error: true };
-
-            transaction.oncomplete = () => resolve(result);
-            transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed"));
-            transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted"));
-
-            const getRequest = store.get(key);
-            getRequest.onsuccess = () => {
-                const existing = getRequest.result;
-                if (existing && existing.operation) {
-                    const previous = existing.operation;
-                    if (String(previous.id || "") !== savedOperation.id) {
-                        result = { saved: false, conflict: true, operation: previous };
-                        return;
-                    }
-                    if (previous.fileData !== savedOperation.fileData ||
-                        previous.vehicleId !== savedOperation.vehicleId ||
-                        previous.fieldName !== savedOperation.fieldName ||
-                        previous.filename !== savedOperation.filename ||
-                        previous.mimeType !== savedOperation.mimeType) {
-                        result = { saved: false, conflict: true, operation: previous };
-                        return;
-                    }
-                }
-
-                const putRequest = store.put({ key, operation: savedOperation, updatedAt: Date.now() });
-                putRequest.onsuccess = () => { result = { saved: true, key }; };
-                putRequest.onerror = () => reject(putRequest.error || new Error("No se pudo guardar el reemplazo pendiente"));
-            };
-            getRequest.onerror = () => reject(getRequest.error || new Error("No se pudo consultar el reemplazo pendiente"));
-        });
-    } catch (error) {
-        console.error("No se pudo persistir el reemplazo de imagen pendiente:", error);
-        return { saved: false, error: true };
-    }
+    if(ownerEntry&&ownerEntry.operation){
+     if(isAdminImageUploadPendingOwnedBy(ownerEntry.operation,owner))result={available:true,operation:ownerEntry.operation};
+     else{
+      const q=getQuarantinedAdminImageUploadPendingKey(vehicleId,fieldName,ownerEntry.operation.id,"owner-mismatch");
+      if(q){store.put({key:q,operation:ownerEntry.operation,reason:"owner-mismatch",quarantinedAt:Date.now()});store.delete(key);}
+      result={available:true,operation:null};
+     }
+    }else result={available:true,operation:null};
+   };
+   tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error||new Error("IndexedDB transaction failed"));tx.onabort=()=>reject(tx.error||new Error("IndexedDB transaction aborted"));
+   const ownerReq=store.get(key);ownerReq.onsuccess=()=>{ownerEntry=ownerReq.result;ownerReady=true;finish();};ownerReq.onerror=()=>reject(ownerReq.error||new Error("No se pudo consultar el reemplazo del propietario"));
+   const legacyReq=store.get(legacyKey);legacyReq.onsuccess=()=>{legacyEntry=legacyReq.result;legacyReady=true;finish();};legacyReq.onerror=()=>reject(legacyReq.error||new Error("No se pudo consultar el reemplazo legado"));
+  });
+ }catch(error){console.error("No se pudo consultar el reemplazo pendiente:",error&&error.name||"StorageError");return {available:false,operation:null};}
 }
-
-/**
- * Elimina el intento únicamente si el opId coincide con el registro almacenado.
- */
-export async function removeAdminImageUploadPendingOperation(vehicleId, fieldName, opId) {
-    const key = getAdminImageUploadPendingKey(vehicleId, fieldName);
-    const cleanOpId = String(opId || "").trim();
-    if (!key || !cleanOpId) return false;
-
-    try {
-        const database = await initDB();
-        return await new Promise((resolve, reject) => {
-            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], "readwrite");
-            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
-            let removed = false;
-
-            transaction.oncomplete = () => resolve(removed);
-            transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed"));
-            transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted"));
-
-            const getRequest = store.get(key);
-            getRequest.onsuccess = () => {
-                const entry = getRequest.result;
-                if (!entry || !entry.operation || String(entry.operation.id || "") !== cleanOpId) return;
-                const deleteRequest = store.delete(key);
-                deleteRequest.onsuccess = () => { removed = true; };
-                deleteRequest.onerror = () => reject(deleteRequest.error || new Error("No se pudo retirar el reemplazo confirmado"));
-            };
-            getRequest.onerror = () => reject(getRequest.error || new Error("No se pudo verificar el reemplazo antes de retirarlo"));
-        });
-    } catch (error) {
-        console.error("No se pudo retirar el reemplazo de imagen confirmado:", error);
-        return null;
-    }
+export async function saveAdminImageUploadPendingOperation(operation){
+ const snapshot=createAdminImageUploadPendingSnapshot(operation);if(!snapshot)return {saved:false,error:true};
+ const key=getAdminImageUploadPendingKey(snapshot.ownerId,snapshot.vehicleId,snapshot.fieldName);if(!key)return {saved:false,error:true};
+ try{
+  const database=await initDB();
+  return await new Promise((resolve,reject)=>{
+   const tx=database.transaction([ADMIN_LOCAL_STATE_STORE],"readwrite"),store=tx.objectStore(ADMIN_LOCAL_STATE_STORE);let result={saved:false,error:true};
+   tx.oncomplete=()=>resolve(result);tx.onerror=()=>reject(tx.error||new Error("IndexedDB transaction failed"));tx.onabort=()=>reject(tx.error||new Error("IndexedDB transaction aborted"));
+   const getReq=store.get(key);getReq.onsuccess=()=>{
+    const previous=getReq.result&&getReq.result.operation;
+    if(previous&&(!isAdminImageUploadPendingOwnedBy(previous,snapshot.ownerId)||String(previous.id||"")!==snapshot.id||
+     previous.fileData!==snapshot.fileData||previous.vehicleId!==snapshot.vehicleId||previous.fieldName!==snapshot.fieldName||
+     previous.filename!==snapshot.filename||previous.mimeType!==snapshot.mimeType)){result={saved:false,conflict:true};return;}
+    const putReq=store.put({key,operation:snapshot,updatedAt:Date.now()});putReq.onsuccess=()=>{result={saved:true,key};};putReq.onerror=()=>reject(putReq.error||new Error("No se pudo guardar el reemplazo pendiente"));
+   };getReq.onerror=()=>reject(getReq.error||new Error("No se pudo consultar el reemplazo pendiente"));
+  });
+ }catch(error){console.error("No se pudo persistir el reemplazo de imagen pendiente:",error&&error.name||"StorageError");return {saved:false,error:true};}
+}
+export async function removeAdminImageUploadPendingOperation(vehicleId,fieldName,opId,ownerId){
+ const owner=String(ownerId??"").trim(),key=getAdminImageUploadPendingKey(owner,vehicleId,fieldName),id=String(opId||"").trim();if(!key||!id)return false;
+ try{
+  const database=await initDB();
+  return await new Promise((resolve,reject)=>{
+   const tx=database.transaction([ADMIN_LOCAL_STATE_STORE],"readwrite"),store=tx.objectStore(ADMIN_LOCAL_STATE_STORE);let removed=false;
+   tx.oncomplete=()=>resolve(removed);tx.onerror=()=>reject(tx.error||new Error("IndexedDB transaction failed"));tx.onabort=()=>reject(tx.error||new Error("IndexedDB transaction aborted"));
+   const getReq=store.get(key);getReq.onsuccess=()=>{
+    const entry=getReq.result;if(!entry||!entry.operation||!isAdminImageUploadPendingOwnedBy(entry.operation,owner)||String(entry.operation.id||"")!==id)return;
+    const del=store.delete(key);del.onsuccess=()=>{removed=true;};del.onerror=()=>reject(del.error||new Error("No se pudo retirar el reemplazo confirmado"));
+   };getReq.onerror=()=>reject(getReq.error||new Error("No se pudo verificar el reemplazo antes de retirarlo"));
+  });
+ }catch(error){console.error("No se pudo retirar el reemplazo de imagen confirmado:",error&&error.name||"StorageError");return null;}
 }
 
  

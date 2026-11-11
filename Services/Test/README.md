@@ -434,3 +434,14 @@ Política conservadora: no se aplica TTL automático a operaciones pendientes (`
 - `PendingOperationIsolation.js`: permanencia de snapshots antiguos y eliminación únicamente mediante opId del propietario (8 escenarios).
 - `EditBackupIsolation.js`: permanencia de copias antiguas hasta su eliminación explícita por propietario/vehículo (8 escenarios).
 - `IndexedDBTransactions.js`: permanencia de addCutPending antiguo y rechazo de eliminación desde otra cuenta (22 escenarios en total).
+
+
+## Aislamiento de reemplazos de imágenes ADMIN (AUG-053 — iteración 5)
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/AdminImageUploadIsolation.js
+```
+
+La suite comprueba claves por propietario/vehículo/campo, rechazo de identidades incompletas, separación de claves legadas, cuarentena sin adjudicación de propietario, whitelist del snapshot sin credenciales y rechazo de recuperación/eliminación cruzada. Los registros legados sin owner se ponen en cuarentena al consultar el estado; no se purgan automáticamente para preservar operaciones de resultado remoto incierto.
