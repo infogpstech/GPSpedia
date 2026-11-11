@@ -525,7 +525,7 @@ export async function saveAddCutOperationPendingOperation(operation) {
                     String(previous.operation.id || '').trim() !== snapshot.id ||
                     String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase() ||
                     (previous.operation.status === 'completed' && snapshot.status !== 'completed'))) {
-                    result = { saved: false, conflict: true, operation: previous.operation || null };
+                    result = { saved: false, conflict: true };
                     return;
                 }
                 const put = store.put({ key, operation: snapshot, updatedAt: Date.now() });
