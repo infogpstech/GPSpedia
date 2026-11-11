@@ -1090,3 +1090,11 @@ AUG-046 — MANEJO DE CONTRASEÑAS Y REVOCACIÓN DE SESIONES — 2026-11-10
 - checkpoint.md: registra el alcance de la comprobación, sus límites y la continuidad exclusiva de AUG-046.
 - No se modificaron código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
 ================================================================================
+
+
+================================================================================
+AUG-046 — REPORTES DE PROBLEMAS EN FICHAS DE VEHÍCULOS — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 17 documenta autenticación e identidad del reportante, datos almacenados en Feedbacks, copia del texto en Actividad_Usuario, comportamiento del selector de imagen y efectos de la consulta/eliminación del reporte.
+- checkpoint.md: registra el alcance, límites y continuidad exclusiva de AUG-046.
+- No se modificaron código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+================================================================================
