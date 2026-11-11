@@ -320,3 +320,8 @@ Verifica igualdad de carácter por posición en `extractSharedChars`, mapeo por 
 ## Aislamiento de actividad local por cuenta (AUG-051 — iteración 2)
 
 La suite `Services/Test/IndexedDBTransactions.js` verifica aislamiento de `searchHistory`, `viewedItems` y `validationCache` por `userId`, rechazo de operaciones sin propietario y exclusión de consultas potencialmente VIN. Las entradas heredadas sin propietario nunca se muestran a una cuenta; no se cambia el esquema físico ni se atribuyen registros antiguos a un usuario sin evidencia. Node CLI, IndexedDB real, dos cuentas y dos pestañas siguen pendientes de validación en el entorno local/Beta.
+
+
+## Variantes de miniaturas por tamaño (AUG-051 — iteración 3)
+
+La suite `Services/Test/IndexedDBTransactions.js` incluye un escenario que genera y recupera variantes independientes de 300 y 800 px, verifica que no se confundan con una variante de 1600 px y comprueba la liberación de `ImageBitmap.close()`. El escenario usa IndexedDB y Canvas simulados; no sustituye pruebas de navegador real ni de imágenes transparentes.
