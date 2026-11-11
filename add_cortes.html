@@ -912,7 +912,7 @@
                         return;
                     }
                 } catch (err) {
-                    console.error('Error verificando VIN en submit:', err);
+                    console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError');
                 }
             }
 

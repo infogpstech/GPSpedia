@@ -1,7 +1,7 @@
 const LEGACY='gpsepedia_pending_operation', PREFIX=LEGACY+':owner:', QUARANTINE=LEGACY+':quarantine:';
 const ownerOf=v=>String(v||'').trim();
 const parse=raw=>{try{const v=JSON.parse(raw);return v&&typeof v==='object'&&!Array.isArray(v)?v:null;}catch(_){return null;}};
-function clean(v){if(Array.isArray(v))return v.map(clean);if(!v||typeof v!=='object')return v;const o={};for(const [k,x] of Object.entries(v)){if(/session.?token|password|credential|authorization/i.test(k))continue;o[k]=clean(x);}return o;}
+function clean(v){if(Array.isArray(v))return v.map(clean);if(!v||typeof v!=='object')return v;const o={};for(const [k,x] of Object.entries(v)){if(/token|password|credential|authorization/i.test(k))continue;o[k]=clean(x);}return o;}
 export function createPendingOperationStore(storage,userId){
  const owner=ownerOf(userId);if(!storage||!owner)throw new TypeError('ownerId requerido');
  const key=PREFIX+encodeURIComponent(owner);

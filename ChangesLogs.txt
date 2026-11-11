@@ -1,4 +1,10 @@
 ================================================================================
+2026-11-11 — AUG-053 — AJUSTE DE SANITIZACIÓN DE CREDENCIALES
+Se amplió el filtro de campos persistidos para excluir cualquier propiedad que contenga «token» y se redujo el registro de errores de validación VIN al tipo de error, sin imprimir el objeto de excepción.
+Archivos: pendingOperationStore.js, Services/Test/PendingOperationIsolation.js, add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — AJUSTE DE SESIÓN — COMPROBACIONES DESPUÉS DE ESPERAS DE RED
 add_cortes vuelve a verificar el propietario después de la consulta VIN y tras recibir la respuesta de addOrUpdateCut. Si la cuenta cambió durante una petición asíncrona, el flujo no continúa con la sesión anterior ni limpia el snapshot como si perteneciera a la cuenta nueva.
 Archivos: add_cortes.html y checkpoint.md.
