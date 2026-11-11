@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {getAdminImageUploadPendingKey,getLegacyAdminImageUploadPendingKey,getQuarantinedAdminImageUploadPendingKey,createAdminImageUploadPendingSnapshot,isAdminImageUploadPendingOwnedBy} from "../../adminImageUploadIsolation.js";
+import {getAdminImageUploadPendingKey,getLegacyAdminImageUploadPendingKey,getQuarantinedAdminImageUploadPendingKey,createAdminImageUploadPendingSnapshot,isAdminImageUploadPendingOwnedBy,isAdminImageUploadStatusConfirmedCancelled} from "../../adminImageUploadIsolation.js";
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS",name);}
 const base={id:"1234567890abcdef12345678",ownerId:"USER-A",vehicleId:"VEHICLE-1",fieldName:"imgCorte1",fileData:"data:image/png;base64,AA==",filename:"corte.png",mimeType:"image/png",createdAt:100};
 testCase("dos propietarios reciben claves independientes",()=>assert.notEqual(getAdminImageUploadPendingKey("USER-A","VEHICLE-1","imgCorte1"),getAdminImageUploadPendingKey("USER-B","VEHICLE-1","imgCorte1")));
@@ -11,4 +11,12 @@ testCase("snapshot aplica whitelist y excluye credenciales",()=>{const s=createA
 testCase("rechaza snapshot legado sin owner",()=>{const {ownerId,...legacy}=base;assert.equal(createAdminImageUploadPendingSnapshot(legacy),null);});
 testCase("rechaza Data URL y campo inválidos",()=>{assert.equal(createAdminImageUploadPendingSnapshot({...base,fileData:"bad"}),null);assert.equal(createAdminImageUploadPendingSnapshot({...base,fieldName:"other"}),null);});
 testCase("solo el propietario exacto puede recuperar",()=>{const s=createAdminImageUploadPendingSnapshot(base);assert.equal(isAdminImageUploadPendingOwnedBy(s,"USER-A"),true);assert.equal(isAdminImageUploadPendingOwnedBy(s,"USER-B"),false);assert.equal(isAdminImageUploadPendingOwnedBy(s,""),false);});
-console.log("AdminImageUploadIsolation: "+passed+"/9 PASS");
+
+testCase("solo cancelled es terminal para limpiar el snapshot; not_found conserva la operación",()=>{
+ assert.equal(isAdminImageUploadStatusConfirmedCancelled("cancelled"),true);
+ assert.equal(isAdminImageUploadStatusConfirmedCancelled("not_found"),false);
+ assert.equal(isAdminImageUploadStatusConfirmedCancelled("pending"),false);
+ assert.equal(isAdminImageUploadStatusConfirmedCancelled("requires_review"),false);
+ assert.equal(isAdminImageUploadStatusConfirmedCancelled("linked"),false);
+});
+console.log("AdminImageUploadIsolation: "+passed+"/10 PASS");
