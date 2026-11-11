@@ -389,3 +389,12 @@ La regresión añadida a `Services/Test/IndexedDBTransactions.js` solicita cinco
 Ejecutar `node --experimental-default-type=module Services/Test/ServiceWorkerCache.js`.
 
 La suite verifica el precache del grafo estático transitivo (incluido VinDifferentialEngine.js), tratamiento de cuota en recursos opcionales y esenciales, asociación de cache.put a event.waitUntil, fallback de navegación offline y exclusión de peticiones no GET. Utiliza Cache Storage y fetch simulados; instalación/actualización y arranque offline en navegador real quedan para Beta.
+
+
+## Escenarios de inicio y PWA (AUG-052 — criterio 5)
+
+Ejecutar `node --experimental-default-type=module Services/Test/PWAStartupScenarios.js`.
+
+La suite cubre primera instalación y precarga del App Shell/grafo de módulos; actualización v14→v15 y conservación de cachés ajenas; fallo de precarga esencial sin activar una instalación incompleta; arranque offline desde un deep link con fallback a `index.html`; deep link sin sesión ni catálogo; estados terminales error/stale; timeout y caída de API con máximo de tres intentos; y snapshots sintéticos de 0, 250, 2,500 y 10,000 Cortes con rechazo de IDs duplicados. Usa Service Worker, estado, solicitudes y datos simulados; no invoca endpoints ni modifica datos.
+
+La ejecución en runtime V8 adaptado obtuvo 10/10 escenarios PASS. La ejecución literal de Node CLI y las pruebas en navegador/dispositivo real, Cache Storage real, red y Apps Script/Spreadsheet se reservan a Beta.

@@ -1,4 +1,14 @@
 ================================================================================
+AUG-052 — ITERACIÓN 6 — 2026-11-11 — ESCENARIOS LOCALES DE INICIO Y PWA
+Estado: CRITERIO 5 COMPLETADO CON VALIDACIÓN DIFERIDA; AUG-052 queda pendiente únicamente de validaciones Beta reales.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 4572195365ffb02c3fedaf0548489f5ecb9d00af. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Se agregó Services/Test/PWAStartupScenarios.js con diez escenarios: primera instalación y grafo de módulos; actualización v14→v15; preservación del caché anterior ante fallo esencial; limpieza de cachés anteriores sin borrar los de otras aplicaciones; navegación offline desde deep link con fallback a index.html; guardia de deep link sin sesión y catálogo idle; error terminal sin catálogo; uso de snapshot stale; API lenta/caída con máximo de tres intentos; y snapshots sintéticos de 0, 250, 2,500 y 10,000 Cortes con rechazo de IDs duplicados.
+Validación: runtime V8 adaptado 10/10 escenarios PASS. Se usaron fuentes vigentes de service-worker.js, main.js, state.js y catalogRequest.js y dobles de Cache Storage/fetch/AbortController; la validación de snapshots se contrastó con el contrato de offline.js. No se ejecutó Node CLI literal por no disponer de checkout local. No se ejecutaron navegador/dispositivo real, Cache Storage real, red, Apps Script ni Spreadsheet; quedan reservados a Beta y no bloquean el cierre local.
+Archivos: Services/Test/PWAStartupScenarios.js (nuevo), Services/Test/README.md, ChangesLogs.txt, Tareas_pendientes_parte1.txt y checkpoint.md. Sin cambios funcionales, endpoints, contratos, despliegues ni datos productivos.
+Siguiente: no iniciar AUG-053. AUG-052 queda COMPLETADA CON VALIDACIÓN DIFERIDA; las pruebas de integración real se ejecutarán en Beta.
+================================================================================
+
+================================================================================
 AUG-051 — ITERACIÓN 10 — 2026-11-11 — CONCURRENCIA DE COMPRESIÓN
 Estado: EN PROGRESO — implementación realizada; validación integrada pendiente.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 0433fbf32243382c1f2c13dffefc3ec18240f383.
