@@ -4,6 +4,8 @@
 // - Implement image compression and local caching.
 // - Provide a clean API for offline data access.
 
+import { thumbnailCompressionQueue } from './thumbnailCompressionQueue.js';
+
 const DB_NAME = 'GPSpedia_DB';
 const DB_VERSION = 4; // Añade persistencia local del inventario administrativo.
 
@@ -885,7 +887,7 @@ async function storeThumbnailWithQuotaRecovery(entry, key) {
  }
 }
 
-/** Compresión por variante; conserva compatibilidad de lectura con claves antiguas. */
+/** Compresión por variante; limita el trabajo costoso y conserva las claves antiguas. */
 export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400){
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
  const fileId=normalizeId(rawFileId);if(!fileId)return null;
@@ -895,22 +897,32 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
  if(!fetchUrl||fetchUrl.includes("placehold.co"))return null;
  try{
   const cached=await readFreshThumbnail(cacheKey);if(cached)return cached;
-  const response=await fetch(fetchUrl,{mode:"cors"});if(!response.ok)return null;
-  const bitmap=await createImageBitmap(await response.blob());
-  try{
-   if(!bitmap.width||!bitmap.height)return null;
-   const scale=Math.min(1,width/bitmap.width),canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
-   if(!ctx)return null;
-   canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-   ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
-   return await new Promise(resolve=>canvas.toBlob(async blob=>{
-    if(!blob){resolve(null);return;}
-    const now=Date.now(),entry={key:cacheKey,fileId,width,blob,cachedAt:now,lastAccessedAt:now};
-    const saved=await storeThumbnailWithQuotaRecovery(entry,cacheKey);
-    if(saved!==null) await evictLeastRecentlyUsedThumbnails();
-    resolve(saved===null?null:blob);
-   },"image/png"));
-  }finally{if(typeof bitmap.close==="function")bitmap.close();}
+  return await thumbnailCompressionQueue.run(async()=>{
+   // Otra solicitud de la misma variante pudo completar mientras esta esperaba turno.
+   const queuedCached=await readFreshThumbnail(cacheKey);if(queuedCached)return queuedCached;
+   const response=await fetch(fetchUrl,{mode:"cors"});if(!response.ok)return null;
+   const bitmap=await createImageBitmap(await response.blob());
+   try{
+    if(!bitmap.width||!bitmap.height)return null;
+    const scale=Math.min(1,width/bitmap.width),canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+    if(!ctx)return null;
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    return await new Promise(resolve=>canvas.toBlob(blob=>{
+     if(!blob){resolve(null);return;}
+     const now=Date.now(),entry={key:cacheKey,fileId,width,blob,cachedAt:now,lastAccessedAt:now};
+     storeThumbnailWithQuotaRecovery(entry,cacheKey)
+      .then(async saved=>{
+       if(saved!==null)await evictLeastRecentlyUsedThumbnails();
+       resolve(saved===null?null:blob);
+      })
+      .catch(error=>{
+       console.warn("Thumbnail persistence failed for",fileId,error);
+       resolve(null);
+      });
+    },"image/png"));
+   }finally{if(typeof bitmap.close==="function")bitmap.close();}
+  });
  }catch(error){console.warn("Thumbnail compression failed for",fileId,error);return null;}
 }
 export async function getThumbnail(rawFileId,requestedSize=400){
