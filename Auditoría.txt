@@ -417,3 +417,27 @@ Severidad: media, riesgo de aislamiento/consistencia de estado cliente; no se ve
 Corrección: propagar el contexto completo iniciador a envío/reintento/reconciliación; revalidar después de lectura y persistencia antes de mutar memoria/UI o enviar; suprimir callbacks de error obsoletos; mantener la guarda posterior a la eliminación IndexedDB antes de modificar mapas.
 Validación local: contrato AdminModalEditRestoreContract 10/10 PASS y parsing V8 de ui.js PASS. No se ejecutaron navegador/IndexedDB real ni escenarios multi-pestaña; quedan para Beta.
 ================================================================================
+
+
+================================================================================
+H-AUD-003-001 — RESUELTO EN FUENTES — 2026-11-11
+Referencia de seguimiento: AUG-055, Tareas_pendientes_parte1.txt.
+Alcance de la corrección: ciclo durable de alta de cortes y vinculación de opId con vehículo, slot y contenido original.
+
+Resolución:
+- add_cortes usa IndexedDB (adminLocalState) como snapshot durable por propietario. La solicitud no se envía si la lectura/escritura no está disponible o si la transacción no verifica el snapshot.
+- Los snapshots se validan por propietario, opId, tipo, etapa, estado, vehículo, payload y huella. Los registros completed son terminales y no se reutilizan. Si falla la limpieza después de confirmar, se conserva el estado terminal hasta reconciliarlo con el servidor.
+- WRITE y ADMIN calculan y verifican una huella SHA-256 del payload. La hoja de idempotencia se amplía de A:E a A:F; vehicleId y slotIndex se validan además de la huella. Los reintentos con otra asociación o contenido se rechazan.
+- Las hojas históricas A:E se leen con las columnas realmente disponibles antes de agregar F. Los registros antiguos sin huella no se reutilizan automáticamente; requieren reconciliación manual.
+- El cliente exige respuesta success, huella y vehicleId válido/coincidente y limpieza confirmada antes de avanzar a etapa 3.
+
+Validación local:
+- AddCutOperationIntegrity: 27/27 PASS.
+- AddCutOperationRecoveryFlow: 3/3 PASS, incluyendo pérdida de respuesta antes y después del commit y limpieza fallida tras confirmación.
+- IndexedDBTransactions: 10/10 escenarios nuevos PASS; suite acumulada 43 escenarios (33 previos validados en AUG-053).
+- IdempotenciaIntegrity: 18/18 PASS.
+- CheckOperationSecurity: 12/12 PASS.
+- Parsing local de WRITE, ADMIN, offline.js y módulo frontend: PASS.
+
+Límites: las pruebas se ejecutaron en runtime JavaScript adaptado con dobles locales. No se ejecutaron navegador/IndexedDB reales, Apps Script/Spreadsheet/Drive desplegados ni pruebas multi-pestaña reales; esas validaciones permanecen para Beta. No se afirma una verificación en producción.
+================================================================================
