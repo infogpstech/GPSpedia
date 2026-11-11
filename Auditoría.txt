@@ -441,3 +441,30 @@ Validación local:
 
 Límites: las pruebas se ejecutaron en runtime JavaScript adaptado con dobles locales. No se ejecutaron navegador/IndexedDB reales, Apps Script/Spreadsheet/Drive desplegados ni pruebas multi-pestaña reales; esas validaciones permanecen para Beta. No se afirma una verificación en producción.
 ================================================================================
+
+
+================================================================================
+H-AUD-003-002 — RESUELTO EN FUENTES — 2026-11-11
+Referencia: AUG-056.
+
+Evidencia revisada:
+- `displayMatches()` presentaba «Agregar Nuevo Corte» sin comprobar si los tres tipos de corte estaban ocupados.
+- `#second-cut-accordion` no sincronizaba su visibilidad con los espacios disponibles.
+- `proceedToStage3()` consultaba `state.catalogData.cortes`, fuente que no se inicializaba en el estado del formulario, para decidir si mostrar el acordeón de vídeo.
+- WRITE y ADMIN ya adquirían ScriptLock y volvían a leer la fila antes de elegir un espacio; esa protección se conserva.
+
+Resolución:
+- La interfaz calcula disponibilidad desde el registro seleccionado y oculta las acciones de alta cuando los tres espacios están ocupados.
+- La guía de vídeo se muestra únicamente cuando el registro seleccionado no contiene `videoGuiaDesarmeUrl`.
+- Tras guardar o recuperar se vuelve a consultar `checkVehicle`; si no puede verificarse un vehículo existente, la interfaz falla de forma conservadora.
+- WRITE y ADMIN centralizan la selección del primer espacio libre bajo el bloqueo existente y devuelven `slotIndex`. Si los tres están ocupados, rechazan la operación sin sobrescribir.
+- Ante una colisión concurrente, el formulario y el snapshot durable permanecen conservados y se informa que no se sobrescribió ningún corte.
+
+Validación local:
+- CutAvailability: 20/20 PASS.
+- AddCutOperationIntegrity: 27/27 PASS.
+- YouTubeAddCortesContract: 4/4 PASS.
+- Parsing V8 de los módulos modificados: PASS.
+
+Límites: no se ejecutaron navegador real, Apps Script desplegados ni escrituras concurrentes reales sobre Spreadsheet. Esas comprobaciones permanecen para Beta.
+================================================================================
