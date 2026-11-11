@@ -1,14 +1,13 @@
 ================================================================================
 AUG-051 — ITERACIÓN 5 — 2026-11-11
-Estado: EN PROGRESO — implementación realizada; validación local pendiente.
-Rama: GPSpedia2.2.5_work. HEAD de inicio: 2b30e8680022bd828a1ce61a53afac0543eb9a2f.
-Alcance único: política LRU para variantes de miniaturas. Se fijó un máximo de 200 variantes persistidas; las lecturas válidas actualizan lastAccessedAt y, al superar el máximo, se eliminan las variantes menos recientes. La actualización de recencia y la evicción esperan el commit de transacciones readwrite.
-Prueba añadida: poblar 200 variantes, consultar la más antigua, insertar una nueva y verificar que se conserva la consultada y se expulsa la menos reciente.
-Archivos: offline.js; Services/Test/IndexedDBTransactions.js; Services/Test/README.md; Tareas.txt; ChangesLogs.txt.
+Estado: EN PROGRESO — corrección del simulador incorporada; suite completa y revisión final pendientes.
+Rama: GPSpedia2.2.5_work. HEAD confirmado antes de esta actualización: b3cc129949c98c2a597fc42c7418d5f89de51a1f.
+Alcance único: política LRU para variantes de miniaturas, máximo de 200 entradas, actualización de lastAccessedAt y evicción de las menos recientes.
+Corrección de esta iteración: el harness de IndexedDB ahora contabiliza solicitudes pendientes por transacción y solo dispara oncomplete cuando todas han finalizado. Se añadió una regresión que retiene deliberadamente una solicitud delete y comprueba que la operación LRU no resuelva antes de liberarla.
+Validación ejecutada: prueba aislada del harness con delete diferido PASS. No se ejecutó la suite completa ni Node CLI: el entorno de trabajo no tiene checkout local del repositorio y la resolución DNS hacia GitHub no está disponible. No declarar validación integral todavía.
 Compatibilidad: sin cambio de DB_VERSION ni de stores.
-Pendiente antes del cierre: ejecutar parsing y suite completa en el entorno local disponible, revisar diff y corregir cualquier fallo. No iniciar cuota global, límite RAM, ObjectURL, concurrencia ni AUG-052 en esta iteración.
+Pendiente: ejecutar parsing y las 12 pruebas de IndexedDBTransactions.js en un checkout local, revisar el diff completo y cerrar la iteración. No iniciar cuota global, límite RAM, ObjectURL, concurrencia ni AUG-052.
 ================================================================================
-
 ================================================================================
 
 # Checkpoint activo — GPSpedia

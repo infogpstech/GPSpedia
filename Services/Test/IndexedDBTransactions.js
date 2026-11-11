@@ -17,30 +17,39 @@ function createIndexedDBHarness(options = {}) {
     const connections = [];
     let openCount = 0;
     let transactionCount = 0;
-
     const database = {
         objectStoreNames: { contains: name => stores.has(name) },
-        createObjectStore(name, config = {}) {
-            stores.set(name, { values: new Map(), keyPath: config.keyPath || null });
-            return {};
-        },
+        createObjectStore(name, config = {}) { stores.set(name, { values: new Map(), keyPath: config.keyPath || null }); return {}; },
         close() { this.closed = true; },
         transaction(names, mode) {
             transactionCount += 1;
             const behavior = options.transactions && options.transactions[transactionCount - 1] || 'complete';
-            let aborted = false;
+            let aborted = false, finished = false, pendingRequests = 0, completionScheduled = false;
             const tx = {
                 error: behavior === 'quota' ? new DOMException('Quota exceeded', 'QuotaExceededError') : null,
                 objectStore(name) {
                     const record = stores.get(name);
+                    const enqueue = (request, operation, defer = false) => {
+                        pendingRequests += 1;
+                        const execute = () => {
+                            if (aborted || finished) { pendingRequests -= 1; return; }
+                            try { operation(); }
+                            finally { pendingRequests -= 1; scheduleCompletion(); }
+                        };
+                        if (defer && options.deferDeletes) {
+                            queueMicrotask(() => { if (options.onDeleteQueued) options.onDeleteQueued(execute); else execute(); });
+                        } else queueMicrotask(execute);
+                        return request;
+                    };
                     return {
                         put(value, key) {
                             const request = {};
-                            queueMicrotask(() => {
+                            return enqueue(request, () => {
                                 if (behavior === 'quota') {
                                     request.error = tx.error;
                                     if (request.onerror) request.onerror();
                                     if (tx.onerror) tx.onerror();
+                                    aborted = true;
                                     if (tx.onabort) tx.onabort();
                                     return;
                                 }
@@ -48,74 +57,50 @@ function createIndexedDBHarness(options = {}) {
                                 record.values.set(resolvedKey, structuredClone(value));
                                 request.result = resolvedKey;
                                 if (request.onsuccess) request.onsuccess();
-                                queueMicrotask(() => {
-                                    if (behavior === 'abort') {
-                                        aborted = true;
-                                        tx.error = new DOMException('Aborted', 'AbortError');
-                                        if (tx.onabort) tx.onabort();
-                                    } else if (!aborted && tx.oncomplete) {
-                                        tx.oncomplete();
-                                    }
+                                if (behavior === 'abort') queueMicrotask(() => {
+                                    aborted = true;
+                                    tx.error = new DOMException('Aborted', 'AbortError');
+                                    if (tx.onabort) tx.onabort();
                                 });
                             });
-                            return request;
                         },
                         get(key) {
                             const request = {};
-                            queueMicrotask(() => {
-                                request.result = record.values.get(key);
-                                if (request.onsuccess) request.onsuccess();
-                                queueMicrotask(() => {
-                                    if (tx.oncomplete) tx.oncomplete();
-                                });
-                            });
-                            return request;
+                            return enqueue(request, () => { request.result = record.values.get(key); if (request.onsuccess) request.onsuccess(); });
                         },
                         getAll() {
                             const request = {};
-                            queueMicrotask(() => {
-                                request.result = [...record.values.values()];
-                                if (request.onsuccess) request.onsuccess();
-                                queueMicrotask(() => {
-                                    if (tx.oncomplete) tx.oncomplete();
-                                });
-                            });
-                            return request;
+                            return enqueue(request, () => { request.result = [...record.values.values()]; if (request.onsuccess) request.onsuccess(); });
                         },
                         delete(key) {
                             const request = {};
-                            queueMicrotask(() => {
-                                record.values.delete(key);
-                                request.result = undefined;
-                                if (request.onsuccess) request.onsuccess();
-                                queueMicrotask(() => { if (tx.oncomplete) tx.oncomplete(); });
-                            });
-                            return request;
+                            return enqueue(request, () => { record.values.delete(key); request.result = undefined; if (request.onsuccess) request.onsuccess(); }, true);
                         }
                     };
                 },
-                abort() {
-                    aborted = true;
-                    if (tx.onabort) queueMicrotask(() => tx.onabort());
-                }
+                abort() { aborted = true; if (tx.onabort) queueMicrotask(() => tx.onabort()); }
             };
+            function scheduleCompletion() {
+                if (pendingRequests || aborted || finished || completionScheduled) return;
+                completionScheduled = true;
+                queueMicrotask(() => {
+                    completionScheduled = false;
+                    if (pendingRequests || aborted || finished) return;
+                    finished = true;
+                    if (tx.oncomplete) tx.oncomplete();
+                });
+            }
             return tx;
         }
     };
-
     const indexedDB = {
         open() {
             openCount += 1;
             const request = {};
             connections.push(database);
             queueMicrotask(() => {
-                if (options.blocked) {
-                    if (request.onblocked) request.onblocked();
-                    return;
-                }
-                if (openCount === 1 && request.onupgradeneeded) {
-                    request.onupgradeneeded({ target: { result: database } });
-                }
+                if (options.blocked) { if (request.onblocked) request.onblocked(); return; }
+                if (openCount === 1 && request.onupgradeneeded) request.onupgradeneeded({ target: { result: database } });
                 request.result = database;
                 if (request.onsuccess) request.onsuccess({ target: { result: database } });
             });
@@ -124,7 +109,6 @@ function createIndexedDBHarness(options = {}) {
     };
     return { indexedDB, database, connections, stores, get openCount() { return openCount; } };
 }
-
 async function freshOffline(harness, label) {
     globalThis.indexedDB = harness.indexedDB;
     return import(`../../offline.js?indexeddb-${label}-${Date.now()}-${Math.random()}`);
@@ -252,7 +236,39 @@ async function runIndexedDBTransactionTests() {
             assert.equal([...store.values.values()].filter(entry=>entry&&entry.key&&entry.blob).length,200);
         }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/11 PASS`);
+    await testAsync('la evicción LRU espera a que todas las solicitudes delete completen',async()=>{
+        let releaseDelete;
+        let notifyDeleteQueued;
+        const deleteQueued=new Promise(resolve=>{notifyDeleteQueued=resolve;});
+        const harness=createIndexedDBHarness({deferDeletes:true,onDeleteQueued:release=>notifyDeleteQueued(release)});
+        const api=await freshOffline(harness,'thumbnail-lru-pending-delete');
+        await api.initDB();
+        const store=harness.stores.get('thumbnails'),now=Date.now();
+        for(let i=0;i<200;i++){
+            const key='pending-'+String(i).padStart(3,'0')+'::w300';
+            store.values.set(key,{key,fileId:'pending-'+i,width:300,blob:new Blob(['thumb-'+i]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
+        }
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:640,height:480,close(){}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            let settled=false;
+            const saving=api.compressAndStoreThumbnail('https://images.example/pending.png','pending-new-entry',300).then(value=>{settled=true;return value;});
+            releaseDelete=await deleteQueued;
+            await Promise.resolve();
+            assert.equal(settled,false,'la operación no debe resolver antes de completar delete');
+            releaseDelete();
+            assert.ok(await saving);
+            assert.equal(settled,true);
+            assert.equal([...store.values.values()].filter(entry=>entry&&entry.key&&entry.blob).length,200);
+            assert.equal(store.values.has('pending-199::w300'),false);
+        }finally{
+            if(releaseDelete)releaseDelete();
+            globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;
+        }
+    });
+    console.log('\nIndexedDB transaction tests: \${passed}/12 PASS');
 }
 
 runIndexedDBTransactionTests().catch(error => {

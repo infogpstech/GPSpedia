@@ -935,3 +935,12 @@ Prueba añadida: recencia, expulsión de la variante menos utilizada y conservac
 Pendiente: cuota total IndexedDB, límite RAM, revocación segura de ObjectURL y límite de concurrencia de compresión.
 Siguiente: validar localmente la suite completa y revisar el diff de la iteración 5; no iniciar AUG-052.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ADENDA ITERACIÓN 5 — 2026-11-11
+Estado: EN PROGRESO.
+Se corrigió el harness de IndexedDB para llevar el conteo de solicitudes activas por transacción; transaction.oncomplete espera ahora a que concluyan también las solicitudes delete encoladas desde onsuccess.
+Se añadió una regresión con delete diferido que verifica que la operación LRU permanezca pendiente hasta completar la eliminación. La lógica aislada del harness pasó; la suite completa aún no se ejecutó.
+Pendiente: ejecutar parsing y suite completa (12 pruebas) en un checkout local, revisar diff y cerrar iteración. No iniciar AUG-052.
+================================================================================

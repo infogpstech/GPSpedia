@@ -338,3 +338,6 @@ La suite `Services/Test/IndexedDBTransactions.js` incluye un escenario que gener
 - La lectura y actualización de recencia se realizan dentro de una transacción IndexedDB `readwrite`, y la evicción vuelve a evaluar el conjunto dentro de otra transacción `readwrite`.
 - El límite controla el número de variantes, no el tamaño en bytes ni la cuota global del navegador. La política de cuota total permanece pendiente en AUG-051.
 - La suite `Services/Test/IndexedDBTransactions.js` incluye una regresión que comprueba actualización de recencia, expulsión de la variante menos reciente y conservación de la recién creada.
+
+
+La regresión LRU también difiere deliberadamente una solicitud `delete` y comprueba que la operación no se resuelva antes de que esa solicitud termine. El harness contabiliza solicitudes pendientes de cada transacción, incluidas las encoladas durante `onsuccess`. Ejecutar junto con el resto de escenarios mediante `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.

@@ -1298,3 +1298,11 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Services/Test/README.md: se documentó el alcance del límite y su diferencia frente a la cuota total del navegador.
 - No se modificó DB_VERSION ni la estructura de stores.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CORRECCIÓN DEL HARNESS LRU
+- Services/Test/IndexedDBTransactions.js: el simulador ahora espera a que terminen todas las solicitudes pendientes de una transacción antes de emitir transaction.oncomplete.
+- Se agregó una prueba de regresión que difiere una solicitud delete y comprueba que la promesa LRU no resuelva anticipadamente.
+- La verificación aislada del ciclo de solicitud diferida pasó. La suite completa queda pendiente de ejecución en checkout local.
+================================================================================
