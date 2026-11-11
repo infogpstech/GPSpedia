@@ -1346,3 +1346,13 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Services/Test/ImageObjectUrlLifecycle.js: pruebas de exceso, contabilidad compartida y recuperación del presupuesto.
 - Services/Test/README.md: alcance del límite y exclusiones de memoria decodificada/GPU y recursos remotos.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CONCURRENCIA DE COMPRESIÓN DE MINIATURAS (ITERACIÓN 10)
+- thumbnailCompressionQueue.js: cola FIFO con máximo de dos trabajos activos por instancia JavaScript.
+- offline.js: las tareas de compresión pasan por la cola, revalidan la caché al obtener turno y liberan ImageBitmap al finalizar.
+- Services/Test/IndexedDBTransactions.js: regresión con cinco solicitudes concurrentes, límite de dos bitmaps activos y cierre de recursos.
+- Se corrigió la liberación del turno para que active disminuya antes de resolver/rechazar la promesa del trabajo.
+- Validación ejecutada: Node CLI aislado del limitador (3/3) y simulación de cinco trabajos/recursos bitmap (2/2); parsing V8 de offline.js y la suite: PASS. La suite IndexedDB integrada no se ejecutó desde este entorno porque el adaptador disponible no completó el harness; requiere ejecución en checkout local.
+================================================================================
