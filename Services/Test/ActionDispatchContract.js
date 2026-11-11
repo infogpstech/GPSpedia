@@ -105,13 +105,13 @@ function runActionDispatchContractTests(sources) {
     });
     run_("ADMIN separa acciones de edición modal del resto de acciones exclusivas de Desarrollador", () => {
         const adminSource = String(input.ADMIN || "");
-        assert_(/const ADMIN_MODAL_EDIT_ACTIONS = new Set\\(\\["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\\]\\)/.test(adminSource),
+        assert_(adminSource.includes('const ADMIN_MODAL_EDIT_ACTIONS = new Set(["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);'),
             "La lista de acciones Gefe debe limitarse a las tres operaciones del modal.");
-        assert_(/ADMIN_MODAL_EDIT_ACTIONS\\.has\\(action\\) \\? assertModalEditSession\\(payload\\) : assertDeveloperSession\\(payload\\)/.test(adminSource),
+        assert_(adminSource.includes("ADMIN_MODAL_EDIT_ACTIONS.has(action) ? assertModalEditSession(payload) : assertDeveloperSession(payload)"),
             "ADMIN debe exigir sesión Desarrollador para acciones ajenas al modal.");
-        assert_(/function assertModalEditSession\\(payload\\)\\{return getAdminSessionContext_\\(payload,\\["desarrollador","gefe"\\]\\);\\}/.test(adminSource),
+        assert_(adminSource.includes('function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","gefe"]);}'),
             "La sesión modal debe validar roles desde el servidor.");
-        assert_(/function assertDeveloperSession\\(payload\\)\\{return getAdminSessionContext_\\(payload,\\["desarrollador"\\]\\);\\}/.test(adminSource),
+        assert_(adminSource.includes('function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}'),
             "La sesión administrativa general debe seguir siendo exclusiva de Desarrollador.");
     });
     run_("el mapa no contiene servicios duplicados o inválidos", () => {
