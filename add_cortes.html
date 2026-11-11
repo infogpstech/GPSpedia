@@ -1035,12 +1035,12 @@
                 getCurrentSessionForOwner(pendingOp.ownerId);
                 if (!checkRes || checkRes.status !== 'success') throw new Error('INVALID_CHECK_OPERATION_RESPONSE');
                 if (checkRes.exists === true) {
+                    if (checkRes.operationHash !== operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
+                    if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
                     serverConfirmed = true;
                     pendingOp.status = 'completed';
                     const terminalSaved = await saveAddCutOperationPendingOperation(pendingOp);
                     if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
-                    if (checkRes.operationHash !== operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
-                    if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
                     const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
                     if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
                     snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
