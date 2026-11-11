@@ -134,7 +134,7 @@ export function showSavingIndicator(status, message = "") {
 
 function getCurrentEditOwnerContext_() {
     const context = getUiSessionContext_();
-    const role = String(context && context.role || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const role = String(context && context.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     return context && ["desarrollador", "gefe"].includes(role) ? context : null;
 }
 
