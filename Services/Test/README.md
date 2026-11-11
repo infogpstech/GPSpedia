@@ -588,7 +588,7 @@ El backend WRITE y ADMIN amplía la hoja dedicada de idempotencia de A:E a A:F, 
 
 ### Suites y validación AUG-055
 
-- AddCutOperationIntegrity.js: **21/21 PASS**. Comprueba canonicalización cliente/WRITE/ADMIN para vehículo nuevo, existente y modo silencioso; huella del contenido e imágenes; vinculación por vehículo y payload; contrato de la hoja A:F; orden snapshot/check/send; recuperación de respuesta perdida; estado terminal y limpieza.
+- AddCutOperationIntegrity.js: **24/24 PASS**. Comprueba canonicalización cliente/WRITE/ADMIN para vehículo nuevo, existente y modo silencioso; huella del contenido e imágenes; vinculación por vehículo y payload; contrato de la hoja A:F; orden snapshot/check/send; recuperación de respuesta perdida; estado terminal y limpieza.
 - IndexedDBTransactions.js: se amplió de 33 a **43 escenarios**. Los 10 escenarios nuevos de AUG-055 ejecutaron **10/10 PASS** con el harness IndexedDB adaptado: persistencia/verificación, aislamiento por propietario, conflicto de opId/huella, snapshot corrupto, cuota/aborto, limpieza exacta, borrado verificado, concurrencia serializada, estado completed terminal y almacenamiento no disponible. Los 33 escenarios anteriores corresponden a la validación de AUG-053 y no se volvieron a ejecutar en este cierre.
 - IdempotenciaIntegrity.js: **16/16 PASS** con las funciones vigentes del servicio ADMIN; incluye hash válido/inválido y registro histórico sin huella.
 - CheckOperationSecurity.js: **12/12 PASS** con WRITE y frontend vigentes.
