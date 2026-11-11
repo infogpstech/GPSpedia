@@ -1504,3 +1504,23 @@ Pendiente Beta: verificar el deployment LEGACY/logFrontend; el código fuente de
 Commit de cierre: fix(api): reconcile action map and service dispatchers. SHA resultante se verificará en HEAD de la rama tras publicación.
 Siguiente tarea: AUG-045. No iniciada.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — DEPENDENCIA AUG-045 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre confirmado: 48247e62bb2ba3154cce8fb159bba52fae03cb73.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea principal: AUG-045 — Versionar y hacer trazable la aceptación de Términos y Condiciones. Permanece EN PROGRESO.
+Decisión confirmada por el usuario: aceptación individual por usuario y una columna adicional en Users.
+Bloqueo detectado: el coordinador compartido aplica política deny-by-default; la nueva acción AUTH/acceptTerms sería rechazada aunque el router AUTH la registrara.
+Resolución de esta iteración:
+- Services/Coordinator.js autoriza AUTH/acceptTerms y reserva los recursos de identidad Users, ActiveSessions y Logs para serializar la verificación de sesión/revocación y la escritura.
+- Services/Test/SharedMutationCoordinator.js añade una regresión que comprueba la lease y el bloqueo de mutaciones USERS concurrentes.
+- Services/Test/README.md documenta la nueva cobertura.
+- ChangesLogs.txt y Tareas.txt registran únicamente esta dependencia.
+Validación local: suite SharedMutationCoordinator y parsing de Coordinator.js/SharedMutationCoordinator.js; resultados se verifican antes de publicar.
+No se implementó aún la columna TermsAcceptance ni el handler acceptTerms. No se modificaron deployments, coordinador desplegado, hojas ni datos productivos.
+Siguiente paso para la próxima interacción: reanudar AUG-045 desde el diseño ya acordado; completar Services/Auth.js y Services/Test/Auth.js, Services/users.js y su copia de prueba, api-config.js, auth.js, ui.js, index.html, pruebas lógicas y registros de cierre. No iniciar AUG-046.
+================================================================================

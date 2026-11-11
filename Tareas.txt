@@ -761,3 +761,9 @@ Pendiente Beta: obtener y verificar el código/contrato del deployment LEGACY/lo
 Rama base GPSpedia2.2.5 sin cambios.
 Siguiente tarea identificada: AUG-045. No iniciada en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-045 — CONTINUIDAD — 2026-11-10
+Se detectó y resolvió la dependencia del coordinador compartido: AUTH/acceptTerms estaba denegada por política deny-by-default. Services/Coordinator.js ahora reserva recursos de identidad y la suite SharedMutationCoordinator incorpora regresión. AUG-045 continúa EN PROGRESO; siguiente paso: implementar la persistencia TermsAcceptance en AUTH/Users y conectar el bloqueo frontend. Checkpoint de dependencia en checkpoint.md.
+================================================================================

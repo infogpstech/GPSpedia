@@ -397,6 +397,18 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => coordinatorPolicy_("FEEDBACK", "assignCollaborator"), "política");
     });
 
+    test_("AUTH acceptTerms serializa la aceptación con las mutaciones de identidad", function() {
+        const r = createRuntime_();
+        const policy = coordinatorPolicy_("AUTH", "acceptTerms");
+        assert_(policy.writeResources.includes("USERS"), "acceptTerms debe reservar Users.");
+        assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe reservar ActiveSessions para verificar/reconciliar identidad.");
+        const acceptance = acquire_(r, "AUTH", "acceptTerms");
+        assert_(acceptance.status === "success", "acceptTerms debe obtener una lease autorizada.");
+        const profile = acquire_(r, "USERS", "updateProfile");
+        assert_(profile.status === "error" && profile.code === "busy", "La aceptación debe serializarse con cambios de Users.");
+        release_(r, "AUTH", "acceptTerms", acceptance.token);
+    });
+
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
     return summary;
 }

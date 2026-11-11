@@ -20,6 +20,7 @@ function coordinatorPolicy_(service, operation) {
     const policies = {
         AUTH: {
             login: { write: identityWrite },
+            acceptTerms: { write: identityWrite },
             validateSession: { write: identityWrite },
             touchSession: { write: identityWrite },
             changePassword: { write: identityWrite },

@@ -249,3 +249,6 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 - `logFrontend` es la única acción LEGACY declarada: `users.html` la envía mediante `remoteLog` al SCRIPT_URL que coincide con API_ENDPOINTS.LEGACY. El código del deployment no está versionado aquí y debe verificarse en Beta.
 - `routeAction` ya no redirige silenciosamente servicios desconocidos a LEGACY; falla con error de servicio no configurado.
 - La suite usa fuentes estáticas y no invoca endpoints, deployments ni datos productivos.
+
+
+La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `ActiveSessions`; su política y serialización se comprueban en `runSharedMutationCoordinatorTests()`.

@@ -947,3 +947,12 @@ AUG-044 — Reconciliar mapa central de acciones y dispatchers — 2026-11-10
 - Services/Test/ActionDispatchContract.js: nueva prueba estática de correspondencia entre mapa, endpoints, dispatchers, compatibilidades y LEGACY.
 - Services/Test/README.md, Tareas_pendientes_parte1.txt, Auditoría.txt, ChangesLogs.txt, Tareas.txt, tareas_completadas_parte1.txt y checkpoint.md: documentación, evidencia y cierre de AUG-044.
 ================================================================================
+
+
+================================================================================
+DEPENDENCIA AUG-045 — Autorizar acceptTerms en el coordinador compartido — 2026-11-10
+- Services/Coordinator.js: la política AUTH incorpora acceptTerms con reserva de recursos de identidad Users, ActiveSessions y Logs, coherente con la verificación/reconciliación de sesión y rol.
+- Services/Test/SharedMutationCoordinator.js: nueva regresión para confirmar que acceptTerms obtiene lease y bloquea una mutación USERS concurrente.
+- Services/Test/README.md: documenta los recursos reservados y la prueba.
+- AUG-045 permanece EN PROGRESO; esta modificación resuelve una dependencia necesaria antes de implementar el handler AUTH y el flujo frontend.
+================================================================================
