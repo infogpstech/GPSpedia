@@ -83,7 +83,7 @@ function runAdminModalEditSecurityTests() {
             getSpreadsheet=()=>({getSheetByName:()=>sheet});
             SpreadsheetApp={flush:()=>{}};
             const result=handleUpdateVehicleField({vehicleId:"VEH-VIN",fieldName:"vin",value:"VIN123"},()=>{});
-            assert_(result.status==="success"&&vehicle[42]==="VIN123");
+            assert_(result.status==="success"&&vehicle[42]==='["VIN123"]'&&result.normalizedValue==='["VIN123"]');
         });
         run_("updateVehicleField rechaza campos fuera del modal antes de acceder a datos",()=>{
             let accessed=false;getSpreadsheet=()=>{accessed=true;throw new Error("No debe consultar Spreadsheet.");};
