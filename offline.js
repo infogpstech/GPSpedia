@@ -821,6 +821,70 @@ async function evictLeastRecentlyUsedThumbnails() {
  );
 }
 
+/** Identifica agotamiento de cuota de almacenamiento sin confundir otros abortos. */
+function isThumbnailQuotaError(error) {
+ return !!error && (error.name === "QuotaExceededError" || error.code === 22 || error.code === 1014);
+}
+
+/** Libera el 25 % más antiguo de las miniaturas persistidas para recuperar cuota. */
+async function evictOldestThumbnailBatch() {
+ return runThumbnailStoreTransaction(
+  store => store.getAll(),
+  (store, entries) => {
+   const cached = (Array.isArray(entries) ? entries : [])
+    .filter(entry => entry && typeof entry === "object" &&
+     typeof entry.key === "string" && entry.blob)
+    .sort((a, b) =>
+     (Number(a.lastAccessedAt) || Number(a.cachedAt) || 0) -
+     (Number(b.lastAccessedAt) || Number(b.cachedAt) || 0) ||
+     (Number(a.cachedAt) || 0) - (Number(b.cachedAt) || 0) ||
+     a.key.localeCompare(b.key));
+   const count = cached.length ? Math.max(1, Math.ceil(cached.length * 0.25)) : 0;
+   for (let index = 0; index < count; index += 1) store.delete(cached[index].key);
+   return count;
+  }
+ );
+}
+
+/** Si solo quedan registros heredados, libera una parte de sus claves antiguas. */
+async function evictLegacyThumbnailBatch() {
+ return runThumbnailStoreTransaction(
+  store => store.getAllKeys(),
+  (store, keys) => {
+   const legacyKeys = Array.isArray(keys) ? keys : [];
+   const count = legacyKeys.length ? Math.max(1, Math.ceil(legacyKeys.length * 0.25)) : 0;
+   for (let index = 0; index < count; index += 1) store.delete(legacyKeys[index]);
+   return count;
+  }
+ );
+}
+
+/**
+ * Ante QuotaExceededError, descarta progresivamente miniaturas LRU y reintenta.
+ * Solo afecta al almacén de miniaturas; si la cuota sigue agotada, omite la caché.
+ */
+async function storeThumbnailWithQuotaRecovery(entry, key) {
+ const save = () => runThumbnailStoreTransaction(
+  store => store.put(entry, key),
+  (store, result) => result
+ );
+ try {
+  return await save();
+ } catch (error) {
+  if (!isThumbnailQuotaError(error)) throw error;
+ }
+ while (true) {
+  let removed = await evictOldestThumbnailBatch();
+  if (!removed) removed = await evictLegacyThumbnailBatch();
+  if (!removed) return null;
+  try {
+   return await save();
+  } catch (error) {
+   if (!isThumbnailQuotaError(error)) throw error;
+  }
+ }
+}
+
 /** Compresión por variante; conserva compatibilidad de lectura con claves antiguas. */
 export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400){
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
@@ -842,7 +906,7 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
    return await new Promise(resolve=>canvas.toBlob(async blob=>{
     if(!blob){resolve(null);return;}
     const now=Date.now(),entry={key:cacheKey,fileId,width,blob,cachedAt:now,lastAccessedAt:now};
-    const saved=await performOp("thumbnails","readwrite",store=>store.put(entry,cacheKey));
+    const saved=await storeThumbnailWithQuotaRecovery(entry,cacheKey);
     if(saved!==null) await evictLeastRecentlyUsedThumbnails();
     resolve(saved===null?null:blob);
    },"image/png"));

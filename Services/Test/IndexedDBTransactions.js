@@ -45,8 +45,10 @@ function createIndexedDBHarness(options = {}) {
                         put(value, key) {
                             const request = {};
                             return enqueue(request, () => {
-                                if (behavior === 'quota') {
-                                    request.error = tx.error;
+                                if (behavior === 'quota' || (name === 'thumbnails' && options.quotaFailures > 0)) {
+                                    if (options.quotaFailures > 0) options.quotaFailures -= 1;
+                                    request.error = behavior === 'quota' ? tx.error : new DOMException('Quota exceeded', 'QuotaExceededError');
+                                    tx.error = request.error;
                                     if (request.onerror) request.onerror();
                                     if (tx.onerror) tx.onerror();
                                     aborted = true;
@@ -71,6 +73,10 @@ function createIndexedDBHarness(options = {}) {
                         getAll() {
                             const request = {};
                             return enqueue(request, () => { request.result = [...record.values.values()]; if (request.onsuccess) request.onsuccess(); });
+                        },
+                        getAllKeys() {
+                            const request = {};
+                            return enqueue(request, () => { request.result = [...record.values.keys()]; if (request.onsuccess) request.onsuccess(); });
                         },
                         delete(key) {
                             const request = {};
@@ -215,6 +221,61 @@ async function runIndexedDBTransactionTests() {
             assert.ok(await api.getThumbnail('ttl-file-123',300));
         }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
     });
+    await testAsync('la cuota agotada elimina miniaturas LRU y reintenta sin afectar otros datos',async()=>{
+        const harness=createIndexedDBHarness({quotaFailures:1}),api=await freshOffline(harness,'thumbnail-quota-recovery');
+        await api.saveCatalog(snapshot);
+        await api.initDB();
+        const store=harness.stores.get('thumbnails'),now=Date.now();
+        for(let i=0;i<4;i++){
+            const key='quota-'+String(i).padStart(3,'0')+'::w300';
+            store.values.set(key,{key,fileId:'quota-'+i,width:300,blob:new Blob(['thumb-'+i]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
+        }
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:640,height:480,close(){}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            const result=await api.compressAndStoreThumbnail('https://images.example/quota.png','quota-new-entry',300);
+            assert.ok(result,'la miniatura debe guardarse después de liberar cuota');
+            assert.equal(store.values.has('quota-003::w300'),false,'debe eliminar primero la variante menos reciente');
+            assert.equal(store.values.has('quota-new-entry::w300'),true);
+            assert.deepEqual(await api.getCatalog(),snapshot,'la recuperación no debe modificar otros almacenes');
+        }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
+    await testAsync('la recuperación de cuota también libera miniaturas heredadas',async()=>{
+        const harness=createIndexedDBHarness({quotaFailures:1}),api=await freshOffline(harness,'thumbnail-quota-legacy');
+        await api.initDB();
+        const store=harness.stores.get('thumbnails');
+        store.values.set('legacy-file-a',new Blob(['legacy-a']));
+        store.values.set('legacy-file-b',new Blob(['legacy-b']));
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:640,height:480,close(){}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            const result=await api.compressAndStoreThumbnail('https://images.example/quota-legacy.png','quota-legacy-new',300);
+            assert.ok(result);
+            assert.equal(store.values.has('legacy-file-a'),false,'debe liberar primero una clave heredada cuando no hay variantes LRU modernas');
+            assert.equal(store.values.has('quota-legacy-new::w300'),true);
+        }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
+    await testAsync('si la cuota sigue agotada después de liberar miniaturas, omite el caché sin afectar el catálogo',async()=>{
+        const harness=createIndexedDBHarness({quotaFailures:10}),api=await freshOffline(harness,'thumbnail-quota-exhausted');
+        await api.saveCatalog(snapshot);
+        await api.initDB();
+        const store=harness.stores.get('thumbnails');
+        store.values.set('legacy-file-only',new Blob(['legacy']));
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:640,height:480,close(){}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            const result=await api.compressAndStoreThumbnail('https://images.example/quota-full.png','quota-full-new',300);
+            assert.equal(result,null,'no debe fallar la carga visual si la caché no puede persistirse');
+            assert.equal(store.values.size,0,'debe agotar primero las miniaturas descartables');
+            assert.deepEqual(await api.getCatalog(),snapshot,'el catálogo debe permanecer intacto');
+        }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
     await testAsync('LRU actualiza recencia y expulsa la variante menos utilizada al superar el límite',async()=>{
         const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-lru');
         await api.initDB();
@@ -268,7 +329,7 @@ async function runIndexedDBTransactionTests() {
             globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;
         }
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/12 PASS`);
+    console.log(`\nIndexedDB transaction tests: ${passed}/15 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

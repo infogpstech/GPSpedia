@@ -954,3 +954,12 @@ Validación local: parsing V8 de offline.js y Services/Test/IndexedDBTransaction
 Compatibilidad: DB_VERSION y estructura de stores sin cambios.
 Siguiente iteración de AUG-051: abordar únicamente la política de cuota total de IndexedDB. No iniciar límite RAM, revocación de ObjectURL, concurrencia de compresión ni AUG-052.
 ================================================================================
+
+
+================================================================================
+AUG-051 — CIERRE DE ITERACIÓN 6 — RECUPERACIÓN DE CUOTA — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Al producirse QuotaExceededError al guardar una miniatura, se elimina progresivamente el 25 % más antiguo del almacén thumbnails según LRU y se reintenta. Si solo quedan registros heredados sin metadatos LRU, se liberan sus claves por lotes. Si la cuota continúa agotada tras liberar el caché, se omite la persistencia de la miniatura y se conservan los demás almacenes.
+Pruebas locales: parsing V8 aprobado y suite Services/Test/IndexedDBTransactions.js ejecutada en V8 adaptado, 15/15 PASS. Node CLI literal no ejecutado por falta de checkout local y fallo de DNS. IndexedDB real y multi-pestaña reservados a Beta.
+Siguiente iteración AUG-051: abordar exclusivamente el límite de memoria RAM de miniaturas. No iniciar revocación de ObjectURL, concurrencia de compresión ni AUG-052.
+================================================================================

@@ -341,3 +341,9 @@ La suite `Services/Test/IndexedDBTransactions.js` incluye un escenario que gener
 
 
 La regresión LRU también difiere deliberadamente una solicitud `delete` y comprueba que la operación no se resuelva antes de que esa solicitud termine. El harness contabiliza solicitudes pendientes de cada transacción, incluidas las encoladas durante `onsuccess`. Ejecutar junto con el resto de escenarios mediante `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+
+
+## Recuperación ante cuota de IndexedDB (AUG-051)
+
+Ejecutar `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+Cuando una escritura de miniatura falla con `QuotaExceededError`, la aplicación elimina progresivamente el 25 % más antiguo de las miniaturas persistidas (orden LRU); si solo quedan registros heredados sin metadatos de recencia, libera sus claves por lotes y reintenta la escritura. La recuperación solo afecta al almacén desechable `thumbnails`; si no quedan miniaturas para liberar o la escritura vuelve a fallar sin poder recuperar espacio, se omite el almacenamiento en caché y se conserva el resultado nulo, sin afectar los demás almacenes. La suite incluye una simulación de fallo de cuota y comprueba que la escritura se recupere y que el catálogo permanezca intacto.

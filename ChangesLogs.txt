@@ -1314,3 +1314,11 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Se añadió una regresión que retiene una solicitud delete y verifica que la operación LRU no resuelva antes de su finalización.
 - Se corrigió el resumen para imprimir el total real de pruebas ejecutadas.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE ITERACIÓN 6 — RECUPERACIÓN DE CUOTA
+- offline.js: ante QuotaExceededError al guardar miniaturas, elimina progresivamente el 25 % más antiguo según LRU y reintenta; si solo quedan registros heredados, libera sus claves por lotes.
+- Si no se recupera cuota después de agotar las miniaturas, omite el almacenamiento en caché y no afecta los demás almacenes.
+- Services/Test/IndexedDBTransactions.js: pruebas de recuperación de cuota, limpieza de claves heredadas, agotamiento persistente y preservación del catálogo.
+================================================================================
