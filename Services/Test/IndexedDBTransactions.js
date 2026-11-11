@@ -334,7 +334,7 @@ async function runIndexedDBTransactionTests() {
         const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
         let active=0,maxActive=0,started=0,closed=0;
         const releases=[],waiters=[];
-        const waitForStarted=target=>started>=target?Promise.resolve():new Promise(resolve=>waiters.push({target,resolve}));
+        const waitForStarted=target=>started>=target?Promise.resolve():new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error(`Timeout esperando ${target} compresiones iniciadas.`)),2000);waiters.push({target,resolve:()=>{clearTimeout(timeout);resolve();}});});
         const notifyStarted=()=>{
             for(let index=waiters.length-1;index>=0;index--){
                 if(started>=waiters[index].target){waiters[index].resolve();waiters.splice(index,1);}
