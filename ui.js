@@ -1352,11 +1352,10 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
  */
 async function checkValidationEligibility(item) {
     const currentYear = new Date().getFullYear();
-    const { catalogData } = getState();
+    const { catalogData, currentUser } = getState();
     const { cortes } = catalogData;
-
-    // 1. Verificar si el usuario ya respondió anteriormente para este mismo registro (ID)
-    const cachedResponse = await offline.getValidationResponse(item.id);
+    const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
+    const cachedResponse = ownerId && ownerId !== '0' ? await offline.getValidationResponse(item.id, ownerId) : null;
     if (cachedResponse) return { eligible: false };
 
     const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
@@ -1415,11 +1414,10 @@ function showValidationBanner(item, isOldModel) {
 
     const currentYear = new Date().getFullYear();
     const { currentUser } = getState();
-    const isRegisteredUser = Boolean(currentUser && currentUser.ID !== undefined &&
-        currentUser.ID !== null && String(currentUser.ID).trim() !== "" &&
-        String(currentUser.ID).trim() !== "0");
+    const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
+    const isRegisteredUser = Boolean(ownerId && ownerId !== "0");
     const suggestionActorPayload = isRegisteredUser
-        ? { userId: String(currentUser.ID), sessionToken: String(currentUser.SessionToken || "") }
+        ? { userId: ownerId, sessionToken: String(currentUser.SessionToken || "") }
         : { userId: "0" };
 
     const renderStep = (content) => {
@@ -1449,7 +1447,7 @@ function showValidationBanner(item, isOldModel) {
         try {
             const submission = await confirmValidationBeforeCache(
                 () => suggestYear(item.id, suggestedYear || currentYear, response, suggestionActorPayload),
-                () => offline.saveValidationResponse(item.id, response)
+                () => offline.saveValidationResponse(item.id, response, ownerId)
             );
             if (!submission.recorded) {
                 registrationInProgress = false;
@@ -1843,15 +1841,21 @@ function createDetailParagraph(label, text) {
 }
 
 export function mostrarDetalleModal(item, isNavigation = false, navOptions = {}) {
-    const { catalogData } = getState();
+    const { catalogData, currentUser } = getState();
     const activeItem = (catalogData && catalogData.cortes)
         ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
         : item;
-
-    // Registrar como item visto (offline)
-    offline.saveViewedItem(activeItem).then(() => {
-        offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
-    });
+    const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
+    if (ownerId && ownerId !== '0') {
+        offline.saveViewedItem(activeItem, ownerId).then(() => {
+            const activeUser = getState().currentUser;
+            if (String(activeUser && (activeUser.ID || activeUser.id) || '').trim() !== ownerId) return;
+            offline.getViewedItems(ownerId).then(viewed => {
+                const latestUser = getState().currentUser;
+                if (String(latestUser && (latestUser.ID || latestUser.id) || '').trim() === ownerId) setState({ viewedItems: viewed });
+            });
+        });
+    }
 
     const { relay: datosRelay } = catalogData;
 
@@ -2654,7 +2658,9 @@ function updateOpenModalIfActive(newItem) {
     // Una manera limpia es volver a almacenar el item modificado en el historial de vistos sin alterar la visualización actual,
     // y dejar que la siguiente apertura muestre la nueva versión.
     // Sin embargo, para cumplir 100% que la siguiente apertura muestre automáticamente la versión actualizada y el caché esté listo:
-    offline.saveViewedItem(newItem).catch(err => console.warn("Error guardando item visto actualizado:", err));
+    const currentUser = getState().currentUser;
+    const ownerId = String(currentUser && (currentUser.ID || currentUser.id) || '').trim();
+    if (ownerId && ownerId !== '0') offline.saveViewedItem(newItem, ownerId).catch(err => console.warn("Error guardando item visto actualizado:", err));
 }
 
 /**
