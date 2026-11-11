@@ -134,7 +134,8 @@ export function showSavingIndicator(status, message = "") {
 
 function getCurrentEditOwnerContext_() {
     const context = getUiSessionContext_();
-    return context && context.role === 'desarrollador' ? context : null;
+    const role = String(context && context.role || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    return context && ["desarrollador", "gefe"].includes(role) ? context : null;
 }
 
 function getEditBackupStore_(ownerId) {
@@ -2020,7 +2021,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             editBtn.onclick = async () => {
                 const editSession = getCurrentEditOwnerContext_();
                 if (!editSession) {
-                    showSavingIndicator("error", "No se pudo verificar la cuenta Desarrollador para iniciar la edición.");
+                    showSavingIndicator("error", "No se pudo verificar una cuenta autorizada para iniciar la edición.");
                     return;
                 }
                 const cleanVehicleId = String(activeItem.id);
