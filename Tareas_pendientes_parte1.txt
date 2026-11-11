@@ -632,7 +632,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Fallar cerrado si falta el modal o no puede leerse el estado; manejar errores de almacenamiento sin desbloquear catálogo.
   6. Probar dos cuentas en un dispositivo, una cuenta en dos dispositivos, logout/login, storage vacío/alterado/no disponible, versión nueva y markup/JS desalineados.
 - Relación: AUD-T-036; AUD-T-024/AUG-016; AUG-046.
-- Estado: NUEVA; decisión, diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Aceptación individual persistida en AUTH/Users; UI fail-closed por versión y confirmación backend; parsing y pruebas locales de lógica/esquema/contratos aprobadas. Apps Script, Spreadsheet aislado y navegador real pendientes de Beta.
 
 ### AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad
 - Origen: H-AUD-036-003. Prioridad alta antes de usarlo como aceptación legal definitiva.
