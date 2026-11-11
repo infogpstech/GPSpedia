@@ -1628,3 +1628,22 @@ Límites:
 Resultado de la iteración: revisión comparativa documental ampliada y registrada en Legal/AUG-046_revision_preliminar.md, sección 9. AUG-046 permanece EN PROGRESO; siguen pendientes las confirmaciones operativas y la validación interna corporativa. No iniciar AUG-047.
 Siguiente paso: continuar únicamente AUG-046 con la consolidación de confirmaciones operativas y decisiones internas, sin editar el contenido legal.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-046 — ACLARACIÓN DE IDENTIDAD Y CONTENIDO — 2026-11-11
+HEAD de trabajo al inicio: e9702c2c0908607c14a46d5bae4b6c59ced8d758.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Aclaración expresa del responsable del proyecto:
+- GPSpedia es la plataforma y herramienta. Su código, diseño, organización, estructura general y elementos propios son desarrollo privado de la empresa, protegidos por derechos de autor conforme a la definición del proyecto.
+- Las imágenes y videos compartidos son conocimiento público; GPSpedia los organiza, etiqueta, complementa con información útil y reúne información dispersa con mayor precisión, sin reclamar autoría sobre los materiales originales.
+- TRACKLINK es la marca corporativa de la empresa.
+- Motorlink S.A. es la empresa y su nombre registrado en Honduras.
+
+Corrección aplicada al memo Legal/AUG-046_revision_preliminar.md, sección 9.4: los dos primeros puntos de 9.1 que planteaban como pendientes la distinción de contenidos y la relación entre entidades/marca quedan reemplazados por esta aclaración. No deben volver a tratarse como contradicciones pendientes. El alcance de la auditoría es técnico y descriptivo; no se emitirán opiniones ni recomendaciones jurídicas.
+
+No se modificó el acuerdo de uso, el aviso, index.html, su versión/fecha, el flujo de aceptación, código ni datos productivos. La aclaración se registró solo en documentación de auditoría y checkpoint.
+
+AUG-046 sigue en curso por los restantes contrastes operativos y validaciones internas que aún no se han confirmado. Continuar solo AUG-046 en la siguiente iteración; no iniciar AUG-047.
+================================================================================
