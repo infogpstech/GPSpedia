@@ -1392,3 +1392,14 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - style.css: agrega estilos responsivos para los estados de carga, datos desactualizados y error recuperable.
 - Services/Test/CatalogStatus.js: cuatro escenarios sintéticos de presentación de estados.
 - Services/Test/README.md y Tareas_pendientes_parte1.txt: documentan la suite y el avance del criterio 2. No se modifican endpoints, backend ni Service Worker.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 4 — PRECACHE Y CUOTA DE CACHE STORAGE
+- service-worker.js: incrementa el cache a v15 e incorpora el grafo estático transitivo de módulos de main.js, add_cortes.html y users.html, incluido VinDifferentialEngine.js y sus dependencias.
+- La precarga esencial usa addAll atómico; ante cuota insuficiente o recurso esencial ausente, falla la instalación para conservar activo el Service Worker anterior.
+- Los iconos complementarios se precargan individualmente; cuota agotada se registra y detiene solo los recursos opcionales restantes.
+- Las escrituras runtime cache.put quedan cubiertas por event.waitUntil; errores de cuota/almacenamiento se registran sin descartar la respuesta de red.
+- La activación elimina únicamente versiones anteriores del namespace gpsepedia-cache-* y conserva cachés ajenas.
+- Services/Test/ServiceWorkerCache.js: seis escenarios de precache, cuota, waitUntil, fallback offline y exclusión de POST.
+- Services/Test/README.md y Tareas_pendientes_parte1.txt actualizados.

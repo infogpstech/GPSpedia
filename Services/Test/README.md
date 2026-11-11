@@ -382,3 +382,10 @@ La regresión añadida a `Services/Test/IndexedDBTransactions.js` solicita cinco
 - Ejecutar `node --experimental-default-type=module Services/Test/CatalogStatus.js`.
 - Comprueba el estado informativo durante la carga, el aviso persistente de datos guardados posiblemente desactualizados, el reintento ofrecido cuando no hay catálogo disponible y la ocultación del aviso al recuperar el estado ready.
 - La suite valida la clasificación de estados sin DOM ni servicios externos. La interacción real del botón, la red y la recuperación offline quedan pendientes de Beta.
+
+
+## Service Worker: precache del grafo y cuota (AUG-052 — iteración 4)
+
+Ejecutar `node --experimental-default-type=module Services/Test/ServiceWorkerCache.js`.
+
+La suite verifica el precache del grafo estático transitivo (incluido VinDifferentialEngine.js), tratamiento de cuota en recursos opcionales y esenciales, asociación de cache.put a event.waitUntil, fallback de navegación offline y exclusión de peticiones no GET. Utiliza Cache Storage y fetch simulados; instalación/actualización y arranque offline en navegador real quedan para Beta.

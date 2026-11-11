@@ -1,90 +1,41 @@
-const CACHE_NAME = 'gpsepedia-cache-v14';
-const urlsToCache = [
-  './',
-  './index.html',
-  './add_cortes.html',
-  './users.html',
-  './main.js',
-  './auth.js',
-  './ui.js',
-  './rich-text.js',
-  './state.js',
-  './navigation.js',
-  './offline.js',
-  './lightbox.js',
-  './api-config.js',
-  './style.css',
-  './icon-v3-192x192.png',
-  './icon-v3-512x512.png',
-  './icon-pwa-192x192.png',
-  './icon-pwa-512x512.png'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache and caching basic assets');
-        return cache.addAll(urlsToCache);
-      })
-  );
-  self.skipWaiting(); // Force the new service worker to activate immediately
-});
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim()) // Take control of all open clients
-  );
-});
-
-self.addEventListener('fetch', event => {
-  // Ignorar peticiones que no sean GET (como las de la API que usan POST)
-  if (event.request.method !== 'GET') return;
-
-  // Estrategia para peticiones de navegación (recarga de página)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Si hay red, actualizamos el caché y devolvemos la respuesta
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
-          }
-          return response;
-        })
-        .catch(() => {
-          // Si falla la red (offline refresh), intentamos servir el recurso desde caché
-          // o como último recurso el index.html
-          return caches.match(event.request, { ignoreSearch: true })
-            .then(cachedResponse => {
-              return cachedResponse || caches.match('./index.html');
-            });
-        })
-    );
-    return;
+const CACHE_NAME='gpsepedia-cache-v15';
+const CORE_ASSETS=['./','./index.html','./add_cortes.html','./users.html','./main.js','./auth.js','./ui.js','./rich-text.js','./state.js','./navigation.js','./offline.js','./lightbox.js','./api-config.js','./VinDifferentialEngine.js','./search-utils.js','./catalogStatus.js','./catalogRequest.js','./pys-data.js','./validationSubmission.js','./likeState.js','./youtubeUpload.js','./imageObjectUrlCache.js','./thumbnailCompressionQueue.js','./style.css','./manifest.json'];
+const OPTIONAL_ASSETS=['./icon-v3-192x192.png','./icon-v3-512x512.png','./icon-pwa-192x192.png','./icon-pwa-512x512.png'];
+function isQuotaExceeded(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.code===22));}
+function reportCacheWriteError(error,operation){
+ if(isQuotaExceeded(error)){console.warn('[GPSpedia SW] Cuota de Cache Storage agotada; se omite esta escritura.',operation);return;}
+ console.warn('[GPSpedia SW] No se pudo actualizar Cache Storage.',operation,error);
+}
+self.addEventListener('install',event=>{
+ event.waitUntil((async()=>{
+  const cache=await caches.open(CACHE_NAME);
+  try{await cache.addAll(CORE_ASSETS);}
+  catch(error){console.error('[GPSpedia SW] Falló la precarga esencial; se conserva el Service Worker anterior.',error);throw error;}
+  for(const asset of OPTIONAL_ASSETS){
+   try{await cache.add(asset);}
+   catch(error){reportCacheWriteError(error,asset);if(isQuotaExceeded(error))break;}
   }
-
-  // Estrategia general para assets (Network-First con fallback a Cache)
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response && response.status === 200) {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
-        }
-        return response;
-      })
-      .catch(() => caches.match(event.request, { ignoreSearch: true }))
-  );
+  await self.skipWaiting();
+ })());
+});
+self.addEventListener('activate',event=>{
+ event.waitUntil(caches.keys().then(names=>Promise.all(
+  names.filter(name=>name.startsWith('gpsepedia-cache-')&&name!==CACHE_NAME).map(name=>caches.delete(name))
+ )).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch',event=>{
+ if(event.request.method!=='GET')return;
+ const networkResponse=fetch(event.request);
+ const cacheWrite=networkResponse.then(response=>{
+  if(!response||response.status!==200)return;
+  return caches.open(CACHE_NAME).then(cache=>cache.put(event.request,response.clone()))
+   .catch(error=>reportCacheWriteError(error,event.request.url));
+ }).catch(()=>undefined);
+ event.waitUntil(cacheWrite);
+ if(event.request.mode==='navigate'){
+  event.respondWith(networkResponse.catch(()=>caches.match(event.request,{ignoreSearch:true})
+   .then(cached=>cached||caches.match('./index.html'))));
+  return;
+ }
+ event.respondWith(networkResponse.catch(()=>caches.match(event.request,{ignoreSearch:true})));
 });

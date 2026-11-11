@@ -155,3 +155,13 @@ ADENDA DE VALIDACIÓN — AUG-052 ITERACIÓN 3 — 2026-11-11
 - La comparación del commit bf5e9370f5f2e34bb32f684e83a1945beb11c274 confirma nueve archivos, todos dentro del alcance de la iteración 3. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente: AUG-052, criterio 3 (precache, event.waitUntil y manejo de cuota), en una iteración independiente.
 ================================================================================
+
+
+================================================================================
+AUG-052 — ITERACIÓN 4 — 2026-11-11 — PRECACHE, EVENT.WAITUNTIL Y CUOTA
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 02f083b8dab0fb4838727a70dedf22346319c2b8. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+service-worker.js incrementa el cache a v15. CORE_ASSETS incluye las tres entradas HTML y el grafo estático transitivo de módulos de main.js, add_cortes.html y users.html, incluido VinDifferentialEngine.js. La precarga esencial usa addAll atómico; si falla por cuota/recurso esencial, la instalación falla para preservar el SW anterior. Los iconos son opcionales y se omiten al agotar cuota. Las escrituras runtime cache.put están asociadas a event.waitUntil y sus errores no invalidan respuestas de red. La activación solo elimina caches anteriores gpsepedia-cache-* y no toca caches de otras aplicaciones.
+Suite Services/Test/ServiceWorkerCache.js: 6/6 PASS en runtime V8 adaptado (grafo, cuota opcional, cuota esencial, waitUntil/cache.put, navegación offline y POST). Node CLI literal no ejecutado. Instalación/actualización y arranque offline en navegador real quedan para Beta. No se modifican endpoints ni backend.
+Siguiente iteración: AUG-052, criterio 4 (evaluar caché/paginación o getNavigationData). No iniciar AUG-053 ni otra tarea.
+================================================================================
