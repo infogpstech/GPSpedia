@@ -82,3 +82,14 @@ Pruebas: Services/Test/ImageObjectUrlLifecycle.js (7 casos sintéticos). Validac
 Archivos: ui.js, imageObjectUrlCache.js, Services/Test/ImageObjectUrlLifecycle.js, Services/Test/README.md, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
 Siguiente iteración: implementar exclusivamente el límite RAM de miniaturas usando el ciclo de vida ahora disponible. No iniciar concurrencia de compresión ni AUG-052.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CONTINUIDAD — AUG-051 ITERACIÓN 10 — 2026-11-11
+Estado: EN PROGRESO — revisión y validación parcial realizadas; suite integrada aún sin ejecución.
+HEAD confirmado al reanudar: 3c0147f9558735ab041fb6f848a3c7be93652ddb. Rama de trabajo: GPSpedia2.2.5_work. Comparación con GPSpedia2.2.5: idéntica al HEAD confirmado; sin cambios concurrentes.
+Se revisó NORMAS_DESAROLLO.md, el checkpoint y los archivos de cola, integración y pruebas. La rama permanece en el commit de la iteración 10.
+Validación adicional reproducible en el runtime disponible: limitador probado con 5 trabajos/límite 2, 4 trabajos/límite 1 incluyendo rechazo, y 9 trabajos/límite 3. FIFO, máximo simultáneo, liberación de turno y estado final active=0/queued=0: PASS. Parsing de helper, offline.js y suite: PASS.
+No se pudo ejecutar literalmente la suite IndexedDBTransactions.js: este entorno no contiene checkout local ni Node CLI asociado al repositorio. Los intentos de adaptar el harness IndexedDB en V8 no se consideran una ejecución válida y no se reportan como PASS. No se modificó el código funcional durante esta reanudación.
+Acción para continuar: disponer de un checkout local de GPSpedia2.2.5_work y ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js; revisar cualquier fallo y cerrar iteración 10. No iniciar AUG-052.
+================================================================================
