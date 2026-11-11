@@ -251,7 +251,7 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
                 throw new Error("El reemplazo está vinculado, pero el archivo no superó la verificación de integridad. Requiere revisión antes de descartar.");
             }
             const imageTarget = { src: "", removeAttribute: () => {} };
-            await submitAdminImageUploadOperation(operation, imageTarget);
+            await submitAdminImageUploadOperation(operation, imageTarget, editSession);
             if (!isCurrentUiSessionContext_(editSession)) {
                 throw new Error("La sesión cambió durante la reconciliación del reemplazo. No se continuó con otra cuenta.");
             }
@@ -458,9 +458,10 @@ function readAdminImageAsDataUrl(file) {
     });
 }
 
-async function submitAdminImageUploadOperation(operation, imgElement) {
-    const editSession = getCurrentEditOwnerContext_();
-    if (!editSession || !operation || String(operation.ownerId || "") !== String(editSession.userId || "")) {
+async function submitAdminImageUploadOperation(operation, imgElement, expectedSession = null) {
+    const editSession = expectedSession || getCurrentEditOwnerContext_();
+    if (!editSession || !isCurrentUiSessionContext_(editSession) || !operation ||
+        String(operation.ownerId || "") !== String(editSession.userId || "")) {
         throw new Error("El reemplazo pendiente pertenece a otra cuenta o no tiene un propietario verificable.");
     }
     const response = await routeAction("uploadAdminImage", {
@@ -566,11 +567,13 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
             imgElement.src = pendingOperation.fileData;
             showSavingIndicator("processing", "Recuperando reemplazo pendiente...");
             try {
-                await submitAdminImageUploadOperation(pendingOperation, imgElement);
+                await submitAdminImageUploadOperation(pendingOperation, imgElement, editSession);
             } catch (error) {
-                imgElement.src = previousSrc;
-                console.error("No se pudo recuperar el reemplazo pendiente:", error);
-                showSavingIndicator("error", "No se pudo confirmar. El intento original quedó guardado; vuelve a hacer clic para reintentar.");
+                if (isCurrentUiSessionContext_(editSession)) {
+                    imgElement.src = previousSrc;
+                    console.error("No se pudo recuperar el reemplazo pendiente:", error);
+                    showSavingIndicator("error", "No se pudo confirmar. El intento original quedó guardado; vuelve a hacer clic para reintentar.");
+                }
             } finally {
                 uploadInProgress = false;
             }
@@ -586,8 +589,7 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
             uploadInProgress = true;
             try {
                 const fileData = await readAdminImageAsDataUrl(file);
-                const activeSession = getCurrentEditOwnerContext_();
-                if (!activeSession || String(activeSession.userId || "") !== ownerId) {
+                if (!isCurrentUiSessionContext_(editSession) || String(editSession.userId || "") !== ownerId) {
                     throw new Error("La sesión cambió durante la lectura del archivo. No se inició el reemplazo.");
                 }
                 const operation = {
@@ -601,6 +603,9 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                     createdAt: Date.now()
                 };
                 const saved = await offline.saveAdminImageUploadPendingOperation(operation);
+                if (!isCurrentUiSessionContext_(editSession)) {
+                    throw new Error("La sesión cambió mientras se guardaba el reemplazo. El snapshot durable se conserva para reconciliarlo con su cuenta propietaria.");
+                }
                 if (!saved || saved.saved !== true) {
                     if (saved && saved.operation) pendingAdminImageUploads.set(pendingKey, saved.operation);
                     if (saved && saved.conflict) {
@@ -612,13 +617,15 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                 pendingAdminImageUploads.set(pendingKey, operation);
                 imgElement.src = fileData;
                 showSavingIndicator("processing", "Subiendo imagen...");
-                await submitAdminImageUploadOperation(operation, imgElement);
+                await submitAdminImageUploadOperation(operation, imgElement, editSession);
             } catch (error) {
-                imgElement.src = previousSrc;
-                console.error("Error al subir imagen editada:", error);
-                showSavingIndicator("error", error && error.message
-                    ? error.message
-                    : "No se pudo confirmar. El intento pendiente se conserva para reintentar.");
+                if (isCurrentUiSessionContext_(editSession)) {
+                    imgElement.src = previousSrc;
+                    console.error("Error al subir imagen editada:", error);
+                    showSavingIndicator("error", error && error.message
+                        ? error.message
+                        : "No se pudo confirmar. El intento pendiente se conserva para reintentar.");
+                }
             } finally {
                 uploadInProgress = false;
             }

@@ -57,7 +57,7 @@ function runAdminModalEditRestoreContractTests(uiSource, adminSource) {
     run("la consulta remota no continúa con una sesión distinta", () => {
         const resolver = ui.slice(ui.indexOf("async function resolvePendingAdminImageOperationsBeforeDiscard_"), ui.indexOf("async function exitModalEditMode"));
         assert(/await routeAction\(["']getAdminImageUploadStatus["'][\s\S]*?isCurrentUiSessionContext_\(editSession\)/.test(resolver), "Falta revalidar tras consultar el ledger.");
-        assert(/await submitAdminImageUploadOperation\(operation, imageTarget\)[\s\S]*?isCurrentUiSessionContext_\(editSession\)/.test(resolver), "Falta revalidar tras reconciliar un reemplazo.");
+        assert(/await submitAdminImageUploadOperation\(operation, imageTarget(?:,\s*editSession)?\)[\s\S]*?isCurrentUiSessionContext_\(editSession\)/.test(resolver), "Falta revalidar tras reconciliar un reemplazo.");
         assert(/commitAdminImageReplacementBaseline_\(cleanVehicleId, operation\.fieldName, currentUrl, editSession\)/.test(resolver), "El baseline no recibe el contexto esperado.");
         assert(/removePendingAdminImageUploadConfirmed_\(operation, editSession\)/.test(resolver), "La eliminación no recibe el contexto esperado.");
     });
@@ -68,6 +68,26 @@ function runAdminModalEditRestoreContractTests(uiSource, adminSource) {
         const submit = ui.slice(ui.indexOf("async function submitAdminImageUploadOperation"), ui.indexOf("function convertImageToEditable"));
         assert(/await offline\.removeAdminImageUploadPendingOperation[\s\S]*?isCurrentUiSessionContext_\(editSession\)/.test(submit), "El envío no revalida tras eliminar.");
         assert(/await offline\.getAdminImageUploadPendingOperation[\s\S]*?isCurrentUiSessionContext_\(editSession\)/.test(submit), "El envío no revalida tras releer.");
+    });
+    run("el envío conserva el contexto completo de la sesión iniciadora", () => {
+        const submit = ui.slice(ui.indexOf("async function submitAdminImageUploadOperation"), ui.indexOf("function convertImageToEditable"));
+        const converter = ui.slice(ui.indexOf("function convertImageToEditable"), ui.indexOf("const normalizeVersion"));
+        assert(/submitAdminImageUploadOperation\(operation, imgElement, expectedSession = null\)/.test(submit), "El envío no acepta el contexto iniciador.");
+        assert(/expectedSession \|\| getCurrentEditOwnerContext_\(\)/.test(submit) && /!isCurrentUiSessionContext_\(editSession\)/.test(submit), "El envío no valida la sesión completa esperada.");
+        assert(/await readAdminImageAsDataUrl\(file\)[\s\S]*?isCurrentUiSessionContext_\(editSession\)/.test(converter), "La lectura no revalida el contexto iniciador.");
+        assert(/await offline\.saveAdminImageUploadPendingOperation\(operation\)[\s\S]*?isCurrentUiSessionContext_\(editSession\)[\s\S]*?pendingAdminImageUploads\.set\(pendingKey, operation\)[\s\S]*?submitAdminImageUploadOperation\(operation, imgElement, editSession\)/.test(converter), "No se verifica la sesión tras persistir y antes de enviar.");
+        assert(/submitAdminImageUploadOperation\(pendingOperation, imgElement, editSession\)/.test(converter), "El reintento no conserva la sesión iniciadora.");
+    });
+    run("los callbacks obsoletos no modifican la interfaz tras cambiar sesión", () => {
+        const converter = ui.slice(ui.indexOf("function convertImageToEditable"), ui.indexOf("const normalizeVersion"));
+        assert(/catch \(error\) \{\s*if \(isCurrentUiSessionContext_\(editSession\)\) \{[\s\S]*?imgElement\.src = previousSrc/.test(converter), "El callback tardío restaura la imagen.");
+        assert(/catch \(error\) \{\s*if \(isCurrentUiSessionContext_\(editSession\)\) \{[\s\S]*?showSavingIndicator/.test(converter), "El callback tardío muestra avisos.");
+    });
+    run("la eliminación IndexedDB no muta mapas después de cambiar sesión", () => {
+        const remover = ui.slice(ui.indexOf("async function removePendingAdminImageUploadConfirmed_"), ui.indexOf("async function resolvePendingAdminImageOperationsBeforeDiscard_"));
+        assert(/await offline\.removeAdminImageUploadPendingOperation[\s\S]*?if \(!isCurrentUiSessionContext_\(expectedSession\)\) return false;[\s\S]*?pendingAdminImageUploads\.delete\(key\)/.test(remover), "La eliminación no protege memoria después de IndexedDB.");
+        const submit = ui.slice(ui.indexOf("async function submitAdminImageUploadOperation"), ui.indexOf("function convertImageToEditable"));
+        assert(/await offline\.removeAdminImageUploadPendingOperation[\s\S]*?if \(!isCurrentUiSessionContext_\(editSession\)\)[\s\S]*?throw new Error[\s\S]*?pendingAdminImageUploads\.delete\(key\)/.test(submit), "El envío no protege memoria después de eliminar.");
     });
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }

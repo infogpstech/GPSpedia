@@ -406,3 +406,14 @@ Corrección requerida: definir alcance de limpieza; verificar estado de operaci�
 Límites: hallazgo estático de código versionado. Sin navegador real, perfiles de usuario, limpieza efectiva, pruebas multi-pestaña ni verificación de deployment. No se modificó código ni datos productivos.
 Estado: ABIERTO; corrección separada, no implementada durante AUG-046.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ADENDA ITERACIÓN 14 — CONTEXTO DE SESIÓN ENTRE PERSISTENCIA Y ENVÍO DE IMAGEN
+Ubicación: ui.js, convertImageToEditable() y submitAdminImageUploadOperation().
+Evidencia: después de await readAdminImageAsDataUrl() solo se comparaba userId; después de await saveAdminImageUploadPendingOperation() no se revalidaba la sesión antes de hidratar pendingAdminImageUploads, modificar el elemento de imagen y llamar al envío. submitAdminImageUploadOperation() recapturaba la sesión vigente y comprobaba únicamente el ownerId.
+Impacto: una continuación asíncrona de una sesión anterior podía actualizar mapas/DOM después de logout/cambio de token o rol; si el usuario volvía a autenticarse con la misma cuenta, el envío podía ejecutarse con un contexto distinto del que inició la operación. El snapshot durable ya persistido debía conservarse para recuperación, no enviarse automáticamente bajo otra sesión.
+Severidad: media, riesgo de aislamiento/consistencia de estado cliente; no se verificó exposición ni modificación de datos productivos.
+Corrección: propagar el contexto completo iniciador a envío/reintento/reconciliación; revalidar después de lectura y persistencia antes de mutar memoria/UI o enviar; suprimir callbacks de error obsoletos; mantener la guarda posterior a la eliminación IndexedDB antes de modificar mapas.
+Validación local: contrato AdminModalEditRestoreContract 11/11 PASS y parsing V8 de ui.js PASS. No se ejecutaron navegador/IndexedDB real ni escenarios multi-pestaña; quedan para Beta.
+================================================================================

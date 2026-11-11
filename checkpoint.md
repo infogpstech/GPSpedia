@@ -1,4 +1,26 @@
 ================================================================================
+AUG-053 — ITERACIÓN 14 — 2026-11-11 — CONTINUIDAD DE SESIÓN ENTRE SNAPSHOT DURABLE Y ENVÍO
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD anterior: 937757b59673c46311c89ebdf1ef8871c9476600. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo corregido:
+- convertImageToEditable comparaba solo userId después de leer el archivo y no revalidaba el contexto completo tras guardar el snapshot en IndexedDB. Una continuación tardía podía hidratar mapas y modificar la interfaz después de logout/cambio de token o rol.
+- submitAdminImageUploadOperation recapturaba la sesión al ejecutarse y solo comparaba ownerId, por lo que podía enviar una operación iniciada bajo otro contexto de sesión de la misma cuenta.
+
+Corrección:
+- El contexto completo de sesión se propaga desde la selección del archivo a la lectura, persistencia, envío, reintento y reconciliación.
+- Se revalida después de leer el archivo y después de persistir el snapshot, antes de actualizar memoria/UI o enviar la solicitud.
+- Si la sesión cambia después de persistir, se conserva el snapshot durable para su propietario y se detiene el envío.
+- Los callbacks de error obsoletos no restauran imágenes ni muestran avisos sobre una interfaz de otra sesión.
+- La eliminación IndexedDB conserva la guarda posterior al await: si la sesión cambia, no se actualizan mapas en memoria. La eliminación owner/opId solo se solicita después de confirmación remota y baseline local.
+
+Archivos: ui.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Auditoría.txt, ChangesLogs.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+Validación local: contratos AdminModalEditRestoreContract 11/11 PASS; parsing V8 de ui.js PASS.
+Validación diferida a Beta: navegador real, IndexedDB real, cambio multi-pestaña y servicios Apps Script/Drive.
+Siguiente iteración: continuar AUG-053 con el siguiente escenario del ciclo combinado snapshot/operación pendiente que aún no tenga cobertura local. No iniciar AUG-054.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 13 — 2026-11-11 — REVALIDACIÓN DE SESIÓN EN RECONCILIACIÓN ASÍNCRONA
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 01591f5b8413ae3aaa80c6e123a0d9726bcc8b24. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).

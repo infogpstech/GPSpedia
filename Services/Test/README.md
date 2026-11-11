@@ -472,3 +472,10 @@ La acción `getAdminImageUploadStatus` se enruta a ADMIN y devuelve solo estado,
 ## Cambio de sesión durante reconciliación de imágenes ADMIN (AUG-053 — iteración 13)
 
 La suite `AdminModalEditRestoreContract.js` verifica que la carga de operaciones pendientes capture y revalide el contexto completo de sesión (usuario, token y rol), y que la consulta remota del ledger, el baseline y la limpieza/verificación IndexedDB no continúen modificando el estado en memoria después de un cambio de sesión. Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. Es un contrato estático local; no sustituye pruebas reales de navegador/IndexedDB ni concurrencia entre pestañas.
+
+
+## Ciclo durable de reemplazos ADMIN y cambio de sesión (AUG-053 — iteración 14)
+
+La suite `AdminModalEditRestoreContract.js` comprueba que la lectura del archivo, la persistencia del snapshot y el envío/reintento mantengan el contexto completo de la sesión iniciadora. Después de guardar en IndexedDB, una sesión cambiada detiene el envío y conserva el snapshot durable para la cuenta propietaria. Los callbacks de error obsoletos no actualizan la interfaz; las eliminaciones confirmadas revalidan el contexto antes de modificar mapas en memoria.
+
+Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. Es un contrato estático local; no sustituye IndexedDB/navegador real ni pruebas multi-pestaña reservadas a Beta.

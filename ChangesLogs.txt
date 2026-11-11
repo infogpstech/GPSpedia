@@ -1530,3 +1530,13 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 
 
 [2026-11-11] AUG-053 iteración 13: se reforzó el ciclo asíncrono de reemplazos ADMIN. La carga IndexedDB revalida el contexto completo de sesión; la consulta del ledger, reconciliación, baseline y limpieza local comprueban que siga vigente la sesión iniciadora antes de continuar o modificar mapas en memoria. Se ampliaron los contratos de restauración/reconciliación. Archivos: ui.js, Services/Test/AdminModalEditRestoreContract.js y Services/Test/README.md.
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 14 — CONTEXTO DE SESIÓN EN EL CICLO DURABLE DE IMÁGENES
+- ui.js: el envío inicial, el reintento y la reconciliación reciben el contexto completo de la sesión que inició la operación; ya no recapturan una sesión posterior del mismo propietario.
+- ui.js: después de persistir el snapshot en IndexedDB se revalida la sesión antes de hidratar mapas, modificar la imagen o enviar la solicitud. Si la sesión cambió, se conserva el snapshot durable y no se envía.
+- ui.js: los callbacks de error tardíos solo restauran la imagen o muestran avisos si sigue vigente la sesión iniciadora. Se mantiene la revalidación posterior a la eliminación IndexedDB antes de tocar mapas en memoria.
+- Services/Test/AdminModalEditRestoreContract.js: tres contratos adicionales para continuidad de sesión, orden de persistencia/envío y protección de callbacks/eliminación.
+- Validación ejecutada en runtime V8: contratos 11/11 PASS y parsing V8 de ui.js PASS. No ejecutados: navegador/IndexedDB real, cambio multi-pestaña ni servicios Apps Script/Drive; permanecen como validaciones Beta.
+================================================================================
