@@ -135,3 +135,14 @@ api-config.js integra el helper en fetchCatalogData y expone status en errores H
 Prueba añadida: Services/Test/CatalogRequestRetry.js (7 escenarios). Validación de red real, navegador, backend y Service Worker queda pendiente de Beta.
 Siguiente iteración: resolver explícitamente la experiencia de error recuperable sin caché y la indicación de datos desactualizados cuando se conserva caché. No modificar todavía el Service Worker ni los endpoints.
 ================================================================================
+
+
+================================================================================
+AUG-052 — ITERACIÓN 3 — 2026-11-11 — ESTADO RECUPERABLE DEL CATÁLOGO
+Estado: IMPLEMENTACIÓN Y PRUEBAS SINTÉTICAS PREPARADAS; validación de ejecución pendiente.
+Rama: GPSpedia2.2.5_work. HEAD de partida: e60fbbb3cc080ebd9de61cce94ef8d49851685b8. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Se incorpora un aviso persistente para estados loading/stale/error. Cuando falla la actualización con caché, la interfaz informa que se muestran datos guardados posiblemente desactualizados. Cuando no hay catálogo, presenta un error recuperable y permite reintentar la carga desde la sesión vigente. Los deep links permanecen pendientes después de error/timeout y se aplican cuando una carga posterior alcanza ready/stale.
+Archivos funcionales: catalogStatus.js, style.css, auth.js y main.js. Pruebas: Services/Test/CatalogStatus.js. Documentación: Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+Validaciones Beta pendientes: DOM/navegador real, interacción visual del reintento, recuperación offline y red real. No se modifican endpoints, backend ni Service Worker.
+Siguiente iteración: continuar AUG-052 con el criterio 3 (precache del grafo de módulos, event.waitUntil y manejo de cuota). No iniciar AUG-053 ni otras tareas.
+================================================================================

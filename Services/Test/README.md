@@ -375,3 +375,10 @@ La regresión añadida a `Services/Test/IndexedDBTransactions.js` solicita cinco
 - Comprueba éxito inmediato, reintento de fallo transitorio, HTTP 503, timeout con aborto de la solicitud, no reintento de HTTP permanente, cancelación externa y cancelación durante la espera de reintento.
 - Política cliente: timeout de 8 s por intento, máximo 2 reintentos con espera exponencial de 400/800 ms; no reintenta errores HTTP 4xx (excepto 408/429), respuestas inválidas ni errores de aplicación.
 - El ciclo de sesión cancela la carga anterior al cambiar de cuenta o cerrar sesión. No se modifican endpoints ni contratos del backend.
+
+
+## Estado recuperable del catálogo (AUG-052 — iteración 3)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/CatalogStatus.js`.
+- Comprueba el estado informativo durante la carga, el aviso persistente de datos guardados posiblemente desactualizados, el reintento ofrecido cuando no hay catálogo disponible y la ocultación del aviso al recuperar el estado ready.
+- La suite valida la clasificación de estados sin DOM ni servicios externos. La interacción real del botón, la red y la recuperación offline quedan pendientes de Beta.

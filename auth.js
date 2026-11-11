@@ -230,6 +230,15 @@ async function loadInitialData() {
     }
 }
 
+/** Reintenta la carga del catálogo únicamente para la sesión que sigue activa. */
+export async function retryCatalogLoad() {
+    const currentUser = getState().currentUser;
+    if (!currentUser || !isCurrentSession(currentUser)) return false;
+    if (getState().catalogLoadStatus === 'loading') return false;
+    await loadInitialData();
+    return true;
+}
+
 function processCatalogData(catalogData) {
     try {
         const categoryCounts = catalogData.cortes.reduce((acc, item) => {

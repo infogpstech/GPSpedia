@@ -13,6 +13,7 @@ import * as navigation from './navigation.js';
 import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
 import { decodeSearchHash } from './search-utils.js';
+import { getCatalogStatusView } from './catalogStatus.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
@@ -57,6 +58,60 @@ function installSessionRevalidation_() {
     }, 5 * 60 * 1000);
 }
 
+function installCatalogStatusBanner_() {
+    let banner = document.getElementById('catalog-status-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'catalog-status-banner';
+        banner.className = 'catalog-status-banner';
+        banner.setAttribute('role', 'status');
+        banner.setAttribute('aria-live', 'polite');
+        const message = document.createElement('span');
+        message.id = 'catalog-status-message';
+        const retryButton = document.createElement('button');
+        retryButton.id = 'catalog-status-retry';
+        retryButton.type = 'button';
+        retryButton.textContent = 'Reintentar';
+        retryButton.hidden = true;
+        banner.append(message, retryButton);
+        const appContainer = document.querySelector('.container');
+        document.body.insertBefore(banner, appContainer || null);
+    }
+    const message = banner.querySelector('#catalog-status-message');
+    const retryButton = banner.querySelector('#catalog-status-retry');
+    if (!message || !retryButton || banner.dataset.bound === 'true') return;
+    banner.dataset.bound = 'true';
+
+    let retryInProgress = false;
+    const render = currentState => {
+        const view = getCatalogStatusView(currentState.catalogLoadStatus);
+        banner.hidden = !view.visible;
+        banner.dataset.status = view.status;
+        message.textContent = view.message;
+        retryButton.hidden = !view.retryable;
+        retryButton.disabled = retryInProgress || currentState.catalogLoadStatus === 'loading';
+    };
+    retryButton.addEventListener('click', async () => {
+        if (retryInProgress) return;
+        retryInProgress = true;
+        retryButton.disabled = true;
+        retryButton.textContent = 'Reintentando...';
+        try {
+            const started = await auth.retryCatalogLoad();
+            if (!started) ui.showGlobalError('No se pudo iniciar la actualización. Verifica que tu sesión siga activa.');
+        } catch (error) {
+            console.warn('No se pudo reintentar la carga del catálogo:', error);
+            ui.showGlobalError('No se pudo reintentar la carga del catálogo. Vuelve a intentarlo.');
+        } finally {
+            retryInProgress = false;
+            retryButton.textContent = 'Reintentar';
+            render(state.getState());
+        }
+    });
+    state.subscribe(render);
+    render(state.getState());
+}
+
 /**
  * Main function to initialize the application.
  */
@@ -73,6 +128,7 @@ async function initializeApp() {
     window.state = state;
     window.ui = ui;
     window.navigation = navigation;
+    installCatalogStatusBanner_();
     const contactToolbar = document.getElementById('contact-message-toolbar');
     if (contactToolbar && contactToolbar.dataset.richMounted !== 'true') {
         contactToolbar.appendChild(createRichTextToolbar('contact-message'));
@@ -899,6 +955,21 @@ async function initializeApp() {
             // notifica estados terminales mediante state.js; no se usa polling.
             let waitStarted = false;
             let stopWaitingForLogin = () => {};
+            const waitForCatalogRecovery = () => {
+                let stopRecoveryWait = () => {};
+                const applyAfterRecovery = latestState => {
+                    if (!latestState.currentUser || latestState.catalogLoadStatus === 'idle') {
+                        stopRecoveryWait();
+                        return;
+                    }
+                    if (latestState.catalogLoadStatus === 'ready' || latestState.catalogLoadStatus === 'stale') {
+                        stopRecoveryWait();
+                        navigation.filtrarContenido(query);
+                    }
+                };
+                stopRecoveryWait = state.subscribe(applyAfterRecovery);
+                applyAfterRecovery(state.getState());
+            };
             const beginCatalogWait = currentState => {
                 if (waitStarted || !currentState.currentUser) return;
                 waitStarted = true;
@@ -910,24 +981,15 @@ async function initializeApp() {
                     }
                     if (result.status === 'timeout') {
                         ui.showGlobalError('La carga del catálogo está tardando demasiado. Comprueba tu conexión; la búsqueda se abrirá cuando los datos estén disponibles.');
-                        let stopLateWait = () => {};
-                        const applyWhenReady = latestState => {
-                            if (latestState.catalogLoadStatus === 'ready' || latestState.catalogLoadStatus === 'stale') {
-                                stopLateWait();
-                                navigation.filtrarContenido(query);
-                            } else if (latestState.catalogLoadStatus === 'error') {
-                                stopLateWait();
-                                ui.showGlobalError('No se pudo cargar el catálogo. Comprueba tu conexión e inténtalo nuevamente.');
-                            }
-                        };
-                        stopLateWait = state.subscribe(applyWhenReady);
-                        applyWhenReady(state.getState());
+                        waitForCatalogRecovery();
                         return;
                     }
-                    ui.showGlobalError(`No se pudo cargar el catálogo para abrir la búsqueda: ${result.error}`);
+                    ui.showGlobalError('No se pudo cargar el catálogo para abrir la búsqueda. Puedes reintentar desde el aviso de estado del catálogo.');
+                    waitForCatalogRecovery();
                 }).catch(error => {
                     console.warn('No se pudo esperar la carga del catálogo para el deep link:', error);
                     ui.showGlobalError('No se pudo preparar la búsqueda. Comprueba tu conexión e inténtalo nuevamente.');
+                    waitForCatalogRecovery();
                 });
             };
             stopWaitingForLogin = state.subscribe(beginCatalogWait);

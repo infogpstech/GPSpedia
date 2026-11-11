@@ -1382,3 +1382,13 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - main.js: ajusta el límite de espera del deep link a 27 s, coherente con el máximo de tres intentos de 8 s y pausas de 400/800 ms.
 - Services/Test/CatalogRequestRetry.js: siete escenarios de éxito, red transitoria, HTTP 503, timeout/abort, HTTP permanente, cancelación externa y cancelación durante backoff.
 - No se modifican Service Worker, cache.put, endpoints ni servicios productivos.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 3 — ESTADO RECUPERABLE DEL CATÁLOGO
+- catalogStatus.js: centraliza la presentación de los estados loading, stale y error; el aviso de error ofrece reintento y el estado stale informa que se conservan datos guardados posiblemente desactualizados.
+- main.js: crea un aviso persistente accesible para el estado del catálogo, con botón de reintento y presentación adaptable.
+- auth.js: expone retryCatalogLoad(), limitado a la sesión vigente y sin iniciar cargas duplicadas.
+- style.css: agrega estilos responsivos para los estados de carga, datos desactualizados y error recuperable.
+- Services/Test/CatalogStatus.js: cuatro escenarios sintéticos de presentación de estados.
+- Services/Test/README.md y Tareas_pendientes_parte1.txt: documentan la suite y el avance del criterio 2. No se modifican endpoints, backend ni Service Worker.
