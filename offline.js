@@ -521,10 +521,10 @@ export async function saveAddCutOperationPendingOperation(operation) {
             const get = store.get(key);
             get.onsuccess = () => {
                 const previous = get.result;
-                if (previous && (!previous.operation ||
-                    String(previous.operation.ownerId || '').trim() !== owner ||
+                if (previous && (!isValidAddCutOperationSnapshot_(previous.operation, owner) ||
                     String(previous.operation.id || '').trim() !== snapshot.id ||
-                    String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase())) {
+                    String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase() ||
+                    (previous.operation.status === 'completed' && snapshot.status !== 'completed'))) {
                     result = { saved: false, conflict: true, operation: previous.operation || null };
                     return;
                 }
