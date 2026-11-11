@@ -308,4 +308,4 @@ Se contrastó el almacenamiento y la eliminación de imágenes adjuntas a las su
 
 **Límites:** revisión estática de la rama `GPSpedia2.2.5_work`; no se consultaron archivos, carpetas ni permisos reales de Drive, no se ejecutó una carga o eliminación y no se verificaron deployments ni tareas externas de limpieza. No se modificó código funcional, acuerdo, aviso, modales ni flujo de aceptación.
 
-**Ubicaciones de referencia en el HEAD revisado:** `Services/feedback.js` — `FEEDBACK_ACTION_PERMISSIONS` (línea 310), `handleSuggestCutChange()` (línea 1613), `handleGetFeedbackItems()` (línea 1470 aprox.) y `handleDeleteFeedbackItem()` (línea 1877); `ui.js` — renderizado de `suggestionData.imageUrl` y llamada a `deleteFeedbackItem()` (línea 6317).
+**Ubicaciones de referencia en el HEAD revisado:** `Services/feedback.js` — `FEEDBACK_ACTION_PERMISSIONS` (línea 310), `handleSuggestCutChange()` (línea 1613), `handleGetFeedbackItems()` (línea 1445) y `handleDeleteFeedbackItem()` (línea 1877); `ui.js` — renderizado de `suggestionData.imageUrl` y llamada a `deleteFeedbackItem()` (línea 6317).
