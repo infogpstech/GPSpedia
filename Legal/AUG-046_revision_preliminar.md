@@ -204,3 +204,17 @@ Se amplía el inventario de consistencia: además de confirmar los flujos de dat
 No se modificó `index.html`, el Aviso Importante, el acuerdo, la sección 13, los textos de «Sobre Nosotros» o FAQ, la versión/fecha 2026-07, el frontend, el backend, el flujo AUG-045, endpoints, deployments ni datos productivos.
 
 **Estado de AUG-046:** EN PROGRESO. Revisión comparativa documental ampliada; quedan las confirmaciones operativas y la validación interna corporativa. No iniciar AUG-047.
+
+
+### 9.4 Aclaración del responsable del proyecto — 2026-11-11
+
+El usuario corrigió expresamente la interpretación de los puntos 1 y 2 anteriores y proporcionó la siguiente descripción funcional e institucional, que prevalece para el contexto de esta auditoría:
+
+- **GPSpedia:** la plataforma y herramienta. La plataforma, su código, diseño, organización, estructura general y elementos propios constituyen el desarrollo privado de la empresa y están protegidos por derechos de autor, según la definición del proyecto.
+- **Contenido público organizado:** las imágenes y videos compartidos corresponden a conocimiento público. GPSpedia no pretende atribuirse la autoría de esos materiales originales; su función es organizarlos, etiquetarlos, agregar información útil y reunir con mayor precisión información que se encuentra dispersa en otras fuentes.
+- **TRACKLINK:** marca corporativa de la empresa.
+- **Motorlink S.A.:** la empresa y su nombre registrado en Honduras.
+
+**Corrección de la revisión anterior:** no debe mantenerse como pendiente que la empresa tenga que decidir desde cero la distinción entre la plataforma/estructura propia y los materiales públicos compartidos, ni que deba definir nuevamente la relación entre GPSpedia, TRACKLINK y Motorlink S.A. El responsable del proyecto ya aclaró esos conceptos. Los puntos 1 y 2 de la sección 9.1 quedan reemplazados por esta aclaración y no deben tratarse como contradicciones pendientes del producto.
+
+La auditoría de esta tarea se limita a describir el funcionamiento técnico y registrar las definiciones del responsable del proyecto. No emitiré opiniones, interpretaciones ni recomendaciones jurídicas, ni sustituiré la revisión o aprobación que corresponda a la empresa. Esta aclaración no autoriza cambios en el acuerdo ni en otros textos legales.
