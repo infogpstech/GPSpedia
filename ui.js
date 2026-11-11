@@ -46,6 +46,7 @@ export function isNoRecomendadoValue(val) {
 export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
+const TERMS_CURRENT_VERSION = '2026-07';
 
 // Variables de control para el Modo Edición In-Modal
 let inEditMode = false;
@@ -6817,6 +6818,60 @@ export function showLoginScreen(reason = null) {
     document.getElementById('password').value = '';
 }
 
+
+function renderTermsGate_(user) {
+    const container = document.querySelector('.container'), footer = document.querySelector('.footer');
+    const modal = document.getElementById('terms-modal'), button = document.getElementById('btn-accept-terms');
+    const errorMessage = document.getElementById('terms-error');
+    const keepBlocked = message => {
+        if (container) container.style.display = 'none';
+        if (footer) footer.style.display = 'none';
+        if (modal) modal.style.display = 'flex';
+        if (button) button.disabled = true;
+        if (errorMessage) errorMessage.textContent = message;
+        showGlobalError(message); return false;
+    };
+    if (!container || !footer || !modal || !button) return keepBlocked('No se pudo cargar el aviso obligatorio de términos. El catálogo permanecerá bloqueado.');
+    if (modal.dataset.termsVersion !== TERMS_CURRENT_VERSION) return keepBlocked('La versión del aviso y la versión de términos del sistema no coinciden. Actualiza la página; el catálogo permanece bloqueado.');
+    const acceptance = user && user.TermsAcceptance, acceptedAt = acceptance && Date.parse(acceptance.acceptedAt);
+    const accepted = Boolean(acceptance && acceptance.status === 'accepted' &&
+        acceptance.version === TERMS_CURRENT_VERSION && Number.isFinite(acceptedAt));
+    if (accepted) {
+        modal.style.display = 'none'; button.disabled = false;
+        if (errorMessage) errorMessage.textContent = '';
+        container.style.display = 'block'; footer.style.display = 'flex'; return true;
+    }
+    container.style.display = 'none'; footer.style.display = 'none'; modal.style.display = 'flex';
+    button.disabled = false;
+    button.onclick = async () => {
+        button.disabled = true; if (errorMessage) errorMessage.textContent = '';
+        try {
+            const userId = String(user && (user.ID || user.id) || '').trim(), sessionToken = user && user.SessionToken;
+            if (!userId || typeof sessionToken !== 'string' || !sessionToken) throw new Error('No se pudo identificar la sesión activa. Inicia sesión nuevamente.');
+            const result = await routeAction('acceptTerms', { userId, sessionToken, version: TERMS_CURRENT_VERSION });
+            const confirmed = result && result.termsAcceptance;
+            if (!result || result.status !== 'success' || result.accepted !== true ||
+                !confirmed || confirmed.status !== 'accepted' || confirmed.version !== TERMS_CURRENT_VERSION ||
+                !Number.isFinite(Date.parse(confirmed.acceptedAt))) {
+                throw new Error('El servidor no confirmó el registro de aceptación. El catálogo permanece bloqueado.');
+            }
+            const stored = JSON.parse(localStorage.getItem('gpsepedia_session') || 'null');
+            if (!stored || String(stored.ID || stored.id || '') !== userId || stored.SessionToken !== sessionToken) {
+                throw new Error('La sesión local cambió durante la aceptación. Inicia sesión nuevamente.');
+            }
+            stored.TermsAcceptance = confirmed;
+            localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
+            user.TermsAcceptance = confirmed; setState({ currentUser: user });
+            modal.style.display = 'none'; container.style.display = 'block'; footer.style.display = 'flex';
+        } catch (error) {
+            const message = error && error.message ? error.message : 'No se pudo registrar la aceptación.';
+            if (errorMessage) errorMessage.textContent = message;
+            showGlobalError(message); button.disabled = false;
+        }
+    };
+    return false;
+}
+
 export function showApp(user) {
     const appContext = getUiSessionContext_(user);
     const appContextKey = appContext
@@ -6836,33 +6891,8 @@ export function showApp(user) {
 
     document.getElementById('login-modal').style.display = 'none';
 
-    // Comprobación de aceptación del aviso de condiciones
-    const termsAccepted = localStorage.getItem('gpsepedia_terms_accepted') === 'true';
-    const termsModal = document.getElementById('terms-modal');
-
-    if (!termsAccepted && termsModal) {
-        // Bloquear acceso mostrando solo el modal de términos
-        document.querySelector('.container').style.display = 'none';
-        document.querySelector('.footer').style.display = 'none';
-        termsModal.style.display = 'flex';
-
-        // Manejar el evento del botón
-        const acceptBtn = document.getElementById('btn-accept-terms');
-        if (acceptBtn) {
-            acceptBtn.onclick = () => {
-                localStorage.setItem('gpsepedia_terms_accepted', 'true');
-                termsModal.style.display = 'none';
-                document.querySelector('.container').style.display = 'block';
-                document.querySelector('.footer').style.display = 'flex';
-            };
-        }
-    } else {
-        if (termsModal) {
-            termsModal.style.display = 'none';
-        }
-        document.querySelector('.container').style.display = 'block';
-        document.querySelector('.footer').style.display = 'flex';
-    }
+    // AUTH confirma la aceptación individual; localStorage solo conserva una copia de sesión.
+    if (!renderTermsGate_(user)) return;
 
     if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
         document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;

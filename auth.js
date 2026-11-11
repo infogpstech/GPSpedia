@@ -47,8 +47,10 @@ function persistSessionValidation(user,result){
   if(!sameSession(latest,user))return;
   latest.SessionCreatedAt=result.createdAt||latest.SessionCreatedAt;
   latest.SessionLastActivityAt=result.lastActivityAt||latest.SessionLastActivityAt;
+  latest.TermsAcceptance=result.termsAcceptance||null;
   latest.SessionValidatedAt=Date.now();
   localStorage.setItem(SESSION_KEY,JSON.stringify(latest));
+  return latest;
  }catch(e){console.warn('No se pudo actualizar la vigencia local:',e.message);}
 }
 async function validateSessionCoordinated(user, force = false){
@@ -260,31 +262,19 @@ export async function validateActiveSession(force = false) {
 }
 
 export async function checkSession() {
-    // Rehidratar datos auxiliares sin bloquear el flujo de autenticación.
     try {
-        const historyPromise = offline.getSearchHistory();
-        const viewedPromise = offline.getViewedItems();
+        const historyPromise = offline.getSearchHistory(), viewedPromise = offline.getViewedItems();
         try {
             const cachedPysRaw = localStorage.getItem('gpsepedia_pys_cache');
-            if (cachedPysRaw) {
-                const parsedPys = JSON.parse(cachedPysRaw);
-                if (Array.isArray(parsedPys) && parsedPys.length > 0) setState({ pysData: parsedPys });
-            }
-        } catch(e) {}
+            if (cachedPysRaw) { const parsedPys = JSON.parse(cachedPysRaw); if (Array.isArray(parsedPys) && parsedPys.length) setState({ pysData: parsedPys }); }
+        } catch (error) {}
         Promise.all([historyPromise, viewedPromise]).then(([history, viewed]) => {
             if (history || viewed) setState({ searchHistory: history || [], viewedItems: viewed || [] });
-        }).catch(e => console.warn("Error asíncrono cargando historial/vistos:", e));
-    } catch (e) {
-        console.warn("Error en el flujo de rehidratación:", e);
-    }
+        }).catch(error => console.warn("Error asíncrono cargando historial/vistos:", error));
+    } catch (error) { console.warn("Error en el flujo de rehidratación:", error); }
 
     const sessionData = localStorage.getItem(SESSION_KEY);
-    if (!sessionData) {
-        setState({ currentUser: null });
-        showLoginScreen();
-        return;
-    }
-
+    if (!sessionData) { setState({ currentUser: null }); showLoginScreen(); return; }
     let user;
     try {
         user = JSON.parse(sessionData);
@@ -292,21 +282,15 @@ export async function checkSession() {
     } catch (error) {
         console.error("Sesión local inválida:", error);
         if (localStorage.getItem(SESSION_KEY) !== sessionData) return checkSession();
-        localStorage.removeItem(SESSION_KEY);
-        setState({ currentUser: null });
-        showLoginScreen('La sesión local no es válida. Inicia sesión nuevamente.');
-        return;
+        localStorage.removeItem(SESSION_KEY); setState({ currentUser: null });
+        showLoginScreen('La sesión local no es válida. Inicia sesión nuevamente.'); return;
     }
-
     const latestSession = readStoredSession();
     if (!sameSession(latestSession, user)) {
         if (latestSession) return checkSession();
-        setState({ currentUser: null });
-        showLoginScreen();
-        return;
+        setState({ currentUser: null }); showLoginScreen(); return;
     }
     user = latestSession;
-
     const localExpiration = getLocalSessionExpiry(user);
     if (localExpiration) {
         logout(localExpiration === 'absolute_expiration'
@@ -314,41 +298,32 @@ export async function checkSession() {
             : 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.', user);
         return;
     }
-
-    // La interfaz no espera al lock remoto: cada pestaña alcanza un estado visual.
-    if (!isCurrentSession(user)) {
-        const latest = readStoredSession();
-        if (latest) return checkSession();
+    if (!isCurrentSession(user)) return;
+    if (window.navigator && window.navigator.onLine === false) {
         setState({ currentUser: null });
-        showLoginScreen();
+        showLoginScreen('Conéctate a Internet para verificar tu sesión y la aceptación vigente de los términos.');
         return;
     }
-    handleLoginSuccess(user, false);
-    loadInitialData();
-
-    if (window.navigator && window.navigator.onLine === false) return;
-
     try {
-        const result = await validateSessionCoordinated(user);
+        const result = await validateSessionCoordinated(user, true);
         if (result && result.stale) return;
-        if (result && result.valid === false) {
-            console.warn("Sesión invalidada por el servidor.");
-            logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.", user);
-        } else if (result && result.timeout) {
-            console.warn("La validación de sesión superó el tiempo máximo; se conserva el estado local y el backend seguirá validando cada operación.");
+        if (result && result.valid === true) {
+            const validatedUser = persistSessionValidation(user, result);
+            if (!validatedUser || !sameSession(readStoredSession(), user)) return;
+            handleLoginSuccess(validatedUser, false); loadInitialData(); return;
         }
+        if (result && result.valid === false) { logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.", user); return; }
+        setState({ currentUser: null });
+        showLoginScreen('No se pudo verificar la sesión ni la aceptación de términos. Intenta nuevamente.');
     } catch (error) {
         if (!isCurrentSession(user)) return;
-        console.warn("Fallo validación de sesión (API inaccesible):", error.message);
-        const errorMsg = (error.message || "").toLowerCase();
-        const isExpirationError = errorMsg.includes('expirada') ||
-                                  errorMsg.includes('inválida') ||
-                                  errorMsg.includes('expired');
-        if (isExpirationError) {
-            console.error("Cerrando sesión por error de validación explícito:", errorMsg);
-            showGlobalError(`Error de sesión: ${error.message}`);
-            logout(null, user);
+        console.warn("Fallo validación de sesión:", error && error.message ? error.message : error);
+        const message = String(error && error.message || '').toLowerCase();
+        if (message.includes('expirada') || message.includes('inválida') || message.includes('expired')) {
+            showGlobalError('Error de sesión: ' + error.message); logout(null, user); return;
         }
+        setState({ currentUser: null });
+        showLoginScreen('No se pudo verificar la sesión ni la aceptación de términos. Intenta nuevamente.');
     }
 }
 

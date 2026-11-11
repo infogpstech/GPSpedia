@@ -956,3 +956,15 @@ DEPENDENCIA AUG-045 — Autorizar acceptTerms en el coordinador compartido — 2
 - Services/Test/README.md: documenta los recursos reservados y la prueba.
 - AUG-045 permanece EN PROGRESO; esta modificación resuelve una dependencia necesaria antes de implementar el handler AUTH y el flujo frontend.
 ================================================================================
+
+
+================================================================================
+AUG-045 — ACEPTACIÓN VERSIONADA DE TÉRMINOS
+- Services/Auth.js y Services/Test/Auth.js: columna TermsAcceptance (I), lectura segura, versión 2026-07, aceptación autenticada/idempotente, verificación de escritura y sincronización en login/validateSession.
+- Services/users.js y espejo: mapa de columna I sin exponer ni permitir editar la aceptación mediante perfil.
+- api-config.js: acceptTerms dirigido a AUTH.
+- auth.js: revalidación autoritativa al restaurar sesión y sincronización de TermsAcceptance en caché.
+- ui.js e index.html: bloqueo fail-closed, versión de markup, confirmación backend y manejo de errores; se retira gpsepedia_terms_accepted como autorización.
+- Spreadsheet/GPSpedia_DB_columnas.md: estructura objetivo Users!I, sin afirmar migración física.
+- Services/Test/TermsAcceptance.js y README: pruebas de parseo, esquema y contratos.
+================================================================================

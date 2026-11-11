@@ -366,3 +366,11 @@ Corrección:
 Validación: ActionDispatchContract 11/11 PASS; parsing de api-config.js, Services/write.js, Services/catalog.js, Services/admin.js y Services/Test/ActionDispatchContract.js PASS; prueba de routeAction con serviceOverride desconocido rechaza sin realizar fetch. Sin llamadas a endpoints ni servicios externos.
 Pendiente Beta: verificar el deployment LEGACY y su contrato real de logFrontend; no se asumió ni simuló su dispatcher.
 ================================================================================
+
+
+================================================================================
+H-AUD-036-001 / H-AUD-036-002 — RESOLUCIÓN TÉCNICA MEDIANTE AUG-045 — 2026-11-10
+Decisión confirmada: aceptación individual por cuenta, no por dispositivo.
+Corrección: AUTH persiste TermsAcceptance como JSON en Users!I:I con versión, acceptedAt y status; valida sesión activa única, expiración, cuenta activa y revocación pendiente antes de escribir. Login/validateSession devuelven estado autoritativo. La UI exige versión vigente y solo desbloquea tras confirmación backend y actualización de caché local.
+Validación local: parser/esquema y contratos AUTH/USERS/API/UI; parsing de módulos modificados. Apps Script, Spreadsheet y navegador real pendientes de Beta.
+================================================================================

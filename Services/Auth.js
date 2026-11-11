@@ -22,7 +22,8 @@ const COLS_USERS = {
     Telefono: 5,
     Correo_Electronico: 6,
     Nombre_Completo: 7,
-    SessionToken: 8
+    SessionToken: 8,
+    TermsAcceptance: 9
 };
 
 const COLS_ACTIVE_SESSIONS = {
@@ -427,7 +428,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","validateSession","touchSession","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].includes(action);
+    return ["login","validateSession","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].includes(action);
 }
 
 function doPost(e) {
@@ -472,6 +473,9 @@ function doPostInternal_(e) {
                 break;
             case 'validateSession':
                 response = handleValidateSession(request.payload);
+                break;
+            case 'acceptTerms':
+                response = handleAcceptTerms(request.payload);
                 break;
             case 'touchSession':
                 response = handleTouchSession(request.payload);
@@ -799,6 +803,7 @@ function handleLogin(payload) {
         try {
             sessionLock.waitLock(10000);
             sessionLockAcquired = true;
+            ensureTermsAcceptanceColumn_(userSheet);
             const currentUserRows = userSheet.getDataRange().getValues().slice(1)
                 .map((row, index) => ({ row, rowIndex: index + 2 }))
                 .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === normalizeUserId(userId));
@@ -866,7 +871,8 @@ function handleLogin(payload) {
             Correo_Electronico: foundUserRow[COLS_USERS.Correo_Electronico - 1],
             SessionToken: sessionToken,
             SessionCreatedAt: sessionCreatedAt,
-            SessionLastActivityAt: sessionCreatedAt
+            SessionLastActivityAt: sessionCreatedAt,
+            TermsAcceptance: parseTermsAcceptance_(foundUserRow[COLS_USERS.TermsAcceptance - 1])
         };
 
         return { status: 'success', user: user, sessionCleanupPending };
@@ -918,6 +924,40 @@ function normalizeRoleName(value) {
 function normalizeUserId(value) {
     return String(value === null || value === undefined ? '' : value).trim();
 }
+
+const TERMS_CURRENT_VERSION = '2026-07';
+function parseTermsAcceptance_(value) {
+    if (value === null || value === undefined || String(value).trim() === '') return { version: '', acceptedAt: '', status: 'pending' };
+    let record;
+    try { record = JSON.parse(String(value)); } catch (error) { return { version: '', acceptedAt: '', status: 'invalid' }; }
+    if (!record || typeof record !== 'object' || Array.isArray(record) ||
+        typeof record.version !== 'string' || !record.version.trim() ||
+        typeof record.acceptedAt !== 'string' || !record.acceptedAt.trim() ||
+        !Number.isFinite(Date.parse(record.acceptedAt)) || record.status !== 'accepted') {
+        return { version: '', acceptedAt: '', status: 'invalid' };
+    }
+    return { version: record.version.trim(), acceptedAt: record.acceptedAt, status: 'accepted' };
+}
+function ensureTermsAcceptanceColumn_(sheet) {
+    if (!sheet) throw new Error('No se encontró la hoja Users.');
+    const column = COLS_USERS.TermsAcceptance;
+    const header = String(sheet.getRange(1, column).getValue() || '').trim();
+    if (header === 'TermsAcceptance') return column;
+    if (header) throw new Error('La columna I de Users ya contiene otro encabezado; no se modificó el esquema.');
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+        const occupied = sheet.getRange(2, column, lastRow - 1, 1).getValues()
+            .some(row => row[0] !== null && row[0] !== undefined && String(row[0]).trim() !== '');
+        if (occupied) throw new Error('La columna I de Users contiene datos sin encabezado; no se modificó el esquema.');
+    }
+    sheet.getRange(1, column).setValue('TermsAcceptance');
+    SpreadsheetApp.flush();
+    if (String(sheet.getRange(1, column).getValue() || '').trim() !== 'TermsAcceptance') {
+        throw new Error('No se pudo confirmar el encabezado TermsAcceptance en Users.');
+    }
+    return column;
+}
+
 
 function roleRevocationPropertyKey_(userId) {
     return ROLE_REVOCATION_PROPERTY_PREFIX + encodeURIComponent(normalizeUserId(userId));
@@ -1253,7 +1293,54 @@ function parseSessionDate_(v){if(v===null||v===undefined||String(v).trim()==='')
 function addCalendarMonthsUTC_(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
 function getSessionExpirationStatus_(row,now=new Date()){if(!row)return{expired:true,reason:'missing_session'};const created=parseSessionDate_(row[COLS_ACTIVE_SESSIONS.date-1]),raw=row[COLS_ACTIVE_SESSIONS.LastActivityAt-1],activity=raw===null||raw===undefined||String(raw).trim()===''?created:parseSessionDate_(raw);if(!created||!activity)return{expired:true,reason:'invalid_timestamp'};if(now.getTime()>=addCalendarMonthsUTC_(created,SESSION_ABSOLUTE_MONTHS).getTime())return{expired:true,reason:'absolute_expiration'};if(now.getTime()>=addCalendarMonthsUTC_(activity,SESSION_IDLE_MONTHS).getTime())return{expired:true,reason:'inactivity_expiration'};return{expired:false,createdAt:created,lastActivityAt:activity};}
 function ensureActiveSessionsActivityColumn_(sheet){const col=COLS_ACTIVE_SESSIONS.LastActivityAt;if(sheet.getMaxColumns()<col)sheet.insertColumnsAfter(sheet.getMaxColumns(),col-sheet.getMaxColumns());const header=String(sheet.getRange(1,col).getValue()||'').trim();if(header==='lastActivityAt')return col;if(header!=='')throw new Error('La columna F de ActiveSessions está ocupada por otro encabezado; no se modificó el esquema.');const last=sheet.getLastRow();if(last>1&&sheet.getRange(2,col,last-1,1).getValues().some(r=>r[0]!==null&&r[0]!==undefined&&String(r[0]).trim()!==''))throw new Error('La columna F de ActiveSessions contiene datos sin encabezado; no se modificó el esquema.');sheet.getRange(1,col).setValue('lastActivityAt');SpreadsheetApp.flush();return col;}
-function validateAndTouchSession_(token,expectedUserId=null){const lock=LockService.getScriptLock();let acquired=false;try{lock.waitLock(10000);acquired=true;const ss=SpreadsheetApp.openById(SPREADSHEET_ID),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)return{valid:false,reason:'missing_sheet'};ensureActiveSessionsActivityColumn_(sh);const data=sh.getDataRange().getValues(),matches=[];for(let i=1;i<data.length;i++)if(data[i][COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token)matches.push({rowIndex:i+1,row:data[i]});if(matches.length!==1)return{valid:false,reason:matches.length>1?'duplicate_token':'missing_session'};const session=matches[0],userId=normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario-1]);if(!userId||(expectedUserId!==null&&userId!==normalizeUserId(expectedUserId)))return{valid:false,reason:'identity_mismatch'};const userRows=uh.getDataRange().getValues().slice(1).filter(r=>normalizeUserId(r[COLS_USERS.ID-1])===userId);if(userRows.length!==1||!isActiveAuthUserRecord(userRows[0]))return{valid:false,reason:'inactive_or_ambiguous_user'};try{if(hasPendingRoleRevocation_(userId)){reconcileRoleRevocationUnderLock_(uh,sh,userId);return{valid:false,reason:'role_changed_reauthentication_required'};}}catch(roleRevocationError){return{valid:false,reason:'role_revocation_pending'};}const expiry=getSessionExpirationStatus_(session.row,new Date());if(expiry.expired){const requestRevocation=revokeLoginRequestForTokenUnderLock_(token, userId);if(requestRevocation.pending)return{valid:false,reason:'expired_request_revocation_pending'};try{sh.deleteRow(session.rowIndex);}catch(e){console.error('No se pudo retirar la fila expirada:',e.message);}if(userRows[0][COLS_USERS.SessionToken-1]===token){try{const current=uh.getDataRange().getValues().slice(1).map((r,i)=>({r,rowIndex:i+2})).filter(x=>normalizeUserId(x.r[COLS_USERS.ID-1])===userId);if(current.length===1)uh.getRange(current[0].rowIndex,COLS_USERS.SessionToken).clearContent();}catch(e){console.error('No se pudo limpiar Users.SessionToken:',e.message);}}SpreadsheetApp.flush();return{valid:false,reason:expiry.reason};}const lastActivityAt=new Date().toISOString();sh.getRange(session.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(lastActivityAt);SpreadsheetApp.flush();return{valid:true,userId,createdAt:expiry.createdAt.toISOString(),lastActivityAt};}finally{if(acquired)lock.releaseLock();}}
+function validateAndTouchSession_(token, expectedUserId = null) {
+    const lock = LockService.getScriptLock(); let acquired = false;
+    try {
+        lock.waitLock(10000); acquired = true;
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!sessionsSheet || !usersSheet) return { valid: false, reason: 'missing_sheet' };
+        ensureActiveSessionsActivityColumn_(sessionsSheet);
+        const data = sessionsSheet.getDataRange().getValues(), matches = [];
+        for (let i = 1; i < data.length; i++) if (data[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token) matches.push({ rowIndex: i + 1, row: data[i] });
+        if (matches.length !== 1) return { valid: false, reason: matches.length > 1 ? 'duplicate_token' : 'missing_session' };
+        const session = matches[0], userId = normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        if (!userId || (expectedUserId !== null && userId !== normalizeUserId(expectedUserId))) return { valid: false, reason: 'identity_mismatch' };
+        const userRows = usersSheet.getDataRange().getValues().slice(1)
+            .map((row, index) => ({ row, rowIndex: index + 2 }))
+            .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
+        if (userRows.length !== 1 || !isActiveAuthUserRecord(userRows[0].row)) return { valid: false, reason: 'inactive_or_ambiguous_user' };
+        try {
+            if (hasPendingRoleRevocation_(userId)) {
+                reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId);
+                return { valid: false, reason: 'role_changed_reauthentication_required' };
+            }
+        } catch (error) { return { valid: false, reason: 'role_revocation_pending' }; }
+        const expiration = getSessionExpirationStatus_(session.row, new Date());
+        if (expiration.expired) {
+            const requestRevocation = revokeLoginRequestForTokenUnderLock_(token, userId);
+            if (requestRevocation.pending) return { valid: false, reason: 'expired_request_revocation_pending' };
+            try { sessionsSheet.deleteRow(session.rowIndex); } catch (error) { console.error('No se pudo retirar la fila expirada:', error.message); }
+            if (userRows[0].row[COLS_USERS.SessionToken - 1] === token) {
+                try {
+                    const current = usersSheet.getDataRange().getValues().slice(1)
+                        .map((row, index) => ({ row, rowIndex: index + 2 }))
+                        .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
+                    if (current.length === 1) usersSheet.getRange(current[0].rowIndex, COLS_USERS.SessionToken).clearContent();
+                } catch (error) { console.error('No se pudo limpiar Users.SessionToken:', error.message); }
+            }
+            SpreadsheetApp.flush(); return { valid: false, reason: expiration.reason };
+        }
+        ensureTermsAcceptanceColumn_(usersSheet);
+        const termsAcceptance = parseTermsAcceptance_(usersSheet.getRange(userRows[0].rowIndex, COLS_USERS.TermsAcceptance).getValue());
+        const lastActivityAt = new Date().toISOString();
+        sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(lastActivityAt);
+        SpreadsheetApp.flush();
+        return { valid: true, userId, createdAt: expiration.createdAt.toISOString(), lastActivityAt, termsAcceptance };
+    } finally { if (acquired) lock.releaseLock(); }
+}
+
 function handleResetUserSessions(payload) {
     const targetUserId = normalizeUserId(payload && payload.targetUserId);
     const sessionToken = payload && payload.sessionToken;
@@ -1719,6 +1806,53 @@ function handleResetUserPassword(payload) {
             ? 'Contraseña restablecida y sesiones invalidadas. La limpieza de algunas referencias o filas quedó pendiente.'
             : 'Contraseña restablecida. Se cerraron todas las sesiones de la cuenta.'
     };
+}
+
+
+function handleAcceptTerms(payload) {
+    const sessionToken = payload && payload.sessionToken;
+    const requestedVersion = String(payload && payload.version || '').trim();
+    if (typeof sessionToken !== 'string' || !sessionToken) throw new Error('Se requiere una sesión válida para aceptar los términos.');
+    if (requestedVersion !== TERMS_CURRENT_VERSION) throw new Error('La versión de términos enviada no coincide con la versión vigente. Actualiza la página e intenta nuevamente.');
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        lock.waitLock(10000); acquired = true;
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron las hojas Users y ActiveSessions.');
+        const sessionMatches = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
+        if (sessionMatches.length !== 1) throw new Error(sessionMatches.length > 1
+            ? 'El token de sesión está duplicado; no se registró la aceptación.'
+            : 'La sesión no es válida o expiró. Inicia sesión nuevamente.');
+        const session = sessionMatches[0];
+        const userId = normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        if (!userId) throw new Error('No se pudo identificar al usuario de la sesión.');
+        if (payload && payload.userId !== undefined && normalizeUserId(payload.userId) !== userId) {
+            throw new Error('La identidad enviada no corresponde a la sesión activa.');
+        }
+        const expiration = getSessionExpirationStatus_(session.row, new Date());
+        if (expiration.expired) throw new Error('La sesión expiró por ' + expiration.reason + '.');
+        const userMatches = usersSheet.getDataRange().getValues().slice(1)
+            .map((row, index) => ({ row, rowIndex: index + 2 }))
+            .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
+        if (userMatches.length !== 1 || !isActiveAuthUserRecord(userMatches[0].row)) {
+            throw new Error('No se pudo identificar una cuenta activa y única.');
+        }
+        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, userId);
+        ensureTermsAcceptanceColumn_(usersSheet);
+        const cell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);
+        const current = parseTermsAcceptance_(cell.getValue());
+        if (current.status === 'accepted' && current.version === TERMS_CURRENT_VERSION) {
+            return { status: 'success', accepted: true, alreadyAccepted: true, termsAcceptance: current };
+        }
+        const acceptance = { version: TERMS_CURRENT_VERSION, acceptedAt: new Date().toISOString(), status: 'accepted' };
+        const serialized = JSON.stringify(acceptance);
+        cell.setValue(serialized); SpreadsheetApp.flush();
+        if (String(cell.getValue() || '') !== serialized) throw new Error('No se pudo confirmar el registro de aceptación. El catálogo permanece bloqueado.');
+        return { status: 'success', accepted: true, alreadyAccepted: false, termsAcceptance: parseTermsAcceptance_(cell.getValue()) };
+    } finally { if (acquired) lock.releaseLock(); }
 }
 
 function handleLogout(payload) {

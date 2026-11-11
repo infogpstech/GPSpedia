@@ -29,7 +29,8 @@ const COLS_USERS = {
     Telefono: 5,
     Correo_Electronico: 6,
     Nombre_Completo: 7,
-    SessionToken: 8
+    SessionToken: 8,
+    TermsAcceptance: 9
 };
 const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
 function hasPendingRoleRevocationForUser_(userRow) { return String(userRow && userRow[COLS_USERS.SessionToken - 1] || '').startsWith(ROLE_REVOCATION_SHARED_PREFIX); }

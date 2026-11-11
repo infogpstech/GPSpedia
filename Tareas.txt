@@ -767,3 +767,15 @@ Siguiente tarea identificada: AUG-045. No iniciada en esta iteración.
 AUG-045 — CONTINUIDAD — 2026-11-10
 Se detectó y resolvió la dependencia del coordinador compartido: AUTH/acceptTerms estaba denegada por política deny-by-default. Services/Coordinator.js ahora reserva recursos de identidad y la suite SharedMutationCoordinator incorpora regresión. AUG-045 continúa EN PROGRESO; siguiente paso: implementar la persistencia TermsAcceptance en AUTH/Users y conectar el bloqueo frontend. Checkpoint de dependencia en checkpoint.md.
 ================================================================================
+
+
+================================================================================
+AUG-045 — CIERRE DE IMPLEMENTACIÓN LOCAL — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Decisión: aceptación individual por usuario; Users incorpora TermsAcceptance en columna I. AUTH es fuente autoritativa y localStorage solo caché.
+Implementación: AUTH valida sesión activa única, expiración, cuenta activa y revocación de rol pendiente antes de registrar aceptación; la escritura se relee y confirma. Login y validateSession devuelven la evidencia. Versión vigente: 2026-07.
+Frontend: bloquea catálogo hasta recibir aceptación vigente; exige confirmación backend; falta de modal/botón, versión HTML/JS desalineada, error backend o error de caché local mantienen el bloqueo. La restauración de sesión consulta AUTH antes de mostrar catálogo.
+Pruebas locales: parser/esquema y contratos AUTH/USERS/API/UI; parsing V8 de los módulos afectados.
+Beta pendiente: Apps Script y Spreadsheet aislados, navegador real, dos cuentas en un dispositivo, misma cuenta en dos dispositivos y validación de Users real.
+No se modificaron deployments, endpoints ni datos productivos; rama base sin cambios.
+================================================================================

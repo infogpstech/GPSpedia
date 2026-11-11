@@ -252,3 +252,10 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 
 
 La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `ActiveSessions`; su política y serialización se comprueban en `runSharedMutationCoordinatorTests()`.
+
+
+## Aceptación versionada de Términos y Condiciones (AUG-045)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/TermsAcceptance.js`.
+- Comprueba parseo de evidencia, creación segura del encabezado I de Users, rechazo de encabezados/datos incompatibles y contratos AUTH/USERS/API/UI.
+- No accede a Google Sheets real, Apps Script desplegado ni navegador; esas comprobaciones quedan reservadas a Beta.

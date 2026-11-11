@@ -417,3 +417,14 @@ Encabezados exactos: `actorKey`, `vehicleId`, `corteIndex`, `previousCount`, `ta
 - Una hoja existente con encabezados incompatibles o filas duplicadas bloquea la operación; no se reescribe ni se corrige automáticamente.
 
 La hoja se añade de forma independiente y no altera las columnas históricas de Cortes o Feedbacks.
+
+
+## Estructura objetivo de Users — AUG-045
+
+**Estado:** esquema definido por el código; esta sección no afirma que la hoja productiva o la copia inventariada ya hayan sido modificadas.
+
+| Posición | Letra | Encabezado objetivo | Uso |
+|---:|:---:|---|---|
+| 9 | I | `TermsAcceptance` | JSON de aceptación individual: versión, fecha/hora ISO y estado |
+
+AUTH crea el encabezado únicamente si I1 está vacío y no existen datos en I2:I. Si encuentra otro encabezado o datos bajo encabezado vacío, detiene la operación sin sobrescribirlos. El valor no se expone en listados ni puede modificarse mediante actualización de perfil.

@@ -545,7 +545,7 @@
 
 <!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->
 <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE -->
-<div id="terms-modal" class="terms-overlay" style="display: none;">
+<div id="terms-modal" class="terms-overlay" data-terms-version="2026-07" style="display: none;">
     <div class="terms-modal-content">
         <div class="terms-header">
             <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" class="terms-logo">
@@ -557,6 +557,7 @@
             <p>Al continuar, usted acepta los <a href="#" id="terms-link-in-modal" style="color: var(--accent-color); text-decoration: underline; font-weight: bold;">Términos y Condiciones</a>.</p>
         </div>
         <div class="terms-footer">
+            <p id="terms-error" role="alert" aria-live="polite"></p>
             <button id="btn-accept-terms">Aceptar Términos</button>
         </div>
     </div>

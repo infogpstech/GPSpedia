@@ -1524,3 +1524,15 @@ Validación local: suite SharedMutationCoordinator y parsing de Coordinator.js/S
 No se implementó aún la columna TermsAcceptance ni el handler acceptTerms. No se modificaron deployments, coordinador desplegado, hojas ni datos productivos.
 Siguiente paso para la próxima interacción: reanudar AUG-045 desde el diseño ya acordado; completar Services/Auth.js y Services/Test/Auth.js, Services/users.js y su copia de prueba, api-config.js, auth.js, ui.js, index.html, pruebas lógicas y registros de cierre. No iniciar AUG-046.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-045 — ACEPTACIÓN VERSIONADA DE TÉRMINOS — 2026-11-10
+Repositorio: infogpstech/GPSpedia. Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre confirmado: f3844be2e117a2b8461fd0f2ab5a98a16fd9d26c. Rama base GPSpedia2.2.5 sin cambios.
+Decisión: aceptación individual por usuario. Nueva columna Users.TermsAcceptance en I. Versión vigente: 2026-07.
+AUTH valida I1 y solo crea el encabezado si I1 e I2:I están libres; encabezado distinto o datos sin encabezado detienen sin sobrescritura. Login y validateSession devuelven la evidencia. acceptTerms deriva userId del token y verifica sesión única/vigente, cuenta activa y revocación pendiente; registra {version, acceptedAt, status}, relee y confirma; la aceptación vigente es idempotente.
+USERS conoce la columna sin exponerla ni permitir edición mediante updateProfile. El frontend deja de usar gpsepedia_terms_accepted; revalida AUTH antes de mostrar catálogo y bloquea ante aceptación pendiente/antigua/inválida, fallo de backend/caché, modal/botón ausente o discrepancia de versión. La dependencia del coordinador quedó resuelta en f3844be2e117a2b8461fd0f2ab5a98a16fd9d26c.
+Pruebas locales: parsing 7/7; lógica/esquema/contratos 16/16; espejo AUTH exacto. Apps Script, Spreadsheet aislado, deployments, endpoints y navegador real no ejecutados; quedan para Beta.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: verificar commit y detenerse; no iniciar AUG-046.
+================================================================================

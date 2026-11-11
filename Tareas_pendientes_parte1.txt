@@ -623,6 +623,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 
 ### AUG-045 — Versionar y hacer trazable la aceptación de Términos y Condiciones
 - Origen: H-AUD-036-001/002. Prioridad alta si se requiere evidencia individual; media si se conserva política local por dispositivo.
+- Decisión aprobada por el usuario: aceptación individual por cuenta; se agrega `TermsAcceptance` en Users, columna I. AUTH es fuente autoritativa y localStorage solo caché.
 - Criterios:
   1. Definir si la aceptación se exige por dispositivo o por usuario.
   2. Asociar la aceptación a una versión/fecha; una versión nueva debe activar reaceptación según política.
