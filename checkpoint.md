@@ -1,4 +1,14 @@
 ================================================================================
+AUG-053 — ITERACIÓN 1 — 2026-11-11 — AISLAMIENTO DE addCutPending POR CUENTA
+Estado: EN PROGRESO. Implementación y cinco regresiones añadidas; validación local y revisión final pendientes.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 51cb25ca6a7dde1715960b9616b34110325e09ad. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Alcance: operaciones pendientes del modal «Agregar Corte». Las claves IndexedDB se particionan por ownerId/vehicleId; las claves legadas se migran al propietario registrado y los registros sin owner o en conflicto se conservan en cuarentena, sin recuperación automática. Lectura, escritura y eliminación validan ownerId. Antes de addOrUpdateCut se vuelve a comprobar la cuenta propietaria y se utiliza el SessionToken vigente en memoria; el token no se persiste.
+Pruebas añadidas en Services/Test/IndexedDBTransactions.js: coexistencia de dos cuentas para un vehículo, conflicto dentro de la misma cuenta, migración de registro legado, aislamiento de legado ajeno y eliminación restringida al propietario. Validación pendiente de ejecutar antes del cierre.
+Fuera de alcance: gpsepedia_pending_operation, adminImageUploadPending y gpsepedia_edit_backup. La política de acceso a reemplazos ADMIN requiere definición explícita (privados por iniciador o compartidos entre Desarrolladores); no se presume ninguna.
+Siguiente iteración: abordar únicamente owner-bound y recuperación de gpsepedia_pending_operation. No iniciar AUG-054 ni otras tareas.
+================================================================================
+
+================================================================================
 AUG-052 — ITERACIÓN 6 — 2026-11-11 — ESCENARIOS LOCALES DE INICIO Y PWA
 Estado: CRITERIO 5 COMPLETADO CON VALIDACIÓN DIFERIDA; AUG-052 queda pendiente únicamente de validaciones Beta reales.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 4572195365ffb02c3fedaf0548489f5ecb9d00af. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).

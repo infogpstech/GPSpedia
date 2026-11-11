@@ -8185,7 +8185,16 @@ export function openAddCutForModelModal(item) {
     })();
 
     async function restorePendingOperation() {
-        const stored = await offline.getAddCutPendingOperation(vehicleId);
+        const { currentUser } = getState();
+        const ownerId = String(currentUser && currentUser.ID || "").trim();
+        if (!ownerId) {
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("No se pudo identificar la cuenta activa. No se habilitó un nuevo envío.");
+            return;
+        }
+        const stored = await offline.getAddCutPendingOperation(vehicleId, ownerId);
         if (!stored || stored.available !== true) {
             pendingOperationLoadFailed = true;
             editableControls.forEach(control => { control.disabled = true; });
@@ -8296,9 +8305,15 @@ export function openAddCutForModelModal(item) {
                 showPendingNotice("Operación guardada localmente. Se está enviando al servidor con una clave única de recuperación.");
             }
 
+            const latestUser = getState().currentUser;
+            const latestUserId = String(latestUser && latestUser.ID || "").trim();
+            if (!latestUserId || latestUserId !== String(pendingOperation.userId || "").trim() ||
+                !latestUser.SessionToken) {
+                throw new Error("La cuenta o sesión cambió. Inicia sesión con la cuenta propietaria para reintentar la operación pendiente.");
+            }
             const result = await routeAction("addOrUpdateCut", {
-                userId: currentUser.ID,
-                sessionToken: currentUser.SessionToken,
+                userId: latestUser.ID,
+                sessionToken: latestUser.SessionToken,
                 vehicleId: item.id,
                 cutData: pendingOperation.cutData,
                 opId: pendingOperation.id
@@ -8309,7 +8324,7 @@ export function openAddCutForModelModal(item) {
             }
 
             const completedOpId = pendingOperation.id;
-            const removed = await offline.removeAddCutPendingOperation(vehicleId, completedOpId);
+            const removed = await offline.removeAddCutPendingOperation(vehicleId, pendingOperation.userId, completedOpId);
             if (removed !== true) {
                 console.warn("El corte fue confirmado, pero no se pudo retirar el registro local. Un reintento conservará el mismo opId.", completedOpId);
             }

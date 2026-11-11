@@ -448,112 +448,60 @@ export async function removeAdminImageUploadPendingOperation(vehicleId, fieldNam
  
 // --- IDEMPOTENCIA LOCAL DEL MODAL DE AGREGADO DE CORTES ---
 const ADD_CUT_PENDING_KEY_PREFIX = 'addCutPending:';
-
-function getAddCutPendingKey(vehicleId) {
-    const cleanVehicleId = String(vehicleId === null || vehicleId === undefined ? '' : vehicleId).trim();
-    return cleanVehicleId ? ADD_CUT_PENDING_KEY_PREFIX + cleanVehicleId : '';
+function getAddCutPendingKey(vehicleId,userId){const v=String(vehicleId==null?'':vehicleId).trim(),u=String(userId==null?'':userId).trim();return v&&u?ADD_CUT_PENDING_KEY_PREFIX+encodeURIComponent(u)+':'+encodeURIComponent(v):'';}
+function getLegacyAddCutPendingKey(vehicleId){const v=String(vehicleId==null?'':vehicleId).trim();return v?ADD_CUT_PENDING_KEY_PREFIX+v:'';}
+function getQuarantinedAddCutPendingKey(vehicleId,operationId){const v=String(vehicleId==null?'':vehicleId).trim();return v?ADD_CUT_PENDING_KEY_PREFIX+'quarantine:'+encodeURIComponent(v)+':'+encodeURIComponent(String(operationId||'legacy')):'';}
+async function migrateLegacyAddCutPendingOperation_(vehicleId){
+ const legacyKey=getLegacyAddCutPendingKey(vehicleId);if(!legacyKey)return true;
+ try{const database=await initDB();if(!database)return false;return await new Promise((resolve,reject)=>{
+  const tx=database.transaction([ADMIN_LOCAL_STATE_STORE],'readwrite'),store=tx.objectStore(ADMIN_LOCAL_STATE_STORE);let migrationError=null;
+  tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error||migrationError||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||migrationError||new Error('IndexedDB transaction aborted'));
+  const legacyReq=store.get(legacyKey);legacyReq.onsuccess=()=>{
+   const legacy=legacyReq.result;if(!legacy||!legacy.operation)return;
+   const op=legacy.operation,owner=String(op.userId||'').trim(),target=owner?getAddCutPendingKey(vehicleId,owner):getQuarantinedAddCutPendingKey(vehicleId,op.id);if(!target)return;
+   const targetReq=store.get(target);targetReq.onsuccess=()=>{
+    const existing=targetReq.result;if(!existing){store.put({...legacy,key:target,migratedAt:Date.now()});store.delete(legacyKey);return;}
+    const same=String(existing.operation&&existing.operation.id||'')===String(op.id||'')&&String(existing.operation&&existing.operation.userId||'')===owner;
+    if(same){store.delete(legacyKey);return;}
+    const quarantine=getQuarantinedAddCutPendingKey(vehicleId,op.id);if(!quarantine||quarantine===target)return;
+    const q=store.get(quarantine);q.onsuccess=()=>{if(!q.result){store.put({...legacy,key:quarantine,quarantinedAt:Date.now()});store.delete(legacyKey);}};
+    q.onerror=()=>{migrationError=q.error||new Error('No se pudo aislar el registro legado');try{tx.abort();}catch(error){}};
+   };
+   targetReq.onerror=()=>{migrationError=targetReq.error||new Error('No se pudo consultar la clave del propietario');try{tx.abort();}catch(error){}};
+  };
+  legacyReq.onerror=()=>{migrationError=legacyReq.error||new Error('No se pudo consultar la operación legada');try{tx.abort();}catch(error){}};
+ });}catch(error){console.error('No se pudo aislar la operación legada de agregado de corte.');return false;}
 }
-
-/**
- * Recupera la operación pendiente del modal (+) para un vehículo.
- * available=false indica que IndexedDB no pudo consultarse; no equivale a que no exista operación.
- */
-export async function getAddCutPendingOperation(vehicleId) {
-    const key = getAddCutPendingKey(vehicleId);
-    if (!key) return { available: true, operation: null };
-    const entry = await performAdminStateOp('readonly', store => store.get(key));
-    if (entry === null) return { available: false, operation: null };
-    return {
-        available: true,
-        operation: entry && entry.key === key && entry.operation ? entry.operation : null
-    };
+export async function getAddCutPendingOperation(vehicleId,userId){
+ const owner=String(userId||'').trim(),key=getAddCutPendingKey(vehicleId,owner);if(!key)return{available:false,operation:null};
+ if(!await migrateLegacyAddCutPendingOperation_(vehicleId))return{available:false,operation:null};
+ const entry=await performAdminStateOp('readonly',store=>store.get(key));if(entry===null)return{available:false,operation:null};
+ const op=entry&&entry.key===key&&entry.operation?entry.operation:null;if(op&&String(op.userId||'').trim()!==owner)return{available:false,operation:null};
+ return{available:true,operation:op};
 }
-
-/**
- * Persiste el snapshot antes de enviar addOrUpdateCut.
- * Una operación distinta no puede sobrescribir una operación pendiente del mismo vehículo.
- */
-export async function saveAddCutPendingOperation(operation) {
-    if (!operation || typeof operation !== 'object' || !operation.id ||
-        operation.vehicleId === null || operation.vehicleId === undefined ||
-        !String(operation.userId || '').trim() ||
-        !operation.cutData || typeof operation.cutData !== 'object') {
-        return { saved: false, error: true };
-    }
-
-    const key = getAddCutPendingKey(operation.vehicleId);
-    const opId = String(operation.id).trim();
-    if (!key || !opId) return { saved: false, error: true };
-
-    try {
-        const database = await initDB();
-        return await new Promise((resolve, reject) => {
-            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
-            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
-            let result = null;
-
-            transaction.oncomplete = () => resolve(result || { saved: false, error: true });
-            transaction.onerror = () => reject(transaction.error || new Error('IndexedDB transaction failed'));
-            transaction.onabort = () => reject(transaction.error || new Error('IndexedDB transaction aborted'));
-
-            const getRequest = store.get(key);
-            getRequest.onsuccess = () => {
-                const existing = getRequest.result;
-                if (existing && (!existing.operation || String(existing.operation.id || '').trim() !== opId)) {
-                    result = { saved: false, conflict: true, operation: existing.operation || null };
-                    return;
-                }
-
-                const entry = {
-                    key,
-                    operation,
-                    updatedAt: Date.now()
-                };
-                const putRequest = store.put(entry);
-                putRequest.onsuccess = () => { result = { saved: true, key }; };
-                putRequest.onerror = () => reject(putRequest.error || new Error('No se pudo guardar la operación pendiente'));
-            };
-            getRequest.onerror = () => reject(getRequest.error || new Error('No se pudo consultar la operación pendiente'));
-        });
-    } catch (error) {
-        console.error('No se pudo persistir la operación pendiente de agregado de corte:', error);
-        return { saved: false, error: true };
-    }
+export async function saveAddCutPendingOperation(operation){
+ if(!operation||typeof operation!=='object'||!operation.id||operation.vehicleId===null||operation.vehicleId===undefined||!String(operation.userId||'').trim()||!operation.cutData||typeof operation.cutData!=='object')return{saved:false,error:true};
+ const vehicle=String(operation.vehicleId).trim(),owner=String(operation.userId).trim(),key=getAddCutPendingKey(vehicle,owner),opId=String(operation.id).trim();
+ if(!key||!opId||!await migrateLegacyAddCutPendingOperation_(vehicle))return{saved:false,error:true};
+ const saved={...operation,vehicleId:vehicle,userId:owner};delete saved.sessionToken;delete saved.SessionToken;
+ try{const database=await initDB();return await new Promise((resolve,reject)=>{
+  const tx=database.transaction([ADMIN_LOCAL_STATE_STORE],'readwrite'),store=tx.objectStore(ADMIN_LOCAL_STATE_STORE);let result=null;
+  tx.oncomplete=()=>resolve(result||{saved:false,error:true});tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));
+  const get=store.get(key);get.onsuccess=()=>{const existing=get.result;
+   if(existing&&(!existing.operation||String(existing.operation.userId||'').trim()!==owner||String(existing.operation.id||'').trim()!==opId)){result={saved:false,conflict:true,operation:existing.operation||null};return;}
+   const put=store.put({key,operation:saved,updatedAt:Date.now()});put.onsuccess=()=>{result={saved:true,key};};put.onerror=()=>reject(put.error||new Error('No se pudo guardar la operación pendiente'));
+  };get.onerror=()=>reject(get.error||new Error('No se pudo consultar la operación pendiente'));
+ });}catch(error){console.error('No se pudo persistir la operación pendiente de agregado de corte.');return{saved:false,error:true};}
 }
-
-/**
- * Elimina la operación solo si la clave opId coincide, evitando borrar una operación nueva.
- */
-export async function removeAddCutPendingOperation(vehicleId, opId) {
-    const key = getAddCutPendingKey(vehicleId);
-    const cleanOpId = String(opId || '').trim();
-    if (!key || !cleanOpId) return false;
-
-    try {
-        const database = await initDB();
-        return await new Promise((resolve, reject) => {
-            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
-            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
-            let removed = false;
-
-            transaction.oncomplete = () => resolve(removed);
-            transaction.onerror = () => reject(transaction.error || new Error('IndexedDB transaction failed'));
-            transaction.onabort = () => reject(transaction.error || new Error('IndexedDB transaction aborted'));
-
-            const getRequest = store.get(key);
-            getRequest.onsuccess = () => {
-                const entry = getRequest.result;
-                if (!entry || !entry.operation || String(entry.operation.id || '').trim() !== cleanOpId) return;
-                const deleteRequest = store.delete(key);
-                deleteRequest.onsuccess = () => { removed = true; };
-                deleteRequest.onerror = () => reject(deleteRequest.error || new Error('No se pudo retirar la operación completada'));
-            };
-            getRequest.onerror = () => reject(getRequest.error || new Error('No se pudo verificar la operación antes de eliminarla'));
-        });
-    } catch (error) {
-        console.error('No se pudo retirar la operación pendiente de agregado de corte:', error);
-        return null;
-    }
+export async function removeAddCutPendingOperation(vehicleId,userId,opId){
+ const owner=String(userId||'').trim(),key=getAddCutPendingKey(vehicleId,owner),id=String(opId||'').trim();if(!key||!id)return false;
+ try{const database=await initDB();return await new Promise((resolve,reject)=>{
+  const tx=database.transaction([ADMIN_LOCAL_STATE_STORE],'readwrite'),store=tx.objectStore(ADMIN_LOCAL_STATE_STORE);let removed=false;
+  tx.oncomplete=()=>resolve(removed);tx.onerror=()=>reject(tx.error||new Error('IndexedDB transaction failed'));tx.onabort=()=>reject(tx.error||new Error('IndexedDB transaction aborted'));
+  const get=store.get(key);get.onsuccess=()=>{const entry=get.result;if(!entry||!entry.operation||String(entry.operation.userId||'').trim()!==owner||String(entry.operation.id||'').trim()!==id)return;
+   const del=store.delete(key);del.onsuccess=()=>{removed=true;};del.onerror=()=>reject(del.error||new Error('No se pudo retirar la operación completada'));
+  };get.onerror=()=>reject(get.error||new Error('No se pudo verificar la operación antes de eliminarla'));
+ });}catch(error){console.error('No se pudo retirar la operación pendiente de agregado de corte.');return null;}
 }
 
 // --- CATALOG PERSISTENCE ---

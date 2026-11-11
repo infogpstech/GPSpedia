@@ -398,3 +398,8 @@ Ejecutar `node --experimental-default-type=module Services/Test/PWAStartupScenar
 La suite cubre primera instalación y precarga del App Shell/grafo de módulos; actualización v14→v15 y conservación de cachés ajenas; fallo de precarga esencial sin activar una instalación incompleta; arranque offline desde un deep link con fallback a `index.html`; deep link sin sesión ni catálogo; estados terminales error/stale; timeout y caída de API con máximo de tres intentos; y snapshots sintéticos de 0, 250, 2,500 y 10,000 Cortes con rechazo de IDs duplicados. Usa Service Worker, estado, solicitudes y datos simulados; no invoca endpoints ni modifica datos.
 
 La ejecución en runtime V8 adaptado obtuvo 10/10 escenarios PASS. La ejecución literal de Node CLI y las pruebas en navegador/dispositivo real, Cache Storage real, red y Apps Script/Spreadsheet se reservan a Beta.
+
+
+## Aislamiento de operaciones addCutPending por cuenta (AUG-053 — iteración 1)
+
+La suite `IndexedDBTransactions.js` añade cinco escenarios para el modal «Agregar Corte»: dos cuentas con el mismo vehículo mantienen operaciones separadas; una misma cuenta conserva el conflicto de opId; los registros legados se migran al owner original; y la eliminación solo afecta la operación de la cuenta propietaria. Ejecutar con `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.

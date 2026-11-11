@@ -1421,3 +1421,11 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - La suite valida el App Shell y el fallback offline mediante Cache Storage/fetch simulados; no accede a endpoints, Apps Script ni datos productivos.
 - Validación ejecutada en runtime V8 adaptado: 10/10 escenarios PASS usando las fuentes vigentes de Service Worker, main, state y catalogRequest, con dobles para APIs de entorno. Node CLI literal y navegador real no ejecutados; las pruebas reales de instalación/actualización/offline, red y servicios externos quedan reservadas a Beta.
 - Services/Test/README.md documenta comando y alcance de la suite. Tareas_pendientes_parte1.txt y checkpoint.md actualizados.
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 1 — AISLAMIENTO DE addCutPending POR CUENTA
+- Las claves IndexedDB de operaciones pendientes del modal «Agregar Corte» incluyen ownerId y vehicleId; cuentas distintas ya no compiten por la misma clave.
+- Las claves legadas se migran al propietario registrado y los registros sin owner o en conflicto se conservan en cuarentena, sin recuperación automática.
+- Lectura, escritura y eliminación verifican ownerId; el envío comprueba nuevamente la cuenta propietaria y usa la sesión vigente sin persistir SessionToken.
+- Se añadieron cinco regresiones a Services/Test/IndexedDBTransactions.js.

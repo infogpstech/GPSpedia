@@ -365,7 +365,47 @@ async function runIndexedDBTransactionTests() {
             globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;
         }
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/16 PASS`);
+    await testAsync('addCutPending aísla operaciones del mismo vehículo por cuenta', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-owner-isolation');
+        const make=(userId,id)=>({id,vehicleId:'VEH-OWNER-1',userId,cutData:{tipoCorte1:'Ignición'},status:'processing'});
+        assert.equal((await api.saveAddCutPendingOperation(make('USER-A','OP-A'))).saved,true);
+        assert.equal((await api.saveAddCutPendingOperation(make('USER-B','OP-B'))).saved,true);
+        assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-1','USER-A')).operation.id,'OP-A');
+        assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-1','USER-B')).operation.id,'OP-B');
+    });
+    await testAsync('addCutPending conserva conflicto dentro de la misma cuenta', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-owner-conflict');
+        const base={vehicleId:'VEH-OWNER-2',userId:'USER-A',cutData:{tipoCorte1:'Ignición'},status:'failed'};
+        assert.equal((await api.saveAddCutPendingOperation({...base,id:'OP-ORIGINAL'})).saved,true);
+        const conflict=await api.saveAddCutPendingOperation({...base,id:'OP-NEW'});
+        assert.equal(conflict.conflict,true);assert.equal(conflict.operation.id,'OP-ORIGINAL');
+        assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-2','USER-A')).operation.id,'OP-ORIGINAL');
+    });
+    await testAsync('addCutPending migra el registro legado al propietario original', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-legacy-owner');await api.initDB();
+        const store=h.stores.get('adminLocalState'),op={id:'OP-LEGACY-A',vehicleId:'VEH-LEGACY',userId:'USER-A',cutData:{tipoCorte1:'Bomba'},status:'failed'};
+        store.values.set('addCutPending:VEH-LEGACY',{key:'addCutPending:VEH-LEGACY',operation:op});
+        const restored=await api.getAddCutPendingOperation('VEH-LEGACY','USER-A');
+        assert.equal(restored.operation.id,'OP-LEGACY-A');assert.equal(store.values.has('addCutPending:VEH-LEGACY'),false);
+        assert.equal(store.values.has('addCutPending:USER-A:VEH-LEGACY'),true);
+    });
+    await testAsync('addCutPending de otra cuenta no bloquea y conserva el owner legado', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-legacy-other-owner');await api.initDB();
+        const store=h.stores.get('adminLocalState'),op={id:'OP-LEGACY-A',vehicleId:'VEH-LEGACY-2',userId:'USER-A',cutData:{tipoCorte1:'Bomba'},status:'failed'};
+        store.values.set('addCutPending:VEH-LEGACY-2',{key:'addCutPending:VEH-LEGACY-2',operation:op});
+        assert.equal((await api.getAddCutPendingOperation('VEH-LEGACY-2','USER-B')).operation,null);
+        assert.equal((await api.getAddCutPendingOperation('VEH-LEGACY-2','USER-A')).operation.id,'OP-LEGACY-A');
+    });
+    await testAsync('addCutPending elimina solo el opId de la cuenta propietaria', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-owner-remove');
+        const make=userId=>({id:'OP-'+userId,vehicleId:'VEH-OWNER-3',userId,cutData:{tipoCorte1:'Ignición'},status:'failed'});
+        await api.saveAddCutPendingOperation(make('USER-A'));await api.saveAddCutPendingOperation(make('USER-B'));
+        assert.equal(await api.removeAddCutPendingOperation('VEH-OWNER-3','USER-A','OP-USER-A'),true);
+        assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-3','USER-A')).operation,null);
+        assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-3','USER-B')).operation.id,'OP-USER-B');
+    });
+
+    console.log(`\nIndexedDB transaction tests: ${passed}/21 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
