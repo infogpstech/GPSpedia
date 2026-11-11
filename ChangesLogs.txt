@@ -1113,3 +1113,11 @@ AUG-046 — ACCESO Y CONSERVACIÓN DE IMÁGENES DE VEHÍCULOS/CORTES — 2026-11
 - Tareas.txt y checkpoint.md: registran continuidad de AUG-046 y las confirmaciones operativas pendientes sobre permisos, retención y orígenes HTTP(S).
 - No se modificó código funcional, datos productivos, acuerdo, aviso, aceptación AUG-045, endpoints ni deployments.
 ================================================================================
+
+================================================================================
+AUG-046 — PERSISTENCIA LOCAL Y LIMPIEZA DEL CLIENTE — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 20 documenta claves de almacenamiento local, IndexedDB, Cache Storage, logout y limpieza administrativa.
+- Auditoría.txt: se registra H-AUD-046-002 (MEDIA), por limpieza local incompleta y eliminación de la operación pendiente sin comprobación del estado remoto.
+- Tareas.txt y checkpoint.md: se registra continuidad de AUG-046 y se separa la corrección técnica para una tarea independiente.
+- No se modificó código funcional, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================

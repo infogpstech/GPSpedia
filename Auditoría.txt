@@ -389,3 +389,20 @@ Corrección requerida: aplicar en servidor una comprobación de rol Desarrollado
 Límites: hallazgo estático en código versionado; no se llamó al endpoint ni se verificó el deployment WRITE/ADMIN. Sin cambios funcionales ni datos productivos.
 Estado: ABIERTO; la corrección se debe gestionar como tarea independiente después de la continuidad actual de AUG-046.
 ================================================================================
+
+================================================================================
+H-AUD-046-002 — MEDIA — ABIERTO — 2026-11-10
+Origen: AUG-046, revisión del ciclo de vida de almacenamiento local y limpieza administrativa.
+Ubicación: ui.js:146–167/242–300/1964–1969/4934–4955; add_cortes.html:359–430/1024–1052; auth.js:12/27–54/113–116/345–365; offline.js:7–78/114–180/182–270; service-worker.js:1–89; api-config.js:107–123.
+Evidencia:
+- El logout ordinario elimina gpsepedia_session, pero no ejecuta limpieza general de localStorage, IndexedDB o Cache Storage.
+- Además de la sesión, localStorage conserva gpsepedia_pending_operation (puede incluir VIN, datos de corte y fotos Base64), gpsepedia_pys_cache y gpsepedia_edit_backup; también hay preferencias e indicadores de instalación y claves de control de auditoría Drive.
+- IndexedDB GPSpedia_DB contiene catálogo, historial, vehículos vistos con sus datos, miniaturas, respuestas de validación y estado administrativo de auditoría Drive.
+- El Service Worker guarda recursos y respuestas GET 200 en gpsepedia-cache-v14; routeAction usa POST para los microservicios.
+- El botón «Vaciar Caché Local» solicita deleteDatabase sin esperar success/error/blocked y solo elimina dos claves localStorage (gpsepedia_catalog_cache y gpsepedia_pending_operation). No limpia todas las claves ni Cache Storage.
+- La misma acción elimina la operación pendiente sin consultar su estado en servidor, pudiendo retirar el identificador y los datos necesarios para recuperar un aporte interrumpido.
+Impacto: la limpieza anunciada no es integral ni confirma que IndexedDB se haya eliminado; puede quedar información local y perderse la recuperación de una operación no confirmada. No se verificó pérdida de datos productivos ni datos residuales en dispositivos reales.
+Corrección requerida: definir alcance de limpieza; verificar estado de operación pendiente antes de descartarla; esperar y manejar eventos de deleteDatabase, incluidos blocked/error; alinear interfaz y notificación con el alcance real; decidir tratamiento de Cache Storage, preferencias y datos administrativos. Añadir pruebas locales con IndexedDB bloqueada, múltiples pestañas y operaciones pendientes/confirmadas.
+Límites: hallazgo estático de código versionado. Sin navegador real, perfiles de usuario, limpieza efectiva, pruebas multi-pestaña ni verificación de deployment. No se modificó código ni datos productivos.
+Estado: ABIERTO; corrección separada, no implementada durante AUG-046.
+================================================================================

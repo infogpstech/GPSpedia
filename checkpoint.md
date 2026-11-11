@@ -1945,3 +1945,28 @@ Límites:
 Estado: AUG-046 permanece EN PROGRESO. Confirmaciones pendientes: ACL de la carpeta raíz Cortes, política de acceso prevista, plazo de conservación/eliminación y admisión de URLs HTTP(S) externas.
 Siguiente iteración: continuar AUG-046 con una comprobación técnica distinta, sin repetir secciones anteriores ni iniciar AUG-047.
 ================================================================================
+
+================================================================================
+CHECKPOINT — AUG-046 — PERSISTENCIA LOCAL Y LIMPIEZA DEL CLIENTE — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: 50a71bab464f55a046202160c1f6af7a7da46bc8.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (una sola revisión técnica):
+- Ampliado el inventario de almacenamiento local: gpsepedia_session, gpsepedia_pending_operation, gpsepedia_pys_cache, gpsepedia_edit_backup, preferencias/instalación y claves driveAudit.
+- Confirmado que gpsepedia_pending_operation puede contener VIN, datos del vehículo/corte y fotografías Base64; gpsepedia_edit_backup guarda el registro activo; gpsepedia_pys_cache conserva la respuesta de Problemas y Soluciones.
+- Revisado IndexedDB GPSpedia_DB: catalog, searchHistory, viewedItems, thumbnails, validationCache y adminLocalState.
+- Revisado Cache Storage: service-worker.js usa gpsepedia-cache-v14 y almacena respuestas GET 200; routeAction envía acciones API por POST.
+- Confirmado que logout ordinario elimina gpsepedia_session, no todos los datos locales.
+- Detectada discrepancia en el botón «Vaciar Caché Local»: no espera los eventos de deleteDatabase, elimina solo dos claves y no limpia Cache Storage; además descarta gpsepedia_pending_operation sin consultar estado remoto.
+- Registrado H-AUD-046-002 (MEDIA) en Auditoría.txt y evidencia en Legal/AUG-046_revision_preliminar.md, sección 20. Corrección queda separada y no se implementó.
+
+Límites:
+- Revisión estática de auth.js, main.js, ui.js, add_cortes.html, offline.js, service-worker.js, api-config.js e index.html.
+- No se ejecutó navegador, no se inspeccionaron perfiles reales, no se borró almacenamiento, no se probó IndexedDB bloqueada/múltiples pestañas y no se verificó deployment.
+- No se modificó código, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
+
+Estado: AUG-046 permanece EN PROGRESO. Pendientes confirmaciones operativas y validación interna de la empresa principal. H-AUD-046-002 queda abierto para corrección independiente.
+Siguiente iteración: continuar AUG-046 con una comprobación técnica distinta, sin iniciar AUG-047 ni repetir secciones anteriores.
+================================================================================

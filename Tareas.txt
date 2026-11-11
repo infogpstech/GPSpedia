@@ -801,3 +801,13 @@ AUG-046 — CONTINUIDAD — ACCESO Y CONSERVACIÓN DE IMÁGENES DE VEHÍCULOS/CO
 - No se modificaron código, datos productivos, acuerdo, aviso, aceptación AUG-045, endpoints ni deployments.
 Estado: AUG-046 permanece EN PROGRESO. Pendientes las confirmaciones operativas de la empresa principal.
 ================================================================================
+
+================================================================================
+AUG-046 — CONTINUIDAD — PERSISTENCIA LOCAL Y LIMPIEZA DEL CLIENTE — 2026-11-10
+- Ampliado el inventario de persistencia más allá de gpsepedia_session e IndexedDB: operación pendiente con VIN/imágenes Base64, caché PyS, respaldo de edición, preferencias, estado de auditoría Drive y Cache Storage del Service Worker.
+- Confirmado que logout ordinario elimina gpsepedia_session, no los demás almacenes.
+- Detectada discrepancia en «Vaciar Caché Local»: no espera confirmación de deleteDatabase, elimina solo dos claves localStorage, no limpia Cache Storage y elimina gpsepedia_pending_operation sin comprobar estado remoto.
+- Registrado H-AUD-046-002 (MEDIA) en Auditoría.txt y evidencia en Legal/AUG-046_revision_preliminar.md, sección 20. Corrección pendiente como tarea independiente; no se modificó código.
+- No se modificaron acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
+Estado: AUG-046 permanece EN PROGRESO; faltan confirmaciones operativas y validación interna de la empresa principal.
+================================================================================
