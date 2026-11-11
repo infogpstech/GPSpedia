@@ -661,41 +661,17 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
 
     const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
 
-    // 1. Memoria RAM sincrónica (0ms latencia)
-    if (memoryUrlCache.has(cleanId)) {
-        imgElement.src = memoryUrlCache.get(cleanId);
-        return;
-    }
-
-    // 2. Estrategia Local-First: Recuperar desde IndexedDB tanto online como offline
-    try {
-        const cachedBlob = await Promise.race([
-            offline.getThumbnail(cleanId),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 800))
-        ]).catch(() => null);
-
-        if (cachedBlob) {
-            const objectUrl = URL.createObjectURL(cachedBlob);
-            memoryUrlCache.set(cleanId, objectUrl);
-            imgElement.src = objectUrl;
-            return;
-        }
-    } catch (e) {
-        // Continuar a red si falla la lectura local
-    }
-
-    // 3. Cargar desde la red (Google Drive CDN) si no está presente en el caché local
-    const remoteUrl = getImageUrl(cleanId, size);
-    imgElement.src = remoteUrl;
-
-    // 4. Compresión y persistencia en segundo plano para uso offline/futuro
-    if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') && !cleanId.includes('placehold.co')) {
-        offline.compressAndStoreThumbnail(remoteUrl, cleanId).then(blob => {
-            if (blob) {
-                const objectUrl = URL.createObjectURL(blob);
-                memoryUrlCache.set(cleanId, objectUrl);
-            }
-        }).catch(() => {});
+    const cacheKey=`${cleanId}::w${Math.max(100,Math.min(1600,Math.round(Number(size)||IMG_SIZE_SMALL)))}`;
+    if(memoryUrlCache.has(cacheKey)){imgElement.src=memoryUrlCache.get(cacheKey);return;}
+    try{
+        const cachedBlob=await Promise.race([offline.getThumbnail(cleanId,size),new Promise((_,reject)=>setTimeout(()=>reject(new Error("DB Timeout")),800))]).catch(()=>null);
+        if(cachedBlob){const objectUrl=URL.createObjectURL(cachedBlob);memoryUrlCache.set(cacheKey,objectUrl);imgElement.src=objectUrl;return;}
+    }catch(e){/* Continuar a red si falla la lectura local. */}
+    const remoteUrl=getImageUrl(cleanId,size);imgElement.src=remoteUrl;
+    if(cleanId&&typeof cleanId==="string"&&!cleanId.startsWith("blob:")&&!cleanId.includes("placehold.co")){
+        offline.compressAndStoreThumbnail(remoteUrl,cleanId,size).then(blob=>{
+            if(blob){const objectUrl=URL.createObjectURL(blob);memoryUrlCache.set(cacheKey,objectUrl);}
+        }).catch(()=>{});
     }
 }
 
