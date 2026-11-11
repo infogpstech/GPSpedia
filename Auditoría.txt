@@ -560,3 +560,11 @@ Estado: RESUELTO EN FUENTES.
 El modal de alta de corte ya no ofrece tipos ni relays hardcodeados. El catálogo combina tipoCorte1/2/3 y obtiene configuracion desde la hoja Relay. El frontend rechaza respuestas inválidas/listas vacías, bloquea el envío y permite reintentar; valida la selección antes de guardar el snapshot. No recomendado permanece sujeto a la lista oficial y no requiere relay. Los reintentos durables conservan el payload original sin añadir opciones antiguas al selector.
 Evidencia: ui.js, Services/catalog.js y Services/Test/CutDropdownAuthority.js. Validación local 30/30 PASS. No se ejecutaron navegador real ni Apps Script/Google Sheets desplegados; quedan para Beta.
 ================================================================================
+
+
+================================================================================
+CIERRE DE HALLAZGO REFERIDO — H-AUD-005-001 — AUG-064 — 2026-11-11
+Estado: RESUELTO EN FUENTES.
+WRITE y ADMIN sanitizan en servidor apertura y cableAlimen/cableAlimen2/cableAlimen3 antes de persistir. La edición ADMIN directa aplica el mismo control. La allow-list conserva el formato admitido por rich-text.js y descarta scripts, elementos activos, atributos ejecutables, srcdoc, URL javascript:/data: no autorizadas y estilos peligrosos. La UI sanitiza Apertura, cable individual y todas las diapositivas del carrusel; impresión/exportación sanitizan apertura y los tres cables. Los registros históricos/importados quedan protegidos en cada renderizado; no se ejecutó una migración masiva.
+Evidencia: ui.js, rich-text.js, Services/write.js, Services/admin.js y Services/Test/RichTextContentSecurity.js. Validación local: RichTextContentSecurity 39/39 PASS; AddSupplementaryInfoIntegrity 34/34 PASS. Navegador real y Apps Script/Spreadsheet desplegados quedan para Beta.
+================================================================================

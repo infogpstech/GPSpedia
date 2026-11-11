@@ -651,3 +651,12 @@ Cobertura: slots vacíos en JSON y formatos heredados, espacios intermedios/fina
 - Cubre valores tipo de corte en slots 1/2/3, deduplicación, listas de Relay, respuestas inválidas/vacías, rechazo de valores no oficiales, cambios en Sheets, ausencia de fallback frontend y preservación de operaciones pendientes.
 - Validación local: 30/30 PASS; parsing V8 de helpers, modal y handler de catálogo: PASS.
 - No se ejecutaron navegador real ni Google Sheets/Apps Script desplegados; quedan para Beta.
+
+
+## Seguridad del contenido enriquecido de apertura y alimentación (AUG-064)
+
+La suite `Services/Test/RichTextContentSecurity.js` ejecuta **39/39 comprobaciones PASS** sobre el sanitizador real extraído de WRITE y ADMIN, sus planes de persistencia y la ruta ADMIN `updateVehicleField`. Incluye scripts, atributos `on*`, SVG, iframe/srcdoc, enlaces `javascript:`, imágenes `data:`, CSS peligroso, entidades en esquemas URL, HTML malformado, listas, estilos permitidos y saltos de línea. También verifica los sinks del carrusel, el contenido individual y la impresión/exportación.
+
+WRITE y ADMIN aplican la misma allow-list al guardar `apertura`, `cableAlimen`, `cableAlimen2` y `cableAlimen3`; ADMIN también la aplica al editar esos campos desde el modal. La interfaz vuelve a sanitizar al presentar datos históricos/importados. No se realizó una migración masiva de registros existentes.
+
+La suite `AddSupplementaryInfoIntegrity.js` conserva su cobertura y ahora carga el sanitizador junto con el plan. Parsing V8: WRITE, ADMIN, rich-text.js y el bloque modificado de `createAccordionSection` PASS. No se ejecutaron navegador real, Apps Script desplegado ni Google Sheets real; quedan para Beta.

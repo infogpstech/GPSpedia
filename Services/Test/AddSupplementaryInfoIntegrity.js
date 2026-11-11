@@ -3,7 +3,8 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
  function run_(name,fn){try{fn();passed++;results.push({name,status:"PASS"});}catch(e){failed++;results.push({name,status:"FAIL",message:String(e.message||e)});}}
  function buildRuntime(source){
-  const start=source.indexOf("function createSupplementaryInfoError_"),end=source.indexOf("function handleAddSupplementaryInfo(payload",start);
+  const sanitizerStart=source.indexOf("function sanitizeSupplementaryRichText_");
+  const start=sanitizerStart>=0?sanitizerStart:source.indexOf("function createSupplementaryInfoError_"),end=source.indexOf("function handleAddSupplementaryInfo(payload",start);
   assert_(start>=0&&end>start,"No se encontró el bloque de helpers.");
   return new Function("COLS_CORTES","SpreadsheetApp",source.slice(start,end)+";return {plan:buildSupplementaryInfoPlan_,persist:persistSupplementaryInfoValues_};")(
    {apertura:33,imgApertura:34,cableAlimen:35,imgCableAlimen:36,timestamp:37,notaImportante:38,cableAlimen2:39,imgCableAlimen2:40,cableAlimen3:41,imgCableAlimen3:42},{flush:function(){}});

@@ -95,7 +95,10 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   5. Mantener solo formato permitido por rich-text.js.
   6. Probar script, img onerror, svg/onload, iframe, javascript:, srcdoc, estilos peligrosos, HTML malformado y texto normal con listas/saltos.
 - **Relación:** AUD-T-005; H-AUD-032-001/AUG-039 y AUD-T-014.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Resolución:** WRITE y ADMIN sanitizan en servidor los cuatro campos de apertura/alimentación antes de persistirlos; ADMIN también sanitiza updateVehicleField. La allow-list conserva formato compatible con rich-text.js y elimina contenido activo, atributos no permitidos, esquemas URL inseguros y CSS no autorizado.
+- **Presentación:** el detalle sanitiza Apertura, cable individual y cada diapositiva del carrusel; impresión/exportación sanitizan apertura y los tres cables. Los registros históricos/importados se sanitizan al renderizar, sin migración masiva.
+- **Pruebas:** RichTextContentSecurity 39/39 PASS; AddSupplementaryInfoIntegrity 34/34 PASS; parsing V8 de WRITE, ADMIN, rich-text.js y bloque createAccordionSection PASS. Navegador real y Apps Script/Spreadsheet desplegados quedan para Beta.
 
 ### Adendas derivadas de AUD-T-005
 **AUG-043 — Contratos protegidos y ciclo de aprobación de YouTube**

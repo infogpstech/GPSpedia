@@ -329,6 +329,7 @@ export function sanitizeHtmlContent(htmlStr) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(String(htmlStr), "text/html");
     const allowedTags = new Set(["B", "STRONG", "SPAN", "BR", "P", "DIV", "I", "EM", "U", "S", "STRIKE", "OL", "UL", "LI", "A", "IMG", "SMALL", "MARK", "FONT"]);
+    const dropContentTags = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "SVG", "MATH", "TEMPLATE", "FORM", "TEXTAREA", "SELECT", "OPTION", "BUTTON", "INPUT", "META", "LINK", "BASE", "VIDEO", "AUDIO", "SOURCE", "CANVAS", "APPLET", "NOSCRIPT"]);
     const safeUrl = (value, image = false) => {
         const url = String(value || "").trim();
         if (/^https?:\/\//i.test(url)) return url;
@@ -340,7 +341,8 @@ export function sanitizeHtmlContent(htmlStr) {
         Array.from(node.childNodes).forEach(child => {
             if (child.nodeType !== 1) return;
             if (!allowedTags.has(child.tagName)) {
-                node.replaceChild(doc.createTextNode(child.outerHTML), child);
+                if (dropContentTags.has(child.tagName)) child.remove();
+                else node.replaceChild(doc.createTextNode(child.textContent || ""), child);
                 return;
             }
 

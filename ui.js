@@ -6613,7 +6613,7 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
         function updateSlide(index) {
             currentSlideIndex = (index + totalSlides) % totalSlides;
             const activeCable = sec.cables[currentSlideIndex];
-            slideText.innerHTML = `<strong>${activeCable.label}:</strong> ${activeCable.content || "Sin descripción"}`;
+            slideText.innerHTML = `<strong>${sanitizeHtmlContent(activeCable.label || "Cable")}:</strong> ${sanitizeHtmlContent(activeCable.content || "Sin descripción")}`;
 
             if (activeCable.img) {
                 slideImg.style.display = 'block';
@@ -6708,7 +6708,7 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
 
         if (activeContent) {
             const contentP = document.createElement('p');
-            contentP.innerHTML = activeContent;
+            contentP.innerHTML = sanitizeHtmlContent(activeContent);
             panel.appendChild(contentP);
         }
 

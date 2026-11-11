@@ -1987,7 +1987,12 @@ function handleUpdateVehicleField(payload, logMessage) {
     }
 
     const actualRow = rowIndex + 2;
-    sheet.getRange(actualRow, colIndex).setValue(value !== undefined ? value : "");
+    let valueToStore = value !== undefined ? value : "";
+    if (["apertura", "cableAlimen", "cableAlimen2", "cableAlimen3"].includes(fieldName)) {
+        if (value !== undefined && value !== null && typeof value !== "string") throw new Error("El contenido enriquecido debe ser texto.");
+        valueToStore = sanitizeSupplementaryRichText_(value);
+    }
+    sheet.getRange(actualRow, colIndex).setValue(valueToStore);
     SpreadsheetApp.flush();
 
     let folderSyncWarning = false;
@@ -2899,11 +2904,26 @@ const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { an
 }
 
 
+function sanitizeSupplementaryRichText_(value) {
+ if(value===null||value===undefined)return "";
+ const input=String(value).replace(/\r\n?/g,"\n"),allowed=new Set(["b","strong","span","br","p","div","i","em","u","s","strike","ol","ul","li","a","img","small","mark","font"]),voids=new Set(["br","img"]);
+ const dropped=new Set(["script","style","iframe","object","embed","svg","math","template","form","textarea","select","option","button","input","meta","link","base","video","audio","source","canvas","applet","noscript"]),voidDropped=new Set(["input","meta","link","base","source","embed"]);
+ const markers=new Set(["hyphen","arrow","check","bullet"]),fonts=new Set(["Arial, sans-serif","'Segoe UI', Roboto, sans-serif","'Courier New', monospace","Georgia, serif"]),sizes=new Set(["0.85em","1em","1.2em","1.5em"]),colors=new Set(["red","blue","green","black","white","orange","yellow","gray","grey","purple","teal","navy"]);
+ const textSafe=s=>String(s).replace(/&(?!(?:#\d+|#x[0-9a-f]+|amp|lt|gt|quot|apos);)/gi,"&amp;").replace(/</g,"&lt;").replace(/\n/g,"<br>"),attrSafe=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+ const urlSafe=(v,img)=>{const u=String(v||"").trim();if(!u||/\s|[\u0000-\u001f\u007f]/.test(u))return "";if(/^https?:\/\/[^"'<>]+$/i.test(u))return u;if(!img&&/^(?:mailto|tel):[^"'<>]+$/i.test(u))return u;return "";};
+ const styleSafe=s=>{const out=[],color=v=>/^#[0-9a-f]{3,8}$/i.test(v)||/^rgba?\([0-9.,%\s]+\)$/i.test(v)||colors.has(v.toLowerCase());String(s||"").split(";").forEach(d=>{const i=d.indexOf(":");if(i<0)return;const p=d.slice(0,i).trim().toLowerCase(),v=d.slice(i+1).trim();if(!v||/(?:url\s*\(|expression|javascript:|@import|behavior|binding)/i.test(v))return;if(p==="color"&&color(v))out.push("color:"+v);else if(p==="font-size"&&sizes.has(v))out.push("font-size:"+v);else if(p==="font-family"&&fonts.has(v))out.push("font-family:"+v);else if(p==="float"&&/^(left|right|none)$/i.test(v))out.push("float:"+v);else if(["height","width","margin-left"].includes(p)&&/^(auto|\d{1,3}px|\d{1,3}%|\d{1,2}(?:\.\d+)?em)$/i.test(v))out.push(p+":"+v);else if(p==="text-align"&&/^(left|right|center|justify)$/i.test(v))out.push("text-align:"+v);});return out.join(";");};
+ const attrs=(tag,raw)=>{const out=[],re=/([^\s=\/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>\x60]+)))?/g;let m,blank=false;while((m=re.exec(raw||""))!==null){const n=String(m[1]||"").toLowerCase(),v=m[2]!==undefined?m[2]:m[3]!==undefined?m[3]:m[4]!==undefined?m[4]:"";if(!n||n.startsWith("on")||["srcdoc","formaction","xlink:href","srcset","xmlns"].includes(n))continue;if(n==="style"){const s=styleSafe(v);if(s)out.push('style="'+attrSafe(s)+'"');continue;}if(tag==="a"&&n==="href"){const u=urlSafe(v,false);if(u)out.push('href="'+attrSafe(u)+'"');continue;}if(tag==="a"&&n==="target"&&v==="_blank"){blank=true;out.push('target="_blank"');continue;}if(tag==="a"&&n==="title"){out.push('title="'+attrSafe(v)+'"');continue;}if(tag==="img"&&n==="src"){const u=urlSafe(v,true);if(u)out.push('src="'+attrSafe(u)+'"');continue;}if(tag==="img"&&n==="alt"){out.push('alt="'+attrSafe(v)+'"');continue;}if(tag==="img"&&["width","height"].includes(n)&&/^\d{1,4}$/.test(v)){out.push(n+'="'+v+'"');continue;}if(tag==="ul"&&n==="data-gp-marker"&&markers.has(v)){out.push('data-gp-marker="'+v+'"');continue;}if(tag==="ol"&&n==="start"&&/^\d{1,4}$/.test(v)){out.push('start="'+v+'"');continue;}if(tag==="font"&&n==="color"&&(/^#[0-9a-f]{3,8}$/i.test(v)||colors.has(v.toLowerCase()))){out.push('color="'+attrSafe(v)+'"');continue;}if(tag==="font"&&n==="face"&&fonts.has(v)){out.push('face="'+attrSafe(v)+'"');continue;}if(tag==="font"&&n==="size"&&/^[1-7]$/.test(v))out.push('size="'+v+'"');}if(tag==="a"&&blank)out.push('rel="noopener noreferrer"');return out.length?" "+out.join(" "):"";};
+ let out="",cursor=0;const stack=[],suppressed=[],tokenRe=/<!--[\s\S]*?-->|<![^>]*>|<\/?[a-z][^>]*>|</gi;let m;
+ while((m=tokenRe.exec(input))!==null){if(!suppressed.length)out+=textSafe(input.slice(cursor,m.index));const token=m[0];cursor=tokenRe.lastIndex;if(token.startsWith("<!--")||/^<!/i.test(token))continue;if(token==="<"){if(!suppressed.length)out+="&lt;";continue;}const t=token.match(/^<\s*(\/?)\s*([a-z][a-z0-9-]*)\b([\s\S]*?)>$/i);if(!t){if(!suppressed.length)out+=textSafe(token);continue;}const close=t[1]==="/",tag=t[2].toLowerCase();if(suppressed.length){if(close){const i=suppressed.lastIndexOf(tag);if(i>=0)suppressed.length=i;}else if(dropped.has(tag)&&!voidDropped.has(tag))suppressed.push(tag);continue;}if(dropped.has(tag)){if(!close&&!voidDropped.has(tag))suppressed.push(tag);continue;}if(close){if(!allowed.has(tag)||voids.has(tag))continue;const i=stack.lastIndexOf(tag);if(i<0)continue;for(let j=stack.length-1;j>=i;j--)out+="</"+stack[j]+">";stack.length=i;continue;}if(!allowed.has(tag))continue;out+="<"+tag+attrs(tag,t[3])+">";if(!voids.has(tag))stack.push(tag);}
+ if(!suppressed.length)out+=textSafe(input.slice(cursor));for(let i=stack.length-1;i>=0;i--)out+="</"+stack[i]+">";return out;
+}
+
 function createSupplementaryInfoError_(code,message){const e=new Error(message);e.code=code;return e;}
 function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
 function buildSupplementaryInfoPlan_(payload,current){
- payload=payload&&typeof payload==="object"?payload:{};current=current&&typeof current==="object"?current:{};
+ payload=payload&&typeof payload==="object"?Object.assign({},payload):{};current=current&&typeof current==="object"?current:{};
  ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].forEach(k=>{const v=payload[k];if(v!==undefined&&v!==null&&typeof v!=="string")throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" debe contener texto válido.");});
+ ["apertura","cableAlimen","cableAlimen2","cableAlimen3"].forEach(k=>{if(payload[k]!==undefined&&payload[k]!==null)payload[k]=sanitizeSupplementaryRichText_(payload[k]);});
  const aperture=hasSupplementaryValue_(payload.apertura)||hasSupplementaryValue_(payload.imgApertura),note=hasSupplementaryValue_(payload.notaImportante);
  const pairs=[{text:payload.cableAlimen,image:payload.imgCableAlimen},{text:payload.cableAlimen2,image:payload.imgCableAlimen2},{text:payload.cableAlimen3,image:payload.imgCableAlimen3}].filter(x=>hasSupplementaryValue_(x.text)||hasSupplementaryValue_(x.image));
  if(!aperture&&!note&&!pairs.length)throw createSupplementaryInfoError_("SUPPLEMENTARY_EMPTY_PAYLOAD","No se recibió información suplementaria válida para guardar.");

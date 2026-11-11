@@ -1745,3 +1745,13 @@ CAMBIOS — AUG-063 — 2026-11-11
 - ui.js: No recomendado solo se acepta si aparece en la lista oficial y no exige relay; operaciones pendientes conservan su payload original sin reintroducir opciones retiradas.
 - Services/Test/CutDropdownAuthority.js y Services/Test/README.md: pruebas de slots 1/2/3, listas oficiales, valores inválidos/vacíos y regresiones del modal.
 ================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-064 — 2026-11-11
+- Services/write.js y Services/admin.js: sanitizador de servidor con allow-list de etiquetas, atributos, estilos y esquemas URL; elimina scripts/elementos activos, atributos on*, srcdoc, javascript:, data: no autorizadas y CSS peligroso. Se aplica antes de persistir apertura y los tres campos cableAlimen.
+- Services/admin.js: updateVehicleField valida tipo textual y sanitiza esos cuatro campos antes de escribir.
+- rich-text.js: el sanitizador de interfaz elimina elementos activos y desenvuelve etiquetas no permitidas sin interpretar su marcado.
+- ui.js: el carrusel multi-cable y la presentación individual sanitizan antes de asignar a innerHTML. Impresión/exportación conservan sanitización de apertura y los tres cables.
+- Services/Test/RichTextContentSecurity.js: 39/39 PASS; AddSupplementaryInfoIntegrity: 34/34 PASS.
+================================================================================

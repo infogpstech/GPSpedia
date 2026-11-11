@@ -393,3 +393,17 @@ Validación local: CutDropdownAuthority 30/30 PASS; parsing V8 de helpers, modal
 Beta pendiente: navegador real, hoja Google Sheets real, Apps Script desplegado y cambios concurrentes de listas. No se modificaron datos productivos.
 Siguiente tarea: AUG-064. No se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-064 — CIERRE — 2026-11-11 — SANITIZACIÓN DE APERTURA Y ALIMENTACIÓN
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 78eb4dd6c665041cfef38f3c01ac3a3a93125c14. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- WRITE y ADMIN comparten sanitizador de servidor con allow-list de etiquetas, atributos, estilos y esquemas URL; se aplica al plan de addSupplementaryInfo para apertura y los tres campos cableAlimen.
+- ADMIN updateVehicleField sanitiza esos mismos campos antes de setValue y rechaza valores no textuales.
+- rich-text.js elimina elementos activos y desenvuelve etiquetas no permitidas. ui.js sanitiza cada diapositiva del carrusel y la presentación individual de Apertura/alimentación. Impresión/exportación sanitizan apertura y los tres cables.
+- Los datos históricos/importados quedan protegidos al renderizar; no se realizó migración masiva.
+Validación local: RichTextContentSecurity 39/39 PASS; AddSupplementaryInfoIntegrity 34/34 PASS; parsing V8 de WRITE, ADMIN, rich-text.js y bloque createAccordionSection PASS.
+Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados, datos históricos reales y revisión visual del formato. No se modificaron deployments ni datos productivos.
+Siguiente tarea: AUG-065. No se inicia en esta iteración.
+================================================================================
