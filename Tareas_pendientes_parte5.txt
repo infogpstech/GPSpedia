@@ -130,7 +130,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   4. Mantener proporción, limitar dimensiones sin ampliar artificialmente imágenes pequeñas y tratar errores de CDN/cache sin bloquear el detalle.
   5. Probar el mismo archivo solicitado en tres tamaños, orden de carga inverso, caché fría/caliente, online/offline, PNG transparente y JPEG; verificar dimensiones, bytes y calidad.
 - **Relación:** AUD-T-006; AUD-T-009/AUG-051 para ciclo general de caché, sin duplicarlo.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Implementación y suites locales aprobadas; IndexedDB/Canvas/navegador reales y comprobación visual de transparencia/calidad quedan para Beta.
 
 ### AUG-066 — Restringir el modo de fusión a imágenes que requieren corrección de transparencia
 - **Origen:** H-AUD-006-002. **Prioridad:** Media.
