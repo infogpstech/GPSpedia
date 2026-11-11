@@ -486,6 +486,16 @@ function computeCutOperationFingerprint_(payload) {
     return digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 
+function findNextAvailableCutSlot_(rowValues) {
+    if (!Array.isArray(rowValues)) throw new Error("No se pudo verificar la disponibilidad de los espacios de corte.");
+    for (let slot = 1; slot <= 3; slot++) {
+        const column = COLS_CORTES['tipoCorte' + slot];
+        if (!column) throw new Error("La estructura de columnas de cortes no es válida.");
+        const value = rowValues[column - 1];
+        if (value === null || value === undefined || String(value).trim() === "") return slot;
+    }
+    return null;
+}
 function handleAddOrUpdateCutLocked(payload) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
@@ -637,9 +647,8 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
             return {
                 status: 'success',
                 message: 'La operación ya fue completada (recuperada, reparada y completada).',
-                vehicleId: rowObj.id,
-                timestamp: match.timestamp || rowObj.timestamp,
-                operationHash: operationHash
+                vehicleId: rowObj.id, timestamp: match.timestamp || rowObj.timestamp,
+                slotIndex: slotIndex, operationHash: operationHash
             };
         }
     }
@@ -651,6 +660,7 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
     const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
     let rowIndex;
     let newId;
+    let savedSlotIndex = 1;
 
     if (vinPrefix && !vehicleId) {
         const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, null);
@@ -676,14 +686,9 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
             }
         }
 
-        let cutSlotIndex = -1;
-        for (let i = 1; i <= 3; i++) {
-            if (!rowValues[COLS_CORTES[`tipoCorte${i}`] - 1]) {
-                cutSlotIndex = i;
-                break;
-            }
-        }
-        if (cutSlotIndex === -1) throw new Error("No hay espacios disponibles para más cortes.");
+        const cutSlotIndex = findNextAvailableCutSlot_(rowValues);
+        if (cutSlotIndex === null) throw new Error("No hay espacios disponibles para más cortes.");
+        savedSlotIndex = cutSlotIndex;
 
         if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash);
 
@@ -813,7 +818,7 @@ const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { an
         if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash);
     }
 
-    return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate, operationHash: operationHash };
+    return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate, slotIndex: savedSlotIndex, operationHash: operationHash };
 }
 
 
