@@ -333,7 +333,7 @@
     <script type="module">
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from './api-config.js';
-        import { createPendingOperationStore } from './pendingOperationStore.js';
+        import { getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation } from './offline.js';
         import './lightbox.js';
         import { openYouTubeUploadModal } from './youtubeUpload.js';
         import { createRichTextToolbar, applyRichTextFormat, applyRichTextColor } from './rich-text.js';
@@ -357,7 +357,6 @@
             isNewVehicleFlow: false
         };
 
-        function getPendingOperationStore() { return createPendingOperationStore(localStorage, state.userId); }
         function getCurrentSessionForOwner(expectedOwnerId) {
             let session;
             try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
@@ -368,19 +367,52 @@
             state.userId = userId; state.sessionToken = sessionToken;
             return { userId, sessionToken };
         }
-        function getOrGenerateOpId() {
+        async function getOrGenerateOpId() {
             if (state.opId) return state.opId;
-            const pending = getPendingOperationStore().read().operation;
-            if (pending && pending.id) { state.opId = pending.id; return state.opId; }
+            const pendingResult = await getAddCutOperationPendingOperation(state.userId);
+            if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
+            if (pendingResult.operation) { state.opId = pendingResult.operation.id; return state.opId; }
             const secureCrypto = globalThis.crypto;
-            if (!secureCrypto || typeof secureCrypto.getRandomValues !== 'function') {
-                throw new Error('SECURE_RANDOM_UNAVAILABLE');
-            }
+            if (!secureCrypto || typeof secureCrypto.getRandomValues !== 'function') throw new Error('SECURE_RANDOM_UNAVAILABLE');
             const randomBytes = new Uint8Array(16);
             secureCrypto.getRandomValues(randomBytes);
             const randomPart = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
             state.opId = 'OP-' + Date.now() + '-' + randomPart;
             return state.opId;
+        }
+        function clientFingerprintValue(value) { return value === null || value === undefined ? '' : String(value); }
+        function buildClientCutOperationFingerprintPayload(payload) {
+            const data = payload && typeof payload === 'object' ? payload : {};
+            const vehicle = data.vehicleData && typeof data.vehicleData === 'object' ? data.vehicleData : null;
+            const cut = data.cutData && typeof data.cutData === 'object' ? data.cutData : {};
+            const vehicleId = data.vehicleId === null || data.vehicleId === undefined || data.vehicleId === '' ? null : String(data.vehicleId).trim();
+            return JSON.stringify([
+                'addOrUpdateCut:v1', vehicleId,
+                vehicle ? [
+                    clientFingerprintValue(vehicle.categoria), clientFingerprintValue(vehicle.marca),
+                    clientFingerprintValue(vehicle.modelo), clientFingerprintValue(vehicle.versionesAplicables),
+                    clientFingerprintValue(vehicle.anoDesde), clientFingerprintValue(vehicle.anoHasta),
+                    clientFingerprintValue(vehicle.tipoEncendido), clientFingerprintValue(vehicle.imagenVehiculo)
+                ] : null,
+                [
+                    clientFingerprintValue(cut.tipoCorte1), clientFingerprintValue(cut.configRelay1),
+                    clientFingerprintValue(cut.ubicacionCorte1), clientFingerprintValue(cut.colorCableCorte1),
+                    cut.activaTestigo1 === true, clientFingerprintValue(cut.imgCorte1), clientFingerprintValue(cut.vin)
+                ],
+                data.silent === true
+            ]);
+        }
+        async function computeClientCutOperationFingerprint(payload) {
+            const secureCrypto = globalThis.crypto;
+            if (!secureCrypto || !secureCrypto.subtle || typeof secureCrypto.subtle.digest !== 'function' || typeof TextEncoder !== 'function') throw new Error('SECURE_FINGERPRINT_UNAVAILABLE');
+            const bytes = new TextEncoder().encode(buildClientCutOperationFingerprintPayload(payload));
+            const digest = await secureCrypto.subtle.digest('SHA-256', bytes);
+            return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+        function isValidCutVehicleId(value) {
+            if (value === null || value === undefined || String(value).trim() === '') return false;
+            const normalized = String(value).trim();
+            return normalized.length <= 80 && !/[\u0000-\u001f\u007f]/.test(normalized);
         }
 
         const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
@@ -389,24 +421,37 @@
         async function checkAndRecoverPendingOperation() {
             if (!state.userId || !state.sessionToken) return;
             let pendingOp;
-            try { getCurrentSessionForOwner(state.userId); pendingOp = getPendingOperationStore().read().operation; }
-            catch (error) { console.warn("No se pudo leer el snapshot pendiente; recuperación omitida.", error && error.name || 'StorageError'); return; }
-            if (!pendingOp || pendingOp.ownerId !== state.userId || !['processing','failed'].includes(pendingOp.status)) return;
+            try {
+                getCurrentSessionForOwner(state.userId);
+                const pendingResult = await getAddCutOperationPendingOperation(state.userId);
+                if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
+                pendingOp = pendingResult.operation;
+            } catch (error) {
+                console.warn("No se pudo leer la operación durable pendiente; recuperación omitida.", error && error.name || 'StorageError');
+                return;
+            }
+            if (!pendingOp || pendingOp.ownerId !== state.userId || !['processing', 'failed', 'completed'].includes(pendingOp.status)) return;
             if (!navigator.onLine) { console.log("Dispositivo sin conexión; recuperación pendiente."); return; }
             toggleLoading(true);
-            const silentVal = !!(pendingOp.formData && pendingOp.formData.silentRegister);
             try {
                 const session = getCurrentSessionForOwner(pendingOp.ownerId);
-                const checkRes = await routeAction('checkOperation', { opId:pendingOp.id, userId:session.userId, sessionToken:session.sessionToken }, silentVal ? 'ADMIN' : null);
+                const checkRes = await routeAction('checkOperation', {
+                    opId: pendingOp.id, operationHash: pendingOp.operationHash,
+                    userId: session.userId, sessionToken: session.sessionToken
+                }, pendingOp.requestData.silent === true ? 'ADMIN' : null);
                 getCurrentSessionForOwner(pendingOp.ownerId);
-                if (checkRes && checkRes.exists) {
-                    console.log("Operación pendiente confirmada en el servidor.");
-                    try { getPendingOperationStore().remove(pendingOp.id); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }
+                if (!checkRes || checkRes.status !== 'success') throw new Error('INVALID_CHECK_OPERATION_RESPONSE');
+                if (checkRes.exists === true) {
+                    if (checkRes.operationHash !== pendingOp.operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
+                    if (pendingOp.vehicleId !== null && String(pendingOp.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
+                    const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, pendingOp.id, pendingOp.operationHash);
+                    if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
                     state.opId = null; state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
+                    state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                     alert("Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
                     proceedToStage3(checkRes.vehicleId);
                 } else {
-                    console.log("Operación no confirmada; se restaurarán los datos de la cuenta propietaria.");
+                    if (checkRes.pending === true && checkRes.operationHash !== pendingOp.operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
                     state.opId = pendingOp.id; state.selectedVehicleId = pendingOp.vehicleId; state.vehicleInfo = pendingOp.vehicleInfo || {};
                     const form2 = document.getElementById('form-stage-2');
                     if (form2) {
@@ -418,16 +463,16 @@
                         if (document.getElementById('silentRegister')) document.getElementById('silentRegister').checked = !!data.silentRegister;
                         if (document.getElementById('testigoMotor')) document.getElementById('testigoMotor').checked = !!data.testigoMotor;
                         if (pendingOp.files) {
-                            if (pendingOp.files.imagenVehiculo) { state.restoredFiles.imagenVehiculo=pendingOp.files.imagenVehiculo; const p=document.getElementById('imagenVehiculo_preview'); if(p)p.src=pendingOp.files.imagenVehiculo; }
-                            if (pendingOp.files.imgCorte1) { state.restoredFiles.imgCorte1=pendingOp.files.imgCorte1; const p=document.getElementById('imgCorte1_preview'); if(p)p.src=pendingOp.files.imgCorte1; }
+                            if (pendingOp.files.imagenVehiculo) { state.restoredFiles.imagenVehiculo = pendingOp.files.imagenVehiculo; const p = document.getElementById('imagenVehiculo_preview'); if (p) p.src = pendingOp.files.imagenVehiculo; }
+                            if (pendingOp.files.imgCorte1) { state.restoredFiles.imgCorte1 = pendingOp.files.imgCorte1; const p = document.getElementById('imgCorte1_preview'); if (p) p.src = pendingOp.files.imgCorte1; }
                         }
                         toggleNoRecomendado(); showPhase(2);
                     }
                 }
-            } catch (error) { console.warn("Falló la comprobación de recuperación pendiente.", error && error.name || 'RecoveryError'); }
-            finally { toggleLoading(false); }
+            } catch (error) {
+                console.warn("Falló la comprobación de recuperación pendiente.", error && error.name || 'RecoveryError');
+            } finally { toggleLoading(false); }
         }
-
         window.addEventListener('online', checkAndRecoverPendingOperation);
 
         document.addEventListener('visibilitychange', () => {
@@ -895,232 +940,115 @@
             try { getCurrentSessionForOwner(state.userId); }
             catch (_) { alert("Tu sesión cambió o expiró. Inicia sesión nuevamente antes de guardar."); window.location.replace('index.html'); return; }
             isSubmittingStage2 = true;
-
-            console.log("[PING-PONG][1] Inicio de handleStage2Submit: Formulario enviado.");
-
             const btn = e.target.querySelector('button[type="submit"]');
-            toggleLoading(true);
-            btn.classList.add('btn-loading');
-
-            const vinInput = document.getElementById('vinInput');
-            if (vinInput && vinInput.value.trim()) {
-                const vinVal = vinInput.value.trim();
-                try {
-                    const checkVin = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: state.selectedVehicleId });
-                    if (checkVin.duplicate) {
-                        toggleLoading(false);
-                        btn.classList.remove('btn-loading');
-                        isSubmittingStage2 = false;
-                        const warningEl = document.getElementById('vinDuplicateWarning');
-                        if (warningEl) {
-                            warningEl.style.display = 'block';
-                            warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="window.location.href='index.html#search=${encodeURIComponent(checkVin.modelName)}'"><strong>${checkVin.modelName}</strong></button>`;
+            toggleLoading(true); btn.classList.add('btn-loading');
+            let pendingOp = null, snapshotSaved = false;
+            try {
+                const vinInput = document.getElementById('vinInput');
+                if (vinInput && vinInput.value.trim()) {
+                    try {
+                        const checkVin = await routeAction('checkVinDuplicate', { vin: vinInput.value.trim(), currentVehicleId: state.selectedVehicleId });
+                        if (checkVin.duplicate) {
+                            const warningEl = document.getElementById('vinDuplicateWarning');
+                            if (warningEl) { warningEl.style.display = 'block'; warningEl.textContent = 'VIN ya está registrado para: ' + checkVin.modelName; }
+                            return;
                         }
-                        return;
-                    }
-                } catch (err) {
-                    console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError');
+                    } catch (err) { console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError'); }
                 }
-            }
-
-            try { getCurrentSessionForOwner(state.userId); }
-            catch (_) {
-                alert("Tu sesión cambió o expiró. Inicia sesión nuevamente antes de guardar.");
-                toggleLoading(false);
-                btn.classList.remove('btn-loading');
-                isSubmittingStage2 = false;
-                return;
-            }
-
-            let opId;
-            try {
-                opId = getOrGenerateOpId();
-            } catch (storageError) {
-                console.warn("No se pudo leer el snapshot local pendiente.", storageError && storageError.name || 'StorageError');
-                alert("No se pudo verificar la operación guardada localmente. No se enviará el formulario para evitar duplicados.");
-                toggleLoading(false);
-                btn.classList.remove('btn-loading');
-                isSubmittingStage2 = false;
-                return;
-            }
-            console.log(`[PING-PONG][2] opId obtenido o generado: ${opId}`);
-
-            const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
-            const serviceOverride = silentVal ? 'ADMIN' : null;
-
-            // Apply checkEngine motor warning HTML code insertion right before submitting to prevent editing/accidental deletion
-            const checkbox = document.getElementById('testigoMotor');
-            const testigoHTML = `<br><img src="https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50" style="height:50px; width:auto; float:right; margin-left:10px;"><br><b style="color: red;">NOTA:</b>Este corte activa el testigo del motor <br>`;
-            const textareas = [
-                document.getElementById('ubicacionCorte1'),
-                document.getElementById('ubicacionCorte2'),
-                document.getElementById('ubicacionCorte3')
-            ].filter(Boolean);
-
-            textareas.forEach(textarea => {
-                if (checkbox && checkbox.checked) {
-                    if (!textarea.value.includes(testigoHTML)) {
-                        textarea.value = textarea.value + testigoHTML;
-                    }
-                } else {
-                    if (textarea.value.includes(testigoHTML)) {
-                        textarea.value = textarea.value.replace(testigoHTML, '');
-                    }
+                getCurrentSessionForOwner(state.userId);
+                const opId = await getOrGenerateOpId();
+                const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
+                const serviceOverride = silentVal ? 'ADMIN' : null;
+                const checkbox = document.getElementById('testigoMotor');
+                const testigoHTML = '<br><img src="https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50" style="height:50px; width:auto; float:right; margin-left:10px;"><br><b style="color: red;">NOTA:</b>Este corte activa el testigo del motor <br>';
+                [document.getElementById('ubicacionCorte1'), document.getElementById('ubicacionCorte2'), document.getElementById('ubicacionCorte3')].filter(Boolean).forEach(textarea => {
+                    if (checkbox && checkbox.checked) { if (!textarea.value.includes(testigoHTML)) textarea.value += testigoHTML; }
+                    else if (textarea.value.includes(testigoHTML)) textarea.value = textarea.value.replace(testigoHTML, '');
+                });
+                let base64Veh = null;
+                const vehFileInput = document.getElementById('imagenVehiculo');
+                if (vehFileInput && vehFileInput.files[0]) { base64Veh = await fileToBase64(vehFileInput.files[0]); state.savedFiles.imagenVehiculo = base64Veh; }
+                else if (state.savedFiles.imagenVehiculo) base64Veh = state.savedFiles.imagenVehiculo;
+                else if (state.restoredFiles.imagenVehiculo) { base64Veh = state.restoredFiles.imagenVehiculo; state.savedFiles.imagenVehiculo = base64Veh; }
+                let base64Corte = null;
+                if (!isNoRecomendadoValue(document.getElementById('tipoCorte1').value)) {
+                    const corteFileInput = document.getElementById('imgCorte1');
+                    if (corteFileInput && corteFileInput.files[0]) { base64Corte = await fileToBase64(corteFileInput.files[0]); state.savedFiles.imgCorte1 = base64Corte; }
+                    else if (state.savedFiles.imgCorte1) base64Corte = state.savedFiles.imgCorte1;
+                    else if (state.restoredFiles.imgCorte1) { base64Corte = state.restoredFiles.imgCorte1; state.savedFiles.imgCorte1 = base64Corte; }
                 }
-            });
-
-            console.log("[PING-PONG][3] Procesando imágenes a Base64...");
-            let base64Veh = null;
-            const vehFileInput = document.getElementById('imagenVehiculo');
-            if (vehFileInput && vehFileInput.files[0]) {
-                base64Veh = await fileToBase64(vehFileInput.files[0]);
-                state.savedFiles.imagenVehiculo = base64Veh;
-                console.log(`[PING-PONG][3a] Imagen del vehículo procesada. Longitud: ${base64Veh.length}`);
-            } else if (state.savedFiles.imagenVehiculo) {
-                base64Veh = state.savedFiles.imagenVehiculo;
-                console.log("[PING-PONG][3a] Usando imagen de vehículo previamente guardada.");
-            } else if (state.restoredFiles.imagenVehiculo) {
-                base64Veh = state.restoredFiles.imagenVehiculo;
-                state.savedFiles.imagenVehiculo = base64Veh;
-                console.log("[PING-PONG][3a] Usando imagen de vehículo restaurada.");
-            }
-
-            let base64Corte = null;
-            const isNoRecomendadoType = isNoRecomendadoValue(document.getElementById('tipoCorte1').value);
-            if (!isNoRecomendadoType) {
-                const corteFileInput = document.getElementById('imgCorte1');
-                if (corteFileInput && corteFileInput.files[0]) {
-                    base64Corte = await fileToBase64(corteFileInput.files[0]);
-                    state.savedFiles.imgCorte1 = base64Corte;
-                    console.log(`[PING-PONG][3b] Imagen de corte procesada. Longitud: ${base64Corte.length}`);
-                } else if (state.savedFiles.imgCorte1) {
-                    base64Corte = state.savedFiles.imgCorte1;
-                    console.log("[PING-PONG][3b] Usando imagen de corte previamente guardada.");
-                } else if (state.restoredFiles.imgCorte1) {
-                    base64Corte = state.restoredFiles.imgCorte1;
-                    state.savedFiles.imgCorte1 = base64Corte;
-                    console.log("[PING-PONG][3b] Usando imagen de corte restaurada.");
-                }
-            }
-
-            const pendingOp = {
-                id: opId,
-                ownerId: state.userId,
-                stage: 2,
-                vehicleId: state.selectedVehicleId,
-                vehicleInfo: { ...state.vehicleInfo },
-                formData: {
-                    tipoCorte1: document.getElementById('tipoCorte1').value,
-                    configRelay1: document.getElementById('configRelay1').value,
-                    ubicacionCorte1: document.getElementById('ubicacionCorte1').value,
-                    colorCableCorte1: document.getElementById('colorCableCorte1').value,
-                    silentRegister: silentVal,
-                    testigoMotor: checkbox ? checkbox.checked : false,
-                    vin: document.getElementById('vinInput') ? document.getElementById('vinInput').value.trim() : ''
-                },
-                files: {
-                    imagenVehiculo: base64Veh,
-                    imgCorte1: base64Corte,
-                },
-                status: 'processing'
-            };
-
-            // Save to localStorage before calling API (safe against QuotaExceededError)
-            console.log("[PING-PONG][4] Intentando persistir operación pendiente en localStorage...");
-            try {
-                const saved = getPendingOperationStore().write(pendingOp);
-                if (!saved.saved) console.warn("No se pudo verificar el snapshot pendiente:", saved.reason);
-                else console.log("[PING-PONG][4a] Snapshot guardado para su propietario.");
-            } catch (storageError) { console.warn("[PING-PONG][4b] No se pudo guardar el snapshot pendiente:", storageError && storageError.name || 'StorageError'); }
-
-            try {
-                // First, check if operation already exists on the server to prevent duplicates!
-                console.log("[PING-PONG][5] Comprobando duplicados en el servidor con checkOperation...");
-                const activeSession = getCurrentSessionForOwner(pendingOp.ownerId);
-                const checkRes = await routeAction('checkOperation', { opId, userId:activeSession.userId, sessionToken:activeSession.sessionToken }, serviceOverride);
-                getCurrentSessionForOwner(pendingOp.ownerId);
-                console.log(`[PING-PONG][5a] Respuesta de checkOperation recibida. Existe en el servidor: ${checkRes.exists}`);
-
-                let result;
-                if (checkRes.exists) {
-                    console.log("[PING-PONG][5b] Operación ya detectada en el servidor como completada. Recuperando silenciosamente...");
-
-                    try { getPendingOperationStore().remove(opId); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }
-                    state.opId = null;
-                    state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
-                    state.selectedVehicleId = checkRes.vehicleId;
-                    if (checkRes.timestamp) {
-                        state.timestamp = checkRes.timestamp;
-                    }
-
-                    console.log(`[PING-PONG][8] Operación recuperada con éxito. ID Vehículo: ${checkRes.vehicleId}. Redirigiendo directamente a Etapa 3.`);
-                    alert("Corte recuperado exitosamente.");
-                    proceedToStage3(checkRes.vehicleId);
-                    return;
-                }
-
-                console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
-                const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
-                result = await routeAction('addOrUpdateCut', {
-                    userId: submitSession.userId,
-                    sessionToken: submitSession.sessionToken,
-                    vehicleId: state.selectedVehicleId,
-                    vehicleData: state.selectedVehicleId ? null : { ...state.vehicleInfo, imagenVehiculo: base64Veh },
+                const requestData = {
+                    vehicleId: state.selectedVehicleId == null ? null : state.selectedVehicleId,
+                    vehicleData: state.selectedVehicleId == null ? { ...state.vehicleInfo, imagenVehiculo: base64Veh } : null,
                     cutData: {
-                        tipoCorte1: pendingOp.formData.tipoCorte1,
-                        configRelay1: pendingOp.formData.configRelay1,
-                        ubicacionCorte1: pendingOp.formData.ubicacionCorte1,
-                        colorCableCorte1: pendingOp.formData.colorCableCorte1,
-                        activaTestigo1: pendingOp.formData.testigoMotor === true,
-                        imgCorte1: base64Corte,
-                        vin: pendingOp.formData.vin || ''
+                        tipoCorte1: document.getElementById('tipoCorte1').value,
+                        configRelay1: document.getElementById('configRelay1').value,
+                        ubicacionCorte1: document.getElementById('ubicacionCorte1').value,
+                        colorCableCorte1: document.getElementById('colorCableCorte1').value,
+                        activaTestigo1: checkbox ? checkbox.checked === true : false,
+                        imgCorte1: base64Corte, vin: vinInput ? vinInput.value.trim() : ''
                     },
-                    opId: opId,
                     silent: silentVal
+                };
+                const operationHash = await computeClientCutOperationFingerprint(requestData);
+                pendingOp = {
+                    id: opId, ownerId: state.userId, operationType: 'addOrUpdateCut',
+                    operationHash, stage: 2, vehicleId: requestData.vehicleId,
+                    vehicleInfo: { ...state.vehicleInfo },
+                    formData: {
+                        tipoCorte1: requestData.cutData.tipoCorte1, configRelay1: requestData.cutData.configRelay1,
+                        ubicacionCorte1: requestData.cutData.ubicacionCorte1, colorCableCorte1: requestData.cutData.colorCableCorte1,
+                        silentRegister: silentVal, testigoMotor: requestData.cutData.activaTestigo1, vin: requestData.cutData.vin
+                    },
+                    files: { imagenVehiculo: base64Veh, imgCorte1: base64Corte }, requestData, status: 'processing'
+                };
+                const saved = await saveAddCutOperationPendingOperation(pendingOp);
+                if (!saved || saved.saved !== true) throw new Error('PENDING_SNAPSHOT_NOT_VERIFIED');
+                snapshotSaved = true;
+                const activeSession = getCurrentSessionForOwner(pendingOp.ownerId);
+                const checkRes = await routeAction('checkOperation', {
+                    opId, operationHash, userId: activeSession.userId, sessionToken: activeSession.sessionToken
                 }, serviceOverride);
                 getCurrentSessionForOwner(pendingOp.ownerId);
-
-                console.log("[PING-PONG][7] Respuesta de guardado recibida.", result && result.vehicleId || "sin vehicleId");
-
-                // Clean up operation upon success
-                try { getPendingOperationStore().remove(opId); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }
-                state.opId = null; // Clear so next registration gets a new ID
-                state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
-
-                state.selectedVehicleId = result.vehicleId;
-                if (result.timestamp) {
-                    state.timestamp = result.timestamp;
+                if (!checkRes || checkRes.status !== 'success') throw new Error('INVALID_CHECK_OPERATION_RESPONSE');
+                if (checkRes.exists === true) {
+                    if (checkRes.operationHash !== operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
+                    if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
+                    const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
+                    if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
+                    snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                    state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
+                    alert("Corte recuperado exitosamente."); proceedToStage3(checkRes.vehicleId); return;
                 }
-                console.log(`[PING-PONG][8] Guardado finalizado correctamente. ID Vehículo: ${result.vehicleId}. Redirigiendo a Etapa 3.`);
-                alert("Corte guardado exitosamente.");
-                proceedToStage3(result.vehicleId);
-            } catch(error) {
+                if (checkRes.pending === true && checkRes.operationHash !== operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
+                const submitSession = getCurrentSessionForOwner(pendingOp.ownerId);
+                const result = await routeAction('addOrUpdateCut', {
+                    ...requestData, userId: submitSession.userId, sessionToken: submitSession.sessionToken, opId, operationHash
+                }, serviceOverride);
+                getCurrentSessionForOwner(pendingOp.ownerId);
+                if (!result || result.status !== 'success' || result.operationHash !== operationHash || !isValidCutVehicleId(result.vehicleId)) {
+                    throw new Error('INCOMPLETE_OR_UNVERIFIABLE_SAVE_RESPONSE');
+                }
+                if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(result.vehicleId)) throw new Error('SAVED_VEHICLE_MISMATCH');
+                const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
+                if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
+                snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                state.selectedVehicleId = result.vehicleId; state.timestamp = result.timestamp || null;
+                alert("Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
+            } catch (error) {
                 console.error("[PING-PONG][ERROR] Falló el guardado de la operación.", error && error.name || 'OperationError');
-                pendingOp.status = 'failed';
-                pendingOp.error = 'No se pudo confirmar el guardado.';
-                try { getPendingOperationStore().write(pendingOp); } catch (_) { console.warn("No se pudo actualizar el snapshot pendiente."); }
-
-                const isNetworkError = !navigator.onLine ||
-                                       (error.message && (
-                                           error.message.toLowerCase().includes("fetch") ||
-                                           error.message.toLowerCase().includes("network") ||
-                                           error.message.toLowerCase().includes("failed to fetch") ||
-                                           error.message.toLowerCase().includes("timeout")
-                                       ));
-
-                if (isNetworkError) {
-                    alert("Se ha detectado una interrupción en la conexión de red o un error de comunicación ('Fail to fetch'). Tu progreso y archivos se han guardado localmente de forma segura en tu dispositivo. El sistema intentará completar y reanudar la operación automáticamente cuando se restablezca la conexión, o bien puedes pulsar 'Continuar' nuevamente para reintentarlo.");
-                } else {
-                    alert("No se pudo completar el guardado. Revisa tu conexión e inténtalo nuevamente.");
+                if (pendingOp && snapshotSaved) {
+                    pendingOp.status = 'failed';
+                    const retained = await saveAddCutOperationPendingOperation(pendingOp);
+                    if (!retained || retained.saved !== true) console.warn("No se pudo actualizar el estado del snapshot; se conserva el registro durable previo.");
                 }
+                const networkError = !navigator.onLine || (error && error.message && /fetch|network|timeout/i.test(error.message));
+                if (networkError) alert("Se interrumpió la comunicación. La operación y sus archivos permanecen guardados de forma durable para reintentar la misma solicitud sin duplicarla.");
+                else alert("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
             } finally {
-                console.log("[PING-PONG][9] Finalización de handleStage2Submit: Limpiando cargadores.");
-                toggleLoading(false);
-                btn.classList.remove('btn-loading');
-                isSubmittingStage2 = false;
+                toggleLoading(false); btn.classList.remove('btn-loading'); isSubmittingStage2 = false;
             }
         }
-
         // --- STAGE 3: SUPPLEMENTARY INFO ---
         /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */
         function proceedToStage3(vehicleId) {
