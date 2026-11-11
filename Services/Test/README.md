@@ -445,3 +445,10 @@ node --experimental-default-type=module Services/Test/AdminImageUploadIsolation.
 ```
 
 La suite comprueba claves por propietario/vehículo/campo, rechazo de identidades incompletas, separación de claves legadas, cuarentena sin adjudicación de propietario, whitelist del snapshot sin credenciales y rechazo de recuperación/eliminación cruzada. Los registros legados sin owner se ponen en cuarentena al consultar el estado; no se purgan automáticamente para preservar operaciones de resultado remoto incierto.
+
+
+## Autorización y contrato de edición in-modal ADMIN (AUG-053)
+
+Cargar `Services/admin.js` y `Services/Test/AdminModalEditSecurity.js` en un runtime V8 de pruebas y ejecutar `runAdminModalEditSecurityTests()`. La suite comprueba que Desarrollador y Gefe comparten el permiso únicamente para las tres acciones del modal, que jefe y otros roles siguen excluidos, que se conservan las validaciones de sesión/revocación y que la whitelist cubre campos editables sin exponer columnas ajenas. También valida la consulta del ledger de reemplazos y la asociación vehículo/campo. No invoca Apps Script, Spreadsheet ni Drive reales.
+
+La acción `getAdminImageUploadStatus` se enruta a ADMIN y devuelve solo estado, URL actual/nueva y resultado de integridad; exige sesión válida y asociación exacta entre opId, vehículo y campo de imagen. La integridad del archivo Drive se verifica contra MIME, SHA-256 y metadatos de operación.
