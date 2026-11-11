@@ -1708,6 +1708,9 @@ function getIdempotenciaHeaderState(sheet) {
     if (!sheet) return { compatible: false, missingIndexes: [], reason: "missing_sheet" };
     const maxColumns = Math.max(0, Number(sheet.getMaxColumns()) || 0);
     const lastRow = sheet.getLastRow();
+    if (maxColumns < IDEMPOTENCIA_HEADERS.length - 1 && lastRow > 1) {
+        return { compatible: false, missingIndexes: [], reason: "insufficient_columns_with_data" };
+    }
     const availableColumns = Math.min(maxColumns, IDEMPOTENCIA_HEADERS.length);
     const headers = availableColumns
         ? sheet.getRange(1, 1, 1, availableColumns).getValues()[0]
