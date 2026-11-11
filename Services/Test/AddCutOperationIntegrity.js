@@ -204,6 +204,26 @@ function runAddCutOperationIntegrityTests(sources) {
         const valid = extract_(offline, 'isValidAddCutOperationSnapshot_');
         for (const pattern of [/ownerId/, /operationType !== 'addOrUpdateCut'/, /stage !== 2/, /processing.*failed.*completed/, /OP-\[A-Za-z0-9_-\]/, /\[a-f0-9\]\{64\}/, /requestData\.vehicleId/, /requestData\.cutData/]) assert_(pattern.test(valid), 'Falta validación: ' + pattern);
     });
+    run_('snapshot obsoleto o con owner, etapa, tipo, vehículo o huella incorrectos se rechaza', () => {
+        const validator = new Function(
+            extract_(offline, 'getAddCutOperationKey_') + ';' +
+            extract_(offline, 'sanitizeAddCutOperation_') + ';' +
+            extract_(offline, 'isValidAddCutOperationSnapshot_') +
+            ';return isValidAddCutOperationSnapshot_;'
+        )();
+        const valid = {
+            id: 'OP-100', ownerId: 'OWNER-1', operationType: 'addOrUpdateCut', operationHash: 'a'.repeat(64),
+            stage: 2, status: 'failed', vehicleId: null,
+            requestData: { vehicleId: null, vehicleData: { marca: 'Toyota' }, cutData: {} }
+        };
+        assert_(validator(valid, 'OWNER-1'));
+        assert_(!validator({ ...valid, operationHash: '' }, 'OWNER-1'));
+        assert_(!validator({ ...valid, ownerId: 'OWNER-2' }, 'OWNER-1'));
+        assert_(!validator({ ...valid, operationType: 'other' }, 'OWNER-1'));
+        assert_(!validator({ ...valid, stage: 3 }, 'OWNER-1'));
+        assert_(!validator({ ...valid, vehicleId: '7' }, 'OWNER-1'));
+        assert_(!validator({ ...valid, requestData: { ...valid.requestData, vehicleData: null } }, 'OWNER-1'));
+    });
     run_('IndexedDB guarda, verifica, aísla por owner y no sobrescribe otro opId/huella', () => {
         assert_(/ADD_CUT_OPERATION_KEY_PREFIX = 'addCutOperation:'/.test(offline));
         assert_(/JSON\.stringify\(saved\) === JSON\.stringify\(snapshot\)/.test(offline));
