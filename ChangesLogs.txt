@@ -996,3 +996,13 @@ ADENDA AUG-046 — CONTRASTE TÉCNICO DE FLUJOS Y DATOS — 2026-11-11
 - No se modificaron el acuerdo de uso, el aviso, index.html, código, endpoints, deployments ni datos productivos.
 - No se ejecutaron pruebas de integración ni se verificó la paridad entre el código versionado y los proyectos Apps Script publicados.
 ================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — CONSISTENCIA ENTRE SUPERFICIES INFORMATIVAS — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: se añadió la sección 9 comparando Aviso Importante, acuerdo de uso, «Sobre Nosotros» y FAQ. Se documentaron diferencias de alcance sobre contenido técnico de terceros frente a material interno/organización propia, identidad Motorlink S.A./GPSpedia/TRACKLINK y propósito laboral frente a descripción general de la plataforma.
+- Tareas_pendientes_parte1.txt: se incorporó el nuevo avance documental en AUG-046.
+- checkpoint.md: se registró el resultado, límites y continuidad de la iteración.
+- No se modificó index.html (SHA preservado: 5d6c57956e18e7b504475222ba9fa97ef239c947), acuerdo, Aviso Importante, sección 13, «Sobre Nosotros», FAQ, versión/fecha 2026-07, código, aceptación AUG-045, endpoints, deployments ni datos productivos.
+- No se emitió aprobación jurídica ni se presume validación corporativa. AUG-046 permanece EN PROGRESO; no iniciar AUG-047.
+================================================================================
