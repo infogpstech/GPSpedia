@@ -419,3 +419,11 @@ Rama GPSpedia2.2.5_work. HEAD inicial: 509cc0d1f531b48de10213f6e54301bb0034a07f.
 - Suites: ImageResolutionVariants.js; IndexedDBTransactions.js ampliada para orden inverso y registros ambiguos/incompatibles.
 Siguiente acción: ejecutar suites locales, corregir fallos y actualizar checkpoint con evidencia real. No iniciar AUG-066.
 ================================================================================
+
+
+================================================================================
+AUG-065 — CHECKPOINT DE IMPLEMENTACIÓN — 2026-11-11
+Commit de implementación: 763110b53c974770c12e81bce764957e432b8566 (padre 509cc0d1f531b48de10213f6e54301bb0034a07f).
+Validación realizada en runtime V8: parsing de ui.js (bloques setOptimizedImage/getImageUrl), offline.js, IndexedDBTransactions.js e ImageResolutionVariants.js PASS. Helpers ejecutados: URL fuente original idéntica para 300/800/1600; claves normalizadas distintas por ancho PASS. readFreshThumbnail devuelve Blob válido y rechaza/elimina un registro con ancho discordante PASS.
+Pendiente: ejecutar las suites Node completas. No fue posible resolver DNS de GitHub desde el entorno de contenedor; no afirmar ejecución de Node CLI. La suite IndexedDBTransactions debe ejecutarse/adaptarse localmente antes de cerrar AUG-065. No iniciar AUG-066.
+================================================================================

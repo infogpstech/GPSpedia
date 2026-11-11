@@ -44,6 +44,6 @@ assert.match(uiSource, /getImageUrl\([^\n]*IMG_SIZE_LARGE\)/, 'el Lightbox debe 
 assert.match(offlineSource, /Math\.min\(1,width\/bitmap\.width\)/, 'no ampliar imágenes pequeñas');
 assert.match(offlineSource, /canvas\.toBlob\(blob=>\{[\s\S]*?\},\"image\/png\"\)/, 'persistir variantes PNG con canal alfa');
 assert.match(offlineSource, /entry\.fileId===expected\.fileId&&Number\(entry\.width\)===expected\.width/);
-assert.match(offlineSource, /Una entrada heredada indexada solo por ID no declara su resolución/);
+assert.match(offlineSource, /Un registro histórico indexado solo por ID no declara la resolución/);
 
 console.log('Image resolution variants: PASS');
