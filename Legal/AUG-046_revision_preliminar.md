@@ -218,3 +218,16 @@ El usuario corrigió expresamente la interpretación de los puntos 1 y 2 anterio
 **Corrección de la revisión anterior:** no debe mantenerse como pendiente que la empresa tenga que decidir desde cero la distinción entre la plataforma/estructura propia y los materiales públicos compartidos, ni que deba definir nuevamente la relación entre GPSpedia, TRACKLINK y Motorlink S.A. El responsable del proyecto ya aclaró esos conceptos. Los puntos 1 y 2 de la sección 9.1 quedan reemplazados por esta aclaración y no deben tratarse como contradicciones pendientes del producto.
 
 La auditoría de esta tarea se limita a describir el funcionamiento técnico y registrar las definiciones del responsable del proyecto. No emitiré opiniones, interpretaciones ni recomendaciones jurídicas, ni sustituiré la revisión o aprobación que corresponda a la empresa. Esta aclaración no autoriza cambios en el acuerdo ni en otros textos legales.
+
+
+## 10. Delimitación técnica de la revisión — 2026-11-11
+
+Esta adenda precisa el alcance de las observaciones anteriores para que el registro no atribuya al análisis técnico funciones de asesoría o aprobación jurídica.
+
+1. Las observaciones de las secciones 3, 4, 5 y 9.1 que solicitan decisiones de Legal, interpretan el alcance de cláusulas, califican su validez o plantean contradicciones sobre titularidad e identidad no constituyen conclusiones de esta auditoría. Deben leerse como antecedentes históricos de la revisión preliminar, no como dictámenes, recomendaciones ni instrucciones jurídicas.
+2. Los puntos 1 y 2 de la sección 9.1 quedan expresamente sustituidos por la definición del responsable registrada en 9.4. No son inconsistencias pendientes.
+3. La comprobación que continúa en AUG-046 es exclusivamente técnica y descriptiva: contrastar los textos existentes con los flujos, campos, destinos, permisos y persistencia que pueden observarse en el código versionado; distinguir lo que está implementado de lo que no puede verificarse sin acceso a la operación corporativa.
+4. Las confirmaciones sobre cuentas, permisos, conservación, proveedores, respaldos y atención de solicitudes son datos operativos que debe aportar la empresa. Su registro no implica que esta auditoría determine obligaciones, suficiencia, validez o cumplimiento legal.
+5. La empresa conserva íntegramente la responsabilidad de cualquier revisión y aprobación interna. Esta auditoría no aprueba, rechaza, redacta ni modifica el acuerdo o el aviso.
+
+**Límite permanente:** no modificar el acuerdo de uso, el aviso, sus fechas/versiones, los modales informativos ni el flujo de aceptación. No emitir interpretaciones, opiniones o recomendaciones jurídicas. No iniciar AUG-047.
