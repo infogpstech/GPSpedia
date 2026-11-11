@@ -268,7 +268,7 @@ async function runIndexedDBTransactionTests() {
             globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;
         }
     });
-    console.log('\nIndexedDB transaction tests: ${passed}/12 PASS');
+    console.log(`\nIndexedDB transaction tests: ${passed}/12 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
