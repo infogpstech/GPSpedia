@@ -706,8 +706,8 @@ export async function saveViewedItem(item, ownerId) {
 }
 export async function cacheItemImages(item) {
     if (!item) return;
-    const fieldsToCache = [item.imagenVehiculo,item.imgCorte1,item.imgCorte2,item.imgCorte3,item.imgCableAlimen,item.imgCableAlimen2,item.imgCableAlimen3,item.imagenRelay,item.imagen,item.Imagen];
-    for (const field of fieldsToCache) if (field && typeof field === 'string' && !field.startsWith('blob:') && !field.includes('placehold.co')) compressAndStoreThumbnail(field,field).catch(()=>{});
+    const fieldsToCache=[item.imagenVehiculo,item.imgCorte1,item.imgCorte2,item.imgCorte3,item.imgApertura,item.imgCableAlimen,item.imgCableAlimen2,item.imgCableAlimen3,item.imagenRelay,item.imagen,item.Imagen];
+    for (const field of fieldsToCache) if(field&&typeof field==='string'&&!field.startsWith('blob:')&&!field.includes('placehold.co')) compressAndStoreThumbnail(field,field,300).catch(()=>{});
 }
 export async function getViewedItems(ownerId, limit = 20) {
     const owner = normalizeLocalOwnerId(ownerId);
@@ -720,72 +720,42 @@ export async function getViewedItems(ownerId, limit = 20) {
 
 // --- THUMBNAIL CACHE & COMPRESSION ---
 
-/**
- * Compresses an image from a URL and stores it in IndexedDB.
- * Phase 3.3: Improved CORS handling using lh3.googleusercontent.com and normalization.
- */
-export async function compressAndStoreThumbnail(url, rawFileId) {
-    if (!rawFileId || (typeof rawFileId === 'string' && rawFileId.includes('placehold.co'))) return null;
-
-    // Normalizar el ID para usarlo como clave consistente
-    const fileId = normalizeId(rawFileId);
-    if (!fileId) return null;
-
-    // Phase 3.3: Usar URL de lh3 para evitar problemas de CORS y redirecciones en el fetch.
-    // Solo si el fileId parece ser un ID real de Google Drive.
-    const fetchUrl = (fileId.length > 20 && !fileId.includes('/') && !fileId.includes('http'))
-        ? `https://lh3.googleusercontent.com/d/${fileId}`
-        : url;
-
-    if (!fetchUrl || fetchUrl.includes('placehold.co')) return null;
-
-    try {
-        // 1. Check if already cached
-        const cached = await performOp('thumbnails', 'readonly', (store) => store.get(fileId));
-        if (cached) return cached;
-
-        // 2. Fetch image
-        const response = await fetch(fetchUrl, { mode: 'cors' });
-        if (!response.ok) return null;
-
-        const blob = await response.blob();
-        const bitmap = await createImageBitmap(blob);
-
-        // 3. Create Canvas and compress
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-
-        const MAX_WIDTH = 400; // Phase 3.4: Incrementar un poco para mejor calidad offline
-        const scale = MAX_WIDTH / bitmap.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = bitmap.height * scale;
-
-        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-        return new Promise((resolve) => {
-            // Phase 3.4: Intentar usar webp (que soporta alpha) si el navegador lo permite,
-            // de lo contrario usar png para asegurar transparencia si es necesario.
-            // Para ahorrar espacio, seguimos usando jpeg para la mayoría, pero png es el fallback seguro.
-            const mimeType = 'image/png'; // Cambiado a PNG para preservar transparencias en el catálogo
-
-            canvas.toBlob(async (compressedBlob) => {
-                if (compressedBlob) {
-                    await performOp('thumbnails', 'readwrite', (store) => store.put(compressedBlob, fileId));
-                    resolve(compressedBlob);
-                } else {
-                    resolve(null);
-                }
-            }, mimeType);
-        });
-    } catch (e) {
-        console.warn("Thumbnail compression failed for", fileId, e);
-        return null;
-    }
+function normalizeThumbnailSize(size=400){
+ const n=Number(size);if(!Number.isFinite(n)||n<=0)return 400;return Math.max(100,Math.min(1600,Math.round(n)));
 }
+function buildThumbnailCacheKey(fileId,size){return fileId+"::w"+normalizeThumbnailSize(size);}
 
-export async function getThumbnail(rawFileId) {
-    const fileId = normalizeId(rawFileId);
-    return performOp('thumbnails', 'readonly', (store) => store.get(fileId));
+/** Compresión por variante; conserva compatibilidad de lectura con claves antiguas. */
+export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400){
+ if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
+ const fileId=normalizeId(rawFileId);if(!fileId)return null;
+ const width=normalizeThumbnailSize(requestedSize),cacheKey=buildThumbnailCacheKey(fileId,width);
+ const fetchUrl=fileId.length>20&&!fileId.includes("/")&&!fileId.includes("http")?`https://lh3.googleusercontent.com/d/${fileId}`:url;
+ if(!fetchUrl||fetchUrl.includes("placehold.co"))return null;
+ try{
+  const cached=await performOp("thumbnails","readonly",store=>store.get(cacheKey));if(cached)return cached.blob||cached;
+  const response=await fetch(fetchUrl,{mode:"cors"});if(!response.ok)return null;
+  const bitmap=await createImageBitmap(await response.blob());
+  try{
+   if(!bitmap.width||!bitmap.height)return null;
+   const scale=Math.min(1,width/bitmap.width),canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+   if(!ctx)return null;
+   canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+   ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+   return await new Promise(resolve=>canvas.toBlob(async blob=>{
+    if(!blob){resolve(null);return;}
+    const entry={key:cacheKey,fileId,width,blob,cachedAt:Date.now()};
+    const saved=await performOp("thumbnails","readwrite",store=>store.put(entry,cacheKey));
+    resolve(saved===null?null:blob);
+   },"image/png"));
+  }finally{if(typeof bitmap.close==="function")bitmap.close();}
+ }catch(error){console.warn("Thumbnail compression failed for",fileId,error);return null;}
+}
+export async function getThumbnail(rawFileId,requestedSize=400){
+ const fileId=normalizeId(rawFileId);if(!fileId||typeof fileId!=="string")return null;
+ const cached=await performOp("thumbnails","readonly",store=>store.get(buildThumbnailCacheKey(fileId,requestedSize)));
+ if(cached)return cached.blob||cached;
+ return performOp("thumbnails","readonly",store=>store.get(fileId));
 }
 
 /**
