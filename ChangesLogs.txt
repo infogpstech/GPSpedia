@@ -1015,3 +1015,12 @@ ADENDA AUG-046 — ACLARACIÓN DEL RESPONSABLE DEL PROYECTO — 2026-11-11
 - La revisión AUG-046 se limita a descripción y comprobación técnica. No se emitirán opiniones ni recomendaciones jurídicas.
 - No se modificó el acuerdo de uso, aviso, index.html, versión/fecha, aceptación AUG-045, código ni datos productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — DELIMITACIÓN DEL ALCANCE TÉCNICO — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: sección 10 aclara que la auditoría es exclusivamente técnica/descriptiva; observaciones históricas con lenguaje jurídico se conservan como antecedentes y no como dictámenes ni recomendaciones. Las definiciones institucionales de la sección 9.4 prevalecen.
+- Tareas_pendientes_parte1.txt: AUG-046 precisa que las cláusulas se contrastan descriptivamente con el comportamiento observable y que identidad/marca ya no son contradicciones pendientes.
+- checkpoint.md: registra el avance, las confirmaciones operativas aún no recibidas y la continuidad exclusiva de AUG-046.
+- No se modificaron el acuerdo, aviso, modales, fechas/versiones, aceptación AUG-045, HTML, código, endpoints, deployments ni datos productivos.
+================================================================================
