@@ -1765,3 +1765,29 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
 ================================================================================
+
+
+
+================================================================================
+CHECKPOINT — AUG-046 — ELIMINACIÓN DE IMÁGENES ADJUNTAS A SUGERENCIAS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: 331239910e8f372c76c85d617c94dae00fc0f7da.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisado el flujo de imágenes opcionales de sugerencias de cambio de cortes en FEEDBACK.
+- Confirmado en el código que las imágenes se crean en Drive bajo SugerenciasCortes y reciben permiso ANYONE_WITH_LINK/VIEW.
+- Confirmado que el Inbox devuelve imageUrl y que la interfaz la presenta como enlace de referencia.
+- Confirmado que deleteFeedbackItem elimina la fila Feedbacks de tipo problem_report, categoría bajo la que se presentan estas sugerencias, pero el handler no elimina el archivo ni revoca su compartición.
+- Documentada la evidencia y los límites en Legal/AUG-046_revision_preliminar.md, sección 13; actualizado el avance de AUG-046 en Tareas_pendientes_parte1.txt.
+
+Límites:
+- Revisión estática del código versionado; no se consultaron archivos ni permisos reales de Drive.
+- No se ejecutaron cargas, eliminaciones ni cambios de permisos.
+- No se modificó código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments ni datos productivos.
+- Las confirmaciones operativas y la validación interna corporativa siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
+================================================================================
