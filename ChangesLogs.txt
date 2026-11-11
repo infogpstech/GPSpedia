@@ -1121,3 +1121,12 @@ AUG-046 — PERSISTENCIA LOCAL Y LIMPIEZA DEL CLIENTE — 2026-11-10
 - Tareas.txt y checkpoint.md: se registra continuidad de AUG-046 y se separa la corrección técnica para una tarea independiente.
 - No se modificó código funcional, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
 ================================================================================
+
+================================================================================
+AUG-046 — CIERRE TÉCNICO CON VALIDACIÓN DIFERIDA — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 21 consolida el resultado por criterio, las confirmaciones operativas diferidas, los hallazgos separados y los límites del cierre.
+- Tareas_pendientes_parte1.txt: AUG-046 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA; su continuación documental se rota a Tareas_pendientes_parte5.txt en el punto exacto de AUG-058.
+- Tareas_pendientes_MANIFIESTO.md: creado para identificar las partes y documentar la rotación sin pérdida.
+- Tareas.txt y checkpoint.md: registran el cierre técnico, las validaciones diferidas y la aprobación corporativa pendiente como condición de publicación.
+- H-AUD-046-001 y H-AUD-046-002 permanecen abiertos para corrección independiente. No se modificaron código, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================

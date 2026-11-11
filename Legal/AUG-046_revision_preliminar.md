@@ -452,3 +452,51 @@ Se amplió la revisión del almacenamiento local más allá de la clave de sesi�
 **Límites:** revisión estática de `auth.js`, `main.js`, `ui.js`, `add_cortes.html`, `offline.js`, `service-worker.js`, `api-config.js` y `index.html`. No se ejecutó un navegador, no se inspeccionaron perfiles reales, no se borró almacenamiento, no se probó el comportamiento de IndexedDB con otras pestañas ni se verificó el deployment. No se modificaron código, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
 
 **Ubicaciones de referencia:** `auth.js` (líneas 12, 27–54, 113–116, 345–365); `add_cortes.html` (líneas 359–430 y 1024–1052); `ui.js` (líneas 146–167, 242–300, 1964–1969 y 4934–4955); `offline.js` (líneas 7–78, 114–180 y 182–270); `service-worker.js` (líneas 1–89); `main.js` (líneas 554–570 y 692–752); `api-config.js` (líneas 107–123).
+
+## 21. Cierre de la revisión técnica AUG-046 — 2026-11-10
+
+### Resultado por criterio de aceptación
+
+1. **Responsabilidad de aprobación:** se respeta que la aprobación corresponde a Motorlink S.A. mediante su proceso interno. No se emite aprobación en su nombre. La aprobación corporativa del texto, versión y fecha efectiva permanece como condición previa a cualquier publicación legal definitiva.
+2. **Identidad institucional:** completado con la aclaración del responsable del proyecto registrada en 9.4: GPSpedia es la plataforma/herramienta; TRACKLINK es la marca corporativa; Motorlink S.A. es la empresa y su nombre registrado en Honduras. No queda pendiente reabrir esta definición.
+3. **Flujos y datos:** completado el contraste estático de cuentas/sesiones, contacto público, aportes/reportes, imágenes y vídeos, registros de actividad, bajas de cuenta, almacenamiento local, proveedores y rutas de archivos. La evidencia se desarrolla en las secciones 8 y 11–20. Las configuraciones reales, permisos efectivos, retención corporativa, respaldos y condiciones de proveedores no son deducibles del repositorio y quedan como confirmaciones operativas diferidas.
+4. **Cláusulas frente al comportamiento:** completado el contraste descriptivo del aviso, acuerdo, «Sobre Nosotros» y FAQ con los comportamientos observables. Se documentan diferencias y límites sin emitir interpretaciones ni recomendaciones jurídicas.
+5. **Texto, versión y fecha:** no se modificaron el acuerdo, aviso, modales, flujo de aceptación ni versión/fecha vigente 2026-07. La aprobación de una versión definitiva corresponde al proceso interno de la empresa y no se presume realizada.
+6. **Publicación:** no se desplegó ni se autorizó desplegar una versión legal definitiva. La aprobación corporativa debe registrarse antes de esa publicación.
+
+### Confirmaciones operativas que pasan a validación diferida
+
+La revisión del código versionado queda cerrada. Antes de aprobar/publicar el texto definitivo, la empresa deberá consolidar, mediante su proceso interno y/o Beta, los siguientes datos que no pueden verificarse solo desde el repositorio:
+
+- Paridad entre los proyectos Apps Script publicados y las fuentes revisadas; cuentas propietarias y personal con acceso a Apps Script, Spreadsheet, Drive y YouTube.
+- ACL efectiva de la carpeta raíz «Cortes», herencia de permisos, enlaces compartidos, acceso de imágenes de FEEDBACK y política de acceso para imágenes del catálogo.
+- Conservación y eliminación de imágenes vinculadas, pendientes, huérfanas o sustituidas; admisión operativa de URLs HTTP(S) externas.
+- Canal/cuenta de YouTube, visibilidad no listada, responsables de aprobación, cambios de visibilidad y retirada/eliminación de vídeos.
+- Finalidad, responsable de atención, accesos y retención del formulario público de contacto.
+- Acceso y conservación de Logs, ActividadUsuario, ActiveSessions, registros de contacto/aportes y cualquier limpieza externa o manual.
+- Tratamiento de datos y referencias históricas cuando se desactiva una cuenta; alcance de eliminación, anonimización y conservación.
+- Política para catálogo, búsquedas, vehículos vistos, miniaturas, respaldos de formularios e información local en dispositivos compartidos, incluido el comportamiento esperado al cerrar sesión.
+- Instrucciones y controles internos para aportes que puedan contener placas, VIN, imágenes de clientes, terceros u otros identificadores.
+- Condiciones corporativas de Google/YouTube, región, soporte, accesos administrativos y transferencias aplicables.
+- Canal corporativo para solicitudes de privacidad y responsables de verificar identidad, responder y ejecutar correcciones/eliminaciones.
+- Frecuencia, ubicación, acceso, duración y eliminación de respaldos de Spreadsheet, Drive y registros auxiliares.
+- Aprobación interna del texto exacto, su versión y fecha efectiva, con consistencia entre aviso, acuerdo y aceptación AUG-045.
+
+Estas confirmaciones no se presentan como verificadas. Su ausencia no bloquea el cierre de la revisión técnica local, pero sí impide afirmar que el texto legal definitivo esté aprobado o listo para publicación.
+
+### Hallazgos técnicos separados
+
+- **H-AUD-046-001 (MEDIA):** autorización insuficiente en WRITE para silent=true. Permanece ABIERTO para corrección independiente.
+- **H-AUD-046-002 (MEDIA):** limpieza incompleta del almacenamiento local y descarte de operación pendiente sin comprobar estado remoto. Permanece ABIERTO para corrección independiente.
+
+Ambos hallazgos tienen evidencia y criterio de corrección en Auditoría.txt. No son correcciones incluidas en AUG-046 ni se modificaron durante esta revisión. No se identificó en el alcance de esta iteración un hallazgo crítico que impida el cierre técnico.
+
+### Validación y límites del cierre
+
+- Revisión documental estática completada sobre los archivos versionados y las rutas citadas en las secciones 1–20.
+- Se preservan el acuerdo, aviso, modales, flujo de aceptación, versión/fecha 2026-07, código funcional, endpoints, deployments y datos productivos.
+- Para este cierre documental se verificaron la continuidad de secciones, la referencia de hallazgos, el estado de backlog y la reconstrucción exacta del registro rotado. No se modificó código funcional, por lo que no corresponde afirmar pruebas de sintaxis o integración de aplicación.
+- No se consultaron cuentas corporativas, ACL reales de Drive, hojas productivas, YouTube, proyectos Apps Script publicados ni respaldos; tampoco se ejecutaron pruebas de navegador o dispositivos reales.
+- Las comprobaciones externas y la aprobación corporativa quedan expresamente diferidas; no se simularon ni se presentan como realizadas.
+
+**Estado final de AUG-046: COMPLETADA CON VALIDACIÓN DIFERIDA.** Queda terminado el alcance de revisión técnica/documental en el repositorio. La aprobación interna de la empresa y las confirmaciones operativas indicadas son condiciones previas a aprobar o publicar una versión legal definitiva. Este cierre no constituye dictamen ni aprobación jurídica.
