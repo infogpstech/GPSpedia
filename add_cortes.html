@@ -462,10 +462,11 @@
                         document.getElementById('colorCableCorte1').value = data.colorCableCorte1 || '';
                         if (document.getElementById('silentRegister')) document.getElementById('silentRegister').checked = !!data.silentRegister;
                         if (document.getElementById('testigoMotor')) document.getElementById('testigoMotor').checked = !!data.testigoMotor;
-                        if (pendingOp.files) {
-                            if (pendingOp.files.imagenVehiculo) { state.restoredFiles.imagenVehiculo = pendingOp.files.imagenVehiculo; const p = document.getElementById('imagenVehiculo_preview'); if (p) p.src = pendingOp.files.imagenVehiculo; }
-                            if (pendingOp.files.imgCorte1) { state.restoredFiles.imgCorte1 = pendingOp.files.imgCorte1; const p = document.getElementById('imgCorte1_preview'); if (p) p.src = pendingOp.files.imgCorte1; }
-                        }
+                        const restoredVehicleImage = pendingOp.requestData.vehicleData && pendingOp.requestData.vehicleData.imagenVehiculo || null;
+                        const restoredCutImage = pendingOp.requestData.cutData && pendingOp.requestData.cutData.imgCorte1 || null;
+                        state.restoredFiles = { imagenVehiculo: restoredVehicleImage, imgCorte1: restoredCutImage };
+                        if (restoredVehicleImage) { const p = document.getElementById('imagenVehiculo_preview'); if (p) p.src = restoredVehicleImage; }
+                        if (restoredCutImage) { const p = document.getElementById('imgCorte1_preview'); if (p) p.src = restoredCutImage; }
                         toggleNoRecomendado(); showPhase(2);
                     }
                 }
@@ -950,7 +951,23 @@
                         const checkVin = await routeAction('checkVinDuplicate', { vin: vinInput.value.trim(), currentVehicleId: state.selectedVehicleId });
                         if (checkVin.duplicate) {
                             const warningEl = document.getElementById('vinDuplicateWarning');
-                            if (warningEl) { warningEl.style.display = 'block'; warningEl.textContent = 'VIN ya está registrado para: ' + checkVin.modelName; }
+                            if (warningEl) {
+                                warningEl.style.display = 'block';
+                                warningEl.textContent = 'VIN ya está registrado para: ';
+                                const modelButton = document.createElement('button');
+                                modelButton.type = 'button';
+                                modelButton.className = 'btn btn-secondary';
+                                modelButton.style.padding = '2px 8px';
+                                modelButton.style.fontSize = '0.85em';
+                                modelButton.style.marginLeft = '5px';
+                                const modelLabel = document.createElement('strong');
+                                modelLabel.textContent = String(checkVin.modelName || 'Vehículo');
+                                modelButton.appendChild(modelLabel);
+                                modelButton.addEventListener('click', () => {
+                                    window.location.href = 'index.html#search=' + encodeURIComponent(String(checkVin.modelName || ''));
+                                });
+                                warningEl.appendChild(modelButton);
+                            }
                             return;
                         }
                     } catch (err) { console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError'); }
@@ -1000,7 +1017,7 @@
                         ubicacionCorte1: requestData.cutData.ubicacionCorte1, colorCableCorte1: requestData.cutData.colorCableCorte1,
                         silentRegister: silentVal, testigoMotor: requestData.cutData.activaTestigo1, vin: requestData.cutData.vin
                     },
-                    files: { imagenVehiculo: base64Veh, imgCorte1: base64Corte }, requestData, status: 'processing'
+                    requestData, status: 'processing'
                 };
                 const saved = await saveAddCutOperationPendingOperation(pendingOp);
                 if (!saved || saved.saved !== true) throw new Error('PENDING_SNAPSHOT_NOT_VERIFIED');
