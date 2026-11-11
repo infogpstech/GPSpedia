@@ -916,7 +916,17 @@
                 }
             }
 
-            const opId = getOrGenerateOpId();
+            let opId;
+            try {
+                opId = getOrGenerateOpId();
+            } catch (storageError) {
+                console.warn("No se pudo leer el snapshot local pendiente.", storageError && storageError.name || 'StorageError');
+                alert("No se pudo verificar la operación guardada localmente. No se enviará el formulario para evitar duplicados.");
+                toggleLoading(false);
+                btn.classList.remove('btn-loading');
+                isSubmittingStage2 = false;
+                return;
+            }
             console.log(`[PING-PONG][2] opId obtenido o generado: ${opId}`);
 
             const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;

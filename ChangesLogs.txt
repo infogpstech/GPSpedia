@@ -1,4 +1,10 @@
 ================================================================================
+2026-11-11 — AUG-053 — AJUSTE DE SEGURIDAD — LECTURA DEL SNAPSHOT
+Si falla la lectura del snapshot local antes de obtener el opId, add_cortes detiene el envío, informa que no puede verificar la operación previa y restaura los controles de la interfaz. Así no continúa con un identificador nuevo cuando el estado local es incierto.
+Archivos: add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — ITERACIÓN 2 — AISLAMIENTO DE gpsepedia_pending_operation
 - Se agregó pendingOperationStore.js con clave por propietario, verificación de escritura, lectura/eliminación owner-bound y sanitización recursiva de tokens/credenciales.
 - add_cortes.html ahora vincula snapshots a ownerId, verifica la sesión vigente antes de recuperar y reintentar, y evita registrar snapshots, respuestas completas o mensajes de error potencialmente sensibles.
