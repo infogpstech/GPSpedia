@@ -440,3 +440,14 @@ Rama: GPSpedia2.2.5_work. HEAD confirmado antes del registro: ae2abe19ea1f67fe5a
 Pendiente para Beta: IndexedDB/Canvas/navegador reales, validación de alfa PNG por píxeles, visualización y calidad con imágenes representativas online/offline. No se modificaron servicios, endpoints ni datos productivos.
 AUG-065 cerrada localmente. AUG-066 queda como siguiente tarea; no se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-066 — CHECKPOINT DE IMPLEMENTACIÓN — 2026-11-11
+Estado: EN PROGRESO; alcance CSS restringido y prueba de contrato añadida; validación Node CLI pendiente.
+Rama: GPSpedia2.2.5_work. HEAD de partida: d1755ce61fbc8eef30d2a792f3384422fc9fae8c. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+- style.css: se elimina el modo de fusión global de tarjetas, resultados y vista previa; se limita a la clase explícita .gps-transparent-asset en modo oscuro y se excluye .img-vehiculo-modal.
+- No se asigna automáticamente la clase a imágenes existentes: el modelo actual no expone una señal confiable de transparencia y no permite distinguir PNG con alfa de PNG opacos, JPEG, fotografías o diagramas.
+- Nueva prueba Services/Test/ImageBlendModeScope.js: contrato estático para verificar el selector opt-in y la ausencia de reglas globales. La misma lógica se ejecutó sobre el CSS vigente en runtime V8: 7/7 PASS. Node CLI literal pendiente.
+Siguiente acción: ejecutar la prueba con Node en Codespace, revisar el diff y corregir cualquier fallo reproducible. No iniciar AUG-067.
+================================================================================

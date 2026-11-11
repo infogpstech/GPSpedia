@@ -744,11 +744,9 @@ body.search-active .container {
     background-color: transparent;
 }
 
-/* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */
-.dark-mode .card:not(.brand-logo-item) img,
-.dark-mode .card-img-top,
-.dark-mode .match-card-img,
-.dark-mode #imagenVehiculo_preview {
+/* Solo imágenes con transparencia confirmada deben solicitar esta clase explícitamente.
+   No aplicar a fotografías, diagramas, logos ni vistas previas de tipo desconocido. */
+.dark-mode img.gps-transparent-asset:not(.img-vehiculo-modal) {
     mix-blend-mode: lighten;
 }
 .overlay {

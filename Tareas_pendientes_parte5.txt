@@ -141,7 +141,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   3. No cambiar el tratamiento de .img-vehiculo-modal ni otros elementos fuera del alcance.
   4. Probar imágenes con alfa, fondo opaco, bordes semitransparentes, colores oscuros y modo claro/oscuro.
 - **Relación:** AUD-T-006; conservar objetivo B33 de canal alfa sin degradar imágenes opacas.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO; selector opt-in implementado y prueba de contrato añadida.
 
 ### AUG-067 — Discriminar eje horizontal y vertical en gestos del carrusel de cables
 - **Origen:** H-AUD-006-003. **Prioridad:** Media.

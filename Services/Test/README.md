@@ -673,3 +673,12 @@ Ejecutar `node --experimental-default-type=module Services/Test/ImageResolutionV
 - `Services/Test/IndexedDBTransactions.js`: verifica variantes en orden inverso, caché fría/caliente, dimensiones/proporción, tipo y bytes PNG, registros heredados/incompatibles, TTL, LRU, recuperación de cuota y concurrencia.
 - Validación local: **ImageResolutionVariants PASS** y **IndexedDBTransactions 44/44 PASS** en runtime V8 adaptado, ejecutando las fuentes vigentes de `offline.js` y las suites con adaptadores para imports, IndexedDB y primitivas de navegador.
 - La ejecución literal de los comandos Node CLI no se realizó. Beta pendiente: navegador/IndexedDB/Canvas reales, transparencia PNG verificada por píxeles y pruebas visuales online/offline con imágenes representativas.
+
+
+## AUG-066 — Alcance del modo de fusión de imágenes
+
+Ejecutar desde la raíz:
+
+`node --experimental-default-type=module Services/Test/ImageBlendModeScope.js`
+
+La prueba comprueba que `mix-blend-mode: lighten` exista en una sola regla opt-in: `.gps-transparent-asset`, excluyendo `.img-vehiculo-modal`. No se asigna automáticamente la clase a imágenes del catálogo porque el modelo actual no aporta metadatos fiables que distingan PNG con alfa de PNG opacos, JPEG, fotografías o diagramas. Solo debe añadirse a un recurso después de confirmar que requiere la corrección. Las imágenes sin esa marca conservan su composición normal.

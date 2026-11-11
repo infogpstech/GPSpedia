@@ -1771,3 +1771,12 @@ CAMBIOS — AUG-065 — 2026-11-11 — CIERRE LOCAL
 - offline.js: claves de miniaturas por ID normalizado/ancho, validación estricta de key/fileId/width/Blob y eliminación de registros heredados o incompatibles; la URL fuente Drive permanece original y las variantes se generan localmente como PNG sin ampliar imágenes.
 - Services/Test/IndexedDBTransactions.js: corrección de fixtures LRU para que fileId coincida con la clave normalizada y ajuste de la secuencia de transacciones del escenario de aborto de eliminación.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-066 — RESTRINGIR EL MODO DE FUSIÓN A RECURSOS EXPLÍCITOS
+- style.css: se elimina mix-blend-mode: lighten de selectores generales de tarjetas, resultados y vista previa; queda limitado a img.gps-transparent-asset en modo oscuro y excluye .img-vehiculo-modal.
+- Services/Test/ImageBlendModeScope.js: contrato estático para verificar el alcance opt-in y prevenir la reintroducción de selectores globales.
+- No se asigna automáticamente la clase a recursos actuales porque no existe metadato fiable de canal alfa en el modelo de imágenes. Fotografías, JPEG, PNG opacos, diagramas y logos permanecen sin mezcla salvo marcación explícita justificada.
+- Validación V8 adaptada del contrato sobre el CSS vigente: 7/7 PASS. Node CLI literal pendiente; no se declara la tarea completada.
+================================================================================
