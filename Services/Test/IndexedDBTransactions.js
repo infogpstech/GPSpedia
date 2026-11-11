@@ -164,7 +164,32 @@ async function runIndexedDBTransactionTests() {
         await assert.rejects(blockedOffline.initDB(), /bloqueada/);
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/5 PASS`);
+    const scopedHarness = createIndexedDBHarness();
+    const scopedOffline = await freshOffline(scopedHarness, 'account-scope');
+    await testAsync('historial aislado por cuenta y consultas potencialmente VIN excluidas', async () => {
+        await scopedOffline.saveSearch('Lancer', 'user-a');
+        await scopedOffline.saveSearch('Civic', 'user-b');
+        assert.equal(await scopedOffline.saveSearch('1HGCM82633A004352', 'user-a'), null);
+        assert.deepEqual((await scopedOffline.getSearchHistory('user-a')).map(entry => entry.term), ['lancer']);
+        assert.deepEqual((await scopedOffline.getSearchHistory('user-b')).map(entry => entry.term), ['civic']);
+        assert.equal(await scopedOffline.saveSearch('Corolla', ''), null);
+        assert.deepEqual(await scopedOffline.getSearchHistory(''), []);
+    });
+    await testAsync('vistos aislados entre cuentas', async () => {
+        await scopedOffline.saveViewedItem({ id: 'V-1', marca: 'Toyota' }, 'user-a');
+        await scopedOffline.saveViewedItem({ id: 'V-1', marca: 'Honda' }, 'user-b');
+        const viewedA = await scopedOffline.getViewedItems('user-a'), viewedB = await scopedOffline.getViewedItems('user-b');
+        assert.equal(viewedA.length, 1); assert.equal(viewedA[0].id, 'V-1'); assert.equal(viewedA[0].data.marca, 'Toyota');
+        assert.equal(viewedB.length, 1); assert.equal(viewedB[0].data.marca, 'Honda');
+        assert.deepEqual(await scopedOffline.getViewedItems(''), []);
+    });
+    await testAsync('validationCache aislado por cuenta', async () => {
+        await scopedOffline.saveValidationResponse('V-2', 'correct', 'user-a');
+        assert.ok(await scopedOffline.getValidationResponse('V-2', 'user-a'));
+        assert.equal(await scopedOffline.getValidationResponse('V-2', 'user-b'), null);
+        assert.equal(await scopedOffline.saveValidationResponse('V-2', 'incorrect', ''), null);
+    });
+    console.log(`\nIndexedDB transaction tests: ${passed}/8 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
