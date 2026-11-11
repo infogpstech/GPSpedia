@@ -272,3 +272,18 @@ Roles existentes verificados: normalización UI reconoce 'desarrollador', 'gefe'
 Criterio de seguridad para la siguiente fase: separar autorización de edición de imágenes del guardia ADMIN global. Permitir a Desarrollador/Gefe únicamente las acciones y campos de imagen del modal; updateVehicleField debe restringirse en servidor a la lista blanca de campos de imagen para roles no Desarrollador. Todas las demás acciones ADMIN deben seguir exigiendo Desarrollador. La identidad/rol deben verificarse desde sesión y Users en servidor, nunca confiar en el rol del payload.
 Pendiente inmediato: rastrear y cubrir las acciones de consulta/reconciliación de estado de reemplazo usadas por el modal, definir su autorización mínima y añadir pruebas de contrato/roles antes de modificar el guardia del servicio. No iniciar AUG-054.
 ================================================================================
+
+================================================================================
+AUG-053 — ADENDA DE CONTINUIDAD — ITERACIÓN 7 — 2026-11-11
+Estado: EN PROGRESO — matriz de acciones del modal identificada; no se modificaron permisos todavía.
+HEAD de inicio: cc330bbdd0c7b30b9121f8e1f08c2160a32dd215. Rama base sin cambios: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Hallazgos de integración:
+- El modo edición del modal no se limita a imágenes: permite modificar modelo y otros campos de Cortes mediante updateVehicleField, además de reemplazar imágenes mediante uploadAdminImage.
+- El contexto local getCurrentEditOwnerContext_ y el botón de lápiz siguen limitados a 'desarrollador'. saveFieldSilently y submitAdminImageUploadOperation también dependen de ese contexto.
+- El payload getDeveloperSessionPayload_ solo transporta userId y sessionToken; el servidor no debe aceptar un rol declarado por el cliente.
+- El guardia de doPostInternal_ invoca assertDeveloperSession para prácticamente todas las acciones ADMIN antes del switch. La ampliación debe ser por lista explícita de acciones: updateVehicleField y uploadAdminImage para Desarrollador/Gefe; todas las demás acciones ADMIN conservan exigencia Desarrollador.
+- updateVehicleField valida fieldName contra COLS_CORTES. Para Gefe se debe conservar la semántica de edición in-modal y comprobar el alcance de campos permitido por el modal; uploadAdminImage ya limita fieldName a ocho campos de imagen.
+- getReplacedImages, recoverReplacedImage, getReplacedImageDownloadUrl y demás acciones del gestor de inventario no son llamadas del modal de detalle para editar/reemplazar; no deben incluirse en el permiso Gefe sin necesidad funcional. reconcilePendingImageUploads corresponde a otro ledger y tampoco es el flujo pendiente AdminImageUploads del modal.
+- No se implementaron cambios de código en esta iteración porque ampliar solo la UI sería inseguro y conceder todas las acciones ADMIN sería excesivo. Próximo paso: definir y probar helper de autorización por acción que revalide ActiveSessions y Users y devuelva contexto para Desarrollador/Gefe solo en las dos acciones in-modal; después integrar el mismo conjunto de roles en UI y validar campos/roles.
+No iniciar AUG-054.
+================================================================================
