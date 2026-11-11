@@ -7,6 +7,7 @@ function runAdminModalEditSecurityTests() {
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
     function dataSheet_(rows){return{getDataRange:()=>({getValues:()=>rows})};}
     const oldGet=getSpreadsheet,oldLedger=getOrCreateAdminImageUploadsSheet,oldFind=findAdminImageUploadOperation;
+    const oldDrive=typeof DriveApp==="undefined"?undefined:DriveApp,oldVerify=verifyAdminImageUploadFile,oldSpreadsheetApp=typeof SpreadsheetApp==="undefined"?undefined:SpreadsheetApp;
     function session_(role,options){
         options=options||{};const now=new Date();
         const session=["USR-T","user","TOKEN-T",new Date(now.getTime()-60000),"",new Date(now.getTime()-1000)];
@@ -70,6 +71,47 @@ function runAdminModalEditSecurityTests() {
             expect_(()=>handleGetAdminImageUploadStatus({vehicleId:"VEH-1",fieldName:"imgCorte1",opId:"12345678901234567890"},()=>{}),"no corresponde");
             expect_(()=>handleGetAdminImageUploadStatus({vehicleId:"VEH-1",fieldName:"videoGuiaDesarmeUrl",opId:"12345678901234567890"},()=>{}),"Parámetros inválidos");
         });
-    }finally{getSpreadsheet=oldGet;getOrCreateAdminImageUploadsSheet=oldLedger;findAdminImageUploadOperation=oldFind;}
+
+        run_("updateVehicleField escribe VIN mediante el encabezado dinámico",()=>{
+            const headers=Array(43).fill("");headers[42]="VIN";
+            const vehicle=Array(43).fill("");vehicle[0]="VEH-VIN";
+            const sheet={getLastRow:()=>2,getLastColumn:()=>43,getRange:(r,col,n,w)=>({
+                getValues:()=>r===1?[headers.slice(col-1,col-1+(w||1))]:r===2?[vehicle.slice(col-1,col-1+(w||1))]:[],
+                setValue:value=>{vehicle[col-1]=value;}
+            })};
+            getSpreadsheet=()=>({getSheetByName:()=>sheet});
+            SpreadsheetApp={flush:()=>{}};
+            const result=handleUpdateVehicleField({vehicleId:"VEH-VIN",fieldName:"vin",value:"VIN123"},()=>{});
+            assert_(result.status==="success"&&vehicle[42]==="VIN123");
+        });
+        run_("updateVehicleField rechaza campos fuera del modal antes de acceder a datos",()=>{
+            let accessed=false;getSpreadsheet=()=>{accessed=true;throw new Error("No debe consultar Spreadsheet.");};
+            expect_(()=>handleUpdateVehicleField({vehicleId:"VEH-1",fieldName:"marca",value:"X"},()=>{}),"no forma parte");
+            assert_(!accessed);
+        });
+        run_("consulta linked verifica hash y metadatos del archivo Drive",()=>{
+            const rows=[Array(42).fill(""),Array(42).fill("")];rows[1][COLS_CORTES.id-1]="VEH-1";
+            const currentUrl="https://drive.google.com/uc?export=view&id=FILE_ID_123456789012345";
+            rows[1][COLS_CORTES.imgCorte1-1]=currentUrl;
+            const cuts={getLastRow:()=>2,getRange:(r,col,n,w)=>({
+                getValues:()=>Array.from({length:n||1},(_,i)=>Array.from({length:w||1},(_,j)=>rows[r-1+i][col-1+j])),
+                getValue:()=>rows[r-1][col-1]
+            })};
+            const opId="12345678901234567890",hash="hash-verified",fileId="FILE_ID_123456789012345";
+            getSpreadsheet=()=>({getSheetByName:n=>n===SHEET_NAMES.CORTES?cuts:null});
+            getOrCreateAdminImageUploadsSheet=()=>({});
+            findAdminImageUploadOperation=()=>({values:[opId,"VEH-1","imgCorte1","old",currentUrl,fileId,hash,"image/png","foto.png","linked"]});
+            DriveApp={getFileById:id=>({getDescription:()=>"GPSpediaAdminImageUpload|opId="+opId+"|hash="+hash+"|state=linked",isTrashed:()=>false})};
+            verifyAdminImageUploadFile=()=>true;
+            const result=handleGetAdminImageUploadStatus({vehicleId:"VEH-1",fieldName:"imgCorte1",opId},()=>{});
+            assert_(result.operationStatus==="linked"&&result.fileIntegrity==="valid"&&result.currentImageUrl===currentUrl);
+        });
+
+    }finally{
+        getSpreadsheet=oldGet;getOrCreateAdminImageUploadsSheet=oldLedger;findAdminImageUploadOperation=oldFind;
+        verifyAdminImageUploadFile=oldVerify;
+        if(oldDrive===undefined){try{delete DriveApp;}catch(error){}}else DriveApp=oldDrive;
+        if(oldSpreadsheetApp===undefined){try{delete SpreadsheetApp;}catch(error){}}else SpreadsheetApp=oldSpreadsheetApp;
+    }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
