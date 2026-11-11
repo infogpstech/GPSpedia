@@ -1690,3 +1690,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Nueva suite `Services/Test/FileReadRecovery.js`: 13/13 PASS. CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 PASS.
 - AddCutOperationRecoveryFlow falla 0/3 también con la fuente previa; falla preexistente, no atribuida a este cambio.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-058 — SERIALIZAR RECUPERACIÓN AUTOMÁTICA DE OPERACIONES PENDIENTES
+- `add_cortes.html`: recuperación single-flight compartida por init/online/visibilitychange; no se solapa con envíos de las etapas 1–3 y las solicitudes durante submit se reanudan al terminar.
+- `toggleLoading()` utiliza un contador de operaciones activas para impedir que una finalización oculte el overlay mientras otra operación sigue activa.
+- Nueva suite `Services/Test/AddCutOperationRecoveryConcurrency.js`: 9/9 PASS; parsing V8 del módulo frontend PASS.
+- Navegador, IndexedDB real y eventos del ciclo de vida quedan pendientes para Beta.
+================================================================================
