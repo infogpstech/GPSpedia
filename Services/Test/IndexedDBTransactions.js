@@ -488,7 +488,90 @@ async function runIndexedDBTransactionTests() {
         assert.equal(restored.operation.fileData,operation.fileData,'el fallo no debe alterar la Data URL persistida');
     });
 
-    console.log(`\\nIndexedDB transaction tests: ${passed}/33 PASS`);
+
+    const cutOperationBase = {
+        id: 'OP-1731330000000-0123456789ABCDEF0123456789ABCDEF',
+        ownerId: 'USER-CUT-A', operationType: 'addOrUpdateCut', operationHash: 'a'.repeat(64),
+        stage: 2, vehicleId: null,
+        requestData: { vehicleId: null, vehicleData: { marca: 'Toyota', modelo: 'Hilux' }, cutData: { tipoCorte1: 'Ignición' }, silent: false },
+        status: 'processing', formData: { tipoCorte1: 'Ignición' }, files: { imagenVehiculo: 'data:image/png;base64,AA==' }
+    };
+    await testAsync('AddCutOperationPending persiste y verifica snapshot durable para vehículo nuevo', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-durable-new');
+        const saved = await api.saveAddCutOperationPendingOperation({ ...cutOperationBase, SessionToken: 'must-not-persist', nested: { password: 'secret', keep: true } });
+        assert.equal(saved.saved, true);
+        const read = await api.getAddCutOperationPendingOperation('USER-CUT-A');
+        assert.equal(read.available, true);
+        assert.equal(read.operation.id, cutOperationBase.id);
+        assert.equal(read.operation.vehicleId, null);
+        assert.equal(read.operation.operationHash, cutOperationBase.operationHash);
+        assert.equal(read.operation.nested.keep, true);
+        assert.equal(JSON.stringify(read.operation).includes('must-not-persist'), false);
+        assert.equal(JSON.stringify(read.operation).includes('secret'), false);
+    });
+    await testAsync('AddCutOperationPending aísla snapshots por propietario', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-owner-isolation');
+        const a = { ...cutOperationBase, ownerId: 'USER-A' }, b = { ...cutOperationBase, ownerId: 'USER-B', id: 'OP-1731330000001-0123456789ABCDEF0123456789ABCDEF', operationHash: 'b'.repeat(64) };
+        assert.equal((await api.saveAddCutOperationPendingOperation(a)).saved, true);
+        assert.equal((await api.saveAddCutOperationPendingOperation(b)).saved, true);
+        assert.equal((await api.getAddCutOperationPendingOperation('USER-A')).operation.id, a.id);
+        assert.equal((await api.getAddCutOperationPendingOperation('USER-B')).operation.id, b.id);
+    });
+    await testAsync('AddCutOperationPending rechaza otro opId o huella sin sobrescribir el snapshot original', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-conflict');
+        assert.equal((await api.saveAddCutOperationPendingOperation(cutOperationBase)).saved, true);
+        const conflict = await api.saveAddCutOperationPendingOperation({ ...cutOperationBase, id: 'OP-1731330000002-0123456789ABCDEF0123456789ABCDEF', operationHash: 'c'.repeat(64) });
+        assert.equal(conflict.saved, false); assert.equal(conflict.conflict, true);
+        const mismatch = await api.saveAddCutOperationPendingOperation({ ...cutOperationBase, operationHash: 'd'.repeat(64) });
+        assert.equal(mismatch.saved, false); assert.equal(mismatch.conflict, true);
+        assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
+    });
+    await testAsync('AddCutOperationPending rechaza snapshot corrupto sin reutilizarlo', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-corrupt');
+        await api.initDB();
+        const key = 'addCutOperation:' + encodeURIComponent('USER-CUT-A');
+        h.stores.get('adminLocalState').values.set(key, { key, operation: { ...cutOperationBase, status: 'completed', operationHash: 'invalid' } });
+        const read = await api.getAddCutOperationPendingOperation('USER-CUT-A');
+        assert.equal(read.available, false); assert.equal(read.invalid, true); assert.equal(read.operation, null);
+    });
+    await testAsync('AddCutOperationPending no confirma cuota agotada ni transacción abortada', async () => {
+        const quota = await freshOffline(createIndexedDBHarness({ transactions: ['quota'] }), 'add-cut-quota');
+        const quotaResult = await quota.saveAddCutOperationPendingOperation(cutOperationBase);
+        assert.equal(quotaResult.saved, false);
+        const abort = await freshOffline(createIndexedDBHarness({ transactions: ['abort'] }), 'add-cut-abort');
+        const abortResult = await abort.saveAddCutOperationPendingOperation(cutOperationBase);
+        assert.equal(abortResult.saved, false);
+    });
+    await testAsync('AddCutOperationPending solo elimina el opId y huella exactos y conserva snapshot si aborta', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-remove-exact');
+        assert.equal((await api.saveAddCutOperationPendingOperation(cutOperationBase)).saved, true);
+        assert.equal((await api.removeAddCutOperationPendingOperation('USER-CUT-A', cutOperationBase.id, 'f'.repeat(64))).removed, false);
+        assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
+        const abortApi = await freshOffline(createIndexedDBHarness({ transactions: ['complete', 'abort'] }), 'add-cut-remove-abort');
+        assert.equal((await abortApi.saveAddCutOperationPendingOperation(cutOperationBase)).saved, true);
+        const uncertain = await abortApi.removeAddCutOperationPendingOperation('USER-CUT-A', cutOperationBase.id, cutOperationBase.operationHash);
+        assert.equal(uncertain.removed, false);
+        assert.equal((await abortApi.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
+    });
+    await testAsync('AddCutOperationPending elimina el snapshot solo tras verificar el borrado', async () => {
+        const api = await freshOffline(createIndexedDBHarness(), 'add-cut-remove-verified');
+        assert.equal((await api.saveAddCutOperationPendingOperation(cutOperationBase)).saved, true);
+        assert.equal((await api.removeAddCutOperationPendingOperation('USER-CUT-A', cutOperationBase.id, cutOperationBase.operationHash)).removed, true);
+        const read = await api.getAddCutOperationPendingOperation('USER-CUT-A');
+        assert.equal(read.available, true); assert.equal(read.operation, null);
+    });
+    await testAsync('AddCutOperationPending serializa reintentos concurrentes del mismo snapshot', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-concurrent');
+        const results = await Promise.all([
+            api.saveAddCutOperationPendingOperation(cutOperationBase),
+            api.saveAddCutOperationPendingOperation({ ...cutOperationBase })
+        ]);
+        assert.ok(results.every(result => result.saved === true));
+        assert.equal(h.maxActiveTransactions, 1);
+        assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
+    });
+
+    console.log(`\\nIndexedDB transaction tests: ${passed}/41 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
