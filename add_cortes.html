@@ -451,8 +451,13 @@
                     if (pendingOp.vehicleId !== null && String(pendingOp.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
                     const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, pendingOp.id, pendingOp.operationHash);
                     if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
+                    state.vehicleInfo = pendingOp.vehicleInfo || state.vehicleInfo || {};
                     state.opId = null; state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
                     state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                    await refreshSelectedVehicleMatch(checkRes.vehicleId, {
+                        isNewVehicle: pendingOp.vehicleId === null, slotIndex: pendingOp.vehicleId === null ? 1 : null,
+                        cutType: pendingOp.requestData && pendingOp.requestData.cutData && pendingOp.requestData.cutData.tipoCorte1
+                    });
                     alert("Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
                     proceedToStage3(checkRes.vehicleId);
                 } else {
@@ -834,6 +839,51 @@
             return cutsHtml || '<p>No hay cortes registrados aún.</p>';
         }
 
+        function getCutAvailability(match) {
+            const slots = [1, 2, 3];
+            const occupiedSlots = slots.filter(slot => {
+                const value = match && match['tipoCorte' + slot];
+                return value !== null && value !== undefined && String(value).trim() !== '';
+            });
+            const unknown = !!(match && match.cutAvailabilityUnknown === true);
+            return { occupiedCount: occupiedSlots.length, availableCount: unknown ? 0 : slots.length - occupiedSlots.length,
+                nextSlot: unknown ? null : slots.find(slot => !occupiedSlots.includes(slot)) || null,
+                hasAvailableSlots: !unknown && occupiedSlots.length < slots.length, isFull: unknown || occupiedSlots.length === slots.length };
+        }
+        function canAddVideoGuide(match) {
+            if (match && match.cutAvailabilityUnknown === true) return false;
+            return !(match && String(match.videoGuiaDesarmeUrl || '').trim());
+        }
+        function upsertFallbackVehicleMatch(vehicleId, fallback) {
+            const options = fallback && typeof fallback === 'object' ? fallback : {};
+            if (!Array.isArray(state.matches)) state.matches = [];
+            let match = state.matches.find(item => String(item.id) === String(vehicleId));
+            if (!match) { match = { ...(state.vehicleInfo || {}), id: vehicleId }; state.matches.push(match); }
+            const slot = Number(options.slotIndex);
+            if ([1, 2, 3].includes(slot)) match['tipoCorte' + slot] = String(options.cutType || '').trim() || 'Registrado';
+            if (options.isNewVehicle === true) { match.cutAvailabilityUnknown = false; match.videoGuiaDesarmeUrl = ''; }
+            else match.cutAvailabilityUnknown = true;
+            return match;
+        }
+        async function refreshSelectedVehicleMatch(vehicleId, fallback) {
+            const criteria = state.vehicleInfo || {};
+            try {
+                if (criteria.marca && criteria.modelo && criteria.anoDesde && criteria.tipoEncendido) {
+                    const response = await routeAction('checkVehicle', criteria);
+                    if (response && response.status === 'success' && Array.isArray(response.matches)) {
+                        const refreshed = response.matches.find(item => String(item.id) === String(vehicleId));
+                        if (refreshed) {
+                            delete refreshed.cutAvailabilityUnknown;
+                            if (!Array.isArray(state.matches)) state.matches = [];
+                            const index = state.matches.findIndex(item => String(item.id) === String(vehicleId));
+                            if (index >= 0) state.matches[index] = refreshed; else state.matches.push(refreshed);
+                            return refreshed;
+                        }
+                    }
+                }
+            } catch (error) { console.warn('No se pudo actualizar la disponibilidad del vehículo.', error && error.name || 'CatalogRefreshError'); }
+            return upsertFallbackVehicleMatch(vehicleId, fallback);
+        }
         function displayMatches(matches) {
             const container = document.getElementById('matches-container');
             container.innerHTML = '<h2>Vehículos Similares Encontrados</h2><p>Hemos encontrado registros que coinciden con tu búsqueda. Selecciona una opción:</p>';
@@ -849,6 +899,7 @@
 
                 const matchVersionNormalized = normalizeVersion(match.versionesAplicables);
                 const matchesUserVersion = userVersionNormalized && matchVersionNormalized && (userVersionNormalized === matchVersionNormalized);
+                const cutAvailability = getCutAvailability(match);
 
                 card.innerHTML = `
                     <div class="match-card-header">
@@ -866,7 +917,7 @@
                     <div class="inline-actions">
                         <p>¿Qué deseas hacer con este vehículo?</p>
                         <button class="btn btn-secondary btn-back-stage1">Volver</button>
-                        <button class="btn btn-primary btn-add-cut" data-id="${match.id}">Agregar Nuevo Corte</button>
+                        ${cutAvailability.hasAvailableSlots ? '<button class="btn btn-primary btn-add-cut" data-id="' + match.id + '">Agregar Nuevo Corte</button>' : ''}
                         <button class="btn btn-primary btn-add-info" data-id="${match.id}">Info. Adicional</button>
                     </div>
                 `;
@@ -924,7 +975,7 @@
             const newVehicleImageInput = document.getElementById('imagenVehiculo');
 
             if (vehicleId) {
-                const match = state.matches ? state.matches.find(m => m.id === vehicleId) : null;
+                const match = state.matches ? state.matches.find(m => String(m.id) === String(vehicleId)) : null;
                 const matchName = match ? `${match.marca} ${match.modelo}` : (state.vehicleInfo ? `${state.vehicleInfo.marca || ''} ${state.vehicleInfo.modelo || ''}` : '');
                 title.textContent = `Paso 2: Agregar Corte a ${matchName}`;
                 newVehicleFields.style.display = (state.isNewVehicleFlow && !state.selectedVehicleId) ? 'block' : 'none';
@@ -1046,6 +1097,10 @@
                     if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
                     snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                     state.selectedVehicleId = checkRes.vehicleId; state.timestamp = checkRes.timestamp || null;
+                    await refreshSelectedVehicleMatch(checkRes.vehicleId, {
+                        isNewVehicle: requestData.vehicleId === null, slotIndex: requestData.vehicleId === null ? 1 : null,
+                        cutType: requestData.cutData && requestData.cutData.tipoCorte1
+                    });
                     alert("Corte recuperado exitosamente."); proceedToStage3(checkRes.vehicleId); return;
                 }
                 if (checkRes.pending === true && checkRes.operationHash !== operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
@@ -1066,6 +1121,10 @@
                 if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
                 snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
                 state.selectedVehicleId = result.vehicleId; state.timestamp = result.timestamp || null;
+                await refreshSelectedVehicleMatch(result.vehicleId, {
+                    isNewVehicle: requestData.vehicleId === null, slotIndex: result.slotIndex,
+                    cutType: requestData.cutData && requestData.cutData.tipoCorte1
+                });
                 alert("Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
             } catch (error) {
                 console.error("[PING-PONG][ERROR] Falló el guardado de la operación.", error && error.name || 'OperationError');
@@ -1076,7 +1135,9 @@
                 }
                 const networkError = !navigator.onLine || (error && error.message && /fetch|network|timeout/i.test(error.message));
                 if (networkError) alert("Se interrumpió la comunicación. La operación y sus archivos permanecen guardados de forma durable para reintentar la misma solicitud sin duplicarla.");
-                else alert("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
+                else if (error && /No hay espacios disponibles para más cortes/i.test(String(error.message || ''))) {
+                    alert("Otro colaborador ocupó el último espacio disponible para cortes. Tus datos y archivos permanecen conservados en el formulario y en la operación pendiente; no se sobrescribió ningún corte.");
+                } else alert("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
             } finally {
                 toggleLoading(false); btn.classList.remove('btn-loading'); isSubmittingStage2 = false;
             }
@@ -1085,24 +1146,16 @@
         /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */
         function proceedToStage3(vehicleId) {
             state.selectedVehicleId = vehicleId;
-            // Check if vehicle already has a video
-            if (state.catalogData && state.catalogData.cortes) {
-                const v = state.catalogData.cortes.find(c => c.id == vehicleId);
-                const vidAcc = document.getElementById('video-accordion');
-                if (vidAcc) {
-                    if (v && v.videoGuiaDesarmeUrl) {
-                        vidAcc.style.display = 'none';
-                    } else {
-                        vidAcc.style.display = 'block';
-                    }
-                }
-            }
-            state.selectedVehicleId = vehicleId;
+            const match = (state.matches || []).find(item => String(item.id) === String(vehicleId));
+            const cutAvailability = getCutAvailability(match);
+            const secondCutAccordion = document.getElementById('second-cut-accordion');
+            if (secondCutAccordion) secondCutAccordion.style.display = cutAvailability.hasAvailableSlots ? 'block' : 'none';
+            const videoAccordion = document.getElementById('video-accordion');
+            if (videoAccordion) videoAccordion.style.display = canAddVideoGuide(match) ? 'block' : 'none';
             const warningContainer = document.getElementById('supplementary-warnings');
             warningContainer.innerHTML = '';
 
             let cableSlot = 1;
-            const match = state.matches.find(m => m.id.toString() === vehicleId.toString());
 
             const alimentacionHeader = document.querySelector('#alimentacion-accordion .accordion-header span');
             const alimentacionLabel = document.querySelector('label[for="cableAlimen"]');
