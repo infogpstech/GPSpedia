@@ -713,7 +713,7 @@ export function mapVersionsWithVins(versionesStr, vinRaw) {
         return [];
     }
 
-    // Formatear cada VIN ignorando los últimos 5 dígitos y extrayendo los 4 dígitos distintivos
+    // Normalizar VIN completos heredados y extraer los cuatro caracteres distintivos.
     const cleanedVins = rawVins.map(v => {
         if (!v) return "";
         let s = String(v).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
