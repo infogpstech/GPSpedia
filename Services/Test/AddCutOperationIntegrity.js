@@ -154,6 +154,28 @@ function runAddCutOperationIntegrityTests(sources) {
         assert_(/result\.operationHash !== operationHash/.test(submit));
         assert_(/!isValidCutVehicleId\(result\.vehicleId\)/.test(submit));
     });
+    run_('getOrGenerateOpId bloquea snapshots completed y comprueba siempre IndexedDB', () => {
+        const script = frontend.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
+        const fn = extract_(script, 'getOrGenerateOpId');
+        assert_(/getAddCutOperationPendingOperation/.test(fn));
+        assert_(/status === 'completed'/.test(fn));
+        assert_(/COMPLETED_OPERATION_REQUIRES_RECOVERY/.test(fn));
+        assert_(/state\.opId = null/.test(fn));
+    });
+    run_('una respuesta perdida antes del commit conserva snapshot failed para reintentar mismo opId', () => {
+        const submit = extract_(frontend, 'handleStage2Submit');
+        const recovery = extract_(frontend, 'checkAndRecoverPendingOperation');
+        assert_(/pendingOp\.status = serverConfirmed \? 'completed' : 'failed'/.test(submit));
+        assert_(/state\.opId = pendingOp\.id/.test(recovery));
+        assert_(/checkRes\.exists === true/.test(recovery));
+    });
+    run_('una respuesta perdida después del commit se reconcilia por huella antes de limpiar', () => {
+        const recovery = extract_(frontend, 'checkAndRecoverPendingOperation');
+        assert_(/checkRes\.exists === true/.test(recovery));
+        assert_(/checkRes\.operationHash !== pendingOp\.operationHash/.test(recovery));
+        assert_(/removeAddCutOperationPendingOperation\(pendingOp\.ownerId, pendingOp\.id, pendingOp\.operationHash\)/.test(recovery));
+        assert_(/COMPLETED_SNAPSHOT_UNRESOLVED/.test(recovery));
+    });
     run_('fallo de limpieza conserva snapshot y no libera opId', () => {
         const submit = extract_(frontend, 'handleStage2Submit');
         assert_(/if \(!removed \|\| removed\.removed !== true\) throw new Error\('PENDING_CLEANUP_UNCONFIRMED'\)/.test(submit));
