@@ -1536,3 +1536,18 @@ USERS conoce la columna sin exponerla ni permitir edición mediante updateProfil
 Pruebas locales: parsing 7/7; lógica/esquema/contratos 16/16; espejo AUTH exacto. Apps Script, Spreadsheet aislado, deployments, endpoints y navegador real no ejecutados; quedan para Beta.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Siguiente: verificar commit y detenerse; no iniciar AUG-046.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-046 — REVISIÓN LEGAL PRELIMINAR — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. HEAD al iniciar: cf04440ffb89b744e548b956d44641d97b9c16b1.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no modificada.
+Tarea activa: AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad.
+Se leyó NORMAS_DESAROLLO.md íntegramente. Se inspeccionaron el acuerdo/aviso en index.html y los módulos AUTH, USERS, FEEDBACK, ADMIN, WRITE, CATALOG, api-config.js, offline.js y el inventario documental Spreadsheet.
+Resultado técnico: Aviso Importante con dos párrafos; acuerdo de 16 secciones fechado Julio 2026. La sección 13 contiene solo una descripción general de privacidad; no se localizó un aviso independiente. Se identificaron categorías técnicas de datos, proveedores Google/YouTube usados por el código, almacenamiento local y brechas sobre retención, derechos/canal, destinatarios/transferencias, identidad corporativa, uso laboral, propiedad intelectual y deslinde.
+Documento de trabajo creado: Legal/AUG-046_revision_preliminar.md. Es un inventario técnico y lista de preguntas; no es dictamen ni texto legal aprobado. No se modificó el acuerdo ni su versión y no se tocaron deployments/datos productivos.
+Bloqueo: falta identificar al responsable legal competente y confirmar jurisdicción, identidad/domicilio de Motorlink S.A., relación TRACKLINK/GPSpedia, flujos reales de datos, proveedores/transferencias, retención y canal de solicitudes. Sin esas decisiones no es posible cumplir los criterios de aprobación ni redactar afirmaciones verificables.
+Estado AUG-046: BLOQUEADA — revisión técnica preliminar documentada; aprobación legal y confirmaciones operativas pendientes.
+Siguiente paso al reanudar: obtener responsable legal y confirmaciones corporativas/operativas; preparar propuesta de texto para revisión formal. No desplegar ni cambiar versión legal hasta aprobación. No iniciar AUG-047.
+================================================================================

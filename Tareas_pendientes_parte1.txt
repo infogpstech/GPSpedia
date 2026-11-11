@@ -644,7 +644,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Aprobar texto, versión y fecha efectiva; mantener consistencia con aviso inicial y aceptación.
   6. Registrar aprobación antes de desplegar versión legal definitiva.
 - Relación: AUD-T-036; AUG-045; AUD-T-023/AUD-T-024.
-- Estado: NUEVA; revisión y aprobación pendientes.
+- Estado: BLOQUEADA — revisión técnica preliminar documentada; pendiente identificar y obtener aprobación del responsable legal competente y confirmar datos operativos/jurisdicción. No se ha emitido dictamen ni se ha modificado el texto legal.
 
 ### AUG-047 — Completar accesibilidad, navegación y disponibilidad offline de modales legales
 - Origen: H-AUD-036-004/005. Prioridad baja/media.

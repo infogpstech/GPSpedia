@@ -968,3 +968,11 @@ AUG-045 — ACEPTACIÓN VERSIONADA DE TÉRMINOS
 - Spreadsheet/GPSpedia_DB_columnas.md: estructura objetivo Users!I, sin afirmar migración física.
 - Services/Test/TermsAcceptance.js y README: pruebas de parseo, esquema y contratos.
 ================================================================================
+
+
+================================================================================
+AUG-046 — REVISIÓN TÉCNICA PRELIMINAR — 2026-11-10
+- Se creó Legal/AUG-046_revision_preliminar.md con inventario estático de los textos vigentes, categorías de datos observables, brechas y confirmaciones necesarias.
+- Se actualizó el estado de AUG-046 a BLOQUEADA por falta de responsable legal identificado y de confirmaciones de jurisdicción/tratamiento real.
+- No se modificaron el acuerdo, el aviso, la versión 2026-07, el frontend ni servicios. No se emitió aprobación jurídica ni se tocaron datos productivos/deployments.
+================================================================================
