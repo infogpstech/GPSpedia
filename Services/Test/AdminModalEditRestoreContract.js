@@ -29,5 +29,21 @@ function runAdminModalEditRestoreContractTests(uiSource, adminSource) {
         assert(!/const fieldsToRestore\s*=\s*Object\.keys\(backupSnapshot\)/.test(ui),
             "Se encontró restauración indiscriminada del snapshot completo.");
     });
+
+    run("not_found conserva la operación local y detiene el descarte", () => {
+        const resolver = ui.slice(
+            ui.indexOf("async function resolvePendingAdminImageOperationsBeforeDiscard_"),
+            ui.indexOf("async function exitModalEditMode")
+        );
+        assert(/if\s*\(operationStatus\s*===\s*["']not_found["']\)\s*\{[\s\S]*?throw new Error/.test(resolver),
+            "not_found no detiene el descarte.");
+        assert(/isAdminImageUploadStatusConfirmedCancelled\(operationStatus\)/.test(resolver),
+            "La limpieza no exige cancelación explícita.");
+        assert(!/operationStatus\s*===\s*["']cancelled["']\s*\|\|\s*operationStatus\s*===\s*["']not_found["']/.test(resolver),
+            "not_found todavía se trata como cancelación.");
+        const missingIndex = resolver.indexOf('operationStatus === "not_found"');
+        const clearIndex = resolver.indexOf("removePendingAdminImageUploadConfirmed_(operation)", missingIndex);
+        assert(clearIndex === -1, "El camino not_found intenta borrar el snapshot local.");
+    });
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
