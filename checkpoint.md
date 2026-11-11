@@ -302,3 +302,20 @@ Siguiente paso: construir el inventario exhaustivo de campos editables del modal
 HEAD previo de trabajo: 59593677c5444f20a3746d3b45ea24a6148ed53f. Rama base intacta: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 No iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 9 — 2026-11-11 — INVENTARIO DEL MODAL Y HALLAZGO DE ESTADO DE IMAGEN
+Estado: ANÁLISIS DE INTEGRACIÓN COMPLETADO; implementación de autorización Gefe aún pendiente.
+Rama: GPSpedia2.2.5_work. HEAD verificado antes del checkpoint: cfde5c8eba57f554dd8d7604bf6f47d42dc272de. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Inventario de campos que el editor in-modal guarda mediante updateVehicleField:
+- Campos generales: modelo, versionesAplicables, tipoEncendido, anoDesde, anoHasta, categoria, vin y notaImportante.
+- Campos de cortes dinámicos: tipoCorte{idx}, configRelay{idx}, ubicacionCorte{idx} y colorCableCorte{idx}; el índice proviene del corte renderizado.
+- Descripciones: apertura, cableAlimen, cableAlimen2 y cableAlimen3.
+- Imágenes reemplazables: imagenVehiculo, imgCorte1, imgCorte2, imgCorte3, imgApertura, imgCableAlimen, imgCableAlimen2 e imgCableAlimen3.
+El descarte restaura los campos modificados del snapshot mediante la misma acción updateVehicleField y verifica después la lectura de getCatalogData. Los reemplazos se envían mediante uploadAdminImage y se conservan en IndexedDB por propietario mientras no se confirme su resultado.
+Hallazgo de integración confirmado: ui.js invoca routeAction("getAdminImageUploadStatus", ...) antes de descartar para resolver operaciones pendientes, pero la acción no está declarada en ACTION_TO_SERVICE_MAP de api-config.js, no tiene caso en el dispatcher Services/admin.js y no aparece implementada en Services/write.js, catalog.js, feedback.js ni users.js. La búsqueda por los archivos de servicio del repositorio no encontró implementación. Por tanto, routeAction falla en cliente por acción no definida y el flujo de descarte no puede completar la reconciliación de reemplazos pendientes, independientemente del rol. Este endpoint debe implementarse y probarse antes de declarar completo el acceso Gefe al flujo de edición.
+Autorización actual confirmada: doPostInternal_ valida assertDeveloperSession para toda acción ADMIN excepto ping; el helper revalida ActiveSessions y Users y exige rol desarrollador. El permiso Gefe deberá ser explícito únicamente para updateVehicleField, uploadAdminImage y la nueva consulta de estado; las demás acciones ADMIN conservarán el requisito Desarrollador. El rol jefe sigue excluido.
+No se modificó código funcional ni se cambiaron permisos en esta iteración. No se modificó la rama base. La lista de campos anterior es el inventario observado en los editores actuales; antes de implementar la whitelist del servidor se contrastará contra COLS_CORTES y el esquema del registro para evitar omisiones o permitir columnas ajenas al modal.
+Siguiente iteración: definir la whitelist de campos in-modal a partir de COLS_CORTES, implementar helper de sesión para Desarrollador/Gefe solo en las acciones explícitas, implementar getAdminImageUploadStatus con verificación del ledger/archivo, añadir pruebas de contrato por rol/campo/estado y actualizar el contexto UI para Gefe. No iniciar AUG-054.
+================================================================================
