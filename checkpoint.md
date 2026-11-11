@@ -427,3 +427,16 @@ Commit de implementación: 763110b53c974770c12e81bce764957e432b8566 (padre 509cc
 Validación realizada en runtime V8: parsing de ui.js (bloques setOptimizedImage/getImageUrl), offline.js, IndexedDBTransactions.js e ImageResolutionVariants.js PASS. Helpers ejecutados: URL fuente original idéntica para 300/800/1600; claves normalizadas distintas por ancho PASS. readFreshThumbnail devuelve Blob válido y rechaza/elimina un registro con ancho discordante PASS.
 Pendiente: ejecutar las suites Node completas. No fue posible resolver DNS de GitHub desde el entorno de contenedor; no afirmar ejecución de Node CLI. La suite IndexedDBTransactions debe ejecutarse/adaptarse localmente antes de cerrar AUG-065. No iniciar AUG-066.
 ================================================================================
+
+
+================================================================================
+AUG-065 — CIERRE LOCAL — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD confirmado antes del registro: ae2abe19ea1f67fe5aab3cf5b12c411f78b5df8b. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- Suites ejecutadas en runtime V8 adaptado con fuentes actuales: ImageResolutionVariants.js PASS; IndexedDBTransactions.js 44/44 PASS.
+- La validación detectó fixtures inconsistentes con la identidad estricta de caché: las semillas LRU usaban fileId sin el relleno de ceros presente en la clave; se corrigieron LRU y eliminación diferida. El escenario de aborto configuraba tres transacciones aunque el flujo actual utiliza dos; se ajustó a ['complete','abort'].
+- Commits de corrección: a2d07d78be59435ff037bba2bc9041eadc3fff6d y ae2abe19ea1f67fe5aab3cf5b12c411f78b5df8b.
+- Node CLI literal no ejecutado; el entorno no tenía checkout local y el contenedor no resolvió DNS de GitHub. La validación V8 adaptada ejecutó el código real de offline.js y el contenido íntegro de ambas suites con adaptadores de imports/IndexedDB/Blob.
+Pendiente para Beta: IndexedDB/Canvas/navegador reales, validación de alfa PNG por píxeles, visualización y calidad con imágenes representativas online/offline. No se modificaron servicios, endpoints ni datos productivos.
+AUG-065 cerrada localmente. AUG-066 queda como siguiente tarea; no se inicia en esta iteración.
+================================================================================
