@@ -352,3 +352,8 @@ Cuando una escritura de miniatura falla con `QuotaExceededError`, la aplicación
 ### Image ObjectURL lifecycle
 
 Ejecutar `node --experimental-default-type=module Services/Test/ImageObjectUrlLifecycle.js`. La suite verifica referencias compartidas, liberación al reemplazar una imagen, descarte de respuestas asíncronas obsoletas, limpieza al retirar elementos del DOM y rechazo de URL para elementos todavía desconectados. La prueba usa URL y MutationObserver simulados; la observación de DOM real queda reservada a Beta.
+
+
+### Presupuesto de memoria RAM para miniaturas (AUG-051)
+
+El registro de ObjectURL limita a **64 MiB** la suma de Blob.size de las miniaturas retenidas por URL activas. Si una nueva miniatura supera el presupuesto disponible, no se crea ObjectURL y la interfaz conserva la ruta remota como alternativa. Las referencias compartidas contabilizan el Blob una sola vez y el presupuesto se libera al revocar la URL cuando sale el último consumidor. Este límite cubre bytes de Blob retenidos por el registro; no mide memoria de imágenes decodificadas, superficies GPU ni imágenes cargadas directamente desde red. Ejecutar `node --experimental-default-type=module Services/Test/ImageObjectUrlLifecycle.js`.

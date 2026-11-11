@@ -1,4 +1,13 @@
 ================================================================================
+CHECKPOINT ACTIVO — GPSpedia — 2026-11-11
+AUG-051 — ITERACIÓN 9 — PRESUPUESTO RAM DE MINIATURAS
+Estado: EN VALIDACIÓN LOCAL.
+Rama: GPSpedia2.2.5_work. HEAD de partida: f4cf944ad37515e8408057f3b3935af67d04e2c3.
+Se limita a 64 MiB el total de Blob.size retenido por ObjectURL activos. Las URL compartidas se cuentan una vez; si una nueva miniatura no cabe, attach devuelve null y ui.js mantiene fallback remoto. Al salir el último consumidor, la revocación libera los bytes contabilizados.
+El límite no representa RAM total: excluye superficies decodificadas/GPU y recursos remotos. Suite ampliada a 10 escenarios. Siguiente: cerrar solo esta iteración; concurrencia y AUG-052 fuera de alcance.
+================================================================================
+
+================================================================================
 AUG-051 — ITERACIÓN 7 — 2026-11-11
 Estado: BLOQUEADA POR DEPENDENCIA TÉCNICA; sin cambios funcionales.
 Rama: GPSpedia2.2.5_work. HEAD de análisis: 51fae20e1e90d224ee4d833978a7802a9434e07b. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.

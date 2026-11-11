@@ -741,7 +741,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - Relación: AUD-T-037; AUG-031 para estado local de auditoría Drive, sin reutilizar su store administrativo.
 - Estado: EN PROGRESO; iteraciones 1 a 3 implementadas. Transacciones esperan commit; historial, vistos y validationCache están aislados por cuenta. Las miniaturas se separan por ancho solicitado (100–1600 px), conservan proporción, no amplían imágenes pequeñas y cierran ImageBitmap; imgApertura está incluida. Compatibilidad de lectura con miniaturas antiguas preservada.
 - Validación local: parsing y harness aislado de IndexedDB/Canvas aprobados; Node CLI y navegador real no ejecutados.
-- TTL/LRU/cuota y revocación segura de ObjectURL implementados; resta límite RAM cuantitativo, concurrencia de compresión y pruebas offline/multi-pestaña/imagen.
+- TTL/LRU/cuota, revocación segura de ObjectURL y presupuesto RAM de 64 MiB para Blob activos implementados; resta concurrencia de compresión y pruebas offline/multi-pestaña/imagen.
 - Checkpoint de iteración: checkpoint.md.
 
 ### AUG-052 — Robustecer carga inicial, deep links y estrategia PWA/backend de catálogo
@@ -860,3 +860,7 @@ Persistencia integrada; identidad classKey; ambigüedad visible sin autoapertura
 
 AUG-051 — ITERACIÓN 8 — 2026-11-11
 Ciclo de vida ObjectURL implementado en imageObjectUrlCache.js y ui.js; siete pruebas sintéticas aprobadas. Validación real de MutationObserver/navegador diferida a Beta. Siguiente: límite RAM cuantitativo.
+
+
+AUG-051 — ITERACIÓN 9 — 2026-11-11
+Presupuesto de 64 MiB para Blob activos por ObjectURL; sin capacidad se omite URL y se usa fallback remoto. El límite no incluye memoria decodificada/GPU ni recursos remotos. Suite ampliada a 10 escenarios.

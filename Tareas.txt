@@ -978,3 +978,11 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Se añadió imageObjectUrlCache.js con referencias por elemento y revocación al quedar sin consumidores; MutationObserver libera imágenes retiradas del DOM. ui.js evita URLs huérfanas, carreras de carga y referencias sin consumidor durante compresión. Suite ImageObjectUrlLifecycle: 7/7 PASS local; navegador real pendiente de Beta.
 Siguiente: límite RAM cuantitativo de miniaturas. No iniciar concurrencia de compresión ni AUG-052.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ITERACIÓN 9 — PRESUPUESTO RAM OBJECTURL — 2026-11-11
+Estado: EN VALIDACIÓN LOCAL.
+Presupuesto predeterminado 64 MiB para Blob retenidos por ObjectURL activos. URLs compartidas se contabilizan una vez; sin capacidad se usa fallback remoto y se libera presupuesto al revocar el último consumidor. No representa RAM total ni memoria decodificada/GPU.
+Suite ampliada a 10 escenarios. Siguiente: verificar y cerrar esta iteración. Concurrencia y AUG-052 fuera de alcance.
+================================================================================

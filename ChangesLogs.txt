@@ -1338,3 +1338,11 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Services/Test/README.md: instrucciones y límites de la suite.
 - La validación de MutationObserver/navegador real queda diferida a Beta. El límite RAM cuantitativo no se implementa en esta iteración.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — PRESUPUESTO RAM PARA OBJECTURL (ITERACIÓN 9)
+- imageObjectUrlCache.js: presupuesto configurable de 64 MiB para Blob.size retenido por ObjectURL activos; rechaza nuevas URL si no hay capacidad, contabiliza referencias compartidas una vez y libera bytes al revocar la URL.
+- Services/Test/ImageObjectUrlLifecycle.js: pruebas de exceso, contabilidad compartida y recuperación del presupuesto.
+- Services/Test/README.md: alcance del límite y exclusiones de memoria decodificada/GPU y recursos remotos.
+================================================================================

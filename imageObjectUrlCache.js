@@ -1,13 +1,17 @@
 /**
  * Administra ObjectURL de miniaturas mientras existen elementos img consumidores.
  * Cada URL se revoca al quedar sin consumidores o cuando su elemento sale del DOM.
+ * El presupuesto limita bytes Blob retenidos por URL activa; no estima superficies decodificadas/GPU.
  */
 export function createObjectUrlRegistry({
     urlApi = URL,
     MutationObserverCtor = globalThis.MutationObserver,
-    observationRoot = null
+    observationRoot = null,
+    maxBytes = 64 * 1024 * 1024
 } = {}) {
+    const memoryBudget = Number.isFinite(maxBytes) && maxBytes >= 0 ? maxBytes : 64 * 1024 * 1024;
     const entries = new Map();
+    let retainedBytes = 0;
     const elementEntries = new WeakMap();
     const generations = new WeakMap();
     let observer = null;
@@ -21,6 +25,7 @@ export function createObjectUrlRegistry({
         entry.elements.delete(element);
         if (entry.elements.size === 0) {
             urlApi.revokeObjectURL(entry.url);
+            retainedBytes = Math.max(0, retainedBytes - entry.bytes);
             entries.delete(cacheKey);
         }
         return true;
@@ -70,8 +75,11 @@ export function createObjectUrlRegistry({
 
         let entry = entries.get(cacheKey);
         if (!entry) {
-            entry = { url: urlApi.createObjectURL(blob), elements: new Set() };
+            const blobBytes = blob && Number(blob.size);
+            if (!Number.isFinite(blobBytes) || blobBytes < 0 || blobBytes > memoryBudget || retainedBytes + blobBytes > memoryBudget) return null;
+            entry = { url: urlApi.createObjectURL(blob), elements: new Set(), bytes: blobBytes };
             entries.set(cacheKey, entry);
+            retainedBytes += blobBytes;
         }
 
         entry.elements.add(element);
@@ -85,9 +93,14 @@ export function createObjectUrlRegistry({
         observer = null;
         for (const entry of entries.values()) urlApi.revokeObjectURL(entry.url);
         entries.clear();
+        retainedBytes = 0;
     }
 
-    return { begin, isCurrent, attach, release, dispose };
+    function getStats() {
+        return { entries: entries.size, retainedBytes, maxBytes: memoryBudget };
+    }
+
+    return { begin, isCurrent, attach, release, dispose, getStats };
 }
 
 export const thumbnailObjectUrls = createObjectUrlRegistry();
