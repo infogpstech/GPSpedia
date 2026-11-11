@@ -201,3 +201,25 @@ Validaciones diferidas a Beta (no bloquean el cierre local): navegador/IndexedDB
 
 La tarea queda cerrada. AUG-054 permanece como tarea posterior y no se inicia en este checkpoint.
 ================================================================================
+
+
+================================================================================
+AUG-054 — CIERRE — ITERACIÓN 27 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: f67c4124d21cc1e7cd52a8f226e2e6de94c11ad9. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Resolución:
+- Services/write.js: se confirma la validación de sesión activa y perfil autorizado antes de consultar opId. La respuesta queda minimizada: estado, exists/pending, operationStatus y, para completadas, vehicleId/timestamp; no expone rowData.
+- Política actor-operación: colaborativa para todos los colaboradores autenticados con rol permitido. La hoja A:E no registra propietario; la recuperación por otro técnico es un flujo admitido. No se impone aislamiento por actor ni se usa opId como credencial.
+- add_cortes.html: opId incorpora 128 bits de crypto.getRandomValues y conserva el prefijo OP- y timestamp. Sin crypto, falla explícitamente; no degrada a Math.random.
+- Services/Test/CheckOperationSecurity.js: 12 contratos locales de autenticación previa, acceso colaborativo, estados, minimización y generación criptográfica.
+- README de pruebas, backlog y ChangesLogs.txt actualizados.
+
+Validación:
+- CheckOperationSecurity: 12/12 PASS en runtime JavaScript local del adaptador, ejecutando el handler real con dobles de Spreadsheet y autenticación; sin endpoints ni servicios externos.
+- El análisis del helper confirma token único, ActiveSessions, expiración, perfil único en Users y rechazo de revocación/roles no permitidos.
+- Apps Script y Spreadsheet reales no ejecutados; integración reservada a Beta.
+- Rama base sin modificaciones.
+
+AUG-054 queda cerrada. La siguiente tarea no se inicia en esta iteración.
+================================================================================
