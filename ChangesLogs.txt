@@ -1056,3 +1056,13 @@ AUG-046 — CICLO DE VIDA DE VÍDEOS DE YOUTUBE — 2026-11-10
 - checkpoint.md: registra el alcance, los límites de verificación y la continuidad exclusiva de AUG-046.
 - No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación, endpoints, deployments, canal de YouTube ni datos productivos.
 ================================================================================
+
+
+
+================================================================================
+AUG-046 — CICLO DE VIDA DE IMÁGENES EN SUGERENCIAS DE CORTES — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 13 documenta la carga de imágenes de sugerencias en Drive con permiso ANYONE_WITH_LINK/VIEW, su referencia en Feedbacks y el efecto de deleteFeedbackItem: elimina la fila del Inbox, pero el handler revisado no elimina el archivo ni revoca su compartición.
+- Tareas_pendientes_parte1.txt: se añadió el avance técnico a AUG-046; la tarea permanece EN PROGRESO.
+- checkpoint.md: registra evidencia, límites de la revisión estática y continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments, archivos de Drive ni datos productivos.
+================================================================================
