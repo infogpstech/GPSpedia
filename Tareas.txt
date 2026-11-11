@@ -923,5 +923,5 @@ Estado: EN PROGRESO.
 Implementación: TTL persistente de 30 días; variantes vencidas se eliminan al consultar y se ejecuta limpieza oportunista de entradas vencidas con clave registrada. Registros heredados sin timestamp se descartan al primer acceso.
 Prueba añadida: IndexedDBTransactions.js — expiración, eliminación y regeneración.
 Pendiente: LRU y cuota total de IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; pruebas de navegador real y multi-pestaña.
-Siguiente iteración: implementar LRU como una única tarea. No iniciar AUG-052.
+Siguiente acción: ejecutar la suite IndexedDBTransactions.js en Node CLI local para validar TTL. Si aprueba, implementar LRU en una iteración separada. No iniciar AUG-052.
 ================================================================================

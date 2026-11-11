@@ -7,7 +7,7 @@ Archivos funcionales: offline.js. Suite: Services/Test/IndexedDBTransactions.js 
 Compatibilidad: no se modifica DB_VERSION ni la estructura de stores. Las claves heredadas sin metadatos temporales verificables se descartan al consultarse.
 Validación: parsing sintáctico de offline.js y Services/Test/IndexedDBTransactions.js aprobado con parser V8 tras retirar únicamente export/import de módulo. La suite funcional no se ejecutó en Node CLI; el runner disponible no ofrece temporizadores Node y la ejecución adaptada agotó el tiempo. Diff remoto limitado a los archivos de AUG-051; revisión de lógica y cambios pendientes de validación local reproducible.
 Pendiente: LRU y límite total de cuota IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; pruebas de navegador real y multi-pestaña.
-Siguiente iteración: implementar LRU como una única tarea. No iniciar AUG-052.
+Siguiente acción obligatoria: ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js en Node CLI local. Si aprueba, dedicar la siguiente iteración exclusivamente a implementar LRU. No iniciar AUG-052.
 ================================================================================
 
 # Checkpoint activo — GPSpedia
