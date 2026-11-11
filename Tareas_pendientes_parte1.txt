@@ -832,7 +832,7 @@ Iteración 17: COMPLETADA CON VALIDACIÓN DIFERIDA (el harness IndexedDB ahora s
   4. Si otro usuario ocupa el último slot después de mostrar la opción, conservar los datos del formulario y comunicar la indisponibilidad sin duplicar ni sobrescribir.
   5. Probar 0/1/2/3 slots, vehículo nuevo/existente, video presente/ausente y actualización concurrente.
 - **Relación:** AUD-T-003; AUG-043 (enlace y ciclo de vídeo); AUG-039 (escritura suplementaria).
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; cierre documentado en checkpoint.md y Auditoría.txt.
 
 ### AUG-057 — Restaurar el estado del formulario ante fallos de lectura de archivos
 - **Origen:** H-AUD-003-003. **Prioridad:** Media.
