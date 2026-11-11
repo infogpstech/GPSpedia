@@ -322,6 +322,11 @@ Verifica igualdad de carácter por posición en `extractSharedChars`, mapeo por 
 La suite `Services/Test/IndexedDBTransactions.js` verifica aislamiento de `searchHistory`, `viewedItems` y `validationCache` por `userId`, rechazo de operaciones sin propietario y exclusión de consultas potencialmente VIN. Las entradas heredadas sin propietario nunca se muestran a una cuenta; no se cambia el esquema físico ni se atribuyen registros antiguos a un usuario sin evidencia. Node CLI, IndexedDB real, dos cuentas y dos pestañas siguen pendientes de validación en el entorno local/Beta.
 
 
+## Caducidad TTL de miniaturas (AUG-051 — iteración 4)
+
+Ejecutar `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+La suite comprueba que una miniatura con más de 30 días se elimina y no se devuelve, y que puede regenerarse al solicitarla de nuevo. La limpieza oportunista retira entradas vencidas con metadatos de clave; registros heredados sin fecha se consideran caducados al consultarse. LRU, cuota total, límite RAM, ObjectURL y concurrencia quedan pendientes.
+
 ## Variantes de miniaturas por tamaño (AUG-051 — iteración 3)
 
 La suite `Services/Test/IndexedDBTransactions.js` incluye un escenario que genera y recupera variantes independientes de 300 y 800 px, verifica que no se confundan con una variante de 1600 px y comprueba la liberación de `ImageBitmap.close()`. El escenario usa IndexedDB y Canvas simulados; no sustituye pruebas de navegador real ni de imágenes transparentes.

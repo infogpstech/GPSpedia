@@ -78,7 +78,17 @@ function createIndexedDBHarness(options = {}) {
                                 if (request.onsuccess) request.onsuccess();
                                 queueMicrotask(() => {
                                     if (tx.oncomplete) tx.oncomplete();
-                                });
+                                },);
+                            });
+                            return request;
+                        }
+                        delete(key) {
+                            const request = {};
+                            queueMicrotask(() => {
+                                record.values.delete(key);
+                                request.result = undefined;
+                                if (request.onsuccess) request.onsuccess();
+                                queueMicrotask(() => { if (tx.oncomplete) tx.oncomplete(); });
                             });
                             return request;
                         }
@@ -112,7 +122,7 @@ function createIndexedDBHarness(options = {}) {
             return request;
         }
     };
-    return { indexedDB, database, connections, get openCount() { return openCount; } };
+    return { indexedDB, database, connections, stores, get openCount() { return openCount; } };
 }
 
 async function freshOffline(harness, label) {
@@ -204,7 +214,24 @@ async function runIndexedDBTransactionTests() {
             assert.equal((await api.getThumbnail('drive-file-123',1600))??null,null);
         }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/9 PASS`);
+    await testAsync('miniaturas caducadas por TTL se eliminan y pueden regenerarse',async()=>{
+        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-ttl');
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:640,height:480,close(){}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            await api.compressAndStoreThumbnail('https://images.example/ttl.png','ttl-file-123',300);
+            const store=harness.stores.get('thumbnails'),key='ttl-file-123::w300',entry=store.values.get(key);
+            assert.ok(entry&&entry.cachedAt);
+            entry.cachedAt=Date.now()-(31*24*60*60*1000);store.values.set(key,entry);
+            assert.equal(await api.getThumbnail('ttl-file-123',300),null);
+            assert.equal(store.values.has(key),false);
+            await api.compressAndStoreThumbnail('https://images.example/ttl.png','ttl-file-123',300);
+            assert.ok(await api.getThumbnail('ttl-file-123',300));
+        }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
+    console.log(`\nIndexedDB transaction tests: ${passed}/10 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

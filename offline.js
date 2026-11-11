@@ -725,6 +725,30 @@ function normalizeThumbnailSize(size=400){
 }
 function buildThumbnailCacheKey(fileId,size){return fileId+"::w"+normalizeThumbnailSize(size);}
 
+// TTL persistente: 30 días desde la generación de cada variante.
+const THUMBNAIL_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+function isThumbnailExpired(entry, now = Date.now()) {
+ const cachedAt = entry && Number(entry.cachedAt);
+ return !Number.isFinite(cachedAt) || cachedAt <= 0 || now - cachedAt >= THUMBNAIL_TTL_MS;
+}
+async function purgeExpiredThumbnailEntries(now = Date.now()) {
+ const entries = await performOp("thumbnails", "readonly", store => store.getAll());
+ if (!Array.isArray(entries) || !entries.length) return;
+ const keys = entries.filter(entry => entry && typeof entry === "object" &&
+  !(typeof Blob !== "undefined" && entry instanceof Blob) &&
+  isThumbnailExpired(entry, now) && typeof entry.key === "string").map(entry => entry.key);
+ await Promise.all(keys.map(key => performOp("thumbnails", "readwrite", store => store.delete(key))));
+}
+async function readFreshThumbnail(key) {
+ const entry = await performOp("thumbnails", "readonly", store => store.get(key));
+ if (!entry) return null;
+ if (isThumbnailExpired(entry)) {
+  await performOp("thumbnails", "readwrite", store => store.delete(key));
+  return null;
+ }
+ return entry.blob || entry;
+}
+
 /** Compresión por variante; conserva compatibilidad de lectura con claves antiguas. */
 export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400){
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
@@ -733,7 +757,7 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
  const fetchUrl=fileId.length>20&&!fileId.includes("/")&&!fileId.includes("http")?`https://lh3.googleusercontent.com/d/${fileId}`:url;
  if(!fetchUrl||fetchUrl.includes("placehold.co"))return null;
  try{
-  const cached=await performOp("thumbnails","readonly",store=>store.get(cacheKey));if(cached)return cached.blob||cached;
+  const cached=await readFreshThumbnail(cacheKey);if(cached)return cached;
   const response=await fetch(fetchUrl,{mode:"cors"});if(!response.ok)return null;
   const bitmap=await createImageBitmap(await response.blob());
   try{
@@ -753,9 +777,17 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
 }
 export async function getThumbnail(rawFileId,requestedSize=400){
  const fileId=normalizeId(rawFileId);if(!fileId||typeof fileId!=="string")return null;
- const cached=await performOp("thumbnails","readonly",store=>store.get(buildThumbnailCacheKey(fileId,requestedSize)));
- if(cached)return cached.blob||cached;
- return performOp("thumbnails","readonly",store=>store.get(fileId));
+ await purgeExpiredThumbnailEntries();
+ const cached=await readFreshThumbnail(buildThumbnailCacheKey(fileId,requestedSize));
+ if(cached)return cached;
+ // Los registros heredados sin fecha verificable se descartan al primer acceso.
+ const legacy=await performOp("thumbnails","readonly",store=>store.get(fileId));
+ if(!legacy)return null;
+ if(isThumbnailExpired(legacy)){
+  await performOp("thumbnails","readwrite",store=>store.delete(fileId));
+  return null;
+ }
+ return legacy.blob||legacy;
 }
 
 /**

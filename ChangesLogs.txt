@@ -1258,3 +1258,11 @@ AUG-050 — CIERRE DE INTEGRACIÓN DEL MOTOR DIFERENCIAL VIN — 2026-11-11
 - Services/Test/IndexedDBTransactions.js incorpora regresión de variantes 300/800 px y liberación de bitmap.
 - Sin cambio de DB_VERSION, stores, catálogo, endpoints, servicios productivos ni datos remotos.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — ITERACIÓN 4 — CADUCIDAD TTL DE MINIATURAS
+Se añadió expiración de 30 días para miniaturas persistentes. Las lecturas descartan y eliminan variantes vencidas; las operaciones de caché realizan limpieza oportunista de entradas vencidas con metadatos de clave. Los registros heredados sin fecha se consideran caducados al primer acceso.
+Archivos: offline.js; Services/Test/IndexedDBTransactions.js; Services/Test/README.md; checkpoint.md; ChangesLogs.txt; Tareas.txt.
+La suite incorpora un caso de expiración, eliminación y regeneración. No se modificó DB_VERSION ni la estructura de stores. LRU, cuota, memoria RAM, ObjectURL y concurrencia permanecen pendientes.
+================================================================================

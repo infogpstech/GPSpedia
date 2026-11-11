@@ -1,13 +1,13 @@
 ================================================================================
-AUG-051 — ITERACIÓN 3 — 2026-11-11
+AUG-051 — ITERACIÓN 4 — 2026-11-11
 Estado: EN PROGRESO.
-Rama: GPSpedia2.2.5_work. Commit de inicio: 52970066fe206aadbccd16529f1ed87dca57a71e.
-Resultado: las miniaturas se guardan y recuperan por variante de ancho (claves independientes por tamaño, con límite normalizado de 100 a 1600 px). La compresión conserva la proporción, no amplía imágenes pequeñas y cierra ImageBitmap en finally. cacheItemImages incluye imgApertura. ui.js utiliza la misma variante de tamaño para memoria, IndexedDB y compresión.
-Compatibilidad: getThumbnail conserva lectura de las claves antiguas sin tamaño; no se cambia DB_VERSION ni se recrean stores.
-Archivos funcionales: offline.js, ui.js. Suite: Services/Test/IndexedDBTransactions.js (escenario de variantes 300/800 px y liberación de bitmap).
-Validación local: parsing sintáctico de los tres archivos modificados aprobado; harness aislado de IndexedDB/Canvas aprobó variantes 300/800, recuperación independiente, ausencia de variante 1600 y cierre de ambos bitmaps. Node CLI y navegador real no ejecutados.
-Pendiente: cuota/LRU/TTL de thumbnails; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; validación offline, imágenes transparentes/pequeñas/grandes y multi-pestaña.
-Siguiente iteración: implementar una política acotada de almacenamiento persistente (TTL/LRU/cuota) para miniaturas. No iniciar AUG-052.
+Rama: GPSpedia2.2.5_work. Commit de inicio: 00f1c07ae09e4b248d426c673ca7c2d2e455dcf2.
+Resultado: TTL de 30 días para miniaturas persistentes. Las variantes vencidas se eliminan al consultarse; la lectura/compresión ejecuta limpieza oportunista de entradas vencidas con clave registrada. Los registros heredados sin timestamp se consideran caducados al primer acceso.
+Archivos funcionales: offline.js. Suite: Services/Test/IndexedDBTransactions.js (expiración, eliminación y regeneración).
+Compatibilidad: no se modifica DB_VERSION ni la estructura de stores. Las claves heredadas sin metadatos temporales verificables se descartan al consultarse.
+Validación: suite IndexedDBTransactions.js y parsing/diff pendientes de ejecutar y verificar antes del cierre.
+Pendiente: LRU y límite total de cuota IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; pruebas de navegador real y multi-pestaña.
+Siguiente iteración: implementar LRU como una única tarea. No iniciar AUG-052.
 ================================================================================
 
 # Checkpoint activo — GPSpedia

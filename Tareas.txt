@@ -914,3 +914,14 @@ Fecha: 2026-11-11. Estado: EN PROGRESO.
 Iteraciones 1 a 3: transacciones IndexedDB esperan commit; sesiones e historial local quedan aislados por userId y las consultas potencialmente VIN no se guardan. Las miniaturas tienen claves independientes por ancho solicitado, compatibilidad de lectura con entradas antiguas, proporción conservada, no ampliación de imágenes pequeñas, cierre de ImageBitmap e inclusión de imgApertura. Suite sintética ampliada; parsing y harness aislado aprobados. Node CLI y navegador real pendientes.
 Checkpoint: checkpoint.md. No iniciar AUG-052. Siguiente iteración: política TTL/LRU/cuota de miniaturas, límite RAM, revocación segura de ObjectURL y concurrencia de compresión.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ITERACIÓN 4 — CADUCIDAD TTL DE MINIATURAS
+Fecha: 2026-11-11.
+Estado: EN PROGRESO.
+Implementación: TTL persistente de 30 días; variantes vencidas se eliminan al consultar y se ejecuta limpieza oportunista de entradas vencidas con clave registrada. Registros heredados sin timestamp se descartan al primer acceso.
+Prueba añadida: IndexedDBTransactions.js — expiración, eliminación y regeneración.
+Pendiente: LRU y cuota total de IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; pruebas de navegador real y multi-pestaña.
+Siguiente iteración: implementar LRU como una única tarea. No iniciar AUG-052.
+================================================================================
