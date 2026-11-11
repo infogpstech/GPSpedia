@@ -4425,7 +4425,7 @@ function buildCortesOperationIdMigrationPlan(sheet) {
     };
 }
 
-function getNewIdempotenciaEntries(entries,map){const entriesToWrite=[],entriesToComplete=[];let alreadyPresent=0;entries.forEach(e=>{if(map.has(e.opId)){const old=map.get(e.opId);if(old.vehicleId!==String(e.vehicleId).trim()||Number(old.slotIndex)!==Number(e.slotIndex))throw Error("El opId "+e.opId+" ya existe en Idempotencia con una asociación diferente.");if(old.status==="pending")entriesToComplete.push({rowIndex:old.rowIndex,opId:e.opId});alreadyPresent++;}else entriesToWrite.push([e.opId,String(e.vehicleId).trim(),String(e.slotIndex),e.timestamp,"completed",""]);});return{entriesToWrite,entriesToComplete,alreadyPresent};}
+function getNewIdempotenciaEntries(entries,map){const entriesToWrite=[],entriesToComplete=[];let alreadyPresent=0;entries.forEach(e=>{if(map.has(e.opId)){const old=map.get(e.opId);if(old.vehicleId!==String(e.vehicleId).trim()||Number(old.slotIndex)!==Number(e.slotIndex))throw Error("El opId "+e.opId+" ya existe en Idempotencia con una asociación diferente.");if(old.operationHash)throw Error("El opId "+e.opId+" ya está vinculado a una huella de contenido; la migración histórica no puede demostrar que sea la misma operación.");if(old.status==="pending")entriesToComplete.push({rowIndex:old.rowIndex,opId:e.opId});alreadyPresent++;}else entriesToWrite.push([e.opId,String(e.vehicleId).trim(),String(e.slotIndex),e.timestamp,"completed",""]);});return{entriesToWrite,entriesToComplete,alreadyPresent};}
 
 function renameVinColumnHeader(sheet) {
     if (!sheet || sheet.getMaxColumns() < 45) {
