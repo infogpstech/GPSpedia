@@ -287,3 +287,18 @@ Hallazgos de integración:
 - No se implementaron cambios de código en esta iteración porque ampliar solo la UI sería inseguro y conceder todas las acciones ADMIN sería excesivo. Próximo paso: definir y probar helper de autorización por acción que revalide ActiveSessions y Users y devuelva contexto para Desarrollador/Gefe solo en las dos acciones in-modal; después integrar el mismo conjunto de roles en UI y validar campos/roles.
 No iniciar AUG-054.
 ================================================================================
+
+================================================================================
+AUG-053 — ADENDA ITERACIÓN 8 — ACLARACIÓN FUNCIONAL DEL USUARIO — 2026-11-11
+Requisito confirmado por el usuario: cualquier cuenta cuyo rol real sea 'gefe' debe tener exactamente el mismo acceso que 'desarrollador' al modo edición in-modal del modal de detalle de corte. El alcance incluye TODA la información editable presentada por ese modal, no solo imágenes: campos generales del corte, metadatos, configuraciones, ubicaciones, textos descriptivos y los campos de imagen/reemplazo que el modal expone. Debe poder iniciar edición, guardar, descartar/restaurar y completar/reconciliar reemplazos de imagen igual que Desarrollador.
+Límite de autorización: no conceder por ello acceso general al panel/acciones ADMIN, gestor global de imágenes, operaciones de Drive, gestión de usuarios ni herramientas exclusivas de Desarrollador. La autorización Gefe se limita a las acciones y campos que realmente utiliza el modo edición del modal de detalle. Mantener 'jefe' como rol distinto; el requerimiento confirmado menciona literalmente 'gefe'.
+Hallazgos de revisión:
+- El modal tiene editores distribuidos en varias secciones de ui.js; el flujo guarda campos individuales con updateVehicleField y reemplaza imágenes con uploadAdminImage.
+- El descarte usa el mismo updateVehicleField para restaurar los valores del snapshot. Por tanto, el permiso debe contemplar todos los campos editables del modal y el flujo de restauración, no únicamente los cambios nuevos.
+- El flujo de resolución de reemplazos consulta getAdminImageUploadStatus; se debe rastrear y asegurar que exista y tenga autorización compatible, junto con uploadAdminImage. No ampliar a gestor global de imágenes.
+- Actualmente doPostInternal_ ejecuta assertDeveloperSession global antes del switch, y getCurrentEditOwnerContext_ y el botón de edición del modal solo aceptan desarrollador. La modificación debe introducir una autorización de sesión/rol validada en servidor para el conjunto explícito de acciones del modal y reflejar Gefe en el contexto UI.
+- No se cambiaron permisos ni lógica de aplicación en esta iteración; se actualizó el alcance funcional para evitar una implementación parcial o más restrictiva que lo solicitado.
+Siguiente paso: construir el inventario exhaustivo de campos editables del modal y acciones de guardado/descarte/estado de imagen, crear pruebas de autorización por rol y contrato de campos, y después implementar la autorización equivalente para Desarrollador/Gefe en cliente y servidor.
+HEAD previo de trabajo: 59593677c5444f20a3746d3b45ea24a6148ed53f. Rama base intacta: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+No iniciar AUG-054.
+================================================================================
