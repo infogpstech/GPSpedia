@@ -333,3 +333,22 @@ Pruebas:
 
 Validación Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados y concurrencia real. No se modificaron datos productivos. AUG-059 cerrada; no se inicia AUG-060 en esta iteración.
 ================================================================================
+
+================================================================================
+AUG-060 — CIERRE — ITERACIÓN 1 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD inicial confirmado: 307913be639ea31b6c07ede9e75cfa2dfcbb1ac1. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+Resolución:
+- ui.js: parseVinCollection conserva los slots vacíos en delimitadores heredados, incluidos los intermedios y finales.
+- ui.js: mapVersionsWithVins ya no vuelve a recortar los cinco caracteres seriales de prefijos normalizados; el recorte se aplica únicamente a VIN completos heredados de más de 13 caracteres.
+- Se conserva el índice de cada slot; una versión sin VIN recibe null y las posteriores mantienen su asociación.
+
+Validación local:
+- Services/Test/VinVersionPresentation.js: 10/10 PASS. La suite extrae y ejecuta los helpers reales de ui.js.
+- Se cubren colecciones JSON y heredadas, slots inicial/intermedio/final, límite de tres posiciones, asociación por versión, prefijos almacenados, VIN completos heredados y una sola versión.
+
+Pendiente para Beta: validación visual en navegador real y comprobación con datos reales representativos. No se modificaron servicios, endpoints ni datos productivos.
+Commits de publicación secuencial: el HEAD final se verificará después de actualizar este checkpoint.
+AUG-060 queda cerrada. No se inicia AUG-061 en esta iteración.
+================================================================================
