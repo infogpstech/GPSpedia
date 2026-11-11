@@ -812,16 +812,16 @@ Iteración 17: COMPLETADA CON VALIDACIÓN DIFERIDA (el harness IndexedDB ahora s
 
 ### AUG-055 — Garantizar el ciclo durable y la vinculación de opId en add_cortes
 - **Origen:** H-AUD-003-001. **Prioridad:** Alta.
-- **Problema:** el formulario continúa aunque no pueda persistir el snapshot; puede reutilizar un opId obsoleto y el backend no verifica que la operación recuperada corresponda al vehículo/payload solicitado.
-- **Criterios de aceptación:**
-  1. No enviar addOrUpdateCut si no se ha conservado de forma verificable el snapshot y el opId; definir una alternativa durable aprobada si localStorage no está disponible.
-  2. Validar estructura, estado, vehículo y tipo de operación de cualquier snapshot antes de reutilizarlo; no reutilizar registros completed, corruptos, ajenos o de otra operación.
-  3. Vincular opId en backend a vehicleId, slotIndex y contenido/huella de la operación; rechazar un reintento cuyo vehículo o contenido no coincida con el registro original.
-  4. Si la limpieza local falla después de confirmar, impedir que el opId anterior se reutilice para un corte nuevo; resolver/aislar el snapshot sin perder la recuperación de una respuesta incierta.
-  5. Exigir status === success y vehicleId válido/coincidente antes de borrar el snapshot y avanzar a etapa 3; tratar respuestas incompletas como resultado incierto recuperable.
-  6. Probar cuota agotada, storage bloqueado, write/remove fallido, snapshot obsoleto/corrupto, reintento mismo/diferente vehículo, respuesta perdida antes/después del commit y operación completada.
-- **Relación:** AUD-T-003; AUD-T-031; AUD-T-038/AUG-053/AUG-054.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Problema resuelto:** el formulario podía continuar sin snapshot verificable, reutilizar un opId obsoleto y aceptar una recuperación sin demostrar que correspondía al vehículo y payload originales.
+- **Almacenamiento durable:** add_cortes utiliza IndexedDB (adminLocalState), con clave por propietario. No envía addOrUpdateCut si la lectura o escritura durable no está disponible o si la transacción no verifica el snapshot. El token de sesión no se guarda en el snapshot y las imágenes no se duplican.
+- **Validación de snapshot:** se comprueban ownerId, opId, operationType, stage, status, operationHash, vehículo y estructura del requestData. Los snapshots corruptos, ajenos, obsoletos o de otra operación se bloquean. Los estados processing/failed solo permiten reintentar el mismo opId y huella. completed es terminal, no se reutiliza ni se degrada.
+- **Vinculación backend:** WRITE y ADMIN calculan SHA-256 del payload canónico y lo comparan con la huella enviada. La hoja de idempotencia pasa de A:E a A:F (operationHash); vehicleId y slotIndex siguen vinculados en sus campos dedicados. Un reintento con contenido, vehículo, slot o huella diferente se rechaza sin modificar el registro.
+- **Migración histórica:** las hojas A:E se leen con las columnas disponibles y reciben F de forma compatible. Los registros históricos quedan con huella vacía y no se reutilizan automáticamente. La migración se detiene si un opId histórico coincide con un registro ya vinculado a una huella verificable.
+- **Recuperación y limpieza:** checkOperation valida la huella y devuelve el vehículo asociado. Una respuesta incierta se reconcilia por opId/huella. Si el servidor confirmó pero falla la limpieza local, el snapshot se conserva como completed y bloquea un nuevo opId hasta que la recuperación confirme y retire el registro. Solo se avanza a etapa 3 tras status success, huella y vehicleId válidos/coincidentes, y limpieza verificada.
+- **Pruebas locales:** AddCutOperationIntegrity.js 27/27 PASS; 10 escenarios nuevos de IndexedDBTransactions.js 10/10 PASS (suite acumulada 43; 33 escenarios previos validados en AUG-053); IdempotenciaIntegrity.js 18/18 PASS; CheckOperationSecurity.js 12/12 PASS. Parsing de WRITE, ADMIN, offline.js y módulo frontend: PASS.
+- **Validación Beta diferida:** navegador/IndexedDB real, Apps Script/Spreadsheet/Drive desplegados y simulación integrada de pérdida de respuesta/recuperación en producción. Las pruebas locales usan runtime V8 adaptado y dobles; no se presentan como validación de esos servicios reales.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
 
 ### AUG-056 — Aplicar disponibilidad dinámica real a cortes y vídeo en add_cortes
 - **Origen:** H-AUD-003-002. **Prioridad:** Media.
