@@ -1066,3 +1066,11 @@ AUG-046 — CICLO DE VIDA DE IMÁGENES EN SUGERENCIAS DE CORTES — 2026-11-10
 - checkpoint.md: registra evidencia, límites de la revisión estática y continuidad exclusiva de AUG-046.
 - No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments, archivos de Drive ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-046 — ACCESO Y ALMACENAMIENTO DE IMÁGENES PyS — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 14 documenta la lectura pública de PyS, la devolución y visualización de URLs de imágenes, el alta autenticada con compartición ANYONE_WITH_LINK/VIEW y la compensación del archivo cuando falla la persistencia.
+- checkpoint.md: registra evidencia, límites de la revisión estática y continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments, hojas ni archivos/permisos productivos de Drive.
+================================================================================
