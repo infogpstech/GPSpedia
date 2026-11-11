@@ -196,7 +196,7 @@ function runAddCutOperationIntegrityTests(sources) {
         }
     });
     run_('add_cortes usa IndexedDB como snapshot y no conserva el store anterior en localStorage', () => {
-        assert_(/getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation from '\.\/offline\.js'/.test(frontend));
+        assert_(/import \{[^}]*getAddCutOperationPendingOperation[^}]*\} from '\.\/offline\.js'/.test(frontend));
         assert_(!/createPendingOperationStore|getPendingOperationStore/.test(frontend));
         assert_(/PENDING_OPERATION_STORAGE_UNAVAILABLE/.test(frontend));
     });
