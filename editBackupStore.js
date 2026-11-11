@@ -118,3 +118,19 @@ export function createEditBackupStore(storage, ownerId) {
 
     return { keyFor, read, write, remove };
 }
+
+
+// Devuelve solo campos del editor que realmente difieren de la referencia actual.
+// La ficha completa se conserva como snapshot, pero nunca se envían metadatos ajenos
+// al modal (id, marca, contadores, auditoría, etc.) durante el descarte.
+export function getEditBackupFieldsToRestore(snapshot, currentItem, allowedFields) {
+    if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot) ||
+        !currentItem || typeof currentItem !== "object" || Array.isArray(currentItem) ||
+        !allowedFields || typeof allowedFields.has !== "function") {
+        throw new TypeError("Se requieren snapshot, ficha actual y whitelist de edición.");
+    }
+    return Object.keys(snapshot).filter(field =>
+        allowedFields.has(field) &&
+        JSON.stringify(snapshot[field]) !== JSON.stringify(currentItem[field])
+    );
+}
