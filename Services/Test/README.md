@@ -525,3 +525,10 @@ La suite completa ejecutó 31/31 escenarios con cero fallos en runtime V8 adapta
 ## Persistencia ADMIN después de recrear el módulo (AUG-053 — iteración 22)
 
 Se añadió un escenario que guarda un reemplazo ADMIN desde una instancia de offline.js, crea una instancia nueva sobre el mismo almacén IndexedDB del harness y recupera el snapshot con el mismo propietario, opId y Data URL. También confirma que una cuenta distinta no puede recuperarlo. La suite completa quedó en 32/32 PASS en runtime V8 adaptado. Esta prueba verifica continuidad entre instancias sobre el almacén simulado; no equivale a una recarga real del navegador ni a IndexedDB real. La recarga/navegador/IndexedDB reales y concurrencia multi-pestaña permanecen para Beta.
+
+
+## Carga ADMIN ante lecturas IndexedDB no disponibles (AUG-053 — iteración 23)
+
+La suite `AdminModalEditRestoreContract.js` incluye un contrato para el caso en que una o más lecturas de `adminImageUploadPending` no estén disponibles. Comprueba que la UI valide el conjunto completo antes de copiar operaciones al mapa en memoria y antes de marcar la carga del vehículo como completada. Así se evita aceptar un conjunto parcial como estado restaurado.
+
+Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. Resultado local de esta iteración: 11/11 PASS en runtime V8 adaptado. Es una prueba de contrato estático; no sustituye IndexedDB real, navegador ni pruebas multi-pestaña de Beta.

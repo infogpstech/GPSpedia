@@ -891,3 +891,7 @@ Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js ampliada a 
 
 AUG-053 — ITERACIÓN 22 — 2026-11-11
 Se añadió a Services/Test/IndexedDBTransactions.js un escenario de recarga lógica: guarda adminImageUploadPending con una instancia de offline.js, crea otra instancia sobre el mismo almacén IndexedDB del harness y verifica recuperación del mismo opId, ownerId y Data URL, además de impedir la lectura por otra cuenta. Suite completa: 32/32 PASS en runtime V8 adaptado. No representa recarga real del navegador ni IndexedDB real; estas validaciones y concurrencia multi-pestaña permanecen para Beta. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 23 — 2026-11-11
+Se añadió a Services/Test/AdminModalEditRestoreContract.js un contrato que verifica que, si alguna lectura IndexedDB de adminImageUploadPending no está disponible, la UI rechaza el conjunto completo antes de poblar el mapa en memoria o marcar el vehículo como cargado. Resultado: 11/11 PASS en runtime V8 adaptado con ui.js y Services/admin.js vigentes. Es cobertura estática de orden y guardas; no simula IndexedDB real ni navegador. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.

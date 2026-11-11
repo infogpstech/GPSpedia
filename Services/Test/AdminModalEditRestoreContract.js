@@ -89,5 +89,15 @@ function runAdminModalEditRestoreContractTests(uiSource, adminSource) {
         const submit = ui.slice(ui.indexOf("async function submitAdminImageUploadOperation"), ui.indexOf("function convertImageToEditable"));
         assert(/await offline\.removeAdminImageUploadPendingOperation[\s\S]*?if \(!isCurrentUiSessionContext_\(editSession\)\)[\s\S]*?throw new Error[\s\S]*?pendingAdminImageUploads\.delete\(key\)/.test(submit), "El envío no protege memoria después de eliminar.");
     });
+    run("una lectura IndexedDB no disponible impide cargar un conjunto parcial de reemplazos ADMIN", () => {
+        const loader = ui.slice(ui.indexOf("async function loadPendingAdminImageUploads"), ui.indexOf("function createAdminImageUploadOperationId"));
+        const unavailableGuard = loader.indexOf("if (results.some(result => !result || result.available !== true)) return false;");
+        const populateMap = loader.indexOf("results.forEach(");
+        const markLoaded = loader.indexOf("pendingAdminImageUploadsLoaded.add(ownerVehicleKey)");
+        assert(unavailableGuard >= 0, "La carga no rechaza explícitamente resultados IndexedDB no disponibles.");
+        assert(populateMap > unavailableGuard, "La UI puede copiar resultados parciales antes de comprobar disponibilidad.");
+        assert(markLoaded > unavailableGuard, "La UI puede marcar como cargada una lectura incompleta.");
+        assert(/await Promise\.all\([\s\S]*?offline\.getAdminImageUploadPendingOperation/.test(loader), "La carga ya no verifica el conjunto de lecturas IndexedDB esperado.");
+    });
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }

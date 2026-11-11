@@ -1608,3 +1608,11 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan evidencia, alcance y validaciones diferidas.
 - No se modificó offline.js ni lógica funcional.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 23 — CONTRATO DE CARGA ADMIN COMPLETA
+- Services/Test/AdminModalEditRestoreContract.js: se incorpora un contrato para exigir que las lecturas IndexedDB no disponibles se rechacen antes de poblar el mapa de operaciones pendientes y antes de marcar la carga como completada.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan el nuevo escenario y sus límites.
+- No se modificó ui.js, offline.js ni lógica funcional.
+================================================================================

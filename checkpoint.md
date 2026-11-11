@@ -106,3 +106,26 @@ Validación:
 
 Siguiente iteración: revisar una sola brecha local adicional del criterio 8 sin duplicar las coberturas existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 23 — 2026-11-11 — CARGA ADMIN INCOMPLETA POR FALLO DE LECTURA
+Estado: EN PROGRESO. Se añadió una cobertura de contrato local del criterio 8; AUG-053 sigue abierta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: dccb0ed7001d6d2402f82dbd01afb4f30ab6639a. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo:
+- El contrato de carga pendiente verificaba revalidación de sesión, pero no protegía explícitamente el orden de la comprobación de disponibilidad del conjunto completo de lecturas IndexedDB frente a la población del mapa y la marca de carga completada.
+
+Cambio:
+- Services/Test/AdminModalEditRestoreContract.js: nuevo contrato que exige rechazar resultados no disponibles antes de copiar operaciones a pendingAdminImageUploads y antes de agregar ownerVehicleKey a pendingAdminImageUploadsLoaded.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, checkpoint.md y ChangesLogs.txt: documentan el alcance y la evidencia.
+- No se modificó ui.js, offline.js ni lógica funcional.
+
+Validación:
+- AdminModalEditRestoreContract: 11/11 PASS, cero fallos, en runtime V8 adaptado con ui.js y Services/admin.js vigentes.
+- Parsing V8 del archivo de contrato: PASS.
+- La prueba es un contrato estático de orden/guardas; no representa una lectura fallida ejecutada contra IndexedDB real ni una recarga de navegador.
+- IndexedDB/navegador reales, concurrencia multi-pestaña y servicios externos continúan reservados a Beta.
+
+Siguiente iteración: revisar una sola brecha local adicional del criterio 8 sin duplicar las coberturas existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
+================================================================================
