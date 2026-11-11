@@ -689,9 +689,8 @@ export function parseVinCollection(rawVin) {
         if (!Array.isArray(parsed)) throw new Error("El formato JSON de VIN debe ser un array.");
         return normalizeVinCollectionArray(parsed, "Colección VIN JSON");
     }
-    const values = text.split(/[,/\\;]+/)
-        .map(value => normalizeVinCollectionValue(value, "Colección VIN heredada"))
-        .filter(Boolean);
+    const values = text.split(/[,/\\;])
+        .map(value => normalizeVinCollectionValue(value, "Colección VIN heredada"));
     if (values.length > 3) throw new Error("La colección VIN heredada supera el máximo de tres identificadores.");
     return normalizeVinCollectionArray(values, "Colección VIN heredada");
 }
@@ -719,8 +718,9 @@ export function mapVersionsWithVins(versionesStr, vinRaw) {
         if (!v) return "";
         let s = String(v).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
         if (s.startsWith("OP")) return "";
-        // Ignorar los últimos 5 dígitos (numéricos de serie) si la longitud es mayor a 5
-        if (s.length > 5) {
+        // Los prefijos guardados por WRITE/ADMIN ya excluyen el serial (máximo 13 caracteres).
+        // Solo se recortan los últimos cinco caracteres de VIN completos heredados.
+        if (s.length > 13) {
             s = s.substring(0, s.length - 5);
         }
         return s;
