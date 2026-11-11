@@ -233,7 +233,7 @@ async function runIndexedDBTransactionTests() {
             const store=harness.stores.get('thumbnails'),now=Date.now();
             for(let i=0;i<200;i++){
                 const key=`lru-${String(i).padStart(3,'0')}::w300`;
-                store.values.set(key,{key,fileId:`lru-${i}`,width:300,blob:new Blob([`thumb-${i}`]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
+                store.values.set(key,{key,fileId:`lru-${String(i).padStart(3,'0')}`,width:300,blob:new Blob([`thumb-${i}`]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
             }
             assert.ok(await api.getThumbnail('lru-000',300));
             await api.compressAndStoreThumbnail('https://images.example/lru.png','lru-new-entry',300);
@@ -253,7 +253,7 @@ async function runIndexedDBTransactionTests() {
         const store=harness.stores.get('thumbnails'),now=Date.now();
         for(let i=0;i<200;i++){
             const key='pending-'+String(i).padStart(3,'0')+'::w300';
-            store.values.set(key,{key,fileId:'pending-'+i,width:300,blob:new Blob(['thumb-'+i]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
+            store.values.set(key,{key,fileId:'pending-'+String(i).padStart(3,'0'),width:300,blob:new Blob(['thumb-'+i]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
         }
         const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
         globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
