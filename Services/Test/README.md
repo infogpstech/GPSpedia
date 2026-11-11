@@ -621,3 +621,13 @@ Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes
 - Validación local AUG-059: 12/12 PASS; `AdminModalEditSecurity`: 13/13 PASS; `VinTestigoIntegrity`: 14/14 PASS. Parsing V8 de WRITE/ADMIN/ui/add_cortes: PASS.
 - `AddCutOperationIntegrity` se comprobó contra la fuente base y la modificada: ambas dan 24/27; los mismos tres escenarios de recuperación por respuesta perdida fallan también en la base, por lo que no se atribuyen a AUG-059. No se declaran aprobados.
 - Navegador real, Apps Script/Spreadsheet desplegados y concurrencia multi-servicio quedan para Beta.
+
+## Presentación de VIN por versión — AUG-060
+
+La suite `VinVersionPresentation.js` extrae y ejecuta los helpers reales de `ui.js` para verificar el mapeo de colecciones VIN a `versionesAplicables`.
+
+Ejecutar desde la raíz:
+
+`node --experimental-default-type=module Services/Test/VinVersionPresentation.js`
+
+Cobertura: slots vacíos en JSON y formatos heredados, espacios intermedios/finales, límite de tres posiciones, asociación por índice, prefijos ya normalizados sin recorte adicional, VIN completos heredados con eliminación del serial y presentación de una sola versión. Resultado local de AUG-060: 10/10 PASS. No sustituye validación visual en navegador real, reservada para Beta.
