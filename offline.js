@@ -520,47 +520,95 @@ export async function removeAddCutPendingOperation(vehicleId, opId) {
 
 // --- CATALOG PERSISTENCE ---
 
-export async function saveCatalog(newData) {
-    if (!newData) return null;
+const CATALOG_SNAPSHOT_COLLECTIONS = ['cortes', 'tutoriales', 'relay', 'logos'];
+
+/**
+ * Indexa Cortes por su ID persistente. No genera claves alternativas: un ID
+ * ausente o duplicado invalida la instantánea para evitar colisiones silenciosas.
+ */
+export function indexCatalogItemsById(items) {
+    if (!Array.isArray(items)) throw new TypeError('La colección Cortes debe ser un arreglo.');
+    const index = new Map();
+    items.forEach((item, position) => {
+        const rawId = item && item.id;
+        const id = rawId === undefined || rawId === null ? '' : String(rawId).trim();
+        if (!id) throw new Error(`Corte sin ID estable en la posición ${position}.`);
+        if (index.has(id)) throw new Error(`ID de Corte duplicado: ${id}.`);
+        index.set(id, item);
+    });
+    return index;
+}
+
+/** Una respuesta válida de getCatalogData contiene las cuatro colecciones completas. */
+export function isCompleteCatalogSnapshot(data) {
+    if (!data || typeof data !== 'object' || !CATALOG_SNAPSHOT_COLLECTIONS.every(key => Array.isArray(data[key]))) return false;
     try {
-        const existingData = await getCatalog();
-        let finalData = newData;
+        indexCatalogItemsById(data.cortes);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 
-        if (existingData && existingData.cortes && Array.isArray(existingData.cortes) && Array.isArray(newData.cortes)) {
-            // Fusión incremental del catálogo para preservar datos locales
-            const cortesMap = new Map(existingData.cortes.map(c => [String(c.id), c]));
-            newData.cortes.forEach(item => {
-                cortesMap.set(String(item.id), item);
-            });
+function stableCatalogValue(value) {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (Array.isArray(value)) return `array:[${value.map(stableCatalogValue).join(',')}]`;
+    if (typeof value === 'object') {
+        return `object:{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableCatalogValue(value[key])}`).join(',')}}`;
+    }
+    if (typeof value === 'number' && !Number.isFinite(value)) return `number:${String(value)}`;
+    return `${typeof value}:${JSON.stringify(value)}`;
+}
 
-            const tutorialesMap = new Map((existingData.tutoriales || []).map((t, idx) => [String(t.ID || t.id || t.Tema || t.titulo || idx), t]));
-            (newData.tutoriales || []).forEach((t, idx) => tutorialesMap.set(String(t.ID || t.id || t.Tema || t.titulo || idx), t));
+/** Compara contenido completo y orden de una colección, no solo su cardinalidad. */
+export function areCatalogCollectionsEqual(left, right) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false;
+    return stableCatalogValue(left) === stableCatalogValue(right);
+}
 
-            const relayMap = new Map((existingData.relay || []).map((r, idx) => [String(r.ID || r.id || r.configuracion || r.nombre || idx), r]));
-            (newData.relay || []).forEach((r, idx) => relayMap.set(String(r.ID || r.id || r.configuracion || r.nombre || idx), r));
+export function compareCatalogSnapshots(previous, next) {
+    if (!isCompleteCatalogSnapshot(previous) || !isCompleteCatalogSnapshot(next)) {
+        throw new Error('No se pueden comparar catálogos incompletos o con IDs de Corte inválidos.');
+    }
+    const previousCuts = indexCatalogItemsById(previous.cortes);
+    const nextCuts = indexCatalogItemsById(next.cortes);
+    const cortes = { added: [], modified: [], removed: [] };
 
-            finalData = {
-                ...existingData,
-                ...newData,
-                cortes: Array.from(cortesMap.values()),
-                tutoriales: Array.from(tutorialesMap.values()),
-                relay: Array.from(relayMap.values()),
-                lastUpdated: Date.now()
-            };
-        }
+    for (const [id, newItem] of nextCuts) {
+        const oldItem = previousCuts.get(id);
+        if (!oldItem) cortes.added.push({ id, item: newItem });
+        else if (!areCatalogCollectionsEqual([oldItem], [newItem])) cortes.modified.push({ id, oldItem, newItem });
+    }
+    for (const id of previousCuts.keys()) {
+        if (!nextCuts.has(id)) cortes.removed.push({ id });
+    }
 
-        const res = await performOp('catalog', 'readwrite', (store) => store.put(finalData, 'current'));
+    const collections = {
+        tutoriales: !areCatalogCollectionsEqual(previous.tutoriales, next.tutoriales),
+        relay: !areCatalogCollectionsEqual(previous.relay, next.relay),
+        logos: !areCatalogCollectionsEqual(previous.logos, next.logos)
+    };
+    const hasChanges = cortes.added.length > 0 || cortes.modified.length > 0 || cortes.removed.length > 0 || Object.values(collections).some(Boolean);
+    return { cortes, collections, hasChanges };
+}
 
-        // Pre-cargar miniaturas de los vehículos recientes en segundo plano
-        if (finalData.cortes && finalData.cortes.length > 0) {
-            const recentCortes = finalData.cortes.slice(-15);
-            recentCortes.forEach(item => cacheItemImages(item));
-        }
-
-        return res;
-    } catch (e) {
-        console.warn("Error en saveCatalog incremental:", e);
-        return performOp('catalog', 'readwrite', (store) => store.put(newData, 'current'));
+/**
+ * getCatalogData entrega una instantánea completa, no un delta. Cada escritura
+ * sustituye el snapshot anterior para que los registros retirados no sobrevivan.
+ */
+export async function saveCatalog(newData) {
+    if (!isCompleteCatalogSnapshot(newData)) {
+        throw new Error('No se guardó el catálogo: la respuesta no es una instantánea completa o contiene IDs de Corte inválidos.');
+    }
+    try {
+        const result = await performOp('catalog', 'readwrite', store => store.put(newData, 'current'));
+        if (result === null || result === undefined) throw new Error('IndexedDB no confirmó la escritura del catálogo.');
+        newData.cortes.slice(-15).forEach(item => cacheItemImages(item).catch(() => {}));
+        return result;
+    } catch (error) {
+        console.warn('Error guardando la instantánea completa del catálogo:', error);
+        throw error;
     }
 }
 

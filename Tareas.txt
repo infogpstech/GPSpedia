@@ -821,3 +821,28 @@ AUG-046 — CIERRE TÉCNICO CON VALIDACIÓN DIFERIDA — 2026-11-10
 - No se modificó código funcional, endpoints, deployments ni datos productivos.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. La aprobación interna del texto, versión y fecha efectiva sigue siendo requisito previo a cualquier publicación legal definitiva; no se presume aprobada.
 ================================================================================
+
+
+================================================================================
+AUG-046 — CIERRE ADMINISTRATIVO — 2026-11-10
+Estado: COMPLETADA por instrucción expresa del responsable del proyecto. El registro se cierra sin actividades adicionales sobre esta tarea y sin modificar documentos de contenido legal. H-AUD-046-001 y H-AUD-046-002 permanecen como hallazgos técnicos independientes.
+Continuidad: AUG-047 queda fuera del alcance solicitado; la siguiente tarea técnica no legal es AUG-048.
+================================================================================
+
+================================================================================
+AUG-048 — INICIO — 2026-11-10
+Objetivo: corregir el contrato de instantánea completa del catálogo y su sincronización silenciosa.
+Alcance inicial: offline.js, auth.js, ui.js y pruebas aisladas de snapshot/sincronización. No modificar endpoints, deployments ni datos operativos.
+Criterios: sustituir la caché local completa; rechazar snapshots incompletos o IDs de Corte ausentes/duplicados; comparar el contenido de Tutoriales, Relay y Logos/metadatos; no usar claves sintéticas por Tema/configuración; conservar la identidad persistente de Cortes.
+================================================================================
+
+
+================================================================================
+AUG-048 — CIERRE — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Cambios: offline.js reemplaza la caché por la instantánea completa y rechaza respuestas incompletas o IDs de Corte ausentes/duplicados; auth.js descarta cachés/respuestas que no cumplen el contrato; ui.js compara Cortes por ID persistente y detecta cambios de contenido en Tutoriales, Relay y Logos/metadatos, aunque la cantidad de registros no cambie. No se generan claves fallback por Tema/configuración.
+Pruebas: harness local Node con IndexedDB simulado, 15/15 PASS; incluye reemplazo de registros retirados, rechazo de snapshots incompletos, altas/modificaciones/eliminaciones de Cortes y cambios de contenido con cardinalidad constante.
+No ejecutado: navegador real, IndexedDB real, service worker en dispositivo, pruebas offline de campo ni Beta. No se modificaron endpoints, deployments ni datos operativos.
+Archivos funcionales: offline.js, auth.js y ui.js. Prueba: Services/Test/CatalogSnapshotSync.js. Instrucciones: Services/Test/README.md.
+Siguiente tarea técnica no legal: AUG-049. AUG-047 permanece sin iniciar y fuera del alcance solicitado.
+================================================================================

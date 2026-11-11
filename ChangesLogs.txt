@@ -1130,3 +1130,32 @@ AUG-046 — CIERRE TÉCNICO CON VALIDACIÓN DIFERIDA — 2026-11-10
 - Tareas.txt y checkpoint.md: registran el cierre técnico, las validaciones diferidas y la aprobación corporativa pendiente como condición de publicación.
 - H-AUD-046-001 y H-AUD-046-002 permanecen abiertos para corrección independiente. No se modificaron código, acuerdo, aviso, aceptación AUG-045, endpoints, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-046 — CIERRE ADMINISTRATIVO — 2026-11-10
+- Tareas_pendientes_parte1.txt: AUG-046 pasa a COMPLETADA por instrucción del responsable.
+- Tareas.txt y checkpoint.md: se registra el cierre administrativo y la continuidad técnica.
+- No se modificaron documentos de contenido legal ni código funcional por este cierre.
+================================================================================
+
+================================================================================
+AUG-048 — SNAPSHOT AUTORITATIVO Y SINCRONIZACIÓN DEL CATÁLOGO — 2026-11-10
+- offline.js: saveCatalog sustituye la instantánea completa; se añaden validación de colecciones, indexación por ID persistente y comparación profunda de contenido.
+- auth.js: solo procesa cachés/respuestas que cumplen el contrato completo del catálogo.
+- ui.js: sincroniza cambios de Cortes por ID y detecta modificaciones de Tutoriales, Relay y Logos aunque la cardinalidad no cambie.
+- Services/Test/CatalogSnapshotSync.js: pruebas aisladas de contrato, identidad, comparación y reemplazo de caché.
+- Services/Test/README.md: documenta la ejecución y los límites de la suite.
+- No se modificaron endpoints, deployments ni datos operativos.
+================================================================================
+
+
+================================================================================
+AUG-048 — CIERRE — 2026-11-10
+- offline.js: la caché del catálogo ahora reemplaza la instantánea completa; se rechazan colecciones incompletas e IDs de Corte ausentes/duplicados. Se incorporan comparación profunda de colecciones y diff de Cortes por ID.
+- auth.js: solo procesa y conserva snapshots completos.
+- ui.js: detecta altas, modificaciones y eliminaciones de Cortes; detecta cambios de contenido en Tutoriales, Relay y Logos/metadatos sin depender de cardinalidad; actualiza vistas afectadas.
+- Services/Test/CatalogSnapshotSync.js: suite añadida con 15 casos; harness local Node con IndexedDB simulado: 15/15 PASS.
+- Tareas.txt, backlog y checkpoint actualizados. No se modificaron endpoints, deployments ni datos operativos.
+- Navegador/IndexedDB real y pruebas offline de campo no ejecutados; quedan diferidos a Beta.
+================================================================================

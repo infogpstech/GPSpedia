@@ -259,3 +259,10 @@ La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `Activ
 - Ejecutar `node --experimental-default-type=module Services/Test/TermsAcceptance.js`.
 - Comprueba parseo de evidencia, creación segura del encabezado I de Users, rechazo de encabezados/datos incompatibles y contratos AUTH/USERS/API/UI.
 - No accede a Google Sheets real, Apps Script desplegado ni navegador; esas comprobaciones quedan reservadas a Beta.
+
+
+## Instantánea autoritativa y sincronización del catálogo (AUG-048)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/CatalogSnapshotSync.js`.
+- Comprueba el contrato completo de `getCatalogData`, IDs de Cortes ausentes/duplicados, comparación profunda de Tutoriales/Relay/Logos con cardinalidad constante y reemplazo exacto de la caché IndexedDB.
+- La suite usa un IndexedDB simulado en memoria; no accede a navegador real, Apps Script, Spreadsheet ni datos operativos.

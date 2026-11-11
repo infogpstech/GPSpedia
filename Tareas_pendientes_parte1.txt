@@ -649,7 +649,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - Aclaración del responsable del proyecto (2026-11-11), registrada en la sección 9.4 del memo: GPSpedia es la plataforma/herramienta; su código, diseño, organización y estructura general son desarrollo privado protegido por derechos de autor. Las imágenes y videos compartidos son conocimiento público que GPSpedia organiza, etiqueta y complementa con información útil y precisa, sin reclamar autoría original. TRACKLINK es la marca corporativa; Motorlink S.A. es la empresa y su nombre registrado en Honduras. Quedan sustituidos los puntos 1 y 2 de la sección 9.1 como supuestas contradicciones pendientes. La auditoría se limita a aspectos técnicos y descriptivos, sin opiniones jurídicas.
 - Delimitación (2026-11-11): la revisión del asistente es exclusivamente técnica y descriptiva; las observaciones históricas que formulaban preguntas o recomendaciones jurídicas no son conclusiones ni instrucciones vigentes. Las definiciones de identidad y contenido de la sección 9.4 prevalecen. No modificar el acuerdo, aviso, modales ni flujo de aceptación.
 - Avance técnico (2026-11-10): sección 13 de Legal/AUG-046_revision_preliminar.md documenta que las imágenes adjuntas a sugerencias de cortes se guardan en Drive con acceso ANYONE_WITH_LINK/VIEW y que borrar el registro del Inbox no elimina el archivo ni revoca ese acceso en el handler revisado.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — contraste técnico/documental de los flujos y textos existentes finalizado en el alcance versionado; identidad institucional aclarada; hallazgos técnicos registrados por separado. Quedan como condiciones de liberación la confirmación operativa y la aprobación interna corporativa del texto, versión y fecha efectiva. Esta auditoría no constituye aprobación legal ni autoriza desplegar una versión legal definitiva.
+- Estado: COMPLETADA — CIERRE ADMINISTRATIVO POR INSTRUCCIÓN DEL RESPONSABLE. No se realizarán actividades adicionales dentro de esta tarea.
 
 ### AUG-047 — Completar accesibilidad, navegación y disponibilidad offline de modales legales
 - Origen: H-AUD-036-004/005. Prioridad baja/media.
@@ -670,7 +670,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   3. Mantener IDs estables y evitar colisiones de claves fallback por Tema/configuración.
   4. Probar alta, modificación y eliminación de Cortes/Tutoriales/Relay/Logos; después reiniciar offline y comprobar que no reaparecen registros retirados.
 - Relación: AUD-T-037; AUG-031/AUG-032 para persistencia y snapshot de Drive, sin duplicar sus ámbitos.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. getCatalogData se procesa como instantánea completa; IndexedDB reemplaza el snapshot anterior; Cortes se indexa por ID persistente; Tutoriales, Relay y Logos/metadatos se comparan por contenido completo. Harness local Node con IndexedDB simulado: 15/15 PASS. Navegador/IndexedDB real y validación offline de campo quedan diferidos a Beta.
 
 ### AUG-049 — Completar búsqueda global y navegación por sección
 - Origen: H-AUD-037-003 a H-AUD-037-006. Prioridad alta.

@@ -128,11 +128,13 @@ async function loadInitialData() {
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
         ]);
 
-        if (cachedCatalog) {
+        if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
             console.log("Cargando catálogo desde caché local...");
             const normalizedCached = normalizeCatalogData(cachedCatalog);
             processCatalogData(normalizedCached);
             catalogLoaded = true;
+        } else if (cachedCatalog) {
+            console.warn('Se descartó una caché de catálogo incompleta o con IDs inválidos.');
         }
     } catch (e) {
         console.warn("Error o timeout al leer catálogo de IndexedDB:", e);
@@ -141,7 +143,10 @@ async function loadInitialData() {
     // 2. Cargar desde la red en segundo plano
     try {
         const apiResponse = await fetchCatalogData();
-        const catalogData = normalizeCatalogData(apiResponse.data);
+        const catalogData = normalizeCatalogData(apiResponse && apiResponse.data);
+        if (!offline.isCompleteCatalogSnapshot(catalogData)) {
+            throw new Error('El servicio no devolvió una instantánea completa del catálogo.');
+        }
 
         // Guardar en caché local para futuros usos (silencioso)
         offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
@@ -174,7 +179,7 @@ async function loadInitialData() {
         if (!catalogLoaded) {
             try {
                 const cachedCatalog = await offline.getCatalog();
-                if (cachedCatalog && cachedCatalog.cortes && cachedCatalog.cortes.length > 0) {
+                if (offline.isCompleteCatalogSnapshot(cachedCatalog) && cachedCatalog.cortes.length > 0) {
                     const normalizedCached = normalizeCatalogData(cachedCatalog);
                     processCatalogData(normalizedCached);
                     catalogLoaded = true;

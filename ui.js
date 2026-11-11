@@ -2469,51 +2469,25 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
  */
 export async function performSilentSync(newCatalogData) {
     try {
+        if (!offline.isCompleteCatalogSnapshot(newCatalogData)) {
+            throw new Error('La sincronización recibió una instantánea incompleta o con IDs de Corte inválidos.');
+        }
         const { catalogData: oldCatalogData } = getState();
-        if (!oldCatalogData || !oldCatalogData.cortes) {
-            // Fallback si no hay catálogo anterior cargado
+        if (!offline.isCompleteCatalogSnapshot(oldCatalogData)) {
+            // Si el estado previo no cumple el contrato, sustituirlo por la instantánea completa.
             updateFullState(newCatalogData);
             return;
         }
 
-        // Crear mapas por ID para fácil comparación de cortes
-        const oldCortesMap = new Map(oldCatalogData.cortes.map(c => [String(c.id), c]));
-        const newCortesMap = new Map(newCatalogData.cortes.map(c => [String(c.id), c]));
-
-        const updatedCortesList = [];
-        let hasChanges = false;
-
-        // 1. Detectar cortes modificados o nuevos
-        for (const [id, newCorte] of newCortesMap) {
-            const oldCorte = oldCortesMap.get(id);
-            if (!oldCorte) {
-                // Registro nuevo
-                updatedCortesList.push({ type: 'added', item: newCorte });
-                hasChanges = true;
-            } else if (JSON.stringify(oldCorte) !== JSON.stringify(newCorte)) {
-                // Registro modificado
-                updatedCortesList.push({ type: 'modified', oldItem: oldCorte, newItem: newCorte });
-                hasChanges = true;
-            }
-        }
-
-        // 2. Detectar eliminados
-        for (const id of oldCortesMap.keys()) {
-            if (!newCortesMap.has(id)) {
-                updatedCortesList.push({ type: 'removed', id });
-                hasChanges = true;
-            }
-        }
-
-        // Comprobar si hay tutoriales o relay nuevos o actualizados
-        if (newCatalogData.tutoriales && (!oldCatalogData.tutoriales || newCatalogData.tutoriales.length !== oldCatalogData.tutoriales.length)) {
-            hasChanges = true;
-        }
-        if (newCatalogData.relay && (!oldCatalogData.relay || newCatalogData.relay.length !== oldCatalogData.relay.length)) {
-            hasChanges = true;
-        }
-
-        if (!hasChanges) {
+        // Comparación completa: Cortes por ID persistente y las demás colecciones por contenido.
+        // No se sintetizan claves por Tema/configuración: esas propiedades pueden repetirse.
+        const snapshotDiff = offline.compareCatalogSnapshots(oldCatalogData, newCatalogData);
+        const updatedCortesList = [
+            ...snapshotDiff.cortes.added.map(change => ({ type: 'added', item: change.item })),
+            ...snapshotDiff.cortes.modified.map(change => ({ type: 'modified', oldItem: change.oldItem, newItem: change.newItem })),
+            ...snapshotDiff.cortes.removed.map(change => ({ type: 'removed', id: change.id }))
+        ];
+        if (!snapshotDiff.hasChanges) {
             console.log("Sincronización silenciosa: No se detectaron cambios.");
             return;
         }
@@ -2534,14 +2508,14 @@ export async function performSilentSync(newCatalogData) {
         }
 
         // 4. Actualizar el estado global con los nuevos datos consolidados
-        updateFullState(newCatalogData);
+        updateFullState(newCatalogData, { logosChanged: snapshotDiff.collections.logos });
 
     } catch (e) {
         console.error("Error en performSilentSync:", e);
     }
 }
 
-function updateFullState(catalogData) {
+function updateFullState(catalogData, options = {}) {
     try {
         // Normalizar los datos del catálogo antes de actualizar el estado global
         if (catalogData && Array.isArray(catalogData.cortes)) {
@@ -2622,6 +2596,13 @@ function updateFullState(catalogData) {
         const relayContainer = document.getElementById("contenido-relay");
         if (relayContainer && relayContainer.style.display !== "none") {
             mostrarRelayGrid();
+        }
+        if (options.logosChanged === true) {
+            const currentState = getState();
+            const searchInput = document.getElementById('searchInput');
+            if (currentState.navigationState && currentState.navigationState.level === 'categorias' && searchInput && !searchInput.value.trim()) {
+                mostrarCategorias();
+            }
         }
     } catch (e) {
         console.error("Error actualizando estado global tras sincronización:", e);

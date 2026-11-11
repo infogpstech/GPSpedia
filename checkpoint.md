@@ -2001,3 +2001,63 @@ Validación de esta iteración:
 
 Siguiente trabajo: AUG-046 queda cerrada. Los hallazgos H-AUD-046-001/002 deberán tratarse como tareas independientes según prioridad; no se iniciaron en esta iteración. No se inició AUG-047.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — CIERRE ADMINISTRATIVO AUG-046 / INICIO AUG-048 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD de partida: 40c2a241ba8ebfed587106cb23e846c0168d7531.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; preservada.
+
+AUG-046:
+- Cerrada administrativamente por instrucción del responsable.
+- No se realizaron actividades adicionales sobre esta tarea ni se modificaron documentos de contenido legal.
+- H-AUD-046-001 y H-AUD-046-002 permanecen independientes; este cierre no los corrige.
+
+Selección de continuidad:
+- AUG-047 queda fuera del alcance solicitado porque trata modales legales.
+- Siguiente tarea técnica no legal: AUG-048 — snapshot autoritativo y sincronización silenciosa del catálogo.
+
+AUG-048 — alcance:
+- getCatalogData entrega una instantánea completa con colecciones Cortes, Tutoriales, Relay y Logos.
+- La caché local debe reemplazarse, no fusionarse con registros anteriores.
+- Cortes se identifica exclusivamente por ID persistente, rechazando IDs ausentes/duplicados.
+- Tutoriales, Relay y Logos se comparan por contenido completo, incluyendo metadatos; no por cardinalidad ni por claves fallback Tema/configuración.
+- Archivos previstos: offline.js, auth.js, ui.js, Services/Test/CatalogSnapshotSync.js y Services/Test/README.md.
+- No modificar endpoints, deployments ni datos operativos.
+
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-048 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre de la tarea: 40c2a241ba8ebfed587106cb23e846c0168d7531.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; preservada.
+
+AUG-046:
+- Cierre administrativo por instrucción del responsable; sin intervención adicional ni modificaciones de documentos de contenido legal.
+- H-AUD-046-001 y H-AUD-046-002 siguen siendo hallazgos técnicos independientes.
+
+Selección:
+- AUG-047 no se inició porque queda fuera del alcance solicitado.
+- AUG-048 completada; siguiente tarea técnica no legal: AUG-049.
+
+Implementación AUG-048:
+- getCatalogData queda tratado como instantánea completa: Cortes, Tutoriales, Relay y Logos.
+- saveCatalog sustituye el registro IndexedDB completo; no fusiona registros antiguos, por lo que las eliminaciones remotas no sobreviven en caché.
+- Se rechazan snapshots incompletos y Cortes con ID ausente o duplicado.
+- Cortes se comparan por ID persistente. Tutoriales, Relay y Logos/metadatos se comparan por contenido completo, no por cardinalidad ni por claves sintéticas Tema/configuración.
+- auth.js descarta cachés/respuestas incompletas. ui.js procesa altas, modificaciones y eliminaciones, actualiza estado y refresca las vistas afectadas.
+- Archivos: offline.js, auth.js, ui.js, Services/Test/CatalogSnapshotSync.js y Services/Test/README.md.
+
+Validación:
+- Harness lógico Node con IndexedDB simulado: 15/15 PASS.
+- Sintaxis del harness: PASS.
+- No ejecutado: navegador real, IndexedDB real, Service Worker en dispositivo, pruebas offline de campo, Apps Script/Spreadsheet, deployments, endpoints ni datos operativos.
+- No se modificaron endpoints, deployments ni datos operativos.
+- Las pruebas reales de navegador/IndexedDB/offline se difieren a Beta; no se presentan como realizadas.
+
+================================================================================
