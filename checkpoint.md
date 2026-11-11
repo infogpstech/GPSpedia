@@ -1,13 +1,13 @@
 ================================================================================
 AUG-051 — ITERACIÓN 4 — 2026-11-11
-Estado: EN PROGRESO.
-Rama: GPSpedia2.2.5_work. Commit de inicio: 00f1c07ae09e4b248d426c673ca7c2d2e455dcf2.
-Resultado: TTL de 30 días para miniaturas persistentes. Las variantes vencidas se eliminan al consultarse; la lectura/compresión ejecuta limpieza oportunista de entradas vencidas con clave registrada. Los registros heredados sin timestamp se consideran caducados al primer acceso.
-Archivos funcionales: offline.js. Suite: Services/Test/IndexedDBTransactions.js (expiración, eliminación y regeneración).
-Compatibilidad: no se modifica DB_VERSION ni la estructura de stores. Las claves heredadas sin metadatos temporales verificables se descartan al consultarse.
-Validación: parsing sintáctico de offline.js y Services/Test/IndexedDBTransactions.js aprobado con parser V8 tras retirar únicamente export/import de módulo. La suite funcional no se ejecutó en Node CLI; el runner disponible no ofrece temporizadores Node y la ejecución adaptada agotó el tiempo. Diff remoto limitado a los archivos de AUG-051; revisión de lógica y cambios pendientes de validación local reproducible.
-Pendiente: LRU y límite total de cuota IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; pruebas de navegador real y multi-pestaña.
-Siguiente acción obligatoria: ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js en Node CLI local. Si aprueba, dedicar la siguiente iteración exclusivamente a implementar LRU. No iniciar AUG-052.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de inicio de esta validación: 23600b555aef9c8220f8662374b0bffa8668a3f3.
+Resultado: TTL persistente de 30 días para miniaturas. Las variantes vencidas se eliminan al consultarse; la limpieza oportunista se ejecuta al consultar y antes de comprimir. Los registros heredados sin timestamp se descartan al primer acceso.
+Validación local: parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. Suite completa ejecutada en V8 con adaptación únicamente del cargador de módulos, assert y globals Node ausentes: 10/10 PASS, incluidos commit/abort/cuota/versionchange/bloqueo, aislamiento por cuenta, variantes por tamaño, cierre de ImageBitmap y TTL/eliminación/regeneración. No se ejecutó Node CLI literal ni navegador real/multi-pestaña; estos últimos se reservan para Beta.
+Compatibilidad: sin cambio de DB_VERSION ni estructura de stores.
+Pendiente de AUG-051: evicción LRU y cuota total IndexedDB; límite RAM y revocación segura de ObjectURL; límite de concurrencia de compresión.
+Siguiente iteración: implementar únicamente LRU y probarla con la suite. No iniciar AUG-052.
+================================================================================
 ================================================================================
 
 # Checkpoint activo — GPSpedia

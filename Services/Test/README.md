@@ -325,7 +325,7 @@ La suite `Services/Test/IndexedDBTransactions.js` verifica aislamiento de `searc
 ## Caducidad TTL de miniaturas (AUG-051 — iteración 4)
 
 Ejecutar `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
-La suite comprueba que una miniatura con más de 30 días se elimina y no se devuelve, y que puede regenerarse al solicitarla de nuevo. La limpieza oportunista retira entradas vencidas con metadatos de clave; registros heredados sin fecha se consideran caducados al consultarse. LRU, cuota total, límite RAM, ObjectURL y concurrencia quedan pendientes.
+La suite incluye expiración a los 30 días, eliminación de la variante vencida y regeneración posterior. Validación efectuada en runtime V8 adaptado: 10/10 escenarios PASS. El adaptador sustituyó únicamente el cargador de módulos, las aserciones Node y globals Node ausentes; no representa una ejecución literal de Node CLI. Navegador real y multi-pestaña se reservan a Beta. LRU, cuota total, límite RAM, ObjectURL y concurrencia quedan pendientes.
 
 ## Variantes de miniaturas por tamaño (AUG-051 — iteración 3)
 

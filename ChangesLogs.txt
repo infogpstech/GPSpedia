@@ -1280,3 +1280,11 @@ Validación: parsing sintáctico V8 de offline.js y de la suite aprobado. La eje
 Se corrigió la separación sintáctica entre los métodos getAll y delete del harness de IndexedDB. Parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado después de la corrección.
 La suite funcional completa no se ejecutó en Node CLI y no se declara aprobada. Se mantiene pendiente su ejecución reproducible en entorno Node.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE DE VALIDACIÓN LOCAL DE TTL (ITERACIÓN 4)
+Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js en el runtime V8 disponible, adaptando únicamente el cargador de módulos, la aserción Node y los globals Node ausentes. Resultado: 10/10 PASS. Se verificaron commit/abort/cuota/versionchange/bloqueo, aislamiento por cuenta, variantes por tamaño, liberación de ImageBitmap y expiración/eliminación/regeneración TTL.
+Parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. No se ejecutó Node CLI literal ni navegador real/multi-pestaña; la validación de navegador y multi-pestaña se reserva a Beta.
+La iteración TTL queda completada con validación diferida. Siguiente iteración: evicción LRU como tarea única.
+================================================================================
