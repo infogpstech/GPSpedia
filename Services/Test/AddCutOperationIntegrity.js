@@ -29,6 +29,42 @@ function runAddCutOperationIntegrityTests(sources) {
             extract_(script[1], 'buildClientCutOperationFingerprintPayload') +
             ';return buildClientCutOperationFingerprintPayload;')();
     }
+    function makeRecordOpIdHarness(source) {
+        const rows = [];
+        const sheet = {
+            appendRow(row) { rows.push(row.slice()); },
+            getRange(rowIndex, column) {
+                return { setValue(value) { rows[rowIndex - 2][column - 1] = value; } };
+            }
+        };
+        const readEntries = () => {
+            const byOpId = new Map();
+            rows.forEach((row, index) => byOpId.set(row[0], {
+                opId: row[0], vehicleId: row[1], slotIndex: Number(row[2]),
+                timestamp: row[3], status: row[4], operationHash: row[5] || '', rowIndex: index + 2
+            }));
+            return { byOpId };
+        };
+        const helpers = {
+            normalizeIdempotenciaOpId_: value => { const v = String(value || '').trim(); assert_(/^OP-[A-Za-z0-9_-]{1,100}$/.test(v)); return v; },
+            normalizeIdempotenciaVehicleId_: value => { const v = String(value || '').trim(); assert_(!!v); return v; },
+            normalizeIdempotenciaSlotIndex_: value => { const v = Number(value); assert_([1, 2, 3].includes(v)); return v; },
+            isValidIdempotenciaTimestamp_: value => !!String(value || '').trim(),
+            normalizeIdempotenciaStatus_: value => { const v = String(value || '').toLowerCase(); assert_(v === 'pending' || v === 'completed'); return v; },
+            normalizeIdempotenciaOperationHash_: value => { const v = String(value || '').toLowerCase(); assert_(/^[a-f0-9]{64}$/.test(v)); return v; }
+        };
+        const fn = new Function(
+            'normalizeIdempotenciaOpId_', 'normalizeIdempotenciaVehicleId_', 'normalizeIdempotenciaSlotIndex_',
+            'isValidIdempotenciaTimestamp_', 'normalizeIdempotenciaStatus_', 'normalizeIdempotenciaOperationHash_',
+            'getIdempotenciaSheet', 'readIdempotenciaEntries_', 'SpreadsheetApp',
+            extract_(source, 'recordOpId') + ';return recordOpId;'
+        )(
+            helpers.normalizeIdempotenciaOpId_, helpers.normalizeIdempotenciaVehicleId_, helpers.normalizeIdempotenciaSlotIndex_,
+            helpers.isValidIdempotenciaTimestamp_, helpers.normalizeIdempotenciaStatus_, helpers.normalizeIdempotenciaOperationHash_,
+            () => sheet, readEntries, { flush() {} }
+        );
+        return { record: fn, rows };
+    }
     const sampleNew = {
         vehicleId: null,
         vehicleData: { categoria: 'Camioneta', marca: 'Toyota', modelo: 'Hilux', versionesAplicables: '2.8', anoDesde: '2024', anoHasta: '2025', tipoEncendido: 'Llave', imagenVehiculo: 'data:image/png;base64,VEHICLE' },
@@ -97,6 +133,33 @@ function runAddCutOperationIntegrityTests(sources) {
     run_('migración ADMIN escribe seis columnas y deja huella vacía solo para registros históricos', () => {
         assert_(/entriesToWrite\.push\(\[e\.opId,String\(e\.vehicleId\)\.trim\(\),String\(e\.slotIndex\),e\.timestamp,"completed",""\]\)/.test(admin));
         assert_(/readIdempotenciaEntries_\(s,true\)/.test(admin));
+    });
+    run_('recordOpId WRITE y ADMIN guardan seis columnas y verifican la huella', () => {
+        for (const source of [write, admin]) {
+            const harness = makeRecordOpIdHarness(source), hash = 'a'.repeat(64);
+            const saved = harness.record('OP-100', 'VEH-100', 1, '11/11/2026 10:00:00', 'pending', hash);
+            assert_(saved.operationHash === hash);
+            assert_(harness.rows.length === 1 && harness.rows[0].length === 6 && harness.rows[0][5] === hash);
+        }
+    });
+    run_('recordOpId permite completar solo el mismo vehículo, slot y huella', () => {
+        for (const source of [write, admin]) {
+            const harness = makeRecordOpIdHarness(source), hash = 'b'.repeat(64);
+            harness.record('OP-101', 'VEH-101', 2, '11/11/2026 10:00:00', 'pending', hash);
+            const updated = harness.record('OP-101', 'VEH-101', 2, '11/11/2026 10:00:00', 'completed', hash);
+            assert_(updated.status === 'completed' && updated.operationHash === hash);
+        }
+    });
+    run_('recordOpId rechaza otro contenido o asociación', () => {
+        for (const source of [write, admin]) {
+            const harness = makeRecordOpIdHarness(source), hash = 'c'.repeat(64);
+            harness.record('OP-102', 'VEH-102', 1, '11/11/2026 10:00:00', 'pending', hash);
+            let wrongHash = false, wrongVehicle = false, wrongSlot = false;
+            try { harness.record('OP-102', 'VEH-102', 1, '11/11/2026 10:00:00', 'completed', 'd'.repeat(64)); } catch (_) { wrongHash = true; }
+            try { harness.record('OP-102', 'VEH-999', 1, '11/11/2026 10:00:00', 'completed', hash); } catch (_) { wrongVehicle = true; }
+            try { harness.record('OP-102', 'VEH-102', 2, '11/11/2026 10:00:00', 'completed', hash); } catch (_) { wrongSlot = true; }
+            assert_(wrongHash && wrongVehicle && wrongSlot);
+        }
     });
     run_('WRITE y ADMIN recalculan SHA-256 en servidor y exigen coincidencia con cliente', () => {
         for (const source of [write, admin]) {
