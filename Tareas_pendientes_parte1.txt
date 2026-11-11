@@ -801,15 +801,13 @@ Iteración 17: COMPLETADA CON VALIDACIÓN DIFERIDA (el harness IndexedDB ahora s
 
 ### AUG-054 — Autenticar checkOperation y minimizar su respuesta
 - **Hallazgo origen:** H-AUD-038-005. **Prioridad:** Alta.
-- **Evidencia:** Services/write.js doPost() enruta checkOperation a handleCheckOperation(); el handler busca por opId sin validar sesión y puede devolver rowData completo.
-- **Criterios de aceptación:**
-  1. Definir si la acción es protegida y validar userId/sessionToken contra ActiveSessions/Users antes de consultar; no confiar en opId como credencial.
-  2. Definir relación actor-operación para impedir consultas cruzadas cuando la política requiera propiedad.
-  3. Devolver solo estado, vehicleId, timestamp y datos mínimos de recuperación; no enviar rowData completo si no es necesario.
-  4. Revisar entropía del opId y mantener idempotencia sin usarlo como autorización.
-  5. Probar petición anónima, token inválido, otro usuario, opId inexistente, pendiente/completada y respuesta minimizada.
-- **Relación:** AUD-T-031, AUD-T-035 y AUD-T-038.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Evidencia inicial:** el handler consultaba por opId sin validar sesión y podía devolver rowData completo.
+- **Resolución:** handleCheckOperation valida userId/sessionToken mediante getAuthenticatedCollaborator antes del lookup; la respuesta se limita a estado, exists/pending, operationStatus y, solo para completadas, vehicleId/timestamp.
+- **Política actor-operación:** acceso colaborativo para cualquier colaborador autenticado con rol permitido. La hoja de idempotencia A:E no almacena propietario y el flujo admite recuperación por otro técnico; no se inventa una restricción por actor ni se usa opId como credencial.
+- **opId:** generador actualizado a 128 bits con crypto.getRandomValues; conserva prefijo y marca temporal. No usa Math.random ni actúa como secreto.
+- **Pruebas:** Services/Test/CheckOperationSecurity.js, 12 escenarios locales; cubre autenticación previa al lookup, sesión válida, acceso colaborativo, estados inexistente/pendiente/completado, minimización y generación aleatoria segura.
+- **Validación Beta:** integración real Apps Script/Spreadsheet y prueba de sesión/recuperación en entorno desplegado.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
 
 ### AUG-055 — Garantizar el ciclo durable y la vinculación de opId en add_cortes
