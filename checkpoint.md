@@ -223,3 +223,33 @@ Validación:
 
 AUG-054 queda cerrada. La siguiente tarea no se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-055 — CIERRE — ITERACIÓN 28 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work.
+HEAD de inicio de AUG-055: 204e0a6183c00fd53143d3a326423eb0fe098194.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+Resolución:
+- add_cortes.html: el snapshot de addOrUpdateCut pasa a IndexedDB (adminLocalState), aislado por ownerId. La solicitud no se envía si no se puede leer, persistir y verificar el snapshot. El payload y las imágenes se conservan sin duplicar Data URL; el token de sesión no se guarda.
+- offline.js: se agregan funciones de lectura, escritura verificada y eliminación exacta del snapshot. Se bloquean snapshots corruptos, ajenos, obsoletos o con otro opId/huella. Un snapshot completed es terminal y no puede degradarse ni reutilizarse.
+- add_cortes.html: la huella SHA-256 se calcula con WebCrypto; la recuperación comprueba opId, huella y vehicleId. Solo se avanza a etapa 3 después de una respuesta success verificable y de confirmar la limpieza local. Si la limpieza falla tras el commit, se conserva el snapshot completed hasta reconciliarlo.
+- Services/write.js y Services/admin.js: la hoja de idempotencia se amplía de A:E a A:F con operationHash. Ambos servicios recalculan la huella SHA-256 del payload canónico y rechazan contenido, vehículo, slot o asociación distintos. Las lecturas históricas usan únicamente las columnas existentes antes de ampliar F.
+- Migración histórica: los registros antiguos sin huella permanecen no verificables y no se reutilizan automáticamente. La migración se detiene si encuentra un opId ya asociado a una huella moderna.
+- Auditoría y backlog: H-AUD-003-001 queda registrado como RESUELTO EN FUENTES; AUG-055 queda COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Validación local:
+- AddCutOperationIntegrity.js: 27/27 PASS.
+- AddCutOperationRecoveryFlow.js: 3/3 PASS (respuesta perdida antes del commit, respuesta perdida después del commit y limpieza fallida tras confirmación).
+- IndexedDBTransactions.js: 10/10 escenarios nuevos PASS en harness con initDB real y dobles IndexedDB; la suite acumulada contiene 43 escenarios, de los cuales 33 se validaron previamente en AUG-053.
+- IdempotenciaIntegrity.js: 18/18 PASS.
+- CheckOperationSecurity.js: 12/12 PASS.
+- Parsing local de Services/write.js, Services/admin.js, offline.js y módulo frontend: PASS.
+
+Límites de validación:
+No se ejecutaron navegador/IndexedDB reales, Apps Script/Spreadsheet/Drive desplegados ni pruebas reales multi-pestaña. Esas validaciones permanecen para Beta. Los resultados anteriores corresponden a runtime JavaScript adaptado y dobles locales; no se afirma validación en producción.
+
+AUG-055 queda cerrada. La siguiente tarea no se inicia en esta iteración; se continuará en la siguiente.
+================================================================================

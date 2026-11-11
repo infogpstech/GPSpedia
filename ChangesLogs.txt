@@ -1652,3 +1652,19 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md: documenta política colaborativa, esquema A:E, ejecución y validaciones diferidas.
 - Tareas_pendientes_parte1.txt y checkpoint.md: AUG-054 marcada COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-055 — CIERRE — ITERACIÓN 28
+- add_cortes.html: sustituye el snapshot de localStorage por IndexedDB durable y aislado por propietario. No envía addOrUpdateCut si el snapshot no se guarda y verifica. Calcula la huella SHA-256 con WebCrypto y valida respuesta/vehículo antes de limpiar y avanzar.
+- offline.js: añade lectura, escritura verificada y eliminación exacta de snapshots addCutOperation. Los snapshots corruptos, ajenos, obsoletos o incompatibles se bloquean; completed queda como estado terminal.
+- Services/write.js y Services/admin.js: amplían idempotencia A:E a A:F con operationHash. Ambos recalculan SHA-256 y rechazan reintentos con otra huella, vehículo o slot. La lectura de hojas A:E existentes no consulta una sexta columna fuera de la cuadrícula.
+- Migración ADMIN: los registros históricos sin huella permanecen no verificables; se bloquea una migración histórica sobre un opId que ya esté asociado a una huella.
+- Services/Test/AddCutOperationIntegrity.js: 27/27 PASS.
+- Services/Test/AddCutOperationRecoveryFlow.js: 3/3 PASS para pérdida de respuesta antes/después del commit y fallo de limpieza posterior a confirmación.
+- Services/Test/IndexedDBTransactions.js: 10 nuevos escenarios 10/10 PASS; suite acumulada 43 escenarios (33 previamente validados en AUG-053).
+- Services/Test/IdempotenciaIntegrity.js: 18/18 PASS. Services/Test/CheckOperationSecurity.js: 12/12 PASS.
+- Auditoría.txt registra resolución en fuentes de H-AUD-003-001; backlog y README de pruebas actualizados.
+- Checkpoint de cierre Iteración 28 agregado.
+- Validación real de navegador/IndexedDB y Apps Script/Spreadsheet/Drive queda diferida a Beta.
+================================================================================
