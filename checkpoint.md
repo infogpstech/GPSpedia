@@ -319,3 +319,29 @@ Autorización actual confirmada: doPostInternal_ valida assertDeveloperSession p
 No se modificó código funcional ni se cambiaron permisos en esta iteración. No se modificó la rama base. La lista de campos anterior es el inventario observado en los editores actuales; antes de implementar la whitelist del servidor se contrastará contra COLS_CORTES y el esquema del registro para evitar omisiones o permitir columnas ajenas al modal.
 Siguiente iteración: definir la whitelist de campos in-modal a partir de COLS_CORTES, implementar helper de sesión para Desarrollador/Gefe solo en las acciones explícitas, implementar getAdminImageUploadStatus con verificación del ledger/archivo, añadir pruebas de contrato por rol/campo/estado y actualizar el contexto UI para Gefe. No iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 10 — 2026-11-11 — AUTORIZACIÓN GEFE PARA EDICIÓN IN-MODAL
+Estado: ITERACIÓN COMPLETADA CON VALIDACIÓN DIFERIDA; AUG-053 permanece EN PROGRESO por las validaciones Beta de aislamiento de operaciones locales.
+HEAD previo al checkpoint: 70582bd711966d3e168c7adc37bb92b7e25039f0. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Implementación:
+- Services/admin.js centraliza la revalidación de sesión en getAdminSessionContext_: token único asociado al userId, expiración, perfil único, cuenta activa y ausencia de revocación pendiente. assertDeveloperSession conserva únicamente desarrollador; assertModalEditSession admite desarrollador y gefe, sin confiar en roles enviados por el cliente.
+- ADMIN_MODAL_EDIT_ACTIONS contiene exactamente updateVehicleField, uploadAdminImage y getAdminImageUploadStatus. doPostInternal_ usa el guardia ampliado solo para esas acciones; el resto de acciones ADMIN sigue requiriendo Desarrollador.
+- updateVehicleField aplica whitelist de los campos expuestos por el editor in-modal: categoria, modelo, versionesAplicables, tipoEncendido, anoDesde, anoHasta, vin, notaImportante, apertura, cableAlimen/2/3, tipoCorte/configRelay/ubicacionCorte/colorCableCorte para índices 1–3 y los ocho campos de imagen. Se rechazan columnas ajenas. El campo vin resuelve su columna por encabezado único mediante getVinColumnIndex.
+- Se implementó handleGetAdminImageUploadStatus y se registró en api-config.js y dispatcher ADMIN. La consulta valida opId, vehículo y campo de imagen, rechaza asociaciones cruzadas y devuelve estado, URL actual/nueva e integridad. Cuando hay archivo Drive asociado, verifica ID, metadatos opId/hash, estado de papelera, MIME y SHA-256.
+- ui.js permite que desarrollador y gefe accedan al modo edición del modal. Los helpers de gestión global y otras vistas privilegiadas siguen usando sus controles de rol específicos; jefe no se incluyó.
+
+Archivos: Services/admin.js, api-config.js, ui.js, Services/Test/AdminModalEditSecurity.js (nuevo), Services/Test/ActionDispatchContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt y ChangesLogs.txt.
+
+Validación local ejecutada en runtime V8 adaptado:
+- Parsing de Services/admin.js, ui.js, api-config.js y ambas suites: PASS.
+- runAdminModalEditSecurityTests(): 13/13 PASS.
+- runActionDispatchContractTests(): 11/11 PASS.
+- Revisión del diff de ocho archivos: solo cambios de AUG-053.
+No ejecutado: Node CLI literal, navegador/IndexedDB real, ni integración real con Apps Script, Spreadsheet y Drive. Esas validaciones quedan para Beta; no se simularon ni se reportan como realizadas.
+
+Política conservada: las operaciones locales de reemplazo siguen privadas por ownerId; no se cambió el ledger para compartir operaciones entre cuentas. El permiso Gefe solo habilita su propio flujo de edición modal y su propia cola local.
+Siguiente iteración: revisar la interacción entre el descarte/restauración del snapshot completo y la whitelist, completar pruebas de contrato de restauración y operaciones pendientes, y continuar la validación local de AUG-053. Después registrar cualquier ajuste con checkpoint y commit. No iniciar AUG-054.
+================================================================================
