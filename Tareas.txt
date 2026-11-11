@@ -982,7 +982,7 @@ Siguiente: límite RAM cuantitativo de miniaturas. No iniciar concurrencia de co
 
 ================================================================================
 AUG-051 — ITERACIÓN 9 — PRESUPUESTO RAM OBJECTURL — 2026-11-11
-Estado: EN VALIDACIÓN LOCAL.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Presupuesto predeterminado 64 MiB para Blob retenidos por ObjectURL activos. URLs compartidas se contabilizan una vez; sin capacidad se usa fallback remoto y se libera presupuesto al revocar el último consumidor. No representa RAM total ni memoria decodificada/GPU.
-Suite ampliada a 10 escenarios. Siguiente: verificar y cerrar esta iteración. Concurrencia y AUG-052 fuera de alcance.
+Suite ampliada a 10 escenarios: 10/10 PASS en runtime V8 con adaptadores mínimos; parsing V8 aprobado. Node CLI literal y navegador real no ejecutados; navegador real reservado a Beta. Siguiente interacción: concurrencia de compresión como tarea independiente. AUG-052 fuera de alcance.
 ================================================================================
