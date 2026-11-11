@@ -725,6 +725,8 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   10. Probar VIN completo, prefijo único, prefijo ambiguo, varias generaciones del mismo modelo, rangos solapados/no solapados, años ausentes/abiertos, muestras 0/1/2+, firmas obsoletas, longitudes distintas y cambios de catálogo.
 - Relación: AUD-T-037 y AUD-T-004; VIN/esquema AUD-T-030; migración VIN y freeze IDs. No duplicar H-AUD-037-007.
 
+- Avance 2026-11-11: criterio 6 atendido; VIN completo de 17 caracteres conserva coincidencia exacta y consulta prefijo de 12 como fallback exacto. Implementación y pruebas locales registradas en checkpoint.md.
+
 ### AUG-051 — Robustecer IndexedDB, miniaturas y privacidad del historial local
 - Origen: H-AUD-037-008/009. Prioridad media/alta.
 - Criterios:

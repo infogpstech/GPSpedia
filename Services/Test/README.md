@@ -296,3 +296,9 @@ Verifica el umbral predeterminado/configurable, el estado insuficiente con muest
 
 Ejecutar `node --experimental-default-type=module Services/Test/VinYearRangeSemantics.js`.
 Define y verifica que un `anoHasta` vacío significa que la generación continúa vigente hasta el año actual; un `anoDesde` vacío o inválido deja el rango sin base verificable y no produce solapamiento. Las consultas por año usan la misma regla. La suite usa rangos y firmas sintéticos.
+
+
+### Normalización de VIN completo y prefijos (AUG-050)
+
+Ejecutar `node --experimental-default-type=module Services/Test/VinQueryNormalization.js`.
+La suite verifica que un VIN estándar de 17 caracteres conserve primero la coincidencia exacta completa y, si no existe, consulte exactamente sus primeros 12 caracteres; los prefijos ya ingresados no se recortan. También verifica longitudes distintas, ausencia de coincidencias por subcadena, ambigüedad y filtrado por contexto. Usa firmas sintéticas y no consulta el catálogo productivo.

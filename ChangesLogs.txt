@@ -1205,3 +1205,13 @@ AUG-050 — SEMÁNTICA DE RANGOS DE AÑOS VIN — 2026-11-11
 - Services/Test/VinYearRangeSemantics.js: once pruebas sintéticas de rangos cerrados, abiertos, años ausentes, datos inválidos y consulta contextual.
 - Services/Test/README.md: instrucciones y semántica definida.
 ================================================================================
+
+
+================================================================================
+
+AUG-050 — NORMALIZACIÓN DE VIN COMPLETO Y PREFIJOS — 2026-11-11
+- VinDifferentialEngine.js: las consultas de VIN de 17 caracteres conservan primero la coincidencia exacta completa y, si no existe, consultan el prefijo exacto de 12 caracteres; las consultas que ya son prefijos no se recortan y no se mezclan coincidencias de longitudes distintas.
+- Se incrementa la versión del algoritmo a 1.4.0 para invalidar firmas/cachés calculadas con la lógica de consulta anterior.
+- Services/Test/VinQueryNormalization.js: nueve escenarios sintéticos de VIN completo, prefijo, prioridad exacta, ambigüedad, contexto y longitudes no estándar.
+- Services/Test/README.md: instrucciones de ejecución y límites de la suite.
+================================================================================

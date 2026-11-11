@@ -89,7 +89,7 @@ export class VinDifferentialEngine {
         this.conflictLog = [];
         this.auditLog = [];
         this.catalogFingerprint = null;
-        this.version = "1.3.0";
+        this.version = "1.4.0";
     }
 
     buildSampleMatrix(records) {
@@ -460,18 +460,33 @@ export class VinDifferentialEngine {
 
         if (vin) {
             const cleanVin = normalizeVin(vin);
-            const matches = [];
+            const prefixVin = cleanVin.length === 17 ? cleanVin.slice(0, 12) : null;
+            const exactMatches = [];
+            const prefixMatches = [];
 
             for (const sig of this.signatures.values()) {
                 if (sig.status === "insuficiente") continue;
-                if (sig.vinLength && sig.vinLength !== cleanVin.length) continue;
+
+                // Se conserva la coincidencia exacta de VIN completo. Solo si no existe,
+                // un VIN estándar de 17 caracteres puede consultar firmas del prefijo de 12.
+                let candidateVin = "";
+                let targetMatches = null;
+                if (!sig.vinLength || sig.vinLength === cleanVin.length) {
+                    candidateVin = cleanVin;
+                    targetMatches = exactMatches;
+                } else if (prefixVin && sig.vinLength === prefixVin.length) {
+                    candidateVin = prefixVin;
+                    targetMatches = prefixMatches;
+                } else {
+                    continue;
+                }
 
                 let allMatch = true;
                 if (sig.positions && sig.values) {
                     for (let i = 0; i < sig.positions.length; i++) {
                         const pos = sig.positions[i];
                         const expectedVal = sig.values[i];
-                        if (cleanVin[pos] !== expectedVal) {
+                        if (candidateVin[pos] !== expectedVal) {
                             allMatch = false;
                             break;
                         }
@@ -480,9 +495,12 @@ export class VinDifferentialEngine {
                     allMatch = false;
                 }
 
-                if (allMatch) matches.push(sig);
+                if (allMatch) targetMatches.push(sig);
             }
 
+            // No se mezclan firmas de longitud completa con firmas de prefijo:
+            // una coincidencia completa tiene prioridad; el prefijo es fallback exacto.
+            const matches = exactMatches.length ? exactMatches : prefixMatches;
             const filteredMatches = this.filterMatchesByContext(matches, context);
             if (filteredMatches.length === 1) {
                 return {

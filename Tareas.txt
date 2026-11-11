@@ -888,3 +888,13 @@ AUG-050 — AVANCE PARCIAL — UMBRAL DE MUESTRAS Y COMPETIDORES VIN — 2026-11
 - Se incrementó la versión del algoritmo a 1.2.0 para invalidar cachés calculadas con la lógica anterior.
 - Suite Services/Test/VinSampleThreshold.js: nueve escenarios sintéticos; instrucciones añadidas a Services/Test/README.md.
 - AUG-050 permanece EN PROGRESO. Rangos abiertos, normalización VIN, extractSharedChars y UI/navegación continúan pendientes.
+
+
+================================================================================
+AUG-050 — AVANCE PARCIAL — NORMALIZACIÓN DE VIN COMPLETO/PREFIJOS — 2026-11-11
+- Un VIN de 17 caracteres conserva primero la coincidencia exacta con firmas de 17; si no existe, consulta exactamente los primeros 12 caracteres contra firmas de prefijo.
+- Un prefijo ingresado directamente no se recorta. No se admiten longitudes arbitrarias ni coincidencias por subcadena para VIN completo.
+- La versión del algoritmo pasa a 1.4.0 para invalidar cachés anteriores.
+- Suite Services/Test/VinQueryNormalization.js: nueve escenarios sintéticos.
+- AUG-050 permanece EN PROGRESO; no iniciar AUG-051.
+================================================================================
