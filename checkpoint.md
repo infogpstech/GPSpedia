@@ -254,3 +254,11 @@ AUG-053 — ADENDA ITERACIÓN 5 — 2026-11-11
 Corrección de revisión: resetSessionUi_ limpia pendingAdminImageUploads y pendingAdminImageUploadsLoaded para liberar Data URLs en memoria al cambiar/cerrar sesión, sin borrar el snapshot persistido. Se añaden comprobaciones de sesión después de FileReader, de la lectura IndexedDB y de la respuesta remota para impedir que una continuación obsoleta modifique el estado de otra cuenta. El snapshot original permanece disponible para recuperación del propietario.
 Validación pendiente: pruebas locales específicas del ciclo logout/cambio de cuenta y ejecución completa de la suite en el checkout del repositorio; pruebas IndexedDB real/multi-pestaña diferidas a Beta.
 ================================================================================
+
+
+================================================================================
+AUG-053 — VALIDACIÓN Y PUBLICACIÓN ITERACIÓN 5 — 2026-11-11
+Implementación publicada en dos commits de trabajo: a98a87d8da2d06f92a3479902f31e95c9b532a4e (aislamiento por owner) y 7c5d40a61be2766e6b85e548670c898f72d14219 (limpieza de memoria y guardas de sesión). El HEAD final verificado de la rama GPSpedia2.2.5_work es 7c5d40a61be2766e6b85e548670c898f72d14219; padre: a98a87d8da2d06f92a3479902f31e95c9b532a4e. La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Validación local: Services/Test/AdminImageUploadIsolation.js ejecutada con Node v22.16.0: 9/9 PASS. node --check de adminImageUploadIsolation.js y la suite: PASS. Parsing de ui.js, offline.js, adminImageUploadIsolation.js y la suite mediante V8, retirando únicamente declaraciones import/export para parseo sin ejecución: PASS. Comparación Git desde HEAD inicial confirma ocho archivos dentro del alcance de AUG-053, sin cambios en la rama base.
+Pendiente Beta: IndexedDB real, recarga, cambio de cuenta y dos pestañas. No se ejecutaron navegador real ni servicios externos. AUG-053 sigue EN PROGRESO; la siguiente iteración debe atender las validaciones locales restantes del criterio 8 y el alcance de roles del modal.
+================================================================================
