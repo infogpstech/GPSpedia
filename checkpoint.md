@@ -1,4 +1,23 @@
 ================================================================================
+AUG-053 — ITERACIÓN 15 — 2026-11-11 — PRUEBAS INDEXEDDB DEL CICLO DURABLE DE IMÁGENES ADMIN
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: bf9a3239c160d513aec467640088d418ef931764. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Alcance:
+- Services/Test/IndexedDBTransactions.js incorpora cinco escenarios para persistencia/recuperación de adminImageUploadPending: whitelist sin credenciales, aislamiento por propietario en mismo vehículo/campo, conflicto de opId sin sobrescritura, eliminación por owner/opId exactos y transacción abortada sin confirmación.
+- Services/Test/README.md documenta ejecución y alcance.
+- No se modificó lógica funcional ni datos productivos.
+
+Validación local:
+- Suite IndexedDBTransactions ejecutada en runtime V8 adaptado contra las funciones reales de offline.js y su harness: 27/27 PASS.
+- Parsing V8 de Services/Test/IndexedDBTransactions.js y offline.js: PASS.
+- El runtime adaptado sustituye módulos Node/importación dinámica y APIs de temporización; el comando Node CLI literal no se ejecutó.
+Pendiente Beta: IndexedDB real, navegador real y concurrencia multi-pestaña. No se simularon ni se reportan como realizadas.
+
+Siguiente iteración: continuar AUG-053 con el siguiente escenario del ciclo combinado snapshot/operación pendiente que no tenga cobertura local. No iniciar AUG-054.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 14 — 2026-11-11 — CONTINUIDAD DE SESIÓN ENTRE SNAPSHOT DURABLE Y ENVÍO
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD anterior: 937757b59673c46311c89ebdf1ef8871c9476600. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).

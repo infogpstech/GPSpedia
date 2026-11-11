@@ -479,3 +479,10 @@ La suite `AdminModalEditRestoreContract.js` verifica que la carga de operaciones
 La suite `AdminModalEditRestoreContract.js` comprueba que la lectura del archivo, la persistencia del snapshot y el envío/reintento mantengan el contexto completo de la sesión iniciadora. Después de guardar en IndexedDB, una sesión cambiada detiene el envío y conserva el snapshot durable para la cuenta propietaria. Los callbacks de error obsoletos no actualizan la interfaz; las eliminaciones confirmadas revalidan el contexto antes de modificar mapas en memoria.
 
 Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. Es un contrato estático local; no sustituye IndexedDB/navegador real ni pruebas multi-pestaña reservadas a Beta.
+
+
+## Persistencia IndexedDB de reemplazos de imágenes ADMIN (AUG-053 — iteración 15)
+
+La suite `IndexedDBTransactions.js` cubre el ciclo durable del snapshot `adminImageUploadPending`: escritura y recuperación con whitelist sin credenciales, aislamiento entre propietarios para el mismo vehículo/campo, conflicto de opId sin sobrescribir el intento original, eliminación limitada al propietario/opId exactos y rechazo de una escritura cuya transacción se aborta.
+
+Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`. Estos escenarios usan el harness IndexedDB simulado del proyecto; no sustituyen IndexedDB real ni pruebas multi-pestaña de Beta.

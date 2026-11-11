@@ -1540,3 +1540,11 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/AdminModalEditRestoreContract.js: tres contratos adicionales para continuidad de sesión, orden de persistencia/envío y protección de callbacks/eliminación.
 - Validación ejecutada en runtime V8: contratos 10/10 PASS y parsing V8 de ui.js PASS. No ejecutados: navegador/IndexedDB real, cambio multi-pestaña ni servicios Apps Script/Drive; permanecen como validaciones Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 15 — CONTRATOS DE PERSISTENCIA INDEXEDDB PARA IMÁGENES ADMIN
+- Services/Test/IndexedDBTransactions.js: cinco escenarios nuevos sobre persistencia/recuperación de adminImageUploadPending, exclusión de credenciales, aislamiento por propietario, conflicto del opId, eliminación exacta y aborto de transacción.
+- Services/Test/README.md: documenta el alcance y comando de ejecución de los escenarios.
+- No se modificó lógica funcional ni datos; la iteración se limita a ampliar cobertura local del ciclo durable.
+================================================================================

@@ -420,6 +420,66 @@ async function runIndexedDBTransactionTests() {
         assert.equal(await api.removeAddCutPendingOperation('VEH-OLD','USER-A','OP-OLD'),true);
     });
 
+    await testAsync('adminImageUploadPending persiste y recupera el snapshot completo sin credenciales', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-durable-snapshot');
+        const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-1',fieldName:'imgCorte1',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100,
+            SessionToken:'DO-NOT-PERSIST',credential:'DO-NOT-PERSIST',extra:'DO-NOT-PERSIST'};
+        const saved=await api.saveAdminImageUploadPendingOperation(operation);
+        assert.equal(saved.saved,true);
+        const restored=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-1','imgCorte1','USER-A');
+        assert.equal(restored.available,true);
+        assert.deepEqual(restored.operation,{id:operation.id,ownerId:'USER-A',vehicleId:'VEH-ADMIN-1',fieldName:'imgCorte1',
+            fileData:operation.fileData,filename:operation.filename,mimeType:operation.mimeType,createdAt:100});
+        const key='adminImageUploadPending:USER-A:VEH-ADMIN-1:imgCorte1';
+        const stored=h.stores.get('adminLocalState').values.get(key).operation;
+        assert.equal(Object.prototype.hasOwnProperty.call(stored,'SessionToken'),false);
+        assert.equal(Object.prototype.hasOwnProperty.call(stored,'credential'),false);
+    });
+    await testAsync('adminImageUploadPending aísla el mismo vehículo y campo entre propietarios', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-owner-isolation');
+        const make=(ownerId,id)=>({id,ownerId,vehicleId:'VEH-ADMIN-2',fieldName:'imgCorte2',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100});
+        assert.equal((await api.saveAdminImageUploadPendingOperation(make('USER-A','1234567890abcdef12345678'))).saved,true);
+        assert.equal((await api.saveAdminImageUploadPendingOperation(make('USER-B','abcdef123456789012345678'))).saved,true);
+        assert.equal((await api.getAdminImageUploadPendingOperation('VEH-ADMIN-2','imgCorte2','USER-A')).operation.ownerId,'USER-A');
+        assert.equal((await api.getAdminImageUploadPendingOperation('VEH-ADMIN-2','imgCorte2','USER-B')).operation.ownerId,'USER-B');
+    });
+    await testAsync('adminImageUploadPending conserva el intento original ante un opId conflictivo del mismo propietario', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-conflict');
+        const base={ownerId:'USER-A',vehicleId:'VEH-ADMIN-3',fieldName:'imgCorte3',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        assert.equal((await api.saveAdminImageUploadPendingOperation({...base,id:'1234567890abcdef12345678'})).saved,true);
+        const conflict=await api.saveAdminImageUploadPendingOperation({...base,id:'abcdef123456789012345678',fileData:'data:image/png;base64,Qg=='});
+        assert.equal(conflict.saved,false);
+        assert.equal(conflict.conflict,true);
+        const current=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-3','imgCorte3','USER-A');
+        assert.equal(current.operation.id,'1234567890abcdef12345678');
+        assert.equal(current.operation.fileData,'data:image/png;base64,AA==');
+    });
+    await testAsync('adminImageUploadPending elimina solo el opId exacto de su propietario', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-owner-remove');
+        const make=(ownerId,id)=>({id,ownerId,vehicleId:'VEH-ADMIN-4',fieldName:'imgApertura',
+            fileData:'data:image/png;base64,AA==',filename:'apertura.png',mimeType:'image/png',createdAt:100});
+        const idA='1234567890abcdef12345678',idB='abcdef123456789012345678';
+        await api.saveAdminImageUploadPendingOperation(make('USER-A',idA));
+        await api.saveAdminImageUploadPendingOperation(make('USER-B',idB));
+        assert.equal(await api.removeAdminImageUploadPendingOperation('VEH-ADMIN-4','imgApertura',idA,'USER-B'),false);
+        assert.equal(await api.removeAdminImageUploadPendingOperation('VEH-ADMIN-4','imgApertura','wrong-op','USER-A'),false);
+        assert.equal((await api.getAdminImageUploadPendingOperation('VEH-ADMIN-4','imgApertura','USER-A')).operation.id,idA);
+        assert.equal(await api.removeAdminImageUploadPendingOperation('VEH-ADMIN-4','imgApertura',idA,'USER-A'),true);
+        assert.equal((await api.getAdminImageUploadPendingOperation('VEH-ADMIN-4','imgApertura','USER-A')).operation,null);
+        assert.equal((await api.getAdminImageUploadPendingOperation('VEH-ADMIN-4','imgApertura','USER-B')).operation.id,idB);
+    });
+    await testAsync('adminImageUploadPending no confirma una escritura cuya transacción se aborta', async () => {
+        const h=createIndexedDBHarness({transactions:['abort']}),api=await freshOffline(h,'admin-image-aborted-write');
+        const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-5',fieldName:'imgCorte1',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        const result=await api.saveAdminImageUploadPendingOperation(operation);
+        assert.equal(result.saved,false);
+        assert.equal(result.error,true);
+    });
+
     console.log(`\nIndexedDB transaction tests: ${passed}/22 PASS`);
 }
 
