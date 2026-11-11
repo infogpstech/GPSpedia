@@ -1,14 +1,13 @@
 ================================================================================
 AUG-051 — ITERACIÓN 5 — 2026-11-11
-Estado: EN PROGRESO — corrección del simulador incorporada; suite completa y revisión final pendientes.
-Rama: GPSpedia2.2.5_work. HEAD confirmado antes de esta actualización: b3cc129949c98c2a597fc42c7418d5f89de51a1f.
-Alcance único: política LRU para variantes de miniaturas, máximo de 200 entradas, actualización de lastAccessedAt y evicción de las menos recientes.
-Corrección de esta iteración: el harness de IndexedDB ahora contabiliza solicitudes pendientes por transacción y solo dispara oncomplete cuando todas han finalizado. Se añadió una regresión que retiene deliberadamente una solicitud delete y comprueba que la operación LRU no resuelva antes de liberarla.
-Validación ejecutada: prueba aislada del harness con delete diferido PASS. No se ejecutó la suite completa ni Node CLI: el entorno de trabajo no tiene checkout local del repositorio y la resolución DNS hacia GitHub no está disponible. No declarar validación integral todavía.
-Compatibilidad: sin cambio de DB_VERSION ni de stores.
-Pendiente: ejecutar parsing y las 12 pruebas de IndexedDBTransactions.js en un checkout local, revisar el diff completo y cerrar la iteración. No iniciar cuota global, límite RAM, ObjectURL, concurrencia ni AUG-052.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD al iniciar esta validación: b3cc129949c98c2a597fc42c7418d5f89de51a1f.
+Resultado: política LRU de miniaturas con máximo de 200 variantes persistidas. Las lecturas válidas actualizan lastAccessedAt; al exceder el límite, se eliminan las variantes menos recientes. El harness contabiliza solicitudes pendientes y transaction.oncomplete espera también las solicitudes delete encoladas desde onsuccess.
+Validación local: parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. Suite completa ejecutada desde el código del repositorio en V8 adaptado (cargador de módulos, assert y globals Node ausentes): 12/12 PASS, incluida la regresión de delete diferido. Node CLI literal no ejecutado por ausencia de checkout local y fallo de resolución DNS. Navegador real y multi-pestaña reservados a Beta.
+Compatibilidad: sin cambios de DB_VERSION ni estructura de stores.
+Siguiente iteración AUG-051: evaluar únicamente la política de cuota total de IndexedDB. No iniciar límite RAM, ObjectURL, concurrencia ni AUG-052.
 ================================================================================
-================================================================================
+
 
 # Checkpoint activo — GPSpedia
 

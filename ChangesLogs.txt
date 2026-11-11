@@ -1306,3 +1306,11 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Se agregó una prueba de regresión que difiere una solicitud delete y comprueba que la promesa LRU no resuelva anticipadamente.
 - La verificación aislada del ciclo de solicitud diferida pasó. La suite completa queda pendiente de ejecución en checkout local.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE ITERACIÓN 5 — LRU DE MINIATURAS
+- Services/Test/IndexedDBTransactions.js: el harness espera a que finalicen todas las solicitudes de una transacción, incluidas las eliminaciones encoladas durante onsuccess.
+- Se añadió una regresión que retiene una solicitud delete y verifica que la operación LRU no resuelva antes de su finalización.
+- Se corrigió el resumen para imprimir el total real de pruebas ejecutadas.
+================================================================================

@@ -944,3 +944,13 @@ Se corrigió el harness de IndexedDB para llevar el conteo de solicitudes activa
 Se añadió una regresión con delete diferido que verifica que la operación LRU permanezca pendiente hasta completar la eliminación. La lógica aislada del harness pasó; la suite completa aún no se ejecutó.
 Pendiente: ejecutar parsing y suite completa (12 pruebas) en un checkout local, revisar diff y cerrar iteración. No iniciar AUG-052.
 ================================================================================
+
+
+================================================================================
+AUG-051 — CIERRE DE ITERACIÓN 5 — LRU DE MINIATURAS — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+La política LRU conserva un máximo de 200 variantes, actualiza lastAccessedAt en lecturas válidas y elimina las menos recientes al exceder el límite. El harness de IndexedDB contabiliza solicitudes pendientes y espera a que finalicen todas las eliminaciones antes de emitir transaction.oncomplete.
+Validación local: parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. Suite completa ejecutada desde el código recuperado del repositorio en V8 adaptado (cargador de módulos, assert y globals Node ausentes): 12/12 PASS, incluida la regresión de delete diferido. Node CLI literal no ejecutado por ausencia de checkout local y fallo de resolución DNS. Navegador real y multi-pestaña quedan reservados a Beta.
+Compatibilidad: DB_VERSION y estructura de stores sin cambios.
+Siguiente iteración de AUG-051: abordar únicamente la política de cuota total de IndexedDB. No iniciar límite RAM, revocación de ObjectURL, concurrencia de compresión ni AUG-052.
+================================================================================
