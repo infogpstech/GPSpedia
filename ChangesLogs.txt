@@ -1502,3 +1502,14 @@ Archivos: adminImageUploadIsolation.js, offline.js, ui.js, Services/Test/AdminIm
 AUG-053 — ADENDA ITERACIÓN 5 — LIMPIEZA DE ESTADO EN MEMORIA
 La revisión posterior detectó que el mapa en memoria podía conservar Data URLs de un propietario después de cerrar sesión, aunque las claves ya estuvieran particionadas. resetSessionUi_ ahora vacía el mapa y el conjunto de estados cargados sin eliminar los snapshots durables de IndexedDB. También se comprueba la sesión después de leer el archivo, al terminar la carga de pendientes y al regresar la respuesta del servidor; si cambió, no se inicia ni se confirma localmente la operación bajo otra cuenta. Se conserva el snapshot durable para reconciliación por su propietario original.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 10 — AUTORIZACIÓN GEFE Y RECONCILIACIÓN DE IMÁGENES IN-MODAL
+- Services/admin.js: centraliza la revalidación de sesión desde ActiveSessions/Users; Desarrollador conserva acceso ADMIN general y Gefe se admite solo en updateVehicleField, uploadAdminImage y getAdminImageUploadStatus.
+- Services/admin.js: limita updateVehicleField a la whitelist de campos del modal, incluidos los tres índices de cortes y los ocho campos de imagen; VIN resuelve su columna por encabezado único.
+- Services/admin.js: implementa getAdminImageUploadStatus. Verifica opId, vehículo, campo, estado del ledger, referencia actual y, cuando existe archivo, MIME, SHA-256 y metadatos Drive de la operación.
+- api-config.js: registra getAdminImageUploadStatus en ADMIN.
+- ui.js: habilita el modo edición in-modal para roles desarrollador y gefe; los gestores globales y las demás acciones privilegiadas conservan sus verificaciones específicas.
+- Services/Test/AdminModalEditSecurity.js: agrega pruebas locales de roles, sesiones, acciones permitidas, whitelist y asociación del estado de reemplazo.
+- Services/Test/ActionDispatchContract.js y Services/Test/README.md: actualizan contrato de dispatcher e instrucciones de validación.
