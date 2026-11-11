@@ -754,6 +754,7 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
  const fileId=normalizeId(rawFileId);if(!fileId)return null;
  const width=normalizeThumbnailSize(requestedSize),cacheKey=buildThumbnailCacheKey(fileId,width);
+ await purgeExpiredThumbnailEntries();
  const fetchUrl=fileId.length>20&&!fileId.includes("/")&&!fileId.includes("http")?`https://lh3.googleusercontent.com/d/${fileId}`:url;
  if(!fetchUrl||fetchUrl.includes("placehold.co"))return null;
  try{
