@@ -1373,3 +1373,12 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - main.js: elimina el polling recursivo de 100 ms al restaurar búsquedas por hash; espera una transición terminal, conserva el deep link durante la ausencia de sesión y permite aplicar la búsqueda si la carga termina después del timeout.
 - Services/Test/CatalogReadiness.js: cuatro regresiones de estado inmediato, suscripción, error y timeout.
 - No se modifican endpoints, contratos backend, estrategia de fetch, Service Worker ni datos productivos.
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 2 — TIMEOUT, CANCELACIÓN Y REINTENTOS DE CATÁLOGO
+- catalogRequest.js: agrega timeout por intento, aborto de la petición vencida, señal externa, espera cancelable y hasta dos reintentos exponenciales solo ante fallos transitorios.
+- api-config.js: fetchCatalogData usa el helper y conserva routeAction; los errores HTTP incluyen status para clasificar reintentos. No cambia endpoint ni payload.
+- auth.js: la carga de catálogo mantiene AbortController; cancela la carga anterior al cambiar de sesión y al cerrar sesión, e ignora resultados/catch de cargas obsoletas.
+- main.js: ajusta el límite de espera del deep link a 27 s, coherente con el máximo de tres intentos de 8 s y pausas de 400/800 ms.
+- Services/Test/CatalogRequestRetry.js: siete escenarios de éxito, red transitoria, HTTP 503, timeout/abort, HTTP permanente, cancelación externa y cancelación durante backoff.
+- No se modifican Service Worker, cache.put, endpoints ni servicios productivos.

@@ -125,3 +125,13 @@ auth.js publica catalogLoadStatus/catalogLoadError al iniciar, cargar desde cach
 Prueba añadida: Services/Test/CatalogReadiness.js (4 escenarios: disponibilidad inmediata, cambio de estado, error y timeout). Validaciones de red, reintentos y PWA no forman parte de esta iteración.
 Siguiente iteración: incorporar timeout/cancelación/reintento controlado al fetch de catálogo. No modificar el Service Worker ni iniciar otros criterios de AUG-052 en esta iteración.
 ================================================================================
+
+================================================================================
+AUG-052 — ITERACIÓN 2 — 2026-11-11 — TIMEOUT, CANCELACIÓN Y REINTENTOS
+Estado: EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 4be9f57f3468110e3450a5547b88708901fced71.
+Se añade catalogRequest.js con timeout de 8 s por intento, máximo de dos reintentos con backoff 400/800 ms, cancelación mediante AbortSignal y cancelación durante el backoff. Solo se reintentan timeouts, fallos de red TypeError y HTTP 408/429/5xx; errores HTTP permanentes, errores de aplicación y respuestas inválidas no se reintentan.
+api-config.js integra el helper en fetchCatalogData y expone status en errores HTTP sin cambiar endpoint ni payload. auth.js cancela una carga previa al iniciar otra sesión y al cerrar sesión; ignora la respuesta de una carga cancelada/obsoleta. main.js amplía a 27 s la espera del deep link para cubrir el tiempo máximo configurado de los tres intentos.
+Prueba añadida: Services/Test/CatalogRequestRetry.js (7 escenarios). Validación de red real, navegador, backend y Service Worker queda pendiente de Beta.
+Siguiente iteración: resolver explícitamente la experiencia de error recuperable sin caché y la indicación de datos desactualizados cuando se conserva caché. No modificar todavía el Service Worker ni los endpoints.
+================================================================================

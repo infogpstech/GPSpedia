@@ -903,7 +903,7 @@ async function initializeApp() {
                 if (waitStarted || !currentState.currentUser) return;
                 waitStarted = true;
                 stopWaitingForLogin();
-                state.waitForCatalogReadiness(15000).then(result => {
+                state.waitForCatalogReadiness(27000).then(result => {
                     if (result.status === 'ready' || result.status === 'stale') {
                         navigation.filtrarContenido(query);
                         return;

@@ -369,3 +369,9 @@ El registro de ObjectURL limita a **64 MiB** la suma de Blob.size de las miniatu
 `thumbnailCompressionQueue.js` limita a **dos compresiones simultáneas por instancia JavaScript/pestaña** y procesa las solicitudes pendientes en orden FIFO. La compresión, incluida la descarga, decodificación, generación del Blob y persistencia, ocupa un turno hasta finalizar. Si una variante ya fue guardada mientras otra solicitud esperaba, se vuelve a consultar la caché antes de descargarla y comprimirla. Cada `ImageBitmap` se cierra en `finally`; los errores liberan el turno y mantienen el comportamiento de caché opcional.
 
 La regresión añadida a `Services/Test/IndexedDBTransactions.js` solicita cinco miniaturas concurrentes y verifica el máximo de dos `ImageBitmap` activos, la persistencia de los cinco resultados y el cierre de cada bitmap. Ejecutar con `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`. La suite integrada queda pendiente de ejecución en un checkout local; las pruebas aisladas del limitador sí se ejecutaron en Node.
+
+## Timeout, cancelación y reintentos del catálogo (AUG-052 — iteración 2)
+- Ejecutar `node --experimental-default-type=module Services/Test/CatalogRequestRetry.js`.
+- Comprueba éxito inmediato, reintento de fallo transitorio, HTTP 503, timeout con aborto de la solicitud, no reintento de HTTP permanente, cancelación externa y cancelación durante la espera de reintento.
+- Política cliente: timeout de 8 s por intento, máximo 2 reintentos con espera exponencial de 400/800 ms; no reintenta errores HTTP 4xx (excepto 408/429), respuestas inválidas ni errores de aplicación.
+- El ciclo de sesión cancela la carga anterior al cambiar de cuenta o cerrar sesión. No se modifican endpoints ni contratos del backend.

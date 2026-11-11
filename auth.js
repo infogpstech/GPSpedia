@@ -16,6 +16,8 @@ const VALIDATION_LOCK_NAME = 'gpsepedia-session-validation';
 const VALIDATION_CACHE_TTL_MS = 10000;
 const VALIDATION_TIMEOUT_MS = 8000;
 const LOCK_WAIT_TIMEOUT_MS = 5000;
+let catalogLoadController_ = null;
+function cancelCatalogLoad_() { const controller = catalogLoadController_; catalogLoadController_ = null; if (controller && !controller.signal.aborted) controller.abort(); }
 
 function addSessionCalendarMonthsUTC(date,months){const d=new Date(date.getTime()),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+months);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return d;}
 function getLocalSessionExpiry(user,now=new Date()){
@@ -123,6 +125,7 @@ function handleSessionStorageChange(event){
 if(typeof window!=='undefined')window.addEventListener('storage',handleSessionStorageChange);
 
 function handleLoginSuccess(user, persist = true) {
+    cancelCatalogLoad_();
     logoutGeneration_ += 1;
     if (persist) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setState({ currentUser: user });
@@ -131,6 +134,11 @@ function handleLoginSuccess(user, persist = true) {
 }
 
 async function loadInitialData() {
+    cancelCatalogLoad_();
+    if (typeof AbortController !== 'function') { setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' }); showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.'); return; }
+    const loadController = new AbortController();
+    catalogLoadController_ = loadController;
+    const isCurrentLoad = () => catalogLoadController_ === loadController && !loadController.signal.aborted;
     let catalogLoaded = false;
     setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
 
@@ -142,6 +150,7 @@ async function loadInitialData() {
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout local")), 3000))
         ]);
 
+        if (!isCurrentLoad()) return;
         if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
             console.log("Cargando catálogo desde caché local...");
             const normalizedCached = normalizeCatalogData(cachedCatalog);
@@ -152,12 +161,15 @@ async function loadInitialData() {
             console.warn('Se descartó una caché de catálogo incompleta o con IDs inválidos.');
         }
     } catch (e) {
+        if (!isCurrentLoad()) return;
         console.warn("Error o timeout al leer catálogo de IndexedDB:", e);
     }
 
-    // 2. Cargar desde la red en segundo plano
+    if (!isCurrentLoad()) return;
+    // 2. Cargar desde la red en segundo plano con timeout y reintentos acotados.
     try {
-        const apiResponse = await fetchCatalogData();
+        const apiResponse = await fetchCatalogData({ signal: loadController.signal, timeoutMs: 8000, retries: 2, baseDelayMs: 400 });
+        if (!isCurrentLoad()) return;
         const catalogData = normalizeCatalogData(apiResponse && apiResponse.data);
         if (!offline.isCompleteCatalogSnapshot(catalogData)) {
             throw new Error('El servicio no devolvió una instantánea completa del catálogo.');
@@ -180,6 +192,7 @@ async function loadInitialData() {
         loadPysData({ refresh: true }).catch(e => console.warn("Error precargando PyS en segundo plano:", e));
 
     } catch (error) {
+        if (!isCurrentLoad()) return;
         console.warn("Fallo al cargar catálogo desde red:", error);
 
         // Phase 3.3/3.4: Solo mostrar error si REALMENTE no hay nada cargado ni se pudo cargar del caché tras el fallo de red
@@ -212,6 +225,8 @@ async function loadInitialData() {
         } else {
             setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
         }
+    } finally {
+        if (catalogLoadController_ === loadController) catalogLoadController_ = null;
     }
 }
 
@@ -367,8 +382,9 @@ export function logout(reason = null, expectedSession = null) {
 
     // Nunca borrar una sesión que haya sustituido a la que originó esta operación.
     if (guardedSession && !isCurrentSession(guardedSession)) return false;
+    cancelCatalogLoad_();
     const logoutGeneration = ++logoutGeneration_;
-    setState({ currentUser: null, searchHistory: [], viewedItems: [] });
+    setState({ currentUser: null, searchHistory: [], viewedItems: [], catalogLoadStatus: 'idle', catalogLoadError: null });
     if (!guardedSession || sameSession(readStoredSession(), guardedSession)) {
         localStorage.removeItem(SESSION_KEY);
     }

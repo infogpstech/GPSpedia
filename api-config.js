@@ -4,6 +4,8 @@
 // ============================================================================
 
 // 1. CONFIGURACIÓN
+import { runCatalogRequestWithRetry } from './catalogRequest.js';
+
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycby1-ncfuo3PV38ZqvTkdHv2uoD2mNkgS3WNo_2_ycBvcxocA0H5QsNiZoqSadR19P7SiQ/exec",
@@ -124,7 +126,9 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         httpStatus = response.status;
         if (!response.ok) {
             outcome = "http_error";
-            throw new Error(`Error de red: ${response.status} ${response.statusText}`);
+            const httpError = new Error(`Error de red: ${response.status} ${response.statusText}`);
+            httpError.status = response.status;
+            throw httpError;
         }
         const text = await response.text();
         let result;
@@ -198,8 +202,8 @@ export async function validateSession(userId, sessionToken, signal = null) {
     return await routeAction('validateSession', { userId, sessionToken }, null, signal ? { signal } : {});
 }
 
-export async function fetchCatalogData() {
-    return await routeAction('getCatalogData');
+export async function fetchCatalogData(options = {}) {
+    return runCatalogRequestWithRetry(signal => routeAction('getCatalogData', {}, null, { signal }), options);
 }
 
 export async function getFeedbackItems(sessionPayload = {}) {
