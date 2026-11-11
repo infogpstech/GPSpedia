@@ -1591,3 +1591,11 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan alcance, resultado y validaciones pendientes.
 - No se modificó lógica funcional ni offline.js.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 21 — VALIDACIÓN INTEGRAL DE INDEXEDDBTRANSACTIONS
+- Services/Test/IndexedDBTransactions.js: suite completa ejecutada en runtime V8 adaptado, 31/31 PASS, cero fallos; incluye el caso QuotaExceededError de persistencia ADMIN.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: actualizan la evidencia y distinguen el runtime adaptado de Node CLI/IndexedDB real.
+- No se modificó lógica funcional ni el harness en esta iteración.
+================================================================================

@@ -514,4 +514,9 @@ La suite completa de 30 escenarios se ejecutó y aprobó (30/30) en runtime V8 a
 
 Se añadió un escenario específico para QuotaExceededError durante la escritura de adminImageUploadPending. La prueba exige que saveAdminImageUploadPendingOperation devuelva {saved:false,error:true} y que una lectura posterior no encuentre un snapshot parcial.
 
-El nuevo caso se ejecutó de forma aislada contra la función real de offline.js, con un adaptador IndexedDB que provoca el fallo de cuota: PASS. La suite queda ampliada a 31 escenarios; la ejecución integral de los 31 casos aún está pendiente. El comando Node CLI, IndexedDB real, navegador y concurrencia multi-pestaña no se ejecutaron; estas últimas validaciones permanecen para Beta.
+El caso se ejecutó de forma aislada y también quedó aprobado dentro de la suite completa: 31/31 PASS en runtime V8 adaptado, con las funciones reales de offline.js y adaptadores para dependencias del navegador. El comando Node CLI no se ejecutó en este entorno; tampoco se probó IndexedDB real, navegador real ni concurrencia multi-pestaña, que permanecen para Beta.
+
+
+## Validación integral de IndexedDBTransactions (AUG-053 — iteración 21)
+
+La suite completa ejecutó 31/31 escenarios con cero fallos en runtime V8 adaptado. Se cargaron las funciones reales de `offline.js` y las dependencias locales; la importación dinámica se sustituyó por una factoría y se adaptaron IndexedDB, `queueMicrotask`, `Blob`, `DOMException`, `structuredClone` y temporizadores. Los errores de aborto y cuota observados en el registro corresponden a rutas negativas esperadas de los escenarios. No se ejecutó el comando Node CLI original ni se probó IndexedDB/navegador real o concurrencia multi-pestaña; estas validaciones permanecen para Beta.

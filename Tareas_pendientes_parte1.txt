@@ -883,3 +883,7 @@ Validación de la cobertura durable ADMIN: suite Services/Test/IndexedDBTransact
 
 AUG-053 — ITERACIÓN 20 — 2026-11-11
 Criterio 8: se detectó que la suite IndexedDBTransactions cubría aborto de escritura, pero no un fallo de cuota específico al guardar adminImageUploadPending. Se añadió un escenario que exige {saved:false,error:true} y ausencia de snapshot parcial tras QuotaExceededError. El escenario nuevo pasó de forma aislada contra la función real de offline.js con adaptador IndexedDB. La suite queda en 31 casos; la ejecución integral de los 31 aún está pendiente. No se ejecutó Node CLI ni IndexedDB/navegador real o multi-pestaña; permanecen para Beta. AUG-053 continúa EN PROGRESO. No iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 21 — 2026-11-11
+Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js ampliada a 31 escenarios: 31/31 PASS, cero fallos, en runtime V8 adaptado con las funciones reales de offline.js y adaptadores de dependencias de navegador. Incluye el nuevo escenario QuotaExceededError de persistencia ADMIN. No se ejecutó el comando Node CLI ni IndexedDB/navegador real o multi-pestaña; permanecen para Beta. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.
