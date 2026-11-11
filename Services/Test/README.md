@@ -595,3 +595,9 @@ El backend WRITE y ADMIN amplía la hoja dedicada de idempotencia de A:E a A:F, 
 - CheckOperationSecurity.js: **12/12 PASS** con WRITE y frontend vigentes.
 
 Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes.html: PASS. La lectura del esquema histórico A:E se adapta a las cinco columnas disponibles antes de agregar F; no intenta consultar una sexta columna fuera de la cuadrícula. Las pruebas ejecutadas usan runtime V8 adaptado y dobles locales; no equivalen a navegador/IndexedDB reales ni a Apps Script/Spreadsheet/Drive desplegados. Esas verificaciones integradas permanecen para Beta.
+
+
+## AUG-056 — Disponibilidad dinámica de cortes y vídeo
+- `Services/Test/CutAvailability.js`: ejecutar `runCutAvailabilityTests({ frontend, write, admin })`. Cubre estados 0/1/2/3, selección del primer espacio libre en WRITE/ADMIN, vehículos nuevos/existentes, visibilidad de cortes/vídeo, refresco tras guardar/recuperar y conservación del formulario ante una colisión.
+- Validación local: CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; YouTubeAddCortesContract 4/4 PASS. Parsing V8 de los módulos modificados: PASS.
+- Navegador real, Apps Script/Spreadsheet desplegados y concurrencia real quedan diferidos a Beta; no se afirma validación de producción.
