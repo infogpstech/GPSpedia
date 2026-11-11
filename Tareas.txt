@@ -911,6 +911,6 @@ Pruebas locales sintéticas y contratos de integración documentados. Validació
 ================================================================================
 AUG-051 — ROBUSTECER INDEXEDDB, MINIATURAS Y PRIVACIDAD DEL HISTORIAL LOCAL
 Fecha: 2026-11-11. Estado: EN PROGRESO.
-Iteraciones 1 y 2: operaciones genéricas IndexedDB esperan transaction.oncomplete y manejan abort/error; conexiones liberadas ante onversionchange; bloqueos de upgrade/timeout explícitos. searchHistory, viewedItems y validationCache quedan aislados por userId; la actividad se rehidrata solo tras validar sesión y no se almacenan consultas potencialmente VIN. Suite sintética ampliada; Node CLI y navegador real pendientes.
-Checkpoint: checkpoint.md. No iniciar AUG-052. Siguiente iteración: cuota/LRU/TTL de miniaturas, claves por tamaño/campos (incluido imgApertura), límite RAM, ObjectURL, concurrencia de compresión y cierre de ImageBitmap.
+Iteraciones 1 a 3: transacciones IndexedDB esperan commit; sesiones e historial local quedan aislados por userId y las consultas potencialmente VIN no se guardan. Las miniaturas tienen claves independientes por ancho solicitado, compatibilidad de lectura con entradas antiguas, proporción conservada, no ampliación de imágenes pequeñas, cierre de ImageBitmap e inclusión de imgApertura. Suite sintética ampliada; parsing y harness aislado aprobados. Node CLI y navegador real pendientes.
+Checkpoint: checkpoint.md. No iniciar AUG-052. Siguiente iteración: política TTL/LRU/cuota de miniaturas, límite RAM, revocación segura de ObjectURL y concurrencia de compresión.
 ================================================================================
