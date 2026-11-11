@@ -6,7 +6,8 @@
   3. Mantener el estado de loading hasta que finalicen todas las operaciones activas; gestionar errores sin bloquear la interfaz.
   4. Probar disparadores simultáneos, retorno online durante submit, pestaña visible durante recuperación, checkOperation lento y respuestas pending/completed.
 - **Relación:** AUD-T-003; AUG-034 por coordinación de mutaciones entre proyectos.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Cierre:** recuperación single-flight; recuperación y envíos mutuamente excluyentes en etapas 1–3; solicitudes durante submit diferidas y reanudadas; overlay controlado por contador de operaciones activas. Evidencia en `Services/Test/AddCutOperationRecoveryConcurrency.js`, `Services/Test/README.md` y `checkpoint.md`.
 
 ================================================================================
 ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
