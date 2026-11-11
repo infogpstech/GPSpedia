@@ -588,9 +588,9 @@ El backend WRITE y ADMIN amplía la hoja dedicada de idempotencia de A:E a A:F, 
 
 ### Suites y validación AUG-055
 
-- AddCutOperationIntegrity.js: **24/24 PASS**. Comprueba canonicalización cliente/WRITE/ADMIN para vehículo nuevo, existente y modo silencioso; huella del contenido e imágenes; vinculación por vehículo y payload; contrato de la hoja A:F; orden snapshot/check/send; recuperación de respuesta perdida; estado terminal y limpieza.
+- AddCutOperationIntegrity.js: **25/25 PASS**. Comprueba canonicalización cliente/WRITE/ADMIN para vehículo nuevo, existente y modo silencioso; huella del contenido e imágenes; vinculación por vehículo y payload; contrato de la hoja A:F; orden snapshot/check/send; recuperación de respuesta perdida; estado terminal y limpieza.
 - IndexedDBTransactions.js: se amplió de 33 a **43 escenarios**. Los 10 escenarios nuevos de AUG-055 ejecutaron **10/10 PASS** con el harness IndexedDB adaptado: persistencia/verificación, aislamiento por propietario, conflicto de opId/huella, snapshot corrupto, cuota/aborto, limpieza exacta, borrado verificado, concurrencia serializada, estado completed terminal y almacenamiento no disponible. Los 33 escenarios anteriores corresponden a la validación de AUG-053 y no se volvieron a ejecutar en este cierre.
-- IdempotenciaIntegrity.js: **17/17 PASS** con las funciones vigentes del servicio ADMIN; incluye hash válido/inválido y registro histórico sin huella.
+- IdempotenciaIntegrity.js: **18/18 PASS** con las funciones vigentes del servicio ADMIN; incluye hash válido/inválido, lectura A:E sin pedir F fuera de cuadrícula, registro histórico sin huella y rechazo de migración sobre un opId ya vinculado a una huella.
 - CheckOperationSecurity.js: **12/12 PASS** con WRITE y frontend vigentes.
 
 Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes.html: PASS. La lectura del esquema histórico A:E se adapta a las cinco columnas disponibles antes de agregar F; no intenta consultar una sexta columna fuera de la cuadrícula. Las pruebas ejecutadas usan runtime V8 adaptado y dobles locales; no equivalen a navegador/IndexedDB reales ni a Apps Script/Spreadsheet/Drive desplegados. Esas verificaciones integradas permanecen para Beta.
