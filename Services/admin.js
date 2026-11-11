@@ -4024,8 +4024,12 @@ function readIdempotenciaEntries_(sheet, allowMissingHeaders) {
     const lastRow = sheet.getLastRow();
     if (lastRow <= 1) return { entries: entries, byOpId: byOpId };
 
-    const rows = sheet.getRange(2, 1, lastRow - 1, IDEMPOTENCIA_HEADERS.length).getValues();
-    rows.forEach((row, offset) => {
+    const availableColumns = Math.min(IDEMPOTENCIA_HEADERS.length, Math.max(0, Number(sheet.getMaxColumns()) || 0));
+    const rows = availableColumns
+        ? sheet.getRange(2, 1, lastRow - 1, availableColumns).getValues()
+        : [];
+    rows.forEach((sourceRow, offset) => {
+        const row = sourceRow.concat(Array(Math.max(0, IDEMPOTENCIA_HEADERS.length - sourceRow.length)).fill(""));
         const entry = normalizeIdempotenciaEntry_(row, offset + 2);
         if (!entry) return;
         if (byOpId.has(entry.opId)) {
