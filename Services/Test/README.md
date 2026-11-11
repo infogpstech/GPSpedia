@@ -279,3 +279,8 @@ La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `Activ
 - Ejecutar `node --experimental-default-type=module Services/Test/VinSignaturePersistence.js`.
 - Comprueba fingerprint determinista, invalidación por cambios, versionado, restauración compatible, rechazo de caché obsoleta/corrupta y recálculo.
 - Usa localStorage simulado y datos sintéticos; no consulta catálogo operativo ni servicios externos.
+
+
+### Resolución de identidad y contexto VIN
+
+Ejecutar `node --experimental-default-type=module Services/Test/VinContextResolution.js` para probar resolución por `classKey`, marca, modelo, año dentro del rango y versión, además de contextos insuficientes o contradictorios. La suite usa firmas sintéticas y no consulta el catálogo productivo.

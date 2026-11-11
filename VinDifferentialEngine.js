@@ -403,6 +403,35 @@ export class VinDifferentialEngine {
         };
     }
 
+    filterMatchesByContext(matches, context = {}) {
+        if (!context || typeof context !== "object") return matches;
+        let filtered = matches;
+        const has = key => context[key] !== undefined && context[key] !== null && String(context[key]).trim() !== "";
+        if (has("classKey")) filtered = filtered.filter(s => s.classKey === String(context.classKey).trim());
+        if (has("marca")) filtered = filtered.filter(s => String(s.marca || "").trim().toUpperCase() === String(context.marca).trim().toUpperCase());
+        if (has("modelo")) filtered = filtered.filter(s => normalizeModelName(s.modelo) === normalizeModelName(context.modelo));
+        if (has("version")) filtered = filtered.filter(s => String(s.version || "").trim().toUpperCase() === String(context.version).trim().toUpperCase());
+        const yearValue = has("ano") ? context.ano : has("year") ? context.year : context.anoModelo;
+        if (yearValue !== undefined && yearValue !== null && String(yearValue).trim() !== "") {
+            const year = Number.parseInt(yearValue, 10);
+            if (Number.isFinite(year)) filtered = filtered.filter(s => {
+                const parts = String(s.rangoAnos || s.generacion || "").split("-");
+                const from = Number.parseInt(s.anoDesde ?? parts[0], 10);
+                const to = Number.parseInt(s.anoHasta ?? parts[1] ?? parts[0], 10);
+                const start = Number.isFinite(from) ? from : to, end = Number.isFinite(to) ? to : start;
+                return Number.isFinite(start) && Number.isFinite(end) && year >= start && year <= end;
+            });
+        }
+        if (has("anoDesde") && has("anoHasta")) {
+            const from = Number.parseInt(context.anoDesde, 10), to = Number.parseInt(context.anoHasta, 10);
+            if (Number.isFinite(from) && Number.isFinite(to)) filtered = filtered.filter(s => {
+                const parts = String(s.rangoAnos || s.generacion || "").split("-");
+                return Number.parseInt(parts[0], 10) === from && Number.parseInt(parts[1] || parts[0], 10) === to;
+            });
+        }
+        return filtered;
+    }
+
     queryVehicle(query = {}) {
         const { vin, partialChars, context } = query;
 
@@ -431,33 +460,16 @@ export class VinDifferentialEngine {
                 if (allMatch) matches.push(sig);
             }
 
-            if (matches.length === 1) {
+            const filteredMatches = this.filterMatchesByContext(matches, context);
+            if (filteredMatches.length === 1) {
                 return {
                     identificationType: "completa",
-                    match: matches[0],
-                    certainty: matches[0].confidence,
-                    message: "Identificación vehicular exitosa y unívoca."
+                    match: filteredMatches[0],
+                    certainty: filteredMatches[0].confidence,
+                    message: !context ? "Identificación vehicular exitosa y unívoca." : "Identificación desambiguada mediante identidad vehicular."
                 };
-            } else if (matches.length > 1) {
-                let filteredMatches = matches;
-                if (context) {
-                    if (context.marca) {
-                        filteredMatches = filteredMatches.filter(m => m.marca.toUpperCase() === context.marca.toUpperCase());
-                    }
-                    if (context.modelo) {
-                        filteredMatches = filteredMatches.filter(m => m.modelo.toUpperCase() === context.modelo.toUpperCase());
-                    }
-                }
-
-                if (filteredMatches.length === 1) {
-                    return {
-                        identificationType: "completa",
-                        match: filteredMatches[0],
-                        certainty: filteredMatches[0].confidence,
-                        message: "Identificación desambiguada mediante contexto vehicular."
-                    };
-                }
-
+            }
+            if (filteredMatches.length > 1) {
                 return {
                     identificationType: "ambigua",
                     matches: filteredMatches,
@@ -465,14 +477,15 @@ export class VinDifferentialEngine {
                     certainty: 50,
                     message: "Múltiples configuraciones compatibles con la firma del VIN."
                 };
-            } else {
-                return {
-                    identificationType: "sin_coincidencias",
-                    matches: [],
-                    certainty: 0,
-                    message: "No se encontraron firmas compatibles para el VIN proporcionado."
-                };
             }
+            return {
+                identificationType: "sin_coincidencias",
+                matches: [],
+                certainty: 0,
+                message: matches.length
+                    ? "El VIN coincide, pero el contexto vehicular proporcionado no corresponde a esas configuraciones."
+                    : "No se encontraron firmas compatibles para el VIN proporcionado."
+            };
         }
 
         if (partialChars) {

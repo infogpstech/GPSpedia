@@ -873,3 +873,10 @@ AUG-050 — AVANCE PARCIAL — PERSISTENCIA DE FIRMAS VIN — 2026-11-11
 - Suite Services/Test/VinSignaturePersistence.js con localStorage simulado y datos sintéticos.
 - Esta entrega resuelve solo persistencia. Resolución ambigua, classKey, umbral, rangos, VIN, UI y navegación siguen pendientes en AUG-050.
 ================================================================================
+
+
+AUG-050 — AVANCE PARCIAL — RESOLUCIÓN DE IDENTIDAD VIN — 2026-11-11
+- queryVehicle aplica contexto por classKey o identidad: marca, modelo normalizado, año dentro del rango y versión.
+- Valida el contexto aun con una coincidencia única; rechaza identidades contradictorias y conserva ambigüedad si falta contexto.
+- Suite sintética Services/Test/VinContextResolution.js añadida con seis escenarios.
+- AUG-050 permanece EN PROGRESO; no iniciar AUG-051.

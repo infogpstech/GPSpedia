@@ -2108,3 +2108,13 @@ Pendiente en AUG-050: classKey/identidad, ambigüedad, normalización VIN, umbra
 Sin cambios en endpoints, Apps Script, Spreadsheet, deployments, datos productivos o rama base.
 Siguiente iteración: continuar AUG-050 con una corrección lógica independiente, priorizando resolución por identidad completa y ambigüedad.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-050 — RESOLUCIÓN DE IDENTIDAD VIN — 2026-11-11
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work.
+HEAD padre: 7b970de8368bcaffdc684bf691fe77ded80ad8d7. Rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1; preservada.
+Avance parcial: queryVehicle resuelve contexto por classKey o identidad (marca, modelo normalizado, año dentro del rango y versión). Valida contexto aun con una sola coincidencia, rechaza identidades contradictorias y conserva ambigüedad cuando el contexto no basta.
+Pruebas añadidas: Services/Test/VinContextResolution.js, seis casos sintéticos. Validación pendiente de ejecución/revisión antes de publicar.
+Alcance único: resolución por identidad/contexto. Umbral, rangos abiertos, normalización de prefijos, extractSharedChars, UI y navegación siguen pendientes. No iniciar AUG-051.
+================================================================================

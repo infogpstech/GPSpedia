@@ -1180,3 +1180,10 @@ AUG-050 — AVANCE PARCIAL DE PERSISTENCIA VIN — 2026-11-11
 - Services/Test/VinSignaturePersistence.js: pruebas de compatibilidad, invalidación, corrupción y recálculo.
 - Services/Test/README.md: instrucciones de la suite.
 ================================================================================
+
+
+================================================================================
+AUG-050 — RESOLUCIÓN DE IDENTIDAD VIN — 2026-11-11
+- VinDifferentialEngine.js: queryVehicle filtra por classKey o contexto (marca, modelo normalizado, año/rango y versión), valida coincidencias únicas y evita identidades incompatibles.
+- Services/Test/VinContextResolution.js: seis pruebas sintéticas; Services/Test/README.md: instrucciones de ejecución.
+================================================================================
