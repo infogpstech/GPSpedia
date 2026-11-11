@@ -5,7 +5,7 @@ Rama: GPSpedia2.2.5_work. Commit de inicio: 00f1c07ae09e4b248d426c673ca7c2d2e455
 Resultado: TTL de 30 días para miniaturas persistentes. Las variantes vencidas se eliminan al consultarse; la lectura/compresión ejecuta limpieza oportunista de entradas vencidas con clave registrada. Los registros heredados sin timestamp se consideran caducados al primer acceso.
 Archivos funcionales: offline.js. Suite: Services/Test/IndexedDBTransactions.js (expiración, eliminación y regeneración).
 Compatibilidad: no se modifica DB_VERSION ni la estructura de stores. Las claves heredadas sin metadatos temporales verificables se descartan al consultarse.
-Validación: suite IndexedDBTransactions.js y parsing/diff pendientes de ejecutar y verificar antes del cierre.
+Validación: revisión posterior al primer commit detectó y corrigió la sintaxis del mock de delete; la suite y parsing/diff aún deben ejecutarse y verificarse antes del cierre.
 Pendiente: LRU y límite total de cuota IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; pruebas de navegador real y multi-pestaña.
 Siguiente iteración: implementar LRU como una única tarea. No iniciar AUG-052.
 ================================================================================

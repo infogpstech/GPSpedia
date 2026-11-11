@@ -78,10 +78,10 @@ function createIndexedDBHarness(options = {}) {
                                 if (request.onsuccess) request.onsuccess();
                                 queueMicrotask(() => {
                                     if (tx.oncomplete) tx.oncomplete();
-                                },);
+                                });
                             });
                             return request;
-                        }
+                        },
                         delete(key) {
                             const request = {};
                             queueMicrotask(() => {
