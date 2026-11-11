@@ -41,9 +41,12 @@ function runAdminModalEditRestoreContractTests(uiSource, adminSource) {
             "La limpieza no exige cancelación explícita.");
         assert(!/operationStatus\s*===\s*["']cancelled["']\s*\|\|\s*operationStatus\s*===\s*["']not_found["']/.test(resolver),
             "not_found todavía se trata como cancelación.");
-        const missingIndex = resolver.indexOf('operationStatus === "not_found"');
-        const clearIndex = resolver.indexOf("removePendingAdminImageUploadConfirmed_(operation)", missingIndex);
-        assert(clearIndex === -1, "El camino not_found intenta borrar el snapshot local.");
+        const notFoundBlock = resolver.match(/if\s*\(operationStatus\s*===\s*["']not_found["']\)\s*\{([\s\S]*?)\n\s*\}/);
+        assert(notFoundBlock && /throw new Error/.test(notFoundBlock[1]),
+            "not_found no termina en un error conservador.");
+        assert(!/removePendingAdminImageUploadConfirmed_/.test(notFoundBlock[1]) &&
+            !/commitAdminImageReplacementBaseline_/.test(notFoundBlock[1]),
+            "El camino not_found modifica o elimina estado local.");
     });
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
