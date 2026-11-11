@@ -1867,3 +1867,28 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar exclusivamente AUG-046 con una comprobación técnica nueva, sin repetir las secciones ya documentadas ni inferir el comportamiento de recursos productivos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — REPORTES DE PROBLEMAS EN FICHAS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado antes de esta iteración: 462dc61dc24dddbe0a0cefe3a08c34fd755f797d.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios respecto de la base.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisado el formulario de reporte de problemas por corte, su autenticación, autorización, persistencia y gestión posterior.
+- Confirmado que reportProblem exige sesión válida aunque no restrinja el envío a una lista de roles; el backend sustituye la identidad aportada por el cliente con la identidad autenticada.
+- Documentado el almacenamiento en Feedbacks y la copia del texto completo del reporte en Actividad_Usuario.
+- Confirmado que el selector opcional de imagen solo incorpora el nombre del archivo al texto; este flujo no transmite el contenido de la imagen.
+- Documentado que la consulta y gestión del Inbox están restringidas a Desarrollador, Gefe, Jefe y Supervisor; eliminar el reporte borra su fila de Feedbacks, no la copia de actividad.
+- Evidencia incorporada en Legal/AUG-046_revision_preliminar.md, sección 17.
+
+Límites:
+- Revisión estática; no se consultaron hojas productivas ni se ejecutaron envíos, adjuntos, respuestas, resoluciones o eliminaciones.
+- No se modificó código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+- La validación operativa y la aprobación interna corporativa de AUG-046 siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar exclusivamente AUG-046 con una comprobación técnica nueva, sin repetir secciones anteriores ni inferir el comportamiento de recursos productivos.
+================================================================================
