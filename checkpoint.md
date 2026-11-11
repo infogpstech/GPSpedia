@@ -1714,3 +1714,28 @@ Límites:
 AUG-046 permanece EN PROGRESO. Continúan pendientes confirmaciones operativas y validación interna de la empresa principal. No iniciar AUG-047.
 Siguiente iteración: continuar AUG-046 con otro contraste técnico puntual del código versionado; no inferir datos de producción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — REVISIÓN DE REGISTROS Y ACTIVIDAD — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: 747e10d6d3a3d6559795c50750ce85abfb628923.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisados los registros técnicos AUTH en la hoja Logs: campos almacenados, inserción de registros y única purga selectiva observada.
+- Revisado el acceso a ActividadUsuario: roles autorizados y límite de 100 registros devueltos.
+- Revisada la limpieza manual de ActividadUsuario: borrado total de contenido o eliminación de filas con más de siete días, según el parámetro recibido.
+- No se encontró en los módulos AUTH/FEEDBACK revisados una programación automática de estas purgas.
+- Documentada la evidencia en Legal/AUG-046_revision_preliminar.md, sección 11.
+
+Límites:
+- Solo código versionado; no se inspeccionaron hojas, permisos directos, respaldos, deployments ni procesos externos.
+- No se ejecutaron consultas ni borrados de registros.
+- No se modificó código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments ni datos productivos.
+- Las confirmaciones operativas y la validación interna corporativa siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
+================================================================================

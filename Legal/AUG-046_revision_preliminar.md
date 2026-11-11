@@ -256,3 +256,21 @@ Esta adenda precisa el alcance de las observaciones anteriores para que el regis
 5. La empresa conserva íntegramente la responsabilidad de cualquier revisión y aprobación interna. Esta auditoría no aprueba, rechaza, redacta ni modifica el acuerdo o el aviso.
 
 **Límite permanente:** no modificar el acuerdo de uso, el aviso, sus fechas/versiones, los modales informativos ni el flujo de aceptación. No emitir interpretaciones, opiniones o recomendaciones jurídicas. No iniciar AUG-047.
+
+
+## 11. Contraste puntual de registros técnicos y actividad de usuarios — 2026-11-11
+
+Se revisaron las rutas de registro, consulta y limpieza de las hojas `Logs` y `ActividadUsuario` en el código versionado de AUTH y FEEDBACK.
+
+- **Registros técnicos de AUTH:** `logToSheet()` escribe en `Logs` cuatro campos: marca de tiempo ISO, nivel, mensaje y detalles serializados como JSON. Inserta cada nuevo registro en la fila 2, debajo de los encabezados. El dispatcher AUTH registra la recepción y el análisis de las solicitudes, además de errores; por ello, la hoja puede contener metadatos técnicos y detalles de ejecución.
+- **Consulta de Logs:** no se encontró una acción de lectura de la hoja `Logs` en el dispatcher AUTH ni una ruta `getLogs` en `api-config.js`. Esto solo describe la interfaz de la aplicación revisada; no permite determinar quién puede abrir la hoja directamente ni sus permisos efectivos en Google Sheets.
+- **Limpieza de Logs:** `clearSensitiveLogs` está reservada a una cuenta activa con rol Desarrollador y sesión válida, con comprobaciones de unicidad, expiración y revocación pendiente. La rutina elimina registros que coinciden con patrones concretos de campos de credenciales, el inicio de sesión con nombre de usuario o el mensaje de comparación de contraseña. No aplica un corte por antigüedad ni elimina todos los registros. No se encontró otra rutina de purga de `Logs` en AUTH.
+- **Consulta de ActividadUsuario:** FEEDBACK autoriza `getActivityLogs` para los roles `Desarrollador`, `Gefe` y `Supervisor`. El handler devuelve los campos ID, fecha, ID/nombre de usuario, tipo de actividad, elemento asociado y detalle; invierte el orden de las filas y limita la respuesta a 100 registros.
+- **Limpieza de ActividadUsuario:** `clearActivityLogs` está reservada a Desarrollador. Si se invoca sin `keepLastWeek: true`, limpia el contenido de todos los registros y conserva la fila de encabezados. Si se invoca con ese indicador, elimina filas cuya marca de tiempo tenga más de siete días; los registros con fecha vacía o no interpretable no cumplen esa condición y no son eliminados por esa rama.
+- **Carácter de la limpieza:** ambas purgas son acciones invocables de forma explícita. En los módulos AUTH y FEEDBACK revisados no se encontró la creación de un trigger temporal para ejecutarlas automáticamente. Por tanto, el código observado no acredita una política automática de conservación por antigüedad para estas dos hojas.
+
+**Resultado descriptivo:** la aplicación ofrece consulta de una ventana de hasta 100 registros de actividad a determinados roles y limpieza manual de esa hoja por Desarrollador. Para la hoja técnica `Logs`, el código revisado ofrece una purga manual y selectiva de determinados registros sensibles, pero no una acción de consulta desde el dispatcher AUTH ni una purga temporal general. Los permisos directos de las hojas, las copias de seguridad y cualquier limpieza externa no pueden deducirse de estos módulos.
+
+**Límites:** la revisión corresponde a `Services/Auth.js`, `Services/feedback.js` y `api-config.js` versionados en esta rama. No se consultaron las hojas reales, no se ejecutaron acciones de consulta o borrado, no se inspeccionaron permisos de Google Sheets y no se verificaron deployments ni procesos externos. No se modificó código de aplicación, texto del acuerdo, aviso, modales ni flujo de aceptación.
+
+**Ubicaciones de referencia en el HEAD revisado:** `Services/Auth.js` — `logToSheet()` (línea 255) y `handleClearSensitiveLogs()` (línea 290); `Services/feedback.js` — matriz `FEEDBACK_ACTION_PERMISSIONS` (línea 303), `handleGetActivityLogs()` (línea 1552) y `handleClearActivityLogs()` (línea 1989).
