@@ -123,4 +123,5 @@ test("no intenta restaurar campos del snapshot que no pertenecen al modal", () =
         ["modelo"]
     );
 });
-\nconsole.log("Edit backup isolation: " + passed + "/12 PASS");
+
+console.log("Edit backup isolation: " + passed + "/12 PASS");
