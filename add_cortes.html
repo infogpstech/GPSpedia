@@ -916,6 +916,15 @@
                 }
             }
 
+            try { getCurrentSessionForOwner(state.userId); }
+            catch (_) {
+                alert("Tu sesión cambió o expiró. Inicia sesión nuevamente antes de guardar.");
+                toggleLoading(false);
+                btn.classList.remove('btn-loading');
+                isSubmittingStage2 = false;
+                return;
+            }
+
             let opId;
             try {
                 opId = getOrGenerateOpId();
@@ -1062,6 +1071,7 @@
                     opId: opId,
                     silent: silentVal
                 }, serviceOverride);
+                getCurrentSessionForOwner(pendingOp.ownerId);
 
                 console.log("[PING-PONG][7] addOrUpdateCut completado exitosamente con el servidor.", result);
 

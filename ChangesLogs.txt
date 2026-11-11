@@ -1,4 +1,10 @@
 ================================================================================
+2026-11-11 — AUG-053 — AJUSTE DE SESIÓN — COMPROBACIONES DESPUÉS DE ESPERAS DE RED
+add_cortes vuelve a verificar el propietario después de la consulta VIN y tras recibir la respuesta de addOrUpdateCut. Si la cuenta cambió durante una petición asíncrona, el flujo no continúa con la sesión anterior ni limpia el snapshot como si perteneciera a la cuenta nueva.
+Archivos: add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — AJUSTE DE SEGURIDAD — LECTURA DEL SNAPSHOT
 Si falla la lectura del snapshot local antes de obtener el opId, add_cortes detiene el envío, informa que no puede verificar la operación previa y restaura los controles de la interfaz. Así no continúa con un identificador nuevo cuando el estado local es incierto.
 Archivos: add_cortes.html y checkpoint.md.
