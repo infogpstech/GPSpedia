@@ -13,17 +13,35 @@ export function normalizeModelName(modelRaw) {
     return String(modelRaw).trim().toUpperCase().replace(/[-_\s./\\]+/g, "");
 }
 
-export function doYearRangesOverlap(desdeA, hastaA, desdeB, hastaB) {
-    const dA = parseInt(desdeA, 10);
-    const dB = parseInt(desdeB, 10);
-    const currentYear = new Date().getFullYear();
-    const hA = hastaA ? parseInt(hastaA, 10) : (isNaN(dA) ? currentYear : dA + 10);
-    const hB = hastaB ? parseInt(hastaB, 10) : (isNaN(dB) ? currentYear : dB + 10);
+function parseModelYear(value) {
+    if (value === undefined || value === null || String(value).trim() === "") return null;
+    const year = Number(String(value).trim());
+    return Number.isInteger(year) && year > 0 && year <= 9999 ? year : null;
+}
 
-    if (isNaN(dA) || isNaN(dB)) return true; // Si faltan años, permitir comparación por defecto
-    const minD = Math.max(dA, dB);
-    const maxH = Math.min(hA, hB);
-    return minD <= maxH;
+function normalizeModelYearRange(anoDesde, anoHasta, currentYear = new Date().getFullYear()) {
+    const start = parseModelYear(anoDesde);
+    // Un anoHasta vacío representa una generación que continúa vigente hasta el año actual.
+    const end = anoHasta === undefined || anoHasta === null || String(anoHasta).trim() === ""
+        ? parseModelYear(currentYear)
+        : parseModelYear(anoHasta);
+
+    // Sin año inicial no existe un intervalo verificable; no se asume solapamiento universal.
+    if (start === null || end === null || start > end) return null;
+    return { start, end };
+}
+
+export function doYearRangesOverlap(desdeA, hastaA, desdeB, hastaB, currentYear = new Date().getFullYear()) {
+    const rangeA = normalizeModelYearRange(desdeA, hastaA, currentYear);
+    const rangeB = normalizeModelYearRange(desdeB, hastaB, currentYear);
+    if (!rangeA || !rangeB) return false;
+    return Math.max(rangeA.start, rangeB.start) <= Math.min(rangeA.end, rangeB.end);
+}
+
+export function isYearWithinRange(yearValue, anoDesde, anoHasta, currentYear = new Date().getFullYear()) {
+    const year = parseModelYear(yearValue);
+    const range = normalizeModelYearRange(anoDesde, anoHasta, currentYear);
+    return year !== null && range !== null && year >= range.start && year <= range.end;
 }
 
 export function fingerprintVinCatalog(records) {
@@ -71,7 +89,7 @@ export class VinDifferentialEngine {
         this.conflictLog = [];
         this.auditLog = [];
         this.catalogFingerprint = null;
-        this.version = "1.2.0";
+        this.version = "1.3.0";
     }
 
     buildSampleMatrix(records) {
@@ -420,13 +438,11 @@ export class VinDifferentialEngine {
         if (has("version")) filtered = filtered.filter(s => String(s.version || "").trim().toUpperCase() === String(context.version).trim().toUpperCase());
         const yearValue = has("ano") ? context.ano : has("year") ? context.year : context.anoModelo;
         if (yearValue !== undefined && yearValue !== null && String(yearValue).trim() !== "") {
-            const year = Number.parseInt(yearValue, 10);
-            if (Number.isFinite(year)) filtered = filtered.filter(s => {
+            filtered = filtered.filter(s => {
                 const parts = String(s.rangoAnos || s.generacion || "").split("-");
-                const from = Number.parseInt(s.anoDesde ?? parts[0], 10);
-                const to = Number.parseInt(s.anoHasta ?? parts[1] ?? parts[0], 10);
-                const start = Number.isFinite(from) ? from : to, end = Number.isFinite(to) ? to : start;
-                return Number.isFinite(start) && Number.isFinite(end) && year >= start && year <= end;
+                const from = s.anoDesde ?? parts[0];
+                const to = s.anoHasta ?? parts[1] ?? "";
+                return isYearWithinRange(yearValue, from, to);
             });
         }
         if (has("anoDesde") && has("anoHasta")) {

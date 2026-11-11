@@ -1197,3 +1197,11 @@ AUG-050 — UMBRAL DE MUESTRAS Y COMPETIDORES VIN — 2026-11-11
 - Services/Test/VinSampleThreshold.js: nueve pruebas sintéticas de umbral, rangos competidores y exclusión de firmas insuficientes.
 - Services/Test/README.md: instrucciones de ejecución y límites de la suite.
 ================================================================================
+
+
+================================================================================
+AUG-050 — SEMÁNTICA DE RANGOS DE AÑOS VIN — 2026-11-11
+- VinDifferentialEngine.js: anoHasta vacío se interpreta como vigente hasta el año actual; anoDesde ausente/inválido y rangos invertidos no se consideran comparables. El filtro contextual de queryVehicle usa la misma regla. Versión del algoritmo 1.3.0.
+- Services/Test/VinYearRangeSemantics.js: once pruebas sintéticas de rangos cerrados, abiertos, años ausentes, datos inválidos y consulta contextual.
+- Services/Test/README.md: instrucciones y semántica definida.
+================================================================================

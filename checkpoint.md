@@ -2133,3 +2133,19 @@ Pendiente en AUG-050: semántica de rangos abiertos/años ausentes; normalizaci�
 No se modifican endpoints, Apps Script, Spreadsheet, deployments, datos productivos ni rama base.
 Siguiente iteración: seleccionar un único criterio restante de AUG-050; no iniciar AUG-051.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-050 — SEMÁNTICA DE RANGOS DE AÑOS VIN — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD padre verificado: 58e362d4b92b1eae79255cb30105976ed7a3d79c.
+Rama base: GPSpedia2.2.5; HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+Subproblema resuelto: criterio 8 de AUG-050. Semántica: anoHasta vacío significa que la generación sigue vigente hasta el año actual; se elimina la extensión arbitraria de diez años. anoDesde ausente/inválido impide formar un rango verificable y no se considera solapamiento. Los rangos invertidos o malformados también se rechazan. doYearRangesOverlap y el filtro contextual de queryVehicle usan la misma regla.
+Versión de algoritmo: 1.3.0 para invalidar cachés calculadas con la semántica anterior.
+Pruebas: Services/Test/VinYearRangeSemantics.js (11/11), VinSampleThreshold.js (9/9), VinContextResolution.js (6/6) y VinSignaturePersistence.js (6/6). Total: 32/32 PASS en harness V8 aislado. Parsing del motor y suite: PASS. No se ejecutó Node CLI.
+Archivos: VinDifferentialEngine.js, Services/Test/VinYearRangeSemantics.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+AUG-050 continúa EN PROGRESO. Pendientes: normalización VIN completo/prefijos, extractSharedChars y UI/navegación; revisión de coste combinatorio y medición real de catálogo (validación real diferida según normas).
+No se modifican endpoints, Apps Script, Spreadsheet, deployments, datos productivos ni rama base.
+Siguiente iteración: seleccionar un único criterio restante de AUG-050; no iniciar AUG-051.
+================================================================================

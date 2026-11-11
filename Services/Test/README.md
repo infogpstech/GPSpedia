@@ -290,3 +290,9 @@ Ejecutar `node --experimental-default-type=module Services/Test/VinContextResolu
 
 Ejecutar `node --experimental-default-type=module Services/Test/VinSampleThreshold.js`.
 Verifica el umbral predeterminado/configurable, el estado insuficiente con muestras por debajo del mínimo, la ausencia de competidores por rango de años y que las firmas insuficientes no participen en consultas. Usa registros sintéticos; no consulta el catálogo productivo.
+
+
+### Semántica de rangos de años VIN
+
+Ejecutar `node --experimental-default-type=module Services/Test/VinYearRangeSemantics.js`.
+Define y verifica que un `anoHasta` vacío significa que la generación continúa vigente hasta el año actual; un `anoDesde` vacío o inválido deja el rango sin base verificable y no produce solapamiento. Las consultas por año usan la misma regla. La suite usa rangos y firmas sintéticos.

@@ -835,3 +835,12 @@ AUG-051 — ampliar criterios:
 - **Relación:** AUD-T-003.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
+
+
+AUG-050 — AVANCE PARCIAL — SEMÁNTICA DE RANGOS VIN — 2026-11-11
+- Se define anoHasta vacío como generación vigente hasta el año actual; se elimina la extensión arbitraria de diez años.
+- Un anoDesde ausente, inválido o un rango invertido no se considera comparable ni produce solapamiento.
+- doYearRangesOverlap y el filtro de año de queryVehicle comparten la misma semántica.
+- VinDifferentialEngine.js actualizado a 1.3.0 para invalidar firmas/cachés calculadas con el criterio anterior.
+- Suite Services/Test/VinYearRangeSemantics.js con 11 escenarios sintéticos; instrucciones añadidas al README.
+- AUG-050 permanece EN PROGRESO. No iniciar AUG-051.
