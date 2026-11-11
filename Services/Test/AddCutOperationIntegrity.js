@@ -67,6 +67,37 @@ function runAddCutOperationIntegrityTests(sources) {
         assert_(base !== client({ ...sampleNew, cutData: { ...sampleNew.cutData, imgCorte1: 'data:image/png;base64,OTHER' } }));
         assert_(base !== client({ ...sampleNew, vehicleData: { ...sampleNew.vehicleData, imagenVehiculo: 'data:image/png;base64,OTHER' } }));
     });
+    run_('el digest de servidor recibe exactamente el canonical compartido y produce 64 hex', () => {
+        const client = getClientCanonical();
+        for (const source of [write, admin]) {
+            let captured = null;
+            const Utilities = {
+                DigestAlgorithm: { SHA_256: 'SHA_256' }, Charset: { UTF_8: 'UTF-8' },
+                computeDigest(algorithm, value, charset) {
+                    assert_(algorithm === 'SHA_256' && charset === 'UTF-8');
+                    captured = value;
+                    return Array.from({ length: 32 }, (_, index) => index - 128);
+                }
+            };
+            const server = new Function('Utilities', extract_(source, 'fingerprintValue_') + ';' +
+                extract_(source, 'buildCutOperationFingerprintPayload_') + ';' +
+                extract_(source, 'computeCutOperationFingerprint_') + ';return computeCutOperationFingerprint_;')(Utilities);
+            const hash = server(sampleNew);
+            assert_(captured === client(sampleNew));
+            assert_(hash === Array.from({ length: 32 }, (_, index) => (index + 128).toString(16).padStart(2, '0')).join(''));
+        }
+    });
+    run_('el cliente calcula SHA-256 con WebCrypto y no usa hash débil', () => {
+        const script = frontend.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
+        const fn = extract_(script, 'computeClientCutOperationFingerprint');
+        assert_(/crypto\.subtle\.digest\('SHA-256'/.test(fn));
+        assert_(/TextEncoder/.test(fn));
+        assert_(!/Math\.random|btoa|encodeURIComponent/.test(fn));
+    });
+    run_('migración ADMIN escribe seis columnas y deja huella vacía solo para registros históricos', () => {
+        assert_(/entriesToWrite\.push\(\[e\.opId,String\(e\.vehicleId\)\.trim\(\),String\(e\.slotIndex\),e\.timestamp,"completed",""\]\)/.test(admin));
+        assert_(/readIdempotenciaEntries_\(s,true\)/.test(admin));
+    });
     run_('WRITE y ADMIN recalculan SHA-256 en servidor y exigen coincidencia con cliente', () => {
         for (const source of [write, admin]) {
             assert_(/Utilities\.computeDigest\(Utilities\.DigestAlgorithm\.SHA_256/.test(source));
