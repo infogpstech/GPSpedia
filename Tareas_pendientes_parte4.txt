@@ -1934,3 +1934,15 @@ CORRECCIÓN POSTERIOR — AUG-036 — CONTRATO FIJO DE COLUMNAS TESTIGO
 Fecha: 2026-11-10
 La implementación anterior descrita en esta sección agregaba los encabezados testigo al final de la hoja. AUG-036 corrige esa decisión: activaTestigo1, activaTestigo2 y activaTestigo3 se ubican obligatoriamente en AT:AV (46–48), incluso si existen columnas adicionales. No se desplazan ni reasignan columnas posteriores. Encabezados duplicados/fuera de posición, celdas objetivo ocupadas o datos sin encabezado detienen la operación. Validación lógica 14/14; Spreadsheet aislada pendiente de Beta.
 ================================================================================
+
+================================================================================
+ADENDA DE CIERRE — AUG-060 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Origen: H-AUD-004-001 / AUD-T-004.
+Resolución:
+- `parseVinCollection()` conserva las posiciones vacías al interpretar delimitadores heredados; los slots vacíos no se eliminan antes de asociar los VIN con `versionesAplicables`.
+- `mapVersionsWithVins()` distingue prefijos normalizados almacenados (hasta 13 caracteres) de VIN completos heredados (más de 13); solo estos últimos pierden los cinco caracteres seriales.
+- Se mantiene la correspondencia por índice y se muestra null cuando una versión no tiene VIN; no se desplazan ni se inventan valores.
+Validación local: `VinVersionPresentation.js` 10/10 PASS. La suite ejecuta los helpers extraídos de la fuente vigente de `ui.js`.
+Pendiente para Beta: comprobación visual en navegador real con colecciones de una, dos y tres versiones y datos de producción controlados. No se modificaron datos ni servicios productivos.
+================================================================================
