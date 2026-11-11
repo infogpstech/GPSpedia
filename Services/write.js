@@ -501,6 +501,10 @@ function handleAddOrUpdateCutLocked(payload) {
         const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
         if (opMatch) opId = opMatch[1];
     }
+    const operationHash = opId ? computeCutOperationFingerprint_(payload) : null;
+    if (opId && normalizeIdempotenciaOperationHash_(payload.operationHash, "Solicitud addOrUpdateCut") !== operationHash) {
+        throw new Error("La huella enviada no coincide con el contenido de la operación.");
+    }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     ensureTestigoColumns(sheet, true);
@@ -513,6 +517,13 @@ function handleAddOrUpdateCutLocked(payload) {
     if (opId) {
         const match = findRowByOpId(sheet, opId);
         if (match) {
+            if (!match.operationHash || match.operationHash !== operationHash) {
+                throw new Error("El opId ya existe, pero su contenido no coincide o pertenece a un registro legado sin huella verificable.");
+            }
+            const storedVehicleId = normalizeIdempotenciaVehicleId_(match.vehicleId || match.rowValues[COLS_CORTES.id - 1], "Reintento addOrUpdateCut");
+            if (vehicleId && storedVehicleId !== normalizeIdempotenciaVehicleId_(vehicleId, "Reintento addOrUpdateCut")) {
+                throw new Error("El opId ya está vinculado a otro vehículo; no se modificó.");
+            }
             const rowIndex = match.rowIndex;
             const rowValues = match.rowValues;
             const rowObj = mapRowToObject(rowValues, COLS_CORTES);
@@ -621,13 +632,14 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
             markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).getValue());
             markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + slotIndex]).getValue());
             if (opId && rowObj.id) {
-                recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed");
+                recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed", operationHash);
             }
             return {
                 status: 'success',
                 message: 'La operación ya fue completada (recuperada, reparada y completada).',
                 vehicleId: rowObj.id,
-                timestamp: match.timestamp || rowObj.timestamp
+                timestamp: match.timestamp || rowObj.timestamp,
+                operationHash: operationHash
             };
         }
     }
@@ -673,7 +685,7 @@ const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_r
         }
         if (cutSlotIndex === -1) throw new Error("No hay espacios disponibles para más cortes.");
 
-        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending");
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending", operationHash);
 
         let imageUrl = '';
         if (cutData.imgCorte1) {
@@ -695,7 +707,7 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
         SpreadsheetApp.flush();
         markImageUploadLinked(sheet.getRange(rowIndex, COLS_CORTES["imgCorte" + cutSlotIndex]).getValue());
-        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed");
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed", operationHash);
 
         newId = vehicleId;
 
@@ -732,7 +744,7 @@ const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIn
         }
         if (opId) {
             try {
-                recordOpId(opId, newId, 1, formattedDate, "pending");
+                recordOpId(opId, newId, 1, formattedDate, "pending", operationHash);
             } catch (error) {
                 try {
                     const persistedOperation = findRowByOpId(sheet, opId);
@@ -798,10 +810,10 @@ const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { an
         SpreadsheetApp.flush();
         markImageUploadLinked(vehiculoImageUrl);
         markImageUploadLinked(corteImageUrl);
-        if (opId) recordOpId(opId, newId, 1, formattedDate, "completed");
+        if (opId) recordOpId(opId, newId, 1, formattedDate, "completed", operationHash);
     }
 
-    return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate };
+    return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate, operationHash: operationHash };
 }
 
 
@@ -2141,12 +2153,18 @@ function handleCheckOperation(payload) {
     if (!match) {
         return { status: "success", exists: false, pending: false };
     }
+    const expectedHash = String(payload && payload.operationHash || "").trim().toLowerCase();
+    if (expectedHash && (!/^[a-f0-9]{64}$/.test(expectedHash) || match.operationHash !== expectedHash)) {
+        throw new Error("El opId no corresponde al contenido de la operación recuperada.");
+    }
     if (match.status !== "completed") {
         return {
             status: "success",
             exists: false,
             pending: true,
-            operationStatus: match.status
+            operationStatus: match.status,
+            vehicleId: match.vehicleId,
+            operationHash: match.operationHash
         };
     }
 
@@ -2157,7 +2175,8 @@ function handleCheckOperation(payload) {
         pending: false,
         operationStatus: "completed",
         vehicleId: rowObj.id,
-        timestamp: rowObj.timestamp
+        timestamp: rowObj.timestamp,
+        operationHash: match.operationHash
     };
 }
 
