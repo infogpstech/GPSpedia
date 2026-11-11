@@ -414,3 +414,14 @@ node --experimental-default-type=module Services/Test/PendingOperationIsolation.
 ```
 
 La prueba verifica partición por propietario, exclusión de credenciales, rechazo de owner distinto, migración de registros legados con propietario explícito, cuarentena de registros sin propietario, eliminación por opId y conservación del legado ante fallos de almacenamiento.
+
+
+## Aislamiento de copias de edición (AUG-053)
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/EditBackupIsolation.js
+```
+
+Verifica separación por cuenta y vehículo, rechazo de identidades incongruentes, cuarentena/migración de registros legados, eliminación limitada y exclusión de tokens/credenciales.

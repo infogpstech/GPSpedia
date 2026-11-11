@@ -8,6 +8,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey, ensureV
 import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
+import { createEditBackupStore } from './editBackupStore.js';
 import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
@@ -55,6 +56,8 @@ const TERMS_CURRENT_VERSION = '2026-07';
 let inEditMode = false;
 let isDriveAuditRunning = false;
 let originalItemBackup = null;
+let originalItemBackupOwnerId = null;
+let originalItemBackupVehicleId = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
 const ADMIN_IMAGE_UPLOAD_FIELDS = [
@@ -129,6 +132,22 @@ export function showSavingIndicator(status, message = "") {
     }
 }
 
+function getCurrentEditOwnerContext_() {
+    const context = getUiSessionContext_();
+    return context && context.role === 'desarrollador' ? context : null;
+}
+
+function getEditBackupStore_(ownerId) {
+    return createEditBackupStore(localStorage, ownerId);
+}
+
+function clearInMemoryEditBackup_() {
+    originalItemBackup = null;
+    originalItemBackupOwnerId = null;
+    originalItemBackupVehicleId = null;
+    editedItemBuffer = null;
+}
+
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
@@ -148,21 +167,21 @@ async function saveFieldSilently(vehicleId, fieldName, value) {
 
 function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl) {
     const cleanVehicleId = String(vehicleId);
-    if (!originalItemBackup) {
-        const storedBackup = localStorage.getItem("gpsepedia_edit_backup");
-        if (storedBackup) {
-            try { originalItemBackup = JSON.parse(storedBackup); } catch (error) {}
-        }
+    const session = getCurrentEditOwnerContext_();
+    if (!session || !originalItemBackup ||
+        originalItemBackupOwnerId !== session.userId ||
+        originalItemBackupVehicleId !== cleanVehicleId ||
+        String(originalItemBackup.id) !== cleanVehicleId) return false;
+
+    originalItemBackup[fieldName] = String(imageUrl || "");
+    try {
+        const saved = getEditBackupStore_(session.userId).write(cleanVehicleId, originalItemBackup);
+        if (!saved.saved) return false;
+    } catch (error) {
+        console.warn("No se pudo actualizar la base de descarte local.", error && error.name || "StorageError");
+        return false;
     }
-    if (originalItemBackup && String(originalItemBackup.id) === cleanVehicleId) {
-        originalItemBackup[fieldName] = String(imageUrl || "");
-        try {
-            localStorage.setItem("gpsepedia_edit_backup", JSON.stringify(originalItemBackup));
-        } catch (error) {
-            console.error("No se pudo persistir la nueva base de descarte:", error);
-            return false;
-        }
-    }
+
     if (editedItemBuffer && String(editedItemBuffer.id) === cleanVehicleId) {
         editedItemBuffer[fieldName] = String(imageUrl || "");
     }
@@ -243,33 +262,66 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
 }
 
 async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
-    if (!vehicleId) vehicleId = editedItemBuffer?.id || originalItemBackup?.id;
+    const editSession = getCurrentEditOwnerContext_();
+    if (!editSession) {
+        showSavingIndicator("error", "La sesión de edición no está disponible. Inicia sesión nuevamente.");
+        return false;
+    }
+    if (!vehicleId) vehicleId = editedItemBuffer?.id || originalItemBackup?.id || originalItemBackupVehicleId;
+    const cleanVehicleId = String(vehicleId || "");
+    if (!cleanVehicleId) return false;
+
+    if (originalItemBackup && (
+        originalItemBackupOwnerId !== editSession.userId ||
+        originalItemBackupVehicleId !== cleanVehicleId ||
+        String(originalItemBackup.id) !== cleanVehicleId
+    )) {
+        showSavingIndicator("error", "La copia de edición pertenece a otra sesión o vehículo. No se restauraron datos.");
+        return false;
+    }
 
     if (!originalItemBackup) {
-        const storedBackup = localStorage.getItem("gpsepedia_edit_backup");
-        if (storedBackup) {
-            try { originalItemBackup = JSON.parse(storedBackup); } catch (error) {}
+        try {
+            const stored = getEditBackupStore_(editSession.userId).read(cleanVehicleId);
+            if (stored.status === "quarantined") {
+                showSavingIndicator("warning", "Se aisló una copia de edición antigua sin propietario verificable; no se restauró.");
+                return false;
+            }
+            if (stored.backup) {
+                originalItemBackup = stored.backup;
+                originalItemBackupOwnerId = editSession.userId;
+                originalItemBackupVehicleId = cleanVehicleId;
+            }
+        } catch (error) {
+            showSavingIndicator("error", "No se pudo verificar la copia local de edición.");
+            return false;
         }
     }
 
     if (!saveChanges && originalItemBackup) {
         try {
-            // Un reemplazo confirmado es irreversible desde «Descartar cambios».
-            await resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId);
+            if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
+            await resolvePendingAdminImageOperationsBeforeDiscard_(cleanVehicleId);
+            if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
 
             const backupSnapshot = JSON.parse(JSON.stringify(originalItemBackup));
             const fieldsToRestore = Object.keys(backupSnapshot).filter(key =>
                 JSON.stringify(backupSnapshot[key]) !== JSON.stringify(editedItemBuffer && editedItemBuffer[key])
             );
             for (const field of fieldsToRestore) {
-                await saveFieldSilently(vehicleId, field, backupSnapshot[field]);
+                if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
+                const restored = await saveFieldSilently(cleanVehicleId, field, backupSnapshot[field]);
+                if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
+                if (!restored) throw new Error("FIELD_RESTORE_FAILED");
             }
 
+            if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
             const response = await routeAction("getCatalogData");
+            if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
             if (!response || !response.data || !Array.isArray(response.data.cortes)) {
                 throw new Error("No se pudo leer el catálogo para verificar la restauración.");
             }
-            const updatedItem = response.data.cortes.find(item => String(item.id) === String(vehicleId));
+            const updatedItem = response.data.cortes.find(item => String(item.id) === cleanVehicleId);
             if (!updatedItem) throw new Error("El vehículo ya no aparece en el catálogo; no se confirmó el descarte.");
 
             const mismatches = fieldsToRestore.filter(field =>
@@ -283,41 +335,47 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
             setState({ catalogData: response.data });
             inEditMode = false;
             window.inEditMode = false;
-            originalItemBackup = null;
-            editedItemBuffer = null;
-            localStorage.removeItem("gpsepedia_edit_backup");
+            try { getEditBackupStore_(editSession.userId).remove(cleanVehicleId); }
+            catch (error) { showSavingIndicator("warning", "Cambios restaurados, pero no se pudo limpiar la copia local."); }
+            clearInMemoryEditBackup_();
             showSavingIndicator("success", "Cambios descartados; los reemplazos de imagen ya confirmados se conservaron.");
 
             if (!skipReopen) mostrarDetalleModal(updatedItem);
             else document.getElementById("modalDetalle").classList.remove("visible");
         } catch (error) {
-            console.error("No se pudo completar el descarte verificado:", error);
-            showSavingIndicator("error", error && error.message || "No se pudo verificar el descarte.");
+            console.warn("No se pudo completar el descarte verificado.", error && error.message === "EDIT_SESSION_CHANGED" ? "EDIT_SESSION_CHANGED" : error && error.name || "DiscardError");
+            showSavingIndicator("error", error && error.message === "EDIT_SESSION_CHANGED"
+                ? "La sesión cambió durante el descarte. No se continuó con la cuenta nueva."
+                : error && error.message || "No se pudo verificar el descarte.");
             return false;
         }
     } else {
+        if (!isCurrentUiSessionContext_(editSession)) return false;
         inEditMode = false;
         window.inEditMode = false;
-        originalItemBackup = null;
-        editedItemBuffer = null;
-        localStorage.removeItem("gpsepedia_edit_backup");
+        try { getEditBackupStore_(editSession.userId).remove(cleanVehicleId); }
+        catch (error) { console.warn("No se pudo limpiar la copia local de edición.", error && error.name || "StorageError"); }
+        clearInMemoryEditBackup_();
 
         if (!skipReopen) {
             routeAction("getCatalogData").then(response => {
+                if (!isCurrentUiSessionContext_(editSession)) return;
                 if (response && response.data) {
                     setState({ catalogData: response.data });
-                    const updatedItem = response.data.cortes.find(item => String(item.id) === String(vehicleId));
+                    const updatedItem = response.data.cortes.find(item => String(item.id) === cleanVehicleId);
                     if (updatedItem) mostrarDetalleModal(updatedItem);
                 }
-            });
+            }).catch(error => console.warn("No se pudo actualizar el catálogo al cerrar la edición.", error && error.name || "CatalogError"));
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
             routeAction("getCatalogData").then(response => {
-                if (response && response.data) setState({ catalogData: response.data });
-            });
+                if (isCurrentUiSessionContext_(editSession) && response && response.data) setState({ catalogData: response.data });
+            }).catch(error => console.warn("No se pudo actualizar el catálogo al cerrar la edición.", error && error.name || "CatalogError"));
         }
     }
+    return true;
 }
+
 function getAdminImageUploadPendingKey(vehicleId, fieldName) {
     return String(vehicleId) + "::" + String(fieldName);
 }
@@ -1946,13 +2004,41 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             editBtn.className = "share-modal-btn";
             editBtn.title = "Activar modo edición";
             editBtn.onclick = async () => {
+                const editSession = getCurrentEditOwnerContext_();
+                if (!editSession) {
+                    showSavingIndicator("error", "No se pudo verificar la cuenta Desarrollador para iniciar la edición.");
+                    return;
+                }
+                const cleanVehicleId = String(activeItem.id);
+                const backup = JSON.parse(JSON.stringify(activeItem));
+                let stored;
+                try { stored = getEditBackupStore_(editSession.userId).write(cleanVehicleId, backup); }
+                catch (error) {
+                    showSavingIndicator("error", "No se pudo guardar la copia local de seguridad. No se inició la edición.");
+                    return;
+                }
+                if (!stored.saved) {
+                    showSavingIndicator("error", "No se pudo verificar la copia local de seguridad. No se inició la edición.");
+                    return;
+                }
+
+                originalItemBackup = stored.backup;
+                originalItemBackupOwnerId = editSession.userId;
+                originalItemBackupVehicleId = cleanVehicleId;
+                editedItemBuffer = { ...activeItem };
                 inEditMode = true;
                 window.inEditMode = true;
-                originalItemBackup = JSON.parse(JSON.stringify(activeItem));
-                localStorage.setItem('gpsepedia_edit_backup', JSON.stringify(originalItemBackup));
-                editedItemBuffer = { ...activeItem };
+
                 await precargarDropdownOptions();
-                const pendingImagesLoaded = await loadPendingAdminImageUploads(activeItem.id);
+                if (!isCurrentUiSessionContext_(editSession)) {
+                    inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
+                    return;
+                }
+                const pendingImagesLoaded = await loadPendingAdminImageUploads(cleanVehicleId);
+                if (!isCurrentUiSessionContext_(editSession)) {
+                    inEditMode = false; window.inEditMode = false; clearInMemoryEditBackup_();
+                    return;
+                }
                 if (!pendingImagesLoaded) {
                     showSavingIndicator("warning", "No se pudo consultar IndexedDB; los reemplazos de imagen quedarán bloqueados hasta verificar su estado.");
                 }

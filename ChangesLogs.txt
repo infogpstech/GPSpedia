@@ -1,4 +1,12 @@
 ================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 3 — AISLAMIENTO DE gpsepedia_edit_backup
+- Se agregó editBackupStore.js con almacenamiento por ownerId/vehicleId, validación de identidad, verificación de escritura, sanitización de credenciales y cuarentena de copias legadas sin propietario.
+- ui.js ahora crea, recupera, actualiza y elimina únicamente la copia vinculada a la cuenta Desarrollador y vehículo de la sesión actual; la restauración se detiene si cambia la sesión durante las solicitudes.
+- Se agregaron siete escenarios en Services/Test/EditBackupIsolation.js.
+Archivos: ui.js, editBackupStore.js, Services/Test/EditBackupIsolation.js, Services/Test/README.md, checkpoint.md, Tareas_pendientes_parte1.txt y ChangesLogs.txt.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — AJUSTE FINAL DE LOGS SENSIBLES
 Se sanitizaron también los errores de validación VIN y sugerencias, y se redujo el registro de addOrUpdateCut a vehicleId; no se imprime el objeto de respuesta.
 Archivos: add_cortes.html y checkpoint.md.

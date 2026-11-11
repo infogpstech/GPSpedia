@@ -1,4 +1,15 @@
 ================================================================================
+AUG-053 — ITERACIÓN 3 — 2026-11-11 — OWNER-BOUND DE gpsepedia_edit_backup
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD anterior: 89f21f4af5fc79684dc30032fd66805f33f604c8. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Se agregó editBackupStore.js: snapshots separados por ownerId y vehicleId, validación de identidad del vehículo, verificación de escritura, eliminación limitada al par cuenta/vehículo y sanitización recursiva de tokens/credenciales. Las copias legadas sin propietario se conservan en cuarentena y nunca se restauran; una copia legada con ownerId y vehicleId explícitos puede migrarse.
+ui.js ahora exige sesión Desarrollador válida para iniciar/terminar edición, persiste y recupera exclusivamente la copia de la cuenta y vehículo actuales, comprueba que la sesión siga siendo la misma tras esperas asíncronas y no restaura campos si cambia. La actualización de la base de descarte tras un reemplazo confirmado también queda limitada a la sesión y vehículo que iniciaron la edición.
+Pruebas añadidas: Services/Test/EditBackupIsolation.js (7 escenarios). Validación pendiente de ejecutar en runtime Node; parsing del módulo ui.js y pruebas reproducibles quedan por verificar antes de cierre. Navegador real, cambio entre pestañas y flujo de reemplazo de imagen se validan en Beta.
+Fuera de alcance: adminImageUploadPending y política de privacidad de reemplazos ADMIN (requiere decisión explícita); retención/expiración y limpieza global siguen pendientes. No iniciar AUG-054.
+Siguiente iteración: atender únicamente el siguiente bloque no dependiente de la decisión ADMIN dentro de AUG-053.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 2 — 2026-11-11 — OWNER-BOUND Y RECUPERACIÓN DE gpsepedia_pending_operation
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO con las áreas restantes.
 Rama: GPSpedia2.2.5_work. Commit anterior: c524460523f9e4ee62d1657ecc1a10bcc9634419. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
