@@ -1006,3 +1006,12 @@ ADENDA AUG-046 — CONSISTENCIA ENTRE SUPERFICIES INFORMATIVAS — 2026-11-11
 - No se modificó index.html (SHA preservado: 5d6c57956e18e7b504475222ba9fa97ef239c947), acuerdo, Aviso Importante, sección 13, «Sobre Nosotros», FAQ, versión/fecha 2026-07, código, aceptación AUG-045, endpoints, deployments ni datos productivos.
 - No se emitió aprobación jurídica ni se presume validación corporativa. AUG-046 permanece EN PROGRESO; no iniciar AUG-047.
 ================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — ACLARACIÓN DEL RESPONSABLE DEL PROYECTO — 2026-11-11
+- Se registró en Legal/AUG-046_revision_preliminar.md, sección 9.4, la definición del responsable: GPSpedia es la plataforma/herramienta; código, diseño, organización y estructura general son desarrollo privado protegido por derechos de autor; imágenes y videos compartidos son conocimiento público que la plataforma organiza, etiqueta y complementa con información útil y precisa sin reclamar autoría original; TRACKLINK es la marca corporativa y Motorlink S.A. es la empresa y su nombre registrado en Honduras.
+- Se corrigió el backlog y el checkpoint: los puntos 1 y 2 de la sección 9.1 sobre supuestas contradicciones de titularidad/identidad quedan sustituidos por la aclaración recibida y dejan de ser pendientes.
+- La revisión AUG-046 se limita a descripción y comprobación técnica. No se emitirán opiniones ni recomendaciones jurídicas.
+- No se modificó el acuerdo de uso, aviso, index.html, versión/fecha, aceptación AUG-045, código ni datos productivos.
+================================================================================
