@@ -103,3 +103,15 @@ Corrección de precisión respecto a la adenda anterior: Node.js sí está insta
 Se intentó adaptar el harness de Services/Test/IndexedDBTransactions.js al runtime V8 disponible. La adaptación falló en el primer escenario por diferencias del entorno/adaptador en la simulación de IndexedDB; este resultado no es una ejecución válida de la suite y no se atribuye como fallo del código de producción ni como PASS.
 No se modificó código funcional. Acción para reanudar: proporcionar un checkout local accesible de GPSpedia2.2.5_work o habilitar conectividad de red para clonarlo; después ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js, revisar el resultado y cerrar únicamente la iteración 10. No iniciar AUG-052.
 ================================================================================
+
+
+================================================================================
+AUG-051 — CIERRE LOCAL — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD previo al cierre: a6433903d0cec16fa93d2af2718173b2a5486c26. Rama base: GPSpedia2.2.5; sin modificaciones.
+Validación de iteración 10: Services/Test/IndexedDBTransactions.js ejecutada con el código de la rama en runtime V8 y adaptadores mínimos para módulos, aserciones y globals Node: 16/16 PASS. Incluye transacciones/abortos/cuota, aislamiento por cuenta, TTL/LRU, recuperación de cuota, solicitudes delete diferidas y concurrencia de cinco miniaturas con máximo de dos trabajos/bitmaps activos y cierre de los cinco ImageBitmap.
+Validaciones adicionales: limitador aislado 3/3; simulación de cinco trabajos/recursos 2/2; parsing V8 de offline.js, thumbnailCompressionQueue.js y la suite aprobado.
+Limitación explícita: Node CLI literal no ejecutado. Node 22.16.0 está disponible, pero no hay checkout local y git clone falla por DNS de github.com. La ejecución V8 adaptada sí completó los 16 escenarios; no se atribuye como ejecución Node.
+Validaciones Beta pendientes: IndexedDB real, navegador real, operación offline y multi-pestaña. No se modificaron endpoints, deployments ni datos productivos.
+AUG-051 cerrada localmente. No iniciar AUG-052 en esta iteración.
+================================================================================

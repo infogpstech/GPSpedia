@@ -1356,3 +1356,12 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Se corrigió la liberación del turno para que active disminuya antes de resolver/rechazar la promesa del trabajo.
 - Validación ejecutada: Node CLI aislado del limitador (3/3) y simulación de cinco trabajos/recursos bitmap (2/2); parsing V8 de offline.js y la suite: PASS. La suite IndexedDB integrada no se ejecutó desde este entorno porque el adaptador disponible no completó el harness; requiere ejecución en checkout local.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CIERRE ITERACIÓN 10 Y CIERRE LOCAL DE LA TAREA
+- Services/Test/IndexedDBTransactions.js: suite sintética completa ejecutada en runtime V8 con adaptadores mínimos para módulos, aserciones y globals Node; 16/16 escenarios PASS, incluida concurrencia de cinco miniaturas con máximo de dos ImageBitmap activos y cierre de los cinco recursos.
+- Parsing V8 de offline.js, thumbnailCompressionQueue.js y Services/Test/IndexedDBTransactions.js aprobado. Las pruebas aisladas previas del limitador (3/3) y simulación de cinco trabajos/recursos (2/2) se mantienen aprobadas.
+- Node CLI literal no ejecutado: el entorno carece de checkout local y la clonación falla por resolución DNS de github.com. La suite adaptada no se presenta como ejecución Node.
+- AUG-051 queda COMPLETADA CON VALIDACIÓN DIFERIDA. IndexedDB real, navegador, offline y multi-pestaña quedan reservados a Beta.
+================================================================================

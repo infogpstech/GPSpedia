@@ -739,10 +739,9 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Definir retención/aislamiento de searchHistory por cuenta o borrar/ocultar búsquedas al cambiar de usuario; tratar VIN como dato potencialmente sensible.
   6. Probar transacciones abortadas, storage quota, upgrades con varias pestañas, offline, imágenes pequeñas/grandes/transparencias y cambio de cuenta.
 - Relación: AUD-T-037; AUG-031 para estado local de auditoría Drive, sin reutilizar su store administrativo.
-- Estado: EN PROGRESO; iteraciones 1 a 3 implementadas. Transacciones esperan commit; historial, vistos y validationCache están aislados por cuenta. Las miniaturas se separan por ancho solicitado (100–1600 px), conservan proporción, no amplían imágenes pequeñas y cierran ImageBitmap; imgApertura está incluida. Compatibilidad de lectura con miniaturas antiguas preservada.
-- Validación local: parsing y harness aislado de IndexedDB/Canvas aprobados; Node CLI y navegador real no ejecutados.
-- TTL/LRU/cuota, revocación segura de ObjectURL y presupuesto RAM de 64 MiB para Blob activos implementados. La concurrencia de compresión está implementada con límite de dos trabajos por instancia JavaScript; falta ejecutar la suite integrada en checkout local. Las pruebas reales offline/multi-pestaña/imagen quedan reservadas a Beta.
-- Checkpoint de iteración: checkpoint.md.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Transacciones esperan commit; historial, vistos y validationCache están aislados por cuenta. Las miniaturas se separan por ancho solicitado (100–1600 px), conservan proporción, no amplían imágenes pequeñas y cierran ImageBitmap; imgApertura está incluida. TTL de 30 días, LRU de 200 variantes y recuperación progresiva de cuota implementados. ObjectURL compartidas se revocan al quedar sin consumidores y el presupuesto contabilizado es 64 MiB de Blob activos (no representa RAM total). La compresión usa cola FIFO con máximo de dos trabajos activos por instancia JavaScript y cierra ImageBitmap en finally.
+- Validación local: suite sintética IndexedDBTransactions.js 16/16 PASS en runtime V8 con adaptadores mínimos para módulos, aserciones y globals Node; limitador aislado 3/3 y simulación de recursos 2/2; parsing V8 aprobado. Node CLI literal no ejecutado por falta de checkout local y fallo DNS al clonar. Las pruebas con IndexedDB real, navegador, offline y multi-pestaña quedan reservadas a Beta.
+- Checkpoint de cierre: checkpoint.md.
 
 ### AUG-052 — Robustecer carga inicial, deep links y estrategia PWA/backend de catálogo
 - Origen: H-AUD-037-010 a H-AUD-037-012. Prioridad media.
