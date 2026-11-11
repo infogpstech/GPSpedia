@@ -253,3 +253,20 @@ No se ejecutaron navegador/IndexedDB reales, Apps Script/Spreadsheet/Drive despl
 
 AUG-055 queda cerrada. La siguiente tarea no se inicia en esta iteración; se continuará en la siguiente.
 ================================================================================
+
+
+================================================================================
+AUG-056 — CIERRE — ITERACIÓN 1 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD inicial: 9ef9028d9b79b9673aef37fb86100b43d2fbb8a0. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+Cambios:
+- `add_cortes.html`: disponibilidad dinámica de slots desde el registro seleccionado; ocultación de acciones de alta cuando no hay espacio; visibilidad de vídeo basada en `videoGuiaDesarmeUrl`; refresco tras guardar/recuperar. Si no puede verificarse un vehículo existente, se falla de forma conservadora.
+- `Services/write.js` y `Services/admin.js`: selección del primer slot libre bajo los bloqueos existentes; respuesta con `slotIndex`; rechazo de vehículo completo sin sobrescritura.
+- Ante conflicto por el último espacio, el formulario y el snapshot durable se conservan.
+
+Validación local: CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; YouTubeAddCortesContract 4/4 PASS. Parsing V8 de los archivos de código modificados: PASS.
+
+Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados y concurrencia real entre usuarios/proyectos. No se ejecutaron servicios externos ni datos productivos.
+Siguiente tarea: AUG-057. No se inicia en esta iteración.
+================================================================================
