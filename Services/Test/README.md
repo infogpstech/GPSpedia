@@ -502,3 +502,10 @@ El harness IndexedDB mantiene una cola de transacciones y no activa una nueva tr
 El caso concurrente ADMIN exige que una sola operación se guarde, la otra devuelva conflicto y la recuperación conserve íntegro el primer snapshot. La serialización global del harness es deliberadamente conservadora: también serializa transacciones que IndexedDB real podría ejecutar en paralelo si fueran compatibles. No sustituye la validación con IndexedDB real ni las pruebas multi-pestaña de Beta.
 
 Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+
+
+## Abortos durante la eliminación de snapshots ADMIN (AUG-053 — iteración 18)
+
+El harness conserva un registro de deshacer por transacción y revierte las mutaciones en memoria cuando ocurre un aborto. La suite comprueba que, si la eliminación de un snapshot ADMIN recibe éxito en el request pero la transacción aborta antes del commit, la API devuelve un resultado incierto (`null`) y el snapshot original permanece recuperable con el mismo opId y Data URL. Esto evita confundir el éxito del request individual con el commit de la transacción.
+
+La suite completa de 30 escenarios y el comando Node CLI no se ejecutaron en esta iteración. La simulación de rollback es local; no sustituye IndexedDB real ni pruebas multi-pestaña de Beta. Ejecutar: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.

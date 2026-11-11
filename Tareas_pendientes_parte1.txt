@@ -872,3 +872,7 @@ Presupuesto de 64 MiB para Blob activos por ObjectURL; sin capacidad se omite UR
 
 AUG-053 — ITERACIÓN 13 — 2026-11-11
 Cambio de sesión durante la reconciliación de reemplazos ADMIN: la carga de operaciones pendientes captura el contexto completo de sesión y lo revalida tras IndexedDB; la consulta del estado remoto vuelve a validar antes de interpretar el resultado; el baseline y las limpiezas/relecturas locales quedan condicionados al mismo contexto. Se añadieron contratos para evitar que continuaciones de una sesión anterior actualicen baseline o mapas en memoria tras logout/cambio de cuenta. Validación local: parsing V8 de ui.js y suite; contrato AdminModalEditRestoreContract ampliado. IndexedDB/navegador real y multi-pestaña permanecen para Beta. AUG-053 continúa EN PROGRESO. No iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 18 — 2026-11-11
+Se amplió el harness IndexedDB para revertir escrituras y eliminaciones cuando una transacción aborta. Nuevo caso ADMIN: una solicitud delete exitosa seguida de abort no se reporta como eliminación confirmada; la API devuelve resultado incierto y el snapshot original sigue disponible con opId y Data URL íntegros. La suite completa de 30 escenarios y el comando Node CLI no se ejecutaron en esta iteración; la validación completa queda pendiente. No sustituye IndexedDB/navegador real ni multi-pestaña de Beta. AUG-053 continúa EN PROGRESO; no iniciar AUG-054.

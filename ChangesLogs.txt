@@ -1565,3 +1565,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Tareas_pendientes_parte1.txt y checkpoint.md: registran resultado 29/29 PASS y continuidad de AUG-053.
 - No se modificó lógica funcional ni offline.js.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 18 — ROLLBACK DEL HARNESS ANTE ABORTO DE ELIMINACIÓN ADMIN
+- Services/Test/IndexedDBTransactions.js: el harness ahora registra y revierte las mutaciones put/delete al abortar una transacción; se añadió un caso ADMIN para comprobar que un request delete exitoso seguido de abort no elimina de forma durable el snapshot.
+- Services/Test/README.md: documenta el escenario y los límites de la simulación de rollback.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran el alcance y dejan explícita la validación pendiente.
+- No se modificó lógica funcional ni offline.js.
+================================================================================
