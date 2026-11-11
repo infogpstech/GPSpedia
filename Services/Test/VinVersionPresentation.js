@@ -4,10 +4,10 @@ import { runInNewContext } from 'node:vm';
 
 const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
 const start = uiSource.indexOf('export function parseEquipmentVersions(');
-const end = uiSource.indexOf('/**\\n * Establece una imagen optimizada', start);
+const end = uiSource.indexOf('/**\n * Establece una imagen optimizada', start);
 if (start < 0 || end <= start) throw new Error('No se encontró el bloque de helpers VIN de ui.js.');
 const helperSource = uiSource.slice(start, end).replace(/^export function /gm, 'function ');
-const helpers = runInNewContext(`${helperSource}\\n;({ parseVinCollection, mapVersionsWithVins })`);
+const helpers = runInNewContext(`${helperSource}\n;({ parseVinCollection, mapVersionsWithVins })`);
 
 let passed = 0;
 function test(name, callback) { callback(); passed++; console.log('PASS', name); }
