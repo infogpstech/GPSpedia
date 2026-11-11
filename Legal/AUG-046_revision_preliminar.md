@@ -176,3 +176,31 @@ Esta lista es el siguiente insumo necesario para que la empresa determine si el 
 - Esta matriz es evidencia técnica para decisión interna, no aprobación jurídica.
 
 **Estado de AUG-046:** EN PROGRESO. El contraste de código está ampliado y la lista de confirmaciones queda preparada para la empresa principal. La validación corporativa del contenido sigue pendiente; no se presume aprobación. No iniciar AUG-047.
+
+
+## 9. Consistencia entre los textos informativos y el acuerdo vigente — 2026-11-11
+
+Se realizó una comparación adicional de las superficies informativas presentes en `index.html`: Aviso Importante, acuerdo de uso, modal «Sobre Nosotros» y preguntas frecuentes. El análisis se limita a consistencia documental; no propone ni aplica cambios al contenido.
+
+### 9.1 Diferencias y puntos que requieren decisión corporativa
+
+1. **Titularidad y alcance de propiedad intelectual.** La sección 9 del acuerdo describe todo el contenido organizado en GPSpedia —incluidos textos, fotografías, diagramas, tablas y procedimientos— como recurso privado y restringe su reproducción. En cambio, «Sobre Nosotros» aclara que GPSpedia no busca atribuirse derechos sobre información técnica original de fabricantes, autores o fuentes externas, y la FAQ describe la información técnica como compilación de datos de libre acceso y conocimiento práctico sobre la que GPSpedia no reclama autoría exclusiva. No son necesariamente afirmaciones incompatibles si se distingue entre material de terceros y la selección, estructura, organización y material interno; sin embargo, esa distinción no queda expresada con precisión uniforme en las tres superficies. La empresa debe confirmar qué categorías controla, qué materiales son de terceros y qué restricciones corresponden a cada categoría.
+2. **Identidad institucional.** El acuerdo atribuye facultades a Motorlink S.A. y, en algunas cláusulas, presenta «Motorlink S.A. y GPSpedia» como sujetos separados; los modales «Sobre Nosotros» y FAQ hablan de GPSpedia como plataforma/marca, mientras el acuerdo muestra el logotipo TRACKLINK. Debe definirse una descripción institucional única que explique empresa responsable, plataforma y marcas sin atribuir personalidad jurídica a GPSpedia.
+3. **Aviso breve y acuerdo.** El Aviso Importante presenta el uso bajo responsabilidad del usuario y enlaza al acuerdo, pero no identifica por sí mismo a la empresa responsable ni resume el tratamiento de datos. La aceptación versionada de AUG-045 corresponde al acuerdo completo; la empresa debe confirmar que la forma de presentar el aviso breve y el documento enlazado refleja la política corporativa deseada. No se modificó el flujo.
+4. **Finalidad de la herramienta.** El acuerdo limita el uso a actividades laborales y trabajos realizados en representación de Motorlink S.A.; «Sobre Nosotros» y FAQ describen el producto de forma más general, como plataforma de consulta técnica y apoyo profesional. Conviene distinguir el propósito general de la herramienta de los permisos y límites aplicables al usuario interno.
+
+### 9.2 Evidencia de ubicación
+
+- `index.html`, modal `#terms-modal`: Aviso Importante y enlace a los Términos y Condiciones.
+- `index.html`, modal `#terms-agreement-modal`: secciones 1, 3, 4, 6, 7, 9, 10, 12, 13 y 16.
+- `index.html`, modal `#about-us-modal`: descripción de la plataforma, fuentes de información y aclaración sobre derechos de fabricantes/autores/fuentes externas.
+- `index.html`, `#faq-modal`: respuesta «¿La información tiene derechos de autor?».
+- SHA del archivo revisado en la rama de trabajo: `5d6c57956e18e7b504475222ba9fa97ef239c947` (sin cambios).
+
+### 9.3 Resultado y límites
+
+Se amplía el inventario de consistencia: además de confirmar los flujos de datos de la sección 8, la empresa debe resolver la delimitación entre contenido de terceros, material interno y estructura/organización propia, y unificar la descripción institucional y el propósito laboral. Son decisiones de la empresa principal; no se infiere titularidad, licencia ni aprobación jurídica a partir del código.
+
+No se modificó `index.html`, el Aviso Importante, el acuerdo, la sección 13, los textos de «Sobre Nosotros» o FAQ, la versión/fecha 2026-07, el frontend, el backend, el flujo AUG-045, endpoints, deployments ni datos productivos.
+
+**Estado de AUG-046:** EN PROGRESO. Revisión comparativa documental ampliada; quedan las confirmaciones operativas y la validación interna corporativa. No iniciar AUG-047.
