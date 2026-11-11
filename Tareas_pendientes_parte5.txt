@@ -56,7 +56,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   7. Mantener asociación texto/imagen; no asociar descripción nueva a imagen previa por omisión.
   8. Probar slots vacíos/ocupados, imagen sin texto, texto sin imagen, ficha obsoleta, payload vacío, dos usuarios por último slot y fallo de escritura.
 - **Relación:** AUD-T-005; AUG-034, AUG-039 y AUD-T-031.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; evidencia en Services/Test/AddSupplementaryInfoIntegrity.js y checkpoint.md.
 
 ### AUG-062 — Sincronizar el modal de detalle después de una ampliación confirmada
 - **Origen:** H-AUD-005-003. **Prioridad:** Media.

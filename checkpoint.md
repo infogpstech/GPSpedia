@@ -352,3 +352,16 @@ Pendiente para Beta: validación visual en navegador real y comprobación con da
 Los archivos se publicaron secuencialmente mediante commits independientes, conforme al mecanismo disponible.
 AUG-060 queda cerrada. No se inicia AUG-061 en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-061 — CIERRE — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD inicial: 4f858f89124f6576d76a09109011093a2add9820. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- WRITE y ADMIN validan payload y registro vigente bajo coordinación compartida para CORTES, DRIVE e IMAGE_UPLOAD_LEDGER, conservando ScriptLock local.
+- Apertura rechaza texto o imagen existentes. Alimentación asigna en servidor el primer par libre, considerando texto e imagen; ignora el slot enviado por navegador y rechaza slots completos o pares ambiguos.
+- Escritura suplementaria agrupada, verificada por lectura posterior y con intento de rollback. Respuesta incluye vehicleId, slotIndex y errores diferenciados.
+- ui.js envía un par genérico; no calcula el slot desde datos potencialmente obsoletos.
+Validación local: AddSupplementaryInfoIntegrity 34/34 PASS; parsing de helpers y handlers WRITE/ADMIN aprobado. No se ejecutaron navegador real, Apps Script, Spreadsheet, Drive ni concurrencia real; quedan diferidos a Beta.
+Siguiente tarea: AUG-062. No se inicia en esta iteración.
+================================================================================

@@ -842,8 +842,9 @@ function doPostInternal_(e) {
         const durationSec = ((errorEndTime - startTime) / 1000).toFixed(2);
 
         response = {
-            status: 'error',
-            estado: 'error',
+            status: "error",
+            code: error && error.code || "SERVICE_ERROR",
+            estado: "error",
             message: error.message,
             mensaje: error.message,
             tiempoTranscurrido: `${durationSec}s`,
@@ -2897,92 +2898,57 @@ const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { an
     }
 }
 
-function handleAddSupplementaryInfo(payload, logMessage) {
-    const lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); }
-    catch (error) { throw new Error("No se pudo bloquear el registro de información suplementaria administrativa. Intente nuevamente."); }
-    try { return handleAddSupplementaryInfoLocked(payload, logMessage); }
-    finally { lock.releaseLock(); }
+
+function createSupplementaryInfoError_(code,message){const e=new Error(message);e.code=code;return e;}
+function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
+function buildSupplementaryInfoPlan_(payload,current){
+ payload=payload&&typeof payload==="object"?payload:{};current=current&&typeof current==="object"?current:{};
+ ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].forEach(k=>{const v=payload[k];if(v!==undefined&&v!==null&&typeof v!=="string")throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" debe contener texto válido.");});
+ const aperture=hasSupplementaryValue_(payload.apertura)||hasSupplementaryValue_(payload.imgApertura),note=hasSupplementaryValue_(payload.notaImportante);
+ const pairs=[{text:payload.cableAlimen,image:payload.imgCableAlimen},{text:payload.cableAlimen2,image:payload.imgCableAlimen2},{text:payload.cableAlimen3,image:payload.imgCableAlimen3}].filter(x=>hasSupplementaryValue_(x.text)||hasSupplementaryValue_(x.image));
+ if(!aperture&&!note&&!pairs.length)throw createSupplementaryInfoError_("SUPPLEMENTARY_EMPTY_PAYLOAD","No se recibió información suplementaria válida para guardar.");
+ if(pairs.length>1)throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","La solicitud debe agregar un solo cable de alimentación por operación.");
+ if(aperture&&(hasSupplementaryValue_(current.apertura)||hasSupplementaryValue_(current.imgApertura)))throw createSupplementaryInfoError_("SUPPLEMENTARY_CONFLICT","La apertura ya contiene texto o imagen. No se sobrescribió la información existente.");
+ const updates={};let slotIndex=null;
+ if(aperture){if(hasSupplementaryValue_(payload.apertura))updates.apertura=payload.apertura;if(hasSupplementaryValue_(payload.imgApertura))updates.imgApertura=payload.imgApertura;}
+ if(pairs.length){const slot=[1,2,3].find(i=>{const n=i===1?"":String(i);return !hasSupplementaryValue_(current["cableAlimen"+n])&&!hasSupplementaryValue_(current["imgCableAlimen"+n]);});if(!slot)throw createSupplementaryInfoError_("SUPPLEMENTARY_CONFLICT","Los tres espacios de alimentación están ocupados. No se modificó el registro.");slotIndex=slot;const n=slot===1?"":String(slot);if(hasSupplementaryValue_(pairs[0].text))updates["cableAlimen"+n]=pairs[0].text;if(hasSupplementaryValue_(pairs[0].image))updates["imgCableAlimen"+n]=pairs[0].image;}
+ if(note)updates.notaImportante=payload.notaImportante;return {updates,slotIndex,apertureRequested:aperture};
 }
-
-function handleAddSupplementaryInfoLocked(payload, logMessage) {
-    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, cableAlimen2, imgCableAlimen2, cableAlimen3, imgCableAlimen3, notaImportante, timestamp } = payload;
-    if (!vehicleId) {
-        throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
-    }
-
-    logMessage("Registro Administrativo", `Procesando addSupplementaryInfo administrativo para ID: ${vehicleId}...`);
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
-    const rowIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
-
-    if (rowIndex === -1) {
-        throw new Error("El ID del vehículo proporcionado no fue encontrado para actualizar.");
-    }
-    const actualRow = rowIndex + 2;
-
-    const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
-
-    const folder = findOrCreateVehicleFolder(vehicleInfo);
-
-    // Actualizar campos de texto si se proporcionaron
-    if (apertura) sheet.getRange(actualRow, COLS_CORTES.apertura).setValue(apertura);
-    if (cableAlimen) sheet.getRange(actualRow, COLS_CORTES.cableAlimen).setValue(cableAlimen);
-    if (cableAlimen2) sheet.getRange(actualRow, COLS_CORTES.cableAlimen2).setValue(cableAlimen2);
-    if (cableAlimen3) sheet.getRange(actualRow, COLS_CORTES.cableAlimen3).setValue(cableAlimen3);
-    if (notaImportante) sheet.getRange(actualRow, COLS_CORTES.notaImportante).setValue(notaImportante);
-
-    // Subir imágenes si se proporcionaron y no están ya correctamente subidas
-    if (imgApertura) {
-        const currentAperturaImg = rowValues[COLS_CORTES.imgApertura - 1];
-        if (!checkFileIdValid(currentAperturaImg)) {
-const filename = buildCanonicalImageBaseName(vehicleInfo, "imgApertura");
-            const imageUrl = uploadImageToDrive(imgApertura, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgApertura"));
-            sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
-        }
-    }
-    if (imgCableAlimen) {
-        const currentAlimenImg = rowValues[COLS_CORTES.imgCableAlimen - 1];
-        if (!checkFileIdValid(currentAlimenImg)) {
-const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen");
-            const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen"));
-            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
-        }
-    }
-    if (imgCableAlimen2) {
-        const currentAlimenImg2 = rowValues[COLS_CORTES.imgCableAlimen2 - 1];
-        if (!checkFileIdValid(currentAlimenImg2)) {
-const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen2");
-            const imageUrl = uploadImageToDrive(imgCableAlimen2, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen2"));
-            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen2).setValue(imageUrl);
-        }
-    }
-    if (imgCableAlimen3) {
-        const currentAlimenImg3 = rowValues[COLS_CORTES.imgCableAlimen3 - 1];
-        if (!checkFileIdValid(currentAlimenImg3)) {
-const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen3");
-            const imageUrl = uploadImageToDrive(imgCableAlimen3, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen3"));
-            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen3).setValue(imageUrl);
-        }
-    }
-
-    // Forzar timestamp administrativo (hace 365 días) o el recibido en la carga (solo si está vacío)
-    const currentTimestamp = rowValues[COLS_CORTES.timestamp - 1];
-    if (!currentTimestamp) {
-        let targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() - 365);
-        const formattedDate = timestamp || Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
-        sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
-    }
-
-    SpreadsheetApp.flush();
-    [COLS_CORTES.imgApertura, COLS_CORTES.imgCableAlimen, COLS_CORTES.imgCableAlimen2, COLS_CORTES.imgCableAlimen3]
-        .forEach(column => markImageUploadLinked(sheet.getRange(actualRow, column).getValue()));
-    logMessage("Registro Administrativo", `Información suplementaria administrativa agregada con éxito.`);
-    return { status: 'success', message: 'Información suplementaria administrativa agregada de forma silenciosa.' };
+function persistSupplementaryInfoValues_(sheet,row,original,updated){
+ const range=sheet.getRange(row,COLS_CORTES.apertura,1,10);
+ try{range.setValues([updated]);SpreadsheetApp.flush();const saved=range.getValues()[0];if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");return true;}
+ catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
 }
-
+function handleAddSupplementaryInfo(payload, logMessage){
+ 
+ const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","No se pudo bloquear el registro de información suplementaria. Intente nuevamente.");}
+ try{return handleAddSupplementaryInfoLocked(payload, logMessage);}finally{lock.releaseLock();}
+}
+function handleAddSupplementaryInfoLocked(payload, logMessage){
+ 
+ if(!payload||typeof payload!=="object"||!String(payload.vehicleId||"").trim())throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
+ logMessage("Registro Administrativo","Procesando addSupplementaryInfo administrativo para ID: "+payload.vehicleId+"...");
+ const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+ if(!sheet||sheet.getLastRow()<2)throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND","El vehículo indicado no existe en el registro.");
+ if(sheet.getLastColumn()<COLS_CORTES.imgCableAlimen3)throw createSupplementaryInfoError_("SUPPLEMENTARY_SCHEMA_INVALID","La hoja Cortes no contiene todas las columnas de información suplementaria.");
+ const ids=sheet.getRange(2,COLS_CORTES.id,sheet.getLastRow()-1,1).getValues().flat(),matches=[];
+ ids.forEach((id,i)=>{if(String(id==null?"":id).trim()===String(payload.vehicleId).trim())matches.push(i+2);});
+ if(!matches.length)throw createSupplementaryInfoError_("VEHICLE_NOT_FOUND","El vehículo indicado no existe en el registro.");
+ if(matches.length>1)throw createSupplementaryInfoError_("VEHICLE_ID_AMBIGUOUS","El ID del vehículo aparece más de una vez. No se realizó ninguna modificación.");
+ const row=matches[0],rowValues=sheet.getRange(row,1,1,sheet.getLastColumn()).getValues()[0],vehicle=mapRowToObject(rowValues,COLS_CORTES);
+ const plan=buildSupplementaryInfoPlan_(payload,vehicle),original=rowValues.slice(COLS_CORTES.apertura-1,COLS_CORTES.imgCableAlimen3),updated=original.slice(),index=field=>COLS_CORTES[field]-COLS_CORTES.apertura;
+ Object.keys(plan.updates).forEach(field=>{if(field.indexOf("img")!==0)updated[index(field)]=plan.updates[field];});
+ const imageFields=["imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"],images=imageFields.filter(field=>hasSupplementaryValue_(plan.updates[field]));
+ try{
+  const folder=images.length?findOrCreateVehicleFolder(vehicle):null;
+  images.forEach(field=>{const url=uploadImageToDrive(plan.updates[field],buildCanonicalImageBaseName(vehicle,field),folder,buildImageUploadOperationKey(payload.opId,payload.vehicleId,field));if(!url)throw Error("La carga de imagen no devolvió una URL válida.");updated[index(field)]=url;});
+  const ti=index("timestamp");if(!hasSupplementaryValue_(String(updated[ti]||""))){let date=new Date();date.setDate(date.getDate()-365);updated[ti]=hasSupplementaryValue_(payload.timestamp)?payload.timestamp:Utilities.formatDate(date,"GMT-6","dd/MM/yyyy");}
+  persistSupplementaryInfoValues_(sheet,row,original,updated);
+ }catch(e){if(e&&e.code)throw e;throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo guardar la información suplementaria: "+String(e&&e.message||e));}
+ images.forEach(field=>{try{markImageUploadLinked(updated[index(field)]);}catch(e){logMessage("Advertencia","La imagen se guardó, pero no se confirmó su vínculo en el ledger: "+String(e&&e.message||e),0,0,true,false);}});
+ logMessage("Registro Administrativo","Información suplementaria administrativa agregada con éxito.");
+ return {status:"success",message:"Información suplementaria administrativa agregada de forma silenciosa.",vehicleId:String(payload.vehicleId),slotIndex:plan.slotIndex,apertureSaved:plan.apertureRequested};
+}
 // ============================================================================
 // HELPERS COMUNES
 // ============================================================================

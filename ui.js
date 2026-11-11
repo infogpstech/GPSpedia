@@ -8680,19 +8680,8 @@ export function openAddFeedModal(item) {
             });
         }
 
-        const payload = { vehicleId: item.id };
-        const details = content.querySelector("#add-feed-detalles").value;
-
-        if (!item.cableAlimen) {
-            payload.cableAlimen = details;
-            payload.imgCableAlimen = imgBase64;
-        } else if (!item.cableAlimen2) {
-            payload.cableAlimen2 = details;
-            payload.imgCableAlimen2 = imgBase64;
-        } else if (!item.cableAlimen3) {
-            payload.cableAlimen3 = details;
-            payload.imgCableAlimen3 = imgBase64;
-        }
+        // El servidor asigna el primer par texto/imagen libre usando el registro vigente.
+        const payload = { vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
 
         try {
             await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });

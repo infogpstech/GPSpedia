@@ -1719,3 +1719,11 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Validación local: VinVersionPresentation 10/10 PASS.
 - Navegador real y validación visual con datos reales quedan diferidos a Beta.
 ================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-061 — 2026-11-11
+- Services/write.js y Services/admin.js: validación autoritativa del payload y registro vigente; apertura protegida contra sobrescritura; asignación del primer par texto/imagen libre en servidor; rechazo de slots completos y payloads vacíos/ambiguos; escritura agrupada con lectura posterior y rollback ante fallo; respuesta con vehicleId, slotIndex y códigos de error.
+- ui.js: el modal de alimentación deja de seleccionar el slot desde el objeto frontend y envía un par genérico para asignación en servidor.
+- Services/Test/AddSupplementaryInfoIntegrity.js y Services/Test/README.md: pruebas de disponibilidad, conflictos, persistencia y rollback.
+================================================================================

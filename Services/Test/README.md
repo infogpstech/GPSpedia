@@ -631,3 +631,9 @@ Ejecutar desde la raíz:
 `node --experimental-default-type=module Services/Test/VinVersionPresentation.js`
 
 Cobertura: slots vacíos en JSON y formatos heredados, espacios intermedios/finales, límite de tres posiciones, asociación por índice, prefijos ya normalizados sin recorte adicional, VIN completos heredados con eliminación del serial y presentación de una sola versión. Resultado local de AUG-060: 10/10 PASS. No sustituye validación visual en navegador real, reservada para Beta.
+
+
+## AUG-061 — Disponibilidad y protección de información suplementaria
+- Ejecutar `runAddSupplementaryInfoIntegrityTests({ write, admin, coordinator, ui })` con las fuentes actuales de WRITE, ADMIN, Coordinator y ui.js.
+- Cubre payload vacío/ambiguo, apertura ocupada, asignación autoritativa de slots, pares texto/imagen incompletos, ficha obsoleta, slots completos, nota independiente, persistencia/rollback, locks y coordinación compartida.
+- Apps Script, Spreadsheet, Drive, concurrencia real y navegador quedan diferidos a Beta.
