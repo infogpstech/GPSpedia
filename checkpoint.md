@@ -1,4 +1,34 @@
 ================================================================================
+AUG-053 — ITERACIÓN 12 — 2026-11-11 — RECONCILIACIÓN CONSERVADORA DE REEMPLAZOS DE IMAGEN
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: c06519bdb758c7778018edd479fb9a01ce4fb695. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo corregido:
+- resolvePendingAdminImageOperationsBeforeDiscard_ trataba not_found como si el servidor hubiera cancelado el reemplazo. Sin embargo, not_found solo indica que el ledger aún no tiene registro; una solicitud previa puede seguir esperando antes de crear su registro remoto. Limpiar el Data URL/opId en ese estado podía destruir la única copia necesaria para recuperar la operación.
+- Se añadió isAdminImageUploadStatusConfirmedCancelled en adminImageUploadIsolation.js. Solo el estado explícito cancelled permite actualizar baseline y limpiar directamente.
+- Para not_found, el descarte ahora se detiene con un mensaje claro y conserva intactos el snapshot local, Data URL y opId. El usuario puede reintentar/reconciliar usando el mismo identificador cuando la solicitud previa ya haya terminado.
+- linked continúa por la ruta idempotente de uploadAdminImage, que confirma el estado vigente/superseded y exige integridad del archivo cuando el enlace sigue activo. pending/requires_review siguen bloqueando el descarte.
+- No cambia la política privada por ownerId ni se habilita recuperación cruzada.
+
+Archivos funcionales: ui.js y adminImageUploadIsolation.js.
+Pruebas: Services/Test/AdminImageUploadIsolation.js (10 escenarios); Services/Test/AdminModalEditRestoreContract.js (4 contratos). Documentación: Services/Test/README.md, ChangesLogs.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+
+Validación local en runtime V8 adaptado:
+- Parsing V8 de ui.js, adminImageUploadIsolation.js, Services/admin.js y suites relacionadas: PASS.
+- AdminImageUploadIsolation: 10/10 PASS.
+- AdminModalEditRestoreContract: 4/4 PASS.
+- EditBackupIsolation: 12/12 PASS.
+- AdminModalEditSecurity: 13/13 PASS.
+- ActionDispatchContract: 11/11 PASS.
+No ejecutado: IndexedDB/navegador real, solicitudes concurrentes Apps Script, Spreadsheet ni Drive reales. Se mantienen como validaciones Beta; no se simularon ni se reportan como realizadas.
+
+Commits de esta iteración publicados secuencialmente: ddf76ac0cd9ce10072116457900a716ef7ed9e59, 9207a5a7d5f3b0bf6b10621969b377f2d0532ba1, 7a51edf33159481f341d44f693a7e1ac69b50e48, e99377688665c6526e6a74c69ba8ccd9800bd696, f4722cb36276a0505a42e227f9c613a69274ae0e, 5d850cc4493d077397071167a16c1be9c108f881, 9efd76f9cd03409e5732c9b897b95cea5ac1c9e7 y 209b42399117e5195ab6c1d5d798bfc48c03a600. Rama base sin cambios.
+
+Siguiente iteración: continuar exclusivamente con pruebas de contrato del ciclo completo de snapshot/operación pendiente, enfocadas en cambio de sesión durante la consulta de estado y eliminación posterior; verificar que ningún resultado asíncrono de otra sesión pueda actualizar baseline o limpiar una operación. No iniciar AUG-054.
+================================================================================
+
+
+================================================================================
 AUG-053 — ITERACIÓN 11 — 2026-11-11 — RESTAURACIÓN ACOTADA DEL EDITOR IN-MODAL
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 26cc7e5d335fd76289b2fcd2cca7cf81b8ab09c0. HEAD antes de este checkpoint: ac5ac581e5a74633067ad106e852cb2eef1bb5db. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
