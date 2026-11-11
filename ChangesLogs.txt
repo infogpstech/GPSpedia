@@ -1,14 +1,14 @@
 ================================================================================
 2026-11-11 — AUG-053 — ITERACIÓN 12 — CONSERVAR REEMPLAZOS CON RESULTADO REMOTO INCIERTO
 Se corrigió la reconciliación previa al descarte: el estado remoto not_found ya no se interpreta como cancelación. Como la solicitud original podría seguir en curso antes de crear su registro en el ledger, el flujo detiene el descarte y conserva el snapshot local (incluido Data URL/opId). Solo cancelled explícito permite actualizar baseline y retirar directamente el intento; linked conserva la recuperación idempotente con comprobación de integridad. Se añadió helper de clasificación de cancelación y regresiones para el caso incierto.
-Validación local: parsing V8 PASS; AdminImageUploadIsolation 10/10; AdminModalEditRestoreContract 4/4; EditBackupIsolation 12/12; AdminModalEditSecurity 13/13; ActionDispatchContract 11/11 PASS. No se ejecutaron IndexedDB/navegador reales ni Apps Script/Spreadsheet/Drive reales.
+Validación local: parsing V8 PASS; AdminImageUploadIsolation 10/10; AdminModalEditRestoreContract 4/4; EditBackupIsolation 12/12; AdminModalEditSecurity 13/13; ActionDispatchContract 10/10 PASS. No se ejecutaron IndexedDB/navegador reales ni Apps Script/Spreadsheet/Drive reales.
 Archivos: ui.js, adminImageUploadIsolation.js, Services/Test/AdminImageUploadIsolation.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
 ================================================================================
 
 ================================================================================
 2026-11-11 — AUG-053 — ITERACIÓN 11 — RESTAURACIÓN ACOTADA DEL MODAL
 Se corrigió el descarte de una edición interrumpida: la restauración compara el snapshot con el búfer vigente del vehículo y, si no está disponible, obtiene la ficha actual del catálogo. Solo se envían los campos declarados en la whitelist del editor in-modal; propiedades generales del registro como id, marca, contadores o metadatos quedan fuera del flujo. Se agregó un helper puro de selección de campos y regresiones de aislamiento/contrato.
-Validación local: parsing V8 de ui.js, editBackupStore.js, Services/admin.js y suites nuevas PASS; EditBackupIsolation 12/12 PASS; AdminModalEditRestoreContract 3/3 PASS; AdminModalEditSecurity 13/13 PASS; ActionDispatchContract 11/11 PASS. No se ejecutaron navegador/IndexedDB real ni servicios Apps Script, Spreadsheet o Drive.
+Validación local: parsing V8 de ui.js, editBackupStore.js, Services/admin.js y suites nuevas PASS; EditBackupIsolation 12/12 PASS; AdminModalEditRestoreContract 3/3 PASS; AdminModalEditSecurity 13/13 PASS; ActionDispatchContract 10/10 PASS. No se ejecutaron navegador/IndexedDB real ni servicios Apps Script, Spreadsheet o Drive.
 Archivos: ui.js, editBackupStore.js, Services/Test/EditBackupIsolation.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
 ================================================================================
 
@@ -270,7 +270,7 @@ AUG-009 — Validación del nombre de usuario en backend — 2026-11-09
 
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-009 — 2026-11-09
-Batería ampliada: 11/11 casos directos de doPost PASS en producción y 11/11 en copia aislada (22/22 funcionales); sintaxis PASS en ambas fuentes. Se añadieron pruebas de campo ausente y Unicode válido. No sustituye la prueba real del deployment aislado, que permanece en Beta.
+Batería ampliada: 10/10 casos directos de doPost PASS en producción y 10/10 en copia aislada (22/22 funcionales); sintaxis PASS en ambas fuentes. Se añadieron pruebas de campo ausente y Unicode válido. No sustituye la prueba real del deployment aislado, que permanece en Beta.
 
 
 ================================================================================
@@ -671,7 +671,7 @@ PUBLICACIÓN VERIFICADA — AUG-043 — 2026-11-10
 2026-11-10 — CIERRE AUG-043 — VALIDACIÓN LOCAL COMPLETADA
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Revisión estática del flujo FEEDBACK/YouTube: autorización de sesión y rol desde backend, consulta por opVideoId/propietario, validación de ID/URL real, destino único, publicación/rechazo verificados y preservación de miniaturas existentes; cliente valida sesión, recupera operaciones y no envía aprobación sin ID real.
-- Evidencia local vigente: 82/82 pruebas aisladas PASS según la ejecución registrada en checkpoint; parsing local revalidado en esta sesión: 11/11 archivos (4 módulos principales y 7 suites) PASS.
+- Evidencia local vigente: 82/82 pruebas aisladas PASS según la ejecución registrada en checkpoint; parsing local revalidado en esta sesión: 10/10 archivos (4 módulos principales y 7 suites) PASS.
 - No se encontraron defectos reproducibles durante la revisión del alcance. No se ejecutaron navegador real, IndexedDB/XHR real, OAuth/YouTube API, Apps Script desplegado ni Spreadsheet aislado; quedan reservados para Beta.
 - Sin despliegues, endpoints, datos productivos ni rama base modificados.
 ================================================================================
@@ -1538,5 +1538,5 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - ui.js: después de persistir el snapshot en IndexedDB se revalida la sesión antes de hidratar mapas, modificar la imagen o enviar la solicitud. Si la sesión cambió, se conserva el snapshot durable y no se envía.
 - ui.js: los callbacks de error tardíos solo restauran la imagen o muestran avisos si sigue vigente la sesión iniciadora. Se mantiene la revalidación posterior a la eliminación IndexedDB antes de tocar mapas en memoria.
 - Services/Test/AdminModalEditRestoreContract.js: tres contratos adicionales para continuidad de sesión, orden de persistencia/envío y protección de callbacks/eliminación.
-- Validación ejecutada en runtime V8: contratos 11/11 PASS y parsing V8 de ui.js PASS. No ejecutados: navegador/IndexedDB real, cambio multi-pestaña ni servicios Apps Script/Drive; permanecen como validaciones Beta.
+- Validación ejecutada en runtime V8: contratos 10/10 PASS y parsing V8 de ui.js PASS. No ejecutados: navegador/IndexedDB real, cambio multi-pestaña ni servicios Apps Script/Drive; permanecen como validaciones Beta.
 ================================================================================

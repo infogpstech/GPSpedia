@@ -363,7 +363,7 @@ Corrección:
 - Se declararon en SERVICE_COMPATIBILITY_ACTIONS las rutas directas históricas CATALOG/getSuggestion y ADMIN/checkOperation, ADMIN/addOrUpdateCut y ADMIN/addSupplementaryInfo. El mapa central conserva WRITE como destino canónico; ADMIN sigue validando sesión Desarrollador antes del dispatch.
 - EXTERNAL_ACTIONS documenta logFrontend, su consumidor y la dependencia no versionada LEGACY.
 - routeAction ahora falla cerrado si el servicio no tiene endpoint; ya no redirige automáticamente a LEGACY.
-Validación: ActionDispatchContract 11/11 PASS; parsing de api-config.js, Services/write.js, Services/catalog.js, Services/admin.js y Services/Test/ActionDispatchContract.js PASS; prueba de routeAction con serviceOverride desconocido rechaza sin realizar fetch. Sin llamadas a endpoints ni servicios externos.
+Validación: ActionDispatchContract 10/10 PASS; parsing de api-config.js, Services/write.js, Services/catalog.js, Services/admin.js y Services/Test/ActionDispatchContract.js PASS; prueba de routeAction con serviceOverride desconocido rechaza sin realizar fetch. Sin llamadas a endpoints ni servicios externos.
 Pendiente Beta: verificar el deployment LEGACY y su contrato real de logFrontend; no se asumió ni simuló su dispatcher.
 ================================================================================
 
@@ -415,5 +415,5 @@ Evidencia: después de await readAdminImageAsDataUrl() solo se comparaba userId;
 Impacto: una continuación asíncrona de una sesión anterior podía actualizar mapas/DOM después de logout/cambio de token o rol; si el usuario volvía a autenticarse con la misma cuenta, el envío podía ejecutarse con un contexto distinto del que inició la operación. El snapshot durable ya persistido debía conservarse para recuperación, no enviarse automáticamente bajo otra sesión.
 Severidad: media, riesgo de aislamiento/consistencia de estado cliente; no se verificó exposición ni modificación de datos productivos.
 Corrección: propagar el contexto completo iniciador a envío/reintento/reconciliación; revalidar después de lectura y persistencia antes de mutar memoria/UI o enviar; suprimir callbacks de error obsoletos; mantener la guarda posterior a la eliminación IndexedDB antes de modificar mapas.
-Validación local: contrato AdminModalEditRestoreContract 11/11 PASS y parsing V8 de ui.js PASS. No se ejecutaron navegador/IndexedDB real ni escenarios multi-pestaña; quedan para Beta.
+Validación local: contrato AdminModalEditRestoreContract 10/10 PASS y parsing V8 de ui.js PASS. No se ejecutaron navegador/IndexedDB real ni escenarios multi-pestaña; quedan para Beta.
 ================================================================================

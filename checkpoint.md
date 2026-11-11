@@ -15,7 +15,7 @@ Corrección:
 - La eliminación IndexedDB conserva la guarda posterior al await: si la sesión cambia, no se actualizan mapas en memoria. La eliminación owner/opId solo se solicita después de confirmación remota y baseline local.
 
 Archivos: ui.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Auditoría.txt, ChangesLogs.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
-Validación local: contratos AdminModalEditRestoreContract 11/11 PASS; parsing V8 de ui.js PASS.
+Validación local: contratos AdminModalEditRestoreContract 10/10 PASS; parsing V8 de ui.js PASS.
 Validación diferida a Beta: navegador real, IndexedDB real, cambio multi-pestaña y servicios Apps Script/Drive.
 Siguiente iteración: continuar AUG-053 con el siguiente escenario del ciclo combinado snapshot/operación pendiente que aún no tenga cobertura local. No iniciar AUG-054.
 ================================================================================
@@ -63,7 +63,7 @@ Validación local en runtime V8 adaptado:
 - AdminModalEditRestoreContract: 4/4 PASS.
 - EditBackupIsolation: 12/12 PASS.
 - AdminModalEditSecurity: 13/13 PASS.
-- ActionDispatchContract: 11/11 PASS.
+- ActionDispatchContract: 10/10 PASS.
 No ejecutado: IndexedDB/navegador real, solicitudes concurrentes Apps Script, Spreadsheet ni Drive reales. Se mantienen como validaciones Beta; no se simularon ni se reportan como realizadas.
 
 Commits de esta iteración publicados secuencialmente: ddf76ac0cd9ce10072116457900a716ef7ed9e59, 9207a5a7d5f3b0bf6b10621969b377f2d0532ba1, 7a51edf33159481f341d44f693a7e1ac69b50e48, e99377688665c6526e6a74c69ba8ccd9800bd696, f4722cb36276a0505a42e227f9c613a69274ae0e, 5d850cc4493d077397071167a16c1be9c108f881, 9efd76f9cd03409e5732c9b897b95cea5ac1c9e7 y 209b42399117e5195ab6c1d5d798bfc48c03a600. Rama base sin cambios.
@@ -91,7 +91,7 @@ Validación local en runtime V8 adaptado:
 - EditBackupIsolation: 12/12 PASS.
 - AdminModalEditRestoreContract: 3/3 PASS (whitelist UI/backend, helper de restauración y fallback a ficha actual).
 - AdminModalEditSecurity: 13/13 PASS.
-- ActionDispatchContract: 11/11 PASS.
+- ActionDispatchContract: 10/10 PASS.
 No ejecutado: Node CLI literal, navegador/IndexedDB real, recarga y multi-pestaña reales, ni integración Apps Script/Spreadsheet/Drive. Se mantienen como validaciones Beta; no se simularon ni se reportan como realizadas.
 
 Commits de esta iteración (publicados secuencialmente por archivo): 057508d3f9eca0ac9636333fc09e21b5d3b6b06f, b83f017a873bb2c1c6656031ca2e8f1be35977a4, 470e33fa6c6492f6e47a083988a0fefb05b0eb80, ebd1fe7ba0e6d49bdcd0c2941db91eb33abc0f1f, 4784f7135d370bd237c180a8594eb7fa7ec2b390, 0a3c6e11efdbd3a58a6eef7b7c11774856d7b54a, 7b38ff9571a6cc8abf027b68641233e77139ab68 y ac5ac581e5a74633067ad106e852cb2eef1bb5db. Rama base sin cambios.
@@ -440,7 +440,7 @@ Archivos: Services/admin.js, api-config.js, ui.js, Services/Test/AdminModalEditS
 Validación local ejecutada en runtime V8 adaptado:
 - Parsing de Services/admin.js, ui.js, api-config.js y ambas suites: PASS.
 - runAdminModalEditSecurityTests(): 13/13 PASS.
-- runActionDispatchContractTests(): 11/11 PASS.
+- runActionDispatchContractTests(): 10/10 PASS.
 - Revisión del diff de ocho archivos: solo cambios de AUG-053.
 No ejecutado: Node CLI literal, navegador/IndexedDB real, ni integración real con Apps Script, Spreadsheet y Drive. Esas validaciones quedan para Beta; no se simularon ni se reportan como realizadas.
 
