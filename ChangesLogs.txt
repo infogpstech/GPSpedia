@@ -1,4 +1,10 @@
 ================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 3 — RECUPERACIÓN TRAS CAMBIO DE SESIÓN
+Al cerrar la interfaz por cambio de sesión se limpia el estado de edición en memoria, pero se conserva el snapshot persistido para que solo el mismo propietario pueda reanudarlo. Al iniciar edición, se reutiliza una copia previa válida del mismo propietario/vehículo en lugar de sobrescribir la línea base de una edición interrumpida.
+Archivos: ui.js, checkpoint.md y Tareas_pendientes_parte1.txt.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — ITERACIÓN 3 — COMPATIBILIDAD DEL BASELINE DE IMAGEN
 Se preservó el comportamiento del reemplazo de imagen fuera del modo de edición: si no existe una copia de edición activa, no hay snapshot que actualizar y el baseline no bloquea la operación confirmada. Durante una edición, la escritura sigue exigiendo coincidencia de sesión, propietario y vehículo.
 Archivos: ui.js y checkpoint.md.

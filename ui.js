@@ -2012,10 +2012,18 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 }
                 const cleanVehicleId = String(activeItem.id);
                 const backup = JSON.parse(JSON.stringify(activeItem));
+                let store;
                 let stored;
-                try { stored = getEditBackupStore_(editSession.userId).write(cleanVehicleId, backup); }
-                catch (error) {
-                    showSavingIndicator("error", "No se pudo guardar la copia local de seguridad. No se inició la edición.");
+                try {
+                    store = getEditBackupStore_(editSession.userId);
+                    const previous = store.read(cleanVehicleId);
+                    if (previous.status === "ready" && previous.backup) {
+                        stored = { saved: true, backup: previous.backup };
+                    } else {
+                        stored = store.write(cleanVehicleId, backup);
+                    }
+                } catch (error) {
+                    showSavingIndicator("error", "No se pudo guardar o recuperar la copia local de seguridad. No se inició la edición.");
                     return;
                 }
                 if (!stored.saved) {
@@ -3535,6 +3543,9 @@ function resetRoleScopedViews_() {
 }
 
 function resetSessionUi_() {
+    inEditMode = false;
+    window.inEditMode = false;
+    clearInMemoryEditBackup_();
     capturePrivilegedModalTemplates_();
     const previousContext = lastShownAppContext;
     if (previousContext && previousContext.userId && typeof offline.clearDriveAuditState === 'function') {
