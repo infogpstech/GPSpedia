@@ -574,3 +574,23 @@ La política vigente es colaborativa: cualquier usuario con sesión activa y rol
 El generador de opId usa 128 bits obtenidos mediante crypto.getRandomValues y una marca temporal para correlación. Si la API criptográfica no está disponible, falla explícitamente; no degrada a Math.random. Esta aleatoriedad reduce colisiones, pero no sustituye autenticación ni autoriza consultas.
 
 La suite se ejecuta mediante runCheckOperationSecurityTests({write, frontend}), proporcionando las fuentes vigentes de Services/write.js y add_cortes.html al adaptador local. No requiere endpoints ni servicios externos. La validación Apps Script/Spreadsheet real queda para Beta.
+
+
+## Ciclo durable y vinculación de opId en add_cortes (AUG-055)
+
+La operación pendiente de add_cortes se conserva en IndexedDB (adminLocalState) mediante una clave aislada por propietario. El snapshot incluye opId, propietario, tipo de operación, etapa, estado, vehículo solicitado, payload original y huella SHA-256. Las imágenes se conservan una sola vez dentro del payload para evitar duplicar Data URL. El token de sesión no se persiste en el snapshot.
+
+IndexedDB es el almacenamiento durable aprobado para esta operación; localStorage ya no se usa para guardar el snapshot. Si IndexedDB no está disponible, bloquea la lectura o rechaza la escritura por cuota/aborto, el formulario no envía addOrUpdateCut. Cada escritura se verifica mediante lectura posterior dentro de la transacción. La limpieza exige coincidencia exacta de propietario, opId y huella, y se verifica antes de avanzar a etapa 3.
+
+Los estados processing y failed pueden reintentarse únicamente con el mismo opId y la misma huella. Un snapshot completed es terminal: no se reutiliza ni se degrada a failed; primero debe reconciliarse contra checkOperation. Si el servidor confirma la misma huella y un vehicleId válido/coincidente, se elimina el snapshot y se continúa. Si la respuesta se perdió antes del commit, el snapshot queda disponible para reintentar; si se perdió después del commit, la consulta por opId y huella permite recuperar la confirmación. Un snapshot corrupto, de otro propietario o con otra operación queda bloqueado, sin sobrescritura automática.
+
+El backend WRITE y ADMIN amplía la hoja dedicada de idempotencia de A:E a A:F, agregando operationHash. La migración agrega F de forma compatible cuando la hoja antigua tiene cinco columnas; las hojas truncadas o con datos bajo encabezados incompatibles siguen rechazándose. Los registros históricos migrados conservan operationHash vacío porque no es posible reconstruir de forma fiable su payload original. Por seguridad, un reintento de esos opId históricos no se acepta automáticamente y requiere reconciliación manual.
+
+### Suites y validación AUG-055
+
+- AddCutOperationIntegrity.js: **21/21 PASS**. Comprueba canonicalización cliente/WRITE/ADMIN para vehículo nuevo, existente y modo silencioso; huella del contenido e imágenes; vinculación por vehículo y payload; contrato de la hoja A:F; orden snapshot/check/send; recuperación de respuesta perdida; estado terminal y limpieza.
+- IndexedDBTransactions.js: se amplió de 33 a **43 escenarios**. Los 10 escenarios nuevos de AUG-055 ejecutaron **10/10 PASS** con el harness IndexedDB adaptado: persistencia/verificación, aislamiento por propietario, conflicto de opId/huella, snapshot corrupto, cuota/aborto, limpieza exacta, borrado verificado, concurrencia serializada, estado completed terminal y almacenamiento no disponible. Los 33 escenarios anteriores corresponden a la validación de AUG-053 y no se volvieron a ejecutar en este cierre.
+- IdempotenciaIntegrity.js: **16/16 PASS** con las funciones vigentes del servicio ADMIN; incluye hash válido/inválido y registro histórico sin huella.
+- CheckOperationSecurity.js: **12/12 PASS** con WRITE y frontend vigentes.
+
+Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes.html: PASS. Las pruebas ejecutadas usan runtime V8 adaptado y dobles locales; no equivalen a navegador/IndexedDB reales ni a Apps Script/Spreadsheet/Drive desplegados. Esas verificaciones integradas permanecen para Beta.
