@@ -998,7 +998,9 @@ Cierre local de AUG-051. AUG-052 permanece fuera de alcance.
 
 
 ================================================================================
-AUG-065 — ITERACIÓN DE IMPLEMENTACIÓN — 2026-11-11
-Estado: EN PROGRESO.
-Se implementan variantes PNG locales 300/800/1600 px sin modificar la URL fuente de Drive; claves ObjectURL/IndexedDB por ID normalizado/ancho; rechazo de entradas heredadas ambiguas y metadatos incompatibles. Se amplía IndexedDBTransactions y se conserva ImageResolutionVariants. Validación local integral pendiente.
+AUG-065 — CIERRE — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Se implementan variantes PNG locales 300/800/1600 px sin modificar la URL fuente de Drive; claves ObjectURL/IndexedDB por ID normalizado/ancho; rechazo de entradas heredadas ambiguas y metadatos incompatibles. Blob/Data URL se conservan directamente y Lightbox mantiene acceso a la fuente original.
+Validación local: IndexedDBTransactions.js 44/44 PASS en runtime V8 adaptado con las fuentes vigentes de offline.js y el harness de la suite; ImageResolutionVariants.js PASS en runtime V8 adaptado. La ejecución literal Node CLI no se realizó porque el entorno no dispone de checkout local y el contenedor no resuelve DNS de GitHub.
+Beta pendiente: IndexedDB y Canvas reales en navegador, transparencia PNG por píxeles, comportamiento visual online/offline y verificación de calidad con imágenes representativas. No se modificaron datos ni servicios productivos.
 ================================================================================
