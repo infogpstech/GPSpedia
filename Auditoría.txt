@@ -568,3 +568,9 @@ Estado: RESUELTO EN FUENTES.
 WRITE y ADMIN sanitizan en servidor apertura y cableAlimen/cableAlimen2/cableAlimen3 antes de persistir. La edición ADMIN directa aplica el mismo control. La allow-list conserva el formato admitido por rich-text.js y descarta scripts, elementos activos, atributos ejecutables, srcdoc, URL javascript:/data: no autorizadas y estilos peligrosos. La UI sanitiza Apertura, cable individual y todas las diapositivas del carrusel; impresión/exportación sanitizan apertura y los tres cables. Los registros históricos/importados quedan protegidos en cada renderizado; no se ejecutó una migración masiva.
 Evidencia: ui.js, rich-text.js, Services/write.js, Services/admin.js y Services/Test/RichTextContentSecurity.js. Validación local: RichTextContentSecurity 39/39 PASS; AddSupplementaryInfoIntegrity 34/34 PASS. Navegador real y Apps Script/Spreadsheet desplegados quedan para Beta.
 ================================================================================
+
+
+================================================================================
+AUG-065 — EVIDENCIA DE CORRECCIÓN EN CURSO — H-AUD-006-001
+Las claves de miniaturas quedan vinculadas a ID normalizado y ancho; la lectura valida key/fileId/width/Blob y descarta entradas históricas ambiguas. Drive mantiene la URL fuente original para preservar transparencia; Canvas genera PNG locales de 300/800/1600 px, con proporción y sin ampliación. Validación local integral pendiente.
+================================================================================

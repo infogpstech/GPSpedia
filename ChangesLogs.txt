@@ -1755,3 +1755,11 @@ CAMBIOS — AUG-064 — 2026-11-11
 - ui.js: el carrusel multi-cable y la presentación individual sanitizan antes de asignar a innerHTML. Impresión/exportación conservan sanitización de apertura y los tres cables.
 - Services/Test/RichTextContentSecurity.js: 39/39 PASS; AddSupplementaryInfoIntegrity: 34/34 PASS.
 ================================================================================
+
+
+================================================================================
+AUG-065 — 2026-11-11 — IMPLEMENTACIÓN PARCIAL
+- ui.js: variantes 300/800/1600, clave ObjectURL canónica, Blob/Data URL directos y adjunción de Blob PNG solo con token vigente.
+- offline.js: clave por ID normalizado/ancho, lectura estricta y descarte de registros heredados/incompatibles.
+- Pruebas: ImageResolutionVariants.js e IndexedDBTransactions.js ampliada para orden inverso y caché incompatible.
+================================================================================

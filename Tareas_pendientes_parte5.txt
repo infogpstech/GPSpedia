@@ -39,7 +39,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - **Problema:** la presentación elimina slots vacíos antes de asociar VIN a versiones y recorta cinco caracteres de un prefijo que ya fue normalizado por WRITE/ADMIN.
 - **Criterios de aceptación:** preservar índices/slots vacíos; no volver a recortar prefijos; mostrar cuatro caracteres distintivos correctos junto a la versión correspondiente; probar 1–3 versiones, huecos intermedios, prefijos con diferencias al final y datos heredados.
 - **Relación:** AUD-T-004; ampliar VAL-12 sin duplicar AUG-050.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO. Implementación de variantes PNG 300/800/1600 px, URL fuente original, claves por ID normalizado/ancho y validación estricta de IndexedDB. Suites de regresión añadidas; cierre pendiente de validación integral local.
 
 - 2026-11-07 — AUD-T-004: AUG-050 ampliada con normalización de consulta, muestras/competidores, rangos, caracteres compartidos y cobertura por versión; nuevas AUG-059/AUG-060. Inventario: 59 IDs únicos dentro de AUG-001 a AUG-060; AUG-015 continúa ausente y no se infiere.
 

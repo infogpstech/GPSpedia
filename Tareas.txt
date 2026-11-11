@@ -995,3 +995,10 @@ thumbnailCompressionQueue.js establece una cola FIFO con máximo de dos compresi
 Validación: limitador aislado 3/3; simulación de cinco trabajos/recursos 2/2; parsing V8 aprobado; suite IndexedDBTransactions.js ejecutada con adaptadores mínimos de runtime V8: 16/16 PASS. Node CLI literal no ejecutado por falta de checkout local y bloqueo DNS de GitHub. IndexedDB real, navegador, offline y multi-pestaña quedan diferidos a Beta.
 Cierre local de AUG-051. AUG-052 permanece fuera de alcance.
 ================================================================================
+
+
+================================================================================
+AUG-065 — ITERACIÓN DE IMPLEMENTACIÓN — 2026-11-11
+Estado: EN PROGRESO.
+Se implementan variantes PNG locales 300/800/1600 px sin modificar la URL fuente de Drive; claves ObjectURL/IndexedDB por ID normalizado/ancho; rechazo de entradas heredadas ambiguas y metadatos incompatibles. Se amplía IndexedDBTransactions y se conserva ImageResolutionVariants. Validación local integral pendiente.
+================================================================================

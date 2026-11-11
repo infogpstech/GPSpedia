@@ -140,3 +140,8 @@ WRITE y ADMIN registran cada intento en ImageUploadLedger antes de crear el arch
 ### Estrategia de lectura del catálogo
 
 La evaluación de `getCatalogData`, `getNavigationData`, `getDropdownData`, caché de servidor/IndexedDB y paginación está documentada en [Catalog_Read_Strategy.md](./Catalog_Read_Strategy.md).
+
+
+## Resolución y caché de imágenes — AUG-065
+
+Drive conserva la URL fuente original (`https://lh3.googleusercontent.com/d/{fileId}`) para todos los tamaños y evita sufijos CDN `=w`/`=s`, que pueden alterar la transparencia PNG. Canvas genera variantes locales PNG de 300, 800 y 1600 px de ancho máximo, manteniendo proporción y sin ampliar imágenes pequeñas. ObjectURL e IndexedDB comparten una clave por ID normalizado/ancho; los registros heredados o incompatibles no se reutilizan. El Lightbox conserva acceso a la fuente original de alta resolución.

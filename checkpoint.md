@@ -407,3 +407,15 @@ Validación local: RichTextContentSecurity 39/39 PASS; AddSupplementaryInfoInteg
 Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados, datos históricos reales y revisión visual del formato. No se modificaron deployments ni datos productivos.
 Siguiente tarea: AUG-065. No se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-065 — CHECKPOINT — 2026-11-11
+Estado: EN PROGRESO; implementación y cobertura añadidas, validación integral pendiente.
+Rama GPSpedia2.2.5_work. HEAD inicial: 509cc0d1f531b48de10213f6e54301bb0034a07f. Rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- ui.js: variantes 300/800/1600; clave ObjectURL canónica; Blob/Data URL directos; Blob PNG adjunto solo si el token sigue vigente.
+- offline.js: clave por ID normalizado/ancho; lectura estricta valida key/fileId/width/Blob; elimina registros históricos sin tamaño declarado o metadatos incompatibles.
+- URL Drive original sin sufijos CDN para preservar alfa; Canvas PNG conserva proporción y no amplía. Lightbox conserva fuente original.
+- Suites: ImageResolutionVariants.js; IndexedDBTransactions.js ampliada para orden inverso y registros ambiguos/incompatibles.
+Siguiente acción: ejecutar suites locales, corregir fallos y actualizar checkpoint con evidencia real. No iniciar AUG-066.
+================================================================================

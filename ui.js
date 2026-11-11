@@ -47,10 +47,11 @@ export function isNoRecomendadoValue(val) {
     return clean === 'no recomendado';
 }
 
-// Constants for optimized image loading
-export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
-export const IMG_SIZE_MEDIUM = 800;  // Modal details
-export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
+// Variantes PNG locales; el tamaño es el ancho máximo, nunca una ampliación.
+export const IMAGE_VARIANTS = Object.freeze({ SMALL: 300, MEDIUM: 800, LARGE: 1600 });
+export const IMG_SIZE_SMALL = IMAGE_VARIANTS.SMALL;
+export const IMG_SIZE_MEDIUM = IMAGE_VARIANTS.MEDIUM;
+export const IMG_SIZE_LARGE = IMAGE_VARIANTS.LARGE;
 const TERMS_CURRENT_VERSION = '2026-07';
 
 // Variables de control para el Modo Edición In-Modal
@@ -787,7 +788,11 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
 
     const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
     const normalizedSize = Math.max(100, Math.min(1600, Math.round(Number(size) || IMG_SIZE_SMALL)));
-    const cacheKey = `${cleanId}::w${normalizedSize}`;
+    const cacheKey = offline.getThumbnailCacheKey(cleanId, normalizedSize);
+    if (typeof cleanId === "string" && /^(?:blob:|data:)/i.test(cleanId)) {
+        if (thumbnailObjectUrls.isCurrent(imgElement, requestToken)) imgElement.src = cleanId;
+        return;
+    }
 
     try {
         const cachedBlob = await Promise.race([
@@ -805,12 +810,24 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     const remoteUrl = getImageUrl(cleanId, normalizedSize);
     imgElement.src = remoteUrl;
 
-    if (cleanId && typeof cleanId === "string" && !cleanId.startsWith("blob:") && !cleanId.includes("placehold.co")) {
-        // La compresión solo persiste la miniatura; no crea ObjectURL sin un elemento consumidor.
-        offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize).catch(() => {});
+    if (cleanId && typeof cleanId === "string" && !cleanId.startsWith("blob:") &&
+        !cleanId.startsWith("data:") && !cleanId.includes("placehold.co")) {
+        // La variante PNG solo reemplaza la fuente remota si la solicitud sigue vigente.
+        offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize).then(blob => {
+            if (blob && thumbnailObjectUrls.isCurrent(imgElement, requestToken)) {
+                thumbnailObjectUrls.attach(cacheKey, blob, imgElement, requestToken);
+            }
+        }).catch(() => {});
     }
 }
 
+/**
+ * Devuelve la fuente original sin transformaciones CDN. Drive conserva
+ * https://lh3.googleusercontent.com/d/{fileId} para todos los tamaños: =w/=s
+ * pueden convertir PNG transparentes y perder el canal alfa.
+ * Las variantes 300/800/1600 px se generan localmente como PNG. size se mantiene
+ * por compatibilidad con los llamadores existentes.
+ */
 export function getImageUrl(fileId, size = 400) {
     // Si ya es una URL de Blob o Data URL (base64/svg), devolverla directamente.
     if (fileId && typeof fileId === 'string' && (fileId.startsWith('blob:') || fileId.startsWith('data:'))) {

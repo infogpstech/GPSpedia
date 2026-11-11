@@ -114,20 +114,41 @@ async function runIndexedDBTransactionTests() {
         assert.equal(await scopedOffline.getValidationResponse('V-2', 'user-b'), null);
         assert.equal(await scopedOffline.saveValidationResponse('V-2', 'incorrect', ''), null);
     });
-    await testAsync('miniaturas separadas por tamaño y liberación de ImageBitmap',async()=>{
-        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-sizes');
+    await testAsync('variantes pequeña/media/grande aisladas en orden inverso y sin ampliar',async()=>{
+        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-resolution-variants');
         const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
-        let closed=0;const widths=[];
-        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
-        globalThis.createImageBitmap=async()=>({width:1600,height:800,close(){closed++;}});
-        globalThis.document={createElement(){const canvas={width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){widths.push(this.width);cb(new Blob(['thumb'],{type:'image/png'}));}};return canvas;}};
+        let closed=0,fetches=0;const dimensions=[],types=[];
+        globalThis.fetch=async()=>{fetches++;return{ok:true,blob:async()=>new Blob(['source'],{type:'image/jpeg'})};};
+        globalThis.createImageBitmap=async()=>({width:1200,height:600,close(){closed++;}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb,type){dimensions.push([this.width,this.height]);types.push(type);cb(new Blob(['png-'+this.width],{type}));}};}};
         try{
-            await api.compressAndStoreThumbnail('https://images.example/vehicle.png','drive-file-123',300);
-            await api.compressAndStoreThumbnail('https://images.example/vehicle.png','drive-file-123',800);
-            assert.ok(await api.getThumbnail('drive-file-123',300));assert.ok(await api.getThumbnail('drive-file-123',800));
-            assert.deepEqual(widths,[300,800]);assert.equal(closed,2);
-            assert.equal((await api.getThumbnail('drive-file-123',1600))??null,null);
+            assert.equal(await api.getThumbnail('drive-file-123',300),null);
+            await api.compressAndStoreThumbnail('https://images.example/vehicle.jpg','drive-file-123',1600);
+            await api.compressAndStoreThumbnail('https://images.example/vehicle.jpg','drive-file-123',800);
+            await api.compressAndStoreThumbnail('https://images.example/vehicle.jpg','drive-file-123',300);
+            const large=await api.getThumbnail('drive-file-123',1600),medium=await api.getThumbnail('drive-file-123',800),small=await api.getThumbnail('drive-file-123',300);
+            assert.ok(large&&medium&&small);
+            assert.deepEqual(dimensions,[[1200,600],[800,400],[300,150]]);
+            assert.deepEqual(types,['image/png','image/png','image/png']);
+            assert.ok(large.size>0&&medium.size>0&&small.size>0);
+            assert.equal(closed,3);assert.equal(fetches,3);
+            assert.equal(await api.getThumbnail('drive-file-123',400),null);
+            assert.equal((await api.getThumbnail('drive-file-123',800)).type,'image/png');
         }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
+    await testAsync('rechaza caché heredada y metadatos de variante incompatibles',async()=>{
+        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-incompatible-variants');
+        await api.initDB();
+        const store=harness.stores.get('thumbnails'),now=Date.now();
+        store.values.set('legacy-file-123',{blob:new Blob(['legacy']),cachedAt:now,width:400});
+        store.values.set('wrong-file-123::w800',{key:'wrong-file-123::w800',fileId:'wrong-file-123',width:300,blob:new Blob(['wrong-width']),cachedAt:now,lastAccessedAt:now});
+        store.values.set('wrong-id-123::w800',{key:'wrong-id-123::w800',fileId:'another-id',width:800,blob:new Blob(['wrong-id']),cachedAt:now,lastAccessedAt:now});
+        assert.equal(await api.getThumbnail('legacy-file-123',800),null);
+        assert.equal(await api.getThumbnail('wrong-file-123',800),null);
+        assert.equal(await api.getThumbnail('wrong-id-123',800),null);
+        assert.equal(store.values.has('legacy-file-123'),false);
+        assert.equal(store.values.has('wrong-file-123::w800'),false);
+        assert.equal(store.values.has('wrong-id-123::w800'),false);
     });
     await testAsync('miniaturas caducadas por TTL se eliminan y pueden regenerarse',async()=>{
         const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-ttl');
@@ -587,7 +608,7 @@ async function runIndexedDBTransactionTests() {
         assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
     });
 
-    console.log(`\\nIndexedDB transaction tests: ${passed}/43 PASS`);
+    console.log(`\\nIndexedDB transaction tests: ${passed}/44 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

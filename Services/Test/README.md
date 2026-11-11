@@ -660,3 +660,8 @@ La suite `Services/Test/RichTextContentSecurity.js` ejecuta **39/39 comprobacion
 WRITE y ADMIN aplican la misma allow-list al guardar `apertura`, `cableAlimen`, `cableAlimen2` y `cableAlimen3`; ADMIN también la aplica al editar esos campos desde el modal. La interfaz vuelve a sanitizar al presentar datos históricos/importados. No se realizó una migración masiva de registros existentes.
 
 La suite `AddSupplementaryInfoIntegrity.js` conserva su cobertura y ahora carga el sanitizador junto con el plan. Parsing V8: WRITE, ADMIN, rich-text.js y el bloque modificado de `createAccordionSection` PASS. No se ejecutaron navegador real, Apps Script desplegado ni Google Sheets real; quedan para Beta.
+
+
+## AUG-065 — Variantes de resolución y URL fuente
+
+Ejecutar `node --experimental-default-type=module Services/Test/ImageResolutionVariants.js` y `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`. La primera suite comprueba URL fuente original, IDs normalizados, claves por ancho, Blob/Data URL, Lightbox y PNG local sin ampliación. La segunda cubre tres variantes en orden inverso, caché fría/caliente, proporción, bytes y rechazo de registros heredados/incompatibles.
