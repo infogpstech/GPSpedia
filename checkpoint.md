@@ -1,4 +1,23 @@
 ================================================================================
+AUG-053 — ITERACIÓN 16 — 2026-11-11 — REINTENTO CONCURRENTE IDEMPOTENTE DEL SNAPSHOT ADMIN
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 9a2c0b6b5bd0f1b8e18e26097c4ad07ab8d3a9b8. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Alcance:
+- Se añadió un escenario a Services/Test/IndexedDBTransactions.js que ejecuta dos llamadas concurrentes para persistir exactamente el mismo snapshot ADMIN (owner, vehículo, campo, opId y contenido).
+- Ambas escrituras deben confirmar y la lectura posterior debe conservar el opId y Data URL originales.
+- Services/Test/README.md, backlog, changelog y checkpoint documentan el caso.
+- No se modificó lógica funcional.
+
+Validación local:
+- Suite IndexedDBTransactions: 28/28 PASS sobre funciones reales de offline.js y harness simulado, ejecutada en runtime V8 adaptado.
+- Parsing V8 de la suite y offline.js: PASS.
+Límite: el harness no modela aislamiento/serialización completa de transacciones readwrite concurrentes; esta prueba cubre duplicados idénticos, no conflictos simultáneos ni carreras entre pestañas. IndexedDB real y multi-pestaña quedan para Beta.
+
+Siguiente iteración: continuar AUG-053 con cobertura local de transacciones concurrentes conflictivas, primero ampliando/validando el harness para que represente la serialización IndexedDB sin falsear resultados. No iniciar AUG-054.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 15 — 2026-11-11 — PRUEBAS INDEXEDDB DEL CICLO DURABLE DE IMÁGENES ADMIN
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD de partida: bf9a3239c160d513aec467640088d418ef931764. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).

@@ -480,7 +480,23 @@ async function runIndexedDBTransactionTests() {
         assert.equal(result.error,true);
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/22 PASS`);
+    await testAsync('adminImageUploadPending acepta escrituras simultáneas idempotentes del mismo snapshot', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-concurrent-idempotent');
+        const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-6',fieldName:'imgCorte1',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        const results=await Promise.all([
+            api.saveAdminImageUploadPendingOperation(operation),
+            api.saveAdminImageUploadPendingOperation({...operation})
+        ]);
+        assert.equal(results.length,2);
+        assert.ok(results.every(result=>result.saved===true),'ambos reintentos idénticos deben resolverse como guardados');
+        const restored=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-6','imgCorte1','USER-A');
+        assert.equal(restored.available,true);
+        assert.equal(restored.operation.id,operation.id);
+        assert.equal(restored.operation.fileData,operation.fileData);
+    });
+
+    console.log(`\nIndexedDB transaction tests: ${passed}/28 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

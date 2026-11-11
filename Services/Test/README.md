@@ -486,3 +486,10 @@ Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las 
 La suite `IndexedDBTransactions.js` cubre el ciclo durable del snapshot `adminImageUploadPending`: escritura y recuperación con whitelist sin credenciales, aislamiento entre propietarios para el mismo vehículo/campo, conflicto de opId sin sobrescribir el intento original, eliminación limitada al propietario/opId exactos y rechazo de una escritura cuya transacción se aborta.
 
 Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`. Estos escenarios usan el harness IndexedDB simulado del proyecto; no sustituyen IndexedDB real ni pruebas multi-pestaña de Beta.
+
+
+## Escrituras simultáneas idempotentes de snapshots ADMIN (AUG-053 — iteración 16)
+
+La suite `IndexedDBTransactions.js` comprueba que dos llamadas concurrentes que persisten el mismo snapshot (mismo propietario, vehículo, campo, opId y contenido) finalicen correctamente y que la recuperación conserve el mismo identificador y Data URL. El caso cubre reintentos duplicados idénticos; no pretende simular el aislamiento/ordenamiento de transacciones readwrite entre pestañas, que queda reservado a IndexedDB real en Beta.
+
+Ejecutar: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.

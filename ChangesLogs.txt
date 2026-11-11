@@ -1548,3 +1548,11 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md: documenta el alcance y comando de ejecución de los escenarios.
 - No se modificó lógica funcional ni datos; la iteración se limita a ampliar cobertura local del ciclo durable.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 16 — REINTENTO CONCURRENTE IDEMPOTENTE DEL SNAPSHOT ADMIN
+- Services/Test/IndexedDBTransactions.js: nuevo escenario con dos llamadas simultáneas para guardar el mismo snapshot; ambas confirman y la lectura conserva el opId y Data URL.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: alcance, resultado y límite del harness documentados.
+- No se modificó lógica funcional. El caso no representa la serialización real de transacciones concurrentes; conflictos simultáneos y multi-pestaña quedan para una futura ampliación del harness y Beta.
+================================================================================
