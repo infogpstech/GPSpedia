@@ -1,4 +1,11 @@
 ================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 11 — RESTAURACIÓN ACOTADA DEL MODAL
+Se corrigió el descarte de una edición interrumpida: la restauración compara el snapshot con el búfer vigente del vehículo y, si no está disponible, obtiene la ficha actual del catálogo. Solo se envían los campos declarados en la whitelist del editor in-modal; propiedades generales del registro como id, marca, contadores o metadatos quedan fuera del flujo. Se agregó un helper puro de selección de campos y regresiones de aislamiento/contrato.
+Validación local: parsing V8 de ui.js, editBackupStore.js, Services/admin.js y suites nuevas PASS; EditBackupIsolation 12/12 PASS; AdminModalEditRestoreContract 3/3 PASS; AdminModalEditSecurity 13/13 PASS; ActionDispatchContract 11/11 PASS. No se ejecutaron navegador/IndexedDB real ni servicios Apps Script, Spreadsheet o Drive.
+Archivos: ui.js, editBackupStore.js, Services/Test/EditBackupIsolation.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — ITERACIÓN 4 — RETENCIÓN Y LIMPIEZA SEGURA
 Se estableció una política sin expiración automática para snapshots cuyo resultado remoto sea incierto y copias de edición recuperables. La limpieza queda vinculada a confirmación terminal y a la identidad owner/vehículo/opId correspondiente; los registros en cuarentena se conservan. Se añadieron regresiones de permanencia y limpieza explícita para pendingOperationStore, editBackupStore y addCutPending.
 Archivos: Services/Test/PendingOperationIsolation.js, Services/Test/EditBackupIsolation.js, Services/Test/IndexedDBTransactions.js, Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md.
