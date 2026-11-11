@@ -1763,3 +1763,11 @@ AUG-065 — 2026-11-11 — IMPLEMENTACIÓN PARCIAL
 - offline.js: clave por ID normalizado/ancho, lectura estricta y descarte de registros heredados/incompatibles.
 - Pruebas: ImageResolutionVariants.js e IndexedDBTransactions.js ampliada para orden inverso y caché incompatible.
 ================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-065 — 2026-11-11 — CIERRE LOCAL
+- ui.js: variantes pequeña/media/grande (300/800/1600 px), clave canónica de ObjectURL por ID/ancho, uso directo de Blob/Data URL y adjunción protegida por token de solicitud.
+- offline.js: claves de miniaturas por ID normalizado/ancho, validación estricta de key/fileId/width/Blob y eliminación de registros heredados o incompatibles; la URL fuente Drive permanece original y las variantes se generan localmente como PNG sin ampliar imágenes.
+- Services/Test/IndexedDBTransactions.js: corrección de fixtures LRU para que fileId coincida con la clave normalizada y ajuste de la secuencia de transacciones del escenario de aborto de eliminación.
+================================================================================
