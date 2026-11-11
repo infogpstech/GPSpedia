@@ -384,6 +384,8 @@ async function loadPendingAdminImageUploads(vehicleId, ownerId) {
     const results = await Promise.all(ADMIN_IMAGE_UPLOAD_FIELDS.map(fieldName =>
         offline.getAdminImageUploadPendingOperation(cleanVehicleId, fieldName, cleanOwnerId)
     ));
+    const activeSession = getCurrentEditOwnerContext_();
+    if (!activeSession || String(activeSession.userId || "") !== cleanOwnerId) return false;
     if (results.some(result => !result || result.available !== true)) return false;
     results.forEach((result, index) => {
         if (result.operation && String(result.operation.ownerId || "") === cleanOwnerId) {
@@ -428,6 +430,9 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
         fieldName: operation.fieldName,
         opId: operation.id
     });
+    if (!isCurrentUiSessionContext_(editSession)) {
+        throw new Error("La sesión cambió durante el reemplazo. El intento permanece guardado para reconciliarlo al volver a iniciar sesión.");
+    }
     if (!response || response.status !== "success" || !response.imageUrl) {
         throw new Error("El servicio no confirmó el reemplazo de imagen.");
     }
@@ -533,6 +538,10 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
             uploadInProgress = true;
             try {
                 const fileData = await readAdminImageAsDataUrl(file);
+                const activeSession = getCurrentEditOwnerContext_();
+                if (!activeSession || String(activeSession.userId || "") !== ownerId) {
+                    throw new Error("La sesión cambió durante la lectura del archivo. No se inició el reemplazo.");
+                }
                 const operation = {
                     id: createAdminImageUploadOperationId(),
                     ownerId: ownerId,
@@ -3550,6 +3559,8 @@ function resetSessionUi_() {
     inEditMode = false;
     window.inEditMode = false;
     clearInMemoryEditBackup_();
+    pendingAdminImageUploads.clear();
+    pendingAdminImageUploadsLoaded.clear();
     capturePrivilegedModalTemplates_();
     const previousContext = lastShownAppContext;
     if (previousContext && previousContext.userId && typeof offline.clearDriveAuditState === 'function') {

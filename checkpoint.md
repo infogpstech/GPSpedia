@@ -247,3 +247,10 @@ Política aplicada: los reemplazos ADMIN son privados por iniciador. Cada snapsh
 Prueba añadida: Services/Test/AdminImageUploadIsolation.js (9 escenarios de identidad, claves, whitelist y privacidad); instrucciones en Services/Test/README.md. Validación de navegador/IndexedDB real, recarga, cambio de cuenta y dos pestañas queda pendiente de Beta. No se modificaron backend, endpoints ni datos productivos.
 Siguiente iteración: continuar AUG-053 con las pruebas locales pendientes del criterio 8 y revisar integración de las identidades/roles habilitados para edición del modal. No iniciar AUG-054 ni otra tarea.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ADENDA ITERACIÓN 5 — 2026-11-11
+Corrección de revisión: resetSessionUi_ limpia pendingAdminImageUploads y pendingAdminImageUploadsLoaded para liberar Data URLs en memoria al cambiar/cerrar sesión, sin borrar el snapshot persistido. Se añaden comprobaciones de sesión después de FileReader, de la lectura IndexedDB y de la respuesta remota para impedir que una continuación obsoleta modifique el estado de otra cuenta. El snapshot original permanece disponible para recuperación del propietario.
+Validación pendiente: pruebas locales específicas del ciclo logout/cambio de cuenta y ejecución completa de la suite en el checkout del repositorio; pruebas IndexedDB real/multi-pestaña diferidas a Beta.
+================================================================================

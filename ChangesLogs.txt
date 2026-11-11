@@ -1496,3 +1496,9 @@ AUG-053 — ITERACIÓN 5 — 2026-11-11 — AISLAMIENTO DE ADMINIMAGEUPLOADPENDI
 Se particionaron los snapshots pendientes por ownerId, vehicleId y fieldName. El ownerId se guarda como identidad estable y se excluyen SessionToken/credenciales mediante whitelist. La recuperación, el reintento y la eliminación comprueban el propietario; la UI limita su mapa y estado de carga al propietario y vehículo activos. Los registros legados sin propietario y los snapshots con propietario incongruente se trasladan a cuarentena sin adjudicación automática. Se conserva la política sin TTL para operaciones de resultado incierto.
 Archivos: adminImageUploadIsolation.js, offline.js, ui.js, Services/Test/AdminImageUploadIsolation.js y Services/Test/README.md. Validación de navegador/IndexedDB real, recarga, cambio de cuenta y dos pestañas queda pendiente de Beta; no se modificaron backend, endpoints ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ADENDA ITERACIÓN 5 — LIMPIEZA DE ESTADO EN MEMORIA
+La revisión posterior detectó que el mapa en memoria podía conservar Data URLs de un propietario después de cerrar sesión, aunque las claves ya estuvieran particionadas. resetSessionUi_ ahora vacía el mapa y el conjunto de estados cargados sin eliminar los snapshots durables de IndexedDB. También se comprueba la sesión después de leer el archivo, al terminar la carga de pendientes y al regresar la respuesta del servidor; si cambió, no se inicia ni se confirma localmente la operación bajo otra cuenta. Se conserva el snapshot durable para reconciliación por su propietario original.
+================================================================================
