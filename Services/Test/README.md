@@ -459,3 +459,11 @@ La acción `getAdminImageUploadStatus` se enruta a ADMIN y devuelve solo estado,
 - Ejecutar `node --experimental-default-type=module Services/Test/EditBackupIsolation.js` para comprobar aislamiento por owner/vehículo y selección de campos a restaurar. La regresión confirma que solo se consideran campos permitidos por el modal, que la comparación usa la ficha actual tras una edición interrumpida y que no se restaura sin una referencia actual verificable.
 - `Services/Test/AdminModalEditRestoreContract.js` expone `runAdminModalEditRestoreContractTests(uiSource, adminSource)`. Pasar el contenido vigente de `ui.js` y `Services/admin.js`; valida que UI/backend compartan los campos base, que los campos dinámicos 1–3 coincidan y que el descarte no itere indiscriminadamente el snapshot completo.
 - Estas pruebas son locales y no sustituyen la validación Beta de navegador, IndexedDB real, Apps Script, Spreadsheet ni Drive.
+
+
+## Reconciliación conservadora de reemplazos de imagen pendientes (AUG-053 — iteración 12)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/AdminImageUploadIsolation.js` para validar la propiedad local de los snapshots y que solo el estado remoto explícito `cancelled` se considere una cancelación terminal apta para limpieza directa.
+- Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. La regresión verifica que `not_found` detenga el descarte sin modificar la base ni eliminar la operación local.
+- `not_found` no demuestra que una petición anterior haya terminado: puede seguir esperando antes de crear el registro remoto. Por ello, se conserva el Data URL local y se permite reconciliar/reintentar con el mismo opId. Solo `cancelled` explícito permite actualizar baseline y limpiar directamente; `linked` continúa por la ruta idempotente con verificación de integridad.
+- Pruebas locales en runtime V8 adaptado; no sustituyen IndexedDB real, concurrencia de solicitudes Apps Script ni validación Beta.
