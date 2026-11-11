@@ -1739,3 +1739,29 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — CICLO DE VIDA DE VÍDEOS DE YOUTUBE — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: db53a300b278303eda6a331afde740c7e0f4e47b.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisada la configuración de YouTube: los vídeos se crean con privacyStatus=unlisted.
+- Confirmado que el cliente envía la URL y los metadatos al backend al finalizar la transferencia; el backend conserva la solicitud y su estado.
+- Confirmado que aprobar incorpora y verifica el enlace en el destino GPSpedia, sin llamada de cambio de privacidad a YouTube en el handler revisado.
+- Confirmado que rechazar retira el enlace del destino y la miniatura asociada de tutorial, pero no elimina ni cambia la visibilidad del vídeo en YouTube; la URL/ID permanecen en el registro de solicitud.
+- Revisados los controles de sesión y roles de las acciones de carga, consulta, aprobación y rechazo.
+- Documentada la evidencia en Legal/AUG-046_revision_preliminar.md, sección 12.
+
+Límites:
+- Solo código versionado; no se consultó YouTube real, canal, vídeos, permisos, propietarios ni deployments.
+- No se ejecutaron subidas, aprobaciones, rechazos ni eliminaciones.
+- No se modificó código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments ni datos productivos.
+- Las confirmaciones operativas y la validación interna corporativa siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
+================================================================================
