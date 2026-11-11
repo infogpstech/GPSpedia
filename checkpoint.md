@@ -1842,3 +1842,28 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar exclusivamente AUG-046 con una comprobación técnica nueva, sin repetir secciones anteriores ni inferir el comportamiento de recursos productivos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — CONTRASEÑAS Y REVOCACIÓN DE SESIONES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado antes de esta iteración: 2a23e742c8beed1182a7ca84ccabc34c35daff5e.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios respecto de la base.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisados el formato de hash/verificación de contraseñas y la migración de valores heredados durante un login correcto.
+- Documentado el cambio de contraseña propio: exige contraseña actual, verifica identidad/sesión y revoca sesiones antes de guardar el nuevo hash.
+- Documentado el restablecimiento administrativo: reservado a Desarrollador y compuesto en la interfaz por dos solicitudes separadas (updateUser y resetUserPassword).
+- Registrado el posible estado parcial si updateUser termina y resetUserPassword falla, sin compensación visible en la interfaz.
+- Registrada la diferencia entre cleanupPending del backend y los avisos fijos de la interfaz que no presentan ese estado.
+- Evidencia incorporada en Legal/AUG-046_revision_preliminar.md, sección 16.
+
+Límites:
+- Revisión estática de código versionado; no se consultaron hojas productivas ni contraseñas reales, ni se ejecutaron cambios/restablecimientos o pruebas de fallos.
+- No se modificó código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+- La validación operativa y la aprobación interna corporativa de AUG-046 siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar exclusivamente AUG-046 con una comprobación técnica nueva, sin repetir las secciones ya documentadas ni inferir el comportamiento de recursos productivos.
+================================================================================
