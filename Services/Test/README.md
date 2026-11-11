@@ -357,3 +357,10 @@ Ejecutar `node --experimental-default-type=module Services/Test/ImageObjectUrlLi
 ### Presupuesto de memoria RAM para miniaturas (AUG-051)
 
 El registro de ObjectURL limita a **64 MiB** la suma de Blob.size de las miniaturas retenidas por URL activas. Si una nueva miniatura supera el presupuesto disponible, no se crea ObjectURL y la interfaz conserva la ruta remota como alternativa. Las referencias compartidas contabilizan el Blob una sola vez y el presupuesto se libera al revocar la URL cuando sale el último consumidor. Este límite cubre bytes de Blob retenidos por el registro; no mide memoria de imágenes decodificadas, superficies GPU ni imágenes cargadas directamente desde red. Ejecutar `node --experimental-default-type=module Services/Test/ImageObjectUrlLifecycle.js`.
+
+
+## Concurrencia de compresión de miniaturas (AUG-051 — iteración 10)
+
+`thumbnailCompressionQueue.js` limita a **dos compresiones simultáneas por instancia JavaScript/pestaña** y procesa las solicitudes pendientes en orden FIFO. La compresión, incluida la descarga, decodificación, generación del Blob y persistencia, ocupa un turno hasta finalizar. Si una variante ya fue guardada mientras otra solicitud esperaba, se vuelve a consultar la caché antes de descargarla y comprimirla. Cada `ImageBitmap` se cierra en `finally`; los errores liberan el turno y mantienen el comportamiento de caché opcional.
+
+La regresión añadida a `Services/Test/IndexedDBTransactions.js` solicita cinco miniaturas concurrentes y verifica el máximo de dos `ImageBitmap` activos, la persistencia de los cinco resultados y el cierre de cada bitmap. Ejecutar con `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`. La suite integrada queda pendiente de ejecución en un checkout local; las pruebas aisladas del limitador sí se ejecutaron en Node.
