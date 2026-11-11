@@ -405,6 +405,17 @@ async function runIndexedDBTransactionTests() {
         assert.equal(result.error,true);
     });
 
+    await testAsync('adminImageUploadPending no confirma la escritura cuando IndexedDB agota la cuota', async () => {
+        const h=createIndexedDBHarness({transactions:['quota']}),api=await freshOffline(h,'admin-image-quota-failure');
+        const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-9',fieldName:'imgCorte1',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        const result=await api.saveAdminImageUploadPendingOperation(operation);
+        assert.equal(result.saved,false,'una escritura sin cuota disponible no debe confirmarse');
+        assert.equal(result.error,true,'el fallo de almacenamiento debe comunicarse explícitamente');
+        const restored=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-9','imgCorte1','USER-A');
+        assert.equal(restored.available,true);
+        assert.equal(restored.operation,null,'no debe quedar un snapshot parcial tras el fallo de cuota');
+    });
     await testAsync('adminImageUploadPending acepta escrituras simultáneas idempotentes del mismo snapshot', async () => {
         const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-concurrent-idempotent');
         const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-6',fieldName:'imgCorte1',
@@ -451,7 +462,7 @@ async function runIndexedDBTransactionTests() {
         assert.equal(restored.operation.fileData,operation.fileData);
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/30 PASS`);
+    console.log(`\nIndexedDB transaction tests: ${passed}/31 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

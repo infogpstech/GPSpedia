@@ -42,3 +42,25 @@ Cambios:
 Siguiente iteración: revisar los criterios restantes de AUG-053, en particular los escenarios locales del criterio 8 que no estén ya cubiertos por las suites existentes; seleccionar una sola brecha concreta y probarla. No iniciar AUG-054.
 ================================================================================
 
+
+================================================================================
+AUG-053 — ITERACIÓN 20 — 2026-11-11 — FALLO DE CUOTA AL PERSISTIR SNAPSHOTS ADMIN
+Estado: EN PROGRESO. Se añadió cobertura local para una brecha del criterio 8; AUG-053 sigue abierta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 7ca34ace6fa358382bcfe69a4376b4b4f440e4a6. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo:
+- IndexedDBTransactions cubría abortos de escritura ADMIN, pero no el caso específico de agotamiento de cuota durante la persistencia de adminImageUploadPending.
+
+Cambio:
+- Services/Test/IndexedDBTransactions.js: nuevo escenario QuotaExceededError para guardar un snapshot ADMIN. Exige respuesta {saved:false,error:true} y confirma mediante lectura posterior que no quedó un snapshot parcial.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y ChangesLogs.txt: documentan el caso y el alcance de su validación.
+- No se modificó offline.js ni lógica funcional.
+
+Validación:
+- Parsing V8 del archivo de suite con el escenario añadido: PASS.
+- Ejecución aislada del escenario contra la función real saveAdminImageUploadPendingOperation con adaptador IndexedDB que simula QuotaExceededError: PASS; resultado {saved:false,error:true}, sin snapshot parcial.
+- La suite completa ampliada a 31 escenarios no se ejecutó integralmente en esta iteración. Tampoco se ejecutó el comando Node CLI.
+- No se afirma validación de IndexedDB real, navegador real ni multi-pestaña; permanecen para Beta.
+
+Siguiente iteración: ejecutar los 31 escenarios de IndexedDBTransactions en runtime compatible y revisar una sola brecha local adicional del criterio 8. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
+================================================================================

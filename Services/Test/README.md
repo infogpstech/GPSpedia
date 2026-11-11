@@ -509,3 +509,9 @@ Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/
 El harness conserva un registro de deshacer por transacción y revierte las mutaciones en memoria cuando ocurre un aborto. La suite comprueba que, si la eliminación de un snapshot ADMIN recibe éxito en el request pero la transacción aborta antes del commit, la API devuelve un resultado incierto (`null`) y el snapshot original permanece recuperable con el mismo opId y Data URL. Esto evita confundir el éxito del request individual con el commit de la transacción.
 
 La suite completa de 30 escenarios se ejecutó y aprobó (30/30) en runtime V8 adaptado, usando el harness local y adaptadores para dependencias de navegador. El comando Node CLI no se ejecutó en este entorno; tampoco se probó IndexedDB real ni concurrencia multi-pestaña, que permanecen para Beta. Ejecutar: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+
+## Fallo de cuota al persistir snapshots ADMIN (AUG-053 — iteración 20)
+
+Se añadió un escenario específico para QuotaExceededError durante la escritura de adminImageUploadPending. La prueba exige que saveAdminImageUploadPendingOperation devuelva {saved:false,error:true} y que una lectura posterior no encuentre un snapshot parcial.
+
+El nuevo caso se ejecutó de forma aislada contra la función real de offline.js, con un adaptador IndexedDB que provoca el fallo de cuota: PASS. La suite queda ampliada a 31 escenarios; la ejecución integral de los 31 casos aún está pendiente. El comando Node CLI, IndexedDB real, navegador y concurrencia multi-pestaña no se ejecutaron; estas últimas validaciones permanecen para Beta.
