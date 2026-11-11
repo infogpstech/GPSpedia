@@ -638,7 +638,7 @@
                             warningEl.style.display = 'none';
                         }
                     } catch (err) {
-                        console.error('Error al validar VIN:', err);
+                        console.warn('No se pudo validar el VIN.', err && err.name || 'ValidationError');
                     }
                 });
             }
@@ -736,7 +736,7 @@
                 if (suggestion) {
                     container.innerHTML = `Quizás quisiste decir: <a onclick="applySuggestion('${field}', '${suggestion}')" style="cursor:pointer; color:#007bff; text-decoration:underline;">${suggestion}</a>`;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.warn('No se pudo obtener la sugerencia.', e && e.name || 'SuggestionError'); }
         }
 
         function applySuggestion(field, suggestion) {
@@ -1073,7 +1073,7 @@
                 }, serviceOverride);
                 getCurrentSessionForOwner(pendingOp.ownerId);
 
-                console.log("[PING-PONG][7] addOrUpdateCut completado exitosamente con el servidor.", result);
+                console.log("[PING-PONG][7] Respuesta de guardado recibida.", result && result.vehicleId || "sin vehicleId");
 
                 // Clean up operation upon success
                 try { getPendingOperationStore().remove(opId); } catch (_) { console.warn("No se pudo limpiar el snapshot confirmado."); }

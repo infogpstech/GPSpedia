@@ -1,4 +1,10 @@
 ================================================================================
+2026-11-11 — AUG-053 — AJUSTE FINAL DE LOGS SENSIBLES
+Se sanitizaron también los errores de validación VIN y sugerencias, y se redujo el registro de addOrUpdateCut a vehicleId; no se imprime el objeto de respuesta.
+Archivos: add_cortes.html y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — AJUSTE DE SANITIZACIÓN DE CREDENCIALES
 Se amplió el filtro de campos persistidos para excluir cualquier propiedad que contenga «token» y se redujo el registro de errores de validación VIN al tipo de error, sin imprimir el objeto de excepción.
 Archivos: pendingOperationStore.js, Services/Test/PendingOperationIsolation.js, add_cortes.html y checkpoint.md.
