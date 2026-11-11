@@ -23,6 +23,10 @@ import * as offline from './offline.js';
 
 let datosFiltrados = [];
 let searchDebounceTimer = null;
+function getCurrentOwnerId() {
+    const user = getState().currentUser;
+    return String(user && (user.ID || user.id) || '').trim();
+}
 
 // Una única notificación vuelve a ejecutar la consulta vigente cuando cualquier consumidor
 // termina la petición compartida de PyS (precarga, búsqueda o modal).
@@ -160,12 +164,17 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return;
     }
 
-    // Guardar en historial de búsqueda (offline) con Debounce de Phase 2
+    // Guardar el historial únicamente para la cuenta que inició esta búsqueda.
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    const searchOwnerId = getCurrentOwnerId();
     searchDebounceTimer = setTimeout(() => {
+        if (!searchOwnerId || searchOwnerId === '0' || getCurrentOwnerId() !== searchOwnerId) return;
         if (textoBusqueda.trim().length >= 3) {
-            offline.saveSearch(textoBusqueda).then(() => {
-                offline.getSearchHistory().then(history => setState({ searchHistory: history }));
+            offline.saveSearch(textoBusqueda, searchOwnerId).then(() => {
+                if (getCurrentOwnerId() !== searchOwnerId) return;
+                offline.getSearchHistory(searchOwnerId).then(history => {
+                    if (getCurrentOwnerId() === searchOwnerId) setState({ searchHistory: history });
+                });
             });
         }
     }, 1500);
