@@ -1247,3 +1247,14 @@ AUG-050 — CIERRE DE INTEGRACIÓN DEL MOTOR DIFERENCIAL VIN — 2026-11-11
 - Services/Test/IndexedDBTransactions.js: tres escenarios nuevos de aislamiento multi-cuenta y privacidad VIN.
 - Sin cambio de DB_VERSION, stores, contratos del catálogo, endpoints, servicios productivos ni datos remotos.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — VARIANTES DE MINIATURAS POR TAMAÑO (ITERACIÓN 3)
+- offline.js guarda y recupera variantes de miniatura con claves independientes por ancho solicitado, normalizado entre 100 y 1600 px; conserva fallback de lectura para entradas antiguas con clave simple.
+- La compresión mantiene la proporción, evita ampliar imágenes pequeñas y libera ImageBitmap mediante finally.
+- cacheItemImages incorpora imgApertura y precarga la variante de 300 px.
+- ui.js consulta, guarda y mantiene en memoria la variante correspondiente al tamaño solicitado.
+- Services/Test/IndexedDBTransactions.js incorpora regresión de variantes 300/800 px y liberación de bitmap.
+- Sin cambio de DB_VERSION, stores, catálogo, endpoints, servicios productivos ni datos remotos.
+================================================================================
