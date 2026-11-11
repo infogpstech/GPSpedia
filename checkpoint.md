@@ -1,4 +1,15 @@
 ================================================================================
+AUG-051 — ITERACIÓN 10 — 2026-11-11 — CONCURRENCIA DE COMPRESIÓN
+Estado: EN PROGRESO — implementación realizada; validación integrada pendiente.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 0433fbf32243382c1f2c13dffefc3ec18240f383.
+Se añadió thumbnailCompressionQueue.js con cola FIFO y máximo de dos trabajos activos por instancia JavaScript/pestaña. offline.js ejecuta por la cola la descarga, decodificación, generación y persistencia de cada miniatura; reconsulta la caché al obtener turno para evitar trabajo duplicado si otra solicitud ya guardó la misma variante. ImageBitmap se cierra en finally y el turno se libera antes de resolver/rechazar el trabajo.
+Pruebas añadidas: Services/Test/IndexedDBTransactions.js incluye cinco solicitudes simultáneas, verifica máximo dos ImageBitmap activos, persistencia de resultados y cierre de los cinco bitmaps.
+Validación ejecutada: Node CLI aislado del limitador 3/3 (límite, FIFO y liberación tras rechazo); simulación de cinco trabajos/bitmaps 2/2; parsing V8 de offline.js y suite: PASS. La suite integrada IndexedDBTransactions.js no pudo completarse con el adaptador de este entorno; requiere ejecución literal en checkout local. No se afirma como aprobada.
+Archivos funcionales: thumbnailCompressionQueue.js, offline.js. Pruebas: Services/Test/IndexedDBTransactions.js. Documentación: Services/Test/README.md, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+Siguiente iteración: ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js en checkout local, revisar la regresión y cerrar AUG-051. No iniciar AUG-052.
+================================================================================
+
+================================================================================
 CHECKPOINT ACTIVO — GPSpedia — 2026-11-11
 AUG-051 — ITERACIÓN 9 — PRESUPUESTO RAM DE MINIATURAS
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
