@@ -563,3 +563,14 @@ Total acumulado: **99/99 escenarios locales PASS**. Parsing V8 de `pendingOperat
 En `ui.js`, los dos manejadores de error de reemplazo ADMIN registran únicamente el nombre del error o la etiqueta genérica `UploadError`; no envían el objeto Error a la consola. La prueba de contrato protege esta condición.
 
 Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**. Pendiente para Beta: navegador e IndexedDB reales, recarga real, concurrencia real entre pestañas y pruebas integradas con Apps Script, Spreadsheet y Drive. No se ejecutó el comando Node CLI original ni se simularon esas dependencias externas.
+
+
+## Seguridad y recuperación de checkOperation (AUG-054)
+
+CheckOperationSecurity.js ejecuta el handler real de Services/write.js con dobles locales para autenticación, Spreadsheet y lookup. Cubre rechazo anónimo antes de consultar, validaciones del helper de sesión, sesión válida, consulta colaborativa entre dos usuarios autenticados, opId inexistente, estado pendiente, estado completado y whitelist de la respuesta. También protege el orden autenticación/lookup y el contrato del esquema de idempotencia A:E.
+
+La política vigente es colaborativa: cualquier usuario con sesión activa y rol permitido puede consultar el estado de un opId. La hoja de idempotencia no almacena actor/propietario, y el flujo de recuperación permite que otro técnico continúe una operación interrumpida. No se aplica un filtro de propietario inexistente ni se presenta el opId como secreto o credencial. La consulta requiere siempre userId y sessionToken validados contra ActiveSessions y Users.
+
+El generador de opId usa 128 bits obtenidos mediante crypto.getRandomValues y una marca temporal para correlación. Si la API criptográfica no está disponible, falla explícitamente; no degrada a Math.random. Esta aleatoriedad reduce colisiones, pero no sustituye autenticación ni autoriza consultas.
+
+La suite se ejecuta mediante runCheckOperationSecurityTests({write, frontend}), proporcionando las fuentes vigentes de Services/write.js y add_cortes.html al adaptador local. No requiere endpoints ni servicios externos. La validación Apps Script/Spreadsheet real queda para Beta.
