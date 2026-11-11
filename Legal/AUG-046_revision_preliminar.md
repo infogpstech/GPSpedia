@@ -189,6 +189,20 @@ Se volvió a comprobar el código versionado para precisar el comportamiento al 
 
 **Resultado de esta revalidación:** la afirmación de la sección 8.2 sobre persistencia después del cierre de sesión coincide con el código actual de la rama. Esto describe exclusivamente el código versionado; no acredita el comportamiento de deployments externos ni prueba la persistencia en un navegador/dispositivo real. No se ejecutó una prueba de navegador ni se accedió a datos productivos.
 
+
+### 8.6 Revalidación del flujo de contacto público — 2026-11-10
+
+Se siguió la ruta desde el formulario del cliente hasta el handler FEEDBACK y la lectura del Inbox:
+
+- **Captura en el cliente:** `index.html` define los campos Nombre, Correo Electrónico y Mensaje. En `main.js` (líneas 793–806), el submit recopila esos tres valores y también intenta adjuntar `currentUser?.ID`, si existe, antes de llamar `sendContactForm`.
+- **Autorización de escritura:** `api-config.js` enruta `sendContactForm` a FEEDBACK. En `Services/feedback.js` (líneas 311–333), la acción figura en `FEEDBACK_PUBLIC_ACTIONS`; no pasa por `assertFeedbackSession`. El autorizador reemplaza el `userId` recibido por el valor fijo `N/A`. Por tanto, el identificador de cuenta que pudiera enviar el cliente no se conserva en esta ruta.
+- **Validación y almacenamiento:** `handleSendContactForm` (líneas 1341–1361) exige nombre, correo y mensaje; limita sus longitudes a 100, 254 y 3000 caracteres, respectivamente, y valida el formato básico del correo. Aplica un contador de frecuencia con `CacheService.getScriptCache()`, bajo la clave `feedback-rate:public_contact:<bucket>`, con límite de 10 solicitudes por intervalo de 3600 segundos. La clave no incorpora identidad del remitente. Después escribe en la hoja `Contactanos`: `User_ID = N/A`, `Asunto = "Contacto de " + nombre` y `Mensaje = "De: " + correo + "\\n\\n" + mensaje`.
+- **Consulta del Inbox:** `getFeedbackItems` está restringida por `FEEDBACK_ACTION_PERMISSIONS` a los roles `Desarrollador`, `Gefe`, `Jefe` y `Supervisor`. El handler incorpora los registros de `Contactanos` a la respuesta unificada del Inbox. La acción pública de envío no hace pública la consulta de esos registros.
+
+**Resultado descriptivo:** el formulario puede enviar consultas sin una sesión autenticada; el backend no asocia esos envíos a una cuenta GPSpedia, aunque el cliente intente enviar el ID de la sesión actual. Los datos se almacenan en `Contactanos` y su consulta mediante el Inbox está sujeta a los roles indicados en el código. El límite de frecuencia observado es un contador de caché de script por intervalo, no un límite individual por remitente.
+
+**Límites:** se comprobó el código versionado de la rama, no la configuración desplegada, los permisos reales de la hoja, las cuentas que pueden acceder a ella, el plazo efectivo de conservación ni quién atiende los mensajes en operación. No se enviaron formularios ni se consultó Spreadsheet productivo.
+
 ## 9. Consistencia entre los textos informativos y el acuerdo vigente — 2026-11-11
 
 Se realizó una comparación adicional de las superficies informativas presentes en `index.html`: Aviso Importante, acuerdo de uso, modal «Sobre Nosotros» y preguntas frecuentes. El análisis se limita a consistencia documental; no propone ni aplica cambios al contenido.

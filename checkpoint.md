@@ -1689,3 +1689,28 @@ Límites:
 Estado: AUG-046 permanece EN PROGRESO. Continúan pendientes las confirmaciones operativas de la empresa principal y su validación interna. No iniciar AUG-047.
 Siguiente paso: continuar AUG-046 con otra comprobación técnica concreta del comportamiento versionado, sin convertir las confirmaciones corporativas pendientes en supuestos ni modificar textos legales.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — REVALIDACIÓN DE CONTACTO PÚBLICO — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work.
+HEAD verificado al iniciar: f9bd7a8d69dceb6c0252289b7df925c1d29497c3.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+
+Trabajo de esta iteración (solo AUG-046):
+- Seguido el flujo de contacto desde index.html/main.js, pasando por api-config.js, hasta Services/feedback.js.
+- Confirmado que sendContactForm es una acción pública y no exige sesión en FEEDBACK.
+- El cliente puede enviar currentUser.ID, pero authorizeFeedbackAction_ lo reemplaza por userId=N/A.
+- Confirmadas validaciones de campos y longitudes, contador de CacheService con máximo de 10 solicitudes por intervalo de 3600 segundos, y escritura de nombre/correo/mensaje en Contactanos.
+- Confirmado que getFeedbackItems requiere uno de los roles Desarrollador, Gefe, Jefe o Supervisor y agrega Contactanos al Inbox.
+- Documentada la evidencia en Legal/AUG-046_revision_preliminar.md, sección 8.6.
+
+Límites:
+- Solo código versionado; no se verificaron deployments, permisos reales de Spreadsheet, retención ni responsables operativos.
+- No se enviaron formularios ni se accedió a datos productivos.
+- No se modificó código de aplicación, acuerdo, aviso, modales ni flujo de aceptación.
+
+AUG-046 permanece EN PROGRESO. Continúan pendientes confirmaciones operativas y validación interna de la empresa principal. No iniciar AUG-047.
+Siguiente iteración: continuar AUG-046 con otro contraste técnico puntual del código versionado; no inferir datos de producción.
+================================================================================

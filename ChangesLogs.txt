@@ -1032,3 +1032,11 @@ AUG-046 — REVALIDACIÓN DE PERSISTENCIA AL CERRAR SESIÓN — 2026-11-11
 - checkpoint.md: registra la revalidación, sus límites y la continuidad exclusiva de AUG-046.
 - No se modificaron código de aplicación, acuerdo, aviso, modales, versión/fecha legal, aceptación AUG-045, endpoints, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-046 — REVALIDACIÓN DE CONTACTO PÚBLICO — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 8.6 documenta captura, autorización pública, validaciones, límite de frecuencia, almacenamiento en Contactanos y control de acceso al Inbox.
+- checkpoint.md: registra evidencia, límites de verificación y continuidad exclusiva de AUG-046.
+- No se modificó código de aplicación, acuerdo, aviso, modales, aceptación, endpoints, deployments ni datos productivos.
+================================================================================
