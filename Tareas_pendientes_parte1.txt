@@ -876,3 +876,7 @@ Cambio de sesión durante la reconciliación de reemplazos ADMIN: la carga de op
 
 AUG-053 — ITERACIÓN 18 — 2026-11-11
 Se amplió el harness IndexedDB para revertir escrituras y eliminaciones cuando una transacción aborta. Nuevo caso ADMIN: una solicitud delete exitosa seguida de abort no se reporta como eliminación confirmada; la API devuelve resultado incierto y el snapshot original sigue disponible con opId y Data URL íntegros. La suite completa de 30 escenarios y el comando Node CLI no se ejecutaron en esta iteración; la validación completa queda pendiente. No sustituye IndexedDB/navegador real ni multi-pestaña de Beta. AUG-053 continúa EN PROGRESO; no iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 19 — 2026-11-11
+Validación de la cobertura durable ADMIN: suite Services/Test/IndexedDBTransactions.js 30/30 PASS en runtime V8 adaptado; incluye aborto de escritura, conflicto concurrente, idempotencia y aborto de eliminación con conservación del snapshot original. Se verificó el contador interno de 30 casos y el caso nuevo pasó. No se ejecutó el comando Node CLI ni IndexedDB/navegador real; concurrencia multi-pestaña y servicios externos permanecen para Beta. AUG-053 continúa EN PROGRESO mientras se revisa la cobertura local restante del criterio 8. No iniciar AUG-054.
