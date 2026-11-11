@@ -467,3 +467,8 @@ La acción `getAdminImageUploadStatus` se enruta a ADMIN y devuelve solo estado,
 - Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. La regresión verifica que `not_found` detenga el descarte sin modificar la base ni eliminar la operación local.
 - `not_found` no demuestra que una petición anterior haya terminado: puede seguir esperando antes de crear el registro remoto. Por ello, se conserva el Data URL local y se permite reconciliar/reintentar con el mismo opId. Solo `cancelled` explícito permite actualizar baseline y limpiar directamente; `linked` continúa por la ruta idempotente con verificación de integridad.
 - Pruebas locales en runtime V8 adaptado; no sustituyen IndexedDB real, concurrencia de solicitudes Apps Script ni validación Beta.
+
+
+## Cambio de sesión durante reconciliación de imágenes ADMIN (AUG-053 — iteración 13)
+
+La suite `AdminModalEditRestoreContract.js` verifica que la carga de operaciones pendientes capture y revalide el contexto completo de sesión (usuario, token y rol), y que la consulta remota del ledger, el baseline y la limpieza/verificación IndexedDB no continúen modificando el estado en memoria después de un cambio de sesión. Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. Es un contrato estático local; no sustituye pruebas reales de navegador/IndexedDB ni concurrencia entre pestañas.
