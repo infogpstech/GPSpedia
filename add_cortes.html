@@ -423,7 +423,14 @@
         const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
         /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */
-        async function checkAndRecoverPendingOperation() {
+        let isSubmittingStage1 = false;
+        let isSubmittingStage2 = false;
+        let isSubmittingStage3 = false;
+        let pendingOperationRecoveryPromise = null;
+        let pendingOperationRecoveryRequested = false;
+        let activeLoadingOperations = 0;
+
+        async function performPendingOperationRecovery() {
             if (!state.userId || !state.sessionToken) return;
             let pendingOp;
             try {
@@ -486,6 +493,30 @@
                 console.warn("Falló la comprobación de recuperación pendiente.", error && error.name || 'RecoveryError');
             } finally { toggleLoading(false); }
         }
+        function checkAndRecoverPendingOperation() {
+            if (isSubmittingStage1 || isSubmittingStage2 || isSubmittingStage3) {
+                pendingOperationRecoveryRequested = true;
+                return Promise.resolve(false);
+            }
+            if (pendingOperationRecoveryPromise) return pendingOperationRecoveryPromise;
+            pendingOperationRecoveryRequested = false;
+            const recovery = performPendingOperationRecovery();
+            const tracked = recovery.finally(() => {
+                if (pendingOperationRecoveryPromise === tracked) pendingOperationRecoveryPromise = null;
+            });
+            pendingOperationRecoveryPromise = tracked;
+            return tracked;
+        }
+
+        function resumePendingOperationRecovery() {
+            if (!pendingOperationRecoveryRequested || isSubmittingStage1 || isSubmittingStage2 || isSubmittingStage3) return Promise.resolve(false);
+            if (!navigator.onLine) return Promise.resolve(false);
+            pendingOperationRecoveryRequested = false;
+            // Mantiene el overlay durante el traspaso entre submit y recuperación.
+            toggleLoading(true);
+            return checkAndRecoverPendingOperation().finally(() => toggleLoading(false));
+        }
+
         window.addEventListener('online', checkAndRecoverPendingOperation);
 
         document.addEventListener('visibilitychange', () => {
@@ -755,6 +786,8 @@
         // --- STAGE 1: VEHICLE VERIFICATION ---
         async function handleStage1Submit(e) {
             e.preventDefault();
+            if (isSubmittingStage1) return;
+            if (pendingOperationRecoveryPromise) { alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.'); return; }
             const form = e.target;
             const btn = form.querySelector('button[type="submit"]');
             state.vehicleInfo = {
@@ -766,8 +799,9 @@
                 versionesAplicables: form.querySelector('#versionesAplicables').value,
             };
 
+            isSubmittingStage1 = true;
             toggleLoading(true);
-            btn.classList.add('btn-loading');
+            if (btn) btn.classList.add('btn-loading');
             try {
                 const response = await routeAction('checkVehicle', state.vehicleInfo);
                 if (response.status === 'error') throw new Error(response.message);
@@ -782,8 +816,10 @@
             } catch (error) {
                 alert(`Error al verificar: ${error.message}`);
             } finally {
+                isSubmittingStage1 = false;
+                if (btn) btn.classList.remove('btn-loading');
+                void resumePendingOperationRecovery();
                 toggleLoading(false);
-                btn.classList.remove('btn-loading');
             }
         }
 
@@ -992,12 +1028,11 @@
             showPhase(2);
         }
 
-        let isSubmittingStage2 = false;
-
         /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */
         async function handleStage2Submit(e) {
             e.preventDefault();
             if (isSubmittingStage2) return;
+            if (pendingOperationRecoveryPromise) { alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.'); return; }
             try { getCurrentSessionForOwner(state.userId); }
             catch (_) { alert("Tu sesión cambió o expiró. Inicia sesión nuevamente antes de guardar."); window.location.replace('index.html'); return; }
             isSubmittingStage2 = true;
@@ -1143,7 +1178,10 @@
                     alert("No se pudo leer una de las imágenes. No se envió la solicitud. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
                 } else alert("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
             } finally {
-                toggleLoading(false); btn.classList.remove('btn-loading'); isSubmittingStage2 = false;
+                isSubmittingStage2 = false;
+                if (btn) btn.classList.remove('btn-loading');
+                void resumePendingOperationRecovery();
+                toggleLoading(false);
             }
         }
         // --- STAGE 3: SUPPLEMENTARY INFO ---
@@ -1288,10 +1326,10 @@
             showPhase(3);
         }
 
-        let isSubmittingStage3 = false;
         async function handleStage3Submit(e) {
             e.preventDefault();
             if (isSubmittingStage3) return;
+            if (pendingOperationRecoveryPromise) { alert('Se está verificando una operación pendiente. Espera a que finalice antes de enviar nuevamente.'); return; }
             isSubmittingStage3 = true;
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true);
@@ -1324,9 +1362,10 @@
                     alert("No se pudo guardar la información suplementaria. Tus datos permanecen en el formulario; puedes intentarlo nuevamente.");
                 }
             } finally {
-                toggleLoading(false);
-                if (btn) btn.classList.remove('btn-loading');
                 isSubmittingStage3 = false;
+                if (btn) btn.classList.remove('btn-loading');
+                void resumePendingOperationRecovery();
+                toggleLoading(false);
             }
         }
 
@@ -1337,7 +1376,9 @@
         }
 
         function toggleLoading(isLoading) {
-            document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none';
+            activeLoadingOperations = isLoading ? activeLoadingOperations + 1 : Math.max(0, activeLoadingOperations - 1);
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.style.display = activeLoadingOperations > 0 ? 'flex' : 'none';
         }
 
         function populateSelect(id, options, defaultValue = "") {
