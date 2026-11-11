@@ -1576,3 +1576,30 @@ Límites:
 
 Siguiente paso: continuar únicamente AUG-046, contrastando los hallazgos con los flujos técnicos y preparando una lista concreta de confirmaciones para la empresa. No iniciar AUG-047.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-046 — CONTRASTE DE FLUJOS Y DATOS — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD de inicio: 76d55333eff978a80e32fab6a72cfb51f6f4ff3f.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea única: AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad.
+
+Trabajo realizado:
+- Se retomó el estado desde Git y se leyó íntegramente NORMAS_DESAROLLO.md y Proceso de desarollo.md, junto con el checkpoint AUG-046 y los módulos relevantes.
+- Se contrastaron flujos en AUTH/USERS/FEEDBACK/WRITE/CATALOG/ADMIN, api-config.js, auth.js, offline.js, youtubeUpload.js e index.html.
+- Se documentó una matriz de datos/destinos y 12 confirmaciones operativas en Legal/AUG-046_revision_preliminar.md, sección 8.
+- Hallazgos nuevos: formulario público de contacto con nombre/correo/mensaje; ciertos archivos de imagen de FEEDBACK se comparten con permiso ANYONE_WITH_LINK; vídeos se configuran unlisted; IndexedDB persiste tras logout; Logs/ActividadUsuario carecen de retención automática identificada en los módulos revisados; la baja de cuenta es lógica y conserva el ID histórico.
+- Se distinguió el permiso de imágenes de FEEDBACK del flujo común WRITE, donde el fragmento revisado no establece el mismo permiso.
+- Se amplió el criterio 3 de AUG-046 en el backlog para incluir los flujos y categorías realmente observados.
+
+Límites y preservación:
+- No se modificó index.html ni ningún texto del acuerdo/aviso, ni la versión 2026-07.
+- No se modificó código, endpoints, deployments, hojas productivas, Drive ni YouTube.
+- No se ejecutaron pruebas de integración ni llamadas a servicios externos.
+- No se verificó que los deployments de Apps Script coincidan con el código de esta rama.
+- La revisión es técnica; no es aprobación jurídica y no se presume aprobación corporativa.
+
+Siguiente paso: obtener/consolidar las 12 confirmaciones operativas de la empresa principal y contrastarlas con la matriz técnica; continuar solo AUG-046. No iniciar AUG-047.
+================================================================================

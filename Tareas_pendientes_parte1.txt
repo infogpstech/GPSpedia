@@ -639,13 +639,14 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - Criterios:
   1. La revisión y aprobación corresponden a la empresa principal mediante su proceso interno; registrar su validación antes de publicar una versión definitiva. Esta auditoría técnica no es dictamen jurídico.
   2. Confirmar entidad responsable y denominación legal (Motorlink S.A.) y relación de marca TRACKLINK/GPSpedia.
-  3. Validar categorías de datos, finalidades, conservación, acceso, destinatarios/proveedores, transferencias y canal para consultas/solicitudes, según operación real.
+  3. Contrastar los flujos de cuenta/sesión, contacto público, reportes/aportes, imágenes en Drive, vídeos no listados, registros y almacenamiento local; confirmar finalidades, accesos, conservación, proveedores/transferencias y canal para solicitudes según operación real.
   4. Revisar uso laboral, cuentas, confidencialidad, propiedad intelectual, extracción, deslinde y suspensión.
   5. Aprobar texto, versión y fecha efectiva; mantener consistencia con aviso inicial y aceptación.
   6. Registrar aprobación antes de desplegar versión legal definitiva.
 - Relación: AUD-T-036; AUG-045; AUD-T-023/AUD-T-024.
 - Aclaración del usuario (2026-11-10): GPSpedia es una herramienta interna de la empresa principal; los asuntos legales corresponden a esa empresa. No se requiere un responsable legal externo como dependencia para continuar el trabajo técnico. La validación definitiva corresponde al proceso interno de la empresa.
-- Estado: EN PROGRESO — revisión técnica preliminar documentada; pendiente confirmar los datos operativos que solo la empresa conoce y registrar su validación interna. No se ha emitido aprobación jurídica ni se ha modificado el texto legal.
+- Avance técnico (2026-11-11): contraste dirigido de AUTH, USERS, FEEDBACK, WRITE, CATALOG, ADMIN, offline.js y api-config.js documentado en la sección 8 de Legal/AUG-046_revision_preliminar.md; lista de 12 confirmaciones operativas preparada.
+- Estado: EN PROGRESO — pendiente respuesta/consolidación de confirmaciones operativas por la empresa principal y validación interna del contenido. No se ha emitido aprobación jurídica ni se ha modificado el texto legal.
 
 ### AUG-047 — Completar accesibilidad, navegación y disponibilidad offline de modales legales
 - Origen: H-AUD-036-004/005. Prioridad baja/media.

@@ -986,3 +986,13 @@ ADENDA AUG-046 — ACLARACIÓN DE RESPONSABILIDAD CORPORATIVA — 2026-11-10
 - Hallazgos documentados: uso de la denominación “Motorlink S.A. y GPSpedia” como sujetos separados, descripción incompleta de proveedores Google/YouTube, conservación de registros, almacenamiento local y ausencia de canal específico de privacidad.
 - No se modificaron index.html, el acuerdo de uso, el aviso, fecha/versión 2026-07, código, deployments ni datos productivos. No se emitió aprobación legal.
 ================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — CONTRASTE TÉCNICO DE FLUJOS Y DATOS — 2026-11-11
+- Se amplió Legal/AUG-046_revision_preliminar.md con matriz de flujos y 12 confirmaciones operativas para la empresa principal.
+- Se documentaron el formulario público de contacto, permisos ANYONE_WITH_LINK en determinadas imágenes de FEEDBACK, vídeos YouTube unlisted, persistencia IndexedDB tras logout, ausencia de retención automática identificada en los módulos revisados y baja lógica de cuentas con conservación del ID.
+- Se amplió el criterio 3 de AUG-046 en Tareas_pendientes_parte1.txt.
+- No se modificaron el acuerdo de uso, el aviso, index.html, código, endpoints, deployments ni datos productivos.
+- No se ejecutaron pruebas de integración ni se verificó la paridad entre el código versionado y los proyectos Apps Script publicados.
+================================================================================

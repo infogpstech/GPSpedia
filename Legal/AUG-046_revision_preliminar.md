@@ -122,3 +122,57 @@ Estos son hallazgos de correspondencia entre texto y funcionamiento observable, 
 - No se verificaron configuraciones reales de cuentas Google/YouTube, permisos, contratos, regiones o plazos de conservación.
 
 **Estado actualizado:** AUG-046 continúa EN PROGRESO. La revisión técnica preliminar está documentada y el bloqueo por falta de un responsable legal externo queda retirado conforme a la aclaración del usuario. Permanecen pendientes las confirmaciones operativas que solo la empresa puede proporcionar y su validación interna del contenido. No iniciar AUG-047.
+
+
+## 8. Contraste técnico de flujos y datos — 2026-11-11
+
+Esta sección amplía el inventario anterior mediante inspección dirigida de los handlers y persistencia local. Describe el comportamiento implementado en la rama de trabajo; **no confirma que los deployments de Apps Script o la hoja productiva ejecuten exactamente esta misma versión**.
+
+### 8.1 Matriz de flujos observados
+
+| Flujo | Datos y destino observados | Implicación para la información que debe explicar la empresa |
+|---|---|---|
+| Cuenta y autenticación | `Users`: ID, usuario, contraseña (hash para nuevas/actualizadas; compatibilidad de lectura con credenciales heredadas), privilegios, teléfono, correo y nombre. AUTH también guarda `TermsAcceptance`. `ActiveSessions` contiene ID/usuario, token y marcas de tiempo. | Distinguir datos de empleados/contratistas, finalidad de cada campo, quién accede a perfiles y cuánto tiempo se conservan cuenta, aceptación y sesiones. |
+| Sesión en navegador | `auth.js` persiste el objeto de sesión en `localStorage` bajo `gpsepedia_session`. El cierre de sesión elimina esa clave y solicita revocación remota. | La sesión y parte de los datos de perfil/token residen en el dispositivo. La empresa debe decidir y describir el comportamiento esperado en dispositivos compartidos. |
+| Catálogo offline | `offline.js` crea IndexedDB `GPSpedia_DB` con almacenes para catálogo, historial de búsqueda, vehículos consultados, miniaturas, respuestas de validación y estado administrativo. | Los datos persisten en el navegador. El cierre de sesión revisado no borra estos almacenes; no debe afirmarse que toda la información local se elimina al cerrar sesión. |
+| Contacto público | `sendContactForm` no requiere sesión: recibe nombre, correo y mensaje y los escribe en `Contactanos`. | La recopilación no se limita a usuarios autenticados ni a cuentas laborales. Deben definirse finalidad, responsable de atención, acceso y retención de consultas públicas. |
+| Reportes y aportes | FEEDBACK registra usuario/colaborador, ID de vehículo, descripción del problema y, cuando corresponde, metadatos del reporte (ID, corte e indicador de testigo). Problemas y sugerencias pueden incorporar imágenes y detalles técnicos. | Los textos e imágenes podrían incluir datos de clientes, placas, VIN, personas u otros identificadores. La empresa debe definir instrucciones de carga, clasificación y moderación. |
+| Imágenes en Drive | En los handlers de problemas y sugerencias de FEEDBACK se invoca explícitamente `setSharing(ANYONE_WITH_LINK, VIEW)`. La función común de WRITE crea archivos en Drive, pero el fragmento revisado no aplica esa misma instrucción de compartición. | No generalizar el permiso a todas las imágenes. Confirmar si el acceso por enlace está habilitado en producción, qué carpetas/archivos afecta, si es intencional y qué contenido puede cargarse. |
+| Vídeos en YouTube | FEEDBACK obtiene token OAuth de Apps Script para iniciar carga en YouTube y fija `privacyStatus: unlisted`. Guarda una solicitud de aprobación en `Feedbacks` con creador, título, descripción, URL/ID, destino, metadatos y estado. | Confirmar cuenta/canal propietario, acceso administrativo, visibilidad no listada, moderación, eliminación y tratamiento de metadatos. “No listado” no equivale a privado: quien tenga el enlace puede acceder. |
+| Auditoría y actividad | AUTH escribe en `Logs` timestamp, nivel, mensaje y detalles JSON. FEEDBACK escribe `ActividadUsuario` con fecha, ID/nombre, tipo de actividad, elemento y detalle. | Definir quién puede consultar/exportar los registros, contenido potencial de los detalles y conservación. La lectura de código no muestra un calendario automático de retención. |
+| Baja de cuentas | AUTH desactiva lógicamente la cuenta: reemplaza el usuario por un identificador `__deleted__`, limpia campos de perfil/credenciales y revoca sesiones. El ID histórico se conserva para mantener referencias. | La baja de acceso no equivale a eliminación de todos los registros históricos relacionados con el usuario. La empresa debe definir el alcance de la eliminación y las excepciones de conservación. |
+
+### 8.2 Hallazgos concretos frente al texto actual
+
+1. La sección 13 no menciona el formulario público de contacto, que recoge nombre, correo y mensaje sin autenticación.
+2. La sección 13 no describe la persistencia local. En el código revisado, cerrar sesión elimina la clave de sesión, pero no borra el catálogo, historial, elementos vistos, cachés ni miniaturas de IndexedDB.
+3. La sección 12 informa que puede registrarse actividad, pero no especifica el detalle de campos, los permisos de consulta ni un plazo/criterio de conservación. AUTH solo dispone de una purga manual para ciertos registros sensibles; no se encontró una política temporal automática en los módulos revisados.
+4. La sección 13 dice que la información solo se comparte por obligación legal o autorización. Debe contrastarse con las cargas a Google Drive con acceso “cualquiera con el enlace” en determinados flujos y con la publicación de vídeos de YouTube como “no listados”. La empresa debe decidir qué explicación corresponde a esos recursos y a los proveedores.
+5. El mecanismo de baja de cuentas es lógico y conserva el ID histórico. No debe describirse como borrado completo de toda información relacionada.
+6. Los datos técnicos de vehículos no identifican necesariamente a una persona por sí solos; la empresa debe confirmar si se vinculan con órdenes de trabajo, clientes, matrículas, VIN completos/parciales, imágenes u otros registros que permitan identificarla.
+
+### 8.3 Confirmaciones operativas para la empresa principal
+
+Esta lista es el siguiente insumo necesario para que la empresa determine si el texto vigente refleja el funcionamiento real. No requiere que el usuario identifique un asesor externo; las respuestas pueden ser consolidadas por el área interna responsable.
+
+1. **Versión desplegada:** confirmar que los proyectos Apps Script publicados corresponden a los servicios revisados en esta rama y señalar diferencias, si existen.
+2. **Cuentas y propiedad:** identificar qué cuenta corporativa administra Apps Script, Spreadsheet, Drive y el canal de YouTube; qué personal/administradores tienen acceso y con qué permisos.
+3. **Compartición de imágenes:** confirmar si las imágenes de problemas/sugerencias conservan el permiso “cualquiera con el enlace” en la operación real y si se permite subir fotografías con placas, VIN, clientes, rostros u otros datos.
+4. **Vídeos:** confirmar que el canal corporativo y el estado “no listado” son los previstos; indicar quién aprueba, quién puede cambiar visibilidad y cómo se retiran vídeos.
+5. **Datos del contacto:** confirmar quién atiende el formulario público, para qué se utiliza el nombre/correo/mensaje y durante cuánto tiempo se conservan.
+6. **Registros:** fijar criterios de conservación y acceso para `Logs`, `ActividadUsuario`, `ActiveSessions` y registros de contacto/aportes; confirmar si existen limpiezas externas o manuales no visibles en el código.
+7. **Baja y eliminación:** determinar qué datos se eliminan, anonimizan o conservan cuando termina la relación laboral o se desactiva una cuenta, incluidos aportes, actividad, backups y referencias históricas.
+8. **Almacenamiento local:** decidir si la persistencia de catálogo, búsquedas, vehículos vistos, miniaturas y recuperaciones de carga en el dispositivo es aceptable en equipos compartidos y si se espera limpieza al cerrar sesión.
+9. **Datos de vehículos e imágenes:** confirmar si los aportes pueden contener datos personales de clientes/terceros y qué instrucciones o controles internos se aplican.
+10. **Google/YouTube:** confirmar términos corporativos aplicables, configuración de región/ubicación, accesos de soporte, transferencias y condiciones de los servicios. El repositorio no permite verificar estos aspectos.
+11. **Solicitudes de privacidad:** indicar el canal corporativo que recibe consultas/reclamos y quién verifica identidad, responde y ejecuta correcciones o eliminaciones.
+12. **Respaldos:** confirmar frecuencia, ubicación, acceso, duración y eliminación de copias de Spreadsheet/Drive y de registros auxiliares.
+
+### 8.4 Alcance y límites
+
+- Se revisaron los handlers y módulos locales indicados; no se realizaron llamadas a endpoints, despliegues, hojas productivas, Drive ni YouTube.
+- La presencia de una función en el repositorio no acredita que esté desplegada ni que su configuración de producción sea idéntica.
+- No se alteró el acuerdo, el aviso, su versión/fecha, HTML, frontend, backend ni datos.
+- Esta matriz es evidencia técnica para decisión interna, no aprobación jurídica.
+
+**Estado de AUG-046:** EN PROGRESO. El contraste de código está ampliado y la lista de confirmaciones queda preparada para la empresa principal. La validación corporativa del contenido sigue pendiente; no se presume aprobación. No iniciar AUG-047.
