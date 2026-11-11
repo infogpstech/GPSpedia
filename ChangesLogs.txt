@@ -1074,3 +1074,11 @@ AUG-046 — ACCESO Y ALMACENAMIENTO DE IMÁGENES PyS — 2026-11-10
 - checkpoint.md: registra evidencia, límites de la revisión estática y continuidad exclusiva de AUG-046.
 - No se modificaron código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints, deployments, hojas ni archivos/permisos productivos de Drive.
 ================================================================================
+
+
+================================================================================
+AUG-046 — DESACTIVACIÓN Y REGISTROS DE CUENTAS — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 15 documenta el flujo deleteUser, sus validaciones y permisos, la desactivación lógica de la cuenta, la conservación de ID y TermsAcceptance, la revocación de sesiones y el tratamiento de fallos parciales.
+- checkpoint.md: registra el alcance de la comprobación, sus límites y la continuidad exclusiva de AUG-046.
+- No se modificaron código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+================================================================================
