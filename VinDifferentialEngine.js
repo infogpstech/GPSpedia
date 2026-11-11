@@ -65,12 +65,13 @@ export function getClassificationKey(item, version = "", level = 5) {
 
 export class VinDifferentialEngine {
     constructor(options = {}) {
-        this.minSamplesThreshold = options.minSamplesThreshold || 2;
+        const configuredThreshold = Number(options.minSamplesThreshold);
+        this.minSamplesThreshold = Number.isInteger(configuredThreshold) && configuredThreshold > 0 ? configuredThreshold : 2;
         this.signatures = new Map();
         this.conflictLog = [];
         this.auditLog = [];
         this.catalogFingerprint = null;
-        this.version = "1.1.0";
+        this.version = "1.2.0";
     }
 
     buildSampleMatrix(records) {
@@ -313,8 +314,13 @@ export class VinDifferentialEngine {
 
                 const extendedCompetitors = competitors;
 
-                const isInsufficient = sampleCount < 1;
-                if (isInsufficient) {
+                const insufficientReason = sampleCount < this.minSamplesThreshold
+                    ? `Se requieren al menos ${this.minSamplesThreshold} muestras para calcular una firma diferencial.`
+                    : competitors.length === 0
+                        ? "No existen configuraciones competidoras aplicables dentro del rango de años."
+                        : "";
+
+                if (insufficientReason) {
                     insufficientCount++;
                     this.signatures.set(group.classKey, {
                         id: `SIG-${group.classKey}`,
@@ -327,8 +333,9 @@ export class VinDifferentialEngine {
                         vinLength: vLen,
                         status: "insuficiente",
                         confidence: 0,
-                        reason: "Muestras insuficientes para generar firma diferencial.",
+                        reason: insufficientReason,
                         samplesCount: sampleCount,
+                        algorithmVersion: this.version,
                         calculatedAt: new Date().toISOString()
                     });
                     return;

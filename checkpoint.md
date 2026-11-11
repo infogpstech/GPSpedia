@@ -2118,3 +2118,18 @@ Avance parcial: queryVehicle resuelve contexto por classKey o identidad (marca, 
 Pruebas añadidas: Services/Test/VinContextResolution.js, seis casos sintéticos. Validación pendiente de ejecución/revisión antes de publicar.
 Alcance único: resolución por identidad/contexto. Umbral, rangos abiertos, normalización de prefijos, extractSharedChars, UI y navegación siguen pendientes. No iniciar AUG-051.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-050 — UMBRAL DE MUESTRAS Y COMPETIDORES VIN — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD padre verificado antes de esta iteración: 7bd9f6e595bea7c6a6f238ada576e40134c8f05a.
+Rama base: GPSpedia2.2.5; HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+Subproblema resuelto: criterio 7 de AUG-050. El motor aplica minSamplesThreshold (predeterminado 2); las clases por debajo del mínimo y las que carecen de competidores aplicables dentro del rango de años reciben status insuficiente, sin posiciones diferenciales ni estado validada. La consulta excluye estas firmas. Versión de algoritmo: 1.2.0 para invalidar cachés previas.
+Pruebas: Services/Test/VinSampleThreshold.js (9/9), VinContextResolution.js (6/6) y VinSignaturePersistence.js (6/6): 21/21 PASS en harness V8 aislado. No se ejecutó Node CLI.
+Archivos: VinDifferentialEngine.js, Services/Test/VinSampleThreshold.js, Services/Test/README.md, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+Pendiente en AUG-050: semántica de rangos abiertos/años ausentes; normalización VIN completo/prefijos; extractSharedChars; integración de resultados ambiguos/versiones en UI/navegación; medición de coste con catálogo real.
+No se modifican endpoints, Apps Script, Spreadsheet, deployments, datos productivos ni rama base.
+Siguiente iteración: seleccionar un único criterio restante de AUG-050; no iniciar AUG-051.
+================================================================================

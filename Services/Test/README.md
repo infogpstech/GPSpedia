@@ -284,3 +284,9 @@ La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `Activ
 ### Resolución de identidad y contexto VIN
 
 Ejecutar `node --experimental-default-type=module Services/Test/VinContextResolution.js` para probar resolución por `classKey`, marca, modelo, año dentro del rango y versión, además de contextos insuficientes o contradictorios. La suite usa firmas sintéticas y no consulta el catálogo productivo.
+
+
+### Umbral de muestras y competidores aplicables VIN
+
+Ejecutar `node --experimental-default-type=module Services/Test/VinSampleThreshold.js`.
+Verifica el umbral predeterminado/configurable, el estado insuficiente con muestras por debajo del mínimo, la ausencia de competidores por rango de años y que las firmas insuficientes no participen en consultas. Usa registros sintéticos; no consulta el catálogo productivo.

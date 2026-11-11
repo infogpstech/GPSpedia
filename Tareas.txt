@@ -880,3 +880,11 @@ AUG-050 — AVANCE PARCIAL — RESOLUCIÓN DE IDENTIDAD VIN — 2026-11-11
 - Valida el contexto aun con una coincidencia única; rechaza identidades contradictorias y conserva ambigüedad si falta contexto.
 - Suite sintética Services/Test/VinContextResolution.js añadida con seis escenarios.
 - AUG-050 permanece EN PROGRESO; no iniciar AUG-051.
+
+
+AUG-050 — AVANCE PARCIAL — UMBRAL DE MUESTRAS Y COMPETIDORES VIN — 2026-11-11
+- VinDifferentialEngine.js aplica minSamplesThreshold (predeterminado: 2) y marca como insuficientes las clases que no alcanzan el mínimo.
+- No genera firmas cuando no existen competidores de la misma familia con rangos de años aplicables; no se contabilizan como firmas pendientes ni conflictos.
+- Se incrementó la versión del algoritmo a 1.2.0 para invalidar cachés calculadas con la lógica anterior.
+- Suite Services/Test/VinSampleThreshold.js: nueve escenarios sintéticos; instrucciones añadidas a Services/Test/README.md.
+- AUG-050 permanece EN PROGRESO. Rangos abiertos, normalización VIN, extractSharedChars y UI/navegación continúan pendientes.
