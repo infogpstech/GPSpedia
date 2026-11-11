@@ -1,3 +1,9 @@
+================================================================================
+2026-11-11 — AUG-051 — ANÁLISIS ITERACIÓN 7 — DEPENDENCIA PARA LÍMITE RAM
+Se inspeccionó la caché de miniaturas en ui.js. memoryUrlCache es un Map sin límite que conserva URLs blob; eliminar entradas del Map sin revocar las URLs no libera los Blob asociados. Se documentó el ciclo de vida seguro de ObjectURL como prerrequisito para implementar un límite RAM real. No hubo cambios funcionales ni pruebas de memoria.
+Archivos: checkpoint.md, Tareas.txt, ChangesLogs.txt.
+================================================================================
+
 # Registro de cambios — GPSpedia
 
 Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de registrar cambios o modificar el proyecto.
