@@ -368,14 +368,15 @@
             return { userId, sessionToken };
         }
         async function getOrGenerateOpId() {
-            if (state.opId) return state.opId;
             const pendingResult = await getAddCutOperationPendingOperation(state.userId);
             if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
             if (pendingResult.operation) {
                 if (pendingResult.operation.status === 'completed') throw new Error('COMPLETED_OPERATION_REQUIRES_RECOVERY');
+                if (state.opId && state.opId !== pendingResult.operation.id) throw new Error('PENDING_OPERATION_ID_MISMATCH');
                 state.opId = pendingResult.operation.id;
                 return state.opId;
             }
+            state.opId = null;
             const secureCrypto = globalThis.crypto;
             if (!secureCrypto || typeof secureCrypto.getRandomValues !== 'function') throw new Error('SECURE_RANDOM_UNAVAILABLE');
             const randomBytes = new Uint8Array(16);
