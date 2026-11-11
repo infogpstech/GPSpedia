@@ -1,4 +1,26 @@
 ================================================================================
+AUG-053 — ITERACIÓN 13 — 2026-11-11 — REVALIDACIÓN DE SESIÓN EN RECONCILIACIÓN ASÍNCRONA
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 01591f5b8413ae3aaa80c6e123a0d9726bcc8b24. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo corregido:
+- loadPendingAdminImageUploads solo comparaba userId después de esperar IndexedDB. Una sesión nueva de la misma cuenta podía recibir el resultado de una lectura iniciada con otro token/contexto.
+- resolvePendingAdminImageOperationsBeforeDiscard_ no revalidaba el contexto después de consultar getAdminImageUploadStatus ni después de reconciliar un reemplazo vinculado; podía continuar con una respuesta tardía.
+- La limpieza y verificación posterior en IndexedDB podían actualizar los mapas de memoria después de cambiar la sesión.
+
+Corrección:
+- La carga captura el contexto completo y lo revalida después de Promise.all antes de hidratar mapas.
+- La consulta remota y la reconciliación vinculada revalidan la sesión original antes de interpretar resultados o continuar.
+- El baseline recibe el contexto esperado; la eliminación/relectura local exige el mismo contexto antes de modificar mapas.
+- El flujo normal de envío revalida después de eliminar o releer IndexedDB antes de actualizar el estado en memoria.
+- Se conserva el aislamiento por ownerId; no se habilita recuperación cruzada.
+
+Archivos: ui.js, Services/Test/AdminModalEditRestoreContract.js, Services/Test/README.md, ChangesLogs.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+Validación local: parsing V8 PASS; AdminModalEditRestoreContract 7/7 PASS. No se ejecutaron navegador/IndexedDB real ni pruebas multi-pestaña; quedan reservadas a Beta.
+Siguiente iteración: continuar exclusivamente con el ciclo combinado de snapshot/operación pendiente, revisando orden de persistencia durable y cambio de sesión durante eliminación IndexedDB. No iniciar AUG-054.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 12 — 2026-11-11 — RECONCILIACIÓN CONSERVADORA DE REEMPLAZOS DE IMAGEN
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD de partida: c06519bdb758c7778018edd479fb9a01ce4fb695. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
