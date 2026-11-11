@@ -1666,3 +1666,26 @@ No se han recibido aún las 12 confirmaciones operativas corporativas de la secc
 
 Siguiente acción: continuar únicamente AUG-046, contrastando evidencia técnica adicional que pueda verificarse desde el repositorio sin inferir configuraciones productivas ni decisiones jurídicas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — REVALIDACIÓN DE PERSISTENCIA AL CERRAR SESIÓN — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: a8c8e22fc1f5f47622d6f410c00bfd90cac9717c.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revalidado auth.js: logout() elimina gpsepedia_session y solicita revocación remota; no elimina gpsepedia_pys_cache.
+- Revalidado offline.js: GPSpedia_DB v4 contiene catalog, searchHistory, viewedItems, thumbnails, validationCache y adminLocalState. logout() no elimina la base ni vacía esos almacenes.
+- Añadida la evidencia y sus ubicaciones de código a Legal/AUG-046_revision_preliminar.md, sección 8.5.
+- Actualizados ChangesLogs.txt y este checkpoint para registrar únicamente los cambios documentales realizados.
+
+Límites:
+- La comprobación corresponde al código versionado de la rama; no verifica deployments de Apps Script ni la configuración productiva.
+- No se ejecutaron pruebas de navegador/IndexedDB real ni se accedió a cuentas, Spreadsheet, Drive o YouTube productivos.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, versión/fecha legal, aceptación AUG-045, endpoints, deployments ni datos productivos.
+
+Estado: AUG-046 permanece EN PROGRESO. Continúan pendientes las confirmaciones operativas de la empresa principal y su validación interna. No iniciar AUG-047.
+Siguiente paso: continuar AUG-046 con otra comprobación técnica concreta del comportamiento versionado, sin convertir las confirmaciones corporativas pendientes en supuestos ni modificar textos legales.
+================================================================================

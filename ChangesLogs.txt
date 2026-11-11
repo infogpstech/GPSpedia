@@ -1024,3 +1024,11 @@ ADENDA AUG-046 — DELIMITACIÓN DEL ALCANCE TÉCNICO — 2026-11-11
 - checkpoint.md: registra el avance, las confirmaciones operativas aún no recibidas y la continuidad exclusiva de AUG-046.
 - No se modificaron el acuerdo, aviso, modales, fechas/versiones, aceptación AUG-045, HTML, código, endpoints, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-046 — REVALIDACIÓN DE PERSISTENCIA AL CERRAR SESIÓN — 2026-11-11
+- Legal/AUG-046_revision_preliminar.md: sección 8.5 documenta que auth.js elimina gpsepedia_session, pero no gpsepedia_pys_cache ni los almacenes de GPSpedia_DB declarados en offline.js.
+- checkpoint.md: registra la revalidación, sus límites y la continuidad exclusiva de AUG-046.
+- No se modificaron código de aplicación, acuerdo, aviso, modales, versión/fecha legal, aceptación AUG-045, endpoints, deployments ni datos productivos.
+================================================================================

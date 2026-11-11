@@ -178,6 +178,17 @@ Esta lista es el siguiente insumo necesario para que la empresa determine si el 
 **Estado de AUG-046:** EN PROGRESO. El contraste de código está ampliado y la lista de confirmaciones queda preparada para la empresa principal. La validación corporativa del contenido sigue pendiente; no se presume aprobación. No iniciar AUG-047.
 
 
+
+### 8.5 Revalidación puntual del cierre de sesión y persistencia local — 2026-11-11
+
+Se volvió a comprobar el código versionado para precisar el comportamiento al cerrar sesión:
+
+- En `auth.js`, `logout()` (líneas 345–397) valida que la sesión local no haya sido sustituida, limpia el estado en memoria y elimina únicamente la clave `gpsepedia_session` de `localStorage`. Después solicita la revocación remota mediante `routeAction('logout', ...)`; si no recibe confirmación, informa que la revocación queda pendiente.
+- En el mismo módulo, la precarga y rehidratación de PyS utiliza `gpsepedia_pys_cache` en `localStorage` (líneas 164 y 268–275). El cuerpo de `logout()` no elimina esa clave.
+- En `offline.js`, la base `GPSpedia_DB` (versión 4) declara los almacenes `catalog`, `searchHistory`, `viewedItems`, `thumbnails`, `validationCache` y `adminLocalState` (líneas 8–83). El cierre de sesión revisado no invoca una rutina de borrado de esa base ni vacía esos almacenes.
+
+**Resultado de esta revalidación:** la afirmación de la sección 8.2 sobre persistencia después del cierre de sesión coincide con el código actual de la rama. Esto describe exclusivamente el código versionado; no acredita el comportamiento de deployments externos ni prueba la persistencia en un navegador/dispositivo real. No se ejecutó una prueba de navegador ni se accedió a datos productivos.
+
 ## 9. Consistencia entre los textos informativos y el acuerdo vigente — 2026-11-11
 
 Se realizó una comparación adicional de las superficies informativas presentes en `index.html`: Aviso Importante, acuerdo de uso, modal «Sobre Nosotros» y preguntas frecuentes. El análisis se limita a consistencia documental; no propone ni aplica cambios al contenido.
