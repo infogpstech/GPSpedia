@@ -455,6 +455,37 @@ function handleFreezeCortesIds(payload) {
 }
 
 
+function fingerprintValue_(value) {
+    return value === null || value === undefined ? "" : String(value);
+}
+function buildCutOperationFingerprintPayload_(payload) {
+    const data = payload && typeof payload === "object" ? payload : {};
+    const vehicle = data.vehicleData && typeof data.vehicleData === "object" ? data.vehicleData : null;
+    const cut = data.cutData && typeof data.cutData === "object" ? data.cutData : {};
+    const vehicleId = data.vehicleId === null || data.vehicleId === undefined || data.vehicleId === ""
+        ? null : String(data.vehicleId).trim();
+    return JSON.stringify([
+        "addOrUpdateCut:v1", vehicleId,
+        vehicle ? [
+            fingerprintValue_(vehicle.categoria), fingerprintValue_(vehicle.marca),
+            fingerprintValue_(vehicle.modelo), fingerprintValue_(vehicle.versionesAplicables),
+            fingerprintValue_(vehicle.anoDesde), fingerprintValue_(vehicle.anoHasta),
+            fingerprintValue_(vehicle.tipoEncendido), fingerprintValue_(vehicle.imagenVehiculo)
+        ] : null,
+        [
+            fingerprintValue_(cut.tipoCorte1), fingerprintValue_(cut.configRelay1),
+            fingerprintValue_(cut.ubicacionCorte1), fingerprintValue_(cut.colorCableCorte1),
+            cut.activaTestigo1 === true, fingerprintValue_(cut.imgCorte1), fingerprintValue_(cut.vin)
+        ],
+        data.silent === true
+    ]);
+}
+function computeCutOperationFingerprint_(payload) {
+    const canonical = buildCutOperationFingerprintPayload_(payload);
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, canonical, Utilities.Charset.UTF_8);
+    return digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+}
+
 function handleAddOrUpdateCutLocked(payload) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
@@ -1650,7 +1681,7 @@ function checkFileIdValid(url) {
 // GESTIÓN DE IDEMPOTENCIA EN HOJA DEDICADA ("Idempotencia")
 // ============================================================================
 
-const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status"];
+const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status", "operationHash"];
 
 /**
  * Comprueba el esquema A:E sin modificar la hoja.
@@ -1665,9 +1696,6 @@ function getIdempotenciaHeaderState(sheet) {
     if (!sheet) return { compatible: false, missingIndexes: [], reason: "missing_sheet" };
     const maxColumns = Math.max(0, Number(sheet.getMaxColumns()) || 0);
     const lastRow = sheet.getLastRow();
-    if (maxColumns < IDEMPOTENCIA_HEADERS.length && lastRow > 1) {
-        return { compatible: false, missingIndexes: [], reason: "insufficient_columns_with_data" };
-    }
     const availableColumns = Math.min(maxColumns, IDEMPOTENCIA_HEADERS.length);
     const headers = availableColumns
         ? sheet.getRange(1, 1, 1, availableColumns).getValues()[0]
@@ -1772,6 +1800,12 @@ function isValidIdempotenciaTimestamp_(value) {
     return !Number.isNaN(Date.parse(raw));
 }
 
+function normalizeIdempotenciaOperationHash_(value, context) {
+    const hash = String(value === null || value === undefined ? "" : value).trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(hash)) throw new Error((context || "Idempotencia") + ": operationHash debe ser SHA-256 hexadecimal de 64 caracteres.");
+    return hash;
+}
+
 function normalizeIdempotenciaStatus_(value, context) {
     const status = String(value === null || value === undefined ? "" : value).trim().toLowerCase();
     if (status !== "pending" && status !== "completed") {
@@ -1792,6 +1826,7 @@ function normalizeIdempotenciaEntry_(row, rowIndex) {
         slotIndex: normalizeIdempotenciaSlotIndex_(row[2], context),
         timestamp: row[3],
         status: normalizeIdempotenciaStatus_(row[4], context),
+        operationHash: isBlankIdempotenciaValue_(row[5]) ? "" : normalizeIdempotenciaOperationHash_(row[5], context),
         rowIndex: rowIndex
     };
 }
@@ -1918,7 +1953,7 @@ function removeEmptyPendingCutRow(sheet, rowIndex, lastColumn) {
     }
 }
 
-function recordOpId(opId, vehicleId, slotIndex, timestamp, status) {
+function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
     normalizeIdempotenciaOpId_(cleanOpId, "Registro de operación");
@@ -1932,12 +1967,16 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status) {
         throw new Error("Registro de operación: timestamp vacío o inválido.");
     }
     const targetStatus = normalizeIdempotenciaStatus_(status === undefined ? "completed" : status, "Registro de operación");
+    const cleanOperationHash = normalizeIdempotenciaOperationHash_(operationHash, "Registro de operación");
     const sheet = getIdempotenciaSheet();
     const existing = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
 
     if (existing) {
         if (existing.vehicleId !== cleanVehicleId || existing.slotIndex !== cleanSlotIndex) {
             throw new Error("El opId " + cleanOpId + " ya está asociado a otro vehicleId/slotIndex; no se modificó.");
+        }
+        if (!existing.operationHash || existing.operationHash !== cleanOperationHash) {
+            throw new Error("El opId " + cleanOpId + " no coincide con la huella del contenido original; no se modificó.");
         }
         const finalStatus = existing.status === "completed" || targetStatus === "completed" ? "completed" : "pending";
         if (existing.status !== finalStatus) sheet.getRange(existing.rowIndex, 5).setValue(finalStatus);
@@ -1951,7 +1990,7 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status) {
         return verified;
     }
 
-    sheet.appendRow([cleanOpId, cleanVehicleId, cleanSlotIndex, cleanTimestamp, targetStatus]);
+    sheet.appendRow([cleanOpId, cleanVehicleId, cleanSlotIndex, cleanTimestamp, targetStatus, cleanOperationHash]);
     SpreadsheetApp.flush();
     const verified = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
     if (!verified || verified.vehicleId !== cleanVehicleId ||
@@ -2020,6 +2059,8 @@ function findRowByOpId(sheet, opId) {
             slotIndex: entry.slotIndex,
             timestamp: entry.timestamp,
             status: entry.status,
+            vehicleId: entry.vehicleId,
+            operationHash: entry.operationHash,
             fromIdempotenciaSheet: true
         };
     }
@@ -2084,6 +2125,8 @@ function findRowByOpId(sheet, opId) {
         slotIndex: null,
         timestamp: unique.rowValues[COLS_CORTES.timestamp - 1] || "",
         status: "completed",
+        vehicleId: normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación heredada " + cleanOpId),
+        operationHash: null,
         fromIdempotenciaSheet: false
     };
 }
