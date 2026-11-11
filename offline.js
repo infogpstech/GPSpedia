@@ -437,6 +437,158 @@ export async function removeAddCutPendingOperation(vehicleId,userId,opId){
  });}catch(error){console.error('No se pudo retirar la operación pendiente de agregado de corte.');return null;}
 }
 
+
+
+// --- OPERACIÓN DURABLE DE ALTA DE CORTES (AUG-055) ---
+const ADD_CUT_OPERATION_KEY_PREFIX = 'addCutOperation:';
+function getAddCutOperationKey_(ownerId) {
+    const owner = String(ownerId || '').trim();
+    return owner ? ADD_CUT_OPERATION_KEY_PREFIX + encodeURIComponent(owner) : '';
+}
+function sanitizeAddCutOperation_(value) {
+    if (Array.isArray(value)) return value.map(sanitizeAddCutOperation_);
+    if (!value || typeof value !== 'object') return value;
+    const clean = {};
+    Object.keys(value).forEach(key => {
+        if (/token|password|credential|authorization/i.test(key)) return;
+        clean[key] = sanitizeAddCutOperation_(value[key]);
+    });
+    return clean;
+}
+function isValidAddCutOperationSnapshot_(operation, ownerId) {
+    if (!operation || typeof operation !== 'object' || Array.isArray(operation)) return false;
+    const owner = String(ownerId || '').trim();
+    const id = String(operation.id || '').trim();
+    if (!owner || String(operation.ownerId || '').trim() !== owner) return false;
+    if (!/^OP-[A-Za-z0-9_-]{1,100}$/.test(id)) return false;
+    if (operation.operationType !== 'addOrUpdateCut' || operation.stage !== 2) return false;
+    if (!['processing', 'failed', 'completed'].includes(operation.status)) return false;
+    if (!/^[a-f0-9]{64}$/i.test(String(operation.operationHash || ''))) return false;
+    if (!operation.requestData || typeof operation.requestData !== 'object' || Array.isArray(operation.requestData)) return false;
+    if (!operation.requestData.cutData || typeof operation.requestData.cutData !== 'object' || Array.isArray(operation.requestData.cutData)) return false;
+    const requestVehicleId = operation.requestData.vehicleId == null || operation.requestData.vehicleId === ''
+        ? null : String(operation.requestData.vehicleId).trim();
+    const snapshotVehicleId = operation.vehicleId == null || operation.vehicleId === ''
+        ? null : String(operation.vehicleId).trim();
+    if (requestVehicleId !== snapshotVehicleId) return false;
+    if (requestVehicleId === null && (!operation.requestData.vehicleData || typeof operation.requestData.vehicleData !== 'object')) return false;
+    if (requestVehicleId !== null && operation.requestData.vehicleData !== null) return false;
+    return true;
+}
+export async function getAddCutOperationPendingOperation(ownerId) {
+    const owner = String(ownerId || '').trim(), key = getAddCutOperationKey_(owner);
+    if (!key) return { available: false, operation: null };
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readonly');
+            const request = transaction.objectStore(ADMIN_LOCAL_STATE_STORE).get(key);
+            let entry = null, requestError = null;
+            request.onsuccess = () => { entry = request.result || null; };
+            request.onerror = () => { requestError = request.error || new Error('No se pudo leer la operación durable.'); };
+            transaction.oncomplete = () => {
+                if (requestError) { resolve({ available: false, operation: null }); return; }
+                if (!entry) { resolve({ available: true, operation: null }); return; }
+                const operation = entry.operation;
+                if (entry.key !== key || !isValidAddCutOperationSnapshot_(operation, owner)) {
+                    resolve({ available: false, operation: null, invalid: true });
+                    return;
+                }
+                resolve({ available: true, operation: sanitizeAddCutOperation_(operation) });
+            };
+            transaction.onerror = () => reject(transaction.error || requestError || new Error('Lectura IndexedDB fallida.'));
+            transaction.onabort = () => reject(transaction.error || requestError || new Error('Lectura IndexedDB abortada.'));
+        });
+    } catch (error) {
+        console.error('No se pudo consultar la operación durable de cortes:', error && error.name || 'StorageError');
+        return { available: false, operation: null };
+    }
+}
+export async function saveAddCutOperationPendingOperation(operation) {
+    if (!operation || typeof operation !== 'object') return { saved: false, error: true };
+    const owner = String(operation.ownerId || '').trim(), key = getAddCutOperationKey_(owner);
+    const snapshot = sanitizeAddCutOperation_(operation);
+    if (!key || !isValidAddCutOperationSnapshot_(snapshot, owner)) return { saved: false, error: true, reason: 'invalid-snapshot' };
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let result = null, operationError = null;
+            transaction.oncomplete = () => resolve(result || { saved: false, error: true });
+            transaction.onerror = () => reject(transaction.error || operationError || new Error('Escritura IndexedDB fallida.'));
+            transaction.onabort = () => reject(transaction.error || operationError || new Error('Escritura IndexedDB abortada.'));
+            const get = store.get(key);
+            get.onsuccess = () => {
+                const previous = get.result;
+                if (previous && (!previous.operation ||
+                    String(previous.operation.ownerId || '').trim() !== owner ||
+                    String(previous.operation.id || '').trim() !== snapshot.id ||
+                    String(previous.operation.operationHash || '').toLowerCase() !== snapshot.operationHash.toLowerCase())) {
+                    result = { saved: false, conflict: true, operation: previous.operation || null };
+                    return;
+                }
+                const put = store.put({ key, operation: snapshot, updatedAt: Date.now() });
+                put.onerror = () => { operationError = put.error || new Error('No se pudo guardar la operación durable.'); try { transaction.abort(); } catch (_) {} };
+                put.onsuccess = () => {
+                    const verify = store.get(key);
+                    verify.onerror = () => { operationError = verify.error || new Error('No se pudo verificar la operación durable.'); try { transaction.abort(); } catch (_) {} };
+                    verify.onsuccess = () => {
+                        const saved = verify.result && verify.result.operation;
+                        result = saved && isValidAddCutOperationSnapshot_(saved, owner) &&
+                            saved.id === snapshot.id && saved.operationHash === snapshot.operationHash &&
+                            JSON.stringify(saved) === JSON.stringify(snapshot)
+                            ? { saved: true, key, operation: saved }
+                            : { saved: false, verificationFailed: true };
+                    };
+                };
+            };
+            get.onerror = () => { operationError = get.error || new Error('No se pudo comprobar la operación existente.'); try { transaction.abort(); } catch (_) {} };
+        });
+    } catch (error) {
+        console.error('No se pudo persistir la operación durable de cortes:', error && error.name || 'StorageError');
+        return { saved: false, error: true };
+    }
+}
+export async function removeAddCutOperationPendingOperation(ownerId, operationId, operationHash) {
+    const owner = String(ownerId || '').trim(), key = getAddCutOperationKey_(owner);
+    const id = String(operationId || '').trim(), hash = String(operationHash || '').toLowerCase();
+    if (!key || !id || !/^[a-f0-9]{64}$/.test(hash)) return { removed: false, error: true };
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let result = null, operationError = null;
+            transaction.oncomplete = () => resolve(result || { removed: false, error: true });
+            transaction.onerror = () => reject(transaction.error || operationError || new Error('Limpieza IndexedDB fallida.'));
+            transaction.onabort = () => reject(transaction.error || operationError || new Error('Limpieza IndexedDB abortada.'));
+            const get = store.get(key);
+            get.onsuccess = () => {
+                const entry = get.result;
+                if (!entry) { result = { removed: true, missing: true }; return; }
+                const op = entry.operation;
+                if (!op || String(op.ownerId || '').trim() !== owner || String(op.id || '').trim() !== id ||
+                    String(op.operationHash || '').toLowerCase() !== hash) {
+                    result = { removed: false, conflict: true };
+                    return;
+                }
+                const del = store.delete(key);
+                del.onerror = () => { operationError = del.error || new Error('No se pudo retirar la operación confirmada.'); try { transaction.abort(); } catch (_) {} };
+                del.onsuccess = () => {
+                    const verify = store.get(key);
+                    verify.onerror = () => { operationError = verify.error || new Error('No se pudo verificar la limpieza.'); try { transaction.abort(); } catch (_) {} };
+                    verify.onsuccess = () => { result = verify.result ? { removed: false, verificationFailed: true } : { removed: true }; };
+                };
+            };
+            get.onerror = () => { operationError = get.error || new Error('No se pudo verificar la operación antes de limpiarla.'); try { transaction.abort(); } catch (_) {} };
+        });
+    } catch (error) {
+        console.error('No se pudo retirar la operación durable confirmada:', error && error.name || 'StorageError');
+        return { removed: false, error: true };
+    }
+}
+
 // --- CATALOG PERSISTENCE ---
 
 const CATALOG_SNAPSHOT_COLLECTIONS = ['cortes', 'tutoriales', 'relay', 'logos'];
