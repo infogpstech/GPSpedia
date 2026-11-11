@@ -895,3 +895,7 @@ Se añadió a Services/Test/IndexedDBTransactions.js un escenario de recarga ló
 
 AUG-053 — ITERACIÓN 23 — 2026-11-11
 Se añadió a Services/Test/AdminModalEditRestoreContract.js un contrato que verifica que, si alguna lectura IndexedDB de adminImageUploadPending no está disponible, la UI rechaza el conjunto completo antes de poblar el mapa en memoria o marcar el vehículo como cargado. Resultado: 11/11 PASS en runtime V8 adaptado con ui.js y Services/admin.js vigentes. Es cobertura estática de orden y guardas; no simula IndexedDB real ni navegador. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 24 — 2026-11-11
+Se añadió a Services/Test/IndexedDBTransactions.js una simulación de error de lectura IndexedDB al recuperar adminImageUploadPending. La API debe informar available:false y operation:null, y una lectura posterior debe recuperar el snapshot original con el mismo opId y Data URL. El harness ahora cancela las solicitudes pendientes cuando una transacción aborta. Parsing V8 de la suite: PASS. Prueba aislada del getter real de offline.js ante error de request: PASS. La suite completa de 33 escenarios y Node CLI no se ejecutaron; IndexedDB/navegador reales y multi-pestaña permanecen para Beta. AUG-053 continúa EN PROGRESO. No iniciar AUG-054.

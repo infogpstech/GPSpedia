@@ -23,11 +23,11 @@ function createIndexedDBHarness(options = {}) {
   const settle=()=>{if(finished||processing||pendingRequests)return;if(aborted){finished=true;release(tx);return;}if(requestQueue.length||completionScheduled)return;completionScheduled=true;queueMicrotask(()=>{completionScheduled=false;if(finished||aborted||processing||pendingRequests||requestQueue.length)return;finished=true;if(tx.oncomplete)tx.oncomplete();if(options.onTransactionComplete)options.onTransactionComplete({names,mode});release(tx);});};
   const processNext=()=>{if(!activated||processing||finished||aborted){settle();return;}const item=requestQueue.shift();if(!item){settle();return;}processing=true;const execute=()=>{if(aborted||finished){pendingRequests--;processing=false;settle();return;}try{item.operation();}finally{pendingRequests--;processing=false;if(aborted)settle();else processNext();}};if(item.defer&&options.deferDeletes)queueMicrotask(()=>{if(options.onDeleteQueued)options.onDeleteQueued(execute);else execute();});else queueMicrotask(execute);};
   const enqueue=(request,operation,defer=false)=>{pendingRequests++;requestQueue.push({operation,defer});processNext();return request;};
-  const abortTransaction=()=>{if(aborted||finished)return;aborted=true;for(let index=undoActions.length-1;index>=0;index--)undoActions[index]();undoActions.length=0;if(tx.onabort)tx.onabort();settle();};
+  const abortTransaction=()=>{if(aborted||finished)return;aborted=true;for(let index=undoActions.length-1;index>=0;index--)undoActions[index]();undoActions.length=0;pendingRequests-=requestQueue.length;requestQueue.length=0;if(tx.onabort)tx.onabort();settle();};
   tx={error:behavior==='quota'?new DOMException('Quota exceeded','QuotaExceededError'):null,
    objectStore(name){const record=stores.get(name);return{
     put(value,key){const request={};return enqueue(request,()=>{if(behavior==='quota'||(name==='thumbnails'&&options.quotaFailures>0)){if(options.quotaFailures>0)options.quotaFailures--;request.error=behavior==='quota'?tx.error:new DOMException('Quota exceeded','QuotaExceededError');tx.error=request.error;if(request.onerror)request.onerror();if(tx.onerror)tx.onerror();abortTransaction();return;}const resolvedKey=key===undefined?value[record.keyPath]:key;const hadPrevious=record.values.has(resolvedKey),previousValue=record.values.get(resolvedKey);undoActions.push(()=>{if(hadPrevious)record.values.set(resolvedKey,previousValue);else record.values.delete(resolvedKey);});record.values.set(resolvedKey,structuredClone(value));request.result=resolvedKey;if(request.onsuccess)request.onsuccess();if(behavior==='abort')queueMicrotask(()=>{tx.error=new DOMException('Aborted','AbortError');abortTransaction();});});},
-    get(key){const request={};return enqueue(request,()=>{request.result=record.values.get(key);if(request.onsuccess)request.onsuccess();});},
+    get(key){const request={};return enqueue(request,()=>{if(behavior==='get-error'){request.error=new DOMException('Read failed','UnknownError');tx.error=request.error;if(request.onerror)request.onerror();if(tx.onerror)tx.onerror();abortTransaction();return;}request.result=record.values.get(key);if(request.onsuccess)request.onsuccess();});},
     getAll(){const request={};return enqueue(request,()=>{request.result=[...record.values.values()];if(request.onsuccess)request.onsuccess();});},
     getAllKeys(){const request={};return enqueue(request,()=>{request.result=[...record.values.keys()];if(request.onsuccess)request.onsuccess();});},
     delete(key){const request={};return enqueue(request,()=>{const hadPrevious=record.values.has(key),previousValue=record.values.get(key);undoActions.push(()=>{if(hadPrevious)record.values.set(key,previousValue);});record.values.delete(key);request.result=undefined;if(request.onsuccess)request.onsuccess();if(behavior==='abort')queueMicrotask(()=>{tx.error=new DOMException('Aborted','AbortError');abortTransaction();});},true);}
@@ -475,7 +475,20 @@ async function runIndexedDBTransactionTests() {
         assert.equal(restored.operation.fileData,operation.fileData);
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/32 PASS`);
+    await testAsync('adminImageUploadPending informa lectura no disponible y conserva el snapshot original', async () => {
+        const h=createIndexedDBHarness({transactions:['complete','get-error','complete']}),api=await freshOffline(h,'admin-image-read-failure');
+        const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-READ-ERROR',fieldName:'imgCorte1',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        assert.equal((await api.saveAdminImageUploadPendingOperation(operation)).saved,true);
+        const failedRead=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-READ-ERROR','imgCorte1','USER-A');
+        assert.deepEqual(failedRead,{available:false,operation:null},'un fallo de request.get no debe confundirse con una lectura vacía');
+        const restored=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-READ-ERROR','imgCorte1','USER-A');
+        assert.equal(restored.available,true);
+        assert.equal(restored.operation.id,operation.id,'el snapshot debe seguir disponible después del fallo de lectura');
+        assert.equal(restored.operation.fileData,operation.fileData,'el fallo no debe alterar la Data URL persistida');
+    });
+
+    console.log(`\\nIndexedDB transaction tests: ${passed}/33 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

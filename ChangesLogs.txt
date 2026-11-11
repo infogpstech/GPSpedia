@@ -1616,3 +1616,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan el nuevo escenario y sus límites.
 - No se modificó ui.js, offline.js ni lógica funcional.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 24 — FALLO DE LECTURA EN RECUPERACIÓN ADMIN
+- Services/Test/IndexedDBTransactions.js: el harness permite simular error de request.get, aborta la transacción y cancela solicitudes pendientes; nuevo escenario comprueba respuesta no disponible y conservación del snapshot ADMIN para una lectura posterior.
+- Validación: parsing V8 de la suite PASS; prueba aislada del getter real de offline.js ante un error de lectura PASS. La suite completa de 33 escenarios y Node CLI no se ejecutaron.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md documentan el caso y los límites.
+- No se modificó lógica funcional ni offline.js.
+================================================================================

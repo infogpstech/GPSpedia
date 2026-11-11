@@ -532,3 +532,10 @@ Se añadió un escenario que guarda un reemplazo ADMIN desde una instancia de of
 La suite `AdminModalEditRestoreContract.js` incluye un contrato para el caso en que una o más lecturas de `adminImageUploadPending` no estén disponibles. Comprueba que la UI valide el conjunto completo antes de copiar operaciones al mapa en memoria y antes de marcar la carga del vehículo como completada. Así se evita aceptar un conjunto parcial como estado restaurado.
 
 Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las fuentes vigentes de `ui.js` y `Services/admin.js`. Resultado local de esta iteración: 11/11 PASS en runtime V8 adaptado. Es una prueba de contrato estático; no sustituye IndexedDB real, navegador ni pruebas multi-pestaña de Beta.
+
+
+## Fallo de lectura durante la recuperación ADMIN (AUG-053 — iteración 24)
+
+La suite `IndexedDBTransactions.js` simula un error de `get()` durante la recuperación de un snapshot ADMIN. Comprueba que la API devuelve `{available:false,operation:null}` y que una lectura posterior puede recuperar el mismo opId y Data URL, sin confundir el error con un registro inexistente. El harness cancela las solicitudes pendientes al abortar la transacción, de acuerdo con la semántica de IndexedDB.
+
+Validación de esta iteración: parsing V8 de la suite PASS y prueba aislada del getter real de `offline.js` ante un error de request PASS. La suite completa ampliada a 33 escenarios y el comando Node CLI no se ejecutaron. IndexedDB/navegador reales y concurrencia multi-pestaña permanecen para Beta.

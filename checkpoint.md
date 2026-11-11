@@ -129,3 +129,28 @@ Validación:
 
 Siguiente iteración: revisar una sola brecha local adicional del criterio 8 sin duplicar las coberturas existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 24 — 2026-11-11 — FALLO DE LECTURA EN RECUPERACIÓN ADMIN
+Estado: EN PROGRESO. Se añadió una prueba dinámica al harness para una lectura IndexedDB fallida; AUG-053 sigue abierta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 8ac7e6baf101bb51c8c6bdaf3c2a6ca28a853242. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo:
+- La iteración 23 añadía un contrato estático de UI para impedir que una lectura no disponible se trate como conjunto completo, pero la suite IndexedDB no simulaba un error de request.get durante la recuperación ADMIN.
+- El harness tampoco cancelaba las solicitudes en cola cuando una transacción abortaba por error de lectura, lo que podía dejar la simulación sin finalizar.
+
+Cambios:
+- Services/Test/IndexedDBTransactions.js: el harness simula UnknownError en request.get, propaga error de request/transacción y aborta; al abortar descarta las solicitudes pendientes de la cola.
+- Nuevo escenario ADMIN: guarda un snapshot, fuerza error de lectura, exige {available:false,operation:null} y verifica en una transacción posterior que el mismo opId y Data URL permanecen recuperables.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y ChangesLogs.txt registran el alcance.
+- No se modificó offline.js, ui.js ni lógica funcional.
+
+Validación:
+- Parsing V8 del archivo de suite actualizado: PASS.
+- Prueba aislada del cuerpo real getAdminImageUploadPendingOperation de offline.js con un adaptador que dispara request.onerror, transaction.onerror y transaction.onabort: PASS; devuelve {available:false,operation:null}.
+- La suite completa ampliada a 33 escenarios y el comando Node CLI no se ejecutaron en esta iteración.
+- No se afirma validación con IndexedDB/navegador real ni concurrencia multi-pestaña; permanecen para Beta.
+
+Siguiente iteración: ejecutar la suite IndexedDBTransactions completa (33 escenarios) en runtime local compatible y corregir cualquier fallo reproducible. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
+================================================================================
