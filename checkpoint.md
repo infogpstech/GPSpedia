@@ -1817,3 +1817,28 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — DESACTIVACIÓN Y REGISTROS DE CUENTAS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado antes de esta iteración: a366d347738c6b555144fd20a64ad85f0b8b2cf0.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios respecto de la base.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisado el flujo de deleteUser desde users.html, el enrutamiento de api-config.js y el handler handleDeleteUser() en AUTH.
+- Confirmado en el código que la acción aplica validación de sesión, unicidad de IDs/sesión, protección contra autoeliminación y matriz de permisos por rol.
+- Documentado que la cuenta se desactiva lógicamente mediante tombstone __deleted__, se limpian las columnas B:H y se conservan el ID (A) y TermsAcceptance (I).
+- Revisada la revocación de intentos de login pendientes y eliminación de filas ActiveSessions; un fallo parcial deja la cuenta desactivada y requiere reintento de limpieza por Desarrollador.
+- En Services/Test/Auth.js no se localizó un caso de prueba específico para handleDeleteUser(); la observación se limita a ese archivo.
+- Evidencia incorporada en Legal/AUG-046_revision_preliminar.md, sección 15.
+
+Límites:
+- Revisión estática del código versionado; no se consultaron hojas productivas ni se ejecutaron eliminaciones, pruebas con sesiones o acciones de Apps Script.
+- No se modificó código funcional, datos productivos, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+- La validación operativa y la aprobación interna corporativa de AUG-046 siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar exclusivamente AUG-046 con una comprobación técnica nueva, sin repetir secciones anteriores ni inferir el comportamiento de recursos productivos.
+================================================================================
