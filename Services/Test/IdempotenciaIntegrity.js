@@ -22,5 +22,6 @@ function runIdempotenciaIntegrityTests(){
 
  run("migración completa un registro pending existente",()=>{const p=getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"7",slotIndex:1,status:"pending",rowIndex:3}]]));assert(p.entriesToComplete.length===1&&p.entriesToComplete[0].rowIndex===3&&p.entriesToWrite.length===0);});
  run("migración rechaza asociación incompatible",()=>{let e;try{getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"8",slotIndex:1,status:"completed",rowIndex:3}]]));}catch(x){e=x;}assert(!!e&&String(e.message||e).includes("asociación diferente"));});
+ run("migración histórica no reutiliza opId ya vinculado a una huella",()=>{let e;try{getNewIdempotenciaEntries([{opId:"OP-a",vehicleId:"7",slotIndex:1,timestamp:"10/11/2026"}],new Map([["OP-a",{vehicleId:"7",slotIndex:1,status:"completed",operationHash:"a".repeat(64),rowIndex:3}]]));}catch(x){e=x;}assert(!!e&&String(e.message||e).includes("huella"));});
  return{status:failed?"FAIL":"PASS",passed,failed,results:out};
 }
