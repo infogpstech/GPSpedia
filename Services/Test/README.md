@@ -520,3 +520,8 @@ El caso se ejecutó de forma aislada y también quedó aprobado dentro de la sui
 ## Validación integral de IndexedDBTransactions (AUG-053 — iteración 21)
 
 La suite completa ejecutó 31/31 escenarios con cero fallos en runtime V8 adaptado. Se cargaron las funciones reales de `offline.js` y las dependencias locales; la importación dinámica se sustituyó por una factoría y se adaptaron IndexedDB, `queueMicrotask`, `Blob`, `DOMException`, `structuredClone` y temporizadores. Los errores de aborto y cuota observados en el registro corresponden a rutas negativas esperadas de los escenarios. No se ejecutó el comando Node CLI original ni se probó IndexedDB/navegador real o concurrencia multi-pestaña; estas validaciones permanecen para Beta.
+
+
+## Persistencia ADMIN después de recrear el módulo (AUG-053 — iteración 22)
+
+Se añadió un escenario que guarda un reemplazo ADMIN desde una instancia de offline.js, crea una instancia nueva sobre el mismo almacén IndexedDB del harness y recupera el snapshot con el mismo propietario, opId y Data URL. También confirma que una cuenta distinta no puede recuperarlo. La suite completa quedó en 32/32 PASS en runtime V8 adaptado. Esta prueba verifica continuidad entre instancias sobre el almacén simulado; no equivale a una recarga real del navegador ni a IndexedDB real. La recarga/navegador/IndexedDB reales y concurrencia multi-pestaña permanecen para Beta.

@@ -84,3 +84,25 @@ Cambios:
 
 Siguiente iteración: continuar la revisión del criterio 8 para seleccionar una sola brecha local adicional que no esté cubierta por las suites existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 22 — 2026-11-11 — RECUPERACIÓN ADMIN TRAS RECREAR EL MÓDULO
+Estado: EN PROGRESO. Se cubrió una brecha local del criterio 8; AUG-053 sigue abierta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: c36fd25cb138a643e125f7eb48200a7adebebc21. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo:
+- La suite comprobaba persistencia y recuperación ADMIN dentro de una instancia de offline.js, pero no recreaba el módulo entre ambas operaciones para representar una recarga lógica.
+
+Cambio:
+- Services/Test/IndexedDBTransactions.js: nuevo escenario que guarda un reemplazo ADMIN, crea una instancia nueva del módulo sobre el mismo almacén del harness y recupera el snapshot verificando ownerId, opId y Data URL; una cuenta distinta no puede recuperarlo.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, checkpoint.md y ChangesLogs.txt: documentan el escenario y sus límites.
+- No se modificó offline.js ni lógica funcional.
+
+Validación:
+- Suite completa Services/Test/IndexedDBTransactions.js: 32/32 PASS, cero fallos, en runtime V8 adaptado con funciones reales de offline.js y adaptadores locales.
+- El escenario comprueba continuidad entre instancias sobre el almacén simulado; no representa recarga real del navegador ni IndexedDB real.
+- No se ejecutó Node CLI original, navegador/IndexedDB real ni concurrencia multi-pestaña; permanecen para Beta.
+
+Siguiente iteración: revisar una sola brecha local adicional del criterio 8 sin duplicar las coberturas existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
+================================================================================

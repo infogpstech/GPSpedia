@@ -1599,3 +1599,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: actualizan la evidencia y distinguen el runtime adaptado de Node CLI/IndexedDB real.
 - No se modificó lógica funcional ni el harness en esta iteración.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 22 — RECUPERACIÓN ADMIN TRAS RECREAR EL MÓDULO
+- Services/Test/IndexedDBTransactions.js: nuevo escenario que persiste un reemplazo ADMIN, recrea la instancia del módulo sobre el mismo almacén del harness y comprueba recuperación del ownerId, opId y Data URL; una cuenta distinta no puede recuperar la operación.
+- Suite completa: 32/32 PASS en runtime V8 adaptado. La prueba no equivale a recarga real del navegador ni IndexedDB real.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: documentan evidencia, alcance y validaciones diferidas.
+- No se modificó offline.js ni lógica funcional.
+================================================================================

@@ -887,3 +887,7 @@ Criterio 8: se detectó que la suite IndexedDBTransactions cubría aborto de esc
 
 AUG-053 — ITERACIÓN 21 — 2026-11-11
 Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js ampliada a 31 escenarios: 31/31 PASS, cero fallos, en runtime V8 adaptado con las funciones reales de offline.js y adaptadores de dependencias de navegador. Incluye el nuevo escenario QuotaExceededError de persistencia ADMIN. No se ejecutó el comando Node CLI ni IndexedDB/navegador real o multi-pestaña; permanecen para Beta. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 22 — 2026-11-11
+Se añadió a Services/Test/IndexedDBTransactions.js un escenario de recarga lógica: guarda adminImageUploadPending con una instancia de offline.js, crea otra instancia sobre el mismo almacén IndexedDB del harness y verifica recuperación del mismo opId, ownerId y Data URL, además de impedir la lectura por otra cuenta. Suite completa: 32/32 PASS en runtime V8 adaptado. No representa recarga real del navegador ni IndexedDB real; estas validaciones y concurrencia multi-pestaña permanecen para Beta. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.

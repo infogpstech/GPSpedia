@@ -361,6 +361,19 @@ async function runIndexedDBTransactionTests() {
         assert.equal(Object.prototype.hasOwnProperty.call(stored,'SessionToken'),false);
         assert.equal(Object.prototype.hasOwnProperty.call(stored,'credential'),false);
     });
+    await testAsync('adminImageUploadPending conserva el snapshot tras recrear el módulo (recarga)', async () => {
+        const h=createIndexedDBHarness(),firstApi=await freshOffline(h,'admin-image-before-reload');
+        const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-RELOAD',fieldName:'imgCorte2',
+            fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        assert.equal((await firstApi.saveAdminImageUploadPendingOperation(operation)).saved,true);
+        const reloadedApi=await freshOffline(h,'admin-image-after-reload');
+        const restored=await reloadedApi.getAdminImageUploadPendingOperation('VEH-ADMIN-RELOAD','imgCorte2','USER-A');
+        assert.equal(restored.available,true);
+        assert.equal(restored.operation.id,operation.id);
+        assert.equal(restored.operation.ownerId,'USER-A');
+        assert.equal(restored.operation.fileData,operation.fileData);
+        assert.equal((await reloadedApi.getAdminImageUploadPendingOperation('VEH-ADMIN-RELOAD','imgCorte2','USER-B')).operation,null);
+    });
     await testAsync('adminImageUploadPending aísla el mismo vehículo y campo entre propietarios', async () => {
         const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-owner-isolation');
         const make=(ownerId,id)=>({id,ownerId,vehicleId:'VEH-ADMIN-2',fieldName:'imgCorte2',
@@ -462,7 +475,7 @@ async function runIndexedDBTransactionTests() {
         assert.equal(restored.operation.fileData,operation.fileData);
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/31 PASS`);
+    console.log(`\nIndexedDB transaction tests: ${passed}/32 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
