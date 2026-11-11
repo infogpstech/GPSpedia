@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createEditBackupStore } from "../../editBackupStore.js";
+import { createEditBackupStore, getEditBackupFieldsToRestore } from "../../editBackupStore.js";
 
 class MemoryStorage {
     constructor() { this.values = new Map(); }
@@ -81,4 +81,46 @@ test("una copia de edición antigua permanece recuperable hasta el descarte expl
     assert.equal(store.remove("V-OLD"), true);
     assert.equal(store.read("V-OLD").backup, null);
 });
-console.log("Edit backup isolation: " + passed + "/8 PASS");
+
+test("el descarte restaura solo campos editables y excluye metadatos de la ficha", () => {
+    const snapshot = {
+        id: "V-1", marca: "Toyota", modelo: "Corolla", vin: "VIN-OLD",
+        imgCorte1: "https://old-image", contadorBusqueda: 10, timestamp: "old"
+    };
+    const current = {
+        id: "V-2", marca: "Honda", modelo: "Civic", vin: "VIN-NEW",
+        imgCorte1: "https://new-image", contadorBusqueda: 99, timestamp: "new"
+    };
+    const allowed = new Set(["modelo", "vin", "imgCorte1"]);
+    assert.deepEqual(
+        getEditBackupFieldsToRestore(snapshot, current, allowed).sort(),
+        ["imgCorte1", "modelo", "vin"]
+    );
+});
+
+test("la comparación usa la ficha vigente recuperada tras una edición interrumpida", () => {
+    const snapshot = { id: "V-1", modelo: "Corolla", marca: "Toyota", categoria: "Sedan" };
+    const latestCatalogItem = { id: "V-1", modelo: "Civic", marca: "Honda", categoria: "Sedan" };
+    const allowed = new Set(["modelo", "categoria"]);
+    assert.deepEqual(
+        getEditBackupFieldsToRestore(snapshot, latestCatalogItem, allowed),
+        ["modelo"]
+    );
+});
+
+test("no inicia restauración si falta una referencia actual verificable", () => {
+    assert.throws(
+        () => getEditBackupFieldsToRestore({ id: "V-1", modelo: "Corolla" }, null, new Set(["modelo"])),
+        /snapshot, ficha actual y whitelist/
+    );
+});
+
+test("no intenta restaurar campos del snapshot que no pertenecen al modal", () => {
+    const snapshot = { id: "V-1", marca: "Toyota", modelo: "Corolla", videoGuiaDesarmeUrl: "url" };
+    const current = { id: "V-2", marca: "Honda", modelo: "Civic", videoGuiaDesarmeUrl: "other" };
+    assert.deepEqual(
+        getEditBackupFieldsToRestore(snapshot, current, new Set(["modelo"])),
+        ["modelo"]
+    );
+});
+\nconsole.log("Edit backup isolation: " + passed + "/12 PASS");
