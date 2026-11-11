@@ -863,3 +863,13 @@ Validación diferida a Beta: navegación visual real en navegador/dispositivos, 
 Archivos funcionales: navigation.js, ui.js, auth.js, main.js, search-utils.js y pys-data.js. Suite: Services/Test/GlobalSearch.js. Instrucciones: Services/Test/README.md.
 Siguiente tarea: se determinará en la próxima iteración; no se inició ninguna otra tarea.
 ================================================================================
+
+
+================================================================================
+AUG-050 — AVANCE PARCIAL — PERSISTENCIA DE FIRMAS VIN — 2026-11-11
+- Corregido el contrato de persistencia: firmas guardadas con versión de algoritmo y fingerprint determinista del catálogo (IDs, marca, modelo, rango, versiones y VIN).
+- La restauración exige coincidencia de versión, fingerprint, conteo y estructura; datos antiguos, corruptos o de otro catálogo se rechazan sin alterar el Map existente.
+- Añadido ensureVinSignatures para reutilizar memoria, restaurar caché compatible o recalcular/guardar cuando cambia el catálogo.
+- Suite Services/Test/VinSignaturePersistence.js con localStorage simulado y datos sintéticos.
+- Esta entrega resuelve solo persistencia. Resolución ambigua, classKey, umbral, rangos, VIN, UI y navegación siguen pendientes en AUG-050.
+================================================================================

@@ -26,6 +26,10 @@ export function doYearRangesOverlap(desdeA, hastaA, desdeB, hastaB) {
     return minD <= maxH;
 }
 
+export function fingerprintVinCatalog(records) {
+ const rows=(Array.isArray(records)?records:[]).map(record=>{const r=record||{};return{id:String(r.id==null?"":r.id),marca:String(r.marca||"").trim().toUpperCase(),modelo:normalizeModelName(r.modelo),anoDesde:String(r.anoDesde==null?"":r.anoDesde).trim(),anoHasta:String(r.anoHasta==null?"":r.anoHasta).trim(),versiones:parseVersionsList(r.versionesAplicables).map(v=>v.trim().toUpperCase()),vin:(Array.isArray(r.vin)?r.vin:(r.vin==null?[]:[r.vin])).map(v=>normalizeVin(v))};});
+ const source=JSON.stringify(rows.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:JSON.stringify(a)<JSON.stringify(b)?-1:JSON.stringify(a)>JSON.stringify(b)?1:0));let hash=2166136261;for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619);}return `${rows.length}:${(hash>>>0).toString(16).padStart(8,"0")}`;
+}
 export function parseVersionsList(versionesStr) {
     if (!versionesStr) return [];
     const parts = String(versionesStr).split(/[,/\\\\]+/);
@@ -65,7 +69,8 @@ export class VinDifferentialEngine {
         this.signatures = new Map();
         this.conflictLog = [];
         this.auditLog = [];
-        this.version = "1.0.0";
+        this.catalogFingerprint = null;
+        this.version = "1.1.0";
     }
 
     buildSampleMatrix(records) {
@@ -273,6 +278,7 @@ export class VinDifferentialEngine {
     }
 
     calculateSignatures(records) {
+        this.catalogFingerprint=fingerprintVinCatalog(records);
         const matrixByLength = this.buildSampleMatrix(records);
         this.signatures.clear();
         this.conflictLog = [];
@@ -532,57 +538,12 @@ export class VinDifferentialEngine {
 }
 
 export class VinSignatureStore {
-    constructor() {
-        this.storageKey = "gpspedia_vin_signatures";
-        this.metaKey = "gpspedia_vin_signatures_meta";
-    }
-
-    saveSignatures(engine) {
-        if (!engine || !engine.signatures) return false;
-        try {
-            const list = Array.from(engine.signatures.values());
-            localStorage.setItem(this.storageKey, JSON.stringify(list));
-            localStorage.setItem(this.metaKey, JSON.stringify({
-                version: engine.version,
-                updatedAt: new Date().toISOString(),
-                count: list.length,
-                conflicts: engine.conflictLog || []
-            }));
-            return true;
-        } catch (e) {
-            console.error("Error persistiendo firmas diferenciales de VIN:", e);
-            return false;
-        }
-    }
-
-    loadSignatures(engine) {
-        if (!engine) return false;
-        try {
-            const raw = localStorage.getItem(this.storageKey);
-            if (!raw) return false;
-            const list = JSON.parse(raw);
-            if (Array.isArray(list)) {
-                engine.signatures.clear();
-                list.forEach(sig => {
-                    engine.signatures.set(sig.classKey, sig);
-                });
-                return true;
-            }
-        } catch (e) {
-            console.error("Error cargando firmas diferenciales de VIN:", e);
-        }
-        return false;
-    }
-
-    getMetadata() {
-        try {
-            const raw = localStorage.getItem(this.metaKey);
-            return raw ? JSON.parse(raw) : null;
-        } catch (e) {
-            return null;
-        }
-    }
+ constructor(){this.storageKey="gpspedia_vin_signatures";this.metaKey="gpspedia_vin_signatures_meta";}
+ saveSignatures(engine){if(!engine||!engine.signatures||!engine.catalogFingerprint)return false;try{const list=[...engine.signatures.values()],meta={version:engine.version,catalogFingerprint:engine.catalogFingerprint,updatedAt:new Date().toISOString(),count:list.length,conflicts:engine.conflictLog||[]};localStorage.setItem(this.storageKey,JSON.stringify(list));localStorage.setItem(this.metaKey,JSON.stringify(meta));return true;}catch(error){console.error("Error persistiendo firmas diferenciales de VIN:",error);return false;}}
+ loadSignatures(engine,records){if(!engine||!Array.isArray(records))return false;try{const raw=localStorage.getItem(this.storageKey),rawMeta=localStorage.getItem(this.metaKey);if(!raw||!rawMeta)return false;const list=JSON.parse(raw),meta=JSON.parse(rawMeta),fp=fingerprintVinCatalog(records),statuses=new Set(["validada","calculada","pendiente_revision","insuficiente"]);const valid=Array.isArray(list)&&meta&&meta.version===engine.version&&meta.catalogFingerprint===fp&&meta.count===list.length&&list.every(s=>s&&typeof s.classKey==="string"&&s.classKey.length>0&&statuses.has(s.status)&&s.id===`SIG-${s.classKey}`&&(s.algorithmVersion===undefined||s.algorithmVersion===engine.version));if(!valid)return false;const restored=new Map();for(const s of list){if(restored.has(s.classKey))return false;restored.set(s.classKey,s);}engine.signatures.clear();restored.forEach((s,k)=>engine.signatures.set(k,s));engine.conflictLog=Array.isArray(meta.conflicts)?meta.conflicts:[];engine.catalogFingerprint=fp;return true;}catch(error){console.error("Error cargando firmas diferenciales de VIN:",error);return false;}}
+ getMetadata(){try{const raw=localStorage.getItem(this.metaKey);return raw?JSON.parse(raw):null;}catch(error){return null;}}
 }
+export function ensureVinSignatures(records,engine=vinDifferentialEngine,store=vinSignatureStore){if(!Array.isArray(records)||!engine||!store)return null;const fp=fingerprintVinCatalog(records);if(engine.catalogFingerprint===fp)return engine.signatures;if(store.loadSignatures(engine,records))return engine.signatures;engine.calculateSignatures(records);store.saveSignatures(engine);return engine.signatures;}
 
 export const vinDifferentialEngine = new VinDifferentialEngine();
 export const vinSignatureStore = new VinSignatureStore();

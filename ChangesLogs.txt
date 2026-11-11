@@ -1172,3 +1172,11 @@ AUG-049 — BÚSQUEDA GLOBAL Y NAVEGACIÓN POR SECCIÓN — 2026-11-10
 - Services/Test/GlobalSearch.js: 21 pruebas de lógica; Services/Test/README.md documenta ejecución.
 - No se modificaron endpoints, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-050 — AVANCE PARCIAL DE PERSISTENCIA VIN — 2026-11-11
+- VinDifferentialEngine.js: versionado, fingerprint determinista, validación de metadatos y restauración condicional; nuevo ensureVinSignatures.
+- Services/Test/VinSignaturePersistence.js: pruebas de compatibilidad, invalidación, corrupción y recálculo.
+- Services/Test/README.md: instrucciones de la suite.
+================================================================================

@@ -273,3 +273,9 @@ La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `Activ
 - Ejecutar `node --experimental-default-type=module Services/Test/GlobalSearch.js`.
 - Comprueba normalización de acentos, HTML y entidades; búsqueda en los tres slots de Cortes; prioridad exacta/parcial/descriptiva; campos de Relay, Tutoriales y PyS; años frente a modelos numéricos; clasificación y autoapertura por sección; deep links y promesas compartidas.
 - La suite usa datos sintéticos y no llama a Apps Script ni a endpoints operativos.
+
+
+## Persistencia de firmas diferenciales VIN (AUG-050 — avance)
+- Ejecutar `node --experimental-default-type=module Services/Test/VinSignaturePersistence.js`.
+- Comprueba fingerprint determinista, invalidación por cambios, versionado, restauración compatible, rechazo de caché obsoleta/corrupta y recálculo.
+- Usa localStorage simulado y datos sintéticos; no consulta catálogo operativo ni servicios externos.

@@ -2092,3 +2092,19 @@ Archivos: navigation.js, ui.js, auth.js, main.js, search-utils.js, pys-data.js, 
 Continuidad: AUG-049 cerrada. La siguiente tarea se seleccionará en una iteración posterior; no iniciar más trabajo en esta iteración.
 
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-050 — AVANCE PARCIAL DE PERSISTENCIA — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD padre: fb4b4b66e1b4af4f283b1199beed95b45e359d26.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; preservada.
+Estado: AUG-050 EN PROGRESO; se cierra únicamente este subproblema de persistencia.
+
+Cambios: VinDifferentialEngine.js versionado 1.1.0; fingerprint determinista de ID/marca/modelo/rango/versiones/VIN; metadatos y validación de caché; carga compatible sin mutar Map si falla; ensureVinSignatures. Suite Services/Test/VinSignaturePersistence.js; README de pruebas; Tareas.txt actualizado.
+Validación: seis casos aislados de persistencia y parsing del motor. Se usa localStorage simulado y datos sintéticos. No se consultan servicios ni datos operativos.
+Pendiente en AUG-050: classKey/identidad, ambigüedad, normalización VIN, umbral/competidores, rangos, extractSharedChars, UI/navegación y pruebas restantes. No iniciar AUG-051.
+Sin cambios en endpoints, Apps Script, Spreadsheet, deployments, datos productivos o rama base.
+Siguiente iteración: continuar AUG-050 con una corrección lógica independiente, priorizando resolución por identidad completa y ambigüedad.
+================================================================================
