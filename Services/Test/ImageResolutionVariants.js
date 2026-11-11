@@ -46,4 +46,4 @@ assert.match(offlineSource, /canvas\.toBlob\(blob=>\{[\s\S]*?\},\"image\/png\"\)
 assert.match(offlineSource, /entry\.fileId===expected\.fileId&&Number\(entry\.width\)===expected\.width/);
 assert.match(offlineSource, /Una entrada heredada indexada solo por ID no declara su resolución/);
 
-console.log(`Image resolution variants: 18/18 PASS`);
+console.log('Image resolution variants: PASS');
