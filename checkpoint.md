@@ -1,4 +1,32 @@
 ================================================================================
+AUG-053 — ITERACIÓN 11 — 2026-11-11 — RESTAURACIÓN ACOTADA DEL EDITOR IN-MODAL
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 26cc7e5d335fd76289b2fcd2cca7cf81b8ab09c0. HEAD antes de este checkpoint: ac5ac581e5a74633067ad106e852cb2eef1bb5db. Rama base verificada: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo corregido:
+- exitModalEditMode comparaba todas las propiedades del snapshot completo. Si el búfer de edición no estaba disponible, podía considerar modificados id, marca, contadores y metadatos ajenos al modal; el backend los rechazaría por whitelist y el descarte no podría terminar.
+- Se añadió getEditBackupFieldsToRestore en editBackupStore.js. La selección exige snapshot, ficha actual verificable y whitelist; solo devuelve propiedades permitidas que realmente difieren.
+- ui.js define ADMIN_MODAL_EDIT_FIELDS con los mismos campos base que Services/admin.js y los campos dinámicos tipoCorte/configRelay/ubicacionCorte/colorCableCorte 1–3. El descarte usa el búfer vigente del vehículo y, si falta, obtiene getCatalogData y localiza la ficha actual antes de seleccionar campos. La verificación posterior a las escrituras se conserva.
+- Los reemplazos de imagen siguen reconciliándose antes del descarte y el baseline confirmado se mantiene; no se amplió el acceso de Gefe ni la privacidad por ownerId.
+
+Archivos funcionales: ui.js y editBackupStore.js.
+Pruebas/documentación: Services/Test/EditBackupIsolation.js (12 escenarios), Services/Test/AdminModalEditRestoreContract.js (3 contratos), Services/Test/README.md, ChangesLogs.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+
+Validación local en runtime V8 adaptado:
+- Parsing de ui.js, editBackupStore.js, Services/admin.js y las suites nuevas: PASS.
+- EditBackupIsolation: 12/12 PASS.
+- AdminModalEditRestoreContract: 3/3 PASS (whitelist UI/backend, helper de restauración y fallback a ficha actual).
+- AdminModalEditSecurity: 13/13 PASS.
+- ActionDispatchContract: 11/11 PASS.
+No ejecutado: Node CLI literal, navegador/IndexedDB real, recarga y multi-pestaña reales, ni integración Apps Script/Spreadsheet/Drive. Se mantienen como validaciones Beta; no se simularon ni se reportan como realizadas.
+
+Commits de esta iteración (publicados secuencialmente por archivo): 057508d3f9eca0ac9636333fc09e21b5d3b6b06f, b83f017a873bb2c1c6656031ca2e8f1be35977a4, 470e33fa6c6492f6e47a083988a0fefb05b0eb80, ebd1fe7ba0e6d49bdcd0c2941db91eb33abc0f1f, 4784f7135d370bd237c180a8594eb7fa7ec2b390, 0a3c6e11efdbd3a58a6eef7b7c11774856d7b54a, 7b38ff9571a6cc8abf027b68641233e77139ab68 y ac5ac581e5a74633067ad106e852cb2eef1bb5db. Rama base sin cambios.
+
+Siguiente iteración: continuar exclusivamente con el siguiente bloque de validación local pendiente de AUG-053, centrado en el ciclo combinado de snapshot de edición y operaciones pendientes de imagen (recuperación, reconciliación, descarte y preservación por ownerId). No iniciar AUG-054.
+================================================================================
+
+
+================================================================================
 AUG-053 — ITERACIÓN 4 — 2026-11-11 — POLÍTICA DE RETENCIÓN Y LIMPIEZA SEGURA
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 4faef14c4df300918c570b286b77c2fdd45044fa. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
