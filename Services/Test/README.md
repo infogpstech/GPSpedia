@@ -607,3 +607,9 @@ Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes
 - `Services/Test/FileReadRecovery.js`: ejecutar `runFileReadRecoveryTests({ frontend })`. Cubre FileReader success/error/abort, archivo vacío, imagen opcional ausente, excepción síncrona, fallos en etapas 2 y 3, restauración de overlay/botón/flags, conservación de datos y reintento sin recargar.
 - Validación local: FileReadRecovery 13/13 PASS; CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 del módulo frontend PASS.
 - `AddCutOperationRecoveryFlow.js` presenta 0/3 tanto con la fuente inicial como con la modificada; falla preexistente, no atribuida a AUG-057 y no usada como validación aprobada.
+
+
+## AUG-058 — Serialización de recuperación de operaciones pendientes
+- `Services/Test/AddCutOperationRecoveryConcurrency.js`: ejecutar `runAddCutOperationRecoveryConcurrencyTests({ frontend })`.
+- Cubre single-flight entre init/online/visibilitychange, checkOperation lento, reanudación después de submit en etapas 1–3, restauración de snapshots pending, conservación de completed no confirmado y contador de loading compartido.
+- Validación local: 9/9 PASS en runtime V8 adaptado; parsing V8 del módulo frontend PASS. Navegador real, eventos del ciclo de vida e IndexedDB real quedan para Beta.
