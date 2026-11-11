@@ -1273,3 +1273,10 @@ La suite incorpora un caso de expiración, eliminación y regeneración. No se m
 Se corrigió el mock IndexedDB de delete en Services/Test/IndexedDBTransactions.js y se incorporó la limpieza oportunista TTL también al iniciar compresión. Se conserva el TTL de 30 días y el alcance de la iteración.
 Validación: parsing sintáctico V8 de offline.js y de la suite aprobado. La ejecución funcional completa no pudo completarse en el entorno de herramientas disponible; requiere Node CLI local. No se declara la suite como aprobada.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — RECTIFICACIÓN DE VALIDACIÓN DE ITERACIÓN 4
+Se corrigió la separación sintáctica entre los métodos getAll y delete del harness de IndexedDB. Parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado después de la corrección.
+La suite funcional completa no se ejecutó en Node CLI y no se declara aprobada. Se mantiene pendiente su ejecución reproducible en entorno Node.
+================================================================================
