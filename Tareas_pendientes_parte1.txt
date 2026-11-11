@@ -712,6 +712,8 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 ### AUG-050 — Corregir resolución e integración del motor diferencial VIN
 - Origen: H-AUD-037-007; ampliación técnica AUD-T-004/H-AUD-004-001 a 003.
 - Prioridad: Alta por riesgo de identificar variante vehicular incorrecta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-11.
+- Cierre: criterios 1–4 y 6–10 implementados y validados localmente; medición con catálogo operativo y validación visual real reservadas a Beta.
 - Criterios:
   1. Cargar firmas guardadas cuando sean compatibles con versión/huella del catálogo; recalcular e invalidar de forma controlada cuando los datos cambien.
   2. Resolver la firma por classKey o identidad completa (marca, modelo, rango y versión), no solo marca+modelo.
@@ -846,3 +848,8 @@ AUG-050 — AVANCE PARCIAL — SEMÁNTICA DE RANGOS VIN — 2026-11-11
 - VinDifferentialEngine.js actualizado a 1.3.0 para invalidar firmas/cachés calculadas con el criterio anterior.
 - Suite Services/Test/VinYearRangeSemantics.js con 11 escenarios sintéticos; instrucciones añadidas al README.
 - AUG-050 permanece EN PROGRESO. No iniciar AUG-051.
+
+
+AUG-050 — CIERRE — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Persistencia integrada; identidad classKey; ambigüedad visible sin autoapertura; versiones/generaciones mapeadas; extractSharedChars compara posición y valor; búsqueda combinatoria perezosa con presupuesto de 20,000 evaluaciones por clase y métricas. Criterios VIN completo/prefijos, umbral, competidores y rangos se resolvieron en iteraciones previas. Suites locales registradas en Services/Test/README.md. Medición con catálogo real y validación visual en navegador reservadas a Beta. AUG-051 no iniciada.

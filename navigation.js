@@ -1,4 +1,4 @@
-import { vinDifferentialEngine } from './VinDifferentialEngine.js';
+import { vinDifferentialEngine, vinSignatureStore, ensureVinSignatures, mapVinMatchesToRecords } from './VinDifferentialEngine.js';
 // GPSpedia Navigation Module | Version: 2.1.6
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
@@ -106,46 +106,33 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
     }
 
-    /* TAREA 4.1: INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN Y DIFERENCIACIÓN DE VERSIONES */
-    // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
+    /* AUG-050: búsqueda VIN por classKey, con ambigüedad explícita */
     const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
     let isVinQuery = false;
-    let targetVinPrefix = "";
-    let identifiedExactVersion = null;
     let matchedVehicleById = null;
-
+    let vinChoiceItems = [];
+    let vinMappingFailed = false;
     if (cleanVinSearch.length >= 5 && cleanVinSearch.length <= 25) {
-        // 1. Comprobación directa con VIN completo o prefijo sin serial
-        const vinExactMatch = cortes.find(c => {
+        const directVinMatch = cortes.find(c => {
             const vins = parseVinCollectionNavigation(c.vin);
             return vins.some(v => v === cleanVinSearch || cleanVinSearch.startsWith(v) || v.startsWith(cleanVinSearch));
         });
-
-        if (vinExactMatch) {
-            isVinQuery = true;
-            matchedVehicleById = vinExactMatch.id;
-        }
-
-        // 2. Si no hubo coincidencia directa exacta, o para modelos con múltiples versiones, consultar el motor diferencial
+        if (directVinMatch) { isVinQuery = true; matchedVehicleById = directVinMatch.id; }
         try {
-            if (vinDifferentialEngine.signatures.size === 0 && cortes) {
-                vinDifferentialEngine.calculateSignatures(cortes);
-            }
+            ensureVinSignatures(cortes, vinDifferentialEngine, vinSignatureStore);
             const diffMatch = vinDifferentialEngine.queryVehicle({ vin: cleanVinSearch });
-            if (diffMatch && diffMatch.match && (diffMatch.identificationType === 'completa' || diffMatch.identificationType === 'parcial')) {
-                const matchedVehicle = cortes.find(c =>
-                    c.marca.toUpperCase() === diffMatch.match.marca.toUpperCase() &&
-                    c.modelo.toUpperCase() === diffMatch.match.modelo.toUpperCase()
-                );
-                if (matchedVehicle) {
-                    isVinQuery = true;
-                    matchedVehicleById = matchedVehicle.id;
-                    identifiedExactVersion = diffMatch.match.version;
-                }
+            if (diffMatch && diffMatch.identificationType === "ambigua" && Array.isArray(diffMatch.matches)) {
+                vinChoiceItems = mapVinMatchesToRecords(diffMatch.matches, cortes)
+                    .map(item => ({ ...item, _sectionType: "corte", _vinAmbiguousChoice: true }));
+                isVinQuery = true;
+                matchedVehicleById = null;
+                if (!vinChoiceItems.length) vinMappingFailed = true;
+            } else if (diffMatch && diffMatch.identificationType === "completa" && diffMatch.match) {
+                vinChoiceItems = mapVinMatchesToRecords([diffMatch.match], cortes)
+                    .map(item => ({ ...item, _sectionType: "corte", _vinAmbiguousChoice: false }));
+                if (vinChoiceItems.length) { isVinQuery = true; matchedVehicleById = vinChoiceItems[0].id; }
             }
-        } catch (e) {
-            console.error('Error en búsqueda de motor diferencial:', e);
-        }
+        } catch (e) { console.error('Error en búsqueda de motor diferencial:', e); }
     }
 
     // --- BÚSQUEDA GLOBAL MULTI-SECCIÓN ---
@@ -156,24 +143,14 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         loadPysData().catch(error => console.warn('No se pudo cargar PyS para la búsqueda global:', error));
     }
 
-    // El motor diferencial de VIN puede reconocer prefijos que no aparecen literalmente en el registro.
-    const searchableCuts = cortes.map(item => {
-        if (isVinQuery && matchedVehicleById && String(item.id) === String(matchedVehicleById) && identifiedExactVersion) {
-            return { ...item, _identifiedVersion: identifiedExactVersion };
-        }
-        return item;
-    });
-    datosFiltrados = buildGlobalSearchResults({
-        query: busqueda,
-        cortes: searchableCuts,
-        relay,
-        tutoriales,
-        pys: pysItems
-    });
-
-    if (isVinQuery && matchedVehicleById && !datosFiltrados.some(item =>
+    datosFiltrados = buildGlobalSearchResults({ query: busqueda, cortes, relay, tutoriales, pys: pysItems });
+    if (vinMappingFailed) datosFiltrados = [];
+    if (vinChoiceItems.length > 0) {
+        const ids = new Set(vinChoiceItems.map(item => String(item.id)));
+        datosFiltrados = [...vinChoiceItems, ...datosFiltrados.filter(item => item._sectionType !== 'corte' || !ids.has(String(item.id)))];
+    } else if (isVinQuery && matchedVehicleById && !datosFiltrados.some(item =>
         item._sectionType === 'corte' && String(item.id) === String(matchedVehicleById))) {
-        const matchedVehicle = searchableCuts.find(item => String(item.id) === String(matchedVehicleById));
+        const matchedVehicle = cortes.find(item => String(item.id) === String(matchedVehicleById));
         if (matchedVehicle) datosFiltrados.unshift({ ...matchedVehicle, _sectionType: 'corte', _searchPriority: -1 });
     }
 
@@ -212,7 +189,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         }
     }
 
-    const resultType = classifySearchResults(datosFiltrados, busqueda);
+    const resultType = vinChoiceItems.length ? 'modelo' : classifySearchResults(datosFiltrados, busqueda);
     const renderResults = resultType === 'marca'
         ? [...new Set(datosFiltrados.map(item => item.marca).filter(Boolean))]
         : datosFiltrados;

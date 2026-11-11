@@ -332,3 +332,12 @@ AUG-044 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-10
 Se reconciliaron ACTION_TO_SERVICE_MAP y los dispatchers AUTH, USERS, CATALOG, WRITE, FEEDBACK, ADMIN y UTILITIES. addCorte y getHeaders fueron retirados; migrateYearRanges y assignCollaborator ya estaban retirados. Se documentaron cuatro rutas de compatibilidad directa y la dependencia externa logFrontend/LEGACY. routeAction falla cerrado ante servicios sin endpoint.
 Validación local: ActionDispatchContract 11/11 PASS; parsing 5/5 PASS; servicio desconocido rechazado antes de fetch. LEGACY queda pendiente de verificación en Beta.
 ================================================================================
+
+
+================================================================================
+AUG-050 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-11
+Motor diferencial VIN integrado en motor, persistencia, navegación y UI. Resolución por classKey/identidad completa; alternativas ambiguas presentadas sin autoapertura; versiones y generaciones conservadas; extractSharedChars compara posición y valor; búsqueda combinatoria perezosa con presupuesto y métricas. VIN completo/prefijos, umbral, competidores y rangos cubiertos por suites de regresión.
+Pruebas locales sintéticas: 52/52 PASS en harness V8 aislado; parsing de VinDifferentialEngine.js, navigation.js, ui.js y suite de cierre: 4/4 PASS. No se ejecutó Node CLI.
+Validación Beta pendiente: medición sobre catálogo operativo y navegación visual real multi-versión/generación. No se modificaron endpoints, deployments ni datos productivos.
+Commit único de cierre: consultar historial de GPSpedia2.2.5_work.
+================================================================================

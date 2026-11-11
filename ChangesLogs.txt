@@ -1215,3 +1215,13 @@ AUG-050 — NORMALIZACIÓN DE VIN COMPLETO Y PREFIJOS — 2026-11-11
 - Services/Test/VinQueryNormalization.js: nueve escenarios sintéticos de VIN completo, prefijo, prioridad exacta, ambigüedad, contexto y longitudes no estándar.
 - Services/Test/README.md: instrucciones de ejecución y límites de la suite.
 ================================================================================
+
+
+================================================================================
+AUG-050 — CIERRE DE INTEGRACIÓN DEL MOTOR DIFERENCIAL VIN — 2026-11-11
+- VinDifferentialEngine.js: algoritmo 1.5.0; extractSharedChars compara carácter y posición; mapVinMatchesToRecords resuelve por classKey y conserva versiones/generaciones; búsqueda combinatoria perezosa con límite configurable (20,000 por clase por defecto), métricas de evaluaciones/comparaciones y estado pendiente al agotar presupuesto.
+- navigation.js: restaura firmas compatibles mediante ensureVinSignatures; conserva todas las alternativas ambiguas y las entrega como opciones por identidad/versión.
+- ui.js: restaura firmas compatibles, presenta aviso de ambigüedad, impide autoapertura de la primera opción, representa la versión identificada en tarjetas y renderiza la firma de cada versión aplicable.
+- Services/Test/VinAUG050Completion.js: once pruebas de igualdad posicional, mapeo de versiones/generaciones, límite combinatorio y contratos de integración.
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt y checkpoint.md actualizados. Medición de catálogo real y validación visual quedan diferidas a Beta.
+================================================================================

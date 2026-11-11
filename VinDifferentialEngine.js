@@ -89,7 +89,10 @@ export class VinDifferentialEngine {
         this.conflictLog = [];
         this.auditLog = [];
         this.catalogFingerprint = null;
-        this.version = "1.4.0";
+        this.version = "1.5.0";
+        const configuredBudget = Number(options.maxCombinationEvaluationsPerClass);
+        this.maxCombinationEvaluationsPerClass = Number.isInteger(configuredBudget) && configuredBudget > 0 ? configuredBudget : 20000;
+        this.computationMetrics = { totalCombinationEvaluations: 0, totalComparisonOperations: 0, budgetExhaustedClasses: 0 };
     }
 
     buildSampleMatrix(records) {
@@ -204,94 +207,72 @@ export class VinDifferentialEngine {
     findMinimalCombination(targetGroup, competitorGroups, length) {
         const targetSamples = targetGroup.samples;
         if (!targetSamples || targetSamples.length === 0) return null;
-
         const { stablePositions } = this.analyzePositionStability(targetSamples, length);
-        if (stablePositions.size === 0) return null;
-
+        if (stablePositions.size === 0) {
+            this.lastSearchMetrics = { combinationEvaluations: 0, comparisonOperations: 0, budgetExceeded: false };
+            return null;
+        }
         const availablePositions = Array.from(stablePositions.keys());
-
-        // TAREA 4.1: Priorizar posiciones que NO pertenezcan a la posible sección serial (últimos 5 o 6 caracteres si la longitud > 6)
-        const serialCutoff = length > 6 ? (length - 6) : length;
-
+        const serialCutoff = length > 6 ? length - 6 : length;
         availablePositions.sort((a, b) => {
-            const isSerialA = a >= serialCutoff;
-            const isSerialB = b >= serialCutoff;
-            if (isSerialA && !isSerialB) return 1;
-            if (!isSerialA && isSerialB) return -1;
+            const serialA = a >= serialCutoff, serialB = b >= serialCutoff;
+            if (serialA && !serialB) return 1;
+            if (!serialA && serialB) return -1;
             return a - b;
         });
-
-        const maxK = Math.min(availablePositions.length, 6);
-
-        // Primero buscar combinaciones sin incluir caracteres seriales (si hay suficientes posiciones no seriales)
         const nonSerialPositions = availablePositions.filter(p => p < serialCutoff);
+        const maxK = Math.min(availablePositions.length, 6);
+        const metrics = { combinationEvaluations: 0, comparisonOperations: 0, budgetExceeded: false };
+        const evaluate = combo => {
+            if (metrics.combinationEvaluations >= this.maxCombinationEvaluationsPerClass) {
+                metrics.budgetExceeded = true;
+                return false;
+            }
+            metrics.combinationEvaluations++;
+            return this.comboDifferentiatesAll(combo, targetGroup, competitorGroups, metrics);
+        };
+        const makeResult = combo => {
+            const positions = combo.slice().sort((a, b) => a - b);
+            const values = positions.map(p => stablePositions.get(p));
+            return {
+                positions, humanPositions: positions.map(p => p + 1), values,
+                displayFragment: values.slice(0, 4).join(""),
+                signatureString: values.join("-"),
+                readableFormat: positions.map((p, i) => `Pos ${p + 1}: ${values[i]}`).join(" | ")
+            };
+        };
+        let result = null;
         if (nonSerialPositions.length > 0) {
-            const nonSerialMaxK = Math.min(nonSerialPositions.length, 6);
-            for (let k = 1; k <= nonSerialMaxK; k++) {
-                const combinations = this.getCombinations(nonSerialPositions, k);
-                for (const combo of combinations) {
-                    if (this.comboDifferentiatesAll(combo, targetGroup, competitorGroups)) {
-                        const positions = combo.sort((a, b) => a - b);
-                        const values = positions.map(p => stablePositions.get(p));
-                        const displayFragment = values.slice(0, 4).join("");
-                        return {
-                            positions,
-                            humanPositions: positions.map(p => p + 1),
-                            values,
-                            displayFragment,
-                            signatureString: values.join("-"),
-                            readableFormat: positions.map((p, i) => `Pos ${p + 1}: ${values[i]}`).join(" | ")
-                        };
-                    }
+            for (let k = 1; k <= Math.min(nonSerialPositions.length, 6) && !result && !metrics.budgetExceeded; k++) {
+                for (const combo of this.iterateCombinations(nonSerialPositions, k)) {
+                    if (evaluate(combo)) { result = makeResult(combo); break; }
+                    if (metrics.budgetExceeded) break;
                 }
             }
         }
-
-        // Si no fue posible sin seriales, buscar en todas las posiciones pero limitando fragmento visible a máx 4
-        for (let k = 1; k <= maxK; k++) {
-            const combinations = this.getCombinations(availablePositions, k);
-
-            for (const combo of combinations) {
-                if (this.comboDifferentiatesAll(combo, targetGroup, competitorGroups)) {
-                    const positions = combo.sort((a, b) => a - b);
-                    const values = positions.map(p => stablePositions.get(p));
-                    const displayFragment = values.slice(0, 4).join("");
-                    return {
-                        positions,
-                        humanPositions: positions.map(p => p + 1),
-                        values,
-                        displayFragment,
-                        signatureString: values.join("-"),
-                        readableFormat: positions.map((p, i) => `Pos ${p + 1}: ${values[i]}`).join(" | ")
-                    };
-                }
+        for (let k = 1; k <= maxK && !result && !metrics.budgetExceeded; k++) {
+            for (const combo of this.iterateCombinations(availablePositions, k)) {
+                if (evaluate(combo)) { result = makeResult(combo); break; }
+                if (metrics.budgetExceeded) break;
             }
         }
-
-        return null;
-    }
-
-    getCombinations(arr, k) {
-        if (k === 1) return arr.map(el => [el]);
-        const result = [];
-        for (let i = 0; i <= arr.length - k; i++) {
-            const head = arr[i];
-            const tailCombos = this.getCombinations(arr.slice(i + 1), k - 1);
-            tailCombos.forEach(tc => result.push([head, ...tc]));
-        }
+        this.lastSearchMetrics = metrics;
         return result;
     }
 
-    comboDifferentiatesAll(combo, targetGroup, competitorGroups) {
+    *iterateCombinations(arr, k, start = 0, prefix = []) {
+        if (prefix.length === k) { yield prefix.slice(); return; }
+        const remaining = k - prefix.length;
+        for (let i = start; i <= arr.length - remaining; i++) {
+            prefix.push(arr[i]); yield* this.iterateCombinations(arr, k, i + 1, prefix); prefix.pop();
+        }
+    }
+    getCombinations(arr, k) { return [...this.iterateCombinations(arr, k)]; }
+    comboDifferentiatesAll(combo, targetGroup, competitorGroups, metrics = null) {
         const targetSig = combo.map(p => targetGroup.samples[0].vin[p]).join("");
-
-        for (const comp of competitorGroups) {
-            for (const compSample of comp.samples) {
-                const compSig = combo.map(p => compSample.vin[p]).join("");
-                if (compSig === targetSig) {
-                    return false;
-                }
-            }
+        for (const comp of competitorGroups) for (const sample of comp.samples) {
+            if (metrics) metrics.comparisonOperations++;
+            if (combo.map(p => sample.vin[p]).join("") === targetSig) return false;
         }
         return true;
     }
@@ -307,6 +288,7 @@ export class VinDifferentialEngine {
         let validatedCount = 0;
         let pendingCount = 0;
         let insufficientCount = 0;
+        this.computationMetrics = { totalCombinationEvaluations: 0, totalComparisonOperations: 0, budgetExhaustedClasses: 0 };
 
         for (const [vLen, groupsMap] of matrixByLength.entries()) {
             const allGroups = Array.from(groupsMap.values());
@@ -360,12 +342,18 @@ export class VinDifferentialEngine {
                 }
 
                 const minCombo = this.findMinimalCombination(group, extendedCompetitors, vLen);
-
+                const searchMetrics = this.lastSearchMetrics || { combinationEvaluations: 0, comparisonOperations: 0, budgetExceeded: false };
+                this.computationMetrics.totalCombinationEvaluations += searchMetrics.combinationEvaluations;
+                this.computationMetrics.totalComparisonOperations += searchMetrics.comparisonOperations;
+                if (searchMetrics.budgetExceeded) this.computationMetrics.budgetExhaustedClasses++;
                 if (!minCombo) {
                     this.conflictLog.push({
                         classKey: group.classKey,
-                        reason: "No fue posible encontrar una combinación de caracteres que diferencie esta configuración.",
-                        competitorsCount: extendedCompetitors.length
+                        reason: searchMetrics.budgetExceeded
+                            ? "Se alcanzó el límite de combinaciones por clase; requiere revisión o ampliación controlada del presupuesto."
+                            : "No fue posible encontrar una combinación de caracteres que diferencie esta configuración.",
+                        competitorsCount: extendedCompetitors.length,
+                        ...searchMetrics
                     });
                     pendingCount++;
 
@@ -380,7 +368,9 @@ export class VinDifferentialEngine {
                         vinLength: vLen,
                         status: "pendiente_revision",
                         confidence: 40,
-                        reason: "Firma ambigua o idéntica con registros de otra configuración.",
+                        reason: searchMetrics.budgetExceeded
+                            ? "Presupuesto de búsqueda combinatoria agotado; firma pendiente de revisión."
+                            : "Firma ambigua o idéntica con registros de otra configuración.",
                         samplesCount: sampleCount,
                         calculatedAt: new Date().toISOString()
                     });
@@ -424,7 +414,8 @@ export class VinDifferentialEngine {
             pendingCount,
             insufficientCount,
             conflictsCount: this.conflictLog.length,
-            conflictLog: this.conflictLog
+            conflictLog: this.conflictLog,
+            computationMetrics: { ...this.computationMetrics, maxCombinationEvaluationsPerClass: this.maxCombinationEvaluationsPerClass }
         };
     }
 
@@ -575,20 +566,44 @@ export class VinDifferentialEngine {
     }
 
     extractSharedChars(matches) {
-        if (!matches || matches.length === 0) return [];
+        if (!Array.isArray(matches) || matches.length === 0) return [];
         const first = matches[0];
+        if (!Array.isArray(first.positions) || !Array.isArray(first.values)) return [];
         const shared = [];
-        if (first.positions) {
-            first.positions.forEach((pos, idx) => {
-                const charVal = first.values[idx];
-                const allShare = matches.every(m => m.positions && m.positions.includes(pos));
-                if (allShare) {
-                    shared.push({ position: pos + 1, char: charVal });
-                }
+        first.positions.forEach((position, index) => {
+            const value = first.values[index];
+            if (value === undefined || value === null) return;
+            const allShare = matches.every(match => {
+                if (!Array.isArray(match.positions) || !Array.isArray(match.values)) return false;
+                const matchIndex = match.positions.indexOf(position);
+                return matchIndex >= 0 && match.values[matchIndex] === value;
             });
-        }
+            if (allShare) shared.push({ position: position + 1, char: value });
+        });
         return shared;
     }
+}
+
+export function mapVinMatchesToRecords(matches, records) {
+    const signatures = Array.isArray(matches) ? matches : (matches ? [matches] : []);
+    if (!Array.isArray(records) || signatures.length === 0) return [];
+    const mapped = [], seen = new Set();
+    signatures.forEach(signature => {
+        if (!signature || !signature.classKey) return;
+        for (const record of records) {
+            if (!record) continue;
+            const versions = parseVersionsList(record.versionesAplicables);
+            const candidates = versions.length ? versions : [""];
+            const version = candidates.find(v => getClassificationKey(record, v, 5) === signature.classKey);
+            if (version === undefined) continue;
+            const identity = `${signature.classKey}|${String(record.id)}`;
+            if (seen.has(identity)) continue;
+            seen.add(identity);
+            mapped.push({ ...record, versionesAplicables: version, _identifiedVersion: version,
+                _vinClassKey: signature.classKey, _vinAmbiguousChoice: signatures.length > 1 });
+        }
+    });
+    return mapped;
 }
 
 export class VinSignatureStore {

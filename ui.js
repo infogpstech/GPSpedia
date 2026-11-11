@@ -1,4 +1,4 @@
-import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from './VinDifferentialEngine.js';
+import { vinDifferentialEngine, vinSignatureStore, getClassificationKey, ensureVinSignatures } from './VinDifferentialEngine.js';
 // GPSpedia UI Module | Version: 2.1.6
 // Responsibilities:
 // - Render UI components based on state.
@@ -1756,6 +1756,14 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
     cont.innerHTML = `<h4>Resultados para: "${query}"</h4>`;
 
+    const hasAmbiguousVinChoices = Array.isArray(results) && results.some(item => item && item._vinAmbiguousChoice);
+    if (hasAmbiguousVinChoices) {
+        const notice = document.createElement("p");
+        notice.className = "vin-ambiguity-notice";
+        notice.style.cssText = "margin: 8px 0 14px; padding: 10px 12px; border-left: 3px solid #d69e2e; background: rgba(214,158,46,0.10); border-radius: 4px;";
+        notice.textContent = "El VIN coincide con varias configuraciones. Selecciona la versión o generación correspondiente para continuar.";
+        cont.appendChild(notice);
+    }
     const grid = document.createElement("div");
     grid.className = "grid";
 
@@ -1790,7 +1798,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     cont.appendChild(grid);
 
     // Solo una coincidencia de Corte puede abrir automáticamente el detalle de vehículo.
-    if (autoOpen && type === 'modelo' && shouldAutoOpenVehicleDetail(results)) {
+    if (autoOpen && !hasAmbiguousVinChoices && type === 'modelo' && shouldAutoOpenVehicleDetail(results)) {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) searchInput.blur();
 
@@ -2289,40 +2297,45 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
 
-    /* TAREA 1: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN */
+    /* AUG-050: mostrar la firma diferencial correspondiente a cada versión aplicable */
     const itemVersions = parseEquipmentVersions(activeItem ? activeItem.versionesAplicables : '');
-    if (activeItem && activeItem.vin && itemVersions.length > 1) {
+    if (activeItem && activeItem.vin && itemVersions.length > 0) {
         try {
             const catalogData = getState().catalogData;
-            if (vinDifferentialEngine.signatures.size === 0 && catalogData && catalogData.cortes) {
-                vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            if (catalogData && catalogData.cortes) {
+                ensureVinSignatures(catalogData.cortes, vinDifferentialEngine, vinSignatureStore);
             }
-            const mainVersion = itemVersions[0] || '';
-            const classKey = getClassificationKey(activeItem, mainVersion, 5);
-            const sig = vinDifferentialEngine.signatures.get(classKey);
+            const signatures = itemVersions.map(version => ({
+                version,
+                signature: vinDifferentialEngine.signatures.get(getClassificationKey(activeItem, version, 5))
+            })).filter(entry => entry.signature &&
+                entry.signature.status !== 'insuficiente' &&
+                Array.isArray(entry.signature.positions) &&
+                entry.signature.positions.length > 0);
 
-            if (sig && sig.status !== 'insuficiente' && sig.positions && sig.positions.length > 0) {
+            if (signatures.length > 0) {
                 const sigBox = document.createElement('div');
                 sigBox.className = 'vin-signature-badge';
-                sigBox.style.cssText = 'margin: 6px 0 10px 0; padding: 6px 12px; background: rgba(0, 123, 255, 0.08); border-left: 3px solid #007bff; border-radius: 4px; font-size: 0.82em; display: flex; flex-direction: column; gap: 2px;';
+                sigBox.style.cssText = 'margin: 6px 0 10px 0; padding: 6px 12px; background: rgba(0, 123, 255, 0.08); border-left: 3px solid #007bff; border-radius: 4px; font-size: 0.82em; display: flex; flex-direction: column; gap: 6px;';
 
-                const sigTitle = document.createElement('span');
-                sigTitle.style.cssText = 'font-weight: bold; color: var(--text-color); display: flex; align-items: center; gap: 6px;';
-                sigTitle.innerHTML = `<i class="fa-solid fa-fingerprint" style="color: #007bff;"></i> Firma Diferencial de VIN: <strong>${sig.signatureString}</strong> <span style="font-size: 0.85em; opacity: 0.8; font-weight: normal;">(${sig.readableFormat})</span>`;
-
-                const sigMeta = document.createElement('span');
-                sigMeta.style.cssText = 'color: #666; font-size: 0.88em;';
-                sigMeta.textContent = `Caracteres mínimos: ${sig.charactersNeeded} | Certeza: ${sig.confidence}% (${sig.status === 'validada' ? 'Identificación validada' : 'Firma calculada'})`;
-
-                sigBox.appendChild(sigTitle);
-                sigBox.appendChild(sigMeta);
+                signatures.forEach(({ version, signature }) => {
+                    const sigEntry = document.createElement('div');
+                    sigEntry.style.cssText = 'display: flex; flex-direction: column; gap: 2px;';
+                    const sigTitle = document.createElement('span');
+                    sigTitle.style.cssText = 'font-weight: bold; color: var(--text-color);';
+                    sigTitle.textContent = `Firma diferencial VIN — ${version || 'Versión no especificada'}: ${signature.signatureString} (${signature.readableFormat})`;
+                    const sigMeta = document.createElement('span');
+                    sigMeta.style.cssText = 'color: #666; font-size: 0.88em;';
+                    sigMeta.textContent = `Caracteres mínimos: ${signature.charactersNeeded} | Certeza: ${signature.confidence}% (${signature.status === 'validada' ? 'Identificación validada' : 'Firma calculada'})`;
+                    sigEntry.append(sigTitle, sigMeta);
+                    sigBox.appendChild(sigEntry);
+                });
                 cont.appendChild(sigBox);
             }
         } catch (e) {
-            console.error('Error visualizando firma diferencial:', e);
+            console.error('Error visualizando firmas diferenciales:', e);
         }
     }
-
 
     if (inEditMode || activeItem.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
@@ -6675,6 +6688,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
     const card = document.createElement("div");
     card.className = "card";
     card.setAttribute('data-vehicle-id', item.id || '');
+    if (item._vinClassKey) card.setAttribute('data-vin-class-key', item._vinClassKey);
     card.style.animation = 'none';
     card.style.opacity = '1';
 
@@ -6701,10 +6715,11 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
         card.onclick = () => openPysDetailModal(item);
     } else if (resultsForVariant) {
         card.onclick = () => {
+            const selectedVersion = item._identifiedVersion || item.versionesAplicables;
             const filasDeVariante = resultsForVariant.filter(r =>
                 r.marca === item.marca &&
                 r.modelo === item.modelo &&
-                r.versionesAplicables === item.versionesAplicables
+                (r._identifiedVersion || r.versionesAplicables) === selectedVersion
             );
             mostrarVersiones(filasDeVariante, item.categoria, item.marca, item.modelo);
         };
@@ -6747,7 +6762,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
         secondary.textContent = item.modelo || item.configuracion || item.Tema || item.Problema || '';
         overlay.append(primary, secondary);
     } else if (resultsForVariant) {
-        const version = item.versionesAplicables || '';
+        const version = item._identifiedVersion || item.versionesAplicables || '';
         const tiposEncendido = [...new Set(resultsForVariant
             .filter(r => r.marca === item.marca && r.modelo === item.modelo && r.categoria === item.categoria && r.versionesAplicables === item.versionesAplicables)
             .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');

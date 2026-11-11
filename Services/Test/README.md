@@ -302,3 +302,9 @@ Define y verifica que un `anoHasta` vacío significa que la generación continú
 
 Ejecutar `node --experimental-default-type=module Services/Test/VinQueryNormalization.js`.
 La suite verifica que un VIN estándar de 17 caracteres conserve primero la coincidencia exacta completa y, si no existe, consulte exactamente sus primeros 12 caracteres; los prefijos ya ingresados no se recortan. También verifica longitudes distintas, ausencia de coincidencias por subcadena, ambigüedad y filtrado por contexto. Usa firmas sintéticas y no consulta el catálogo productivo.
+
+
+### Cierre AUG-050 — integración, ambigüedad y coste combinatorio
+
+Ejecutar `node --experimental-default-type=module Services/Test/VinAUG050Completion.js`.
+Verifica igualdad de carácter por posición en `extractSharedChars`, mapeo por `classKey` de versiones/generaciones, límite de evaluaciones combinatorias y métricas de coste, además de contratos estáticos de navegación/renderizado. El presupuesto predeterminado es 20,000 combinaciones por clase; al agotarse, la firma queda pendiente de revisión y no se valida. Usa datos sintéticos. La medición con el catálogo operativo y la validación visual real se reservan a Beta.
