@@ -8,7 +8,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey, ensureV
 import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
-import { createEditBackupStore } from './editBackupStore.js';
+import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
 import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
@@ -64,6 +64,16 @@ const ADMIN_IMAGE_UPLOAD_FIELDS = [
     "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
     "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
 ];
+const ADMIN_MODAL_EDIT_FIELDS = new Set([
+    "categoria", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta",
+    "vin", "notaImportante", "apertura", "cableAlimen", "cableAlimen2", "cableAlimen3",
+    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura",
+    "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3",
+    ...[1, 2, 3].flatMap(index => [
+        "tipoCorte" + index, "configRelay" + index,
+        "ubicacionCorte" + index, "colorCableCorte" + index
+    ])
+]);
 const pendingAdminImageUploads = new Map();
 const pendingAdminImageUploadsLoaded = new Set();
 
@@ -299,8 +309,20 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
             if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
 
             const backupSnapshot = JSON.parse(JSON.stringify(originalItemBackup));
-            const fieldsToRestore = Object.keys(backupSnapshot).filter(key =>
-                JSON.stringify(backupSnapshot[key]) !== JSON.stringify(editedItemBuffer && editedItemBuffer[key])
+            let currentEditItem = editedItemBuffer && String(editedItemBuffer.id) === cleanVehicleId
+                ? editedItemBuffer
+                : null;
+            if (!currentEditItem) {
+                const currentResponse = await routeAction("getCatalogData");
+                if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
+                if (!currentResponse || !currentResponse.data || !Array.isArray(currentResponse.data.cortes)) {
+                    throw new Error("No se pudo leer el catálogo para identificar los campos pendientes de restauración.");
+                }
+                currentEditItem = currentResponse.data.cortes.find(item => String(item.id) === cleanVehicleId) || null;
+                if (!currentEditItem) throw new Error("El vehículo ya no aparece en el catálogo; no se inició la restauración.");
+            }
+            const fieldsToRestore = getEditBackupFieldsToRestore(
+                backupSnapshot, currentEditItem, ADMIN_MODAL_EDIT_FIELDS
             );
             for (const field of fieldsToRestore) {
                 if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
