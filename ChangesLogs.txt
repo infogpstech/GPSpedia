@@ -1225,3 +1225,14 @@ AUG-050 — CIERRE DE INTEGRACIÓN DEL MOTOR DIFERENCIAL VIN — 2026-11-11
 - Services/Test/VinAUG050Completion.js: once pruebas de igualdad posicional, mapeo de versiones/generaciones, límite combinatorio y contratos de integración.
 - Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt y checkpoint.md actualizados. Medición de catálogo real y validación visual quedan diferidas a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — ROBUSTEZ DE TRANSACCIONES INDEXEDDB (ITERACIÓN 1)
+- performOp ahora resuelve únicamente después de transaction.oncomplete; request.onsuccess conserva el resultado, pero no confirma persistencia.
+- Los eventos transaction.onerror, transaction.onabort y request.onerror rechazan la operación.
+- initDB cierra la conexión ante onversionchange, permite reabrir y falla explícitamente ante onblocked y timeout; evita conservar promesas de apertura rechazadas.
+- Añadida Services/Test/IndexedDBTransactions.js con escenarios sintéticos de commit, abort, cuota, versionchange y bloqueo de upgrade.
+- Validación de ejecución Node CLI y navegador real pendiente; no se afirma prueba ejecutada.
+- Sin cambio de DB_VERSION, stores, datos locales, endpoints ni servicios productivos. AUG-051 continúa en progreso.
+================================================================================

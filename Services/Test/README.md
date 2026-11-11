@@ -308,3 +308,10 @@ La suite verifica que un VIN estándar de 17 caracteres conserve primero la coin
 
 Ejecutar `node --experimental-default-type=module Services/Test/VinAUG050Completion.js`.
 Verifica igualdad de carácter por posición en `extractSharedChars`, mapeo por `classKey` de versiones/generaciones, límite de evaluaciones combinatorias y métricas de coste, además de contratos estáticos de navegación/renderizado. El presupuesto predeterminado es 20,000 combinaciones por clase; al agotarse, la firma queda pendiente de revisión y no se valida. Usa datos sintéticos. La medición con el catálogo operativo y la validación visual real se reservan a Beta.
+
+
+## Robustez de transacciones IndexedDB (AUG-051 — iteración 1)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+- La suite usa IndexedDB simulado y comprueba que la escritura solo se confirma después de transaction.oncomplete, que un abort posterior a request.onsuccess no se interpreta como persistencia, que los errores de cuota fallan cerrados, que onversionchange cierra y permite reabrir la conexión y que onblocked rechaza explícitamente la apertura.
+- No sustituye pruebas con IndexedDB real, dos pestañas ni navegadores móviles; esas validaciones siguen pendientes en AUG-051/Beta.

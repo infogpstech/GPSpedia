@@ -10,95 +10,131 @@ const DB_VERSION = 4; // Añade persistencia local del inventario administrativo
 let dbPromise = null;
 
 /**
- * Initializes the IndexedDB database.
- * Phase 3.3: Added timeout and robustness to prevent startup hangs.
+ * Abre IndexedDB y libera la conexión cuando otra pestaña solicita una versión
+ * distinta. Un upgrade bloqueado falla de forma explícita en vez de dejar una
+ * promesa pendiente hasta un timeout silencioso.
  */
 export async function initDB() {
     if (dbPromise) return dbPromise;
 
-    dbPromise = new Promise((resolve, reject) => {
-        // Timeout de seguridad: Si la DB no responde en 5 segundos, fallamos para no bloquear el splash screen
-        const timeout = setTimeout(() => {
-            console.error("IndexedDB initialization timed out.");
-            dbPromise = null;
-            reject(new Error("IndexedDB timeout"));
-        }, 5000);
+    let openingPromise;
+    openingPromise = new Promise((resolve, reject) => {
+        let settled = false;
+        let timeout = null;
+        let request;
 
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onerror = (event) => {
-            clearTimeout(timeout);
-            console.error("IndexedDB error:", event.target.error);
-            dbPromise = null;
-            reject(event.target.error);
+        const clearOpenState = () => {
+            if (timeout !== null) clearTimeout(timeout);
+            if (dbPromise === openingPromise) dbPromise = null;
+        };
+        const fail = (error) => {
+            if (settled) return;
+            settled = true;
+            clearOpenState();
+            reject(error instanceof Error ? error : new Error('IndexedDB no pudo inicializarse.'));
         };
 
-        request.onblocked = () => {
-            console.warn("IndexedDB update blocked. Please close other tabs.");
-            // No rechazamos aquí, pero avisamos. El timeout eventualmente actuará si sigue bloqueado.
-        };
+        try {
+            if (typeof indexedDB === 'undefined') throw new Error('IndexedDB no está disponible.');
+            timeout = setTimeout(() => fail(new Error('IndexedDB initialization timed out.')), 5000);
+            request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        request.onsuccess = (event) => {
-            clearTimeout(timeout);
-            resolve(event.target.result);
-        };
+            request.onerror = (event) => {
+                fail(event && event.target && event.target.error || request.error || new Error('IndexedDB open failed.'));
+            };
 
-        request.onupgradeneeded = (event) => {
-            const dbInstance = event.target.result;
+            request.onblocked = () => {
+                console.warn('IndexedDB upgrade blocked by another open tab.');
+                fail(new Error('La actualización de IndexedDB está bloqueada por otra pestaña. Ciérrala y vuelve a intentar.'));
+            };
 
-            // Catalog Store: Stores the full catalog data object
-            if (!dbInstance.objectStoreNames.contains('catalog')) {
-                dbInstance.createObjectStore('catalog');
-            }
+            request.onupgradeneeded = (event) => {
+                const dbInstance = event.target.result;
+                if (!dbInstance.objectStoreNames.contains('catalog')) dbInstance.createObjectStore('catalog');
+                if (!dbInstance.objectStoreNames.contains('searchHistory')) dbInstance.createObjectStore('searchHistory', { keyPath: 'term' });
+                if (!dbInstance.objectStoreNames.contains('viewedItems')) dbInstance.createObjectStore('viewedItems', { keyPath: 'id' });
+                if (!dbInstance.objectStoreNames.contains('thumbnails')) dbInstance.createObjectStore('thumbnails');
+                if (!dbInstance.objectStoreNames.contains('validationCache')) dbInstance.createObjectStore('validationCache', { keyPath: 'vehicleId' });
+                if (!dbInstance.objectStoreNames.contains('adminLocalState')) dbInstance.createObjectStore('adminLocalState', { keyPath: 'key' });
+            };
 
-            // Search History: Normalized search terms
-            if (!dbInstance.objectStoreNames.contains('searchHistory')) {
-                dbInstance.createObjectStore('searchHistory', { keyPath: 'term' });
-            }
-
-            // Viewed Items: Vehicles already consulted
-            if (!dbInstance.objectStoreNames.contains('viewedItems')) {
-                dbInstance.createObjectStore('viewedItems', { keyPath: 'id' });
-            }
-
-            // Thumbnails: Compressed images as Blobs
-            if (!dbInstance.objectStoreNames.contains('thumbnails')) {
-                dbInstance.createObjectStore('thumbnails');
-            }
-
-            // Validation Cache: Stores user responses to vehicle year validations
-            if (!dbInstance.objectStoreNames.contains('validationCache')) {
-                dbInstance.createObjectStore('validationCache', { keyPath: 'vehicleId' });
-            }
-
-            // Administrative local state: resumable Drive audit and inventory view preference.
-            if (!dbInstance.objectStoreNames.contains('adminLocalState')) {
-                dbInstance.createObjectStore('adminLocalState', { keyPath: 'key' });
-            }
-        };
+            request.onsuccess = (event) => {
+                const database = event.target.result;
+                if (settled) {
+                    database.close();
+                    return;
+                }
+                database.onversionchange = () => {
+                    database.close();
+                    if (dbPromise === openingPromise) dbPromise = null;
+                };
+                settled = true;
+                clearOpenState();
+                resolve(database);
+            };
+        } catch (error) {
+            fail(error);
+        }
     });
-    return dbPromise;
+
+    dbPromise = openingPromise;
+    openingPromise.catch(() => {
+        if (dbPromise === openingPromise) dbPromise = null;
+    });
+    return openingPromise;
 }
 
 /**
- * Generic helper to perform DB operations.
- * Phase 3.2: Improved robustness and error handling.
+ * Ejecuta una operación y solo confirma el resultado después de que finalice
+ * la transacción completa. request.onsuccess no garantiza que el commit ocurra.
  */
 async function performOp(storeName, mode, callback) {
     try {
         const database = await initDB();
-        if (!database) throw new Error("Could not initialize IndexedDB");
+        if (!database) throw new Error('Could not initialize IndexedDB');
 
-        return new Promise((resolve, reject) => {
+        return await new Promise((resolve, reject) => {
+            let transaction;
+            let requestResult;
+            let requestSucceeded = false;
+            let settled = false;
+
+            const fail = (error) => {
+                if (settled) return;
+                settled = true;
+                reject(error instanceof Error ? error : new Error('IndexedDB transaction failed.'));
+            };
+
             try {
-                const transaction = database.transaction([storeName], mode);
+                transaction = database.transaction([storeName], mode);
                 const store = transaction.objectStore(storeName);
-                const request = callback(store);
 
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            } catch (e) {
-                reject(e);
+                transaction.oncomplete = () => {
+                    if (settled) return;
+                    if (!requestSucceeded) {
+                        fail(new Error('La transacción terminó sin confirmar la solicitud.'));
+                        return;
+                    }
+                    settled = true;
+                    resolve(requestResult);
+                };
+                transaction.onerror = () => fail(transaction.error || new Error('IndexedDB transaction failed.'));
+                transaction.onabort = () => fail(transaction.error || new Error('IndexedDB transaction aborted'));
+
+                const request = callback(store);
+                if (!request || typeof request !== 'object') {
+                    throw new Error('La operación IndexedDB no devolvió una solicitud válida.');
+                }
+                request.onsuccess = () => {
+                    requestResult = request.result;
+                    requestSucceeded = true;
+                };
+                request.onerror = () => fail(request.error || new Error('IndexedDB request failed.'));
+            } catch (error) {
+                try {
+                    if (transaction) transaction.abort();
+                } catch (abortError) {}
+                fail(error);
             }
         });
     } catch (err) {

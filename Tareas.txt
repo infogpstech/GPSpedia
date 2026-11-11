@@ -906,3 +906,11 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Motor VIN: persistencia versionada/fingerprint; identidad classKey; contexto y rangos; umbral y competidores; VIN completo/prefijos; extractSharedChars por posición/valor; ambigüedad y versiones integradas a navegación/UI; búsqueda combinatoria acotada con métricas.
 Pruebas locales sintéticas y contratos de integración documentados. Validación visual real y medición con catálogo operativo diferidas a Beta. No se modificaron endpoints, deployments ni datos productivos. AUG-051 no iniciada.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ROBUSTECER INDEXEDDB, MINIATURAS Y PRIVACIDAD DEL HISTORIAL LOCAL
+Fecha: 2026-11-11. Estado: EN PROGRESO.
+Iteración 1: operaciones genéricas IndexedDB esperan transaction.oncomplete y manejan abort/error; conexiones liberadas ante onversionchange; bloqueos de upgrade y timeout reportados explícitamente. Suite sintética agregada, pendiente de ejecución Node CLI y navegador real.
+Checkpoint: checkpoint.md. No iniciar AUG-052. Siguiente iteración: definir/implementar aislamiento de searchHistory y viewedItems y documentar la política de validationCache según su uso real.
+================================================================================

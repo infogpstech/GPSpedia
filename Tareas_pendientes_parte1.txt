@@ -739,7 +739,8 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Definir retención/aislamiento de searchHistory por cuenta o borrar/ocultar búsquedas al cambiar de usuario; tratar VIN como dato potencialmente sensible.
   6. Probar transacciones abortadas, storage quota, upgrades con varias pestañas, offline, imágenes pequeñas/grandes/transparencias y cambio de cuenta.
 - Relación: AUD-T-037; AUG-031 para estado local de auditoría Drive, sin reutilizar su store administrativo.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: EN PROGRESO; iteración 1 implementada. La capa genérica espera el commit de transacción y maneja abort/error; initDB libera conexión en onversionchange y reporta onblocked. Suite sintética añadida, ejecución pendiente. Restan aislamiento/retención de historial y vistos, política validationCache, cuota/LRU/TTL, claves/tamaños de miniaturas, RAM/ObjectURL, concurrencia/ImageBitmap y validación multi-cuenta/offline/multi-pestaña.
+- Checkpoint de iteración: checkpoint.md.
 
 ### AUG-052 — Robustecer carga inicial, deep links y estrategia PWA/backend de catálogo
 - Origen: H-AUD-037-010 a H-AUD-037-012. Prioridad media.
