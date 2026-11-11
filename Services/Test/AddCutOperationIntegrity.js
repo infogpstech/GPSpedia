@@ -82,6 +82,12 @@ function runAddCutOperationIntegrityTests(sources) {
             assert_(/row\[5\].*normalizeIdempotenciaOperationHash_/.test(source));
         }
     });
+    run_('WRITE y ADMIN leen hojas históricas A:E y completan F en memoria sin rango fuera de cuadrícula', () => {
+        for (const source of [write, admin]) {
+            assert_(/Math\.min\(IDEMPOTENCIA_HEADERS\.length, Math\.max\(0, Number\(sheet\.getMaxColumns\(\)\) \|\| 0\)\)/.test(source));
+            assert_(/sourceRow\.concat\(Array\(Math\.max\(0, IDEMPOTENCIA_HEADERS\.length - sourceRow\.length\)\)\.fill\(""\)\)/.test(source));
+        }
+    });
     run_('canonicalización del cliente coincide con WRITE y ADMIN para vehículo nuevo', () => {
         const client = getClientCanonical();
         for (const source of [write, admin]) {
