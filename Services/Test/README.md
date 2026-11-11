@@ -452,3 +452,10 @@ La suite comprueba claves por propietario/vehículo/campo, rechazo de identidade
 Cargar `Services/admin.js` y `Services/Test/AdminModalEditSecurity.js` en un runtime V8 de pruebas y ejecutar `runAdminModalEditSecurityTests()`. La suite ejecuta 13 escenarios: Desarrollador y Gefe comparten el permiso únicamente para las tres acciones del modal; jefe y otros roles siguen excluidos; se conservan las validaciones de sesión/revocación; la whitelist cubre campos editables sin exponer columnas ajenas; VIN usa el encabezado dinámico; y la consulta del ledger valida asociación vehículo/campo e integridad de archivo. No invoca Apps Script, Spreadsheet ni Drive reales.
 
 La acción `getAdminImageUploadStatus` se enruta a ADMIN y devuelve solo estado, URL actual/nueva y resultado de integridad; exige sesión válida y asociación exacta entre opId, vehículo y campo de imagen. La integridad del archivo Drive se verifica contra MIME, SHA-256 y metadatos de operación.
+
+
+## Restauración segura del editor in-modal (AUG-053 — iteración 11)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/EditBackupIsolation.js` para comprobar aislamiento por owner/vehículo y selección de campos a restaurar. La regresión confirma que solo se consideran campos permitidos por el modal, que la comparación usa la ficha actual tras una edición interrumpida y que no se restaura sin una referencia actual verificable.
+- `Services/Test/AdminModalEditRestoreContract.js` expone `runAdminModalEditRestoreContractTests(uiSource, adminSource)`. Pasar el contenido vigente de `ui.js` y `Services/admin.js`; valida que UI/backend compartan los campos base, que los campos dinámicos 1–3 coincidan y que el descarte no itere indiscriminadamente el snapshot completo.
+- Estas pruebas son locales y no sustituyen la validación Beta de navegador, IndexedDB real, Apps Script, Spreadsheet ni Drive.
