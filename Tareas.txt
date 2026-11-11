@@ -779,3 +779,13 @@ Pruebas locales: parser/esquema y contratos AUTH/USERS/API/UI; parsing V8 de los
 Beta pendiente: Apps Script y Spreadsheet aislados, navegador real, dos cuentas en un dispositivo, misma cuenta en dos dispositivos y validación de Users real.
 No se modificaron deployments, endpoints ni datos productivos; rama base sin cambios.
 ================================================================================
+
+================================================================================
+AUG-046 — CONTINUIDAD — CONTRASTE DE APORTES COLABORATIVOS — 2026-11-10
+- Revisado el registro/actualización de vehículos y cortes: autenticación por sesión de colaborador, escritura directa en Cortes y lectura del catálogo mediante getCatalogData.
+- Documentada la diferencia entre la restricción visual/ADMIN del indicador «Registro Silencioso» y la falta de comprobación de rol equivalente en WRITE.
+- Hallazgo nuevo H-AUD-046-001 (MEDIA) registrado en Auditoría.txt; su corrección queda fuera de esta iteración y deberá tratarse en una tarea independiente. No se inició esa corrección.
+- Evidencia y límites incorporados en Legal/AUG-046_revision_preliminar.md, sección 18.
+- No se modificaron código funcional, acuerdo, aviso, versión/fecha 2026-07, aceptación AUG-045, endpoints, deployments ni datos productivos.
+Estado: AUG-046 permanece EN PROGRESO. La validación interna y las confirmaciones operativas de la empresa principal siguen pendientes.
+================================================================================

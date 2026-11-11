@@ -1892,3 +1892,29 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar exclusivamente AUG-046 con una comprobación técnica nueva, sin repetir secciones anteriores ni inferir el comportamiento de recursos productivos.
 ================================================================================
+
+================================================================================
+CHECKPOINT — AUG-046 — REGISTRO COLABORATIVO DE VEHÍCULOS Y CORTES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: 246c2ebf198eae734f8ba29721176b40191e01d8.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisado addOrUpdateCut desde el formulario hasta WRITE y la lectura del catálogo.
+- Confirmado que el handler exige sesión válida de un rol colaborador, obtiene el nombre desde Users y escribe directamente en Cortes.
+- Confirmado que getCatalogData sirve los datos de Cortes sin comprobación de sesión en el dispatcher CATALOG.
+- Detectada diferencia de autorización para silent: la interfaz envía el caso a ADMIN y ADMIN exige Desarrollador, pero WRITE acepta el indicador sin comprobar ese rol.
+- Documentado H-AUD-046-001 (MEDIA) en Auditoría.txt y evidencia técnica en Legal/AUG-046_revision_preliminar.md, sección 18.
+- Actualizados ChangesLogs.txt y Tareas.txt.
+
+Límites:
+- Revisión estática de código versionado; no se llamó a endpoints ni se consultaron Spreadsheet/Drive productivos.
+- No se verificó la paridad de los deployments WRITE, ADMIN o CATALOG.
+- No se ejecutaron pruebas de integración ni pruebas con cuentas reales.
+- No se modificó código funcional, acuerdo, aviso, versión/fecha 2026-07, aceptación AUG-045, endpoints, deployments ni datos productivos.
+- H-AUD-046-001 queda abierto para corrección independiente; no se inició esa tarea.
+
+Estado: AUG-046 permanece EN PROGRESO. Continúan pendientes las confirmaciones operativas y la validación interna de la empresa principal.
+Siguiente paso: continuar AUG-046 con un contraste técnico distinto, sin repetir los flujos ya documentados ni modificar textos informativos/legal.
+================================================================================

@@ -374,3 +374,18 @@ Decisión confirmada: aceptación individual por cuenta, no por dispositivo.
 Corrección: AUTH persiste TermsAcceptance como JSON en Users!I:I con versión, acceptedAt y status; valida sesión activa única, expiración, cuenta activa y revocación pendiente antes de escribir. Login/validateSession devuelven estado autoritativo. La UI exige versión vigente y solo desbloquea tras confirmación backend y actualización de caché local.
 Validación local: parser/esquema y contratos AUTH/USERS/API/UI; parsing de módulos modificados. Apps Script, Spreadsheet y navegador real pendientes de Beta.
 ================================================================================
+
+================================================================================
+H-AUD-046-001 — MEDIA — ABIERTO — 2026-11-10
+Origen: AUG-046, contraste técnico del registro colaborativo de vehículos y cortes.
+Ubicación: add_cortes.html:236/516/966/1087; api-config.js:20–21; Services/admin.js:86/674–700; Services/write.js:135–153/174–218/458–605; Services/catalog.js:115–135/234; ui.js:6691.
+Evidencia:
+- La interfaz muestra «Registro Silencioso» únicamente a Desarrollador y, al marcarlo, envía addOrUpdateCut al servicio ADMIN.
+- ADMIN exige sesión y rol Desarrollador mediante assertDeveloperSession().
+- El destino canónico de addOrUpdateCut es WRITE. En WRITE, getAuthenticatedCollaborator() admite varios roles colaboradores y valida sesión, cuenta y expiración, pero handleAddOrUpdateCutLocked() no exige rol Desarrollador cuando payload.silent === true.
+- El mismo indicador retrocede 365 días el timestamp. La vista «Últimos Agregados» ordena por timestamp y muestra seis elementos, sin un filtro temporal; el retroceso afecta el orden, pero no garantiza exclusión absoluta del carrusel ni oculta el registro del catálogo.
+Impacto: un colaborador autenticado con un rol distinto de Desarrollador puede omitir el control de ADMIN mediante una solicitud directa a WRITE y modificar la fecha usada para ordenar el aporte en «Últimos Agregados». No se observó que este indicador otorgue permisos adicionales para editar otros campos ni que vuelva privado el contenido.
+Corrección requerida: aplicar en servidor una comprobación de rol Desarrollador cuando silent sea true en WRITE, o rechazar ese indicador en WRITE y conservar el flujo administrativo protegido. Añadir pruebas de petición directa con sesión de técnico y Desarrollador; mantener el registro ordinario disponible para los roles autorizados.
+Límites: hallazgo estático en código versionado; no se llamó al endpoint ni se verificó el deployment WRITE/ADMIN. Sin cambios funcionales ni datos productivos.
+Estado: ABIERTO; la corrección se debe gestionar como tarea independiente después de la continuidad actual de AUG-046.
+================================================================================
