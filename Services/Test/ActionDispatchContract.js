@@ -103,9 +103,16 @@ function runActionDispatchContractTests(sources) {
         assert_(/if\s*\(!targetUrl\)\s*throw new Error/.test(api), "routeAction aún redirige silenciosamente a LEGACY.");
         assert_(!/if\s*\(!targetUrl\)\s*targetUrl\s*=\s*API_ENDPOINTS\.LEGACY/.test(api), "Se conserva fallback a LEGACY.");
     });
-    run_("aliases ADMIN conservan autorización de Desarrollador", () => {
-        assert_(/const developerContext\s*=\s*action\s*!==\s*['"]ping['"]\s*\?\s*assertDeveloperSession\(payload\)\s*:\s*null/.test(String(input.ADMIN || "")),
-            "ADMIN ya no valida sesión Desarrollador antes de despachar acciones.");
+    run_("ADMIN separa acciones de edición modal del resto de acciones exclusivas de Desarrollador", () => {
+        const adminSource = String(input.ADMIN || "");
+        assert_(/const ADMIN_MODAL_EDIT_ACTIONS = new Set\\(\\["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\\]\\)/.test(adminSource),
+            "La lista de acciones Gefe debe limitarse a las tres operaciones del modal.");
+        assert_(/ADMIN_MODAL_EDIT_ACTIONS\\.has\\(action\\) \\? assertModalEditSession\\(payload\\) : assertDeveloperSession\\(payload\\)/.test(adminSource),
+            "ADMIN debe exigir sesión Desarrollador para acciones ajenas al modal.");
+        assert_(/function assertModalEditSession\\(payload\\)\\{return getAdminSessionContext_\\(payload,\\["desarrollador","gefe"\\]\\);\\}/.test(adminSource),
+            "La sesión modal debe validar roles desde el servidor.");
+        assert_(/function assertDeveloperSession\\(payload\\)\\{return getAdminSessionContext_\\(payload,\\["desarrollador"\\]\\);\\}/.test(adminSource),
+            "La sesión administrativa general debe seguir siendo exclusiva de Desarrollador.");
     });
     run_("el mapa no contiene servicios duplicados o inválidos", () => {
         for (const service of Object.values(actionMap)) assert_(endpoints.includes(service), "Servicio sin endpoint: " + service);
