@@ -1,5 +1,15 @@
 ================================================================================
 AUG-053 — ITERACIÓN 1 — 2026-11-11 — AISLAMIENTO DE addCutPending POR CUENTA
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO con las demás áreas pendientes.
+Rama: GPSpedia2.2.5_work. Commit de implementación: c738a810c537c69f8835519604dbcf2016951b58. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Las claves IndexedDB se particionan por ownerId/vehicleId; las claves legadas se migran al propietario registrado y los registros sin owner o en conflicto se conservan en cuarentena, sin recuperación automática. Lectura, escritura y eliminación validan ownerId. Antes de addOrUpdateCut se comprueba de nuevo la cuenta propietaria y se usa el SessionToken vigente en memoria; no se persisten SessionToken ni credenciales.
+Validación local: parsing V8 de offline.js, ui.js y Services/Test/IndexedDBTransactions.js PASS. Cinco escenarios addCutPending ejecutados contra las funciones reales con IndexedDB simulado: 5/5 PASS (dos cuentas/vehículo, conflicto intra-cuenta, migración legado, legado de otra cuenta y eliminación por owner); se verificó además que no se guarden sessionToken/SessionToken. La suite completa Node CLI no se ejecutó literalmente; IndexedDB real, cambio de cuenta entre pestañas y navegador real quedan reservados a Beta.
+Fuera de alcance: gpsepedia_pending_operation, adminImageUploadPending y gpsepedia_edit_backup. La política de acceso a reemplazos ADMIN requiere definición explícita (privados por iniciador o compartidos entre Desarrolladores); no se presume ninguna.
+Siguiente iteración: abordar únicamente owner-bound y recuperación de gpsepedia_pending_operation. No iniciar AUG-054 ni otras tareas.
+================================================================================
+
+================================================================================
+AUG-053 — ITERACIÓN 1 — 2026-11-11 — AISLAMIENTO DE addCutPending POR CUENTA
 Estado: EN PROGRESO. Implementación y cinco regresiones añadidas; validación local y revisión final pendientes.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 51cb25ca6a7dde1715960b9616b34110325e09ad. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
 Alcance: operaciones pendientes del modal «Agregar Corte». Las claves IndexedDB se particionan por ownerId/vehicleId; las claves legadas se migran al propietario registrado y los registros sin owner o en conflicto se conservan en cuarentena, sin recuperación automática. Lectura, escritura y eliminación validan ownerId. Antes de addOrUpdateCut se vuelve a comprobar la cuenta propietaria y se utiliza el SessionToken vigente en memoria; el token no se persiste.

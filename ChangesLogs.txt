@@ -1429,3 +1429,4 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Las claves legadas se migran al propietario registrado y los registros sin owner o en conflicto se conservan en cuarentena, sin recuperación automática.
 - Lectura, escritura y eliminación verifican ownerId; el envío comprueba nuevamente la cuenta propietaria y usa la sesión vigente sin persistir SessionToken.
 - Se añadieron cinco regresiones a Services/Test/IndexedDBTransactions.js.
+- Validación de iteración: parsing V8 de offline.js, ui.js y suite PASS; cinco escenarios addCutPending ejecutados contra las funciones reales con IndexedDB simulado: 5/5 PASS, incluida ausencia de SessionToken en el snapshot persistido. Node CLI literal y IndexedDB/navegador real no ejecutados; quedan para Beta.

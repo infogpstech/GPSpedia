@@ -402,4 +402,4 @@ La ejecución en runtime V8 adaptado obtuvo 10/10 escenarios PASS. La ejecución
 
 ## Aislamiento de operaciones addCutPending por cuenta (AUG-053 — iteración 1)
 
-La suite `IndexedDBTransactions.js` añade cinco escenarios para el modal «Agregar Corte»: dos cuentas con el mismo vehículo mantienen operaciones separadas; una misma cuenta conserva el conflicto de opId; los registros legados se migran al owner original; y la eliminación solo afecta la operación de la cuenta propietaria. Ejecutar con `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+La suite `IndexedDBTransactions.js` añade cinco escenarios para el modal «Agregar Corte»: dos cuentas con el mismo vehículo mantienen operaciones separadas; una misma cuenta conserva el conflicto de opId; los registros legados se migran al owner original; los tokens de sesión no se persisten; y la eliminación solo afecta la operación de la cuenta propietaria. Ejecutar con `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.

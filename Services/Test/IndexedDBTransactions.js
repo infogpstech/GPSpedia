@@ -367,11 +367,14 @@ async function runIndexedDBTransactionTests() {
     });
     await testAsync('addCutPending aísla operaciones del mismo vehículo por cuenta', async () => {
         const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-owner-isolation');
-        const make=(userId,id)=>({id,vehicleId:'VEH-OWNER-1',userId,cutData:{tipoCorte1:'Ignición'},status:'processing'});
+        const make=(userId,id)=>({id,vehicleId:'VEH-OWNER-1',userId,sessionToken:'DO-NOT-PERSIST',SessionToken:'DO-NOT-PERSIST-EITHER',cutData:{tipoCorte1:'Ignición'},status:'processing'});
         assert.equal((await api.saveAddCutPendingOperation(make('USER-A','OP-A'))).saved,true);
         assert.equal((await api.saveAddCutPendingOperation(make('USER-B','OP-B'))).saved,true);
         assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-1','USER-A')).operation.id,'OP-A');
         assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-1','USER-B')).operation.id,'OP-B');
+        const storedA = (await api.getAddCutPendingOperation('VEH-OWNER-1','USER-A')).operation;
+        assert.equal(Object.prototype.hasOwnProperty.call(storedA,'sessionToken'),false);
+        assert.equal(Object.prototype.hasOwnProperty.call(storedA,'SessionToken'),false);
     });
     await testAsync('addCutPending conserva conflicto dentro de la misma cuenta', async () => {
         const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-owner-conflict');
