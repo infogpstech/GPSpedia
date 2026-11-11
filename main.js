@@ -895,16 +895,43 @@ async function initializeApp() {
                 searchInput.parentElement.classList.add('has-text');
             }
 
-            // Esperar a que el catálogo esté cargado en el estado antes de filtrar.
-            const checkDataAndSearch = () => {
-                const { catalogData } = state.getState();
-                if (catalogData && catalogData.cortes && catalogData.cortes.length > 0) {
-                    navigation.filtrarContenido(query);
-                } else {
-                    setTimeout(checkDataAndSearch, 100);
-                }
+            // Si aún no hay sesión, el listener espera al login. La carga del catálogo
+            // notifica estados terminales mediante state.js; no se usa polling.
+            let waitStarted = false;
+            let stopWaitingForLogin = () => {};
+            const beginCatalogWait = currentState => {
+                if (waitStarted || !currentState.currentUser) return;
+                waitStarted = true;
+                stopWaitingForLogin();
+                state.waitForCatalogReadiness(15000).then(result => {
+                    if (result.status === 'ready' || result.status === 'stale') {
+                        navigation.filtrarContenido(query);
+                        return;
+                    }
+                    if (result.status === 'timeout') {
+                        ui.showGlobalError('La carga del catálogo está tardando demasiado. Comprueba tu conexión; la búsqueda se abrirá cuando los datos estén disponibles.');
+                        let stopLateWait = () => {};
+                        const applyWhenReady = latestState => {
+                            if (latestState.catalogLoadStatus === 'ready' || latestState.catalogLoadStatus === 'stale') {
+                                stopLateWait();
+                                navigation.filtrarContenido(query);
+                            } else if (latestState.catalogLoadStatus === 'error') {
+                                stopLateWait();
+                                ui.showGlobalError('No se pudo cargar el catálogo. Comprueba tu conexión e inténtalo nuevamente.');
+                            }
+                        };
+                        stopLateWait = state.subscribe(applyWhenReady);
+                        applyWhenReady(state.getState());
+                        return;
+                    }
+                    ui.showGlobalError(`No se pudo cargar el catálogo para abrir la búsqueda: ${result.error}`);
+                }).catch(error => {
+                    console.warn('No se pudo esperar la carga del catálogo para el deep link:', error);
+                    ui.showGlobalError('No se pudo preparar la búsqueda. Comprueba tu conexión e inténtalo nuevamente.');
+                });
             };
-            checkDataAndSearch();
+            stopWaitingForLogin = state.subscribe(beginCatalogWait);
+            beginCatalogWait(state.getState());
         }
     }, 0);
 }

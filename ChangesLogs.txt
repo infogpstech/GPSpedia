@@ -1365,3 +1365,11 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Node CLI literal no ejecutado: el entorno carece de checkout local y la clonación falla por resolución DNS de github.com. La suite adaptada no se presenta como ejecución Node.
 - AUG-051 queda COMPLETADA CON VALIDACIÓN DIFERIDA. IndexedDB real, navegador, offline y multi-pestaña quedan reservados a Beta.
 ================================================================================
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 1 — ESPERA TERMINAL DE DEEP LINKS
+- state.js: incorpora estados idle/loading/ready/stale/error para la carga del catálogo y waitForCatalogReadiness(), basado en suscripción y timeout acotado.
+- auth.js: publica estados de carga al resolver desde caché, red o error; distingue catálogo disponible pero posiblemente desactualizado.
+- main.js: elimina el polling recursivo de 100 ms al restaurar búsquedas por hash; espera una transición terminal, conserva el deep link durante la ausencia de sesión y permite aplicar la búsqueda si la carga termina después del timeout.
+- Services/Test/CatalogReadiness.js: cuatro regresiones de estado inmediato, suscripción, error y timeout.
+- No se modifican endpoints, contratos backend, estrategia de fetch, Service Worker ni datos productivos.

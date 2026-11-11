@@ -132,6 +132,7 @@ function handleLoginSuccess(user, persist = true) {
 
 async function loadInitialData() {
     let catalogLoaded = false;
+    setState({ catalogLoadStatus: 'loading', catalogLoadError: null });
 
     // 1. Intentar cargar desde caché local inmediatamente (Cache-First)
     try {
@@ -146,6 +147,7 @@ async function loadInitialData() {
             const normalizedCached = normalizeCatalogData(cachedCatalog);
             processCatalogData(normalizedCached);
             catalogLoaded = true;
+            setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
         } else if (cachedCatalog) {
             console.warn('Se descartó una caché de catálogo incompleta o con IDs inválidos.');
         }
@@ -172,6 +174,7 @@ async function loadInitialData() {
             processCatalogData(catalogData);
         }
         catalogLoaded = true;
+        setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
         // Precarga compartida de Problemas y Soluciones; búsqueda y modales reutilizan esta misma petición.
         loadPysData({ refresh: true }).catch(e => console.warn("Error precargando PyS en segundo plano:", e));
@@ -187,12 +190,14 @@ async function loadInitialData() {
                     const normalizedCached = normalizeCatalogData(cachedCatalog);
                     processCatalogData(normalizedCached);
                     catalogLoaded = true;
+                    setState({ catalogLoadStatus: 'stale', catalogLoadError: error.message || 'La red no está disponible.' });
                     console.log("Catalog rehydrated from cache after network failure.");
                     return;
                 }
             } catch (e) { /* silent */ }
 
             // Si llegamos aquí, no hay datos locales ni de red.
+            setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
             showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
 
             // Aseguramos que el estado refleje un catálogo vacío para limpiar skeletons si los hubiera
@@ -204,6 +209,8 @@ async function loadInitialData() {
                     sortedCategories: []
                 }
             });
+        } else {
+            setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
         }
     }
 }

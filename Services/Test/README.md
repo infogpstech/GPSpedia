@@ -272,6 +272,11 @@ La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `Activ
 
 - Ejecutar `node --experimental-default-type=module Services/Test/GlobalSearch.js`.
 - Comprueba normalización de acentos, HTML y entidades; búsqueda en los tres slots de Cortes; prioridad exacta/parcial/descriptiva; campos de Relay, Tutoriales y PyS; años frente a modelos numéricos; clasificación y autoapertura por sección; deep links y promesas compartidas.
+
+## Estado terminal de carga para deep links (AUG-052 — iteración 1)
+- Ejecutar `node --experimental-default-type=module Services/Test/CatalogReadiness.js`.
+- Comprueba resolución inmediata con catálogo disponible, espera por suscripción de estado (sin polling), propagación de error terminal y timeout acotado.
+- La suite valida el contrato local de estado; no sustituye pruebas de navegador real ni de red.
 - La suite usa datos sintéticos y no llama a Apps Script ni a endpoints operativos.
 
 

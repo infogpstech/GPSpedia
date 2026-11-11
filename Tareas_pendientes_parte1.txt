@@ -752,7 +752,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   4. Evaluar caché/paginación o getNavigationData para reducir lecturas completas de Spreadsheet; documentar cuándo usar cada endpoint.
   5. Probar primera instalación, actualización de Service Worker, arranque offline, deep link sin sesión/sin catálogo, API lenta/caída y catálogos de tamaño representativo.
 - Relación: AUD-T-037; AUD-T-029/AUG-033 por límites de tiempo y cargas de Drive; no confundir catálogo Spreadsheet con auditoría Drive.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: EN PROGRESO. Iteración 1 completada: deep links esperan estados terminales de catálogo mediante suscripción con timeout de 15 s; se elimina el polling infinito. Pruebas locales del helper: 4 escenarios añadidos. Pendiente: timeout/cancelación/reintento controlado del fetch de catálogo, tratamiento explícito de error sin caché y datos obsoletos con caché, precache/event.waitUntil/cuota, evaluación de getNavigationData y validaciones PWA/Beta.
 
 ================================================================================
 CONTROL DE INVENTARIO DE IDENTIFICADORES AUG — AUD-CP-0019

@@ -115,3 +115,13 @@ Limitación explícita: Node CLI literal no ejecutado. Node 22.16.0 está dispon
 Validaciones Beta pendientes: IndexedDB real, navegador real, operación offline y multi-pestaña. No se modificaron endpoints, deployments ni datos productivos.
 AUG-051 cerrada localmente. No iniciar AUG-052 en esta iteración.
 ================================================================================
+
+================================================================================
+AUG-052 — ITERACIÓN 1 — 2026-11-11 — ESPERA TERMINAL DE DEEP LINKS
+Estado: EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 8bc20a6eab1a0de252142ca7f2b35480b5f81f0d.
+Se reemplaza el polling recursivo de 100 ms en main.js por waitForCatalogReadiness() en state.js. La espera se resuelve por suscripción ante catálogo ready/stale o error terminal, con timeout de 15 s. Si no hay sesión, el deep link queda pendiente hasta que el usuario inicie sesión; si vence el tiempo, se informa y se conserva una suscripción para aplicar la búsqueda si el catálogo llega después.
+auth.js publica catalogLoadStatus/catalogLoadError al iniciar, cargar desde caché, completar red o fallar; si hay caché y falla la actualización, el estado es stale.
+Prueba añadida: Services/Test/CatalogReadiness.js (4 escenarios: disponibilidad inmediata, cambio de estado, error y timeout). Validaciones de red, reintentos y PWA no forman parte de esta iteración.
+Siguiente iteración: incorporar timeout/cancelación/reintento controlado al fetch de catálogo. No modificar el Service Worker ni iniciar otros criterios de AUG-052 en esta iteración.
+================================================================================
