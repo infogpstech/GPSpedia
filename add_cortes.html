@@ -616,6 +616,8 @@
                 if (preview) {
                     preview.src = '';
                 }
+                if (state.savedFiles) state.savedFiles.imgCorte1 = null;
+                if (state.restoredFiles) state.restoredFiles.imgCorte1 = null;
                 if (uploadLabel) {
                     uploadLabel.classList.add('disabled');
                 }
@@ -1137,6 +1139,8 @@
                 if (networkError) alert("Se interrumpió la comunicación. La operación y sus archivos permanecen guardados de forma durable para reintentar la misma solicitud sin duplicarla.");
                 else if (error && /No hay espacios disponibles para más cortes/i.test(String(error.message || ''))) {
                     alert("Otro colaborador ocupó el último espacio disponible para cortes. Tus datos y archivos permanecen conservados en el formulario y en la operación pendiente; no se sobrescribió ningún corte.");
+                } else if (error && error.name === 'FileReadError') {
+                    alert("No se pudo leer una de las imágenes. No se envió la solicitud. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
                 } else alert("No se pudo confirmar el guardado o la limpieza local. La operación permanece conservada; no se iniciará otra con el mismo identificador.");
             } finally {
                 toggleLoading(false); btn.classList.remove('btn-loading'); isSubmittingStage2 = false;
@@ -1284,48 +1288,45 @@
             showPhase(3);
         }
 
+        let isSubmittingStage3 = false;
         async function handleStage3Submit(e) {
             e.preventDefault();
+            if (isSubmittingStage3) return;
+            isSubmittingStage3 = true;
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true);
-            btn.classList.add('btn-loading');
-
-            const cableAlimenVal = document.getElementById('cableAlimen').value;
-            const imgCableAlimenVal = await fileToBase64(document.getElementById('imgCableAlimen').files[0]);
-
-            const payload = {
-                userId: state.userId,
-                sessionToken: state.sessionToken,
-                vehicleId: state.selectedVehicleId,
-                apertura: document.getElementById('apertura').value,
-                notaImportante: document.getElementById('notaImportante').value,
-                imgApertura: await fileToBase64(document.getElementById('imgApertura').files[0]),
-                timestamp: state.timestamp
-            };
-
-            const slot = state.cableSlotToRegister || 1;
-            if (slot === 1) {
-                payload.cableAlimen = cableAlimenVal;
-                payload.imgCableAlimen = imgCableAlimenVal;
-            } else if (slot === 2) {
-                payload.cableAlimen2 = cableAlimenVal;
-                payload.imgCableAlimen2 = imgCableAlimenVal;
-            } else if (slot === 3) {
-                payload.cableAlimen3 = cableAlimenVal;
-                payload.imgCableAlimen3 = imgCableAlimenVal;
-            }
-
-            const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
-            const serviceOverride = silentVal ? 'ADMIN' : null;
-
+            if (btn) btn.classList.add('btn-loading');
             try {
+                const cableAlimenVal = document.getElementById('cableAlimen').value;
+                const cableImageInput = document.getElementById('imgCableAlimen');
+                const openingImageInput = document.getElementById('imgApertura');
+                const imgCableAlimenVal = await fileToBase64(cableImageInput && cableImageInput.files ? cableImageInput.files[0] : null);
+                const imgAperturaVal = await fileToBase64(openingImageInput && openingImageInput.files ? openingImageInput.files[0] : null);
+                const payload = {
+                    userId: state.userId, sessionToken: state.sessionToken, vehicleId: state.selectedVehicleId,
+                    apertura: document.getElementById('apertura').value,
+                    notaImportante: document.getElementById('notaImportante').value,
+                    imgApertura: imgAperturaVal, timestamp: state.timestamp
+                };
+                const slot = state.cableSlotToRegister || 1;
+                if (slot === 1) { payload.cableAlimen = cableAlimenVal; payload.imgCableAlimen = imgCableAlimenVal; }
+                else if (slot === 2) { payload.cableAlimen2 = cableAlimenVal; payload.imgCableAlimen2 = imgCableAlimenVal; }
+                else if (slot === 3) { payload.cableAlimen3 = cableAlimenVal; payload.imgCableAlimen3 = imgCableAlimenVal; }
+                const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
+                const serviceOverride = silentVal ? 'ADMIN' : null;
                 await routeAction('addSupplementaryInfo', payload, serviceOverride);
                 alert("Información guardada. Serás redirigido.");
                 window.location.href = 'index.html';
             } catch(error) {
-                alert(`Error al guardar: ${error.message}`);
+                if (error && error.name === 'FileReadError') {
+                    alert("No se pudo leer una de las imágenes. No se envió la información suplementaria. Los campos y archivos seleccionados permanecen en el formulario; vuelve a seleccionar la imagen o inténtalo nuevamente.");
+                } else {
+                    alert("No se pudo guardar la información suplementaria. Tus datos permanecen en el formulario; puedes intentarlo nuevamente.");
+                }
+            } finally {
                 toggleLoading(false);
-                btn.classList.remove('btn-loading');
+                if (btn) btn.classList.remove('btn-loading');
+                isSubmittingStage3 = false;
             }
         }
 
@@ -1352,14 +1353,25 @@
         function setupImagePreview(inputId, previewId) {
             const input = document.getElementById(inputId);
             const preview = document.getElementById(previewId);
+            if (!input || !preview) return;
             input.addEventListener('change', () => {
-                const file = input.files[0];
-                if (file) {
+                const file = input.files && input.files[0];
+                if (!file) { preview.src = ''; return; }
+                preview.src = '';
+                if (file.size === 0) {
+                    console.warn('No se pudo generar la vista previa de una imagen.', 'EmptyFile');
+                    return;
+                }
+                try {
                     const reader = new FileReader();
-                    reader.onload = (e) => { preview.src = e.target.result; };
+                    reader.onload = () => {
+                        if (typeof reader.result === 'string' && reader.result.startsWith('data:')) preview.src = reader.result;
+                    };
+                    reader.onerror = () => console.warn('No se pudo generar la vista previa de una imagen.', reader.error && reader.error.name || 'FileReadError');
+                    reader.onabort = () => console.warn('Se canceló la lectura de una imagen para vista previa.', 'FileReadAborted');
                     reader.readAsDataURL(file);
-                } else {
-                    preview.src = '';
+                } catch (error) {
+                    console.warn('No se pudo iniciar la vista previa de una imagen.', error && error.name || 'FileReadError');
                 }
             });
         }
@@ -1370,11 +1382,40 @@
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
-                if (!file) resolve(null);
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
+                if (!file) { resolve(null); return; }
+                if (typeof file.size === 'number' && file.size === 0) {
+                    const emptyFileError = new Error('FILE_EMPTY');
+                    emptyFileError.name = 'FileReadError';
+                    reject(emptyFileError);
+                    return;
+                }
+                try {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        if (typeof reader.result !== 'string' || !reader.result.startsWith('data:')) {
+                            const invalidResultError = new Error('FILE_READ_INVALID_RESULT');
+                            invalidResultError.name = 'FileReadError';
+                            reject(invalidResultError);
+                            return;
+                        }
+                        resolve(reader.result);
+                    };
+                    reader.onerror = () => {
+                        const readError = new Error('FILE_READ_FAILED');
+                        readError.name = 'FileReadError';
+                        reject(readError);
+                    };
+                    reader.onabort = () => {
+                        const abortError = new Error('FILE_READ_ABORTED');
+                        abortError.name = 'FileReadError';
+                        reject(abortError);
+                    };
+                    reader.readAsDataURL(file);
+                } catch (_) {
+                    const startError = new Error('FILE_READ_START_FAILED');
+                    startError.name = 'FileReadError';
+                    reject(startError);
+                }
             });
         }
 

@@ -273,3 +273,21 @@ Siguiente tarea: AUG-057. No se inicia en esta iteración.
 
 
 Actualización de continuidad: la entrada original de AUG-056 en Tareas_pendientes_parte1.txt también quedó marcada COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-057 permanece como siguiente tarea y no se inició.
+
+
+================================================================================
+AUG-057 — CIERRE — ITERACIÓN 1 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 0a8a1a1e4a0210ef33b70ac88f3e48f3e39f4b4d. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Resolución:
+- `add_cortes.html`: `fileToBase64()` retorna null inmediatamente cuando no hay archivo; rechaza archivos vacíos/resultados inválidos y controla FileReader error, abort y excepciones síncronas.
+- Etapa 2 detiene conversión fallida antes de snapshot/envío, conserva datos y archivos seleccionados e informa que puede reintentarse. finally restaura overlay, botón y flag.
+- Etapa 3 protege contra doble envío y agrupa lecturas, payload y petición en try/catch/finally. Los errores de lectura no generan peticiones y todos los caminos restauran overlay, botón y flag.
+- Vistas previas controlan error/abort. «No recomendado» elimina referencias de imagen almacenadas para evitar imágenes obsoletas.
+- FileReadRecovery 13/13 PASS; CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 PASS.
+
+Nota preexistente: AddCutOperationRecoveryFlow ejecuta 0/3 tanto contra fuente inicial como modificada; no se atribuye a AUG-057 ni se declara aprobada.
+Beta pendiente: navegador real, FileReader real, Apps Script/Spreadsheet desplegados y pruebas de campo. No se modificaron servicios ni datos productivos.
+AUG-057 queda cerrada. No se inicia otra tarea en esta iteración.
+================================================================================

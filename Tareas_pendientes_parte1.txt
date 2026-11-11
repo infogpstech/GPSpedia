@@ -842,7 +842,8 @@ Iteración 17: COMPLETADA CON VALIDACIÓN DIFERIDA (el harness IndexedDB ahora s
   3. Conservar datos recuperables y permitir reintentar sin recargar la página.
   4. Probar FileReader success/error/abort, archivo vacío, imagen opcional ausente y fallo de lectura antes del envío en etapas 2 y 3.
 - **Relación:** AUD-T-003.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Cierre:** FileReader robusto; recuperación visual en etapas 2 y 3; imágenes opcionales diferenciadas de errores; datos y archivos conservados para reintento. Evidencia en Auditoría.txt y checkpoint.md.
 
 
 

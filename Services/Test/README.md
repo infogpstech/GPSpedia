@@ -601,3 +601,9 @@ Parsing local de Services/write.js, Services/admin.js y el módulo de add_cortes
 - `Services/Test/CutAvailability.js`: ejecutar `runCutAvailabilityTests({ frontend, write, admin })`. Cubre estados 0/1/2/3, selección del primer espacio libre en WRITE/ADMIN, vehículos nuevos/existentes, visibilidad de cortes/vídeo, refresco tras guardar/recuperar y conservación del formulario ante una colisión.
 - Validación local: CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; YouTubeAddCortesContract 4/4 PASS. Parsing V8 de los módulos modificados: PASS.
 - Navegador real, Apps Script/Spreadsheet desplegados y concurrencia real quedan diferidos a Beta; no se afirma validación de producción.
+
+
+## AUG-057 — Recuperación ante fallos de lectura de archivos
+- `Services/Test/FileReadRecovery.js`: ejecutar `runFileReadRecoveryTests({ frontend })`. Cubre FileReader success/error/abort, archivo vacío, imagen opcional ausente, excepción síncrona, fallos en etapas 2 y 3, restauración de overlay/botón/flags, conservación de datos y reintento sin recargar.
+- Validación local: FileReadRecovery 13/13 PASS; CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 del módulo frontend PASS.
+- `AddCutOperationRecoveryFlow.js` presenta 0/3 tanto con la fuente inicial como con la modificada; falla preexistente, no atribuida a AUG-057 y no usada como validación aprobada.

@@ -1679,3 +1679,14 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; YouTubeAddCortesContract 4/4 PASS.
 - Navegador, Apps Script desplegados y concurrencia real quedan diferidos a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-057 — RECUPERACIÓN ANTE FALLOS DE LECTURA DE ARCHIVOS
+- `add_cortes.html`: `fileToBase64()` diferencia archivo ausente, vacío, lectura inválida, error, abort y excepción de inicio.
+- Etapa 2 detiene errores de conversión antes de snapshot/envío y conserva el formulario para reintentar.
+- Etapa 3 incorpora protección contra doble envío y try/catch/finally para restaurar overlay, botón y flag.
+- Vistas previas controlan error/abort; «No recomendado» limpia referencias de imagen obsoletas.
+- Nueva suite `Services/Test/FileReadRecovery.js`: 13/13 PASS. CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 PASS.
+- AddCutOperationRecoveryFlow falla 0/3 también con la fuente previa; falla preexistente, no atribuida a este cambio.
+================================================================================

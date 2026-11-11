@@ -468,3 +468,28 @@ Validación local:
 
 Límites: no se ejecutaron navegador real, Apps Script desplegados ni escrituras concurrentes reales sobre Spreadsheet. Esas comprobaciones permanecen para Beta.
 ================================================================================
+
+
+================================================================================
+AUG-057 — RESOLUCIÓN DEL HALLAZGO REFERENCIADO H-AUD-003-003 — 2026-11-11
+Origen: tarea AUG-057 del backlog. El identificador H-AUD-003-003 no figuraba como entrada independiente en la versión activa de Auditoría.txt; esta anotación registra evidencia técnica verificada sin atribuir contenido histórico no disponible al hallazgo original.
+
+Ubicación: add_cortes.html — fileToBase64(), setupImagePreview(), handleStage2Submit() y handleStage3Submit().
+Evidencia:
+- fileToBase64() resolvía null ante archivo ausente, pero continuaba creando FileReader y llamando readAsDataURL(undefined); no controlaba abort, excepción síncrona de inicio ni archivos vacíos.
+- handleStage3Submit() ejecutaba las lecturas antes del try/catch/finally. Un rechazo podía dejar activo el overlay y el botón, sin liberar un indicador de envío.
+- setupImagePreview() no atendía error ni abort de FileReader.
+- En etapa 2, el guardado durable y la petición ocurren después de convertir imágenes; un error debe detener el flujo sin crear una operación parcial.
+
+Impacto: bloqueo de etapa 3, fallo al omitir imágenes opcionales y riesgo de enviar datos incompletos. Los errores podían impedir reintentar sin recargar.
+
+Corrección:
+- fileToBase64() retorna inmediatamente null sin archivo; rechaza archivos vacíos/resultados inválidos y controla error, abort y excepciones síncronas con FileReadError.
+- Etapa 2 detiene el flujo ante fallo de lectura, sin persistir ni enviar; conserva campos/archivos y restaura overlay, botón y flag.
+- Etapa 3 añade guarda contra doble envío y agrupa conversiones, payload y petición en try/catch/finally; restaura controles en todos los resultados.
+- Vistas previas controlan error/abort. «No recomendado» limpia referencias de imagen almacenadas para evitar reutilizar una imagen obsoleta.
+
+Validación local: FileReadRecovery 13/13 PASS; CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; parsing V8 PASS. AddCutOperationRecoveryFlow: 0/3 en fuente previa y modificada; falla preexistente reproducida, no se presenta como aprobada.
+
+Navegador real y Apps Script/Spreadsheet desplegados quedan pendientes para Beta.
+================================================================================
