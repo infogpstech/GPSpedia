@@ -195,6 +195,11 @@ function runAddCutOperationIntegrityTests(sources) {
             assert_(/operationHash: match\.operationHash/.test(source));
         }
     });
+    run_('add_cortes usa IndexedDB como snapshot y no conserva el store anterior en localStorage', () => {
+        assert_(/getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation from '\.\/offline\.js'/.test(frontend));
+        assert_(!/createPendingOperationStore|getPendingOperationStore/.test(frontend));
+        assert_(/PENDING_OPERATION_STORAGE_UNAVAILABLE/.test(frontend));
+    });
     run_('snapshot durable valida owner, tipo, etapa, estado, id, huella y vehículo', () => {
         const valid = extract_(offline, 'isValidAddCutOperationSnapshot_');
         for (const pattern of [/ownerId/, /operationType !== 'addOrUpdateCut'/, /stage !== 2/, /processing.*failed.*completed/, /OP-\[A-Za-z0-9_-\]/, /\[a-f0-9\]\{64\}/, /requestData\.vehicleId/, /requestData\.cutData/]) assert_(pattern.test(valid), 'Falta validación: ' + pattern);
