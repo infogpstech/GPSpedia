@@ -652,77 +652,70 @@ export async function getCatalog() {
     return performOp('catalog', 'readonly', (store) => store.get('current'));
 }
 
-// --- SEARCH HISTORY ---
-
-export async function saveSearch(term, metadata = {}) {
-    const entry = {
-        term: term.toLowerCase().trim(),
-        timestamp: Date.now(),
-        metadata
-    };
-    return performOp('searchHistory', 'readwrite', (store) => store.put(entry));
+// --- ACCOUNT-SCOPED LOCAL ACTIVITY ---
+function normalizeLocalOwnerId(ownerId) {
+    const value = String(ownerId === null || ownerId === undefined ? '' : ownerId).trim();
+    return value && value !== '0' ? value : '';
 }
-
-export async function getSearchHistory(limit = 10) {
-    const all = await performOp('searchHistory', 'readonly', (store) => store.getAll());
+function buildOwnerScopedKey(ownerId, recordId) { return JSON.stringify([ownerId, String(recordId)]); }
+function isPotentialVinSearchTerm(term) {
+    const value = String(term === null || term === undefined ? '' : term).trim();
+    if (!/^[A-HJ-NPR-Z0-9]{6,18}$/i.test(value)) return false;
+    return /\d/.test(value) || value.length >= 12;
+}
+export async function saveSearch(term, ownerId, metadata = {}) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    const normalizedTerm = String(term === null || term === undefined ? '' : term).toLowerCase().trim();
+    if (!owner || !normalizedTerm || isPotentialVinSearchTerm(normalizedTerm)) return null;
+    const entry = { term: buildOwnerScopedKey(owner, normalizedTerm), ownerId: owner, query: normalizedTerm, timestamp: Date.now(), metadata };
+    return performOp('searchHistory', 'readwrite', store => store.put(entry));
+}
+export async function getSearchHistory(ownerId, limit = 10) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    if (!owner) return [];
+    const all = await performOp('searchHistory', 'readonly', store => store.getAll());
     if (!all) return [];
-    return all.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
+    const legacyVinTerms = all.filter(entry => entry && !entry.ownerId && isPotentialVinSearchTerm(entry.term)).map(entry => entry.term);
+    if (legacyVinTerms.length) await Promise.all(legacyVinTerms.map(term => performOp('searchHistory', 'readwrite', store => store.delete(term))));
+    return all.filter(entry => entry && entry.ownerId === owner && typeof entry.query === 'string')
+        .sort((a,b) => b.timestamp-a.timestamp).slice(0,limit).map(entry => ({ ...entry, term: entry.query }));
 }
-
-// --- VALIDATION CACHE ---
-
-export async function saveValidationResponse(vehicleId, response) {
-    const entry = {
-        vehicleId: String(vehicleId),
-        timestamp: Date.now(),
-        response: response
-    };
-    return performOp('validationCache', 'readwrite', (store) => store.put(entry));
+// El backend conserva la respuesta colaborativa; este caché solo recuerda qué cuenta respondió.
+export async function saveValidationResponse(vehicleId, response, ownerId) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    const recordId = String(vehicleId === null || vehicleId === undefined ? '' : vehicleId).trim();
+    if (!owner || !recordId) return null;
+    const entry = { vehicleId: buildOwnerScopedKey(owner, recordId), ownerId: owner, recordId, timestamp: Date.now(), response };
+    return performOp('validationCache', 'readwrite', store => store.put(entry));
 }
-
-export async function getValidationResponse(vehicleId) {
-    return performOp('validationCache', 'readonly', (store) => store.get(String(vehicleId)));
+export async function getValidationResponse(vehicleId, ownerId) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    const recordId = String(vehicleId === null || vehicleId === undefined ? '' : vehicleId).trim();
+    if (!owner || !recordId) return null;
+    const entry = await performOp('validationCache', 'readonly', store => store.get(buildOwnerScopedKey(owner, recordId)));
+    return entry && entry.ownerId === owner && entry.recordId === recordId ? entry : null;
 }
-
-// --- VIEWED ITEMS ---
-
-export async function saveViewedItem(item) {
-    if (!item || item.id === undefined || item.id === null) return null;
-    const entry = {
-        id: String(item.id),
-        timestamp: Date.now(),
-        data: item
-    };
-    const res = await performOp('viewedItems', 'readwrite', (store) => store.put(entry));
-
-    // Precargar proactivamente todas las imágenes asociadas al vehículo visto
+export async function saveViewedItem(item, ownerId) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    if (!owner || !item || item.id === undefined || item.id === null) return null;
+    const itemId = String(item.id);
+    const entry = { id: buildOwnerScopedKey(owner, itemId), ownerId: owner, itemId, timestamp: Date.now(), data: item };
+    const result = await performOp('viewedItems', 'readwrite', store => store.put(entry));
     cacheItemImages(item).catch(err => console.warn("Error precargando imágenes de visto recientemente:", err));
-    return res;
+    return result;
 }
-
-/**
- * Precarga y almacena en IndexedDB todas las imágenes de un registro de vehículo.
- */
 export async function cacheItemImages(item) {
     if (!item) return;
-    const fieldsToCache = [
-        item.imagenVehiculo,
-        item.imgCorte1, item.imgCorte2, item.imgCorte3,
-        item.imgCableAlimen, item.imgCableAlimen2, item.imgCableAlimen3,
-        item.imagenRelay, item.imagen, item.Imagen
-    ];
-
-    for (const field of fieldsToCache) {
-        if (field && typeof field === 'string' && !field.startsWith('blob:') && !field.includes('placehold.co')) {
-            compressAndStoreThumbnail(field, field).catch(() => {});
-        }
-    }
+    const fieldsToCache = [item.imagenVehiculo,item.imgCorte1,item.imgCorte2,item.imgCorte3,item.imgCableAlimen,item.imgCableAlimen2,item.imgCableAlimen3,item.imagenRelay,item.imagen,item.Imagen];
+    for (const field of fieldsToCache) if (field && typeof field === 'string' && !field.startsWith('blob:') && !field.includes('placehold.co')) compressAndStoreThumbnail(field,field).catch(()=>{});
 }
-
-export async function getViewedItems(limit = 20) {
-    const all = await performOp('viewedItems', 'readonly', (store) => store.getAll());
+export async function getViewedItems(ownerId, limit = 20) {
+    const owner = normalizeLocalOwnerId(ownerId);
+    if (!owner) return [];
+    const all = await performOp('viewedItems','readonly',store=>store.getAll());
     if (!all) return [];
-    return all.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
+    return all.filter(entry=>entry&&entry.ownerId===owner&&entry.data).sort((a,b)=>b.timestamp-a.timestamp)
+        .slice(0,limit).map(entry=>({id:entry.itemId,timestamp:entry.timestamp,data:entry.data}));
 }
 
 // --- THUMBNAIL CACHE & COMPRESSION ---
