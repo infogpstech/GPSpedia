@@ -135,3 +135,8 @@ Los deployments y endpoints operativos son recursos independientes: se administr
 ### Cargas generales de imágenes y reconciliación
 
 WRITE y ADMIN registran cada intento en ImageUploadLedger antes de crear el archivo Drive. Se verifica por lectura posterior la fila del ledger y los metadatos de Drive; al reutilizar archivos se recalcula SHA-256 y se valida operación, carpeta, MIME y tamaño. El límite es 10 MB por imagen. La acción ADMIN reconcilePendingImageUploads trabaja en dry-run por defecto; confirm:true aplica estados, sin eliminar archivos. Si la persistencia de ImageUploadLedger no está disponible, la carga se detiene antes de crear archivos.
+
+
+### Estrategia de lectura del catálogo
+
+La evaluación de `getCatalogData`, `getNavigationData`, `getDropdownData`, caché de servidor/IndexedDB y paginación está documentada en [Catalog_Read_Strategy.md](./Catalog_Read_Strategy.md).

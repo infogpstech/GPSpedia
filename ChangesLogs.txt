@@ -1403,3 +1403,13 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - La activación elimina únicamente versiones anteriores del namespace gpsepedia-cache-* y conserva cachés ajenas.
 - Services/Test/ServiceWorkerCache.js: seis escenarios de precache, cuota, waitUntil, fallback offline y exclusión de POST.
 - Services/Test/README.md y Tareas_pendientes_parte1.txt actualizados.
+
+
+================================================================================
+2026-11-11 — AUG-052 — ITERACIÓN 5 — EVALUACIÓN DE LECTURA DEL CATÁLOGO
+- Se agregó Catalog_Read_Strategy.md y se enlazó desde README.md.
+- Se documentó el contrato y uso actual de getCatalogData, getNavigationData y getDropdownData.
+- Se verificó que la escritura CacheService del snapshot completo está deshabilitada por el límite de 100 KB por entrada; IndexedDB guarda el snapshot completo, pero el flujo aún realiza reconciliación remota.
+- Se documentó que getNavigationData reduce el tamaño de respuesta, pero todavía recorre getDataRange() y no tiene consumidor frontend detectado.
+- Se documentó por qué la paginación no es compatible como cambio aislado con el contrato actual de snapshot completo y modo offline.
+- No se modificaron endpoints, código backend, contratos ni despliegues.

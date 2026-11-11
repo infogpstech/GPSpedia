@@ -165,3 +165,13 @@ service-worker.js incrementa el cache a v15. CORE_ASSETS incluye las tres entrad
 Suite Services/Test/ServiceWorkerCache.js: 6/6 PASS en runtime V8 adaptado (grafo, cuota opcional, cuota esencial, waitUntil/cache.put, navegación offline y POST). Node CLI literal no ejecutado. Instalación/actualización y arranque offline en navegador real quedan para Beta. No se modifican endpoints ni backend.
 Siguiente iteración: AUG-052, criterio 4 (evaluar caché/paginación o getNavigationData). No iniciar AUG-053 ni otra tarea.
 ================================================================================
+
+
+================================================================================
+AUG-052 — ITERACIÓN 5 — 2026-11-11 — EVALUACIÓN DE ESTRATEGIA DE LECTURA
+Estado: CRITERIO 4 COMPLETADO; AUG-052 continúa EN PROGRESO por criterio 5 y validaciones Beta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: c736fd6fa0232e6b7b664ff1276f530446d5d117. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Se creó Catalog_Read_Strategy.md y se enlazó desde README.md. Hallazgos: getCatalogData es el contrato canónico de snapshot completo y se usa a través de fetchCatalogData; IndexedDB permite rehidratación local, pero el flujo siempre solicita reconciliación remota. CacheService conserva una lectura de catalog_data_v2, pero la escritura del snapshot está deshabilitada por superar 100 KB por entrada. getNavigationData devuelve resumen pequeño, pero hoy recorre getDataRange() en Cortes y LogosMarca, y no tiene consumidor frontend encontrado. getDropdownData es consumido por add_cortes.html y también recorre getDataRange() de Cortes. No existe paginación; introducirla rompería el contrato de snapshot completo/offline si no se coordina con cursor estable, versión de snapshot, eliminaciones y ensamblado atómico de páginas.
+Decisión: conservar getCatalogData para el catálogo principal; reservar getNavigationData para una futura carga inicial ligera solo después de reducir rangos leídos y definir consumidor; mantener getDropdownData para formularios; no adoptar paginación en esta tarea. No se modificaron código backend, endpoints, contratos ni despliegues. No se hicieron mediciones productivas de Spreadsheet.
+Siguiente: AUG-052, criterio 5 (pruebas de primera instalación, actualización de Service Worker, arranque offline, deep links sin sesión/sin catálogo, API lenta/caída y catálogos representativos). Las pruebas que requieren navegador real/Apps Script/Spreadsheet productivo se registrarán para Beta; ejecutar localmente las simulaciones reproducibles disponibles.
+================================================================================
