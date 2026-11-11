@@ -139,10 +139,19 @@ Siguiente iteración: resolver explícitamente la experiencia de error recuperab
 
 ================================================================================
 AUG-052 — ITERACIÓN 3 — 2026-11-11 — ESTADO RECUPERABLE DEL CATÁLOGO
-Estado: IMPLEMENTACIÓN Y PRUEBAS SINTÉTICAS PREPARADAS; validación de ejecución pendiente.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Rama: GPSpedia2.2.5_work. HEAD de partida: e60fbbb3cc080ebd9de61cce94ef8d49851685b8. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Se incorpora un aviso persistente para estados loading/stale/error. Cuando falla la actualización con caché, la interfaz informa que se muestran datos guardados posiblemente desactualizados. Cuando no hay catálogo, presenta un error recuperable y permite reintentar la carga desde la sesión vigente. Los deep links permanecen pendientes después de error/timeout y se aplican cuando una carga posterior alcanza ready/stale.
 Archivos funcionales: catalogStatus.js, style.css, auth.js y main.js. Pruebas: Services/Test/CatalogStatus.js. Documentación: Services/Test/README.md, Tareas_pendientes_parte1.txt, ChangesLogs.txt y checkpoint.md.
 Validaciones Beta pendientes: DOM/navegador real, interacción visual del reintento, recuperación offline y red real. No se modifican endpoints, backend ni Service Worker.
 Siguiente iteración: continuar AUG-052 con el criterio 3 (precache del grafo de módulos, event.waitUntil y manejo de cuota). No iniciar AUG-053 ni otras tareas.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN — AUG-052 ITERACIÓN 3 — 2026-11-11
+- Suite Services/Test/CatalogStatus.js ejecutada en runtime V8 adaptado: 4/4 PASS (loading, stale, error recuperable y ocultación en ready/idle).
+- Parsing V8 de main.js, auth.js y Services/Test/CatalogStatus.js: PASS.
+- La ejecución literal mediante Node CLI no se realizó en esta sesión. No se ejecutaron navegador real, red real ni recuperación offline; quedan diferidos a Beta.
+- La comparación del commit bf5e9370f5f2e34bb32f684e83a1945beb11c274 confirma nueve archivos, todos dentro del alcance de la iteración 3. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente: AUG-052, criterio 3 (precache, event.waitUntil y manejo de cuota), en una iteración independiente.
 ================================================================================
