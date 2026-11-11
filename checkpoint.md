@@ -494,7 +494,7 @@ Pruebas en Services/Test/FeedbackWriteSecurity.js:
 - Rechazo de reutilización de reportId con contenido diferente.
 - Rechazo de reportId duplicado preexistente.
 Validación local ejecutada:
-- Suite runFeedbackWriteSecurityTests(): 20/20 PASS.
+- Suite runFeedbackWriteSecurityTests(): 21/21 PASS.
 - Parsing/sintaxis: Services/feedback.js, Services/Test/FeedbackWriteSecurity.js, api-config.js, ui.js, youtubeUpload.js y Services/Coordinator.js — 6/6 PASS (los módulos cliente se analizaron tras retirar únicamente las declaraciones import/export para validación de sintaxis).
 - Matriz de contratos: todas las acciones despachadas tienen política de autorización o declaración pública explícita (suggestYear conserva su resolución especial de actor); todas las políticas tienen dispatcher; todas las acciones FEEDBACK están en ACTION_TO_SERVICE_MAP; todas las acciones compartidas tienen política en Coordinator.js. Sin discrepancias.
 - Revisión de los callsites principales: transmisión de sesión verificada para reportes, likes, PyS, sugerencias, tutoriales y flujo de aprobación de vídeo.
@@ -2059,5 +2059,36 @@ Validación:
 - No ejecutado: navegador real, IndexedDB real, Service Worker en dispositivo, pruebas offline de campo, Apps Script/Spreadsheet, deployments, endpoints ni datos operativos.
 - No se modificaron endpoints, deployments ni datos operativos.
 - Las pruebas reales de navegador/IndexedDB/offline se difieren a Beta; no se presentan como realizadas.
+
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUG-049 — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD de partida: 20097c73ee0149ff48c6d88c507b34e8dc44e2a5.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; preservada.
+
+Estado: AUG-049 COMPLETADA CON VALIDACIÓN DIFERIDA. No se inició ninguna otra tarea. No se tocaron documentos ni procesos legales.
+
+Cambios:
+- search-utils.js: normalización de consultas/campos con mayúsculas, espacios, diacríticos, etiquetas y entidades HTML; ranking por título exacto, parcial y campos descriptivos; búsqueda global por secciones.
+- Cortes: búsqueda en marca/modelo/versión/años/VIN y los tres slots de tipo, ubicación, color, configuración de relay y detalles.
+- Relay, Tutoriales y PyS: campos textuales conservados, etiquetas de sección preservadas y sin asignar marcas sintéticas.
+- Clasificación de marca restringida a resultados exclusivamente Corte.
+- ui.js: los resultados Relay/Tutorial/PyS abren sus modales propios incluso si son la única coincidencia; autoapertura de detalle de vehículo restringida a un único Corte. Se conservan registros con títulos/configuraciones repetidos.
+- pys-data.js: única promesa getPysData compartida entre auth.js, navigation.js y todos los consumidores de ui.js; notifica al módulo de búsqueda para reejecutar la consulta activa al completarse.
+- main.js: deep links #search decodificados con tolerancia a secuencias porcentuales inválidas.
+- Pruebas: Services/Test/GlobalSearch.js; 21/21 casos de lógica aprobados en el harness local. Sintaxis/parsing: 7/7 archivos aprobados.
+- No se modificaron endpoints, deployments ni datos productivos.
+
+Validaciones diferidas a Beta:
+- Revisión visual y navegación real en navegador/dispositivos.
+- Prueba de deep links en sesiones reales y retorno de historial.
+- Integración real de getPysData contra el servicio remoto.
+
+Archivos: navigation.js, ui.js, auth.js, main.js, search-utils.js, pys-data.js, Services/Test/GlobalSearch.js, Services/Test/README.md.
+Continuidad: AUG-049 cerrada. La siguiente tarea se seleccionará en una iteración posterior; no iniciar más trabajo en esta iteración.
 
 ================================================================================

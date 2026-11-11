@@ -266,3 +266,10 @@ La acción AUTH `acceptTerms` reserva los recursos de identidad `Users` y `Activ
 - Ejecutar `node --experimental-default-type=module Services/Test/CatalogSnapshotSync.js`.
 - Comprueba el contrato completo de `getCatalogData`, IDs de Cortes ausentes/duplicados, comparación profunda de Tutoriales/Relay/Logos con cardinalidad constante y reemplazo exacto de la caché IndexedDB.
 - La suite usa un IndexedDB simulado en memoria; no accede a navegador real, Apps Script, Spreadsheet ni datos operativos.
+
+
+## Búsqueda global y navegación por sección (AUG-049)
+
+- Ejecutar `node --experimental-default-type=module Services/Test/GlobalSearch.js`.
+- Comprueba normalización de acentos, HTML y entidades; búsqueda en los tres slots de Cortes; prioridad exacta/parcial/descriptiva; campos de Relay, Tutoriales y PyS; años frente a modelos numéricos; clasificación y autoapertura por sección; deep links y promesas compartidas.
+- La suite usa datos sintéticos y no llama a Apps Script ni a endpoints operativos.

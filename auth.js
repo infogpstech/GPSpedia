@@ -8,6 +8,7 @@ import { setState, getState } from './state.js';
 import { routeAction, fetchCatalogData, login as apiLogin, validateSession as apiValidateSession, completeLoginRequest } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError } from './ui.js';
 import * as offline from './offline.js';
+import { loadPysData } from './pys-data.js';
 
 const SESSION_KEY = 'gpsepedia_session';
 let logoutGeneration_ = 0;
@@ -160,17 +161,8 @@ async function loadInitialData() {
         }
         catalogLoaded = true;
 
-        // Precarga en segundo plano de Problemas y Soluciones para respuesta inmediata (0ms)
-        try {
-            routeAction('getPysData').then(res => {
-                if (res && res.data && Array.isArray(res.data)) {
-                    setState({ pysData: res.data });
-                    try {
-                        localStorage.setItem('gpsepedia_pys_cache', JSON.stringify(res.data));
-                    } catch(e) {}
-                }
-            }).catch(e => console.warn("Error precargando PyS en segundo plano:", e));
-        } catch(e) {}
+        // Precarga compartida de Problemas y Soluciones; búsqueda y modales reutilizan esta misma petición.
+        loadPysData({ refresh: true }).catch(e => console.warn("Error precargando PyS en segundo plano:", e));
 
     } catch (error) {
         console.warn("Fallo al cargar catálogo desde red:", error);

@@ -153,21 +153,21 @@ ACTUALIZACIÓN DE ESTADO — AUG-005
 Fecha: 2026-11-09.
 Estado: COMPLETADA EN FUENTES; lógica y sintaxis PASS. Validación funcional aislada diferida a Beta.
 deleteUser se trasladó a AUTH bajo el lock común con login/logout/resetUserSessions; la cuenta se desactiva lógicamente conservando fila e ID, y se revocan sus sesiones. AUTH valida existencia/estado activo; login revalida bajo lock; USERS filtra desactivados y asigna UUID estático a cuentas nuevas. UI/backend bloquean autodeleción; FEEDBACK rechaza tombstones incluso sin filtro de rol.
-H-AUD-053 RESUELTO; H-AUD-054 RESUELTO POR DISEÑO sin borrar filas ni asumir fórmula histórica. Pruebas: 20/20 lógica con dobles; sintaxis PASS en fuentes Apps Script, api-config.js y script inline users.html. No se ejecutaron deployments aislados ni endpoints live; pruebas funcionales se realizarán en Beta.
+H-AUD-053 RESUELTO; H-AUD-054 RESUELTO POR DISEÑO sin borrar filas ni asumir fórmula histórica. Pruebas: 21/21 lógica con dobles; sintaxis PASS en fuentes Apps Script, api-config.js y script inline users.html. No se ejecutaron deployments aislados ni endpoints live; pruebas funcionales se realizarán en Beta.
 Siguiente acción: continuar con la siguiente tarea según Plan Maestro y verificar el commit.
 ================================================================================
 
 
 ADENDA DE VERIFICACIÓN — AUG-005
-La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 20/20 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
+La revisión final amplió la protección de Users.ID: antes de cambiar nombre/rol, AUTH obtiene los valores calculados de todos los IDs existentes, rechaza filas con datos sin ID y cualquier ID duplicado, y escribe esos valores como constantes. Esto evita que fórmulas históricas dependientes de nombre, fila u otros campos cambien al desactivar la cuenta. Las cuentas nuevas ya no copian fórmulas: solo copian formato y validación de datos y escriben UUID estático. La batería final quedó en 21/21 pruebas lógicas PASS; las pruebas incluyen IDs duplicados/vacíos y preservación de valores. Sintaxis PASS en cuatro scripts Apps Script, api-config.js y script inline users.html.
 
 
 ADENDA FINAL POST-REVISIÓN — AUG-005 / H-AUD-059
-Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
+Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 21/21 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
 
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
-Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+Batería lógica consolidada: 21/21 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
 
 
 ================================================================================
@@ -845,4 +845,21 @@ Pruebas: harness local Node con IndexedDB simulado, 15/15 PASS; incluye reemplaz
 No ejecutado: navegador real, IndexedDB real, service worker en dispositivo, pruebas offline de campo ni Beta. No se modificaron endpoints, deployments ni datos operativos.
 Archivos funcionales: offline.js, auth.js y ui.js. Prueba: Services/Test/CatalogSnapshotSync.js. Instrucciones: Services/Test/README.md.
 Siguiente tarea técnica no legal: AUG-049. AUG-047 permanece sin iniciar y fuera del alcance solicitado.
+================================================================================
+
+
+================================================================================
+AUG-049 — CIERRE — 2026-11-10
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Implementación:
+- search-utils.js centraliza normalización de consulta/campos (mayúsculas, espacios, acentos, etiquetas y entidades HTML), extracción de campos y ranking exacto/parcial/descriptivo.
+- Cortes: incluye los campos de los tres slots (tipo, ubicación, color, configuración de relay y detalles), además de marca/modelo/versión/años/VIN. La coincidencia literal de un modelo numérico prevalece sobre el filtro de rango de años.
+- Relay, Tutoriales y PyS conservan sus campos textuales y tipo de sección. Los resultados no reciben marcas sintéticas ni se clasifican como marcas.
+- ui.js mantiene el destino específico de cada tarjeta y solo autoabre el detalle de vehículo cuando existe una única coincidencia de Corte.
+- pys-data.js comparte una sola promesa getPysData entre autenticación, búsqueda, sección PyS y modales; notifica la actualización para reejecutar la consulta activa una sola vez.
+- main.js decodifica deep links de búsqueda sin interrumpir la inicialización por secuencias porcentuales inválidas.
+- Pruebas: Services/Test/GlobalSearch.js, 21/21 PASS en el harness local; sintaxis/parsing de navigation.js, ui.js, auth.js, main.js, search-utils.js, pys-data.js y la suite: PASS.
+Validación diferida a Beta: navegación visual real en navegador/dispositivos, verificación de deep links en sesiones reales y pruebas de integración contra el servicio remoto getPysData. No se ejecutaron endpoints ni se modificaron datos productivos.
+Archivos funcionales: navigation.js, ui.js, auth.js, main.js, search-utils.js y pys-data.js. Suite: Services/Test/GlobalSearch.js. Instrucciones: Services/Test/README.md.
+Siguiente tarea: se determinará en la próxima iteración; no se inició ninguna otra tarea.
 ================================================================================

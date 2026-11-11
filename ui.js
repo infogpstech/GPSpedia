@@ -11,6 +11,8 @@ import * as offline from './offline.js';
 import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
+import { shouldAutoOpenVehicleDetail } from './search-utils.js';
+import { loadPysData } from './pys-data.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
 
@@ -1761,7 +1763,8 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
         // Renderizado para resultados de tipo MARCA.
         grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px, 1fr))";
         grid.style.gap = "30px";
-        results.forEach(marca => {
+        const marcas = [...new Set(results.map(result => typeof result === 'string' ? result : result.marca).filter(Boolean))];
+        marcas.forEach(marca => {
             const logoUrl = getLogoUrlForMarca(marca, null);
             const card = document.createElement("div");
             card.className = "card brand-logo-item";
@@ -1776,40 +1779,24 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
             grid.appendChild(card);
         });
     } else {
-        // Renderizado para resultados de tipo MODELO (y por defecto).
-        // Agrupar los resultados primero por Modelo único (Marca + Modelo)
-        /* TAREA 4: Evitar que elementos de Relay, Tutoriales o PyS se colapsen indebidamente a una sola tarjeta */
-        const modelosUnicos = [...new Map(results.map((item, idx) => {
-            if (item._sectionType) {
-                const secId = item.ID || item.id || item.Tema || item.configuracion || item.Problema || idx;
-                return [`${item._sectionType}|${secId}`, item];
-            }
-            const key = `${item.marca}|${item.modelo}`;
-            return [key, item];
-        })).values()];
-
-        modelosUnicos.forEach(ejemplo => {
-            const card = crearCardVehiculo(ejemplo, false, results);
+        // Cada registro conserva su identidad y su destino de sección; no se colapsan
+        // Tutoriales/Relay/PyS por títulos o configuraciones que pueden repetirse.
+        results.forEach(item => {
+            const card = crearCardVehiculo(item, false, results);
             grid.appendChild(card);
         });
     }
 
     cont.appendChild(grid);
 
-    // Caso especial: Si solo existe 1 modelo con 1 versión aplicable y 1 solo rango de año, abrir directamente el modal de detalle.
-    if (autoOpen && type === 'modelo') {
-        const uniqueModels = [...new Set(results.map(r => `${r.marca}|${r.modelo}`))];
-        const uniqueVersions = [...new Set(results.map(r => r.versionesAplicables || ''))];
-        const uniqueYears = [...new Set(results.map(r => `${r.anoDesde}-${r.anoHasta || ''}`))];
+    // Solo una coincidencia de Corte puede abrir automáticamente el detalle de vehículo.
+    if (autoOpen && type === 'modelo' && shouldAutoOpenVehicleDetail(results)) {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.blur();
 
-        if (uniqueModels.length === 1 && uniqueVersions.length === 1 && uniqueYears.length === 1 && results.length === 1) {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.blur();
-
-            setTimeout(() => {
-                mostrarDetalleModal(results[0]);
-            }, 150);
-        }
+        setTimeout(() => {
+            mostrarDetalleModal(results[0]);
+        }, 150);
     }
 }
 
@@ -3016,13 +3003,8 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
         updateAccordion(cachedPys);
     }
 
-    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
-    routeAction("getPysData").then(res => {
-        if (res && res.data && Array.isArray(res.data)) {
-            setState({ pysData: res.data });
-            updateAccordion(res.data);
-        }
-    }).catch(err => {
+    // 2. Actualizar en segundo plano usando la misma promesa compartida que búsqueda y autenticación.
+    loadPysData({ refresh: true }).then(updateAccordion).catch(err => {
         console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
     });
 }
@@ -6756,7 +6738,14 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
     overlay.className = "overlay";
 
     if (item._sectionType && item._sectionType !== 'corte') {
-        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca || ''}</div><div class="overlay-text-secondary">${item.modelo || ''}</div>`;
+        const sectionLabels = { relay: 'Relay', tutorial: 'Tutorial', pys: 'Problema' };
+        const primary = document.createElement('div');
+        primary.className = 'overlay-text-primary';
+        primary.textContent = sectionLabels[item._sectionType] || 'Resultado';
+        const secondary = document.createElement('div');
+        secondary.className = 'overlay-text-secondary';
+        secondary.textContent = item.modelo || item.configuracion || item.Tema || item.Problema || '';
+        overlay.append(primary, secondary);
     } else if (resultsForVariant) {
         const version = item.versionesAplicables || '';
         const tiposEncendido = [...new Set(resultsForVariant
@@ -8671,12 +8660,7 @@ export async function renderPysSection() {
 
     // Sincronización en segundo plano con el backend
     try {
-        const res = await routeAction("getPysData");
-        const freshItems = (res && res.data) ? res.data : [];
-        setState({ pysData: freshItems });
-        try {
-            localStorage.setItem('gpsepedia_pys_cache', JSON.stringify(freshItems));
-        } catch(e) {}
+        const freshItems = await loadPysData({ refresh: true });
 
         // Si no había caché o si los datos cambiaron, renderizar con datos frescos
         const cacheHash = JSON.stringify(cachedData || []);
@@ -8907,8 +8891,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
                     referenceId: created.problemId,
                     metadata: { alcance: payload.alcance, modelosAsociados: payload.modelosAsociados },
                     onSuccess: async () => {
-                        const fresh = await routeAction("getPysData");
-                        if (fresh && Array.isArray(fresh.data)) setState({ pysData: fresh.data });
+                        await loadPysData({ refresh: true });
                     }
                 });
             }
@@ -9340,8 +9323,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             referenceId: item.id_problem || item.id,
             metadata: { problemId: item.id_problem || item.id },
             onSuccess: async () => {
-                const fresh = await routeAction("getPysData");
-                if (fresh && Array.isArray(fresh.data)) setState({ pysData: fresh.data });
+                await loadPysData({ refresh: true });
             }
         });
         form.appendChild(uploadPysVideoBtn);
@@ -10722,8 +10704,7 @@ export async function openAssociateExistingProblemModal(vehicle) {
     // Obtener problemas de la sección PyS
     let allPys = [];
     try {
-        const res = await routeAction("getPysData");
-        allPys = (res && res.data) ? res.data : [];
+        allPys = await loadPysData({ refresh: true });
     } catch (e) {
         console.error("Error al obtener datos PyS:", e);
     }

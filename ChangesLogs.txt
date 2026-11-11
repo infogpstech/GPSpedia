@@ -1159,3 +1159,16 @@ AUG-048 — CIERRE — 2026-11-10
 - Tareas.txt, backlog y checkpoint actualizados. No se modificaron endpoints, deployments ni datos operativos.
 - Navegador/IndexedDB real y pruebas offline de campo no ejecutados; quedan diferidos a Beta.
 ================================================================================
+
+
+================================================================================
+AUG-049 — BÚSQUEDA GLOBAL Y NAVEGACIÓN POR SECCIÓN — 2026-11-10
+- navigation.js: consulta normalizada, motor de búsqueda global por secciones, ranking de resultados y reejecución de la consulta cuando termina la carga compartida de PyS.
+- search-utils.js: normalización HTML/diacríticos/espacios, campos de búsqueda, prioridad exacta/parcial/descriptiva, clasificación exclusiva de Cortes, regla de autoapertura y decodificación de deep links.
+- pys-data.js: centraliza getPysData en una promesa compartida y notifica su finalización a la búsqueda.
+- auth.js y ui.js: reutilizan el cargador compartido; se eliminaron las llamadas independientes getPysData en vistas y callbacks.
+- ui.js: tarjetas de cada sección conservan su destino; solo Corte puede autoabrir el detalle de vehículo; se evita colapsar resultados por nombres/configuraciones repetidos.
+- main.js: decodifica de forma segura el hash #search.
+- Services/Test/GlobalSearch.js: 21 pruebas de lógica; Services/Test/README.md documenta ejecución.
+- No se modificaron endpoints, deployments ni datos productivos.
+================================================================================

@@ -12,6 +12,7 @@ import * as ui from './ui.js';
 import * as navigation from './navigation.js';
 import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
+import { decodeSearchHash } from './search-utils.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
@@ -886,27 +887,24 @@ async function initializeApp() {
         installSessionRevalidation_();
 
         // --- LÓGICA DE DEEP LINKING PARA BÚSQUEDA ---
-        const hash = window.location.hash;
-        if (hash.startsWith('#search=')) {
-            const query = decodeURIComponent(hash.substring(8));
-            if (query) {
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) {
-                    searchInput.value = query;
-                    searchInput.parentElement.classList.add('has-text');
-                }
-
-                // Esperar a que el catálogo esté cargado en el estado antes de filtrar
-                const checkDataAndSearch = () => {
-                    const { catalogData } = state.getState();
-                    if (catalogData && catalogData.cortes && catalogData.cortes.length > 0) {
-                        navigation.filtrarContenido(query);
-                    } else {
-                        setTimeout(checkDataAndSearch, 100);
-                    }
-                };
-                checkDataAndSearch();
+        const query = decodeSearchHash(window.location.hash);
+        if (query) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = query;
+                searchInput.parentElement.classList.add('has-text');
             }
+
+            // Esperar a que el catálogo esté cargado en el estado antes de filtrar.
+            const checkDataAndSearch = () => {
+                const { catalogData } = state.getState();
+                if (catalogData && catalogData.cortes && catalogData.cortes.length > 0) {
+                    navigation.filtrarContenido(query);
+                } else {
+                    setTimeout(checkDataAndSearch, 100);
+                }
+            };
+            checkDataAndSearch();
         }
     }, 0);
 }

@@ -684,7 +684,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   7. Desambiguar números de cuatro dígitos usados como año frente a nombre de modelo; no filtrar únicamente por rango cuando exista coincidencia literal.
   8. Probar acentos, términos HTML, múltiples slots, año/modelo numérico, una coincidencia por cada sección, cero resultados y deep links.
 - Relación: Tarea 10.1; commits f1db85fe/7fae24ac; AUD-T-037.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Normalización y búsqueda global por prioridad exacta/parcial/descriptiva; cobertura de todos los slots de Cortes y campos textuales de Relay/Tutorial/PyS; clasificación y apertura específicas por sección; carga getPysData compartida y reejecución de consulta activa; desambiguación de año/modelo numérico y deep links robustos. Pruebas locales de lógica: 21/21 PASS; sintaxis de 7 archivos: PASS. Validación visual en navegador y pruebas de integración quedan diferidas a Beta.
 
 [ADENDA / REGISTRO REPETIDO DEL MISMO ID — CONSERVADO; NO ES UNA TAREA NUEVA]
 
@@ -700,7 +700,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   7. Desambiguar números de cuatro dígitos usados como año frente a nombre de modelo; no filtrar únicamente por rango cuando exista coincidencia literal.
   8. Probar acentos, términos HTML, múltiples slots, año/modelo numérico, una coincidencia por cada sección, cero resultados y deep links.
 - Relación: Tarea 10.1; commits f1db85fe/7fae24ac; AUD-T-037.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Normalización y búsqueda global por prioridad exacta/parcial/descriptiva; cobertura de todos los slots de Cortes y campos textuales de Relay/Tutorial/PyS; clasificación y apertura específicas por sección; carga getPysData compartida y reejecución de consulta activa; desambiguación de año/modelo numérico y deep links robustos. Pruebas locales de lógica: 21/21 PASS; sintaxis de 7 archivos: PASS. Validación visual en navegador y pruebas de integración quedan diferidas a Beta.
 
 
 **Adenda AUD-T-015 — 2026-11-08 (AUD-20261108-S033/AUD-CP-0033)**
