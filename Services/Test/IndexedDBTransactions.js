@@ -329,7 +329,43 @@ async function runIndexedDBTransactionTests() {
             globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;
         }
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/15 PASS`);
+    await testAsync('la compresión de miniaturas mantiene como máximo dos trabajos activos',async()=>{
+        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-concurrency');
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        let active=0,maxActive=0,started=0,closed=0;
+        const releases=[],waiters=[];
+        const waitForStarted=target=>started>=target?Promise.resolve():new Promise(resolve=>waiters.push({target,resolve}));
+        const notifyStarted=()=>{
+            for(let index=waiters.length-1;index>=0;index--){
+                if(started>=waiters[index].target){waiters[index].resolve();waiters.splice(index,1);}
+            }
+        };
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>{
+            active+=1;started+=1;maxActive=Math.max(maxActive,active);notifyStarted();
+            await new Promise(resolve=>releases.push(resolve));
+            active-=1;
+            return{width:640,height:480,close(){closed++;}};
+        };
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            const jobs=Array.from({length:5},(_,index)=>
+                api.compressAndStoreThumbnail(`https://images.example/concurrency-${index}.png`,`concurrency-${index}`,300));
+            for(const target of [2,4,5]){
+                await waitForStarted(target);
+                releases.splice(0).forEach(release=>release());
+            }
+            const results=await Promise.all(jobs);
+            assert.equal(results.length,5);
+            assert.ok(results.every(Boolean),'las miniaturas deben completar su persistencia');
+            assert.equal(maxActive,2,'no deben existir más de dos ImageBitmap activos simultáneamente');
+            assert.equal(closed,5,'cada ImageBitmap debe cerrarse al finalizar su compresión');
+        }finally{
+            releases.splice(0).forEach(release=>release());
+            globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;
+        }
+    });
+    console.log(`\nIndexedDB transaction tests: ${passed}/16 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
