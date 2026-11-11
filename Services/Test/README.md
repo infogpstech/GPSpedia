@@ -315,3 +315,8 @@ Verifica igualdad de carácter por posición en `extractSharedChars`, mapeo por 
 - Ejecutar `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
 - La suite usa IndexedDB simulado y comprueba que la escritura solo se confirma después de transaction.oncomplete, que un abort posterior a request.onsuccess no se interpreta como persistencia, que los errores de cuota fallan cerrados, que onversionchange cierra y permite reabrir la conexión y que onblocked rechaza explícitamente la apertura.
 - No sustituye pruebas con IndexedDB real, dos pestañas ni navegadores móviles; esas validaciones siguen pendientes en AUG-051/Beta.
+
+
+## Aislamiento de actividad local por cuenta (AUG-051 — iteración 2)
+
+La suite `Services/Test/IndexedDBTransactions.js` verifica aislamiento de `searchHistory`, `viewedItems` y `validationCache` por `userId`, rechazo de operaciones sin propietario y exclusión de consultas potencialmente VIN. Las entradas heredadas sin propietario nunca se muestran a una cuenta; no se cambia el esquema físico ni se atribuyen registros antiguos a un usuario sin evidencia. Node CLI, IndexedDB real, dos cuentas y dos pestañas siguen pendientes de validación en el entorno local/Beta.
