@@ -37,7 +37,7 @@ function createIndexedDBHarness(options = {}) {
   };
   transactionQueue.push(tx);activateNext();return tx;
  }};
- const indexedDB={open(){openCount++;const request={};connections.push(database);queueMicrotask(()=>{if(options.blocked){if(request.onblocked)request.onblocked();return;}if(openCount===1&&request.onupgradeneeded)request.onupgradeneeded({target:{result:database}});request.result=database;if(request.onsuccess)request.onsuccess({target:{result:database}});});return request;}};
+ const indexedDB={open(){openCount++;const request={};connections.push(database);queueMicrotask(()=>{if(options.openError){request.error=new DOMException('IndexedDB unavailable','UnknownError');if(request.onerror)request.onerror();return;}if(options.blocked){if(request.onblocked)request.onblocked();return;}if(openCount===1&&request.onupgradeneeded)request.onupgradeneeded({target:{result:database}});request.result=database;if(request.onsuccess)request.onsuccess({target:{result:database}});});return request;}};
  return{indexedDB,database,connections,stores,get openCount(){return openCount;},get maxActiveTransactions(){return maxActiveTransactions;}};
 }
 async function freshOffline(harness, label) {
@@ -560,6 +560,22 @@ async function runIndexedDBTransactionTests() {
         const read = await api.getAddCutOperationPendingOperation('USER-CUT-A');
         assert.equal(read.available, true); assert.equal(read.operation, null);
     });
+    await testAsync('AddCutOperationPending no permite degradar un snapshot completed', async () => {
+        const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-completed-terminal');
+        const completed = { ...cutOperationBase, status: 'completed' };
+        assert.equal((await api.saveAddCutOperationPendingOperation(completed)).saved, true);
+        const downgrade = await api.saveAddCutOperationPendingOperation({ ...completed, status: 'failed' });
+        assert.equal(downgrade.saved, false);
+        assert.equal(downgrade.conflict, true);
+        assert.equal((await api.getAddCutOperationPendingOperation(completed.ownerId)).operation.status, 'completed');
+    });
+    await testAsync('AddCutOperationPending falla cerrado cuando IndexedDB está bloqueado/no disponible', async () => {
+        const api = await freshOffline(createIndexedDBHarness({ openError: true }), 'add-cut-storage-blocked');
+        const read = await api.getAddCutOperationPendingOperation(cutOperationBase.ownerId);
+        assert.equal(read.available, false);
+        const saved = await api.saveAddCutOperationPendingOperation(cutOperationBase);
+        assert.equal(saved.saved, false);
+    });
     await testAsync('AddCutOperationPending serializa reintentos concurrentes del mismo snapshot', async () => {
         const h = createIndexedDBHarness(), api = await freshOffline(h, 'add-cut-concurrent');
         const results = await Promise.all([
@@ -571,7 +587,7 @@ async function runIndexedDBTransactionTests() {
         assert.equal((await api.getAddCutOperationPendingOperation('USER-CUT-A')).operation.id, cutOperationBase.id);
     });
 
-    console.log(`\\nIndexedDB transaction tests: ${passed}/41 PASS`);
+    console.log(`\\nIndexedDB transaction tests: ${passed}/43 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
