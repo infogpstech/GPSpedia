@@ -93,3 +93,32 @@ La siguiente lista describe campos y flujos implementados, no determina por sí 
 - `Spreadsheet/GPSpedia_DB_columnas.md`: inventario documental de hojas y columnas.
 
 **Limitación:** el análisis estático no confirma la configuración real de las cuentas externas, los permisos de Drive/YouTube, las regiones de almacenamiento, la retención efectiva ni el contenido actual de la hoja productiva.
+
+
+## 7. Adenda de alcance — aclaración del propietario de la plataforma — 2026-11-10
+
+El usuario aclara que GPSpedia es una herramienta interna de la empresa principal y que los asuntos legales corresponden a dicha empresa. Por tanto, la aprobación legal no debe tratarse como una contratación o validación externa necesaria para que el desarrollo técnico continúe. La revisión y aprobación definitiva, si corresponde, pertenece al proceso interno de la empresa y a las personas que esta autorice.
+
+Esta aclaración modifica la clasificación del bloqueo anterior: **no se requiere identificar a un asesor legal externo para continuar AUG-046**. No equivale, sin embargo, a una aprobación del contenido ni permite afirmar que el texto vigente ya fue aprobado por la empresa. La aprobación interna del texto definitivo debe quedar bajo responsabilidad de la empresa principal.
+
+### Hallazgos de consistencia que deben elevarse a la empresa
+
+La lectura del texto vigente permite señalar estos puntos concretos, sin modificarlo:
+
+1. **Identidad de GPSpedia:** varias cláusulas mencionan a “Motorlink S.A. y GPSpedia” como si fueran dos sujetos con facultades propias (por ejemplo, la suspensión de acceso y el deslinde). Dado que GPSpedia es una herramienta de la empresa, la empresa debe confirmar la forma institucional correcta de describir la plataforma y a la entidad que ejerce esas facultades.
+2. **Privacidad y proveedores tecnológicos:** la sección 13 afirma que la información solo se comparte por obligación legal o autorización. El código revisado utiliza servicios de Google para Apps Script, Sheets y Drive, y contempla publicación de vídeos mediante YouTube. La empresa debe confirmar cómo se describen esos proveedores y el acceso técnico a los datos para que el texto no resulte engañoso o incompleto.
+3. **Registro de actividad:** la sección 12 menciona usuarios, fechas, actividad, aportes y acciones de seguridad, pero no informa criterios de conservación ni el procedimiento para atender solicitudes relacionadas con esos registros.
+4. **Información local del navegador:** el código conserva historial de búsqueda, elementos vistos y cachés en IndexedDB. La sección 13 no explica ese almacenamiento local ni cómo se elimina al cerrar sesión, cambiar de cuenta o limpiar los datos del navegador.
+5. **Canal de privacidad:** no se identifica un canal específico para consultas o solicitudes relacionadas con la información personal.
+6. **Marca y entidad:** el acuerdo identifica a Motorlink S.A. y muestra la marca TRACKLINK. La aclaración confirma que GPSpedia es herramienta interna, pero no define por sí sola la denominación registral, domicilio ni relación corporativa exacta de esas marcas; no se deben inventar esos datos.
+
+Estos son hallazgos de correspondencia entre texto y funcionamiento observable, no conclusiones sobre cumplimiento legal. La empresa puede decidir el tratamiento y la redacción institucional que correspondan.
+
+### Límites expresos de esta iteración
+
+- No se modificó ni se modificará el acuerdo de uso, el aviso, la fecha “Julio, 2026”, la versión 2026-07 ni el HTML que los contiene.
+- No se añadió texto legal nuevo ni se alteró el flujo de aceptación de AUG-045.
+- No se emitió aprobación jurídica ni aprobación en nombre de la empresa.
+- No se verificaron configuraciones reales de cuentas Google/YouTube, permisos, contratos, regiones o plazos de conservación.
+
+**Estado actualizado:** AUG-046 continúa EN PROGRESO. La revisión técnica preliminar está documentada y el bloqueo por falta de un responsable legal externo queda retirado conforme a la aclaración del usuario. Permanecen pendientes las confirmaciones operativas que solo la empresa puede proporcionar y su validación interna del contenido. No iniciar AUG-047.

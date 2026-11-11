@@ -637,14 +637,15 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 ### AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad
 - Origen: H-AUD-036-003. Prioridad alta antes de usarlo como aceptación legal definitiva.
 - Criterios:
-  1. Obtener revisión/aprobación del responsable legal competente para jurisdicción y operación; esta auditoría técnica no es dictamen jurídico.
+  1. La revisión y aprobación corresponden a la empresa principal mediante su proceso interno; registrar su validación antes de publicar una versión definitiva. Esta auditoría técnica no es dictamen jurídico.
   2. Confirmar entidad responsable y denominación legal (Motorlink S.A.) y relación de marca TRACKLINK/GPSpedia.
   3. Validar categorías de datos, finalidades, conservación, acceso, destinatarios/proveedores, transferencias y canal para consultas/solicitudes, según operación real.
   4. Revisar uso laboral, cuentas, confidencialidad, propiedad intelectual, extracción, deslinde y suspensión.
   5. Aprobar texto, versión y fecha efectiva; mantener consistencia con aviso inicial y aceptación.
   6. Registrar aprobación antes de desplegar versión legal definitiva.
 - Relación: AUD-T-036; AUG-045; AUD-T-023/AUD-T-024.
-- Estado: BLOQUEADA — revisión técnica preliminar documentada; pendiente identificar y obtener aprobación del responsable legal competente y confirmar datos operativos/jurisdicción. No se ha emitido dictamen ni se ha modificado el texto legal.
+- Aclaración del usuario (2026-11-10): GPSpedia es una herramienta interna de la empresa principal; los asuntos legales corresponden a esa empresa. No se requiere un responsable legal externo como dependencia para continuar el trabajo técnico. La validación definitiva corresponde al proceso interno de la empresa.
+- Estado: EN PROGRESO — revisión técnica preliminar documentada; pendiente confirmar los datos operativos que solo la empresa conoce y registrar su validación interna. No se ha emitido aprobación jurídica ni se ha modificado el texto legal.
 
 ### AUG-047 — Completar accesibilidad, navegación y disponibilidad offline de modales legales
 - Origen: H-AUD-036-004/005. Prioridad baja/media.

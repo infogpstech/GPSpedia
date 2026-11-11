@@ -976,3 +976,13 @@ AUG-046 — REVISIÓN TÉCNICA PRELIMINAR — 2026-11-10
 - Se actualizó el estado de AUG-046 a BLOQUEADA por falta de responsable legal identificado y de confirmaciones de jurisdicción/tratamiento real.
 - No se modificaron el acuerdo, el aviso, la versión 2026-07, el frontend ni servicios. No se emitió aprobación jurídica ni se tocaron datos productivos/deployments.
 ================================================================================
+
+
+================================================================================
+ADENDA AUG-046 — ACLARACIÓN DE RESPONSABILIDAD CORPORATIVA — 2026-11-10
+- Se actualizó Legal/AUG-046_revision_preliminar.md para incorporar la aclaración del usuario: GPSpedia es una herramienta interna de la empresa principal y la responsabilidad legal corresponde a esa empresa; no se requiere identificar un asesor legal externo para continuar la revisión técnica.
+- Se actualizó Tareas_pendientes_parte1.txt: AUG-046 pasa de BLOQUEADA a EN PROGRESO, con validación interna y confirmaciones operativas pendientes.
+- Se actualizó checkpoint.md para registrar el alcance, el estado y la continuidad de AUG-046.
+- Hallazgos documentados: uso de la denominación “Motorlink S.A. y GPSpedia” como sujetos separados, descripción incompleta de proveedores Google/YouTube, conservación de registros, almacenamiento local y ausencia de canal específico de privacidad.
+- No se modificaron index.html, el acuerdo de uso, el aviso, fecha/versión 2026-07, código, deployments ni datos productivos. No se emitió aprobación legal.
+================================================================================

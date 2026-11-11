@@ -1551,3 +1551,28 @@ Bloqueo: falta identificar al responsable legal competente y confirmar jurisdicc
 Estado AUG-046: BLOQUEADA — revisión técnica preliminar documentada; aprobación legal y confirmaciones operativas pendientes.
 Siguiente paso al reanudar: obtener responsable legal y confirmaciones corporativas/operativas; preparar propuesta de texto para revisión formal. No desplegar ni cambiar versión legal hasta aprobación. No iniciar AUG-047.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-046 — ACLARACIÓN DE RESPONSABILIDAD CORPORATIVA — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work.
+HEAD padre confirmado: f9669ae1edf6b1ec7a418b51e1182c46f1075ec2.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea única: AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad.
+
+Aclaración del usuario: GPSpedia es una herramienta interna de la empresa principal; los asuntos legales son responsabilidad de esa empresa. Se retira como bloqueo la exigencia de identificar un responsable legal externo. La aprobación definitiva sigue correspondiendo al proceso interno de la empresa y no se presume realizada.
+
+Avance de esta iteración:
+- Se actualizó Legal/AUG-046_revision_preliminar.md con la aclaración y hallazgos de consistencia entre el texto visible y el funcionamiento técnico observado.
+- Se identificaron expresiones que presentan a “Motorlink S.A. y GPSpedia” como sujetos separados, la afirmación de privacidad frente al uso de proveedores Google/YouTube, la falta de detalle de conservación, almacenamiento local y canal de privacidad.
+- Se actualizó el estado de AUG-046 a EN PROGRESO; el trabajo técnico puede continuar sin esperar a un asesor externo.
+- Se preservó íntegramente el acuerdo de uso, el aviso, su fecha y versión. No se modificó index.html, frontend, backend, aceptación de AUG-045, deployments ni datos productivos.
+
+Límites:
+- La revisión es técnica/documental; no constituye dictamen ni aprobación jurídica.
+- La empresa debe confirmar datos operativos que no pueden deducirse del código y realizar su validación interna.
+- No se verificaron cuentas, permisos, contratos, regiones ni retención real de Google/YouTube.
+
+Siguiente paso: continuar únicamente AUG-046, contrastando los hallazgos con los flujos técnicos y preparando una lista concreta de confirmaciones para la empresa. No iniciar AUG-047.
+================================================================================
