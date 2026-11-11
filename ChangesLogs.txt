@@ -1709,3 +1709,13 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Nueva suite `Services/Test/VinAuthoritativeValidation.js`: 12/12 PASS. Regresiones: AdminModalEditSecurity 13/13; VinTestigoIntegrity 14/14; parsing V8 PASS.
 - AddCutOperationIntegrity: 24/27 en base y modificada; mismos tres fallos previos de recuperación por respuesta perdida, documentados sin atribución a AUG-059.
 ================================================================================
+
+================================================================================
+2026-11-11 — AUG-060 — PRESERVAR POSICIONES Y PRESENTAR VIN POR VERSIÓN
+- `ui.js`: parseVinCollection conserva posiciones vacías de colecciones heredadas; mapVersionsWithVins evita recortar nuevamente los cinco caracteres seriales de prefijos ya normalizados y limita ese recorte a VIN completos heredados.
+- `Services/Test/VinVersionPresentation.js`: nueva suite de 10 escenarios que ejecuta los helpers reales extraídos de ui.js.
+- `Services/Test/README.md`: documenta ejecución, cobertura y límite de validación Beta.
+- `Tareas_pendientes_parte4.txt`, `Auditoría.txt` y `checkpoint.md`: registran cierre y continuidad.
+- Validación local: VinVersionPresentation 10/10 PASS.
+- Navegador real y validación visual con datos reales quedan diferidos a Beta.
+================================================================================
