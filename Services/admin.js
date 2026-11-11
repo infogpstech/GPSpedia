@@ -3815,7 +3815,7 @@ function checkFileIdValid(url) {
 // GESTIÓN DE IDEMPOTENCIA EN HOJA DEDICADA ("Idempotencia")
 // ============================================================================
 
-const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status"];
+const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status", "operationHash"];
 
 /**
  * Comprueba el esquema A:E sin modificar la hoja.
@@ -3830,7 +3830,7 @@ function getIdempotenciaHeaderState(sheet) {
     if (!sheet) return { compatible: false, missingIndexes: [], reason: "missing_sheet" };
     const maxColumns = Math.max(0, Number(sheet.getMaxColumns()) || 0);
     const lastRow = sheet.getLastRow();
-    if (maxColumns < IDEMPOTENCIA_HEADERS.length && lastRow > 1) {
+    if (maxColumns < IDEMPOTENCIA_HEADERS.length - 1 && lastRow > 1) {
         return { compatible: false, missingIndexes: [], reason: "insufficient_columns_with_data" };
     }
     const availableColumns = Math.min(maxColumns, IDEMPOTENCIA_HEADERS.length);
@@ -3937,6 +3937,12 @@ function isValidIdempotenciaTimestamp_(value) {
     return !Number.isNaN(Date.parse(raw));
 }
 
+function normalizeIdempotenciaOperationHash_(value, context) {
+    const hash = String(value === null || value === undefined ? "" : value).trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(hash)) throw new Error((context || "Idempotencia") + ": operationHash debe ser SHA-256 hexadecimal de 64 caracteres.");
+    return hash;
+}
+
 function normalizeIdempotenciaStatus_(value, context) {
     const status = String(value === null || value === undefined ? "" : value).trim().toLowerCase();
     if (status !== "pending" && status !== "completed") {
@@ -3957,6 +3963,7 @@ function normalizeIdempotenciaEntry_(row, rowIndex) {
         slotIndex: normalizeIdempotenciaSlotIndex_(row[2], context),
         timestamp: row[3],
         status: normalizeIdempotenciaStatus_(row[4], context),
+        operationHash: isBlankIdempotenciaValue_(row[5]) ? "" : normalizeIdempotenciaOperationHash_(row[5], context),
         rowIndex: rowIndex
     };
 }
@@ -4083,7 +4090,7 @@ function removeEmptyPendingCutRow(sheet, rowIndex, lastColumn) {
     }
 }
 
-function recordOpId(opId, vehicleId, slotIndex, timestamp, status) {
+function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash) {
     const cleanOpId = String(opId === null || opId === undefined ? "" : opId).trim();
     if (!cleanOpId) return null;
     normalizeIdempotenciaOpId_(cleanOpId, "Registro de operación");
@@ -4097,12 +4104,16 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status) {
         throw new Error("Registro de operación: timestamp vacío o inválido.");
     }
     const targetStatus = normalizeIdempotenciaStatus_(status === undefined ? "completed" : status, "Registro de operación");
+    const cleanOperationHash = normalizeIdempotenciaOperationHash_(operationHash, "Registro de operación");
     const sheet = getIdempotenciaSheet();
     const existing = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
 
     if (existing) {
         if (existing.vehicleId !== cleanVehicleId || existing.slotIndex !== cleanSlotIndex) {
             throw new Error("El opId " + cleanOpId + " ya está asociado a otro vehicleId/slotIndex; no se modificó.");
+        }
+        if (!existing.operationHash || existing.operationHash !== cleanOperationHash) {
+            throw new Error("El opId " + cleanOpId + " no coincide con la huella del contenido original; no se modificó.");
         }
         const finalStatus = existing.status === "completed" || targetStatus === "completed" ? "completed" : "pending";
         if (existing.status !== finalStatus) sheet.getRange(existing.rowIndex, 5).setValue(finalStatus);
@@ -4116,7 +4127,7 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status) {
         return verified;
     }
 
-    sheet.appendRow([cleanOpId, cleanVehicleId, cleanSlotIndex, cleanTimestamp, targetStatus]);
+    sheet.appendRow([cleanOpId, cleanVehicleId, cleanSlotIndex, cleanTimestamp, targetStatus, cleanOperationHash]);
     SpreadsheetApp.flush();
     const verified = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
     if (!verified || verified.vehicleId !== cleanVehicleId ||
@@ -4185,6 +4196,8 @@ function findRowByOpId(sheet, opId) {
             slotIndex: entry.slotIndex,
             timestamp: entry.timestamp,
             status: entry.status,
+            vehicleId: entry.vehicleId,
+            operationHash: entry.operationHash,
             fromIdempotenciaSheet: true
         };
     }
@@ -4249,6 +4262,8 @@ function findRowByOpId(sheet, opId) {
         slotIndex: null,
         timestamp: unique.rowValues[COLS_CORTES.timestamp - 1] || "",
         status: "completed",
+        vehicleId: normalizeIdempotenciaVehicleId_(vehicleId, "Recuperación heredada " + cleanOpId),
+        operationHash: null,
         fromIdempotenciaSheet: false
     };
 }
@@ -4259,7 +4274,7 @@ function normalizeIdempotenciaHeader(value) {
 
 function inspectIdempotenciaMigrationTarget(){const ss=getSpreadsheet(),p=ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA),f=ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);if(p){const st=getIdempotenciaHeaderState(p);if(isUnsafeIdempotenciaHeaderState_(st))throw Error("La hoja Idempotencia tiene datos bajo un encabezado vacío; migración detenida.");if(st.compatible){readIdempotenciaEntries_(p,false);return{sheet:p,name:SHEET_NAMES.IDEMPOTENCIA,usingFallback:false};}}if(f){const st=getIdempotenciaHeaderState(f);if(isUnsafeIdempotenciaHeaderState_(st))throw Error("La hoja Idempotencia_Cortes tiene datos bajo un encabezado vacío; migración detenida.");if(!st.compatible)throw Error("La hoja Idempotencia_Cortes existe, pero su estructura no es compatible.");readIdempotenciaEntries_(f,false);return{sheet:f,name:SHEET_NAMES.IDEMPOTENCIA_FALLBACK,usingFallback:true,primaryIncompatible:Boolean(p)};}if(p)throw Error("La hoja Idempotencia existe pero no es compatible; se conserva para revisión manual.");return{sheet:null,name:SHEET_NAMES.IDEMPOTENCIA,usingFallback:false};}
 
-function readIdempotenciaOperationMap(s){const map=new Map(),v=readIdempotenciaEntries_(s,false);v.entries.forEach(e=>map.set(e.opId,{vehicleId:e.vehicleId,slotIndex:e.slotIndex,timestamp:e.timestamp,status:e.status,rowIndex:e.rowIndex}));return map;}
+function readIdempotenciaOperationMap(s){const map=new Map(),v=readIdempotenciaEntries_(s,false);v.entries.forEach(e=>map.set(e.opId,{vehicleId:e.vehicleId,slotIndex:e.slotIndex,timestamp:e.timestamp,status:e.status,operationHash:e.operationHash,rowIndex:e.rowIndex}));return map;}
 
 function buildCortesOperationIdMigrationPlan(sheet) {
     if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
@@ -4363,7 +4378,7 @@ function buildCortesOperationIdMigrationPlan(sheet) {
     };
 }
 
-function getNewIdempotenciaEntries(entries,map){const entriesToWrite=[],entriesToComplete=[];let alreadyPresent=0;entries.forEach(e=>{if(map.has(e.opId)){const old=map.get(e.opId);if(old.vehicleId!==String(e.vehicleId).trim()||Number(old.slotIndex)!==Number(e.slotIndex))throw Error("El opId "+e.opId+" ya existe en Idempotencia con una asociación diferente.");if(old.status==="pending")entriesToComplete.push({rowIndex:old.rowIndex,opId:e.opId});alreadyPresent++;}else entriesToWrite.push([e.opId,String(e.vehicleId).trim(),String(e.slotIndex),e.timestamp,"completed"]);});return{entriesToWrite,entriesToComplete,alreadyPresent};}
+function getNewIdempotenciaEntries(entries,map){const entriesToWrite=[],entriesToComplete=[];let alreadyPresent=0;entries.forEach(e=>{if(map.has(e.opId)){const old=map.get(e.opId);if(old.vehicleId!==String(e.vehicleId).trim()||Number(old.slotIndex)!==Number(e.slotIndex))throw Error("El opId "+e.opId+" ya existe en Idempotencia con una asociación diferente.");if(old.status==="pending")entriesToComplete.push({rowIndex:old.rowIndex,opId:e.opId});alreadyPresent++;}else entriesToWrite.push([e.opId,String(e.vehicleId).trim(),String(e.slotIndex),e.timestamp,"completed",""]);});return{entriesToWrite,entriesToComplete,alreadyPresent};}
 
 function renameVinColumnHeader(sheet) {
     if (!sheet || sheet.getMaxColumns() < 45) {
