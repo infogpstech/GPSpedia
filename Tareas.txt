@@ -970,3 +970,11 @@ Estado: BLOQUEADA POR DEPENDENCIA TÉCNICA.
 ui.js mantiene memoryUrlCache sin límite y almacena URLs creadas con URL.createObjectURL. Reducir solo el tamaño del Map no libera el Blob asociado; la URL debe revocarse de forma segura. La revocación/ciclo de vida de ObjectURL, prevista para una iteración posterior, es prerrequisito para que el límite RAM sea efectivo.
 No se modificó código ni se declara resuelto el límite RAM. Siguiente: resolver exclusivamente el ciclo de vida seguro de ObjectURL y después retomar el límite RAM. Concurrencia de compresión y AUG-052 siguen fuera de alcance.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ITERACIÓN 8 — CICLO DE VIDA OBJECTURL — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Se añadió imageObjectUrlCache.js con referencias por elemento y revocación al quedar sin consumidores; MutationObserver libera imágenes retiradas del DOM. ui.js evita URLs huérfanas, carreras de carga y referencias sin consumidor durante compresión. Suite ImageObjectUrlLifecycle: 7/7 PASS local; navegador real pendiente de Beta.
+Siguiente: límite RAM cuantitativo de miniaturas. No iniciar concurrencia de compresión ni AUG-052.
+================================================================================

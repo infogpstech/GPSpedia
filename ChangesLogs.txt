@@ -1328,3 +1328,13 @@ La iteración TTL queda completada con validación diferida. Siguiente iteració
 - Si no se recupera cuota después de agotar las miniaturas, omite el almacenamiento en caché y no afecta los demás almacenes.
 - Services/Test/IndexedDBTransactions.js: pruebas de recuperación de cuota, limpieza de claves heredadas, agotamiento persistente y preservación del catálogo.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — CICLO DE VIDA SEGURO DE OBJECTURL (ITERACIÓN 8)
+- imageObjectUrlCache.js: registro compartido de URL por clave con referencias por elemento; revoca la URL al quedar sin consumidores y observa nodos retirados del DOM.
+- ui.js: setOptimizedImage libera la URL previa, descarta respuestas asíncronas obsoletas y solo crea URL para miniaturas con un elemento conectado. La compresión en segundo plano persiste el Blob sin crear URL huérfanas.
+- Services/Test/ImageObjectUrlLifecycle.js: siete pruebas de referencias, reemplazo, carreras asíncronas, retirada DOM, elemento desconectado y dispose.
+- Services/Test/README.md: instrucciones y límites de la suite.
+- La validación de MutationObserver/navegador real queda diferida a Beta. El límite RAM cuantitativo no se implementa en esta iteración.
+================================================================================

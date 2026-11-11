@@ -347,3 +347,8 @@ La regresión LRU también difiere deliberadamente una solicitud `delete` y comp
 
 Ejecutar `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
 Cuando una escritura de miniatura falla con `QuotaExceededError`, la aplicación elimina progresivamente el 25 % más antiguo de las miniaturas persistidas (orden LRU); si solo quedan registros heredados sin metadatos de recencia, libera sus claves por lotes y reintenta la escritura. La recuperación solo afecta al almacén desechable `thumbnails`; si no quedan miniaturas para liberar o la escritura vuelve a fallar sin poder recuperar espacio, se omite el almacenamiento en caché y se conserva el resultado nulo, sin afectar los demás almacenes. La suite incluye una simulación de fallo de cuota y comprueba que la escritura se recupere y que el catálogo permanezca intacto.
+
+
+### Image ObjectURL lifecycle
+
+Ejecutar `node Services/Test/ImageObjectUrlLifecycle.js`. La suite verifica referencias compartidas, liberación al reemplazar una imagen, descarte de respuestas asíncronas obsoletas, limpieza al retirar elementos del DOM y rechazo de URL para elementos todavía desconectados. La prueba usa URL y MutationObserver simulados; la observación de DOM real queda reservada a Beta.

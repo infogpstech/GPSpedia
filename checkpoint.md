@@ -51,3 +51,14 @@ Archivos funcionales: VinDifferentialEngine.js, navigation.js, ui.js. Suite: Ser
 Documentación: Services/Test/README.md, ChangesLogs.txt, Tareas_pendientes_parte1.txt y Tareas.txt.
 AUG-051 no iniciada.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ITERACIÓN 8 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 51fae20e1e90d224ee4d833978a7802a9434e07b.
+Dependencia resuelta: se implementó el ciclo de vida de ObjectURL antes del límite RAM. imageObjectUrlCache.js mantiene referencias por elemento, comparte URL solo entre consumidores activos, revoca al quedar sin consumidores y observa elementos retirados del DOM. ui.js libera la referencia anterior al iniciar una nueva carga, descarta respuestas asíncronas obsoletas y no crea URL para imágenes desconectadas ni durante compresión sin consumidor.
+Pruebas: Services/Test/ImageObjectUrlLifecycle.js (7 casos sintéticos). Validación de DOM/MutationObserver real y navegación visual queda diferida a Beta.
+Archivos: ui.js, imageObjectUrlCache.js, Services/Test/ImageObjectUrlLifecycle.js, Services/Test/README.md, ChangesLogs.txt, Tareas.txt, Tareas_pendientes_parte1.txt y checkpoint.md.
+Siguiente iteración: implementar exclusivamente el límite RAM de miniaturas usando el ciclo de vida ahora disponible. No iniciar concurrencia de compresión ni AUG-052.
+================================================================================

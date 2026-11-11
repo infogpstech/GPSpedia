@@ -12,6 +12,7 @@ import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { shouldAutoOpenVehicleDetail } from './search-utils.js';
+import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData } from './pys-data.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
@@ -637,10 +638,8 @@ export function mapVersionsWithVins(versionesStr, vinRaw) {
  * @param {string} fileId - El ID o URL de la imagen.
  * @param {number} size - El tamaño solicitado para la imagen.
  */
-// Caché local en memoria RAM para URLs de objeto (0ms carga sincrónica)
-const memoryUrlCache = new Map();
-
 export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
+    const requestToken = thumbnailObjectUrls.begin(imgElement);
     if (!fileId) {
         imgElement.src = getImageUrl(null);
         return;
@@ -660,18 +659,28 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
     };
 
     const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
+    const normalizedSize = Math.max(100, Math.min(1600, Math.round(Number(size) || IMG_SIZE_SMALL)));
+    const cacheKey = `${cleanId}::w${normalizedSize}`;
 
-    const cacheKey=`${cleanId}::w${Math.max(100,Math.min(1600,Math.round(Number(size)||IMG_SIZE_SMALL)))}`;
-    if(memoryUrlCache.has(cacheKey)){imgElement.src=memoryUrlCache.get(cacheKey);return;}
-    try{
-        const cachedBlob=await Promise.race([offline.getThumbnail(cleanId,size),new Promise((_,reject)=>setTimeout(()=>reject(new Error("DB Timeout")),800))]).catch(()=>null);
-        if(cachedBlob){const objectUrl=URL.createObjectURL(cachedBlob);memoryUrlCache.set(cacheKey,objectUrl);imgElement.src=objectUrl;return;}
-    }catch(e){/* Continuar a red si falla la lectura local. */}
-    const remoteUrl=getImageUrl(cleanId,size);imgElement.src=remoteUrl;
-    if(cleanId&&typeof cleanId==="string"&&!cleanId.startsWith("blob:")&&!cleanId.includes("placehold.co")){
-        offline.compressAndStoreThumbnail(remoteUrl,cleanId,size).then(blob=>{
-            if(blob){const objectUrl=URL.createObjectURL(blob);memoryUrlCache.set(cacheKey,objectUrl);}
-        }).catch(()=>{});
+    try {
+        const cachedBlob = await Promise.race([
+            offline.getThumbnail(cleanId, normalizedSize),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 800))
+        ]).catch(() => null);
+
+        if (!thumbnailObjectUrls.isCurrent(imgElement, requestToken)) return;
+        if (cachedBlob && thumbnailObjectUrls.attach(cacheKey, cachedBlob, imgElement, requestToken)) return;
+    } catch (e) {
+        /* Continuar a red si falla la lectura local. */
+    }
+
+    if (!thumbnailObjectUrls.isCurrent(imgElement, requestToken)) return;
+    const remoteUrl = getImageUrl(cleanId, normalizedSize);
+    imgElement.src = remoteUrl;
+
+    if (cleanId && typeof cleanId === "string" && !cleanId.startsWith("blob:") && !cleanId.includes("placehold.co")) {
+        // La compresión solo persiste la miniatura; no crea ObjectURL sin un elemento consumidor.
+        offline.compressAndStoreThumbnail(remoteUrl, cleanId, normalizedSize).catch(() => {});
     }
 }
 
