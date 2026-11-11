@@ -179,7 +179,7 @@ function runAddCutOperationIntegrityTests(sources) {
     run_('fallo de limpieza conserva snapshot y no libera opId', () => {
         const submit = extract_(frontend, 'handleStage2Submit');
         assert_(/if \(!removed \|\| removed\.removed !== true\) throw new Error\('PENDING_CLEANUP_UNCONFIRMED'\)/.test(submit));
-        assert_(/pendingOp\.status = 'failed'/.test(submit));
+        assert_(/pendingOp\.status = serverConfirmed \? 'completed' : 'failed'/.test(submit));
         assert_(/saveAddCutOperationPendingOperation\(pendingOp\)/.test(submit));
     });
     run_('recuperación comprueba status, huella y vehicleId antes de eliminar snapshot', () => {
