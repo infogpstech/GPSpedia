@@ -372,7 +372,14 @@
             if (state.opId) return state.opId;
             const pending = getPendingOperationStore().read().operation;
             if (pending && pending.id) { state.opId = pending.id; return state.opId; }
-            state.opId = 'OP-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+            const secureCrypto = globalThis.crypto;
+            if (!secureCrypto || typeof secureCrypto.getRandomValues !== 'function') {
+                throw new Error('SECURE_RANDOM_UNAVAILABLE');
+            }
+            const randomBytes = new Uint8Array(16);
+            secureCrypto.getRandomValues(randomBytes);
+            const randomPart = Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+            state.opId = 'OP-' + Date.now() + '-' + randomPart;
             return state.opId;
         }
 
