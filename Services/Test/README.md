@@ -665,3 +665,11 @@ La suite `AddSupplementaryInfoIntegrity.js` conserva su cobertura y ahora carga 
 ## AUG-065 — Variantes de resolución y URL fuente
 
 Ejecutar `node --experimental-default-type=module Services/Test/ImageResolutionVariants.js` y `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`. La primera suite comprueba URL fuente original, IDs normalizados, claves por ancho, Blob/Data URL, Lightbox y PNG local sin ampliación. La segunda cubre tres variantes en orden inverso, caché fría/caliente, proporción, bytes y rechazo de registros heredados/incompatibles.
+
+
+## AUG-065 — Variantes de resolución y caché de miniaturas
+
+- `Services/Test/ImageResolutionVariants.js`: verifica URL fuente original para 300/800/1600, extracción de IDs, claves normalizadas por ancho, Blob/Data URL, fuente grande de Lightbox, PNG y límite de no ampliación.
+- `Services/Test/IndexedDBTransactions.js`: verifica variantes en orden inverso, caché fría/caliente, dimensiones/proporción, tipo y bytes PNG, registros heredados/incompatibles, TTL, LRU, recuperación de cuota y concurrencia.
+- Validación local: **ImageResolutionVariants PASS** y **IndexedDBTransactions 44/44 PASS** en runtime V8 adaptado, ejecutando las fuentes vigentes de `offline.js` y las suites con adaptadores para imports, IndexedDB y primitivas de navegador.
+- La ejecución literal de los comandos Node CLI no se realizó. Beta pendiente: navegador/IndexedDB/Canvas reales, transparencia PNG verificada por píxeles y pruebas visuales online/offline con imágenes representativas.
