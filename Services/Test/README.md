@@ -425,3 +425,12 @@ node --experimental-default-type=module Services/Test/EditBackupIsolation.js
 ```
 
 Verifica separación por cuenta y vehículo, rechazo de identidades incongruentes, cuarentena/migración de registros legados, eliminación limitada y exclusión de tokens/credenciales.
+
+
+## Retención segura de snapshots locales (AUG-053 — iteración 4)
+
+Política conservadora: no se aplica TTL automático a operaciones pendientes (`addCutPending` y `gpsepedia_pending_operation`) ni a copias de edición (`gpsepedia_edit_backup`). Una operación en estado processing/failed puede tener un resultado remoto incierto; una copia de edición puede ser necesaria para recuperar una sesión interrumpida. Por ello, se conservan hasta una confirmación autoritativa del servidor o el cierre explícito y verificado de la edición. La limpieza se limita al propietario, vehículo y opId correspondientes. Los registros legados en cuarentena no se purgan automáticamente. No se aplica esta política a `adminImageUploadPending`, cuya privacidad sigue pendiente de decisión.
+
+- `PendingOperationIsolation.js`: permanencia de snapshots antiguos y eliminación únicamente mediante opId del propietario (8 escenarios).
+- `EditBackupIsolation.js`: permanencia de copias antiguas hasta su eliminación explícita por propietario/vehículo (8 escenarios).
+- `IndexedDBTransactions.js`: permanencia de addCutPending antiguo y rechazo de eliminación desde otra cuenta (22 escenarios en total).

@@ -1,4 +1,10 @@
 ================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 4 — RETENCIÓN Y LIMPIEZA SEGURA
+Se estableció una política sin expiración automática para snapshots cuyo resultado remoto sea incierto y copias de edición recuperables. La limpieza queda vinculada a confirmación terminal y a la identidad owner/vehículo/opId correspondiente; los registros en cuarentena se conservan. Se añadieron regresiones de permanencia y limpieza explícita para pendingOperationStore, editBackupStore y addCutPending.
+Archivos: Services/Test/PendingOperationIsolation.js, Services/Test/EditBackupIsolation.js, Services/Test/IndexedDBTransactions.js, Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md.
+================================================================================
+
+================================================================================
 2026-11-11 — AUG-053 — ITERACIÓN 3 — RECUPERACIÓN TRAS CAMBIO DE SESIÓN
 Al cerrar la interfaz por cambio de sesión se limpia el estado de edición en memoria, pero se conserva el snapshot persistido para que solo el mismo propietario pueda reanudarlo. Al iniciar edición, se reutiliza una copia previa válida del mismo propietario/vehículo en lugar de sobrescribir la línea base de una edición interrumpida.
 Archivos: ui.js, checkpoint.md y Tareas_pendientes_parte1.txt.

@@ -408,7 +408,19 @@ async function runIndexedDBTransactionTests() {
         assert.equal((await api.getAddCutPendingOperation('VEH-OWNER-3','USER-B')).operation.id,'OP-USER-B');
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/21 PASS`);
+    await testAsync('addCutPending conserva snapshots antiguos hasta confirmación y limpieza por propietario/opId', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'addcut-retention');
+        await api.initDB();
+        const store=h.stores.get('adminLocalState');
+        const key='addCutPending:'+encodeURIComponent('USER-A')+':'+encodeURIComponent('VEH-OLD');
+        store.values.set(key,{key,updatedAt:1,operation:{id:'OP-OLD',vehicleId:'VEH-OLD',userId:'USER-A',cutData:{tipoCorte1:'Ignición'},status:'failed'}});
+        assert.equal((await api.getAddCutPendingOperation('VEH-OLD','USER-A')).operation.id,'OP-OLD');
+        assert.equal(await api.removeAddCutPendingOperation('VEH-OLD','USER-B','OP-OLD'),false);
+        assert.equal((await api.getAddCutPendingOperation('VEH-OLD','USER-A')).operation.id,'OP-OLD');
+        assert.equal(await api.removeAddCutPendingOperation('VEH-OLD','USER-A','OP-OLD'),true);
+    });
+
+    console.log(`\nIndexedDB transaction tests: ${passed}/22 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

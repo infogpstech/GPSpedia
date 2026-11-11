@@ -73,4 +73,12 @@ test("no persiste tokens ni credenciales anidados", () => {
     assert.equal(store.read("V-1").backup.nested.keep, true);
 });
 
-console.log("Edit backup isolation: " + passed + "/7 PASS");
+test("una copia de edición antigua permanece recuperable hasta el descarte explícito", () => {
+    const storage = new MemoryStorage();
+    const store = createEditBackupStore(storage, "USR-A");
+    store.write("V-OLD", { id: "V-OLD", marca: "Toyota", createdAt: 1 });
+    assert.equal(store.read("V-OLD").backup.marca, "Toyota");
+    assert.equal(store.remove("V-OLD"), true);
+    assert.equal(store.read("V-OLD").backup, null);
+});
+console.log("Edit backup isolation: " + passed + "/8 PASS");

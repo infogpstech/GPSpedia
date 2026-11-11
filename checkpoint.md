@@ -1,4 +1,13 @@
 ================================================================================
+AUG-053 — ITERACIÓN 4 — 2026-11-11 — POLÍTICA DE RETENCIÓN Y LIMPIEZA SEGURA
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 4faef14c4df300918c570b286b77c2fdd45044fa. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Se establece una política conservadora: no aplicar TTL automático a addCutPending ni gpsepedia_pending_operation mientras el resultado remoto pueda ser incierto, ni a gpsepedia_edit_backup mientras una edición interrumpida pueda requerir recuperación. Los snapshots de operaciones solo se limpian después de confirmación autoritativa del servidor y por owner/opId; las copias de edición solo tras cierre explícito/verificado y por owner/vehículo. Los registros legados en cuarentena se preservan. No se modifica adminImageUploadPending porque su política de privacidad ADMIN sigue pendiente de decisión.
+Pruebas añadidas: PendingOperationIsolation.js (8 escenarios), EditBackupIsolation.js (8 escenarios) e IndexedDBTransactions.js (22 escenarios, incluido snapshot addCutPending antiguo y eliminación cruzada rechazada). No se introduce una purga global ni se elimina Data URL recuperable por antigüedad.
+Siguiente iteración: resolver exclusivamente la decisión pendiente sobre privacidad/propiedad de adminImageUploadPending; no iniciar AUG-054.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 3 — 2026-11-11 — OWNER-BOUND DE gpsepedia_edit_backup
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD anterior: 89f21f4af5fc79684dc30032fd66805f33f604c8. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
