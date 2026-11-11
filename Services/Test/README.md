@@ -644,3 +644,10 @@ Cobertura: slots vacíos en JSON y formatos heredados, espacios intermedios/fina
 - Cubre altas de corte/apertura/alimentación, conservación de los tres slots, lectura forzada sin caché heredada, reconstrucción por ID, navegación, aprobación de vídeo vehicular y separación entre confirmación de escritura y fallo de refresco.
 - Validación local: 30/30 PASS; parsing V8 de los bloques modificados de UI y del handler de catálogo: PASS.
 - Navegador real, Apps Script/Spreadsheet y aprobación integrada de YouTube quedan diferidos a Beta.
+
+
+## AUG-063 — Selectores oficiales para agregar cortes
+- Ejecutar `runCutDropdownAuthorityTests({ ui, catalog })` con las fuentes actuales de `ui.js` y `Services/catalog.js`.
+- Cubre valores tipo de corte en slots 1/2/3, deduplicación, listas de Relay, respuestas inválidas/vacías, rechazo de valores no oficiales, cambios en Sheets, ausencia de fallback frontend y preservación de operaciones pendientes.
+- Validación local: 30/30 PASS; parsing V8 de helpers, modal y handler de catálogo: PASS.
+- No se ejecutaron navegador real ni Google Sheets/Apps Script desplegados; quedan para Beta.

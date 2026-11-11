@@ -1736,3 +1736,12 @@ CAMBIOS — AUG-062 — 2026-11-11
 - Services/catalog.js: getCatalogData acepta forceRefresh y omite la caché heredada cuando se solicita; el router reenvía el payload.
 - Services/Test/VehicleExpansionDetailRefresh.js y Services/Test/README.md: pruebas de refresco, slots, confirmación y aprobación de vídeo.
 ================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-063 — 2026-11-11
+- Services/catalog.js: getDropdownData reúne tipos de corte de los tres slots de Cortes y obtiene configuraciones relay de la columna configuracion de la hoja Relay; devuelve error si falta alguna hoja.
+- ui.js: el modal de agregar corte elimina listas y fallbacks estáticos, carga y valida opciones oficiales, bloquea envío ante fallo/listas vacías, permite reintentar la carga y valida selección antes de persistir el snapshot.
+- ui.js: No recomendado solo se acepta si aparece en la lista oficial y no exige relay; operaciones pendientes conservan su payload original sin reintroducir opciones retiradas.
+- Services/Test/CutDropdownAuthority.js y Services/Test/README.md: pruebas de slots 1/2/3, listas oficiales, valores inválidos/vacíos y regresiones del modal.
+================================================================================

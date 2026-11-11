@@ -8185,7 +8185,19 @@ export function openAddVinModal(item) {
 }
 
 /* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
-export function openAddCutForModelModal(item) {
+export function normalizeCutDropdownResponse_(response) {
+    if (!response || response.status !== "success" || !response.dropdowns || typeof response.dropdowns !== "object") throw new Error("El servicio no devolvió las listas oficiales de cortes.");
+    const normalizeList = value => Array.isArray(value) ? Array.from(new Set(value.map(item => String(item == null ? "" : item).trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b)) : [];
+    const tipoDeCorte = normalizeList(response.dropdowns.tipoDeCorte), configRelay = normalizeList(response.dropdowns.configRelay);
+    if (!tipoDeCorte.length) throw new Error("La lista oficial de tipos de corte está vacía o no disponible.");
+    if (!configRelay.length) throw new Error("La lista oficial de configuraciones relay está vacía o no disponible.");
+    return { tipoDeCorte, configRelay };
+}
+function isCutDropdownValueAllowed_(value, options) {
+    return typeof value === "string" && value.trim() !== "" && Array.isArray(options) && options.includes(value);
+}
+
+function openAddCutForModelModal(item) {
     const vehicleId = String(item && item.id !== undefined && item.id !== null ? item.id : "").trim();
     if (!vehicleId) {
         showGlobalError("No se pudo identificar el vehículo para agregar el corte.");
@@ -8213,19 +8225,16 @@ export function openAddCutForModelModal(item) {
         <form id="add-cut-model-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Tipo de Corte</label>
-                <select id="add-cut-tipo" required>
-                    <option value="" selected disabled>Seleccione una opción</option>
-                    <option value="Bomba de combustible">Bomba de combustible</option>
-                    <option value="Ignición">Ignición</option>
-                    <option value="Botón de encendido">Botón de encendido</option>
-                    <option value="No recomendado">No recomendado</option>
+                <select id="add-cut-tipo" required disabled>
+                    <option value="" selected disabled>Cargando opciones oficiales...</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Configuración Relay</label>
-                <select id="add-cut-relay" required>
-                    <option value="" selected disabled>Seleccione una opción</option>
+                <select id="add-cut-relay" required disabled>
+                    <option value="" selected disabled>Cargando opciones oficiales...</option>
                 </select>
+                <button type="button" id="add-cut-retry-dropdowns" class="btn btn-secondary" style="display:none;">Reintentar carga de listas</button>
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
@@ -8262,12 +8271,16 @@ export function openAddCutForModelModal(item) {
     const testigoInput = content.querySelector("#add-cut-testigo");
     const fileInput = content.querySelector("#add-cut-img-file");
     const pendingNotice = content.querySelector("#add-cut-pending-notice");
+    const retryDropdownsBtn = content.querySelector("#add-cut-retry-dropdowns");
     const form = content.querySelector("#add-cut-model-form");
     const submitBtn = form.querySelector('button[type="submit"]');
     const editableControls = [tipoSelect, relaySelect, detailsInput, colorInput, testigoInput, fileInput];
 
     let pendingOperation = null;
     let pendingOperationLoadFailed = false;
+    let pendingOperationCheckComplete = false;
+    let cutDropdownsReady = false;
+    let cutDropdownOptions = { tipoDeCorte: [], configRelay: [] };
     let submitInProgress = false;
 
     const showPendingNotice = (message) => {
@@ -8277,7 +8290,7 @@ export function openAddCutForModelModal(item) {
 
     const lockFormForPendingOperation = () => {
         editableControls.forEach(control => { control.disabled = true; });
-        submitBtn.disabled = false;
+        submitBtn.disabled = !cutDropdownsReady || pendingOperationLoadFailed;
         submitBtn.innerText = "Reintentar guardado pendiente";
     };
 
@@ -8306,72 +8319,89 @@ export function openAddCutForModelModal(item) {
         pendingOperation = operation;
         const savedCut = operation.cutData;
 
-        tipoSelect.value = savedCut.tipoCorte1 || "";
+        const savedType = String(savedCut.tipoCorte1 || "");
         const savedRelay = String(savedCut.configRelay1 || "");
-        if (savedRelay && !Array.from(relaySelect.options).some(option => option.value === savedRelay)) {
-            const option = document.createElement("option");
-            option.value = savedRelay;
-            option.textContent = savedRelay;
-            relaySelect.appendChild(option);
-        }
-        relaySelect.value = savedRelay;
+        tipoSelect.value = isCutDropdownValueAllowed_(savedType, cutDropdownOptions.tipoDeCorte) ? savedType : "";
+        relaySelect.value = isCutDropdownValueAllowed_(savedRelay, cutDropdownOptions.configRelay) ? savedRelay : "";
         detailsInput.value = savedCut.ubicacionCorte1 || "";
         colorInput.value = savedCut.colorCableCorte1 || "";
         testigoInput.checked = savedCut.activaTestigo1 === true;
         syncNoRecomendadoState();
         lockFormForPendingOperation();
-        showPendingNotice("Existe un agregado pendiente para este vehículo. Se conservaron los datos originales, incluida la imagen. El reintento utilizará la misma clave para evitar duplicados; los campos permanecen bloqueados para no alterar una operación que pudo haberse completado.");
+        const staleSelections = [
+            savedType && !isCutDropdownValueAllowed_(savedType, cutDropdownOptions.tipoDeCorte) ? "tipo de corte" : "",
+            savedRelay && !isCutDropdownValueAllowed_(savedRelay, cutDropdownOptions.configRelay) ? "configuración relay" : ""
+        ].filter(Boolean);
+        showPendingNotice("Existe un agregado pendiente para este vehículo. Se conservaron los datos originales, incluida la imagen. El reintento utilizará la misma clave para evitar duplicados; los campos permanecen bloqueados." +
+            (staleSelections.length ? " La lista vigente ya no contiene el " + staleSelections.join(" ni la ") + "; el reintento conserva el valor original sin ofrecerlo como opción nueva." : ""));
         return true;
     };
 
-    const populateRelayOptions = (options) => {
-        relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
-        const list = Array.isArray(options) && options.length > 0
-            ? options
-            : ["Corte a ignición", "5 pines NC", "5 pines NA", "Sin relay"];
-
-        list.forEach(opt => {
-            const el = document.createElement("option");
-            el.value = opt;
-            el.textContent = opt;
-            relaySelect.appendChild(el);
+    const populateSelectOptions = (select, options, placeholder) => {
+        select.innerHTML = "";
+        const emptyOption = document.createElement("option");
+        emptyOption.value = "";
+        emptyOption.textContent = placeholder;
+        emptyOption.disabled = true;
+        emptyOption.selected = true;
+        select.appendChild(emptyOption);
+        options.forEach(value => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
         });
-        if (!relaySelect.value) relaySelect.value = "";
+        select.value = "";
     };
 
     function syncNoRecomendadoState() {
         const isNoRec = isNoRecomendadoValue(tipoSelect.value);
-        if (isNoRec) {
-            relaySelect.disabled = true;
-            relaySelect.required = false;
-            relaySelect.value = "";
-        } else {
-            relaySelect.disabled = Boolean(pendingOperation);
-            relaySelect.required = !pendingOperation;
-        }
+        relaySelect.disabled = Boolean(pendingOperation) || !cutDropdownsReady || isNoRec;
+        relaySelect.required = cutDropdownsReady && !pendingOperation && !isNoRec;
+        if (isNoRec) relaySelect.value = "";
     }
 
     tipoSelect.onchange = syncNoRecomendadoState;
 
-    const relayOptionsPromise = (async () => {
+    const loadCutDropdownOptions = async () => {
+        retryDropdownsBtn.style.display = "none";
+        tipoSelect.disabled = true;
+        relaySelect.disabled = true;
+        submitBtn.disabled = true;
         try {
-            const dropdowns = await precargarDropdownOptions();
-            if (dropdowns && dropdowns.configRelay) {
-                populateRelayOptions(dropdowns.configRelay);
-            } else {
-                populateRelayOptions([]);
-            }
+            const response = await routeAction("getDropdownData");
+            cutDropdownOptions = normalizeCutDropdownResponse_(response);
+            populateSelectOptions(tipoSelect, cutDropdownOptions.tipoDeCorte, "Seleccione un tipo de corte");
+            populateSelectOptions(relaySelect, cutDropdownOptions.configRelay, "Seleccione una configuración relay");
+            cutDropdownsReady = true;
+            tipoSelect.disabled = Boolean(pendingOperation);
+            syncNoRecomendadoState();
+            if (pendingOperation) applyPendingOperation(pendingOperation);
+            else pendingNotice.style.display = "none";
+            submitBtn.disabled = !pendingOperationCheckComplete || !cutDropdownsReady || pendingOperationLoadFailed;
+            return true;
         } catch (error) {
-            console.error("Error cargando opciones de relay para modal:", error);
-            populateRelayOptions([]);
+            cutDropdownsReady = false;
+            cutDropdownOptions = { tipoDeCorte: [], configRelay: [] };
+            tipoSelect.innerHTML = '<option value="" selected disabled>Opciones no disponibles</option>';
+            relaySelect.innerHTML = '<option value="" selected disabled>Opciones no disponibles</option>';
+            tipoSelect.disabled = true;
+            relaySelect.disabled = true;
+            retryDropdownsBtn.style.display = "inline-block";
+            showPendingNotice("No se pudieron cargar las listas oficiales desde Google Sheets. No se permitirá enviar un corte con opciones incompletas. Comprueba la conexión y reintenta la carga.");
+            console.error("Error cargando listas oficiales para modal de corte:", error);
+            return false;
         }
-        syncNoRecomendadoState();
-    })();
+    };
+
+    retryDropdownsBtn.onclick = () => { loadCutDropdownOptions(); };
+    const relayOptionsPromise = loadCutDropdownOptions();
 
     async function restorePendingOperation() {
         const { currentUser } = getState();
         const ownerId = String(currentUser && currentUser.ID || "").trim();
         if (!ownerId) {
+            pendingOperationCheckComplete = true;
             pendingOperationLoadFailed = true;
             editableControls.forEach(control => { control.disabled = true; });
             submitBtn.disabled = true;
@@ -8380,6 +8410,7 @@ export function openAddCutForModelModal(item) {
         }
         const stored = await offline.getAddCutPendingOperation(vehicleId, ownerId);
         if (!stored || stored.available !== true) {
+            pendingOperationCheckComplete = true;
             pendingOperationLoadFailed = true;
             editableControls.forEach(control => { control.disabled = true; });
             submitBtn.disabled = true;
@@ -8389,12 +8420,14 @@ export function openAddCutForModelModal(item) {
 
         if (!stored.operation) {
             pendingNotice.style.display = "none";
-            submitBtn.disabled = false;
+            pendingOperationCheckComplete = true;
+            submitBtn.disabled = !cutDropdownsReady || pendingOperationLoadFailed;
             submitBtn.innerText = "Agregar Corte";
             return;
         }
 
         const operation = stored.operation;
+        pendingOperationCheckComplete = true;
         if (!applyPendingOperation(operation)) {
             pendingOperationLoadFailed = true;
             editableControls.forEach(control => { control.disabled = true; });
@@ -8411,6 +8444,7 @@ export function openAddCutForModelModal(item) {
             await restorePendingOperation();
         } catch (error) {
             console.error("No se pudo recuperar la operación pendiente del modal:", error);
+            pendingOperationCheckComplete = true;
             pendingOperationLoadFailed = true;
             editableControls.forEach(control => { control.disabled = true; });
             submitBtn.disabled = true;
@@ -8424,6 +8458,21 @@ export function openAddCutForModelModal(item) {
         if (pendingOperationLoadFailed) {
             showGlobalError("No se pudo verificar el estado local de las operaciones pendientes. No se envió el corte.");
             return;
+        }
+        if (!cutDropdownsReady) {
+            showPendingNotice("Las listas oficiales no están disponibles. Reintenta su carga antes de enviar el corte.");
+            return;
+        }
+        if (!pendingOperation) {
+            if (!isCutDropdownValueAllowed_(tipoSelect.value, cutDropdownOptions.tipoDeCorte)) {
+                showGlobalError("Selecciona un tipo de corte incluido en la lista oficial vigente.");
+                return;
+            }
+            if (!isNoRecomendadoValue(tipoSelect.value) &&
+                !isCutDropdownValueAllowed_(relaySelect.value, cutDropdownOptions.configRelay)) {
+                showGlobalError("Selecciona una configuración relay incluida en la lista oficial vigente.");
+                return;
+            }
         }
 
         const { currentUser } = getState();

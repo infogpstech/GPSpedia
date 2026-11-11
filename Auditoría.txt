@@ -551,3 +551,12 @@ Estado: RESUELTO EN FUENTES.
 Las ampliaciones de corte, apertura y alimentación separan la confirmación del backend de la sincronización posterior. La lectura de catálogo usa forceRefresh para omitir caché heredada; se valida un ID único y se reconstruye el detalle activo sin duplicar entradas de History API. La aprobación de vídeo de tipo corte actualiza el catálogo y solo vuelve a dibujar la ficha si el mismo vehículo sigue abierto.
 Evidencia: ui.js, Services/catalog.js y Services/Test/VehicleExpansionDetailRefresh.js. Validación local 30/30 PASS. Navegador real, Apps Script/Spreadsheet y aprobación integrada de YouTube no se ejecutaron; quedan para Beta.
 ================================================================================
+
+
+================================================================================
+CIERRE DE HALLAZGO — AUG-063 — 2026-11-11
+Hallazgo relacionado: H-AUD-005-004 (referencia del backlog).
+Estado: RESUELTO EN FUENTES.
+El modal de alta de corte ya no ofrece tipos ni relays hardcodeados. El catálogo combina tipoCorte1/2/3 y obtiene configuracion desde la hoja Relay. El frontend rechaza respuestas inválidas/listas vacías, bloquea el envío y permite reintentar; valida la selección antes de guardar el snapshot. No recomendado permanece sujeto a la lista oficial y no requiere relay. Los reintentos durables conservan el payload original sin añadir opciones antiguas al selector.
+Evidencia: ui.js, Services/catalog.js y Services/Test/CutDropdownAuthority.js. Validación local 30/30 PASS. No se ejecutaron navegador real ni Apps Script/Google Sheets desplegados; quedan para Beta.
+================================================================================

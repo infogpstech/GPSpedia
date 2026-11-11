@@ -82,7 +82,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   5. Mantener regla especial «No recomendado» sin exigir relay cuando corresponda.
   6. Probar valores exclusivos de slots 1/2/3, listas vacías, cambios en Sheets, respuesta inválida y fallo de red.
 - **Relación:** AUD-T-005; AUD-T-003/AUG-056 sin duplicar add_cortes.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; suite local `CutDropdownAuthority.js` aprobada.
 
 ### AUG-064 — Sanitizar y presentar de forma segura el contenido enriquecido de apertura y alimentación
 - **Origen:** H-AUD-005-001. **Prioridad:** Alta.

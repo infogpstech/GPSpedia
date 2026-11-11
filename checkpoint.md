@@ -379,3 +379,17 @@ Validación local: VehicleExpansionDetailRefresh 30/30 PASS. Parsing V8 de helpe
 Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados y aprobación integrada de YouTube. No se modificaron datos productivos.
 Siguiente tarea: AUG-063. No se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-063 — CIERRE — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD inicial confirmado: e3fdf2c74c2bec34acaf155c1c9b851325a713e2. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- Services/catalog.js: tipos de corte extraídos de tipoCorte1, tipoCorte2 y tipoCorte3 de la hoja Cortes; configuraciones relay tomadas de Relay.configuracion. Valores vacíos excluidos, duplicados eliminados y listas ordenadas.
+- ui.js: el modal elimina las opciones hardcodeadas/fallback. Carga getDropdownData, valida la estructura y requiere listas no vacías; ante error bloquea el envío y ofrece reintentar.
+- La selección de tipo y relay se valida antes de crear el snapshot durable. No recomendado solo se acepta si forma parte de la lista oficial y no exige relay.
+- La restauración de operaciones pendientes no agrega valores obsoletos a los selectores; el payload durable original se conserva para el reintento. El envío permanece bloqueado hasta completar también la consulta de operaciones pendientes.
+Validación local: CutDropdownAuthority 30/30 PASS; parsing V8 de helpers, modal y handler de catálogo PASS.
+Beta pendiente: navegador real, hoja Google Sheets real, Apps Script desplegado y cambios concurrentes de listas. No se modificaron datos productivos.
+Siguiente tarea: AUG-064. No se inicia en esta iteración.
+================================================================================

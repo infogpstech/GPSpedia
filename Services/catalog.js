@@ -374,62 +374,37 @@ function handleGetCatalogData(payload = {}) {
 
 function handleGetDropdownData() {
     try {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-        if (!sheet) {
-            throw new Error(`Sheet "${SHEET_NAMES.CORTES}" not found.`);
-        }
-
-        // Obtener la regla de validación de la columna "Categoría"
-        const categoriaRule = sheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
+        const spreadsheet = getSpreadsheet();
+        const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+        const relaySheet = spreadsheet.getSheetByName(SHEET_NAMES.RELAY);
+        if (!cortesSheet) throw new Error(`Sheet "${SHEET_NAMES.CORTES}" not found.`);
+        if (!relaySheet) throw new Error(`Sheet "${SHEET_NAMES.RELAY}" not found.`);
+        const categoryRule = cortesSheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
         let categorias = [];
-        if (categoriaRule) {
-            const criteriaValues = categoriaRule.getCriteriaValues()[0];
-            // Comprobar si criteriaValues es un objeto Range (tiene getValues) o un array.
-            if (criteriaValues && typeof criteriaValues.getValues === 'function') {
-                // Es un Range, obtener los valores.
-                categorias = criteriaValues.getValues().flat().filter(String).sort();
-            } else if (criteriaValues && Array.isArray(criteriaValues)) {
-                // Es un array, usarlo directamente.
-                categorias = criteriaValues.flat().filter(String).sort();
-            }
+        if (categoryRule) {
+            const criteriaValues = categoryRule.getCriteriaValues()[0];
+            if (criteriaValues && typeof criteriaValues.getValues === "function") categorias = criteriaValues.getValues().flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
+            else if (Array.isArray(criteriaValues)) categorias = criteriaValues.flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
         }
-
-        const data = sheet.getDataRange().getValues();
-        data.shift(); // Remove headers
-
-        // Helper function to get unique, sorted values from a column index
-        const getUniqueSortedValues = (colIndex) => {
+        const cortesData = cortesSheet.getDataRange().getValues(), relayData = relaySheet.getDataRange().getValues();
+        const rows = Array.isArray(cortesData) ? cortesData.slice(1) : [], relayRows = Array.isArray(relayData) ? relayData.slice(1) : [];
+        const uniqueSorted = (sourceRows, indexes) => {
             const values = new Set();
-            data.forEach(row => {
-                if (row[colIndex] && row[colIndex].toString().trim()) {
-                    values.add(row[colIndex].toString().trim());
-                }
-            });
-            return Array.from(values).sort((a, b) => a.localeCompare(b));
+            sourceRows.forEach(row => indexes.forEach(index => {
+                const value = String(row && row[index] != null ? row[index] : "").trim();
+                if (value) values.add(value);
+            }));
+            return Array.from(values).sort((a,b)=>a.localeCompare(b));
         };
-
-        const marcas = getUniqueSortedValues(COLS_CORTES.marca - 1);
-        const tiposCorte = getUniqueSortedValues(COLS_CORTES.tipoCorte1 -1);
-        const tiposEncendido = getUniqueSortedValues(COLS_CORTES.tipoEncendido - 1);
-        const configRelay = getUniqueSortedValues(COLS_CORTES.configRelay1 -1);
-
-
-        const dropdownData = {
-            categoria: categorias,
-            marca: marcas,
-            tipoDeCorte: tiposCorte,
-            tipoDeEncendido: tiposEncendido,
-            configRelay: configRelay
-        };
-
-        return { status: 'success', dropdowns: dropdownData };
-
+        return {status:"success",dropdowns:{
+            categoria:categorias,
+            marca:uniqueSorted(rows,[COLS_CORTES.marca-1]),
+            tipoDeCorte:uniqueSorted(rows,[COLS_CORTES.tipoCorte1-1,COLS_CORTES.tipoCorte2-1,COLS_CORTES.tipoCorte3-1]),
+            tipoDeEncendido:uniqueSorted(rows,[COLS_CORTES.tipoEncendido-1]),
+            configRelay:uniqueSorted(relayRows,[COLS_RELAY.configuracion-1])
+        }};
     } catch (error) {
-        return {
-            status: 'error',
-            message: 'Failed to get dropdown data.',
-            details: { errorMessage: error.message }
-        };
+        return {status:"error",message:"Failed to get dropdown data.",details:{errorMessage:error&&error.message?error.message:String(error)}};
     }
 }
 
