@@ -1527,3 +1527,6 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - ui.js: habilita el modo edición in-modal para roles desarrollador y gefe; los gestores globales y las demás acciones privilegiadas conservan sus verificaciones específicas.
 - Services/Test/AdminModalEditSecurity.js: agrega pruebas locales de roles, sesiones, acciones permitidas, whitelist y asociación del estado de reemplazo.
 - Services/Test/ActionDispatchContract.js y Services/Test/README.md: actualizan contrato de dispatcher e instrucciones de validación.
+
+
+[2026-11-11] AUG-053 iteración 13: se reforzó el ciclo asíncrono de reemplazos ADMIN. La carga IndexedDB revalida el contexto completo de sesión; la consulta del ledger, reconciliación, baseline y limpieza local comprueban que siga vigente la sesión iniciadora antes de continuar o modificar mapas en memoria. Se ampliaron los contratos de restauración/reconciliación. Archivos: ui.js, Services/Test/AdminModalEditRestoreContract.js y Services/Test/README.md.
