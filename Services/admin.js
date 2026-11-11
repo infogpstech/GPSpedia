@@ -83,7 +83,7 @@ function getSessionExpirationStatus_(row,now=new Date()){
  return{expired:false};
 }
 const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
-function assertDeveloperSession(payload){
+function getAdminSessionContext_(payload, allowedRoles){
  const id=String(payload&&payload.userId||"").trim(),token=String(payload&&payload.sessionToken||"").trim();if(!id||!token)throw new Error("Acceso denegado: sesión no autorizada.");
  const ss=getSpreadsheet(),sh=ss.getSheetByName("ActiveSessions"),uh=ss.getSheetByName("Users");if(!sh||!uh)throw new Error("Acceso denegado: sesión no autorizada.");
  const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>String(r[2]||"").trim()===token);
@@ -91,8 +91,23 @@ function assertDeveloperSession(payload){
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
  const u=userMatches[0];if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
  const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
- const role=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();if(role!=="desarrollador")throw new Error("Acceso denegado: sesión no autorizada.");
- const fullName=String(u[6]||"").trim();return{userId:id,role:"Desarrollador",fullName,userName:fullName||username};
+ const role=String(u[3]||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").trim().toLowerCase();
+ if(!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
+ const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":"Gefe";
+ return{userId:id,role:displayRole,fullName,userName:fullName||username};
+}
+function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
+function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","gefe"]);}
+const ADMIN_MODAL_EDIT_ACTIONS = new Set(["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);
+const ADMIN_MODAL_EDIT_FIELDS = new Set([
+ "categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","vin","notaImportante",
+ "apertura","cableAlimen","cableAlimen2","cableAlimen3",
+ "imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura",
+ "imgCableAlimen","imgCableAlimen2","imgCableAlimen3"
+]);
+function isAdminModalEditField_(fieldName){
+ const field=String(fieldName||"");
+ return ADMIN_MODAL_EDIT_FIELDS.has(field)||/^(tipoCorte|configRelay|ubicacionCorte|colorCableCorte)[1-3]$/.test(field);
 }
 function extractDriveFileIds(value) {
     const text = String(value || "");
@@ -695,7 +710,7 @@ function doPostInternal_(e) {
         const request = JSON.parse(e.postData.contents);
         const { action, payload } = request;
 
-        const developerContext = action !== 'ping' ? assertDeveloperSession(payload) : null;
+        const developerContext = action === 'ping' ? null : (ADMIN_MODAL_EDIT_ACTIONS.has(action) ? assertModalEditSession(payload) : assertDeveloperSession(payload));
 
         logMessage("Inicio", `Iniciando acción administrativa: ${action}`);
 
@@ -736,6 +751,9 @@ function doPostInternal_(e) {
                 break;
             case 'uploadAdminImage':
                 response = handleUploadAdminImage(payload, logMessage);
+                break;
+            case 'getAdminImageUploadStatus':
+                response = handleGetAdminImageUploadStatus(payload, logMessage);
                 break;
             // Compatibilidad directa histórica; el mapa canónico dirige esta acción a WRITE.
             case 'checkOperation':
@@ -1890,15 +1908,14 @@ function handleAddLogo(payload, logMessage) {
  * Actualizar de manera silenciosa una celda en Google Sheets por ID de vehículo y columna/campo
  */
 function handleUpdateVehicleField(payload, logMessage) {
-    const { vehicleId, fieldName, value } = payload;
-    if (!vehicleId || !fieldName) {
-        throw new Error("Parámetros de edición de campo incompletos.");
+    const { vehicleId, fieldName, value } = payload || {};
+    if (!vehicleId || !fieldName) throw new Error("Parámetros de edición de campo incompletos.");
+    if (!isAdminModalEditField_(fieldName)) {
+        throw new Error("El campo '" + fieldName + "' no forma parte de la edición del modal de detalle.");
     }
-
-    const colIndex = COLS_CORTES[fieldName];
-    if (!colIndex) {
-        throw new Error(`El campo '${fieldName}' no existe en el esquema del catálogo.`);
-    }
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const colIndex = fieldName === "vin" ? getVinColumnIndex(sheet) : COLS_CORTES[fieldName];
+    if (!colIndex) throw new Error("El campo '" + fieldName + "' no existe en el esquema del catálogo.");
 
     logMessage("Edición In-Modal", `Actualizando campo '${fieldName}' para el vehículo ID: ${vehicleId}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
@@ -2054,6 +2071,78 @@ function findReplacedImageRecordById(sheet, replacementId) {
  * Subir o recuperar de forma idempotente una imagen modificada desde el modal.
  * El ledger AdminImageUploads conserva el estado incluso cuando el campo no tenía URL anterior.
  */
+function handleGetAdminImageUploadStatus(payload, logMessage) {
+    const { vehicleId, fieldName, opId } = payload || {};
+    const cleanVehicleId = String(vehicleId || "").trim();
+    const cleanFieldName = String(fieldName || "").trim();
+    const operationId = String(opId || "").trim();
+    const imageFields = new Set([
+        "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+        "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+    ]);
+    if (!cleanVehicleId || !imageFields.has(cleanFieldName) ||
+        !/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
+        throw new Error("Parámetros inválidos para consultar el estado del reemplazo de imagen.");
+    }
+
+    const cutsSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!cutsSheet || cutsSheet.getLastRow() < 2) throw new Error("No hay registros disponibles en la hoja Cortes.");
+    const vehicleIds = cutsSheet.getRange(2, 1, cutsSheet.getLastRow() - 1, 1).getValues().flat();
+    const vehicleRows = [];
+    vehicleIds.forEach((id, index) => { if (String(id) === cleanVehicleId) vehicleRows.push(index + 2); });
+    if (vehicleRows.length !== 1) throw new Error("El vehículo no existe o su identificador está duplicado.");
+    const imageColumn = COLS_CORTES[cleanFieldName];
+    const currentImageUrl = String(cutsSheet.getRange(vehicleRows[0], imageColumn).getValue() || "").trim();
+
+    const ledger = getOrCreateAdminImageUploadsSheet();
+    const operation = findAdminImageUploadOperation(ledger, operationId);
+    if (!operation) {
+        logMessage("Edición In-Modal", "No existe registro remoto para el intento " + operationId + ".");
+        return { status: "success", operationStatus: "not_found", currentImageUrl: currentImageUrl, newImageUrl: "", fileIntegrity: "not_available" };
+    }
+
+    const values = operation.values;
+    if (String(values[1] || "") !== cleanVehicleId || String(values[2] || "") !== cleanFieldName) {
+        throw new Error("El identificador de operación no corresponde al vehículo y campo solicitados.");
+    }
+    const operationStatus = String(values[9] || "pending");
+    if (!["pending", "linked", "cancelled", "requires_review"].includes(operationStatus)) {
+        throw new Error("El ledger contiene un estado de reemplazo no reconocido.");
+    }
+    const newImageUrl = String(values[4] || "").trim();
+    const fileId = String(values[5] || "").trim();
+    const contentHash = String(values[6] || "").trim();
+    const mimeType = String(values[7] || "").trim();
+    let fileIntegrity = "not_available";
+    if (newImageUrl || fileId) {
+        fileIntegrity = "invalid";
+        const urlFileId = extractDriveFileId(newImageUrl);
+        if (fileId && urlFileId === fileId && contentHash && /^image\/[a-zA-Z0-9.+-]+$/i.test(mimeType)) {
+            try {
+                const file = DriveApp.getFileById(fileId);
+                const description = String(file.getDescription() || "");
+                const opMatch = description.match(/(?:^|\|)opId=([^|]*)/);
+                const hashMatch = description.match(/(?:^|\|)hash=([^|]*)/);
+                if (!file.isTrashed() && opMatch && opMatch[1] === operationId &&
+                    hashMatch && hashMatch[1] === contentHash) {
+                    verifyAdminImageUploadFile(file, mimeType, contentHash);
+                    fileIntegrity = "valid";
+                }
+            } catch (error) {
+                fileIntegrity = "invalid";
+            }
+        }
+    }
+    logMessage("Edición In-Modal", "Estado del reemplazo " + operationId + ": " + operationStatus + ".");
+    return {
+        status: "success",
+        operationStatus: operationStatus,
+        currentImageUrl: currentImageUrl,
+        newImageUrl: newImageUrl,
+        fileIntegrity: fileIntegrity
+    };
+}
+
 function handleUploadAdminImage(payload, logMessage) {
     const { vehicleId, fileData, filename, mimeType, fieldName, opId } = payload || {};
     const imageFields = new Set([
