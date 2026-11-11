@@ -92,13 +92,24 @@ async function validateSessionCoordinated(user, force = false){
   throw error;
  }finally{clearTimeout(lockTimer);}
 }
+function loadUserLocalActivity(user) {
+    const ownerId = String(user && (user.ID || user.id) || '').trim();
+    if (!ownerId || ownerId === '0') { setState({ searchHistory: [], viewedItems: [] }); return; }
+    Promise.all([offline.getSearchHistory(ownerId), offline.getViewedItems(ownerId)]).then(([history, viewed]) => {
+        const activeUser = getState().currentUser;
+        const activeOwnerId = String(activeUser && (activeUser.ID || activeUser.id) || '').trim();
+        if (!isCurrentSession(user) || activeOwnerId !== ownerId) return;
+        setState({ searchHistory: history || [], viewedItems: viewed || [] });
+    }).catch(error => console.warn("Error asíncrono cargando historial/vistos:", error));
+}
+
 function handleSessionStorageChange(event){
  if(!event||event.key!==SESSION_KEY)return;
  const current=getState().currentUser;
  const latest=readStoredSession();
  if(!latest){
   if(current){
-   setState({currentUser:null});
+   setState({currentUser:null,searchHistory:[],viewedItems:[]});
    showLoginScreen('La sesión se cerró en otra pestaña. Inicia sesión nuevamente.');
   }
   return;
@@ -116,6 +127,7 @@ function handleLoginSuccess(user, persist = true) {
     if (persist) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setState({ currentUser: user });
     showApp(user); // Muestra la UI principal inmediatamente
+    loadUserLocalActivity(user);
 }
 
 async function loadInitialData() {
@@ -259,19 +271,13 @@ export async function validateActiveSession(force = false) {
 }
 
 export async function checkSession() {
+    setState({ currentUser: null, searchHistory: [], viewedItems: [] });
     try {
-        const historyPromise = offline.getSearchHistory(), viewedPromise = offline.getViewedItems();
-        try {
-            const cachedPysRaw = localStorage.getItem('gpsepedia_pys_cache');
-            if (cachedPysRaw) { const parsedPys = JSON.parse(cachedPysRaw); if (Array.isArray(parsedPys) && parsedPys.length) setState({ pysData: parsedPys }); }
-        } catch (error) {}
-        Promise.all([historyPromise, viewedPromise]).then(([history, viewed]) => {
-            if (history || viewed) setState({ searchHistory: history || [], viewedItems: viewed || [] });
-        }).catch(error => console.warn("Error asíncrono cargando historial/vistos:", error));
-    } catch (error) { console.warn("Error en el flujo de rehidratación:", error); }
-
+        const cachedPysRaw = localStorage.getItem('gpsepedia_pys_cache');
+        if (cachedPysRaw) { const parsedPys = JSON.parse(cachedPysRaw); if (Array.isArray(parsedPys) && parsedPys.length) setState({ pysData: parsedPys }); }
+    } catch (error) {}
     const sessionData = localStorage.getItem(SESSION_KEY);
-    if (!sessionData) { setState({ currentUser: null }); showLoginScreen(); return; }
+    if (!sessionData) { setState({ currentUser: null, searchHistory: [], viewedItems: [] }); showLoginScreen(); return; }
     let user;
     try {
         user = JSON.parse(sessionData);
@@ -279,13 +285,13 @@ export async function checkSession() {
     } catch (error) {
         console.error("Sesión local inválida:", error);
         if (localStorage.getItem(SESSION_KEY) !== sessionData) return checkSession();
-        localStorage.removeItem(SESSION_KEY); setState({ currentUser: null });
+        localStorage.removeItem(SESSION_KEY); setState({ currentUser: null, searchHistory: [], viewedItems: [] });
         showLoginScreen('La sesión local no es válida. Inicia sesión nuevamente.'); return;
     }
     const latestSession = readStoredSession();
     if (!sameSession(latestSession, user)) {
         if (latestSession) return checkSession();
-        setState({ currentUser: null }); showLoginScreen(); return;
+        setState({ currentUser: null, searchHistory: [], viewedItems: [] }); showLoginScreen(); return;
     }
     user = latestSession;
     const localExpiration = getLocalSessionExpiry(user);
@@ -297,7 +303,7 @@ export async function checkSession() {
     }
     if (!isCurrentSession(user)) return;
     if (window.navigator && window.navigator.onLine === false) {
-        setState({ currentUser: null });
+        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
         showLoginScreen('Conéctate a Internet para verificar tu sesión y la aceptación vigente de los términos.');
         return;
     }
@@ -310,7 +316,7 @@ export async function checkSession() {
             handleLoginSuccess(validatedUser, false); loadInitialData(); return;
         }
         if (result && result.valid === false) { logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.", user); return; }
-        setState({ currentUser: null });
+        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
         showLoginScreen('No se pudo verificar la sesión ni la aceptación de términos. Intenta nuevamente.');
     } catch (error) {
         if (!isCurrentSession(user)) return;
@@ -319,7 +325,7 @@ export async function checkSession() {
         if (message.includes('expirada') || message.includes('inválida') || message.includes('expired')) {
             showGlobalError('Error de sesión: ' + error.message); logout(null, user); return;
         }
-        setState({ currentUser: null });
+        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
         showLoginScreen('No se pudo verificar la sesión ni la aceptación de términos. Intenta nuevamente.');
     }
 }
@@ -355,7 +361,7 @@ export function logout(reason = null, expectedSession = null) {
     // Nunca borrar una sesión que haya sustituido a la que originó esta operación.
     if (guardedSession && !isCurrentSession(guardedSession)) return false;
     const logoutGeneration = ++logoutGeneration_;
-    setState({ currentUser: null });
+    setState({ currentUser: null, searchHistory: [], viewedItems: [] });
     if (!guardedSession || sameSession(readStoredSession(), guardedSession)) {
         localStorage.removeItem(SESSION_KEY);
     }
