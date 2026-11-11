@@ -77,6 +77,7 @@ function runAdminModalEditSecurityTests() {
             const vehicle=Array(43).fill("");vehicle[0]="VEH-VIN";
             const sheet={getLastRow:()=>2,getLastColumn:()=>43,getRange:(r,col,n,w)=>({
                 getValues:()=>r===1?[headers.slice(col-1,col-1+(w||1))]:r===2?[vehicle.slice(col-1,col-1+(w||1))]:[],
+                getValue:()=>vehicle[col-1],
                 setValue:value=>{vehicle[col-1]=value;}
             })};
             getSpreadsheet=()=>({getSheetByName:()=>sheet});
