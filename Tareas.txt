@@ -925,3 +925,13 @@ Prueba: Services/Test/IndexedDBTransactions.js — suite completa ejecutada en V
 Pendiente de AUG-051: LRU y cuota total de IndexedDB; límite RAM y revocación segura de ObjectURL; concurrencia de compresión.
 Siguiente iteración: implementar únicamente LRU y validar con la suite. No iniciar AUG-052.
 ================================================================================
+
+
+================================================================================
+AUG-051 — ADENDA ITERACIÓN 5 — 2026-11-11
+Estado: EN PROGRESO.
+Implementación de LRU para miniaturas: máximo de 200 variantes persistidas; cada lectura válida actualiza lastAccessedAt y la evicción elimina las menos recientes al superar el límite. Se mantiene sin cambios DB_VERSION y la estructura de stores.
+Prueba añadida: recencia, expulsión de la variante menos utilizada y conservación de la nueva entrada. Validación de ejecución pendiente de completar antes de cerrar esta iteración.
+Pendiente: cuota total IndexedDB, límite RAM, revocación segura de ObjectURL y límite de concurrencia de compresión.
+Siguiente: validar localmente la suite completa y revisar el diff de la iteración 5; no iniciar AUG-052.
+================================================================================

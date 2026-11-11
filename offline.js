@@ -739,14 +739,86 @@ async function purgeExpiredThumbnailEntries(now = Date.now()) {
   isThumbnailExpired(entry, now) && typeof entry.key === "string").map(entry => entry.key);
  await Promise.all(keys.map(key => performOp("thumbnails", "readwrite", store => store.delete(key))));
 }
+// Límite de variantes persistidas; la cuota global de IndexedDB se trata en otra iteración.
+const MAX_THUMBNAIL_ENTRIES = 200;
+
+/**
+ * Ejecuta una lectura-modificación dentro de una única transacción readwrite.
+ * El resultado solo se entrega cuando IndexedDB confirma el commit.
+ */
+async function runThumbnailStoreTransaction(requestFactory, onSuccess) {
+ const database = await initDB();
+ return new Promise((resolve, reject) => {
+  let transaction, result = null, settled = false;
+  const fail = error => {
+   if (settled) return;
+   settled = true;
+   reject(error instanceof Error ? error : new Error("IndexedDB thumbnail transaction failed."));
+  };
+  try {
+   transaction = database.transaction(["thumbnails"], "readwrite");
+   const store = transaction.objectStore("thumbnails");
+   transaction.oncomplete = () => {
+    if (settled) return;
+    settled = true;
+    resolve(result);
+   };
+   transaction.onerror = () => fail(transaction.error || new Error("IndexedDB thumbnail transaction failed."));
+   transaction.onabort = () => fail(transaction.error || new Error("IndexedDB thumbnail transaction aborted."));
+   const request = requestFactory(store);
+   request.onsuccess = () => {
+    try { result = onSuccess(store, request.result); }
+    catch (error) {
+     try { transaction.abort(); } catch (abortError) {}
+     fail(error);
+    }
+   };
+   request.onerror = () => fail(request.error || new Error("IndexedDB thumbnail request failed."));
+  } catch (error) {
+   try { if (transaction) transaction.abort(); } catch (abortError) {}
+   fail(error);
+  }
+ });
+}
+
+/** Actualiza la recencia en la misma transacción que recupera la variante. */
 async function readFreshThumbnail(key) {
- const entry = await performOp("thumbnails", "readonly", store => store.get(key));
- if (!entry) return null;
- if (isThumbnailExpired(entry)) {
-  await performOp("thumbnails", "readwrite", store => store.delete(key));
-  return null;
- }
- return entry.blob || entry;
+ return runThumbnailStoreTransaction(
+  store => store.get(key),
+  (store, entry) => {
+   if (!entry) return null;
+   if (isThumbnailExpired(entry)) {
+    store.delete(key);
+    return null;
+   }
+   if (entry && typeof entry === "object" && entry.key === key && entry.blob) {
+    entry.lastAccessedAt = Date.now();
+    store.put(entry, key);
+    return entry.blob;
+   }
+   return entry.blob || entry;
+  }
+ );
+}
+
+/** Conserva las variantes más recientes y elimina primero las menos utilizadas. */
+async function evictLeastRecentlyUsedThumbnails() {
+ return runThumbnailStoreTransaction(
+  store => store.getAll(),
+  (store, entries) => {
+   const cached = (Array.isArray(entries) ? entries : [])
+    .filter(entry => entry && typeof entry === "object" && typeof entry.key === "string" &&
+     entry.blob && !isThumbnailExpired(entry))
+    .sort((a, b) =>
+     (Number(a.lastAccessedAt) || Number(a.cachedAt) || 0) -
+     (Number(b.lastAccessedAt) || Number(b.cachedAt) || 0) ||
+     (Number(a.cachedAt) || 0) - (Number(b.cachedAt) || 0) ||
+     a.key.localeCompare(b.key));
+   const excess = cached.length - MAX_THUMBNAIL_ENTRIES;
+   for (let index = 0; index < excess; index += 1) store.delete(cached[index].key);
+   return Math.max(0, excess);
+  }
+ );
 }
 
 /** Compresión por variante; conserva compatibilidad de lectura con claves antiguas. */
@@ -769,8 +841,9 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
    return await new Promise(resolve=>canvas.toBlob(async blob=>{
     if(!blob){resolve(null);return;}
-    const entry={key:cacheKey,fileId,width,blob,cachedAt:Date.now()};
+    const now=Date.now(),entry={key:cacheKey,fileId,width,blob,cachedAt:now,lastAccessedAt:now};
     const saved=await performOp("thumbnails","readwrite",store=>store.put(entry,cacheKey));
+    if(saved!==null) await evictLeastRecentlyUsedThumbnails();
     resolve(saved===null?null:blob);
    },"image/png"));
   }finally{if(typeof bitmap.close==="function")bitmap.close();}

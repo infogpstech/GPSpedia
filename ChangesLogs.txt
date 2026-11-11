@@ -1288,3 +1288,13 @@ Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js en el runti
 Parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. No se ejecutó Node CLI literal ni navegador real/multi-pestaña; la validación de navegador y multi-pestaña se reserva a Beta.
 La iteración TTL queda completada con validación diferida. Siguiente iteración: evicción LRU como tarea única.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-051 — ITERACIÓN 5 — POLÍTICA LRU DE MINIATURAS
+- offline.js: se añadió un límite de 200 variantes persistidas, actualización de lastAccessedAt al consultar una variante y evicción de las menos recientes al superar el límite.
+- La lectura/actualización de recencia y la evicción usan transacciones IndexedDB readwrite y esperan su finalización.
+- Services/Test/IndexedDBTransactions.js: se añadió una prueba de recencia y expulsión LRU.
+- Services/Test/README.md: se documentó el alcance del límite y su diferencia frente a la cuota total del navegador.
+- No se modificó DB_VERSION ni la estructura de stores.
+================================================================================

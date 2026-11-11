@@ -231,7 +231,28 @@ async function runIndexedDBTransactionTests() {
             assert.ok(await api.getThumbnail('ttl-file-123',300));
         }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/10 PASS`);
+    await testAsync('LRU actualiza recencia y expulsa la variante menos utilizada al superar el límite',async()=>{
+        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-lru');
+        await api.initDB();
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:640,height:480,close(){}});
+        globalThis.document={createElement(){return{width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){cb(new Blob(['thumb'],{type:'image/png'}));}};}};
+        try{
+            const store=harness.stores.get('thumbnails'),now=Date.now();
+            for(let i=0;i<200;i++){
+                const key=`lru-${String(i).padStart(3,'0')}::w300`;
+                store.values.set(key,{key,fileId:`lru-${i}`,width:300,blob:new Blob([`thumb-${i}`]),cachedAt:now-1000-i,lastAccessedAt:now-1000-i});
+            }
+            assert.ok(await api.getThumbnail('lru-000',300));
+            await api.compressAndStoreThumbnail('https://images.example/lru.png','lru-new-entry',300);
+            assert.equal(store.values.has('lru-000::w300'),true,'la variante consultada recientemente debe conservarse');
+            assert.equal(store.values.has('lru-199::w300'),false,'la variante más antigua no consultada debe expulsarse');
+            assert.equal(store.values.has('lru-new-entry::w300'),true,'la variante recién creada debe conservarse');
+            assert.equal([...store.values.values()].filter(entry=>entry&&entry.key&&entry.blob).length,200);
+        }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
+    console.log(`\nIndexedDB transaction tests: ${passed}/11 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

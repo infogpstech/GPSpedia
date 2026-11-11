@@ -330,3 +330,11 @@ La suite incluye expiración a los 30 días, eliminación de la variante vencida
 ## Variantes de miniaturas por tamaño (AUG-051 — iteración 3)
 
 La suite `Services/Test/IndexedDBTransactions.js` incluye un escenario que genera y recupera variantes independientes de 300 y 800 px, verifica que no se confundan con una variante de 1600 px y comprueba la liberación de `ImageBitmap.close()`. El escenario usa IndexedDB y Canvas simulados; no sustituye pruebas de navegador real ni de imágenes transparentes.
+
+
+## AUG-051 — caché local de miniaturas
+
+- Las variantes persistidas usan una política LRU con un máximo de 200 entradas. Cada lectura válida actualiza `lastAccessedAt`; al superar el límite se eliminan primero las variantes con menor recencia.
+- La lectura y actualización de recencia se realizan dentro de una transacción IndexedDB `readwrite`, y la evicción vuelve a evaluar el conjunto dentro de otra transacción `readwrite`.
+- El límite controla el número de variantes, no el tamaño en bytes ni la cuota global del navegador. La política de cuota total permanece pendiente en AUG-051.
+- La suite `Services/Test/IndexedDBTransactions.js` incluye una regresión que comprueba actualización de recencia, expulsión de la variante menos reciente y conservación de la recién creada.

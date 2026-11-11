@@ -1,13 +1,14 @@
 ================================================================================
-AUG-051 — ITERACIÓN 4 — 2026-11-11
-Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
-Rama: GPSpedia2.2.5_work. HEAD de inicio de esta validación: 23600b555aef9c8220f8662374b0bffa8668a3f3.
-Resultado: TTL persistente de 30 días para miniaturas. Las variantes vencidas se eliminan al consultarse; la limpieza oportunista se ejecuta al consultar y antes de comprimir. Los registros heredados sin timestamp se descartan al primer acceso.
-Validación local: parsing V8 de offline.js y Services/Test/IndexedDBTransactions.js aprobado. Suite completa ejecutada en V8 con adaptación únicamente del cargador de módulos, assert y globals Node ausentes: 10/10 PASS, incluidos commit/abort/cuota/versionchange/bloqueo, aislamiento por cuenta, variantes por tamaño, cierre de ImageBitmap y TTL/eliminación/regeneración. No se ejecutó Node CLI literal ni navegador real/multi-pestaña; estos últimos se reservan para Beta.
-Compatibilidad: sin cambio de DB_VERSION ni estructura de stores.
-Pendiente de AUG-051: evicción LRU y cuota total IndexedDB; límite RAM y revocación segura de ObjectURL; límite de concurrencia de compresión.
-Siguiente iteración: implementar únicamente LRU y probarla con la suite. No iniciar AUG-052.
+AUG-051 — ITERACIÓN 5 — 2026-11-11
+Estado: EN PROGRESO — implementación realizada; validación local pendiente.
+Rama: GPSpedia2.2.5_work. HEAD de inicio: 2b30e8680022bd828a1ce61a53afac0543eb9a2f.
+Alcance único: política LRU para variantes de miniaturas. Se fijó un máximo de 200 variantes persistidas; las lecturas válidas actualizan lastAccessedAt y, al superar el máximo, se eliminan las variantes menos recientes. La actualización de recencia y la evicción esperan el commit de transacciones readwrite.
+Prueba añadida: poblar 200 variantes, consultar la más antigua, insertar una nueva y verificar que se conserva la consultada y se expulsa la menos reciente.
+Archivos: offline.js; Services/Test/IndexedDBTransactions.js; Services/Test/README.md; Tareas.txt; ChangesLogs.txt.
+Compatibilidad: sin cambio de DB_VERSION ni de stores.
+Pendiente antes del cierre: ejecutar parsing y suite completa en el entorno local disponible, revisar diff y corregir cualquier fallo. No iniciar cuota global, límite RAM, ObjectURL, concurrencia ni AUG-052 en esta iteración.
 ================================================================================
+
 ================================================================================
 
 # Checkpoint activo — GPSpedia
