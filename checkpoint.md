@@ -1603,3 +1603,28 @@ Límites y preservación:
 
 Siguiente paso: obtener/consolidar las 12 confirmaciones operativas de la empresa principal y contrastarlas con la matriz técnica; continuar solo AUG-046. No iniciar AUG-047.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-046 — CONSISTENCIA DOCUMENTAL ENTRE SUPERFICIES — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar esta iteración: 7bb4dcc0f44c59f92515c131c027b26a5260d0f3.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+Tarea única: AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad.
+
+Trabajo realizado:
+- Se confirmó la normativa vigente y se retomó la sección 8 del memo AUG-046.
+- Se compararon el Aviso Importante, el acuerdo de uso, «Sobre Nosotros» y la FAQ en index.html.
+- Se documentó una diferencia de alcance entre la reserva general de contenido privado de la sección 9 y las aclaraciones de «Sobre Nosotros»/FAQ sobre información técnica de terceros y compilación de datos públicos.
+- Se registró la necesidad de delimitar contenido de terceros, material interno y valor propio de selección/organización; también se anotó la consistencia de identidad Motorlink S.A./GPSpedia/TRACKLINK y el propósito laboral frente a la descripción general de la plataforma.
+- El archivo index.html conserva el SHA 5d6c57956e18e7b504475222ba9fa97ef239c947.
+
+Límites:
+- No se modificó el Aviso Importante, el acuerdo, la sección 13, «Sobre Nosotros», FAQ, fecha/versión 2026-07, ni el flujo AUG-045.
+- No se modificaron código, endpoints, deployments ni datos productivos.
+- La comparación no determina titularidad, licencias ni validez jurídica; requiere decisión y validación interna de la empresa principal.
+
+Resultado de la iteración: revisión comparativa documental ampliada y registrada en Legal/AUG-046_revision_preliminar.md, sección 9. AUG-046 permanece EN PROGRESO; siguen pendientes las confirmaciones operativas y la validación interna corporativa. No iniciar AUG-047.
+Siguiente paso: continuar únicamente AUG-046 con la consolidación de confirmaciones operativas y decisiones internas, sin editar el contenido legal.
+================================================================================
