@@ -9,6 +9,7 @@ import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAs
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
+import { isAdminImageUploadStatusConfirmedCancelled } from './adminImageUploadIsolation.js';
 import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
@@ -248,7 +249,11 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
             continue;
         }
 
-        if (operationStatus === "cancelled" || operationStatus === "not_found") {
+        if (operationStatus === "not_found") {
+            throw new Error("El servidor todavía no registra este intento. Una solicitud anterior podría seguir en curso; se conserva el archivo local y no se completó el descarte. Reintenta la reconciliación más tarde.");
+        }
+
+        if (isAdminImageUploadStatusConfirmedCancelled(operationStatus)) {
             if (!commitAdminImageReplacementBaseline_(cleanVehicleId, operation.fieldName, currentUrl)) {
                 throw new Error("No se pudo guardar la referencia activa confirmada antes de limpiar el intento local.");
             }
