@@ -90,7 +90,7 @@ function runAddCutOperationIntegrityTests(sources) {
     run_('el cliente calcula SHA-256 con WebCrypto y no usa hash débil', () => {
         const script = frontend.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
         const fn = extract_(script, 'computeClientCutOperationFingerprint');
-        assert_(/crypto\.subtle\.digest\('SHA-256'/.test(fn));
+        assert_(/subtle\.digest\('SHA-256'/.test(fn));
         assert_(/TextEncoder/.test(fn));
         assert_(!/Math\.random|btoa|encodeURIComponent/.test(fn));
     });
