@@ -1918,7 +1918,6 @@ function handleUpdateVehicleField(payload, logMessage) {
     if (!colIndex) throw new Error("El campo '" + fieldName + "' no existe en el esquema del catálogo.");
 
     logMessage("Edición In-Modal", `Actualizando campo '${fieldName}' para el vehículo ID: ${vehicleId}...`);
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
     const rowIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
     if (rowIndex === -1) {
