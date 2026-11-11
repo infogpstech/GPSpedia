@@ -1696,7 +1696,7 @@ function checkFileIdValid(url) {
 const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status", "operationHash"];
 
 /**
- * Comprueba el esquema A:E sin modificar la hoja.
+ * Comprueba el esquema A:F sin modificar la hoja.
  * Los encabezados vacíos son reparables; los encabezados no vacíos distintos
  * del esquema esperado hacen que la hoja sea incompatible.
  */
@@ -1900,7 +1900,7 @@ function initializeIdempotenciaSheet(sheet) {
     SpreadsheetApp.flush();
     state = getIdempotenciaHeaderState(sheet);
     if (!state.compatible || state.missingIndexes.length) {
-        throw new Error("No se pudo verificar la estructura A:E de la hoja «" + sheet.getName() + "».");
+        throw new Error("No se pudo verificar la estructura A:F de la hoja «" + sheet.getName() + "».");
     }
     readIdempotenciaEntries_(sheet, false);
     return sheet;
@@ -1999,7 +1999,7 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
 
         const verified = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
         if (!verified || verified.vehicleId !== cleanVehicleId ||
-            verified.slotIndex !== cleanSlotIndex || verified.status !== finalStatus) {
+            verified.slotIndex !== cleanSlotIndex || verified.status !== finalStatus || verified.operationHash !== cleanOperationHash) {
             throw new Error("No se pudo verificar la actualización del opId " + cleanOpId + ".");
         }
         return verified;
@@ -2009,7 +2009,7 @@ function recordOpId(opId, vehicleId, slotIndex, timestamp, status, operationHash
     SpreadsheetApp.flush();
     const verified = readIdempotenciaEntries_(sheet, false).byOpId.get(cleanOpId);
     if (!verified || verified.vehicleId !== cleanVehicleId ||
-        verified.slotIndex !== cleanSlotIndex || verified.status !== targetStatus) {
+        verified.slotIndex !== cleanSlotIndex || verified.status !== targetStatus || verified.operationHash !== cleanOperationHash) {
         throw new Error("No se pudo verificar el registro del opId " + cleanOpId + ".");
     }
     return verified;
