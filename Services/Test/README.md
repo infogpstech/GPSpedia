@@ -539,3 +539,8 @@ Ejecutar `runAdminModalEditRestoreContractTests(uiSource, adminSource)` con las 
 La suite `IndexedDBTransactions.js` simula un error de `get()` durante la recuperación de un snapshot ADMIN. Comprueba que la API devuelve `{available:false,operation:null}` y que una lectura posterior puede recuperar el mismo opId y Data URL, sin confundir el error con un registro inexistente. El harness cancela las solicitudes pendientes al abortar la transacción, de acuerdo con la semántica de IndexedDB.
 
 Validación de esta iteración: parsing V8 de la suite PASS y prueba aislada del getter real de `offline.js` ante un error de request PASS. La suite completa ampliada a 33 escenarios y el comando Node CLI no se ejecutaron. IndexedDB/navegador reales y concurrencia multi-pestaña permanecen para Beta.
+
+
+## Validación integral de IndexedDBTransactions (AUG-053 — iteración 25)
+
+La suite completa ejecutó **33/33 escenarios PASS**, cero fallos de aserción, en un runtime V8 adaptado. Se cargaron las fuentes vigentes de `offline.js`, `thumbnailCompressionQueue.js` y `adminImageUploadIsolation.js`; la importación dinámica de la suite se sustituyó por una factoría que crea instancias independientes del módulo sobre el harness compartido. Se adaptaron IndexedDB, `Blob`, `DOMException`, `structuredClone`, `queueMicrotask` y el registro de consola/assert. Los errores de aborto, cuota y lectura registrados corresponden a rutas negativas esperadas y sus aserciones pasaron. No se ejecutó el comando Node CLI original ni se probó IndexedDB/navegador real o concurrencia multi-pestaña; estas validaciones permanecen para Beta.

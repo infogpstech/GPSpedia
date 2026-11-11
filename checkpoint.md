@@ -154,3 +154,22 @@ Validación:
 
 Siguiente iteración: ejecutar la suite IndexedDBTransactions completa (33 escenarios) en runtime local compatible y corregir cualquier fallo reproducible. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — ITERACIÓN 25 — 2026-11-11 — VALIDACIÓN INTEGRAL DE INDEXEDDBTRANSACTIONS
+Estado: EN PROGRESO. La suite durable quedó validada; AUG-053 continúa abierta para revisar las brechas locales restantes del criterio 8.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 3250b21b8f0a5883fe9ce75a190e169c39e805e8. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Validación ejecutada:
+- Services/Test/IndexedDBTransactions.js: 33/33 PASS, cero fallos de aserción.
+- Ejecución en runtime V8 adaptado con las fuentes vigentes de offline.js, thumbnailCompressionQueue.js y adminImageUploadIsolation.js; la importación dinámica se sustituyó por una factoría para crear instancias independientes sobre el harness IndexedDB compartido.
+- Se adaptaron IndexedDB, Blob, DOMException, structuredClone, queueMicrotask y consola/assert. Los errores de aborto, cuota y lectura observados corresponden a rutas negativas esperadas y las aserciones pasaron.
+- No se ejecutó el comando Node CLI original. No se afirma ejecución en navegador real, IndexedDB real ni concurrencia multi-pestaña; permanecen para Beta.
+
+Cambios de registro:
+- Services/Test/README.md, Tareas_pendientes_parte1.txt, checkpoint.md y ChangesLogs.txt documentan el resultado 33/33 y sus límites.
+- No se modificó lógica funcional ni el harness durante esta iteración.
+
+Siguiente iteración: revisar una sola brecha local adicional del criterio 8 que no esté cubierta por las suites existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
+================================================================================

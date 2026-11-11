@@ -899,3 +899,7 @@ Se añadió a Services/Test/AdminModalEditRestoreContract.js un contrato que ver
 
 AUG-053 — ITERACIÓN 24 — 2026-11-11
 Se añadió a Services/Test/IndexedDBTransactions.js una simulación de error de lectura IndexedDB al recuperar adminImageUploadPending. La API debe informar available:false y operation:null, y una lectura posterior debe recuperar el snapshot original con el mismo opId y Data URL. El harness ahora cancela las solicitudes pendientes cuando una transacción aborta. Parsing V8 de la suite: PASS. Prueba aislada del getter real de offline.js ante error de request: PASS. La suite completa de 33 escenarios y Node CLI no se ejecutaron; IndexedDB/navegador reales y multi-pestaña permanecen para Beta. AUG-053 continúa EN PROGRESO. No iniciar AUG-054.
+
+
+AUG-053 — ITERACIÓN 25 — 2026-11-11
+Se ejecutó la suite completa Services/Test/IndexedDBTransactions.js: 33/33 PASS, cero fallos de aserción, en runtime V8 adaptado con las fuentes vigentes de offline.js y sus dependencias locales (thumbnailCompressionQueue.js y adminImageUploadIsolation.js). Se sustituyó la importación dinámica por una factoría de módulos y se adaptaron IndexedDB, Blob, DOMException, structuredClone, queueMicrotask y consola/assert. Los errores de aborto, cuota y lectura fueron rutas negativas esperadas. No se ejecutó Node CLI original ni IndexedDB/navegador real o concurrencia multi-pestaña; permanecen para Beta. AUG-053 continúa EN PROGRESO para revisar una sola brecha local adicional del criterio 8. No iniciar AUG-054.

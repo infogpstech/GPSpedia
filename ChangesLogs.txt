@@ -1625,3 +1625,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md documentan el caso y los límites.
 - No se modificó lógica funcional ni offline.js.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 25 — VALIDACIÓN INTEGRAL DE INDEXEDDBTRANSACTIONS
+- Services/Test/IndexedDBTransactions.js: suite completa ejecutada en runtime V8 adaptado, 33/33 PASS, cero fallos de aserción; se cargaron offline.js y sus dependencias locales vigentes mediante factoría de módulos sobre el harness IndexedDB.
+- Services/Test/README.md: documenta el resultado, adaptadores y límites de validación.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran la evidencia y la siguiente brecha local pendiente.
+- No se modificó código funcional ni el harness. Node CLI original, IndexedDB/navegador reales y concurrencia multi-pestaña no se ejecutaron; permanecen para Beta.
+================================================================================
