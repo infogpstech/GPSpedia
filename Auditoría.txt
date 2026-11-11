@@ -531,3 +531,15 @@ Validación local:
 
 Pendiente para Beta: navegador real, Apps Script/Spreadsheet desplegados y concurrencia de servicios reales. No se modificaron datos productivos.
 ================================================================================
+
+================================================================================
+AUG-060 — CIERRE DE PRESENTACIÓN VIN POR VERSIÓN — 2026-11-11
+Hallazgo de origen: H-AUD-004-001 (AUD-T-004).
+Ubicación: ui.js — parseVinCollection(), mapVersionsWithVins().
+Resolución verificada en fuentes:
+- La lectura de formatos heredados conserva los slots vacíos producidos por delimitadores consecutivos o finales. El índice se mantiene hasta el mapeo con versionesAplicables.
+- La presentación reconoce que WRITE/ADMIN ya guardan prefijos sin los cinco caracteres seriales. El recorte de cinco caracteres se limita a valores completos heredados de más de 13 caracteres.
+- Las posiciones sin VIN se presentan como null y no desplazan la asociación de las versiones posteriores.
+Validación local: Services/Test/VinVersionPresentation.js, 10/10 PASS; cubre JSON, formatos heredados, slots inicial/intermedio/final, límite de tres, prefijos normalizados, VIN completos heredados y una sola versión.
+Validación diferida a Beta: renderizado visual en navegador real y comprobación con datos reales representativos. No se modificaron servicios, endpoints ni datos productivos.
+================================================================================
