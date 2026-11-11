@@ -1668,3 +1668,14 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Checkpoint de cierre Iteración 28 agregado.
 - Validación real de navegador/IndexedDB y Apps Script/Spreadsheet/Drive queda diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-056 — DISPONIBILIDAD DINÁMICA DE CORTES Y VÍDEO
+- `add_cortes.html`: se oculta la acción de agregar corte y el acordeón de segundo corte cuando los tres slots están ocupados; la visibilidad del vídeo se determina desde `videoGuiaDesarmeUrl` del registro seleccionado.
+- Se refresca el registro después de guardar/recuperar; si no se confirma el estado de un vehículo existente, la interfaz falla de forma conservadora.
+- `Services/write.js` y `Services/admin.js`: helper de selección del primer slot libre bajo ScriptLock y respuesta con `slotIndex`; se conserva el rechazo de filas completas.
+- Ante colisión concurrente, el formulario y el snapshot durable se conservan.
+- CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PASS; YouTubeAddCortesContract 4/4 PASS.
+- Navegador, Apps Script desplegados y concurrencia real quedan diferidos a Beta.
+================================================================================
