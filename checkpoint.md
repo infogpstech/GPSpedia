@@ -291,3 +291,23 @@ Nota preexistente: AddCutOperationRecoveryFlow ejecuta 0/3 tanto contra fuente i
 Beta pendiente: navegador real, FileReader real, Apps Script/Spreadsheet desplegados y pruebas de campo. No se modificaron servicios ni datos productivos.
 AUG-057 queda cerrada. No se inicia otra tarea en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-058 — CIERRE — ITERACIÓN 1 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: dde14f9cd54ca268fbfbb4b165cc9e62d4f3e54b. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+Resolución:
+- `add_cortes.html`: se separa la ejecución de recuperación de su wrapper single-flight; init, online y visibilitychange reutilizan una única promesa mientras la recuperación está activa.
+- Las recuperaciones disparadas durante submit de etapas 1, 2 o 3 se difieren y se reanudan al terminar si hay conexión. Los submits se rechazan temporalmente mientras una recuperación activa consulta/reconcilia el snapshot.
+- `toggleLoading()` mantiene un contador de operaciones activas para que el overlay no desaparezca al finalizar una operación mientras otra sigue ejecutándose; el traspaso submit→recuperación conserva el indicador.
+- Los snapshots pending se restauran sin eliminarlos; los completed no confirmados permanecen terminales; las operaciones confirmadas se limpian solo después de verificar hash y vehículo.
+
+Validación local:
+- `Services/Test/AddCutOperationRecoveryConcurrency.js`: 9/9 PASS; incluye disparadores simultáneos, checkOperation lento, evento durante submit en etapas 1–3, visibilitychange durante recuperación, snapshots pending/completed y contador de loading.
+- Parsing V8 del módulo frontend: PASS.
+
+Validación Beta pendiente: eventos reales del navegador, IndexedDB real, Apps Script/Spreadsheet y pruebas de campo. No se modificaron servicios ni datos productivos.
+AUG-058 queda cerrada. No se inicia otra tarea en esta iteración.
+================================================================================
