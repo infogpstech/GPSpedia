@@ -27,3 +27,12 @@ export function isAdminImageUploadPendingOwnedBy(operation,ownerId){
  const expected=String(ownerId??"").trim();
  return Boolean(expected&&operation&&String(operation.ownerId||"")===expected);
 }
+
+/**
+ * Solo una cancelación explícita registrada por el servidor permite retirar
+ * el snapshot local sin volver a ejecutar la operación.
+ * "not_found" no es terminal: una petición previa puede seguir en curso.
+ */
+export function isAdminImageUploadStatusConfirmedCancelled(status) {
+ return String(status || "") === "cancelled";
+}
