@@ -1,4 +1,27 @@
 ================================================================================
+AUG-053 — ITERACIÓN 17 — 2026-11-11 — SERIALIZACIÓN DEL HARNESS Y CONFLICTO CONCURRENTE ADMIN
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
+Rama: GPSpedia2.2.5_work. HEAD de partida: b4d9efbfb8bda9b151a2540893e0ca234ff25632. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo abordado:
+- El harness previo programaba requests de transacciones independientes en microtareas separadas, permitiendo que dos transacciones readwrite solaparan artificialmente sus lecturas.
+- Esto no representaba la serialización de transacciones con almacenes solapados de IndexedDB y no era adecuado para probar conflictos simultáneos.
+
+Cambios:
+- Services/Test/IndexedDBTransactions.js: el harness incorpora una cola global de transacciones, activa la siguiente al terminar/abortar la actual y procesa las solicitudes en orden, conservando la posibilidad de que callbacks añadan requests.
+- Nuevo escenario: dos escrituras ADMIN simultáneas con opId y Data URL distintos sobre la misma clave; exactamente una se guarda, la otra devuelve conflicto y la lectura conserva íntegro el primer snapshot.
+- Services/Test/README.md, backlog y ChangesLogs.txt documentan alcance y límites.
+- No se modificó offline.js ni lógica funcional.
+
+Validación local:
+- Suite IndexedDBTransactions: 29/29 PASS sobre funciones reales de offline.js con el harness actualizado, ejecutada en runtime V8 adaptado.
+- Parsing V8 de suite y offline.js: PASS.
+Límite: el harness serializa globalmente todas las transacciones como aproximación conservadora; IndexedDB real puede ejecutar en paralelo transacciones compatibles. No se afirma validación de IndexedDB real, navegador real ni multi-pestaña; permanecen para Beta.
+
+Siguiente iteración: continuar AUG-053 con el siguiente escenario local no cubierto del ciclo durable de snapshots ADMIN; no iniciar AUG-054.
+================================================================================
+
+================================================================================
 AUG-053 — ITERACIÓN 16 — 2026-11-11 — REINTENTO CONCURRENTE IDEMPOTENTE DEL SNAPSHOT ADMIN
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. AUG-053 continúa EN PROGRESO.
 Rama: GPSpedia2.2.5_work. HEAD de partida: 9a2c0b6b5bd0f1b8e18e26097c4ad07ab8d3a9b8. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).

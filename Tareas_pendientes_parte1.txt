@@ -797,6 +797,7 @@ AUG-051 — ampliar criterios:
 Iteración 14: COMPLETADA CON VALIDACIÓN DIFERIDA (el envío inicial, reintento y reconciliación conservan el contexto completo de la sesión iniciadora; tras guardar el snapshot se revalida antes de actualizar memoria o enviar; callbacks obsoletos no modifican UI; contratos 10/10 PASS y parsing V8 PASS). Pendiente Beta: IndexedDB/navegador real y cambio multi-pestaña.
 Iteración 15: COMPLETADA CON VALIDACIÓN DIFERIDA (cinco escenarios IndexedDB ejecutados sobre funciones reales de offline.js mediante el harness: snapshot/whitelist, aislamiento por propietario, conflicto opId, eliminación exacta y aborto de transacción; suite total 27/27 PASS y parsing V8 PASS). Pendiente Beta: IndexedDB/navegador real y cambio multi-pestaña.
 Iteración 16: COMPLETADA CON VALIDACIÓN DIFERIDA (se añade prueba de dos escrituras simultáneas e idénticas del mismo snapshot; ambas deben confirmar y la recuperación debe conservar opId y Data URL; suite 28/28 PASS).
+Iteración 17: COMPLETADA CON VALIDACIÓN DIFERIDA (el harness IndexedDB ahora serializa transacciones mediante una cola y procesa solicitudes en orden; prueba dos escrituras ADMIN conflictivas simultáneas: una confirma, la otra devuelve conflicto y el primer snapshot permanece intacto; suite 29/29 PASS). La serialización global es conservadora y no modela concurrencia real entre pestañas.
 
 ### AUG-054 — Autenticar checkOperation y minimizar su respuesta
 - **Hallazgo origen:** H-AUD-038-005. **Prioridad:** Alta.

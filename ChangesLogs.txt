@@ -1556,3 +1556,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Services/Test/README.md, Tareas_pendientes_parte1.txt y checkpoint.md: alcance, resultado y límite del harness documentados.
 - No se modificó lógica funcional. El caso no representa la serialización real de transacciones concurrentes; conflictos simultáneos y multi-pestaña quedan para una futura ampliación del harness y Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — ITERACIÓN 17 — SERIALIZACIÓN DEL HARNESS Y CONFLICTO CONCURRENTE ADMIN
+- Services/Test/IndexedDBTransactions.js: el harness ahora serializa transacciones mediante una cola y procesa sus solicitudes en orden; se añadió prueba de dos escrituras ADMIN conflictivas simultáneas, con una sola confirmación y preservación del snapshot ganador.
+- Services/Test/README.md: documenta el modelo conservador del harness y su límite frente a IndexedDB real.
+- Tareas_pendientes_parte1.txt y checkpoint.md: registran resultado 29/29 PASS y continuidad de AUG-053.
+- No se modificó lógica funcional ni offline.js.
+================================================================================

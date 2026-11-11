@@ -13,107 +13,32 @@ async function testAsync(name, fn) {
 }
 
 function createIndexedDBHarness(options = {}) {
-    const stores = new Map();
-    const connections = [];
-    let openCount = 0;
-    let transactionCount = 0;
-    const database = {
-        objectStoreNames: { contains: name => stores.has(name) },
-        createObjectStore(name, config = {}) { stores.set(name, { values: new Map(), keyPath: config.keyPath || null }); return {}; },
-        close() { this.closed = true; },
-        transaction(names, mode) {
-            transactionCount += 1;
-            const behavior = options.transactions && options.transactions[transactionCount - 1] || 'complete';
-            let aborted = false, finished = false, pendingRequests = 0, completionScheduled = false;
-            const tx = {
-                error: behavior === 'quota' ? new DOMException('Quota exceeded', 'QuotaExceededError') : null,
-                objectStore(name) {
-                    const record = stores.get(name);
-                    const enqueue = (request, operation, defer = false) => {
-                        pendingRequests += 1;
-                        const execute = () => {
-                            if (aborted || finished) { pendingRequests -= 1; return; }
-                            try { operation(); }
-                            finally { pendingRequests -= 1; scheduleCompletion(); }
-                        };
-                        if (defer && options.deferDeletes) {
-                            queueMicrotask(() => { if (options.onDeleteQueued) options.onDeleteQueued(execute); else execute(); });
-                        } else queueMicrotask(execute);
-                        return request;
-                    };
-                    return {
-                        put(value, key) {
-                            const request = {};
-                            return enqueue(request, () => {
-                                if (behavior === 'quota' || (name === 'thumbnails' && options.quotaFailures > 0)) {
-                                    if (options.quotaFailures > 0) options.quotaFailures -= 1;
-                                    request.error = behavior === 'quota' ? tx.error : new DOMException('Quota exceeded', 'QuotaExceededError');
-                                    tx.error = request.error;
-                                    if (request.onerror) request.onerror();
-                                    if (tx.onerror) tx.onerror();
-                                    aborted = true;
-                                    if (tx.onabort) tx.onabort();
-                                    return;
-                                }
-                                const resolvedKey = key === undefined ? value[record.keyPath] : key;
-                                record.values.set(resolvedKey, structuredClone(value));
-                                request.result = resolvedKey;
-                                if (request.onsuccess) request.onsuccess();
-                                if (behavior === 'abort') queueMicrotask(() => {
-                                    aborted = true;
-                                    tx.error = new DOMException('Aborted', 'AbortError');
-                                    if (tx.onabort) tx.onabort();
-                                });
-                            });
-                        },
-                        get(key) {
-                            const request = {};
-                            return enqueue(request, () => { request.result = record.values.get(key); if (request.onsuccess) request.onsuccess(); });
-                        },
-                        getAll() {
-                            const request = {};
-                            return enqueue(request, () => { request.result = [...record.values.values()]; if (request.onsuccess) request.onsuccess(); });
-                        },
-                        getAllKeys() {
-                            const request = {};
-                            return enqueue(request, () => { request.result = [...record.values.keys()]; if (request.onsuccess) request.onsuccess(); });
-                        },
-                        delete(key) {
-                            const request = {};
-                            return enqueue(request, () => { record.values.delete(key); request.result = undefined; if (request.onsuccess) request.onsuccess(); }, true);
-                        }
-                    };
-                },
-                abort() { aborted = true; if (tx.onabort) queueMicrotask(() => tx.onabort()); }
-            };
-            function scheduleCompletion() {
-                if (pendingRequests || aborted || finished || completionScheduled) return;
-                completionScheduled = true;
-                queueMicrotask(() => {
-                    completionScheduled = false;
-                    if (pendingRequests || aborted || finished) return;
-                    finished = true;
-                    if (tx.oncomplete) tx.oncomplete();
-                });
-            }
-            return tx;
-        }
-    };
-    const indexedDB = {
-        open() {
-            openCount += 1;
-            const request = {};
-            connections.push(database);
-            queueMicrotask(() => {
-                if (options.blocked) { if (request.onblocked) request.onblocked(); return; }
-                if (openCount === 1 && request.onupgradeneeded) request.onupgradeneeded({ target: { result: database } });
-                request.result = database;
-                if (request.onsuccess) request.onsuccess({ target: { result: database } });
-            });
-            return request;
-        }
-    };
-    return { indexedDB, database, connections, stores, get openCount() { return openCount; } };
+ const stores=new Map(),connections=[],transactionQueue=[];let openCount=0,transactionCount=0,activeTransaction=null,activeTransactions=0,maxActiveTransactions=0;
+ const activateNext=()=>{if(activeTransaction||!transactionQueue.length)return;activeTransaction=transactionQueue.shift();queueMicrotask(()=>activeTransaction&&activeTransaction.activate());};
+ const release=tx=>{if(activeTransaction!==tx)return;activeTransactions--;activeTransaction=null;activateNext();};
+ const database={objectStoreNames:{contains:name=>stores.has(name)},createObjectStore(name,config={}){stores.set(name,{values:new Map(),keyPath:config.keyPath||null});return{};},close(){this.closed=true;},
+ transaction(names,mode){
+  transactionCount++;const behavior=options.transactions&&options.transactions[transactionCount-1]||'complete';
+  let aborted=false,finished=false,activated=false,processing=false,pendingRequests=0,completionScheduled=false;const requestQueue=[];let tx;
+  const settle=()=>{if(finished||processing||pendingRequests)return;if(aborted){finished=true;release(tx);return;}if(requestQueue.length||completionScheduled)return;completionScheduled=true;queueMicrotask(()=>{completionScheduled=false;if(finished||aborted||processing||pendingRequests||requestQueue.length)return;finished=true;if(tx.oncomplete)tx.oncomplete();if(options.onTransactionComplete)options.onTransactionComplete({names,mode});release(tx);});};
+  const processNext=()=>{if(!activated||processing||finished||aborted){settle();return;}const item=requestQueue.shift();if(!item){settle();return;}processing=true;const execute=()=>{if(aborted||finished){pendingRequests--;processing=false;settle();return;}try{item.operation();}finally{pendingRequests--;processing=false;if(aborted)settle();else processNext();}};if(item.defer&&options.deferDeletes)queueMicrotask(()=>{if(options.onDeleteQueued)options.onDeleteQueued(execute);else execute();});else queueMicrotask(execute);};
+  const enqueue=(request,operation,defer=false)=>{pendingRequests++;requestQueue.push({operation,defer});processNext();return request;};
+  const abortTransaction=()=>{if(aborted||finished)return;aborted=true;if(tx.onabort)tx.onabort();settle();};
+  tx={error:behavior==='quota'?new DOMException('Quota exceeded','QuotaExceededError'):null,
+   objectStore(name){const record=stores.get(name);return{
+    put(value,key){const request={};return enqueue(request,()=>{if(behavior==='quota'||(name==='thumbnails'&&options.quotaFailures>0)){if(options.quotaFailures>0)options.quotaFailures--;request.error=behavior==='quota'?tx.error:new DOMException('Quota exceeded','QuotaExceededError');tx.error=request.error;if(request.onerror)request.onerror();if(tx.onerror)tx.onerror();abortTransaction();return;}const resolvedKey=key===undefined?value[record.keyPath]:key;record.values.set(resolvedKey,structuredClone(value));request.result=resolvedKey;if(request.onsuccess)request.onsuccess();if(behavior==='abort')queueMicrotask(()=>{tx.error=new DOMException('Aborted','AbortError');abortTransaction();});});},
+    get(key){const request={};return enqueue(request,()=>{request.result=record.values.get(key);if(request.onsuccess)request.onsuccess();});},
+    getAll(){const request={};return enqueue(request,()=>{request.result=[...record.values.values()];if(request.onsuccess)request.onsuccess();});},
+    getAllKeys(){const request={};return enqueue(request,()=>{request.result=[...record.values.keys()];if(request.onsuccess)request.onsuccess();});},
+    delete(key){const request={};return enqueue(request,()=>{record.values.delete(key);request.result=undefined;if(request.onsuccess)request.onsuccess();},true);}
+   };},
+   abort(){queueMicrotask(abortTransaction);},
+   activate(){if(activated||finished)return;activated=true;activeTransactions++;maxActiveTransactions=Math.max(maxActiveTransactions,activeTransactions);if(options.onTransactionStart)options.onTransactionStart({names,mode});processNext();}
+  };
+  transactionQueue.push(tx);activateNext();return tx;
+ }};
+ const indexedDB={open(){openCount++;const request={};connections.push(database);queueMicrotask(()=>{if(options.blocked){if(request.onblocked)request.onblocked();return;}if(openCount===1&&request.onupgradeneeded)request.onupgradeneeded({target:{result:database}});request.result=database;if(request.onsuccess)request.onsuccess({target:{result:database}});});return request;}};
+ return{indexedDB,database,connections,stores,get openCount(){return openCount;},get maxActiveTransactions(){return maxActiveTransactions;}};
 }
 async function freshOffline(harness, label) {
     globalThis.indexedDB = harness.indexedDB;
@@ -496,7 +421,23 @@ async function runIndexedDBTransactionTests() {
         assert.equal(restored.operation.fileData,operation.fileData);
     });
 
-    console.log(`\nIndexedDB transaction tests: ${passed}/28 PASS`);
+    await testAsync('adminImageUploadPending serializa escrituras simultáneas conflictivas y conserva la primera', async () => {
+        const h=createIndexedDBHarness(),api=await freshOffline(h,'admin-image-concurrent-conflict');
+        const base={ownerId:'USER-A',vehicleId:'VEH-ADMIN-7',fieldName:'imgCorte2',filename:'corte.png',mimeType:'image/png',createdAt:100};
+        const results=await Promise.all([
+            api.saveAdminImageUploadPendingOperation({...base,id:'1234567890abcdef12345678',fileData:'data:image/png;base64,AA=='}),
+            api.saveAdminImageUploadPendingOperation({...base,id:'abcdef123456789012345678',fileData:'data:image/png;base64,Qg=='})
+        ]);
+        assert.equal(results.filter(result=>result.saved===true).length,1);
+        assert.equal(results.filter(result=>result.conflict===true).length,1);
+        assert.equal(h.maxActiveTransactions,1,'las transacciones con almacén compartido deben ejecutarse de forma serial');
+        const restored=await api.getAdminImageUploadPendingOperation('VEH-ADMIN-7','imgCorte2','USER-A');
+        assert.equal(restored.available,true);
+        assert.equal(restored.operation.id,'1234567890abcdef12345678');
+        assert.equal(restored.operation.fileData,'data:image/png;base64,AA==');
+    });
+
+    console.log(`\nIndexedDB transaction tests: ${passed}/29 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {

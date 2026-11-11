@@ -493,3 +493,12 @@ Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/
 La suite `IndexedDBTransactions.js` comprueba que dos llamadas concurrentes que persisten el mismo snapshot (mismo propietario, vehículo, campo, opId y contenido) finalicen correctamente y que la recuperación conserve el mismo identificador y Data URL. El caso cubre reintentos duplicados idénticos; no pretende simular el aislamiento/ordenamiento de transacciones readwrite entre pestañas, que queda reservado a IndexedDB real en Beta.
 
 Ejecutar: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
+
+
+## Serialización de transacciones y conflictos concurrentes (AUG-053 — iteración 17)
+
+El harness IndexedDB mantiene una cola de transacciones y no activa una nueva transacción hasta que termina la anterior. Las solicitudes de cada transacción se procesan en orden; los callbacks pueden añadir solicitudes adicionales antes de evaluar su finalización. Esto permite probar dos escrituras simultáneas sobre la misma clave sin que ambas lean artificialmente el estado vacío.
+
+El caso concurrente ADMIN exige que una sola operación se guarde, la otra devuelva conflicto y la recuperación conserve íntegro el primer snapshot. La serialización global del harness es deliberadamente conservadora: también serializa transacciones que IndexedDB real podría ejecutar en paralelo si fueran compatibles. No sustituye la validación con IndexedDB real ni las pruebas multi-pestaña de Beta.
+
+Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/IndexedDBTransactions.js`.
