@@ -371,7 +371,11 @@
             if (state.opId) return state.opId;
             const pendingResult = await getAddCutOperationPendingOperation(state.userId);
             if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
-            if (pendingResult.operation) { state.opId = pendingResult.operation.id; return state.opId; }
+            if (pendingResult.operation) {
+                if (pendingResult.operation.status === 'completed') throw new Error('COMPLETED_OPERATION_REQUIRES_RECOVERY');
+                state.opId = pendingResult.operation.id;
+                return state.opId;
+            }
             const secureCrypto = globalThis.crypto;
             if (!secureCrypto || typeof secureCrypto.getRandomValues !== 'function') throw new Error('SECURE_RANDOM_UNAVAILABLE');
             const randomBytes = new Uint8Array(16);
@@ -452,6 +456,7 @@
                     proceedToStage3(checkRes.vehicleId);
                 } else {
                     if (checkRes.pending === true && checkRes.operationHash !== pendingOp.operationHash) throw new Error('PENDING_OPERATION_MISMATCH');
+                    if (pendingOp.status === 'completed') throw new Error('COMPLETED_SNAPSHOT_UNRESOLVED');
                     state.opId = pendingOp.id; state.selectedVehicleId = pendingOp.vehicleId; state.vehicleInfo = pendingOp.vehicleInfo || {};
                     const form2 = document.getElementById('form-stage-2');
                     if (form2) {
@@ -471,6 +476,7 @@
                     }
                 }
             } catch (error) {
+                if (error && error.message === 'COMPLETED_SNAPSHOT_UNRESOLVED') alert("Existe una operación marcada como completada localmente, pero el servidor no confirma su resultado. Se conserva para revisión y no se reutilizará su identificador.");
                 console.warn("Falló la comprobación de recuperación pendiente.", error && error.name || 'RecoveryError');
             } finally { toggleLoading(false); }
         }
@@ -943,7 +949,7 @@
             isSubmittingStage2 = true;
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true); btn.classList.add('btn-loading');
-            let pendingOp = null, snapshotSaved = false;
+            let pendingOp = null, snapshotSaved = false, serverConfirmed = false;
             try {
                 const vinInput = document.getElementById('vinInput');
                 if (vinInput && vinInput.value.trim()) {
@@ -1029,6 +1035,10 @@
                 getCurrentSessionForOwner(pendingOp.ownerId);
                 if (!checkRes || checkRes.status !== 'success') throw new Error('INVALID_CHECK_OPERATION_RESPONSE');
                 if (checkRes.exists === true) {
+                    serverConfirmed = true;
+                    pendingOp.status = 'completed';
+                    const terminalSaved = await saveAddCutOperationPendingOperation(pendingOp);
+                    if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
                     if (checkRes.operationHash !== operationHash || !isValidCutVehicleId(checkRes.vehicleId)) throw new Error('RECOVERED_OPERATION_MISMATCH');
                     if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(checkRes.vehicleId)) throw new Error('RECOVERED_VEHICLE_MISMATCH');
                     const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
@@ -1047,6 +1057,10 @@
                     throw new Error('INCOMPLETE_OR_UNVERIFIABLE_SAVE_RESPONSE');
                 }
                 if (requestData.vehicleId !== null && String(requestData.vehicleId) !== String(result.vehicleId)) throw new Error('SAVED_VEHICLE_MISMATCH');
+                serverConfirmed = true;
+                pendingOp.status = 'completed';
+                const terminalSaved = await saveAddCutOperationPendingOperation(pendingOp);
+                if (!terminalSaved || terminalSaved.saved !== true) throw new Error('COMPLETED_SNAPSHOT_NOT_VERIFIED');
                 const removed = await removeAddCutOperationPendingOperation(pendingOp.ownerId, opId, operationHash);
                 if (!removed || removed.removed !== true) throw new Error('PENDING_CLEANUP_UNCONFIRMED');
                 snapshotSaved = false; state.opId = null; state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
@@ -1055,7 +1069,7 @@
             } catch (error) {
                 console.error("[PING-PONG][ERROR] Falló el guardado de la operación.", error && error.name || 'OperationError');
                 if (pendingOp && snapshotSaved) {
-                    pendingOp.status = 'failed';
+                    pendingOp.status = serverConfirmed ? 'completed' : 'failed';
                     const retained = await saveAddCutOperationPendingOperation(pendingOp);
                     if (!retained || retained.saved !== true) console.warn("No se pudo actualizar el estado del snapshot; se conserva el registro durable previo.");
                 }
