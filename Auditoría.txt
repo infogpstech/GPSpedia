@@ -493,3 +493,20 @@ Validación local: FileReadRecovery 13/13 PASS; CutAvailability 20/20 PASS; AddC
 
 Navegador real y Apps Script/Spreadsheet desplegados quedan pendientes para Beta.
 ================================================================================
+
+
+================================================================================
+AUG-058 — RESOLUCIÓN DE RECUPERACIÓN AUTOMÁTICA CONCURRENTE — 2026-11-11
+Origen: tarea AUG-058 de Tareas_pendientes_parte5.txt. El identificador H-AUD-003-004 se conserva como referencia de origen indicada por el backlog; no aparece como entrada independiente en la versión activa de Auditoría.txt, por lo que esta anotación no le atribuye texto histórico adicional.
+
+Ubicación: add_cortes.html — performPendingOperationRecovery(), checkAndRecoverPendingOperation(), resumePendingOperationRecovery(), handleStage1Submit(), handleStage2Submit(), handleStage3Submit() y toggleLoading().
+Hallazgo confirmado en fuentes: init(), online y visibilitychange podían iniciar llamadas de recuperación superpuestas; una recuperación podía consultar/cambiar etapa durante un submit; toggleLoading(false) de una operación podía ocultar el overlay aunque otra siguiera activa.
+Resolución:
+- Se separa el worker de recuperación de un wrapper single-flight que devuelve la misma promesa a los disparadores concurrentes.
+- Si una etapa 1, 2 o 3 está enviando, la recuperación se difiere. Al terminar el submit se reanuda si hay conexión; la recuperación activa bloquea nuevos envíos hasta finalizar.
+- El contador de operaciones loading conserva visible el overlay hasta que terminen todas las operaciones que lo adquirieron, incluido el traspaso submit→recuperación.
+- Los estados pending se restauran sin limpieza; los completed no confirmados permanecen terminales; los completed confirmados se limpian solo tras validar hash/vehículo.
+
+Validación local: AddCutOperationRecoveryConcurrency 9/9 PASS. Incluye disparadores concurrentes, checkOperation lento, evento durante submit en etapas 1–3, visibilitychange durante recuperación, snapshots pending/completed y solapamiento de loading. Parsing V8 del módulo frontend PASS.
+Límites: no se ejecutaron eventos reales de navegador, IndexedDB real, Apps Script ni pruebas de campo; quedan para Beta.
+================================================================================
