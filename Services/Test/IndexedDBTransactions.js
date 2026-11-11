@@ -463,7 +463,7 @@ async function runIndexedDBTransactionTests() {
 
 
     await testAsync('adminImageUploadPending conserva el snapshot cuando aborta la eliminación confirmada', async () => {
-        const h=createIndexedDBHarness({transactions:['complete','abort']}),api=await freshOffline(h,'admin-image-aborted-delete');
+        const h=createIndexedDBHarness({transactions:['complete','complete','abort']}),api=await freshOffline(h,'admin-image-aborted-delete');
         const operation={id:'1234567890abcdef12345678',ownerId:'USER-A',vehicleId:'VEH-ADMIN-8',fieldName:'imgCorte3',
             fileData:'data:image/png;base64,AA==',filename:'corte.png',mimeType:'image/png',createdAt:100};
         assert.equal((await api.saveAdminImageUploadPendingOperation(operation)).saved,true);
