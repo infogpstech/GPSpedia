@@ -1791,3 +1791,29 @@ Límites:
 AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
 Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — ACCESO Y ALMACENAMIENTO DE IMÁGENES PyS — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: 6821c3c306b3580686f3c4e70b6783080cea8f01.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (solo AUG-046):
+- Revisada la política FEEDBACK: getPysData es pública; addProblem requiere sesión válida y no limita por lista de roles.
+- Confirmado que handleGetPysData devuelve los registros PyS, incluida la URL Imagen, y que ui.js consume la consulta pública y muestra esa imagen en las tarjetas.
+- Confirmado que handleAddProblem crea la imagen en Drive con acceso ANYONE_WITH_LINK/VIEW y persiste su URL en la hoja pys.
+- Revisada la compensación de fallos: archivo no vinculado se envía a papelera si se verifica que no existe fila asociada; los estados parciales o ambiguos conservan el archivo para revisión.
+- Inspeccionadas pruebas aisladas existentes para acceso público/escritura autenticada y compensación; no se ejecutaron.
+- Documentada la evidencia en Legal/AUG-046_revision_preliminar.md, sección 14.
+
+Límites:
+- Revisión estática; no se consultaron hojas ni archivos/permisos reales de Drive.
+- No se ejecutaron pruebas, cargas, borrados ni operaciones productivas.
+- No se modificó código de aplicación, acuerdo, aviso, modales, aceptación AUG-045, endpoints ni deployments.
+- Las confirmaciones operativas y la validación interna corporativa siguen pendientes.
+
+AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+Siguiente iteración: continuar únicamente AUG-046 con otro contraste técnico concreto del código versionado, sin inferir configuraciones productivas ni decisiones jurídicas.
+================================================================================
