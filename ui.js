@@ -168,6 +168,7 @@ async function saveFieldSilently(vehicleId, fieldName, value) {
 function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl) {
     const cleanVehicleId = String(vehicleId);
     const session = getCurrentEditOwnerContext_();
+    if (!inEditMode && !originalItemBackup && !editedItemBuffer) return true;
     if (!session || !originalItemBackup ||
         originalItemBackupOwnerId !== session.userId ||
         originalItemBackupVehicleId !== cleanVehicleId ||
