@@ -739,8 +739,9 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Definir retención/aislamiento de searchHistory por cuenta o borrar/ocultar búsquedas al cambiar de usuario; tratar VIN como dato potencialmente sensible.
   6. Probar transacciones abortadas, storage quota, upgrades con varias pestañas, offline, imágenes pequeñas/grandes/transparencias y cambio de cuenta.
 - Relación: AUD-T-037; AUG-031 para estado local de auditoría Drive, sin reutilizar su store administrativo.
-- Estado: EN PROGRESO; iteraciones 1 y 2 implementadas. La capa genérica espera el commit y maneja abort/error; initDB libera conexiones ante onversionchange y reporta onblocked/timeout. searchHistory, viewedItems y validationCache están aislados por userId; la actividad se rehidrata solo después de validar sesión y las consultas potencialmente VIN no se guardan. La suite sintética amplía cobertura multi-cuenta; Node CLI y navegador real aún pendientes.
-- Restan cuota/LRU/TTL de thumbnails, claves por tamaño y campos de imagen (incluido imgApertura), límite RAM, ciclo ObjectURL, concurrencia de compresión, cierre de ImageBitmap y pruebas offline/multi-pestaña/imagen.
+- Estado: EN PROGRESO; iteraciones 1 a 3 implementadas. Transacciones esperan commit; historial, vistos y validationCache están aislados por cuenta. Las miniaturas se separan por ancho solicitado (100–1600 px), conservan proporción, no amplían imágenes pequeñas y cierran ImageBitmap; imgApertura está incluida. Compatibilidad de lectura con miniaturas antiguas preservada.
+- Validación local: parsing y harness aislado de IndexedDB/Canvas aprobados; Node CLI y navegador real no ejecutados.
+- Restan política TTL/LRU/cuota, límite RAM, revocación segura de ObjectURL, concurrencia de compresión y pruebas offline/multi-pestaña/imagen.
 - Checkpoint de iteración: checkpoint.md.
 
 ### AUG-052 — Robustecer carga inicial, deep links y estrategia PWA/backend de catálogo
