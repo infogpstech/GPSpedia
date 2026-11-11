@@ -15,11 +15,18 @@ export function createConcurrencyLimiter(limit = 2) {
             active += 1;
             Promise.resolve()
                 .then(job.task)
-                .then(job.resolve, job.reject)
-                .finally(() => {
-                    active -= 1;
-                    drain();
-                });
+                .then(
+                    value => {
+                        active -= 1;
+                        job.resolve(value);
+                        drain();
+                    },
+                    error => {
+                        active -= 1;
+                        job.reject(error);
+                        drain();
+                    }
+                );
         }
     }
 
