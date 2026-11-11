@@ -1,14 +1,13 @@
 ================================================================================
-AUG-051 — ITERACIÓN 2 — 2026-11-11
+AUG-051 — ITERACIÓN 3 — 2026-11-11
 Estado: EN PROGRESO.
-Rama: GPSpedia2.2.5_work. Commit de inicio: 60b871faf74233e14a5489b10a448e4b4931a353.
-Resultado: searchHistory, viewedItems y validationCache usan claves compuestas por userId e identificador sin cambiar el esquema físico. Registros heredados sin propietario no se exponen. Las búsquedas potencialmente VIN no se guardan y los términos heredados potencialmente VIN se eliminan al consultar.
-auth.js rehidrata actividad solo después de validar sesión y la limpia al cerrar sesión, perderla o cambiar de cuenta. navigation.js y ui.js pasan userId y evitan actualizar la interfaz si cambia la cuenta durante la operación.
-Archivos funcionales: offline.js, auth.js, navigation.js, ui.js. Suite: Services/Test/IndexedDBTransactions.js (tres escenarios nuevos).
-Validación: parsing sintáctico de cinco archivos JS y cinco escenarios de IndexedDB en memoria aprobados. Node CLI y navegador real no ejecutados en este entorno. AUG-051 sigue EN PROGRESO.
-Sin cambio de DB_VERSION, stores, contratos del catálogo, endpoints, servicios productivos ni datos remotos.
-Pendiente: cuota/LRU/TTL de thumbnails; claves por tamaño y campos (incluido imgApertura); límite RAM, ObjectURL, concurrencia de compresión, cierre de ImageBitmap; pruebas Node CLI, offline, multi-cuenta y multi-pestaña en entorno real.
-Siguiente iteración: continuar AUG-051 desde política de miniaturas y ciclo de vida de recursos de imagen. No iniciar AUG-052.
+Rama: GPSpedia2.2.5_work. Commit de inicio: 52970066fe206aadbccd16529f1ed87dca57a71e.
+Resultado: las miniaturas se guardan y recuperan por variante de ancho (claves independientes por tamaño, con límite normalizado de 100 a 1600 px). La compresión conserva la proporción, no amplía imágenes pequeñas y cierra ImageBitmap en finally. cacheItemImages incluye imgApertura. ui.js utiliza la misma variante de tamaño para memoria, IndexedDB y compresión.
+Compatibilidad: getThumbnail conserva lectura de las claves antiguas sin tamaño; no se cambia DB_VERSION ni se recrean stores.
+Archivos funcionales: offline.js, ui.js. Suite: Services/Test/IndexedDBTransactions.js (escenario de variantes 300/800 px y liberación de bitmap).
+Validación local: parsing sintáctico de los tres archivos modificados aprobado; harness aislado de IndexedDB/Canvas aprobó variantes 300/800, recuperación independiente, ausencia de variante 1600 y cierre de ambos bitmaps. Node CLI y navegador real no ejecutados.
+Pendiente: cuota/LRU/TTL de thumbnails; límite RAM y revocación segura de ObjectURL; concurrencia de compresión; validación offline, imágenes transparentes/pequeñas/grandes y multi-pestaña.
+Siguiente iteración: implementar una política acotada de almacenamiento persistente (TTL/LRU/cuota) para miniaturas. No iniciar AUG-052.
 ================================================================================
 
 # Checkpoint activo — GPSpedia
