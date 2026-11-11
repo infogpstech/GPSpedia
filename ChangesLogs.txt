@@ -1634,3 +1634,12 @@ La revisión posterior detectó que el mapa en memoria podía conservar Data URL
 - Tareas_pendientes_parte1.txt y checkpoint.md: registran la evidencia y la siguiente brecha local pendiente.
 - No se modificó código funcional ni el harness. Node CLI original, IndexedDB/navegador reales y concurrencia multi-pestaña no se ejecutaron; permanecen para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-053 — CIERRE — ITERACIÓN 26
+- ui.js: se sanitizan los dos registros de error de reemplazo ADMIN; la consola recibe solo el nombre del error o UploadError, no el objeto Error completo.
+- Services/Test/AdminModalEditRestoreContract.js: se añade una regresión para impedir que los manejadores de reemplazo registren objetos Error, snapshots u operaciones completas.
+- Services/Test/README.md: se documenta la cobertura local acumulada y las validaciones diferidas a Beta.
+- Tareas_pendientes_parte1.txt y checkpoint.md: AUG-053 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA; se conserva el historial y se registra el cierre.
+================================================================================

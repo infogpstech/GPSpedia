@@ -544,3 +544,22 @@ Validación de esta iteración: parsing V8 de la suite PASS y prueba aislada del
 ## Validación integral de IndexedDBTransactions (AUG-053 — iteración 25)
 
 La suite completa ejecutó **33/33 escenarios PASS**, cero fallos de aserción, en un runtime V8 adaptado. Se cargaron las fuentes vigentes de `offline.js`, `thumbnailCompressionQueue.js` y `adminImageUploadIsolation.js`; la importación dinámica de la suite se sustituyó por una factoría que crea instancias independientes del módulo sobre el harness compartido. Se adaptaron IndexedDB, `Blob`, `DOMException`, `structuredClone`, `queueMicrotask` y el registro de consola/assert. Los errores de aborto, cuota y lectura registrados corresponden a rutas negativas esperadas y sus aserciones pasaron. No se ejecutó el comando Node CLI original ni se probó IndexedDB/navegador real o concurrencia multi-pestaña; estas validaciones permanecen para Beta.
+
+
+## Cierre local de AUG-053 — cobertura integral y sanitización de errores
+
+Se cerró la cobertura local de los criterios de aceptación de AUG-053. Suites ejecutadas y aprobadas:
+
+- `PendingOperationIsolation.js`: 8/8.
+- `EditBackupIsolation.js`: 12/12.
+- `AdminImageUploadIsolation.js`: 10/10.
+- `IndexedDBTransactions.js`: 33/33 en runtime V8 adaptado (iteración 25; el código del harness y `offline.js` no cambió durante el cierre).
+- `AdminModalEditRestoreContract.js`: 12/12; incluye regresión para impedir que los manejadores de reemplazo ADMIN registren objetos Error, snapshots u operaciones completas.
+- `AdminModalEditSecurity.js`: 13/13.
+- `ActionDispatchContract.js`: 11/11.
+
+Total acumulado: **99/99 escenarios locales PASS**. Parsing V8 de `pendingOperationStore.js`, `editBackupStore.js`, `adminImageUploadIsolation.js`, `ui.js` y `Services/admin.js`: PASS.
+
+En `ui.js`, los dos manejadores de error de reemplazo ADMIN registran únicamente el nombre del error o la etiqueta genérica `UploadError`; no envían el objeto Error a la consola. La prueba de contrato protege esta condición.
+
+Estado: **COMPLETADA CON VALIDACIÓN DIFERIDA**. Pendiente para Beta: navegador e IndexedDB reales, recarga real, concurrencia real entre pestañas y pruebas integradas con Apps Script, Spreadsheet y Drive. No se ejecutó el comando Node CLI original ni se simularon esas dependencias externas.

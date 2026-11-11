@@ -99,5 +99,14 @@ function runAdminModalEditRestoreContractTests(uiSource, adminSource) {
         assert(markLoaded > unavailableGuard, "La UI puede marcar como cargada una lectura incompleta.");
         assert(/await Promise\.all\([\s\S]*?offline\.getAdminImageUploadPendingOperation/.test(loader), "La carga ya no verifica el conjunto de lecturas IndexedDB esperado.");
     });
+    run("los errores del reemplazo ADMIN se registran sin objetos ni datos sensibles", () => {
+        const converter = ui.slice(ui.indexOf("function convertImageToEditable"), ui.indexOf("/**", ui.indexOf("function convertImageToEditable")));
+        assert(converter.includes('console.error("No se pudo recuperar el reemplazo pendiente:", error && error.name || "UploadError")'),
+            "El reintento registra el objeto de error sin sanitizar.");
+        assert(converter.includes('console.error("Error al subir imagen editada:", error && error.name || "UploadError")'),
+            "La carga inicial registra el objeto de error sin sanitizar.");
+        assert(!/console\\.(?:log|warn|error)\\([^;]*,\\s*(?:error|operation|pendingOperation|fileData)\\s*\\)/.test(converter),
+            "La consola puede recibir objetos de error, snapshots u operaciones completas.");
+    });
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }

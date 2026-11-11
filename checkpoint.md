@@ -173,3 +173,31 @@ Cambios de registro:
 
 Siguiente iteración: revisar una sola brecha local adicional del criterio 8 que no esté cubierta por las suites existentes. AUG-053 permanece EN PROGRESO; no iniciar AUG-054.
 ================================================================================
+
+
+================================================================================
+AUG-053 — CIERRE — ITERACIÓN 26 — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 6c48fd5c63ac1e8cf621743b21e55952db2bebb1. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Última corrección local:
+- ui.js: los dos manejadores de error del reemplazo ADMIN dejaron de registrar el objeto Error completo; ahora registran únicamente error.name o la etiqueta genérica UploadError.
+- Services/Test/AdminModalEditRestoreContract.js: nueva regresión que exige registros de error sanitizados y prohíbe enviar objetos Error, snapshots u operaciones completas a la consola.
+
+Validación final:
+- PendingOperationIsolation: 8/8 PASS.
+- EditBackupIsolation: 12/12 PASS.
+- AdminImageUploadIsolation: 10/10 PASS.
+- IndexedDBTransactions: 33/33 PASS (runtime V8 adaptado, iteración 25; ni el harness ni offline.js cambiaron durante el cierre).
+- AdminModalEditRestoreContract: 12/12 PASS.
+- AdminModalEditSecurity: 13/13 PASS.
+- ActionDispatchContract: 11/11 PASS.
+- Total acumulado: 99/99 escenarios locales PASS.
+- Parsing V8 de pendingOperationStore.js, editBackupStore.js, adminImageUploadIsolation.js, ui.js y Services/admin.js: PASS.
+
+Criterios locales 1–8: cubiertos. Política de reemplazos ADMIN: privada por iniciador; snapshots asociados a owner estable y sin tokens/credenciales; legado sin owner en cuarentena; retención conservadora sin TTL para operaciones inciertas; limpieza con confirmación terminal e identidad exacta; addCutPending aislado por userId; errores de consola sanitizados.
+
+Validaciones diferidas a Beta (no bloquean el cierre local): navegador/IndexedDB reales, recarga real, concurrencia multi-pestaña real y servicios Apps Script/Spreadsheet/Drive. El comando Node CLI original no se ejecutó.
+
+La tarea queda cerrada. AUG-054 permanece como tarea posterior y no se inicia en este checkpoint.
+================================================================================

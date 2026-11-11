@@ -571,7 +571,7 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
             } catch (error) {
                 if (isCurrentUiSessionContext_(editSession)) {
                     imgElement.src = previousSrc;
-                    console.error("No se pudo recuperar el reemplazo pendiente:", error);
+                    console.error("No se pudo recuperar el reemplazo pendiente:", error && error.name || "UploadError");
                     showSavingIndicator("error", "No se pudo confirmar. El intento original quedó guardado; vuelve a hacer clic para reintentar.");
                 }
             } finally {
@@ -621,7 +621,7 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
             } catch (error) {
                 if (isCurrentUiSessionContext_(editSession)) {
                     imgElement.src = previousSrc;
-                    console.error("Error al subir imagen editada:", error);
+                    console.error("Error al subir imagen editada:", error && error.name || "UploadError");
                     showSavingIndicator("error", error && error.message
                         ? error.message
                         : "No se pudo confirmar. El intento pendiente se conserva para reintentar.");
