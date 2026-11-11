@@ -177,9 +177,10 @@ async function saveFieldSilently(vehicleId, fieldName, value) {
     }
 }
 
-function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl) {
+function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl, expectedSession = null) {
     const cleanVehicleId = String(vehicleId);
     const session = getCurrentEditOwnerContext_();
+    if (expectedSession && !isCurrentUiSessionContext_(expectedSession)) return false;
     if (!inEditMode && !originalItemBackup && !editedItemBuffer) return true;
     if (!session || !originalItemBackup ||
         originalItemBackupOwnerId !== session.userId ||
@@ -201,11 +202,15 @@ function commitAdminImageReplacementBaseline_(vehicleId, fieldName, imageUrl) {
     return true;
 }
 
-async function removePendingAdminImageUploadConfirmed_(operation) {
+async function removePendingAdminImageUploadConfirmed_(operation, expectedSession) {
     const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
+    if (!expectedSession || !isCurrentUiSessionContext_(expectedSession) ||
+        String(operation.ownerId || "") !== String(expectedSession.userId || "")) return false;
     const removed = await offline.removeAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName, operation.id, operation.ownerId);
+    if (!isCurrentUiSessionContext_(expectedSession)) return false;
     if (removed === true) { pendingAdminImageUploads.delete(key); return true; }
     const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName, operation.ownerId);
+    if (!isCurrentUiSessionContext_(expectedSession)) return false;
     if (!latest || latest.available !== true) return false;
     if (latest.operation) { pendingAdminImageUploads.set(key, latest.operation); return false; }
     pendingAdminImageUploads.delete(key); return true;
@@ -216,8 +221,10 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
     if (!editSession || !editSession.userId) throw new Error("No se pudo verificar el propietario de los reemplazos pendientes.");
     const ownerId = String(editSession.userId), cleanVehicleId = String(vehicleId);
     const ownerVehicleKey = getAdminImageUploadOwnerVehicleKey(ownerId, cleanVehicleId);
+    if (!isCurrentUiSessionContext_(editSession)) throw new Error("La sesión cambió antes de reconciliar los reemplazos pendientes.");
     if (!pendingAdminImageUploadsLoaded.has(ownerVehicleKey)) {
         const loaded = await loadPendingAdminImageUploads(cleanVehicleId, ownerId);
+        if (!isCurrentUiSessionContext_(editSession)) throw new Error("La sesión cambió durante la lectura de reemplazos pendientes.");
         if (!loaded) throw new Error("No se pudo consultar IndexedDB; no se descartaron cambios para evitar perder el estado de un reemplazo.");
     }
     const operations = Array.from(pendingAdminImageUploads.entries())
@@ -230,6 +237,9 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
             fieldName: operation.fieldName,
             opId: operation.id
         });
+        if (!isCurrentUiSessionContext_(editSession)) {
+            throw new Error("La sesión cambió durante la consulta del reemplazo. La operación local se conserva para reconciliarla con la cuenta propietaria.");
+        }
         if (!status || status.status !== "success") {
             throw new Error("No se pudo consultar el estado del reemplazo " + operation.id + "; no se descartaron cambios.");
         }
@@ -242,6 +252,9 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
             }
             const imageTarget = { src: "", removeAttribute: () => {} };
             await submitAdminImageUploadOperation(operation, imageTarget);
+            if (!isCurrentUiSessionContext_(editSession)) {
+                throw new Error("La sesión cambió durante la reconciliación del reemplazo. No se continuó con otra cuenta.");
+            }
             const key = getAdminImageUploadPendingKey(operation.ownerId, operation.vehicleId, operation.fieldName);
             if (pendingAdminImageUploads.has(key)) {
                 throw new Error("El reemplazo está confirmado, pero no se pudo limpiar su operación local. No se completó el descarte.");
@@ -254,10 +267,10 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
         }
 
         if (isAdminImageUploadStatusConfirmedCancelled(operationStatus)) {
-            if (!commitAdminImageReplacementBaseline_(cleanVehicleId, operation.fieldName, currentUrl)) {
+            if (!commitAdminImageReplacementBaseline_(cleanVehicleId, operation.fieldName, currentUrl, editSession)) {
                 throw new Error("No se pudo guardar la referencia activa confirmada antes de limpiar el intento local.");
             }
-            const removed = await removePendingAdminImageUploadConfirmed_(operation);
+            const removed = await removePendingAdminImageUploadConfirmed_(operation, editSession);
             if (!removed) throw new Error("No se pudo confirmar la limpieza del intento local; no se completó el descarte.");
             continue;
         }
@@ -405,15 +418,16 @@ function getAdminImageUploadPendingKey(ownerId, vehicleId, fieldName) {
 }
 async function loadPendingAdminImageUploads(vehicleId, ownerId) {
     const cleanVehicleId = String(vehicleId), cleanOwnerId = String(ownerId || "");
-    if (!cleanOwnerId) return false;
+    const sessionContext = getCurrentEditOwnerContext_();
+    if (!cleanOwnerId || !sessionContext || String(sessionContext.userId || "") !== cleanOwnerId ||
+        !isCurrentUiSessionContext_(sessionContext)) return false;
     const ownerVehicleKey = getAdminImageUploadOwnerVehicleKey(cleanOwnerId, cleanVehicleId);
     ADMIN_IMAGE_UPLOAD_FIELDS.forEach(fieldName => pendingAdminImageUploads.delete(getAdminImageUploadPendingKey(cleanOwnerId, cleanVehicleId, fieldName)));
     pendingAdminImageUploadsLoaded.delete(ownerVehicleKey);
     const results = await Promise.all(ADMIN_IMAGE_UPLOAD_FIELDS.map(fieldName =>
         offline.getAdminImageUploadPendingOperation(cleanVehicleId, fieldName, cleanOwnerId)
     ));
-    const activeSession = getCurrentEditOwnerContext_();
-    if (!activeSession || String(activeSession.userId || "") !== cleanOwnerId) return false;
+    if (!isCurrentUiSessionContext_(sessionContext)) return false;
     if (results.some(result => !result || result.available !== true)) return false;
     results.forEach((result, index) => {
         if (result.operation && String(result.operation.ownerId || "") === cleanOwnerId) {
@@ -473,7 +487,7 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
     else imgElement.removeAttribute("src");
 
     const baselinePersisted = commitAdminImageReplacementBaseline_(
-        operation.vehicleId, operation.fieldName, currentImageUrl
+        operation.vehicleId, operation.fieldName, currentImageUrl, editSession
     );
     if (!baselinePersisted) {
         pendingAdminImageUploads.set(key, operation);
@@ -484,11 +498,17 @@ async function submitAdminImageUploadOperation(operation, imgElement) {
     const removed = await offline.removeAdminImageUploadPendingOperation(
         operation.vehicleId, operation.fieldName, operation.id, operation.ownerId
     );
+    if (!isCurrentUiSessionContext_(editSession)) {
+        throw new Error("La sesión cambió durante la limpieza local. El resultado se reconciliará al volver a iniciar sesión.");
+    }
     let cleanupConfirmed = removed === true;
     if (!cleanupConfirmed) {
         const latest = await offline.getAdminImageUploadPendingOperation(
             operation.vehicleId, operation.fieldName, operation.ownerId
         );
+        if (!isCurrentUiSessionContext_(editSession)) {
+            throw new Error("La sesión cambió durante la verificación de limpieza. No se modificó el estado en memoria.");
+        }
         if (latest && latest.available === true) {
             if (latest.operation) pendingAdminImageUploads.set(key, latest.operation);
             else {
