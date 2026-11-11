@@ -1106,3 +1106,10 @@ AUG-046 — REGISTRO COLABORATIVO DE VEHÍCULOS Y CORTES — 2026-11-10
 - Tareas.txt y checkpoint.md: se registra continuidad de AUG-046 y se separa la corrección del hallazgo para una tarea posterior.
 - No se modificó código funcional, acuerdo, aviso, versión/fecha, aceptación AUG-045, endpoints, deployments ni datos productivos.
 ================================================================================
+
+================================================================================
+AUG-046 — ACCESO Y CONSERVACIÓN DE IMÁGENES DE VEHÍCULOS/CORTES — 2026-11-10
+- Legal/AUG-046_revision_preliminar.md: sección 19 documenta recepción, validación, almacenamiento, ledger, referencias, disponibilidad por catálogo y dependencia de la ACL de Drive.
+- Tareas.txt y checkpoint.md: registran continuidad de AUG-046 y las confirmaciones operativas pendientes sobre permisos, retención y orígenes HTTP(S).
+- No se modificó código funcional, datos productivos, acuerdo, aviso, aceptación AUG-045, endpoints ni deployments.
+================================================================================

@@ -789,3 +789,15 @@ AUG-046 — CONTINUIDAD — CONTRASTE DE APORTES COLABORATIVOS — 2026-11-10
 - No se modificaron código funcional, acuerdo, aviso, versión/fecha 2026-07, aceptación AUG-045, endpoints, deployments ni datos productivos.
 Estado: AUG-046 permanece EN PROGRESO. La validación interna y las confirmaciones operativas de la empresa principal siguen pendientes.
 ================================================================================
+
+================================================================================
+AUG-046 — CONTINUIDAD — ACCESO Y CONSERVACIÓN DE IMÁGENES DE VEHÍCULOS/CORTES — 2026-11-10
+- Revisado el flujo de imágenes de vehículo, cortes e información suplementaria desde add_cortes.html hasta WRITE, Drive, ImageUploadLedger y la respuesta del catálogo.
+- Confirmado que WRITE valida MIME, bytes y límite de 10 MB; usa SHA-256/token, ledger durable, verificación del archivo y vinculación a referencias de Cortes.
+- Confirmada la jerarquía bajo la carpeta raíz «Cortes». El flujo revisado no establece permisos explícitos por archivo; el acceso efectivo depende de la ACL de Drive de la carpeta raíz y de la herencia. El catálogo devuelve IDs, pero no valida permisos Drive.
+- Documentada la falta de una política automática de caducidad/eliminación en el flujo de carga; la reconciliación administrativa ya existente no se repitió ni ejecutó.
+- Documentada la ruta backend compatible con URL HTTP(S), aunque el formulario revisado transmite Data URL.
+- Sección 19 añadida a Legal/AUG-046_revision_preliminar.md. No se generó un hallazgo nuevo porque el acceso real y la retención corporativa requieren confirmación operativa; no se infirió que las imágenes sean públicas o privadas.
+- No se modificaron código, datos productivos, acuerdo, aviso, aceptación AUG-045, endpoints ni deployments.
+Estado: AUG-046 permanece EN PROGRESO. Pendientes las confirmaciones operativas de la empresa principal.
+================================================================================

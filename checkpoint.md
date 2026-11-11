@@ -1918,3 +1918,30 @@ Límites:
 Estado: AUG-046 permanece EN PROGRESO. Continúan pendientes las confirmaciones operativas y la validación interna de la empresa principal.
 Siguiente paso: continuar AUG-046 con un contraste técnico distinto, sin repetir los flujos ya documentados ni modificar textos informativos/legal.
 ================================================================================
+
+================================================================================
+CHECKPOINT — AUG-046 — ACCESO Y CONSERVACIÓN DE IMÁGENES DE VEHÍCULOS/CORTES — 2026-11-10
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD confirmado al iniciar: 2d36e1fe98097ac1dfaca41b86ba5f4f76d88ef7.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; intacta.
+
+Trabajo de esta iteración (una sola revisión técnica):
+- Revisado add_cortes.html → WRITE → Drive/ImageUploadLedger → CATALOG para imágenes principales, cortes e información suplementaria.
+- Confirmadas validaciones MIME/bytes/límite 10 MB, hash SHA-256, token, carpeta esperada, verificación de contenido y registro de referencias linked.
+- Confirmada la jerarquía de carpetas bajo «Cortes».
+- No se encontró asignación explícita de permisos Drive en el flujo de carga revisado; el acceso efectivo depende de ACL real de la carpeta raíz y herencia. No se concluyó que los archivos sean públicos o privados.
+- El catálogo expone IDs de imágenes en sus datos, sin verificar ACL por archivo.
+- No se observó caducidad/eliminación automática en el flujo de carga. La reconciliación de pendientes existente no se repitió ni ejecutó.
+- Se documentó que el helper admite URL HTTP(S) aunque el formulario observado envía Data URL.
+- Evidencia incorporada en Legal/AUG-046_revision_preliminar.md, sección 19. No se registró hallazgo nuevo porque ACL y política de retención requieren confirmación operativa y no se deben inferir.
+
+Límites:
+- Revisión estática de add_cortes.html, Services/write.js y Services/catalog.js.
+- No se consultaron Drive/Spreadsheet productivos, ACL, ni se cargaron o modificaron archivos.
+- No se verificaron deployments ni se ejecutaron pruebas de integración.
+- No se modificó código funcional, datos productivos, acuerdo, aviso, aceptación AUG-045, endpoints ni deployments.
+
+Estado: AUG-046 permanece EN PROGRESO. Confirmaciones pendientes: ACL de la carpeta raíz Cortes, política de acceso prevista, plazo de conservación/eliminación y admisión de URLs HTTP(S) externas.
+Siguiente iteración: continuar AUG-046 con una comprobación técnica distinta, sin repetir secciones anteriores ni iniciar AUG-047.
+================================================================================
