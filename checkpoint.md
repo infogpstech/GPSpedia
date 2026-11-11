@@ -93,3 +93,13 @@ Validación adicional reproducible en el runtime disponible: limitador probado c
 No se pudo ejecutar literalmente la suite IndexedDBTransactions.js: este entorno no contiene checkout local ni Node CLI asociado al repositorio. Los intentos de adaptar el harness IndexedDB en V8 no se consideran una ejecución válida y no se reportan como PASS. No se modificó el código funcional durante esta reanudación.
 Acción para continuar: disponer de un checkout local de GPSpedia2.2.5_work y ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js; revisar cualquier fallo y cerrar iteración 10. No iniciar AUG-052.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CONTINUIDAD — AUG-051 ITERACIÓN 10 — 2026-11-11
+Estado: EN PROGRESO — suite integrada pendiente por falta de checkout local accesible.
+HEAD confirmado: 77877a10b6d5b547e8c0f315465bc0e78c5e23cd. Rama de trabajo: GPSpedia2.2.5_work. HEAD de rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1. La rama base permanece sin modificaciones.
+Corrección de precisión respecto a la adenda anterior: Node.js sí está instalado en el entorno (v22.16.0). El impedimento no es la ausencia de Node CLI, sino la falta de un checkout local del repositorio. Se intentó clonar GPSpedia2.2.5_work mediante Git, pero la conexión falló porque el entorno no pudo resolver github.com (Could not resolve host). Por tanto, no se ejecutó la suite original mediante Node.
+Se intentó adaptar el harness de Services/Test/IndexedDBTransactions.js al runtime V8 disponible. La adaptación falló en el primer escenario por diferencias del entorno/adaptador en la simulación de IndexedDB; este resultado no es una ejecución válida de la suite y no se atribuye como fallo del código de producción ni como PASS.
+No se modificó código funcional. Acción para reanudar: proporcionar un checkout local accesible de GPSpedia2.2.5_work o habilitar conectividad de red para clonarlo; después ejecutar node --experimental-default-type=module Services/Test/IndexedDBTransactions.js, revisar el resultado y cerrar únicamente la iteración 10. No iniciar AUG-052.
+================================================================================
