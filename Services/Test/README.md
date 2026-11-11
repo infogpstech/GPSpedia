@@ -637,3 +637,10 @@ Cobertura: slots vacíos en JSON y formatos heredados, espacios intermedios/fina
 - Ejecutar `runAddSupplementaryInfoIntegrityTests({ write, admin, coordinator, ui })` con las fuentes actuales de WRITE, ADMIN, Coordinator y ui.js.
 - Cubre payload vacío/ambiguo, apertura ocupada, asignación autoritativa de slots, pares texto/imagen incompletos, ficha obsoleta, slots completos, nota independiente, persistencia/rollback, locks y coordinación compartida.
 - Apps Script, Spreadsheet, Drive, concurrencia real y navegador quedan diferidos a Beta.
+
+
+## AUG-062 — Sincronización del detalle tras ampliaciones
+- Ejecutar `runVehicleExpansionDetailRefreshTests({ ui, catalog })` con `ui.js` y `Services/catalog.js` actuales.
+- Cubre altas de corte/apertura/alimentación, conservación de los tres slots, lectura forzada sin caché heredada, reconstrucción por ID, navegación, aprobación de vídeo vehicular y separación entre confirmación de escritura y fallo de refresco.
+- Validación local: 30/30 PASS; parsing V8 de los bloques modificados de UI y del handler de catálogo: PASS.
+- Navegador real, Apps Script/Spreadsheet y aprobación integrada de YouTube quedan diferidos a Beta.

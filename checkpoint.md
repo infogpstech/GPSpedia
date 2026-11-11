@@ -365,3 +365,17 @@ Rama: GPSpedia2.2.5_work. HEAD inicial: 4f858f89124f6576d76a09109011093a2add9820
 Validación local: AddSupplementaryInfoIntegrity 34/34 PASS; parsing de helpers y handlers WRITE/ADMIN aprobado. No se ejecutaron navegador real, Apps Script, Spreadsheet, Drive ni concurrencia real; quedan diferidos a Beta.
 Siguiente tarea: AUG-062. No se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-062 — CIERRE — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD inicial: 348e37294b59fb7a62f78a66ccafe43266eed2b0. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+- Las altas de corte, apertura y alimentación comparten un finalizador que valida status/vehicleId y separa el guardado del refresco.
+- La sincronización solicita getCatalogData con forceRefresh; Services/catalog.js omite la caché heredada solo cuando ese indicador es true. Las consultas normales conservan su comportamiento.
+- El catálogo debe contener exactamente un vehículo con el ID solicitado. Se actualiza el estado y se reconstruye el detalle con mostrarDetalleModal(updatedItem, true), evitando una entrada History API adicional.
+- modalDetalle.dataset.vehicleId identifica el contexto activo. Tras aprobar vídeo de tipo corte, se actualiza el catálogo y solo se reconstruye si el mismo vehículo sigue abierto; tutoriales y PyS no alteran el detalle vehicular.
+Validación local: VehicleExpansionDetailRefresh 30/30 PASS. Parsing V8 de helpers y bloques de corte, apertura/alimentación, inbox/aprobación y detalle de vehículo: PASS. Handler de catálogo ejecutado con dobles para probar forceRefresh y compatibilidad de caché.
+Beta pendiente: navegador real, Apps Script/Spreadsheet desplegados y aprobación integrada de YouTube. No se modificaron datos productivos.
+Siguiente tarea: AUG-063. No se inicia en esta iteración.
+================================================================================

@@ -125,7 +125,7 @@ function doPost(e) {
 
     switch (action) {
       case 'getCatalogData':
-        result = handleGetCatalogData();
+        result = handleGetCatalogData(payload);
         break;
       case 'getDropdownData':
         result = handleGetDropdownData();
@@ -231,16 +231,19 @@ function mapRowToObject(row, colMap, imageFields = new Set()) {
   return obj;
 }
 
-function handleGetCatalogData() {
+function handleGetCatalogData(payload = {}) {
     const cache = CacheService.getScriptCache();
     const cacheKey = 'catalog_data_v2';
+    const forceRefresh = Boolean(payload && payload.forceRefresh === true);
     let cachedData = null;
 
-    // 1. Intento de lectura de caché con manejo de errores
-    try {
-        cachedData = cache.get(cacheKey);
-    } catch (e) {
-        cachedData = null; // Asegurarse de que cachedData es null si falla
+    // La sincronización posterior a una escritura confirmada omite cualquier caché heredada.
+    if (!forceRefresh) {
+        try {
+            cachedData = cache.get(cacheKey);
+        } catch (e) {
+            cachedData = null;
+        }
     }
 
     if (cachedData) {

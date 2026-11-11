@@ -69,7 +69,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   5. Si refresh falla, informar que escritura fue confirmada y que la interfaz requiere sincronización.
   6. Probar corte, apertura, tres cables, vídeo aprobado y fallos de refresh.
 - **Relación:** AUD-T-005; AUD-T-037 y AUD-T-007.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; evidencia en Services/Test/VehicleExpansionDetailRefresh.js y checkpoint.md.
 
 ### AUG-063 — Obtener selectores del modal de corte desde las listas centralizadas de Google Sheets
 - **Origen:** H-AUD-005-004. **Prioridad:** Media.

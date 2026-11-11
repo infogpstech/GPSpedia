@@ -1974,6 +1974,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const modalDetalle = document.getElementById("modalDetalle");
     if (modalDetalle) {
         modalDetalle.dataset.modalType = 'corte';
+        modalDetalle.dataset.vehicleId = String(activeItem.id);
     }
 
     // Gestión contextual de pila de navegación anti-bucle
@@ -6364,6 +6365,11 @@ export function renderInboxDetail(item) {
                     if (!isCurrentInboxDetail()) return;
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    await syncApprovedVehicleVideoDetail_(item.videoMeta, {
+                        notifyRefreshFailure: message => {
+                            if (isCurrentInboxDetail()) mostrarNotificacion(message, "warning");
+                        }
+                    });
                     openInbox();
                 } catch (err) {
                     if (!isCurrentInboxDetail()) return;
@@ -8508,16 +8514,7 @@ export function openAddCutForModelModal(item) {
             }
 
             pendingOperation = null;
-            alert("Corte agregado con éxito.");
-            modal.remove();
-
-            try {
-                const catalogResult = await routeAction("getCatalogData");
-                if (catalogResult && catalogResult.data) setState({ catalogData: catalogResult.data });
-            } catch (refreshError) {
-                console.error("El corte se guardó, pero no se pudo actualizar el catálogo:", refreshError);
-                showGlobalError("El corte se guardó correctamente, pero no se pudo actualizar el catálogo. Vuelve a cargar la información.");
-            }
+            await completeVehicleExpansionSave_(result, item.id, "Corte agregado con éxito.", modal);
         } catch (error) {
             console.error("Error agregando corte:", error);
             if (pendingOperation && persistedForAttempt) {
@@ -8540,6 +8537,47 @@ export function openAddCutForModelModal(item) {
             if (pendingOperation && !pendingOperationLoadFailed) submitBtn.disabled = false;
         }
     };
+}
+
+
+async function refreshVehicleDetailAfterExpansion_(vehicleId, dependencies = {}) {
+ const cleanVehicleId=String(vehicleId==null?"":vehicleId).trim();
+ if(!cleanVehicleId)throw new Error("No se recibió un ID de vehículo válido para sincronizar el detalle.");
+ const fetchCatalog=dependencies.fetchCatalog||(()=>routeAction("getCatalogData",{forceRefresh:true}));
+ const updateCatalog=dependencies.updateCatalog||(data=>setState({catalogData:data}));
+ const renderDetail=dependencies.renderDetail||(vehicle=>mostrarDetalleModal(vehicle,true));
+ const response=await fetchCatalog();
+ if(!response||response.status!=="success"||!response.data||!Array.isArray(response.data.cortes))throw new Error("La lectura del catálogo no devolvió una respuesta completa y válida.");
+ const matches=response.data.cortes.filter(vehicle=>String(vehicle&&vehicle.id)===cleanVehicleId);
+ if(matches.length!==1)throw new Error(matches.length?"El ID del vehículo aparece más de una vez en el catálogo; no se reconstruyó el detalle.":"El vehículo actualizado no aparece en la lectura vigente del catálogo.");
+ const updatedItem=matches[0];updateCatalog(response.data);renderDetail(updatedItem);return updatedItem;
+}
+async function completeVehicleExpansionSave_(writeResult,vehicleId,successMessage,modal,dependencies={}) {
+ const cleanVehicleId=String(vehicleId==null?"":vehicleId).trim();
+ if(!cleanVehicleId||!writeResult||writeResult.status!=="success"||String(writeResult.vehicleId==null?"":writeResult.vehicleId).trim()!==cleanVehicleId)throw new Error("El servidor no confirmó el guardado de la información para el vehículo solicitado.");
+ if(!modal||typeof modal.remove!=="function")throw new Error("No se pudo cerrar el formulario después de confirmar el guardado.");
+ const notifySuccess=dependencies.notifySuccess||(message=>alert(message));
+ const notifyRefreshFailure=dependencies.notifyRefreshFailure||(message=>showGlobalError(message));
+ modal.remove();notifySuccess(successMessage);
+ try{const updatedItem=await refreshVehicleDetailAfterExpansion_(cleanVehicleId,dependencies);return {writeConfirmed:true,refreshed:true,vehicleId:cleanVehicleId,updatedItem};}
+ catch(refreshError){notifyRefreshFailure("La información se guardó correctamente, pero no se pudo sincronizar el detalle del vehículo. Vuelve a cargar el catálogo para ver los cambios.");return {writeConfirmed:true,refreshed:false,vehicleId:cleanVehicleId};}
+}
+async function syncApprovedVehicleVideoDetail_(videoMeta, dependencies = {}) {
+ const approvedVideo=videoMeta&&typeof videoMeta==="object"?videoMeta:{};
+ const referenceId=String(approvedVideo.referenceId||"").trim();
+ if(approvedVideo.contentType!=="corte"||!referenceId)return {applicable:false,refreshed:false};
+ const getDetailModal=dependencies.getDetailModal||(()=>document.getElementById("modalDetalle"));
+ const renderDetail=dependencies.renderDetail||(vehicle=>mostrarDetalleModal(vehicle,true));
+ const notifyRefreshFailure=dependencies.notifyRefreshFailure||(message=>mostrarNotificacion(message,"warning"));
+ const detailModal=getDetailModal();
+ const shouldReopen=Boolean(detailModal&&detailModal.classList.contains("visible")&&detailModal.dataset.modalType==="corte"&&String(detailModal.dataset.vehicleId||"")===referenceId);
+ try{
+  await refreshVehicleDetailAfterExpansion_(referenceId,{fetchCatalog:dependencies.fetchCatalog,updateCatalog:dependencies.updateCatalog,renderDetail:updatedItem=>{if(shouldReopen)renderDetail(updatedItem);}});
+  return {applicable:true,refreshed:true,detailReopened:shouldReopen};
+ }catch(error){
+  notifyRefreshFailure("El vídeo fue aprobado, pero no se pudo sincronizar el catálogo del vehículo. Vuelve a cargar la información.");
+  return {applicable:true,refreshed:false,detailReopened:false};
+ }
 }
 
 /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
@@ -8602,16 +8640,13 @@ export function openAddAperturaModal(item) {
         }
 
         try {
-            await routeAction("addSupplementaryInfo", {
+            const writeResult = await routeAction("addSupplementaryInfo", {
                 ...getDeveloperSessionPayload(),
                 vehicleId: item.id,
                 apertura: content.querySelector("#add-apertura-detalles").value,
                 imgApertura: imgBase64
             });
-            alert("Apertura agregada con éxito.");
-            modal.remove();
-            const catRes = await routeAction("getCatalogData");
-            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+            await completeVehicleExpansionSave_(writeResult, item.id, "Apertura agregada con éxito.", modal);
         } catch (err) {
             console.error(err);
             showGlobalError("Error: " + err.message);
@@ -8684,11 +8719,8 @@ export function openAddFeedModal(item) {
         const payload = { vehicleId: item.id, cableAlimen: content.querySelector("#add-feed-detalles").value, imgCableAlimen: imgBase64 };
 
         try {
-            await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
-            alert("Cable de alimentación agregado con éxito.");
-            modal.remove();
-            const catRes = await routeAction("getCatalogData");
-            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+            const writeResult = await routeAction("addSupplementaryInfo", { ...payload, ...getDeveloperSessionPayload() });
+            await completeVehicleExpansionSave_(writeResult, item.id, "Cable de alimentación agregado con éxito.", modal);
         } catch (err) {
             console.error(err);
             showGlobalError("Error: " + err.message);

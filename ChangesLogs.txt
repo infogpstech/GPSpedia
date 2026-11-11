@@ -1727,3 +1727,12 @@ CAMBIOS — AUG-061 — 2026-11-11
 - ui.js: el modal de alimentación deja de seleccionar el slot desde el objeto frontend y envía un par genérico para asignación en servidor.
 - Services/Test/AddSupplementaryInfoIntegrity.js y Services/Test/README.md: pruebas de disponibilidad, conflictos, persistencia y rollback.
 ================================================================================
+
+
+================================================================================
+CAMBIOS — AUG-062 — 2026-11-11
+- ui.js: unifica la finalización de altas de corte, apertura y alimentación; separa confirmación de escritura y refresco. Tras lectura forzada, actualiza catalogData y reconstruye el detalle por ID sin agregar entradas al historial.
+- ui.js: registra el ID del vehículo del modal y, tras aprobar vídeo de tipo corte, sincroniza el catálogo; solo reconstruye si continúa abierto el mismo vehículo. El fallo de sincronización se informa separado de la aprobación.
+- Services/catalog.js: getCatalogData acepta forceRefresh y omite la caché heredada cuando se solicita; el router reenvía el payload.
+- Services/Test/VehicleExpansionDetailRefresh.js y Services/Test/README.md: pruebas de refresco, slots, confirmación y aprobación de vídeo.
+================================================================================
