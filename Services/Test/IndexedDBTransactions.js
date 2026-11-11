@@ -189,7 +189,22 @@ async function runIndexedDBTransactionTests() {
         assert.equal(await scopedOffline.getValidationResponse('V-2', 'user-b'), null);
         assert.equal(await scopedOffline.saveValidationResponse('V-2', 'incorrect', ''), null);
     });
-    console.log(`\nIndexedDB transaction tests: ${passed}/8 PASS`);
+    await testAsync('miniaturas separadas por tamaño y liberación de ImageBitmap',async()=>{
+        const harness=createIndexedDBHarness(),api=await freshOffline(harness,'thumbnail-sizes');
+        const oldFetch=globalThis.fetch,oldBitmap=globalThis.createImageBitmap,oldDocument=globalThis.document;
+        let closed=0;const widths=[];
+        globalThis.fetch=async()=>({ok:true,blob:async()=>new Blob(['source'])});
+        globalThis.createImageBitmap=async()=>({width:1600,height:800,close(){closed++;}});
+        globalThis.document={createElement(){const canvas={width:0,height:0,getContext(){return{drawImage(){}};},toBlob(cb){widths.push(this.width);cb(new Blob(['thumb'],{type:'image/png'}));}};return canvas;}};
+        try{
+            await api.compressAndStoreThumbnail('https://images.example/vehicle.png','drive-file-123',300);
+            await api.compressAndStoreThumbnail('https://images.example/vehicle.png','drive-file-123',800);
+            assert.ok(await api.getThumbnail('drive-file-123',300));assert.ok(await api.getThumbnail('drive-file-123',800));
+            assert.deepEqual(widths,[300,800]);assert.equal(closed,2);
+            assert.equal((await api.getThumbnail('drive-file-123',1600))??null,null);
+        }finally{globalThis.fetch=oldFetch;globalThis.createImageBitmap=oldBitmap;globalThis.document=oldDocument;}
+    });
+    console.log(`\nIndexedDB transaction tests: ${passed}/9 PASS`);
 }
 
 runIndexedDBTransactionTests().catch(error => {
