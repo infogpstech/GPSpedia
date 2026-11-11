@@ -1647,3 +1647,22 @@ No se modificó el acuerdo de uso, el aviso, index.html, su versión/fecha, el f
 
 AUG-046 sigue en curso por los restantes contrastes operativos y validaciones internas que aún no se han confirmado. Continuar solo AUG-046 en la siguiente iteración; no iniciar AUG-047.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT — AUG-046 — DELIMITACIÓN DEL ALCANCE TÉCNICO — 2026-11-11
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work.
+HEAD de inicio verificado: 8714f1bd3fcb487aa436721809374afb139bb24a.
+Rama base: GPSpedia2.2.5. HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Avance de esta iteración:
+1. Se identificó que las secciones históricas 3, 4, 5 y 9.1 del memo conservaban expresiones de revisión jurídica y preguntas sobre identidad/titularidad que podían confundirse con conclusiones vigentes, pese a las aclaraciones expresas del responsable.
+2. Se añadió la sección 10 al memo para delimitar AUG-046 como contraste técnico/descriptivo. Las observaciones históricas se conservan como antecedente, no como asesoría, dictamen o recomendación jurídica.
+3. Se actualizó AUG-046 en el backlog para reflejar las definiciones confirmadas en 9.4 y precisar que el contraste de cláusulas es solo descriptivo frente al comportamiento observable.
+4. Se mantiene la restricción absoluta de no modificar el acuerdo de uso, aviso, modales, fechas/versiones ni aceptación.
+
+No se han recibido aún las 12 confirmaciones operativas corporativas de la sección 8.3. No se verificaron cuentas, permisos, despliegues, hojas productivas, Drive, YouTube ni respaldos reales. AUG-046 permanece EN PROGRESO. No iniciar AUG-047.
+
+Siguiente acción: continuar únicamente AUG-046, contrastando evidencia técnica adicional que pueda verificarse desde el repositorio sin inferir configuraciones productivas ni decisiones jurídicas.
+================================================================================
