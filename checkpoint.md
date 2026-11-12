@@ -701,3 +701,13 @@ Validación de esta iteración: pendiente ejecutar la prueba ampliada en Codespa
 Rama base intacta. ChangesLogs.txt sin modificar por superar el límite y requerir rotación normativa.
 Siguiente acción: ejecutar la prueba ampliada (6/6) y revisar cualquier fallo; después revisar el guardado/reconciliación de checkpoints durante cancelación y reanudación. No iniciar AUG-069.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — ITERACIÓN 3F
+Validación adaptada ejecutada en runtime V8:
+- YouTubeUploadCloseDuringTransfer: 6/6 PASS.
+- OverlayHistoryStack: 11/11 PASS.
+- YouTubeUploadOverlayLifecycle: 8/8 PASS.
+- youtubeUpload.js: parsing sintáctico en V8 después de retirar import/export para adaptar el módulo a la evaluación aislada.
+La prueba nueva ejecutó closeAfterUpload real con overlayHistory real y History simulado; verificó que la entrada se elimina y no se solicita confirmación cuando el cierre automático se produce tras finalizar la operación. También confirmó estáticamente que hay exactamente tres llamadas a closeAfterUpload.
+Limitación: no es ejecución Node CLI en Codespaces ni prueba DOM/navegador real. Esas verificaciones siguen pendientes para Beta/entorno de Codespaces según corresponda.
