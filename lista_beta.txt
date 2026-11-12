@@ -1117,3 +1117,28 @@ Pruebas en navegador/dispositivo:
 
 No reactivar filtros rápidos, no modificar datos productivos y no desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-100 — VALIDACIÓN VISUAL DEL SISTEMA UNIVERSAL DE BOTONES
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas visuales en navegador real:
+1. Revisar botones primarios, secundarios, destructivos, advertencia, icono y compactos en index.html, users.html y add_cortes.html.
+2. Repetir con tema claro y oscuro; verificar contraste, foco visible por teclado, hover, active, disabled y loading.
+3. Comprobar formularios, modales, Inbox y panel de Desarrollador, incluidos botones con iconos y textos largos.
+4. Revisar viewports móviles: targets táctiles, wrapping, desbordamiento y separación entre acciones.
+5. Confirmar que controles especializados (carruseles, acordeones, navegación, cierres y validación) conservan su comportamiento y geometría.
+
+No modificar datos productivos ni desplegar a producción.
+================================================================================
