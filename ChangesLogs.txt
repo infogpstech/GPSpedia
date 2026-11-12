@@ -16,7 +16,7 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - main.js: menú, lightbox, info-modals, aviso legal y modal de detalle se resuelven según la capa superior; el detalle solo detiene/limpia su reproductor cuando realmente se cierra.
 - ui.js: el acuerdo legal abierto desde el aviso obligatorio se posiciona por encima del aviso.
 - users.html: modales de perfil y administración registrados en pila LIFO; se elimina el cierre masivo por popstate.
-- Services/Test/OverlayHistoryStack.js: 18/18 PASS. ReplacedImagesLightboxHistory.js: 6/6 PASS. Parsing V8: main.js, módulo users.html y bloque legal de ui.js PASS.
+- Services/Test/OverlayHistoryStack.js: 19/19 PASS. ReplacedImagesLightboxHistory.js: 6/6 PASS. Parsing V8: main.js, módulo users.html y bloque legal de ui.js PASS.
 - Services/Test/README.md, Tareas_pendientes_parte5.txt, Auditoría.txt y checkpoint.md: cobertura, estado y evidencia actualizados.
 - Validación en runtime V8 adaptado con History simulado; navegador/DOM real y gestos nativos no ejecutados, quedan para Beta.
 ================================================================================
