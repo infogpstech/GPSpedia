@@ -102,7 +102,7 @@ function buildHarness(feedback, options = {}) {
         getSpreadsheet: () => ({})
     };
     const roleHelper = extract(feedback, "function normalizeFeedbackRole(role) {", "function getSessionExpirationStatus_");
-    const relationHelpers = extract(feedback, "function normalizeModelosAsociadosList_(values) {", "function handleClearActivityLogs(payload) {");
+    const relationHelpers = extract(feedback, "function parseModelosAsociados(rawVal) {", "function handleClearActivityLogs(payload) {");
     vm.runInNewContext(
         roleHelper + "\n" + relationHelpers +
         "\nthis.api = { add: handleAddVehicleToProblem, remove: handleRemoveVehicleFromProblem, parse: parseModelosAsociados };",
