@@ -252,3 +252,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - modalNavigation.js: se extraen las reglas de transición y operaciones push/pop de la pila para probar el retorno LIFO sin depender del DOM.
 - Services/Test/PysModalNavigation.js: agrega pruebas de transiciones reales, supresión de re-renderizados y recorridos anidados PyS→vehículo→PyS.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-090 — INTEGRIDAD DE RELACIONES PyS–VEHÍCULOS
+- Services/feedback.js: normalización estricta de modelos_asociados, compatibilidad con formatos heredados, validación unívoca de IDs en pys/Cortes, ScriptLock en alta/baja, persistencia canónica, verificación de lectura posterior e idempotencia. El alta preasociada también valida dentro de su lock.
+- Services/Coordinator.js: versión 1.1.1; addProblem y las acciones add/remove de relación reservan lectura CORTES para impedir carreras con escrituras del servicio WRITE.
+- ui.js: deduplicación de IDs asociados y omisión de relaciones huérfanas al renderizar vehículos.
+- Services/Test: nueva PysVehicleRelationIntegrity.js; se amplían SharedMutationCoordinator.js y PysCreationIntegrity.js para cubrir las dependencias y el nuevo helper compartido.
+================================================================================
