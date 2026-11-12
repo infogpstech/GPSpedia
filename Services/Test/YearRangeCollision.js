@@ -49,7 +49,7 @@ test("la UI mantiene la comprobación de ambos límites para el año puntual", (
     assert.ok(/yearVal\s*>=\s*\(parseInt\(c\.anoDesde\)\s*\|\|\s*0\)[\s\S]*?yearVal\s*<=\s*\(parseInt\(c\.anoHasta\)\s*\|\|\s*parseInt\(c\.anoDesde\)\s*\|\|\s*0\)/.test(ui));
 });
 test("la UI confirma el registro backend antes de guardar la respuesta local", () => {
-    assert.ok(/await\\s+confirmValidationBeforeCache\\s*\\(/.test(ui));
+    assert.ok(ui.includes("await confirmValidationBeforeCache("));
     assert.ok(ui.includes("() => suggestYear("));
 });
 
