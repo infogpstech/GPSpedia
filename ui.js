@@ -10425,14 +10425,13 @@ export function openAddTutorialModal() {
 
         submitBtn.disabled = true;
         submitBtn.innerText = "Guardando...";
-        const operationId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-            .map(value => value.toString(16).padStart(2, "0")).join("");
-        const payload = {
-            operationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
-            videoUrl: "", ...getSessionPayload_()
-        };
-
         try {
+            const operationId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                .map(value => value.toString(16).padStart(2, "0")).join("");
+            const payload = {
+                operationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
+                videoUrl: "", ...getSessionPayload_()
+            };
             const created = await addTutorial(payload);
             if (!created || created.status !== "success" || !created.referenceId) {
                 throw new Error("El servidor no confirmó el destino del tutorial.");
