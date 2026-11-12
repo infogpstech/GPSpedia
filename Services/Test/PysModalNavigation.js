@@ -14,6 +14,7 @@ test('deferred restoration does not reset vertical scroll after asynchronous con
  const state={scrollTop:350,accordion:{index:0,label:'Posibles problemas'},horizontalScrolls:[{className:'carousel-track',index:0,scrollLeft:120}]};
  const result=restoreModalViewState(empty,state);
  assert.equal(result.accordionRestored,false);assert.equal(result.pendingHorizontalScrolls.length,1);
+ detail.scrollTop=700;
  const deferred={accordion:state.accordion,horizontalScrolls:result.pendingHorizontalScrolls};
  const again=restoreModalViewState(empty,deferred);
  assert.equal(detail.scrollTop,700);assert.equal(again.pendingHorizontalScrolls.length,1);
