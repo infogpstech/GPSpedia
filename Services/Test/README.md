@@ -705,7 +705,7 @@ Ejecutar desde la raíz:
 cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
-La suite verifica la pila anidada, cierre del overlay superior con Atrás, cierre manual, reemplazo de un overlay sin agregar profundidad, reconciliación LIFO, preservación de otros campos de history.state y manejo de errores.
+La suite verifica la pila anidada, cierre del overlay superior con Atrás, cierre manual, reemplazo de un overlay sin agregar profundidad, reconciliación LIFO, preservación de otros campos de history.state y manejo de errores. También comprueba que renderRelayInfoModal delegue el cierre al gestor compartido y no cree entradas paralelas con history.pushState.
 
 
 
