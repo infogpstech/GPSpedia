@@ -258,6 +258,8 @@ async function uploadYouTubeFileResumable_(record, onProgress, setActiveXhr, isC
  * @param {Object} [options.metadata] - Metadatos adicionales (marca, modelo, versión, etc.).
  * @param {Function} [options.onSuccess] - Callback invocado tras enviar a aprobación con éxito.
  */
+let youtubeUploadOverlaySequence = 0;
+
 export function openYouTubeUploadModal(options = {}) {
     const {
         initialTitle = "",
@@ -384,16 +386,42 @@ export function openYouTubeUploadModal(options = {}) {
             })
         : Promise.resolve(null);
 
+    const overlayHistory = window.overlayHistory;
+    const overlayHistoryId = "youtube-upload-" + Date.now() + "-" + (++youtubeUploadOverlaySequence);
+    let closeWithoutPrompt = false;
+
     const closeModal = () => {
-        if (isUploading) {
-            if (!confirm("Hay una carga de vídeo activa. ¿Deseas pausarla y conservar el progreso?")) return;
+        if (isUploading && !closeWithoutPrompt) {
+            if (!confirm("Hay una carga de vídeo activa. ¿Deseas pausarla y conservar el progreso?")) return false;
             uploadCancelled = true;
             if (activeXhr) activeXhr.abort();
         }
         modal.remove();
+        return true;
     };
-    closeBtn.onclick = closeModal;
-    cancelBtn.onclick = closeModal;
+
+    // Se registra explícitamente: main.js excluye este modal del observador genérico
+    // para que el cierre pueda confirmar la pausa y abortar el XHR de forma segura.
+    if (overlayHistory && typeof overlayHistory.register === "function") {
+        overlayHistory.register(overlayHistoryId, closeModal);
+    }
+
+    const requestOverlayClose = () => {
+        if (overlayHistory && typeof overlayHistory.close === "function" &&
+            overlayHistory.getStack().includes(overlayHistoryId)) {
+            overlayHistory.close(overlayHistoryId);
+            return;
+        }
+        closeModal();
+    };
+
+    const closeAfterUpload = () => {
+        closeWithoutPrompt = true;
+        requestOverlayClose();
+    };
+
+    closeBtn.onclick = requestOverlayClose;
+    cancelBtn.onclick = requestOverlayClose;
 
     discardBtn.onclick = async () => {
         if (!recoveredUploadRecord || recoveredUploadRecord.status === "uploaded") return;
@@ -483,7 +511,7 @@ export function openYouTubeUploadModal(options = {}) {
                     if (uploadRecord) await deleteYouTubeUploadRecord_(opVideoId);
                     clearYouTubeOperationContext_(operationContext.storageKey, opVideoId);
                     isUploading = false;
-                    modal.remove();
+                    closeAfterUpload();
                     if (typeof onSuccess === "function") onSuccess({
                         videoUrl: previousOperation.videoUrl, opVideoId, status: "pending", alreadySubmitted: true
                     });
@@ -493,7 +521,7 @@ export function openYouTubeUploadModal(options = {}) {
                     if (uploadRecord) await deleteYouTubeUploadRecord_(opVideoId);
                     clearYouTubeOperationContext_(operationContext.storageKey, opVideoId);
                     isUploading = false;
-                    modal.remove();
+                    closeAfterUpload();
                     alert("Esta operación ya fue aprobada. No se inició una segunda subida.");
                     return;
                 }
@@ -608,7 +636,7 @@ export function openYouTubeUploadModal(options = {}) {
             progressPercent.textContent = "100%";
             progressStatus.textContent = "Vídeo enviado a aprobación.";
             isUploading = false;
-            modal.remove();
+            closeAfterUpload();
             alert("Vídeo transferido a YouTube como no listado. Se creó la solicitud de aprobación; aparecerá en GPSpedia únicamente después de aprobarse.");
             if (typeof onSuccess === "function") onSuccess({
                 title: uploadRecord.title, description: uploadRecord.description,
