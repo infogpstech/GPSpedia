@@ -8,23 +8,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #333;
-            --background-color: #f4f4f4;
-            --card-background: #fff;
-            --text-color: #333;
-            --light-text: #fff;
-            --error-color: #dc3545;
-            --modal-bg: #fff;
-            --transition-speed: 0.3s;
+    /* Contrato semántico compartido por index, users y add_cortes. */
+    --gp-color-page:#f4f4f4; --gp-color-surface:#ffffff; --gp-color-elevated:#ffffff;
+    --gp-color-text:#333333; --gp-color-text-secondary:#495057; --gp-color-text-muted:#666666;
+    --gp-color-text-disabled:#6c757d; --gp-color-border:#e0e0e0; --gp-color-border-strong:#6c757d;
+    --gp-color-accent:#007bff; --gp-color-accent-contrast:#ffffff; --gp-color-button-bg:#f0f0f0;
+    --gp-color-success:#198754; --gp-color-warning:#ffc107; --gp-color-danger:#dc3545;
+    --gp-color-info-bg:#e9f7ff; --gp-color-info-text:#004085; --gp-color-disabled-bg:#e9ecef;
+    --gp-color-focus:#005fcc; --gp-color-overlay:rgba(0,0,0,0.5); --gp-transition-speed:0.3s;
+            --primary-color:var(--gp-color-accent); --secondary-color:var(--gp-color-text);
+            --background-color:var(--gp-color-page); --card-background:var(--gp-color-surface); --text-color:var(--gp-color-text);
+            --light-text:#ffffff; --error-color:var(--gp-color-danger); --modal-bg:var(--gp-color-elevated);
+            --transition-speed:var(--gp-transition-speed);
         }
         body.dark-mode {
-            --primary-color: #58a6ff;
-            --secondary-color: #FFFFFFDE;
-            --background-color: #121212;
-            --card-background: #1e1e1e;
-            --text-color: #FFFFFFDE;
-            --modal-bg: #242424;
+    /* Mismo contrato semántico, con valores del tema oscuro. */
+    --gp-color-page:#121212; --gp-color-surface:#1e1e1e; --gp-color-elevated:#242424;
+    --gp-color-text:#f0f0f0; --gp-color-text-secondary:#bdbdbd; --gp-color-text-muted:#b0b0b0;
+    --gp-color-text-disabled:#9e9e9e; --gp-color-border:#3a3a3a; --gp-color-border-strong:#64748b;
+    --gp-color-accent:#58a6ff; --gp-color-accent-contrast:#102033; --gp-color-button-bg:#2c2c2c;
+    --gp-color-success:#5bd18a; --gp-color-warning:#ffd166; --gp-color-danger:#ff7b86;
+    --gp-color-info-bg:#17283a; --gp-color-info-text:#e5edf7; --gp-color-disabled-bg:#2c2c2c;
+    --gp-color-focus:#8abfff; --gp-color-overlay:rgba(0,0,0,0.7); --gp-transition-speed:0.3s;
+            --primary-color:var(--gp-color-accent); --secondary-color:var(--gp-color-text);
+            --background-color:var(--gp-color-page); --card-background:var(--gp-color-surface); --text-color:var(--gp-color-text);
+            --error-color:var(--gp-color-danger); --modal-bg:var(--gp-color-elevated);
         }
         *, *::before, *::after {
             box-sizing: border-box;
@@ -90,16 +98,16 @@
         }
         .user-table th, .user-table td {
             padding: 8px 10px; /* Reducido para hacer la tabla más compacta */
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid var(--gp-color-border);
             text-align: left;
             font-size: 0.9rem; /* Tamaño optimizado para densidad de datos */
             white-space: nowrap; /* Evita saltos de línea indeseados */
         }
         .user-table th {
-            background-color: rgba(0,0,0,0.05);
+            background-color: var(--gp-color-page);
         }
         .dark-mode .user-table th {
-            background-color: rgba(255,255,255,0.05);
+            background-color: var(--gp-color-surface);
         }
         .actions-cell .btn-sm {
             margin-right: 5px;
@@ -121,7 +129,7 @@
             background-color: var(--modal-bg);
             margin: 10% auto;
             padding: 20px;
-            border: 1px solid #888;
+            border: 1px solid var(--gp-color-border-strong);
             width: 80%;
             max-width: 500px;
             border-radius: 10px;
@@ -131,7 +139,7 @@
             border-color: rgba(255,255,255,0.1);
         }
         .close-btn {
-            color: #aaa;
+            color: var(--gp-color-text-muted);
             float: right;
             font-size: 28px;
             font-weight: bold;
