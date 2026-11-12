@@ -9405,7 +9405,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             </div>
             <div class="form-group">
                 <label>Imagen del Problema</label>
-                <input type="file" id="pys-img-file" accept="image/*" required>
+                <input type="file" id="pys-img-file" accept="image/jpeg,image/png,image/webp" required>
             </div>
             <div class="form-group">
                 <label>Detalle del Problema (Máx 700 caracteres)</label>
@@ -9528,41 +9528,70 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
 
     const form = content.querySelector("#add-pys-form");
     form.onsubmit = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
 
         const { currentUser } = getState();
-        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
-
-        const fileInput = content.querySelector("#pys-img-file");
-        let imgBase64 = "";
-        if (fileInput.files && fileInput.files[0]) {
-            imgBase64 = await new Promise(res => {
-                const r = new FileReader();
-                r.onload = re => res(re.target.result);
-                r.readAsDataURL(fileInput.files[0]);
-            });
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado.");
+            return;
         }
 
-        const payload = {
-            titulo: content.querySelector("#pys-titulo").value.trim(),
-            descripcion: content.querySelector("#pys-detalle").value.trim(),
-            sinSolucion: chkSinSolucion.checked,
-            solucion: txtSolucion.value.trim(),
-            prevenir: content.querySelector("#pys-prevenir").value.trim(),
-            videoUrl: "",
-            ...getSessionPayload_(),
-            alcance: alcanceSelect.value,
-            modelosAsociados: Array.from(selectedVehicleIds),
-            imgBase64,
-        };
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const fileInput = content.querySelector("#pys-img-file");
+        const selectedFile = fileInput.files && fileInput.files[0];
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Guardando...";
 
+        let completed = false;
         try {
+            if (!selectedFile) throw new Error("Debes seleccionar una imagen para el problema.");
+            const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+            if (!allowedMimeTypes.includes(String(selectedFile.type || "").toLowerCase())) {
+                throw new Error("La imagen debe estar en formato JPEG, PNG o WebP.");
+            }
+            if (!Number.isFinite(selectedFile.size) || selectedFile.size < 1 || selectedFile.size > 3 * 1024 * 1024) {
+                throw new Error("La imagen debe tener un tamaño máximo de 3 MB.");
+            }
+
+            const imgBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    const result = event && event.target ? event.target.result : null;
+                    if (typeof result !== "string" ||
+                        !result.startsWith("data:" + selectedFile.type.toLowerCase() + ";base64,")) {
+                        reject(new Error("La lectura no devolvió una imagen válida del tipo seleccionado."));
+                        return;
+                    }
+                    resolve(result);
+                };
+                reader.onerror = () => reject(reader.error || new Error("No se pudo leer la imagen seleccionada."));
+                reader.onabort = () => reject(new Error("La lectura de la imagen fue cancelada. Selecciona el archivo nuevamente."));
+                try {
+                    reader.readAsDataURL(selectedFile);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+
+            const payload = {
+                titulo: content.querySelector("#pys-titulo").value.trim(),
+                descripcion: content.querySelector("#pys-detalle").value.trim(),
+                sinSolucion: chkSinSolucion.checked,
+                solucion: txtSolucion.value.trim(),
+                prevenir: content.querySelector("#pys-prevenir").value.trim(),
+                videoUrl: "",
+                ...getSessionPayload_(),
+                alcance: alcanceSelect.value,
+                modelosAsociados: Array.from(selectedVehicleIds),
+                imgBase64
+            };
+
             const created = await routeAction("addProblem", payload);
-            if (!created || created.status !== "success" || !created.problemId) throw new Error("El servidor no confirmó el ID del problema creado.");
+            if (!created || created.status !== "success" || !created.problemId) {
+                throw new Error("El servidor no confirmó el ID del problema ni la vinculación de su imagen.");
+            }
+
+            completed = true;
             modal.remove();
             renderPysSection();
             if (confirm("El problema se registró sin vídeo. ¿Deseas subir ahora un vídeo para enviarlo a aprobación?")) {
@@ -9581,11 +9610,14 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
                 const panel = document.getElementById("detalleCompleto");
                 if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle);
             }
-        } catch(err) {
+        } catch (err) {
             console.error(err);
             showGlobalError("Error al registrar problema: " + err.message);
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar";
+        } finally {
+            if (!completed) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Agregar";
+            }
         }
     };
 }
