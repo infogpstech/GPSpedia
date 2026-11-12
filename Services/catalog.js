@@ -65,7 +65,8 @@ const COLS_TUTORIALES = {
     comoIdentificarlo: 4,
     dondeEncontrarlo: 5,
     Detalles: 6,
-    Video: 7
+    Video: 7,
+    Colaborador: 8
 };
 
 const COLS_RELAY = {
