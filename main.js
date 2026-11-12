@@ -480,10 +480,15 @@ async function initializeApp() {
             // Evitar que el historial se desplace hacia atrás recuperando la posición actual
             // mediante la re-inserción del estado de búsqueda activo desenfocado.
             if (currentQuery) {
-                const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
-                history.replaceState({ level: "busqueda", query: currentQuery }, '', newUrl);
+                const currentNavigationState = window.state.getState().navigationState || {};
+                const searchState = {
+                    level: "busqueda",
+                    query: currentQuery,
+                    previousState: currentNavigationState.previousState || null
+                };
+                replaceNavigationState(searchState, { previousNavigationState: currentNavigationState.previousState });
                 // Sincronizar también el estado de navegación global
-                window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
+                window.state.setState({ navigationState: searchState });
             } else {
                 navigation.irAPaginaPrincipal(true);
             }
