@@ -881,3 +881,35 @@ AUG-091 — TÍTULO DEL ACORDEÓN PyS
 
 No desplegar a producción ni modificar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-092 — INTEGRIDAD DEL MÓDULO TUTORIAL
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+Pruebas en un proyecto Apps Script y una Spreadsheet aislados, nunca en producción:
+21. Confirmar que la hoja canónica se llama `Tutorial` y conserva A:G exactamente: ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles y Video. Confirmar que H se agrega como Colaborador solo si está vacía; si H contiene datos sin encabezado, verificar que el servicio se detenga sin alterarlos.
+22. Intentar alta como Técnico y como Desarrollador. El primer caso debe rechazarse; el segundo debe guardar userId/nombre derivados de Users y ActiveSessions, ignorando cualquier colaborador enviado por el cliente.
+23. Crear un tutorial completo y comprobar posiciones A:H, ID estable, colaborador y lectura inmediata del catálogo. Reintentar con el mismo operationId; debe devolver el registro original sin duplicarlo.
+24. Intentar crear el mismo tema con otro operationId, incluyendo diferencias de acentos, mayúsculas y espacios; confirmar rechazo sin agregar filas.
+25. Ejecutar dos altas simultáneas con el mismo operationId y con operationId diferentes para el mismo tema; confirmar una sola fila válida y sin sobrescrituras.
+26. Editar por ID Tema, comoIdentificarlo, dondeEncontrarlo y Detalles. Confirmar que ID, Imagen, Video y Colaborador no cambien; verificar edición de registros históricos con ID vacío usando un tema único.
+27. Enviar vídeo para aprobación con ID de tutorial; confirmar que la publicación escribe miniatura en C y enlace aprobado en G. Probar rechazo, reintentos y destino duplicado/inexistente sin alterar otras columnas.
+28. Verificar en el detalle el orden de Cómo identificarlo, Dónde encontrarlo, Detalles y Colaborador al final. Comprobar la miniatura/vídeo, edición y formulario en escritorio/móvil y modo claro/oscuro.
+29. Confirmar que alta, edición, envío de vídeo, aprobación y rechazo se serializan sobre el recurso TUTORIAL del coordinador; repetir operaciones concurrentes para comprobar ausencia de carreras.
+
+No migrar automáticamente datos de una hoja histórica `Tutoriales` ni reordenar filas. No desplegar a producción ni modificar datos productivos.
+================================================================================
