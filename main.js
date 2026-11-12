@@ -488,30 +488,16 @@ async function initializeApp() {
                 }
             }
 
-            // Comprobar pila de navegación modal para retorno contextual
-            const navStack = window.modalNavStack || [];
-            if (navStack.length > 0) {
-                const prevContext = navStack.pop();
-                if (prevContext) {
-                    if (prevContext.type === 'vehicle' && window.ui && window.ui.mostrarDetalleModal) {
-                        window.ui.mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
-                        return;
-                    } else if (prevContext.type === 'pys' && window.ui && window.ui.openPysDetailModal) {
-                        window.ui.openPysDetailModal(prevContext.item, prevContext.navOptions || {});
-                        return;
-                    }
-                }
+            if(window.inEditMode){
+                const vehicleId=modalDetalle.dataset.vehicleId||null;
+                Promise.resolve(ui.exitModalEditMode(false,vehicleId,true)).then(discarded=>{
+                    if(!discarded)return;
+                    if(!ui.restoreModalNavigationContext()){modalDetalle.classList.remove('visible');ui.clearModalNavStack();}
+                });
+                return;
             }
-
-            if (window.inEditMode) {
-                window.ui.exitModalEditMode(false, null, true);
-            } else {
-                modalDetalle.classList.remove('visible');
-            }
-
-            if (window.modalNavStack) {
-                window.modalNavStack.length = 0;
-            }
+            if(ui.restoreModalNavigationContext())return;
+            modalDetalle.classList.remove('visible');ui.clearModalNavStack();
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
             const isSearchActive = document.body.classList.contains('search-active');
