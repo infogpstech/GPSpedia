@@ -68,6 +68,10 @@ function renderNavigationTarget_(targetState) {
             break;
         }
         case 'versionesEquipamiento': mostrarVersionesEquipamiento(state.categoria, state.marca, state.modelo); break;
+        case undefined:
+            if (state.section) mostrarSeccion(state.section, true);
+            else if (window.navigation && window.navigation.irAPaginaPrincipal) window.navigation.irAPaginaPrincipal(true);
+            break;
         case 'categorias':
         default:
             if (window.navigation && window.navigation.irAPaginaPrincipal) window.navigation.irAPaginaPrincipal(true);
@@ -7257,10 +7261,11 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
     if (sectionElement) sectionElement.style.display = 'block';
     if (buttonElement) buttonElement.classList.add('active');
 
-    // Registrar en el historial si no viene de un popstate
+    // Registrar una sola entrada por sección; repetir la sección actual no aumenta la pila.
     if (!isFromPopState && window.history && window.history.pushState) {
-        const hash = sectionName === 'cortes' ? '' : `#${sectionName}`;
-        window.history.pushState({ section: sectionName }, '', window.location.pathname + window.location.search + hash);
+        pushNavigationState({ section: sectionName }, {
+            previousNavigationState: getState().navigationState
+        });
     }
 
     switch (sectionName) {
