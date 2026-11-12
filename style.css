@@ -50,6 +50,19 @@ input, textarea, select {
     --accent-color: #007bff;
     --transition-speed: 0.3s;
     --border-color: #e0e0e0;
+
+    /* Tokens semánticos del banner de validación colaborativa */
+    --validation-bg: #eaf4ff;
+    --validation-border: #b6d4f2;
+    --validation-text: #1f2937;
+    --validation-muted: #4b5563;
+    --validation-input-bg: #ffffff;
+    --validation-input-border: #8b9aab;
+    --validation-primary-bg: #005fcc;
+    --validation-primary-text: #ffffff;
+    --validation-secondary-bg: #dbeafe;
+    --validation-secondary-text: #1e3a5f;
+    --validation-focus: #005fcc;
 }
 
 body.dark-mode {
@@ -67,6 +80,19 @@ body.dark-mode {
     --menu-bg: #1e1e1e;
     --accent-color: #58a6ff;
     --border-color: #3a3a3a;
+
+    /* Valores con contraste alto para el mismo componente en tema oscuro */
+    --validation-bg: #17283a;
+    --validation-border: #315577;
+    --validation-text: #e5edf7;
+    --validation-muted: #c1ccda;
+    --validation-input-bg: #1e293b;
+    --validation-input-border: #64748b;
+    --validation-primary-bg: #8abfff;
+    --validation-primary-text: #102033;
+    --validation-secondary-bg: #29435f;
+    --validation-secondary-text: #e7f0ff;
+    --validation-focus: #8abfff;
 }
 
 /* Solución técnica para el logo en modo oscuro */
@@ -1217,23 +1243,18 @@ body.search-active .container {
 /* --- VALIDATION BANNER --- */
 /* Tarea: Corregir recorte de texto en notificación de consulta de vehículos de años anteriores */
 .validation-banner {
-    background: rgba(88, 166, 255, 0.15);
-    border: 1px solid rgba(88, 166, 255, 0.3);
+    background: var(--validation-bg);
+    border: 1px solid var(--validation-border);
     border-radius: 12px;
     padding: 14px;
     margin: 10px 0;
     font-size: 0.9em;
     animation: slideDown 0.4s ease-out;
-    color: var(--text-primary);
+    color: var(--validation-text);
     overflow: visible;
     position: relative;
     box-sizing: border-box;
     width: 100%;
-}
-
-[data-theme="dark"] .validation-banner {
-    background: rgba(88, 166, 255, 0.1);
-    border-color: rgba(88, 166, 255, 0.2);
 }
 
 .validation-content {
@@ -1283,8 +1304,8 @@ body.search-active .container {
     font-size: 0.85em;
     font-weight: 600;
     transition: background 0.2s, transform 0.1s;
-    background: var(--accent-color);
-    color: white;
+    background: var(--validation-primary-bg);
+    color: var(--validation-primary-text);
 }
 
 .validation-btn:active {
@@ -1292,8 +1313,8 @@ body.search-active .container {
 }
 
 .validation-btn.secondary {
-    background: rgba(128, 128, 128, 0.2);
-    color: var(--text-primary);
+    background: var(--validation-secondary-bg);
+    color: var(--validation-secondary-text);
 }
 
 .validation-input-group {
@@ -1306,10 +1327,21 @@ body.search-active .container {
     flex: 1;
     padding: 6px 10px;
     border-radius: 6px;
-    border: 1px solid rgba(128, 128, 128, 0.3);
-    background: var(--card-bg);
-    color: var(--text-primary);
+    border: 1px solid var(--validation-input-border);
+    background: var(--validation-input-bg);
+    color: var(--validation-text);
     font-size: 0.9em;
+}
+
+.validation-input::placeholder {
+    color: var(--validation-muted);
+    opacity: 1;
+}
+
+.validation-btn:focus-visible,
+.validation-input:focus-visible {
+    outline: 2px solid var(--validation-focus);
+    outline-offset: 2px;
 }
 
 @keyframes slideDown {
