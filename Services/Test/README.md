@@ -433,7 +433,7 @@ Política conservadora: no se aplica TTL automático a operaciones pendientes (`
 
 - `PendingOperationIsolation.js`: permanencia de snapshots antiguos y eliminación únicamente mediante opId del propietario (8 escenarios).
 - `EditBackupIsolation.js`: permanencia de copias antiguas hasta su eliminación explícita por propietario/vehículo (8 escenarios).
-- `IndexedDBTransactions.js`: permanencia de addCutPending antiguo y rechazo de eliminación desde otra cuenta (22 escenarios en total).
+- `IndexedDBTransactions.js`: permanencia de addCutPending antiguo y rechazo de eliminación desde otra cuenta (24 escenarios en total).
 
 
 ## Aislamiento de reemplazos de imágenes ADMIN (AUG-053 — iteración 5)
@@ -912,4 +912,4 @@ trap 'rm -f "$TEST_TMP"' EXIT
 node "$TEST_TMP"
 ```
 
-22 escenarios: selector MIME, límite 3 MB, FileReader load/error/abort, restablecimiento del botón, confirmación del servidor, validación compartida de JPEG/PNG/WebP y firmas, Data URL legado, MIME/extensión reales, ACL pública/no verificable, almacenamiento bajo `Cortes/SugerenciasCortes`, read-back, rollback, metadatos e idempotencia. Las pruebas usan dobles para Drive/Spreadsheet y no representan permisos o escrituras reales de Apps Script.
+24 escenarios: selector MIME, límite 3 MB, FileReader load/error/abort, restablecimiento del botón, confirmación del servidor, validación compartida de JPEG/PNG/WebP y firmas, Data URL legado, MIME/extensión reales, ACL pública/no verificable, almacenamiento bajo `Cortes/SugerenciasCortes`, read-back, rollback, metadatos e idempotencia. Las pruebas usan dobles para Drive/Spreadsheet y no representan permisos o escrituras reales de Apps Script.
