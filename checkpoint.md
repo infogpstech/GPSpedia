@@ -755,3 +755,13 @@ Siguiente acción: validar los tres escenarios; si pasan, registrar checkpoint y
 
 ADENDA DE AJUSTE DE PRUEBA — ITERACIÓN 3H
 La primera ejecución adaptada reveló que el extractor de la nueva prueba omitía el prefijo async de findPendingYouTubeUploadRecord_. Se corrigió el extractor para conservar la declaración async, siguiendo el mismo criterio aplicado en la prueba de reanudación. El error estaba en el harness de prueba, no en la implementación de IndexedDB ni en youtubeUpload.js. Se repetirá la validación.
+
+
+ADENDA DE VALIDACIÓN — ITERACIÓN 3H
+YouTubeUploadDraftRecovery: 3/3 PASS en runtime V8 adaptado:
+- Encuentra y devuelve una transferencia pausada cuyo referenceId persistido es "null".
+- Conserva la búsqueda de registros asociados a una referencia concreta.
+- Confirma que openYouTubeUploadModal inicia la búsqueda cuando hay usuario aunque referenceId sea null.
+Parsing sintáctico de youtubeUpload.js: PASS en V8 adaptado, retirando import/export para evaluación aislada.
+El extractor de la prueba se corrigió para conservar async. El runner V8 recibió un adaptador queueMicrotask basado en Promise.resolve().then(), ya que ese global no está expuesto en el runtime aislado de esta ejecución.
+No es ejecución Node CLI en Codespaces ni IndexedDB real del navegador. La simulación local de la lógica y los contratos aprobó; persistencia real y comportamiento de navegador quedan para Beta.
