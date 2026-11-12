@@ -8023,6 +8023,17 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
 }
 
 /* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
+function createSuggestionOperationId_() {
+    const cryptoApi = window.crypto;
+    if (cryptoApi && typeof cryptoApi.randomUUID === "function") return cryptoApi.randomUUID();
+    if (cryptoApi && typeof cryptoApi.getRandomValues === "function") {
+        const bytes = new Uint8Array(24);
+        cryptoApi.getRandomValues(bytes);
+        return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+    throw new Error("El navegador no dispone de un generador seguro para identificar la sugerencia.");
+}
+
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
@@ -8133,6 +8144,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     closeBtn.onclick = () => modal.remove();
 
     const form = content.querySelector("#suggest-cut-form");
+    let lastSuggestionSubmissionSignature = "";
+    let suggestionOperationId = "";
     form.onsubmit = async (e) => {
         e.preventDefault();
         const { currentUser } = getState();
@@ -8180,6 +8193,16 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
                 reportId: reportRef, vehicleId, corteIndex: validCorteNum,
                 details: content.querySelector("#sug-detalles").value.trim(), imageAttachment, proposedValues
             };
+            const submissionSignature = JSON.stringify({
+                reportId: payload.reportId, vehicleId: payload.vehicleId, corteIndex: payload.corteIndex,
+                details: payload.details, image: imageAttachment ? imageAttachment.dataUrl : "",
+                proposedValues: payload.proposedValues
+            });
+            if (!suggestionOperationId || submissionSignature !== lastSuggestionSubmissionSignature) {
+                suggestionOperationId = createSuggestionOperationId_();
+                lastSuggestionSubmissionSignature = submissionSignature;
+            }
+            payload.suggestionOperationId = suggestionOperationId;
             const response = await suggestCutChange(payload, getSessionPayload_());
             if (!response || response.status !== "success") throw new Error(response && response.message || "El servidor no confirmó la sugerencia.");
             if (imageAttachment && (response.imageAttached !== true || !response.imageUrl)) {

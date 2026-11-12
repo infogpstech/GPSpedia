@@ -528,3 +528,39 @@ BETA AISLADA — no usar cuentas, carpetas ni datos productivos:
 9. Confirmar que reportes/sugerencias históricas siguen mostrándose y que no se modifican ACL ni archivos anteriores automáticamente.
 Registrar navegador, cuenta/rol de prueba, IDs, filas antes/después, permisos efectivos y evidencia. No declarar PASS sin comprobar acceso real del revisor y denegación a usuarios no autorizados.
 ================================================================================
+
+
+================================================================================
+AUG-080 — SERIALIZACIÓN E IDEMPOTENCIA DE SUGERENCIAS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado antes de probar.
+
+PRUEBAS EN FEEDBACK / SPREADSHEET / DRIVE AISLADOS (NO PRODUCCIÓN):
+1. Enviar simultáneamente dos solicitudes con el mismo suggestionOperationId y payload. Confirmar una sola fila de sugerencia, una sola imagen (si aplica) y que ambas respuestas identifiquen el mismo registro.
+2. Simular respuesta perdida después de que el servidor confirme la escritura; reenviar exactamente el mismo payload y suggestionOperationId. Confirmar respuesta del registro original sin fila ni archivo duplicado.
+3. Repetir el mismo suggestionOperationId cambiando details, proposedValues, vehículo, corte, usuario o bytes de imagen. Confirmar rechazo y ausencia de nueva fila/archivo.
+4. Repetir el mismo reporte/vehículo/corte/usuario con una nueva clave pero payload idéntico. Confirmar compatibilidad/idempotencia de la solicitud ya registrada y ausencia de carga duplicada.
+5. Repetir la misma clave con payload idéntico desde dos clientes y con payload distinto desde un tercero. Confirmar una sola escritura y rechazo del tercero.
+6. Provocar fallo de Drive antes de crear el archivo, fallo de escritura de Feedbacks después de cargar imagen y fallo de lectura de confirmación. Comprobar rollback; si no puede verificarse que la fila quedó vacía, confirmar que el archivo no se envía a papelera y registrar la operación para reconciliación.
+7. Confirmar que la copia de fórmulas y el append no pisan filas concurrentes, que las columnas históricas mantienen su orden y que el estado inicial sigue siendo pendiente de revisión.
+8. Repetir con cliente anterior sin suggestionOperationId. Confirmar compatibilidad mediante la clave compuesta histórica y huella del contenido, sin duplicar registros.
+9. Verificar reintento tras timeout, reintento después de recargar la página y solicitudes para dos reportes distintos del mismo usuario. Registrar operationId, reportId, IDs de fila/archivo, payload fingerprint, tiempos, respuestas y estado antes/después.
+
+No declarar PASS sin verificar la concurrencia real de Apps Script, una sola fila y un solo archivo en Drive/Spreadsheet aislados. No usar endpoints, carpetas, hojas, cuentas ni datos productivos.
+================================================================================

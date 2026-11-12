@@ -893,3 +893,26 @@ Siguiente tarea: AUG-043 — Alinear contratos de acciones protegidas y ciclo de
 ADENDA DE CIERRE — AUG-155 — 2026-11-10
 Estado: COMPLETADA EN VALIDACIÓN LOCAL. H-AUD-033-008 a H-AUD-033-012 resueltos en fuentes mediante coordinador independiente e integración AUTH/USERS/WRITE/ADMIN/FEEDBACK. Sintaxis 10/10 PASS; suite lógica 17/17 PASS; wrappers 7/7 PASS; cobertura de políticas 61/61; paridad AUTH/USERS producción-prueba PASS; Code Review/Safety & Side Effects PASS. No hubo deployments, HTTP, Apps Script real ni datos productivos. Configuración y concurrencia real diferidas a Beta. AUG-034 permanece como tarea distinta para migración VIN/Idempotencia.
 ================================================================================
+
+
+================================================================================
+AUG-080 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD de partida verificado: d2766f1ab0fb60f12ddbe8b8e36c9e88a903dec2. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Implementación:
+- ui.js crea un suggestionOperationId criptográficamente aleatorio, lo conserva mientras el payload del formulario no cambie y genera una clave nueva si cambia el contenido. La clave se envía junto con la sesión a través de api-config.js, sin alterar el contrato del dispatcher.
+- Services/feedback.js valida la clave, calcula una huella SHA-256 del reporte, vehículo, corte, actor, propuesta y hash de imagen; busca la operación antes de cargar archivos o reservar fila. Una repetición idéntica devuelve el registro original; la misma clave con payload diferente se rechaza.
+- Se conserva la búsqueda compuesta histórica para clientes anteriores y formularios reabiertos, evitando duplicados aunque el cliente no conserve la clave de operación.
+- LockService protege la búsqueda de duplicados, lectura de última fila, copia de fórmulas, carga de imagen, escritura y flush; la liberación permanece en finally.
+- La recuperación verifica que la fila haya quedado vacía antes de enviar a papelera una imagen recién cargada. Si no puede confirmar el rollback, conserva el archivo y registra la condición para reconciliación, evitando dejar una fila persistida apuntando a una imagen eliminada.
+- Los registros nuevos conservan las columnas de Feedbacks y el estado pendiente de revisión. Los registros históricos no se migran.
+
+Validación local:
+- Services/Test/SuggestionConcurrencyIdempotency.js: 19/19 PASS en harness V8 adaptado con dobles de Spreadsheet/Drive y lock síncrono.
+- Parsing V8 de Services/feedback.js, modal openSuggestCutModal y suite: PASS.
+- La suite cubre replay, mismo ID con payload distinto, duplicados, registro parcial, serialización, rollback confirmado/no verificable y no duplicación de imagen.
+- Node CLI no se ejecutó porque no se dispone de un checkout local completo en este entorno. La suite y el comando reproducible quedaron publicados; no se presenta el harness adaptado como concurrencia real.
+
+Beta pendiente: concurrencia real en Apps Script, timeout/respuesta perdida, Drive/Spreadsheet aislados, rollback real, reintentos de clientes antiguos y comprobación de columnas/fórmulas. No se ejecutaron deployments ni datos productivos.
+Siguiente tarea: AUG-081 — Validar esquema y límites de reportes y propuestas. No iniciada.
+================================================================================

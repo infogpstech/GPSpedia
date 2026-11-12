@@ -913,3 +913,18 @@ node "$TEST_TMP"
 ```
 
 25 escenarios: selector MIME, límite 3 MB, FileReader load/error/abort, restablecimiento del botón, confirmación del servidor, validación compartida de JPEG/PNG/WebP y firmas, Data URL legado, MIME/extensión reales, ACL pública/no verificable, almacenamiento bajo `Cortes/SugerenciasCortes`, read-back, rollback, metadatos e idempotencia. Las pruebas usan dobles para Drive/Spreadsheet y no representan permisos o escrituras reales de Apps Script.
+
+
+## AUG-080 — Serialización e idempotencia de sugerencias de corte
+
+Ejecutar desde la raíz con Node.js:
+
+```bash
+set -e
+TEST_TMP=Services/Test/SuggestionConcurrencyIdempotency.mjs
+cp Services/Test/SuggestionConcurrencyIdempotency.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite contiene 19 escenarios: generación segura y estabilidad de la clave de operación; rotación cuando cambia el payload; SHA-256 de la solicitud; búsqueda de operaciones persistidas y detección de duplicados/registros parciales; exclusión crítica del lock; replay sin nueva fila ni carga de imagen; rechazo de la misma clave con contenido distinto; serialización de reintentos; liberación del lock y rollback confirmado/no verificable. Usa dobles de Sheets/Drive y un lock síncrono simulado: no demuestra concurrencia real ni sustituye Apps Script, Spreadsheet o Drive aislados. En el entorno de desarrollo se ejecutó en runtime V8 adaptado: 19/19 PASS. Node CLI debe ejecutarse desde un checkout completo; no se declara ejecutado aquí.

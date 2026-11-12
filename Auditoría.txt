@@ -749,3 +749,19 @@ Impacto mitigado: carga de archivos con tipo falso, confirmación engañosa de i
 Compatibilidad: se conserva el formato Data URL legado en imgBase64, sujeto a la misma validación. Los archivos históricos no se migran ni cambian de ACL automáticamente.
 Validación local: suite de 25 escenarios ejecutada en harness V8 aislado: 25/25 PASS; parsing de Services/feedback.js, modal de ui.js y suite PASS. Beta pendiente: ACL real heredada de Cortes, acceso de revisores, rechazo a usuarios no autorizados, Drive/Spreadsheet aislados y rollback real.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-010-006 / AUG-080 — 2026-11-12
+Estado: CORREGIDO EN FUENTES; concurrencia real pendiente de Beta.
+Hallazgo: handleSuggestCutChange calculaba la fila siguiente y escribía sin una clave de operación explícita. La protección por lock y la huella previa no identificaban un intento lógico estable ante reintentos con respuesta perdida, y la limpieza de una fila no confirmada podía enviar a papelera una imagen aunque no se hubiera verificado la reversión.
+Corrección:
+- ui.js genera suggestionOperationId mediante crypto.randomUUID/getRandomValues, lo mantiene mientras el payload permanezca idéntico y lo renueva cuando cambia el contenido.
+- Services/feedback.js valida la clave y persiste suggestionOperationId con una huella SHA-256 que incluye reporte, vehículo, corte, usuario, detalles, propuesta y hash de imagen.
+- La búsqueda por clave ocurre bajo LockService antes de reservar fila o cargar imagen. El replay idéntico devuelve el registro existente; el mismo ID con datos distintos, duplicados o registros parciales se rechazan sin crear otro registro.
+- Se mantiene el mecanismo compuesto previo como compatibilidad para clientes antiguos y formularios reabiertos.
+- La sección crítica comprende lectura de última fila, copia de fórmulas, carga, escritura y flush. El lock se libera en finally.
+- El archivo solo se envía a papelera cuando se verifica que la fila y el estado quedaron vacíos; ante rollback no verificable se conserva para reconciliación.
+Impacto: reduce colisiones de filas, registros duplicados y archivos huérfanos o referencias rotas por reintentos y fallos parciales.
+Validación: suite de 19 escenarios PASS en runtime V8 adaptado; parsing V8 de backend, modal y suite PASS. El harness no representa concurrencia real. Beta pendiente: Apps Script, Spreadsheet y Drive aislados, solicitudes simultáneas, respuesta perdida, rollback y clientes legacy.
+================================================================================

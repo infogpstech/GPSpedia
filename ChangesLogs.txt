@@ -118,3 +118,16 @@ AUG-076 — Stored XSS en Inbox y formularios de corte
 - Services/feedback.js: reutiliza validación Base64/MIME/tamaño/firma binaria y SHA-256; conserva MIME/extensión real; guarda en `Cortes/SugerenciasCortes` heredando ACL de `Cortes`, comprueba que el archivo no tenga acceso público y no concede permisos ANYONE_WITH_LINK. La escritura de Feedbacks se confirma por lectura posterior; si falla, intenta revertir la fila y retirar el archivo huérfano. Se conserva compatibilidad con clientes anteriores que envían Data URL.
 - Services/Test/SuggestionImageSecurity.js: suite de 25 escenarios de UI, validación, MIME/extensión, ACL, fallo cerrado, idempotencia y rollback.
 ================================================================================
+
+
+================================================================================
+AUG-080 — SERIALIZACIÓN E IDEMPOTENCIA DE SUGERENCIAS
+Fecha: 2026-11-12
+Archivos: ui.js; Services/feedback.js; Services/Test/SuggestionConcurrencyIdempotency.js; Services/Test/README.md; lista_beta.txt; Tareas_pendientes_parte5.txt; Tareas.txt; Auditoría.txt; checkpoint.md.
+- UI crea y conserva suggestionOperationId mientras el payload no cambia; un payload editado recibe una clave nueva.
+- FEEDBACK valida y persiste la clave, utiliza SHA-256 sobre la identidad y contenido normalizado, devuelve el registro existente en reintentos idénticos y rechaza reutilización de clave con datos distintos.
+- La sección crítica de inserción queda bajo LockService hasta flush; se conserva la compatibilidad con el índice lógico previo para clientes antiguos.
+- Rollback de fila se verifica antes de retirar una imagen; si el estado no puede verificarse, el archivo se conserva para reconciliación.
+- Se añade suite reproducible de 19 escenarios y guía de validación Beta aislada.
+Validación registrada por separado: 19/19 PASS en harness V8 adaptado; parsing V8 de backend, modal y suite PASS. Node CLI e integración real Apps Script/Drive/Spreadsheet no se afirman como ejecutados.
+================================================================================

@@ -1004,3 +1004,14 @@ Se implementan variantes PNG locales 300/800/1600 px sin modificar la URL fuente
 Validación local: IndexedDBTransactions.js 44/44 PASS en runtime V8 adaptado con las fuentes vigentes de offline.js y el harness de la suite; ImageResolutionVariants.js PASS en runtime V8 adaptado. La ejecución literal Node CLI no se realizó porque el entorno no dispone de checkout local y el contenedor no resuelve DNS de GitHub.
 Beta pendiente: IndexedDB y Canvas reales en navegador, transparencia PNG por píxeles, comportamiento visual online/offline y verificación de calidad con imágenes representativas. No se modificaron datos ni servicios productivos.
 ================================================================================
+
+
+================================================================================
+AUG-080 — SERIALIZAR E IDEMPOTENTIZAR LA INSERCIÓN DE SUGERENCIAS
+Fecha: 2026-11-12.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Implementación: clave suggestionOperationId estable por envío, huella SHA-256 del payload, replay idempotente, compatibilidad con clientes anteriores, lock alrededor de lectura/copia/escritura/flush y recuperación conservadora de imagen ante rollback no verificable.
+Evidencia local: suite V8 adaptada 19/19 PASS; parsing V8 de backend, modal y suite PASS. Node CLI e integración real no ejecutados en este entorno.
+Beta: concurrencia Apps Script, timeout/respuesta perdida, idempotencia con Drive/Spreadsheet aislados y rollback real pendientes en lista_beta.txt.
+Siguiente: AUG-081.
+================================================================================

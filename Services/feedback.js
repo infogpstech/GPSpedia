@@ -1615,19 +1615,57 @@ function handleGetActivityLogs(payload) {
 
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
-function buildCutSuggestionRequestFingerprint_(details, proposedValues, imgBase64) {
+function buildCutSuggestionRequestFingerprint_(request) {
     const source = JSON.stringify({
-        details: String(details || ""),
-        proposedValues: proposedValues || {},
-        image: String(imgBase64 || "")
+        reportId: String(request.reportId || ""),
+        vehicleId: String(request.vehicleId || ""),
+        corteIndex: Number(request.corteIndex),
+        userId: String(request.userId || ""),
+        details: String(request.details || ""),
+        proposedValues: request.proposedValues || {},
+        imageSha256: String(request.imageSha256 || "")
     });
-    let hashA = 2166136261, hashB = 2246822519;
-    for (let i = 0; i < source.length; i++) {
-        const code = source.charCodeAt(i);
-        hashA = Math.imul(hashA ^ code, 16777619) >>> 0;
-        hashB = Math.imul(hashB ^ (code + i), 3266489917) >>> 0;
-    }
-    return source.length + ":" + hashA.toString(16) + ":" + hashB.toString(16);
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, source);
+    return Array.from(digest).map(value => (value & 255).toString(16).padStart(2, "0")).join("");
+}
+
+function findCutSuggestionByOperation_(sheet, operationId) {
+    const id = String(operationId || "").trim();
+    if (!sheet || !id || sheet.getLastRow() < 2) return null;
+    const rows = sheet.getDataRange().getValues();
+    const matches = [];
+    rows.slice(1).forEach((row, index) => {
+        const raw = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+        if (!raw) return;
+        let record;
+        try { record = JSON.parse(raw); }
+        catch (error) {
+            if (raw.includes('"suggestionOperationId":"' + id + '"')) {
+                throw new Error("La operación de sugerencia existe en un registro incompleto; requiere revisión antes de reintentar.");
+            }
+            return;
+        }
+        if (record && record.subType === "suggestion_cut" &&
+            String(record.suggestionOperationId || "") === id) {
+            matches.push({ rowNumber: index + 2, record: record });
+        }
+    });
+    if (matches.length > 1) throw new Error("El identificador de operación aparece duplicado en Feedbacks; requiere revisión.");
+    return matches.length ? matches[0] : null;
+}
+
+function buildCutSuggestionReplayResponse_(existing, reportId) {
+    return {
+        status: "success",
+        message: "La sugerencia ya estaba registrada; se devolvió el registro existente.",
+        reportId: reportId,
+        alreadySuggested: true,
+        alreadyProcessed: true,
+        suggestionOperationId: String(existing.record.suggestionOperationId || ""),
+        imageAttached: Boolean(existing.record.imageUrl),
+        imageUrl: String(existing.record.imageUrl || ""),
+        suggestionData: existing.record
+    };
 }
 
 function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, userId) {
@@ -1751,21 +1789,28 @@ function saveSuggestionImageAttachment_(image, vehicleId, corteIndex) {
     }
 }
 function handleSuggestCutChange(payload) {
-    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, imageAttachment, proposedValues } = payload || {};
+    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, imageAttachment, proposedValues, suggestionOperationId } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
     const normalizedCorteIndex = Number(corteIndex);
     if (!normalizedVehicleId || !userId || !userName || !Number.isInteger(normalizedCorteIndex) ||
         normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
         throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
+    const normalizedOperationId = String(suggestionOperationId || "").trim();
+    if (normalizedOperationId && !/^[A-Za-z0-9_-]{20,80}$/.test(normalizedOperationId)) {
+        throw new Error("Identificador de operación de sugerencia inválido.");
+    }
     const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
     const normalizedImage = normalizeSuggestionImageAttachment_(imageAttachment, imgBase64);
-    const imageDataUrl = normalizedImage ? String(imageAttachment != null ? imageAttachment.dataUrl || "" : imgBase64 || "") : "";
     const reportContext = validateCutSuggestionReportContext_(reportId, normalizedVehicleId, normalizedCorteIndex);
     const normalizedReportId = reportContext.reportId;
     const normalizedUserId = String(userId);
     const normalizedDetails = String(details || "");
-    const requestFingerprint = buildCutSuggestionRequestFingerprint_(normalizedDetails, normalizedProposedValues, imageDataUrl);
+    const requestFingerprint = buildCutSuggestionRequestFingerprint_({
+        reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
+        userId: normalizedUserId, details: normalizedDetails, proposedValues: normalizedProposedValues,
+        imageSha256: normalizedImage ? normalizedImage.sha256 : ""
+    });
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     let uploadedImage = null, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
@@ -1773,17 +1818,25 @@ function handleSuggestCutChange(payload) {
         const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
         pendingSheet = sheet;
-        const existing = findCutSuggestionByRequest_(sheet, normalizedReportId, normalizedVehicleId, normalizedCorteIndex, normalizedUserId);
-        if (existing) {
-            if (!existing.record.requestFingerprint || existing.record.requestFingerprint !== requestFingerprint) {
-                throw new Error("El identificador del reporte ya fue utilizado con datos distintos; no se creó otra sugerencia.");
+        const existingByOperation = normalizedOperationId
+            ? findCutSuggestionByOperation_(sheet, normalizedOperationId) : null;
+        if (existingByOperation) {
+            const record = existingByOperation.record;
+            const sameOperation = String(record.reportId || "") === normalizedReportId &&
+                String(record.vehicleId || "").trim() === normalizedVehicleId &&
+                Number(record.corteIndex) === normalizedCorteIndex &&
+                String(record.userId || "") === normalizedUserId &&
+                String(record.requestFingerprint || "") === requestFingerprint;
+            if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra sugerencia.");
+            return buildCutSuggestionReplayResponse_(existingByOperation, normalizedReportId);
+        }
+        // Compatibilidad con clientes anteriores y formularios reabiertos después de perder la respuesta.
+        const existingByRequest = findCutSuggestionByRequest_(sheet, normalizedReportId, normalizedVehicleId, normalizedCorteIndex, normalizedUserId);
+        if (existingByRequest) {
+            if (!existingByRequest.record.requestFingerprint || existingByRequest.record.requestFingerprint !== requestFingerprint) {
+                throw new Error("El reporte ya tiene una sugerencia con datos distintos; no se creó otra sugerencia.");
             }
-            return {
-                status: "success", message: "La sugerencia ya estaba registrada; se devolvió el registro existente.",
-                reportId: normalizedReportId, alreadySuggested: true,
-                imageAttached: Boolean(existing.record.imageUrl), imageUrl: String(existing.record.imageUrl || ""),
-                suggestionData: existing.record
-            };
+            return buildCutSuggestionReplayResponse_(existingByRequest, normalizedReportId);
         }
         const createdAt = new Date().toISOString();
         const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1;
@@ -1796,7 +1849,9 @@ function handleSuggestCutChange(payload) {
         if (normalizedImage) uploadedImage = saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex);
         const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
-            subType: "suggestion_cut", schemaVersion: 2, reportId: normalizedReportId,
+            subType: "suggestion_cut", schemaVersion: 3,
+            suggestionOperationId: normalizedOperationId || "",
+            reportId: normalizedReportId,
             vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex, userId: normalizedUserId,
             userName: String(userName), createdAt, imageUrl: imageMetadata ? imageMetadata.imageUrl : "",
             imageFileId: imageMetadata ? imageMetadata.imageFileId : "", imageName: imageMetadata ? imageMetadata.imageName : "",
@@ -1813,19 +1868,32 @@ function handleSuggestCutChange(payload) {
         rowCommitted = true;
         result = {
             status: "success", message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
-            reportId: normalizedReportId, imageAttached: Boolean(imageMetadata),
+            reportId: normalizedReportId, suggestionOperationId: normalizedOperationId,
+            imageAttached: Boolean(imageMetadata),
             imageUrl: imageMetadata ? imageMetadata.imageUrl : "", suggestionData: suggestionRecord
         };
         uploadedImage = null;
     } catch (error) {
+        let rollbackConfirmed = false;
         if (!rowCommitted && pendingSheet && pendingRowNumber) {
             try {
-                pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS.Usuario, 1, 3).clearContent();
+                const pendingRange = pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS.Usuario, 1, 3);
+                pendingRange.clearContent();
                 if (COLS_FEEDBACKS["Se resolvio"]) pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS["Se resolvio"]).clearContent();
                 SpreadsheetApp.flush();
-            } catch (rollbackError) { console.error("No se pudo revertir completamente la fila de sugerencia:", rollbackError); }
+                const cleared = pendingRange.getValues()[0].every(value => value === "" || value === null);
+                const statusCleared = !COLS_FEEDBACKS["Se resolvio"] ||
+                    pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS["Se resolvio"]).getValue() === "";
+                rollbackConfirmed = cleared && statusCleared;
+                if (!rollbackConfirmed) console.error("La reversión de la fila de sugerencia no pudo confirmarse; se conserva la imagen para evitar romper una referencia persistida.");
+            } catch (rollbackError) {
+                console.error("No se pudo confirmar la reversión de la fila de sugerencia:", rollbackError);
+            }
         }
-        if (!rowCommitted) trashReportImageUpload_(uploadedImage);
+        if (!rowCommitted && uploadedImage && rollbackConfirmed) trashReportImageUpload_(uploadedImage);
+        else if (!rowCommitted && uploadedImage && !rollbackConfirmed) {
+            console.error("La imagen de sugerencia se conserva para reconciliación porque el estado de la fila no pudo verificarse.");
+        }
         throw error;
     } finally { lock.releaseLock(); }
     logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, JSON.stringify(result.suggestionData));
