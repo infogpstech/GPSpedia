@@ -196,3 +196,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: alinea maxlength y etiquetas de creación/edición; corrige el prompt de prevención de 100 a 700 caracteres y valida los campos antes de enviar la edición.
 - Services/Test/PysCreationIntegrity.js: amplía cobertura de 25 a 43 escenarios para límites, tipos, HTML vacío, checkbox, URLs y edición.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-086 — PROTEGER ESCRITURAS DE SOLUCIÓN Y PREVENCIÓN PyS
+- Services/feedback.js: añade withPysMutationLock_ con ScriptLock y detección de lock ya adquirido; serializa lectura, comprobación de estado, escritura y read-back.
+- handleAddSolution escribe las columnas Se soluciono/Solucion en una operación conjunta y rechaza estados inconsistentes.
+- handleAddPrevention solo escribe si el campo está vacío.
+- Ambas acciones reconocen reintentos idénticos como éxito recuperado y devuelven conflicto explícito PYS_CONFLICT ante contenido diferente, sin sobrescribir.
+- ui.js: gestiona respuesta conflict, informa, refresca el catálogo PyS y no presenta conflicto como éxito.
+- Services/Test/PysCreationIntegrity.js: agrega cinco escenarios de replay, conflictos, estado incoherente, lock ya adquirido y liberación tras fallo; suite acumulada 48 escenarios.
+================================================================================

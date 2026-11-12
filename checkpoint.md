@@ -1416,3 +1416,21 @@ Archivos modificados: Services/feedback.js, ui.js, Services/Test/PysCreationInte
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Siguiente tarea: AUG-086 — evitar sobrescrituras concurrentes de solución y prevención.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-086 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Tarea: evitar sobrescrituras concurrentes de solución y prevención PyS.
+Implementación:
+- withPysMutationLock_ serializa las mutaciones con ScriptLock y evita adquisición anidada cuando hasLock() indica que la envoltura compartida ya posee el lock.
+- handleAddSolution vuelve a leer el estado dentro de la sección crítica; exige coherencia entre Se soluciono y Solucion; escribe ambas columnas en conjunto y verifica read-back.
+- handleAddPrevention solo escribe si sigue vacío y verifica read-back.
+- Reintentos idénticos devuelven success/recovered; contenido distinto devuelve conflict/PYS_CONFLICT sin sobrescribir. Estado inconsistente se rechaza.
+- ui.js muestra el conflicto, cierra la vista obsoleta y refresca PyS.
+Pruebas locales: PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS; sintaxis backend/modal UI PASS en harness V8 adaptado.
+Pendiente Beta: concurrencia real Apps Script/Spreadsheet, timeout real y navegador; pasos en lista_beta.txt. No se desplegó ni se modificaron datos productivos.
+Archivos: Services/feedback.js, ui.js, Services/Test/PysCreationIntegrity.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, Tareas.txt, checkpoint.md, ChangesLogs.txt, Auditoría.txt y lista_beta.txt.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Siguiente tarea: AUG-087 — evitar consultas PyS redundantes y gestionar frescura de caché.
+================================================================================

@@ -430,6 +430,7 @@ AUG-085 — Unificar validación de campos y URL de vídeo PyS
   3. Añadir clave de operación o condición de estado para que reintentos no creen sobrescrituras; devolver conflicto explícito cuando otro usuario ya actualizó.
   4. Mantener coherencia entre columna Se soluciono, Solucion y Prevención.
   5. Probar dos usuarios con modales abiertos, doble envío, respuesta perdida, registro ya actualizado y llamada directa.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Escrituras condicionales y reintentos idempotentes implementados; concurrencia real de Apps Script/Spreadsheet queda en lista_beta.txt.
 
 ### AUG-087 — Evitar consultas PyS redundantes y gestionar frescura de caché
 - **Origen:** H-AUD-011-007. **Prioridad:** Media.

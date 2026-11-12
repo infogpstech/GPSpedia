@@ -2182,42 +2182,76 @@ const expected=buildPysExpectedRow_(problemId,p,url,models);sheet.appendRow(expe
 }
 
 
-function handleAddSolution(payload) {
-    const { problemId, solucion, userId, userName } = payload || {};
-    const normalizedSolution = normalizePysField_(solucion, "La solución", PYS_SOLUTION_MAX_LENGTH, true, true);
-    if (!problemId || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
-    const sheet = getPysSheet_(false);
-    if (!sheet) throw new Error("Hoja pys no encontrada.");
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) throw new Error("No hay problemas registrados.");
-    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-    const matches = ids.map((id, index) => ({ id, index })).filter(item => String(item.id) === String(problemId));
-    if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID duplicado." : "Problema no encontrado.");
-    const row = matches[0].index + 2;
-    sheet.getRange(row, 4).setValue("x");
-    sheet.getRange(row, 5).setValue(normalizedSolution);
-    SpreadsheetApp.flush();
-    try { logUserActivity(userId, userName, "add_solution", problemId, "Se agregó una solución."); }
-    catch (logError) { console.error("No se pudo registrar la actividad de solución:", logError); }
-    return { status: "success", message: "Solución agregada con éxito." };
+function withPysMutationLock_(callback) {
+    const lock = LockService.getScriptLock();
+    const alreadyHeld = typeof lock.hasLock === "function" && lock.hasLock();
+    let acquired = false;
+    try {
+        if (!alreadyHeld) { lock.waitLock(15000); acquired = true; }
+        return callback();
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
 }
-
+function buildPysConflictResponse_(message) { return { status: "conflict", code: "PYS_CONFLICT", message }; }
+function findPysMutationRow_(sheet, problemId) {
+    const lastRow=sheet.getLastRow();
+    if(lastRow<2)throw new Error("No hay problemas registrados.");
+    const ids=sheet.getRange(2,1,lastRow-1,1).getValues().flat();
+    const matches=ids.map((id,index)=>({id,index})).filter(item=>String(item.id)===String(problemId));
+    if(matches.length!==1)throw new Error(matches.length?"El problema tiene un ID duplicado.":"Problema no encontrado.");
+    return matches[0].index+2;
+}
+function handleAddSolution(payload) {
+    const {problemId,solucion,userId,userName}=payload||{};
+    const normalizedSolution=normalizePysField_(solucion,"La solución",PYS_SOLUTION_MAX_LENGTH,true,true);
+    if(!problemId||!userId||!userName)throw new Error("problemId, solución y sesión verificada son requeridos.");
+    let shouldLog=false;
+    const result=withPysMutationLock_(()=>{
+        const sheet=getPysSheet_(false);
+        if(!sheet)throw new Error("Hoja pys no encontrada.");
+        const row=findPysMutationRow_(sheet,problemId),current=sheet.getRange(row,4,1,2).getValues()[0];
+        const marker=String(current[0]==null?"":current[0]).trim();
+        const storedSolution=current[1]==null||current[1]===""?"":normalizePysField_(current[1],"La solución registrada",PYS_SOLUTION_MAX_LENGTH,false,true);
+        const hasMarker=marker!=="",hasSolution=storedSolution!=="";
+        if(hasMarker!==hasSolution)throw new Error("El registro PyS tiene un estado inconsistente entre «Se solucionó» y «Solución»; requiere revisión.");
+        if(hasSolution){
+            if(storedSolution===normalizedSolution)return{status:"success",recovered:true,message:"La misma solución ya estaba registrada; se confirmó el resultado anterior."};
+            return buildPysConflictResponse_("Conflicto: otro colaborador ya registró una solución diferente. Actualiza los datos antes de continuar.");
+        }
+        sheet.getRange(row,4,1,2).setValues([["x",normalizedSolution]]);
+        SpreadsheetApp.flush();
+        const saved=sheet.getRange(row,4,1,2).getValues()[0];
+        if(String(saved[0]==null?"":saved[0]).trim()!=="x"||String(saved[1]==null?"":saved[1])!==normalizedSolution)throw new Error("No se pudo confirmar la solución PyS. Puedes reintentar el mismo contenido.");
+        shouldLog=true;
+        return{status:"success",message:"Solución agregada con éxito."};
+    });
+    if(shouldLog){try{logUserActivity(userId,userName,"add_solution",problemId,"Se agregó una solución.");}catch(logError){console.error("No se pudo registrar la actividad de solución:",logError);}}
+    return result;
+}
 function handleAddPrevention(payload) {
-    const { problemId, prevenir, userId, userName } = payload || {};
-    const normalizedPrevention = normalizePysField_(prevenir, "La prevención", PYS_SOLUTION_MAX_LENGTH, true, true);
-    if (!problemId || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
-    const sheet = getPysSheet_(false);
-    if (!sheet) throw new Error("Hoja pys no encontrada.");
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) throw new Error("No hay problemas registrados.");
-    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-    const matches = ids.map((id, index) => ({ id, index })).filter(item => String(item.id) === String(problemId));
-    if (matches.length !== 1) throw new Error(matches.length ? "El problema tiene un ID duplicado." : "Problema no encontrado.");
-    sheet.getRange(matches[0].index + 2, 6).setValue(normalizedPrevention);
-    SpreadsheetApp.flush();
-    try { logUserActivity(userId, userName, "add_prevention", problemId, "Se agregó una prevención."); }
-    catch (logError) { console.error("No se pudo registrar la actividad de prevención:", logError); }
-    return { status: "success", message: "Prevención agregada con éxito." };
+    const {problemId,prevenir,userId,userName}=payload||{};
+    const normalizedPrevention=normalizePysField_(prevenir,"La prevención",PYS_SOLUTION_MAX_LENGTH,true,true);
+    if(!problemId||!userId||!userName)throw new Error("problemId, prevención y sesión verificada son requeridos.");
+    let shouldLog=false;
+    const result=withPysMutationLock_(()=>{
+        const sheet=getPysSheet_(false);
+        if(!sheet)throw new Error("Hoja pys no encontrada.");
+        const row=findPysMutationRow_(sheet,problemId),current=sheet.getRange(row,6).getValue();
+        const storedPrevention=current==null||current===""?"":normalizePysField_(current,"La prevención registrada",PYS_SOLUTION_MAX_LENGTH,false,true);
+        if(storedPrevention){
+            if(storedPrevention===normalizedPrevention)return{status:"success",recovered:true,message:"La misma prevención ya estaba registrada; se confirmó el resultado anterior."};
+            return buildPysConflictResponse_("Conflicto: otro colaborador ya registró una prevención diferente. Actualiza los datos antes de continuar.");
+        }
+        sheet.getRange(row,6).setValue(normalizedPrevention);
+        SpreadsheetApp.flush();
+        const saved=sheet.getRange(row,6).getValue();
+        if(String(saved==null?"":saved)!==normalizedPrevention)throw new Error("No se pudo confirmar la prevención PyS. Puedes reintentar el mismo contenido.");
+        shouldLog=true;
+        return{status:"success",message:"Prevención agregada con éxito."};
+    });
+    if(shouldLog){try{logUserActivity(userId,userName,"add_prevention",problemId,"Se agregó una prevención.");}catch(logError){console.error("No se pudo registrar la actividad de prevención:",logError);}}
+    return result;
 }
 
 function handleAddTutorial(payload) {

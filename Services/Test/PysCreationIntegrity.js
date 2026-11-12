@@ -37,6 +37,7 @@ function makeSheet(rows,name,state,options){
                     if(name==="pys"&&options.failReferenceScan&&state.fileCreated&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed");
                     return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>((rows[row-1+r]||[])[col-1+c]??"")));
                 },
+                getValue(){return (rows[row-1]||[])[col-1]??"";},
                 getDisplayValues(){
                     if(name==="pys"&&options.failReferenceScan&&state.fileCreated&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed");
                     return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=((rows[row-1+r]||[])[col-1+c]??"");return v==null?"":String(v);}));
@@ -86,7 +87,7 @@ function buildHarness(feedback,ui,options={}){
             computeDigest:(algorithm,value)=>Array.from(crypto.createHash("sha256").update(Buffer.isBuffer(value)?value:Array.isArray(value)?Buffer.from(value):String(value)).digest())
         },
         DriveApp:{getFileById:id=>state.files[id]||null},
-        LockService:{getScriptLock:()=>({waitLock:()=>{state.lockWaits++;},releaseLock:()=>{state.lockReleases++;}})},
+        LockService:{getScriptLock:()=>({hasLock:()=>Boolean(options.lockAlreadyHeld),waitLock:()=>{state.lockWaits++;},releaseLock:()=>{state.lockReleases++;}})},
         SpreadsheetApp:{flush:()=>{state.flushCount++;if(options.failFlushAt===state.flushCount)throw new Error("Spreadsheet flush failed");}},
         getSafeSheet:name=>name==="pys"?state.pysSheet:name==="PysOperations"?state.opsSheet:null,
         getSpreadsheet:()=>({insertSheet:name=>{
@@ -338,6 +339,46 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.throws(()=>h.update({problemId:"isue-001",userRole:"Desarrollador",videoUrl:"https://youtu.be/dQw4w9WgXcQ"}),/solicitud de aprobación/);
         const linked=buildUpdateHarness(feedback,"https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         linked.update({problemId:"isue-001",userRole:"Desarrollador",videoUrl:"https://www.youtube.com/watch?v=dQw4w9WgXcQ"});
+    });
+    test("reintento idéntico de solución confirma éxito sin duplicar y otro contenido produce conflicto",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows});
+        const first=h.api.addSolution({problemId:"isue-001",solucion:"Revisar fusible",userId:"u1",userName:"T1"});
+        const retry=h.api.addSolution({problemId:"isue-001",solucion:"Revisar   fusible",userId:"u2",userName:"T2"});
+        const conflict=h.api.addSolution({problemId:"isue-001",solucion:"Cambiar módulo",userId:"u3",userName:"T3"});
+        assert.equal(first.status,"success");assert.equal(retry.status,"success");assert.equal(retry.recovered,true);
+        assert.equal(conflict.status,"conflict");assert.equal(conflict.code,"PYS_CONFLICT");
+        assert.equal(h.state.pysRows[1][3],"x");assert.equal(h.state.pysRows[1][4],"Revisar fusible");
+        assert.equal(h.state.lockWaits,3);assert.equal(h.state.lockReleases,3);
+    });
+    test("reintento idéntico de prevención es idempotente y contenido distinto no sobrescribe",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows});
+        const first=h.api.addPrevention({problemId:"isue-001",prevenir:"Asegurar conexión",userId:"u1",userName:"T1"});
+        const retry=h.api.addPrevention({problemId:"isue-001",prevenir:"Asegurar   conexión",userId:"u2",userName:"T2"});
+        const conflict=h.api.addPrevention({problemId:"isue-001",prevenir:"Usar otro cable",userId:"u3",userName:"T3"});
+        assert.equal(first.status,"success");assert.equal(retry.recovered,true);assert.equal(conflict.status,"conflict");
+        assert.equal(h.state.pysRows[1][5],"Asegurar conexión");
+        assert.equal(h.state.lockWaits,3);assert.equal(h.state.lockReleases,3);
+    });
+    test("rechaza estado incoherente entre indicador y solución sin mutar",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","x","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows});
+        assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:"Solución nueva",userId:"u",userName:"T"}),/estado inconsistente/);
+        assert.equal(h.state.pysRows[1][3],"x");assert.equal(h.state.pysRows[1][4],"");
+        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+    });
+    test("no vuelve a adquirir ni libera un ScriptLock que ya posee la envoltura externa",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows,lockAlreadyHeld:true});
+        const result=h.api.addPrevention({problemId:"isue-001",prevenir:"Revisar",userId:"u",userName:"T"});
+        assert.equal(result.status,"success");assert.equal(h.state.lockWaits,0);assert.equal(h.state.lockReleases,0);
+    });
+    test("libera el lock si falla la confirmación de escritura de solución",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows,failFlushAt:1});
+        assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:"Reparar",userId:"u",userName:"T"}),/Spreadsheet flush failed/);
+        assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
     });
     test("el formulario genera una clave aleatoria estable y la adjunta al payload",()=>{
         assert.match(ui,/pendingPysOperationId/);assert.match(ui,/pendingPysOperationSignature !== operationSignature/);

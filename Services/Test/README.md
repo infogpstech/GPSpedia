@@ -1008,3 +1008,12 @@ node "$TEST_TMP"
 La suite ampliada contiene 43 escenarios. Comprueba límites exactos y límite +1 (título 15, descripción 200, solución/previsión 700), tipos estrictos, normalización de espacios, contenido HTML enriquecido vacío, booleano estricto para `sinSolucion`, alta/edición, addSolution/addPrevention y URL YouTube mediante HTTPS, hosts/rutas/ID permitidos. Rechaza hosts falsos, esquemas inseguros, rutas no admitidas, puertos, credenciales y parámetros `v` duplicados. Las altas PyS continúan enviando vídeos únicamente mediante el flujo de aprobación; un enlace directo no elude la moderación.
 
 La suite usa dobles locales para Drive/Spreadsheet. En esta iteración se ejecutó en un harness V8 adaptado: 43/43 PASS. La suite de regresión `PysImageStorageRecovery.js` conserva 22/22 PASS. El comando Node CLI literal, Apps Script/Spreadsheet/Drive reales, DOM/navegador y YouTube API real no se ejecutaron; se reservan para Beta aislada.
+
+## AUG-086 — Escrituras concurrentes de solución y prevención PyS
+
+Ejecutar la suite con el comando ESM temporal indicado en AUG-085. La suite `PysCreationIntegrity.js` contiene ahora 48 escenarios y añade:
+- Escritura condicional bajo `LockService.getScriptLock()`, con detección de un lock ya adquirido por la envoltura compartida para evitar una adquisición anidada.
+- Escritura conjunta de `Se soluciono` y `Solucion`, lectura posterior y verificación de coherencia.
+- Prevención de sobrescritura; contenido idéntico se trata como replay idempotente y contenido distinto devuelve `status: "conflict"` / `PYS_CONFLICT`.
+- Rechazo de estado histórico incoherente, liberación del lock tras fallo y simulación de lock previamente adquirido.
+Validación local adaptada: PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS; sintaxis de backend y modal UI modificado PASS. La concurrencia real de Apps Script/Spreadsheet permanece en Beta aislada.

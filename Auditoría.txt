@@ -863,3 +863,18 @@ Corrección:
 Evidencia local: PysCreationIntegrity 43/43 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; parsing backend y bloques UI afectados PASS.
 Límites: Node CLI literal, Apps Script/Spreadsheet/Drive reales, DOM/navegador y YouTube API real no ejecutados. No se desplegó ni se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-011-006 / AUG-086 — 2026-11-12
+Estado: CORREGIDO EN FUENTES; concurrencia real diferida a Beta.
+Hallazgo: addSolution y addPrevention localizaban el registro y escribían sin exclusión crítica ni comprobación del valor vigente. Un formulario obsoleto podía reemplazar una contribución que otro usuario acababa de guardar.
+Corrección:
+- Se serializa la lectura, validación y escritura con ScriptLock. Si la envoltura compartida ya posee el mismo lock, hasLock() evita una adquisición anidada.
+- Solución: la columna Se soluciono y Solucion se verifican conjuntamente; ambas se escriben en un único setValues y se comprueba el read-back.
+- Prevención: se escribe únicamente si sigue vacía.
+- El mismo contenido reenviado se reconoce como éxito idempotente; contenido diferente devuelve status conflict / PYS_CONFLICT sin mutación. Estado histórico incoherente se rechaza.
+- UI diferencia conflicto de éxito y actualiza la vista tras la respuesta.
+Evidencia local: PysCreationIntegrity 48/48 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; parsing de backend y modal UI afectado PASS.
+Límites: no se ejecutó Node CLI literal, Apps Script concurrente real, Spreadsheet real ni navegador real. No se modificaron deployments ni datos productivos.
+================================================================================

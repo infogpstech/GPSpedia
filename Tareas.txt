@@ -1107,3 +1107,17 @@ Unificación de validación de campos y URL de vídeo PyS.
 - Node CLI literal, Apps Script/Spreadsheet/Drive reales, navegador/DOM y YouTube API real no ejecutados; quedan en Beta aislada. No se desplegó ni se modificaron datos productivos.
 Siguiente: AUG-086 — evitar sobrescrituras concurrentes de solución y prevención.
 ================================================================================
+
+
+================================================================================
+AUG-086 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Evitar sobrescrituras concurrentes de solución y prevención PyS.
+- Services/feedback.js: agrega withPysMutationLock_ con ScriptLock; detecta hasLock() para reutilizar una exclusión ya adquirida por la envoltura compartida y evitar deadlock por adquisición anidada.
+- handleAddSolution vuelve a leer el registro dentro del lock, valida coherencia entre Se soluciono/Solucion, escribe ambas columnas en una sola operación y verifica el read-back.
+- handleAddPrevention vuelve a leer el valor dentro del lock, escribe solo si está vacío y verifica la persistencia.
+- Reintento con el mismo contenido devuelve éxito recuperado sin volver a escribir; contenido distinto devuelve status=conflict y code=PYS_CONFLICT sin sobrescribir. Los estados inconsistentes se rechazan.
+- ui.js reconoce conflictos, informa al usuario, cierra el detalle obsoleto y refresca PyS. Tras éxito también actualiza los datos.
+- Pruebas locales adaptadas: PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS; sintaxis backend/modal UI PASS.
+- Node CLI literal, dos ejecuciones Apps Script simultáneas, Spreadsheet real y navegador real no ejecutados; quedan en Beta aislada. No se modificaron datos ni deployments productivos.
+Siguiente: AUG-087 — evitar consultas PyS redundantes y gestionar frescura de caché.
+================================================================================

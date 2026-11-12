@@ -759,3 +759,38 @@ PRUEBAS EN BETA AISLADA — copia FEEDBACK, Spreadsheet y Drive de prueba; nunca
 
 No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
 ================================================================================
+
+================================================================================
+AUG-086 — VALIDACIÓN BETA DE CONCURRENCIA EN SOLUCIÓN Y PREVENCIÓN PyS
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — FEEDBACK y Spreadsheet de prueba; nunca producción:
+1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de Services/Test/README.md.
+2. Abrir el mismo PyS desde dos cuentas/sesiones y enviar soluciones diferentes casi simultáneamente. Confirmar una única solución, columnas Se soluciono/Solucion coherentes y respuesta conflict explícita al segundo contenido.
+3. Repetir con prevención desde dos usuarios y comprobar que el segundo valor no sobrescribe el primero.
+4. Enviar dos veces el mismo contenido; confirmar que el segundo envío se resuelve como replay idempotente sin nueva escritura ni actividad duplicada.
+5. Simular timeout o pérdida de respuesta después del flush y reenviar el mismo contenido; debe devolver éxito recuperado.
+6. Probar llamada directa a addSolution/addPrevention con contenido distinto cuando ya existe valor; debe responder conflict sin mutar la fila.
+7. Sembrar estados históricos incoherentes (Se soluciono marcado sin Solucion y viceversa); la operación debe detenerse sin corregir ni sobrescribir silenciosamente.
+8. Verificar que el lock se libera tras errores de lectura, escritura y flush; comprobar que la envoltura compartida no provoca espera anidada.
+9. Registrar cuentas/roles de prueba, tiempos, payloads, respuestas y filas antes/después. No usar datos productivos.
+
+No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================

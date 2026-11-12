@@ -10320,9 +10320,18 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         addSolBtn.onclick = () => {
             const solText = window.prompt("Introduce la solución a este problema (máx 700 caracteres):");
             if (solText && solText.trim()) {
-                routeAction("addSolution", { ...getSessionPayload_(), problemId: item.id_problem, solucion: solText.trim() }).then(() => {
-                    alert("Solución agregada con éxito.");
+                routeAction("addSolution", { ...getSessionPayload_(), problemId: item.id_problem, solucion: solText.trim() }).then(async result => {
+                    if (result && result.status === "conflict") {
+                        showGlobalError(result.message || "Otro colaborador ya registró una solución diferente.");
+                        document.getElementById("modalDetalle").classList.remove("visible");
+                        await loadPysData({ refresh: true });
+                        renderPysSection();
+                        return;
+                    }
+                    if (!result || result.status !== "success") throw new Error("El servidor no confirmó la solución.");
+                    alert(result.recovered ? "La solución ya estaba registrada; no se duplicó." : "Solución agregada con éxito.");
                     document.getElementById("modalDetalle").classList.remove("visible");
+                    await loadPysData({ refresh: true });
                     renderPysSection();
                 }).catch(e => showGlobalError("Error: " + e.message));
             }
@@ -10338,9 +10347,18 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         addPrevBtn.onclick = () => {
             const prevText = window.prompt("Introduce recomendación preventiva (máx 700 caracteres):");
             if (prevText && prevText.trim()) {
-                routeAction("addPrevention", { ...getSessionPayload_(), problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
-                    alert("Prevención agregada con éxito.");
+                routeAction("addPrevention", { ...getSessionPayload_(), problemId: item.id_problem, prevenir: prevText.trim() }).then(async result => {
+                    if (result && result.status === "conflict") {
+                        showGlobalError(result.message || "Otro colaborador ya registró una prevención diferente.");
+                        document.getElementById("modalDetalle").classList.remove("visible");
+                        await loadPysData({ refresh: true });
+                        renderPysSection();
+                        return;
+                    }
+                    if (!result || result.status !== "success") throw new Error("El servidor no confirmó la prevención.");
+                    alert(result.recovered ? "La prevención ya estaba registrada; no se duplicó." : "Prevención agregada con éxito.");
                     document.getElementById("modalDetalle").classList.remove("visible");
+                    await loadPysData({ refresh: true });
                     renderPysSection();
                 }).catch(e => showGlobalError("Error: " + e.message));
             }
