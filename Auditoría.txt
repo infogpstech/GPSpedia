@@ -585,3 +585,15 @@ Impacto: el retroceso interno podía dejar una entrada redundante y hacer que At
 Corrección: sameNavigationState() considera equivalentes la ausencia y null para dimensiones opcionales, sin equiparar valores seleccionados diferentes. Se agregó regresión del fallback y la normalización del renderizador.
 Validación: regresión aislada de comparación y reconstrucción 3/3 PASS con Node v22.16.0. La suite completa ampliada a 18 escenarios queda pendiente de ejecución en el Codespace; no se declara como ejecutada.
 ================================================================================
+
+
+================================================================================
+H-AUD-069-002 — MEDIA — CORREGIDO EN FUENTES — 2026-11-11
+Origen: revisión de la matriz de ida/vuelta de AUG-069.
+Ubicaciones: navigationHistory.js, navigateBackToState(); ui.js, mostrarSeccion().
+Evidencia 1: el fallback de navigateBackToState() reemplazaba la entrada con el destino, pero guardaba como antecesor el metadata de la vista actual. Si el destino ya incluía previousState, el historial podía conservar como padre una vista profunda obsoleta y volver a ella al siguiente Atrás.
+Evidencia 2: mostrarSeccion() escribía el estado de sección en History API, pero no sincronizaba state.navigationState. Al entrar a una sección desde una vista profunda y después seleccionar una categoría/modelo, los botones internos podían capturar como destino el contexto de catálogo anterior en vez de la sección activa.
+Impacto: retorno interno inconsistente y posible ciclo/retroceso a una vista que el usuario ya había abandonado.
+Corrección: el fallback prioriza el antecesor explícito del destino; mostrarSeccion() sincroniza la sección activa y su antecesor tanto en navegación normal como al restaurar popstate.
+Validación: se añadieron regresiones de ancestry de fallback, sincronización de sección y deep link de búsqueda. La ejecución completa de 21 escenarios se declara pendiente hasta correr el entorno Node del proyecto.
+================================================================================
