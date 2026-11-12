@@ -85,18 +85,18 @@ function coordinatorPolicy_(service, operation) {
             addVehicleToProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
             removeVehicleFromProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
             updatePysItem: { read: feedbackRead, write: feedbackWrite },
-            updateTutorialItem: { read: feedbackRead, write: feedbackWrite },
+            updateTutorialItem: { read: [...feedbackRead, "TUTORIAL"], write: [...feedbackWrite, "TUTORIAL"] },
             suggestCutChange: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
             suggestYear: { read: feedbackRead, write: ["CORTES", ...feedbackWrite] },
-            addTutorial: { read: feedbackRead, write: feedbackWrite },
+            addTutorial: { read: [...feedbackRead, "TUTORIAL"], write: [...feedbackWrite, "TUTORIAL"] },
             sendContactForm: { write: ["FEEDBACK"] },
             replyToFeedback: { read: feedbackRead, write: feedbackWrite },
             markAsResolved: { read: feedbackRead, write: feedbackWrite },
             deleteFeedbackItem: { read: feedbackRead, write: feedbackWrite },
             clearActivityLogs: { read: feedbackRead, write: ["ACTIVITY"] },
-            submitVideoForApproval: { read: feedbackRead, write: feedbackWrite },
-            approveVideo: { read: feedbackRead, write: ["CORTES", ...feedbackWrite] },
-            rejectVideo: { read: feedbackRead, write: feedbackWrite }
+            submitVideoForApproval: { read: [...feedbackRead, "TUTORIAL"], write: feedbackWrite },
+            approveVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["CORTES", "TUTORIAL", ...feedbackWrite] },
+            rejectVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["TUTORIAL", ...feedbackWrite] }
         }
     };
 
