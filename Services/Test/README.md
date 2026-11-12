@@ -1252,3 +1252,14 @@ node --experimental-default-type=module Services/Test/ResponsiveFormsUsers.js
 ResponsiveFormsUsers.js comprueba el reflujo de la cuadrícula de add_cortes.html, sus tarjetas de coincidencias, grupos de imágenes, mensajes, acordeones, acciones y controles. Para users.html verifica el ajuste de las cuatro columnas de la tabla sin scroll horizontal, el texto envolvente, los botones de acción, los límites y scroll interno de modales, los tamaños táctiles y la adaptación en orientación horizontal de poca altura. También valida el balance estructural CSS y la sintaxis de los módulos JavaScript.
 
 La suite es una comprobación estática/estructural y no sustituye la inspección visual en navegador real. En Beta comprobar 320, 375, 420, 600, 760, 768, 1024 y 1440 px, orientación vertical/horizontal, zoom, teclado virtual, foco y ausencia de overflow horizontal global.
+
+
+## AUG-106 — Colisión inclusiva entre rangos de generaciones
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/YearRangeCollision.js
+```
+
+YearRangeCollision.js prueba la comparación inclusiva de rangos en el backend: superposición parcial, contención, contacto en ambos extremos, huecos, rangos anteriores/posteriores e intervalos inválidos. También comprueba que el handler autoritativo compara los dos extremos de ambos rangos y que la validación puntual de la UI conserva sus límites. Los casos son sintéticos; no consultan ni modifican Spreadsheet, endpoints ni datos productivos.
