@@ -18,7 +18,8 @@ function harness({addAllError=null,optionalError=null,putError=null,networkError
 function event(request={method:'GET',mode:'cors',url:'/main.js'}){return{request,waits:[],response:null,waitUntil(p){this.waits.push(Promise.resolve(p));},respondWith(p){this.response=Promise.resolve(p);}};}
 test('precache incluye el grafo transitivo y VinDifferentialEngine',async()=>{
  const h=harness(),e=event();h.listeners.install(e);await Promise.all(e.waits);
- for(const p of ['./main.js','./VinDifferentialEngine.js','./catalogStatus.js','./catalogRequest.js','./pys-data.js','./validationSubmission.js','./likeState.js','./youtubeUpload.js','./imageObjectUrlCache.js','./thumbnailCompressionQueue.js'])assert.ok(h.assets.includes(p),p);
+ for(const p of ['./main.js','./VinDifferentialEngine.js','./share-utils.js','./catalogStatus.js','./catalogRequest.js','./pys-data.js','./validationSubmission.js','./likeState.js','./youtubeUpload.js','./imageObjectUrlCache.js','./thumbnailCompressionQueue.js'])assert.ok(h.assets.includes(p),p);
+ assert.match(source,/gpsepedia-cache-v16/);
  assert.equal(h.skip,1);
 });
 test('cuota opcional no impide instalar App Shell',async()=>{
