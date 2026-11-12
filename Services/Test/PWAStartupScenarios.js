@@ -103,9 +103,9 @@ await run('primera instalación precarga el App Shell y el grafo de módulos', a
     const event = makeEvent();
     worker.listeners.install(event);
     await Promise.all(event.waits);
-    const assets = worker.cacheData.get('gpsepedia-cache-v15');
+    const assets = worker.cacheData.get('gpsepedia-cache-v16');
     assert.ok(assets, 'debe crear el caché de la versión actual');
-    for (const asset of ['./index.html', './main.js', './auth.js', './offline.js', './VinDifferentialEngine.js', './catalogRequest.js']) {
+    for (const asset of ['./index.html', './main.js', './auth.js', './offline.js', './VinDifferentialEngine.js', './catalogRequest.js', './share-utils.js']) {
         assert.ok(assets.has(asset), 'falta ' + asset);
     }
     assert.equal(worker.skipWaitingCalls, 1);
@@ -123,7 +123,7 @@ await run('actualización activa v15, elimina solo el caché anterior de GPSpedi
     await Promise.all(activateEvent.waits);
     assert.equal(worker.cacheData.has('gpsepedia-cache-v14'), false);
     assert.equal(worker.cacheData.has('another-app-cache'), true);
-    assert.equal(worker.cacheData.has('gpsepedia-cache-v15'), true);
+    assert.equal(worker.cacheData.has('gpsepedia-cache-v16'), true);
     assert.equal(worker.claimCalls, 1);
 });
 
