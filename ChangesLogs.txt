@@ -268,3 +268,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - style.css: el título ocupa el espacio flexible, conserva el contraste del botón en ambos temas y permite ajuste de línea en móviles.
 - Services/Test/PysAccordionTitle.js: seis verificaciones de contrato para texto, tema, flecha y viewport.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-092 — ESQUEMA, PERSISTENCIA Y AUTORIZACIÓN DE TUTORIAL
+- Services/feedback.js: alta y edición alineadas con hoja Tutorial A:G; extensión H Colaborador; IDs estables, validación de campos, deduplicación, reintentos y persistencia verificada. Se protegen referencias de vídeo pendientes por ID y por título histórico.
+- Services/catalog.js y Spreadsheet/GPSpedia_DB_columnas.md: mapa de ocho campos y documentación de la extensión sin reordenar columnas históricas.
+- ui.js: campos completos de alta/edición, detalle de imagen/vídeo y colaborador al final; alta reservada a Desarrollador y uso del ID estable en aprobación.
+- Services/Coordinator.js: exclusión compartida del recurso TUTORIAL entre alta, edición y flujo de aprobación.
+- Services/Test: TutorialIntegrity.js; ampliación de VideoApprovalPublishing.js y SharedMutationCoordinator.js; actualización del contrato de alta de tutorial en FeedbackWriteSecurity.js.
+- lista_beta.txt y Services/Test/README.md: pruebas de integración aislada y ejecución local documentadas.
+================================================================================
