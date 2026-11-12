@@ -276,7 +276,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-020-003. **Prioridad:** Media.
 - **Problema:** FEEDBACK, WRITE y ADMIN mantienen copias de helpers de carpetas, normalización, nombres canónicos y cargas de imágenes. La normalización Unicode y las estructuras de entrada no son idénticas; los cambios pueden divergir entre deployments independientes.
 - **Criterios:** definir un contrato común/versionado para getCortesRootFolder, getFolderCanonicalName, findOrCreateSubFolder, findOrCreateVehicleFolder, nombres de imágenes y uploadImageToDrive; si los proyectos Apps Script siguen separados, utilizar biblioteca compartida o fuente generada/versionada; documentar deliberadamente los contratos distintos de mapRowToObject; probar diacríticos, espacios, carpetas equivalentes, colisiones, renombrado automático, raíces inválidas e idempotencia de cargas.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; contrato local aprobado, comprobación visual real pendiente para Beta.
 
 ### AUG-137 — Retirar funciones huérfanas y markup de depuración obsoleto
 - **Origen:** H-AUD-020-004. **Prioridad:** Baja.
@@ -528,4 +528,15 @@ Se implementó la validación del par userId+sessionToken en AUTH, limpieza acot
 Pruebas locales: sintaxis, revocación, identidad cruzada, duplicados, idempotencia, expiración, cierre remoto, cambio de cuenta, overlays, rol Developer y ruteo: 32/32 PASS.
 Beta pendiente: pruebas funcionales reales, integración, concurrencia física LockService y deployments. No se ejecutaron endpoints operativos ni se modificaron datos productivos.
 La ficha original AUG-147 se conserva; esta adenda actualiza su estado sin borrar historial.
+================================================================================
+
+
+================================================================================
+AUG-100 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- Se verificó el sistema existente button-system.css y su inclusión única en index.html, users.html y add_cortes.html; los botones ordinarios estáticos ya utilizan .btn y variantes semánticas.
+- Se reforzaron los controles compactos a 40px y se integró aria-busy=true al estado loading.
+- Se creó Services/Test/ButtonSystemIntegrity.js con 9 escenarios de contrato; la documentación enumera las excepciones especializadas de UI que conservan estilos propios.
+- Validación automatizada local por contrato estático; no se ejecutó navegador real ni Node CLI en esta sesión. La revisión visual en temas/viewports queda para Beta.
+- Sin cambios de endpoints, permisos, datos ni deployments.
+Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-100.
 ================================================================================
