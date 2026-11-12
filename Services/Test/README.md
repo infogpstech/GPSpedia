@@ -1034,3 +1034,15 @@ La suite contiene 12 escenarios: reutilización dentro del TTL de cinco minutos,
 `pys-data.js` centraliza el estado y la caché local; conserva la clave histórica `gpsepedia_pys_cache` y agrega `gpsepedia_pys_cache_updated_at`. Los datos vencidos se muestran con aviso mientras se intenta actualizar. Si la red falla, se conserva la última colección y se comunica que puede estar desactualizada. Una invalidación durante una petición impide que una respuesta iniciada antes de la mutación sobrescriba el estado posterior.
 
 Validación local adaptada: PysDataCache 12/12 PASS; PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS. Node CLI literal, DOM/navegador, API desplegada y navegación real no se ejecutaron; se reservan para Beta aislada.
+
+
+## AUG-088 — Contexto anti-ciclo al asociar PyS desde un vehículo
+
+```bash
+TEST_TMP=Services/Test/PysNavigationContext.mjs
+cp Services/Test/PysNavigationContext.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite contiene seis pruebas de contrato: propagación de navOptions desde la tarjeta única y el carrusel, preservación al abrir el formulario de alta preasociada, reconstrucción del acordeón después de crear o asociar un PyS, y permanencia de la protección contextual sin alterar la relación persistida. DOM/navegador real y navegación móvil quedan para Beta aislada.

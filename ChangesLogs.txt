@@ -218,3 +218,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: reutiliza caché fresca en navegación; invalida después de alta, solución, prevención, edición y asociación; muestra aviso cuando los datos mostrados pueden estar obsoletos.
 - Services/Test/PysDataCache.js: 12 escenarios de TTL, concurrencia, invalidación, fallos de red, caché vacía/corrupta, backoff y contrato UI.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-088 — PRESERVAR CONTEXTO ANTI-CICLO EN ASOCIACIONES PyS
+- ui.js: propaga navOptions desde las tarjetas de asociación existentes, tanto en vista única como en carrusel.
+- openAssociateExistingProblemModal recibe y conserva navOptions al abrir el formulario de creación preasociada y al reconstruir el acordeón tras asociar.
+- openAddProblemModal acepta navOptions y lo utiliza tras el registro de un problema preasociado.
+- No se modifica la relación persistida; la supresión del acordeón continúa dependiendo del origen contextual pys.
+- Se añade Services/Test/PysNavigationContext.js con seis pruebas de contrato UI.
+================================================================================

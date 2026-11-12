@@ -1453,3 +1453,17 @@ Archivos: pys-data.js, state.js, ui.js, Services/Test/PysDataCache.js, Services/
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Siguiente: AUG-088 — mantener el contexto anti-ciclo después de asociar problemas desde un vehículo anidado.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-088 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Tarea: mantener el contexto anti-ciclo después de asociar problemas desde un vehículo anidado.
+- Ambas tarjetas de asociación pasan navOptions a openAssociateExistingProblemModal.
+- El modal existente conserva navOptions al abrir el alta preasociada y al reconstruir el acordeón tras asociar.
+- La guarda originModal === 'pys' sigue ocultando el acordeón; no se altera la relación persistida.
+Validación local: seis pruebas de contrato PASS. DOM/navegador real pendiente en lista_beta.txt. Sin despliegues ni cambios de datos productivos.
+Archivos: ui.js, Services/Test/PysNavigationContext.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, Tareas.txt, checkpoint.md, ChangesLogs.txt y lista_beta.txt.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Siguiente: AUG-089 — preservar pila modal y posición de navegación en recorridos PyS–vehículo.
+================================================================================

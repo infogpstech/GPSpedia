@@ -460,7 +460,7 @@ AUG-085 — Unificar validación de campos y URL de vídeo PyS
   2. Mantener oculto el acordeón cuando el vehículo fue abierto desde PyS, incluso después de una asociación exitosa.
   3. No borrar ni alterar la relación persistida para evitar ciclos; controlar únicamente la navegación contextual.
   4. Probar ambas rutas (problema nuevo y existente) desde un vehículo abierto desde PyS y comprobar que no reaparece el enlace recursivo.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Se propagan las opciones de navegación al asociar un PyS existente y al crear uno preasociado; pruebas de contrato 6/6 PASS. DOM/navegador real queda en Beta aislada.
 
 ### AUG-089 — Preservar la pila modal y la posición de navegación en recorridos PyS–vehículo
 - **Hallazgos origen:** H-AUD-012-002 y H-AUD-012-003.

@@ -828,3 +828,36 @@ PRUEBAS EN BETA AISLADA — nunca producción:
 
 No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
 ================================================================================
+
+
+================================================================================
+AUG-088 — VALIDACIÓN BETA DE CONTEXTO ANTI-CICLO PyS–VEHÍCULO
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — cuenta y datos de prueba:
+1. Abrir un detalle PyS, seleccionar un vehículo relacionado y comprobar que el acordeón «Posibles problemas» no aparece.
+2. Desde ese vehículo, asociar un PyS existente mediante la tarjeta «Agregar Problema»; verificar que el acordeón continúa oculto después de guardar.
+3. Repetir con el flujo «Agregar problema» → creación preasociada; verificar que el acordeón no reaparece al completar el registro.
+4. Confirmar que la relación vehículo–PyS se guarda y permanece visible al abrir el vehículo desde la navegación normal, fuera del origen PyS.
+5. Repetir con un PyS y vehículo diferentes; probar vista de tarjeta única y carrusel.
+6. Registrar capturas antes/después y confirmar que no se alteraron asociaciones ajenas.
+
+No desplegar a producción ni modificar datos productivos.
+================================================================================

@@ -3162,7 +3162,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             addPysCard.className = "card card-create-pys-assoc";
             addPysCard.style.cssText = "width: 140px; height: 120px; padding: 10px; margin: 0;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
-            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem, navOptions);
             singleCardContainer.appendChild(addPysCard);
 
             contentWrapper.appendChild(singleCardContainer);
@@ -3185,7 +3185,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             addPysCard.className = "card card-create-pys-assoc";
             addPysCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin-right: 20px;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
-            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem, navOptions);
             carouselTrack.appendChild(addPysCard);
 
             carouselContainer.appendChild(carouselTrack);
@@ -9374,7 +9374,7 @@ export async function renderPysSection() {
 }
 
 /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
-export function openAddProblemModal(preAssociatedVehicle = null) {
+export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}) {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
 
@@ -9636,7 +9636,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             }
             if (preAssociatedVehicle && preAssociatedVehicle.id) {
                 const panel = document.getElementById("detalleCompleto");
-                if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle);
+                if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle, navOptions);
             }
         } catch (err) {
             console.error(err);
@@ -11437,7 +11437,7 @@ export async function loadAndRenderInbox() {
 }
 
 /* TAREA 9.2: MODAL PARA ASOCIAR PROBLEMAS EXISTENTES O NUEVOS DESDE EL VEHÍCULO */
-export async function openAssociateExistingProblemModal(vehicle) {
+export async function openAssociateExistingProblemModal(vehicle, navOptions = {}) {
     const existing = document.getElementById("assoc-existing-pys-modal");
     if (existing) existing.remove();
 
@@ -11478,7 +11478,7 @@ export async function openAssociateExistingProblemModal(vehicle) {
     // Botón para agregar un problema nuevo pre-asociado
     content.querySelector("#btn-create-new-pys-for-vehicle").onclick = () => {
         closeModal();
-        openAddProblemModal(vehicle);
+        openAddProblemModal(vehicle, navOptions);
     };
 
     // Obtener problemas de la sección PyS
@@ -11573,7 +11573,7 @@ export async function openAssociateExistingProblemModal(vehicle) {
                         // Actualizar inmediatamente el modal de detalle del vehículo
                         const panel = document.getElementById("detalleCompleto");
                         if (panel) {
-                            renderPosiblesProblemasAccordion(panel, vehicle);
+                            renderPosiblesProblemasAccordion(panel, vehicle, navOptions);
                         }
                     }
                 } catch (err) {

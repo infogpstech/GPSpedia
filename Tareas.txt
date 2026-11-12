@@ -1135,3 +1135,14 @@ Evitar consultas PyS redundantes y gestionar frescura de caché.
 - Node CLI literal, API desplegada, DOM/navegador y navegación real no ejecutados; quedan en Beta aislada. No se desplegó ni se modificaron datos productivos.
 Siguiente: AUG-088 — mantener el contexto anti-ciclo después de asociar problemas desde un vehículo anidado.
 ================================================================================
+
+
+================================================================================
+AUG-088 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- ui.js: ambas tarjetas «Agregar Problema» reenvían navOptions al modal de asociación.
+- openAssociateExistingProblemModal conserva navOptions al abrir openAddProblemModal para crear un problema preasociado.
+- Tras asociar o crear, la reconstrucción del acordeón recibe el mismo contexto.
+- La protección anti-ciclo sigue dependiendo de originModal === 'pys'; no se modifica la relación persistida.
+- Seis pruebas de contrato UI PASS; DOM/navegador real pendiente en Beta aislada. No se desplegó ni se modificaron datos productivos.
+Siguiente: AUG-089 — preservar pila modal y posición de navegación en recorridos PyS–vehículo.
+================================================================================
