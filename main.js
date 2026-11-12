@@ -320,14 +320,17 @@ async function initializeApp() {
         if (stale.length === 1 && fresh.length === 1 && currentStack[currentStack.length - 1] === stale[0][0]) {
             const [oldId] = stale[0];
             const element = fresh[0];
-            const id = 'info-modal-' + (++overlaySequence);
+            const id = element.dataset.gpOverlayHistoryId || 'info-modal-' + (++overlaySequence);
+            const closeOverlay = typeof element.__gpOverlayClose === 'function'
+                ? element.__gpOverlayClose
+                : () => {
+                    element.style.display = 'none';
+                    element.classList.remove('visible');
+                };
             overlayElements.delete(oldId);
             element.dataset.gpOverlayHistoryId = id;
             overlayElements.set(id, element);
-            overlayHistory.replaceTop(id, () => {
-                element.style.display = 'none';
-                element.classList.remove('visible');
-            });
+            overlayHistory.replaceTop(id, closeOverlay);
             return;
         }
 
@@ -340,10 +343,13 @@ async function initializeApp() {
             element.dataset.gpOverlayHistoryId = id;
             overlayElements.set(id, element);
             if (!overlayHistory.has(id)) {
-                overlayHistory.register(id, () => {
-                    element.style.display = 'none';
-                    element.classList.remove('visible');
-                });
+                const closeOverlay = typeof element.__gpOverlayClose === 'function'
+                    ? element.__gpOverlayClose
+                    : () => {
+                        element.style.display = 'none';
+                        element.classList.remove('visible');
+                    };
+                overlayHistory.register(id, closeOverlay);
             }
         });
     }
