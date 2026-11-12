@@ -694,7 +694,7 @@ ro y pruebas locales aprobadas, navegador real pendiente para Beta.
   2. Mantener la decisión de no incluir ni reactivar filtros rápidos.
   3. Probar blur, limpiar búsqueda, abrir resultado, modal, navegación atrás y cambio de sección.
   4. Verificar ausencia de errores y ausencia de DOM residual.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; referencias residuales retiradas y pruebas locales aprobadas, navegador real pendiente para Beta.
 
 
 ================================================================================
@@ -717,6 +717,8 @@ Implementación: acción AUTH logout; revocación individual por token exacto; l
 Archivos: auth.js, api-config.js, Services/Auth.js y Services/Test/Auth.js. La copia de prueba conserva su Spreadsheet ID.
 Pruebas: 7 casos backend y 4 frontend con dobles locales PASS. No se realizaron pruebas en Apps Script real.
 Pendiente: parser sintáctico integral, Code Review independiente y deployments aislados para validación funcional. No promover a COMPLETADA hasta contar con evidencia.
+================================================================================
+
 ================================================================================
 
 
@@ -1090,4 +1092,15 @@ AUG-098 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - Pruebas locales en harness adaptado: SearchQueryXssIntegrity 8/8; GlobalSearch 21/21; NavigationVinCollection 6/6; VinVersionPresentation 11/11 PASS. Los escenarios cubren payloads HTML/SVG/eventos, comillas, ampersand, Unicode, estados vacíos, deep links codificados, navegación y delimitadores VIN.
 - No se ejecutó Node CLI ni navegador real. Beta pendiente: búsquedas reales con teclado/táctil, historial, resultados, estados vacíos, enlaces compartidos, secuencias porcentuales inválidas, navegación atrás y viewports. No se modificaron datos ni se desplegó a producción.
 Siguiente: AUG-099 — Eliminar referencias residuales a filtros rápidos cancelados.
+================================================================================
+
+
+================================================================================
+AUG-099 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- main.js: retiradas las referencias a toggleFiltersBtn y filtersBar del handler blur, además de comentarios residuales de la barra de filtros rápidos cancelada.
+- Inventario: index.html no contiene los IDs cancelados; style.css no contiene selectores de filtros rápidos; ui.js/navigation.js no conservan controles equivalentes. Las coincidencias de "filter" restantes corresponden a Array.filter, filtros de archivos de reemplazo o propiedades CSS filter, no a filtros rápidos de búsqueda.
+- Se conserva la búsqueda directa, el botón para limpiar, la sincronización de estado focus/blur y la clase search-active mientras un modal está visible.
+- Services/Test/SearchFilterCleanup.js: 8/8 PASS, incluidos blur con consulta vacía, consulta activa y modal visible; sin ReferenceError.
+- No se ejecutó Node CLI ni navegador real. Beta pendiente: input, limpiar, blur, navegación, modal, teclado virtual y viewports. No se reactivaron filtros ni se modificaron datos productivos.
+Siguiente: recuperar la primera tarea canónica pendiente posterior a AUG-099; ignorar identificadores duplicados anulados por las adendas del backlog.
 ================================================================================
