@@ -283,6 +283,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - 2026-11-08 — AUD-T-009: nueva AUG-074; adenda a AUG-052. Inventario: 80 IDs únicos dentro de AUG-001 a AUG-081; AUG-015 continúa ausente.
 
 ================================================================================
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; detección iPadOS de escritorio, metadatos/icono Apple, instrucciones manuales y conservación del flujo estándar implementados. Suite adaptada 20/20 PASS; Node CLI literal y validación en dispositivos reales pendientes de Beta.
 
 ### AUG-075 — Autenticar reportes y sugerencias y derivar identidad desde sesión
 - **Origen:** H-AUD-010-001. **Prioridad:** Alta.
