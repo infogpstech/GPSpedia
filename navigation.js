@@ -137,7 +137,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
                 }
             } catch (e) {}
         }
-        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        return str.split(/[,\/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
     }
 
     /* AUG-050: búsqueda VIN por classKey, con ambigüedad explícita */
