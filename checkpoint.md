@@ -765,3 +765,15 @@ YouTubeUploadDraftRecovery: 3/3 PASS en runtime V8 adaptado:
 Parsing sintáctico de youtubeUpload.js: PASS en V8 adaptado, retirando import/export para evaluación aislada.
 El extractor de la prueba se corrigió para conservar async. El runner V8 recibió un adaptador queueMicrotask basado en Promise.resolve().then(), ya que ese global no está expuesto en el runtime aislado de esta ejecución.
 No es ejecución Node CLI en Codespaces ni IndexedDB real del navegador. La simulación local de la lógica y los contratos aprobó; persistencia real y comportamiento de navegador quedan para Beta.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3I — RECUPERACIÓN DE TRANSFERENCIA COMPLETADA SIN FILE — 2026-11-12
+Hallazgo: form.onsubmit exigía siempre que el registro recuperado conservara uploadRecord.file, incluso cuando videoId era válido y bytesUploaded alcanzaba fileSize. Esto impedía recuperar/enviar la aprobación si el objeto File no podía restaurarse desde IndexedDB, aunque no fuera necesario repetir la transferencia.
+Corrección: helper hasCompletedYouTubeUpload_ valida ID final de 11 caracteres, tamaño positivo finito y bytesUploaded >= fileSize. La validación inicial del formulario y la comprobación de identidad permiten ausencia de File solo cuando se cumplen esas condiciones. El flujo existente reconoce el videoId y omite uploadYouTubeFileResumable_, continuando con submitVideoForApproval.
+Prueba nueva: Services/Test/YouTubeUploadCompletedRecordRecovery.js, cubre registro uploaded sin File, estado interrupted posterior a transferencia completa, ausencia de ID, offset incompleto y tamaños inválidos, además del contrato del formulario.
+Archivos modificados: youtubeUpload.js, Services/Test/YouTubeUploadCompletedRecordRecovery.js, Services/Test/README.md.
+Estado: pendiente ejecutar pruebas locales adaptadas, parsing y revisión de diff.
+ChangesLogs.txt no se modifica por rotación normativa. Rama base intacta.
+Siguiente acción: validar seis escenarios; después continuar con estados de persistencia IndexedDB. No iniciar AUG-069.
+================================================================================

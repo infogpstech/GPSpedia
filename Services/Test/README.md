@@ -751,3 +751,14 @@ cp Services/Test/YouTubeUploadDraftRecovery.js Services/Test/YouTubeUploadDraftR
 ```
 
 Comprueba la búsqueda IndexedDB de operaciones cuyo referenceId es null y conserva la búsqueda por referencia para contenido asociado. La prueba simula IndexedDB; no sustituye la validación de persistencia en navegador real.
+
+
+## AUG-068 — Recuperación de transferencia completada sin objeto File
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/YouTubeUploadCompletedRecordRecovery.js Services/Test/YouTubeUploadCompletedRecordRecovery.mjs && node Services/Test/YouTubeUploadCompletedRecordRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCompletedRecordRecovery.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+Comprueba que un registro con ID final válido y todos los bytes confirmados puede continuar al envío/recuperación de aprobación aunque el objeto File no esté disponible. Rechaza registros incompletos, sin ID o con tamaño inválido.

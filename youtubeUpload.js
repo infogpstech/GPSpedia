@@ -126,6 +126,16 @@ async function deleteYouTubeUploadRecord_(opVideoId) {
     });
 }
 
+function hasCompletedYouTubeUpload_(record) {
+    if (!record) return false;
+    const videoId = String(record.videoId || "");
+    const fileSize = Number(record.fileSize);
+    const bytesUploaded = Number(record.bytesUploaded);
+    return /^[A-Za-z0-9_-]{11}$/.test(videoId) &&
+        Number.isFinite(fileSize) && fileSize > 0 &&
+        Number.isFinite(bytesUploaded) && bytesUploaded >= fileSize;
+}
+
 function parseYouTubeUploadRange_(rangeHeader) {
     const match = String(rangeHeader || "").match(/bytes=0-(\d+)/i);
     return match ? Number(match[1]) + 1 : 0;
@@ -491,14 +501,15 @@ export function openYouTubeUploadModal(options = {}) {
         }
 
         const file = recoveredUploadRecord ? recoveredUploadRecord.file : (fileInput.files && fileInput.files[0]);
-        if (!file) {
+        const recoveredAlreadyUploaded = hasCompletedYouTubeUpload_(recoveredUploadRecord);
+        if (!file && !recoveredAlreadyUploaded) {
             alert("Por favor selecciona un archivo de vídeo.");
             return;
         }
         const title = String(recoveredUploadRecord ? recoveredUploadRecord.title : titleInput.value).trim();
         const description = String(recoveredUploadRecord ? recoveredUploadRecord.description : descInput.value).trim();
         if (!title) { alert("Por favor ingresa un título para el vídeo."); return; }
-        if (!Number(file.size || 0)) { alert("El archivo de vídeo está vacío o no se puede leer."); return; }
+        if (file && !Number(file.size || 0)) { alert("El archivo de vídeo está vacío o no se puede leer."); return; }
 
         isUploading = true;
         uploadCancelled = false;
@@ -528,7 +539,8 @@ export function openYouTubeUploadModal(options = {}) {
 
             if (uploadRecord) {
                 if (String(uploadRecord.userId) !== userId || String(uploadRecord.referenceId) !== String(referenceId) ||
-                    String(uploadRecord.contentType) !== String(contentType) || !uploadRecord.file) {
+                    String(uploadRecord.contentType) !== String(contentType) ||
+                    (!uploadRecord.file && !recoveredAlreadyUploaded)) {
                     throw new Error("La sesión recuperada no coincide con el usuario o destino actual.");
                 }
                 operationContext = { opVideoId: uploadRecord.opVideoId, storageKey: uploadRecord.storageKey };
