@@ -9962,7 +9962,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
         descLabel.textContent = "Descripción (máx 200 caracteres):";
         const descInput = document.createElement("textarea");
         descInput.id = "edit-pys-desc-textarea";
-        descInput.maxLength = 700;
+        descInput.maxLength = 200;
         descInput.rows = 4;
         descInput.value = item.Descripcion || "";
         descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
