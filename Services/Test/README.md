@@ -684,3 +684,14 @@ cp Services/Test/ImageBlendModeScope.js Services/Test/ImageBlendModeScope.mjs &&
 ```
 
 La prueba comprueba que `mix-blend-mode: lighten` exista en una sola regla opt-in: `.gps-transparent-asset`, excluyendo `.img-vehiculo-modal`. No se asigna automáticamente la clase a imágenes del catálogo porque el modelo actual no aporta metadatos fiables que distingan PNG con alfa de PNG opacos, JPEG, fotografías o diagramas. Solo debe añadirse a un recurso después de confirmar que requiere la corrección. Las imágenes sin esa marca conservan su composición normal.
+
+
+## AUG-067 — Discriminar eje horizontal y vertical en gestos del carrusel de cables
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/CableCarouselSwipeAxis.js Services/Test/CableCarouselSwipeAxis.mjs && node Services/Test/CableCarouselSwipeAxis.mjs; RESULT=$?; rm -f Services/Test/CableCarouselSwipeAxis.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite extrae el helper real de `ui.js` y comprueba swipes horizontales, gestos verticales/diagonales, umbral, multitáctil, controles interactivos, `touchcancel`, coordenadas inválidas y un solo cambio por gesto. Los listeners son pasivos y no bloquean el desplazamiento vertical nativo.
