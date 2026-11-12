@@ -454,3 +454,30 @@ cp Services/Test/ReportImageAttachment.js Services/Test/ReportImageAttachment.mj
 
 BETA AISLADA (nunca producción): 1) reportar sin imagen; 2) cargar JPEG/PNG/WebP y verificar metadata y archivo en `Cortes/Reportes individuales`; 3) abrir Inbox con cuenta revisora y confirmar permisos heredados sin ANYONE_WITH_LINK; 4) probar MIME/firma inválidos, archivo vacío, >3 MB, FileReader error/abort y error Drive; 5) reenviar mismo reportId/hash y verificar no duplicado; mismo reportId/hash distinto debe rechazarse; 6) confirmar compatibilidad histórica; 7) simular fallo de metadata y comprobar rollback/papelera. No declarar PASS hasta comprobar Drive y acceso reales.
 ================================================================================
+
+
+================================================================================
+AUG-078 — VALIDACIÓN BETA DE ASOCIACIÓN REPORTE/VEHÍCULO/CORTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz antes de probar:
+
+```bash
+set -e
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "ERROR: origin incorrecto"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar"; exit 1; }
+git switch GPSpedia2.2.5_work
+git fetch origin
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+PRUEBAS EN DEPLOYMENT FEEDBACK Y SPREADSHEET AISLADOS:
+1. Crear un reporte individual real con metadata completa; enviar sugerencia con mismo reportId/vehicleId/corteIndex y verificar registro.
+2. Repetir con reportId vacío, N/A, inventado, inexistente y duplicado; todos deben rechazarse sin escritura ni archivo Drive.
+3. Probar vehicleId distinto del metadata y distinto de Feedbacks.ID_vehiculo; corteIndex distinto; confirmar rechazo.
+4. Probar vehículo inexistente y duplicado en Cortes; slot vacío o sin tipo/ubicación; confirmar rechazo.
+5. Probar reporte histórico sin reportMetadata; confirmar que se sigue leyendo en Inbox sin migración ni modificación y que no puede originar una nueva sugerencia no verificable.
+6. Confirmar que una sugerencia válida queda en Feedbacks como propuesta independiente y que la hoja Cortes permanece sin cambios.
+Registrar IDs de prueba, respuesta, filas antes/después y evidencia. No usar datos productivos.
+================================================================================
