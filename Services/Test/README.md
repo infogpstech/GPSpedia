@@ -1188,3 +1188,16 @@ node --experimental-default-type=module Services/Test/SearchFilterCleanup.js
 SearchFilterCleanup.js comprueba que main.js no conserve referencias a toggleFiltersBtn/filtersBar ni IDs cancelados, que index.html/style.css/ui.js no contengan controles o selectores de filtros rápidos, y que el flujo de búsqueda directa permanezca activo. También ejecuta el handler blur con consulta vacía, consulta activa y modal visible para detectar ReferenceError y confirmar la animación del encabezado.
 
 La eliminación es deliberada: no se reintroducen filtros rápidos ni se sustituyen por controles equivalentes. Validar en Beta el input, botón de limpieza, blur, navegación, modal y viewports móviles.
+
+
+## AUG-100 — Sistema universal de botones
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/ButtonSystemIntegrity.js
+```
+
+La suite comprueba la carga única de button-system.css en index.html, users.html y add_cortes.html; variantes semánticas, icono/compactas, tema oscuro, foco visible, hover, active, disabled, loading/aria-busy, target táctil y aislamiento respecto de inputs/selects. También verifica que los botones estáticos de users.html y add_cortes.html usan .btn y mantiene un inventario cerrado de excepciones en index.html.
+
+Los controles especializados creados en ui.js conservan estilos propios porque representan navegación, carruseles, divulgación/acordeones, cierre de overlays, validación, compartir o accesos compactos con geometría/semántica particular: carousel-btn, cable-carousel-btn, validation-btn, share-modal-btn, info-close-btn, btn-expand-plus, accordion-btn, feedback-btn-overlay, btn-link y backBtn. No se reemplazan por variantes genéricas para evitar alterar su interacción o dimensiones. Los botones de acción ordinarios usan .btn y sus variantes.
