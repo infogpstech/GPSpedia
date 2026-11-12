@@ -1046,3 +1046,15 @@ node "$TEST_TMP"
 ```
 
 La suite contiene seis pruebas de contrato: propagación de navOptions desde la tarjeta única y el carrusel, preservación al abrir el formulario de alta preasociada, reconstrucción del acordeón después de crear o asociar un PyS, y permanencia de la protección contextual sin alterar la relación persistida. DOM/navegador real y navegación móvil quedan para Beta aislada.
+
+
+## AUG-089 — Pila modal y posición de navegación PyS–vehículo
+
+```bash
+TEST_TMP=Services/Test/PysModalNavigation.mjs
+cp Services/Test/PysModalNavigation.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+Cinco escenarios: captura/restauración de scroll vertical, acordeón activo y carruseles; propagación del contexto PyS/vehículo; ausencia de entradas duplicadas durante edición/re-render; y retorno de un nivel desde cierre manual/popstate. Navegador y gestos táctiles reales quedan para Beta.
