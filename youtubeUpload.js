@@ -75,14 +75,34 @@ function openYouTubeUploadDb_() {
     });
 }
 
+function watchYouTubeUploadTransaction_(db, tx, errorMessage, abortMessage, resolve, reject, readResult) {
+    let settled = false;
+    const finish = (error, value) => {
+        if (settled) return;
+        settled = true;
+        try { db.close(); } catch (closeError) {}
+        if (error) reject(error);
+        else resolve(value);
+    };
+    tx.oncomplete = () => {
+        try { finish(null, readResult()); }
+        catch (error) { finish(error); }
+    };
+    tx.onerror = () => finish(new Error(errorMessage));
+    tx.onabort = () => finish(new Error(abortMessage || errorMessage));
+}
+
 async function saveYouTubeUploadRecord_(record) {
     const db = await openYouTubeUploadDb_();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(YOUTUBE_UPLOAD_STORE_NAME, "readwrite");
+        watchYouTubeUploadTransaction_(
+            db, tx,
+            "No se pudo guardar el punto de recuperación de la subida.",
+            "Se canceló el guardado del punto de recuperación.",
+            resolve, reject, () => true
+        );
         tx.objectStore(YOUTUBE_UPLOAD_STORE_NAME).put(record);
-        tx.oncomplete = () => { db.close(); resolve(true); };
-        tx.onerror = () => { db.close(); reject(new Error("No se pudo guardar el punto de recuperación de la subida.")); };
-        tx.onabort = () => { db.close(); reject(new Error("Se canceló el guardado del punto de recuperación.")); };
     });
 }
 
@@ -90,9 +110,14 @@ async function getYouTubeUploadRecord_(opVideoId) {
     const db = await openYouTubeUploadDb_();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(YOUTUBE_UPLOAD_STORE_NAME, "readonly");
+        let result = null;
         const request = tx.objectStore(YOUTUBE_UPLOAD_STORE_NAME).get(String(opVideoId));
-        request.onsuccess = () => { const result = request.result || null; db.close(); resolve(result); };
-        request.onerror = () => { db.close(); reject(new Error("No se pudo leer la recuperación de la subida.")); };
+        request.onsuccess = () => { result = request.result || null; };
+        watchYouTubeUploadTransaction_(
+            db, tx,
+            "No se pudo leer la recuperación de la subida.",
+            null, resolve, reject, () => result
+        );
     });
 }
 
@@ -100,6 +125,8 @@ async function findPendingYouTubeUploadRecord_(userId, contentType, referenceId)
     const db = await openYouTubeUploadDb_();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(YOUTUBE_UPLOAD_STORE_NAME, "readonly");
+        let result = null;
+        let lookupError = null;
         const request = tx.objectStore(YOUTUBE_UPLOAD_STORE_NAME).getAll();
         request.onsuccess = () => {
             const matches = (request.result || []).filter(record =>
@@ -108,11 +135,17 @@ async function findPendingYouTubeUploadRecord_(userId, contentType, referenceId)
                 String(record.referenceId || "") === String(referenceId) &&
                 ["new", "uploading", "paused", "interrupted", "uploaded"].includes(String(record.status || ""))
             );
-            db.close();
-            if (matches.length > 1) return reject(new Error("Hay varias subidas pendientes para este contenido; requiere revisión antes de continuar."));
-            resolve(matches[0] || null);
+            if (matches.length > 1) lookupError = new Error("Hay varias subidas pendientes para este contenido; requiere revisión antes de continuar.");
+            else result = matches[0] || null;
         };
-        request.onerror = () => { db.close(); reject(new Error("No se pudieron consultar las subidas pendientes.")); };
+        watchYouTubeUploadTransaction_(
+            db, tx,
+            "No se pudieron consultar las subidas pendientes.",
+            null, resolve, reject, () => {
+                if (lookupError) throw lookupError;
+                return result;
+            }
+        );
     });
 }
 
@@ -120,9 +153,12 @@ async function deleteYouTubeUploadRecord_(opVideoId) {
     const db = await openYouTubeUploadDb_();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(YOUTUBE_UPLOAD_STORE_NAME, "readwrite");
+        watchYouTubeUploadTransaction_(
+            db, tx,
+            "No se pudo limpiar la recuperación de la subida completada.",
+            null, resolve, reject, () => true
+        );
         tx.objectStore(YOUTUBE_UPLOAD_STORE_NAME).delete(String(opVideoId));
-        tx.oncomplete = () => { db.close(); resolve(true); };
-        tx.onerror = () => { db.close(); reject(new Error("No se pudo limpiar la recuperación de la subida completada.")); };
     });
 }
 
