@@ -566,3 +566,8 @@ Riesgos y pendientes:
 - No añadir ChangesLogs.txt todavía: continúa por encima del umbral normativo de 180,000 caracteres y requiere rotación sin pérdida con manifiesto antes de una nueva entrada.
 No se inició AUG-069. La rama base permanece intacta.
 ================================================================================
+
+
+AUG-068 — ADENDA ITERACIÓN 2 — 2026-11-11
+Corrección detectada en revisión del flujo: al volver desde un overlay hijo, el estado histórico anterior puede ser el del modal padre y no contener __gpOverlayStack. Por ello, el listener popstate ahora también consulta si la pila administrada aún tiene elementos; si los hay, reconcilia la pila con el estado de destino y retorna antes de ejecutar el cierre de #modalDetalle. Esto evita que una pulsación cierre simultáneamente el overlay hijo y el padre.
+Validación: la sintaxis de main.js y los 10 escenarios lógicos del gestor se volvieron a comprobar tras la corrección; ambos PASS en V8 adaptado. Sigue pendiente una prueba de integración DOM que verifique el ciclo MutationObserver + popstate y los flujos de youtubeUpload.js.
