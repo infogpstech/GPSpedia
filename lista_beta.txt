@@ -565,3 +565,40 @@ PRUEBAS EN FEEDBACK / SPREADSHEET / DRIVE AISLADOS (NO PRODUCCIÓN):
 
 No declarar PASS sin verificar la concurrencia real de Apps Script, una sola fila y un solo archivo en Drive/Spreadsheet aislados. No usar endpoints, carpetas, hojas, cuentas ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-081 — ESQUEMA Y LÍMITES DE REPORTES Y PROPUESTAS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado antes de probar.
+
+EJECUCIÓN EN ENTORNO BETA AISLADO (Apps Script FEEDBACK, Spreadsheet y Drive de prueba; nunca producción):
+
+1. Enviar reportes con descripción ausente, vacía, solo espacios, tipo no string, longitud 2001 y longitud exacta 2000. Confirmar que los inválidos no crean filas, metadata ni archivos; el límite válido se normaliza y persiste íntegro.
+2. Enviar justificación ausente/vacía/espacios, tipo incorrecto, 2001 y 2000 caracteres. Confirmar rechazo previo a cualquier escritura/carga para inválidos.
+3. Probar `proposedValues` con un único campo, varios campos y cada uno de los cinco permitidos. Verificar límites: tipo 80, ubicación 300, colorCable 120, configRelay 120 y activaTestigo true/false/null.
+4. Enviar arrays, string, objetos anidados, valores numéricos/booleanos en campos de texto, strings en activaTestigo, claves desconocidas y alias de escritura `activaCheckEngine`. Confirmar rechazo y ausencia de escritura.
+5. Enviar propuesta idéntica al corte actual, sin campos y con campos vacíos sin cambio. Confirmar rechazo de no-op; después cambiar solo ubicación, solo color, solo tipo y solo testigo y confirmar aceptación cuando cada cambio sea real.
+6. Verificar que el valor de testigo informado en el reporte se conserva al abrir la sugerencia y se utiliza como baseline; probar ambos estados booleanos y null en datos históricos.
+7. Leer registros históricos que usan `activaCheckEngine` y comprobar que siguen presentándose como `activaTestigo` sin migración ni modificación de filas antiguas.
+8. Repetir con clientes antiguos y formularios actuales; comprobar que el esquema nuevo no rompe la lectura de sugerencias históricas ni la idempotencia AUG-080.
+9. Confirmar que los rechazos no disparan actividad de usuario, carga de imagen ni append; registrar payload, respuesta, fila y archivos antes/después.
+
+No declarar PASS sin comprobar filas y archivos en recursos aislados. No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================

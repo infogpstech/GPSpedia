@@ -1290,3 +1290,28 @@ ADENDA DE CONTINUIDAD — AUG-080 — 2026-11-12
 Corrección de compatibilidad detectada en revisión post-commit: se conserva el cálculo de la huella histórica únicamente para reconocer y devolver sugerencias ya persistidas antes de AUG-080. Las operaciones nuevas siguen usando SHA-256. Se evita que un reintento antiguo con respuesta perdida sea rechazado por el cambio de algoritmo o cree una segunda fila/imagen.
 La suite se amplía de 19 a 20 escenarios e incluye replay de un registro histórico con huella anterior: 20/20 PASS en runtime V8 adaptado; parsing V8 de backend, modal y suite PASS. Node CLI continúa sin ejecutarse por falta de checkout local y fallo DNS al clonar GitHub.
 La validación Beta añade el reintento de un registro histórico pre-AUG-080.
+
+
+================================================================================
+AUG-081 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD de partida: a0962e3c481c360e7bbf00466e11df12a0ede972. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Implementación:
+- FEEDBACK normaliza y valida en servidor la descripción del reporte y la justificación de la sugerencia: texto obligatorio, trim, espacios horizontales normalizados y máximo de 2000 caracteres.
+- proposedValues acepta únicamente tipo, ubicacion, colorCable, configRelay y activaTestigo. Los cuatro primeros deben ser strings con límites de 80, 300, 120 y 120 caracteres; activaTestigo acepta exclusivamente true, false o null.
+- Se rechazan arrays, valores de tipo incorrecto, claves adicionales y el alias activaCheckEngine en nuevas escrituras. La lectura histórica conserva compatibilidad con activaCheckEngine.
+- El contexto de validación obtiene los valores vigentes del vehículo y el testigo informado en el reporte. Se rechazan propuestas sin cambios reales; se permiten cambios parciales de uno o varios campos.
+- UI aplica maxlength y validación temprana; el estado de testigo del reporte se transmite al modal de sugerencia para comparar contra el baseline correcto.
+- La validación autoritativa permanece en backend y se ejecuta antes de cargar imagen o escribir.
+
+Validación local:
+- Services/Test/ReportSuggestionSchemaValidation.js: 16/16 PASS en runtime V8 adaptado.
+- Services/Test/SuggestionConcurrencyIdempotency.js: 20/20 PASS tras integrar los nuevos validadores.
+- Parsing V8 de Services/feedback.js, modal de sugerencia, modal de reporte y suite: PASS.
+- Node CLI literal no ejecutado por falta de checkout local; los comandos reproducibles quedan en Services/Test/README.md.
+- Las pruebas locales cubren normalización, campos parciales/múltiples, tipos, límites, no-op, lectura histórica y contratos UI/backend.
+
+Beta pendiente: FEEDBACK desplegado en entorno aislado, Spreadsheet/Drive de prueba, límites reales y ausencia de escrituras ante payload inválido, propuesta de un campo, no-op, testigo true/false/null y lectura de filas históricas. No se ejecutaron deployments ni datos productivos.
+
+Siguiente tarea: consultar el backlog vigente después de AUG-081; no iniciar otra tarea dentro de este cierre.
+================================================================================

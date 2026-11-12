@@ -927,4 +927,21 @@ trap 'rm -f "$TEST_TMP"' EXIT
 node "$TEST_TMP"
 ```
 
-La suite contiene 19 escenarios: generación segura y estabilidad de la clave de operación; rotación cuando cambia el payload; SHA-256 de la solicitud; búsqueda de operaciones persistidas y detección de duplicados/registros parciales; exclusión crítica del lock; replay sin nueva fila ni carga de imagen; rechazo de la misma clave con contenido distinto; serialización de reintentos; liberación del lock y rollback confirmado/no verificable. Usa dobles de Sheets/Drive y un lock síncrono simulado: no demuestra concurrencia real ni sustituye Apps Script, Spreadsheet o Drive aislados. En el entorno de desarrollo se ejecutó en runtime V8 adaptado: 20/20 PASS. Node CLI debe ejecutarse desde un checkout completo; no se declara ejecutado aquí.
+La suite contiene 20 escenarios: generación segura y estabilidad de la clave de operación; rotación cuando cambia el payload; SHA-256 de la solicitud; búsqueda de operaciones persistidas y detección de duplicados/registros parciales; exclusión crítica del lock; replay sin nueva fila ni carga de imagen; rechazo de la misma clave con contenido distinto; serialización de reintentos; liberación del lock y rollback confirmado/no verificable. Usa dobles de Sheets/Drive y un lock síncrono simulado: no demuestra concurrencia real ni sustituye Apps Script, Spreadsheet o Drive aislados. En el entorno de desarrollo se ejecutó en runtime V8 adaptado: 20/20 PASS. Node CLI debe ejecutarse desde un checkout completo; no se declara ejecutado aquí.
+
+
+## AUG-081 — Esquema y límites de reportes y propuestas
+
+Ejecutar desde la raíz del repositorio con Node.js:
+
+```bash
+set -e
+TEST_TMP=Services/Test/ReportSuggestionSchemaValidation.mjs
+cp Services/Test/ReportSuggestionSchemaValidation.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite contiene 16 escenarios sobre normalización y obligatoriedad del reporte/justificación, límites de longitud, esquema permitido de `proposedValues`, tipos estrictos, propuestas parciales/múltiples, rechazo de no-op, compatibilidad de lectura histórica, validación server-side y límites de UI. Usa funciones reales extraídas de `Services/feedback.js` y contratos estáticos de `ui.js`; no invoca servicios Apps Script, Spreadsheet ni Drive reales.
+
+Límites canónicos del backend: descripción completa del reporte 2000 caracteres; justificación de propuesta 2000; `tipo` 80; `ubicacion` 300; `colorCable` 120; `configRelay` 120. `activaTestigo` solo acepta boolean o null. El navegador limita los campos de texto y conserva la validación autoritativa en servidor. Se rechazan propuestas sin cambio respecto al corte registrado.

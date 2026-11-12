@@ -7877,7 +7877,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Descripción del Error Detectado *</label>
-                <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
+                <textarea id="rep-error" rows="3" maxlength="1500" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
             </div>
             <div class="form-group">
                 <label for="rep-testigo-motor" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
@@ -7887,7 +7887,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             </div>
             <div class="form-group">
                 <label>Información Incorrecta o Incompleta</label>
-                <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
+                <textarea id="rep-incorrecto" rows="2" maxlength="400" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
             </div>
             <div class="form-group">
                 <label>Imagen de Referencia (Opcional)</label>
@@ -7922,14 +7922,21 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             return;
         }
 
+        const errorDesc = content.querySelector("#rep-error").value.trim();
+        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
+        if (!errorDesc) {
+            showGlobalError("Describe el problema antes de enviar el reporte.");
+            return;
+        }
+        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
+        if (incorrectInfo) fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
+        if (fullProblemText.length > 2000) {
+            showGlobalError("La descripción completa del reporte no puede superar 2000 caracteres.");
+            return;
+        }
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.classList.add("btn-loading");
-
-        const errorDesc = content.querySelector("#rep-error").value.trim();
-        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
-        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
-        if (incorrectInfo) fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
 
         const fileInput = content.querySelector("#rep-img-file");
         try {
@@ -7959,7 +7966,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
                 throw new Error("El servidor no confirmó que la imagen quedara guardada; el reporte no se marcará como exitoso.");
             const confirmedReportId = res.reportId || reportId;
             modal.remove();
-            showReportSuccessModal(vehicleId, corteNum, currentCutData, confirmedReportId);
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, confirmedReportId, activaTestigoMotor);
         } catch (err) {
             console.error("Error al enviar reporte de corte:", err);
             showGlobalError("No se pudo enviar el reporte: " + String(err && err.message || "inténtalo de nuevo."));
@@ -7969,7 +7976,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     };
 }
 
-function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
+function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId, reportActivaTestigo = undefined) {
     const existing = document.getElementById("report-success-modal");
     if (existing) existing.remove();
 
@@ -8018,7 +8025,7 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     content.querySelector("#btn-close-report-success").onclick = close;
     content.querySelector("#btn-suggest-change-action").onclick = () => {
         modal.remove();
-        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
+        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId, reportActivaTestigo);
     };
 }
 
@@ -8034,7 +8041,7 @@ function createSuggestionOperationId_() {
     throw new Error("El navegador no dispone de un generador seguro para identificar la sugerencia.");
 }
 
-export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "", reportActivaTestigo = undefined) {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
 
@@ -8059,7 +8066,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
     const relayOptions = (safeDropdowns && safeDropdowns.configRelay && safeDropdowns.configRelay.length > 0)
         ? safeDropdowns.configRelay : defaultRelays;
-    const currentTestigoValue = normalizeActivaTestigoValue(currentCutData.activaTestigo);
+    const currentTestigoValue = typeof reportActivaTestigo === "boolean"
+        ? reportActivaTestigo : normalizeActivaTestigoValue(currentCutData.activaTestigo);
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
@@ -8080,11 +8088,11 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             </div>
             <div class="form-group">
                 <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
-                <input type="text" id="sug-ubicacion" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
+                <input type="text" id="sug-ubicacion" maxlength="300" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
             </div>
             <div class="form-group">
                 <label for="sug-color">Color de Cable</label>
-                <input type="text" id="sug-color" placeholder="Ej. Azul / Blanco, Verde grueso">
+                <input type="text" id="sug-color" maxlength="120" placeholder="Ej. Azul / Blanco, Verde grueso">
             </div>
             <div class="form-group">
                 <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
@@ -8101,7 +8109,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             <div class="form-group">
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
                 <div class="rich-editor-toolbar" data-rich-target="sug-detalles"></div>
-                <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
+                <textarea id="sug-detalles" rows="3" maxlength="2000" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
         </form>
@@ -8181,6 +8189,9 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
                 });
                 imageAttachment = { dataUrl, name: String(selectedFile.name || "imagen"), mimeType, size: selectedFile.size };
             }
+            const normalizedDetails = content.querySelector("#sug-detalles").value.trim();
+            if (!normalizedDetails) throw new Error("Explica y justifica el cambio antes de enviar la sugerencia.");
+            if (normalizedDetails.length > 2000) throw new Error("La justificación no puede superar 2000 caracteres.");
             const proposedValues = {
                 tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
                 ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
@@ -8191,7 +8202,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             };
             const payload = {
                 reportId: reportRef, vehicleId, corteIndex: validCorteNum,
-                details: content.querySelector("#sug-detalles").value.trim(), imageAttachment, proposedValues
+                details: normalizedDetails, imageAttachment, proposedValues
             };
             const submissionSignature = JSON.stringify({
                 reportId: payload.reportId, vehicleId: payload.vehicleId, corteIndex: payload.corteIndex,

@@ -770,3 +770,22 @@ Validación: suite de 19 escenarios PASS en runtime V8 adaptado; parsing V8 de b
 ADENDA H-AUD-010-006 — COMPATIBILIDAD DE HUELLAS HISTÓRICAS — 2026-11-12
 Se detectó y corrigió una incompatibilidad potencial en reintentos de sugerencias guardadas antes de AUG-080: esos registros conservan la huella histórica no criptográfica. FEEDBACK calcula ahora esa huella solo como alternativa de lectura para reconocer registros ya existentes; no se usa para crear ni identificar operaciones nuevas. SHA-256 permanece como huella canónica para las nuevas operaciones. La suite incluye replay de registro legacy: 20/20 PASS en runtime V8 adaptado. La verificación con registros reales permanece en Beta aislada.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-010-007 — VALIDACIÓN DE ESQUEMA Y LÍMITES FEEDBACK — 2026-11-12
+Estado: CORREGIDO EN FUENTES; validación de integración diferida a Beta.
+
+Hallazgo original: reportProblem y suggestCutChange aceptaban texto sin validación semántica/longitud backend; proposedValues copiaba claves/tipos arbitrarios, sin límites por campo ni protección contra propuestas vacías o sin cambios.
+
+Corrección:
+- normalizeFeedbackText_ valida tipo string, normaliza espacios, rechaza vacío y aplica límite 2000 a reportes y justificaciones.
+- normalizeSuggestionProposedValues usa allowlist estricta: tipo, ubicacion, colorCable, configRelay y activaTestigo. Rechaza propiedades adicionales, arrays, objetos inesperados y tipos incompatibles.
+- Límites por campo: tipo 80, ubicacion 300, colorCable 120 y configRelay 120. activaTestigo conserva true/false/null; la alias histórica activaCheckEngine se acepta solo en lectura de registros antiguos.
+- validateCutSuggestionReportContext_ devuelve los valores vigentes del corte y el testigo del reporte; assertMeaningfulSuggestionChanges_ rechaza no-op y admite propuesta parcial/múltiple solo cuando al menos un valor cambia realmente.
+- UI aplica límites visibles y propaga el testigo informado en el reporte como baseline de la sugerencia.
+
+Validación local: ReportSuggestionSchemaValidation.js 16/16 PASS y SuggestionConcurrencyIdempotency.js 20/20 PASS en runtime V8 adaptado; parsing de backend, modales y suites PASS. Node CLI literal y servicios reales no ejecutados.
+
+Beta pendiente: FEEDBACK, Spreadsheet y Drive aislados; pruebas de límites y rechazo antes de escritura, propuestas parciales, no-op, testigo y lectura histórica. No se modificaron deployments ni datos productivos.
+================================================================================

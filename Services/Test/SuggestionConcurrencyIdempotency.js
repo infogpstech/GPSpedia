@@ -18,6 +18,7 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
     };
     const uiBlock = section(ui, "function createSuggestionOperationId_()", "export function openSuggestCutModal(");
     const modalBlock = section(ui, "export function openSuggestCutModal(", "\nexport function openExpandMenuModal");
+    const schemaBlock = section(feedback, "const FEEDBACK_REPORT_TEXT_MAX_LENGTH", "function parseCutSuggestionRecord(");
     const helperBlock = section(feedback, "function buildCutSuggestionRequestFingerprint_(", "function validateCutSuggestionReportContext_(");
     const handlerBlock = section(feedback, "function handleSuggestCutChange(", "\nfunction parseModelosAsociados(");
     const cols = { Usuario: 2, ID_vehiculo: 3, Problema: 4, "Se resolvio": 5 };
@@ -30,6 +31,8 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
     const helperFactory = new Function("Utilities", "COLS_FEEDBACKS", helperBlock +
         "\nreturn { buildCutSuggestionRequestFingerprint_, buildLegacyCutSuggestionRequestFingerprint_, findCutSuggestionByOperation_, findCutSuggestionByRequest_, buildCutSuggestionReplayResponse_ };");
     const helpers = helperFactory(utilities, cols);
+    const schemaFactory = new Function(schemaBlock + "\nreturn { normalizeFeedbackText_, normalizeSuggestionProposedValues, assertMeaningfulSuggestionChanges_ };");
+    const schema = schemaFactory();
 
     test("UI genera el identificador con crypto seguro y rechaza fallback débil", () => {
         assert.ok(uiBlock.includes("cryptoApi.randomUUID"));
@@ -188,15 +191,22 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
             releaseLock() { assert.equal(locked, true); locked = false; events.push("release"); }
         };
         const factory = new Function(
-            "normalizeSuggestionProposedValues", "normalizeSuggestionImageAttachment_", "validateCutSuggestionReportContext_",
+            "normalizeSuggestionProposedValues", "normalizeFeedbackText_", "assertMeaningfulSuggestionChanges_",
+            "FEEDBACK_REPORT_TEXT_MAX_LENGTH", "normalizeSuggestionImageAttachment_", "validateCutSuggestionReportContext_",
             "LockService", "getSafeSheet", "SHEET_NAMES", "COLS_FEEDBACKS", "SpreadsheetApp",
             "saveSuggestionImageAttachment_", "trashReportImageUpload_", "logUserActivity", "console", "Utilities",
             helperBlock + "\n" + handlerBlock + "\nreturn handleSuggestCutChange;"
         );
         const handler = factory(
-            value => value || {},
+            schema.normalizeSuggestionProposedValues,
+            schema.normalizeFeedbackText_,
+            schema.assertMeaningfulSuggestionChanges_,
+            2000,
             () => options.image ? { sha256:"a".repeat(64), bytes:[1], mimeType:"image/png", size:1 } : null,
-            (reportId, vehicleId, corteIndex) => ({ reportId, vehicleId, corteIndex }),
+            (reportId, vehicleId, corteIndex) => ({
+                reportId, vehicleId, corteIndex,
+                currentValues:{ tipo:"Bomba", ubicacion:"", colorCable:"", configRelay:"", activaTestigo:null }
+            }),
             { getScriptLock: () => lock },
             () => sheet,
             { FEEDBACKS:"Feedbacks" }, cols,

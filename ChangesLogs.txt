@@ -136,3 +136,15 @@ Validación registrada por separado: 19/19 PASS en harness V8 adaptado; parsing 
 AUG-080 — ADENDA DE COMPATIBILIDAD HISTÓRICA — 2026-11-12
 Services/feedback.js conserva un comparador de huella anterior exclusivamente para replay de sugerencias persistidas antes de AUG-080. Las operaciones nuevas continúan usando SHA-256. Services/Test/SuggestionConcurrencyIdempotency.js añade el escenario de replay legacy; resultado actualizado: 20/20 PASS en runtime V8 adaptado. lista_beta.txt incluye la comprobación con registros históricos reales.
 ================================================================================
+
+
+================================================================================
+AUG-081 — VALIDACIÓN DE ESQUEMA Y LÍMITES DE REPORTES Y PROPUESTAS
+Fecha: 2026-11-12
+Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValidation.js; Services/Test/SuggestionConcurrencyIdempotency.js; Services/Test/README.md; lista_beta.txt; Tareas_pendientes_parte5.txt; Tareas.txt; Auditoría.txt; checkpoint.md.
+- Validación backend de texto obligatorio, normalización y máximo 2000 caracteres para reporte y justificación.
+- Allowlist estricta de propuesta y tipos; límites tipo 80, ubicacion 300, colorCable 120, configRelay 120; activaTestigo boolean/null.
+- Detección server-side de cambios reales contra el corte y rechazo de no-op; compatibilidad histórica de lectura mantenida.
+- UI incorpora maxlength, validación previa y transmisión del estado de testigo del reporte al modal de sugerencia.
+- Se añade suite de 16 escenarios y se actualiza la suite de idempotencia para probar los nuevos validadores (20 escenarios).
+================================================================================

@@ -1286,7 +1286,8 @@ function trashReportImageUpload_(upload) {
 function handleReportProblem(payload) {
     payload = payload && typeof payload === "object" ? payload : {};
     const { vehicleId, problemText, userId, userName } = payload;
-    if (!vehicleId || !problemText || !userId || !userName) throw new Error("Faltan datos para reportar el problema (vehicleId, problemText, userId, userName).");
+    if (!vehicleId || !userId || !userName) throw new Error("Faltan datos para reportar el problema (vehicleId, userId, userName).");
+    const normalizedProblemText = normalizeFeedbackText_(problemText, "La descripción del reporte", FEEDBACK_REPORT_TEXT_MAX_LENGTH);
     const hasReportContext = payload.reportId !== undefined || payload.corteIndex !== undefined || payload.activaTestigoMotor !== undefined;
     let reportContext = null;
     if (hasReportContext) {
@@ -1309,7 +1310,7 @@ function handleReportProblem(payload) {
             if(existing) {
                 const sameReport=String(existing.row[COLS_FEEDBACKS.Usuario-1]||"")===String(userName)&&
                     String(existing.row[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId)&&
-                    String(existing.row[COLS_FEEDBACKS.Problema-1]||"")===String(problemText)&&
+                    String(existing.row[COLS_FEEDBACKS.Problema-1]||"")===normalizedProblemText&&
                     String(existing.metadata.vehicleId||"")===String(vehicleId)&&Number(existing.metadata.corteIndex)===reportContext.corteIndex&&
                     existing.metadata.activaTestigoMotor===reportContext.activaTestigoMotor&&
                     (!existing.metadata.userId||String(existing.metadata.userId)===String(userId));
@@ -1338,7 +1339,7 @@ function handleReportProblem(payload) {
                 if(lastCol>1) sheet.getRange(newRowNumber,2,1,lastCol-1).clearContent();
             }
             if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
-            sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,problemText]]);
+            sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,normalizedProblemText]]);
             if(reportContext) {
                 const metadata={reportId:reportContext.reportId,userId:String(userId),vehicleId:String(vehicleId),
                     corteIndex:reportContext.corteIndex,activaTestigoMotor:reportContext.activaTestigoMotor};
@@ -1366,7 +1367,7 @@ function handleReportProblem(payload) {
         }
         throw error;
     } finally { lock.releaseLock(); }
-    if(!duplicateReport) logUserActivity(userId,userName,"report_problem",vehicleId,problemText);
+    if(!duplicateReport) logUserActivity(userId,userName,"report_problem",vehicleId,normalizedProblemText);
     return {status:"success",message:duplicateReport?"El reporte ya estaba registrado; se devolvió el identificador existente.":"Problema reportado.",
         reportId:generatedReportId,alreadyReported:duplicateReport,imageAttached:Boolean(resolvedImageUrl),imageUrl:resolvedImageUrl};
 }
@@ -1403,6 +1404,26 @@ function handleSendContactForm(payload) {
 // HANDLERS FOR INBOX SYSTEM
 // ============================================================================
 
+const FEEDBACK_REPORT_TEXT_MAX_LENGTH = 2000;
+const SUGGESTION_FIELD_MAX_LENGTHS = Object.freeze({
+    tipo: 80, ubicacion: 300, colorCable: 120, configRelay: 120
+});
+
+function normalizeFeedbackText_(value, label, maxLength) {
+    if (typeof value !== "string") throw new Error(label + " debe enviarse como texto.");
+    const normalized = value.replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").trim();
+    if (!normalized) throw new Error(label + " no puede estar vacío.");
+    if (normalized.length > maxLength) throw new Error(label + " supera el límite de " + maxLength + " caracteres.");
+    return normalized;
+}
+
+function normalizeSuggestionTextField_(value, field, maxLength) {
+    if (typeof value !== "string") throw new Error("El campo propuesto " + field + " debe ser texto.");
+    const normalized = value.replace(/\s+/g, " ").trim();
+    if (normalized.length > maxLength) throw new Error("El campo propuesto " + field + " supera el límite de " + maxLength + " caracteres.");
+    return normalized;
+}
+
 function normalizeSuggestionActivaTestigo(value) {
     if (value === true || value === false) return value;
     if (value === null || value === undefined) return null;
@@ -1410,21 +1431,46 @@ function normalizeSuggestionActivaTestigo(value) {
     if (!normalized || ["no aplica", "no_aplica", "no aplica / no especificado", "no aplica/no especificado", "no especificado", "no especificada", "n/a", "na"].includes(normalized)) return null;
     if (["true", "sí", "si", "yes", "x", "1"].includes(normalized)) return true;
     if (["false", "no", "0"].includes(normalized)) return false;
-    throw new Error("El valor propuesto para activaTestigo no es válido.");
+    throw new Error("El valor histórico del testigo no es válido.");
 }
+
+function normalizeSuggestionActivaTestigoInput_(value) {
+    if (value === true || value === false || value === null) return value;
+    throw new Error("El valor propuesto para activaTestigo debe ser true, false o null.");
+}
+
 function normalizeSuggestionProposedValues(proposedValues) {
     if (proposedValues !== undefined && proposedValues !== null &&
-        (typeof proposedValues !== "object" || Array.isArray(proposedValues))) throw new Error("Los valores propuestos deben enviarse como un objeto.");
+        (typeof proposedValues !== "object" || Array.isArray(proposedValues))) {
+        throw new Error("Los valores propuestos deben enviarse como un objeto.");
+    }
     const source = proposedValues || {};
-    const normalized = Object.assign({}, source);
-    const hasCanonical = Object.prototype.hasOwnProperty.call(source, "activaTestigo");
-    const hasLegacy = Object.prototype.hasOwnProperty.call(source, "activaCheckEngine");
-    const canonicalValue = hasCanonical ? normalizeSuggestionActivaTestigo(source.activaTestigo) : null;
-    const legacyValue = hasLegacy ? normalizeSuggestionActivaTestigo(source.activaCheckEngine) : null;
-    if (hasCanonical && hasLegacy && canonicalValue !== legacyValue) throw new Error("Los campos históricos y actuales del testigo contienen valores incompatibles.");
-    normalized.activaTestigo = hasCanonical ? canonicalValue : (hasLegacy ? legacyValue : null);
-    delete normalized.activaCheckEngine;
+    const allowed = ["tipo", "ubicacion", "colorCable", "configRelay", "activaTestigo"];
+    Object.keys(source).forEach(key => {
+        if (!allowed.includes(key)) throw new Error("El campo propuesto " + key + " no está permitido.");
+    });
+    const normalized = {};
+    Object.keys(SUGGESTION_FIELD_MAX_LENGTHS).forEach(field => {
+        if (Object.prototype.hasOwnProperty.call(source, field)) {
+            normalized[field] = normalizeSuggestionTextField_(source[field], field, SUGGESTION_FIELD_MAX_LENGTHS[field]);
+        }
+    });
+    if (Object.prototype.hasOwnProperty.call(source, "activaTestigo")) {
+        normalized.activaTestigo = normalizeSuggestionActivaTestigoInput_(source.activaTestigo);
+    }
     return normalized;
+}
+
+function assertMeaningfulSuggestionChanges_(proposedValues, currentValues) {
+    const proposed = proposedValues || {};
+    const current = currentValues || {};
+    const changed = Object.keys(proposed).some(key => {
+        if (key === "activaTestigo") return proposed[key] !== current[key];
+        return String(proposed[key] == null ? "" : proposed[key]).trim().toLowerCase() !==
+            String(current[key] == null ? "" : current[key]).trim().toLowerCase();
+    });
+    if (!changed) throw new Error("La propuesta no modifica ningún campo del corte. Cambia al menos un valor antes de enviarla.");
+    return true;
 }
 function normalizeStoredSuggestionProposedValues(proposedValues) {
     const source = proposedValues && typeof proposedValues === "object" && !Array.isArray(proposedValues) ? proposedValues : {};
@@ -1753,7 +1799,14 @@ function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
         !String(vehicle[locationColumn - 1] || "").trim()) {
         throw new Error("El corte indicado no está ocupado e identificado en el catálogo del vehículo.");
     }
-    return { reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex };
+    const currentValues = {
+        tipo: String(vehicle[typeColumn - 1] || "").trim(),
+        ubicacion: String(vehicle[locationColumn - 1] || "").trim(),
+        colorCable: String(vehicle[COLS_CORTES["colorCableCorte" + normalizedCorteIndex] - 1] || "").trim(),
+        configRelay: String(vehicle[COLS_CORTES["configRelay" + normalizedCorteIndex] - 1] || "").trim(),
+        activaTestigo: typeof metadata.activaTestigoMotor === "boolean" ? metadata.activaTestigoMotor : null
+    };
+    return { reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex, currentValues };
 }
 
 function normalizeSuggestionImageAttachment_(imageAttachment, legacyImgBase64) {
@@ -1817,11 +1870,12 @@ function handleSuggestCutChange(payload) {
         throw new Error("Identificador de operación de sugerencia inválido.");
     }
     const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
-    const normalizedImage = normalizeSuggestionImageAttachment_(imageAttachment, imgBase64);
+    const normalizedDetails = normalizeFeedbackText_(details, "La justificación de la sugerencia", FEEDBACK_REPORT_TEXT_MAX_LENGTH);
     const reportContext = validateCutSuggestionReportContext_(reportId, normalizedVehicleId, normalizedCorteIndex);
+    assertMeaningfulSuggestionChanges_(normalizedProposedValues, reportContext.currentValues);
+    const normalizedImage = normalizeSuggestionImageAttachment_(imageAttachment, imgBase64);
     const normalizedReportId = reportContext.reportId;
     const normalizedUserId = String(userId);
-    const normalizedDetails = String(details || "");
     const legacyImageDataUrl = normalizedImage
         ? String(imageAttachment != null ? imageAttachment.dataUrl || "" : imgBase64 || "") : "";
     const requestFingerprint = buildCutSuggestionRequestFingerprint_({
