@@ -19,7 +19,7 @@ function event(request={method:'GET',mode:'cors',url:'/main.js'}){return{request
 test('precache incluye el grafo transitivo y VinDifferentialEngine',async()=>{
  const h=harness(),e=event();h.listeners.install(e);await Promise.all(e.waits);
  for(const p of ['./main.js','./VinDifferentialEngine.js','./share-utils.js','./catalogStatus.js','./catalogRequest.js','./pys-data.js','./validationSubmission.js','./likeState.js','./youtubeUpload.js','./imageObjectUrlCache.js','./thumbnailCompressionQueue.js','./modalNavigation.js'])assert.ok(h.assets.includes(p),p);
- assert.match(source,/gpsepedia-cache-v17/);
+ assert.match(source,/gpsepedia-cache-v18/);
  assert.equal(h.skip,1);
 });
 test('cuota opcional no impide instalar App Shell',async()=>{
