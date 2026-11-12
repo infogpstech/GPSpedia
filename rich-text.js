@@ -1,3 +1,5 @@
+import { getRichTextMode } from './api-config.js';
+
 /* Utilidades compartidas para los editores de texto enriquecido de GPSpedia. */
 
 const SAFE_MARKERS = new Set(["hyphen", "arrow", "check", "bullet"]);
@@ -88,6 +90,7 @@ function splitSelectionIntoListItems(selected) {
 }
 
 export function applyRichTextFormat(targetId, format, extraValue = null) {
+    if (getRichTextMode() !== "advanced" && format !== "bold") return;
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
     attachListKeyboardBehavior(textarea);
@@ -188,6 +191,7 @@ function attachListKeyboardBehavior(textarea) {
     if (!textarea || textarea.dataset.richListKeyboardBound === "true") return;
     textarea.dataset.richListKeyboardBound = "true";
     textarea.addEventListener("keydown", event => {
+        if (getRichTextMode() !== "advanced") return;
         if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
         const value = textarea.value;
         const lower = value.toLowerCase();
@@ -241,8 +245,12 @@ function attachListKeyboardBehavior(textarea) {
 }
 
 export function createRichTextToolbar(targetId) {
+    const mode = getRichTextMode();
+    const isAdvanced = mode === "advanced";
     const toolbar = document.createElement("div");
     toolbar.className = "rich-editor-toolbar";
+    toolbar.dataset.richTargetId = String(targetId);
+    toolbar.dataset.richTextMode = mode;
     toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:4px;";
 
     const makeButton = (label, title, callback) => {
@@ -260,9 +268,12 @@ export function createRichTextToolbar(targetId) {
     };
 
     toolbar.appendChild(makeButton("B", "Negrita", () => applyRichTextFormat(targetId, "bold")));
-    toolbar.appendChild(makeButton("I", "Cursiva", () => applyRichTextFormat(targetId, "italic")));
-    toolbar.appendChild(makeButton("U", "Subrayado", () => applyRichTextFormat(targetId, "underline")));
-    toolbar.appendChild(makeButton("S", "Tachado", () => applyRichTextFormat(targetId, "strike")));
+
+    if (isAdvanced) {
+        toolbar.appendChild(makeButton("I", "Cursiva", () => applyRichTextFormat(targetId, "italic")));
+        toolbar.appendChild(makeButton("U", "Subrayado", () => applyRichTextFormat(targetId, "underline")));
+        toolbar.appendChild(makeButton("S", "Tachado", () => applyRichTextFormat(targetId, "strike")));
+    }
 
     const colorPicker = document.createElement("input");
     colorPicker.type = "color";
@@ -271,40 +282,57 @@ export function createRichTextToolbar(targetId) {
     colorPicker.addEventListener("change", event => applyRichTextColor(targetId, event.target.value));
     toolbar.appendChild(colorPicker);
 
-    const sizeSelect = document.createElement("select");
-    sizeSelect.title = "Tamaño de fuente";
-    sizeSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-    sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
-    sizeSelect.addEventListener("change", event => {
-        if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value);
-        event.target.value = "";
-    });
-    toolbar.appendChild(sizeSelect);
+    if (isAdvanced) {
+        const sizeSelect = document.createElement("select");
+        sizeSelect.title = "Tamaño de fuente";
+        sizeSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
+        sizeSelect.innerHTML = '<option value="">Tamaño</option><option value="0.85em">Pequeño</option><option value="1em">Normal</option><option value="1.2em">Grande</option><option value="1.5em">Encabezado</option>';
+        sizeSelect.addEventListener("change", event => {
+            if (event.target.value) applyRichTextFormat(targetId, "size", event.target.value);
+            event.target.value = "";
+        });
+        toolbar.appendChild(sizeSelect);
 
-    const fontSelect = document.createElement("select");
-    fontSelect.title = "Tipo de fuente";
-    fontSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-    fontSelect.innerHTML = '<option value="">Fuente</option><option value="Arial">Arial</option><option value="Segoe UI">Segoe UI</option><option value="Courier New">Monospace</option><option value="Georgia">Georgia</option>';
-    fontSelect.addEventListener("change", event => {
-        if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value);
-        event.target.value = "";
-    });
-    toolbar.appendChild(fontSelect);
+        const fontSelect = document.createElement("select");
+        fontSelect.title = "Tipo de fuente";
+        fontSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
+        fontSelect.innerHTML = '<option value="">Fuente</option><option value="Arial">Arial</option><option value="Segoe UI">Segoe UI</option><option value="Courier New">Monospace</option><option value="Georgia">Georgia</option>';
+        fontSelect.addEventListener("change", event => {
+            if (event.target.value) applyRichTextFormat(targetId, "font", event.target.value);
+            event.target.value = "";
+        });
+        toolbar.appendChild(fontSelect);
 
-    const markerSelect = document.createElement("select");
-    markerSelect.title = "Marcador de lista no ordenada";
-    markerSelect.setAttribute("aria-label", "Marcador de lista no ordenada");
-    markerSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
-    markerSelect.innerHTML = '<option value="bullet">• Viñeta</option><option value="hyphen">- Guion</option><option value="arrow">→ Flecha</option><option value="check">✓ Verificación</option>';
-    toolbar.appendChild(markerSelect);
-    toolbar.appendChild(makeButton("• Lista", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value)));
-    toolbar.appendChild(makeButton("1. Lista", "Lista ordenada", () => applyRichTextFormat(targetId, "ol")));
+        const markerSelect = document.createElement("select");
+        markerSelect.title = "Marcador de lista no ordenada";
+        markerSelect.setAttribute("aria-label", "Marcador de lista no ordenada");
+        markerSelect.style.cssText = "height:28px; padding:2px 4px; border:1px solid var(--border-color, #ccc); border-radius:4px;";
+        markerSelect.innerHTML = '<option value="bullet">• Viñeta</option><option value="hyphen">- Guion</option><option value="arrow">→ Flecha</option><option value="check">✓ Verificación</option>';
+        toolbar.appendChild(markerSelect);
+        toolbar.appendChild(makeButton("• Lista", "Lista no ordenada", () => applyRichTextFormat(targetId, "ul", markerSelect.value)));
+        toolbar.appendChild(makeButton("1. Lista", "Lista ordenada", () => applyRichTextFormat(targetId, "ol")));
+    }
 
-    Promise.resolve().then(() => attachListKeyboardBehavior(document.getElementById(targetId)));
+    if (isAdvanced) {
+        Promise.resolve().then(() => attachListKeyboardBehavior(document.getElementById(targetId)));
+    }
     return toolbar;
 }
 
-function sanitizeSafeStyle(styleText) {
+export function refreshRichTextToolbars(root = document) {
+    if (!root || typeof root.querySelectorAll !== "function") return 0;
+    const toolbars = Array.from(root.querySelectorAll(".rich-editor-toolbar[data-rich-target-id]"));
+    let refreshed = 0;
+    toolbars.forEach(toolbar => {
+        const targetId = toolbar.dataset.richTargetId;
+        if (!targetId || !toolbar.parentNode) return;
+        toolbar.replaceWith(createRichTextToolbar(targetId));
+        refreshed++;
+    });
+    return refreshed;
+}
+
+function sanitizeSafeStyle(styleText, mode = getRichTextMode()) {
     const safe = [];
     const allowedColors = value => /^#[0-9a-f]{3,8}$/i.test(value) || /^(rgb|rgba)\([0-9.,%\s]+\)$/i.test(value) || SAFE_NAMED_COLORS.has(value.toLowerCase());
     String(styleText || "").split(";").forEach(declaration => {
@@ -315,11 +343,11 @@ function sanitizeSafeStyle(styleText) {
         const lower = value.toLowerCase();
         if (lower.includes("url(") || lower.includes("expression") || lower.includes("javascript:")) return;
         if (property === "color" && allowedColors(value)) safe.push(`color:${value}`);
-        else if (property === "font-size" && SAFE_SIZES.has(value)) safe.push(`font-size:${value}`);
-        else if (property === "font-family" && SAFE_FONT_VALUES.has(value)) safe.push(`font-family:${value}`);
-        else if (property === "float" && /^(left|right|none)$/i.test(value)) safe.push(`float:${value}`);
-        else if (["height", "width", "margin-left"].includes(property) && /^(auto|\d{1,3}px|\d{1,3}%|\d{1,2}(?:\.\d+)?em)$/i.test(value)) safe.push(`${property}:${value}`);
-        else if (property === "text-align" && /^(left|right|center|justify)$/i.test(value)) safe.push(`text-align:${value}`);
+        else if (mode === "advanced" && property === "font-size" && SAFE_SIZES.has(value)) safe.push(`font-size:${value}`);
+        else if (mode === "advanced" && property === "font-family" && SAFE_FONT_VALUES.has(value)) safe.push(`font-family:${value}`);
+        else if (mode === "advanced" && property === "float" && /^(left|right|none)$/i.test(value)) safe.push(`float:${value}`);
+        else if (mode === "advanced" && ["height", "width", "margin-left"].includes(property) && /^(auto|\d{1,3}px|\d{1,3}%|\d{1,2}(?:\.\d+)?em)$/i.test(value)) safe.push(`${property}:${value}`);
+        else if (mode === "advanced" && property === "text-align" && /^(left|right|center|justify)$/i.test(value)) safe.push(`text-align:${value}`);
     });
     return safe.join(";");
 }
@@ -328,7 +356,10 @@ export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return "";
     const parser = new DOMParser();
     const doc = parser.parseFromString(String(htmlStr), "text/html");
-    const allowedTags = new Set(["B", "STRONG", "SPAN", "BR", "P", "DIV", "I", "EM", "U", "S", "STRIKE", "OL", "UL", "LI", "A", "IMG", "SMALL", "MARK", "FONT"]);
+    const mode = getRichTextMode();
+    const allowedTags = mode === "advanced"
+        ? new Set(["B", "STRONG", "SPAN", "BR", "P", "DIV", "I", "EM", "U", "S", "STRIKE", "OL", "UL", "LI", "A", "IMG", "SMALL", "MARK", "FONT"])
+        : new Set(["B", "STRONG", "SPAN", "BR"]);
     const dropContentTags = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "SVG", "MATH", "TEMPLATE", "FORM", "TEXTAREA", "SELECT", "OPTION", "BUTTON", "INPUT", "META", "LINK", "BASE", "VIDEO", "AUDIO", "SOURCE", "CANVAS", "APPLET", "NOSCRIPT"]);
     const safeUrl = (value, image = false) => {
         const url = String(value || "").trim();
@@ -353,7 +384,7 @@ export function sanitizeHtmlContent(htmlStr) {
                 let keep = false;
 
                 if (name === "style") {
-                    const safeStyle = sanitizeSafeStyle(value);
+                    const safeStyle = sanitizeSafeStyle(value, mode);
                     if (safeStyle) child.setAttribute("style", safeStyle);
                     else child.removeAttribute("style");
                     return;
