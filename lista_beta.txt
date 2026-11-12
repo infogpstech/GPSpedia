@@ -318,3 +318,37 @@ Cobertura esperada según las suites actuales: NavigationBackHistory (21 escenar
 
 3. Validaciones Beta en navegador/dispositivo real (pendientes; no sustituidas por Node CLI): probar Atrás/Adelante del navegador, botón físico Atrás y gestos nativos; comprobar cierre secuencial de overlays, stacking contexts y conservación de capas inferiores; repetir navegación multinivel, deep links y búsqueda; verificar lightbox sobre ficha y que el reproductor/iframe solo se detenga al cerrar la ficha cuando corresponda. Registrar navegador, dispositivo, versión, pasos y resultado, incluidos fallos reproducibles. No afirmar que estas validaciones se ejecutaron hasta realizarlas en Beta.
 ================================================================================
+
+
+================================================================================
+AUG-074 — VALIDACIÓN PWA iOS/iPadOS — PENDIENTE DE BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guárdalos o confírmalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, el remoto no coincide o el fast-forward falla, detenerse; no usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD actualizado antes de iniciar pruebas.
+
+PRUEBAS EN DISPOSITIVOS/NAVEGADORES REALES:
+1. iPhone Safari en navegador normal: botón de instalación visible; abrir instrucciones, seleccionar Compartir > Añadir a la pantalla de inicio y comprobar icono/nombre.
+2. iPhone con GPSpedia instalada: abrir desde el icono; confirmar modo standalone y botón de instalación oculto.
+3. iPadOS Safari con user-agent móvil: comprobar detección y mostrar instrucciones en navegador normal.
+4. iPadOS Safari solicitando sitio de escritorio (UA Macintosh): comprobar que platform MacIntel + capacidad táctil detecta iPadOS y muestra instrucciones.
+5. Instalar en iPad y abrir desde pantalla de inicio: confirmar standalone y botón oculto.
+6. Navegador compatible con beforeinstallprompt (por ejemplo, Chrome Android): comprobar que el evento sigue mostrando el botón, que el prompt se invoca y que appinstalled oculta el botón.
+7. Mac de escritorio con platform MacIntel y maxTouchPoints 0: confirmar que no aparece el flujo manual de iOS.
+8. Navegador estándar sin beforeinstallprompt: confirmar que no aparece el botón manual de iOS.
+
+Registrar dispositivo, versión de sistema, navegador, versión, user-agent/plataforma cuando sea posible, pasos y resultado. No marcar estas pruebas como ejecutadas hasta realizarlas en Beta.
+================================================================================
