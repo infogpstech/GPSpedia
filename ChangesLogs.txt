@@ -343,3 +343,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Dependencia de sintaxis: se escapó el slash en el parser VIN de navigation.js y se agregó NavigationVinCollection.js.
 - Pruebas locales: SearchQueryXssIntegrity 8/8; GlobalSearch 21/21; NavigationVinCollection 6/6; VinVersionPresentation 11/11 PASS.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-099 — LIMPIEZA DE FILTROS RÁPIDOS CANCELADOS
+- main.js: retiradas las referencias obsoletas a toggleFiltersBtn y filtersBar del evento blur y los comentarios de la barra cancelada.
+- Se mantiene la búsqueda directa, el botón de limpieza y la sincronización de focus/blur; no se reintroducen controles ni estilos de filtros rápidos.
+- Services/Test/SearchFilterCleanup.js: 8/8 PASS, incluyendo blur con consulta vacía/activa y modal visible.
+================================================================================
