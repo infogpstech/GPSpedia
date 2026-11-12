@@ -205,7 +205,7 @@ Las pruebas del flujo de aprobación se ejecutan con Services/feedback.js y las 
 - Services/Test/VideoApprovalState.js — valida el estado y la forma de las solicitudes.
 - Services/Test/YouTubeApproval.js — creación idempotente, recuperación por opVideoId, titularidad, duplicados y URL/ID real.
 - Services/Test/YouTubeApprovalInit.js — metadatos fijos, destino existente, respuesta HTTP y URL oficial de sesión.
-- Services/Test/VideoApprovalPublishing.js — aprobación/rechazo en Cortes, PyS y Tutoriales; unicidad del destino, miniaturas, reintentos tras fallos parciales, reintento después de perder la respuesta de una aprobación completada y verificación de que no se sobrescriba un destino alterado.
+- Services/Test/VideoApprovalPublishing.js — aprobación/rechazo en Cortes, PyS y Tutorial; unicidad del destino, miniaturas, reintentos tras fallos parciales, validación de subType/status, consistencia entre ID_vehiculo y referenceId, estado de fila pendiente/resuelta, JSON inválido y decisiones terminales.
 - Services/Test/VideoApprovalContracts.js — ejecutar runVideoApprovalCreationContractTests(); valida altas sin vídeo, bloqueo de enlaces directos y protección de cambios fuera del flujo de aprobación.
 - Services/Test/VideoApprovalSessions.js — sesión ausente, inválida, expirada, revocada, token cruzado, duplicidad de token/perfil y rol no permitido.
 - Services/Test/YouTubeAddCortesContract.js — ejecutar `runYouTubeAddCortesContractTests(addCortesHtml)` desde el runner local; verifica que Cortes no exponga entrada manual, no copie la URL pendiente al formulario y conserve el flujo de aprobación con bloqueo de doble envío.
@@ -236,7 +236,7 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 
 - `Services/Test/FeedbackWriteSecurity.js` — ejecutar `runFeedbackWriteSecurityTests()` junto con `Services/feedback.js` en un proyecto temporal V8. Usa dobles en memoria para autorización, identidad de actor, política pública, deduplicación de likes, recuperación de contadores y rechazo de altas PyS sin imagen.
   También prueba peticiones POST directas: sustitución de identidad, sesión inválida, rol falsificado en `approveVideo`, coordinación FEEDBACK y rechazo de `assignCollaborator`.
-- `Services/Test/SharedMutationCoordinator.js` comprueba la contención interservicios y que `recordLike`, `suggestYear` y `approveVideo` reserven `CORTES`, `FEEDBACK` y `ACTIVITY`; también confirma que `assignCollaborator` ya no esté habilitada.
+- `Services/Test/SharedMutationCoordinator.js` comprueba la contención interservicios y que `recordLike`, `suggestYear` y `approveVideo` reserven `CORTES`, `FEEDBACK` y `ACTIVITY`; también confirma que `assignCollaborator` ya no esté habilitada y que `approveVideo` y `rejectVideo` no puedan adquirir leases simultáneas.
 - Acciones públicas: `getPysData` (solo lectura) y `sendContactForm` (longitudes/correo validados y máximo 10 envíos por hora). `suggestYear` admite aportes anónimos limitados a 30 por hora; no cuentan para modificar automáticamente el catálogo y quedan para revisión manual.
 - Las escrituras `recordLike`, `reportProblem`, `addProblem`, `addSolution`, `addPrevention` y `suggestCutChange` requieren sesión activa; el backend reemplaza userId/userName/userRole con datos de Users. Las demás acciones deben estar declaradas; las no declaradas se rechazan.
 - `FeedbackLikes` se crea bajo demanda; su esquema está en `Spreadsheet/GPSpedia_DB_columnas.md`. No ejecutar contra hojas productivas.
@@ -1099,3 +1099,13 @@ node --experimental-default-type=module Services/Test/TutorialIntegrity.js
 La suite cubre el esquema canónico A:G de la hoja `Tutorial`, la extensión H para `Colaborador` sin reinterpretar datos históricos, alta idempotente por `operationId`, duplicados por tema normalizado, recuperación tras respuesta incierta de `flush`, edición atómica por ID con compatibilidad de registros históricos sin ID, límites de payload, contrato de autorización Desarrollador, identidad derivada desde Users, campos y colaborador en UI, mapeo de catálogo y exclusión mutua del recurso `TUTORIAL` en el coordinador. Usa dobles de Spreadsheet/LockService; no accede a datos reales.
 
 Regresión relacionada: ejecutar también las suites `VideoApprovalPublishing.js` y `SharedMutationCoordinator.js`. La integración con Apps Script/Spreadsheet aislada y la comprobación visual en navegador se reservan para Beta.
+
+
+## AUG-093 — Estado e integridad de decisiones de vídeo
+
+Ejecutar las suites aisladas de publicación y coordinación cargando sus dependencias en un proyecto temporal de pruebas:
+
+- `runVideoApprovalPublishingTests()`: 26 escenarios previstos para tipo `video_approval`, JSON válido, estado pendiente tanto en el payload como en la fila Feedbacks, coincidencia de `ID_vehiculo` con `referenceId`, unicidad del ID de solicitud, rechazo de estados terminales, reintentos idempotentes y destinos Cortes/PyS/Tutorial.
+- `runSharedMutationCoordinatorTests()`: 32 escenarios previstos; incluye exclusión mutua entre decisiones simultáneas de aprobación y rechazo.
+
+Las suites usan dobles en memoria. La ejecución integrada con sesiones reales y Spreadsheet aislada se valida en Beta; no usar datos ni despliegues productivos.
