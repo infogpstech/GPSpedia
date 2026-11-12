@@ -606,3 +606,14 @@ Estado de AUG-069: COMPLETADA CON VALIDACIÓN DIFERIDA. La revisión del diff co
 Validaciones Beta pendientes: botón físico, gestos nativos, Forward y comportamiento completo en navegador/dispositivo real. No se presentan como ejecutadas.
 Registro: ChangesLogs.txt fue rotado por superar el umbral documental; la reconstrucción de las dos partes archivadas coincidió exactamente con los 180542 caracteres originales.
 ================================================================================
+
+
+================================================================================
+AUG-070 — H-AUD-070-001 — CIERRE MULTICAPA DE OVERLAYS
+Ubicaciones: overlayHistory.js, handlePopState(); main.js, listener popstate y registro de info-modals; users.html, setupEventListeners().
+Evidencia: el gestor consumía en un mismo evento todas las entradas que no aparecían en el estado destino. El App Shell recorría los info-modals visibles con forEach y users.html aplicaba el mismo patrón a todos sus modales. La prioridad de cierre dependía de ramas por tipo y no de la capa efectiva; el acuerdo legal abierto desde el aviso obligatorio podía quedar por debajo de este por z-index.
+Impacto: un solo Atrás podía ocultar varias capas, perder el contexto padre o dejar la interfaz y el historial desincronizados; la limpieza de contenido podía afectar una capa que debía seguir visible.
+Corrección: cada popstate retira solo la entrada superior; si el destino omitió más capas, se reconstruye el estado de las capas restantes. El App Shell selecciona la capa visible por z-index efectivo, orden de apertura y orden DOM. Los modales de users.html usan la misma pila LIFO. El acuerdo legal recibe z-index superior al aviso cuando se abre desde este.
+Validación: OverlayHistoryStack 18/18 PASS y ReplacedImagesLightboxHistory 6/6 PASS en runtime V8 adaptado; parsing V8 de main.js, módulo users.html y bloque legal ui.js PASS. No se ejecutó navegador real.
+Estado: corregido y validado localmente. Beta pendiente: interacción DOM/navegador real, botón físico y gestos nativos.
+================================================================================
