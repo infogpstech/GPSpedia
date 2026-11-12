@@ -645,8 +645,18 @@ Siguiente: AUG-095 — Sanitización autoritativa del contenido enriquecido en b
   4. Revisar todos los sinks de lectura, incluidos detalle, carrusel, impresión, exportación y offline.
   5. No migrar masivamente registros productivos sin autorización.
   6. Probar llamadas directas a backend y reintentos para cada campo.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; validación local aprobada, proyectos Apps Script/Spreadsheet aislados pendientes para Beta.
 
+
+================================================================================
+AUG-095 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- FEEDBACK aplica el sanitizador a descripción, solución y prevención al crear PyS, al agregar solución/previsión y al editar; WRITE sanitiza apertura, cables de alimentación y nota antes de producir las actualizaciones persistibles.
+- Las allow-lists y reglas de FEEDBACK/WRITE son idénticas y coinciden con los elementos permitidos por rich-text.js. Se conservan los formatos del editor; se eliminan scripts, elementos activos, eventos, esquemas peligrosos y CSS no permitido.
+- Se corrigió la validación de contenido visible para que BR y NBSP no permitan campos requeridos vacíos; WRITE rechaza también aportes suplementarios sin texto ni imagen útil. UI limita descripción PyS a 200 caracteres, igual que backend.
+- Pruebas en harness JavaScript adaptado: RichTextBackendSanitization 12/12 PASS; PysCreationIntegrity 52/52 PASS. Parsing de feedback.js, write.js, rich-text.js y suites PASS; revisión de sinks: detalle, acordeón/carrusel y ficha de impresión/exportación usan sanitización; offline.js no inserta HTML. Dos rutas de renderizado pendientes quedan en AUG-096.
+- Node CLI y proyectos Apps Script/Spreadsheet reales no se ejecutaron; integración aislada, pruebas con sesiones reales y verificación visual quedan para Beta. No se migraron datos históricos ni se desplegó a producción.
+Siguiente: AUG-096 — Sanitizar todas las rutas de renderizado de contenido descriptivo.
+================================================================================
 ### AUG-096 — Sanitizar todas las rutas de renderizado de contenido descriptivo
 - Origen: H-AUD-014-002. Tarea AUD-T-014. Sesión/checkpoint: AUD-20261108-S032/AUD-CP-0032. Prioridad: Alta.
 - Evidencia: ui.js updateSlide() (5905–5909), vista sin carrusel (5998–6004); otros consumidores sí invocan sanitizeHtmlContent (1665, 2193, 2964–2966, 8883, 9292–9354).
