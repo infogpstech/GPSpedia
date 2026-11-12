@@ -817,3 +817,13 @@ cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs &&
 ```
 
 La suite contiene 19 escenarios. Comprueba que cada `popstate` cierre una sola capa, que las capas inferiores permanezcan visibles, que el selector determine la capa superior por `z-index` efectivo y orden de apertura, que el menú/lightbox/detalle/info-modals y overlays legales se resuelvan en orden, y que `users.html` utilice la misma semántica LIFO para sus modales. Incluye cancelación de cierre, tres capas anidadas, reemplazo de overlays y cierre manual explícito de un padre con sus descendientes. `ReplacedImagesLightboxHistory.js` mantiene 6/6 escenarios de regresión para lightbox sobre ficha. La validación local usa runtime V8 adaptado e History simulado; DOM/navegador real queda para Beta.
+
+## AUG-071 — Reconciliación del historial del menú y modales
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/OverlayMenuModalHistory.js Services/Test/OverlayMenuModalHistory.mjs && node Services/Test/OverlayMenuModalHistory.mjs; RESULT=$?; rm -f Services/Test/OverlayMenuModalHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite contiene 12 escenarios para el registro idempotente del menú, la transición menú→Inbox/Dashboard/Changelog/DevTools, cierres por popstate y cierre directo, conservación de búsqueda/sección, reemplazo de modales, vistas administrativas y envío exitoso de contact-form. History se simula; navegador real y gestos nativos permanecen como validación Beta.
