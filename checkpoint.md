@@ -1606,3 +1606,16 @@ Archivos: ui.js, navigation.js, Services/Test/SearchQueryXssIntegrity.js, Servic
 Último commit de escritura confirmado antes de esta actualización: 762f0bc234e27e749c1fec2e5bcb679454648b7d. La rama base GPSpedia2.2.5 permanece sin modificaciones.
 Siguiente: AUG-099 — Eliminar referencias residuales a filtros rápidos cancelados.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-099 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+main.js: eliminadas las referencias obsoletas toggleFiltersBtn/filtersBar y los comentarios de filtros rápidos cancelados. Se conserva búsqueda directa, botón X, sincronización focus/blur y clase search-active mientras hay modal visible.
+Inventario: index.html/style.css/ui.js/navigation.js no contienen controles/estilos de filtros rápidos. Los usos de filter restantes son funciones de colección, filtros de administración y propiedades CSS de imagen; no se eliminaron por ser ajenos.
+Pruebas locales en harness adaptado: SearchFilterCleanup 8/8 PASS; handler blur ejecutado con consulta vacía, activa y modal visible sin ReferenceError. No se ejecutó Node CLI ni navegador real.
+Beta pendiente: búsqueda, botón limpiar, blur, navegación, modal, teclado virtual y viewports. No se reactivaron filtros ni se modificaron datos productivos.
+Archivos: main.js, Services/Test/SearchFilterCleanup.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Último commit de escritura confirmado antes de esta actualización: 75f5bf0f6cf1b7cc80e05e27c0dbfd189ab6bb93. La rama base GPSpedia2.2.5 permanece sin modificaciones.
+Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-099; no ejecutar la entrada histórica AUG-100 anulada por adenda.
+================================================================================
