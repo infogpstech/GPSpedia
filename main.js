@@ -14,7 +14,7 @@ import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
 import { decodeSearchHash } from './search-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
-import { createOverlayHistoryManager, selectTopmostOverlay } from './overlayHistory.js';
+import { createOverlayHistoryManager, selectTopmostOverlay, overlayHistoryStateKey } from './overlayHistory.js';
 import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 
 let deferredPrompt;
@@ -424,6 +424,18 @@ async function initializeApp() {
         if (topOverlay && topOverlay.kind !== 'detail') {
             topOverlay.close();
             return;
+        }
+        // Si un cierre directo ya ocultó/retiró el elemento antes del popstate,
+        // reconciliar igualmente la entrada superior omitida por el estado destino.
+        if (!topOverlay) {
+            const overlayStack = overlayHistory.getStack();
+            const targetOverlayIds = Array.isArray(state[overlayHistoryStateKey])
+                ? state[overlayHistoryStateKey] : [];
+            const topOverlayId = overlayStack[overlayStack.length - 1];
+            if (topOverlayId && !targetOverlayIds.includes(topOverlayId)) {
+                overlayHistory.handlePopState(state);
+                return;
+            }
         }
         const searchInput = document.getElementById('searchInput');
 
