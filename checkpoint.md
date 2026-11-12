@@ -960,3 +960,23 @@ Validación:
 
 Siguiente acción: continuar la matriz de rutas de ida/vuelta y deep links, manteniendo AUG-069 como única tarea activa. No iniciar AUG-070.
 ================================================================================
+
+
+================================================================================
+AUG-069 — ITERACIÓN 3 — 2026-11-11 — CIERRE DE ANCESTRY Y ESTADO DE SECCIONES
+Estado: EN PROGRESO. Se detectaron y corrigieron dos inconsistencias adicionales al recorrer las rutas de ida/vuelta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 557b684ee42872fbad7bc61b0ced7291d597272c.
+
+Correcciones:
+- navigationHistory.js: navigateBackToState() prioriza targetState.previousState como metadata antecesora al reemplazar por fallback. La metadata del estado actual se usa solo si el destino no trae antecesor propio.
+- ui.js: mostrarSeccion() sincroniza state.navigationState con la sección activa y conserva el antecesor tomado de History API. Evita que los renderizadores posteriores de catálogo capturen una vista profunda obsoleta como destino de retorno.
+- Services/Test/NavigationBackHistory.js: suite ampliada de 18 a 21 escenarios; incluye ancestry de fallback, contrato de sincronización de secciones y deep links con caracteres reservados/escapes inválidos.
+- Services/Test/README.md, Tareas_pendientes_parte5.txt y Auditoría.txt actualizados.
+
+Validación:
+- Pruebas nuevas agregadas; ejecución completa pendiente. No se afirma 21/21 PASS.
+- No se ejecutó navegador real, botón físico ni gestos nativos; quedan para Beta.
+- Sin cambios en rama base ni datos productivos.
+
+Siguiente acción: ejecutar la suite completa en entorno Node, revisar todos los estados de ida/vuelta, corregir cualquier fallo local y cerrar AUG-069 como COMPLETADA CON VALIDACIÓN DIFERIDA únicamente cuando las pruebas locales estén aprobadas.
+================================================================================
