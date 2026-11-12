@@ -3798,11 +3798,10 @@ function setupModal(modalId, openFn) {
         const closeBtn = modal.querySelector('.info-close-btn');
         if (closeBtn && !closeBtn.dataset.listenerSet) {
             closeBtn.addEventListener('click', () => {
-                const termsModal = document.getElementById('terms-modal');
-                const isTermsModalActive = termsModal && termsModal.style.display === 'flex';
-
-                if (!isTermsModalActive && window.history && window.history.state && window.history.state.modalOpen) {
-                    window.history.back();
+                const overlayId = modal.dataset.gpOverlayHistoryId;
+                const historyManager = window.overlayHistory;
+                if (overlayId && historyManager && historyManager.has(overlayId)) {
+                    historyManager.close(overlayId);
                 } else {
                     modal.style.display = 'none';
                 }
@@ -5376,6 +5375,18 @@ export async function openReplacedImagesModal() {
     const isCurrentRequest = () => generation === replacedImagesModalGeneration_ && isCurrentUiSessionContext_(requestContext);
     const modal = document.getElementById('replaced-images-modal');
     if (!modal || !isCurrentRequest()) return;
+    let cachedReplaced = [];
+    let folders = [];
+    const replacedOverlayId = 'ui-modal:replaced-images-modal';
+    modal.dataset.gpOverlayHistoryId = replacedOverlayId;
+    const replacedHistory = window.overlayHistory;
+    if (replacedHistory && !replacedHistory.has(replacedOverlayId)) replacedHistory.register(replacedOverlayId, () => {
+        replacedImagesModalGeneration_ += 1;
+        closeReplacedImagesLightbox_(true);
+        cachedReplaced = [];
+        folders = [];
+        modal.style.display = 'none';
+    });
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-replaced-images-modal');
@@ -5394,11 +5405,9 @@ export async function openReplacedImagesModal() {
     const lightboxTitle = document.getElementById('replaced-image-lightbox-title');
     const lightboxClose = document.getElementById('replaced-image-lightbox-close');
 
-    let cachedReplaced = [];
     let currentView = await offline.getReplacedImagesView();
     if (!isCurrentRequest()) return;
     currentView = currentView === 'list' ? 'list' : 'grid';
-    let folders = [];
 
     const closeLightbox = () => closeReplacedImagesLightbox_();
 
@@ -5704,11 +5713,16 @@ export async function openReplacedImagesModal() {
     };
 
     if (closeBtn) closeBtn.onclick = () => {
-        replacedImagesModalGeneration_ += 1;
-        cachedReplaced = [];
-        folders = [];
-        if (listContainer) listContainer.replaceChildren();
-        modal.style.display = 'none';
+        const historyManager = window.overlayHistory;
+        if (historyManager && historyManager.has(replacedOverlayId)) historyManager.close(replacedOverlayId);
+        else {
+            replacedImagesModalGeneration_ += 1;
+            closeReplacedImagesLightbox_(true);
+            cachedReplaced = [];
+            folders = [];
+            if (listContainer) listContainer.replaceChildren();
+            modal.style.display = 'none';
+        }
     };
     if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
     if (refreshBtn) refreshBtn.onclick = () => { loadData(); loadFolders(); };
@@ -5767,6 +5781,13 @@ export async function openAuditDriveModal() {
         panelGeneration === adminPanelGeneration_ && isCurrentUiSessionContext_(requestContext);
     const modal = document.getElementById('audit-drive-modal');
     if (!modal || !isCurrentRequest()) return;
+    const auditOverlayId = 'ui-modal:audit-drive-modal';
+    modal.dataset.gpOverlayHistoryId = auditOverlayId;
+    const auditHistory = window.overlayHistory;
+    if (auditHistory && !auditHistory.has(auditOverlayId)) auditHistory.register(auditOverlayId, () => {
+        auditDriveModalGeneration_ += 1;
+        modal.style.display = 'none';
+    });
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
@@ -5777,8 +5798,9 @@ export async function openAuditDriveModal() {
     const resumeButton = document.getElementById('btn-audit-drive-resume');
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
-        auditDriveModalGeneration_ += 1;
-        modal.style.display = 'none';
+        const historyManager = window.overlayHistory;
+        if (historyManager && historyManager.has(auditOverlayId)) historyManager.close(auditOverlayId);
+        else { auditDriveModalGeneration_ += 1; modal.style.display = 'none'; }
     };
 
     summaryEl.innerHTML = `
@@ -7260,26 +7282,60 @@ export function showGlobalNotification(message, type = 'info') {
     }, 5000);
 }
 
+const SIDE_MENU_HISTORY_ID_ = 'side-menu';
+
 export function openSideMenu() {
     const { currentUser } = getState();
+    const menu = document.getElementById('side-menu');
+    if (!menu) return;
     if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
         document.getElementById('menu-username').textContent = currentUser.Nombre_Completo || currentUser.Nombre_Usuario;
     }
-    document.getElementById('side-menu').classList.add('open');
+    if (menu.classList.contains('open')) return;
+    menu.classList.add('open');
     document.getElementById('menu-overlay').classList.add('open');
-
-    if (window.history && window.history.pushState) {
+    const historyManager = window.overlayHistory;
+    if (historyManager && typeof historyManager.register === 'function') {
+        if (!historyManager.has(SIDE_MENU_HISTORY_ID_)) {
+            historyManager.register(SIDE_MENU_HISTORY_ID_, () => closeSideMenu(true));
+        }
+    } else if (window.history && window.history.pushState) {
         window.history.pushState({ sideMenuOpen: true }, '');
     }
 }
 
 export function closeSideMenu(isFromPopState = false) {
-    document.getElementById('side-menu').classList.remove('open');
-    document.getElementById('menu-overlay').classList.remove('open');
-
-    if (!isFromPopState && window.history && window.history.state && window.history.state.sideMenuOpen) {
-        window.history.back();
+    const menu = document.getElementById('side-menu');
+    const historyManager = window.overlayHistory;
+    if (!isFromPopState && historyManager && historyManager.has(SIDE_MENU_HISTORY_ID_)) {
+        historyManager.close(SIDE_MENU_HISTORY_ID_);
+        return;
     }
+    if (menu) menu.classList.remove('open');
+    document.getElementById('menu-overlay')?.classList.remove('open');
+    if (!isFromPopState && (!historyManager || !historyManager.has(SIDE_MENU_HISTORY_ID_)) &&
+        window.history && window.history.state && window.history.state.sideMenuOpen) window.history.back();
+}
+
+export function closeSideMenuAndRun(callback) {
+    const historyManager = window.overlayHistory;
+    const menu = document.getElementById('side-menu');
+    if (!menu || !menu.classList.contains('open') || !historyManager || !historyManager.has(SIDE_MENU_HISTORY_ID_)) {
+        closeSideMenu(true);
+        return Promise.resolve().then(() => typeof callback === 'function' ? callback() : undefined);
+    }
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            window.removeEventListener('popstate', onPopState);
+            Promise.resolve().then(() => typeof callback === 'function' ? callback() : undefined).then(resolve, reject);
+        };
+        const onPopState = () => { if (!historyManager.has(SIDE_MENU_HISTORY_ID_)) finish(); };
+        window.addEventListener('popstate', onPopState);
+        if (!historyManager.close(SIDE_MENU_HISTORY_ID_)) finish();
+    });
 }
 
 export function mostrarSeccion(sectionName, isFromPopState = false) {
