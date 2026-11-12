@@ -145,7 +145,7 @@ function createToolbarRuntime(mode) {
         .replace(/^export /, "");
     return new Function(
         "getRichTextMode", "document", "applyRichTextFormat", "applyRichTextColor", "Promise", "attachListKeyboardBehavior",
-        toolbarSource + "\\nreturn createRichTextToolbar;"
+        toolbarSource + "\nreturn createRichTextToolbar;"
     )(() => mode, documentStub, () => {}, () => {}, Promise, () => {});
 }
 
@@ -153,7 +153,7 @@ function createStyleSanitizer() {
     const styleSource = extract(richText, "function sanitizeSafeStyle(styleText", "export function sanitizeHtmlContent");
     return new Function(
         "SAFE_SIZES", "SAFE_FONT_VALUES", "SAFE_NAMED_COLORS", "getRichTextMode",
-        styleSource + "\\nreturn sanitizeSafeStyle;"
+        styleSource + "\nreturn sanitizeSafeStyle;"
     )(new Set(["0.85em", "1em", "1.2em", "1.5em"]),
       new Set(["Arial, sans-serif", "'Segoe UI', Roboto, sans-serif", "'Courier New', monospace", "Georgia, serif"]),
       new Set(["red", "blue", "green", "black", "white", "orange", "yellow", "gray", "grey", "purple", "teal", "navy"]),
