@@ -706,3 +706,15 @@ cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs &&
 ```
 
 La suite verifica la pila anidada, cierre del overlay superior con Atrás, cierre manual, reemplazo de un overlay sin agregar profundidad, reconciliación LIFO, preservación de otros campos de history.state y manejo de errores.
+
+
+
+## AUG-068 — Ciclo de vida de instancias del modal YouTube
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/YouTubeUploadOverlayLifecycle.js Services/Test/YouTubeUploadOverlayLifecycle.mjs && node Services/Test/YouTubeUploadOverlayLifecycle.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadOverlayLifecycle.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La prueba de contrato verifica que una segunda apertura no retire directamente una instancia existente, que una transferencia activa y un modal cubierto por otro overlay se conserven, que se respete la cancelación del cierre y que el reemplazo reutilice la entrada superior del historial.

@@ -271,7 +271,30 @@ export function openYouTubeUploadModal(options = {}) {
     } = options;
 
     const existing = document.getElementById("youtube-upload-modal");
-    if (existing) existing.remove();
+    let replaceExistingOverlayId = null;
+    if (existing) {
+        const existingOverlayId = existing.__youtubeUploadOverlayId;
+        const existingClose = existing.__youtubeUploadClose;
+        const existingIsUploading = typeof existing.__youtubeUploadIsUploading === "function"
+            && existing.__youtubeUploadIsUploading();
+        const existingHistory = window.overlayHistory;
+        const existingStack = existingHistory && typeof existingHistory.getStack === "function"
+            ? existingHistory.getStack()
+            : [];
+        const existingIsRegistered = Boolean(existingOverlayId && existingStack.includes(existingOverlayId));
+
+        // No sustituir una transferencia activa: conserva su XHR y su punto de recuperación.
+        if (existingIsUploading) return existing;
+
+        // Un overlay hijo debe cerrarse antes; no retirar un modal que no está en la cima.
+        if (existingIsRegistered && existingStack[existingStack.length - 1] !== existingOverlayId) {
+            return existing;
+        }
+        if (typeof existingClose !== "function" || existingClose() === false) {
+            return existing;
+        }
+        if (existingIsRegistered) replaceExistingOverlayId = existingOverlayId;
+    }
 
     const modal = document.createElement("div");
     modal.id = "youtube-upload-modal";
@@ -402,8 +425,19 @@ export function openYouTubeUploadModal(options = {}) {
 
     // Se registra explícitamente: main.js excluye este modal del observador genérico
     // para que el cierre pueda confirmar la pausa y abortar el XHR de forma segura.
+    // El callback queda asociado al nodo para que una apertura posterior pueda
+    // cerrar/reemplazar esta instancia sin dejar una entrada huérfana en el historial.
+    modal.__youtubeUploadOverlayId = overlayHistoryId;
+    modal.__youtubeUploadClose = closeModal;
+    modal.__youtubeUploadIsUploading = () => isUploading;
+
     if (overlayHistory && typeof overlayHistory.register === "function") {
-        overlayHistory.register(overlayHistoryId, closeModal);
+        const currentStack = overlayHistory.getStack();
+        if (replaceExistingOverlayId && currentStack[currentStack.length - 1] === replaceExistingOverlayId) {
+            overlayHistory.replaceTop(overlayHistoryId, closeModal);
+        } else {
+            overlayHistory.register(overlayHistoryId, closeModal);
+        }
     }
 
     const requestOverlayClose = () => {

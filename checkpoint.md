@@ -605,3 +605,32 @@ Validación realizada: revisión estática del archivo recuperado de GitHub. Se 
 Archivos modificados en esta iteración: youtubeUpload.js. No se modificó ChangesLogs.txt por superar 180,000 caracteres y requerir rotación normativa sin pérdida.
 Continuidad: en la siguiente iteración ejecutar validaciones reproducibles (sintaxis y suite), revisar sincronización del historial al reemplazar una instancia existente del modal y probar cancelación/confirmación con transferencia activa. No iniciar AUG-069.
 ================================================================================
+
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3C — SINCRONIZACIÓN AL REABRIR EL MODAL YOUTUBE — 2026-11-11
+Estado: EN PROGRESO. Se corrigió el reemplazo de instancias para evitar entradas huérfanas; pendiente ejecutar la prueba Node CLI en Codespaces y continuar con validaciones de cierre durante transferencia activa.
+Rama: GPSpedia2.2.5_work. HEAD de partida confirmado: f7348e46f71e70af4f868c65943632afcf5a6118. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Hallazgo:
+- openYouTubeUploadModal retiraba con existing.remove() el modal anterior sin notificar a overlayHistory. La entrada anterior permanecía en la pila; la nueva apertura agregaba otra entrada y el siguiente Atrás podía operar sobre un overlay inexistente.
+- La sustitución directa también podía retirar una transferencia activa y abortar su continuidad sin pasar por la confirmación prevista.
+
+Cambio:
+- youtubeUpload.js: la instancia expone su ID, callback de cierre y estado de transferencia.
+- Si ya existe una transferencia activa, la nueva apertura reutiliza la instancia existente y no altera su XHR ni su progreso.
+- Si el modal está cubierto por otro overlay, no se retira desde debajo.
+- Si está inactivo y es el overlay superior, se ejecuta su callback de cierre; si el cierre se cancela, no se crea otra instancia.
+- El reemplazo de una instancia registrada usa overlayHistory.replaceTop para reutilizar la entrada existente; se evita el registro huérfano.
+- Services/Test/YouTubeUploadOverlayLifecycle.js: nueva prueba de contrato estático con ocho comprobaciones.
+- Services/Test/README.md: comando Node CLI con copia temporal .mjs.
+
+Validación de esta iteración:
+- Revisión de fuente y consistencia de las rutas de reemplazo: realizada.
+- No se ejecutó Node CLI ni un runtime DOM/browser en esta iteración; la suite nueva queda pendiente de ejecución en Codespaces.
+- No se modificó ChangesLogs.txt porque supera el umbral de 180,000 caracteres y requiere rotación normativa sin pérdida antes de añadir entradas.
+- No se modificó la rama base.
+
+Siguiente acción: ejecutar YouTubeUploadOverlayLifecycle (8 comprobaciones) en Codespaces, corregir cualquier fallo reproducible y luego continuar con las pruebas de cancelación/confirmación de cierre durante transferencia activa. No iniciar AUG-069.
+================================================================================
