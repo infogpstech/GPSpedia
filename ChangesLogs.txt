@@ -302,3 +302,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/YouTubeUploadXssIntegrity.js: regresión para comillas, ampersands, etiquetas, eventos, cierre de textarea, acentos, saltos de línea y límites.
 - Services/Test/README.md y lista_beta.txt: ejecución local y validación visual aislada documentadas.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-095 — SANITIZACIÓN AUTORITATIVA DE CONTENIDO ENRIQUECIDO
+- Services/feedback.js: se verificó la aplicación del sanitizador allow-list en alta PyS, descripción, solución, prevención y edición; se corrige la detección de contenido vacío para saltos BR y entidades NBSP.
+- Services/write.js: se conserva el mismo contrato allow-list que FEEDBACK y se rechazan campos suplementarios que, tras sanitizarse, solo contienen etiquetas vacías, saltos o espacios no separables.
+- ui.js: el editor in-modal de PyS limita la descripción a 200 caracteres, en concordancia con la validación backend.
+- Services/Test/RichTextBackendSanitization.js y PysCreationIntegrity.js: cobertura de payloads directos, contenido activo, atributos, URLs, CSS, entidades, límites y reintentos.
+================================================================================
