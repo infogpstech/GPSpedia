@@ -14,6 +14,7 @@ import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
 import { decodeSearchHash } from './search-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
+import { createOverlayHistoryManager, overlayHistoryStateKey } from './overlayHistory.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
@@ -281,10 +282,72 @@ async function initializeApp() {
     // Exponer handleViewportChange globalmente para lightbox.js
     window.handleViewportChange = handleViewportChange;
 
+    // Registro único de overlays .info-modal y coordinación con el historial del navegador.
+    const overlayElements = new Map();
+    let overlaySequence = 0;
+    const overlayHistory = createOverlayHistoryManager(window.history);
+    window.overlayHistory = overlayHistory;
+
+    function isOverlayVisible_(element) {
+        if (!element || !element.isConnected) return false;
+        if (element.classList.contains('visible')) return true;
+        return element.style.display !== 'none' && window.getComputedStyle(element).display !== 'none';
+    }
+
+    function registerVisibleOverlays_() {
+        const visible = Array.from(document.querySelectorAll('.info-modal'))
+            .filter(element => element.id !== 'youtube-upload-modal' && isOverlayVisible_(element));
+        const visibleSet = new Set(visible);
+        const stale = Array.from(overlayElements.entries()).filter(([, element]) => !visibleSet.has(element));
+        const fresh = visible.filter(element => !overlayElements.has(element));
+
+        // Un overlay que reemplaza al superior ocupa su misma entrada, sin añadir un nivel de Atrás.
+        if (stale.length === 1 && fresh.length === 1) {
+            const [oldId] = stale[0];
+            const element = fresh[0];
+            const id = 'info-modal-' + (++overlaySequence);
+            overlayElements.delete(oldId);
+            element.dataset.gpOverlayHistoryId = id;
+            overlayElements.set(id, element);
+            overlayHistory.replaceTop(id, () => {
+                element.style.display = 'none';
+                element.classList.remove('visible');
+            });
+            return;
+        }
+
+        stale.forEach(([id]) => {
+            overlayElements.delete(id);
+            overlayHistory.close(id);
+        });
+        fresh.forEach(element => {
+            const id = 'info-modal-' + (++overlaySequence);
+            element.dataset.gpOverlayHistoryId = id;
+            overlayElements.set(id, element);
+            overlayHistory.register(id, () => {
+                element.style.display = 'none';
+                element.classList.remove('visible');
+            });
+        });
+    }
+
+    const overlayObserver = new MutationObserver(registerVisibleOverlays_);
+    overlayObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+    registerVisibleOverlays_();
+
     /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};
+        if (Object.prototype.hasOwnProperty.call(state, overlayHistoryStateKey)) {
+            overlayHistory.handlePopState(state);
+            return;
+        }
         const searchInput = document.getElementById('searchInput');
 
         // Impedir cualquier retroceso o acción de popstate si el modal de aviso inicial está activo
