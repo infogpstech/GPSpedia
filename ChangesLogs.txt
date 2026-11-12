@@ -283,3 +283,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 2026-11-12 — ADENDA AUG-092
 - ui.js: conserva la barra de formato enriquecido en el campo Detalles al editar un tutorial; se mantiene el contenido existente y el límite de 700 caracteres.
 - Regresión local repetida tras el ajuste: TutorialIntegrity 21/21, VideoApprovalPublishing 18/18, SharedMutationCoordinator 31/31 y PysVehicleRelationIntegrity 18/18 PASS; parsing focalizado PASS.
+
+
+================================================================================
+2026-11-12 — AUG-093 — INTEGRIDAD DE SOLICITUDES DE VÍDEO
+- Services/feedback.js: valida subType video_approval, estado pendiente en JSON y Feedbacks, unicidad del ID, coincidencia ID_vehiculo/referenceId, URL/ID canónicos, tipo, título e identidad creadora antes de decidir.
+- Se mantiene la confirmación idempotente de una aprobación previa únicamente cuando destino, estado de fila, resolución y aprobador coinciden; rechazo y estados terminales no admiten transiciones repetidas.
+- Services/Test/VideoApprovalPublishing.js: pruebas de JSON inválido, tipo incorrecto, estado terminal, estado de fila incoherente, ID cruzado, solicitud inexistente e identidad creadora ausente.
+- Services/Test/SharedMutationCoordinator.js: prueba de exclusión mutua entre approveVideo y rejectVideo.
+- Services/Test/README.md y lista_beta.txt: documentación de pruebas y validación integrada aislada.
+================================================================================
