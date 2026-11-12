@@ -7741,6 +7741,9 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
         const identificarInput = addField("Cómo identificarlo", item.comoIdentificarlo, { multiline: true });
         const encontrarInput = addField("Dónde encontrarlo", item.dondeEncontrarlo, { multiline: true });
         const detallesInput = addField("Detalles", item.Detalles || item.Descripcion, { multiline: true });
+        detallesInput.id = "edit-tutorial-details-textarea";
+        const detailsToolbar = createRichTextToolbar("edit-tutorial-details-textarea");
+        form.insertBefore(detailsToolbar, detallesInput);
 
         const videoLabel = document.createElement("label");
         videoLabel.style.fontWeight = "bold";
