@@ -35,64 +35,41 @@ input, textarea, select {
 }
 
 :root {
-    --bg-color: #f4f4f4;
-    --text-color: #333;
-    --text-high: #333333;
-    --text-medium: #666666;
-    --text-disabled: #999999;
-    --card-bg: #fff;
-    --header-color: #333;
-    --modal-bg: #fff;
-    --modal-text: #333;
-    --button-bg: #f0f0f0;
-    --button-text: #007bff;
-    --menu-bg: #fff;
-    --accent-color: #007bff;
-    --transition-speed: 0.3s;
-    --border-color: #e0e0e0;
-
-    /* Tokens semánticos del banner de validación colaborativa */
-    --validation-bg: #eaf4ff;
-    --validation-border: #b6d4f2;
-    --validation-text: #1f2937;
-    --validation-muted: #4b5563;
-    --validation-input-bg: #ffffff;
-    --validation-input-border: #8b9aab;
-    --validation-primary-bg: #005fcc;
-    --validation-primary-text: #ffffff;
-    --validation-secondary-bg: #dbeafe;
-    --validation-secondary-text: #1e3a5f;
-    --validation-focus: #005fcc;
+    /* Contrato semántico compartido por index, users y add_cortes. */
+    --gp-color-page:#f4f4f4; --gp-color-surface:#ffffff; --gp-color-elevated:#ffffff;
+    --gp-color-text:#333333; --gp-color-text-secondary:#495057; --gp-color-text-muted:#666666;
+    --gp-color-text-disabled:#6c757d; --gp-color-border:#e0e0e0; --gp-color-border-strong:#6c757d;
+    --gp-color-accent:#007bff; --gp-color-accent-contrast:#ffffff; --gp-color-button-bg:#f0f0f0;
+    --gp-color-success:#198754; --gp-color-warning:#ffc107; --gp-color-danger:#dc3545;
+    --gp-color-info-bg:#e9f7ff; --gp-color-info-text:#004085; --gp-color-disabled-bg:#e9ecef;
+    --gp-color-focus:#005fcc; --gp-color-overlay:rgba(0,0,0,0.5); --gp-transition-speed:0.3s;
+    --bg-color:var(--gp-color-page); --text-color:var(--gp-color-text); --text-high:var(--gp-color-text);
+    --text-medium:var(--gp-color-text-muted); --text-disabled:var(--gp-color-text-disabled); --card-bg:var(--gp-color-surface);
+    --header-color:var(--gp-color-text); --modal-bg:var(--gp-color-elevated); --modal-text:var(--gp-color-text);
+    --button-bg:var(--gp-color-button-bg); --button-text:var(--gp-color-accent); --menu-bg:var(--gp-color-surface);
+    --accent-color:var(--gp-color-accent); --transition-speed:var(--gp-transition-speed); --border-color:var(--gp-color-border);
+    --validation-bg:#eaf4ff; --validation-border:#b6d4f2; --validation-text:#1f2937; --validation-muted:#4b5563;
+    --validation-input-bg:#ffffff; --validation-input-border:#8b9aab; --validation-primary-bg:#005fcc;
+    --validation-primary-text:#ffffff; --validation-secondary-bg:#dbeafe; --validation-secondary-text:#1e3a5f; --validation-focus:#005fcc;
 }
 
 body.dark-mode {
-    --bg-color: #121212;
-    --text-color: #FFFFFFDE;
-    --text-high: #FFFFFFDE;
-    --text-medium: #FFFFFF99;
-    --text-disabled: #FFFFFF61;
-    --card-bg: #1e1e1e;
-    --header-color: #FFFFFFDE;
-    --modal-bg: #242424;
-    --modal-text: #FFFFFFDE;
-    --button-bg: #2c2c2c;
-    --button-text: #58a6ff;
-    --menu-bg: #1e1e1e;
-    --accent-color: #58a6ff;
-    --border-color: #3a3a3a;
-
-    /* Valores con contraste alto para el mismo componente en tema oscuro */
-    --validation-bg: #17283a;
-    --validation-border: #315577;
-    --validation-text: #e5edf7;
-    --validation-muted: #c1ccda;
-    --validation-input-bg: #1e293b;
-    --validation-input-border: #64748b;
-    --validation-primary-bg: #8abfff;
-    --validation-primary-text: #102033;
-    --validation-secondary-bg: #29435f;
-    --validation-secondary-text: #e7f0ff;
-    --validation-focus: #8abfff;
+    /* Mismo contrato semántico, con valores del tema oscuro. */
+    --gp-color-page:#121212; --gp-color-surface:#1e1e1e; --gp-color-elevated:#242424;
+    --gp-color-text:#f0f0f0; --gp-color-text-secondary:#bdbdbd; --gp-color-text-muted:#b0b0b0;
+    --gp-color-text-disabled:#9e9e9e; --gp-color-border:#3a3a3a; --gp-color-border-strong:#64748b;
+    --gp-color-accent:#58a6ff; --gp-color-accent-contrast:#102033; --gp-color-button-bg:#2c2c2c;
+    --gp-color-success:#5bd18a; --gp-color-warning:#ffd166; --gp-color-danger:#ff7b86;
+    --gp-color-info-bg:#17283a; --gp-color-info-text:#e5edf7; --gp-color-disabled-bg:#2c2c2c;
+    --gp-color-focus:#8abfff; --gp-color-overlay:rgba(0,0,0,0.7); --gp-transition-speed:0.3s;
+    --bg-color:var(--gp-color-page); --text-color:var(--gp-color-text); --text-high:var(--gp-color-text);
+    --text-medium:var(--gp-color-text-muted); --text-disabled:var(--gp-color-text-disabled); --card-bg:var(--gp-color-surface);
+    --header-color:var(--gp-color-text); --modal-bg:var(--gp-color-elevated); --modal-text:var(--gp-color-text);
+    --button-bg:var(--gp-color-button-bg); --button-text:var(--gp-color-accent); --menu-bg:var(--gp-color-surface);
+    --accent-color:var(--gp-color-accent); --border-color:var(--gp-color-border);
+    --validation-bg:#17283a; --validation-border:#315577; --validation-text:#e5edf7; --validation-muted:#c1ccda;
+    --validation-input-bg:#1e293b; --validation-input-border:#64748b; --validation-primary-bg:#8abfff;
+    --validation-primary-text:#102033; --validation-secondary-bg:#29435f; --validation-secondary-text:#e7f0ff; --validation-focus:#8abfff;
 }
 
 /* Solución técnica para el logo en modo oscuro */
@@ -126,7 +103,7 @@ h1.app-title {
 .backBtn {
     margin-bottom: 15px;
     cursor: pointer;
-    color: #007bff;
+    color: var(--gp-color-accent);
     display: inline-flex;
     align-items: center;
     font-weight: bold;
@@ -135,7 +112,7 @@ h1.app-title {
     transition: background 0.2s;
 }
 .backBtn:hover {
-    background: #e9f7ff;
+    background: var(--gp-color-info-bg);
 }
 
 /* --- RECONSTRUCCIÓN EXTREMA DEL HEADER --- */
@@ -187,13 +164,13 @@ h1.app-title {
 }
 
 #connection-status.online {
-    background-color: #28a745;
-    box-shadow: 0 0 2px #28a745;
+    background-color: var(--gp-color-success);
+    box-shadow: 0 0 2px var(--gp-color-success);
 }
 
 #connection-status.offline {
-    background-color: #ffc107;
-    box-shadow: 0 0 2px #ffc107;
+    background-color: var(--gp-color-warning);
+    box-shadow: 0 0 2px var(--gp-color-warning);
     animation: pulse-offline 1.5s infinite ease-in-out;
 }
 
@@ -373,10 +350,10 @@ body.dark-mode h1.app-title {
 #side-menu nav a i {
     width: 20px; /* Ancho fijo para alinear iconos */
     text-align: center;
-    color: #007bff;
+    color: var(--gp-color-accent);
 }
 .side-menu-changelog-a {
-    color: #007bff;
+    color: var(--gp-color-accent);
     text-decoration: none;
     font-size: 0.85em;
     cursor: pointer;
@@ -415,9 +392,9 @@ body.dark-mode h1.app-title {
     border-color: #555;
 }
 .dark-mode .section-btn.active {
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
     color: #fff;
-    border-color: #007bff;
+    border-color: var(--gp-color-accent);
 }
 .dark-mode #detalleCompleto {
     background: var(--modal-bg);
@@ -434,7 +411,7 @@ body.dark-mode h1.app-title {
     color: var(--button-text);
 }
 .dark-mode .accordion-btn:hover, .dark-mode .accordion-btn.active {
-    background-color: #444;
+    background-color: var(--gp-color-border-strong);
 }
 .dark-mode .panel-desplegable {
     background-color: var(--modal-bg);
@@ -489,7 +466,7 @@ body.dark-mode h1.app-title {
     border-radius: 50%;
 }
 input:checked + .slider {
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
 }
 input:checked + .slider:before {
     transform: translateX(26px);
@@ -578,7 +555,7 @@ body.search-active .container {
     gap: 10px;
 }
 .section-btn {
-    background-color: #f0f0f0;
+    background-color: var(--gp-color-button-bg);
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 10px 20px;
@@ -588,12 +565,12 @@ body.search-active .container {
     transition: background-color 0.3s, color 0.3s;
 }
 .section-btn.active {
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
     color: #fff;
-    border-color: #007bff;
+    border-color: var(--gp-color-accent);
 }
 .section-btn:hover:not(.active) {
-    background-color: #e0e0e0;
+    background-color: var(--gp-color-disabled-bg);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -931,7 +908,7 @@ body.search-active .container {
     min-width: 40px;
     min-height: 40px;
     border-radius: 50%;
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
     color: #ffffff;
     border: none;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -1089,7 +1066,7 @@ body.search-active .container {
 .btn-link {
     background: none;
     border: none;
-    color: #007bff;
+    color: var(--gp-color-accent);
     text-decoration: underline;
     cursor: pointer;
     padding: 0;
@@ -1141,11 +1118,11 @@ body.search-active .container {
 }
 
 .feedback-btn-overlay.util-btn.liked {
-    background-color: #28a745;
+    background-color: var(--gp-color-success);
 }
 
 #detalleCompleto h4 {
-    color: #007bff;
+    color: var(--gp-color-accent);
     border-bottom: 2px solid #eee;
     padding-bottom: 5px;
     margin-top: 8px; /* Reducido para economizar espacio */
@@ -1158,8 +1135,8 @@ body.search-active .container {
 
 /* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
 .accordion-btn {
-    background-color: #f0f0f0;
-    color: #007bff;
+    background-color: var(--gp-color-button-bg);
+    color: var(--gp-color-accent);
     cursor: pointer;
     padding: 12px 15px; /* Reducido para economizar espacio */
     width: 100%;
@@ -1176,7 +1153,7 @@ body.search-active .container {
     align-items: center;
 }
 .accordion-btn:hover, .accordion-btn.active {
-    background-color: #e0e0e0;
+    background-color: var(--gp-color-disabled-bg);
 }
 .accordion-arrow {
     transition: transform 0.3s ease;
@@ -1484,7 +1461,7 @@ body.search-active .container {
 .modal form select:focus,
 .modal form textarea:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--gp-color-accent);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
@@ -1501,7 +1478,7 @@ body.search-active .container {
 .modal form input:disabled,
 .modal form select:disabled,
 .modal form textarea:disabled {
-    background-color: #e9ecef;
+    background-color: var(--gp-color-disabled-bg);
     opacity: 0.7;
     cursor: not-allowed;
 }
@@ -1512,7 +1489,7 @@ body.dark-mode .info-modal-content textarea:disabled,
 body.dark-mode .modal form input:disabled,
 body.dark-mode .modal form select:disabled,
 body.dark-mode .modal form textarea:disabled {
-    background-color: #2b3035;
+    background-color: var(--gp-color-disabled-bg);
     opacity: 0.6;
 }
 
@@ -1699,7 +1676,7 @@ body.dark-mode .modal form textarea:disabled {
 .share-modal-btn {
     background: none;
     border: none;
-    color: #007bff;
+    color: var(--gp-color-accent);
     font-size: 1.2rem;
     cursor: pointer;
     padding: 5px;
@@ -1736,7 +1713,7 @@ body.dark-mode .modal form textarea:disabled {
     box-sizing: border-box;
 }
 #contact-form button {
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
     color: white;
     padding: 12px 20px;
     border: none;
@@ -1800,7 +1777,7 @@ body.dark-mode .modal form textarea:disabled {
     position: fixed;
     top: 20px;
     right: 20px;
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
     color: white;
     padding: 15px 25px;
     border-radius: 8px;
@@ -1872,7 +1849,7 @@ body.dark-mode .modal form textarea:disabled {
     font-size: 0.7em;
 }
 .inbox-item i {
-    color: #007bff;
+    color: var(--gp-color-accent);
     font-size: 0.8em;
 }
 .inbox-item-content {
@@ -1895,7 +1872,7 @@ body.dark-mode .modal form textarea:disabled {
 .inbox-detail-title {
     margin: 0 0 4px 0 !important;
     font-size: 0.9rem !important;
-    color: #007bff;
+    color: var(--gp-color-accent);
     line-height: 1.2;
 }
 .inbox-detail-meta {
@@ -1937,7 +1914,7 @@ body.dark-mode .modal form textarea:disabled {
     font-size: 0.8rem;
 }
 .inbox-actions button {
-    background-color: #007bff;
+    background-color: var(--gp-color-accent);
     color: white;
     border: none;
     padding: 6px 12px;
@@ -1947,7 +1924,7 @@ body.dark-mode .modal form textarea:disabled {
     margin-right: 5px;
 }
 .inbox-actions button.resolve-btn {
-    background-color: #28a745;
+    background-color: var(--gp-color-success);
 }
 
 /* --- OFFLINE & VIEWED STYLES --- */
