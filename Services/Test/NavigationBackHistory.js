@@ -213,8 +213,11 @@ test('section back and forward restore the adjacent section entries', () => {
 
 test('main focus and blur handlers do not create paired duplicate search entries', () => {
     const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
-    assert.match(mainSource, /if \(currentState\.level === 'busqueda' \|\| currentState\.level === 'busqueda_focused'\) \{\s*replaceNavigationState\(focusedState/);
-    assert.doesNotMatch(mainSource, /pushNavigationState\(searchState/);
+    const focusStart = mainSource.indexOf("searchInput.addEventListener('focus'");
+    const blurStart = mainSource.indexOf("searchInput.addEventListener('blur'", focusStart);
+    const focusSource = mainSource.slice(focusStart, blurStart);
+    assert.match(focusSource, /if \(currentState\.level === 'busqueda' \|\| currentState\.level === 'busqueda_focused'\) \{\s*replaceNavigationState\(focusedState/);
+    assert.doesNotMatch(focusSource, /pushNavigationState\(searchState/);
     assert.match(mainSource, /pushNavigationState\(searchState, \{ previousNavigationState: currentNavState\.previousState \}\)/);
 });
 
