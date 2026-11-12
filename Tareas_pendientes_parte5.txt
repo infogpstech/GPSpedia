@@ -486,7 +486,7 @@ AUG-089 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - main.js: el retroceso del modal comparte restoreModalNavigationContext con el cierre manual y consume un nivel.
 - service-worker.js: modalNavigation.js incluido en App Shell; caché actualizada a gpsepedia-cache-v17.
 - Services/Test/PysModalNavigation.js y ServiceWorkerCache.js: cobertura añadida/actualizada.
-Validación local: PysModalNavigation 6/6 PASS; PysNavigationContext 6/6 PASS; OverlayHistoryStack 19/19 PASS; ServiceWorkerCache 6/6 PASS. Los cinco bloques UI modificados, main.js, modalNavigation.js y service-worker.js aprobaron parsing focalizado. Diff revisado; no se desplegó ni se modificaron datos productivos. La ejecución se realizó en harness JavaScript de sesión; no se ejecutó Node CLI. Navegador/DOM real, scroll táctil y gesto Atrás quedan diferidos a Beta.
+Validación local: PysModalNavigation 8/8 PASS; PysNavigationContext 6/6 PASS; OverlayHistoryStack 19/19 PASS; ServiceWorkerCache 6/6 PASS. Los cinco bloques UI modificados, main.js, modalNavigation.js y service-worker.js aprobaron parsing focalizado. Diff revisado; no se desplegó ni se modificaron datos productivos. La ejecución se realizó en harness JavaScript de sesión; no se ejecutó Node CLI. Navegador/DOM real, scroll táctil y gesto Atrás quedan diferidos a Beta.
 Siguiente: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
 ================================================================================
 
