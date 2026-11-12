@@ -49,10 +49,9 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-105 — Completar el layout responsive de formularios y gestión de usuarios
 - Origen: H-AUD-016-004. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Evidencia: add_cortes.html:58 mantiene grid-template-columns:1fr 1fr sin breakpoint; users.html carece de @media y usa tabla nowrap con scroll horizontal y modal width:80%.
-- Problema: formularios y modales pueden quedar comprimidos en teléfonos; la tabla depende de scroll horizontal sin un ajuste de layout específico.
-- Criterios: adaptar la cuadrícula a una columna; ajustar modal y controles móviles; conservar acceso a acciones y evitar overflow; probar anchos 320–1440 px y orientación horizontal.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Resultado: add_cortes.html adapta su cuadrícula, tarjetas de coincidencias, grupos de imágenes, mensajes y acciones hasta 760 px; los campos conservan tamaño legible en móviles. users.html mantiene la tabla semántica y ajusta sus cuatro columnas y acciones al ancho disponible, con texto envolvente y sin depender del scroll horizontal. Los modales limitan su altura al viewport y permiten scroll interno; controles táctiles de 44 px.
+- Validación local: ResponsiveFormsUsers.js comprueba 15 contratos responsive, estructura CSS y sintaxis JavaScript.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Inspección visual real 320–1440 px, orientación, foco y teclado virtual pendiente en Beta.
 
 ## Hallazgos derivados de AUD-T-017 — 2026-11-08
 
