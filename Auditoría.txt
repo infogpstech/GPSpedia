@@ -681,3 +681,15 @@ Validación local adaptada:
 - Parsing V8: share-utils.js, main.js y bloque de compartir de ui.js: PASS.
 Límites: Node CLI literal no ejecutado en este entorno. Web Share/Clipboard real, permisos, contexto seguro, lectores de pantalla y navegación en dispositivos requieren validación Beta. No se modificaron endpoints ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-073 — H-AUD-073-001 — EN CORRECCIÓN — 2026-11-12
+Origen: AUG-073 / H-AUD-008-004.
+Ubicaciones iniciales: index.html (#connection-status); main.js (updateStatus y eventos online/offline); style.css (#connection-status.offline y @keyframes pulse-offline).
+Evidencia:
+- El indicador es un div de 3×3 px con title dinámico, pero no tiene role=status, aria-live ni texto accesible que se actualice.
+- El texto "Conectado" puede interpretarse como disponibilidad de GPSpedia, aunque navigator.onLine solo informa el estado de conectividad que reporta el navegador/dispositivo.
+- La animación pulse-offline no contempla prefers-reduced-motion.
+Alcance: conservar el punto minimalista, anunciar el estado con texto accesible, precisar el significado de navigator.onLine y desactivar únicamente la animación bajo movimiento reducido. No se añadirá health check backend porque el indicador actual no presenta disponibilidad de servicios; cualquier estado backend deberá ser independiente y tener timeout acotado.
+================================================================================
