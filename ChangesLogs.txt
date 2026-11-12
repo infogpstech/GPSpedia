@@ -430,3 +430,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - La prueba existente «validationCache aislado por cuenta» de Services/Test/IndexedDBTransactions.js cubre separación entre user-a y user-b y rechazo de escritura anónima.
 - La comprobación con dos cuentas simultáneas, cambio de cuenta y sesiones reales queda para Beta. No se ejecutaron navegador/IndexedDB reales ni servicios externos.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-109 — CONFIANZA DE APORTACIONES ANÓNIMAS
+- Se formalizó la política: aportes anónimos son reportes no verificados para revisión manual; nunca cuentan en el umbral de tres cuentas autenticadas que modifica automáticamente el catálogo.
+- El backend reemplaza cualquier identificador anónimo enviado por el cliente con anon:unverified. Los actores autenticados se derivan de la sesión validada.
+- Se reforzó FeedbackWriteSecurity.js: ahora comprueba que regenerar anonymousReporterId no genere otra clave, y que repetir el mismo aporte no agregue otra fila ni actividad.
+- Se documentó el límite backend de 30 solicitudes por hora. Es un control global de frecuencia, no una verificación por IP/persona.
+- No se modificó el flujo de negocio ni se habilitó ponderación automática de aportes anónimos.
+================================================================================

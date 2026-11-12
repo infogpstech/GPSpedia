@@ -1372,16 +1372,31 @@ function runFeedbackWriteSecurityTests() {
                 assert_(result.status==="info"&&result.message.includes("no cuenta para modificar automáticamente"),"Debe informar que el aporte anónimo requiere revisión manual.");
                 assert_(cuts.rows[1][COLS_CORTES.anoHasta-1]===2022,"Dos usuarios verificados más un anónimo no deben alcanzar el umbral automático.");
                 assert_(activityCount===1,"El aporte anónimo registrado debe generar una actividad.");
+
+                const regeneratedActor=authorizeFeedbackAction_("suggestYear",{
+                    userId:"0",userName:"Anónimo",anonymousReporterId:"cliente-regenerado-por-el-cliente"
+                });
+                assert_(regeneratedActor.suggestionActorKey===actor.suggestionActorKey,
+                    "Regenerar el identificador del navegador no debe crear una nueva identidad anónima.");
+                const repeated=handleSuggestYear({
+                    ...regeneratedActor,vehicleId:"VEH-ANON-THRESHOLD",newYear:2025,response:"Sí (Funciona)"
+                });
+                assert_(repeated.recorded===false,"Repetir la aportación anónima no debe registrarla ni contarla otra vez.");
+                assert_(feedbackSheet.rows.length===4,"La repetición con un identificador regenerado no debe crear otra fila.");
+                assert_(activityCount===1,"La repetición anónima no debe duplicar el registro de actividad.");
             } finally {
                 assertFeedbackSession=originalAssert;getSpreadsheet=originalGetSpreadsheet;getSafeSheet=originalGetSafeSheet;
                 logUserActivity=originalLog;LockService=originalLock;SpreadsheetApp=originalSpreadsheetApp;CacheService=originalCache;
             }
         });
 
-        test_("El actor anónimo ignora el identificador fabricable del navegador", function() {
-            const actor = resolveSuggestionYearActor({ userId: "0", anonymousReporterId: "fabricado" });
-            assert_(actor.suggestionActorKey === "anon:unverified");
-            assert_(!isVerifiedSuggestionActorKey_(actor.suggestionActorKey));
+        test_("El actor anónimo ignora identificadores de navegador fabricados o regenerados", function() {
+            const first = resolveSuggestionYearActor({ userId: "0", anonymousReporterId: "fabricado-1" });
+            const regenerated = resolveSuggestionYearActor({ userId: "0", anonymousReporterId: "fabricado-2" });
+            assert_(first.suggestionActorKey === "anon:unverified");
+            assert_(regenerated.suggestionActorKey === first.suggestionActorKey,
+                "Un identificador de navegador nuevo no debe representar otro aportante verificable.");
+            assert_(!isVerifiedSuggestionActorKey_(first.suggestionActorKey));
         });
         test_("El actor autenticado se deriva de la sesión validada", function() {
             const actor = resolveSuggestionYearActor({ userId: "FALSO", sessionToken: "TEST_SESSION" });

@@ -1350,3 +1350,30 @@ En navegador real, usando un vehículo de prueba y sin datos productivos:
 5. Cerrar sesión y volver a iniciar con cada cuenta; confirmar que solo reaparece la caché correspondiente a esa identidad.
 No desplegar, modificar servicios ni alterar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-109 — CONTROL DE CONFIANZA DE APORTACIONES ANÓNIMAS
+
+Antes de cualquier prueba, sincronizar únicamente la rama autorizada:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En un deployment FEEDBACK de pruebas y Spreadsheet aislada:
+1. Enviar el mismo aporte anónimo varias veces y con distintos anonymousReporterId; comprobar que se conserva una sola fila por vehículo/año y que no aumenta el número de votos verificados.
+2. Enviar aportes anónimos desde varios navegadores/dispositivos; comprobar que todos quedan para revisión manual y ninguno cuenta para el umbral automático.
+3. Confirmar que dos cuentas autenticadas distintas sí cuentan como dos aportantes, y que una tercera cuenta autenticada puede alcanzar el umbral cuando corresponda.
+4. Comprobar el límite de 30 solicitudes anónimas por hora con CacheService real, incluyendo solicitudes concurrentes y el reinicio de ventana.
+5. Revisar que los aportes anónimos permanecen pendientes tras una ampliación automática disparada exclusivamente por tres cuentas autenticadas.
+6. Confirmar que una identidad autenticada falsificada o una clave user: enviada sin sesión válida se rechaza.
+
+No ejecutar contra Spreadsheet productiva, no desplegar a producción y no modificar el catálogo real.
+================================================================================
