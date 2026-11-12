@@ -11,6 +11,7 @@ import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
 import { isAdminImageUploadStatusConfirmedCancelled } from './adminImageUploadIsolation.js';
 import { confirmValidationBeforeCache } from './validationSubmission.js';
+import { startValidationBannerForModal } from './validationBannerLifecycle.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { shouldAutoOpenVehicleDetail } from './search-utils.js';
@@ -2067,7 +2068,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const currentModalType=modalDetalle&&modalDetalle.dataset.modalType;
     const sameModalViewState=modalWasVisible&&currentModalType==='corte'?captureModalViewState(modalDetalle):null;
     registerModalNavigationTransition_('corte',currentModalType,modalWasVisible,navOptions);
-    if(modalDetalle){modalDetalle.dataset.modalType='corte';modalDetalle.dataset.vehicleId=String(activeItem.id);}
+    if(modalDetalle){modalDetalle.dataset.modalType='corte';modalDetalle.dataset.vehicleId=String(activeItem.id); delete modalDetalle.dataset.validationBannerRequestedVehicleId;}
 
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -2594,6 +2595,17 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             convertImageToEditable(imgVehiculo, activeItem.id, 'imagenVehiculo');
         }
         cont.appendChild(imgVehiculo);
+    }
+
+    // AUG-110: la elegibilidad pertenece al ciclo del modal, no a la carga de imágenes/cortes.
+    if (!inEditMode && modalDetalle) {
+        startValidationBannerForModal({
+            item: activeItem,
+            modalElement: modalDetalle,
+            detailContainer: cont,
+            checkEligibility: checkValidationEligibility,
+            showBanner: showValidationBanner
+        }).catch(error => console.warn("No se pudo iniciar la validación comunitaria:", error));
     }
 
     if (inEditMode) {
@@ -3406,18 +3418,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         if (isLazy) {
             img.dataset.src = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
         } else {
-            // Phase Collaborative Update: Trigger validation banner after primary cut image loads
-            // Attachment happens before setOptimizedImage to ensure we catch the onload event.
-            const { catalogData } = getState();
-            const currentItem = catalogData.cortes.find(c => String(c.id) === String(vehicleId));
-            if (currentItem && !inEditMode) {
-                img.onload = async () => {
-                    const { eligible, isOldModel } = await checkValidationEligibility(currentItem);
-                    if (eligible) {
-                        showValidationBanner(currentItem, isOldModel);
-                    }
-                };
-            }
+            // La validación comunitaria se inicia desde el ciclo del modal (AUG-110).
             setOptimizedImage(img, cutData.img || null, IMG_SIZE_MEDIUM);
         }
 
