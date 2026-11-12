@@ -1315,3 +1315,29 @@ Beta pendiente: FEEDBACK desplegado en entorno aislado, Spreadsheet/Drive de pru
 
 Siguiente tarea: consultar el backlog vigente después de AUG-081; no iniciar otra tarea dentro de este cierre.
 ================================================================================
+
+================================================================================
+AUG-082 — ITERACIÓN DE CIERRE — 2026-11-12 — STORED XSS EN PyS
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. HEAD de partida: cb1416687bf172b9f3e1ed12e3cfc6148f87c795.
+Commits de implementación/pruebas:
+- ui.js: 43bbc8f12a14d5de149c65b57e116c1d0c771813
+- Services/Test/PysStoredXss.js: 3040f58039a56a6285d3f69eb986eec2974e4355
+- Ajuste de aserción de la suite: ca049d4be90979c17868fe66bd9809eece178a27
+
+Cambios:
+- Tarjetas PyS ya no interpolan Problema en innerHTML; título y estado se crean con nodos y textContent.
+- Modal PyS usa textContent para Problema y Colaborador. cleanColaboradorName solo normaliza el valor.
+- Validador de video usa URL, HTTPS, allowlist exacta de hosts y rutas, y verifica ID. El iframe se crea mediante DOM con URL canónica construida desde el ID; no se aceptan fallbacks ni href arbitrarios.
+- sanitizeHtmlContent permanece como frontera para descripción, solución y prevención enriquecidas.
+- Suite Services/Test/PysStoredXss.js: 10 escenarios y comando Node documentados.
+
+Validación local:
+- 10/10 PASS en harness V8 adaptado. El runtime de orquestación no expone URL nativo, por lo que la matriz se ejecutó con un adaptador compatible; la suite publicada utiliza URL nativo de Node.
+- Parsing V8 de helper, createPysCard, openPysDetailModal y suite: PASS.
+- Revisión de sinks del modal PyS: PASS; no quedan interpolaciones de Problema, Colaborador o Video en HTML/atributos.
+
+Pendiente Beta: Node CLI desde checkout completo; renderizado DOM/navegador real; matriz de payloads de ataque y reproducción real de YouTube. No se modificaron backend, endpoints, deployments ni datos productivos.
+
+Siguiente tarea: AUG-083 — Completar el almacenamiento y la recuperación de imágenes PyS. No iniciar AUG-084 en esta iteración.
+================================================================================
