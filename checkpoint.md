@@ -820,3 +820,25 @@ Siguiente acción: ejecutar la suite reproducible en Node CLI de Codespaces y co
 ADENDA DE VALIDACIÓN — ITERACIÓN 3J
 La suite Services/Test/YouTubeUploadRecordPersistence.js se ejecutó completa con las funciones reales extraídas de youtubeUpload.js y el IndexedDB simulado: 14/14 PASS. Se incluyen los 12 escenarios iniciales y dos regresiones adicionales que fuerzan el aborto después de que get/getAll entregan su resultado; ambas confirman que la lectura no se resuelve antes de tx.oncomplete.
 Se corrigió el mensaje final del harness de 12/12 a 14/14. La ejecución fue en runtime V8 adaptado; no equivale a Node CLI/Codespaces ni IndexedDB real de navegador.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3K — INTEGRACIÓN DE HISTORIAL EN add_cortes.html
+Hallazgo:
+- add_cortes.html es una página independiente: importa youtubeUpload.js, pero no carga main.js ni inicializaba window.overlayHistory.
+- Su listener popstate solo atendía al lightbox. Por ello, durante una carga YouTube abierta desde esta página, Atrás no llegaba al callback de cierre/confirmación del modal; el overlay podía permanecer abierto fuera de la navegación.
+Corrección:
+- Se importó createOverlayHistoryManager y overlayHistoryStateKey desde overlayHistory.js.
+- Se inicializa window.overlayHistory con window.history al cargar el módulo de add_cortes.
+- El listener popstate conserva prioridad del lightbox (si está sobre la carga) y después delega el cierre del overlay administrado al gestor compartido.
+- No se modificó la lógica de XHR, confirmación, pausa ni persistencia de youtubeUpload.js.
+Prueba nueva: Services/Test/AddCortesYouTubeOverlayHistory.js. Cubre Atrás durante carga YouTube y secuencia lightbox -> YouTube, comprobando que cada retroceso cierra únicamente la capa superior.
+Validación local:
+- AddCortesYouTubeOverlayHistory: 2/2 PASS en runtime V8 adaptado, con el gestor real overlayHistory.js y el listener extraído de add_cortes.html.
+- YouTubeUploadCloseDuringTransfer: 6/6 PASS con callbacks reales del módulo y gestor real.
+- Parsing del módulo inline de add_cortes.html: PASS después de retirar imports para evaluación aislada.
+- No se ejecutó Node CLI en Codespaces ni navegador real; la validación DOM/navegador queda diferida a Beta.
+ChangesLogs.txt no se modificó por la rotación documental ya identificada. Rama base intacta.
+Estado de AUG-068: EN PROGRESO. No iniciar AUG-069.
+Siguiente acción: continuar el inventario de constructores dinámicos restantes y comprobar la reconciliación del observador DOM con la pila compartida.
+================================================================================
