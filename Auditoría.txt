@@ -893,3 +893,9 @@ Corrección:
 Evidencia local: PysDataCache 12/12 PASS; PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; sintaxis de módulos y bloques UI modificados PASS.
 Límites: no se ejecutó Node CLI literal, API desplegada, DOM/navegador ni navegación real. No se modificaron deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA DE IMPLEMENTACIÓN — H-AUD-012-002 / H-AUD-012-003 — AUG-089 — 2026-11-12
+Estado: EN PROGRESO. Cambios aplicados para registrar solo transiciones PyS–vehículo, conservar navOptions durante edición y restaurar scroll vertical, carrusel horizontal y acordeón. Cierre manual y popstate comparten retorno de un nivel. Evidencia: ui.js, main.js, modalNavigation.js, Services/Test/PysModalNavigation.js. Pendiente: ejecución y aprobación de pruebas locales; navegador/dispositivo real queda para Beta.
+================================================================================
