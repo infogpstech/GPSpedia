@@ -1619,3 +1619,14 @@ Archivos: main.js, Services/Test/SearchFilterCleanup.js, Services/Test/README.md
 Último commit de escritura confirmado antes de esta actualización: 75f5bf0f6cf1b7cc80e05e27c0dbfd189ab6bb93. La rama base GPSpedia2.2.5 permanece sin modificaciones.
 Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-099; no ejecutar la entrada histórica AUG-100 anulada por adenda.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-100 — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- Se verificó el sistema existente button-system.css y su inclusión única en index.html, users.html y add_cortes.html; los botones ordinarios estáticos ya utilizan .btn y variantes semánticas.
+- Se reforzaron los controles compactos a 40px y se integró aria-busy=true al estado loading.
+- Se creó Services/Test/ButtonSystemIntegrity.js con 9 escenarios de contrato; la documentación enumera las excepciones especializadas de UI que conservan estilos propios.
+- Validación automatizada local por contrato estático; no se ejecutó navegador real ni Node CLI en esta sesión. La revisión visual en temas/viewports queda para Beta.
+- Sin cambios de endpoints, permisos, datos ni deployments.
+Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-100.
+================================================================================
