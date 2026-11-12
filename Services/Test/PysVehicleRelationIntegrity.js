@@ -122,7 +122,7 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
 
     test("el dispatcher conserva sesión obligatoria y restricción de Desarrollador para bajas", () => {
         assert.match(feedback, /addVehicleToProblem:\s*null,\s*removeVehicleFromProblem:\s*\["Desarrollador"\]/);
-        assert.match(feedback, /function authorizeFeedbackAction_\([\\s\\S]*?userRole: actor\.role/);
+        assert.match(feedback, /function authorizeFeedbackAction_\([\s\S]*?userRole: actor\.role/);
     });
 
     test("renderTrackVehicles elimina tarjetas duplicadas y omite IDs sin vehículo", () => {
