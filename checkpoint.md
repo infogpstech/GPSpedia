@@ -1223,7 +1223,7 @@ Nota de trazabilidad: el HEAD de `GPSpedia2.2.5_work` se comparó con la referen
 
 ================================================================================
 AUG-078 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
-Rama: GPSpedia2.2.5_work. HEAD previo verificado: 5669bd6d4e77006e014ee92428d2f277bf351645. Commit de código: 1c79083ac8debe15c7d4d2634ed165ee2c969eac. Commit de suite: f4a192986275c4d26ca1e1a54b70c582f1030535.
+Rama: GPSpedia2.2.5_work. HEAD previo verificado: 5669bd6d4e77006e014ee92428d2f277bf351645. Commit de código: 1c79083ac8debe15c7d4d2634ed165ee2c969eac. Commits de suite: f4a192986275c4d26ca1e1a54b70c582f1030535 (compatibilidad ESM), 0ad43e63e8350fa9a53eac0fe2ab108e68dc4f9f y 3cc40d4df0963cd9b3af0ce74835916aa5507683 (orden de validación y prueba previa a creación de imagen).
 
 Cambio: handleSuggestCutChange exige reportId real y único, valida metadata del reporte y su columna ID_vehiculo, coteja corteIndex y valida vehículo único y slot ocupado/identificado (tipo + ubicación) en Cortes. Toda validación ocurre antes de crear archivos, calcular idempotencia o escribir Feedbacks. No crea metadata ni altera Cortes. Los reportes históricos sin metadata permanecen intactos y no pueden originar sugerencias nuevas sin vínculo verificable.
 
@@ -1231,3 +1231,5 @@ Validación Node.js v22.16.0: 11/11 PASS con mocks aislados para metadata y cat�
 
 Siguiente tarea: AUG-079 — Robustecer carga y política de acceso de imágenes de sugerencias. No iniciada; fuera de esta iteración.
 ================================================================================
+
+Verificación de sintaxis posterior a los commits de AUG-078: parsing V8 completo de Services/feedback.js y de la suite ESM: PASS. La suite Node ESM se ejecutó en harness aislado con dobles y funciones de validación extraídas: 11/11 PASS. El checkout completo no estuvo disponible en este entorno; la ejecución contra el archivo FEEDBACK completo queda reproducible con el comando documentado.
