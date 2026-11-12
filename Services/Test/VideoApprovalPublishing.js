@@ -152,6 +152,46 @@ function runVideoApprovalPublishingTests() {
             handleRejectVideo(actor_("vid-1"));
             assert_(JSON.parse(e.feedback.data[1][3]).status==="rejected");
         }));
+        run_("rechaza un JSON parseable que no sea video_approval",()=>withEnv_("corte",{},e=>{
+            const payload=JSON.parse(e.feedback.data[1][3]);payload.subType="problem_report";e.feedback.data[1][3]=JSON.stringify(payload);
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"no corresponde a una solicitud de aprobación de vídeo");
+            assert_(e.cuts.data[1][9]==="","No debe publicar un reporte como vídeo.");
+        }));
+        run_("rechaza contenido JSON inválido antes de tocar el destino",()=>withEnv_("corte",{},e=>{
+            e.feedback.data[1][3]="{json roto";
+            expect_(()=>handleRejectVideo(actor_("vid-1")),"JSON de vídeo válido");
+            assert_(e.cuts.data[1][9]==="","No debe retirar ni escribir el destino.");
+        }));
+        run_("rechaza estados terminales en el flujo de rechazo",()=>withEnv_("corte",{},e=>{
+            const payload=JSON.parse(e.feedback.data[1][3]);payload.status="approved";payload.approvedBy="Aprobador";payload.approvalDate="2026-11-12";
+            e.feedback.data[1][3]=JSON.stringify(payload);e.feedback.data[1][4]="approved";e.feedback.data[1][5]=true;e.feedback.data[1][6]="Aprobador";
+            expect_(()=>handleRejectVideo(actor_("vid-1")),"ya no está pendiente");
+            assert_(e.cuts.data[1][9]==="","No debe retirar un vídeo ya aprobado.");
+        }));
+        run_("rechaza estado JSON pendiente si la columna Respuesta ya es terminal",()=>withEnv_("corte",{},e=>{
+            e.feedback.data[1][4]="rejected";e.feedback.data[1][5]=true;
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"estado de la fila no coincide");
+            assert_(e.cuts.data[1][9]==="","No debe publicar una solicitud con estado de fila inconsistente.");
+        }));
+        run_("rechaza estado JSON pendiente si la fila ya está resuelta",()=>withEnv_("corte",{},e=>{
+            e.feedback.data[1][5]=true;
+            expect_(()=>handleRejectVideo(actor_("vid-1")),"estado de la fila no coincide");
+            assert_(e.cuts.data[1][9]==="","No debe retirar el destino por un registro ya resuelto.");
+        }));
+        run_("rechaza una referencia cruzada entre ID_vehiculo y referenceId",()=>withEnv_("corte",{},e=>{
+            e.feedback.data[1][2]="veh-otro";
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"no coincide con el destino declarado");
+            assert_(e.cuts.data[1][9]==="","No debe publicar en un destino cruzado.");
+        }));
+        run_("rechaza ID de solicitud cruzado o inexistente",()=>withEnv_("corte",{},e=>{
+            expect_(()=>handleApproveVideo(actor_("otro-id")),"no encontrada");
+            assert_(e.cuts.data[1][9]==="");
+        }));
+        run_("rechaza una solicitud pendiente cuyo JSON declara estado rechazado",()=>withEnv_("corte",{},e=>{
+            const payload=JSON.parse(e.feedback.data[1][3]);payload.status="rejected";e.feedback.data[1][3]=JSON.stringify(payload);
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"ya no está pendiente");
+            assert_(e.cuts.data[1][9]==="");
+        }));
         run_("rechaza solicitud duplicada antes de publicar",()=>withEnv_("corte",{duplicateRequest:true},e=>{
             expect_(()=>handleApproveVideo(actor_("vid-1")),"más de una vez");
             assert_(e.cuts.data[1][9]==="");
