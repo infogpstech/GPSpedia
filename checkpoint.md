@@ -1491,3 +1491,12 @@ Beta pendiente: navegación en navegador/dispositivo real, gesto Atrás, cierre 
 Siguiente tarea: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
 HEAD final de trabajo pendiente de verificación al concluir esta actualización documental.
 ================================================================================
+
+
+================================================================================
+VERIFICACIÓN FINAL DE PUBLICACIÓN — AUG-089 — 2026-11-12
+El código y las pruebas se encuentran publicados en GPSpedia2.2.5_work. Último HEAD verificado antes de esta actualización de continuidad: d19af4551a756512ae1cf528d71d8f41b28f3572 (padre de esta actualización documental). Rama base GPSpedia2.2.5 verificada en d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin modificaciones.
+Comparación desde el HEAD de inicio de AUG-089: 13 archivos afectados, 36 commits secuenciales por operaciones de escritura de un archivo; 0 commits detrás de la referencia inicial. No se usó force push ni se reescribió historial.
+Validaciones locales aprobadas: PysModalNavigation 8/8; PysNavigationContext 6/6; OverlayHistoryStack 19/19; ServiceWorkerCache 6/6; parsing focalizado de bloques UI, main.js, modalNavigation.js y service-worker.js PASS.
+Estado final de AUG-089: COMPLETADA CON VALIDACIÓN DIFERIDA. Próxima tarea del backlog: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
+================================================================================
