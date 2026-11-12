@@ -109,6 +109,36 @@ testCase('clasifica por marca solo cuando todos los resultados son Cortes', () =
     assert.equal(classifySearchResults([{ _sectionType: 'relay', marca: 'Relay', modelo: '5 pines' }], 'Relay'), 'modelo');
     assert.equal(classifySearchResults([{ _sectionType: 'tutorial', marca: 'Tutorial', modelo: 'GPS' }], 'Tutorial'), 'modelo');
     assert.equal(classifySearchResults([{ _sectionType: 'pys', marca: 'Problema', modelo: 'GPS' }], 'Problema'), 'modelo');
+
+    const exactModelResults = buildGlobalSearchResults({ query: 'Corolla', cortes: [baseCut] });
+    assert.equal(classifySearchResults(exactModelResults, 'Corolla'), 'modelo');
+    const actualBrandResults = buildGlobalSearchResults({ query: 'Toyota', cortes: [baseCut] });
+    assert.equal(classifySearchResults(actualBrandResults, 'Toyota'), 'marca');
+});
+testCase('mantiene la clasificación de sección en títulos exactos de Relay, Tutorial y PyS', () => {
+    const cases = [
+        [buildGlobalSearchResults({ query: 'Relay 5 pines', relay }), 'Relay 5 pines'],
+        [buildGlobalSearchResults({ query: 'Instalación de GPS', tutoriales }), 'Instalación de GPS'],
+        [buildGlobalSearchResults({ query: 'GPS sin señal', pys }), 'GPS sin señal']
+    ];
+    for (const [results, query] of cases) {
+        assert.equal(results.length, 1, query);
+        assert.equal(classifySearchResults(results, query), 'modelo', query);
+    }
+});
+testCase('no clasifica como marca las coincidencias mixtas de Cortes y otras secciones', () => {
+    const results = buildGlobalSearchResults({
+        query: 'Toyota',
+        cortes: [baseCut],
+        relay: [{ ID: 'R-3', configuracion: 'Relay auxiliar', vehiculoDondeSeUtiliza: 'Toyota' }],
+        tutoriales: [{ ID: 'T-3', Tema: 'Toyota instalación' }],
+        pys: [{ id: 'P-3', Problema: 'Toyota GPS' }]
+    });
+    assert.deepEqual(
+        [...new Set(results.map(item => item._sectionType))].sort(),
+        ['corte', 'pys', 'relay', 'tutorial']
+    );
+    assert.equal(classifySearchResults(results, 'Toyota'), 'modelo');
 });
 testCase('mantiene el destino específico de cada sección en los resultados', () => {
     const results = buildGlobalSearchResults({ query: 'guía práctica', tutoriales });
@@ -158,4 +188,4 @@ testCase('devuelve cero resultados cuando ningún campo coincide', () => {
     assert.deepEqual(buildGlobalSearchResults({ query: 'término inexistente', cortes: [baseCut], relay, tutoriales, pys }), []);
 });
 
-console.log(`GlobalSearch: ${passed}/21 PASS`);
+console.log(`GlobalSearch: ${passed}/23 PASS`);
