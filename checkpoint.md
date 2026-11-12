@@ -1749,3 +1749,18 @@ Validación local: ResponsiveFormsUsers.js 16/16 PASS en harness V8; parsing de 
 Archivos: users.html, add_cortes.html, Services/Test/ResponsiveFormsUsers.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente: AUG-106 — Corregir la condición de colisión entre rangos de generaciones. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-106 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida verificado: 4a533004e3a47b1734f595410bfd8f14ebe8dc66.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Services/feedback.js: comparación inclusiva de intervalos encapsulada en yearRangesOverlapInclusive_; el handler autoritativo compara ambos extremos de ambos rangos antes de rechazar una ampliación.
+- La revisión confirmó que el HEAD de partida ya tenía la expresión correcta de solapamiento inclusivo; el cambio la formaliza y añade cobertura de regresión sin alterar el resultado funcional esperado.
+- La UI conserva la comprobación puntual yearVal >= anoDesde && yearVal <= anoHasta y excluye el propio registro.
+- Services/Test/YearRangeCollision.js: cobertura de límites, solapamiento parcial, contención, huecos, rangos anteriores/posteriores e intervalos inválidos, más contratos backend/UI.
+Validación local: pendiente de ejecución CLI en checkout completo; se ejecutará harness V8 equivalente y parsing del helper antes de publicar. Beta: Spreadsheet/Apps Script aislados y navegador real; no se usaron endpoints operativos ni datos productivos.
+Archivos: Services/feedback.js, Services/Test/YearRangeCollision.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-107. No iniciar hasta la siguiente interacción.
+================================================================================
