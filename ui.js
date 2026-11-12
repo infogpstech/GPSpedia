@@ -1146,7 +1146,6 @@ export function mostrarMarcas(categoria) {
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<h4>Marcas de ${categoria}</h4>`;
     renderNavigationBackButton(cont, { level: 'categorias' });
-    const cont = document.getElementById("contenido");
     const itemsInCategory = cortes.filter(item => item.categoria === categoria);
     const marcas = [...new Set(itemsInCategory.map(item => item.marca))].filter(m => m).sort();
 
@@ -1190,7 +1189,6 @@ export function mostrarModelosPorMarca(marca) {
         : { level: 'categorias' };
     cont.innerHTML = `<h4>Modelos de ${marca}</h4>`;
     renderNavigationBackButton(cont, backTarget);
-    const cont = document.getElementById("contenido");
 
     // Se filtran los cortes para obtener todos los modelos de la marca seleccionada, excluyendo motocicletas
     const modelosFiltrados = cortes.filter(item => item.marca === marca && item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()));
@@ -1301,7 +1299,6 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
     else backTarget = { level: 'marcas', categoria, origin: 'categoria' };
     cont.innerHTML = `<h4>Modelos de ${marca} ${versionEquipamiento || ''}</h4>`;
     renderNavigationBackButton(cont, backTarget);
-    const cont = document.getElementById("contenido");
 
     let modelosFiltrados = cortes.filter(item => item.categoria === categoria && item.marca === marca);
     if (versionEquipamiento) {
@@ -1350,7 +1347,6 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
     else backTarget = { level: 'modelos', categoria, marca, origin };
     cont.innerHTML = `<h4>Tipos de Encendido para ${modelo} ${versionEquipamiento || ''}</h4>`;
     renderNavigationBackButton(cont, backTarget);
-    const cont = document.getElementById("contenido");
 
     let vehiculos = cortes.filter(item =>
         item.categoria === categoria &&
@@ -1402,7 +1398,6 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     else backTarget = { level: 'modelos', categoria, marca, origin };
     cont.innerHTML = `<h4>Años de ${modelo}</h4>`;
     renderNavigationBackButton(cont, backTarget);
-    const cont = document.getElementById("contenido");
     const grid = document.createElement("div"); grid.className = "grid";
     filas.forEach(item => {
         const card = crearCardVehiculo(item);
@@ -1441,7 +1436,6 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
             : { level: 'modelos', categoria, marca, origin };
     cont.innerHTML = `<h4>Versiones de ${modelo}</h4>`;
     renderNavigationBackButton(cont, backTarget);
-    const cont = document.getElementById("contenido");
 
     // Comentario: Se filtra por modelo específico para mostrar solo las versiones relevantes.
     const vehiculosDelModelo = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
