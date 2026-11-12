@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
+import crypto from "node:crypto";
 
 const extract = (source, start, end) => {
     const i = source.indexOf(start);
@@ -24,7 +25,7 @@ const iterator = values => {
 };
 
 function buildHarness(feedback, options = {}) {
-    const state = { rows: options.initialRows ? [HEADER.slice(), ...options.initialRows.map(row => row.slice())] : [],
+    const state = { rows: options.initialRows ? [HEADER.slice(), ...options.initialRows.map(row => row.slice())] : [], operationRows: [], operationsSheet: null, flushCount: 0,
         createdBlob: null, trashed: false, description: "", setSharingCalls: 0, fileCreated: false };
     const driveRoot = { getId: () => "drive-root" };
     const wrongParent = { getId: () => "other-parent" };
@@ -58,6 +59,10 @@ function buildHarness(feedback, options = {}) {
 
     const file = {
         getId: () => FILE_ID,
+        getMimeType: () => state.createdBlob ? state.createdBlob.mimeType : "image/png",
+        getSize: () => state.createdBlob ? state.createdBlob.bytes.length : 0,
+        getDescription: () => state.description,
+        getParents: () => iterator(state.childFolders && state.childFolders.length ? [state.childFolders[0]] : []),
         getSharingAccess: () => options.permissionMismatch ? "PRIVATE" : "ANYONE_WITH_LINK",
         getSharingPermission: () => "VIEW",
         setSharing: () => { state.setSharingCalls++; },
@@ -71,32 +76,25 @@ function buildHarness(feedback, options = {}) {
     state.file = file;
 
     const sheet = {
-        getLastRow: () => { if (options.failReferenceScan && state.fileCreated) throw new Error("Spreadsheet read failed"); return state.rows.length; },
-        getLastColumn: () => 10,
-        getRange: (row, col, numRows = 1, numCols = 1) => ({
-            setValues: values => {
-                for (let r = 0; r < values.length; r++) state.rows[row - 1 + r] = values[r].slice();
-            },
-            getValues: () => {
-                if (options.failReferenceScan && row >= 2 && numCols > 1) throw new Error("Spreadsheet read failed");
-                return state.rows.slice(row - 1, row - 1 + numRows).map(values => values.slice(col - 1, col - 1 + numCols));
-            },
-            getDisplayValues: () => {
-                if (options.failReferenceScan && row >= 2 && numCols > 1) throw new Error("Spreadsheet read failed");
-                return state.rows.slice(row - 1, row - 1 + numRows).map(values =>
-                    values.slice(col - 1, col - 1 + numCols).map(value => value === null || value === undefined ? "" : String(value)));
-            }
+        getLastRow: () => { if (options.failReferenceScan && state.fileCreated) throw new Error("Spreadsheet read failed"); return state.rows.reduce((last,row,i)=>row&&row.some(v=>v!==""&&v!==null&&v!==undefined)?i+1:last,0); },
+        getLastColumn: () => state.rows.reduce((max,row)=>Math.max(max,row?row.reduce((last,v,i)=>v!==""&&v!==null&&v!==undefined?i+1:last,0):0),0),
+        getRange: (row,col,numRows=1,numCols=1) => ({
+            setValues: values => { for(let r=0;r<values.length;r++){const target=state.rows[row-1+r]||(state.rows[row-1+r]=[]);for(let c=0;c<values[r].length;c++)target[col-1+c]=values[r][c];} },
+            getValues: () => { if(options.failReferenceScan&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>(state.rows[row-1+r]||[])[col-1+c]??"")); },
+            getDisplayValues: () => { if(options.failReferenceScan&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed"); return Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=(state.rows[row-1+r]||[])[col-1+c]??"";return v==null?"":String(v);})); }
         }),
-        getDataRange: () => ({
-            getDisplayValues: () => {
-                if (options.failDataRange) throw new Error("Spreadsheet data range unavailable");
-                return state.rows.map(row => row.map(value => value === null || value === undefined ? "" : String(value)));
-            }
+        getDataRange: () => ({ getDisplayValues: () => { if(options.failDataRange)throw new Error("Spreadsheet data range unavailable");return state.rows.map(row=>row.map(v=>v==null?"":String(v))); } }),
+        appendRow: row => { if(options.failAppend)throw new Error("Spreadsheet append failed");state.rows.push(row.slice()); }
+    };
+    const operationsSheet = {
+        getLastRow: () => state.operationRows.reduce((last,row,i)=>row&&row.some(v=>v!==""&&v!==null&&v!==undefined)?i+1:last,0),
+        getLastColumn: () => state.operationRows.reduce((max,row)=>Math.max(max,row?row.reduce((last,v,i)=>v!==""&&v!==null&&v!==undefined?i+1:last,0):0),0),
+        getRange: (row,col,numRows=1,numCols=1) => ({
+            setValues: values => { for(let r=0;r<values.length;r++){const target=state.operationRows[row-1+r]||(state.operationRows[row-1+r]=[]);for(let c=0;c<values[r].length;c++)target[col-1+c]=values[r][c];} },
+            getValues: () => Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>(state.operationRows[row-1+r]||[])[col-1+c]??"")),
+            getDisplayValues: () => Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{const v=(state.operationRows[row-1+r]||[])[col-1+c]??"";return v==null?"":String(v);} ))
         }),
-        appendRow: row => {
-            if (options.failAppend) throw new Error("Spreadsheet append failed");
-            state.rows.push(row.slice());
-        }
+        appendRow: row => state.operationRows.push(row.slice())
     };
 
     const context = {
@@ -104,19 +102,20 @@ function buildHarness(feedback, options = {}) {
         Utilities: {
             base64Decode: value => Array.from(Buffer.from(value, "base64")),
             base64Encode: value => Buffer.from(value).toString("base64"),
-            newBlob: (bytes, mimeType, name) => ({ bytes: Array.from(bytes), mimeType, name })
+            newBlob: (bytes, mimeType, name) => ({ bytes: Array.from(bytes), mimeType, name }), DigestAlgorithm: { SHA_256: "SHA_256" }, computeDigest: (algorithm, value) => Array.from(crypto.createHash("sha256").update(Array.isArray(value) ? Buffer.from(value) : String(value)).digest())
         },
         DriveApp: {
             getFolderById: id => {
                 if (options.wrongRootId || id !== "root-cortes") throw new Error("Authorized Drive root unavailable");
                 return cortesFolder;
             },
-            getRootFolder: () => driveRoot
+            getRootFolder: () => driveRoot,
+            getFileById: id => id === FILE_ID ? file : null
         },
         LockService: { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) },
-        SpreadsheetApp: { flush: () => { if (options.failFlush) throw new Error("Spreadsheet flush failed"); } },
-        getSafeSheet: () => sheet,
-        getSpreadsheet: () => ({ insertSheet: () => sheet }),
+        SpreadsheetApp: { flush: () => { state.flushCount++; if (options.failFlush && state.flushCount === 5) throw new Error("Spreadsheet flush failed"); } },
+        getSafeSheet: name => name === "PysOperations" ? state.operationsSheet : sheet,
+        getSpreadsheet: () => ({ insertSheet: name => { if (name === "PysOperations") { state.operationsSheet = operationsSheet; return operationsSheet; } return sheet; } }),
         logUserActivity: () => {},
         state
     };
@@ -129,7 +128,7 @@ function buildHarness(feedback, options = {}) {
         "\nthis.api = { validate: validatePysImageDataUrl_, getFolder: getPysImagesFolder_, " +
         "checkPermissions: assertPysImageFolderPermissions_, normalize: normalizePysImageReference_, " +
         "findReferences: findPysImageReferences_, markRecovery: markPysImageForRecovery_, " +
-        "add: handleAddProblem, read: handleGetPysData };",
+        "add: payload => handleAddProblem(Object.assign({ opId: "legacy-test-operation-000000000001" }, payload)), read: handleGetPysData };",
         context
     );
     return { api: context.api, state, sheet, context, file, cortesFolder };
