@@ -2629,9 +2629,6 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     modalDetalle.dataset.modalType = 'corte';
     modalDetalle.classList.add("visible");
-    if (!isNavigation && window.history && window.history.pushState) {
-        window.history.pushState({ modalOpen: true }, '');
-    }
 }
 
 /**
@@ -3760,10 +3757,6 @@ function setupModal(modalId, openFn) {
                 }
             });
             closeBtn.dataset.listenerSet = 'true';
-        }
-
-        if (window.history && window.history.pushState) {
-            window.history.pushState({ modalOpen: true }, '');
         }
 
         return await openFn(...args);
@@ -7525,9 +7518,6 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     const modalDetalle = document.getElementById("modalDetalle");
     modalDetalle.dataset.modalType = 'tutorial';
     modalDetalle.classList.add("visible");
-    if (!inEditModeTutorial && window.history && window.history.pushState) {
-        window.history.pushState({ modalOpen: true }, '');
-    }
 }
 
 function mostrarDetalleRelayModal(item) {
@@ -7580,9 +7570,6 @@ function mostrarDetalleRelayModal(item) {
     const modalDetalle = document.getElementById("modalDetalle");
     modalDetalle.dataset.modalType = 'relay';
     modalDetalle.classList.add("visible");
-    if (window.history && window.history.pushState) {
-        window.history.pushState({ modalOpen: true }, '');
-    }
 }
 
 
@@ -9916,9 +9903,6 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
     if (modalDetalle) {
         modalDetalle.dataset.modalType = 'pys';
         modalDetalle.classList.add("visible");
-    }
-    if (window.history && window.history.pushState) {
-        window.history.pushState({ modalOpen: true }, '');
     }
 }
 
