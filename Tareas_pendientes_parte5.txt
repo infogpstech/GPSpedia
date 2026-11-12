@@ -155,7 +155,9 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   4. Mantener el desplazamiento vertical normal de la página y la actualización de altura del acordeón.
   5. Probar gestos verticales, horizontales, diagonales, cancelados, multitáctiles, móvil y PWA standalone.
 - **Relación:** AUD-T-006; no duplicar el swipe interno del lightbox que ya compara ambos ejes.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Validación local:** helper real extraído de `ui.js` probado en runtime V8 adaptado: 15/15 PASS. Se cubren dirección horizontal, predominio de eje, umbral, multitáctil, controles interactivos, `touchcancel`, coordenadas inválidas y prevención de cambios repetidos.
+- **Pendiente para Beta:** validación de gestos en navegador móvil y PWA standalone, confirmando desplazamiento vertical nativo, interacción táctil real y actualización de altura del acordeón.
 
 ### Adenda derivada de AUD-T-006 — AUG-064
 - Incluir ui.js updateSlide(): slideText.innerHTML recibe activeCable.content y debe aplicar el mismo sanitizador/allow-list que el resto de los campos de apertura y alimentación.
