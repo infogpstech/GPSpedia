@@ -5379,14 +5379,11 @@ export async function openReplacedImagesModal() {
     let folders = [];
     const replacedOverlayId = 'ui-modal:replaced-images-modal';
     modal.dataset.gpOverlayHistoryId = replacedOverlayId;
-    const replacedHistory = window.overlayHistory;
-    if (replacedHistory && !replacedHistory.has(replacedOverlayId)) replacedHistory.register(replacedOverlayId, () => {
+    modal.__gpOverlayClose = () => {
         replacedImagesModalGeneration_ += 1;
         closeReplacedImagesLightbox_(true);
-        cachedReplaced = [];
-        folders = [];
         modal.style.display = 'none';
-    });
+    };
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-replaced-images-modal');
@@ -5783,11 +5780,10 @@ export async function openAuditDriveModal() {
     if (!modal || !isCurrentRequest()) return;
     const auditOverlayId = 'ui-modal:audit-drive-modal';
     modal.dataset.gpOverlayHistoryId = auditOverlayId;
-    const auditHistory = window.overlayHistory;
-    if (auditHistory && !auditHistory.has(auditOverlayId)) auditHistory.register(auditOverlayId, () => {
+    modal.__gpOverlayClose = () => {
         auditDriveModalGeneration_ += 1;
         modal.style.display = 'none';
-    });
+    };
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
