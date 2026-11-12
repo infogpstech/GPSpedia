@@ -714,7 +714,7 @@ La suite verifica la pila anidada, cierre del overlay superior con Atrás, cierr
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/YouTubeUploadOverlayLifecycle.js Services/Test/YouTubeUploadOverlayLifecycle.mjs && node Services/Test/YouTubeUploadOverlayLifecycle.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadOverlayLifecycle.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/YouTubeUploadOverlayLifecycle.js Services/Test/YouTubeUploadOverlayLifecycle.mjs && node Services/Test/YouTubeUploadOverlayLifecycle.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadOverlayLifecycle.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La prueba de contrato verifica que una segunda apertura no retire directamente una instancia existente, que una transferencia activa y un modal cubierto por otro overlay se conserven, que se respete la cancelación del cierre y que el reemplazo reutilice la entrada superior del historial.
@@ -725,7 +725,7 @@ La prueba de contrato verifica que una segunda apertura no retire directamente u
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/YouTubeUploadCloseDuringTransfer.js Services/Test/YouTubeUploadCloseDuringTransfer.mjs && node Services/Test/YouTubeUploadCloseDuringTransfer.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCloseDuringTransfer.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/YouTubeUploadCloseDuringTransfer.js Services/Test/YouTubeUploadCloseDuringTransfer.mjs && node Services/Test/YouTubeUploadCloseDuringTransfer.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCloseDuringTransfer.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La prueba ejecuta los callbacks reales `closeModal` y `requestOverlayClose` extraídos de `youtubeUpload.js`, junto con el gestor real de `overlayHistory.js`. Comprueba Atrás, X y Cancelar cuando hay una transferencia activa, tanto al rechazar como al confirmar la pausa. El historial se simula; no sustituye una prueba DOM/navegador real.
@@ -736,7 +736,7 @@ La prueba ejecuta los callbacks reales `closeModal` y `requestOverlayClose` extr
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/YouTubeUploadCheckpointRecovery.js Services/Test/YouTubeUploadCheckpointRecovery.mjs && node Services/Test/YouTubeUploadCheckpointRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCheckpointRecovery.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/YouTubeUploadCheckpointRecovery.js Services/Test/YouTubeUploadCheckpointRecovery.mjs && node Services/Test/YouTubeUploadCheckpointRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCheckpointRecovery.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La prueba ejecuta las funciones reales de consulta de offset, envío de bloques y reanudación extraídas de `youtubeUpload.js`, con XMLHttpRequest simulado. Verifica que se persistan los offsets confirmados por YouTube y que una cancelación durante un bloque conserve el último offset confirmado sin iniciar otro bloque. No sustituye la validación con YouTube API real en Beta.
@@ -747,7 +747,7 @@ La prueba ejecuta las funciones reales de consulta de offset, envío de bloques 
 Desde la raíz del repositorio:
 
 ```bash
-cp Services/Test/YouTubeUploadDraftRecovery.js Services/Test/YouTubeUploadDraftRecovery.mjs && node Services/Test/YouTubeUploadDraftRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadDraftRecovery.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/YouTubeUploadDraftRecovery.js Services/Test/YouTubeUploadDraftRecovery.mjs && node Services/Test/YouTubeUploadDraftRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadDraftRecovery.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 Comprueba la búsqueda IndexedDB de operaciones cuyo referenceId es null y conserva la búsqueda por referencia para contenido asociado. La prueba simula IndexedDB; no sustituye la validación de persistencia en navegador real.
@@ -758,7 +758,7 @@ Comprueba la búsqueda IndexedDB de operaciones cuyo referenceId es null y conse
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/YouTubeUploadCompletedRecordRecovery.js Services/Test/YouTubeUploadCompletedRecordRecovery.mjs && node Services/Test/YouTubeUploadCompletedRecordRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCompletedRecordRecovery.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/YouTubeUploadCompletedRecordRecovery.js Services/Test/YouTubeUploadCompletedRecordRecovery.mjs && node Services/Test/YouTubeUploadCompletedRecordRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCompletedRecordRecovery.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 Comprueba que un registro con ID final válido y todos los bytes confirmados puede continuar al envío/recuperación de aprobación aunque el objeto File no esté disponible. Rechaza registros incompletos, sin ID o con tamaño inválido.
@@ -769,7 +769,7 @@ Comprueba que un registro con ID final válido y todos los bytes confirmados pue
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/YouTubeUploadRecordPersistence.js Services/Test/YouTubeUploadRecordPersistence.mjs && node Services/Test/YouTubeUploadRecordPersistence.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadRecordPersistence.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/YouTubeUploadRecordPersistence.js Services/Test/YouTubeUploadRecordPersistence.mjs && node Services/Test/YouTubeUploadRecordPersistence.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadRecordPersistence.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite verifica el ciclo de lectura/escritura/eliminación de los estados `new`, `uploading`, `paused`, `interrupted` y `uploaded`; el aislamiento por usuario, tipo y referencia; el rechazo de registros duplicados; y los errores/abortos de transacción, incluso cuando una lectura ya recibió su resultado pero la transacción se aborta antes de completarse.
@@ -780,7 +780,7 @@ La suite verifica el ciclo de lectura/escritura/eliminación de los estados `new
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/AddCortesYouTubeOverlayHistory.js Services/Test/AddCortesYouTubeOverlayHistory.mjs && node Services/Test/AddCortesYouTubeOverlayHistory.mjs; RESULT=$?; rm -f Services/Test/AddCortesYouTubeOverlayHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/AddCortesYouTubeOverlayHistory.js Services/Test/AddCortesYouTubeOverlayHistory.mjs && node Services/Test/AddCortesYouTubeOverlayHistory.mjs; RESULT=$?; rm -f Services/Test/AddCortesYouTubeOverlayHistory.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 Verifica que la página independiente inicialice el gestor compartido de overlays y que Atrás cierre la carga YouTube antes de abandonar la vista. También comprueba que, si el lightbox está por encima, se cierre primero y el overlay YouTube permanezca registrado hasta el siguiente retroceso.
@@ -791,7 +791,7 @@ Verifica que la página independiente inicialice el gestor compartido de overlay
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/ReplacedImagesLightboxHistory.js Services/Test/ReplacedImagesLightboxHistory.mjs && node Services/Test/ReplacedImagesLightboxHistory.mjs; RESULT=$?; rm -f Services/Test/ReplacedImagesLightboxHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/ReplacedImagesLightboxHistory.js Services/Test/ReplacedImagesLightboxHistory.mjs && node Services/Test/ReplacedImagesLightboxHistory.mjs; RESULT=$?; rm -f Services/Test/ReplacedImagesLightboxHistory.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 Verifica el registro del lightbox como hijo del modal de imágenes reemplazadas, la reutilización de su entrada al reabrir, el cierre manual mediante el gestor compartido, Atrás con conservación del padre y cierre LIFO del lightbox cuando se cierra el modal padre. La suite usa el gestor real con History simulado; la interacción DOM/navegador real queda para Beta.
@@ -802,7 +802,7 @@ Verifica el registro del lightbox como hijo del modal de imágenes reemplazadas,
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/NavigationBackHistory.js Services/Test/NavigationBackHistory.mjs && node Services/Test/NavigationBackHistory.mjs; RESULT=$?; rm -f Services/Test/NavigationBackHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/NavigationBackHistory.js Services/Test/NavigationBackHistory.mjs && node Services/Test/NavigationBackHistory.mjs; RESULT=$?; rm -f Services/Test/NavigationBackHistory.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite contiene 21 escenarios. Comprueba que el retorno interno use `history.back()` cuando el estado anterior coincide con el destino y que, si no coincide, reemplace la entrada actual y renderice el destino sin duplicar historial. También verifica la normalización de dimensiones opcionales, la conservación del antecesor del destino en fallback y la sincronización del estado de sección entre memoria e History API. Incluye parámetros de categoría, marca, modelo, equipamiento, encendido y búsqueda; estados de sección repetidos; hash de búsqueda con caracteres reservados y escapes inválidos; accesos desde el modal de detalle; y secuencias Atrás/Adelante. History se simula; la interacción con navegador real queda para Beta.
@@ -813,7 +813,7 @@ La suite contiene 21 escenarios. Comprueba que el retorno interno use `history.b
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite contiene 19 escenarios. Comprueba que cada `popstate` cierre una sola capa, que las capas inferiores permanezcan visibles, que el selector determine la capa superior por `z-index` efectivo y orden de apertura, que el menú/lightbox/detalle/info-modals y overlays legales se resuelvan en orden, y que `users.html` utilice la misma semántica LIFO para sus modales. Incluye cancelación de cierre, tres capas anidadas, reemplazo de overlays y cierre manual explícito de un padre con sus descendientes. `ReplacedImagesLightboxHistory.js` mantiene 6/6 escenarios de regresión para lightbox sobre ficha. La validación local usa runtime V8 adaptado e History simulado; DOM/navegador real queda para Beta.
@@ -823,7 +823,7 @@ La suite contiene 19 escenarios. Comprueba que cada `popstate` cierre una sola c
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/OverlayMenuModalHistory.js Services/Test/OverlayMenuModalHistory.mjs && node Services/Test/OverlayMenuModalHistory.mjs; RESULT=$?; rm -f Services/Test/OverlayMenuModalHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/OverlayMenuModalHistory.js Services/Test/OverlayMenuModalHistory.mjs && node Services/Test/OverlayMenuModalHistory.mjs; RESULT=$?; rm -f Services/Test/OverlayMenuModalHistory.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite contiene 13 escenarios para el registro idempotente del menú, la transición menú→Inbox/Dashboard/Changelog/DevTools, cierres por popstate y cierre directo, conservación de búsqueda/sección, reemplazo de modales, vistas administrativas y envío exitoso de contact-form. History se simula; navegador real y gestos nativos permanecen como validación Beta.
@@ -834,7 +834,7 @@ La suite contiene 13 escenarios para el registro idempotente del menú, la trans
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/VehicleShareLinks.js Services/Test/VehicleShareLinks.mjs && node Services/Test/VehicleShareLinks.mjs; RESULT=$?; rm -f Services/Test/VehicleShareLinks.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/VehicleShareLinks.js Services/Test/VehicleShareLinks.mjs && node Services/Test/VehicleShareLinks.mjs; RESULT=$?; rm -f Services/Test/VehicleShareLinks.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite contiene 19 escenarios para construcción/decodificación de URLs, compatibilidad #search=, IDs y metadatos duplicados, variantes, aislamiento de Cortes frente a otras secciones, Web Share exitoso/cancelado/rechazado, fallback Clipboard y errores síncronos/asíncronos. Los permisos de navegador y el contexto seguro requieren validación Beta.
@@ -845,7 +845,7 @@ La suite contiene 19 escenarios para construcción/decodificación de URLs, comp
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/ConnectionStatusAccessibility.js Services/Test/ConnectionStatusAccessibility.mjs && node Services/Test/ConnectionStatusAccessibility.mjs; RESULT=$?; rm -f Services/Test/ConnectionStatusAccessibility.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/ConnectionStatusAccessibility.js Services/Test/ConnectionStatusAccessibility.mjs && node Services/Test/ConnectionStatusAccessibility.mjs; RESULT=$?; rm -f Services/Test/ConnectionStatusAccessibility.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite contiene 8 escenarios para role=status/aria-live, texto accesible online/offline, precisión de navigator.onLine, preservación del punto de 3px y prefers-reduced-motion. Lector de pantalla y cambios reales de conectividad se validan en Beta.
@@ -856,7 +856,7 @@ La suite contiene 8 escenarios para role=status/aria-live, texto accesible onlin
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/PWAInstallDetection.js Services/Test/PWAInstallDetection.mjs && node Services/Test/PWAInstallDetection.mjs; RESULT=$?; rm -f Services/Test/PWAInstallDetection.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/PWAInstallDetection.js Services/Test/PWAInstallDetection.mjs && node Services/Test/PWAInstallDetection.mjs; RESULT=$?; rm -f Services/Test/PWAInstallDetection.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite contiene 20 escenarios para iPhone/iPad, iPadOS con user-agent móvil y de escritorio, control negativo Mac, estado standalone, visibilidad de instrucciones, metadatos Apple, iconos locales y compatibilidad con beforeinstallprompt/appinstalled. La ejecución Node CLI y las pruebas en dispositivos reales se registran por separado; no se consideran aprobadas por una simulación V8.
@@ -866,7 +866,7 @@ La suite contiene 20 escenarios para iPhone/iPad, iPadOS con user-agent móvil y
 Ejecutar desde la raíz del repositorio con Node.js:
 
 ```bash
-node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
 ```
 
 La suite contiene 50 escenarios de seguridad FEEDBACK. Incluye autorización de reportProblem y suggestCutChange para todos los roles activos permitidos, rechazo de sesión ausente/inválida/revocada o cruzada, sustitución de identidad falsificada por los datos de Users y comprobación del dispatcher POST antes de invocar los handlers. El comando proporciona dobles locales de LockService y CacheService; no sustituye pruebas de concurrencia ni de Apps Script/Spreadsheet reales. En Beta se debe repetir el flujo con el deployment FEEDBACK de pruebas y una hoja aislada, verificando que una petición rechazada no deje registros en Feedbacks, Drive ni ActividadUsuario.
