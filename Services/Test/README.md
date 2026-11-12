@@ -1213,3 +1213,16 @@ node --experimental-default-type=module Services/Test/ValidationBannerTheme.js
 ValidationBannerTheme.js verifica los tokens semánticos del banner en tema claro/oscuro, la correspondencia con el selector `body.dark-mode`, los estilos del mensaje, botones y campo de entrada, el foco visible y los contrastes WCAG AA (4.5:1) de texto, placeholder y botones. Comprueba además que no queden referencias al token inexistente `--text-primary` ni al selector `[data-theme="dark"]` dentro del componente.
 
 El banner hereda el tema global mediante los tokens definidos en `:root` y redefinidos en `body.dark-mode`; no requiere un atributo de tema adicional ni cambios en el flujo de validación de `ui.js`. La comprobación visual de mensajes, botones, campo y contraste en navegador real queda para Beta.
+
+
+## AUG-103 — Tokens compartidos de color y tema
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/ThemeTokenConsistency.js
+```
+
+ThemeTokenConsistency.js compara los 21 tokens semánticos de index.html (style.css), users.html y add_cortes.html en `:root` y `body.dark-mode`; valida igualdad de valores, alias heredados y uso de tokens en componentes comunes. Comprueba contraste WCAG AA para texto principal/secundario e información (4.5:1) y foco (3:1).
+
+Se conservan como excepciones los colores contextuales/operativos, marcas y logotipos, imágenes, sombras, overlays y elementos gráficos específicos. El banner de validación mantiene tokens especializados compatibles con la paleta común. La inspección visual en navegador real queda para Beta.
