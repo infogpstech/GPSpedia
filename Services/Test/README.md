@@ -729,3 +729,14 @@ cp Services/Test/YouTubeUploadCloseDuringTransfer.js Services/Test/YouTubeUpload
 ```
 
 La prueba ejecuta los callbacks reales `closeModal` y `requestOverlayClose` extraídos de `youtubeUpload.js`, junto con el gestor real de `overlayHistory.js`. Comprueba Atrás, X y Cancelar cuando hay una transferencia activa, tanto al rechazar como al confirmar la pausa. El historial se simula; no sustituye una prueba DOM/navegador real.
+
+
+## AUG-068 — Persistencia y reanudación de checkpoints de YouTube
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/YouTubeUploadCheckpointRecovery.js Services/Test/YouTubeUploadCheckpointRecovery.mjs && node Services/Test/YouTubeUploadCheckpointRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCheckpointRecovery.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La prueba ejecuta las funciones reales de consulta de offset, envío de bloques y reanudación extraídas de `youtubeUpload.js`, con XMLHttpRequest simulado. Verifica que se persistan los offsets confirmados por YouTube y que una cancelación durante un bloque conserve el último offset confirmado sin iniciar otro bloque. No sustituye la validación con YouTube API real en Beta.

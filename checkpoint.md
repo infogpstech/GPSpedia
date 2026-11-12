@@ -711,3 +711,18 @@ Validación adaptada ejecutada en runtime V8:
 - youtubeUpload.js: parsing sintáctico en V8 después de retirar import/export para adaptar el módulo a la evaluación aislada.
 La prueba nueva ejecutó closeAfterUpload real con overlayHistory real y History simulado; verificó que la entrada se elimina y no se solicita confirmación cuando el cierre automático se produce tras finalizar la operación. También confirmó estáticamente que hay exactamente tres llamadas a closeAfterUpload.
 Limitación: no es ejecución Node CLI en Codespaces ni prueba DOM/navegador real. Esas verificaciones siguen pendientes para Beta/entorno de Codespaces según corresponda.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3G — PRUEBAS DE CHECKPOINT Y REANUDACIÓN — 2026-11-12
+Revisión del flujo de transferencia:
+- La reanudación consulta primero el offset remoto cuando el registro no está en estado new o ya tiene bytes confirmados.
+- El progreso persistido se actualiza con el Range confirmado por YouTube, no con el progreso visual intermedio del evento upload.onprogress.
+- Una cancelación durante un bloque hace que la promesa del bloque rechace; la rutina de transferencia comprueba uploadCancelled y no ejecuta una consulta de reconciliación ni inicia otro bloque.
+- El catch exterior de form.onsubmit guarda el registro como paused cuando uploadCancelled está activo, conservando file, uploadUrl, videoId y bytesUploaded para la siguiente apertura.
+No se encontró en esta inspección un defecto reproducible que requiera modificar youtubeUpload.js. Se añade una prueba local enfocada que ejecuta las funciones reales de transferencia con XMLHttpRequest simulado, cubriendo reanudación desde offset confirmado y cancelación durante un bloque.
+Archivos: Services/Test/YouTubeUploadCheckpointRecovery.js y Services/Test/README.md.
+Validación prevista: ejecución de la nueva prueba y parsing sintáctico adaptado. No declarar ejecución Node CLI/Codespaces ni YouTube API real si no se han ejecutado.
+ChangesLogs.txt no se modifica por requerir rotación normativa. Rama base intacta.
+Siguiente acción: validar ambos escenarios; después revisar persistencia de registros IndexedDB y transiciones de estado uploaded/interrupted/paused. No iniciar AUG-069.
+================================================================================
