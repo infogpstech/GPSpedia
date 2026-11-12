@@ -188,6 +188,7 @@ export function applyRichTextColor(targetId, color) {
 }
 
 function attachListKeyboardBehavior(textarea) {
+    if (getRichTextMode() !== "advanced") return;
     if (!textarea || textarea.dataset.richListKeyboardBound === "true") return;
     textarea.dataset.richListKeyboardBound = "true";
     textarea.addEventListener("keydown", event => {
