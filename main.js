@@ -14,7 +14,7 @@ import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
 import { decodeSearchHash } from './search-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
-import { createOverlayHistoryManager } from './overlayHistory.js';
+import { createOverlayHistoryManager, selectTopmostOverlay } from './overlayHistory.js';
 import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 
 let deferredPrompt;
@@ -395,12 +395,7 @@ async function initializeApp() {
             add(detail, 'detail', null);
         }
 
-        candidates.sort((a, b) =>
-            b.zIndex - a.zIndex ||
-            b.order - a.order ||
-            b.domOrder - a.domOrder
-        );
-        return candidates[0] || null;
+        return selectTopmostOverlay(candidates);
     }
 
     const overlayObserver = new MutationObserver(registerVisibleOverlays_);
