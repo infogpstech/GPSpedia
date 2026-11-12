@@ -1154,7 +1154,7 @@ export function mostrarMarcas(categoria) {
     pushNavigationState(nextState, { previousNavigationState: previousState || { level: 'categorias' } });
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<h4>Marcas de ${categoria}</h4>`;
-    const backTarget = ['busqueda', 'busqueda_focused'].includes(previousState && previousState.level)
+    const backTarget = previousState && ['categorias', 'busqueda', 'busqueda_focused'].includes(previousState.level)
         ? previousState
         : { level: 'categorias' };
     renderNavigationBackButton(cont, backTarget);
@@ -1199,7 +1199,7 @@ export function mostrarModelosPorMarca(marca) {
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-    const backTarget = ['busqueda', 'busqueda_focused'].includes(previousState.level)
+    const backTarget = previousState && ['categorias', 'busqueda', 'busqueda_focused'].includes(previousState.level)
         ? previousState
         : { level: 'categorias' };
     cont.innerHTML = `<h4>Modelos de ${marca}</h4>`;
@@ -1312,9 +1312,8 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
     pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
     let backTarget;
-    if (['busqueda', 'busqueda_focused'].includes(previousState.level)) backTarget = previousState;
+    if (previousState.level && ['busqueda', 'busqueda_focused', 'versionesEquipamiento', 'modelosPorMarca', 'marcas'].includes(previousState.level)) backTarget = previousState;
     else if (versionEquipamiento) backTarget = { level: 'versionesEquipamiento', categoria, marca, modelo: previousState.modelo };
-    else if (origin === 'marca' || previousState.level === 'modelosPorMarca') backTarget = { level: 'modelosPorMarca', marca, origin: 'marca' };
     else backTarget = { level: 'marcas', categoria, origin: 'categoria' };
     cont.innerHTML = `<h4>Modelos de ${marca} ${versionEquipamiento || ''}</h4>`;
     renderNavigationBackButton(cont, backTarget);
@@ -1366,8 +1365,7 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
     pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
     let backTarget;
-    if (['busqueda', 'busqueda_focused'].includes(previousState.level) || previousState.level === 'versionesEquipamiento') backTarget = previousState;
-    else if (origin === 'marca' || previousState.level === 'modelosPorMarca') backTarget = { level: 'modelosPorMarca', marca, origin: 'marca' };
+    if (previousState.level && ['busqueda', 'busqueda_focused', 'versionesEquipamiento', 'modelosPorMarca', 'modelos'].includes(previousState.level)) backTarget = previousState;
     else backTarget = { level: 'modelos', categoria, marca, origin };
     cont.innerHTML = `<h4>Tipos de Encendido para ${modelo} ${versionEquipamiento || ''}</h4>`;
     renderNavigationBackButton(cont, backTarget);
@@ -1424,9 +1422,7 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
     let backTarget;
-    if (['busqueda', 'busqueda_focused'].includes(previousState.level)) backTarget = previousState;
-    else if (previousState.level === 'tiposEncendido' || previousState.level === 'versionesEquipamiento') backTarget = previousState;
-    else if (origin === 'marca' || previousState.level === 'modelosPorMarca') backTarget = { level: 'modelosPorMarca', marca, origin: 'marca' };
+    if (previousState.level && ['busqueda', 'busqueda_focused', 'tiposEncendido', 'versionesEquipamiento', 'modelosPorMarca', 'modelos'].includes(previousState.level)) backTarget = previousState;
     else backTarget = { level: 'modelos', categoria, marca, origin };
     cont.innerHTML = `<h4>Años de ${modelo}</h4>`;
     renderNavigationBackButton(cont, backTarget);
@@ -1465,11 +1461,9 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-    const backTarget = ['busqueda', 'busqueda_focused'].includes(previousState.level)
+    const backTarget = previousState.level && ['busqueda', 'busqueda_focused', 'modelosPorMarca', 'modelos'].includes(previousState.level)
         ? previousState
-        : (origin === 'marca' || previousState.level === 'modelosPorMarca')
-            ? { level: 'modelosPorMarca', marca, origin: 'marca' }
-            : { level: 'modelos', categoria, marca, origin };
+        : { level: 'modelos', categoria, marca, origin };
     cont.innerHTML = `<h4>Versiones de ${modelo}</h4>`;
     renderNavigationBackButton(cont, backTarget);
 
