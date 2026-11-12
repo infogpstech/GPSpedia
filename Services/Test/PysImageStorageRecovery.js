@@ -317,7 +317,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
     });
 
     test("backend no busca carpetas globales ni fuerza JPEG ni comparte ANYONE_WITH_LINK", () => {
-        const handler = extract(feedback, "function handleAddProblem(payload) {", "function handleAddSolution(payload) {");
+        const handler = extract(feedback, "function handleAddProblem(source) {", "function handleAddSolution(payload) {");
         assert.doesNotMatch(handler, /DriveApp\.getFoldersByName|DriveApp\.createFolder|image\/jpeg"\s*,\s*problemId|setSharing/);
         assert.match(handler, /getPysImagesFolder_\(\)/);
         assert.match(handler, /image\.mimeType/);
