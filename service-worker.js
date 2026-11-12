@@ -1,4 +1,4 @@
-const CACHE_NAME='gpsepedia-cache-v17';
+const CACHE_NAME='gpsepedia-cache-v18';
 const CORE_ASSETS=['./','./index.html','./add_cortes.html','./users.html','./main.js','./auth.js','./ui.js','./rich-text.js','./state.js','./navigation.js','./offline.js','./lightbox.js','./api-config.js','./VinDifferentialEngine.js','./search-utils.js','./share-utils.js','./catalogStatus.js','./catalogRequest.js','./pys-data.js','./validationSubmission.js','./likeState.js','./youtubeUpload.js','./imageObjectUrlCache.js','./thumbnailCompressionQueue.js','./modalNavigation.js','./style.css','./manifest.json'];
 const OPTIONAL_ASSETS=['./icon-v3-192x192.png','./icon-v3-512x512.png','./icon-pwa-192x192.png','./icon-pwa-512x512.png'];
 function isQuotaExceeded(error){return Boolean(error&&(error.name==='QuotaExceededError'||error.code===22));}
