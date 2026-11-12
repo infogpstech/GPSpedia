@@ -41,7 +41,8 @@ export function runYouTubeUploadXssIntegrityTests({ upload, ui, cortes }) {
         assert.equal(descriptionInput.value, description);
         assert.ok(descriptionInput.value.includes("</textarea>"));
         assert.ok(descriptionInput.value.includes("\n"));
-        assert.ok(descriptionInput.value.includes("Técnico") === false || titleInput.value.includes("Técnico"));
+        assert.ok(titleInput.value.includes("Técnico"));
+        assert.ok(descriptionInput.value.includes("Ubicación"));
     });
 
     test("limita el tamaño sin convertir el contenido en HTML", () => {
