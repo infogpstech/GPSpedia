@@ -649,3 +649,16 @@ Validación local adaptada:
 - El parsing del ui.js completo falla con «Invalid regular expression: missing /» tanto en el HEAD previo como en el actual; no es regresión atribuible a AUG-071. Los bloques modificados compilan.
 Límites: Node CLI literal no ejecutado en este entorno; los comandos quedan documentados para ejecución en el repositorio local. DOM/navegador real, backdrop físico, gestos nativos y dispositivos quedan diferidos a Beta. No se modificaron endpoints, deployments, datos productivos ni la rama base.
 ================================================================================
+
+
+================================================================================
+AUG-072 — H-AUD-072-001 — EN CORRECCIÓN — 2026-11-12
+Origen: AUG-072 / H-AUD-008-001 y H-AUD-008-002.
+Ubicaciones iniciales: ui.js (botón Compartir en mostrarDetalleModal), main.js (deep link de inicio), search-utils.js y catálogo Cortes.
+Evidencia:
+- El botón compartía únicamente #search=<texto>; no incluía activeItem.id, por lo que varios resultados con metadatos coincidentes podían resolver a un vehículo distinto o a varias secciones.
+- navigator.share() solo registraba console.error en rechazo; AbortError y fallos recuperables no se distinguían.
+- El fallback llamaba navigator.clipboard.writeText sin comprobar disponibilidad y no informaba todos los fallos ni ofrecía un campo de copia manual.
+- El deep link inicial solo decodificaba #search= y no tenía una ruta de resolución por identidad de Cortes.
+Criterio: URL único con ID y búsqueda; resolver exclusivamente contra catalogData.cortes y rechazar IDs duplicados; mantener enlaces históricos; no copiar en AbortError; validar y capturar fallos de Clipboard/Web Share; confirmar éxito y mostrar URL manual ante fallo.
+================================================================================
