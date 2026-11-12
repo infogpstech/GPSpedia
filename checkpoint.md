@@ -1077,3 +1077,16 @@ Publicación:
 - Rama base GPSpedia2.2.5 permanece intacta (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
 Siguiente acción: recuperar la siguiente tarea activa del backlog y sus dependencias; no reabrir AUG-071 sin evidencia nueva.
 ================================================================================
+
+
+================================================================================
+AUG-072 — ITERACIÓN 1 — 2026-11-12 — IDENTIDAD Y FALLBACK DE ENLACES COMPARTIDOS
+Estado: EN PROGRESO. HEAD de partida tras cierre de AUG-071: bacdcb0fb0953359613612bb57e31030e8bd5f7e. Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Trabajo publicado:
+- Nuevo share-utils.js: construcción centralizada de URL #vehicle=<id>&search=<query>, compatibilidad con #search=, decodificación segura, resolución única en catalogData.cortes, manejo de IDs duplicados y utilidades de Web Share/Clipboard.
+- main.js: el deep link espera la disponibilidad del catálogo; resuelve el ID exclusivamente en Cortes; abre el vehículo exacto y mantiene búsqueda como contexto; ante ID no encontrado usa la consulta como fallback; conserva el flujo histórico #search=.
+- ui.js: el botón Compartir usa el mismo URL para Web Share y Clipboard; distingue AbortError, intenta Clipboard ante fallos recuperables, informa éxito/error y muestra un campo de URL accesible para copia manual.
+- Nueva suite Services/Test/VehicleShareLinks.js (18 escenarios) y README actualizado.
+Validación inicial adaptada: suite VehicleShareLinks PASS en V8 con share-utils.js/search-utils.js reales y contratos de main.js/ui.js. Parsing V8 de share-utils.js/main.js y del handler de compartir: PASS. Node CLI literal, DOM/navegadores móviles/escritorio, permisos Clipboard/Web Share y contexto seguro aún no ejecutados.
+Siguiente acción: revisar el ciclo completo de deep link con el catálogo real, probar las rutas de fallback y errores, ampliar cobertura de variantes/resultados multi-sección, ejecutar suites relacionadas y cerrar documentación con evidencia.
+================================================================================
