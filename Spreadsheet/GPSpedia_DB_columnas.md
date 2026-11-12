@@ -233,6 +233,21 @@
 | 8 | H | `Reporte de util` |
 | 9 | I | `anoSugerido` |
 
+#### Columna auxiliar dinámica `suggestionActorKey`
+
+La tabla anterior representa las nueve columnas funcionales del esquema base documentado en el archivo XLSX. El servicio `Services/feedback.js` administra además una columna auxiliar para deduplicar aportantes de sugerencias de año:
+
+- **Encabezado exacto:** `suggestionActorKey`.
+- **Fila de encabezado:** 1.
+- **Ubicación:** se agrega en la primera columna posterior al último encabezado utilizado al momento de su creación (`headerWidth + 1`); por tanto, no tiene una letra fija. Si `reportMetadata` u otra columna auxiliar ya existe, `suggestionActorKey` se coloca después de ella. El servicio la localiza por nombre en lecturas posteriores.
+- **Formatos vigentes:**
+  - `user:<ID>`: aportante autenticado. El ID procede de la sesión validada en backend; no se confía en una clave enviada por el navegador.
+  - `anon:unverified`: aportación anónima sin identidad individual verificable. El identificador del navegador no se utiliza como identidad.
+  - `applied:<clave-original>`: marca interna que sustituye la clave de un aporte positivo autenticado después de aplicar su sugerencia, para conservar el registro sin volver a contarlo como voto pendiente. Ejemplo: `applied:user:USR-123`.
+- **Creación idempotente:** `ensureSuggestionActorColumn()` comprueba las nueve cabeceras base, busca el encabezado auxiliar en la fila 1 y reutiliza su posición si existe exactamente una en una ubicación posterior a I. Si no existe, la crea después del último encabezado usado. Una duplicación, ubicación incompatible o encabezado base incorrecto detiene la operación sin sobrescribir columnas.
+- **Compatibilidad histórica:** las filas creadas antes de incorporar esta columna pueden conservar la celda auxiliar vacía. No se asigna retrospectivamente una identidad a esas filas, porque el servicio no puede demostrar quién las originó. Los valores vacíos y `anon:unverified` no representan votos autenticados.
+- **Respaldo y restauración:** los respaldos completos de `Feedbacks` deben incluir la fila 1 y todas las columnas utilizadas, incluidas `suggestionActorKey` y cualquier columna auxiliar como `reportMetadata`. La restauración debe conservar encabezados y valores de esa columna, sin desplazarla ni convertirla en una de las nueve columnas base. Si se restaura un respaldo histórico de nueve columnas, las filas históricas quedan sin clave; la siguiente escritura válida recreará la columna auxiliar de forma idempotente, pero no reconstruirá ni inventará claves para los registros antiguos. No borrar ni rellenar manualmente valores `user:`, `anon:` o `applied:`.
+
 ### Hoja `Contactanos`
 
 - **Fila de encabezados:** 1

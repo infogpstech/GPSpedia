@@ -449,3 +449,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Se añadió protección contra solicitudes duplicadas y contra resultados tardíos después de cerrar el modal o navegar a otro vehículo.
 - Se añadió suite unitaria independiente para el ciclo de vida del banner.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-111 — ESQUEMA DE suggestionActorKey EN FEEDBACKS
+- Spreadsheet/GPSpedia_DB_columnas.md: se documentó la columna auxiliar dinámica suggestionActorKey, los formatos de actor autenticado/anónimo y la marca applied:, su creación idempotente, compatibilidad de filas históricas y conservación en respaldos/restauraciones.
+- Services/Test/SuggestionActorSchemaDocumentation.js: nueva prueba de contrato documental contra Services/feedback.js.
+- Services/Test/README.md: se añadió el comando y alcance de la prueba.
+================================================================================

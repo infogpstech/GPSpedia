@@ -1275,3 +1275,12 @@ La suite `Services/Test/FeedbackWriteSecurity.js` cubre que los reportes anónim
 - Casos: imagen ausente/rota/lazy/cargada, múltiples cortes, duplicación de solicitudes, navegación a otro vehículo, cierre del modal y vehículo no elegible.
 - Ejecución local: node Services/Test/ValidationBannerLifecycle.js.
 - La validación visual y el comportamiento con imágenes/IndexedDB reales quedan para Beta en navegador aislado.
+
+
+## AUG-111 — Esquema auxiliar de aportantes de Feedbacks
+
+Ejecutar desde la raíz del repositorio:
+
+    node --experimental-default-type=module Services/Test/SuggestionActorSchemaDocumentation.js
+
+La prueba comprueba que el inventario de Feedbacks conserva las nueve columnas base y documenta suggestionActorKey con ubicación dinámica, formatos de actor, marca applied:, creación idempotente, compatibilidad histórica y reglas de respaldo/restauración. Contrasta estos puntos con la implementación real de Services/feedback.js; no accede a Spreadsheet ni modifica datos.

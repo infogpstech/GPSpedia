@@ -108,3 +108,26 @@ Pruebas locales:
 Archivos: ui.js, validationBannerLifecycle.js, Services/Test/ValidationBannerLifecycle.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-111 — Documentar suggestionActorKey en el esquema de Feedbacks. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-111 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA.
+
+Resultado:
+- Se documentó suggestionActorKey como columna auxiliar dinámica de Feedbacks, distinta de las nueve columnas funcionales A:I del inventario original.
+- Su ubicación se determina al crearla: columna posterior al último encabezado utilizado. No tiene letra fija; se localiza por encabezado.
+- Formatos documentados: user:<ID> para cuentas autenticadas, anon:unverified para aportes anónimos y applied:<clave-original> para conservar sugerencias positivas ya aplicadas sin contarlas de nuevo.
+- Se documentaron validación/idempotencia, compatibilidad con filas históricas sin clave y conservación en respaldos/restauraciones.
+- Se añadió prueba de contrato documental que compara el esquema con Services/feedback.js.
+
+Validación local:
+- Contrato documental ejecutado en runtime V8 adaptado: 8/8 comprobaciones PASS (nueve encabezados y orden, ubicación dinámica, formatos user:/anon:/applied:, idempotencia, compatibilidad histórica y respaldo/restauración). Parsing sintáctico del archivo de prueba: PASS.
+- No se ejecutó Node CLI ni se accedió a Spreadsheet real; la ejecución del comando en el repositorio clonado y la restauración en Spreadsheet aislada quedan para Beta.
+- No se accedió a Spreadsheet ni se modificaron datos. La restauración de respaldos y la verificación con Spreadsheet aislada quedan para Beta.
+
+Archivos actualizados: Spreadsheet/GPSpedia_DB_columnas.md, Services/Test/SuggestionActorSchemaDocumentation.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-112 — Reconciliar la entrada de AUD-T-016 en Auditoría.txt. No iniciar dentro de esta tarea.
+================================================================================
