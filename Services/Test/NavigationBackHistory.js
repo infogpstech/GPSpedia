@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
     pushNavigationState,
     replaceNavigationState,
@@ -121,28 +122,41 @@ test('reopening the same navigation state replaces instead of duplicating', () =
     assert.equal(history.entries.length, 1);
 });
 
-test('search focused and unfocused states preserve query and original ancestry', () => {
+test('search focus and blur keep one entry with query and original ancestry', () => {
     const history = createFakeHistory({ level: 'categorias' });
     pushNavigationState(
-        { level: 'busqueda', query: 'Toyota' },
+        { level: 'busqueda_focused', query: 'Toyota' },
         { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
     );
-    pushNavigationState(
-        { level: 'busqueda_focused', query: 'Toyota' },
-        { historyObject: history, locationObject, previousNavigationState: { level: 'busqueda', query: 'Toyota' } }
-    );
-    history.back();
     replaceNavigationState(
         { level: 'busqueda', query: 'Toyota' },
         { historyObject: history, locationObject }
     );
+    assert.equal(history.entries.length, 2);
     assert.equal(history.state.query, 'Toyota');
     assert.deepEqual(history.state[navigationHistoryStateKey], { level: 'categorias' });
-    const action = navigateBackToState(
+    assert.equal(navigateBackToState(
         { level: 'categorias' },
         { historyObject: history, locationObject }
+    ), 'back');
+    assert.equal(history.state.level, 'categorias');
+});
+
+test('native back while search is focused restores one unfocused search entry', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    pushNavigationState(
+        { level: 'busqueda_focused', query: 'Toyota' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
     );
-    assert.equal(action, 'back');
+    history.back();
+    pushNavigationState(
+        { level: 'busqueda', query: 'Toyota' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    assert.equal(history.entries.length, 2);
+    assert.equal(history.state.level, 'busqueda');
+    assert.deepEqual(history.state[navigationHistoryStateKey], { level: 'categorias' });
+    history.back();
     assert.equal(history.state.level, 'categorias');
 });
 
@@ -197,4 +211,26 @@ test('section back and forward restore the adjacent section entries', () => {
     assert.equal(history.state.section, 'tutoriales');
 });
 
-console.log('NavigationBackHistory:', passed + '/10 PASS');
+test('main focus and blur handlers do not create paired duplicate search entries', () => {
+    const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
+    assert.match(mainSource, /if \(currentState\.level === 'busqueda' \|\| currentState\.level === 'busqueda_focused'\) \{\s*replaceNavigationState\(focusedState/);
+    assert.doesNotMatch(mainSource, /pushNavigationState\(searchState/);
+    assert.match(mainSource, /pushNavigationState\(searchState, \{ previousNavigationState: currentNavState\.previousState \}\)/);
+});
+
+test('all catalog back buttons use the centralized operation', () => {
+    const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+    assert.equal((uiSource.match(/renderNavigationBackButton\(cont,/g) || []).length, 6);
+    assert.match(uiSource, /button\.addEventListener\('click', \(\) => volverAEstado\(targetState\)\)/);
+});
+
+test('native popstate restores previous navigation metadata and section states', () => {
+    const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
+    const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+    assert.match(mainSource, /\[navigationHistoryStateKey\]: previousNavigationState/);
+    assert.match(mainSource, /case 'busqueda_focused':/);
+    assert.match(mainSource, /if \(state\.section\)/);
+    assert.match(uiSource, /pushNavigationState\(\{ section: sectionName \}/);
+});
+
+console.log('NavigationBackHistory:', passed + '/13 PASS');
