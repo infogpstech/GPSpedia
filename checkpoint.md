@@ -1500,3 +1500,14 @@ Comparación desde el HEAD de inicio de AUG-089: 13 archivos afectados, 36 commi
 Validaciones locales aprobadas: PysModalNavigation 8/8; PysNavigationContext 6/6; OverlayHistoryStack 19/19; ServiceWorkerCache 6/6; parsing focalizado de bloques UI, main.js, modalNavigation.js y service-worker.js PASS.
 Estado final de AUG-089: COMPLETADA CON VALIDACIÓN DIFERIDA. Próxima tarea del backlog: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-090 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5, sin modificaciones.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Implementación: referencias PyS–vehículo verificadas contra IDs únicos; modelos_asociados normalizado y deduplicado con compatibilidad heredada; altas/bajas protegidas por ScriptLock; creación preasociada también valida Cortes bajo lock; lectura CORTES coordinada entre FEEDBACK y WRITE mediante Coordinator 1.1.1; retorno de la colección realmente persistida; renderizado UI sin tarjetas repetidas ni IDs huérfanos.
+Pruebas locales: PysVehicleRelationIntegrity 18/18; PysCreationIntegrity 48/48; SharedMutationCoordinator 30/30 PASS. Parsing completo de feedback.js, bloque modal de vehículos ui.js y Coordinator.js PASS.
+Limitación: harness JavaScript adaptado; no se ejecutó Node CLI ni Apps Script real. Concurrencia real entre ejecuciones y pruebas Spreadsheet aisladas quedan para Beta. Sin despliegue ni cambios productivos.
+Siguiente tarea: AUG-091 — Alinear el título del acordeón con la especificación de PyS.
+================================================================================
