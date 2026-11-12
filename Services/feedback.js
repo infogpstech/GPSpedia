@@ -1976,28 +1976,6 @@ function handleSuggestCutChange(payload) {
     return result;
 }
 
-function normalizeModelosAsociadosList_(values) {
-    if (!Array.isArray(values)) throw new Error("modelos_asociados debe ser una lista.");
-    const normalized = [];
-    const seen = new Set();
-    values.forEach(value => {
-        if (value === null || value === undefined) return;
-        if (typeof value !== "string" && typeof value !== "number") {
-            throw new Error("modelos_asociados contiene un identificador inválido.");
-        }
-        const id = String(value).trim();
-        if (!id) return;
-        if (id.length > 100 || /[,/\\;\[\]"'\u0000-\u001F\u007F]/.test(id)) {
-            throw new Error("modelos_asociados contiene un identificador con formato inválido.");
-        }
-        if (!seen.has(id)) {
-            seen.add(id);
-            normalized.push(id);
-        }
-    });
-    return normalized;
-}
-
 function parseModelosAsociados(rawVal) {
     if (rawVal === null || rawVal === undefined) return [];
     if (Array.isArray(rawVal)) return normalizeModelosAsociadosList_(rawVal);
@@ -2019,6 +1997,27 @@ function parseModelosAsociados(rawVal) {
     return normalizeModelosAsociadosList_(str.split(/[,/\\;]+/));
 }
 
+function normalizeModelosAsociadosList_(values) {
+    if (!Array.isArray(values)) throw new Error("modelos_asociados debe ser una lista.");
+    const normalized = [];
+    const seen = new Set();
+    values.forEach(value => {
+        if (value === null || value === undefined) return;
+        if (typeof value !== "string" && typeof value !== "number") {
+            throw new Error("modelos_asociados contiene un identificador inválido.");
+        }
+        const id = String(value).trim();
+        if (!id) return;
+        if (id.length > 100 || /[,/\\;\[\]"'\u0000-\u001F\u007F]/.test(id)) {
+            throw new Error("modelos_asociados contiene un identificador con formato inválido.");
+        }
+        if (!seen.has(id)) {
+            seen.add(id);
+            normalized.push(id);
+        }
+    });
+    return normalized;
+}
 
 const PYS_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
 const PYS_IMAGE_EXTENSIONS = Object.freeze({
