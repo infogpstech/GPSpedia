@@ -1213,3 +1213,7 @@ Beta pendiente: ejecutar lista_beta.txt en deployment FEEDBACK, Spreadsheet y Dr
 
 Siguiente tarea: AUG-078 — Validar la relación entre reporte, vehículo y corte en sugerencias. No iniciada; fuera de esta iteración.
 ================================================================================
+
+
+AUG-077 — NOTA DE PUBLICACIÓN DE PRUEBAS
+La suite `Services/Test/ReportImageAttachment.js` quedó publicada en `081b543ee06a87ba63242a21234d0870946ee5a1` (18 casos para ejecutar en el checkout local). En este entorno se ejecutó con Node v22.16.0 un harness aislado de lógica binaria y metadata: 12/12 PASS. El checkout completo no pudo clonarse porque el entorno no resuelve github.com por DNS; por ello la suite de 18 casos no se declara ejecutada aquí. La validación V8 de funciones modificadas y parsing de suite fueron PASS.
