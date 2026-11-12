@@ -1161,3 +1161,18 @@ RichTextModeConfiguration.js valida el modo estricto por defecto, valores ausent
 La preferencia `gpsepedia_rich_text_mode` se guarda por navegador. Solo el panel de Desarrollador expone el cambio y el setter exige ese rol; el valor local no se considera una autoridad de seguridad. En ambos modos el sanitizador mantiene su allow-list y bloquea contenido activo. El backend conserva su sanitización autoritativa segura, independiente de la preferencia de presentación del cliente.
 
 La verificación en Beta debe probar modo estricto y avanzado con datos de catálogo aislados, registros históricos de texto plano, cambio de modo con barras abiertas, varias pestañas y los formularios principales. No se despliega ni se modifica contenido productivo.
+
+## AUG-098 — Inyección HTML desde la consulta de búsqueda
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/SearchQueryXssIntegrity.js
+node --experimental-default-type=module Services/Test/GlobalSearch.js
+node --experimental-default-type=module Services/Test/NavigationVinCollection.js
+node --experimental-default-type=module Services/Test/VinVersionPresentation.js
+```
+
+SearchQueryXssIntegrity.js verifica que el encabezado de resultados, el estado sin coincidencias y los errores globales usan texto plano; comprueba payloads HTML/SVG/eventos, comillas, ampersand, Unicode y consultas recuperadas desde deep links codificados. GlobalSearch.js cubre la clasificación y decodificación de búsquedas. NavigationVinCollection.js y VinVersionPresentation.js verifican los parsers VIN y la sintaxis de navegación/UI.
+
+La consulta permanece como dato de texto desde el input o el deep link hasta el renderizador. Los resultados dinámicos siguen construyéndose con nodos DOM; no se concatenan consultas en HTML. Validar adicionalmente con teclado, búsqueda normal, historial, estados vacíos, enlaces compartidos y navegación atrás en Beta.
