@@ -92,3 +92,13 @@ AUG-076 — Stored XSS en Inbox y formularios de corte
 - Services/Test/InboxStoredXss.js: nueva suite de contratos de seguridad con matriz de payloads y parsing de cinco componentes.
 - Services/Test/README.md, Tareas_pendientes_parte5.txt, Auditoría.txt, checkpoint.md y lista_beta.txt documentan el cierre y las validaciones pendientes.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-077 — ADJUNTO REAL DE IMÁGENES
+- ui.js: selector JPEG/PNG/WebP, FileReader con load/error/abort, límite cliente 3 MB, transmisión del adjunto como quinto argumento opcional y confirmación obligatoria del servidor. El nombre del archivo no se mezcla con el texto libre.
+- api-config.js: contrato reportProblem compatible con los cuatro argumentos previos; serializa imageAttachment.
+- Services/feedback.js: validación de MIME/Base64/tamaño/firma binaria, SHA-256, almacenamiento en `Cortes/Reportes individuales` con permisos heredados, metadata vinculada a reportId, reintentos idempotentes y rollback/limpieza ante fallos.
+- Inbox: enlace HTTPS canónico de Drive con rel=noopener noreferrer; reportes históricos sin imagen compatibles.
+- Services/Test/ReportImageAttachment.js: suite reproducible de 18 pruebas de lógica y contratos; harness Node aislado ejecutado: 12/12 PASS.
+================================================================================
