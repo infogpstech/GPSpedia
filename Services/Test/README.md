@@ -1074,3 +1074,15 @@ node --input-type=module -e 'import fs from "node:fs"; import { runPysVehicleRel
 La suite contiene 18 escenarios: validación de IDs y unicidad en `Cortes`/`pys`, JSON y formatos heredados, normalización/deduplicación, altas y bajas idempotentes, retorno del valor persistido, liberación del `ScriptLock`, reintentos después de errores de flush, validación de preasociaciones al crear un PyS, autorización del desarrollador y filtrado de IDs huérfanos/duplicados en la UI. La suite de `SharedMutationCoordinator.js` cubre 30 escenarios, incluidos leases simultáneos de alta/alta, alta/baja y conflictos de lectura `CORTES` frente a escritura `WRITE`.
 
 Las pruebas locales usan dobles en memoria y harness JavaScript; la contención real entre ejecuciones Apps Script y las operaciones sobre una Spreadsheet aislada se validan en Beta. No apuntar servicios ni coordinadores de prueba a producción.
+
+
+## AUG-091 — Título del acordeón de problemas relacionados
+
+```bash
+TEST_TMP=Services/Test/PysAccordionTitle.mjs
+cp Services/Test/PysAccordionTitle.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node --input-type=module -e 'import fs from "node:fs"; import { runPysAccordionTitleTests } from "./Services/Test/PysAccordionTitle.mjs"; const result = runPysAccordionTitleTests({ ui: fs.readFileSync("ui.js", "utf8"), css: fs.readFileSync("style.css", "utf8") }); console.log(JSON.stringify(result, null, 2)); if (result.status !== "PASS") process.exitCode = 1;'
+```
+
+Seis escenarios verifican el texto exacto «Problemas relacionados a este vehículo», la separación entre título y flecha, ausencia del título anterior, contraste claro/oscuro, distribución flexible y ajuste del texto en pantallas móviles. La comprobación visual en navegador real queda para Beta.
