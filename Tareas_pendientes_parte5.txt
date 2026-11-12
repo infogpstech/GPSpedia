@@ -303,6 +303,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   2. Aplicar el sanitizador existente solo a contenido enriquecido que deba admitir formato; no usar sanitización parcial como sustituto de escape contextual.
   3. Cubrir renderInboxList(), renderInboxDetail(), openReportCutModal() y openSuggestCutModal(), incluidos subject, user, vehicleId, reportId, currentCutData y dropdownOptions.
   4. Probar HTML, SVG, atributos onerror/onload, comillas y payloads almacenados; no debe ejecutarse código al abrir Inbox, detalle ni formularios.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Suite InboxStoredXss 20/20 PASS en runtime V8 adaptado; Node CLI literal y pruebas de DOM/navegador real pendientes de Beta aislada.
 
 ### AUG-077 — Implementar el adjunto real de imágenes en reportes individuales
 - **Origen:** H-AUD-010-003. **Prioridad:** Media.
