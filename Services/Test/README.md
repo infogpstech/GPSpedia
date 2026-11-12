@@ -784,3 +784,14 @@ cp Services/Test/AddCortesYouTubeOverlayHistory.js Services/Test/AddCortesYouTub
 ```
 
 Verifica que la página independiente inicialice el gestor compartido de overlays y que Atrás cierre la carga YouTube antes de abandonar la vista. También comprueba que, si el lightbox está por encima, se cierre primero y el overlay YouTube permanezca registrado hasta el siguiente retroceso.
+
+
+## AUG-068 — Historial del lightbox de imágenes reemplazadas
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/ReplacedImagesLightboxHistory.js Services/Test/ReplacedImagesLightboxHistory.mjs && node Services/Test/ReplacedImagesLightboxHistory.mjs; RESULT=$?; rm -f Services/Test/ReplacedImagesLightboxHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+Verifica el registro del lightbox como hijo del modal de imágenes reemplazadas, la reutilización de su entrada al reabrir, el cierre manual mediante el gestor compartido, Atrás con conservación del padre y cierre LIFO del lightbox cuando se cierra el modal padre. La suite usa el gestor real con History simulado; la interacción DOM/navegador real queda para Beta.
