@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import vm from "node:vm";
 
 function extract_(source, start, end) {
@@ -242,4 +243,15 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     });
 
     return { status: failed ? "FAIL" : "PASS", passed, failed, results };
+}
+
+if (import.meta.url === "file://" + process.argv[1]) {
+    const result = runTutorialIntegrityTests({
+        feedback: fs.readFileSync("Services/feedback.js", "utf8"),
+        ui: fs.readFileSync("ui.js", "utf8"),
+        coordinator: fs.readFileSync("Services/Coordinator.js", "utf8"),
+        catalog: fs.readFileSync("Services/catalog.js", "utf8")
+    });
+    console.log(JSON.stringify(result, null, 2));
+    if (result.status !== "PASS") process.exitCode = 1;
 }
