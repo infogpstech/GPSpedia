@@ -18,7 +18,7 @@ import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
-import { captureModalViewState, restoreModalViewState } from './modalNavigation.js';
+import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
 
@@ -145,9 +145,9 @@ let pendingModalViewRestore_=null;
 function registerModalNavigationTransition_(targetType,currentType,modalWasVisible,navOptions={}){
  if(navOptions._restoreFromStack)return;
  const origin=navOptions.fromOriginModal;
- if(modalWasVisible&&currentType&&currentType!==targetType&&origin&&(origin.type==='vehicle'||origin.type==='pys')){
+ if(shouldRecordModalTransition(targetType,currentType,modalWasVisible,navOptions)){
   pendingModalViewRestore_=null;
-  modalNavStack.push({type:origin.type,item:origin.item,navOptions:origin.navOptions||{},viewState:captureModalViewState(document.getElementById("modalDetalle"))});
+  pushModalNavigationContext(modalNavStack,origin,captureModalViewState(document.getElementById("modalDetalle")));
   return;
  }
  if((!modalWasVisible||(currentType&&currentType!==targetType))&&!navOptions.originModal){modalNavStack.length=0;pendingModalViewRestore_=null;}
@@ -165,9 +165,9 @@ function stopModalDetailMedia_(){
  cont.querySelectorAll("iframe").forEach(iframe=>{try{if(iframe.contentWindow)iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}','*');}catch(error){}iframe.src="";iframe.remove();});
 }
 export function restoreModalNavigationContext(){
- const context=modalNavStack[modalNavStack.length-1];
- if(!context||!context.item||!["vehicle","pys"].includes(context.type))return false;
- modalNavStack.pop();stopModalDetailMedia_();pendingModalViewRestore_=context.viewState||null;
+ const context=popModalNavigationContext(modalNavStack);
+ if(!context)return false;
+ stopModalDetailMedia_();pendingModalViewRestore_=context.viewState||null;
  const restoreOptions={...(context.navOptions||{}),_restoreFromStack:true};
  if(context.type==="vehicle")mostrarDetalleModal(context.item,true,restoreOptions);else openPysDetailModal(context.item,restoreOptions);
  return true;
