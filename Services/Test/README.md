@@ -806,3 +806,14 @@ cp Services/Test/NavigationBackHistory.js Services/Test/NavigationBackHistory.mj
 ```
 
 La suite contiene 21 escenarios. Comprueba que el retorno interno use `history.back()` cuando el estado anterior coincide con el destino y que, si no coincide, reemplace la entrada actual y renderice el destino sin duplicar historial. También verifica la normalización de dimensiones opcionales, la conservación del antecesor del destino en fallback y la sincronización del estado de sección entre memoria e History API. Incluye parámetros de categoría, marca, modelo, equipamiento, encendido y búsqueda; estados de sección repetidos; hash de búsqueda con caracteres reservados y escapes inválidos; accesos desde el modal de detalle; y secuencias Atrás/Adelante. History se simula; la interacción con navegador real queda para Beta.
+
+
+## AUG-070 — Cierre secuencial de overlays por capa efectiva
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite contiene 18 escenarios. Comprueba que cada `popstate` cierre una sola capa, que las capas inferiores permanezcan visibles, que el selector determine la capa superior por `z-index` efectivo y orden de apertura, que el menú/lightbox/detalle/info-modals y overlays legales se resuelvan en orden, y que `users.html` utilice la misma semántica LIFO para sus modales. Incluye cancelación de cierre, tres capas anidadas, reemplazo de overlays y cierre manual explícito de un padre con sus descendientes. `ReplacedImagesLightboxHistory.js` mantiene 6/6 escenarios de regresión para lightbox sobre ficha. La validación local usa runtime V8 adaptado e History simulado; DOM/navegador real queda para Beta.
