@@ -199,7 +199,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     });
 
     test("protege el renombrado histórico si hay una aprobación de vídeo pendiente", () => {
-        const h = buildHarness_(feedback, { rows: [headers, ["", "Tutorial antiguo", "", "", "", "", "", "Autor"]], pendingApproval: true });
+        const h = buildHarness_(feedback, { rows: [headers, ["", "Tutorial antiguo", "", "", "", "", "", "Autor"]], pendingApproval: true, feedbackSheet: {} });
         assert.throws(() => h.api.update({ originalTema: "Tutorial antiguo", tema: "Tutorial nuevo" }), /solicitud de vídeo pendiente/);
         assert.equal(h.sheet.data[1][1], "Tutorial antiguo");
     });
