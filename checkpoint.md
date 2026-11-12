@@ -1727,7 +1727,7 @@ Resultado:
 - No se modificó main.js ni la política global de zoom de index.html.
 
 Validación local:
-- BrowserZoomAccessibility.js: 12 escenarios; incluye simulación DOM del ciclo de apertura/cierre del Lightbox para viewport permisivo y restringido.
+- BrowserZoomAccessibility.js: 13 escenarios; incluye simulación DOM del ciclo de apertura/cierre del Lightbox para viewport permisivo y restringido.
 - Suite y sintaxis ejecutadas en harness V8 sobre el contenido fuente; PASS.
 - No se ejecutó navegador real; comprobaciones visuales 200 %/400 %, foco, reflujo y scroll horizontal quedan diferidas a Beta mediante lista_beta.txt.
 - Sin cambios en endpoints, permisos, datos ni deployments.
