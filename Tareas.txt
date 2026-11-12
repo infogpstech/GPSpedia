@@ -1046,3 +1046,20 @@ Beta pendiente: FEEDBACK desplegado en entorno aislado, Spreadsheet/Drive de pru
 
 Siguiente tarea: consultar el backlog vigente después de AUG-081; no iniciar otra tarea dentro de este cierre.
 ================================================================================
+
+================================================================================
+AUG-082 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD de partida: cb1416687bf172b9f3e1ed12e3cfc6148f87c795.
+
+Implementación:
+- Tarjetas PyS construyen el título y estado mediante nodos DOM; Problema usa textContent.
+- Modal PyS usa textContent para título y colaborador; cleanColaboradorName solo normaliza el nombre y no se usa como sanitizador.
+- Video se valida mediante URL, HTTPS, allowlist exacta de hosts/rutas y ID; el iframe se crea mediante DOM con src canónico generado desde el ID validado.
+- Se elimina el fallback arbitrario de embed y el enlace que concatenaba item.Video. Enlaces no válidos no producen iframe ni enlace externo.
+- Se conserva sanitizeHtmlContent para descripción, solución y prevención enriquecidas.
+
+Validación local: PysStoredXss 10/10 PASS en harness V8 adaptado; parsing de helper, createPysCard, openPysDetailModal y módulo de pruebas PASS. Node CLI literal no ejecutado.
+
+Beta pendiente: payloads HTML/SVG/comillas/onerror/onload, javascript:, data:, hosts falsos y URL embed manipulada en DOM/navegador real; comprobar que no se ejecuta código al renderizar ni al pulsar vídeo y que los enlaces YouTube legítimos funcionan. No se modificaron servicios ni datos productivos.
+Siguiente tarea: AUG-083 — Completar almacenamiento y recuperación de imágenes PyS. No iniciada.
+================================================================================
