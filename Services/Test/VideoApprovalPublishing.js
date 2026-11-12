@@ -1,4 +1,4 @@
-const TUTORIAL_HEADERS = ["Tema", "Imagen", "Video", "Descripción", "Colaborador"];
+const TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEncontrarlo", "Detalles", "Video", "Colaborador"];
 
 // Pruebas aisladas de publicación, rechazo y recuperación de vídeos aprobados.
 // Requiere cargar Services/feedback.js.
@@ -31,7 +31,7 @@ function runVideoApprovalPublishingTests() {
     function env_(type,options){
         options=options||{};
         const feedbackRows=[["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido"]];
-        const approval=approval_(type,options.referenceId||({corte:"veh-1",pys:"pys-1",tutorial:"Tutorial demo"}[type]));
+        const approval=approval_(type,options.referenceId||({corte:"veh-1",pys:"pys-1",tutorial:"tut-1"}[type]));
         const requestRow=["vid-1","Owner",approval.referenceId,JSON.stringify(approval),"pending",false,"","",""];
         if(!options.noRequest)feedbackRows.push(requestRow);
         if(options.duplicateRequest)feedbackRows.push(requestRow.slice());
@@ -41,9 +41,9 @@ function runVideoApprovalPublishingTests() {
         const pysHeaders=["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"];
         const pys=makeSheet_([pysHeaders,["pys-1","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
         const tutHeaders=["Tema","Imagen","Video","Descripción","Colaborador"];
-        const tutorial=makeSheet_([tutHeaders,["Tutorial demo",options.currentImage||"",options.currentUrl||"","","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?2:null});
-        const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutoriales":tutorial };
-        if(options.missingTarget)delete map[type==="corte"?SHEET_NAMES.CORTES:type==="pys"?"pys":"Tutoriales"];
+        const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?3:null});
+        const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutorial":tutorial };
+        if(options.missingTarget)delete map[type==="corte"?SHEET_NAMES.CORTES:type==="pys"?"pys" :"Tutorial"];
         if(options.duplicateTarget){
             const target=type==="corte"?cuts:type==="pys"?pys:tutorial;
             target.data.push(target.data[1].slice());
@@ -57,13 +57,13 @@ function runVideoApprovalPublishingTests() {
         run_("mantiene vacíos los tres destinos hasta la aprobación",()=>{
             ["corte","pys","tutorial"].forEach(type=>{
                 withEnv_(type,{noRequest:true},e=>{
-                    const referenceId={corte:"veh-1",pys:"pys-1",tutorial:"Tutorial demo"}[type];
+                    const referenceId={corte:"veh-1",pys:"pys-1",tutorial:"tut-1"}[type];
                     const result=handleSubmitVideoForApproval({
                         opVideoId:"q".repeat(32),userId:"owner-1",userName:"Owner",
                         title:"Video",description:"",contentType:type,referenceId,
                         videoId,videoUrl,metadata:{}
                     });
-                    const target=type==="corte"?e.cuts.data[1][9]:type==="pys"?e.pys.data[1][7]:e.tutorial.data[1][2];
+                    const target=type==="corte"?e.cuts.data[1][9]:type==="pys"?e.pys.data[1][7]:e.tutorial.data[1][6];
                     assert_(result.status==="success"&&target==="","El destino "+type+" se publicó antes de aprobar.");
                 });
             });
@@ -81,7 +81,7 @@ function runVideoApprovalPublishingTests() {
         run_("aprueba Tutorial por ID y genera miniatura solo si está vacía",()=>withEnv_("tutorial",{},e=>{
             const r=handleApproveVideo(actor_("vid-1"));
             const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
-            assert_(r.targetType==="tutorial"&&e.tutorial.data[1][2]===videoUrl&&e.tutorial.data[1][1]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg"&&saved.status==="approved");
+            assert_(r.targetType==="tutorial"&&e.tutorial.data[1][2]===videoUrl&&e.tutorial.data[1][2]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg"&&saved.status==="approved");
         }));
         run_("si falla la miniatura, no publica la URL del Tutorial",()=>withEnv_("tutorial",{failTutorialImageWrite:true},e=>{
             let error=null;try{handleApproveVideo(actor_("vid-1"));}catch(x){error=x;}
