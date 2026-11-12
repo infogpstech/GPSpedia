@@ -174,6 +174,8 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
     test("rechaza IDs de problema malformados y problemas inexistentes", () => {
         const h = buildHarness(feedback);
         assert.throws(() => h.api.add({ problemId: "isue-x", vehicleId: "V-1" }), /problemId.*formato inválido/);
+        assert.throws(() => h.api.add({ vehicleId: "V-1" }), /problemId válido/);
+        assert.throws(() => h.api.add({ problemId: "isue-001" }), /vehicleId válido/);
         assert.throws(() => h.api.add({ problemId: "isue-999", vehicleId: "V-1" }), /Problema no encontrado/);
         assert.equal(h.state.writes, 0);
     });
