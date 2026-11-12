@@ -1112,3 +1112,15 @@ Validación local adaptada:
 Publicación: cambios en GPSpedia2.2.5_work; HEAD de cierre pendiente de verificación posterior a registros. Rama base GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente tarea identificada en backlog: AUG-073 — Hacer accesible y semánticamente preciso el indicador de conectividad.
 ================================================================================
+
+
+================================================================================
+AUG-073 — ITERACIÓN 1 — 2026-11-12 — ACCESIBILIDAD DEL INDICADOR DE CONECTIVIDAD
+Estado: EN PROGRESO. HEAD de partida tras cierre de AUG-072: 77417c2475c56ef493667b8135a057e217fc6b24. Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Evidencia inicial:
+- index.html contiene #connection-status como div visual de 3px sin semántica live region ni texto accesible.
+- main.js actualiza className/title desde navigator.onLine y escucha online/offline; el título "Conectado" no aclara que el backend no se comprueba.
+- style.css anima el punto offline sin @media prefers-reduced-motion.
+Plan: conservar tamaño y colores; añadir role=status, aria-live=polite, aria-atomic y texto oculto actualizable; explicar que navigator.onLine no acredita disponibilidad backend; respetar movimiento reducido sin ocultar el estado visual. No se necesita health check de backend para este alcance.
+Validación Beta pendiente: lector de pantalla real, cambios online/offline del sistema, red disponible con backend inaccesible y prefers-reduced-motion en navegadores/dispositivos.
+================================================================================
