@@ -2085,7 +2085,8 @@ function normalizePysImageReference_(value) {
         if (!match) match = raw.match(/^https:\/\/lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]{10,110})(?:=[^\s]*)?$/i);
         if (match) id = match[1];
         else if (/drive\.google\.com|googleusercontent\.com/i.test(raw)) return "";
-        else return raw; // Compatibilidad con referencias HTTPS históricas ajenas a Drive.
+        else if (/^https:\/\//i.test(raw)) return raw; // Compatibilidad con referencias HTTPS históricas ajenas a Drive.
+        else return "";
     }
 
     return id ? "https://drive.google.com/file/d/" + id + "/view" : "";
@@ -2101,7 +2102,7 @@ function findPysImageReferences_(sheet, imageFileId, imageUrl) {
         const storedUrl = String(row[6] || "").trim();
         const normalizedUrl = normalizePysImageReference_(storedUrl);
         const storedIds = extractDriveFileIds(storedUrl);
-        if (normalizedUrl === imageUrl || storedIds.includes(String(imageFileId))) {
+        if ((imageUrl && normalizedUrl === imageUrl) || (imageFileId && storedIds.includes(String(imageFileId)))) {
             matches.push({ rowNumber: index + 2, problemId: String(row[0] || "").trim(), imageUrl: storedUrl });
         }
     });
