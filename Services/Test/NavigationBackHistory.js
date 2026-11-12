@@ -131,6 +131,7 @@ test('search focused and unfocused states preserve query and original ancestry',
         { level: 'busqueda_focused', query: 'Toyota' },
         { historyObject: history, locationObject, previousNavigationState: { level: 'busqueda', query: 'Toyota' } }
     );
+    history.back();
     replaceNavigationState(
         { level: 'busqueda', query: 'Toyota' },
         { historyObject: history, locationObject }
