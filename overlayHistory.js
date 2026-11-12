@@ -1,0 +1,104 @@
+// Centralized browser-history stack for dynamically mounted overlays.
+const OVERLAY_HISTORY_KEY = "__gpOverlayStack";
+
+function normalizeState(state) {
+    return state && typeof state === "object" ? state : {};
+}
+
+export function createOverlayHistoryManager(historyApi, onError = null) {
+    const entries = [];
+
+    function publishState(method, extraState = {}) {
+        if (!historyApi || typeof historyApi[method] !== "function") return false;
+        const current = normalizeState(historyApi.state);
+        const next = {
+            ...current,
+            ...extraState,
+            [OVERLAY_HISTORY_KEY]: entries.map(entry => entry.id)
+        };
+        historyApi[method](next, "");
+        return true;
+    }
+
+    function invokeClose(entry, reason) {
+        try {
+            entry.close({ id: entry.id, reason });
+        } catch (error) {
+            if (typeof onError === "function") onError(error, entry.id, reason);
+            else if (typeof console !== "undefined" && console.error) {
+                console.error("No se pudo cerrar el overlay:", entry.id, error);
+            }
+        }
+    }
+
+    function register(id, close) {
+        const normalizedId = String(id || "").trim();
+        if (!normalizedId) throw new TypeError("El overlay requiere un identificador.");
+        if (typeof close !== "function") throw new TypeError("El overlay requiere una función de cierre.");
+        if (entries.some(entry => entry.id === normalizedId)) {
+            throw new Error("El overlay ya está registrado: " + normalizedId);
+        }
+
+        entries.push({ id: normalizedId, close });
+        publishState("pushState");
+        return normalizedId;
+    }
+
+    function replaceTop(id, close) {
+        const normalizedId = String(id || "").trim();
+        if (!normalizedId) throw new TypeError("El overlay requiere un identificador.");
+        if (typeof close !== "function") throw new TypeError("El overlay requiere una función de cierre.");
+        if (entries.some(entry => entry.id === normalizedId)) {
+            throw new Error("El overlay ya está registrado: " + normalizedId);
+        }
+
+        if (entries.length) entries.pop();
+        entries.push({ id: normalizedId, close });
+        publishState("replaceState");
+        return normalizedId;
+    }
+
+    function close(id) {
+        const normalizedId = String(id || "").trim();
+        const index = entries.findIndex(entry => entry.id === normalizedId);
+        if (index < 0) return false;
+
+        const distance = entries.length - index;
+        if (historyApi && distance === 1 && typeof historyApi.back === "function") {
+            historyApi.back();
+            return true;
+        }
+        if (historyApi && distance > 1 && typeof historyApi.go === "function") {
+            historyApi.go(-distance);
+            return true;
+        }
+
+        for (let cursor = entries.length - 1; cursor >= index; cursor--) {
+            invokeClose(entries.pop(), "manual");
+        }
+        publishState("replaceState");
+        return true;
+    }
+
+    function handlePopState(state) {
+        const targetIds = normalizeState(state)[OVERLAY_HISTORY_KEY];
+        const target = Array.isArray(targetIds) ? targetIds : [];
+        while (entries.length && !target.includes(entries[entries.length - 1].id)) {
+            invokeClose(entries.pop(), "popstate");
+        }
+        return entries.length;
+    }
+
+    function getStack() {
+        return entries.map(entry => entry.id);
+    }
+
+    function clear(reason = "clear") {
+        while (entries.length) invokeClose(entries.pop(), reason);
+        publishState("replaceState");
+    }
+
+    return Object.freeze({ register, replaceTop, close, handlePopState, getStack, clear });
+}
+
+export const overlayHistoryStateKey = OVERLAY_HISTORY_KEY;
