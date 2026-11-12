@@ -20,7 +20,8 @@ function runInboxStoredXssTests(sources) {
         list: extract("renderInboxList"),
         detail: extract("renderInboxDetail"),
         report: extract("openReportCutModal"),
-        suggest: extract("openSuggestCutModal")
+        suggest: extract("openSuggestCutModal"),
+        success: (() => { const start = ui.indexOf("function showReportSuccessModal("); const end = ui.indexOf("\\nexport function openSuggestCutModal", start); assert(start >= 0 && end > start); return ui.slice(start, end).trim(); })()
     };
     const parseFunction = source => new Function("return (" + source.replace(/^export\s+/, "") + ");")();
 
@@ -64,6 +65,13 @@ function runInboxStoredXssTests(sources) {
     run("Inbox detalle limita imagen a host Drive y fija rel seguro", () => {
         assert(/\^https:\\\/\\\/drive\\\.google\\\.com\\\//i.test(functions.detail));
         assert(/imageLink\.rel\s*=\s*'noopener noreferrer'/.test(functions.detail));
+    });
+    run("confirmación de reporte usa plantilla estática y reportId como texto", () => {
+        assert(typeof parseFunction(functions.success) === "function");
+        const template = functions.success.match(/content\\.innerHTML\\s*=\\s*`([\\s\\S]*?)`;/);
+        assert(template && !/\\$\\{/.test(template[1]));
+        assert(/identity\\.querySelector\\("strong"\\)\\.textContent\\s*=\\s*String\\(reportId/.test(functions.success));
+        assert(!/\\$\\{(?:reportId|corteNum)/.test(template[1]));
     });
     run("modal de reporte usa plantilla estática", () => {
         const template = functions.report.match(/content\.innerHTML\s*=\s*`([\s\S]*?)`;/);
