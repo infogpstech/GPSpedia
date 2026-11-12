@@ -238,3 +238,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - service-worker.js: incorpora modalNavigation.js al App Shell y renueva caché a gpsepedia-cache-v17.
 - Services/Test/PysModalNavigation.js y ServiceWorkerCache.js: cobertura local añadida/actualizada.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-089 — AJUSTE DE RESTAURACIÓN ASÍNCRONA
+- La restauración diferida conserva únicamente los acordeones/carruseles aún no disponibles y no vuelve a imponer el scroll vertical después de la carga asíncrona.
+- La interacción manual con acordeones cancela una restauración pendiente para no sobrescribir la selección del usuario.
+================================================================================
