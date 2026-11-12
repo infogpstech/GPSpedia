@@ -585,7 +585,18 @@ Siguiente: AUG-093 — Validar tipo y estado antes de aprobar/rechazar vídeos.
 - Problema: Inbox identifica video_approval por subType, pero los handlers mutan cualquier registro cuyo contenido sea JSON parseable; no exigen subType ni status pending.
 - Criterios: exigir subType==='video_approval' y status==='pending'; validar ID único y consistencia; rechazar reportes/sugerencias y estados terminales; impedir transiciones repetidas; probar IDs cruzados, JSON inválido y decisiones concurrentes.
 - Relación: AUG-040 coordinación de escrituras; AUG-043 política de publicación.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; validación local aprobada, ejecución integrada y concurrencia real pendientes para Beta.
+
+
+================================================================================
+AUG-093 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- Services/feedback.js: findPendingVideoApproval_ valida ID único, JSON de objeto, subType video_approval, status pending y consistencia entre ID_vehiculo y referenceId; valida ID/URL canónicos de YouTube, contentType, título, identidad creadora y operationId cuando existe.
+- La fila Feedbacks debe permanecer en estado pending y no resuelta antes de aprobar/rechazar. La única excepción es la confirmación idempotente de una aprobación ya completada: exige estado approved coherente, fila resuelta y responder igual a approvedBy; no vuelve a publicar ni reescribe.
+- Reportes/sugerencias JSON, JSON malformado, IDs inexistentes/duplicados/cruzados, referencias inconsistentes y estados terminales se rechazan antes de modificar el destino. Las decisiones approve/reject comparten leases FEEDBACK/TUTORIAL para serializar la transición.
+- Pruebas locales: VideoApprovalPublishing 27/27 PASS; SharedMutationCoordinator 32/32 PASS; TutorialIntegrity 21/21 PASS; PysVehicleRelationIntegrity 18/18 PASS. Parsing de feedback.js y Coordinator.js PASS.
+- Limitación: harness JavaScript adaptado; no se ejecutó Node CLI ni Apps Script/Spreadsheet real. Concurrencia real y sesiones integradas quedan para Beta. Sin despliegue ni cambios productivos.
+Siguiente: AUG-094 — Eliminar inyección HTML en el modal unificado de subida YouTube.
+================================================================================
 
 ### AUG-094 — Eliminar inyección HTML en el modal unificado de subida YouTube
 - Hallazgo origen: H-AUD-013-007. Tarea AUD-T-013. Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031. Prioridad: Media.
