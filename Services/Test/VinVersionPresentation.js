@@ -46,7 +46,7 @@ test('no muestra VIN distintivo para una sola versión', () => {
 });
 test('acepta delimitadores heredados de barra, barra inversa y punto y coma', () => {
     assert.deepEqual(plain(helpers.parseVinCollection('ABC123/DEF456')), ['ABC123', 'DEF456']);
-    assert.deepEqual(plain(helpers.parseVinCollection(String.raw`ABC123\\GHI789`)), ['ABC123', 'GHI789']);
+    assert.deepEqual(plain(helpers.parseVinCollection(String.raw`ABC123\GHI789`)), ['ABC123', 'GHI789']);
     assert.deepEqual(plain(helpers.parseVinCollection('ABC123;DEF456')), ['ABC123', 'DEF456']);
 });
 test('rechaza JSON mal formado y duplicados', () => {
