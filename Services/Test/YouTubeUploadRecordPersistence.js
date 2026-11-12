@@ -194,4 +194,4 @@ for (const [name, operation] of [
     });
 }
 
-console.log("YouTubeUploadRecordPersistence: " + passed + "/12 PASS");
+console.log("YouTubeUploadRecordPersistence: " + passed + "/14 PASS");
