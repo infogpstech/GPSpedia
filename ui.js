@@ -6439,6 +6439,18 @@ export function renderInboxDetail(item) {
             reportMetadata.activaTestigoMotor === true
                 ? 'El técnico confirma que este corte activa el testigo del motor.'
                 : 'No confirmado en este reporte.', 'margin:0;');
+        const imageFileId = String(reportMetadata.imageFileId || '');
+        const imageUrl = String(reportMetadata.imageUrl || '');
+        const expectedImageUrl = imageFileId ? 'https://drive.google.com/file/d/' + imageFileId + '/view' : '';
+        if (/^[A-Za-z0-9_-]{10,}$/.test(imageFileId) && imageUrl === expectedImageUrl) {
+            const imageParagraph = makeElement('p');
+            imageParagraph.style.margin = '6px 0 0 0';
+            const imageLink = makeElement('a', '', 'Ver imagen adjunta');
+            imageLink.href = imageUrl; imageLink.target = '_blank'; imageLink.rel = 'noopener noreferrer';
+            imageParagraph.append(makeElement('strong', '', 'Evidencia: '), imageLink);
+            if (reportMetadata.imageName) imageParagraph.append(document.createTextNode(' (' + String(reportMetadata.imageName) + ')'));
+            panel.appendChild(imageParagraph);
+        }
         detailContainer.appendChild(panel);
     }
 
@@ -7879,7 +7891,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             </div>
             <div class="form-group">
                 <label>Imagen de Referencia (Opcional)</label>
-                <input type="file" id="rep-img-file" accept="image/*">
+                <input type="file" id="rep-img-file" accept="image/jpeg,image/png,image/webp">
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
         </form>
@@ -7920,24 +7932,37 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         if (incorrectInfo) fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
 
         const fileInput = content.querySelector("#rep-img-file");
-        if (fileInput.files && fileInput.files[0]) {
-            fullProblemText += ` [Imagen de referencia adjunta: ${fileInput.files[0].name}]`;
-        }
-
         try {
+            let imageAttachment = null;
+            const selectedFile = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            if (selectedFile) {
+                const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+                const maxImageBytes = 3 * 1024 * 1024;
+                const mimeType = String(selectedFile.type || "").toLowerCase();
+                if (!allowedMimeTypes.includes(mimeType)) throw new Error("Formato no permitido. Utiliza JPG, PNG o WebP.");
+                if (!Number.isFinite(selectedFile.size) || selectedFile.size < 1 || selectedFile.size > maxImageBytes) throw new Error("La imagen debe pesar como máximo 3 MB.");
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => typeof reader.result === "string" && reader.result.startsWith("data:")
+                        ? resolve(reader.result) : reject(new Error("No se pudo leer el contenido de la imagen."));
+                    reader.onerror = () => reject(new Error("Ocurrió un error al leer la imagen seleccionada."));
+                    reader.onabort = () => reject(new Error("La lectura de la imagen fue cancelada."));
+                    try { reader.readAsDataURL(selectedFile); } catch (error) { reject(error); }
+                });
+                imageAttachment = { dataUrl, name: String(selectedFile.name || "imagen"), mimeType, size: selectedFile.size };
+            }
             const activaTestigoMotor = content.querySelector("#rep-testigo-motor").checked;
-            const res = await reportProblem(
-                vehicleId,
-                fullProblemText,
-                { reportId, corteIndex: Number(corteNum), activaTestigoMotor },
-                getSessionPayload_()
-            );
-            const confirmedReportId = res && res.reportId ? res.reportId : reportId;
+            const res = await reportProblem(vehicleId, fullProblemText,
+                { reportId, corteIndex: Number(corteNum), activaTestigoMotor }, getSessionPayload_(), imageAttachment);
+            if (!res || res.status !== "success") throw new Error(res && res.message || "El servidor no confirmó el reporte.");
+            if (imageAttachment && (res.imageAttached !== true || !res.imageUrl))
+                throw new Error("El servidor no confirmó que la imagen quedara guardada; el reporte no se marcará como exitoso.");
+            const confirmedReportId = res.reportId || reportId;
             modal.remove();
             showReportSuccessModal(vehicleId, corteNum, currentCutData, confirmedReportId);
         } catch (err) {
             console.error("Error al enviar reporte de corte:", err);
-            showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
+            showGlobalError("No se pudo enviar el reporte: " + String(err && err.message || "inténtalo de nuevo."));
             submitBtn.disabled = false;
             submitBtn.classList.remove("btn-loading");
         }
