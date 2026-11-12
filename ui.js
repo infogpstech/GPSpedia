@@ -6299,21 +6299,20 @@ export function renderInboxList(items) {
         if (detail) detail.replaceChildren();
         return;
     }
-    listContainer.innerHTML = '';
-    if (items.length === 0) {
-        listContainer.innerHTML = '<p>No hay mensajes.</p>';
+
+    listContainer.replaceChildren();
+    if (!items.length) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.textContent = 'No hay mensajes.';
+        listContainer.appendChild(emptyMessage);
         return;
     }
 
     items.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'inbox-item';
-        if (item.isResolved) {
-            itemDiv.classList.add('resolved');
-        }
-        if (item.reply) {
-             itemDiv.classList.add('replied');
-        }
+        if (item.isResolved) itemDiv.classList.add('resolved');
+        if (item.reply) itemDiv.classList.add('replied');
 
         let iconClass = 'fa-envelope';
         let tipoLabel = 'Mensaje de contacto';
@@ -6325,18 +6324,24 @@ export function renderInboxList(items) {
             tipoLabel = 'Reporte de problema';
         } else if (item.type === 'video_approval') {
             iconClass = 'fa-brands fa-youtube';
-            const statusText = item.approvalStatus === 'approved' ? 'Aprobado' : (item.approvalStatus === 'rejected' ? 'Rechazado' : 'Pendiente de aprobación');
+            const statusText = item.approvalStatus === 'approved' ? 'Aprobado' :
+                (item.approvalStatus === 'rejected' ? 'Rechazado' : 'Pendiente de aprobación');
             tipoLabel = `Vídeo: ${statusText}`;
         }
-        const title = item.subject || `ID: ${item.id}`;
 
-        itemDiv.innerHTML = `
-            <i class="fa-solid ${iconClass}"></i>
-            <div class="inbox-item-content">
-                <strong class="inbox-item-title">${title}</strong>
-                <p class="inbox-item-type">${tipoLabel}</p>
-            </div>
-        `;
+        const icon = document.createElement('i');
+        icon.className = `fa-solid ${iconClass}`;
+        const itemContent = document.createElement('div');
+        itemContent.className = 'inbox-item-content';
+        const title = document.createElement('strong');
+        title.className = 'inbox-item-title';
+        title.textContent = String(item.subject || `ID: ${item.id || ''}`);
+        const type = document.createElement('p');
+        type.className = 'inbox-item-type';
+        type.textContent = tipoLabel;
+        itemContent.append(title, type);
+        itemDiv.append(icon, itemContent);
+
         itemDiv.addEventListener('click', () => {
             if (!isCurrentInboxView()) return;
             document.querySelectorAll('.inbox-item.active').forEach(el => el.classList.remove('active'));
@@ -6347,8 +6352,6 @@ export function renderInboxList(items) {
     });
 }
 
-
-/* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
 export function createInboxRichTextToolbar(targetId) {
     const toolbar = createRichTextToolbar(targetId);
     toolbar.classList.add("inbox-rich-toolbar");
@@ -6374,104 +6377,210 @@ export function renderInboxDetail(item) {
         detailContainer.replaceChildren();
         return;
     }
+
     const { currentUser, catalogData } = getState();
     const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
-
-    let vehicleLabel = item.vehicleId ? `ID: ${item.vehicleId}` : '';
+    let vehicleLabel = item.vehicleId ? `ID: ${String(item.vehicleId)}` : '';
     if (item.vehicleId && catalogData && catalogData.cortes) {
         const vehicle = catalogData.cortes.find(c => String(c.id) === String(item.vehicleId));
-        if (vehicle) {
-            vehicleLabel = `${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})`;
-        }
+        if (vehicle) vehicleLabel = `${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})`;
     }
 
     const isVideoItem = item.type === 'video_approval';
     const userRole = currentUser ? String(currentUser.Privilegios || '').trim() : '';
     const canApprove = ['desarrollador', 'gefe', 'supervisor'].includes(normalizeUiRole_(userRole));
     const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
-    const reportMetadataHtml = reportMetadata ? `
-        <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
-            <p style="margin:0 0 4px 0;"><strong>Identificador del reporte:</strong> ${sanitizeHtmlContent(String(reportMetadata.reportId || ''))}</p>
-            <p style="margin:0 0 4px 0;"><strong>Corte reportado:</strong> #${Number(reportMetadata.corteIndex)}</p>
-            <p style="margin:0;"><strong>Testigo del motor:</strong> ${reportMetadata.activaTestigoMotor === true ? 'El técnico confirma que este corte activa el testigo del motor.' : 'No confirmado en este reporte.'}</p>
-        </div>
-    ` : '';
-
     const suggestionData = item.type === 'problem_report' && item.suggestionData ? item.suggestionData : null;
     const proposedValues = suggestionData && suggestionData.proposedValues ? suggestionData.proposedValues : {};
-    const proposedTestigoValue = proposedValues.activaTestigo;
-    const proposedTestigoLabel = proposedTestigoValue === true
+    const proposedTestigoLabel = proposedValues.activaTestigo === true
         ? 'Sí: el corte activa el testigo del motor.'
-        : (proposedTestigoValue === false ? 'No: el corte no activa el testigo del motor.' : 'No aplica / no especificado.');
-    const suggestionImageUrl = suggestionData && /^https:\/\/drive\.google\.com\//i.test(String(suggestionData.imageUrl || ""))
-        ? sanitizeHtmlContent(String(suggestionData.imageUrl)) : "";
-    const suggestionMetadataHtml = suggestionData ? `
-        <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
-            <strong>Revisión de sugerencia de corte</strong>
-            <p style="margin:6px 0 4px 0;"><strong>Reporte relacionado:</strong> ${sanitizeHtmlContent(String(suggestionData.reportId || 'No especificado'))}</p>
-            <p style="margin:0 0 4px 0;"><strong>Corte:</strong> #${Number(suggestionData.corteIndex)}</p>
-            <p style="margin:0 0 4px 0;"><strong>Tipo propuesto:</strong> ${sanitizeHtmlContent(String(proposedValues.tipo || 'No especificado'))}</p>
-            <p style="margin:0 0 4px 0;"><strong>Ubicación propuesta:</strong> ${sanitizeHtmlContent(String(proposedValues.ubicacion || 'No especificada'))}</p>
-            <p style="margin:0 0 4px 0;"><strong>Color de cable propuesto:</strong> ${sanitizeHtmlContent(String(proposedValues.colorCable || 'No especificado'))}</p>
-            <p style="margin:0 0 4px 0;"><strong>Configuración de relay propuesta:</strong> ${sanitizeHtmlContent(String(proposedValues.configRelay || 'No especificada'))}</p>
-            <p style="margin:0 0 4px 0;"><strong>Testigo del motor propuesto:</strong> ${proposedTestigoLabel}</p>
-            <p style="margin:0 0 4px 0;"><strong>Estado:</strong> ${sanitizeHtmlContent(String(suggestionData.status || 'pendiente_revision'))}</p>
-            ${suggestionImageUrl ? `<p style="margin:0;"><strong>Imagen:</strong> <a href="${suggestionImageUrl}" target="_blank" rel="noopener noreferrer">Ver imagen de referencia</a></p>` : ''}
-        </div>
-    ` : '';
+        : (proposedValues.activaTestigo === false ? 'No: el corte no activa el testigo del motor.' : 'No aplica / no especificado.');
 
-    detailContainer.innerHTML = `
-        <h3 class="inbox-detail-title">${item.subject}</h3>
-        <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
-        ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
-        ${reportMetadataHtml}
-        ${suggestionMetadataHtml}
-        ${isVideoItem && item.videoUrl ? `
-            <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
-                <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
-                <p style="margin:0 0 4px 0; font-size:0.85rem;"><strong>Estado de Aprobación:</strong> <span class="badge" style="background:${item.approvalStatus === 'approved' ? '#28a745' : (item.approvalStatus === 'rejected' ? '#dc3545' : '#ffc107')}; color:#fff; padding:2px 8px; border-radius:4px;">${item.approvalStatus || 'pending'}</span></p>
-                ${item.contentType ? `<p style="margin:0; font-size:0.85rem;"><strong>Tipo de Contenido:</strong> ${item.contentType}</p>` : ''}
-            </div>
-        ` : ''}
-        <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
-            <div>${sanitizeHtmlContent(item.content)}</div>
-        </div>
-        ${item.reply ? `
-            <div class="inbox-reply-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
-                <strong>Respuesta de ${item.responder || 'Admin'}:</strong>
-                <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
-            </div>` : ''
+    const makeElement = (tag, className, text) => {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined) element.textContent = String(text);
+        return element;
+    };
+    const appendLabeledValue = (parent, label, value, style) => {
+        const paragraph = makeElement('p');
+        if (style) paragraph.style.cssText = style;
+        const strong = makeElement('strong', '', label + ': ');
+        paragraph.append(strong, document.createTextNode(String(value)));
+        parent.appendChild(paragraph);
+        return paragraph;
+    };
+    const makePanel = (margin) => {
+        const panel = makeElement('div');
+        panel.style.cssText = `margin:${margin}; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;`;
+        return panel;
+    };
+    const makeIcon = (className) => makeElement('i', className);
+
+    detailContainer.replaceChildren();
+
+    const heading = makeElement('h3', 'inbox-detail-title', item.subject || '');
+    const sender = makeElement('p', 'inbox-detail-meta');
+    sender.append(makeElement('strong', '', 'De: '), document.createTextNode(String(item.user || '')));
+    detailContainer.append(heading, sender);
+
+    if (item.vehicleId) {
+        const vehicle = makeElement('p', 'inbox-detail-meta');
+        vehicle.append(makeElement('strong', '', 'Vehículo: '), document.createTextNode(vehicleLabel));
+        detailContainer.appendChild(vehicle);
+    }
+
+    if (reportMetadata) {
+        const panel = makePanel('0 0 12px 0');
+        appendLabeledValue(panel, 'Identificador del reporte', reportMetadata.reportId || '');
+        appendLabeledValue(panel, 'Corte reportado', '#' + String(Number(reportMetadata.corteIndex)), 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Testigo del motor',
+            reportMetadata.activaTestigoMotor === true
+                ? 'El técnico confirma que este corte activa el testigo del motor.'
+                : 'No confirmado en este reporte.', 'margin:0;');
+        detailContainer.appendChild(panel);
+    }
+
+    if (suggestionData) {
+        const panel = makePanel('0 0 12px 0');
+        panel.appendChild(makeElement('strong', '', 'Revisión de sugerencia de corte'));
+        appendLabeledValue(panel, 'Reporte relacionado', suggestionData.reportId || 'No especificado', 'margin:6px 0 4px 0;');
+        appendLabeledValue(panel, 'Corte', '#' + String(Number(suggestionData.corteIndex)), 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Tipo propuesto', proposedValues.tipo || 'No especificado', 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Ubicación propuesta', proposedValues.ubicacion || 'No especificada', 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Color de cable propuesto', proposedValues.colorCable || 'No especificado', 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Configuración de relay propuesta', proposedValues.configRelay || 'No especificada', 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Testigo del motor propuesto', proposedTestigoLabel, 'margin:0 0 4px 0;');
+        appendLabeledValue(panel, 'Estado', suggestionData.status || 'pendiente_revision', 'margin:0 0 4px 0;');
+
+        const imageUrl = String(suggestionData.imageUrl || '');
+        if (/^https:\/\/drive\.google\.com\//i.test(imageUrl)) {
+            const imageParagraph = makeElement('p');
+            imageParagraph.style.margin = '0';
+            const imageLink = makeElement('a', '', 'Ver imagen de referencia');
+            imageLink.href = imageUrl;
+            imageLink.target = '_blank';
+            imageLink.rel = 'noopener noreferrer';
+            imageParagraph.append(makeElement('strong', '', 'Imagen: '), imageLink);
+            panel.appendChild(imageParagraph);
         }
-        ${isVideoItem ? `
-            <div class="inbox-actions" style="margin-top:12px;">
-                ${item.approvalStatus === 'pending' && canApprove ? `
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-                        <button id="inbox-approve-video-btn" class="btn btn-primary" style="flex: 1; background-color:#28a745; border-color:#28a745;">
-                            <i class="fa-solid fa-check"></i> Aprobar Vídeo
-                        </button>
-                        <button id="inbox-reject-video-btn" class="btn btn-danger" style="flex: 1; background-color:#dc3545; border-color:#dc3545;">
-                            <i class="fa-solid fa-xmark"></i> Rechazar Vídeo
-                        </button>
-                    </div>
-                ` : ''}
-                <div style="display:flex; justify-content:flex-end;">
-                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
-                </div>
-            </div>
-        ` : `
-            <div class="inbox-actions">
-                <div id="inbox-toolbar-container"></div>
-                <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                    <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
-                    ${item.type === 'problem_report' && !item.isResolved ?
-                        `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
-                    }
-                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
-                </div>
-            </div>
-        `}
-    `;
+        detailContainer.appendChild(panel);
+    }
+
+    if (isVideoItem && item.videoUrl) {
+        const rawVideoUrl = String(item.videoUrl);
+        let safeVideoUrl = '';
+        try {
+            const parsedVideoUrl = new URL(rawVideoUrl);
+            if (parsedVideoUrl.protocol === 'https:' &&
+                ['youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com'].includes(parsedVideoUrl.hostname.toLowerCase())) {
+                safeVideoUrl = parsedVideoUrl.href;
+            }
+        } catch (_) {}
+        const panel = makePanel('0 0 12px 0');
+        const videoParagraph = makeElement('p');
+        videoParagraph.style.margin = '0 0 6px 0';
+        videoParagraph.append(makeElement('strong', '', 'Enlace de YouTube: '));
+        if (safeVideoUrl) {
+            const videoLink = makeElement('a', '', 'Ver vídeo en YouTube');
+            videoLink.href = safeVideoUrl;
+            videoLink.target = '_blank';
+            videoLink.rel = 'noopener noreferrer';
+            videoLink.style.cssText = 'color:#007bff; text-decoration:underline;';
+            videoParagraph.appendChild(videoLink);
+        } else {
+            videoParagraph.appendChild(document.createTextNode('Enlace no válido'));
+        }
+        panel.appendChild(videoParagraph);
+
+        const statusParagraph = makeElement('p');
+        statusParagraph.style.cssText = 'margin:0 0 4px 0; font-size:0.85rem;';
+        const statusBadge = makeElement('span', 'badge', item.approvalStatus || 'pending');
+        const statusColors = { approved: '#28a745', rejected: '#dc3545', pending: '#ffc107' };
+        statusBadge.style.cssText = `background:${statusColors[item.approvalStatus] || statusColors.pending}; color:#fff; padding:2px 8px; border-radius:4px;`;
+        statusParagraph.append(makeElement('strong', '', 'Estado de Aprobación: '), statusBadge);
+        panel.appendChild(statusParagraph);
+        if (item.contentType) {
+            const contentType = makeElement('p');
+            contentType.style.cssText = 'margin:0; font-size:0.85rem;';
+            contentType.append(makeElement('strong', '', 'Tipo de Contenido: '), document.createTextNode(String(item.contentType)));
+            panel.appendChild(contentType);
+        }
+        detailContainer.appendChild(panel);
+    }
+
+    const messagePanel = makeElement('div', 'inbox-message-content');
+    messagePanel.style.cssText = 'background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;';
+    const messageBody = makeElement('div');
+    messageBody.innerHTML = sanitizeHtmlContent(String(item.content || ''));
+    messagePanel.appendChild(messageBody);
+    detailContainer.appendChild(messagePanel);
+
+    if (item.reply) {
+        const replyPanel = makeElement('div', 'inbox-reply-content');
+        replyPanel.style.cssText = 'background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;';
+        replyPanel.append(makeElement('strong', '', 'Respuesta de ' + String(item.responder || 'Admin') + ':'));
+        const replyBody = makeElement('div');
+        replyBody.style.marginTop = '6px';
+        replyBody.innerHTML = sanitizeHtmlContent(String(item.reply));
+        replyPanel.appendChild(replyBody);
+        detailContainer.appendChild(replyPanel);
+    }
+
+    if (isVideoItem) {
+        const actions = makeElement('div', 'inbox-actions');
+        actions.style.marginTop = '12px';
+        if (item.approvalStatus === 'pending' && canApprove) {
+            const approvalRow = makeElement('div');
+            approvalRow.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;';
+            const approveButton = makeElement('button', 'btn btn-primary');
+            approveButton.id = 'inbox-approve-video-btn';
+            approveButton.style.cssText = 'flex:1; background-color:#28a745; border-color:#28a745;';
+            approveButton.append(makeIcon('fa-solid fa-check'), document.createTextNode(' Aprobar Vídeo'));
+            const rejectButton = makeElement('button', 'btn btn-danger');
+            rejectButton.id = 'inbox-reject-video-btn';
+            rejectButton.style.cssText = 'flex:1; background-color:#dc3545; border-color:#dc3545;';
+            rejectButton.append(makeIcon('fa-solid fa-xmark'), document.createTextNode(' Rechazar Vídeo'));
+            approvalRow.append(approveButton, rejectButton);
+            actions.appendChild(approvalRow);
+        }
+        const deleteRow = makeElement('div');
+        deleteRow.style.cssText = 'display:flex; justify-content:flex-end;';
+        const deleteButton = makeElement('button', 'btn btn-danger');
+        deleteButton.id = 'inbox-delete-btn';
+        deleteButton.style.cssText = 'background-color:#dc3545; color:white;';
+        deleteButton.append(makeIcon('fa-solid fa-trash'), document.createTextNode(' Borrar Mensaje'));
+        deleteRow.appendChild(deleteButton);
+        actions.appendChild(deleteRow);
+        detailContainer.appendChild(actions);
+    } else {
+        const actions = makeElement('div', 'inbox-actions');
+        const toolbar = makeElement('div');
+        toolbar.id = 'inbox-toolbar-container';
+        const replyTextarea = makeElement('textarea');
+        replyTextarea.id = 'inbox-reply-textarea';
+        replyTextarea.placeholder = 'Escribe tu respuesta aquí...';
+        const buttonRow = makeElement('div');
+        buttonRow.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;';
+        const replyButton = makeElement('button', 'btn btn-primary');
+        replyButton.id = 'inbox-reply-btn';
+        replyButton.style.flex = '1';
+        replyButton.textContent = 'Enviar Respuesta';
+        buttonRow.appendChild(replyButton);
+        if (item.type === 'problem_report' && !item.isResolved) {
+            const resolveButton = makeElement('button', 'resolve-btn btn btn-secondary');
+            resolveButton.id = 'inbox-resolve-btn';
+            resolveButton.textContent = 'Marcar como Resuelto';
+            buttonRow.appendChild(resolveButton);
+        }
+        const deleteButton = makeElement('button', 'btn btn-danger');
+        deleteButton.id = 'inbox-delete-btn';
+        deleteButton.style.cssText = 'background-color:#dc3545; color:white;';
+        deleteButton.append(makeIcon('fa-solid fa-trash'), document.createTextNode(' Borrar Mensaje'));
+        buttonRow.appendChild(deleteButton);
+        actions.append(toolbar, replyTextarea, buttonRow);
+        detailContainer.appendChild(actions);
+    }
 
     // Listeners para aprobación/rechazo de vídeos
     const approveVideoBtn = document.getElementById('inbox-approve-video-btn');
@@ -6591,6 +6700,408 @@ export function renderInboxDetail(item) {
             }
         });
     }
+}
+
+function getYouTubeEmbedUrl(url) {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Si ya es un ID de 11 caracteres (ej. dQw4w9WgXcQ)
+    if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes(':')) {
+        return `https://www.youtube.com/embed/${trimmed}?enablejsapi=1`;
+    }
+
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = trimmed.match(regExp);
+
+    const id = (match && match[2].length === 11) ? match[2] : null;
+
+    if (id) {
+        return `https://www.youtube.com/embed/${id}?enablejsapi=1`;
+    }
+
+    // Fallback para casos donde el ID es pasado directamente pero no cumplió la primera condición
+    if (!trimmed.includes('/') && !trimmed.includes(':') && trimmed.length > 5) {
+        return `https://www.youtube.com/embed/${trimmed}?enablejsapi=1`;
+    }
+
+    return null;
+}
+
+export function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
+    const btn = document.createElement("button");
+    btn.className = "accordion-btn";
+    btn.innerHTML = `${title} <span class="accordion-arrow">▼</span>`;
+
+    const panel = document.createElement("div");
+    panel.className = "panel-desplegable";
+
+    if (sec.isCorte) {
+        // Los cortes dentro de acordeones son diferidos (isLazy = true)
+        const cIndex = sec.corteIndex || (sec.data && sec.data.index) || 2;
+        renderCutContent(panel, sec.data, datosRelay, vehicleId, true, cIndex);
+    } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
+        if (title === 'Apertura') {
+            const fieldName = 'apertura';
+            const imgFieldName = 'imgApertura';
+            const currentValue = editedItemBuffer.apertura;
+            const currentImg = editedItemBuffer.imgApertura;
+
+            const label = document.createElement('label');
+            label.textContent = `Detalle de ${title}:`;
+            label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
+            const aperturaTargetId = `edit-apertura-${vehicleId}`;
+            const textarea = document.createElement('textarea');
+            textarea.id = aperturaTargetId;
+            textarea.rows = 3;
+            textarea.value = currentValue || "";
+            textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+            textarea.onblur = async () => {
+                if (textarea.value.trim() !== editedItemBuffer[fieldName]) {
+                    editedItemBuffer[fieldName] = textarea.value.trim();
+                    await saveFieldSilently(vehicleId, fieldName, textarea.value.trim());
+                }
+            };
+            panel.appendChild(label);
+            panel.appendChild(createRichTextToolbar(aperturaTargetId));
+            panel.appendChild(textarea);
+
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container-with-feedback';
+            imgContainer.style.marginTop = "10px";
+            const img = document.createElement("img");
+            setOptimizedImage(img, currentImg || null, IMG_SIZE_MEDIUM);
+            img.className = 'img-corte image-with-container';
+            convertImageToEditable(img, vehicleId, imgFieldName);
+            imgContainer.appendChild(img);
+            panel.appendChild(imgContainer);
+        } else {
+            // Cables de Alimentación: Mostrar las 3 posiciones
+            const cableFields = [
+                { label: 'Cable de Alimentación 1', textKey: 'cableAlimen', imgKey: 'imgCableAlimen' },
+                { label: 'Cable de Alimentación 2', textKey: 'cableAlimen2', imgKey: 'imgCableAlimen2' },
+                { label: 'Cable de Alimentación 3', textKey: 'cableAlimen3', imgKey: 'imgCableAlimen3' }
+            ];
+
+            cableFields.forEach(field => {
+                const fieldLabel = document.createElement('label');
+                fieldLabel.textContent = `${field.label}:`;
+                fieldLabel.style.cssText = "display: block; font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.85em;";
+
+                const cableTargetId = `edit-cable-${field.textKey}-${vehicleId}`;
+                const textarea = document.createElement('textarea');
+                textarea.id = cableTargetId;
+                textarea.rows = 2;
+                textarea.value = editedItemBuffer[field.textKey] || "";
+                textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+                textarea.onblur = async () => {
+                    if (textarea.value.trim() !== editedItemBuffer[field.textKey]) {
+                        editedItemBuffer[field.textKey] = textarea.value.trim();
+                        await saveFieldSilently(vehicleId, field.textKey, textarea.value.trim());
+                    }
+                };
+                panel.appendChild(fieldLabel);
+                panel.appendChild(createRichTextToolbar(cableTargetId));
+                panel.appendChild(textarea);
+
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'image-container-with-feedback';
+                imgContainer.style.marginTop = "5px";
+                imgContainer.style.marginBottom = "10px";
+                const img = document.createElement("img");
+                setOptimizedImage(img, editedItemBuffer[field.imgKey] || null, IMG_SIZE_MEDIUM);
+                img.className = 'img-corte image-with-container';
+                convertImageToEditable(img, vehicleId, field.imgKey);
+                imgContainer.appendChild(img);
+                panel.appendChild(imgContainer);
+            });
+        }
+    } else if (sec.isCarousel && sec.cables && sec.cables.length > 1) {
+        // Renderizar un carrusel responsivo para múltiples cables de alimentación
+        const carouselContainer = document.createElement('div');
+        carouselContainer.className = 'cable-carousel-container';
+        carouselContainer.style.cssText = "position: relative; width: 100%; min-height: 100px;";
+
+        const slideText = document.createElement('p');
+        slideText.className = 'cable-carousel-text';
+        slideText.style.cssText = "margin-bottom: 10px; font-weight: 500;";
+
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'image-container-with-feedback';
+        const slideImg = document.createElement('img');
+        slideImg.className = 'img-corte image-with-container';
+        imgContainer.appendChild(slideImg);
+
+        carouselContainer.appendChild(slideText);
+        carouselContainer.appendChild(imgContainer);
+
+        let currentSlideIndex = 0;
+        const totalSlides = sec.cables.length;
+
+        function updateSlide(index) {
+            currentSlideIndex = (index + totalSlides) % totalSlides;
+            const activeCable = sec.cables[currentSlideIndex];
+            slideText.innerHTML = `<strong>${sanitizeHtmlContent(activeCable.label || "Cable")}:</strong> ${sanitizeHtmlContent(activeCable.content || "Sin descripción")}`;
+
+            if (activeCable.img) {
+                slideImg.style.display = 'block';
+                const fileId = activeCable.img.includes('id=') ? activeCable.img.split('id=')[1].split('&')[0] : activeCable.img;
+                setOptimizedImage(slideImg, fileId, IMG_SIZE_MEDIUM);
+                slideImg.onclick = () => {
+                    const validCableImages = sec.cables.filter(c => c.img).map(c => ({
+                        img: c.img,
+                        url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                        label: c.label,
+                        content: c.content
+                    }));
+                    const initialIndex = validCableImages.findIndex(c => c.img === activeCable.img);
+                    const highResImgUrl = getImageUrl(activeCable.img, IMG_SIZE_LARGE);
+
+                    window.abrirLightbox(highResImgUrl, 'lightboxImg', {
+                        cables: validCableImages,
+                        currentIndex: initialIndex >= 0 ? initialIndex : 0,
+                        onSlideChange: (newIndex) => {
+                            const targetCable = validCableImages[newIndex];
+                            if (targetCable) {
+                                const targetSlideIndex = sec.cables.findIndex(c => c.img === targetCable.img);
+                                if (targetSlideIndex >= 0) {
+                                    updateSlide(targetSlideIndex);
+                                }
+                            }
+                        }
+                    });
+                };
+            } else {
+                slideImg.style.display = 'none';
+            }
+        }
+
+        function adjustPanelHeight() {
+            if (btn.classList.contains('active')) {
+                setTimeout(() => {
+                    panel.style.maxHeight = panel.scrollHeight + "px";
+                }, 50);
+            }
+        }
+
+        // Botones de navegación para escritorio
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'cable-carousel-btn prev';
+        prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateSlide(currentSlideIndex - 1);
+            adjustPanelHeight();
+        };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'cable-carousel-btn next';
+        nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateSlide(currentSlideIndex + 1);
+            adjustPanelHeight();
+        };
+
+        carouselContainer.appendChild(prevBtn);
+        carouselContainer.appendChild(nextBtn);
+        panel.appendChild(carouselContainer);
+
+        // Soporte de gestos táctiles: solo se acepta un desplazamiento horizontal dominante.
+        function createCableCarouselTouchHandlers(onSwipe, threshold = 50) {
+            let touchStart = null;
+            const interactiveSelector = 'button, a, input, textarea, select, option, label, [role="button"], [contenteditable="true"]';
+
+            function resetTouch() {
+                touchStart = null;
+            }
+
+            return {
+                touchstart(event) {
+                    resetTouch();
+                    if (!event || !event.touches || event.touches.length !== 1 ||
+                        !event.changedTouches || event.changedTouches.length !== 1) return;
+
+                    const target = event.target;
+                    if (target && typeof target.closest === 'function' && target.closest(interactiveSelector)) return;
+
+                    const touch = event.changedTouches[0];
+                    if (!Number.isFinite(touch.clientX) || !Number.isFinite(touch.clientY)) return;
+                    touchStart = { x: touch.clientX, y: touch.clientY };
+                },
+                touchend(event) {
+                    const start = touchStart;
+                    resetTouch();
+                    if (!start || !event || !event.touches || event.touches.length !== 0 ||
+                        !event.changedTouches || event.changedTouches.length !== 1) return;
+
+                    const touch = event.changedTouches[0];
+                    if (!Number.isFinite(touch.clientX) || !Number.isFinite(touch.clientY)) return;
+
+                    const deltaX = touch.clientX - start.x;
+                    const deltaY = touch.clientY - start.y;
+                    if (Math.abs(deltaX) <= threshold || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+                    onSwipe(deltaX < 0 ? 1 : -1);
+                },
+                touchcancel: resetTouch
+            };
+        }
+
+        const cableTouchHandlers = createCableCarouselTouchHandlers((direction) => {
+            updateSlide(currentSlideIndex + direction);
+            adjustPanelHeight();
+        });
+
+        carouselContainer.addEventListener('touchstart', cableTouchHandlers.touchstart, { passive: true });
+        carouselContainer.addEventListener('touchend', cableTouchHandlers.touchend, { passive: true });
+        carouselContainer.addEventListener('touchcancel', cableTouchHandlers.touchcancel, { passive: true });
+
+        updateSlide(0);
+    } else {
+        const activeContent = (sec.isCarousel && sec.cables && sec.cables.length === 1) ? sec.cables[0].content : sec.content;
+        const activeImg = (sec.isCarousel && sec.cables && sec.cables.length === 1) ? sec.cables[0].img : sec.img;
+
+        if (activeContent) {
+            const contentP = document.createElement('p');
+            contentP.innerHTML = sanitizeHtmlContent(activeContent);
+            panel.appendChild(contentP);
+        }
+
+        if (activeImg) {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container-with-feedback';
+            const img = document.createElement("img");
+            img.dataset.src = getImageUrl(activeImg, IMG_SIZE_MEDIUM);
+            img.className = 'img-corte image-with-container';
+            img.onclick = () => {
+                const highResImgUrl = getImageUrl(activeImg, IMG_SIZE_LARGE);
+                const validCableImages = (sec.isCarousel && sec.cables) ? sec.cables.filter(c => c.img).map(c => ({
+                    img: c.img,
+                    url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                    label: c.label,
+                    content: c.content
+                })) : null;
+
+                const context = (validCableImages && validCableImages.length > 0) ? {
+                    cables: validCableImages,
+                    currentIndex: 0
+                } : null;
+
+                window.abrirLightbox(highResImgUrl, 'lightboxImg', context);
+            };
+            imgContainer.appendChild(img);
+            panel.appendChild(imgContainer);
+        }
+    }
+
+    if (sec.colaborador && !inEditMode) {
+        const colabDiv = document.createElement('div');
+        const colabP = document.createElement('p');
+        colabP.style.cssText = "font-style: italic; color: var(--text-disabled); margin-top: 10px; text-align: left;";
+        colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(sec.colaborador)}</strong>`;
+        colabDiv.appendChild(colabP);
+        panel.appendChild(colabDiv);
+    }
+
+    if (sec.Video) {
+        const videoEmbedUrl = getYouTubeEmbedUrl(sec.Video);
+        if (videoEmbedUrl) {
+            const videoContainer = document.createElement('div');
+            const iframeId = `video-${Date.now()}`;
+            videoContainer.innerHTML = `<iframe id="${iframeId}" width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; margin-top: 10px;"></iframe>`;
+            panel.appendChild(videoContainer);
+            btn.dataset.iframeId = iframeId;
+        }
+    }
+
+    container.appendChild(btn);
+    container.appendChild(panel);
+
+    const loadAccordionImages = () => {
+        const imgs = panel.querySelectorAll('img[data-src]');
+        imgs.forEach(img => {
+            if (!img.src) {
+                img.onload = () => {
+                    // Actualizar maxHeight si el panel sigue abierto
+                    if (btn.classList.contains('active')) {
+                        panel.style.maxHeight = panel.scrollHeight + "px";
+                    }
+                };
+                // Phase 3: Usar setOptimizedImage para cargar desde caché o Drive
+                const fileId = img.dataset.src.includes('id=') ? img.dataset.src.split('id=')[1].split('&')[0] : img.dataset.src;
+                setOptimizedImage(img, fileId, IMG_SIZE_MEDIUM);
+            }
+        });
+    };
+
+    if (isOpen) {
+        btn.classList.add("active");
+        loadAccordionImages();
+        panel.style.maxHeight = panel.scrollHeight + "px";
+    }
+
+    btn.addEventListener("click", function() {
+        const isActive = this.classList.contains("active");
+
+        // Cerrar todos los paneles antes de abrir el nuevo
+        const allButtons = container.querySelectorAll(".accordion-btn");
+        allButtons.forEach(otherBtn => {
+            otherBtn.classList.remove("active");
+            const otherArrow = otherBtn.querySelector(".accordion-arrow");
+            if (otherArrow) otherArrow.textContent = "▼";
+            const otherPanel = otherBtn.nextElementSibling;
+            if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                otherPanel.style.maxHeight = null;
+            }
+        });
+
+        // Si el botón no estaba activo, ábrelo.
+        if (!isActive) {
+            this.classList.add("active");
+            loadAccordionImages();
+            // Esperar un ciclo de renderizado para asegurar que el iframe exista
+            setTimeout(() => {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }, 0);
+        }
+    });
+
+    // Listener para pausar el video CUANDO la animación de cierre TERMINA
+    panel.addEventListener('transitionend', () => {
+        if (!panel.style.maxHeight) { // Si el panel está cerrado
+            const iframeId = btn.dataset.iframeId;
+            const iframe = iframeId ? document.getElementById(iframeId) : null;
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            }
+        }
+    });
+}
+
+function mostrarUltimosAgregados() {
+    const { catalogData } = getState();
+    const { cortes } = catalogData;
+
+    if (!cortes || cortes.length === 0) return;
+
+    const ultimosCortes = [...cortes]
+        .sort((a, b) => {
+            const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+            const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+            if (dateB - dateA !== 0) return dateB - dateA;
+            return b.id - a.id;
+        })
+        .slice(0, 6);
+
+    if (ultimosCortes.length === 0) return;
+
+    crearCarrusel('Últimos Agregados', ultimosCortes, item => {
+        return crearCardVehiculo(item);
+    });
 }
 
 function getYouTubeEmbedUrl(url) {
@@ -7750,11 +8261,8 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-triangle-exclamation" style="color: #dc3545;"></i> Reportar Problema en Corte #${corteNum}</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">
-            Corte seleccionado: <strong>${currentCutData.tipo || 'Sin tipo definido'}</strong>
-        </p>
-
+        <h2 id="report-cut-heading"><i class="fa-solid fa-triangle-exclamation" style="color:#dc3545;"></i></h2>
+        <p id="report-cut-summary" style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;"></p>
         <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Descripción del Error Detectado *</label>
@@ -7778,8 +8286,16 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         </form>
     `;
 
-    mountRichTextToolbars(content);
+    const heading = content.querySelector("#report-cut-heading");
+    heading.appendChild(document.createTextNode(` Reportar Problema en Corte #${String(corteNum)}`));
+    const summary = content.querySelector("#report-cut-summary");
+    summary.append(
+        document.createTextNode('Corte seleccionado: '),
+        document.createElement('strong')
+    );
+    summary.querySelector('strong').textContent = String(currentCutData && currentCutData.tipo || 'Sin tipo definido');
 
+    mountRichTextToolbars(content);
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -7802,9 +8318,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         const errorDesc = content.querySelector("#rep-error").value.trim();
         const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
         let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
-        if (incorrectInfo) {
-            fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
-        }
+        if (incorrectInfo) fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
 
         const fileInput = content.querySelector("#rep-img-file");
         if (fileInput.files && fileInput.files[0]) {
@@ -7816,18 +8330,11 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             const res = await reportProblem(
                 vehicleId,
                 fullProblemText,
-                {
-                    reportId,
-                    corteIndex: Number(corteNum),
-                    activaTestigoMotor
-                },
+                { reportId, corteIndex: Number(corteNum), activaTestigoMotor },
                 getSessionPayload_()
             );
-
             const confirmedReportId = res && res.reportId ? res.reportId : reportId;
             modal.remove();
-
-            // Modal de confirmación con opción accesible de «Sugerir cambio»
             showReportSuccessModal(vehicleId, corteNum, currentCutData, confirmedReportId);
         } catch (err) {
             console.error("Error al enviar reporte de corte:", err);
@@ -7838,7 +8345,6 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     };
 }
 
-// Modal de confirmación accesible posterior al reporte con opción «Sugerir cambio»
 function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     const existing = document.getElementById("report-success-modal");
     if (existing) existing.remove();
@@ -7895,10 +8401,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
 
-    // Asegurar número de corte numérico válido
     const validCorteNum = corteNum || currentCutData.index || 1;
     const reportRef = reportId || `REP-${Date.now()}`;
-
     const modal = document.createElement("div");
     modal.id = "suggest-cut-modal";
     modal.className = "info-modal visible";
@@ -7908,73 +8412,49 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     content.className = "info-modal-content";
     content.style.maxWidth = "520px";
 
-    // Obtención segura de opciones de menú desplegable para evitar ReferenceError
     const safeDropdowns = (typeof dropdownOptions !== "undefined" && dropdownOptions)
         || (typeof window !== "undefined" && window.dropdownOptions)
         || (typeof getState === "function" && getState() && getState().dropdownOptions)
         || null;
-
-    // Opciones para tipo de corte
     const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
     const tiposCorteOptions = (safeDropdowns && safeDropdowns.tipoDeCorte && safeDropdowns.tipoDeCorte.length > 0)
-        ? safeDropdowns.tipoDeCorte
-        : defaultTipos;
-
-    const tipoOptionsHtml = tiposCorteOptions.map(opt => {
-        const isSel = (currentCutData.tipo && currentCutData.tipo.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
-        return `<option value="${opt}" ${isSel}>${opt}</option>`;
-    }).join("");
-
-    // Opciones para configuración de relay
+        ? safeDropdowns.tipoDeCorte : defaultTipos;
     const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
     const relayOptions = (safeDropdowns && safeDropdowns.configRelay && safeDropdowns.configRelay.length > 0)
-        ? safeDropdowns.configRelay
-        : defaultRelays;
-
-    const relayOptionsHtml = relayOptions.map(opt => {
-        const isSel = (currentCutData.configRelay && currentCutData.configRelay.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
-        return `<option value="${opt}" ${isSel}>${opt}</option>`;
-    }).join("");
-
-    // El estado actual procede del mismo contrato normalizado que utiliza el detalle del corte.
+        ? safeDropdowns.configRelay : defaultRelays;
     const currentTestigoValue = normalizeActivaTestigoValue(currentCutData.activaTestigo);
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${validCorteNum}</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Vinculado al Reporte: <strong>${reportRef}</strong> | Vehículo: <strong>${vehicleId}</strong>
-        </p>
-
+        <h2 id="suggest-cut-heading"><i class="fa-solid fa-pen-to-square"></i></h2>
+        <p id="suggest-cut-summary" style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;"></p>
         <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label for="sug-tipo">Tipo de Corte</label>
-                <select id="sug-tipo" class="dev-input" style="padding: 6px;">
+                <select id="sug-tipo" class="dev-input" style="padding:6px;">
                     <option value="">-- Conservar / Seleccionar Tipo --</option>
-                    ${tipoOptionsHtml}
                 </select>
             </div>
             <div class="form-group">
                 <label for="sug-relay">Configuración de Relay</label>
-                <select id="sug-relay" class="dev-input" style="padding: 6px;">
+                <select id="sug-relay" class="dev-input" style="padding:6px;">
                     <option value="">-- Conservar / Seleccionar Relay --</option>
-                    ${relayOptionsHtml}
                 </select>
             </div>
             <div class="form-group">
                 <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
-                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
+                <input type="text" id="sug-ubicacion" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
             </div>
             <div class="form-group">
                 <label for="sug-color">Color de Cable</label>
-                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco, Verde grueso">
+                <input type="text" id="sug-color" placeholder="Ej. Azul / Blanco, Verde grueso">
             </div>
             <div class="form-group">
                 <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
-                <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
-                    <option value="unspecified" ${currentTestigoValue === null ? 'selected' : ''}>No aplica / No especificado</option>
-                    <option value="true" ${currentTestigoValue === true ? 'selected' : ''}>Sí, activa testigo</option>
-                    <option value="false" ${currentTestigoValue === false ? 'selected' : ''}>No activa testigo</option>
+                <select id="sug-check-engine" class="dev-input" style="padding:6px;">
+                    <option value="unspecified">No aplica / No especificado</option>
+                    <option value="true">Sí, activa testigo</option>
+                    <option value="false">No activa testigo</option>
                 </select>
             </div>
             <div class="form-group">
@@ -7990,8 +8470,36 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         </form>
     `;
 
-    mountRichTextToolbars(content);
+    const heading = content.querySelector("#suggest-cut-heading");
+    heading.appendChild(document.createTextNode(` Sugerir Cambio - Corte #${String(validCorteNum)}`));
+    const summary = content.querySelector("#suggest-cut-summary");
+    const reportStrong = document.createElement('strong');
+    reportStrong.textContent = String(reportRef);
+    const vehicleStrong = document.createElement('strong');
+    vehicleStrong.textContent = String(vehicleId);
+    summary.append(
+        document.createTextNode('Vinculado al Reporte: '), reportStrong,
+        document.createTextNode(' | Vehículo: '), vehicleStrong
+    );
 
+    const appendOptions = (select, options, currentValue) => {
+        const normalizedCurrent = String(currentValue || '').toLowerCase();
+        options.forEach(optionValue => {
+            const option = document.createElement('option');
+            const value = String(optionValue == null ? '' : optionValue);
+            option.value = value;
+            option.textContent = value;
+            if (normalizedCurrent && value.toLowerCase() === normalizedCurrent) option.selected = true;
+            select.appendChild(option);
+        });
+    };
+    appendOptions(content.querySelector("#sug-tipo"), tiposCorteOptions, currentCutData.tipo);
+    appendOptions(content.querySelector("#sug-relay"), relayOptions, currentCutData.configRelay);
+    content.querySelector("#sug-ubicacion").value = String(currentCutData.ubicacion || '');
+    content.querySelector("#sug-color").value = String(currentCutData.colorCable || '');
+    content.querySelector("#sug-check-engine").value = currentTestigoValue === null ? 'unspecified' : String(currentTestigoValue);
+
+    mountRichTextToolbars(content);
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -8014,7 +8522,6 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
 
         const fileInput = content.querySelector("#sug-img-file");
         let imgBase64 = "";
-
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
             imgBase64 = await new Promise((resolve) => {
@@ -8032,14 +8539,10 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             activaTestigo: content.querySelector("#sug-check-engine").value === "true" ? true :
                 (content.querySelector("#sug-check-engine").value === "false" ? false : null)
         };
-
         const payload = {
-            reportId: reportRef,
-            vehicleId,
-            corteIndex: validCorteNum,
+            reportId: reportRef, vehicleId, corteIndex: validCorteNum,
             details: content.querySelector("#sug-detalles").value.trim(),
-            imgBase64,
-            proposedValues
+            imgBase64, proposedValues
         };
 
         try {
@@ -8047,8 +8550,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             modal.remove();
             showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
         } catch (err) {
-            console.error("Error al enviar sugerencia:", err);
-            showGlobalError("Error al guardar la sugerencia: " + err.message);
+            console.error("Error al guardar la sugerencia:", err);
+            showGlobalError("Error al guardar la sugerencia. Por favor inténtalo de nuevo.");
             submitBtn.disabled = false;
             submitBtn.classList.remove("btn-loading");
             submitBtn.innerText = "Enviar Sugerencia";
@@ -8056,8 +8559,6 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
     };
 }
 
-
-/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
 export function openExpandMenuModal(item) {
     // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
     const existing = document.getElementById("expand-menu-modal");
