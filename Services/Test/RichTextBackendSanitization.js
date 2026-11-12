@@ -52,7 +52,7 @@ test("la allow-list backend coincide con los elementos admitidos por rich-text.j
     const frontend = richText.match(/const allowedTags = new Set\(\[([^\]]+)\]\)/);
     const backend = feedback.match(/allowed=new Set\(\[([^\]]+)\]\)/);
     assert.ok(frontend && backend, "No se encontró la allow-list en el editor o backend.");
-    const parse = value => Array.from(value.matchAll(/"([a-z]+)"/g), match => match[1]).sort();
+    const parse = value => Array.from(value.matchAll(/"([a-z]+)"/gi), match => match[1].toLowerCase()).sort();
     assert.deepEqual(parse(backend[1]), parse(frontend[1]));
 });
 
