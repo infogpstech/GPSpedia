@@ -168,7 +168,9 @@
 ### Hoja `Tutorial`
 
 - **Fila de encabezados:** 1
-- **Columnas con encabezado:** 7
+- **Columnas históricas:** 7 (A:G), conservadas sin reordenamiento.
+- **Extensión vigente:** 1 columna adicional (H) para `Colaborador`.
+- Los registros históricos conservan sus valores originales; H se añade únicamente cuando está vacía. Si contiene datos sin encabezado, la operación se detiene y no los interpreta como colaboradores.
 
 | Posición | Letra | Encabezado exacto |
 |---:|:---:|---|
@@ -179,6 +181,7 @@
 | 5 | E | `dondeEncontrarlo` |
 | 6 | F | `Detalles` |
 | 7 | G | `Video` |
+| 8 | H | `Colaborador` |
 
 ### Hoja `Relay`
 
