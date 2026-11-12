@@ -17,7 +17,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     };
     const uiBlock = section(ui, "export function openSuggestCutModal(", "\nexport function openExpandMenuModal");
-    const validatorBlock = section(feedback, "function validateReportImageAttachment_(", "function saveReportImageAttachment_(");
+    const validatorBlock = section(feedback, "const REPORT_IMAGE_MAX_BYTES = 3 * 1024 * 1024;", "function saveReportImageAttachment_(");
     const normalizerBlock = section(feedback, "function normalizeSuggestionImageAttachment_(", "function saveSuggestionImageAttachment_(");
     const saveBlock = section(feedback, "function saveSuggestionImageAttachment_(", "function handleSuggestCutChange(");
     const handlerBlock = section(feedback, "function handleSuggestCutChange(", "\nfunction parseModelosAsociados(rawVal)");
@@ -84,7 +84,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     });
     test("validador rechaza MIME discordante con la firma", () => {
         const bad = attachment("image/png"); bad.mimeType = "image/jpeg";
-        assert.throws(() => validate(bad), /no coincide/);
+        assert.throws(() => validate(bad), /tipo MIME/);
     });
     test("validador rechaza payload mayor a 3 MB", () => {
         const bytes = Array(3 * 1024 * 1024 + 1).fill(1);
