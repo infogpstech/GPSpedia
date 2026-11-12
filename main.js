@@ -185,20 +185,24 @@ async function initializeApp() {
 
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
-        const previousNavigationState = window.state.getState().navigationState || null;
-        const searchState = { level: "busqueda", query: currentQuery };
-        const focusedState = { level: "busqueda_focused", query: currentQuery };
+        const currentNavigationState = window.state.getState().navigationState || null;
+        const previousNavigationState = currentNavigationState &&
+            ['busqueda', 'busqueda_focused'].includes(currentNavigationState.level) &&
+            currentNavigationState.previousState
+            ? currentNavigationState.previousState
+            : currentNavigationState;
+        const focusedState = {
+            level: "busqueda_focused",
+            query: currentQuery,
+            previousState: previousNavigationState
+        };
 
-        const focusedNavigationState = { ...focusedState, previousState: previousNavigationState };
-        window.state.setState({ navigationState: focusedNavigationState });
+        window.state.setState({ navigationState: focusedState });
 
-        if (currentState.level === 'busqueda_focused') {
+        if (currentState.level === 'busqueda' || currentState.level === 'busqueda_focused') {
             replaceNavigationState(focusedState, { previousNavigationState });
-        } else if (currentState.level === 'busqueda') {
-            pushNavigationState(focusedState, { previousNavigationState: currentState });
         } else {
-            pushNavigationState(searchState, { previousNavigationState });
-            pushNavigationState(focusedState, { previousNavigationState: searchState });
+            pushNavigationState(focusedState, { previousNavigationState });
         }
     });
 
@@ -460,39 +464,35 @@ async function initializeApp() {
         // NOTA: Solo se intercepta si NO hay un modal visible para evitar interferir con el cierre de overlays.
         const isModalVisible = modalDetalle && modalDetalle.classList.contains('visible');
         const currentNavState = window.state.getState().navigationState || {};
-        if (!isModalVisible && searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
-            const currentQuery = searchInput.value;
+        if (!isModalVisible && searchInput &&
+            (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
+            const currentQuery = searchInput.value || currentNavState.query || '';
 
-            // Cancelar cualquier timeout activo para desenfocar y ocultar el teclado
             if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
-
-            // Activar flag para ignorar el delay en el listener de blur
             isBackGestureBlurring = true;
-
-            // Ocultar la barra activa e iniciar la animación inversa simultáneamente
             document.body.classList.remove('search-active');
-
-            // Retirar foco inmediatamente
             searchInput.blur();
-
             isBackGestureBlurring = false;
 
-            // Evitar que el historial se desplace hacia atrás recuperando la posición actual
-            // mediante la re-inserción del estado de búsqueda activo desenfocado.
             if (currentQuery) {
-                const currentNavigationState = window.state.getState().navigationState || {};
                 const searchState = {
                     level: "busqueda",
                     query: currentQuery,
-                    previousState: currentNavigationState.previousState || null
+                    previousState: currentNavState.previousState || null
                 };
-                replaceNavigationState(searchState, { previousNavigationState: currentNavigationState.previousState });
-                // Sincronizar también el estado de navegación global
+                // Si el destino nativo ya es la búsqueda, reconciliar esa entrada.
+                // Si el gesto llegó al nivel anterior, crear una sola entrada de búsqueda
+                // desenfocada para cancelar únicamente el cierre del teclado.
+                if (state.level === 'busqueda' && state.query === currentQuery) {
+                    replaceNavigationState(searchState, { previousNavigationState: currentNavState.previousState });
+                } else {
+                    pushNavigationState(searchState, { previousNavigationState: currentNavState.previousState });
+                }
                 window.state.setState({ navigationState: searchState });
-            } else {
-                navigation.irAPaginaPrincipal(true);
+                return;
             }
-            return;
+            // Una búsqueda vacía no debe bloquear el retroceso al nivel anterior;
+            // se continúa con la restauración del estado recibido en popstate.
         }
 
         // PRIORIDAD SECUNDARIA: GESTIÓN DE ESTADOS DE CONTENIDO
