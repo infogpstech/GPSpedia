@@ -40,3 +40,15 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Node CLI literal no ejecutado en este entorno. Navegador/DOM real, backdrop, gestos y dispositivos quedan diferidos a Beta.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-072 — IDENTIDAD Y FALLBACK DE ENLACES COMPARTIDOS
+- Nuevo share-utils.js: construcción/decodificación centralizada de enlaces con ID estable, compatibilidad #search=, resolución única contra Cortes y fallback Web Share/Clipboard.
+- main.js: el deep link espera el catálogo, resuelve el ID exacto, evita abrir registros de otras secciones y conserva la búsqueda como fallback.
+- ui.js: comparte un único URL, distingue cancelación AbortError, captura errores de Web Share/Clipboard, confirma copia y ofrece campo manual accesible.
+- service-worker.js: share-utils.js incorporado a CORE_ASSETS y caché renovada a gpsepedia-cache-v16. README y suite VehicleShareLinks documentados.
+- Validación adaptada: VehicleShareLinks 19/19; ServiceWorkerCache 6/6; OverlayMenuModalHistory 13/13; OverlayHistoryStack 19/19; ReplacedImagesLightboxHistory 6/6. Parsing de los módulos/bloque modificado PASS.
+- Node CLI literal y navegadores reales no ejecutados en este entorno; permisos, contexto seguro y pruebas de dispositivo quedan diferidos a Beta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
