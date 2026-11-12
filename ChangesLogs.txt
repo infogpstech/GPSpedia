@@ -245,3 +245,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - La restauración diferida conserva únicamente los acordeones/carruseles aún no disponibles y no vuelve a imponer el scroll vertical después de la carga asíncrona.
 - La interacción manual con acordeones cancela una restauración pendiente para no sobrescribir la selección del usuario.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-089 — COBERTURA DE PILA ANIDADA
+- modalNavigation.js: se extraen las reglas de transición y operaciones push/pop de la pila para probar el retorno LIFO sin depender del DOM.
+- Services/Test/PysModalNavigation.js: agrega pruebas de transiciones reales, supresión de re-renderizados y recorridos anidados PyS→vehículo→PyS.
+================================================================================
