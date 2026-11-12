@@ -969,3 +969,15 @@ H-AUD-011-003 corregido en Services/feedback.js y ui.js. Carpeta PyS restringida
 Suite PysImageStorageRecovery: 22/22 PASS en harness V8 adaptado. Node CLI y servicios reales no ejecutados; validación de Drive/Spreadsheet/ACL/navegador queda en lista_beta.txt.
 Siguiente: AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS.
 ================================================================================
+
+
+================================================================================
+AUG-089 — IMPLEMENTACIÓN — 2026-11-12 — EN PROGRESO
+- ui.js: la pila registra únicamente transiciones reales entre modal PyS y vehículo; edición/re-render conserva navOptions y no duplica entradas.
+- modalNavigation.js: captura/restaura scroll vertical, acordeón activo y scroll horizontal de carruseles PyS/vehículos.
+- main.js: el retroceso del modal comparte restoreModalNavigationContext con el cierre manual y consume un nivel.
+- service-worker.js: modalNavigation.js incluido en App Shell; caché actualizada a gpsepedia-cache-v17.
+- Services/Test/PysModalNavigation.js y ServiceWorkerCache.js: cobertura añadida/actualizada.
+Validación local: pendiente de ejecución y parsing de los archivos modificados. Navegador/DOM real, scroll táctil y gesto Atrás quedan diferidos a Beta.
+Siguiente: AUG-090 después del cierre local de AUG-089.
+================================================================================
