@@ -870,3 +870,35 @@ Validación:
 
 Siguiente acción: revisar si quedan constructores dinámicos de overlays fuera de .info-modal que requieran integración explícita o exclusión del observador. AUG-068 permanece EN PROGRESO; no iniciar AUG-069.
 ================================================================================
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3N — 2026-11-12 — CIERRE DEL LIGHTBOX DE IMÁGENES REEMPLAZADAS
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Se completó el inventario de overlays dinámicos y se corrigió el último ciclo de vida de lightbox detectado.
+Rama: GPSpedia2.2.5_work. HEAD previo al checkpoint: 65e07d8091f066293ecf01c6c50196bd974943f3. Rama base: GPSpedia2.2.5 (sin modificaciones; behindBy 0).
+
+Hallazgo y corrección:
+- `replaced-image-lightbox` era un diálogo hijo de `replaced-images-modal`, pero no registraba apertura/cierre en `overlayHistory`. Atrás podía abandonar el contexto sin cerrar primero la imagen ampliada.
+- `ui.js`: el lightbox ahora se registra explícitamente como hijo en la pila compartida. Reabrirlo reutiliza la entrada existente; Atrás, Escape, backdrop y X delegan el cierre al gestor. Cerrar el modal padre permite que el gestor cierre las capas descendientes en orden LIFO.
+- El cierre del modal padre deja de retirar el lightbox por una ruta paralela; la pila compartida realiza la reconciliación. El reset de sesión limpia el contenido visual y el cierre del padre termina de reconciliar el registro.
+- Nueva suite `Services/Test/ReplacedImagesLightboxHistory.js` con seis escenarios de contrato y pila anidada. `Services/Test/README.md` documenta su comando.
+- `Tareas_pendientes_parte5.txt` actualiza AUG-068 a COMPLETADA CON VALIDACIÓN DIFERIDA.
+- No se modificaron `overlayHistory.js`, `main.js` ni la rama base. `ChangesLogs.txt` no se modificó porque supera el umbral normativo de rotación; no se agregó contenido sin completar antes una rotación sin pérdida.
+
+Validación local:
+- Bloques modificados de apertura/cierre: parsing V8 PASS.
+- Contratos de registro, reapertura sin duplicación y cierre manual: PASS.
+- Pila real `overlayHistory.js` con History simulado: Atrás cierra el hijo y conserva el padre; cierre del padre reconcilia descendientes LIFO.
+- Suite adaptada equivalente de `ReplacedImagesLightboxHistory`: 6/6 PASS en runtime V8.
+- Cobertura ya validada en iteraciones previas: `OverlayHistoryStack` 13/13; `AddCortesYouTubeOverlayHistory` 2/2; `YouTubeUploadCloseDuringTransfer` 6/6; `YouTubeUploadOverlayLifecycle` 8/8.
+- No se ejecutó el comando Node CLI en Codespaces ni prueba DOM/navegador real. Estas validaciones quedan diferidas a Beta; no bloquean el cierre local conforme a NORMAS_DESAROLLO.md.
+
+Commits de esta iteración:
+- b4dbf9a — registro de replaced-image-lightbox en el historial compartido.
+- 6872e26 — nueva suite de regresión.
+- efadc56 — ajuste de aserción del harness.
+- abf398d — documentación de la suite.
+- 65e07d8 — estado de AUG-068 en backlog.
+
+Siguiente acción: AUG-068 cerrada. No iniciar AUG-069 hasta una nueva instrucción.
+================================================================================
