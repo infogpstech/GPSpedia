@@ -955,3 +955,12 @@ Validación local: 10/10 escenarios en harness V8 adaptado; parsing de bloques m
 Beta pendiente: renderizado DOM, payloads de ataque, interacción del enlace y reproducción real de videos.
 Siguiente: AUG-083 — Completar almacenamiento y recuperación de imágenes PyS.
 ================================================================================
+
+
+================================================================================
+AUG-083 — ESTADO DE CIERRE — 2026-11-12
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+H-AUD-011-003 corregido en Services/feedback.js y ui.js. Carpeta PyS restringida a hija directa de la raíz autorizada Cortes; Base64/MIME/firma/tamaño validados; MIME/extensión reales preservados; ACL heredada sin ampliación; rollback condicionado a ausencia de referencias y metadata RECOVERY_REQUIRED ante estado ambiguo. getPysData normaliza la referencia de imagen. FileReader gestiona error/abort y no envía una imagen no leída.
+Suite PysImageStorageRecovery: 22/22 PASS en harness V8 adaptado. Node CLI y servicios reales no ejecutados; validación de Drive/Spreadsheet/ACL/navegador queda en lista_beta.txt.
+Siguiente: AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS.
+================================================================================

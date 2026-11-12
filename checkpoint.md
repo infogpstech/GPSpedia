@@ -1341,3 +1341,29 @@ Pendiente Beta: Node CLI desde checkout completo; renderizado DOM/navegador real
 
 Siguiente tarea: AUG-083 — Completar el almacenamiento y la recuperación de imágenes PyS. No iniciar AUG-084 en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-083 — CIERRE — 2026-11-12 — ALMACENAMIENTO Y RECUPERACIÓN DE IMÁGENES PyS
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work.
+Implementación:
+- Services/feedback.js resuelve Cortes mediante DRIVE_FOLDER_ID y valida que sea carpeta Cortes directamente bajo la raíz Drive. Problemas y Soluciones se localiza/crea solo como hija directa; duplicados se rechazan.
+- Valida Data URL/Base64 canónico, JPEG/PNG/WebP, firma binaria y máximo 3 MB antes de crear recursos. Conserva MIME y extensión reales.
+- No amplía ACL ni configura ANYONE_WITH_LINK. El archivo debe conservar el acceso/permisos de la carpeta.
+- Tras fallos de Sheets, comprueba referencias. Solo compensa si no hay referencias; estados ambiguos o compensación fallida se conservan con RECOVERY_REQUIRED. Una fila vinculada tras fallo parcial se recupera y marca LINKED.
+- getPysData normaliza referencias de imagen. UI limita formato/tamaño y maneja FileReader load/error/abort/excepciones; no envía si la lectura falla.
+Validación: PysImageStorageRecovery 22/22 PASS en harness V8 adaptado con dobles; parsing V8 de backend, handler, UI y suite PASS. Node CLI literal y servicios/ACL/navegador reales no ejecutados; quedan para Beta.
+
+Commits de código/pruebas en rama de trabajo:
+- 7b0e7ed6ea4b121c5380d79feb104410fd064d40 — implementación backend inicial.
+- 938ef82470f1a20961df084f79d3cce9621153ff — UI/FileReader.
+- 4e82f784ade6dc93205b670e06e60c56a3b61dc1 — ajuste final backend.
+- d2d7922c7ccffb2905465cd36c3a8c1cc49e483e — suite/harness final.
+La documentación de cierre se incorpora en un commit separado.
+
+INCIDENCIA DE PUBLICACIÓN — REQUIERE DECISIÓN:
+La operación create_file usada para añadir Services/Test/PysImageStorageRecovery.js ignoró el parámetro branch y creó el commit f5f38f27df0d113a80dc0a86300fe5a9305db0fc en la rama predeterminada main. Se verificó que main apunta a ese commit. El cambio allí es únicamente el archivo de pruebas; no contiene cambios de producción ni deployments. No se realizaron más escrituras en main ni se intentó revertirlo para no modificar otra rama sin autorización. La suite equivalente quedó añadida correctamente a GPSpedia2.2.5_work mediante Git Data API y se verificó en esa rama. La limpieza/reversión del commit accidental en main requiere autorización explícita.
+
+Siguiente tarea: AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS. No iniciada.
+================================================================================

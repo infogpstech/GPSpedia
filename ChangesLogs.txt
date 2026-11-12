@@ -156,3 +156,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Se conserva sanitizeHtmlContent para el contenido enriquecido de descripción, solución y prevención.
 - Services/Test/PysStoredXss.js: 10 escenarios de allowlist, payloads/esquemas/hosts/rutas inválidos y contratos de sinks DOM.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-083 — ALMACENAMIENTO Y RECUPERACIÓN DE IMÁGENES PyS
+- Services/feedback.js: validación server-side de Data URL/Base64, MIME JPEG/PNG/WebP, firma binaria y tamaño máximo 3 MB; Blob y extensión conservan el formato real.
+- Services/feedback.js: carpeta «Problemas y Soluciones» resuelta como hija directa de la raíz autorizada Cortes; duplicados equivalentes se rechazan.
+- Services/feedback.js: no se amplía ACL; se verifica que el archivo conserve el acceso heredado. Se normalizan referencias de imagen en getPysData.
+- Services/feedback.js: al fallar Sheets se comprueban referencias antes de compensar; no se elimina un archivo referenciado. Los estados ambiguos/fallos de compensación conservan metadata RECOVERY_REQUIRED; la escritura parcial confirmada se recupera como LINKED.
+- ui.js: selector JPEG/PNG/WebP, límite cliente 3 MB, FileReader con load/error/abort y captura de excepciones; no se invoca addProblem si la imagen no se pudo leer.
+- Services/Test/PysImageStorageRecovery.js: suite de 22 escenarios para validación, carpeta, permisos, almacenamiento, recuperación, compensación y contratos UI.
+================================================================================

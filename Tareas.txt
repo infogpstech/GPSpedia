@@ -1063,3 +1063,22 @@ Validación local: PysStoredXss 10/10 PASS en harness V8 adaptado; parsing de he
 Beta pendiente: payloads HTML/SVG/comillas/onerror/onload, javascript:, data:, hosts falsos y URL embed manipulada en DOM/navegador real; comprobar que no se ejecuta código al renderizar ni al pulsar vídeo y que los enlaces YouTube legítimos funcionan. No se modificaron servicios ni datos productivos.
 Siguiente tarea: AUG-083 — Completar almacenamiento y recuperación de imágenes PyS. No iniciada.
 ================================================================================
+
+
+================================================================================
+AUG-083 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. Tarea: almacenamiento y recuperación de imágenes PyS. Origen H-AUD-011-003.
+
+Implementación:
+- FEEDBACK resuelve y verifica la raíz autorizada Cortes mediante DRIVE_FOLDER_ID y crea/reutiliza Problemas y Soluciones únicamente como hija directa. Las carpetas equivalentes duplicadas se rechazan.
+- El backend valida Data URL/Base64 canónico, MIME allowlist JPEG/PNG/WebP, firma binaria real y tamaño máximo de 3 MB antes de crear recursos.
+- El Blob conserva MIME y extensión reales. Se elimina la conversión forzada a JPEG.
+- La imagen hereda los permisos de la carpeta; no se llama setSharing ni se añade ANYONE_WITH_LINK. El backend compara el acceso/permisos efectivos del archivo con los de la carpeta.
+- Si falla la escritura, se consultan todas las referencias antes de compensar. Solo se envía a papelera cuando se confirma que no hay referencias. Si la lectura es ambigua, hay otro registro referenciando el archivo o falla la compensación, el archivo se conserva y se marca RECOVERY_REQUIRED.
+- getPysData normaliza IDs y referencias Drive históricas a una URL canónica.
+- UI limita formatos/tamaño y captura error/abort/excepción de FileReader dentro del flujo de envío; no llama addProblem ni confirma éxito si la lectura o carga falla.
+
+Validación local: Services/Test/PysImageStorageRecovery.js, 22/22 PASS en harness V8 adaptado con dobles de Drive/Spreadsheet y adaptadores Base64/VM. Parsing V8 de feedback.js, validador, resolución de carpeta, handler, submit PyS y módulo de pruebas: PASS. Node CLI literal, Apps Script real, Drive/Spreadsheet real, ACL efectiva y navegador real no ejecutados; quedan para Beta aislada.
+
+Siguiente tarea: AUG-084 — garantizar esquema, unicidad e idempotencia de alta PyS. No iniciada en esta iteración.
+================================================================================

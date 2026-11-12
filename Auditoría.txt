@@ -808,3 +808,22 @@ Validación local:
 
 Límites: Node CLI no ejecutado en esta sesión. No se ejecutaron pruebas DOM/navegador real, CSP ni reproducción de YouTube. No se modificaron backend, endpoints, permisos, deployments ni datos productivos. La validación de navegador se difiere a Beta aislada.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-011-003 / AUG-083 — 2026-11-12
+Estado: CORREGIDO EN FUENTES; integración Drive/Spreadsheet y ACL real pendiente de Beta.
+
+Hallazgo: la carga PyS buscaba globalmente «Problemas y Soluciones» y podía seleccionar una carpeta homónima ajena; creaba la carpeta en la raíz si no existía. El contenido se decodificaba sin allowlist/firma/límite y se guardaba siempre como JPEG. Un fallo de escritura posterior podía dejar un archivo huérfano o provocar eliminación sin comprobar referencias. El FileReader del formulario no manejaba error/abort y podía impedir la recuperación del envío.
+
+Corrección:
+- Se utiliza getCortesRootFolder() para validar DRIVE_FOLDER_ID, nombre Cortes y ubicación directa bajo la raíz de Drive. findOrCreateSubFolder() localiza/crea Problemas y Soluciones exclusivamente como hija directa; duplicados equivalentes se rechazan.
+- validatePysImageDataUrl_ exige Data URL/Base64 canónico, MIME JPEG/PNG/WebP, firma binaria coincidente y tamaño entre 1 byte y 3 MB. La validación ocurre antes de crear recursos.
+- El Blob se crea con MIME y extensión reales. La referencia se almacena como URL Drive canónica.
+- El archivo conserva la política de acceso heredada de la carpeta. No se modifica ACL ni se añade ANYONE_WITH_LINK; se compara el acceso y permiso efectivos del archivo con los de la carpeta.
+- Si Sheets falla, findPysImageReferences_ revisa las referencias antes de compensar. Solo se envía a papelera cuando no hay referencias verificables. Si existe una referencia ajena/ambigua, falla la lectura o falla la compensación, el archivo se conserva y se marca RECOVERY_REQUIRED. Si la fila quedó persistida pese a fallo parcial, se recupera el éxito y se marca LINKED.
+- getPysData normaliza IDs/URLs Drive históricos a URL canónica y rechaza referencias Drive malformadas y esquemas no HTTPS.
+- UI limita formatos y tamaño, gestiona load/error/abort/excepción de FileReader y restaura el botón; no envía addProblem sin Data URL válida.
+
+Validación local: 22/22 escenarios PASS en harness V8 adaptado con dobles de Drive/Spreadsheet; parsing V8 de backend, handler y submit PyS PASS. No se ejecutó Node CLI literal, Apps Script real, Drive/Spreadsheet real, ACL efectiva ni navegador real. Estas verificaciones quedan para Beta aislada.
+================================================================================

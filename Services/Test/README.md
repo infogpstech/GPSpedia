@@ -959,3 +959,20 @@ node "$TEST_TMP"
 ```
 
 La suite contiene 10 escenarios sobre IDs y URLs HTTPS de YouTube permitidos, rutas y hosts falsos, esquemas peligrosos, parámetros ambiguos, construcción canónica del iframe, uso de `textContent` en tarjetas/título/colaborador, conservación de `sanitizeHtmlContent()` para descripción/solución/prevención y ausencia de interpolación de `item.Video` en HTML. Es una prueba de lógica y contratos estáticos; no sustituye el renderizado DOM ni la reproducción real en navegador.
+
+
+## AUG-083 — Almacenamiento y recuperación de imágenes PyS
+
+Ejecutar desde la raíz del checkout con Node.js:
+
+```bash
+set -e
+TEST_TMP=Services/Test/PysImageStorageRecovery.mjs
+cp Services/Test/PysImageStorageRecovery.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite contiene 22 escenarios de lógica/contrato con dobles locales: JPEG/PNG/WebP y firmas binarias, Base64 canónico, límite 3 MB, carpeta PyS bajo la raíz autorizada Cortes, carpeta ausente/existente/duplicada, raíz incorrecta, herencia de permisos, normalización de referencias Drive, escritura y MIME reales, fallo Drive, fallo Sheets/flush, detección de referencias, compensación segura, metadata RECOVERY_REQUIRED y recuperación mediante getPysData. También comprueba los límites y los errores/abortos de FileReader en la UI.
+
+La suite no invoca DriveApp, Spreadsheet ni Apps Script reales. En esta iteración se ejecutaron sus 22 escenarios en un harness V8 adaptado con dobles y adaptadores; el comando Node CLI literal no se ejecutó. La integración real, ACL efectiva y renderizado de imágenes quedan para Beta aislada.

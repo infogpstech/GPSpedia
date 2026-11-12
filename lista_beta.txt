@@ -642,3 +642,48 @@ PRUEBAS EN NAVEGADOR/DOM AISLADO (NO PRODUCCIÓN):
 
 No declarar PASS sin inspección del DOM y verificación de ausencia de ejecución. No usar cuentas, videos, carpetas o datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-083 — ALMACENAMIENTO Y RECUPERACIÓN DE IMÁGENES PyS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar el HEAD sincronizado antes de probar.
+
+EJECUCIÓN EN PROYECTO APPS SCRIPT, SPREADSHEET Y DRIVE AISLADOS (NUNCA PRODUCCIÓN):
+1. Ejecutar la suite local:
+   ```bash
+   set -e
+   TEST_TMP=Services/Test/PysImageStorageRecovery.mjs
+   cp Services/Test/PysImageStorageRecovery.js "$TEST_TMP"
+   trap 'rm -f "$TEST_TMP"' EXIT
+   node "$TEST_TMP"
+   ```
+2. Configurar una copia Beta de FEEDBACK con Spreadsheet de prueba y un DRIVE_FOLDER_ID de prueba que apunte a una carpeta «Cortes» hija directa de la raíz de Drive. No usar el ID productivo. Confirmar que getCortesRootFolder rechaza ID incorrecto, nombre distinto o carpeta que no sea hija directa de la raíz.
+3. Probar carpeta «Problemas y Soluciones» ausente, existente y duplicada dentro de Cortes. Confirmar creación/reutilización solo como hija directa; ante duplicados debe fallar sin elegir ni modificar una carpeta homónima externa.
+4. Subir JPEG, PNG y WebP válidos. Comprobar bytes, MIME real, extensión y URL canónica; confirmar que el archivo se crea dentro de Cortes/Problemas y Soluciones y que no se fuerza JPEG.
+5. Probar MIME falso, firma no coincidente, SVG/GIF, Base64 inválido/no canónico, imagen vacía, límite exacto de 3 MB y 3 MB + 1. Los inválidos no deben crear archivo ni fila.
+6. Probar lectura FileReader exitosa, error, abort y excepción de readAsDataURL. Si falla, no debe invocarse addProblem; el botón debe restablecerse y el formulario permitir reintento.
+7. Verificar el acceso heredado del archivo frente a la carpeta. No añadir permisos ANYONE_WITH_LINK ni ampliar ACL; comprobar que los usuarios autorizados pueden visualizar la imagen y los no autorizados siguen sin acceso.
+8. Simular/inducir fallo de createFile, fallo de appendRow, fallo de flush después de append y fallo al leer referencias. Confirmar que un archivo solo se envía a papelera después de comprobar que ninguna fila PyS lo referencia. Si el estado es ambiguo o la compensación falla, conservar el archivo y verificar metadata «RECOVERY_REQUIRED».
+9. Crear un registro que referencia el mismo fileId desde otra fila y provocar un fallo posterior. Confirmar que la compensación no elimina ese archivo.
+10. Consultar getPysData con IDs, URLs Drive canónicas, URLs históricas googleusercontent y referencias históricas válidas. Abrir tarjeta y modal PyS y confirmar carga de imagen; los valores Drive malformados o esquemas inseguros no deben generar una fuente de imagen.
+11. Verificar filas, archivos, MIME, ACL y estado antes/después. No declarar PASS sin inspección real de Drive/Spreadsheet y visualización con las cuentas autorizadas.
+
+No desplegar a producción, no usar carpetas/hojas productivas y no modificar ACL globales.
+================================================================================
