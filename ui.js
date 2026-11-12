@@ -3595,7 +3595,15 @@ function restorePrivilegedModalTemplates_() {
     });
 }
 
-function closeReplacedImagesLightbox_() {
+const REPLACED_IMAGES_LIGHTBOX_HISTORY_ID_ = 'replaced-images-lightbox';
+
+function closeReplacedImagesLightbox_(fromHistory = false) {
+    const historyManager = window.overlayHistory;
+    if (!fromHistory && historyManager &&
+        historyManager.getStack().includes(REPLACED_IMAGES_LIGHTBOX_HISTORY_ID_)) {
+        historyManager.close(REPLACED_IMAGES_LIGHTBOX_HISTORY_ID_);
+        return;
+    }
     if (replacedImagesLightboxKeyHandler_) {
         document.removeEventListener('keydown', replacedImagesLightboxKeyHandler_);
         replacedImagesLightboxKeyHandler_ = null;
@@ -3648,7 +3656,7 @@ function resetSessionUi_() {
     window.adminServiceMetricsUnsubscribe = null;
     window.adminListenersAttached = false;
     window.triggerAdminPanelPing = null;
-    closeReplacedImagesLightbox_();
+    closeReplacedImagesLightbox_(true);
     resetRoleScopedViews_();
     closeSideMenu(true);
 
@@ -5353,7 +5361,13 @@ export async function openReplacedImagesModal() {
 
     const openLightbox = (rep) => {
         if (!isCurrentRequest() || !lightbox || !lightboxImage) return;
-        closeLightbox();
+        const historyManager = window.overlayHistory;
+        if (historyManager &&
+            !historyManager.getStack().includes(REPLACED_IMAGES_LIGHTBOX_HISTORY_ID_)) {
+            historyManager.register(REPLACED_IMAGES_LIGHTBOX_HISTORY_ID_, () => {
+                closeReplacedImagesLightbox_(true);
+            });
+        }
         lightboxImage.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_LARGE);
         lightboxImage.alt = rep.nombre_archivo || 'Imagen de Google Drive';
         lightboxImage.onerror = () => {
@@ -5650,7 +5664,6 @@ export async function openReplacedImagesModal() {
         replacedImagesModalGeneration_ += 1;
         cachedReplaced = [];
         folders = [];
-        closeLightbox();
         if (listContainer) listContainer.replaceChildren();
         modal.style.display = 'none';
     };
