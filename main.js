@@ -651,7 +651,7 @@ async function initializeApp() {
 
     // Hamburger menu listeners
     document.getElementById('hamburger-btn').addEventListener('click', ui.openSideMenu);
-    document.getElementById('menu-overlay').addEventListener('click', ui.closeSideMenu);
+    document.getElementById('menu-overlay').addEventListener('click', () => ui.closeSideMenu());
 
     // Click on logo to go home
     document.querySelectorAll('.app-logo').forEach(logo => {
@@ -668,12 +668,10 @@ async function initializeApp() {
         if (btn) {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (section === 'cortes') {
-                    navigation.irAPaginaPrincipal();
-                } else {
-                    ui.mostrarSeccion(section);
-                }
-                ui.closeSideMenu();
+                ui.closeSideMenuAndRun(() => {
+                    if (section === 'cortes') navigation.irAPaginaPrincipal();
+                    else ui.mostrarSeccion(section);
+                });
             });
         }
     });
