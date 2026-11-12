@@ -346,6 +346,63 @@ async function initializeApp() {
         });
     }
 
+    function getTopmostVisibleOverlay_(state) {
+        const candidates = [];
+        const add = (element, kind, close, order = 0) => {
+            if (!element) return;
+            const style = window.getComputedStyle(element);
+            const zIndex = Number.parseInt(style.zIndex, 10);
+            candidates.push({
+                element, kind, close,
+                zIndex: Number.isFinite(zIndex) ? zIndex : 0,
+                order,
+                domOrder: Array.from(document.querySelectorAll('body *')).indexOf(element)
+            });
+        };
+
+        const sideMenu = document.getElementById('side-menu');
+        if (sideMenu && sideMenu.classList.contains('open')) {
+            add(sideMenu, 'side-menu', () => ui.closeSideMenu(true));
+        }
+
+        const lightbox = document.getElementById('lightbox');
+        if (lightbox && lightbox.classList.contains('visible')) {
+            add(lightbox, 'lightbox', () => window.cerrarLightbox(true));
+        }
+
+        const termsModal = document.getElementById('terms-modal');
+        if (termsModal && termsModal.style.display === 'flex') {
+            add(termsModal, 'terms', () => window.history.pushState(state, ''));
+        }
+
+        const stack = overlayHistory.getStack();
+        const stackOrder = new Map(stack.map((id, index) => [id, index]));
+        Array.from(document.querySelectorAll('.info-modal')).forEach(element => {
+            if (!isOverlayVisible_(element)) return;
+            const id = element.dataset.gpOverlayHistoryId;
+            const order = stackOrder.has(id) ? stackOrder.get(id) : stack.length;
+            add(element, 'info-modal', () => {
+                if (id && stackOrder.has(id)) overlayHistory.handlePopState(state);
+                else {
+                    element.style.display = 'none';
+                    element.classList.remove('visible');
+                }
+            }, order);
+        });
+
+        const detail = document.getElementById('modalDetalle');
+        if (detail && detail.classList.contains('visible')) {
+            add(detail, 'detail', null);
+        }
+
+        candidates.sort((a, b) =>
+            b.zIndex - a.zIndex ||
+            b.order - a.order ||
+            b.domOrder - a.domOrder
+        );
+        return candidates[0] || null;
+    }
+
     const overlayObserver = new MutationObserver(registerVisibleOverlays_);
     overlayObserver.observe(document.body, {
         childList: true,
@@ -359,51 +416,16 @@ async function initializeApp() {
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};
-        if (overlayHistory.getStack().length > 0 || Object.prototype.hasOwnProperty.call(state, overlayHistoryStateKey)) {
-            overlayHistory.handlePopState(state);
+        const topOverlay = getTopmostVisibleOverlay_(state);
+        if (topOverlay && topOverlay.kind !== 'detail') {
+            topOverlay.close();
             return;
         }
         const searchInput = document.getElementById('searchInput');
 
-        // Impedir cualquier retroceso o acción de popstate si el modal de aviso inicial está activo
-        const termsModal = document.getElementById('terms-modal');
-        if (termsModal && termsModal.style.display === 'flex') {
-            history.pushState(state, '');
-            return;
-        }
-
-        // Phase 2.1.5: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
-        // Se reordena el listener para asegurar que cualquier modal u overlay se cierre
-        // antes de intentar restaurar estados de búsqueda o secciones.
-
-        // 1. Cerrar Side Menu si está abierto
-        const sideMenu = document.getElementById('side-menu');
-        if (sideMenu && sideMenu.classList.contains('open')) {
-            ui.closeSideMenu(true);
-            return;
-        }
-
-        // 2. Cerrar Lightbox si está abierto
-        const lightbox = document.getElementById('lightbox');
-        if (lightbox && lightbox.classList.contains('visible')) {
-            window.cerrarLightbox(true); // Pasar true para evitar bucle de back()
-            return;
-        }
-
-        // 3. Cerrar Modales de Información (About, Contact, FAQ, etc.)
-        const infoModals = document.querySelectorAll('.info-modal');
-        let overlayClosed = false;
-        infoModals.forEach(modal => {
-            if (modal.style.display === 'flex') {
-                modal.style.display = 'none';
-                overlayClosed = true;
-            }
-        });
-        if (overlayClosed) return;
-
-        // 4. Cerrar Modal de Detalles
+        // El detalle solo se procesa cuando es la capa visual superior.
         const modalDetalle = document.getElementById('modalDetalle');
-        if (modalDetalle && modalDetalle.classList.contains('visible')) {
+        if (topOverlay && topOverlay.kind === 'detail' && modalDetalle && modalDetalle.classList.contains('visible')) {
             // Detener y limpiar videos antes de cerrar o restaurar modal previo
             if (modalDetalle.dataset.modalType === 'pys') {
                 const iframes = modalDetalle.querySelectorAll('iframe');
