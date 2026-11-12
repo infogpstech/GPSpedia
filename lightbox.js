@@ -14,6 +14,7 @@ let isMultiTouch = false;
 let isZoomedOnStart = false;
 let ignoreNextClick = false;
 let lightboxInitialized = false;
+let previousViewportContent = null;
 
 /* TAREA 6 (B32): NAVEGACIÓN DEL CARRUSEL DE CABLES DE ALIMENTACIÓN DENTRO DEL LIGHTBOX */
 /**
@@ -210,8 +211,11 @@ function abrirLightbox(url, imgId = 'lightboxImg', context = null) {
     lightboxImg.src = "";
     lightboxImg.src = url;
 
-    // Permitir zoom al abrir el lightbox
+    // Permitir zoom al abrir el lightbox y conservar la política de la página.
     if (viewport) {
+        if (!lightbox.classList.contains('visible')) {
+            previousViewportContent = viewport.getAttribute('content') || 'width=device-width, initial-scale=1.0';
+        }
         viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
     }
 
@@ -236,9 +240,11 @@ function cerrarLightbox(isFromPopState = false) {
     currentLightboxContext = null;
     actualizarBotonesLightbox();
 
-    // 1. Forzar restauración de escala visual 1.0
+    // 1. Restaurar la configuración original del viewport de esta página.
+    const restoreViewportContent = previousViewportContent || 'width=device-width, initial-scale=1.0';
+    previousViewportContent = null;
     if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        viewport.setAttribute('content', restoreViewportContent);
     }
 
     // 2. Limpiar estilos agresivamente para evitar que el zoom persista en la imagen
@@ -256,7 +262,7 @@ function cerrarLightbox(isFromPopState = false) {
     // 4. Restauración final y actualización de layout
     setTimeout(() => {
         if (viewport) {
-            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            viewport.setAttribute('content', restoreViewportContent);
         }
         if (typeof window.handleViewportChange === 'function') {
             window.handleViewportChange();
