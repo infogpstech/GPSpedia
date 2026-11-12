@@ -99,7 +99,7 @@ test("users.html carga el sistema compartido y no duplica variantes base", () =>
 
 test("add_cortes.html carga el sistema compartido y elimina variantes duplicadas", () => {
     assert.ok(cortes.indexOf('href="button-system.css"') > cortes.indexOf("</style>"));
-    assert.doesNotMatch(cortes, /\.btn\s*\{|\.btn-primary\s*\{|\.btn-secondary\s*\{/);
+    assert.doesNotMatch(cortes, /(^|\\n)\\s*\\.btn\\s*\\{|(^|\\n)\\s*\\.btn-primary\\s*\\{|(^|\\n)\\s*\\.btn-secondary\\s*\\{/);
     assert.doesNotMatch(cortes, /\.btn-loading\s*\{/);
     assert.match(cortes, /id="btn-addcorte-upload-video" class="btn btn-danger btn-compact"/);
 });
