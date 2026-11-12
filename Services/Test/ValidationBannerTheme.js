@@ -2,7 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 
 function extractRule(css, selector) {
-    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = selector.replaceAll(".", "\\.");
     const match = css.match(new RegExp(escaped + "\\s*\\{([^}]*)\\}"));
     assert(match, "No se encontró la regla CSS: " + selector);
     return match[1];
@@ -11,7 +11,7 @@ function extractRule(css, selector) {
 function extractTokens(css, selector) {
     const block = extractRule(css, selector);
     return Object.fromEntries(
-        [...block.matchAll(/(--[a-z-]+)\\s*:\\s*([^;]+);/g)]
+        [...block.matchAll(/(--[a-z-]+)\s*:\s*([^;]+);/g)]
             .map(match => [match[1], match[2].trim()])
     );
 }
@@ -81,37 +81,37 @@ export function runValidationBannerThemeTests({ css, main, ui }) {
     });
 
     test("el banner usa el sistema body.dark-mode y no el atributo inexistente data-theme", () => {
-        assert.match(css, /body\\.dark-mode\\s*\\{/);
-        assert.doesNotMatch(css, /\\[data-theme\\s*=\\s*["']dark["']\\]\\s*\\.validation-banner/);
-        assert.match(main, /document\\.body\\.classList\\.add\\(['"]dark-mode['"]\\)/);
-        assert.match(main, /document\\.body\\.classList\\.remove\\(['"]dark-mode['"]\\)/);
+        assert.match(css, /body\.dark-mode\s*\{/);
+        assert.doesNotMatch(css, /\[data-theme\s*=\s*["']dark["']\]\s*\.validation-banner/);
+        assert.match(main, /document\.body\.classList\.add\(['"]dark-mode['"]\)/);
+        assert.match(main, /document\.body\.classList\.remove\(['"]dark-mode['"]\)/);
     });
 
     test("el banner utiliza fondo, borde y texto semánticos", () => {
-        assert.match(banner, /background:\\s*var\\(--validation-bg\\)/);
-        assert.match(banner, /border:\\s*1px solid var\\(--validation-border\\)/);
-        assert.match(banner, /color:\\s*var\\(--validation-text\\)/);
+        assert.match(banner, /background:\s*var\(--validation-bg\)/);
+        assert.match(banner, /border:\s*1px solid var\(--validation-border\)/);
+        assert.match(banner, /color:\s*var\(--validation-text\)/);
         assert.doesNotMatch(banner, /--text-primary/);
     });
 
     test("los botones principales y secundarios utilizan pares de tokens propios", () => {
-        assert.match(primary, /background:\\s*var\\(--validation-primary-bg\\)/);
-        assert.match(primary, /color:\\s*var\\(--validation-primary-text\\)/);
-        assert.match(secondary, /background:\\s*var\\(--validation-secondary-bg\\)/);
-        assert.match(secondary, /color:\\s*var\\(--validation-secondary-text\\)/);
+        assert.match(primary, /background:\s*var\(--validation-primary-bg\)/);
+        assert.match(primary, /color:\s*var\(--validation-primary-text\)/);
+        assert.match(secondary, /background:\s*var\(--validation-secondary-bg\)/);
+        assert.match(secondary, /color:\s*var\(--validation-secondary-text\)/);
         assert.doesNotMatch(secondary, /--text-primary/);
     });
 
     test("el campo de entrada y su placeholder usan tokens de tema", () => {
-        assert.match(input, /background:\\s*var\\(--validation-input-bg\\)/);
-        assert.match(input, /border:\\s*1px solid var\\(--validation-input-border\\)/);
-        assert.match(input, /color:\\s*var\\(--validation-text\\)/);
-        assert.match(css, /\\.validation-input::placeholder\\s*\\{[^}]*color:\\s*var\\(--validation-muted\\)/);
+        assert.match(input, /background:\s*var\(--validation-input-bg\)/);
+        assert.match(input, /border:\s*1px solid var\(--validation-input-border\)/);
+        assert.match(input, /color:\s*var\(--validation-text\)/);
+        assert.match(css, /\.validation-input::placeholder\s*\{[^}]*color:\s*var\(--validation-muted\)/);
     });
 
     test("los controles conservan un indicador de foco visible en ambos temas", () => {
-        assert.match(css, /\\.validation-btn:focus-visible[\\s\\S]*?outline:\\s*2px solid var\\(--validation-focus\\)/);
-        assert.match(css, /\\.validation-input:focus-visible/);
+        assert.match(css, /\.validation-btn:focus-visible[\s\S]*?outline:\s*2px solid var\(--validation-focus\)/);
+        assert.match(css, /\.validation-input:focus-visible/);
     });
 
     test("el texto del banner alcanza contraste WCAG AA en ambos temas", () => {
