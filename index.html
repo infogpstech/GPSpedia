@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="button-system.css">
 </head>
 <body>
 <!-- Notificación Toast -->
@@ -60,7 +61,7 @@
         <a id="side-menu-changelog-link" class="side-menu-changelog-a">Registro de cambios</a>
     </div>
     <div style="padding: 20px;">
-        <button id="side-menu-logout-button" style="width: 100%; background: #dc3545; color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">Cerrar Sesión</button>
+        <button id="side-menu-logout-button" class="btn btn-danger btn-block">Cerrar Sesión</button>
     </div>
 </div>
 
@@ -83,7 +84,7 @@
                 <label for="password">Contraseña</label>
                 <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
-            <button type="submit">Acceder</button>
+            <button type="submit" class="btn btn-primary btn-block">Acceder</button>
             <p id="login-error" style="color: red; display: none;"></p>
             <div style="text-align: center; margin-top: 20px;">
                 <small style="color: var(--text-disabled);">v2.2.5</small>
@@ -118,8 +119,8 @@
           </div>
           <div class="header-controls">
               <!-- TAREA 20: Texto exacto 'Instala la app' -->
-              <button id="install-button" style="display: none;">Instala la app</button>
-              <button id="logout-button" style="display: none;">Cerrar Sesión</button>
+              <button id="install-button" class="btn btn-success btn-compact" style="display: none;">Instala la app</button>
+              <button id="logout-button" class="btn btn-danger btn-compact" style="display: none;">Cerrar Sesión</button>
           </div>
       </div>
 
@@ -573,7 +574,7 @@
         </div>
         <div class="terms-footer">
             <p id="terms-error" role="alert" aria-live="polite"></p>
-            <button id="btn-accept-terms">Aceptar Términos</button>
+            <button id="btn-accept-terms" class="btn btn-primary btn-block">Aceptar Términos</button>
         </div>
     </div>
 </div>
@@ -1038,7 +1039,7 @@
             </div>
         </div>
 
-        <button id="ios-install-btn-ok" style="background: var(--accent-color); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.95em;">Entendido</button>
+        <button id="ios-install-btn-ok" class="btn btn-primary btn-block">Entendido</button>
     </div>
 </div>
 
