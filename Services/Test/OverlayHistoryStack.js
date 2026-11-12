@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createOverlayHistoryManager, overlayHistoryStateKey } from '../../overlayHistory.js';
+import { createOverlayHistoryManager, overlayHistoryStateKey, selectTopmostOverlay } from '../../overlayHistory.js';
 
 function createFakeHistory() {
     const entries = [{ state: { level: 'catalogo', marker: 'preserved' } }];
@@ -226,8 +226,8 @@ test('App Shell selecciona la capa visible por z-index y orden de apertura', () 
     assert.ok(selectorStart >= 0 && selectorEnd > selectorStart);
     const selector = mainSource.slice(selectorStart, selectorEnd);
     assert.match(selector, /getComputedStyle\(element\)/);
-    assert.match(selector, /b\.zIndex - a\.zIndex/);
-    assert.match(selector, /b\.order - a\.order/);
+    assert.match(selector, /selectTopmostOverlay\(candidates\)/);
+    assert.match(mainSource, /selectTopmostOverlay/);
     for (const id of ['side-menu', 'lightbox', 'terms-modal', 'modalDetalle']) {
         assert.ok(selector.includes(id), 'Falta capa ' + id);
     }
@@ -252,4 +252,17 @@ test('el acuerdo legal se coloca por encima del aviso obligatorio cuando se abre
     assert.match(block, /termsNotice\.style\.display === 'flex' \? '3200' : ''/);
 });
 
-console.log('OverlayHistoryStack:', passed + '/17 PASS');
+
+test('la capa superior respeta z-index y desempata por orden de apertura', () => {
+    const candidates = [
+        { id: 'parent', zIndex: 2100, order: 0, domOrder: 8 },
+        { id: 'opened-later', zIndex: 2100, order: 2, domOrder: 1 },
+        { id: 'lightbox', zIndex: 2200, order: 0, domOrder: 2 },
+        { id: 'side-menu', zIndex: 2500, order: 0, domOrder: 0 }
+    ];
+    assert.equal(selectTopmostOverlay(candidates).id, 'side-menu');
+    assert.equal(selectTopmostOverlay(candidates.slice(0, 2)).id, 'opened-later');
+    assert.equal(selectTopmostOverlay([]), null);
+});
+
+console.log('OverlayHistoryStack:', passed + '/18 PASS');
