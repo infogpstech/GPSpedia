@@ -260,7 +260,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 - 2026-11-08 — AUD-T-008: nuevas AUG-072/AUG-073; adendas AUG-049/AUG-052. Inventario: 72 IDs únicos dentro de AUG-001 a AUG-073; AUG-015 continúa ausente.
 
 ================================================================================
-- **Estado:** EN PROGRESO; revisión de markup, estado navigator.onLine y animación offline iniciada.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; semántica accesible, descripción precisa de navigator.onLine y prefers-reduced-motion implementados; suite local adaptada aprobada y validación real de tecnologías de asistencia/conectividad pendiente.
 
 ### Adenda derivada de AUD-T-009 — AUG-052
 - Completar el grafo de módulos estáticos que debe estar disponible offline. Además de VinDifferentialEngine.js, incluir youtubeUpload.js, importado por ui.js y add_cortes.html, y verificar las dependencias alcanzables desde main.js, add_cortes.html y users.html.
