@@ -1998,7 +1998,7 @@ const PYS_IMAGE_EXTENSIONS = Object.freeze({
 });
 
 function validatePysImageDataUrl_(value) {
-    if (typeof value !== "string") throw new Error("La imagen del problema es obligatoria y debe enviarse como Data URL.");
+    if (typeof value !== "string" || !value.trim()) throw new Error("La imagen del problema es obligatoria y debe enviarse como Data URL.");
     const match = value.trim().match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/i);
     if (!match) throw new Error("La imagen debe ser JPEG, PNG o WebP codificada en Base64.");
     const mimeType = match[1].toLowerCase();
