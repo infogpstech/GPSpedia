@@ -2858,7 +2858,9 @@ function findPendingVideoApproval_(sheet, itemId, options) {
         throw new Error("El registro no corresponde a una solicitud de aprobación de vídeo.");
     }
     const allowApprovedRetry = options && options.allowApprovedRetry === true;
-    if (videoData.status !== "pending" && !(allowApprovedRetry && videoData.status === "approved")) {
+    const isPending = videoData.status === "pending";
+    const isApprovedRetry = allowApprovedRetry && videoData.status === "approved";
+    if (!isPending && !isApprovedRetry) {
         throw new Error("La solicitud ya no está pendiente; no se permiten transiciones repetidas.");
     }
     const videoId = String(videoData.videoId || "").trim();
@@ -2870,11 +2872,28 @@ function findPendingVideoApproval_(sheet, itemId, options) {
     if (!["corte", "pys", "tutorial"].includes(String(videoData.contentType || ""))) {
         throw new Error("La solicitud contiene un tipo de contenido desconocido.");
     }
-    if (!String(videoData.referenceId || "").trim()) throw new Error("La solicitud no tiene un destino guardado para asociar el vídeo.");
+    const referenceId = String(videoData.referenceId || "").trim();
+    if (!referenceId) throw new Error("La solicitud no tiene un destino guardado para asociar el vídeo.");
+    if (String(matches[0].row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() !== referenceId) {
+        throw new Error("El destino de la fila no coincide con el destino declarado en la solicitud de vídeo.");
+    }
+    if (!String(videoData.title || "").trim()) throw new Error("La solicitud no contiene un título válido.");
     if (videoData.opVideoId && !/^[A-Za-z0-9_-]{20,80}$/.test(String(videoData.opVideoId))) {
         throw new Error("La solicitud contiene un identificador de operación inválido.");
     }
-    return { rowIndex: matches[0].rowIndex, row: matches[0].row, videoData: videoData };
+
+    const row = matches[0].row;
+    const rowStatus = String(row[COLS_FEEDBACKS.Respuesta - 1] || "").trim();
+    const rawResolved = row[COLS_FEEDBACKS["Se resolvio"] - 1];
+    const rowResolved = rawResolved === true || String(rawResolved || "").trim().toLowerCase() === "true";
+    if (isPending && (rowStatus !== "pending" || rowResolved)) {
+        throw new Error("El estado de la fila no coincide con una solicitud de vídeo pendiente.");
+    }
+    if (isApprovedRetry && (rowStatus !== "approved" || !rowResolved ||
+        String(row[COLS_FEEDBACKS.Responde - 1] || "").trim() !== String(videoData.approvedBy || "").trim())) {
+        throw new Error("El estado de la fila no coincide con una aprobación de vídeo confirmada.");
+    }
+    return { rowIndex: matches[0].rowIndex, row: row, videoData: videoData };
 }
 
 
