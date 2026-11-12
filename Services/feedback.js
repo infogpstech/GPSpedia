@@ -2201,8 +2201,7 @@ function handleAddProblem(payload) {
             "fileId=" + imageFileId,
             "mimeType=" + image.mimeType,
             "sizeBytes=" + image.sizeBytes
-        ].join("
-"));
+        ].join("\n"));
         assertPysImageFolderPermissions_(imageFile, folder);
 
         imageUrl = "https://drive.google.com/file/d/" + imageFileId + "/view";
@@ -2233,8 +2232,7 @@ function handleAddProblem(payload) {
                 "fileId=" + imageFileId,
                 "mimeType=" + image.mimeType,
                 "sizeBytes=" + image.sizeBytes
-            ].join("
-"));
+            ].join("\n"));
         } catch (metadataError) {
             console.warn("No se pudo actualizar el estado auxiliar de la imagen PyS:", metadataError);
         }
