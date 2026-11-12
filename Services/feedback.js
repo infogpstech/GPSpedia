@@ -2878,6 +2878,7 @@ function findPendingVideoApproval_(sheet, itemId, options) {
         throw new Error("El destino de la fila no coincide con el destino declarado en la solicitud de vídeo.");
     }
     if (!String(videoData.title || "").trim()) throw new Error("La solicitud no contiene un título válido.");
+    if (!String(videoData.createdByUserId || "").trim()) throw new Error("La solicitud no identifica al usuario que envió el vídeo.");
     if (videoData.opVideoId && !/^[A-Za-z0-9_-]{20,80}$/.test(String(videoData.opVideoId))) {
         throw new Error("La solicitud contiene un identificador de operación inválido.");
     }
