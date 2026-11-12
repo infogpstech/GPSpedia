@@ -514,7 +514,7 @@ trap 'rm -f "$TEST_TMP"' EXIT
 node "$TEST_TMP"
 ```
 
-La suite cubre 22 escenarios de UI, FileReader, MIME/Base64/firma/tamaño, MIME/extensión de Drive, ACL, compatibilidad Data URL, idempotencia y rollback. Registrar la salida real; los dobles locales no sustituyen Drive/Spreadsheet reales.
+La suite cubre 24 escenarios de UI, FileReader, MIME/Base64/firma/tamaño, MIME/extensión de Drive, ACL, compatibilidad Data URL, idempotencia y rollback. Registrar la salida real; los dobles locales no sustituyen Drive/Spreadsheet reales.
 
 BETA AISLADA — no usar cuentas, carpetas ni datos productivos:
 1. Enviar sugerencias sin imagen y con JPEG, PNG y WebP válidos; confirmar registro en Feedbacks, MIME, extensión, hash, tamaño, imageFileId y URL canónica.
