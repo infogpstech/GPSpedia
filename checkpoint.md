@@ -1578,3 +1578,18 @@ Archivos modificados: ui.js, Services/Test/DescriptiveContentRendering.js, Servi
 Publicación secuencial en GPSpedia2.2.5_work mediante operaciones condicionadas a SHA por archivo. Último commit de escritura confirmado: d604ae97eb58e463b46b7d9f60f1fb0817911d7f. La comparación de ramas mantiene GPSpedia2.2.5_work ahead y 0 commits behind; base GPSpedia2.2.5 sin modificaciones.
 Siguiente: recuperar el primer requisito pendiente posterior a AUG-096 en el backlog y comprobar dependencias antes de implementarlo.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-097 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Implementación: api-config.js define gpsepedia_rich_text_mode con strict como valor predeterminado y advanced como opción; persistencia local por navegador, valores inválidos y errores vuelven a strict, setter exige rol Desarrollador. rich-text.js cambia allow-list, CSS permitido, controles de toolbar y comportamiento de listas según el modo; refreshRichTextToolbars actualiza controles abiertos. index.html/ui.js exponen el selector únicamente desde el panel de Desarrollador. Backend conserva sanitización autoritativa segura, independiente de la preferencia local.
+Caché: service-worker.js actualizado a gpsepedia-cache-v18; ServiceWorkerCache.js sincronizado.
+Dependencia resuelta: al validar el módulo UI se detectó una expresión regular inválida en parseVinCollection para delimitadores heredados. Se corrigió y se amplió VinVersionPresentation.js para slash, barra inversa y punto y coma.
+Pruebas locales en harness adaptado: RichTextModeConfiguration 15/15; ServiceWorkerCache 6/6; VinVersionPresentation 11/11; DescriptiveContentRendering 9/9; CableCarouselSwipeAxis 15/15 PASS. Parsing completo de api-config.js, rich-text.js, ui.js y service-worker.js PASS.
+RichTextContentSecurity 38/39: permanece una falla preexistente en la comparación literal entre los sanitizadores WRITE y ADMIN; se documentó como seguimiento independiente, sin alterar servicios ajenos al alcance.
+Beta pendiente: cambio de modo con sesión real, formularios, registros históricos, recarga/pestañas, navegador, temas y viewports. No se ejecutó Node CLI, no se desplegó y no se modificaron datos productivos.
+Archivos: api-config.js, rich-text.js, ui.js, index.html, service-worker.js, Services/Test/RichTextModeConfiguration.js, Services/Test/ServiceWorkerCache.js, Services/Test/VinVersionPresentation.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Último commit de escritura confirmado antes de esta actualización: fc5bcce36ebf5f97b0f6fa112168892172ab249f. La rama base GPSpedia2.2.5 permanece sin modificaciones.
+Siguiente: recuperar la primera tarea pendiente posterior a AUG-097 y verificar sus dependencias.
+================================================================================
