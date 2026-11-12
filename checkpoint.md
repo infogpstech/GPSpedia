@@ -1533,3 +1533,10 @@ Nota operativa: durante la creación de la suite se omitió el parámetro de ram
 Archivos: Services/feedback.js, Services/catalog.js, Services/Coordinator.js, ui.js, Spreadsheet/GPSpedia_DB_columnas.md, Services/Test/TutorialIntegrity.js, Services/Test/VideoApprovalPublishing.js, Services/Test/SharedMutationCoordinator.js, Services/Test/FeedbackWriteSecurity.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-093 — Validar tipo y estado antes de aprobar/rechazar vídeos.
 ================================================================================
+
+================================================================================
+ADENDA DE CIERRE — AUG-092 — 2026-11-12
+Ajuste final: se conservó la barra de formato enriquecido del campo Detalles durante la edición de Tutorial. HEAD de trabajo verificado antes de esta adenda: df5f1f0d90c88506dac004e73b5e7f49190fe6d1.
+Regresión local repetida: TutorialIntegrity 21/21; VideoApprovalPublishing 18/18; SharedMutationCoordinator 31/31; PysVehicleRelationIntegrity 18/18 PASS. Parsing de backend, catálogo, coordinador y bloques UI modificados PASS.
+Estado permanece COMPLETADA CON VALIDACIÓN DIFERIDA. No se ejecutó Node CLI ni entorno real de Apps Script/Spreadsheet/navegador; Beta permanece pendiente.
+================================================================================
