@@ -293,3 +293,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/SharedMutationCoordinator.js: prueba de exclusión mutua entre approveVideo y rejectVideo.
 - Services/Test/README.md y lista_beta.txt: documentación de pruebas y validación integrada aislada.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-094 — SEGURIDAD DEL MODAL DE SUBIDA YOUTUBE
+- youtubeUpload.js: helper setYouTubeUploadInitialValues_ asigna título/descripción por .value en apertura, recuperación y descarte; límites de 100/5000 caracteres preservados.
+- La plantilla del modal permanece estática y los datos iniciales de Corte, PyS y Tutorial se transmiten como opciones, sin interpolación HTML.
+- Services/Test/YouTubeUploadXssIntegrity.js: regresión para comillas, ampersands, etiquetas, eventos, cierre de textarea, acentos, saltos de línea y límites.
+- Services/Test/README.md y lista_beta.txt: ejecución local y validación visual aislada documentadas.
+================================================================================
