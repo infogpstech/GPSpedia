@@ -102,3 +102,11 @@ AUG-076 — Stored XSS en Inbox y formularios de corte
 - Inbox: enlace HTTPS canónico de Drive con rel=noopener noreferrer; reportes históricos sin imagen compatibles.
 - Services/Test/ReportImageAttachment.js: suite reproducible de 18 pruebas de lógica y contratos; harness Node aislado ejecutado: 12/12 PASS.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-078 — VALIDACIÓN DE VÍNCULO REPORTE/VEHÍCULO/CORTE
+- Services/feedback.js: handleSuggestCutChange ahora exige reportId real REP-..., localiza un único reporte por reportMetadata, compara reportId/vehicleId/corteIndex con metadata y la columna ID_vehiculo de Feedbacks, y valida vehículo único y corte ocupado (tipo y ubicación) en Cortes antes de cualquier Drive o escritura.
+- Se elimina el fallback N/A para nuevas sugerencias. Los registros históricos sin metadata no se modifican y no pueden originar nuevas sugerencias sin asociación verificable.
+- Services/Test/CutSuggestionReportLink.js: 11 escenarios Node para vínculo válido, IDs ausentes/sintéticos/inexistentes/duplicados, vehículos cruzados/inexistentes/duplicados, corte distinto, slot vacío, historial sin metadata y orden de validación.
+================================================================================
