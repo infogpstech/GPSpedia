@@ -233,4 +233,4 @@ test('native popstate restores previous navigation metadata and section states',
     assert.match(uiSource, /pushNavigationState\(\{ section: sectionName \}/);
 });
 
-console.log('NavigationBackHistory:', passed + '/13 PASS');
+console.log('NavigationBackHistory:', passed + '/14 PASS');
