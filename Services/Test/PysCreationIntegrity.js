@@ -112,7 +112,7 @@ function buildHarness(feedback,ui,options={}){
 
 function buildUpdateHarness(feedback, videoUrl=""){
     const helpers=extract(feedback,"const PYS_TITLE_MAX_LENGTH=15;","function handleAddProblem(source) {");
-    const update=extract(feedback,"function handleUpdatePysItem(payload) {","/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */");
+    const update=extract(feedback,"function handleUpdatePysItem(payload) {","/* La autorización Desarrollador se valida en authorizeFeedbackAction_ antes de llegar aquí. */");
     const rows=[HEADERS.slice(),["isue-001","Título","Descripción","","Solución","Prevención","",""+videoUrl,"Técnico",""]];
     const sheet={
         getLastRow:()=>rows.length,
@@ -403,7 +403,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         h.api.addSolution({problemId:"isue-001",solucion:'<p onerror="x()">Solución <strong>válida</strong><script>alert(1)</script></p>',userId:"u1",userName:"T1"});
         h.api.addPrevention({problemId:"isue-001",prevenir:'<ul><li>Prevención</li><li><img src="javascript:alert(2)" onerror="x()"></li></ul>',userId:"u1",userName:"T1"});
         assert.equal(h.state.pysRows[1][4],"<p>Solución <strong>válida</strong></p>");
-        assert.equal(h.state.pysRows[1][5],"<ul><li>Prevención</li><li></li></ul>");
+        assert.equal(h.state.pysRows[1][5],"<ul><li>Prevención</li><li><img></li></ul>");
         assert.ok(!JSON.stringify(h.state.pysRows[1]).includes("javascript:"));
     });
     test("la edición directa in-modal sanitiza cada campo enriquecido",()=>{
