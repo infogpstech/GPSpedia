@@ -63,3 +63,13 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Validación adaptada: ConnectionStatusAccessibility 8/8 PASS; parsing V8 del bloque de actualización y main.js PASS. Lector de pantalla y conectividad real quedan para Beta.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-074 — DETECCIÓN E INSTALACIÓN PWA EN iOS/iPadOS
+- main.js: detección de iPadOS cuando Safari usa user-agent de escritorio mediante platform MacIntel + maxTouchPoints > 1; evita clasificar Mac de escritorio sin capacidad táctil como iPad.
+- main.js: en iOS/iPadOS, el estado instalado se determina por display-mode standalone o navigator.standalone; los flags persistentes de otros navegadores no ocultan las instrucciones manuales.
+- index.html: icono apple-touch-icon local y metadatos apple-mobile-web-app-capable, title y status-bar-style; conserva manifest.json.
+- Modal de instalación: instrucciones y título aplicables a iPhone y iPad. Se mantiene beforeinstallprompt/appinstalled para navegadores compatibles.
+- Services/Test/PWAInstallDetection.js ampliada a 20 escenarios, incluidos visibilidad de botón para iPhone/iPadOS escritorio y control negativo Mac.
+================================================================================
