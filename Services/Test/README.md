@@ -827,3 +827,14 @@ cp Services/Test/OverlayMenuModalHistory.js Services/Test/OverlayMenuModalHistor
 ```
 
 La suite contiene 13 escenarios para el registro idempotente del menú, la transición menú→Inbox/Dashboard/Changelog/DevTools, cierres por popstate y cierre directo, conservación de búsqueda/sección, reemplazo de modales, vistas administrativas y envío exitoso de contact-form. History se simula; navegador real y gestos nativos permanecen como validación Beta.
+
+
+## AUG-072 — Identidad y fallback de enlaces compartidos
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/VehicleShareLinks.js Services/Test/VehicleShareLinks.mjs && node Services/Test/VehicleShareLinks.mjs; RESULT=$?; rm -f Services/Test/VehicleShareLinks.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite contiene 18 escenarios para construcción/decodificación de URLs, compatibilidad #search=, IDs y metadatos duplicados, variantes, aislamiento de Cortes frente a otras secciones, Web Share exitoso/cancelado/rechazado, fallback Clipboard y errores síncronos/asíncronos. Los permisos de navegador y el contexto seguro requieren validación Beta.
