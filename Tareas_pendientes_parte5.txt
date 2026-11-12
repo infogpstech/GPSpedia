@@ -329,7 +329,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 
 ### AUG-079 — Robustecer carga y política de acceso de imágenes de sugerencias
 - **Origen:** H-AUD-010-005. **Prioridad:** Media.
-- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Suite local de seguridad de imágenes: 24/24 PASS en harness V8 aislado; parsing de FEEDBACK, modal UI y suite PASS. Integración Drive/Spreadsheet y permisos de revisores pendiente de Beta aislada.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Suite local de seguridad de imágenes: 25/25 PASS en harness V8 aislado; parsing de FEEDBACK, modal UI y suite PASS. Integración Drive/Spreadsheet y permisos de revisores pendiente de Beta aislada.
 - **Problema:** FileReader carece de error/abort; Drive puede fallar y aun así la sugerencia se confirma; los bytes se declaran siempre image/jpeg y se comparten con ANYONE_WITH_LINK.
 - **Criterios de aceptación:**
   1. Gestionar load/error/abort y liberar el estado de envío en todos los resultados; no dejar promesas pendientes.
@@ -732,7 +732,7 @@ Estado: COMPLETADA EN EL ALCANCE LOCAL DE USERS/AUTH; validación real en deploy
 
 
 ADENDA FINAL DE VERIFICACIÓN — AUG-010 — 2026-11-09
-Recuento final corregido tras añadir la prueba del límite de sesiones con rol revalidado: sintaxis 4/4 PASS; USERS 14/14; createUser fallo/reintento 2/2; AUTH migración legacy normal, cambio propio intercalado, reset Desarrollador intercalado y límite por rol actualizado 8/8. Total funcional local 24/24 PASS. H-AUD-067 resuelto. H-AUD-066 permanece abierto en AUG-154. No se ejecutaron deployments ni concurrencia real.
+Recuento final corregido tras añadir la prueba del límite de sesiones con rol revalidado: sintaxis 4/4 PASS; USERS 14/14; createUser fallo/reintento 2/2; AUTH migración legacy normal, cambio propio intercalado, reset Desarrollador intercalado y límite por rol actualizado 8/8. Total funcional local 25/25 PASS. H-AUD-067 resuelto. H-AUD-066 permanece abierto en AUG-154. No se ejecutaron deployments ni concurrencia real.
 
 - **Cierre local (2026-11-09): COMPLETADA EN FUENTES.** H-AUD-068 resuelto. AUTH asigna UUID por solicitud y mantiene `failedAttempts` separado de `pendingAttempts`; éxito elimina solo su reserva y reinicia fallos previos, credenciales inválidas finalizan como fallo y errores de infraestructura revierten solo la reserva propia. Se migran estados cacheados con el campo anterior `attempts` y se depuran reservas con más de 900 segundos.
 - **Verificación:** sintaxis 2/2 PASS; pruebas deterministas de helpers 18/18 PASS (9 por fuente); pruebas de integración de `handleLogin` para credenciales inválidas y error de infraestructura 4/4 PASS (ambas fuentes). Total funcional local 22/22 PASS. Producción y copia de prueba conservan lógica equivalente y Spreadsheet IDs distintos.
@@ -750,7 +750,7 @@ Verificación local: sintaxis 4/4 PASS; pruebas funcionales 18/18 PASS. No se ej
 
 
 ADENDA DE VALIDACIÓN FINAL AUG-013 — 2026-11-09
-Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 24/24 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
+Se ampliaron las pruebas con reintento tras purga parcial, timeout de lock sin borrar filas y rechazo de autorización por doPost en ambas fuentes. Resultado adicional 6/6 PASS; total funcional local 25/25 PASS. Sintaxis 4/4 PASS. La validación real permanece en Beta.
 
 ================================================================================
 ACTUALIZACIÓN AUG-014 — VALIDACIÓN DE CONTRASEÑA EN UI — 2026-11-09
