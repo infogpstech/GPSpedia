@@ -1030,3 +1030,35 @@ Pruebas en navegador/dispositivo y catálogo de prueba, sin desplegar a producci
 
 No usar datos productivos, no modificar registros históricos y no desplegar a producción.
 ================================================================================
+
+================================================================================
+AUG-097 — MODO ESTRICTO/AVANZADO DE TEXTO ENRIQUECIDO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas con cuentas y catálogo aislados:
+1. Iniciar sesión como Desarrollador y comprobar que el selector solo está disponible dentro del panel de Desarrollador; iniciar sesión con Técnico y confirmar que no puede abrir el panel ni cambiar el modo.
+2. Eliminar la clave `gpsepedia_rich_text_mode` del almacenamiento local de la instalación de prueba y confirmar que se aplica modo estricto.
+3. Guardar un valor inválido en la clave y confirmar fallback seguro a estricto.
+4. En modo estricto, comprobar que las barras solo muestran negrita y color; probar saltos naturales, texto plano y estilos de color autorizados.
+5. Cambiar a avanzado; comprobar que aparecen cursiva, subrayado, tachado, fuente, tamaño y listas; probar cada formato permitido.
+6. Cambiar de modo con varias barras ya abiertas; confirmar que se actualizan los controles y que las acciones de formato se corresponden con el modo actual.
+7. En modo estricto, cargar un registro histórico con markup avanzado seguro y comprobar que se conserva el texto visible sin ejecutar ni habilitar etiquetas no permitidas; confirmar que los registros históricos de texto plano no cambian.
+8. En modo avanzado, probar etiquetas/estilos permitidos y payloads con script, iframe, SVG, eventos, javascript:, data: y CSS peligroso; confirmar que ambos modos mantienen el bloqueo de contenido activo.
+9. Recargar la página y abrir otra pestaña del mismo navegador; confirmar persistencia local del modo. Verificar que otro navegador/dispositivo no hereda la preferencia local.
+10. Probar formularios de Cortes, apertura, alimentación, Tutorial, PyS, Solución, Prevención y Contacto; comprobar que el backend continúa sanitizando independientemente del modo cliente.
+11. Confirmar que el App Shell carga la versión `gpsepedia-cache-v18` y que una actualización del service worker no restaura la versión anterior.
+12. Revisar claro/oscuro, escritorio y móvil; confirmar que la barra avanzada no desborda ni tapa los campos.
+
+No modificar datos históricos, no desplegar a producción y no usar servicios o datos productivos.
+================================================================================
