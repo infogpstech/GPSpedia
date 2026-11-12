@@ -899,3 +899,15 @@ Límites: no se ejecutó Node CLI literal, API desplegada, DOM/navegador ni nave
 ADENDA DE IMPLEMENTACIÓN — H-AUD-012-002 / H-AUD-012-003 — AUG-089 — 2026-11-12
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Cambios aplicados para registrar solo transiciones PyS–vehículo, conservar navOptions durante edición y restaurar scroll vertical, carrusel horizontal y acordeón. Cierre manual y popstate comparten retorno de un nivel. Evidencia: ui.js, main.js, modalNavigation.js, Services/Test/PysModalNavigation.js. Pruebas locales: PysModalNavigation 8/8, PysNavigationContext 6/6, OverlayHistoryStack 19/19 y ServiceWorkerCache 6/6 PASS; parsing focalizado de los bloques modificados PASS. Navegador/dispositivo real queda para Beta.
 ================================================================================
+
+
+================================================================================
+ADENDA DE IMPLEMENTACIÓN — H-AUD-012-005 / AUD-T-012 — AUG-090 — 2026-11-12
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Se validan problemId y vehicleId antes de crear/modificar relaciones; el vehículo debe aparecer exactamente una vez en Cortes y el problema debe resolverse a una sola fila válida en pys.
+- Se normaliza modelos_asociados desde JSON y delimitadores heredados, se recortan espacios y se eliminan duplicados. Las altas preasociadas de handleAddProblem también validan los vehículos dentro de ScriptLock.
+- Las operaciones add/remove usan withPysMutationLock_, releen la colección dentro del lock, escriben JSON canónico solo si cambia, ejecutan flush, verifican lectura posterior y devuelven el valor persistido. La baja conserva la restricción de Desarrollador validada por sesión.
+- Coordinator 1.1.1 declara lectura CORTES para addProblem, addVehicleToProblem y removeVehicleFromProblem; la UI evita tarjetas duplicadas y no representa IDs sin vehículo correspondiente.
+- Evidencia local: PysVehicleRelationIntegrity 18/18 PASS; PysCreationIntegrity 48/48 PASS; SharedMutationCoordinator 30/30 PASS; parsing de feedback.js, bloque UI relacionado y Coordinator.js PASS.
+- La validación se ejecutó con harness JavaScript adaptado, no Node CLI ni Apps Script real. Concurrencia entre ejecuciones y operaciones sobre Spreadsheet aislada quedan para Beta. No se desplegó ni se modificaron datos productivos.
+================================================================================
