@@ -10,26 +10,14 @@ function createFakeHistory() {
         get state() { return entries[index].state; },
         get length() { return entries.length; },
         setPopStateHandler(handler) { onPopState = handler; },
-        pushState(state) {
-            entries.splice(index + 1);
-            entries.push({ state });
-            index++;
-        },
+        pushState(state) { entries.splice(index + 1); entries.push({ state }); index++; },
         replaceState(state) { entries[index] = { state }; },
-        back() {
-            if (index === 0) return;
-            index--;
-            if (onPopState) onPopState(entries[index].state);
-        }
+        back() { if (index === 0) return; index--; if (onPopState) onPopState(entries[index].state); }
     };
 }
 
 let passed = 0;
-function test(name, callback) {
-    callback();
-    passed++;
-    console.log('PASS', name);
-}
+function test(name, callback) { callback(); passed++; console.log('PASS', name); }
 
 test('el gestor identifica overlays sin modificar su pila', () => {
     const manager = createOverlayHistoryManager(createFakeHistory());
@@ -41,8 +29,7 @@ test('el gestor identifica overlays sin modificar su pila', () => {
 });
 
 test('abrir el menú repetidamente conserva una sola entrada', () => {
-    const history = createFakeHistory();
-    const manager = createOverlayHistoryManager(history);
+    const history = createFakeHistory(), manager = createOverlayHistoryManager(history);
     if (!manager.has('side-menu')) manager.register('side-menu', () => {});
     if (!manager.has('side-menu')) manager.register('side-menu', () => {});
     assert.equal(history.length, 2);
@@ -50,8 +37,7 @@ test('abrir el menú repetidamente conserva una sola entrada', () => {
 });
 
 test('cerrar el menú permite abrir Inbox sin sideMenuOpen obsoleto', () => {
-    const history = createFakeHistory();
-    const manager = createOverlayHistoryManager(history);
+    const history = createFakeHistory(), manager = createOverlayHistoryManager(history);
     history.setPopStateHandler(state => manager.handlePopState(state));
     manager.register('side-menu', () => {});
     manager.close('side-menu');
@@ -64,9 +50,7 @@ test('cerrar el menú permite abrir Inbox sin sideMenuOpen obsoleto', () => {
 });
 
 test('cerrar un modal hijo conserva el menú padre', () => {
-    const history = createFakeHistory();
-    const closed = [];
-    const manager = createOverlayHistoryManager(history);
+    const history = createFakeHistory(), closed = [], manager = createOverlayHistoryManager(history);
     history.setPopStateHandler(state => manager.handlePopState(state));
     manager.register('side-menu', () => closed.push('menu'));
     manager.register('ui-modal:inbox-modal', () => closed.push('inbox'));
@@ -76,9 +60,7 @@ test('cerrar un modal hijo conserva el menú padre', () => {
 });
 
 test('cierre directo del modal conserva la entrada anterior', () => {
-    const history = createFakeHistory();
-    const closed = [];
-    const manager = createOverlayHistoryManager(history);
+    const history = createFakeHistory(), closed = [], manager = createOverlayHistoryManager(history);
     history.setPopStateHandler(state => manager.handlePopState(state));
     manager.register('section:dashboard', () => closed.push('dashboard'));
     manager.register('ui-modal:contact-modal', () => closed.push('contact'));
@@ -90,8 +72,7 @@ test('cierre directo del modal conserva la entrada anterior', () => {
 });
 
 test('la publicación conserva búsqueda y sección ajenas a la pila', () => {
-    const history = createFakeHistory();
-    const manager = createOverlayHistoryManager(history);
+    const history = createFakeHistory(), manager = createOverlayHistoryManager(history);
     manager.register('modal:contact', () => {});
     assert.deepEqual(history.state[overlayHistoryStateKey], ['modal:contact']);
     assert.equal(history.state.section, 'cortes');
@@ -99,12 +80,24 @@ test('la publicación conserva búsqueda y sección ajenas a la pila', () => {
     assert.equal(history.state.marker, 'preserved');
 });
 
-test('main.js integra el menú en la pila compartida y delega popstate', () => {
+test('reemplazar un modal conserva su identidad y callback personalizados', () => {
+    const history = createFakeHistory(), closed = [], manager = createOverlayHistoryManager(history);
+    manager.register('modal:old', () => closed.push('old'));
+    manager.replaceTop('ui-modal:audit-drive-modal', () => closed.push('audit'));
+    assert.deepEqual(manager.getStack(), ['ui-modal:audit-drive-modal']);
+    history.back();
+    assert.deepEqual(closed, ['audit']);
+    assert.deepEqual(manager.getStack(), []);
+});
+
+test('main.js integra menú y modales en la misma pila y usa callbacks personalizados', () => {
     const source = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
     assert.match(source, /overlayHistory\.has\(id\)/);
     assert.match(source, /overlayHistory\.handlePopState\(state\)/);
     assert.match(source, /stackOrder\.get\('side-menu'\)/);
     assert.match(source, /querySelectorAll\('\.info-modal'\)/);
+    assert.match(source, /element\.__gpOverlayClose/);
+    assert.match(source, /overlayHistory\.replaceTop\(id, closeOverlay\)/);
 });
 
 test('ui.js registra el menú idempotentemente y serializa su cierre', () => {
@@ -116,17 +109,18 @@ test('ui.js registra el menú idempotentemente y serializa su cierre', () => {
     assert.match(source, /historyManager\.has\(overlayId\)/);
 });
 
-test('los accesos del menú esperan el cierre antes de abrir sus destinos', () => {
+test('Inbox, Dashboard, Changelog y DevTools esperan el cierre del menú', () => {
     const source = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
     for (const action of ['openInbox', 'openDashboard', 'openChangeLog', 'openDevTools']) {
         assert.ok(source.includes(`closeSideMenuAndRun(() => ui.${action}())`), 'Falta: ' + action);
     }
 });
 
-test('las vistas administrativas registran callbacks de cierre con invalidación', () => {
+test('las vistas administrativas invalidan operaciones y cierran el lightbox hijo', () => {
     const source = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
     assert.match(source, /ui-modal:audit-drive-modal/);
     assert.match(source, /ui-modal:replaced-images-modal/);
+    assert.match(source, /modal\.__gpOverlayClose = \(\) =>/);
     assert.match(source, /closeReplacedImagesLightbox_\(true\)/);
     assert.match(source, /historyManager\.close\(auditOverlayId\)/);
     assert.match(source, /historyManager\.close\(replacedOverlayId\)/);
@@ -138,4 +132,4 @@ test('el éxito de contact-form cierra mediante el gestor compartido', () => {
     assert.match(source, /historyManager\.close\(contactOverlayId\)/);
 });
 
-console.log('OverlayMenuModalHistory:', passed + '/11 PASS');
+console.log('OverlayMenuModalHistory:', passed + '/12 PASS');
