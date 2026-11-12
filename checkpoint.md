@@ -1367,3 +1367,8 @@ La operación create_file usada para añadir Services/Test/PysImageStorageRecove
 
 Siguiente tarea: AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS. No iniciada.
 ================================================================================
+
+Ajuste final de cobertura AUG-083:
+- 8e1598e211d29efb3edb4af247b20befa4c88161 — agrega caso de prueba para rechazar una raíz Cortes que no sea hija directa de la raíz de Drive.
+- La suite permanece en 22 escenarios; reejecución adaptada posterior al ajuste: 22/22 PASS.
+- Commit de documentación de cierre: 4a9854580176397f15d48ead7c0f272d4b921eb6.
