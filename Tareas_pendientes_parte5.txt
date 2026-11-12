@@ -294,6 +294,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   3. Registrar actividad con identidad verificada y rechazar la operación antes de cualquier escritura en Feedbacks, Drive o ActividadUsuario cuando falte, no coincida o esté revocada la sesión.
   4. Probar sesión válida de cada rol permitido, token ausente/inválido/revocado, userId/token no coincidente y payload con identidad falsificada.
 
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. El flujo de sugerencias transmite sessionToken por separado; el backend valida ActiveSessions/Users y deriva la identidad. Suite FEEDBACK 50/50 PASS en V8 adaptado. Deployment, Spreadsheet/Drive reales y navegador quedan pendientes de Beta aislada.
 ### AUG-076 — Eliminar stored XSS en Inbox y modales de reporte/sugerencia
 - **Origen:** H-AUD-010-002. **Prioridad:** Alta.
 - **Problema:** item.subject/item.user y datos de catálogo/payload se insertan directamente en innerHTML; algunos campos del contenido sí se sanitizan, pero la protección no cubre todos los sinks.
