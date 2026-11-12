@@ -481,3 +481,50 @@ PRUEBAS EN DEPLOYMENT FEEDBACK Y SPREADSHEET AISLADOS:
 6. Confirmar que una sugerencia válida queda en Feedbacks como propuesta independiente y que la hoja Cortes permanece sin cambios.
 Registrar IDs de prueba, respuesta, filas antes/después y evidencia. No usar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-079 — VALIDACIÓN BETA DE IMÁGENES EN SUGERENCIAS Y ACL
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz antes de probar:
+
+```bash
+set -e
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si origin no coincide, hay cambios locales o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios.
+
+PRUEBAS NODE CLI — ejecutar desde la raíz con Node.js:
+
+```bash
+set -e
+TEST_TMP=Services/Test/SuggestionImageSecurity.mjs
+cp Services/Test/SuggestionImageSecurity.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite cubre 22 escenarios de UI, FileReader, MIME/Base64/firma/tamaño, MIME/extensión de Drive, ACL, compatibilidad Data URL, idempotencia y rollback. Registrar la salida real; los dobles locales no sustituyen Drive/Spreadsheet reales.
+
+BETA AISLADA — no usar cuentas, carpetas ni datos productivos:
+1. Enviar sugerencias sin imagen y con JPEG, PNG y WebP válidos; confirmar registro en Feedbacks, MIME, extensión, hash, tamaño, imageFileId y URL canónica.
+2. Intentar MIME no permitido, MIME discordante, Base64 inválido, firma falsa, archivo vacío y tamaño superior a 3 MB; confirmar rechazo antes de crear archivos o filas.
+3. Simular FileReader error y abort en navegador; comprobar mensaje, botón habilitado y que no se invoque el envío.
+4. Simular error de creación Drive, ACL ANYONE/ANYONE_WITH_LINK y ACL no verificable; confirmar rechazo, ausencia de registro y archivo temporal en papelera cuando haya sido creado.
+5. Forzar fallo de escritura/read-back de Feedbacks después de crear archivo; verificar rollback de fila y archivo en papelera. Revisar el estado de la hoja después de cada escenario.
+6. Verificar que `Cortes/SugerenciasCortes` hereda la ACL restringida de `Cortes`; una cuenta revisora autorizada debe abrir la imagen desde Inbox y una cuenta sin autorización debe recibir acceso denegado. Probar también URL en ventana privada/sesión sin permisos; no debe ser pública.
+7. Repetir la misma solicitud con mismo contenido; confirmar idempotencia y ausencia de archivo/registro duplicado. Mismo reportId con contenido distinto debe rechazarse.
+8. Enviar una solicitud desde un cliente anterior usando `imgBase64` Data URL; confirmar que pasa por la misma validación MIME/firma/tamaño.
+9. Confirmar que reportes/sugerencias históricas siguen mostrándose y que no se modifican ACL ni archivos anteriores automáticamente.
+Registrar navegador, cuenta/rol de prueba, IDs, filas antes/después, permisos efectivos y evidencia. No declarar PASS sin comprobar acceso real del revisor y denegación a usuarios no autorizados.
+================================================================================
