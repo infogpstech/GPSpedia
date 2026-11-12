@@ -1662,3 +1662,29 @@ Archivos: Services/Test/GlobalSearch.js, Tareas_pendientes_parte2.txt, ChangesLo
 Publicación secuencial mediante operaciones de actualización de archivo, sin reescritura de historial ni force update.
 Siguiente tarea: AUG-102 — Alinear el tema oscuro del banner de validación y completar sus tokens. No iniciar hasta la siguiente interacción/sesión.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-102 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD verificado antes de publicar este checkpoint: 97ef0fd53707a292cba7b4a3232ad8c0e57e6b1a.
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- style.css alinea el banner con el mecanismo global body.dark-mode; los tokens semánticos del banner se declaran en :root y se redefinen en body.dark-mode.
+- Se corrigieron fondo, borde, texto, placeholder, entrada, botones principales/secundarios y foco visible. Se eliminaron del bloque las referencias al token inexistente --text-primary y al selector desalineado [data-theme="dark"].
+- main.js y ui.js no requirieron cambios: el tema ya se controla mediante body.dark-mode y el flujo del banner conserva las clases y acciones existentes.
+- Services/Test/ValidationBannerTheme.js agrega 12 escenarios de contrato, contraste WCAG AA y compatibilidad con el mecanismo de tema.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt y lista_beta.txt actualizados.
+
+Validación local:
+- La suite de 12 escenarios se ejecutó sobre el contenido actual de style.css, main.js y ui.js en un harness JavaScript aislado: 12/12 PASS.
+- Se comprobó la sintaxis del cuerpo de pruebas al cargarlo en el motor JavaScript; PASS.
+- Node CLI no se ejecutó desde un checkout local porque esta sesión no dispone de una copia de trabajo del repositorio. El comando reproducible queda documentado en Services/Test/README.md.
+- La inspección visual de ambos temas, los estados del flujo y los viewports queda diferida a Beta, con procedimiento de sincronización seguro al inicio de lista_beta.txt.
+- No se modificaron datos, endpoints, permisos, servicios ni deployments.
+
+Archivos: style.css, Services/Test/ValidationBannerTheme.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Publicación mediante actualizaciones secuenciales condicionadas por SHA; sin force push ni reescritura de historial.
+Siguiente tarea: AUG-103 — Consolidar tokens de color y tema entre las páginas. No iniciar hasta la siguiente interacción.
+================================================================================
