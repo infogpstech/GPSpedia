@@ -7320,17 +7320,23 @@ export function closeSideMenu(isFromPopState = false) {
 export function closeSideMenuAndRun(callback) {
     const historyManager = window.overlayHistory;
     const menu = document.getElementById('side-menu');
+    const runCallback = () => Promise.resolve()
+        .then(() => typeof callback === 'function' ? callback() : undefined)
+        .catch(error => {
+            console.error('Error al navegar desde el menú:', error);
+            showGlobalError('No se pudo abrir la vista seleccionada. Intenta nuevamente.');
+        });
     if (!menu || !menu.classList.contains('open') || !historyManager || !historyManager.has(SIDE_MENU_HISTORY_ID_)) {
         closeSideMenu(true);
-        return Promise.resolve().then(() => typeof callback === 'function' ? callback() : undefined);
+        return runCallback();
     }
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
         let settled = false;
         const finish = () => {
             if (settled) return;
             settled = true;
             window.removeEventListener('popstate', onPopState);
-            Promise.resolve().then(() => typeof callback === 'function' ? callback() : undefined).then(resolve, reject);
+            runCallback().then(resolve);
         };
         const onPopState = () => { if (!historyManager.has(SIDE_MENU_HISTORY_ID_)) finish(); };
         window.addEventListener('popstate', onPopState);
