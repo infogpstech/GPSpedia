@@ -866,5 +866,15 @@ AUG-089 — PILA MODAL Y POSICIÓN PyS–VEHÍCULO
 10. Repetir con el carrusel de vehículos relacionados del detalle PyS; comprobar su posición horizontal al regresar.
 11. Repetir los recorridos editando, guardando y descartando cambios; confirmar que el contexto se conserva y que el descarte termina antes del retorno.
 
+AUG-090 — INTEGRIDAD Y ATOMICIDAD DE RELACIONES PyS–VEHÍCULOS
+12. En proyectos Apps Script aislados, desplegar Coordinator 1.1.1 y comprobar que `addProblem`, `addVehicleToProblem` y `removeVehicleFromProblem` reservan lectura de `CORTES`.
+13. Probar alta con problemId/vehicleId ausentes, inexistentes y duplicados; confirmar que no se modifica `pys`.
+14. Probar alta preasociada desde creación PyS con IDs válidos, inexistentes y duplicados en `Cortes`; validar que solo se persistan relaciones unívocas.
+15. Sembrar `modelos_asociados` con JSON, comas, barras, punto y coma, espacios y duplicados; probar alta/baja y verificar JSON canónico sin alterar asociaciones ajenas.
+16. Lanzar dos altas simultáneas del mismo vehículo y después dos altas de vehículos distintos; comprobar que no se pierden relaciones ni se duplican.
+17. Ejecutar alta y baja simultáneas sobre la misma relación; comprobar serialización, resultado final persistido y reintento idempotente.
+18. Forzar timeout/flush y reintentar; confirmar que la operación no duplica asociaciones y que la respuesta refleja el valor guardado.
+19. Intentar desvincular como Técnico y como Desarrollador; comprobar rechazo/aceptación. Verificar que IDs huérfanos no generan tarjetas y que IDs repetidos no duplican tarjetas.
+
 No desplegar a producción ni modificar datos productivos.
 ================================================================================
