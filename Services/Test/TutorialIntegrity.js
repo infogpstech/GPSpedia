@@ -243,6 +243,41 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.doesNotMatch(updateHandler, /userRole/);
     });
 
+    test("authorizeFeedbackAction exige sesión Desarrollador y sustituye identidad del cliente", () => {
+        const authBlock = extract_(feedback, "const FEEDBACK_ACTION_PERMISSIONS", "function doPostInternal_");
+        const authContext = {
+            assertFeedbackSession(payload, allowedRoles) {
+                if (!payload.sessionToken) throw new Error("Sesión inválida.");
+                const actor = { userId: "USR-VERIFIED", userName: "Nombre desde Users", role: "Desarrollador" };
+                if (Array.isArray(allowedRoles) && !allowedRoles.some(role => String(role).toLowerCase() === actor.role.toLowerCase())) {
+                    throw new Error("Rol no autorizado.");
+                }
+                return actor;
+            },
+            FEEDBACK_PUBLIC_ACTIONS: new Set(["getPysData", "sendContactForm"])
+        };
+        vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", authContext);
+        const authorized = authContext.authorize("addTutorial", {
+            userId: "USR-FALSO", userName: "Nombre falso", userRole: "Desarrollador",
+            colaborador: "Colaborador falso", sessionToken: "SESSION-VALIDA"
+        });
+        assert.equal(authorized.userId, "USR-VERIFIED");
+        assert.equal(authorized.userName, "Nombre desde Users");
+        assert.equal(authorized.userRole, "Desarrollador");
+        const h = buildHarness_(feedback, { missingSheet: true });
+        h.api.add({ ...authorized, operationId: "55555555555555555555555555555555", tema: "Tutorial autenticado" });
+        assert.equal(h.sheet.data[1][7], "Nombre desde Users");
+        const technicianContext = {
+            assertFeedbackSession(payload) {
+                if (!payload.sessionToken) throw new Error("Sesión inválida.");
+                return { userId: "USR-TECH", userName: "Técnico", role: "Tecnico" };
+            },
+            FEEDBACK_PUBLIC_ACTIONS: new Set(["getPysData", "sendContactForm"])
+        };
+        vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", technicianContext);
+        assert.throws(() => technicianContext.authorize("addTutorial", { userId: "USR-TECH", sessionToken: "SESSION-TECH" }), /Rol no autorizado/);
+    });
+
     test("catálogo conserva las siete columnas históricas y expone Colaborador en H", () => {
         assert.match(catalog, /ID:\s*1,[\s\S]*?Tema:\s*2,[\s\S]*?Imagen:\s*3,[\s\S]*?comoIdentificarlo:\s*4,[\s\S]*?dondeEncontrarlo:\s*5,[\s\S]*?Detalles:\s*6,[\s\S]*?Video:\s*7,[\s\S]*?Colaborador:\s*8/);
     });
