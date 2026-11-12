@@ -200,7 +200,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   4. Detener reproductores/limpiar recursos solo cuando corresponda al overlay que se cierra; no destruir contenido de niveles subyacentes.
   5. Probar al menos tres capas anidadas, capas con z-index distinto, modal de perfil, lightbox sobre ficha y retrocesos consecutivos.
 - **Relación:** AUD-T-007; AUG-047 para el caso legal y AUG-068 para registro dinámico.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. `overlayHistory.js` ahora cierra una sola capa por `popstate` y expone un selector por `z-index` efectivo, orden de apertura y orden DOM. `main.js` usa el selector para sincronizar menú, lightbox, modal de detalle, info-modals y aviso legal; el acuerdo abierto desde el aviso queda por encima de este. `users.html` usa la pila compartida para los modales de perfil y administración, sin cerrar todos en un mismo evento. `OverlayHistoryStack`: 18/18 PASS; `ReplacedImagesLightboxHistory`: 6/6 PASS en runtime V8 adaptado. Parsing V8 de `main.js`, módulo de `users.html` y bloque legal de `ui.js`: PASS. Pendiente para Beta: interacción DOM/navegador real, botón físico y gestos nativos.
 
 ### AUG-071 — Reconciliar las entradas History API al abrir/cerrar menú y modales
 - **Origen:** H-AUD-007-004. **Prioridad:** Media.
