@@ -726,3 +726,7 @@ Validación prevista: ejecución de la nueva prueba y parsing sintáctico adapta
 ChangesLogs.txt no se modifica por requerir rotación normativa. Rama base intacta.
 Siguiente acción: validar ambos escenarios; después revisar persistencia de registros IndexedDB y transiciones de estado uploaded/interrupted/paused. No iniciar AUG-069.
 ================================================================================
+
+
+ADENDA DE AJUSTE DE PRUEBA — ITERACIÓN 3G
+En la primera ejecución adaptada de YouTubeUploadCheckpointRecovery se detectó un defecto en el extractor de funciones de la propia prueba: omitía el prefijo async de uploadYouTubeFileResumable_, por lo que el evaluador dinámico no podía analizar await. Se corrigió el extractor para conservar la declaración async. No es un defecto de youtubeUpload.js. Se repite la validación tras esta corrección.
