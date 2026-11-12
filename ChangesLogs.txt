@@ -393,3 +393,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - lightbox.js: el ciclo de apertura/cierre conserva y restaura la configuración original del viewport de la página, evitando que el cierre del visor vuelva a deshabilitar el zoom o altere la política de otras páginas.
 - Se añadió Services/Test/BrowserZoomAccessibility.js y se documentó su ejecución.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-105 — LAYOUT RESPONSIVE DE FORMULARIOS Y USUARIOS
+- add_cortes.html: se amplió el reflujo responsive hasta 760 px para cuadrícula, tarjetas de coincidencias, cargas de imágenes, mensajes, acordeones y acciones; controles móviles con texto legible.
+- users.html: tabla ajustada al ancho disponible con texto envolvente, acciones apiladas y botones táctiles; modales limitados al viewport con scroll interno y controles de 44 px.
+- Se añadió Services/Test/ResponsiveFormsUsers.js y se documentó su ejecución.
+================================================================================
