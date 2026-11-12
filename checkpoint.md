@@ -1540,3 +1540,16 @@ Ajuste final: se conservó la barra de formato enriquecido del campo Detalles du
 Regresión local repetida: TutorialIntegrity 21/21; VideoApprovalPublishing 18/18; SharedMutationCoordinator 31/31; PysVehicleRelationIntegrity 18/18 PASS. Parsing de backend, catálogo, coordinador y bloques UI modificados PASS.
 Estado permanece COMPLETADA CON VALIDACIÓN DIFERIDA. No se ejecutó Node CLI ni entorno real de Apps Script/Spreadsheet/navegador; Beta permanece pendiente.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-093 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD verificado antes de este checkpoint: 51d624e3640facac5924d39b9929b67d7851d3cf.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Servicios: findPendingVideoApproval_ exige subType video_approval, status pending, ID único, JSON válido, coincidencia ID_vehiculo/referenceId, videoId/URL canónicos, contentType, título e identidad creadora. La fila Feedbacks debe seguir pending y sin resolver.
+Idempotencia: una aprobación ya completada solo se confirma si el JSON y la fila muestran approved, resuelta y el mismo aprobador; el reintento no vuelve a publicar ni escribir. Rechazo y otras transiciones terminales se bloquean.
+Concurrencia: approveVideo y rejectVideo comparten leases de FEEDBACK y TUTORIAL; las decisiones opuestas se serializan.
+Pruebas locales en harness adaptado: VideoApprovalPublishing 27/27; SharedMutationCoordinator 32/32; TutorialIntegrity 21/21; PysVehicleRelationIntegrity 18/18 PASS. Parsing de feedback.js y Coordinator.js PASS.
+Beta pendiente: Node CLI, Apps Script/Spreadsheet aislados, sesiones reales, concurrencia entre ejecuciones y revisión del Inbox integrado. Sin despliegue ni cambios productivos.
+Siguiente tarea: AUG-094 — Eliminar inyección HTML en el modal unificado de subida YouTube.
+================================================================================
