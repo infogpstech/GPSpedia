@@ -524,7 +524,7 @@ Siguiente: AUG-091 — Alinear el título del acordeón con la especificación d
 - **Evidencia:** Tareas.txt, requisito 12.5 (1511–1521); ui.js renderPosiblesProblemsAccordion() (2720–2723).
 - **Problema:** la especificación exige «Problemas relacionados a este vehículo», mientras que la interfaz muestra «Posibles problemas».
 - **Criterios de aceptación:** utilizar el texto exacto aprobado en el acordeón o documentar formalmente la sustitución; comprobar el título en modo claro/oscuro y móvil.
-- **Estado:** NUEVA; cambio y verificación visual pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; contrato UI/CSS aprobado, verificación visual real pendiente para Beta.
 
 ### Adenda AUD-T-012 — AUG-043: credenciales en acciones de asociación PyS
 - **Evidencia:** Services/feedback.js assertFeedbackSession() (42–74) y actionPermissions/addVehicleToProblem (302–375); ui.js openSearchVehicleForPysAssociationModal() (8551–8565), createPysCard() (2654–2675 y 8981–8990) y openAssociateExistingProblemModal() (10268–10275).
@@ -539,6 +539,17 @@ Siguiente: AUG-091 — Alinear el título del acordeón con la especificación d
 
 
 ## Hallazgos derivados de AUD-T-013 — 2026-11-08
+
+
+================================================================================
+AUG-091 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- El acordeón ahora muestra exactamente «Problemas relacionados a este vehículo», texto aprobado por el criterio de AUG-091.
+- Se separó el título de la flecha; el texto ocupa el espacio disponible, conserva el contraste del botón en modo claro/oscuro y puede ajustarse en móvil sin superponerse con el indicador.
+- PysAccordionTitle 6/6 PASS; parsing del bloque UI modificado PASS. La validación se ejecutó en harness JavaScript adaptado, no Node CLI. Navegador real y comprobación visual de temas/viewports quedan para Beta.
+- Nota de trazabilidad: la referencia histórica Tareas.txt 1511–1521 no coincide con la copia activa (1171 líneas), donde no aparece actualmente el requisito 12.5. Se aplicó literalmente el texto aprobado que conserva el backlog AUG-091; no se documentó una sustitución.
+- Sin despliegue ni cambios productivos.
+Siguiente: AUG-092 — Alinear esquema, persistencia y autorización del módulo Tutorial.
+================================================================================
 
 ### AUG-092 — Alinear esquema, persistencia y autorización del módulo Tutorial
 - Hallazgos origen: H-AUD-013-003 y H-AUD-013-004. Tarea: AUD-T-013/Tarea 12. Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031.
