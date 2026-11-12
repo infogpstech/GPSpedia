@@ -469,3 +469,19 @@ Siguiente acción:
 3. Si el entorno no admite el modo requerido, usar una versión compatible de Node en Codespaces y repetir la prueba.
 AUG-066 permanece EN PROGRESO. No iniciar AUG-067.
 ================================================================================
+
+
+================================================================================
+AUG-066 — CHECKPOINT DE SINCRONIZACIÓN — 2026-11-11
+Estado: EN PROGRESO. La prueba Node CLI ya se ejecutó correctamente; la revisión de sincronización del Codespace detectó que el checkout local está un commit detrás del remoto.
+Evidencia recibida desde Codespaces (captura del usuario):
+- Rama local: GPSpedia2.2.5_work.
+- HEAD local: 3ee5d75 — fix(images): scope dark blend mode to transparent assets.
+- Seguimiento remoto: origin/GPSpedia2.2.5_work.
+- Estado de sincronización: [behind 1], sin commits locales por delante.
+- La salida de `git status -sb` no muestra indicadores de cambios locales modificados; el comando previo `git status --short && git diff --check && git diff` no produjo salida.
+- El HEAD remoto verificado es 7abfab9, hijo directo de 3ee5d75; contiene el checkpoint que documenta el argumento Node no compatible.
+- Después de ese checkpoint, el usuario ejecutó la prueba con el archivo temporal .mjs: resultado confirmado 7/7 PASS y código de salida 0. El archivo temporal fue eliminado por el comando.
+Interpretación: el checkout local conserva la implementación de AUG-066, pero aún no incorpora el commit remoto 7abfab9. No hay evidencia de cambios locales pendientes ni de divergencia; falta sincronizar con fast-forward antes de editar o publicar nuevos cambios.
+Siguiente acción: ejecutar `git pull --ff-only origin GPSpedia2.2.5_work`, comprobar que el HEAD local alcance 7abfab9 y continuar la revisión del comando documentado en Services/Test/README.md. No iniciar AUG-067.
+================================================================================
