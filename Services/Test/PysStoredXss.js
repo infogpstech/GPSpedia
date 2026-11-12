@@ -67,7 +67,7 @@ export function runPysStoredXssTests({ ui }) {
     test("la tarjeta PyS asigna el título almacenado mediante textContent", () => {
         const card = section(ui, "function createPysCard(", "\nexport function renderPosiblesProblemasAccordion");
         assert.match(card, /title\.textContent\s*=\s*item\.Problema/);
-        assert.doesNotMatch(card, /overlay\.innerHTML\s*=|\$\{item\.Problema/);
+        assert.doesNotMatch(card, /overlay\.innerHTML\s*=|card\.innerHTML\s*=|title\.innerHTML\s*=/);
     });
     test("el título y colaborador del modal PyS se insertan como texto", () => {
         const modal = section(ui, "export function openPysDetailModal(", "/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */");
