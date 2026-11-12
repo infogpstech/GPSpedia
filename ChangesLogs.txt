@@ -116,5 +116,5 @@ AUG-076 — Stored XSS en Inbox y formularios de corte
 2026-11-12 — AUG-079 — SEGURIDAD DE IMÁGENES EN SUGERENCIAS
 - ui.js: selector limitado a JPEG/PNG/WebP y 3 MB; FileReader gestiona load/error/abort dentro del bloque de envío y restablece el botón ante fallos. El cliente exige confirmación del servidor antes de mostrar éxito con imagen.
 - Services/feedback.js: reutiliza validación Base64/MIME/tamaño/firma binaria y SHA-256; conserva MIME/extensión real; guarda en `Cortes/SugerenciasCortes` heredando ACL de `Cortes`, comprueba que el archivo no tenga acceso público y no concede permisos ANYONE_WITH_LINK. La escritura de Feedbacks se confirma por lectura posterior; si falla, revierte la fila y retira el archivo. Se conserva compatibilidad con clientes anteriores que envían Data URL.
-- Services/Test/SuggestionImageSecurity.js: suite de 24 escenarios de UI, validación, MIME/extensión, ACL, fallo cerrado, idempotencia y rollback.
+- Services/Test/SuggestionImageSecurity.js: suite de 25 escenarios de UI, validación, MIME/extensión, ACL, fallo cerrado, idempotencia y rollback.
 ================================================================================
