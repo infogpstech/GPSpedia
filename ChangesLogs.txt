@@ -1789,3 +1789,13 @@ CAMBIOS — AUG-065 — 2026-11-11 — CIERRE LOCAL
 - Validación local: Node v24.22.2, ImageBlendModeScope.js 7/7 PASS y código de salida 0. La prueba valida el selector opt-in exacto, la única regla mix-blend-mode y la ausencia de los selectores globales anteriores.
 - Pendiente para Beta: validación visual en navegador real con recursos transparentes/opacos, bordes semitransparentes y modos claro/oscuro. No se asignaron clases automáticamente a imágenes sin metadatos fiables.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-067 — DISCRIMINACIÓN DE EJE EN EL CARRUSEL DE CABLES
+- ui.js: los gestos del carrusel registran coordenadas X/Y y solo navegan cuando el desplazamiento horizontal supera 50 px y domina al vertical. Se ignoran inicios multitáctiles y controles interactivos; touchcancel y secuencias incompletas restablecen el estado. Los listeners son pasivos y conservan el scroll vertical nativo.
+- Services/Test/CableCarouselSwipeAxis.js: nueva suite para swipes horizontales, verticales/diagonales, umbral, multitáctil, controles, cancelación, coordenadas inválidas y una sola acción por gesto.
+- Services/Test/README.md: se documenta la ejecución de la suite mediante copia temporal .mjs y limpieza posterior.
+- Validación local: helper extraído de la fuente vigente de ui.js en runtime V8 adaptado: 15/15 PASS; listeners touchstart/touchend/touchcancel confirmados.
+- Pendiente para Beta: interacción táctil real en navegador móvil y PWA standalone, desplazamiento vertical, y actualización de altura del acordeón.
+================================================================================
