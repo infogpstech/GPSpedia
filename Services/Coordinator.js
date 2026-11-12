@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.0";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.1";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -82,8 +82,8 @@ function coordinatorPolicy_(service, operation) {
             addProblem: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
             addSolution: { read: feedbackRead, write: feedbackWrite },
             addPrevention: { read: feedbackRead, write: feedbackWrite },
-            addVehicleToProblem: { read: feedbackRead, write: feedbackWrite },
-            removeVehicleFromProblem: { read: feedbackRead, write: feedbackWrite },
+            addVehicleToProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
+            removeVehicleFromProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
             updatePysItem: { read: feedbackRead, write: feedbackWrite },
             updateTutorialItem: { read: feedbackRead, write: feedbackWrite },
             suggestCutChange: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
