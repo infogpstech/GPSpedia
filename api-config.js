@@ -262,8 +262,13 @@ export async function sendContactForm(formData) {
     return await routeAction('sendContactForm', formData);
 }
 
-export async function suggestCutChange(data) {
-    return await routeAction("suggestCutChange", data);
+export async function suggestCutChange(data, sessionPayload = {}) {
+    const actor = sessionPayload && typeof sessionPayload === "object" ? {
+        userId: sessionPayload.userId,
+        sessionToken: sessionPayload.sessionToken
+    } : {};
+    const suggestion = data && typeof data === "object" ? data : {};
+    return await routeAction("suggestCutChange", { ...suggestion, ...actor });
 }
 
 export async function addTutorial(data) {
