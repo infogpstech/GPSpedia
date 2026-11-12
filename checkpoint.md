@@ -777,3 +777,15 @@ Estado: pendiente ejecutar pruebas locales adaptadas, parsing y revisión de dif
 ChangesLogs.txt no se modifica por rotación normativa. Rama base intacta.
 Siguiente acción: validar seis escenarios; después continuar con estados de persistencia IndexedDB. No iniciar AUG-069.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — ITERACIÓN 3I
+YouTubeUploadCompletedRecordRecovery: 6/6 PASS en runtime V8 adaptado:
+- Permite continuar un registro con ID final válido y bytes confirmados completos aunque file no esté disponible.
+- Permite recuperación del envío de aprobación si el catch marcó interrupted después de completar la transferencia.
+- Rechaza ausencia de ID final, bytes incompletos y tamaños no válidos.
+- Verifica las guardas del formulario y la comprobación de identidad.
+Regresiones relacionadas: YouTubeUploadCheckpointRecovery 2/2 PASS; YouTubeUploadDraftRecovery 3/3 PASS.
+Parsing sintáctico de youtubeUpload.js: PASS en V8 adaptado, retirando import/export para evaluación aislada.
+Revisión del diff entre 96cae67 y f75a409: únicamente youtubeUpload.js, la prueba nueva, Services/Test/README.md y checkpoint.md.
+Limitaciones: no se ejecutó Node CLI en Codespaces ni IndexedDB/navegador real. La prueba usa funciones reales extraídas y lógica simulada; persistencia real queda para Beta.
