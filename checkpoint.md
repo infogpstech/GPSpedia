@@ -69,7 +69,7 @@ Siguiente tarea: AUG-109 — Definir controles de confianza para aportaciones an
 CHECKPOINT DE CIERRE — AUG-109 — 2026-11-12
 Repositorio: infogpstech/GPSpedia.
 Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
-HEAD padre verificado: 7688414112a42ef751f45b6b7a6cb1e8ab3f197b.
+HEAD previo al primer commit de la tarea: 7688414112a42ef751f45b6b7a6cb1e8ab3f197b. Publicación final verificada tras commit de corrección documental; padre inmediato del commit final: 3564732329be511afb4452eba31445643ea4cf4b.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 Política y resultado:
