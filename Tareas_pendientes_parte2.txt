@@ -72,10 +72,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-108 — Individualizar validationCache por usuario y vehículo
 - Origen: H-AUD-017-003. Prioridad: Media.
-- Evidencia: offline.js:499–508 usa vehicleId como única clave; ui.js:1249–1250 bloquea por cualquier respuesta encontrada.
-- Problema: una respuesta en un dispositivo compartido suprime la consulta para otros instaladores.
-- Criterios: clave compuesta actor/vehicleId; definir cambio de cuenta y anónimos; probar dos cuentas en un perfil y sesiones separadas.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia de resolución: offline.js:719–731 usa una clave compuesta por ownerId y vehicleId; valida ambos campos al recuperar. ui.js:1551–1553 consulta usando la identidad de la cuenta activa.
+- Política: solo las cuentas con ownerId válido pueden guardar o leer la caché. Los usuarios anónimos no guardan entradas compartidas ni heredan respuestas de otras cuentas; podrán volver a recibir la consulta.
+- Prueba existente: Services/Test/IndexedDBTransactions.js, caso «validationCache aislado por cuenta», comprueba lectura por user-a, aislamiento frente a user-b y rechazo de escritura sin propietario. La cobertura local histórica de AUG-051 incluyó esta prueba en runtime V8 adaptado.
+- Resultado: la implementación ya existía como parte de AUG-051; se reconoce la duplicidad del backlog y no se modifica código funcional.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). En Beta queda comprobar dos cuentas escribiendo el mismo vehículo en el mismo perfil, cambio de cuenta y sesiones separadas reales.
 
 ### AUG-109 — Definir controles de confianza para aportaciones anónimas
 - Origen: H-AUD-017-004. Prioridad: Alta.

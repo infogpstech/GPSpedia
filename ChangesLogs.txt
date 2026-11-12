@@ -420,3 +420,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Evidencia local existente: ValidationCacheConfirmation 7/7 PASS; runFeedbackWriteSecurityTests 44/44 PASS; parsing de módulos y suites PASS. No se repitieron pruebas ya vigentes ni se modificó código funcional.
 - lista_beta.txt incorpora escenarios reales de timeout, offline, respuesta perdida, recarga, reintento e IndexedDB. Sin deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-108 — AISLAMIENTO DE VALIDATIONCACHE POR CUENTA
+- Se confirmó que offline.js ya utiliza una clave compuesta ownerId/vehicleId y verifica ambos campos al recuperar; ui.js consulta con la identidad activa.
+- La escritura y lectura sin propietario válido se rechazan. Los usuarios anónimos no comparten caché.
+- La implementación ya existía como parte de AUG-051; se actualizó el estado del backlog sin duplicar código funcional.
+- La prueba existente «validationCache aislado por cuenta» de Services/Test/IndexedDBTransactions.js cubre separación entre user-a y user-b y rechazo de escritura anónima.
+- La comprobación con dos cuentas simultáneas, cambio de cuenta y sesiones reales queda para Beta. No se ejecutaron navegador/IndexedDB reales ni servicios externos.
+================================================================================
