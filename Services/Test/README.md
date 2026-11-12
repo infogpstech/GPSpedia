@@ -168,7 +168,7 @@ Para pruebas aisladas:
 
 El archivo `Services/Test/SharedMutationCoordinator.js` contiene pruebas lógicas aisladas. Para ejecutarlas, cargarlo junto con `Coordinator.js` y `SharedMutationClient.js` en un proyecto temporal de pruebas y ejecutar `runSharedMutationCoordinatorTests()`. La batería utiliza dobles en memoria y no accede a servicios externos.
 
-La suite lógica también cubre la reserva de mantenimiento, drenaje de leases existentes, bloqueo de nuevas mutaciones durante la espera, diagnóstico de operaciones activas, expiración de reservas abandonadas y compatibilidad con leases previas sin campo `phase`. `migrateCortesOperationIds` se declara como mantenimiento exclusivo en ADMIN.
+La suite lógica también cubre la reserva de mantenimiento, drenaje de leases existentes, bloqueo de nuevas mutaciones durante la espera, diagnóstico de operaciones activas, expiración de reservas abandonadas y compatibilidad con leases previas sin campo `phase`. `migrateCortesOperationIds` se declara como mantenimiento exclusivo en ADMIN. La versión 1.1.1 también reserva lectura de `CORTES` para `addProblem`, `addVehicleToProblem` y `removeVehicleFromProblem`; 30 escenarios cubren conflictos con escrituras `WRITE`, dos altas simultáneas y alta/baja concurrentes.
 
 La integración real entre proyectos, la contención de leases bajo concurrencia de Apps Script y la configuración de deployments se validan posteriormente en Beta. La falta de configuración del coordinador hace que las mutaciones fallen cerradas; por ello, el coordinador de cada entorno debe desplegarse y configurarse antes de actualizar sus servicios consumidores.
 
@@ -1058,3 +1058,19 @@ node "$TEST_TMP"
 ```
 
 Ocho escenarios: captura/restauración de scroll vertical, acordeón activo y carruseles; restauración diferida sin saltos de scroll; decisión de registrar transiciones; pila anidada LIFO; propagación del contexto PyS/vehículo; ausencia de entradas duplicadas durante edición/re-render; y retorno de un nivel desde cierre manual/popstate. Navegador y gestos táctiles reales quedan para Beta.
+
+
+## AUG-090 — Integridad y atomicidad de relaciones PyS–vehículos
+
+Ejecutar desde la raíz del repositorio con Node ESM:
+
+```bash
+TEST_TMP=Services/Test/PysVehicleRelationIntegrity.mjs
+cp Services/Test/PysVehicleRelationIntegrity.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node --input-type=module -e 'import fs from "node:fs"; import { runPysVehicleRelationIntegrityTests } from "./Services/Test/PysVehicleRelationIntegrity.mjs"; const result = runPysVehicleRelationIntegrityTests({ feedback: fs.readFileSync("Services/feedback.js", "utf8"), ui: fs.readFileSync("ui.js", "utf8") }); console.log(JSON.stringify(result, null, 2)); if (result.status !== "PASS") process.exitCode = 1;'
+```
+
+La suite contiene 18 escenarios: validación de IDs y unicidad en `Cortes`/`pys`, JSON y formatos heredados, normalización/deduplicación, altas y bajas idempotentes, retorno del valor persistido, liberación del `ScriptLock`, reintentos después de errores de flush, validación de preasociaciones al crear un PyS, autorización del desarrollador y filtrado de IDs huérfanos/duplicados en la UI. La suite de `SharedMutationCoordinator.js` cubre 30 escenarios, incluidos leases simultáneos de alta/alta, alta/baja y conflictos de lectura `CORTES` frente a escritura `WRITE`.
+
+Las pruebas locales usan dobles en memoria y harness JavaScript; la contención real entre ejecuciones Apps Script y las operaciones sobre una Spreadsheet aislada se validan en Beta. No apuntar servicios ni coordinadores de prueba a producción.
