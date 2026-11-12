@@ -1593,3 +1593,16 @@ Archivos: api-config.js, rich-text.js, ui.js, index.html, service-worker.js, Ser
 Último commit de escritura confirmado antes de esta actualización: fc5bcce36ebf5f97b0f6fa112168892172ab249f. La rama base GPSpedia2.2.5 permanece sin modificaciones.
 Siguiente: recuperar la primera tarea pendiente posterior a AUG-097 y verificar sus dependencias.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-098 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+ui.js mostrarResultadosDeBusqueda y showNoResultsMessage ya no insertan query/textoBusqueda mediante innerHTML: se crean nodos DOM y se asigna textContent. showGlobalError también usa textContent. main.js restaura deep links en searchInput.value; navigation.js pasa la consulta original y share-utils/search-utils decodifican sin interpretarla como HTML.
+Dependencia resuelta: navigation.js tenía un slash sin escapar en el parser de colecciones VIN; corregido y cubierto por NavigationVinCollection.js. ui.js y navigation.js pasan parsing integral.
+Pruebas locales en harness adaptado: SearchQueryXssIntegrity 8/8; GlobalSearch 21/21; NavigationVinCollection 6/6; VinVersionPresentation 11/11 PASS. Casos incluyen payloads de imagen/script/SVG/eventos, comillas, ampersand, Unicode, estados vacíos y deep links codificados.
+Beta pendiente: navegador real con búsqueda por input, historial, resultados/no resultados, enlaces compartidos, secuencias inválidas, navegación atrás, móvil y escritorio. No se ejecutó Node CLI ni se desplegó ni se modificaron datos productivos.
+Archivos: ui.js, navigation.js, Services/Test/SearchQueryXssIntegrity.js, Services/Test/NavigationVinCollection.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Último commit de escritura confirmado antes de esta actualización: 762f0bc234e27e749c1fec2e5bcb679454648b7d. La rama base GPSpedia2.2.5 permanece sin modificaciones.
+Siguiente: AUG-099 — Eliminar referencias residuales a filtros rápidos cancelados.
+================================================================================
