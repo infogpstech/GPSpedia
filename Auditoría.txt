@@ -617,3 +617,17 @@ Corrección: cada popstate retira solo la entrada superior; si el destino omiti�
 Validación: OverlayHistoryStack 19/19 PASS y ReplacedImagesLightboxHistory 6/6 PASS en runtime V8 adaptado; parsing V8 de main.js, módulo users.html y bloque legal ui.js PASS. No se ejecutó navegador real.
 Estado: corregido y validado localmente. Beta pendiente: interacción DOM/navegador real, botón físico y gestos nativos.
 ================================================================================
+
+
+================================================================================
+AUG-071 — H-AUD-071-001 — EN CORRECCIÓN — 2026-11-12
+Origen: AUG-071 / AUD-T-007.
+Ubicaciones: overlayHistory.js; main.js; ui.js; Services/Test/OverlayMenuModalHistory.js.
+Evidencia inicial:
+- openSideMenu() creaba una entrada independiente {sideMenuOpen:true}; el cierre consultaba window.history.state y ejecutaba history.back() fuera de la pila compartida.
+- El App Shell elegía visualmente el menú, pero su callback solo lo ocultaba y no retiraba su registro del gestor común.
+- setupModal() cerraba mediante modalOpen genérico o display:none, sin identificar la entrada del modal que debía reconciliar.
+- openAuditDriveModal(), openReplacedImagesModal() y el éxito de contact-form ocultaban modales directamente; las vistas administrativas podían mantener trabajo asíncrono activo al cerrarse.
+Impacto: entradas residuales, cierres que podían consumir una capa incorrecta y desincronización entre menú, modal visible e historial.
+Criterio: cada overlay debe tener una identidad estable y una sola entrada; el menú debe completar su popstate antes de abrir el destino; los cierres administrativos deben invalidar su generación y cerrar descendientes; conservar estado previo de búsqueda/sección.
+================================================================================
