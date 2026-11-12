@@ -33,7 +33,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: main.js:517–532 alterna body.dark-mode sin establecer data-theme; style.css:1260 depende de [data-theme="dark"]; style.css:1253/1322/1337 usa --text-primary sin declaración.
 - Problema: la variante oscura del banner no coincide con el selector activo y el color textual usa un token inexistente.
 - Criterios: unificar selector/atributo de tema; definir tokens semánticos; probar banner, mensajes, botones y contraste en tema claro/oscuro.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). style.css utiliza body.dark-mode y tokens semánticos independientes para banner, mensajes, botones, entrada y foco; se agregó ValidationBannerTheme.js con 12 pruebas, incluidos contrastes WCAG AA. La inspección confirma que ui.js conserva las clases y el flujo de validación sin cambios.
 
 ### AUG-103 — Consolidar tokens de color y tema entre las páginas
 - Origen: H-AUD-016-002. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
