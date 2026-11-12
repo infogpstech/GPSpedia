@@ -1688,3 +1688,27 @@ Archivos: style.css, Services/Test/ValidationBannerTheme.js, Services/Test/READM
 Publicación mediante actualizaciones secuenciales condicionadas por SHA; sin force push ni reescritura de historial.
 Siguiente tarea: AUG-103 — Consolidar tokens de color y tema entre las páginas. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-103 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida verificado: 216bf71449589f93a55b274041968cbba7ff137e.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- style.css (index.html), users.html y add_cortes.html comparten 21 tokens semánticos con valores alineados para tema claro y oscuro.
+- Los alias históricos se conservan como referencias a los tokens compartidos para mantener compatibilidad.
+- Se migraron colores de componentes comunes: fondos, superficies, textos, bordes, acentos, foco, estados deshabilitados, mensajes informativos e indicadores generales.
+- Excepciones: colores contextuales/operativos, marcas/logotipos, imágenes, sombras, overlays y elementos gráficos específicos.
+- El banner de validación conserva tokens especializados compatibles con la paleta común.
+
+Validación local:
+- ThemeTokenConsistency.js: 12 comprobaciones de contrato, igualdad entre páginas, alias, uso y contraste; PASS en harness local.
+- Node CLI no se ejecutó desde checkout local; el comando reproducible está documentado en Services/Test/README.md.
+- Inspección visual de las tres páginas, ambos temas y viewports diferida a Beta mediante lista_beta.txt.
+- No se modificaron endpoints, permisos, servicios, datos ni deployments.
+
+Archivos: style.css, users.html, add_cortes.html, Services/Test/ThemeTokenConsistency.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-104 — Permitir zoom del navegador en add_cortes.html. No iniciar hasta la siguiente interacción.
+================================================================================
