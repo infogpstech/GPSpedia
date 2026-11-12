@@ -1255,3 +1255,5 @@ Beta pendiente: deployment FEEDBACK, Spreadsheet y Drive aislados; ACL efectiva 
 
 Siguiente tarea: AUG-080 — Serializar e idempotentizar la inserción de sugerencias. No iniciada; fuera de esta iteración.
 ================================================================================
+
+Corrección de trazabilidad: la adenda H-AUD-010-005 quedó corregida a 24/24 PASS en Auditoría.txt, commit ba0abb98be818c806b5eba4858e75ce0f0ab9961. Esta cifra corresponde al harness V8 aislado; no se afirma ejecución Node CLI ni integración real de Drive/Spreadsheet.
