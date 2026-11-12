@@ -634,3 +634,30 @@ Validación de esta iteración:
 
 Siguiente acción: ejecutar YouTubeUploadOverlayLifecycle (8 comprobaciones) en Codespaces, corregir cualquier fallo reproducible y luego continuar con las pruebas de cancelación/confirmación de cierre durante transferencia activa. No iniciar AUG-069.
 ================================================================================
+
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3D — CIERRE DURANTE TRANSFERENCIA YOUTUBE — 2026-11-12
+Estado: EN PROGRESO. Se añadió una prueba de integración aislada que ejecuta los callbacks reales extraídos de youtubeUpload.js junto con el gestor real overlayHistory.js y un historial simulado.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 027e295b5faa1532923f80828ba415cd59566665. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Cobertura añadida:
+- Atrás mientras hay transferencia: rechazar confirmación mantiene el modal visible, el XHR sin abortar, uploadCancelled=false y la entrada del historial.
+- Atrás mientras hay transferencia: confirmar pausa marca uploadCancelled, aborta el XHR una vez, elimina el modal y vacía la pila.
+- Solicitud de cierre desde X: rechazar mantiene modal e historial.
+- Solicitud de cierre desde Cancelar: confirmar pausa aborta XHR y cierra modal.
+- La prueba lee youtubeUpload.js y evalúa los callbacks closeModal/requestOverlayClose reales, no copias manuales de su lógica; utiliza createOverlayHistoryManager real con History simulado.
+- Archivo: Services/Test/YouTubeUploadCloseDuringTransfer.js.
+
+Validación local adaptada:
+- Los cuatro escenarios anteriores se ejecutaron en runtime V8 con los callbacks extraídos de youtubeUpload.js y la implementación real de overlayHistory.js: 4/4 PASS.
+- No fue ejecución Node CLI en Codespaces ni prueba con DOM/navegador real.
+- No se modificó ChangesLogs.txt porque supera 180,000 caracteres y requiere rotación normativa sin pérdida.
+- No se modificó la rama base.
+
+Comando de ejecución desde la raíz:
+cp Services/Test/YouTubeUploadCloseDuringTransfer.js Services/Test/YouTubeUploadCloseDuringTransfer.mjs && node Services/Test/YouTubeUploadCloseDuringTransfer.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCloseDuringTransfer.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+
+Siguiente acción: ejecutar la prueba 4/4 y la suite OverlayHistoryStack en Codespaces; resolver cualquier fallo reproducible. Después revisar el flujo de cancelación/recuperación y las rutas de cierre automático. No iniciar AUG-069.
+================================================================================
