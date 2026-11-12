@@ -1124,3 +1124,19 @@ Evidencia inicial:
 Plan: conservar tamaño y colores; añadir role=status, aria-live=polite, aria-atomic y texto oculto actualizable; explicar que navigator.onLine no acredita disponibilidad backend; respetar movimiento reducido sin ocultar el estado visual. No se necesita health check de backend para este alcance.
 Validación Beta pendiente: lector de pantalla real, cambios online/offline del sistema, red disponible con backend inaccesible y prefers-reduced-motion en navegadores/dispositivos.
 ================================================================================
+
+
+================================================================================
+AUG-073 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Resultado:
+- El punto de 3×3 px conserva diseño y colores; ahora expone role=status, aria-live=polite, aria-atomic=true y texto accesible visualmente oculto.
+- main.js comunica el estado reportado por navigator.onLine en el title y en el texto accesible. El mensaje no afirma que los endpoints/backend estén disponibles.
+- style.css respeta prefers-reduced-motion: reduce desactivando la animación offline, sin ocultar el punto ni eliminar el color que comunica el estado.
+- No se agregó health check de backend; si se requiere ese indicador en el futuro deberá ser separado y usar timeout acotado.
+Validación local adaptada:
+- ConnectionStatusAccessibility: 8/8 PASS.
+- Parsing V8 de main.js y del bloque updateStatus: PASS.
+- Node CLI literal no ejecutado. Lector de pantalla, conectividad online/offline real, red disponible con backend inaccesible y movimiento reducido en dispositivos/navegadores quedan diferidos a Beta.
+Publicación: cambios en GPSpedia2.2.5_work; HEAD de cierre pendiente de verificación posterior a registros. Rama base GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente tarea identificada en backlog: AUG-074 — Completar la detección e instalación PWA en iOS/iPadOS.
+================================================================================
