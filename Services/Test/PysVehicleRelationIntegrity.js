@@ -87,6 +87,13 @@ function buildHarness(feedback, options = {}) {
         console: console, Date: Date, JSON: JSON, Math: Math, Number: Number, String: String, Object: Object, Array: Array, RegExp: RegExp, Error: Error, Set: Set, Map: Map,
         SHEET_NAMES: { CORTES: "Cortes" },
         COLS_CORTES: { id: 1 },
+        Utilities: {
+            base64Decode: () => [137, 80, 78, 71, 13, 10, 26, 10],
+            base64Encode: () => "iVBORw0KGgo=",
+            DigestAlgorithm: { SHA_256: "SHA_256" },
+            computeDigest: () => Array(32).fill(1),
+            newBlob: () => ({})
+        },
         LockService: { getScriptLock: () => lock },
         SpreadsheetApp: {
             flush() {
@@ -105,7 +112,7 @@ function buildHarness(feedback, options = {}) {
     const relationHelpers = extract(feedback, "function parseModelosAsociados(rawVal) {", "function handleClearActivityLogs(payload) {");
     vm.runInNewContext(
         roleHelper + "\n" + relationHelpers +
-        "\nthis.api = { add: handleAddVehicleToProblem, remove: handleRemoveVehicleFromProblem, parse: parseModelosAsociados };",
+        "\nthis.api = { add: handleAddVehicleToProblem, remove: handleRemoveVehicleFromProblem, create: handleAddProblem, parse: parseModelosAsociados };",
         context
     );
     return { api: context.api, state };
@@ -129,6 +136,22 @@ export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
         assert.match(ui, /uniqueModelosAsociados = new Set\(\)/);
         assert.match(ui, /if \(!v\) return;/);
         assert.match(ui, /modelosAsociadosIds = modelosAsociadosIds\.reduce/);
+    });
+
+    test("el alta preasociada también valida Cortes dentro de su lock", () => {
+        const h = buildHarness(feedback);
+        assert.throws(() => h.api.create({
+            opId: "operation-pys-000000000000000003",
+            titulo: "Falla eléctrica", descripcion: "Detalle técnico",
+            sinSolucion: true, solucion: "", prevenir: "",
+            userId: "USR-1", userName: "Técnico", videoUrl: "",
+            alcance: "especifico", modelosAsociados: ["V-404"],
+            imgBase64: "data:image/png;base64,iVBORw0KGgo="
+        }), /exactamente un registro/);
+        assert.equal(h.state.lockWaits, 1);
+        assert.equal(h.state.lockReleases, 1);
+        assert.equal(h.state.writes, 0);
+        assert.ok(h.state.reads.every(access => access.locked));
     });
 
     test("normaliza JSON y formatos heredados sin duplicados", () => {
