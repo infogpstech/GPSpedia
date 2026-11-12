@@ -560,7 +560,8 @@ PRUEBAS EN FEEDBACK / SPREADSHEET / DRIVE AISLADOS (NO PRODUCCIÓN):
 6. Provocar fallo de Drive antes de crear el archivo, fallo de escritura de Feedbacks después de cargar imagen y fallo de lectura de confirmación. Comprobar rollback; si no puede verificarse que la fila quedó vacía, confirmar que el archivo no se envía a papelera y registrar la operación para reconciliación.
 7. Confirmar que la copia de fórmulas y el append no pisan filas concurrentes, que las columnas históricas mantienen su orden y que el estado inicial sigue siendo pendiente de revisión.
 8. Repetir con cliente anterior sin suggestionOperationId. Confirmar compatibilidad mediante la clave compuesta histórica y huella del contenido, sin duplicar registros.
-9. Verificar reintento tras timeout, reintento después de recargar la página y solicitudes para dos reportes distintos del mismo usuario. Registrar operationId, reportId, IDs de fila/archivo, payload fingerprint, tiempos, respuestas y estado antes/después.
+9. Reintentar una sugerencia histórica creada antes de AUG-080 con el mismo payload. Confirmar que la huella legacy permite devolver el registro original sin crear una fila ni imagen nueva.
+10. Verificar reintento tras timeout, reintento después de recargar la página y solicitudes para dos reportes distintos del mismo usuario. Registrar operationId, reportId, IDs de fila/archivo, payload fingerprint, tiempos, respuestas y estado antes/después.
 
 No declarar PASS sin verificar la concurrencia real de Apps Script, una sola fila y un solo archivo en Drive/Spreadsheet aislados. No usar endpoints, carpetas, hojas, cuentas ni datos productivos.
 ================================================================================

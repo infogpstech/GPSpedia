@@ -131,3 +131,8 @@ Archivos: ui.js; Services/feedback.js; Services/Test/SuggestionConcurrencyIdempo
 - Se añade suite reproducible de 19 escenarios y guía de validación Beta aislada.
 Validación registrada por separado: 19/19 PASS en harness V8 adaptado; parsing V8 de backend, modal y suite PASS. Node CLI e integración real Apps Script/Drive/Spreadsheet no se afirman como ejecutados.
 ================================================================================
+
+
+AUG-080 — ADENDA DE COMPATIBILIDAD HISTÓRICA — 2026-11-12
+Services/feedback.js conserva un comparador de huella anterior exclusivamente para replay de sugerencias persistidas antes de AUG-080. Las operaciones nuevas continúan usando SHA-256. Services/Test/SuggestionConcurrencyIdempotency.js añade el escenario de replay legacy; resultado actualizado: 20/20 PASS en runtime V8 adaptado. lista_beta.txt incluye la comprobación con registros históricos reales.
+================================================================================

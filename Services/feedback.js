@@ -1629,6 +1629,22 @@ function buildCutSuggestionRequestFingerprint_(request) {
     return Array.from(digest).map(value => (value & 255).toString(16).padStart(2, "0")).join("");
 }
 
+// Solo para reconocer registros creados antes de AUG-080; no se usa en operaciones nuevas.
+function buildLegacyCutSuggestionRequestFingerprint_(details, proposedValues, imageDataUrl) {
+    const source = JSON.stringify({
+        details: String(details || ""),
+        proposedValues: proposedValues || {},
+        image: String(imageDataUrl || "")
+    });
+    let hashA = 2166136261, hashB = 2246822519;
+    for (let i = 0; i < source.length; i++) {
+        const code = source.charCodeAt(i);
+        hashA = Math.imul(hashA ^ code, 16777619) >>> 0;
+        hashB = Math.imul(hashB ^ (code + i), 3266489917) >>> 0;
+    }
+    return source.length + ":" + hashA.toString(16) + ":" + hashB.toString(16);
+}
+
 function findCutSuggestionByOperation_(sheet, operationId) {
     const id = String(operationId || "").trim();
     if (!sheet || !id || sheet.getLastRow() < 2) return null;
@@ -1806,11 +1822,16 @@ function handleSuggestCutChange(payload) {
     const normalizedReportId = reportContext.reportId;
     const normalizedUserId = String(userId);
     const normalizedDetails = String(details || "");
+    const legacyImageDataUrl = normalizedImage
+        ? String(imageAttachment != null ? imageAttachment.dataUrl || "" : imgBase64 || "") : "";
     const requestFingerprint = buildCutSuggestionRequestFingerprint_({
         reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
         userId: normalizedUserId, details: normalizedDetails, proposedValues: normalizedProposedValues,
         imageSha256: normalizedImage ? normalizedImage.sha256 : ""
     });
+    const legacyRequestFingerprint = buildLegacyCutSuggestionRequestFingerprint_(
+        normalizedDetails, normalizedProposedValues, legacyImageDataUrl
+    );
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
     let uploadedImage = null, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
@@ -1833,7 +1854,8 @@ function handleSuggestCutChange(payload) {
         // Compatibilidad con clientes anteriores y formularios reabiertos después de perder la respuesta.
         const existingByRequest = findCutSuggestionByRequest_(sheet, normalizedReportId, normalizedVehicleId, normalizedCorteIndex, normalizedUserId);
         if (existingByRequest) {
-            if (!existingByRequest.record.requestFingerprint || existingByRequest.record.requestFingerprint !== requestFingerprint) {
+            const storedFingerprint = String(existingByRequest.record.requestFingerprint || "");
+            if (storedFingerprint !== requestFingerprint && storedFingerprint !== legacyRequestFingerprint) {
                 throw new Error("El reporte ya tiene una sugerencia con datos distintos; no se creó otra sugerencia.");
             }
             return buildCutSuggestionReplayResponse_(existingByRequest, normalizedReportId);

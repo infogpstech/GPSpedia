@@ -28,7 +28,7 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
         }
     };
     const helperFactory = new Function("Utilities", "COLS_FEEDBACKS", helperBlock +
-        "\nreturn { buildCutSuggestionRequestFingerprint_, findCutSuggestionByOperation_, findCutSuggestionByRequest_, buildCutSuggestionReplayResponse_ };");
+        "\nreturn { buildCutSuggestionRequestFingerprint_, buildLegacyCutSuggestionRequestFingerprint_, findCutSuggestionByOperation_, findCutSuggestionByRequest_, buildCutSuggestionReplayResponse_ };");
     const helpers = helperFactory(utilities, cols);
 
     test("UI genera el identificador con crypto seguro y rechaza fallback débil", () => {
@@ -52,6 +52,7 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
         assert.ok(handlerBlock.includes("suggestionOperationId"));
         assert.ok(handlerBlock.includes("/^[A-Za-z0-9_-]{20,80}$/"));
         assert.ok(handlerBlock.includes("normalizedOperationId ||"));
+        assert.ok(handlerBlock.includes("legacyRequestFingerprint"));
     });
     test("la huella SHA-256 incluye destino, actor, propuesta y hash de imagen", () => {
         const request = { reportId:"REP-1", vehicleId:"V1", corteIndex:2, userId:"U1",
@@ -88,6 +89,21 @@ export function runSuggestionConcurrencyTests({ feedback, ui }) {
         assert.equal(response.alreadyProcessed, true);
         assert.equal(response.imageAttached, true);
         assert.equal(response.suggestionData, record);
+    });
+    test("la huella legacy solo permite replay de registros históricos existentes", () => {
+        const payload = { reportId:"REP-123", vehicleId:"VEH-1", corteIndex:1, userId:"USER-1",
+            userName:"Técnico", details:"Corrección técnica", proposedValues:{ tipo:"Ignición" },
+            suggestionOperationId:"operation_12345678901234567890" };
+        const legacyFingerprint = helpers.buildLegacyCutSuggestionRequestFingerprint_(payload.details, payload.proposedValues, "");
+        const legacyRecord = { subType:"suggestion_cut", reportId:payload.reportId, vehicleId:payload.vehicleId,
+            corteIndex:payload.corteIndex, userId:payload.userId, requestFingerprint:legacyFingerprint, status:"pendiente_revision" };
+        const sheet = makeSheet([["id","user","vehicle","problem","resolved"],
+            ["legacy-id",payload.userName,payload.vehicleId,JSON.stringify(legacyRecord),false]]);
+        const harness = makeHandler(sheet);
+        const response = harness.handler(payload);
+        assert.equal(response.alreadyProcessed, true);
+        assert.equal(harness.uploadCount, 0);
+        assert.equal(sheet.rows.filter(row => String(row[3] || "").includes('"subType":"suggestion_cut"')).length, 1);
     });
     test("el lock precede la lectura de fila, copia, escritura y flush y se libera en finally", () => {
         const lockAt = handlerBlock.indexOf("lock.waitLock(10000)");

@@ -765,3 +765,8 @@ Corrección:
 Impacto: reduce colisiones de filas, registros duplicados y archivos huérfanos o referencias rotas por reintentos y fallos parciales.
 Validación: suite de 19 escenarios PASS en runtime V8 adaptado; parsing V8 de backend, modal y suite PASS. El harness no representa concurrencia real. Beta pendiente: Apps Script, Spreadsheet y Drive aislados, solicitudes simultáneas, respuesta perdida, rollback y clientes legacy.
 ================================================================================
+
+
+ADENDA H-AUD-010-006 — COMPATIBILIDAD DE HUELLAS HISTÓRICAS — 2026-11-12
+Se detectó y corrigió una incompatibilidad potencial en reintentos de sugerencias guardadas antes de AUG-080: esos registros conservan la huella histórica no criptográfica. FEEDBACK calcula ahora esa huella solo como alternativa de lectura para reconocer registros ya existentes; no se usa para crear ni identificar operaciones nuevas. SHA-256 permanece como huella canónica para las nuevas operaciones. La suite incluye replay de registro legacy: 20/20 PASS en runtime V8 adaptado. La verificación con registros reales permanece en Beta aislada.
+================================================================================

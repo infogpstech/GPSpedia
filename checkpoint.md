@@ -1284,3 +1284,9 @@ Validación local:
 Beta pendiente: concurrencia real en Apps Script, timeout/respuesta perdida, Drive/Spreadsheet aislados, rollback real, reintentos de clientes antiguos y comprobación de columnas/fórmulas. No se ejecutaron deployments ni datos productivos.
 Siguiente tarea: AUG-081 — Validar esquema y límites de reportes y propuestas. No iniciada.
 ================================================================================
+
+
+ADENDA DE CONTINUIDAD — AUG-080 — 2026-11-12
+Corrección de compatibilidad detectada en revisión post-commit: se conserva el cálculo de la huella histórica únicamente para reconocer y devolver sugerencias ya persistidas antes de AUG-080. Las operaciones nuevas siguen usando SHA-256. Se evita que un reintento antiguo con respuesta perdida sea rechazado por el cambio de algoritmo o cree una segunda fila/imagen.
+La suite se amplía de 19 a 20 escenarios e incluye replay de un registro histórico con huella anterior: 20/20 PASS en runtime V8 adaptado; parsing V8 de backend, modal y suite PASS. Node CLI continúa sin ejecutarse por falta de checkout local y fallo DNS al clonar GitHub.
+La validación Beta añade el reintento de un registro histórico pre-AUG-080.
