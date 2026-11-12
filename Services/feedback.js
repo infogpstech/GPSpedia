@@ -1989,6 +1989,138 @@ function parseModelosAsociados(rawVal) {
     return str.split(/[,/\\;]+/).map(s => s.trim()).filter(Boolean);
 }
 
+
+const PYS_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+const PYS_IMAGE_EXTENSIONS = Object.freeze({
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+});
+
+function validatePysImageDataUrl_(value) {
+    if (typeof value !== "string") throw new Error("La imagen del problema es obligatoria y debe enviarse como Data URL.");
+    const match = value.trim().match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/i);
+    if (!match) throw new Error("La imagen debe ser JPEG, PNG o WebP codificada en Base64.");
+    const mimeType = match[1].toLowerCase();
+    const base64 = match[2];
+    if (!Object.prototype.hasOwnProperty.call(PYS_IMAGE_EXTENSIONS, mimeType)) {
+        throw new Error("El formato de imagen no está permitido.");
+    }
+    if (base64.length > Math.ceil(PYS_IMAGE_MAX_BYTES / 3) * 4) {
+        throw new Error("La imagen supera el tamaño máximo permitido de 3 MB.");
+    }
+
+    let bytes;
+    try {
+        bytes = Utilities.base64Decode(base64);
+    } catch (error) {
+        throw new Error("No se pudo decodificar la imagen del problema.");
+    }
+    if (!bytes || !bytes.length || bytes.length > PYS_IMAGE_MAX_BYTES) {
+        throw new Error("La imagen está vacía o supera el tamaño máximo permitido de 3 MB.");
+    }
+    if (Utilities.base64Encode(bytes) !== base64) {
+        throw new Error("La codificación Base64 de la imagen no es válida o canónica.");
+    }
+
+    const byteAt = index => Number(bytes[index]) & 255;
+    const signatureValid =
+        (mimeType === "image/jpeg" && bytes.length >= 3 &&
+            byteAt(0) === 0xff && byteAt(1) === 0xd8 && byteAt(2) === 0xff) ||
+        (mimeType === "image/png" && bytes.length >= 8 &&
+            [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => byteAt(index) === value)) ||
+        (mimeType === "image/webp" && bytes.length >= 12 &&
+            String.fromCharCode(byteAt(0), byteAt(1), byteAt(2), byteAt(3)) === "RIFF" &&
+            String.fromCharCode(byteAt(8), byteAt(9), byteAt(10), byteAt(11)) === "WEBP");
+    if (!signatureValid) {
+        throw new Error("La firma binaria de la imagen no coincide con el tipo MIME declarado.");
+    }
+
+    return { bytes, mimeType, extension: PYS_IMAGE_EXTENSIONS[mimeType], sizeBytes: bytes.length };
+}
+
+function getPysImagesFolder_() {
+    const rootFolder = getCortesRootFolder();
+    const folder = findOrCreateSubFolder(rootFolder, "Problemas y Soluciones");
+    if (!folder || String(folder.getId()) === String(rootFolder.getId()) ||
+        getFolderCanonicalName(folder.getName()) !== getFolderCanonicalName("Problemas y Soluciones")) {
+        throw new Error("No se pudo verificar la carpeta PyS dentro de la raíz autorizada de GPSpedia.");
+    }
+
+    const parents = folder.getParents();
+    let isDirectChild = false;
+    while (parents.hasNext()) {
+        if (String(parents.next().getId()) === String(rootFolder.getId())) isDirectChild = true;
+    }
+    if (!isDirectChild) throw new Error("La carpeta PyS no pertenece directamente a la raíz autorizada de GPSpedia.");
+    return { folder, rootFolder };
+}
+
+function assertPysImageFolderPermissions_(file, folder) {
+    if (!file || !folder || typeof file.getSharingAccess !== "function" ||
+        typeof folder.getSharingAccess !== "function" ||
+        typeof file.getSharingPermission !== "function" ||
+        typeof folder.getSharingPermission !== "function") {
+        throw new Error("No se pudieron verificar los permisos heredados de la carpeta PyS.");
+    }
+    const folderAccess = String(folder.getSharingAccess());
+    const fileAccess = String(file.getSharingAccess());
+    const folderPermission = String(folder.getSharingPermission());
+    const filePermission = String(file.getSharingPermission());
+    if (fileAccess !== folderAccess || filePermission !== folderPermission) {
+        throw new Error("El archivo PyS no conserva la política de acceso heredada de su carpeta.");
+    }
+}
+
+function normalizePysImageReference_(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    let id = "";
+
+    if (/^[A-Za-z0-9_-]{10,110}$/.test(raw)) {
+        id = raw;
+    } else {
+        let match = raw.match(/^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,110})(?:\/view)?(?:[?#].*)?$/i);
+        if (!match) match = raw.match(/^https:\/\/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([A-Za-z0-9_-]{10,110})(?:&[^#]*)?(?:#.*)?$/i);
+        if (!match) match = raw.match(/^https:\/\/lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]{10,110})(?:=[^\s]*)?$/i);
+        if (match) id = match[1];
+        else if (/drive\.google\.com|googleusercontent\.com/i.test(raw)) return "";
+        else return raw; // Compatibilidad con referencias HTTPS históricas ajenas a Drive.
+    }
+
+    return id ? "https://drive.google.com/file/d/" + id + "/view" : "";
+}
+
+function findPysImageReferences_(sheet, imageFileId, imageUrl) {
+    if (!sheet) throw new Error("No se pudo comprobar la hoja PyS para recuperar la imagen.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return [];
+    const values = sheet.getRange(2, 1, lastRow - 1, Math.max(7, sheet.getLastColumn())).getDisplayValues();
+    const matches = [];
+    values.forEach((row, index) => {
+        const storedUrl = String(row[6] || "").trim();
+        const normalizedUrl = normalizePysImageReference_(storedUrl);
+        const storedIds = extractDriveFileIds(storedUrl);
+        if (normalizedUrl === imageUrl || storedIds.includes(String(imageFileId))) {
+            matches.push({ rowNumber: index + 2, problemId: String(row[0] || "").trim(), imageUrl: storedUrl });
+        }
+    });
+    return matches;
+}
+
+function markPysImageForRecovery_(file, problemId, imageFileId, reason) {
+    if (!file) return;
+    const description = [
+        "GPSpedia PyS — RECOVERY_REQUIRED",
+        "problemId=" + String(problemId || ""),
+        "fileId=" + String(imageFileId || ""),
+        "reason=" + String(reason || "No se pudo confirmar la vinculación ni la compensación.").slice(0, 500),
+        "updatedAt=" + new Date().toISOString()
+    ].join("\n");
+    try { file.setDescription(description); }
+    catch (error) { console.error("No se pudo registrar metadata de recuperación para la imagen PyS:", error); }
+}
+
 function handleGetPysData() {
     const sheet = getSafeSheet("pys");
     if (!sheet) return { status: "success", data: [] };
@@ -2004,7 +2136,7 @@ function handleGetPysData() {
         Se_soluciono: row[3],
         Solucion: row[4],
         Prevenir: row[5],
-        Imagen: row[6],
+        Imagen: normalizePysImageReference_(row[6]),
         Video: row[7],
         Colaborador: row[8] || "",
         modelosAsociados: parseModelosAsociados(row[9] || "")
@@ -2025,49 +2157,124 @@ function handleAddProblem(payload) {
     if (normalizedSolution.length > 700) throw new Error("La solución no puede superar 700 caracteres.");
     if (normalizedPrevention.length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
     if (!userId || !userName) throw new Error("La sesión verificada no proporcionó un colaborador válido.");
-    if (typeof imgBase64 !== "string" || !imgBase64.trim()) throw new Error("La imagen del problema es obligatoria.");
     if (String(videoUrl || "").trim()) throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
 
+    // Validar la imagen antes de reservar fila o crear recursos en Drive.
+    const image = validatePysImageDataUrl_(imgBase64);
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
-    let imageFile = null, imageUrl = "", problemId = "", sheet = null;
+
+    let imageFile = null, imageUrl = "", imageFileId = "", problemId = "", sheet = null;
     try {
         sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
-        if (sheet.getLastRow() === 0) sheet.getRange(1, 1, 1, 10).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
+        if (sheet.getLastRow() === 0) {
+            sheet.getRange(1, 1, 1, 10).setValues([[
+                "id_problem", "Problema", "Descripción", "Se soluciono", "Solucion",
+                "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"
+            ]]);
+        }
+
         const lastRow = sheet.getLastRow();
         problemId = "isue-" + String(lastRow > 1 ? lastRow : 1).padStart(3, "0");
-        const existingIds = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat().map(value => String(value || "").trim()) : [];
-        if (existingIds.includes(problemId)) throw new Error("El ID calculado del problema ya existe; no se creó un registro duplicado.");
+        const existingIds = lastRow > 1
+            ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat().map(value => String(value || "").trim())
+            : [];
+        if (existingIds.includes(problemId)) {
+            throw new Error("El ID calculado del problema ya existe; no se creó un registro duplicado.");
+        }
 
-        const folders = DriveApp.getFoldersByName("Problemas y Soluciones");
-        const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder("Problemas y Soluciones");
-        const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/i, "")), "image/jpeg", problemId + "_" + Date.now() + ".jpg");
+        const { folder } = getPysImagesFolder_();
+        const fileName = problemId + "_" + Date.now() + "." + image.extension;
+        const blob = Utilities.newBlob(image.bytes, image.mimeType, fileName);
         imageFile = folder.createFile(blob);
         if (!imageFile) throw new Error("Drive no confirmó la creación de la imagen.");
-        imageFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        imageUrl = String(imageFile.getUrl() || "").trim();
-        if (!imageUrl) throw new Error("Drive no devolvió la URL de la imagen creada.");
+        imageFileId = String(imageFile.getId() || "").trim();
+        if (!/^[A-Za-z0-9_-]{10,110}$/.test(imageFileId)) {
+            throw new Error("Drive no devolvió un identificador válido para la imagen.");
+        }
 
+        // No se modifica el ACL del archivo: hereda exactamente el acceso de la carpeta PyS.
+        imageFile.setDescription([
+            "GPSpedia PyS — UPLOAD_PENDING",
+            "problemId=" + problemId,
+            "fileId=" + imageFileId,
+            "mimeType=" + image.mimeType,
+            "sizeBytes=" + image.sizeBytes
+        ].join("
+"));
+        assertPysImageFolderPermissions_(imageFile, folder);
+
+        imageUrl = "https://drive.google.com/file/d/" + imageFileId + "/view";
         const models = alcance === "especifico" && Array.isArray(modelosAsociados)
-            ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean))) : [];
-        sheet.appendRow([problemId, normalizedTitle, normalizedDescription, sinSolucion ? "" : "x", sinSolucion ? "" : normalizedSolution, normalizedPrevention, imageUrl, "", userName, models.length ? JSON.stringify(models) : ""]);
+            ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean)))
+            : [];
+
+        sheet.appendRow([
+            problemId, normalizedTitle, normalizedDescription,
+            sinSolucion ? "" : "x", sinSolucion ? "" : normalizedSolution,
+            normalizedPrevention, imageUrl, "", userName,
+            models.length ? JSON.stringify(models) : ""
+        ]);
         SpreadsheetApp.flush();
-        const persisted = sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId && String(row[6] || "").trim() === imageUrl);
-        if (persisted.length !== 1) throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
+
+        const persisted = sheet.getDataRange().getDisplayValues().slice(1).filter(row =>
+            String(row[0] || "").trim() === problemId &&
+            normalizePysImageReference_(row[6]) === imageUrl
+        );
+        if (persisted.length !== 1) {
+            throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
+        }
+
+        try {
+            imageFile.setDescription([
+                "GPSpedia PyS — LINKED",
+                "problemId=" + problemId,
+                "fileId=" + imageFileId,
+                "mimeType=" + image.mimeType,
+                "sizeBytes=" + image.sizeBytes
+            ].join("
+"));
+        } catch (metadataError) {
+            console.warn("No se pudo actualizar el estado auxiliar de la imagen PyS:", metadataError);
+        }
+
         try { logUserActivity(userId, userName, "add_problem", problemId, normalizedTitle); }
         catch (logError) { console.error("No se pudo registrar la actividad de alta PyS:", logError); }
         return { status: "success", message: "Problema registrado correctamente.", problemId };
     } catch (error) {
         if (imageFile) {
-            let matchingRows = [];
-            try { matchingRows = sheet ? sheet.getDataRange().getValues().slice(1).filter(row => String(row[0] || "").trim() === problemId) : []; }
-            catch (readError) { throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para revisión. Detalle: " + error.message); }
-            if (matchingRows.length === 1 && String(matchingRows[0][6] || "").trim() === imageUrl) {
+            let references;
+            try {
+                references = findPysImageReferences_(sheet, imageFileId, imageUrl);
+            } catch (readError) {
+                markPysImageForRecovery_(imageFile, problemId, imageFileId,
+                    "No se pudo comprobar la hoja PyS después del fallo: " + String(readError && readError.message || readError));
+                throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para recuperación manual. Detalle: " + String(error && error.message || error));
+            }
+
+            if (references.length === 1 &&
+                references[0].problemId === problemId &&
+                normalizePysImageReference_(references[0].imageUrl) === imageUrl) {
                 return { status: "success", message: "Problema registrado y verificado tras una respuesta parcial.", problemId, recovered: true };
             }
-            if (matchingRows.length > 0) throw new Error("Existe un registro PyS parcial o ambiguo; la imagen se conserva para revisión.");
-            try { imageFile.setTrashed(true); SpreadsheetApp.flush(); }
-            catch (cleanupError) { throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; requiere revisión manual."); }
+
+            if (references.length > 0) {
+                markPysImageForRecovery_(imageFile, problemId, imageFileId,
+                    "El archivo aparece referenciado por otro registro o por una fila ambigua; no se eliminó.");
+                throw new Error("La imagen está referenciada por un registro PyS; se conservó para evitar pérdida de datos. Requiere revisión.");
+            }
+
+            try {
+                imageFile.setTrashed(true);
+                SpreadsheetApp.flush();
+                if (typeof imageFile.isTrashed === "function" && imageFile.isTrashed() !== true) {
+                    throw new Error("Drive no confirmó que la imagen no vinculada quedara en papelera.");
+                }
+            } catch (cleanupError) {
+                markPysImageForRecovery_(imageFile, problemId, imageFileId,
+                    "Falló la compensación automática: " + String(cleanupError && cleanupError.message || cleanupError));
+                throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; quedó marcada para recuperación manual.");
+            }
         }
         throw error;
     } finally {
