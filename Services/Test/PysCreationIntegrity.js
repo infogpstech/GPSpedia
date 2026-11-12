@@ -297,7 +297,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     test("edición y alta de aprobación usan el validador estricto del backend",()=>{
         assert.match(feedback,/function handleUpdatePysItem\(payload\)[\s\S]*?getPysYouTubeVideoId_\(requested\)/);
         assert.match(feedback,/function handleSubmitVideoForApproval\(payload\)[\s\S]*?getPysYouTubeVideoId_\(videoUrl\)/);
-        assert.match(ui,/getValidatedYouTubeVideoId\(newVideo\)/);
+        assert.match(ui,/export function getValidatedYouTubeVideoId\(value\)/);
     });
     test("UI anuncia y aplica los mismos límites de campo",()=>{
         assert.match(ui,/pys-titulo" maxlength="15"/);assert.match(ui,/pys-detalle" maxlength="200"/);
