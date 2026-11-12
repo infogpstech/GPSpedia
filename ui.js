@@ -6698,25 +6698,55 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
         carouselContainer.appendChild(nextBtn);
         panel.appendChild(carouselContainer);
 
-        // Soporte de gestos táctiles (swipe) para móvil y PWA
-        let touchStartX = 0;
-        let touchEndX = 0;
+        // Soporte de gestos táctiles: solo se acepta un desplazamiento horizontal dominante.
+        function createCableCarouselTouchHandlers(onSwipe, threshold = 50) {
+            let touchStart = null;
+            const interactiveSelector = 'button, a, input, textarea, select, option, label, [role="button"], [contenteditable="true"]';
 
-        carouselContainer.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, { passive: true });
-
-        carouselContainer.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            const threshold = 50;
-            if (touchEndX < touchStartX - threshold) {
-                updateSlide(currentSlideIndex + 1);
-                adjustPanelHeight();
-            } else if (touchEndX > touchStartX + threshold) {
-                updateSlide(currentSlideIndex - 1);
-                adjustPanelHeight();
+            function resetTouch() {
+                touchStart = null;
             }
-        }, { passive: true });
+
+            return {
+                touchstart(event) {
+                    resetTouch();
+                    if (!event || !event.touches || event.touches.length !== 1 ||
+                        !event.changedTouches || event.changedTouches.length !== 1) return;
+
+                    const target = event.target;
+                    if (target && typeof target.closest === 'function' && target.closest(interactiveSelector)) return;
+
+                    const touch = event.changedTouches[0];
+                    if (!Number.isFinite(touch.clientX) || !Number.isFinite(touch.clientY)) return;
+                    touchStart = { x: touch.clientX, y: touch.clientY };
+                },
+                touchend(event) {
+                    const start = touchStart;
+                    resetTouch();
+                    if (!start || !event || !event.touches || event.touches.length !== 0 ||
+                        !event.changedTouches || event.changedTouches.length !== 1) return;
+
+                    const touch = event.changedTouches[0];
+                    if (!Number.isFinite(touch.clientX) || !Number.isFinite(touch.clientY)) return;
+
+                    const deltaX = touch.clientX - start.x;
+                    const deltaY = touch.clientY - start.y;
+                    if (Math.abs(deltaX) <= threshold || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+                    onSwipe(deltaX < 0 ? 1 : -1);
+                },
+                touchcancel: resetTouch
+            };
+        }
+
+        const cableTouchHandlers = createCableCarouselTouchHandlers((direction) => {
+            updateSlide(currentSlideIndex + direction);
+            adjustPanelHeight();
+        });
+
+        carouselContainer.addEventListener('touchstart', cableTouchHandlers.touchstart, { passive: true });
+        carouselContainer.addEventListener('touchend', cableTouchHandlers.touchend, { passive: true });
+        carouselContainer.addEventListener('touchcancel', cableTouchHandlers.touchcancel, { passive: true });
 
         updateSlide(0);
     } else {
