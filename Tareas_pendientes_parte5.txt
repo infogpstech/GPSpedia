@@ -318,6 +318,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 
 ### AUG-078 — Validar la relación entre reporte, vehículo y corte en sugerencias
 - **Origen:** H-AUD-010-004. **Prioridad:** Media.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Suite Node ESM: 11/11 PASS en harness aislado; parsing V8 PASS. Integración FEEDBACK/Spreadsheet real pendiente de Beta aislada.
 - **Problema:** la sugerencia admite reportId N/A o sintético, no busca el reporte original y no verifica que vehicleId/corteIndex correspondan al mismo reporte ni a un slot real.
 - **Criterios de aceptación:**
   1. Exigir reportId real, existente y único para nuevas sugerencias; retirar el fallback que fabrica un ID cuando falta.
