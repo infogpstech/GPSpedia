@@ -302,7 +302,8 @@ async function initializeApp() {
         const fresh = visible.filter(element => !overlayElements.has(element));
 
         // Un overlay que reemplaza al superior ocupa su misma entrada, sin añadir un nivel de Atrás.
-        if (stale.length === 1 && fresh.length === 1) {
+        const currentStack = overlayHistory.getStack();
+        if (stale.length === 1 && fresh.length === 1 && currentStack[currentStack.length - 1] === stale[0][0]) {
             const [oldId] = stale[0];
             const element = fresh[0];
             const id = 'info-modal-' + (++overlaySequence);
