@@ -261,3 +261,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: deduplicación de IDs asociados y omisión de relaciones huérfanas al renderizar vehículos.
 - Services/Test: nueva PysVehicleRelationIntegrity.js; se amplían SharedMutationCoordinator.js y PysCreationIntegrity.js para cubrir las dependencias y el nuevo helper compartido.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-091 — TÍTULO DEL ACORDEÓN PyS
+- ui.js: sustituye el rótulo visible «Posibles problemas» por «Problemas relacionados a este vehículo» y separa el texto de la flecha.
+- style.css: el título ocupa el espacio flexible, conserva el contraste del botón en ambos temas y permite ajuste de línea en móviles.
+- Services/Test/PysAccordionTitle.js: seis verificaciones de contrato para texto, tema, flecha y viewport.
+================================================================================
