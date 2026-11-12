@@ -860,3 +860,13 @@ cp Services/Test/PWAInstallDetection.js Services/Test/PWAInstallDetection.mjs &&
 ```
 
 La suite contiene 20 escenarios para iPhone/iPad, iPadOS con user-agent móvil y de escritorio, control negativo Mac, estado standalone, visibilidad de instrucciones, metadatos Apple, iconos locales y compatibilidad con beforeinstallprompt/appinstalled. La ejecución Node CLI y las pruebas en dispositivos reales se registran por separado; no se consideran aprobadas por una simulación V8.
+
+## AUG-075 — Seguridad de reportes y sugerencias de corte
+
+Ejecutar desde la raíz del repositorio con Node.js:
+
+```bash
+node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+```
+
+La suite contiene 50 escenarios de seguridad FEEDBACK. Incluye autorización de reportProblem y suggestCutChange para todos los roles activos permitidos, rechazo de sesión ausente/inválida/revocada o cruzada, sustitución de identidad falsificada por los datos de Users y comprobación del dispatcher POST antes de invocar los handlers. El comando proporciona dobles locales de LockService y CacheService; no sustituye pruebas de concurrencia ni de Apps Script/Spreadsheet reales. En Beta se debe repetir el flujo con el deployment FEEDBACK de pruebas y una hoja aislada, verificando que una petición rechazada no deje registros en Feedbacks, Drive ni ActividadUsuario.
