@@ -31,7 +31,7 @@ function createNode(tagName) {
 }
 
 const resultsFnSource = extract(ui, "export function mostrarResultadosDeBusqueda(", "export function showNoResultsMessage(")
-    .replace(/\\bexport\\s+(?=function)/, "");
+    .replace(/\bexport\s+(?=function)/, "");
 const noResultsFnSource = extract(ui, "export function showNoResultsMessage(", "// Normaliza el indicador técnico");
 const createRenderers = () => {
     const container = createNode("div");
@@ -64,9 +64,9 @@ class URLSearchParamsMock {
         String(value || "").split("&").forEach(part => {
             if (!part) return;
             const index = part.indexOf("=");
-            const key = decodeURIComponent((index < 0 ? part : part.slice(0, index)).replace(/\\+/g, " "));
+            const key = decodeURIComponent((index < 0 ? part : part.slice(0, index)).replace(/\+/g, " "));
             const raw = index < 0 ? "" : part.slice(index + 1);
-            const item = decodeURIComponent(raw.replace(/\\+/g, " "));
+            const item = decodeURIComponent(raw.replace(/\+/g, " "));
             const list = this.values.get(key) || [];
             list.push(item);
             this.values.set(key, list);
