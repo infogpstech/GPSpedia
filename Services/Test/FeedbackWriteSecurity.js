@@ -318,16 +318,24 @@ function runFeedbackWriteSecurityTests() {
 
         test_("El alta de tutorial usa el colaborador derivado de la sesión", function() {
             const originalAssert = assertFeedbackSession;
-            const originalGetSafeSheet = getSafeSheet;
-            const rows = [["Tema", "Imagen", "Video", "Descripción", "Colaborador"]];
+            const originalGetSpreadsheet = getSpreadsheet;
+            const originalSpreadsheetApp = SpreadsheetApp;
+            const originalLockService = LockService;
+            const headers = ["ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEncontrarlo", "Detalles", "Video", "Colaborador"];
+            const rows = [headers.slice()];
             const sheet = {
                 getLastRow: () => rows.length,
-                getLastColumn: () => 5,
-                getRange: (row, column, rowCount, columnCount) => ({
+                getLastColumn: () => 8,
+                getRange: (row, column, rowCount = 1, columnCount = 1) => ({
                     getDisplayValues: () => Array.from({ length: rowCount }, (_, r) =>
                         Array.from({ length: columnCount }, (_, c) => String((rows[row - 1 + r] || [])[column - 1 + c] || ""))),
                     getValues: () => Array.from({ length: rowCount }, (_, r) =>
-                        Array.from({ length: columnCount }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] || ""))
+                        Array.from({ length: columnCount }, (_, c) => (rows[row - 1 + r] || [])[column - 1 + c] || "")),
+                    setValue: value => { rows[row - 1][column - 1] = value; }
+                }),
+                getDataRange: () => ({
+                    getValues: () => rows.map(row => row.slice()),
+                    getDisplayValues: () => rows.map(row => row.map(value => String(value || "")))
                 }),
                 appendRow: row => rows.push(row.slice())
             };
@@ -336,23 +344,30 @@ function runFeedbackWriteSecurityTests() {
                     if (!allowedRoles || !allowedRoles.includes("Desarrollador")) throw new Error("Rol no autorizado.");
                     return { userId: "USR-DEV", userName: "Desarrollador verificado", role: "Desarrollador" };
                 };
-                getSafeSheet = () => sheet;
+                getSpreadsheet = () => ({ getSheetByName: name => name === "Tutorial" ? sheet : null });
                 SpreadsheetApp = { flush: function() {} };
+                LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
                 const authorized = authorizeFeedbackAction_("addTutorial", {
                     sessionToken: "TEST_SESSION", userId: "ADMIN-FALSO",
                     userName: "Nombre falso", colaborador: "Colaborador falso"
                 });
                 handleAddTutorial({
-                    ...authorized, tema: "Tutorial de prueba", descripcion: "Descripción",
+                    ...authorized, operationId: "0123456789abcdef0123456789abcdef",
+                    tema: "Tutorial de prueba", detalles: "Descripción",
                     colaborador: "Colaborador falsificado"
                 });
-                assert_(rows[1][4] === "Desarrollador verificado",
+                assert_(rows[1][7] === "Desarrollador verificado",
                     "El colaborador guardado debe proceder de la sesión, no del navegador.");
+                assert_(rows[1][0] === "tut-0123456789abcdef0123456789abcdef",
+                    "El tutorial debe guardar un ID estable basado en la operación.");
             } finally {
                 assertFeedbackSession = originalAssert;
-                getSafeSheet = originalGetSafeSheet;
+                getSpreadsheet = originalGetSpreadsheet;
+                SpreadsheetApp = originalSpreadsheetApp;
+                LockService = originalLockService;
             }
         });
+
         test_("suggestYear valida identidad, año y respuesta antes de acceder a las hojas", function() {
             const oldGet=getSpreadsheet,oldLock=LockService;
             let sheetAccesses=0;
