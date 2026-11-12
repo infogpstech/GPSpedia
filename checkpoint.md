@@ -585,3 +585,7 @@ Validación prevista: ejecutar la suite Node CLI completa y revisar diff/sintaxi
 Continuidad: siguiente iteración, conectar el callback de cierre de youtubeUpload.js con el gestor y devolver false cuando el usuario rechace pausar una transferencia activa. Preservar el aborto XHR y las rutas de cierre por éxito.
 No se modifica la rama base. ChangesLogs.txt no se modifica en esta iteración porque supera el umbral de rotación de 180,000 caracteres; su rotación debe completarse antes de la próxima entrada.
 ================================================================================
+
+
+AUG-068 — ADENDA DE VALIDACIÓN — CIERRE CANCELABLE — 2026-11-11
+La regresión nueva de cancelación de cierre y los diez escenarios previos de la pila se ejecutaron en Node v22.16.0 mediante un harness local adaptado a partir de la implementación y la suite vigentes: **11/11 PASS**, código de salida 0. Se verificaron conservación del estado, cierre superior, orden LIFO, reemplazo, cierre manual, errores, IDs inválidos/inexistentes, clear y restauración de la entrada al cancelar popstate. La ejecución se realizó con una reproducción local del módulo y de los escenarios; no fue una ejecución CLI sobre un checkout de Codespaces. La integración de youtubeUpload.js continúa pendiente y no se declara validada.
