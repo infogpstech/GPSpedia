@@ -1056,3 +1056,24 @@ Alcance implementado:
 Validación en esta iteración: revisión estática y pruebas de contrato preparadas; la ejecución literal Node CLI y navegador real aún no se han ejecutado. No se modificó la rama base ni endpoints/deployments/datos productivos.
 Siguiente acción: revisar transiciones asíncronas y cierres directos, ejecutar el harness disponible, corregir hallazgos locales y completar evidencia de AUG-071 antes de cerrar.
 ================================================================================
+
+
+================================================================================
+AUG-071 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Resultado:
+- Menú lateral, modales estáticos/dinámicos y vistas administrativas usan la misma pila de historial.
+- Reaperturas no duplican la entrada; el menú se cierra y reconcilia antes de abrir Inbox, Dashboard, Changelog, DevTools o cambiar de sección.
+- X, cierres directos observados, popstate y submit exitoso reconcilian el ID correcto. Las entradas de padres permanecen cuando se cierra un hijo; los cierres explícitos de un padre conservan el comportamiento LIFO.
+- Audit Drive e imágenes reemplazadas invalidan generaciones al cerrar; el modal de imágenes cierra el lightbox hijo y libera contenido.
+Validación local adaptada:
+- OverlayMenuModalHistory: 13/13 PASS.
+- OverlayHistoryStack: 19/19 PASS.
+- ReplacedImagesLightboxHistory: 6/6 PASS.
+- Parsing V8 de overlayHistory.js y main.js completos: PASS. setupModal, helpers del menú, openAuditDriveModal y openReplacedImagesModal: PASS.
+- ui.js completo conserva un error de parsing de expresión regular reproducible también en el HEAD inicial; no se atribuye a AUG-071. Los bloques modificados compilan.
+- No se ejecutó Node CLI literal ni DOM/navegador real. El Node CLI está documentado para el repositorio local; navegador/dispositivo, backdrop y gestos nativos quedan diferidos a Beta.
+Publicación:
+- Cambios publicados secuencialmente en GPSpedia2.2.5_work; HEAD de cierre pendiente de verificación posterior a los registros.
+- Rama base GPSpedia2.2.5 permanece intacta (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Siguiente acción: recuperar la siguiente tarea activa del backlog y sus dependencias; no reabrir AUG-071 sin evidencia nueva.
+================================================================================
