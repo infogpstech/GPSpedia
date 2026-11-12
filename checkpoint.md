@@ -686,3 +686,18 @@ Siguiente acción: validar la nueva aserción y continuar la revisión de cierre
 ADENDA DE VALIDACIÓN — ITERACIÓN 3E
 La prueba de cierre durante transferencia se ejecutó nuevamente en runtime V8 adaptado con los callbacks reales de youtubeUpload.js y el gestor real overlayHistory.js: 5/5 PASS. Incluye rechazo/confirmación mediante Atrás, X y Cancelar, aborto único del XHR al confirmar y verificación de que la X permanece visible/enlazada a la ruta protegida.
 No equivale a ejecución Node CLI en Codespaces ni a prueba visual DOM/navegador real. La prueba CLI queda pendiente para la siguiente iteración.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3F — COBERTURA DE CIERRES AUTOMÁTICOS — 2026-11-12
+Revisión del flujo de recuperación y cierre automático de YouTube:
+- Se verificó que las tres rutas automáticas (operación ya pendiente, operación ya aprobada y subida enviada a aprobación) convergen en closeAfterUpload.
+- closeAfterUpload activa closeWithoutPrompt y delega en requestOverlayClose; no retira directamente el modal ni deja desincronizada la pila de overlayHistory.
+- La recuperación local incluye estados new, uploading, paused, interrupted y uploaded. Si hay más de un registro para el mismo usuario/contenido, se detiene con error para evitar elegir una sesión arbitraria.
+- Se amplió Services/Test/YouTubeUploadCloseDuringTransfer.js con dos casos: cierre automático elimina la entrada histórica sin pedir confirmación y las tres rutas automáticas utilizan el cierre centralizado.
+- No se detectó un defecto de implementación que justificara modificar youtubeUpload.js en esta revisión.
+
+Validación de esta iteración: pendiente ejecutar la prueba ampliada en Codespaces. La lógica de cierres manuales y el gestor ya se habían ejecutado en V8 adaptado; no se declara ejecución Node CLI ni navegador real para esta nueva cobertura.
+Rama base intacta. ChangesLogs.txt sin modificar por superar el límite y requerir rotación normativa.
+Siguiente acción: ejecutar la prueba ampliada (6/6) y revisar cualquier fallo; después revisar el guardado/reconciliación de checkpoints durante cancelación y reanudación. No iniciar AUG-069.
+================================================================================

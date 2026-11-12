@@ -24,6 +24,7 @@ function extractArrow(name) {
 
 const closeModalExpression = extractArrow("closeModal");
 const requestCloseExpression = extractArrow("requestOverlayClose");
+const closeAfterUploadExpression = extractArrow("closeAfterUpload");
 assert.match(source, /closeBtn\.onclick = requestOverlayClose;/);
 assert.match(source, /cancelBtn\.onclick = requestOverlayClose;/);
 assert.doesNotMatch(source, /closeBtn\.style\.display\s*=\s*"none"/, "La X debe permanecer disponible durante la transferencia");
@@ -68,8 +69,10 @@ function createScenario(confirmResult) {
          let closeWithoutPrompt = false;
          const closeModal = ${closeModalExpression};
          const requestOverlayClose = ${requestCloseExpression};
+         const closeAfterUpload = ${closeAfterUploadExpression};
          return {
-             closeModal, requestOverlayClose,
+             closeModal, requestOverlayClose, closeAfterUpload,
+             setUploading(value) { isUploading = value; },
              get uploadCancelled() { return uploadCancelled; }
          };`
     );
@@ -130,4 +133,20 @@ test("Cancelar + confirmar pausa aborta XHR y cierra modal", () => {
     assert.equal(s.runtime.uploadCancelled, true);
 });
 
-console.log("YouTubeUploadCloseDuringTransfer:", passed + "/4 PASS");
+
+test("cierre automático sincroniza el historial sin pedir confirmación", () => {
+    const s = createScenario(false);
+    s.runtime.setUploading(false);
+    s.runtime.closeAfterUpload();
+    assert.equal(s.confirmCalls, 0);
+    assert.equal(s.modal.removed, true);
+    assert.deepEqual(s.manager.getStack(), []);
+    assert.equal(s.history.state[overlayHistoryStateKey], undefined);
+});
+
+test("las tres rutas automáticas utilizan el cierre centralizado", () => {
+    assert.match(source, /const closeAfterUpload = \(\) => \{\s*closeWithoutPrompt = true;\s*requestOverlayClose\(\);\s*\};/);
+    assert.equal((source.match(/closeAfterUpload\(\);/g) || []).length, 3);
+});
+
+console.log("YouTubeUploadCloseDuringTransfer:", passed + "/6 PASS");
