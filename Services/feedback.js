@@ -3128,22 +3128,40 @@ function handleUpdateTutorialItem(payload) {
             if (duplicate) throw new Error("Ya existe otro tutorial con ese tema; no se modificó el registro.");
         }
 
-        if (updates.tema !== undefined) sheet.getRange(target.rowIndex, 2).setValue(updates.tema);
-        if (updates.comoIdentificarlo !== undefined) sheet.getRange(target.rowIndex, 4).setValue(updates.comoIdentificarlo);
-        if (updates.dondeEncontrarlo !== undefined) sheet.getRange(target.rowIndex, 5).setValue(updates.dondeEncontrarlo);
-        if (updates.detalles !== undefined) sheet.getRange(target.rowIndex, 6).setValue(updates.detalles);
-        SpreadsheetApp.flush();
+        const nextFields = [
+            updates.tema !== undefined ? updates.tema : String(target.row[1] || ""),
+            String(target.row[2] || ""),
+            updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(target.row[3] || ""),
+            updates.dondeEncontrarlo !== undefined ? updates.dondeEncontrarlo : String(target.row[4] || ""),
+            updates.detalles !== undefined ? updates.detalles : String(target.row[5] || "")
+        ];
+        const currentFields = target.row.slice(1, 6).map(value => String(value || ""));
+        const changed = nextFields.some((value, index) => value !== currentFields[index]);
+        if (changed) sheet.getRange(target.rowIndex, 2, 1, 5).setValues([nextFields]);
+        try {
+            SpreadsheetApp.flush();
+        } catch (flushError) {
+            const recovered = sheet.getRange(target.rowIndex, 2, 1, 5).getValues()[0]
+                .map(value => String(value || ""));
+            if (!nextFields.every((value, index) => value === recovered[index])) throw flushError;
+            return {
+                status: "success", recovered: true,
+                message: "Tutorial actualizado y verificado después de una respuesta de guardado incierta.",
+                updated: { tutorialId: String(target.row[0] || "").trim(), tema: nextFields[0],
+                    comoIdentificarlo: nextFields[2], dondeEncontrarlo: nextFields[3], detalles: nextFields[4] }
+            };
+        }
+        const saved = sheet.getRange(target.rowIndex, 2, 1, 5).getValues()[0]
+            .map(value => String(value || ""));
+        if (!nextFields.every((value, index) => value === saved[index])) {
+            throw new Error("La fila del tutorial no coincide con los cambios solicitados.");
+        }
 
         return {
             status: "success",
             message: "Tutorial actualizado exitosamente.",
-            updated: {
-                tutorialId: String(target.row[0] || "").trim(),
-                tema: updates.tema !== undefined ? updates.tema : String(target.row[1] || ""),
-                comoIdentificarlo: updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(target.row[3] || ""),
-                dondeEncontrarlo: updates.dondeEncontrarlo !== undefined ? updates.dondeEncontrarlo : String(target.row[4] || ""),
-                detalles: updates.detalles !== undefined ? updates.detalles : String(target.row[5] || "")
-            }
+            updated: { tutorialId: String(target.row[0] || "").trim(), tema: nextFields[0],
+                comoIdentificarlo: nextFields[2], dondeEncontrarlo: nextFields[3], detalles: nextFields[4] }
         };
     } finally {
         lock.releaseLock();
