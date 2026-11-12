@@ -5,6 +5,18 @@ function normalizeState(state) {
     return state && typeof state === "object" ? state : {};
 }
 
+export function selectTopmostOverlay(candidates) {
+    if (!Array.isArray(candidates)) return null;
+    return candidates
+        .filter(candidate => candidate && Number.isFinite(Number(candidate.zIndex)))
+        .slice()
+        .sort((a, b) =>
+            Number(b.zIndex) - Number(a.zIndex) ||
+            Number(b.order || 0) - Number(a.order || 0) ||
+            Number(b.domOrder || 0) - Number(a.domOrder || 0)
+        )[0] || null;
+}
+
 export function createOverlayHistoryManager(historyApi, onError = null) {
     const entries = [];
 
