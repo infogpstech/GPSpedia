@@ -311,3 +311,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: el editor in-modal de PyS limita la descripción a 200 caracteres, en concordancia con la validación backend.
 - Services/Test/RichTextBackendSanitization.js y PysCreationIntegrity.js: cobertura de payloads directos, contenido activo, atributos, URLs, CSS, entidades, límites y reintentos.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-096 — SEGURIDAD DE RENDERIZADO DESCRIPTIVO
+- ui.js: los rótulos del carrusel de cables se insertan como texto plano mediante textContent; el cuerpo enriquecido se mantiene separado y se procesa con sanitizeHtmlContent.
+- Services/Test/DescriptiveContentRendering.js: nueva regresión para carrusel, vista individual, detalle PyS, impresión, Inbox y rutas offline.
+- Services/Test/README.md: instrucciones de ejecución y alcance de Beta documentados.
+- Tareas_pendientes_parte5.txt: AUG-096 cerrada con validación diferida; lista_beta.txt registra las comprobaciones reales pendientes.
+================================================================================
