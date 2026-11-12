@@ -227,19 +227,6 @@ body.dark-mode h1.app-title {
     transition: all 0.35s ease-in-out;
 }
 
-#logout-button, #install-button {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.9em;
-    transition: background-color 0.3s;
-}
-
-#logout-button { background-color: #dc3545; color: white; }
-#install-button { background-color: #28a745; color: white; }
-
 .header-bottom {
     display: flex;
     flex-direction: column;
@@ -852,53 +839,9 @@ body.search-active .container {
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
 }
 
-#login-modal button {
+#login-modal button.btn {
     width: 100%;
-    padding: 12px;
-    background: #007bff;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 1.1em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-#login-modal button:hover {
-    background: #0056b3;
-}
-
-/* --- ANIMACIONES DE CARGA EN BOTONES --- */
-.btn-loading {
-    position: relative !important;
-    color: transparent !important;
-    pointer-events: none !important;
-}
-
-.btn-loading::after {
-    content: "";
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    top: 50%;
-    left: 50%;
-    margin-top: -9px;
-    margin-left: -9px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin-button 0.6s linear infinite;
-    z-index: 5;
-}
-
-/* Spinner específico para el botón de login si se requiere otro color */
-#login-form button.btn-loading::after {
-    border-top-color: #fff; /* Se mantiene blanco sobre azul */
-}
-
-@keyframes spin-button {
-    to { transform: rotate(360deg); }
+    font-size: 1.05em;
 }
 
 /* Modal */
@@ -2102,25 +2045,8 @@ body.search-active .search-history-section {
     font-weight: bold;
 }
 
-.terms-footer button {
-    background-color: var(--accent-color, #007bff);
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.2s, transform 0.1s;
+.terms-footer button.btn {
     width: 100%;
-}
-
-.terms-footer button:hover {
-    background-color: #0056b3;
-}
-
-.terms-footer button:active {
-    transform: scale(0.98);
 }
 
 .dark-mode .terms-logo {
@@ -2885,7 +2811,7 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.035);
 }
 
-#dev-tools-modal .dev-tools-card button {
+#dev-tools-modal .dev-tools-card button:not(.btn) {
     min-height: 36px;
     padding: 8px 12px;
     border-radius: 8px;
@@ -2895,12 +2821,12 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
     transition: filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-#dev-tools-modal .dev-tools-card button:hover {
+#dev-tools-modal .dev-tools-card button:not(.btn):hover {
     filter: brightness(0.97);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.10);
 }
 
-#dev-tools-modal .dev-tools-card button:active {
+#dev-tools-modal .dev-tools-card button:not(.btn):active {
     transform: translateY(1px);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
