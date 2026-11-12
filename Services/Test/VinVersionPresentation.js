@@ -54,4 +54,4 @@ test('rechaza JSON mal formado y duplicados', () => {
     assert.throws(() => helpers.parseVinCollection('["ABC123","ABC123"]'), /duplicado/);
 });
 
-console.log('VIN version presentation:', passed, '/ 10');
+console.log('VIN version presentation:', passed, '/ 11');
