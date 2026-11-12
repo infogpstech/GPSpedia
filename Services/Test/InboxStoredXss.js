@@ -21,7 +21,7 @@ function runInboxStoredXssTests(sources) {
         detail: extract("renderInboxDetail"),
         report: extract("openReportCutModal"),
         suggest: extract("openSuggestCutModal"),
-        success: (() => { const start = ui.indexOf("function showReportSuccessModal("); const end = ui.indexOf("\\nexport function openSuggestCutModal", start); assert(start >= 0 && end > start); return ui.slice(start, end).trim(); })()
+        success: (() => { const start = ui.indexOf("function showReportSuccessModal("); const end = ui.indexOf("\nexport function openSuggestCutModal", start); assert(start >= 0 && end > start); return ui.slice(start, end).trim(); })()
     };
     const parseFunction = source => new Function("return (" + source.replace(/^export\s+/, "") + ");")();
 
