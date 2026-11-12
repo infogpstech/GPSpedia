@@ -141,7 +141,9 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   3. No cambiar el tratamiento de .img-vehiculo-modal ni otros elementos fuera del alcance.
   4. Probar imágenes con alfa, fondo opaco, bordes semitransparentes, colores oscuros y modo claro/oscuro.
 - **Relación:** AUD-T-006; conservar objetivo B33 de canal alfa sin degradar imágenes opacas.
-- **Estado:** EN PROGRESO; selector opt-in implementado y prueba de contrato añadida.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Validación local:** `ImageBlendModeScope.js` ejecutada con Node v24.22.2 mediante copia temporal `.mjs`: 7/7 PASS, código de salida 0. La suite verifica la regla opt-in única, el selector exacto y la ausencia de los selectores globales anteriores.
+- **Pendiente para Beta:** comprobación visual con PNG con alfa, fondos opacos, bordes semitransparentes, colores oscuros y modos claro/oscuro en navegador real. No se asigna automáticamente `.gps-transparent-asset` a imágenes sin metadatos fiables de transparencia.
 
 ### AUG-067 — Discriminar eje horizontal y vertical en gestos del carrusel de cables
 - **Origen:** H-AUD-006-003. **Prioridad:** Media.
