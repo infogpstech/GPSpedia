@@ -739,3 +739,13 @@ Evidencia: handleSuggestCutChange antes de fingerprint, Drive o escritura exige 
 Impacto mitigado: asociación de sugerencias a reportes/vehículos/cortes incorrectos, inexistentes o ambiguos. Los registros históricos sin metadata se conservan sin migración ni modificación y no se aceptan como origen de nuevas sugerencias.
 Validación local: suite Node 11/11 PASS. Integración real con Spreadsheet/FEEDBACK y datos históricos permanece para Beta aislada.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-010-005 / AUG-079 — 2026-11-12
+Estado: CORREGIDO EN CÓDIGO; integración y permisos reales pendientes de Beta.
+Evidencia: openSuggestCutModal limita MIME a JPEG/PNG/WebP y 3 MB, gestiona FileReader load/error/abort y libera el botón ante fallos. FEEDBACK reutiliza validateReportImageAttachment_ para comprobar Base64 canónico, tamaño y firma binaria, calcula SHA-256 y crea el Blob con MIME/extensión reales. La imagen se guarda bajo `Cortes/SugerenciasCortes`, sin compartirla públicamente; se rechaza si la ACL heredada es ANYONE/ANYONE_WITH_LINK o no puede verificarse. La respuesta confirma imageAttached/imageUrl; la UI no muestra éxito si falta esa confirmación. La fila se verifica por lectura posterior y, si no queda confirmada, se intenta revertir y enviar a papelera el archivo huérfano.
+Impacto mitigado: carga de archivos con tipo falso, confirmación engañosa de imágenes no guardadas y exposición pública accidental.
+Compatibilidad: se conserva el formato Data URL legado en imgBase64, sujeto a la misma validación. Los archivos históricos no se migran ni cambian de ACL automáticamente.
+Validación local: suite de 22 escenarios ejecutada en harness V8 aislado: 22/22 PASS; parsing de Services/feedback.js, modal de ui.js y suite PASS. Beta pendiente: ACL real heredada de Cortes, acceso de revisores, rechazo a usuarios no autorizados, Drive/Spreadsheet aislados y rollback real.
+================================================================================
