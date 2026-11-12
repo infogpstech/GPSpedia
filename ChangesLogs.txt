@@ -358,3 +358,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/ButtonSystemIntegrity.js: nueva suite de contrato para variantes, estados, tema, carga de hojas de estilo, cobertura de botones estáticos y excepciones especializadas.
 - Services/Test/README.md: documenta ejecución y excepciones de controles dinámicos cuya semántica/geometría requiere estilos propios.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-101 — CLASIFICACIÓN DE MARCAS Y SECCIONES EN BÚSQUEDA GLOBAL
+- La revisión de navigation.js, search-utils.js y ui.js confirmó que la implementación vigente ya asigna un tipo explícito por sección y solo clasifica como marca cuando todos los resultados son Cortes.
+- Relay, Tutorial y PyS conservan su tipo de sección y no se convierten en tarjetas de logos; no fue necesario modificar la lógica de producción.
+- Services/Test/GlobalSearch.js amplía la cobertura para títulos exactos de sección, título exacto de modelo, búsqueda por marca y coincidencias mixtas entre Cortes, Relay, Tutorial y PyS.
+- La validación focalizada de clasificación ejecutada en Node aprobó 7/7 escenarios; la sintaxis de los nuevos casos PASS. La suite completa del repositorio no se ejecutó porque esta sesión no dispone de un checkout local.
+- La comprobación de renderizado e interacción en navegador real queda para Beta. Sin cambios de datos, endpoints ni deployments.
+================================================================================
