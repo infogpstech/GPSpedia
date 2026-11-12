@@ -25,6 +25,24 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
   run_(label+" tres slots ocupados rechazan",function(){try{runtime.plan({cableAlimen:"nuevo"},Object.assign({},empty,{cableAlimen:"A",imgCableAlimen2:"B",cableAlimen3:"C"}));throw Error("Debió fallar");}catch(e){assert_(e.code==="SUPPLEMENTARY_CONFLICT");}});
   run_(label+" pares entrantes múltiples rechazan",function(){try{runtime.plan({cableAlimen:"A",cableAlimen2:"B"},empty);throw Error("Debió fallar");}catch(e){assert_(e.code==="SUPPLEMENTARY_INVALID_PAYLOAD");}});
   run_(label+" nota sola válida",function(){assert_(runtime.plan({notaImportante:"Nota"},empty).updates.notaImportante==="Nota");});
+  run_(label+" nota importante se sanitiza en backend",function(){const p=runtime.plan({notaImportante:'<script>alert(1)</script><strong>Nota segura</strong>'},empty);assert_(p.updates.notaImportante==="<strong>Nota segura</strong>");});
+  run_(label+" sanea todos los campos enriquecidos antes de persistir",function(){
+   const opening=runtime.plan({apertura:'<img src="https://cdn.example/a.png" onerror="alert(1)"><b>Apertura</b>'},empty);
+   const feed=runtime.plan({cableAlimen2:'<svg onload="alert(1)">x</svg><em>Alimentación</em>'},empty);
+   assert_(opening.updates.apertura==='<img src="https://cdn.example/a.png"><b>Apertura</b>');
+   assert_(feed.updates.cableAlimen==="<em>Alimentación</em>");
+  });
+  run_(label+" rechaza campos enriquecidos mayores de 5000",function(){
+   try{runtime.plan({notaImportante:"N".repeat(5001)},empty);throw Error("Debió fallar");}
+   catch(e){assert_(e.code==="SUPPLEMENTARY_INVALID_PAYLOAD");}
+  });
+  run_(label+" acepta el límite de 5000 caracteres",function(){
+   assert_(runtime.plan({notaImportante:"N".repeat(5000)},empty).updates.notaImportante.length===5000);
+  });
+  run_(label+" rechaza tipos no textuales para nota",function(){
+   try{runtime.plan({notaImportante:{html:"<b>x</b>"}},empty);throw Error("Debió fallar");}
+   catch(e){assert_(e.code==="SUPPLEMENTARY_INVALID_PAYLOAD");}
+  });
   run_(label+" persistencia verificada",function(){let values=Array(10).fill("");const range={setValues:function(v){values=v[0].slice();},getValues:function(){return[values.slice()];}};runtime.persist({getRange:function(){return range;}},2,Array(10).fill(""),["A"].concat(Array(9).fill("")));assert_(values[0]==="A");});
   run_(label+" rollback ante fallo de escritura",function(){let values=["old"].concat(Array(9).fill("")),calls=0;const range={setValues:function(v){calls++;values=v[0].slice();if(calls===1)throw Error("write");},getValues:function(){return[values.slice()];}};try{runtime.persist({getRange:function(){return range;}},2,["old"].concat(Array(9).fill("")),["new"].concat(Array(9).fill("")));throw Error("Debió fallar");}catch(e){assert_(e.code==="SUPPLEMENTARY_PERSISTENCE_FAILED"&&values[0]==="old"&&calls===2);}});
   run_(label+" ScriptLock se libera en finally",function(){const p=source.indexOf("function handleAddSupplementaryInfo(payload"),q=source.indexOf("function handleAddSupplementaryInfoLocked",p),block=source.slice(p,q);assert_(block.includes("waitLock(30000)")&&block.includes("finally")&&block.includes("releaseLock"));});
