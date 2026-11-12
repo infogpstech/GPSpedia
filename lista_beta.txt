@@ -861,3 +861,5 @@ PRUEBAS EN BETA AISLADA — cuenta y datos de prueba:
 
 No desplegar a producción ni modificar datos productivos.
 ================================================================================
+
+- [ ] AUG-089 — PyS–vehículo: validar en navegador real retorno de varios niveles con Atrás y cierre X; confirmar scroll vertical, scroll horizontal, acordeón abierto, edición/descartar/guardar y ausencia de entradas duplicadas.
