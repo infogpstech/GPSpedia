@@ -3463,8 +3463,9 @@ function renderRelayInfoModal(relayInfo) {
     closeBtn.className = 'info-close-btn';
     closeBtn.innerHTML = '&times;';
     closeBtn.onclick = () => {
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
+        const overlayId = modal.dataset.gpOverlayHistoryId;
+        if (overlayId && window.overlayHistory && typeof window.overlayHistory.close === 'function') {
+            window.overlayHistory.close(overlayId);
         } else {
             modal.style.display = 'none';
         }
@@ -3489,9 +3490,6 @@ function renderRelayInfoModal(relayInfo) {
     modal.appendChild(content);
     document.body.appendChild(modal);
 
-    if (window.history && window.history.pushState) {
-        window.history.pushState({ modalOpen: true }, '');
-    }
 }
 
 let inboxCacheData = null;
