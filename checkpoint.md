@@ -681,3 +681,8 @@ Validación adaptada pendiente tras el cambio: ejecutar nuevamente la prueba de 
 La rama base no se modifica. ChangesLogs.txt permanece sin cambios por superar el umbral de rotación normativa.
 Siguiente acción: validar la nueva aserción y continuar la revisión de cierres automáticos/recuperación dentro de AUG-068. No iniciar AUG-069.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — ITERACIÓN 3E
+La prueba de cierre durante transferencia se ejecutó nuevamente en runtime V8 adaptado con los callbacks reales de youtubeUpload.js y el gestor real overlayHistory.js: 5/5 PASS. Incluye rechazo/confirmación mediante Atrás, X y Cancelar, aborto único del XHR al confirmar y verificación de que la X permanece visible/enlazada a la ruta protegida.
+No equivale a ejecución Node CLI en Codespaces ni a prueba visual DOM/navegador real. La prueba CLI queda pendiente para la siguiente iteración.
