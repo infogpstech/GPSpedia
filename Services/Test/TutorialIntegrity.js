@@ -61,7 +61,7 @@ function buildHarness_(feedback, options = {}) {
         state
     };
     const helpers = extract_(feedback, "const TUTORIAL_HEADERS", "function extractYouTubeId(url)");
-    const update = extract_(feedback, "function handleUpdateTutorialItem(payload)", "function handleUpdatePysItem(payload)");
+    const update = extract_(feedback, "function handleUpdateTutorialItem(payload)", "\nfunction");
     vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS };", context);
     return { api: context.api, sheet, state };
 }
