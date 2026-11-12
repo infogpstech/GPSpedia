@@ -378,6 +378,29 @@ function runSharedMutationCoordinatorTests() {
         expectThrow_(() => missingClient.withLease("WRITE", "addVinToVehicle", () => "no"), "no está configurada");
     });
 
+    test_("FEEDBACK PyS vehicle relations read Cortes and conflict with vehicle writes", function() {
+        ["addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
+            const policy = coordinatorPolicy_("FEEDBACK", action);
+            assert_(policy.readResources.includes("CORTES"), action + " debe reservar lectura de Cortes.");
+            assert_(policy.writeResources.includes("FEEDBACK"), action + " debe serializar la hoja pys.");
+            assert_(policy.writeResources.includes("ACTIVITY"), action + " debe conservar el recurso de actividad.");
+        });
+
+        const first = createRuntime_();
+        const cutWrite = acquire_(first, "WRITE", "addOrUpdateCut");
+        const relationRead = acquire_(first, "FEEDBACK", "addVehicleToProblem");
+        assert_(relationRead.status === "error" && relationRead.code === "busy",
+            "Una relación PyS no debe leer Cortes mientras se modifica un vehículo.");
+        release_(first, "WRITE", "addOrUpdateCut", cutWrite.token);
+
+        const second = createRuntime_();
+        const relationLease = acquire_(second, "FEEDBACK", "removeVehicleFromProblem");
+        const concurrentCutWrite = acquire_(second, "WRITE", "addOrUpdateCut");
+        assert_(concurrentCutWrite.status === "error" && concurrentCutWrite.code === "busy",
+            "Una modificación de Cortes debe esperar mientras se valida/desvincula una relación PyS.");
+        release_(second, "FEEDBACK", "removeVehicleFromProblem", relationLease.token);
+    });
+
     test_("FEEDBACK recordLike reserves CORTES, FEEDBACK ledger and ACTIVITY", function() {
         const policy = coordinatorPolicy_("FEEDBACK", "recordLike");
         assert_(policy.writeResources.includes("CORTES"), "recordLike debe reservar Cortes.");
