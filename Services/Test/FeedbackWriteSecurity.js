@@ -206,7 +206,7 @@ function runFeedbackWriteSecurityTests() {
             const originalSuggestion = handleSuggestCutChange;
             const originalLog = logUserActivity;
             let handlerCalls = 0, sheetWrites = 0, activityWrites = 0;
-            function configureAuth(tokenRows, userId) {
+            function configureAuth(tokenRows, userId, revoked) {
                 const now = Date.now();
                 const createdAt = new Date(now - 24 * 60 * 60 * 1000);
                 const activityAt = new Date(now - 60 * 60 * 1000);
@@ -215,7 +215,7 @@ function runFeedbackWriteSecurityTests() {
                 );
                 const users = [
                     ["ID", "Username", "", "Privilegios", "", "", "Nombre", "RoleState"],
-                    [userId, "login-user", "", "Tecnico", "", "", "Usuario verificado", ""]
+                    [userId, "login-user", "", "Tecnico", "", "", "Usuario verificado", revoked ? ROLE_REVOCATION_SHARED_PREFIX + "pending" : ""]
                 ];
                 const makeSheet = rows => ({ getDataRange: () => ({ getValues: () => rows }) });
                 const sheets = { ActiveSessions: makeSheet(sessions), Users: makeSheet(users) };
@@ -230,12 +230,12 @@ function runFeedbackWriteSecurityTests() {
                     const cases = [
                         { label: "token ausente", payload: { userId: "USR-A" }, sessions: [], userId: "USR-A" },
                         { label: "token inválido", payload: { userId: "USR-A", sessionToken: "BAD" }, sessions: [], userId: "USR-A" },
-                        { label: "token revocado", payload: { userId: "USR-A", sessionToken: "REVOKED" }, sessions: [], userId: "USR-A" },
+                        { label: "token revocado por cambio de rol", payload: { userId: "USR-A", sessionToken: "TOKEN-A" }, sessions: [{ userId: "USR-A", token: "TOKEN-A" }], userId: "USR-A", revoked: true },
                         { label: "ID cruzado", payload: { userId: "USR-B", sessionToken: "TOKEN-A" }, sessions: [{ userId: "USR-A", token: "TOKEN-A" }], userId: "USR-A" }
                     ];
                     cases.forEach(testCase => {
                         ["reportProblem", "suggestCutChange"].forEach(action => {
-                            configureAuth(testCase.sessions, testCase.userId);
+                            configureAuth(testCase.sessions, testCase.userId, testCase.revoked);
                             const output = doPost({ postData: { contents: JSON.stringify({
                                 action, payload: { vehicleId: "VEH-1", problemText: "Falla",
                                     reportId: "REP-TEST", corteIndex: 1,
