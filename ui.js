@@ -14,6 +14,7 @@ import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { shouldAutoOpenVehicleDetail } from './search-utils.js';
+import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData } from './pys-data.js';
@@ -2055,8 +2056,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
-    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
-    shareBtn.onclick = () => {
+    /* AUG-072: enlace con identidad estable y fallback controlado */
+    shareBtn.onclick = async () => {
         const queryParts = [
             activeItem.marca,
             activeItem.modelo,
@@ -2064,24 +2065,53 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             activeItem.tipoEncendido,
             activeItem.anoDesde
         ].filter(part => part && String(part).trim() !== "");
-
         const shareQuery = queryParts.join(' ');
-
         const shareData = {
             title: `GPSpedia - ${activeItem.marca} ${activeItem.modelo}`,
             text: `Mira la información técnica del ${activeItem.marca} ${activeItem.modelo} (${activeItem.anoDesde}) en GPSpedia.`,
-            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(shareQuery)}`
+            url: buildVehicleShareUrl(window.location.href, activeItem.id, shareQuery)
         };
 
-        if (navigator.share) {
-            navigator.share(shareData).catch(console.error);
-        } else {
-            // Fallback: copiar al portapapeles
-            navigator.clipboard.writeText(shareData.url).then(() => {
-                alert("Enlace copiado al portapapeles");
-            }).catch(err => {
-                console.error("Error al copiar enlace:", err);
-            });
+        shareBtn.disabled = true;
+        try {
+            let result;
+            try {
+                result = await shareVehicleLink(shareData, navigator);
+            } catch (error) {
+                result = { status: 'failed', error };
+            }
+
+            headerDiv.querySelector('.share-manual-link-container')?.remove();
+            if (result.status === 'shared') {
+                mostrarNotificacion('Enlace compartido correctamente.', 'success');
+            } else if (result.status === 'cancelled') {
+                // AbortError es una cancelación explícita: no copiar automáticamente.
+                mostrarNotificacion('Compartir cancelado.', 'info');
+            } else if (result.status === 'copied') {
+                mostrarNotificacion('Enlace copiado al portapapeles.', 'success');
+            } else {
+                mostrarNotificacion('No se pudo compartir ni copiar el enlace. Puedes copiarlo manualmente.', 'error');
+                const fallbackContainer = document.createElement('div');
+                fallbackContainer.className = 'share-manual-link-container';
+                fallbackContainer.style.cssText = 'display:flex;flex-direction:column;gap:5px;flex-basis:100%;min-width:0;';
+                const fallbackLabel = document.createElement('label');
+                fallbackLabel.textContent = 'Enlace para copiar manualmente:';
+                fallbackLabel.htmlFor = 'share-manual-link';
+                const fallbackInput = document.createElement('input');
+                fallbackInput.id = 'share-manual-link';
+                fallbackInput.className = 'share-manual-link';
+                fallbackInput.type = 'text';
+                fallbackInput.readOnly = true;
+                fallbackInput.value = shareData.url;
+                fallbackInput.setAttribute('aria-label', 'Enlace compartido para copiar manualmente');
+                fallbackInput.style.cssText = 'width:100%;min-width:0;padding:7px;border:1px solid var(--border-color);border-radius:5px;';
+                fallbackContainer.append(fallbackLabel, fallbackInput);
+                headerDiv.appendChild(fallbackContainer);
+                fallbackInput.focus();
+                fallbackInput.select();
+            }
+        } finally {
+            shareBtn.disabled = false;
         }
     };
     headerDiv.appendChild(shareBtn);
