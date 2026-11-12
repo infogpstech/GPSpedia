@@ -204,6 +204,13 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.sheet.data[1][1], "Tutorial antiguo");
     });
 
+    test("protege solicitudes antiguas por tema aunque el registro ya tenga ID", () => {
+        const h = buildHarness_(feedback, { rows: [headers, ["tut-legacy", "Tema con ID", "", "", "", "", "", "Autor"]],
+            pendingApproval: true, feedbackSheet: {} });
+        assert.throws(() => h.api.update({ tutorialId: "tut-legacy", tema: "Tema renombrado" }), /solicitud de vídeo pendiente/);
+        assert.equal(h.sheet.data[1][1], "Tema con ID");
+    });
+
     test("rechaza edición ambigua y renombrado a un tema ya utilizado", () => {
         const h = buildHarness_(feedback, { rows: [headers,
             ["tut-1", "Uno", "", "", "", "", "", "A"],
