@@ -267,6 +267,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
         assert.equal(result.status, "success");
         assert.equal(result.recovered, true);
         assert.equal(h.state.trashed, false);
+        assert.match(h.state.description, /LINKED/);
     });
 
     test("no elimina la imagen si otro registro ya la referencia", () => {
@@ -324,10 +325,8 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
     return { status: failed ? "FAIL" : "PASS", passed, failed, results };
 }
 
-if (import.meta.url === "file://" + process.argv[1]) {
-    const feedback = fs.readFileSync("Services/feedback.js", "utf8");
-    const ui = fs.readFileSync("ui.js", "utf8");
-    const result = runPysImageStorageRecoveryTests({ feedback, ui });
-    console.log(JSON.stringify(result, null, 2));
-    if (result.status !== "PASS") process.exitCode = 1;
-}
+const feedback = fs.readFileSync("Services/feedback.js", "utf8");
+const ui = fs.readFileSync("ui.js", "utf8");
+const result = runPysImageStorageRecoveryTests({ feedback, ui });
+console.log(JSON.stringify(result, null, 2));
+if (result.status !== "PASS") process.exitCode = 1;
