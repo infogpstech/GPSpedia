@@ -779,7 +779,7 @@ export function parseVinCollection(rawVin) {
         if (!Array.isArray(parsed)) throw new Error("El formato JSON de VIN debe ser un array.");
         return normalizeVinCollectionArray(parsed, "Colección VIN JSON");
     }
-    const values = text.split(/[,\/\\;])
+    const values = text.split(/[,\/\\;]/)
         .map(value => normalizeVinCollectionValue(value, "Colección VIN heredada"));
     if (values.length > 3) throw new Error("La colección VIN heredada supera el máximo de tres identificadores.");
     return normalizeVinCollectionArray(values, "Colección VIN heredada");
