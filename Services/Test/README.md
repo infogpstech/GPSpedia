@@ -795,3 +795,14 @@ cp Services/Test/ReplacedImagesLightboxHistory.js Services/Test/ReplacedImagesLi
 ```
 
 Verifica el registro del lightbox como hijo del modal de imágenes reemplazadas, la reutilización de su entrada al reabrir, el cierre manual mediante el gestor compartido, Atrás con conservación del padre y cierre LIFO del lightbox cuando se cierra el modal padre. La suite usa el gestor real con History simulado; la interacción DOM/navegador real queda para Beta.
+
+
+## AUG-069 — Sincronización del botón interno «Volver» con History API
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/NavigationBackHistory.js Services/Test/NavigationBackHistory.mjs && node Services/Test/NavigationBackHistory.mjs; RESULT=$?; rm -f Services/Test/NavigationBackHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite comprueba que el retorno interno use `history.back()` cuando el estado anterior coincide con el destino y que, si no coincide, reemplace la entrada actual y renderice el destino sin duplicar historial. Incluye parámetros de categoría, marca, modelo, equipamiento, encendido y búsqueda; estados de sección repetidos; hash de búsqueda; y navegación Atrás/Adelante. History se simula; la interacción con navegador real queda para Beta.
