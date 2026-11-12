@@ -1235,3 +1235,23 @@ Siguiente tarea: AUG-079 — Robustecer carga y política de acceso de imágenes
 Verificación de sintaxis posterior a los commits de AUG-078: parsing V8 completo de Services/feedback.js y de la suite ESM: PASS. La suite Node ESM se ejecutó en harness aislado con dobles y funciones de validación extraídas: 11/11 PASS. El checkout completo no estuvo disponible en este entorno; la ejecución contra el archivo FEEDBACK completo queda reproducible con el comando documentado.
 
 Actualización de cierre: el backlog marca AUG-078 como COMPLETADA CON VALIDACIÓN DIFERIDA en el commit 167ef718ab9cebf4843d6e5062f1fe632622a092. No iniciar AUG-079 en esta iteración.
+
+
+================================================================================
+AUG-079 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+
+Rama: GPSpedia2.2.5_work. HEAD previo verificado: 76338855b5776960d370f8f79ea0843a4f54d9ea. Commits de implementación: Services/feedback.js 269707bd61259d80470fa60b37f2a9a5af75c022; ui.js 31b972721cfc4d11ffadb56c81b4cf3a100e3547. Suite: 04f3aa2188d3c1f54c709085b6c250b6450f207f, revisiones 070199ea4047f327d6783b181ebc0905143f1c31, a925c4c488628e4fba5e940d92c76f8fe1f6b6c8 y f883eb6416dd4b929c280e3cc235ca1ac6f66ef5. Documentación: ChangesLogs 1097e03bad621902fe67b1aa31761aaf00647caa; Auditoría 2eb02d3e74b108f0fc9e17e1d3af59a8fa0ba01b; lista_beta b19a332726f0df27aa192abad0c78e3924efe0d7; Test README b316ece6ad0626db6b2ffe7407932e6f5da3629a; backlog c419fb79143f1bfaca486b90f9b2baa3af124299.
+
+Implementación:
+- ui.js: selector limitado a JPEG/PNG/WebP y 3 MB; FileReader gestiona load/error/abort dentro del try del envío; el catch restablece botón y muestra el error. El cliente requiere status success y, si hay imagen, imageAttached=true e imageUrl antes de cerrar el modal y mostrar éxito.
+- Services/feedback.js: reutiliza validateReportImageAttachment_ para validar Base64 canónico, MIME, tamaño y firma real; calcula SHA-256; crea Blob con MIME real y extensión correcta. Conserva compatibilidad con clientes anteriores que envían imgBase64 como Data URL, aplicando la misma validación.
+- Las imágenes nuevas se guardan bajo Cortes/SugerenciasCortes, sin setSharing ni acceso ANYONE/ANYONE_WITH_LINK. La carga falla de forma cerrada si no se puede verificar ACL; el acceso se hereda de la carpeta Cortes, que debe estar restringida a revisores autorizados.
+- Feedbacks incluye metadatos de archivo (ID, URL canónica, nombre, MIME, tamaño y SHA-256). La fila se confirma mediante read-back. Si la escritura no queda confirmada, se intenta limpiar la fila y enviar el archivo a papelera. Reintentos idénticos devuelven imageAttached/imageUrl existentes.
+- No se migran ni cambian automáticamente permisos de imágenes históricas.
+
+Validación local: suite de seguridad 24/24 PASS en harness V8 aislado; parsing completo de Services/feedback.js, modal de ui.js y suite PASS. Se probaron formatos, MIME discordante, tamaño, compatibilidad Data URL, MIME/extensión de Blob, ACL pública/no verificable, fallo de creación Drive, ID inválido, read-back, rollback, metadatos e idempotencia. No se ejecutó Node CLI desde un checkout completo en este entorno; el comando queda documentado en Services/Test/README.md y lista_beta.txt.
+
+Beta pendiente: deployment FEEDBACK, Spreadsheet y Drive aislados; ACL efectiva de Cortes/SugerenciasCortes, acceso de revisores y denegación a usuarios no autorizados; FileReader real, errores Drive, rollback real y compatibilidad histórica. No se desplegó a producción.
+
+Siguiente tarea: AUG-080 — Serializar e idempotentizar la inserción de sugerencias. No iniciada; fuera de esta iteración.
+================================================================================
