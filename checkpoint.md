@@ -1199,3 +1199,17 @@ Validación local:
 Documentación: Services/Test/InboxStoredXss.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, Auditoría.txt, ChangesLogs.txt y lista_beta.txt.
 Siguiente tarea: AUG-077 — Implementar el adjunto real de imágenes en reportes individuales. No iniciada.
 ================================================================================
+
+
+================================================================================
+AUG-077 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD de partida verificado: ac5fb2176925029e63ad84cfe988f6b4b210ddb0. Padre: 15e00d228931f94117e858516920d3dea14a2fb4. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Implementación: ui.js admite JPEG/PNG/WebP, FileReader con error/abort y límite 3 MB; envía adjunto separado del texto y exige confirmación. api-config.js incorpora quinto argumento opcional sin alterar los cuatro anteriores. FEEDBACK valida MIME/Base64/tamaño/firma, calcula SHA-256, guarda en `Cortes/Reportes individuales` con ACL heredada, asocia metadata al reportId, evita duplicados por hash y restaura metadata/fila y limpia archivo ante fallos. Inbox muestra enlace HTTPS canónico seguro. Los reportes históricos sin imagen siguen siendo válidos.
+
+Validación local: harness Node aislado de lógica binaria/metadata 12/12 PASS; parsing V8 de funciones modificadas PASS. Se incorporó suite reproducible de 18 casos para ejecutar desde el checkout completo; no fue posible ejecutarla aquí porque no hay checkout local y GitHub no resuelve por DNS. Las pruebas de almacenamiento usan dobles; no representan ejecución real de Apps Script/Drive.
+
+Beta pendiente: ejecutar lista_beta.txt en deployment FEEDBACK, Spreadsheet y Drive aislados; verificar escritura real, ACL heredada y acceso del revisor, idempotencia, errores y rollback. No se tocó producción.
+
+Siguiente tarea: AUG-078 — Validar la relación entre reporte, vehículo y corte en sugerencias. No iniciada; fuera de esta iteración.
+================================================================================
