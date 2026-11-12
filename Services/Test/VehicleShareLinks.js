@@ -97,7 +97,7 @@ test('no resuelve IDs que solo pertenecen a Relay, Tutoriales o PyS', () => {
     assert.equal(resolveSharedVehicleById(catalog, 'P-1'), null);
 });
 
-testAsync('Web Share exitoso no invoca Clipboard', async () => {
+await testAsync('Web Share exitoso no invoca Clipboard', async () => {
     let copied = false;
     const result = await shareVehicleLink({ url: 'https://gp.example/#vehicle=C1' }, {
         share: async () => {},
@@ -107,7 +107,7 @@ testAsync('Web Share exitoso no invoca Clipboard', async () => {
     assert.equal(copied, false);
 });
 
-testAsync('AbortError se reconoce como cancelación y no copia automáticamente', async () => {
+await testAsync('AbortError se reconoce como cancelación y no copia automáticamente', async () => {
     let copied = false;
     const result = await shareVehicleLink({ url: 'https://gp.example/#vehicle=C1' }, {
         share: async () => { const error = new Error('cancelled'); error.name = 'AbortError'; throw error; },
@@ -117,7 +117,7 @@ testAsync('AbortError se reconoce como cancelación y no copia automáticamente'
     assert.equal(copied, false);
 });
 
-testAsync('un rechazo recuperable de Web Share activa Clipboard con el mismo URL', async () => {
+await testAsync('un rechazo recuperable de Web Share activa Clipboard con el mismo URL', async () => {
     let copiedUrl = '';
     const url = 'https://gp.example/#vehicle=C1&search=Toyota';
     const result = await shareVehicleLink({ url }, {
@@ -129,7 +129,7 @@ testAsync('un rechazo recuperable de Web Share activa Clipboard con el mismo URL
     assert.equal(copiedUrl, url);
 });
 
-testAsync('un error síncrono de Web Share también intenta Clipboard', async () => {
+await testAsync('un error síncrono de Web Share también intenta Clipboard', async () => {
     let copied = false;
     const result = await shareVehicleLink({ url: 'https://gp.example/#vehicle=C1' }, {
         share() { throw new Error('share sync failure'); },
@@ -139,7 +139,7 @@ testAsync('un error síncrono de Web Share también intenta Clipboard', async ()
     assert.equal(copied, true);
 });
 
-testAsync('sin Web Share usa Clipboard como fallback', async () => {
+await testAsync('sin Web Share usa Clipboard como fallback', async () => {
     let copied = '';
     const result = await shareVehicleLink({ url: 'https://gp.example/#search=Toyota' }, {
         clipboard: { writeText: async value => { copied = value; } }
@@ -148,13 +148,13 @@ testAsync('sin Web Share usa Clipboard como fallback', async () => {
     assert.equal(copied, 'https://gp.example/#search=Toyota');
 });
 
-testAsync('Clipboard ausente devuelve un error recuperable', async () => {
+await testAsync('Clipboard ausente devuelve un error recuperable', async () => {
     const result = await shareVehicleLink({ url: 'https://gp.example/#search=Toyota' }, {});
     assert.equal(result.status, 'failed');
     assert.ok(result.error instanceof Error);
 });
 
-testAsync('writeText síncrono o asíncrono fallido se captura', async () => {
+await testAsync('writeText síncrono o asíncrono fallido se captura', async () => {
     const sync = await copyTextToClipboard('https://gp.example', {
         writeText() { throw new Error('sync clipboard failure'); }
     });
