@@ -37,8 +37,8 @@ function getSafeSheet(name) {
  * No utiliza el rol, nombre ni ID de actor enviados como datos de autorización por el navegador.
  */
 function normalizeFeedbackRole(role) {
-    return String(role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-}
+    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .trim().replace(/\s+/g, " ").toLowerCase();
 
 function getSessionExpirationStatus_(row,now=new Date()){
  if(!row)return{expired:true,reason:'missing_session'};
