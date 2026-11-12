@@ -1008,3 +1008,28 @@ Documentación:
 - ChangesLogs.txt: rotación exacta de 180542 caracteres en dos partes; reconstrucción verificada sin pérdida; manifiesto en ChangesLogs_Archive/manifest.md.
 - Rama base GPSpedia2.2.5 intacta. No se inicia AUG-070 dentro de esta tarea; queda como siguiente tarea del backlog.
 ================================================================================
+
+
+================================================================================
+AUG-070 — ITERACIÓN 1 — 2026-11-12 — CIERRE SECUENCIAL POR CAPA EFECTIVA
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Rama: GPSpedia2.2.5_work. HEAD antes de este checkpoint: fe8543da8f78c9962c4f0b29700c8ae5d90eeb89. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Cambios:
+- overlayHistory.js: handlePopState() retira una sola entrada superior por evento. Si el estado destino omitió varias capas, conserva las inferiores y publica un estado de continuación. Los cierres manuales explícitos sobre un padre mantienen su comportamiento de cascada LIFO. Se añade selectTopmostOverlay(), que compara z-index efectivo, orden de apertura y orden DOM.
+- main.js: el App Shell selecciona la capa visible superior entre menú, lightbox, info-modals, aviso legal y modal de detalle. Solo ejecuta la limpieza del reproductor/iframe cuando el modal de detalle es la capa que se cierra. Se elimina el recorrido que ocultaba todos los info-modals en el mismo evento.
+- ui.js: el acuerdo legal abierto desde el aviso obligatorio recibe una capa visual superior al aviso, para que Atrás cierre primero el acuerdo y conserve el aviso.
+- users.html: modales de perfil y administración se registran en la pila compartida; Atrás cierra una sola capa y conserva las restantes. Se retira el forEach que cerraba todos los modales.
+- Services/Test/OverlayHistoryStack.js: 18 escenarios; Services/Test/README.md documenta ejecución y alcance. Backlog, auditoría y ChangesLogs actualizados.
+
+Validación local:
+- OverlayHistoryStack: 18/18 PASS en runtime V8 adaptado, ejecutando overlayHistory.js real, History simulado y comprobaciones de contrato de main.js, ui.js y users.html.
+- ReplacedImagesLightboxHistory: 6/6 PASS con overlayHistory.js y ui.js reales; el lightbox se cierra primero y conserva visible la ficha padre.
+- Parsing V8: main.js completo PASS; módulo de users.html PASS; bloque legal modificado de ui.js PASS.
+- Revisión de cambios desde el HEAD previo: nueve archivos y solo el alcance AUG-070; ChangesLogs.txt quedó en 2616 caracteres, lejos del umbral de rotación.
+- No se ejecutó Node CLI, DOM/navegador real, botón físico ni gestos nativos.
+
+Validación diferida a Beta:
+- Confirmar interacción visual real y stacking contexts en navegador/dispositivo, retroceso físico y gestos nativos. No bloquean el cierre local según NORMAS_DESAROLLO.md.
+
+Siguiente acción: AUG-070 cerrada. AUG-071 permanece pendiente; no se inicia en esta iteración.
+================================================================================
