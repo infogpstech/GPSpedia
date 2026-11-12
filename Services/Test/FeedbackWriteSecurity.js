@@ -154,6 +154,158 @@ function runFeedbackWriteSecurityTests() {
                 assert_(actor.userId === "USR-TEST-01" && actor.userName === "Usuario verificado", action);
             });
         });
+        test_("reportProblem y suggestCutChange aceptan todos los roles autenticados y derivan identidad real", function() {
+            const originalGetSpreadsheet = getSpreadsheet;
+            function authSheets(role, token, userId) {
+                const now = Date.now();
+                const createdAt = new Date(now - 24 * 60 * 60 * 1000);
+                const activityAt = new Date(now - 60 * 60 * 1000);
+                const activeSessions = [
+                    ["userId", "unused", "sessionToken", "createdAt", "unused", "lastActivityAt"],
+                    [userId, "", token, createdAt, "", activityAt]
+                ];
+                const users = [
+                    ["ID", "Username", "", "Privilegios", "", "", "Nombre", "RoleState"],
+                    [userId, "login-" + userId, "", role, "", "", "Nombre verificado " + role, ""]
+                ];
+                const makeSheet = rows => ({ getDataRange: () => ({ getValues: () => rows }) });
+                const sheets = {
+                    ActiveSessions: makeSheet(activeSessions),
+                    Users: makeSheet(users)
+                };
+                getSpreadsheet = () => ({ getSheetByName: name => sheets[name] || null });
+            }
+            try {
+                const roles = ["Desarrollador", "Gefe", "Jefe", "Supervisor", "Tecnico", "Tecnico_Exterior"];
+                roles.forEach((role, index) => {
+                    const userId = "USR-ROLE-" + index;
+                    const token = "TOKEN-ROLE-" + index;
+                    authSheets(role, token, userId);
+                    ["reportProblem", "suggestCutChange"].forEach(action => {
+                        const authorized = authorizeFeedbackAction_(action, {
+                            userId, sessionToken: token,
+                            userName: "Nombre falsificado", userRole: "Desarrollador"
+                        });
+                        assert_(authorized.userId === userId, action + " debe conservar el ID resuelto desde la sesión.");
+                        assert_(authorized.userName === "Nombre verificado " + role, action + " debe sustituir el nombre del cliente.");
+                        assert_(authorized.userRole === role, action + " no debe aceptar el rol enviado por el cliente.");
+                    });
+                });
+            } finally {
+                getSpreadsheet = originalGetSpreadsheet;
+            }
+        });
+
+        test_("reportProblem y suggestCutChange rechazan sesión ausente, inválida, revocada o cruzada antes de escribir", function() {
+            const originalGetSpreadsheet = getSpreadsheet;
+            const originalGetSafeSheet = getSafeSheet;
+            const originalReport = handleReportProblem;
+            const originalSuggestion = handleSuggestCutChange;
+            const originalLog = logUserActivity;
+            let handlerCalls = 0, sheetWrites = 0, activityWrites = 0;
+            function configureAuth(tokenRows, userId) {
+                const now = Date.now();
+                const createdAt = new Date(now - 24 * 60 * 60 * 1000);
+                const activityAt = new Date(now - 60 * 60 * 1000);
+                const sessions = [["userId", "", "sessionToken", "createdAt", "", "lastActivityAt"]].concat(
+                    tokenRows.map(row => [row.userId, "", row.token, createdAt, "", activityAt])
+                );
+                const users = [
+                    ["ID", "Username", "", "Privilegios", "", "", "Nombre", "RoleState"],
+                    [userId, "login-user", "", "Tecnico", "", "", "Usuario verificado", ""]
+                ];
+                const makeSheet = rows => ({ getDataRange: () => ({ getValues: () => rows }) });
+                const sheets = { ActiveSessions: makeSheet(sessions), Users: makeSheet(users) };
+                getSpreadsheet = () => ({ getSheetByName: name => sheets[name] || null });
+            }
+            try {
+                getSafeSheet = () => { sheetWrites++; throw new Error("No debe consultar ni escribir Feedbacks."); };
+                logUserActivity = () => { activityWrites++; };
+                handleReportProblem = () => { handlerCalls++; return { status: "success" }; };
+                handleSuggestCutChange = () => { handlerCalls++; return { status: "success" }; };
+                withDirectPostHarness_(function() {
+                    const cases = [
+                        { label: "token ausente", payload: { userId: "USR-A" }, sessions: [], userId: "USR-A" },
+                        { label: "token inválido", payload: { userId: "USR-A", sessionToken: "BAD" }, sessions: [], userId: "USR-A" },
+                        { label: "token revocado", payload: { userId: "USR-A", sessionToken: "REVOKED" }, sessions: [], userId: "USR-A" },
+                        { label: "ID cruzado", payload: { userId: "USR-B", sessionToken: "TOKEN-A" }, sessions: [{ userId: "USR-A", token: "TOKEN-A" }], userId: "USR-A" }
+                    ];
+                    cases.forEach(testCase => {
+                        ["reportProblem", "suggestCutChange"].forEach(action => {
+                            configureAuth(testCase.sessions, testCase.userId);
+                            const output = doPost({ postData: { contents: JSON.stringify({
+                                action, payload: { vehicleId: "VEH-1", problemText: "Falla",
+                                    reportId: "REP-TEST", corteIndex: 1,
+                                    details: "Sugerencia", proposedValues: { tipo: "Relay" },
+                                    ...testCase.payload }
+                            }) } });
+                            const response = JSON.parse(output.content);
+                            assert_(response.status === "error",
+                                action + " debe rechazar " + testCase.label + ".");
+                        });
+                    });
+                });
+                assert_(handlerCalls === 0, "Ningún handler debe ejecutarse ante una sesión inválida.");
+                assert_(sheetWrites === 0 && activityWrites === 0,
+                    "No debe haber escrituras ni actividad antes de validar la sesión.");
+            } finally {
+                getSpreadsheet = originalGetSpreadsheet;
+                getSafeSheet = originalGetSafeSheet;
+                handleReportProblem = originalReport;
+                handleSuggestCutChange = originalSuggestion;
+                logUserActivity = originalLog;
+            }
+        });
+
+        test_("POST de reportProblem y suggestCutChange entrega al handler identidad derivada de sesión", function() {
+            const originalGetSpreadsheet = getSpreadsheet;
+            const originalReport = handleReportProblem;
+            const originalSuggestion = handleSuggestCutChange;
+            function configureAuth() {
+                const now = Date.now();
+                const createdAt = new Date(now - 24 * 60 * 60 * 1000);
+                const activityAt = new Date(now - 60 * 60 * 1000);
+                const makeSheet = rows => ({ getDataRange: () => ({ getValues: () => rows }) });
+                const sessions = makeSheet([
+                    ["userId", "", "sessionToken", "createdAt", "", "lastActivityAt"],
+                    ["USR-A", "", "TOKEN-A", createdAt, "", activityAt]
+                ]);
+                const users = makeSheet([
+                    ["ID", "Username", "", "Privilegios", "", "", "Nombre", "RoleState"],
+                    ["USR-A", "login-a", "", "Tecnico", "", "", "Nombre verificado", ""]
+                ]);
+                getSpreadsheet = () => ({ getSheetByName: name => name === "ActiveSessions" ? sessions : name === "Users" ? users : null });
+            }
+            try {
+                configureAuth();
+                let receivedReport = null, receivedSuggestion = null;
+                handleReportProblem = payload => { receivedReport = payload; return { status: "success" }; };
+                handleSuggestCutChange = payload => { receivedSuggestion = payload; return { status: "success" }; };
+                withDirectPostHarness_(function() {
+                    ["reportProblem", "suggestCutChange"].forEach(action => {
+                        const output = doPost({ postData: { contents: JSON.stringify({
+                            action,
+                            payload: { userId: "USR-FAKE", userName: "Nombre falso",
+                                userRole: "Desarrollador", sessionToken: "TOKEN-A",
+                                vehicleId: "VEH-1", problemText: "Falla", reportId: "REP-TEST",
+                                corteIndex: 1, details: "Cambio", proposedValues: { tipo: "Relay" } }
+                        }) } });
+                        assert_(JSON.parse(output.content).status === "success", action + " debe aceptar sesión válida.");
+                    });
+                });
+                assert_(receivedReport && receivedReport.userId === "USR-A" &&
+                    receivedReport.userName === "Nombre verificado" && receivedReport.userRole === "Tecnico",
+                    "reportProblem debe recibir identidad real.");
+                assert_(receivedSuggestion && receivedSuggestion.userId === "USR-A" &&
+                    receivedSuggestion.userName === "Nombre verificado" && receivedSuggestion.userRole === "Tecnico",
+                    "suggestCutChange debe recibir identidad real.");
+            } finally {
+                getSpreadsheet = originalGetSpreadsheet;
+                handleReportProblem = originalReport;
+                handleSuggestCutChange = originalSuggestion;
+            }
+        });
+
         test_("Aprobación mantiene la restricción de rol", function() {
             expectThrow_(() => authorizeFeedbackAction_("approveVideo", { sessionToken: "TEST_SESSION" }), "Rol no autorizado");
         });
