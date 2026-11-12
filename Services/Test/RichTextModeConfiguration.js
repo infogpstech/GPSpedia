@@ -125,5 +125,61 @@ test("los saltos naturales y registros de texto plano siguen siendo compatibles"
     assert.match(richText, /new Set\(\["B", "STRONG", "SPAN", "BR"\]\)/);
 });
 
+
+function createToolbarRuntime(mode) {
+    const makeElement = tag => ({
+        tagName: String(tag).toUpperCase(),
+        children: [],
+        dataset: {},
+        style: {},
+        addEventListener() {},
+        appendChild(child) { this.children.push(child); return child; },
+        setAttribute() {},
+        replaceWith() {}
+    });
+    const documentStub = {
+        createElement: makeElement,
+        getElementById() { return null; }
+    };
+    const toolbarSource = extract(richText, "export function createRichTextToolbar(targetId)", "export function refreshRichTextToolbars")
+        .replace(/^export /, "");
+    return new Function(
+        "getRichTextMode", "document", "applyRichTextFormat", "applyRichTextColor", "Promise", "attachListKeyboardBehavior",
+        toolbarSource + "\\nreturn createRichTextToolbar;"
+    )(() => mode, documentStub, () => {}, () => {}, Promise, () => {});
+}
+
+function createStyleSanitizer() {
+    const styleSource = extract(richText, "function sanitizeSafeStyle(styleText", "export function sanitizeHtmlContent");
+    return new Function(
+        "SAFE_SIZES", "SAFE_FONT_VALUES", "SAFE_NAMED_COLORS", "getRichTextMode",
+        styleSource + "\\nreturn sanitizeSafeStyle;"
+    )(new Set(["0.85em", "1em", "1.2em", "1.5em"]),
+      new Set(["Arial, sans-serif", "'Segoe UI', Roboto, sans-serif", "'Courier New', monospace", "Georgia, serif"]),
+      new Set(["red", "blue", "green", "black", "white", "orange", "yellow", "gray", "grey", "purple", "teal", "navy"]),
+      () => "strict");
+}
+
+test("la barra real en modo estricto contiene solo negrita y color", () => {
+    const toolbar = createToolbarRuntime("strict")("field-description");
+    assert.deepEqual(toolbar.children.map(child => child.tagName), ["BUTTON", "INPUT"]);
+    assert.equal(toolbar.dataset.richTextMode, "strict");
+});
+
+test("la barra real en modo avanzado incluye controles de formato y listas", () => {
+    const toolbar = createToolbarRuntime("advanced")("field-description");
+    assert.equal(toolbar.children.filter(child => child.tagName === "BUTTON").length, 6);
+    assert.equal(toolbar.children.filter(child => child.tagName === "SELECT").length, 3);
+    assert.equal(toolbar.children.filter(child => child.tagName === "INPUT").length, 1);
+    assert.equal(toolbar.dataset.richTextMode, "advanced");
+});
+
+test("el CSS estricto conserva solo color y el avanzado permite estilos adicionales seguros", () => {
+    const sanitizeStyle = createStyleSanitizer();
+    const input = "color:red;font-size:1.2em;font-family:Georgia, serif;text-align:center";
+    assert.equal(sanitizeStyle(input, "strict"), "color:red");
+    assert.equal(sanitizeStyle(input, "advanced"), "color:red;font-size:1.2em;font-family:Georgia, serif;text-align:center");
+});
+
 console.log(JSON.stringify({ suite: "RichTextModeConfiguration", status: failed ? "FAIL" : "PASS", passed, failed, results }, null, 2));
 if (failed) process.exitCode = 1;
