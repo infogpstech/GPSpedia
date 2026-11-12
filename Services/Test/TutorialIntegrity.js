@@ -211,7 +211,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.match(feedback, /const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
         assert.match(feedback, /userName: actor\.userName/);
         assert.match(feedback, /const collaborator = normalizeTutorialField_\(source\.userName/);
-        const updateHandler = extract_(feedback, "function handleUpdateTutorialItem(payload)", "function handleUpdatePysItem(payload)");
+        const updateHandler = extract_(feedback, "function handleUpdateTutorialItem(payload)", "\nfunction");
         assert.doesNotMatch(updateHandler, /userRole/);
     });
 
