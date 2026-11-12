@@ -185,9 +185,8 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.throws(()=>h.api.add(h.validPayload()),/identificadores duplicados/);assert.equal(h.state.createdFiles,0);
     });
     test("no recrea un registro cuando el ledger dice LINKED pero la fila no existe",()=>{
-        const hash="a".repeat(64),row=[OP_A,hash,"isue-001","LINKED","fileid000000000000000000","https://drive.google.com/file/d/fileid000000000000000000/view","now","now"];
-        const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,row]});
-        assert.throws(()=>h.api.add(h.validPayload()),/figura vinculada/);assert.equal(h.state.createdFiles,0);
+        const h=buildHarness(feedback,ui);h.api.add(h.validPayload());h.state.pysRows.splice(1,1);
+        assert.throws(()=>h.api.add(h.validPayload()),/figura vinculada/);assert.equal(h.state.createdFiles,1);
     });
     test("reutiliza una imagen UPLOAD_PENDING después de una interrupción",()=>{
         const h=buildHarness(feedback,ui);const first=h.api.add(h.validPayload());
