@@ -7,6 +7,7 @@ import { vinDifferentialEngine, vinSignatureStore, ensureVinSignatures, mapVinMa
 // - Handle search functionality.
 
 import { getState, setState } from './state.js';
+import { pushNavigationState, replaceNavigationState } from './navigationHistory.js';
 import { loadPysData, subscribePysDataLoaded } from './pys-data.js';
 import {
     buildGlobalSearchResults,
@@ -179,22 +180,19 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         }
     }, 1500);
 
-    // Phase 2.1.5: Gestión inteligente del historial de búsqueda con estados nativos.
-    const historyState = window.history.state || {};
-    const wasAlreadySearching = historyState.level === "busqueda" || historyState.level === "busqueda_focused";
+    // Conservar el nivel previo para que el retorno interno y el retroceso nativo
+    // compartan la misma cadena de navegación.
+    const previousNavigationState = getState().navigationState || null;
+    const nextNavigationState = { level: "busqueda_focused", query: textoBusqueda };
+    setState({ navigationState: nextNavigationState });
 
-    // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
-    setState({ navigationState: { level: "busqueda_focused", query: textoBusqueda } });
-
-    // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
-    const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
-
-    /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */
     if (!isRestoring) {
+        const historyState = window.history.state || {};
+        const wasAlreadySearching = historyState.level === "busqueda" || historyState.level === "busqueda_focused";
         if (wasAlreadySearching) {
-            history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
+            replaceNavigationState(nextNavigationState, { previousNavigationState });
         } else {
-            history.pushState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
+            pushNavigationState(nextNavigationState, { previousNavigationState });
         }
     }
 
