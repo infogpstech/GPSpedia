@@ -1760,7 +1760,7 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - La revisión confirmó que el HEAD de partida ya tenía la expresión correcta de solapamiento inclusivo; el cambio la formaliza y añade cobertura de regresión sin alterar el resultado funcional esperado.
 - La UI conserva la comprobación puntual yearVal >= anoDesde && yearVal <= anoHasta y excluye el propio registro.
 - Services/Test/YearRangeCollision.js: cobertura de límites, solapamiento parcial, contención, huecos, rangos anteriores/posteriores e intervalos inválidos, más contratos backend/UI.
-Validación local: pendiente de ejecución CLI en checkout completo; se ejecutará harness V8 equivalente y parsing del helper antes de publicar. Beta: Spreadsheet/Apps Script aislados y navegador real; no se usaron endpoints operativos ni datos productivos.
+Validación local: YearRangeCollision.js 12/12 PASS en harness V8 adaptado; parsing completo de Services/feedback.js PASS y sintaxis de la suite verificada al ejecutar su cuerpo en el harness. Node CLI no ejecutado porque no hay checkout local completo en esta sesión. Beta: Spreadsheet/Apps Script aislados y navegador real; no se usaron endpoints operativos ni datos productivos.
 Archivos: Services/feedback.js, Services/Test/YearRangeCollision.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-107. No iniciar hasta la siguiente interacción.
 ================================================================================
