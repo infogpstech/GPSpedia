@@ -670,7 +670,8 @@ rutas locales aprobada, navegador/impresión/offline reales pendientes para Beta
 - Evidencia: Tareas.txt define gpsepedia_rich_text_mode y dos allow-lists; api-config.js, ui.js, main.js, index.html y rich-text.js no contienen la clave ni una lectura de modo; rich-text.js:327–431 usa una allow-list fija ampliada y createRichTextToolbar:243–305 expone siempre controles ampliados.
 - Problema: el modo estricto predeterminado y la configuración avanzada descritos en el requisito no se pueden seleccionar ni aplicar en el código vigente revisado.
 - Criterios: fuente de configuración definida; modo estricto por defecto; sanitizer y toolbar cambian coherentemente por modo; persistencia y autorización del ajuste; compatibilidad con registros existentes; pruebas de valor ausente/inválido/estricto/avanzado y cambio de modo.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; modo local estricto/avanzado implementado y pruebas locales aprobadas, navegador real pendiente para Beta.
+cto/avanzado implementado y pruebas locales aprobadas, navegador real pendiente para Beta.
 
 ### AUG-098 — Evitar inyección HTML desde la consulta de búsqueda
 - Origen: H-AUD-015-001. AUD-T-015/Tarea 14. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Alta.
@@ -1062,4 +1063,18 @@ AUG-096 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - RichTextContentSecurity: 38/39 PASS; la única falla es la aserción preexistente de igualdad literal entre los sanitizadores WRITE y ADMIN. No se modificaron esos servicios porque la divergencia no pertenece al alcance de AUG-096; requiere seguimiento independiente. Los 38 escenarios restantes aprobaron.
 - No se ejecutó Node CLI ni navegador real. Verificación visual de etiquetas hostiles, formatos autorizados, impresión y uso offline queda para Beta. No se migraron datos ni se desplegó a producción.
 Siguiente: revisar el backlog posterior a AUG-096 y continuar la primera tarea pendiente sin dependencia bloqueada.
+================================================================================
+
+
+================================================================================
+AUG-097 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- api-config.js: gpsepedia_rich_text_mode se centraliza como preferencia local con valores strict/advanced; ausencia, error de almacenamiento o valor inválido resuelven a strict. El setter valida rol Desarrollador y modo permitido.
+- rich-text.js: modo estricto por defecto permite B/STRONG, SPAN con color seguro y BR; oculta controles avanzados y bloquea su aplicación. Modo avanzado conserva la allow-list HTML/CSS ampliada. Las barras existentes se pueden refrescar al cambiar la preferencia y el comportamiento Enter de listas solo actúa en avanzado.
+- index.html/ui.js: selector añadido al panel de Desarrollador; guarda la preferencia por navegador y actualiza las barras abiertas. No es configuración compartida entre dispositivos ni autoridad de seguridad; el backend mantiene su sanitización autoritativa segura independiente.
+- service-worker.js: App Shell actualizado a gpsepedia-cache-v18; ServiceWorkerCache actualizado.
+- Dependencia corregida durante validación: ui.js parseVinCollection tenía una expresión regular inválida para delimitadores heredados VIN; se escapó slash y se agregó cobertura para slash, barra inversa y punto y coma.
+- Pruebas locales en harness adaptado: RichTextModeConfiguration 15/15; ServiceWorkerCache 6/6; VinVersionPresentation 11/11; DescriptiveContentRendering 9/9; CableCarouselSwipeAxis 15/15 PASS. Parsing de api-config.js, rich-text.js, ui.js y service-worker.js PASS.
+- RichTextContentSecurity: 38/39 PASS; la única falla es la comparación literal preexistente entre sanitizadores WRITE y ADMIN, no relacionada con la preferencia local. Se conserva para seguimiento independiente y no se amplió el alcance.
+- Node CLI y navegador real no ejecutados. Beta pendiente: cambio de modo con sesión real, renderizado de registros históricos, formularios, persistencia entre recargas/pestañas, temas y tamaños de pantalla. No se modificaron datos productivos ni se desplegó.
+Siguiente: revisar el primer requisito pendiente posterior a AUG-097 en el backlog.
 ================================================================================
