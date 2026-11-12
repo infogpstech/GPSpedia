@@ -503,7 +503,18 @@ Siguiente: AUG-090 — Garantizar integridad referencial y atomicidad de relacio
   3. Serializar alta y baja con LockService, releer la colección dentro del lock y liberar en finally.
   4. Hacer idempotentes las altas/bajas y devolver la colección final realmente persistida.
   5. Probar IDs ausentes/inexistentes, IDs duplicados en Cortes, datos heredados, dos altas concurrentes, alta/baja concurrentes y reintentos.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; validación local aprobada, concurrencia real y Spreadsheet aislada pendientes para Beta.
+
+
+================================================================================
+AUG-090 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- `handleAddVehicleToProblem` y `handleRemoveVehicleFromProblem` validan problemId único y vehicleId único en Cortes, normalizan la colección, serializan lectura/modificación/escritura con ScriptLock, confirman el valor persistido y son idempotentes.
+- `handleAddProblem` valida también cada vehículo preasociado dentro de su lock; el coordinador 1.1.1 reserva lectura CORTES para addProblem y para las operaciones add/remove.
+- `parseModelosAsociados` admite JSON y delimitadores heredados, normaliza espacios y deduplica; la UI evita tarjetas repetidas y omite IDs sin vehículo correspondiente.
+- Pruebas locales: PysVehicleRelationIntegrity 18/18 PASS; PysCreationIntegrity 48/48 PASS; SharedMutationCoordinator 30/30 PASS. Parsing completo de feedback.js, bloque de detalle de vehículos en ui.js y Coordinator.js PASS.
+- La validación se ejecutó en harness JavaScript adaptado; no se ejecutó Node CLI ni Apps Script real. Concurrencia entre ejecuciones y operaciones Spreadsheet quedan diferidas a Beta aislada. No se desplegó ni se modificaron datos productivos.
+Siguiente: AUG-091 — Alinear el título del acordeón con la especificación de PyS.
+================================================================================
 
 ### AUG-091 — Alinear el título del acordeón con la especificación de PyS
 - **Hallazgo origen:** H-AUD-012-006.
