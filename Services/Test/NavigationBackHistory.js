@@ -231,6 +231,15 @@ test('all catalog back buttons use the centralized operation', () => {
     assert.match(uiSource, /button\.addEventListener\('click', \(\) => volverAEstado\(targetState\)\)/);
 });
 
+test('empty and no-result searches retain their query ancestry before rendering', () => {
+    const navigationSource = readFileSync(new URL('../../navigation.js', import.meta.url), 'utf8');
+    const syncIndex = navigationSource.indexOf('syncSearchNavigationState_(textoBusqueda, isRestoring)');
+    const noResultsIndex = navigationSource.indexOf('if (datosFiltrados.length === 0)');
+    assert.ok(syncIndex >= 0 && noResultsIndex > syncIndex);
+    assert.match(navigationSource, /function syncSearchNavigationState_\(query, isRestoring\)/);
+    assert.match(navigationSource, /const emptySearchState = \{ level, query: "", previousState: previousNavigationState \}/);
+});
+
 test('native popstate restores previous navigation metadata and section states', () => {
     const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
     const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
@@ -273,4 +282,4 @@ test('multi-level back and forward traversal does not create a loop', () => {
     assert.equal(history.entries.length, 5);
 });
 
-console.log('NavigationBackHistory:', passed + '/15 PASS');
+console.log('NavigationBackHistory:', passed + '/16 PASS');
