@@ -73,3 +73,14 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Modal de instalación: instrucciones y título aplicables a iPhone y iPad. Se mantiene beforeinstallprompt/appinstalled para navegadores compatibles.
 - Services/Test/PWAInstallDetection.js ampliada a 20 escenarios, incluidos visibilidad de botón para iPhone/iPadOS escritorio y control negativo Mac.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-075 — AUTENTICACIÓN DE REPORTES Y SUGERENCIAS
+- api-config.js: suggestCutChange recibe el contexto de sesión por separado y transmite userId/sessionToken junto con los datos de la sugerencia; los datos de actor del formulario no se consideran fuente de identidad.
+- ui.js: el formulario de sugerencia entrega getSessionPayload_() al helper de API sin mezclar las credenciales con los campos editables. reportProblem ya transmitía el contexto de sesión.
+- Services/feedback.js ya aplicaba assertFeedbackSession en la política de acciones y reemplazaba userId/userName/userRole desde ActiveSessions/Users; no fue necesario alterar el dispatcher ni los handlers.
+- Services/Test/FeedbackWriteSecurity.js: cobertura ampliada para los seis roles activos permitidos, sesión ausente/inválida/revocada/cruzada, identidad falsificada y rechazo previo a handlers/escrituras.
+- Validación local V8 adaptada: FeedbackWriteSecurity 50/50 PASS con dobles de LockService y CacheService; parsing V8 de api-config.js y de los dos formularios modificados PASS. No se ejecutó Node CLI literal ni Apps Script/Spreadsheet real.
+- Validación de deployment FEEDBACK, sesión real, registros en Feedbacks/Drive/ActividadUsuario y flujo de navegador quedan diferidos a Beta sobre entorno aislado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
