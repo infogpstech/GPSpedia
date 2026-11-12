@@ -42,6 +42,7 @@ function renderNavigationBackButton(container, targetState) {
 
 function renderNavigationTarget_(targetState) {
     const state = targetState || { level: 'categorias' };
+    setState({ navigationState: state });
     const searchInput = document.getElementById('searchInput');
     if (state.level === 'busqueda' || state.level === 'busqueda_focused') {
         if (searchInput) {
@@ -1140,7 +1141,7 @@ export function mostrarCategorias() {
 export function mostrarMarcas(categoria) {
     const { catalogData, navigationState: previousState } = getState();
     const { cortes } = catalogData;
-    const nextState = { level: "marcas", categoria, origin: "categoria" };
+    const nextState = { level: "marcas", categoria, origin: "categoria", previousState: previousState || null };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState || { level: 'categorias' } });
     const cont = document.getElementById("contenido");
@@ -1390,7 +1391,11 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     const { navigationState } = getState();
     const previousState = navigationState || {};
     const origin = previousState.origin || "categoria";
-    const nextState = { level: "versiones", categoria, marca, modelo, origin, previousState };
+    const versionValues = [...new Set((Array.isArray(filas) ? filas : []).map(item => item && item.versionesAplicables).filter(Boolean))];
+    const ignitionValues = [...new Set((Array.isArray(filas) ? filas : []).map(item => item && item.tipoEncendido).filter(Boolean))];
+    const versionEquipamiento = versionValues.length === 1 ? versionValues[0] : (previousState.versionEquipamiento || null);
+    const tipoEncendido = ignitionValues.length === 1 ? ignitionValues[0] : (previousState.tipoEncendido || null);
+    const nextState = { level: "versiones", categoria, marca, modelo, origin, versionEquipamiento, tipoEncendido, previousState };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
