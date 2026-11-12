@@ -155,7 +155,9 @@ function registerModalNavigationTransition_(targetType,currentType,modalWasVisib
 function applyPendingModalViewRestore_(){
  if(!pendingModalViewRestore_)return false;
  const result=restoreModalViewState(document.getElementById("modalDetalle"),pendingModalViewRestore_);
- if(!pendingModalViewRestore_.accordion||result.accordionRestored)pendingModalViewRestore_=null;
+ const pendingAccordion=pendingModalViewRestore_.accordion&&!result.accordionRestored?pendingModalViewRestore_.accordion:null;
+ const pendingTracks=result.pendingHorizontalScrolls||[];
+ pendingModalViewRestore_=pendingAccordion||pendingTracks.length?{accordion:pendingAccordion,horizontalScrolls:pendingTracks}:null;
  return true;
 }
 function stopModalDetailMedia_(){
@@ -3226,6 +3228,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
         panel.appendChild(contentWrapper);
 
         btn.onclick = () => {
+            pendingModalViewRestore_ = null;
             const isActive = btn.classList.contains("active");
 
             // Cerrar coordinadamente todos los demás acordeones del modal
@@ -7112,6 +7115,7 @@ export function createAccordionSection(container, title, sec, isOpen = false, da
     }
 
     btn.addEventListener("click", function() {
+        pendingModalViewRestore_ = null;
         const isActive = this.classList.contains("active");
 
         // Cerrar todos los paneles antes de abrir el nuevo
