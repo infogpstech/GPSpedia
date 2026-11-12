@@ -1780,3 +1780,12 @@ CAMBIOS — AUG-065 — 2026-11-11 — CIERRE LOCAL
 - No se asigna automáticamente la clase a recursos actuales porque no existe metadato fiable de canal alfa en el modelo de imágenes. Fotografías, JPEG, PNG opacos, diagramas y logos permanecen sin mezcla salvo marcación explícita justificada.
 - Validación V8 adaptada del contrato sobre el CSS vigente: 7/7 PASS. Node CLI literal pendiente; no se declara la tarea completada.
 ================================================================================
+
+
+================================================================================
+2026-11-11 — AUG-066 — CIERRE LOCAL CON VALIDACIÓN VISUAL DIFERIDA
+- Services/Test/README.md: se sustituye el comando Node incompatible por la ejecución de la suite mediante copia temporal .mjs; el comando elimina el temporal, informa el código de salida y devuelve fallo si la prueba no pasa.
+- Tareas_pendientes_parte5.txt: AUG-066 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Validación local: Node v24.22.2, ImageBlendModeScope.js 7/7 PASS y código de salida 0. La prueba valida el selector opt-in exacto, la única regla mix-blend-mode y la ausencia de los selectores globales anteriores.
+- Pendiente para Beta: validación visual en navegador real con recursos transparentes/opacos, bordes semitransparentes y modos claro/oscuro. No se asignaron clases automáticamente a imágenes sin metadatos fiables.
+================================================================================
