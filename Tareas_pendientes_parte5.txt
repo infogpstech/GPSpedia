@@ -603,7 +603,7 @@ Siguiente: AUG-094 — Eliminar inyección HTML en el modal unificado de subida 
 - Evidencia: youtubeUpload.js content.innerHTML (42–72); valores iniciales ui.js (264–280, 9145–9162) y add_cortes.html (1240–1276).
 - Problema: initialDescription se interpola directamente dentro de textarea y initialTitle recibe escape parcial; datos proceden de formularios/catálogo.
 - Criterios: crear nodos y asignar value/textContent o escape contextual; probar comillas, ampersands, etiquetas, cierre textarea, atributos/eventos; conservar acentos y saltos de línea.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; contrato seguro y pruebas locales aprobadas, ejecución visual en navegador pendiente para Beta.
 
 ### Adenda AUD-T-013 — AUG-043
 - En HEAD d8a164c2974f4dc472f169442c2b7efb969bf350, youtubeUpload.js:166–189/236–252 omite sessionToken y usa currentUser.id; routeAction no inyecta credenciales; FEEDBACK exige assertFeedbackSession incluso con allowedRoles=null.
@@ -621,6 +621,18 @@ Siguiente: AUG-094 — Eliminar inyección HTML en el modal unificado de subida 
 
 
 ## Hallazgos derivados de AUD-T-014 — 2026-11-08
+
+
+================================================================================
+AUG-094 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- El modal de youtubeUpload.js ya utiliza una plantilla estructural estática sin interpolación de initialTitle/initialDescription; los valores se asignan mediante propiedades .value.
+- Se centralizó la asignación segura en setYouTubeUploadInitialValues_ y se reutiliza al abrir, recuperar una sesión y descartar una subida. Se mantienen límites de 100 caracteres para título y 5000 para descripción.
+- Los puntos de entrada de Corte, PyS y Tutorial continúan pasando sus datos como opciones; no se construye HTML con esos valores.
+- Nueva suite Services/Test/YouTubeUploadXssIntegrity.js: 5/5 PASS; cubre comillas, ampersands, etiquetas, atributos/eventos, cierre de textarea, acentos, saltos de línea y límites de longitud. Parsing del módulo y suite PASS.
+- El hallazgo auditado ya estaba mitigado en la plantilla actual; la implementación centraliza el contrato y agrega regresión automatizada para evitar que vuelva a interpolarse contenido.
+- Limitación: harness JavaScript adaptado; no se ejecutó Node CLI ni navegador real. La verificación visual y de comportamiento queda para Beta. No se realizaron subidas reales ni cambios productivos.
+Siguiente: AUG-095 — Sanitización autoritativa del contenido enriquecido en backend.
+================================================================================
 
 ### AUG-095 — Sanitización autoritativa del contenido enriquecido en backend
 - Origen: H-AUD-014-001. Tarea AUD-T-014/Tarea 13. Sesión/checkpoint: AUD-20261108-S032/AUD-CP-0032. Prioridad: Alta.
