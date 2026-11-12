@@ -299,7 +299,8 @@ async function initializeApp() {
             .filter(element => element.id !== 'youtube-upload-modal' && isOverlayVisible_(element));
         const visibleSet = new Set(visible);
         const stale = Array.from(overlayElements.entries()).filter(([, element]) => !visibleSet.has(element));
-        const fresh = visible.filter(element => !overlayElements.has(element));
+        const trackedElements = new Set(overlayElements.values());
+        const fresh = visible.filter(element => !trackedElements.has(element));
 
         // Un overlay que reemplaza al superior ocupa su misma entrada, sin añadir un nivel de Atrás.
         const currentStack = overlayHistory.getStack();
