@@ -278,3 +278,8 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test: TutorialIntegrity.js; ampliación de VideoApprovalPublishing.js y SharedMutationCoordinator.js; actualización del contrato de alta de tutorial en FeedbackWriteSecurity.js.
 - lista_beta.txt y Services/Test/README.md: pruebas de integración aislada y ejecución local documentadas.
 ================================================================================
+
+
+2026-11-12 — ADENDA AUG-092
+- ui.js: conserva la barra de formato enriquecido en el campo Detalles al editar un tutorial; se mantiene el contenido existente y el límite de 700 caracteres.
+- Regresión local repetida tras el ajuste: TutorialIntegrity 21/21, VideoApprovalPublishing 18/18, SharedMutationCoordinator 31/31 y PysVehicleRelationIntegrity 18/18 PASS; parsing focalizado PASS.
