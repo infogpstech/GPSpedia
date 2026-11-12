@@ -682,7 +682,8 @@ cto/avanzado implementado y pruebas locales aprobadas, navegador real pendiente 
   2. Mantener el texto literal en resultados y estados vacíos.
   3. Probar etiquetas, atributos/eventos, SVG, comillas, ampersand, Unicode y deep links codificados.
   4. Revisar sinks equivalentes de error/estado de búsqueda.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; renderizado seguro y pruebas locales aprobadas, navegador real pendiente para Beta.
+ro y pruebas locales aprobadas, navegador real pendiente para Beta.
 
 ### AUG-099 — Eliminar referencias residuales a filtros rápidos cancelados
 - Origen: H-AUD-015-002. AUD-T-015/Tarea 15. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
@@ -1077,4 +1078,16 @@ AUG-097 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - RichTextContentSecurity: 38/39 PASS; la única falla es la comparación literal preexistente entre sanitizadores WRITE y ADMIN, no relacionada con la preferencia local. Se conserva para seguimiento independiente y no se amplió el alcance.
 - Node CLI y navegador real no ejecutados. Beta pendiente: cambio de modo con sesión real, renderizado de registros históricos, formularios, persistencia entre recargas/pestañas, temas y tamaños de pantalla. No se modificaron datos productivos ni se desplegó.
 Siguiente: revisar el primer requisito pendiente posterior a AUG-097 en el backlog.
+================================================================================
+
+
+================================================================================
+AUG-098 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- ui.js mostrarResultadosDeBusqueda: el encabezado se construye con h4 + textContent; el contenedor se limpia mediante textContent y no concatena query en innerHTML.
+- ui.js showNoResultsMessage: el estado vacío se construye con p + textContent y estilos CSS asignados mediante style.cssText. showGlobalError ya usa textContent y se añadió verificación.
+- main.js conserva la consulta de deep links en searchInput.value; navigation.js pasa el texto original al renderer; decodeSearchHash/decodeSharedVehicleHash conservan el valor sin interpretarlo como HTML.
+- Dependencia corregida: navegación.js tenía un slash sin escapar en el parser de colecciones VIN; se corrigió para que el módulo mantenga sintaxis válida. ui.js y navigation.js ahora parsean correctamente.
+- Pruebas locales en harness adaptado: SearchQueryXssIntegrity 8/8; GlobalSearch 21/21; NavigationVinCollection 6/6; VinVersionPresentation 11/11 PASS. Los escenarios cubren payloads HTML/SVG/eventos, comillas, ampersand, Unicode, estados vacíos, deep links codificados, navegación y delimitadores VIN.
+- No se ejecutó Node CLI ni navegador real. Beta pendiente: búsquedas reales con teclado/táctil, historial, resultados, estados vacíos, enlaces compartidos, secuencias porcentuales inválidas, navegación atrás y viewports. No se modificaron datos ni se desplegó a producción.
+Siguiente: AUG-099 — Eliminar referencias residuales a filtros rápidos cancelados.
 ================================================================================
