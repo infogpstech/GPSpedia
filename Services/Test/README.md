@@ -1132,3 +1132,16 @@ Ejecutar desde la raíz del repositorio:
 RichTextBackendSanitization.js compara las allow-lists de rich-text.js, FEEDBACK y WRITE; valida elementos y atributos, scripts, eventos, URLs, CSS, etiquetas malformadas, entidades, contenido vacío, tipos y límites; además prueba la normalización del plan de escritura suplementaria. PysCreationIntegrity.js verifica las rutas directas de creación, edición, solución y prevención, además de reintentos idempotentes con contenido ya sanitizado.
 
 Los servicios FEEDBACK y WRITE conservan el mismo sanitizador backend porque se despliegan como proyectos independientes. No se migran registros históricos: la sanitización se aplica únicamente a nuevas escrituras y actualizaciones. La validación con proyectos Apps Script y Spreadsheet aislados se reserva para Beta; nunca apuntar estas pruebas a servicios ni datos productivos.
+
+## AUG-096 — Sanitización de todas las rutas de contenido descriptivo
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/DescriptiveContentRendering.js
+node --experimental-default-type=module Services/Test/CableCarouselSwipeAxis.js
+```
+
+DescriptiveContentRendering.js comprueba el rótulo del carrusel como texto plano, sanitización del contenido enriquecido en carrusel y vista individual, detalle PyS, ficha de impresión, Inbox y ausencia de sinks HTML en offline.js. CableCarouselSwipeAxis.js cubre los gestos del carrusel. La allow-list de etiquetas, atributos, estilos y URLs se valida adicionalmente con las suites de rich-text existentes.
+
+La comprobación con navegador real, payloads de catálogo en ambos modos de presentación, impresión y funcionamiento offline se reserva para Beta. No requiere migrar datos ni modificar servicios o datos productivos.
