@@ -89,8 +89,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
             setState({ navigationState: { level, query: "" } });
 
-            const newUrl = window.location.pathname + window.location.search;
-            history.replaceState({ level, query: "" }, '', newUrl);
+            replaceNavigationState({ level, query: "", previousState: getState().navigationState?.previousState || null });
         }
         return;
     }
