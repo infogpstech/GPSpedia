@@ -162,6 +162,42 @@
             box-sizing: border-box;
         }
 
+
+/* AUG-105: reflujo responsive de gestión de usuarios. */
+.container, .profile-section, .user-management-section, .modal-content { min-width: 0; }
+.profile-section p, .user-table td { overflow-wrap: anywhere; }
+.modal { box-sizing: border-box; padding: 12px; }
+.modal-content { width: min(80%, 500px); max-width: 100%; min-width: 0; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); margin: 12px auto; overflow-y: auto; overscroll-behavior: contain; }
+.form-group input, .form-group select { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; }
+@media (max-width: 760px) {
+ .container { width: 100%; padding: 12px; margin: 8px auto; }
+ .profile-section, .user-management-section { padding: 12px; }
+ #profile-section > div { flex-wrap: wrap; gap: 8px; }
+ .table-scroll-container { overflow-x: visible; overflow-y: visible; }
+ .user-table { width: 100%; min-width: 0; table-layout: fixed; }
+ .user-table th, .user-table td { padding: 8px 5px; font-size: .8rem; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
+ .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 23%; }
+ .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 31%; }
+ .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 17%; }
+ .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 29%; }
+ .actions-cell { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+ .actions-cell .btn-sm { width: 100%; min-width: 0; min-height: 40px; margin: 0; padding: 7px 5px; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+ .modal { padding: 12px; overflow-y: auto; }
+ .modal-content { width: 100%; margin: 0 auto; padding: 16px; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); }
+ .modal-content form .btn { width: 100%; min-height: 44px; white-space: normal; }
+}
+@media (max-width: 420px) {
+ .user-table th, .user-table td { padding: 7px 3px; font-size: .76rem; }
+ .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 22%; }
+ .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 30%; }
+ .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 16%; }
+ .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 32%; }
+ .modal-content { padding: 12px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+ .modal { padding: 8px; }
+ .modal-content { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); margin: 0 auto; padding: 12px; }
+}
     </style>
     <link rel="stylesheet" href="button-system.css">
 </head>
