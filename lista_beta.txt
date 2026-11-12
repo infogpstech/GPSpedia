@@ -876,5 +876,8 @@ AUG-090 — INTEGRIDAD Y ATOMICIDAD DE RELACIONES PyS–VEHÍCULOS
 18. Forzar timeout/flush y reintentar; confirmar que la operación no duplica asociaciones y que la respuesta refleja el valor guardado.
 19. Intentar desvincular como Técnico y como Desarrollador; comprobar rechazo/aceptación. Verificar que IDs huérfanos no generan tarjetas y que IDs repetidos no duplican tarjetas.
 
+AUG-091 — TÍTULO DEL ACORDEÓN PyS
+20. Abrir un detalle de vehículo con problemas relacionados en modo claro y oscuro, y en viewport móvil; confirmar el título exacto «Problemas relacionados a este vehículo», ajuste de línea sin superposición y flecha visible.
+
 No desplegar a producción ni modificar datos productivos.
 ================================================================================
