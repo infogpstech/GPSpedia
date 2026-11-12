@@ -755,16 +755,14 @@ async function initializeApp() {
         }
     }, { passive: true });
     document.getElementById('side-menu-logout-button').addEventListener('click', () => {
-        ui.closeSideMenu();
-        auth.logout();
+        ui.closeSideMenuAndRun(() => auth.logout());
     });
 
     const changelogLink = document.getElementById('side-menu-changelog-link');
     if (changelogLink) {
         changelogLink.addEventListener('click', (e) => {
             e.preventDefault();
-            ui.openChangeLog();
-            ui.closeSideMenu();
+            ui.closeSideMenuAndRun(() => ui.openChangeLog());
         });
     }
 
@@ -772,11 +770,10 @@ async function initializeApp() {
     document.querySelectorAll('.section-btn').forEach(button => {
         button.addEventListener('click', () => {
             const section = button.id.replace('btn-', '');
-            if (section === 'cortes') {
-                navigation.irAPaginaPrincipal();
-            } else {
-                ui.mostrarSeccion(section);
-            }
+            ui.closeSideMenuAndRun(() => {
+                if (section === 'cortes') navigation.irAPaginaPrincipal();
+                else ui.mostrarSeccion(section);
+            });
         });
     });
 
@@ -785,8 +782,7 @@ async function initializeApp() {
     if (inboxBtn) {
         inboxBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ui.openInbox();
-            ui.closeSideMenu();
+            ui.closeSideMenuAndRun(() => ui.openInbox());
         });
     }
 
@@ -834,8 +830,7 @@ async function initializeApp() {
     if (dashboardBtn) {
         dashboardBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ui.openDashboard();
-            ui.closeSideMenu();
+            ui.closeSideMenuAndRun(() => ui.openDashboard());
         });
     }
 
@@ -844,8 +839,7 @@ async function initializeApp() {
     if (devToolsBtn) {
         devToolsBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ui.openDevTools();
-            ui.closeSideMenu();
+            ui.closeSideMenuAndRun(() => ui.openDevTools());
         });
     }
 
@@ -966,7 +960,14 @@ async function initializeApp() {
 
             alert('¡Gracias! Tu mensaje ha sido enviado correctamente.');
             e.target.reset();
-            document.getElementById('contact-modal').style.display = 'none';
+            const contactModal = document.getElementById('contact-modal');
+            const contactOverlayId = contactModal && contactModal.dataset.gpOverlayHistoryId;
+            const historyManager = window.overlayHistory;
+            if (contactOverlayId && historyManager && historyManager.has(contactOverlayId)) {
+                historyManager.close(contactOverlayId);
+            } else if (contactModal) {
+                contactModal.style.display = 'none';
+            }
         } catch (error) {
             ui.showGlobalError(`Hubo un error al enviar el mensaje: ${error.message}`);
         } finally {
