@@ -1120,3 +1120,15 @@ node --experimental-default-type=module Services/Test/YouTubeUploadXssIntegrity.
 ```
 
 La suite verifica que la plantilla estructural del modal no interpole datos externos y que título/descripción se asignen exclusivamente mediante `.value`, tanto al abrir, recuperar como descartar una subida. Incluye comillas, ampersands, etiquetas, atributos/eventos, cierre de `textarea`, acentos, saltos de línea y límites de longitud. También comprueba los puntos de entrada de Corte, PyS y Tutorial. No ejecuta scripts ni requiere servicios externos.
+
+
+## AUG-095 — Sanitización autoritativa de contenido enriquecido
+
+Ejecutar desde la raíz del repositorio:
+
+    node --experimental-default-type=module Services/Test/RichTextBackendSanitization.js
+    node --experimental-default-type=module Services/Test/PysCreationIntegrity.js
+
+RichTextBackendSanitization.js compara las allow-lists de rich-text.js, FEEDBACK y WRITE; valida elementos y atributos, scripts, eventos, URLs, CSS, etiquetas malformadas, entidades, contenido vacío, tipos y límites; además prueba la normalización del plan de escritura suplementaria. PysCreationIntegrity.js verifica las rutas directas de creación, edición, solución y prevención, además de reintentos idempotentes con contenido ya sanitizado.
+
+Los servicios FEEDBACK y WRITE conservan el mismo sanitizador backend porque se despliegan como proyectos independientes. No se migran registros históricos: la sanitización se aplica únicamente a nuevas escrituras y actualizaciones. La validación con proyectos Apps Script y Spreadsheet aislados se reserva para Beta; nunca apuntar estas pruebas a servicios ni datos productivos.
