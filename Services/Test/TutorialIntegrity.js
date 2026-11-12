@@ -58,7 +58,9 @@ function buildHarness_(feedback, options = {}) {
             getSheetByName: name => name === "Tutorial" && options.missingSheet !== true ? sheet : null,
             insertSheet: name => { if (name !== "Tutorial") throw new Error("wrong sheet"); state.inserted = true; return sheet; }
         }),
-        findPendingVideoApprovalForTarget_: () => false,
+        SHEET_NAMES: { FEEDBACKS: "Feedbacks" },
+        getSafeSheet: () => options.feedbackSheet || null,
+        findPendingVideoApprovalForTarget_: () => options.pendingApproval === true,
         state
     };
     const helpers = extract_(feedback, "const TUTORIAL_HEADERS", "function extractYouTubeId(url)");
@@ -187,6 +189,19 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.sheet.data[1][0], "");
         assert.equal(h.sheet.data[1][1], "Tutorial histórico");
         assert.equal(h.sheet.data[1][5], "Detalle actualizado");
+    });
+
+    test("no usa un ID tut- inexistente como fallback de un tema coincidente", () => {
+        const key = "tut-44444444444444444444444444444444";
+        const h = buildHarness_(feedback, { rows: [headers, ["", key, "", "", "", "", "", "Autor"]] });
+        assert.throws(() => h.api.update({ tutorialId: key, detalles: "No debe modificar" }), /Tutorial no encontrado/);
+        assert.equal(h.sheet.data[1][5], "");
+    });
+
+    test("protege el renombrado histórico si hay una aprobación de vídeo pendiente", () => {
+        const h = buildHarness_(feedback, { rows: [headers, ["", "Tutorial antiguo", "", "", "", "", "", "Autor"]], pendingApproval: true });
+        assert.throws(() => h.api.update({ originalTema: "Tutorial antiguo", tema: "Tutorial nuevo" }), /solicitud de vídeo pendiente/);
+        assert.equal(h.sheet.data[1][1], "Tutorial antiguo");
     });
 
     test("rechaza edición ambigua y renombrado a un tema ya utilizado", () => {
