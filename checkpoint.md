@@ -1159,3 +1159,20 @@ Validación local:
 Validación Beta pendiente: Safari iPhone; iPadOS con UA móvil y de escritorio; instalación y apertura standalone; navegador normal; beforeinstallprompt en navegador compatible; Mac de escritorio como control negativo. Requiere comprobar icono/título en pantalla de inicio y visibilidad del botón.
 Siguiente tarea del backlog: AUG-075 — Autenticar reportes y sugerencias y derivar identidad desde sesión. No iniciada en esta iteración.
 ================================================================================
+
+================================================================================
+AUG-075 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work.
+Resultado:
+- El backend ya protegía reportProblem y suggestCutChange mediante FEEDBACK_ACTION_PERMISSIONS y authorizeFeedbackAction_: assertFeedbackSession comprueba ActiveSessions/Users, exige correspondencia userId/token, comprueba expiración/revocación y sustituye userId, userName y userRole con la identidad verificada. Ambas acciones aceptan los roles activos definidos por la política, sin exigir rol administrativo adicional.
+- reportProblem ya recibía getSessionPayload_() a través de api-config.js.
+- Se corrigió el flujo de sugerencias: api-config.js recibe sessionPayload separado, transmite userId/sessionToken y da prioridad a esos valores frente a cualquier campo coincidente en los datos de sugerencia. ui.js pasa getSessionPayload_() como segundo argumento y mantiene los campos editables separados.
+- Services/Test/FeedbackWriteSecurity.js añade pruebas de roles permitidos, sesión ausente/inválida, revocación pendiente de rol, userId/token cruzados, identidad falsificada y rechazo del dispatcher antes de handlers/escrituras.
+Validación local:
+- FeedbackWriteSecurity: 50/50 PASS en runtime V8 adaptado con dobles locales de LockService y CacheService.
+- Parsing V8 de api-config.js y de openReportCutModal/openSuggestCutModal: PASS.
+- No se ejecutó Node CLI literal ni deployment Apps Script/Spreadsheet/Drive real.
+Beta pendiente: ejecutar el comando documentado en Services/Test/README.md; probar reportes y sugerencias con deployment FEEDBACK y hoja aislada, roles permitidos, sesión expirada/revocada/ausente/cruzada y campos de identidad falsificados; verificar que los rechazos no generen filas ni archivos ni actividad. Comprobar también el flujo desde navegador real. No usar endpoints ni datos productivos para estas pruebas.
+Documentación: Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt y lista_beta.txt.
+Siguiente tarea: AUG-076 — Eliminar stored XSS en Inbox y modales de reporte/sugerencia. No iniciada.
+================================================================================
