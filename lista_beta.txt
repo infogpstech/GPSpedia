@@ -207,7 +207,7 @@ AUG-013 — Validación real de purga de Logs coordinada con AUTH
 
 
 ADENDA DE VALIDACIÓN LOCAL AUG-013 — 2026-11-09
-Batería ampliada: 24/24 pruebas funcionales locales PASS. Se añadieron reintento de purga parcial, timeout de lock sin eliminación y rechazo de autorización por doPost en ambas fuentes. Sintaxis 4/4 PASS. No sustituye la prueba real concurrente del deployment AUTH aislado.
+Batería ampliada: 24/25 pruebas funcionales locales PASS. Se añadieron reintento de purga parcial, timeout de lock sin eliminación y rechazo de autorización por doPost en ambas fuentes. Sintaxis 4/4 PASS. No sustituye la prueba real concurrente del deployment AUTH aislado.
 
 
 ================================================================================
@@ -514,7 +514,7 @@ trap 'rm -f "$TEST_TMP"' EXIT
 node "$TEST_TMP"
 ```
 
-La suite cubre 24 escenarios de UI, FileReader, MIME/Base64/firma/tamaño, MIME/extensión de Drive, ACL, compatibilidad Data URL, idempotencia y rollback. Registrar la salida real; los dobles locales no sustituyen Drive/Spreadsheet reales.
+La suite cubre 25 escenarios de UI, FileReader, MIME/Base64/firma/tamaño, MIME/extensión de Drive, ACL, compatibilidad Data URL, idempotencia y rollback. Registrar la salida real; los dobles locales no sustituyen Drive/Spreadsheet reales.
 
 BETA AISLADA — no usar cuentas, carpetas ni datos productivos:
 1. Enviar sugerencias sin imagen y con JPEG, PNG y WebP válidos; confirmar registro en Feedbacks, MIME, extensión, hash, tamaño, imageFileId y URL canónica.
