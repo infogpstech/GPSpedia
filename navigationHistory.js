@@ -8,7 +8,9 @@ export function pickNavigationState(state) {
     if (!state || typeof state !== 'object' || !state.level) return null;
     const picked = {};
     NAVIGATION_FIELDS.forEach(key => {
-        if (Object.prototype.hasOwnProperty.call(state, key)) picked[key] = state[key];
+        if (Object.prototype.hasOwnProperty.call(state, key) && state[key] !== undefined) {
+            picked[key] = state[key];
+        }
     });
     return picked;
 }
