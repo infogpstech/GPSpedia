@@ -26,7 +26,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
   1. Limitar inferencia de marcas a entidades Corte o a un tipo explícito.
   2. No inferir marca desde valores sintéticos de Relay/Tutorial/PyS.
   3. Probar consulta por sección, título exacto, nombre de marca y resultados mixtos.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). La clasificación segura ya está implementada en search-utils.js; se amplió GlobalSearch.js para cubrir títulos exactos de sección, coincidencia exacta de modelo, consulta por marca y resultados mixtos.
 
 ### AUG-102 — Alinear el tema oscuro del banner de validación y completar sus tokens
 - Origen: H-AUD-016-001. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
