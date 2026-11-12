@@ -5382,6 +5382,10 @@ export async function openReplacedImagesModal() {
     modal.__gpOverlayClose = () => {
         replacedImagesModalGeneration_ += 1;
         closeReplacedImagesLightbox_(true);
+        cachedReplaced = [];
+        folders = [];
+        const list = document.getElementById('replaced-images-list-container');
+        if (list) list.replaceChildren();
         modal.style.display = 'none';
     };
     modal.style.display = 'flex';
