@@ -485,3 +485,7 @@ Evidencia recibida desde Codespaces (captura del usuario):
 Interpretación: el checkout local conserva la implementación de AUG-066, pero aún no incorpora el commit remoto 7abfab9. No hay evidencia de cambios locales pendientes ni de divergencia; falta sincronizar con fast-forward antes de editar o publicar nuevos cambios.
 Siguiente acción: ejecutar `git pull --ff-only origin GPSpedia2.2.5_work`, comprobar que el HEAD local alcance 7abfab9 y continuar la revisión del comando documentado en Services/Test/README.md. No iniciar AUG-067.
 ================================================================================
+
+
+AUG-066 — ADENDA DE EVIDENCIA — 2026-11-11
+La captura posterior a la sincronización muestra la salida de `grep -n -A5 -B2 "AUG-066" Services/Test/README.md`: la línea 682 todavía documenta el comando incompatible `node --experimental-default-type=module Services/Test/ImageBlendModeScope.js`. La rama visible en Codespaces es `GPSpedia2.2.5_work` y el directorio de trabajo es `/workspaces/GPSpedia`. La captura no permite confirmar de forma legible el resultado de `git status -sb` ni el SHA de `git log -1`; deben comprobarse antes de editar. Siguiente acción: corregir únicamente la instrucción de ejecución de AUG-066 para usar la copia temporal `.mjs` (sin dejar archivo temporal en el repositorio), validar el diff y la prueba; no iniciar AUG-067.
