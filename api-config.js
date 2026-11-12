@@ -6,6 +6,36 @@
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
 
+export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode";
+export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
+
+export function getRichTextMode() {
+    try {
+        return localStorage.getItem(RICH_TEXT_MODE_KEY) === RICH_TEXT_MODES.ADVANCED
+            ? RICH_TEXT_MODES.ADVANCED
+            : RICH_TEXT_MODES.STRICT;
+    } catch (error) {
+        return RICH_TEXT_MODES.STRICT;
+    }
+}
+
+export function setRichTextMode(mode, actorRole) {
+    const normalizedRole = String(actorRole || "").trim().toLowerCase();
+    const normalizedMode = String(mode || "").trim().toLowerCase();
+    if (normalizedRole !== "desarrollador") {
+        throw new Error("Solo un Desarrollador puede cambiar el modo de texto enriquecido.");
+    }
+    if (![RICH_TEXT_MODES.STRICT, RICH_TEXT_MODES.ADVANCED].includes(normalizedMode)) {
+        throw new Error("Modo de texto enriquecido no válido.");
+    }
+    try {
+        localStorage.setItem(RICH_TEXT_MODE_KEY, normalizedMode);
+        return normalizedMode;
+    } catch (error) {
+        throw new Error("No se pudo guardar la preferencia local de texto enriquecido.");
+    }
+}
+
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycby1-ncfuo3PV38ZqvTkdHv2uoD2mNkgS3WNo_2_ycBvcxocA0H5QsNiZoqSadR19P7SiQ/exec",
