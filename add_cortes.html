@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Nuevo - GPSpedia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
@@ -64,6 +64,16 @@
         .form-phase.active { display: block; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+        /* Reflujo para zoom del navegador y viewports estrechos. */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 16px; }
+            .form-grid { grid-template-columns: minmax(0, 1fr); }
+            .form-grid > * { min-width: 0; }
+            .btn-container { flex-wrap: wrap; }
+            .btn-container > button { min-width: 0; white-space: normal; }
+        }
         .form-group { display: flex; flex-direction: column; }
         .full-width { grid-column: 1 / -1; }
         label { margin-bottom: 6px; font-weight: 500; font-size: 0.8em; color: var(--secondary-color); }
@@ -1468,30 +1478,8 @@
         });
 
         // Bloqueo de Zoom manual con excepción para Lightbox
-        const isLightboxVisible = () => {
-            const lightbox = document.getElementById('lightbox');
-            return lightbox && lightbox.classList.contains('visible');
-        };
-
-        document.addEventListener('wheel', (e) => {
-            if (e.ctrlKey && !isLightboxVisible()) e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && !isLightboxVisible()) {
-                if ([61, 107, 173, 109, 187, 189, 48, 96].includes(e.keyCode)) {
-                    e.preventDefault();
-                }
-            }
-        });
-
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 1 && !isLightboxVisible()) e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 1 && !isLightboxVisible()) e.preventDefault();
-        }, { passive: false });
+        // El zoom del navegador permanece disponible en el formulario.
+        // Los gestos del Lightbox se gestionan de forma independiente.
 
         // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
         window.addEventListener('popstate', (event) => {
