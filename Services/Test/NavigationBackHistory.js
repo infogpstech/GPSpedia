@@ -169,6 +169,10 @@ test('category, brand, model, equipment and ignition fields are compared', () =>
         { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', versionEquipamiento: 'X', tipoEncendido: 'Push' },
         { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', versionEquipamiento: 'X', tipoEncendido: 'Key' }
     ), false);
+    assert.equal(sameNavigationState(
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota', origin: 'categoria' },
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota', origin: 'marca' }
+    ), false);
 });
 
 test('search fallback restores the deep-link hash', () => {
@@ -236,4 +240,37 @@ test('native popstate restores previous navigation metadata and section states',
     assert.match(uiSource, /pushNavigationState\(\{ section: sectionName \}/);
 });
 
-console.log('NavigationBackHistory:', passed + '/14 PASS');
+test('multi-level back and forward traversal does not create a loop', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    pushNavigationState(
+        { level: 'marcas', categoria: 'Autos', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    pushNavigationState(
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: history.state }
+    );
+    pushNavigationState(
+        { level: 'tiposEncendido', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: history.state }
+    );
+    pushNavigationState(
+        { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', tipoEncendido: 'Push', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: history.state }
+    );
+    assert.equal(navigateBackToState(
+        { level: 'tiposEncendido', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', origin: 'categoria' },
+        { historyObject: history, locationObject }
+    ), 'back');
+    assert.equal(history.state.level, 'tiposEncendido');
+    history.forward();
+    assert.equal(history.state.level, 'versiones');
+    assert.equal(navigateBackToState(
+        { level: 'tiposEncendido', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', origin: 'categoria' },
+        { historyObject: history, locationObject }
+    ), 'back');
+    assert.equal(history.state.level, 'tiposEncendido');
+    assert.equal(history.entries.length, 5);
+});
+
+console.log('NavigationBackHistory:', passed + '/15 PASS');
