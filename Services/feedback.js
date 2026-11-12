@@ -2254,6 +2254,18 @@ function handleAddProblem(payload) {
             if (references.length === 1 &&
                 references[0].problemId === problemId &&
                 normalizePysImageReference_(references[0].imageUrl) === imageUrl) {
+                try {
+                    imageFile.setDescription([
+                        "GPSpedia PyS — LINKED",
+                        "problemId=" + problemId,
+                        "fileId=" + imageFileId,
+                        "mimeType=" + image.mimeType,
+                        "sizeBytes=" + image.sizeBytes,
+                        "recoveredAfterPartialFailure=true"
+                    ].join("\\n"));
+                } catch (metadataError) {
+                    console.warn("No se pudo actualizar metadata de la imagen PyS recuperada:", metadataError);
+                }
                 return { status: "success", message: "Problema registrado y verificado tras una respuesta parcial.", problemId, recovered: true };
             }
 
