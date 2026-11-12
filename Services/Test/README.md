@@ -898,3 +898,18 @@ cp Services/Test/CutSuggestionReportLink.js Services/Test/CutSuggestionReportLin
 ```
 
 11 escenarios: vínculo válido; ID ausente/sintético; reporte inexistente/duplicado; vehículo cruzado en metadata/fila; corte distinto; slot vacío; reporte histórico sin metadata; vehículo inexistente/duplicado; validación antes de Drive y escrituras. Los dobles de Spreadsheet no sustituyen integración Beta.
+
+
+## AUG-079 — Seguridad de imágenes en sugerencias
+
+Ejecutar desde la raíz con Node.js:
+
+```bash
+set -e
+TEST_TMP=Services/Test/SuggestionImageSecurity.mjs
+cp Services/Test/SuggestionImageSecurity.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+22 escenarios: selector MIME, límite 3 MB, FileReader load/error/abort, restablecimiento del botón, confirmación del servidor, validación compartida de JPEG/PNG/WebP y firmas, Data URL legado, MIME/extensión reales, ACL pública/no verificable, almacenamiento bajo `Cortes/SugerenciasCortes`, read-back, rollback, metadatos e idempotencia. Las pruebas usan dobles para Drive/Spreadsheet y no representan permisos o escrituras reales de Apps Script.
