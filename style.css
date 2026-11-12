@@ -1214,6 +1214,20 @@ body.search-active .container {
     width: 20px;
     height: 20px;
 }
+.accordion-btn .accordion-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.25;
+}
+.accordion-btn .accordion-arrow {
+    flex: 0 0 20px;
+    margin-left: 10px;
+}
+@media (max-width: 480px) {
+    .accordion-btn .accordion-title {
+        overflow-wrap: anywhere;
+    }
+}
 .accordion-btn.active .accordion-arrow,
 .accordion-item.active .accordion-header i {
     transform: rotate(180deg); /* Flecha hacia arriba */
