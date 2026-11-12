@@ -195,4 +195,61 @@ test('cancelar un cierre por popstate restaura la entrada del overlay', () => {
     assert.equal(attempts, 2);
 });
 
-console.log('OverlayHistoryStack:', passed + '/13 PASS');
+
+test('cada popstate cierra una sola capa y conserva dos overlays inferiores', () => {
+    const history = createFakeHistory();
+    const closed = [];
+    const manager = createOverlayHistoryManager(history);
+    history.setPopStateHandler(state => manager.handlePopState(state));
+    manager.register('parent', () => closed.push('parent'));
+    manager.register('middle', () => closed.push('middle'));
+    manager.register('top', () => closed.push('top'));
+
+    history.back();
+    assert.deepEqual(closed, ['top']);
+    assert.deepEqual(manager.getStack(), ['parent', 'middle']);
+    assert.deepEqual(history.state[overlayHistoryStateKey], ['parent', 'middle']);
+
+    history.back();
+    assert.deepEqual(closed, ['top', 'middle']);
+    assert.deepEqual(manager.getStack(), ['parent']);
+
+    history.back();
+    assert.deepEqual(closed, ['top', 'middle', 'parent']);
+    assert.deepEqual(manager.getStack(), []);
+});
+
+test('App Shell selecciona la capa visible por z-index y orden de apertura', () => {
+    const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
+    const selectorStart = mainSource.indexOf('function getTopmostVisibleOverlay_(state)');
+    const selectorEnd = mainSource.indexOf('const overlayObserver', selectorStart);
+    assert.ok(selectorStart >= 0 && selectorEnd > selectorStart);
+    const selector = mainSource.slice(selectorStart, selectorEnd);
+    assert.match(selector, /getComputedStyle\(element\)/);
+    assert.match(selector, /b\.zIndex - a\.zIndex/);
+    assert.match(selector, /b\.order - a\.order/);
+    for (const id of ['side-menu', 'lightbox', 'terms-modal', 'modalDetalle']) {
+        assert.ok(selector.includes(id), 'Falta capa ' + id);
+    }
+    assert.match(mainSource, /topOverlay\.close\(\);\s*return;/);
+    assert.doesNotMatch(mainSource, /infoModals\.forEach\(modal =>\s*\{\s*if \(modal\.style\.display === 'flex'\)/);
+});
+
+test('users.html usa pila LIFO y no cierra todos los modales en un popstate', () => {
+    const usersSource = readFileSync(new URL('../../users.html', import.meta.url), 'utf8');
+    assert.match(usersSource, /createOverlayHistoryManager\(window\.history\)/);
+    assert.match(usersSource, /modalHistory\.register\(id/);
+    assert.match(usersSource, /modalHistory\.handlePopState\(event\.state \|\| \{\}\)/);
+    assert.doesNotMatch(usersSource, /modals\.forEach\(modal =>\s*\{\s*if \(modal\.style\.display === 'block'\)/);
+});
+
+test('el acuerdo legal se coloca por encima del aviso obligatorio cuando se abre desde él', () => {
+    const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+    const start = uiSource.indexOf("export const openTermsAgreement = setupModal(");
+    const end = uiSource.indexOf("\n});", start) + 4;
+    assert.ok(start >= 0 && end > start);
+    const block = uiSource.slice(start, end);
+    assert.match(block, /termsNotice\.style\.display === 'flex' \? '3200' : ''/);
+});
+
+console.log('OverlayHistoryStack:', passed + '/17 PASS');
