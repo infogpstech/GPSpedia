@@ -1090,3 +1090,30 @@ Pruebas en navegador con catálogo aislado:
 
 No modificar catálogo productivo ni desplegar a producción.
 ================================================================================
+
+================================================================================
+AUG-099 — VALIDACIÓN DE RETIRADA DE FILTROS RÁPIDOS
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador/dispositivo:
+1. Abrir la aplicación y confirmar que la búsqueda funciona directamente, sin barra, botón ni panel de filtros rápidos.
+2. Escribir una consulta y retirar el foco con Enter, clic en otra sección y toque fuera; no debe aparecer ReferenceError ni error en consola.
+3. Repetir con el campo vacío y con el texto borrado mediante el botón X.
+4. Abrir un resultado que despliegue modal y retirar el foco del buscador; la clase search-active debe conservarse mientras el modal esté visible.
+5. Cerrar el modal, limpiar búsqueda y navegar atrás/adelante; confirmar que historial y encabezado se mantienen estables.
+6. Verificar que no existen elementos con IDs catalog-filters-bar o btn-toggle-filters ni controles rápidos equivalentes.
+7. Repetir en viewport móvil con teclado virtual y en escritorio; revisar animación del header y ausencia de saltos visuales.
+
+No reactivar filtros rápidos, no modificar datos productivos y no desplegar a producción.
+================================================================================
