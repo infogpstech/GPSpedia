@@ -171,4 +171,30 @@ test('search fallback restores the deep-link hash', () => {
     assert.equal(history.entries[0].url, '/catalog?mode=all#search=Toyota%20Hilux');
 });
 
-console.log('NavigationBackHistory:', passed + '/8 PASS');
+test('reselecting the active section replaces instead of duplicating', () => {
+    const history = createFakeHistory({ section: 'tutoriales' });
+    const action = pushNavigationState(
+        { section: 'tutoriales' },
+        { historyObject: history, locationObject }
+    );
+    assert.equal(action, 'replace');
+    assert.equal(history.entries.length, 1);
+    assert.equal(history.entries[0].url, '/catalog?mode=all#tutoriales');
+});
+
+test('section back and forward restore the adjacent section entries', () => {
+    const history = createFakeHistory({ section: 'cortes' });
+    pushNavigationState(
+        { section: 'tutoriales' },
+        { historyObject: history, locationObject, previousNavigationState: { section: 'cortes' } }
+    );
+    assert.equal(navigateBackToState(
+        { section: 'cortes' },
+        { historyObject: history, locationObject }
+    ), 'back');
+    assert.equal(history.state.section, 'cortes');
+    history.forward();
+    assert.equal(history.state.section, 'tutoriales');
+});
+
+console.log('NavigationBackHistory:', passed + '/10 PASS');
