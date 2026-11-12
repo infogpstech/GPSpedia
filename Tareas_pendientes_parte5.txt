@@ -477,6 +477,19 @@ AUG-085 — Unificar validación de campos y URL de vídeo PyS
   5. Probar navegación PyS→vehículo y vehículo→PyS, edición, descarte, guardado, cierre X, botón Atrás y varios niveles.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
+
+
+================================================================================
+AUG-089 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- ui.js: la pila registra únicamente transiciones reales entre modal PyS y vehículo; edición/re-render conserva navOptions y no duplica entradas.
+- modalNavigation.js: captura/restaura scroll vertical, acordeón activo y scroll horizontal de carruseles PyS/vehículos.
+- main.js: el retroceso del modal comparte restoreModalNavigationContext con el cierre manual y consume un nivel.
+- service-worker.js: modalNavigation.js incluido en App Shell; caché actualizada a gpsepedia-cache-v17.
+- Services/Test/PysModalNavigation.js y ServiceWorkerCache.js: cobertura añadida/actualizada.
+Validación local: PysModalNavigation 6/6 PASS; PysNavigationContext 6/6 PASS; OverlayHistoryStack 19/19 PASS; ServiceWorkerCache 6/6 PASS. Los cinco bloques UI modificados, main.js, modalNavigation.js y service-worker.js aprobaron parsing focalizado. Diff revisado; no se desplegó ni se modificaron datos productivos. La ejecución se realizó en harness JavaScript de sesión; no se ejecutó Node CLI. Navegador/DOM real, scroll táctil y gesto Atrás quedan diferidos a Beta.
+Siguiente: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
+================================================================================
+
 ### AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos
 - **Hallazgo origen:** H-AUD-012-005.
 - **Tarea auditada:** AUD-T-012.
@@ -970,14 +983,3 @@ Suite PysImageStorageRecovery: 22/22 PASS en harness V8 adaptado. Node CLI y ser
 Siguiente: AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS.
 ================================================================================
 
-
-================================================================================
-AUG-089 — IMPLEMENTACIÓN — 2026-11-12 — EN PROGRESO
-- ui.js: la pila registra únicamente transiciones reales entre modal PyS y vehículo; edición/re-render conserva navOptions y no duplica entradas.
-- modalNavigation.js: captura/restaura scroll vertical, acordeón activo y scroll horizontal de carruseles PyS/vehículos.
-- main.js: el retroceso del modal comparte restoreModalNavigationContext con el cierre manual y consume un nivel.
-- service-worker.js: modalNavigation.js incluido en App Shell; caché actualizada a gpsepedia-cache-v17.
-- Services/Test/PysModalNavigation.js y ServiceWorkerCache.js: cobertura añadida/actualizada.
-Validación local: pendiente de ejecución y parsing de los archivos modificados. Navegador/DOM real, scroll táctil y gesto Atrás quedan diferidos a Beta.
-Siguiente: AUG-090 después del cierre local de AUG-089.
-================================================================================
