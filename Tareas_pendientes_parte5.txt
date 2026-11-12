@@ -408,7 +408,9 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
   4. Añadir opId estable por alta; mismo opId y mismo payload devuelve el resultado previo, mismo opId con payload distinto se rechaza.
   5. Probar filas borradas, huecos, IDs desordenados/duplicados, hoja con encabezados incompatibles, concurrencia y respuesta perdida seguida de reintento.
 
-### AUG-085 — Unificar validación de campos y URL de vídeo PyS
+### Estado de AUG-084: IMPLEMENTADA EN CÓDIGO Y VALIDADA CON DOBLES LOCALES (2026-11-12). Pys mantiene sus diez columnas sin cambios. Se añadieron validación estricta de esquema/IDs, secuencia por máximo sufijo, ledger PysOperations e idempotencia por opId/hash bajo ScriptLock, recuperación de operaciones parciales y clave estable en UI. Suites locales adaptadas: PysCreationIntegrity 25/25 PASS; PysImageStorageRecovery 22/22 PASS. Node CLI literal y servicios reales quedan para Beta aislada según lista_beta.txt.
+
+AUG-085 — Unificar validación de campos y URL de vídeo PyS
 - **Origen:** H-AUD-011-005. **Prioridad:** Media.
 - **Problema:** título/descripcion superan los límites originales sin revisión explícita; el prompt de prevención conserva un límite anterior; el backend no valida estrictamente tipos ni URLs.
 - **Criterios de aceptación:**

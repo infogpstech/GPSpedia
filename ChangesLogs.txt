@@ -167,3 +167,15 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: selector JPEG/PNG/WebP, límite cliente 3 MB, FileReader con load/error/abort y captura de excepciones; no se invoca addProblem si la imagen no se pudo leer.
 - Services/Test/PysImageStorageRecovery.js: suite de 22 escenarios para validación, carpeta, permisos, almacenamiento, recuperación, compensación y contratos UI.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-084 — ESQUEMA, UNICIDAD E IDEMPOTENCIA DE ALTAS PyS
+- Services/feedback.js: añade validadores de esquema exacto para pys y PysOperations; detecta columnas extra, encabezados incorrectos, IDs vacíos/malformados/duplicados y ledger inconsistente antes de mutar datos.
+- Services/feedback.js: reserva IDs desde el máximo sufijo numérico válido, incluyendo operaciones pendientes; usa ScriptLock y ledger PysOperations con hash SHA-256 del payload y de la imagen.
+- Services/feedback.js: reintentos con el mismo opId/payload devuelven el mismo problemId; payload distinto con opId reutilizado se rechaza. Recupera filas persistidas tras respuesta parcial, reutiliza archivos UPLOAD_PENDING y marca RECOVERY_REQUIRED ante ambigüedad.
+- ui.js: genera un opId criptográficamente aleatorio de 128 bits y conserva la clave para reintentos del mismo payload.
+- Services/Test/PysCreationIntegrity.js: 25 escenarios para esquema, IDs, huecos, duplicados, ledger, idempotencia, recuperación y UI.
+- Services/Test/PysImageStorageRecovery.js: harness actualizado para ledger PysOperations; conserva 22 escenarios de AUG-083.
+- Validación local: 25/25 y 22/22 PASS en harness V8 adaptado con dobles. Node CLI literal, Apps Script/Drive/Spreadsheet reales, concurrencia real, ACL y navegador quedan para Beta aislada.
+================================================================================

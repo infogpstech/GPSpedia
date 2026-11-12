@@ -827,3 +827,21 @@ Corrección:
 
 Validación local: 22/22 escenarios PASS en harness V8 adaptado con dobles de Drive/Spreadsheet; parsing V8 de backend, handler y submit PyS PASS. No se ejecutó Node CLI literal, Apps Script real, Drive/Spreadsheet real, ACL efectiva ni navegador real. Estas verificaciones quedan para Beta aislada.
 ================================================================================
+
+
+================================================================================
+ADENDA — H-AUD-011-004 — AUG-084 — 2026-11-12
+Hallazgo: la creación de problemas PyS necesitaba validar el esquema real de la hoja, comprobar unicidad de IDs y protegerse frente a reintentos de una solicitud cuyo resultado no llegó al cliente. El conteo de filas no es una fuente fiable para asignar IDs cuando existen huecos, filas eliminadas o ejecuciones parciales.
+Impacto: IDs repetidos o malformados, sobrescritura accidental de encabezados incompatibles, registros duplicados tras reintentos y asociación incompleta entre fila e imagen.
+Corrección aplicada:
+- Services/feedback.js valida el orden exacto de los diez encabezados históricos de pys y rechaza columnas adicionales. La validación se aplica también a lecturas y demás handlers PyS mediante getPysSheet_.
+- Cada fila con datos debe tener ID isue-NNN válido. Se rechazan IDs vacíos, malformados y sufijos numéricos duplicados, incluso con diferencias de capitalización o ceros a la izquierda.
+- La secuencia nueva se calcula desde el máximo sufijo numérico válido de pys y del ledger; no depende del conteo de filas y tolera huecos.
+- Se añade PysOperations con ocho columnas: opId, payloadHash, problemId, status, imageFileId, imageUrl, createdAt y updatedAt. Su esquema, hash, estados y unicidad de operación/ID se validan antes de usarlo.
+- ScriptLock protege reserva de ID, ledger y persistencia. El hash cubre el payload normalizado y el SHA-256 de la imagen. Mismo opId y mismo contenido recupera el resultado; mismo opId con contenido distinto se rechaza.
+- Los estados PENDING, UPLOAD_PENDING, LINKED y RECOVERY_REQUIRED permiten reanudar la carga, reconocer una fila persistida tras una respuesta parcial y evitar compensar imágenes referenciadas o ambiguas.
+- ui.js genera una clave segura de 128 bits y la mantiene mientras el payload del formulario no cambie.
+Evidencia: Services/Test/PysCreationIntegrity.js (25/25 PASS) y Services/Test/PysImageStorageRecovery.js (22/22 PASS), ejecutadas en harness V8 adaptado con dobles de Spreadsheet/Drive y adaptadores locales. Se comprobó sintaxis del backend y del modal UI.
+Límites: no se ejecutó Node CLI literal, Apps Script real, Spreadsheet/Drive real, dos ejecuciones simultáneas reales, ACL efectiva ni navegador real. Esas verificaciones quedan explícitamente en lista_beta.txt. No se afirma despliegue ni modificación de datos productivos.
+Estado: CORREGIDO EN CÓDIGO; VALIDACIÓN DE INTEGRACIÓN PENDIENTE EN BETA AISLADA.
+================================================================================

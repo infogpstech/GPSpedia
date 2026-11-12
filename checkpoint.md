@@ -1365,10 +1365,28 @@ La documentación de cierre se incorpora en un commit separado.
 INCIDENCIA DE PUBLICACIÓN — REQUIERE DECISIÓN:
 La operación create_file usada para añadir Services/Test/PysImageStorageRecovery.js ignoró el parámetro branch y creó el commit f5f38f27df0d113a80dc0a86300fe5a9305db0fc en la rama predeterminada main. Se verificó que main apunta a ese commit. El cambio allí es únicamente el archivo de pruebas; no contiene cambios de producción ni deployments. No se realizaron más escrituras en main ni se intentó revertirlo para no modificar otra rama sin autorización. La suite equivalente quedó añadida correctamente a GPSpedia2.2.5_work mediante Git Data API y se verificó en esa rama. La limpieza/reversión del commit accidental en main requiere autorización explícita.
 
-Siguiente tarea: AUG-084 — Garantizar esquema, unicidad e idempotencia de alta PyS. No iniciada.
+Siguiente tarea: AUG-085 — revisar la siguiente tarea disponible del backlog. No iniciada.
 ================================================================================
 
 Ajuste final de cobertura AUG-083:
 - 8e1598e211d29efb3edb4af247b20befa4c88161 — agrega caso de prueba para rechazar una raíz Cortes que no sea hija directa de la raíz de Drive.
 - La suite permanece en 22 escenarios; reejecución adaptada posterior al ajuste: 22/22 PASS.
 - Commit de documentación de cierre: 4a9854580176397f15d48ead7c0f272d4b921eb6.
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-084 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Tarea: garantizar esquema, unicidad e idempotencia de alta PyS.
+Implementación:
+- pys conserva sus diez columnas originales; getPysSheet_ valida esquema exacto y los IDs antes de leer/escribir.
+- PysOperations registra opId, payloadHash, problemId, estado, archivo/URL y marcas de tiempo. Estados: PENDING, UPLOAD_PENDING, LINKED y RECOVERY_REQUIRED.
+- ID siguiente calculado por máximo sufijo válido entre pys y ledger; detecta duplicados numéricos, IDs vacíos y malformados; tolera huecos.
+- ScriptLock cubre reserva y persistencia. Reintentos idénticos recuperan la misma fila/archivo; reutilización de opId con payload distinto se rechaza.
+- La recuperación confirma fila y referencias antes de eliminar archivos; estados ambiguos quedan conservados para intervención manual.
+- UI genera opId aleatorio de 128 bits y lo conserva para reintentos del mismo payload.
+Pruebas locales: PysCreationIntegrity 25/25 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado con dobles; sintaxis backend/UI verificada. Node CLI literal y servicios reales no ejecutados.
+Archivos: Services/feedback.js, ui.js, Services/Test/PysCreationIntegrity.js, Services/Test/PysImageStorageRecovery.js, Services/Test/README.md, Spreadsheet/GPSpedia_DB_columnas.md, lista_beta.txt, Tareas.txt, Tareas_pendientes_parte5.txt, ChangesLogs.txt y Auditoría.txt.
+Integración real y concurrencia simultánea quedan pendientes en lista_beta.txt. No desplegar a producción.
+Siguiente tarea: AUG-085 — revisar la siguiente tarea disponible del backlog.
+================================================================================

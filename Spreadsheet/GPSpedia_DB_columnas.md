@@ -428,3 +428,21 @@ La hoja se añade de forma independiente y no altera las columnas históricas de
 | 9 | I | `TermsAcceptance` | JSON de aceptación individual: versión, fecha/hora ISO y estado |
 
 AUTH crea el encabezado únicamente si I1 está vacío y no existen datos en I2:I. Si encuentra otro encabezado o datos bajo encabezado vacío, detiene la operación sin sobrescribirlos. El valor no se expone en listados ni puede modificarse mediante actualización de perfil.
+
+
+## Hoja técnica adicional — PysOperations (AUG-084)
+
+**Estado:** esquema definido por el backend. La hoja se crea al registrar el primer problema nuevo; no se agregan ni reordenan columnas en la hoja histórica `pys`, que conserva sus diez encabezados actuales.
+
+| Posición | Encabezado | Uso |
+|---:|---|---|
+| 1 | `opId` | Clave de operación generada por el cliente; única por alta lógica. |
+| 2 | `payloadHash` | SHA-256 del contenido normalizado y del hash SHA-256 de la imagen. |
+| 3 | `problemId` | ID reservado `isue-NNN`; único dentro del ledger. |
+| 4 | `status` | `PENDING`, `UPLOAD_PENDING`, `LINKED` o `RECOVERY_REQUIRED`. |
+| 5 | `imageFileId` | ID del archivo Drive asociado, vacío antes de cargar imagen. |
+| 6 | `imageUrl` | URL canónica Drive del archivo asociado. |
+| 7 | `createdAt` | Fecha/hora ISO de creación de la operación. |
+| 8 | `updatedAt` | Fecha/hora ISO de la última transición confirmada. |
+
+El backend valida encabezados y orden exactos, columnas adicionales, formato y unicidad de `opId`/ `problemId`, hash y estado antes de usar el ledger. Los registros en `LINKED` no se recrean; los estados ambiguos o `RECOVERY_REQUIRED` bloquean el reintento automático.

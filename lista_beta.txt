@@ -687,3 +687,40 @@ EJECUCIÓN EN PROYECTO APPS SCRIPT, SPREADSHEET Y DRIVE AISLADOS (NUNCA PRODUCCI
 
 No desplegar a producción, no usar carpetas/hojas productivas y no modificar ACL globales.
 ================================================================================
+
+
+================================================================================
+AUG-084 — ESQUEMA, UNICIDAD E IDEMPOTENCIA DE ALTAS PyS
+================================================================================
+
+PREPARACIÓN OBLIGATORIA ANTES DE CUALQUIER PRUEBA BETA
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "Working tree no limpio"; exit 1; }
+git remote get-url origin
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short
+git rev-parse HEAD
+```
+
+Ejecutar exclusivamente en una copia aislada del proyecto Apps Script, una copia aislada de la hoja de cálculo y una carpeta Drive de prueba. No conectar datos de producción ni desplegar a producción.
+
+1. Ejecutar `Services/Test/PysCreationIntegrity.js` y `Services/Test/PysImageStorageRecovery.js` con los comandos de `Services/Test/README.md`. Ambos deben terminar sin fallos.
+2. Confirmar que la hoja `pys` conserva exactamente sus diez encabezados actuales, en el mismo orden. Una hoja con encabezados cambiados, columnas adicionales o filas con datos y un ID vacío/malformado debe detener el alta sin sobrescribir datos ni crear archivos.
+3. Probar IDs desordenados y con huecos (por ejemplo `isue-001`, `isue-005` y una fila vacía intermedia). El siguiente ID debe ser `isue-006`, calculado desde el mayor sufijo válido, no desde el número de filas.
+4. Introducir IDs duplicados (incluyendo diferencias de mayúsculas o relleno, por ejemplo `isue-001` y `ISUE-1`). La lectura y el alta deben detenerse sin crear nuevos recursos.
+5. Verificar que `PysOperations` se cree con los ocho encabezados definidos en `Spreadsheet/GPSpedia_DB_columnas.md`. Alterar orden, agregar columnas o duplicar `opId`/`problemId`: el backend debe fallar de forma cerrada y conservar los datos existentes.
+6. Enviar dos veces el mismo payload con el mismo `opId`. Ambas respuestas deben referir el mismo `problemId`; debe existir una sola fila `pys` y un solo archivo de imagen.
+7. Reutilizar el mismo `opId` con un título, descripción, modelo, usuario, solución, prevención o imagen diferente. Debe rechazarse sin crear otra fila ni archivo.
+8. Enviar dos solicitudes simultáneas con el mismo `opId` y payload. Confirmar que ScriptLock serializa las ejecuciones y queda una sola alta. Repetir con dos `opId` diferentes: IDs únicos y consecutivos, sin sobrescrituras.
+9. Simular pérdida de respuesta después de persistir la fila y antes de recibir confirmación. Reintentar el mismo payload y `opId`: debe reconocer la fila existente, completar el ledger como `LINKED` y no duplicar el problema.
+10. Interrumpir una operación después de guardar `UPLOAD_PENDING`. Reintentar con el mismo payload y `opId`: debe verificar y reutilizar el archivo pendiente, no cargar una segunda imagen.
+11. Provocar un estado ambiguo, fallo de lectura de referencias o fallo de compensación. La operación debe quedar `RECOVERY_REQUIRED`, conservar el archivo y rechazar reintentos automáticos.
+12. Verificar que `getPysData` y los demás handlers PyS rechacen esquemas/IDs incompatibles. Confirmar que el formulario conserva `opId` durante un reintento del mismo payload y genera otra clave si cambia el contenido.
+13. Inspeccionar filas, ledger, IDs, archivos, referencias y permisos antes/después. No declarar PASS de integración hasta comprobar el comportamiento con dos ejecuciones reales y cuentas autorizadas.
+
+No desplegar a producción, no alterar la hoja histórica de diez columnas y no modificar ACL globales.
+================================================================================

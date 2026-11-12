@@ -976,3 +976,19 @@ node "$TEST_TMP"
 La suite contiene 22 escenarios de lógica/contrato con dobles locales: JPEG/PNG/WebP y firmas binarias, Base64 canónico, límite 3 MB, carpeta PyS bajo la raíz autorizada Cortes, carpeta ausente/existente/duplicada, raíz incorrecta, herencia de permisos, normalización de referencias Drive, escritura y MIME reales, fallo Drive, fallo Sheets/flush, detección de referencias, compensación segura, metadata RECOVERY_REQUIRED y recuperación mediante getPysData. También comprueba los límites y los errores/abortos de FileReader en la UI.
 
 La suite no invoca DriveApp, Spreadsheet ni Apps Script reales. En esta iteración se ejecutaron sus 22 escenarios en un harness V8 adaptado con dobles y adaptadores; el comando Node CLI literal no se ejecutó. La integración real, ACL efectiva y renderizado de imágenes quedan para Beta aislada.
+
+
+## AUG-084 — Integridad e idempotencia de altas PyS
+
+Ejecutar la suite con Node en modo ESM temporal:
+
+```bash
+TEST_TMP=Services/Test/PysCreationIntegrity.mjs
+cp Services/Test/PysCreationIntegrity.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite cubre esquema exacto de las diez columnas de `pys`, columnas adicionales, IDs vacíos/malformados/duplicados, secuencias con huecos y fuera de orden, ledger `PysOperations`, colisiones de `opId`/contenido, reintentos idénticos, rechazo de payload distinto, recuperación de imagen `UPLOAD_PENDING`, respuesta parcial tras persistir la fila, compensación segura, estado `RECOVERY_REQUIRED`, liberación del lock y contrato UI del identificador estable. Incluye escenarios de serialización de altas independientes; la concurrencia real de dos ejecuciones simultáneas se confirma en Beta aislada.
+
+La suite usa dobles de Drive/Spreadsheet y no invoca servicios reales. Validación local de esta iteración: 25/25 escenarios PyS nuevos y 22/22 escenarios de recuperación de imágenes, ejecutados en harness V8 adaptado. Node CLI literal, Apps Script, Drive/Spreadsheet reales, ACL efectiva y navegador real quedan para Beta aislada.

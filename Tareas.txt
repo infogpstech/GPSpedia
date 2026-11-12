@@ -1080,5 +1080,17 @@ Implementación:
 
 Validación local: Services/Test/PysImageStorageRecovery.js, 22/22 PASS en harness V8 adaptado con dobles de Drive/Spreadsheet y adaptadores Base64/VM. Parsing V8 de feedback.js, validador, resolución de carpeta, handler, submit PyS y módulo de pruebas: PASS. Node CLI literal, Apps Script real, Drive/Spreadsheet real, ACL efectiva y navegador real no ejecutados; quedan para Beta aislada.
 
-Siguiente tarea: AUG-084 — garantizar esquema, unicidad e idempotencia de alta PyS. No iniciada en esta iteración.
+Siguiente tarea: AUG-085 — revisar la siguiente tarea disponible del backlog. No iniciada en esta iteración.
+================================================================================
+
+
+2026-11-12 — AUG-084 — GARANTIZAR ESQUEMA, UNICIDAD E IDEMPOTENCIA DE ALTA PyS
+Estado: IMPLEMENTADA; pruebas locales con dobles completadas; integración real diferida a Beta aislada.
+- Services/feedback.js: validación estricta del esquema de diez columnas de pys y de PysOperations; rechaza encabezados reordenados, columnas adicionales, IDs vacíos/malformados/duplicados y registros de ledger inconsistentes.
+- IDs PyS: calcula el siguiente ID desde el mayor sufijo numérico válido en pys y PysOperations; tolera huecos y filas vacías sin basarse en el conteo de filas.
+- Idempotencia: registra opId, hash del payload y problemId reservado bajo ScriptLock; estados PENDING, UPLOAD_PENDING, LINKED y RECOVERY_REQUIRED; reintentos idénticos recuperan la misma fila/imagen, payload diferente con el mismo opId se rechaza.
+- Recuperación: verifica filas y referencias antes de compensar; no elimina imágenes asociadas o ambiguas y bloquea recuperación automática cuando se requiere revisión.
+- ui.js: genera opId aleatorio de 128 bits y lo conserva mientras el payload no cambie durante el reintento.
+- Pruebas: PysCreationIntegrity 25/25 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado con dobles; Node CLI literal y servicios reales quedan para Beta.
+Siguiente: AUG-085 — revisar la siguiente tarea disponible del backlog.
 ================================================================================
