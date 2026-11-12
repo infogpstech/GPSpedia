@@ -1154,7 +1154,7 @@ AUG-089 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - Se conserva navOptions al abrir PyS desde el acordeón vehicular y al editar el vehículo.
 - Se captura/restaura scroll vertical, acordeón activo y scroll horizontal de carruseles; el contenido asíncrono no sobrescribe el scroll vertical posterior del usuario.
 - Cierre manual y popstate comparten retorno contextual de un nivel; el descarte de edición se completa antes de restaurar el modal anterior.
-- Pruebas: PysModalNavigation 6/6, PysNavigationContext 6/6, OverlayHistoryStack 19/19 y ServiceWorkerCache 6/6 PASS; parsing focalizado de los bloques de código modificados PASS.
+- Pruebas: PysModalNavigation 8/8, PysNavigationContext 6/6, OverlayHistoryStack 19/19 y ServiceWorkerCache 6/6 PASS; parsing focalizado de los bloques de código modificados PASS.
 - Navegador real, scroll táctil y gesto Atrás pendientes para Beta. No se desplegó ni se modificaron datos productivos.
 Siguiente: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
 ================================================================================
