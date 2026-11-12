@@ -182,8 +182,13 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     // Conservar el nivel previo para que el retorno interno y el retroceso nativo
     // compartan la misma cadena de navegación.
-    const previousNavigationState = getState().navigationState || null;
-    const nextNavigationState = { level: "busqueda_focused", query: textoBusqueda };
+    const currentNavigationState = getState().navigationState || null;
+    const previousNavigationState = currentNavigationState &&
+        ['busqueda', 'busqueda_focused'].includes(currentNavigationState.level) &&
+        currentNavigationState.previousState
+        ? currentNavigationState.previousState
+        : currentNavigationState;
+    const nextNavigationState = { level: "busqueda_focused", query: textoBusqueda, previousState: previousNavigationState };
     setState({ navigationState: nextNavigationState });
 
     if (!isRestoring) {
