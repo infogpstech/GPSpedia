@@ -520,3 +520,23 @@ Validación local: runtime V8 adaptado sobre el helper extraído de la fuente vi
 Pendiente para Beta: probar gestos reales en navegador móvil y PWA standalone, incluidos scroll vertical, controles táctiles y ajuste de altura del acordeón.
 Siguiente tarea en la secuencia: AUG-068 — unificar el registro y el cierre por historial de overlays dinámicos. No se inició en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-068 — ITERACIÓN 1 — 2026-11-11 — BASE DE PILA CENTRALIZADA DE OVERLAYS
+Estado: EN PROGRESO. Se resolvió la primera brecha arquitectónica; integración de los constructores y del controlador global pendiente.
+Rama: GPSpedia2.2.5_work. HEAD confirmado antes de esta actualización documental: 718983287a8b61ac8c712862adcae857e00082ae. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Análisis:
+- main.js detecta los .info-modal únicamente por style.display === 'flex' y cierra todos los visibles en una sola pulsación; esto no discrimina el overlay superior.
+- ui.js mezcla classList 'visible', display inline y estados modalOpen. Los overlays del botón (+), formularios de corte/VIN, reportes, asociación PyS y relay-info no comparten un registro uniforme.
+- youtubeUpload.js crea y elimina su overlay dinámico de forma independiente; debe integrarse sin perder su confirmación de pausa ni el aborto de XHR.
+Cambio de esta iteración:
+- overlayHistory.js: nuevo gestor independiente con registro, reemplazo de overlay superior, cierre manual coordinado con history.back()/go(), reconciliación LIFO en popstate, conservación de otros campos de history.state y manejo de errores de callbacks.
+- Services/Test/OverlayHistoryStack.js: suite de 10 escenarios reproducibles.
+- Services/Test/README.md: comando Node compatible mediante copia temporal .mjs.
+- Tareas_pendientes_parte5.txt: AUG-068 pasa a EN PROGRESO.
+Validación local: el código fuente real de overlayHistory.js se ejecutó en runtime V8 adaptado con historial simulado: 10/10 PASS. No se ejecutó Node CLI en esta iteración.
+Pendiente de la siguiente iteración: integrar el gestor con main.js popstate y con los constructores dinámicos de ui.js/youtubeUpload.js; preservar padre modalDetalle al cerrar submodal; revisar cierre por backdrop, X, submit/cancelación y carga YouTube activa. Después añadir pruebas de integración local para esos callsites.
+Registro: ChangesLogs.txt está en 183,671 bytes, por encima del umbral normativo de 180,000; no se añadió una entrada que aumente el archivo sin preparar primero su rotación. La implementación y evidencia quedan trazadas en este checkpoint y en el backlog. La rotación del registro acumulativo debe resolverse antes de la siguiente adición a ChangesLogs.txt.
+No se inició AUG-069. No se modificó la rama base.
+================================================================================
