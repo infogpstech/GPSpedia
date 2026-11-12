@@ -187,6 +187,11 @@ function runVideoApprovalPublishingTests() {
             expect_(()=>handleApproveVideo(actor_("otro-id")),"no encontrada");
             assert_(e.cuts.data[1][9]==="");
         }));
+        run_("rechaza una solicitud que no identifica al usuario creador",()=>withEnv_("corte",{},e=>{
+            const payload=JSON.parse(e.feedback.data[1][3]);delete payload.createdByUserId;e.feedback.data[1][3]=JSON.stringify(payload);
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"no identifica al usuario");
+            assert_(e.cuts.data[1][9]==="");
+        }));
         run_("rechaza una solicitud pendiente cuyo JSON declara estado rechazado",()=>withEnv_("corte",{},e=>{
             const payload=JSON.parse(e.feedback.data[1][3]);payload.status="rejected";e.feedback.data[1][3]=JSON.stringify(payload);
             expect_(()=>handleApproveVideo(actor_("vid-1")),"ya no está pendiente");
