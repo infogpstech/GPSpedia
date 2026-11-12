@@ -156,6 +156,8 @@ function runFeedbackWriteSecurityTests() {
         });
         test_("reportProblem y suggestCutChange aceptan todos los roles autenticados y derivan identidad real", function() {
             const originalGetSpreadsheet = getSpreadsheet;
+            const originalSessionAssert = assertFeedbackSession;
+            assertFeedbackSession = oldAssert;
             function authSheets(role, token, userId) {
                 const now = Date.now();
                 const createdAt = new Date(now - 24 * 60 * 60 * 1000);
@@ -193,6 +195,7 @@ function runFeedbackWriteSecurityTests() {
                 });
             } finally {
                 getSpreadsheet = originalGetSpreadsheet;
+                assertFeedbackSession = originalSessionAssert;
             }
         });
 
@@ -261,6 +264,8 @@ function runFeedbackWriteSecurityTests() {
             const originalGetSpreadsheet = getSpreadsheet;
             const originalReport = handleReportProblem;
             const originalSuggestion = handleSuggestCutChange;
+            const originalSessionAssert = assertFeedbackSession;
+            assertFeedbackSession = oldAssert;
             function configureAuth() {
                 const now = Date.now();
                 const createdAt = new Date(now - 24 * 60 * 60 * 1000);
@@ -285,7 +290,7 @@ function runFeedbackWriteSecurityTests() {
                     ["reportProblem", "suggestCutChange"].forEach(action => {
                         const output = doPost({ postData: { contents: JSON.stringify({
                             action,
-                            payload: { userId: "USR-FAKE", userName: "Nombre falso",
+                            payload: { userId: "USR-A", userName: "Nombre falso",
                                 userRole: "Desarrollador", sessionToken: "TOKEN-A",
                                 vehicleId: "VEH-1", problemText: "Falla", reportId: "REP-TEST",
                                 corteIndex: 1, details: "Cambio", proposedValues: { tipo: "Relay" } }
@@ -303,6 +308,7 @@ function runFeedbackWriteSecurityTests() {
                 getSpreadsheet = originalGetSpreadsheet;
                 handleReportProblem = originalReport;
                 handleSuggestCutChange = originalSuggestion;
+                assertFeedbackSession = originalSessionAssert;
             }
         });
 
