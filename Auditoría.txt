@@ -597,3 +597,12 @@ Impacto: retorno interno inconsistente y posible ciclo/retroceso a una vista que
 Corrección: el fallback prioriza el antecesor explícito del destino; mostrarSeccion() sincroniza la sección activa y su antecesor tanto en navegación normal como al restaurar popstate.
 Validación: se añadieron regresiones de ancestry de fallback, sincronización de sección y deep link de búsqueda. La ejecución completa de 21 escenarios se declara pendiente hasta correr el entorno Node del proyecto.
 ================================================================================
+
+
+================================================================================
+AUG-069 — ADENDA DE CIERRE — 2026-11-11
+H-AUD-069-001 y H-AUD-069-002: las correcciones registradas quedaron cubiertas por la suite ampliada NavigationBackHistory, ejecutada completa con 21/21 PASS en runtime V8 adaptado. Se utilizó navigationHistory.js y search-utils.js reales; las comprobaciones de contrato leyeron ui.js, main.js y navigation.js vigentes. La función modificada mostrarSeccion() también se compiló y ejecutó de forma aislada con History simulado, verificando estado en memoria y antecesor en History API.
+Estado de AUG-069: COMPLETADA CON VALIDACIÓN DIFERIDA. La revisión del diff confirmó únicamente cambios relacionados con la tarea y sus registros. La rama base no fue modificada.
+Validaciones Beta pendientes: botón físico, gestos nativos, Forward y comportamiento completo en navegador/dispositivo real. No se presentan como ejecutadas.
+Registro: ChangesLogs.txt fue rotado por superar el umbral documental; la reconstrucción de las dos partes archivadas coincidió exactamente con los 180542 caracteres originales.
+================================================================================
