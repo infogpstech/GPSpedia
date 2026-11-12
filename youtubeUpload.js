@@ -188,6 +188,11 @@ function parseYouTubeUploadResponse_(xhr) {
     return response.id;
 }
 
+function setYouTubeUploadInitialValues_(titleInput, descriptionInput, title, description) {
+    titleInput.value = String(title || "").slice(0, 100);
+    descriptionInput.value = String(description || "").slice(0, 5000);
+}
+
 function queryYouTubeUploadOffset_(record, setActiveXhr) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -418,8 +423,7 @@ export function openYouTubeUploadModal(options = {}) {
     const progressPercent = content.querySelector("#yt-progress-percent");
     const progressStatus = content.querySelector("#yt-progress-status");
 
-    titleInput.value = String(initialTitle || "").slice(0, 100);
-    descInput.value = String(initialDescription || "").slice(0, 5000);
+    setYouTubeUploadInitialValues_(titleInput, descInput, initialTitle, initialDescription);
 
     let isUploading = false;
     let uploadCancelled = false;
@@ -437,8 +441,7 @@ export function openYouTubeUploadModal(options = {}) {
                 fileInput.required = false;
                 titleInput.disabled = true;
                 descInput.disabled = true;
-                titleInput.value = String(record.title || initialTitle || "").slice(0, 100);
-                descInput.value = String(record.description || initialDescription || "").slice(0, 5000);
+                setYouTubeUploadInitialValues_(titleInput, descInput, record.title || initialTitle, record.description || initialDescription);
                 fileInfo.textContent = "Archivo recuperable: " + String(record.fileName || "vídeo guardado") + " (" + Number(record.fileSize || 0) + " bytes).";
                 resumeNote.textContent = record.status === "uploaded"
                     ? "La transferencia ya terminó. Al continuar se enviará o recuperará la solicitud de aprobación sin volver a subir el archivo."
@@ -515,8 +518,7 @@ export function openYouTubeUploadModal(options = {}) {
             titleInput.disabled = false;
             descInput.disabled = false;
             fileInput.value = "";
-            titleInput.value = String(initialTitle || "").slice(0, 100);
-            descInput.value = String(initialDescription || "").slice(0, 5000);
+            setYouTubeUploadInitialValues_(titleInput, descInput, initialTitle, initialDescription);
             fileInfo.textContent = "Formatos recomendados: MP4, WebM, MOV.";
             resumeNote.style.display = "none";
             discardBtn.style.display = "none";
