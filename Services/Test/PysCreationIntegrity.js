@@ -384,6 +384,51 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.match(ui,/pendingPysOperationId/);assert.match(ui,/pendingPysOperationSignature !== operationSignature/);
         assert.match(ui,/window\.crypto\.getRandomValues/);assert.match(ui,/payload\.opId = pendingPysOperationId/);
     });
+    test("el alta directa de PyS sanitiza descripción y prevención antes de persistir",()=>{
+        const h=buildHarness(feedback,ui);
+        const result=h.api.add(h.validPayload(OP_A,{
+            descripcion:'<p onclick="alert(1)">Detalle <strong>seguro</strong><script>alert(2)</script></p>',
+            prevenir:'<div onmouseover="x()">Revisar <em>conexión</em><iframe>activo</iframe></div>'
+        }));
+        assert.equal(result.status,"success");
+        const row=h.state.pysRows[1];
+        assert.equal(row[2],"<p>Detalle <strong>seguro</strong></p>");
+        assert.equal(row[5],"<div>Revisar <em>conexión</em></div>");
+        assert.ok(!JSON.stringify(row).includes("alert("));
+        assert.ok(!JSON.stringify(row).includes("onmouseover"));
+    });
+    test("alta de solución y prevención sanitiza llamadas directas al backend",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows});
+        h.api.addSolution({problemId:"isue-001",solucion:'<p onerror="x()">Solución <strong>válida</strong><script>alert(1)</script></p>',userId:"u1",userName:"T1"});
+        h.api.addPrevention({problemId:"isue-001",prevenir:'<ul><li>Prevención</li><li><img src="javascript:alert(2)" onerror="x()"></li></ul>',userId:"u1",userName:"T1"});
+        assert.equal(h.state.pysRows[1][4],"<p>Solución <strong>válida</strong></p>");
+        assert.equal(h.state.pysRows[1][5],"<ul><li>Prevención</li><li></li></ul>");
+        assert.ok(!JSON.stringify(h.state.pysRows[1]).includes("javascript:"));
+    });
+    test("la edición directa in-modal sanitiza cada campo enriquecido",()=>{
+        const h=buildUpdateHarness(feedback);
+        const result=h.update({
+            problemId:"isue-001",userRole:"Desarrollador",
+            descripcion:'<p onclick="x()">Descripción <b>segura</b><script>alert(1)</script></p>',
+            solucion:'<div style="color:blue;background:url(javascript:x)">Solución</div>',
+            prevenir:'<p><iframe>contenido activo</iframe>Prevención</p>'
+        });
+        assert.equal(result.status,"success");
+        assert.equal(h.rows[1][2],"<p>Descripción <b>segura</b></p>");
+        assert.equal(h.rows[1][4],'<div style="color:blue">Solución</div>');
+        assert.equal(h.rows[1][5],"<p>Prevención</p>");
+    });
+    test("el reintento PyS compara contenido ya sanitizado y no duplica registros",()=>{
+        const h=buildHarness(feedback,ui);
+        const first=h.api.add(h.validPayload(OP_A,{descripcion:"<p>Detalle<script>malicioso</script></p>"}));
+        const retry=h.api.add(h.validPayload(OP_A,{descripcion:"<p>Detalle</p>"}));
+        assert.equal(first.problemId,retry.problemId);
+        assert.equal(retry.recovered,true);
+        assert.equal(h.state.pysRows.length,2);
+        assert.equal(h.state.createdFiles,1);
+        assert.equal(h.state.pysRows[1][2],"<p>Detalle</p>");
+    });
     return {status:failed?"FAIL":"PASS",passed,failed,results};
 }
 
