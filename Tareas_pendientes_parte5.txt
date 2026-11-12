@@ -475,7 +475,7 @@ AUG-085 — Unificar validación de campos y URL de vídeo PyS
   3. Guardar/restaurar scroll horizontal del carrusel, scroll vertical del modal y estado abierto del acordeón.
   4. Hacer coherentes el cierre manual y popstate: cada acción debe retroceder exactamente un nivel y no dejar entradas duplicadas.
   5. Probar navegación PyS→vehículo y vehículo→PyS, edición, descarte, guardado, cierre X, botón Atrás y varios niveles.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; pruebas locales aprobadas, validación de navegador/dispositivo real pendiente en Beta.
 
 
 
