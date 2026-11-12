@@ -1041,3 +1041,18 @@ HEAD previo a esta adenda: 96fd13027d5a455c4a32e2d9d5436603ae633fb5.
 
 Se amplió la suite Services/Test/OverlayHistoryStack.js con una comprobación explícita de que el lightbox (z-index 2200) prevalece sobre el modal de detalle (z-index 1600), y otra que verifica que el reproductor/iframe solo se detiene o elimina cuando el detalle es la capa superior que se cierra. Resultado final: **19/19 PASS** en runtime V8 adaptado. ReplacedImagesLightboxHistory.js: **6/6 PASS**. Parsing V8: main.js completo, módulo de users.html y bloque legal modificado de ui.js: PASS. README, backlog, auditoría y ChangesLogs reflejan 19/19. Esta adenda no modifica código funcional; las pruebas DOM/navegador real, botón físico y gestos nativos siguen reservadas para Beta.
 ================================================================================
+
+
+================================================================================
+AUG-071 — ITERACIÓN 1 — 2026-11-12 — UNIFICACIÓN DEL MENÚ Y CICLO DE VIDA DE MODALES
+Estado: EN PROGRESO. HEAD de partida: fbbbfbb76926222b68551e65380f21371c90aa94. Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin divergencia).
+Alcance implementado:
+- overlayHistory.js expone has(id) para consultar identidad sin mutar la pila.
+- main.js registra el menú y los modales visibles en la pila compartida; el popstate del menú delega el cierre al gestor. Los registros personalizados se reconocen sin duplicarlos y conservan su callback al reemplazar un modal.
+- ui.js registra el menú de forma idempotente y agrega closeSideMenuAndRun(), que espera el popstate de cierre antes de abrir la vista destino. setupModal y los cierres de Inbox/administración/contact-form usan la entrada identificada.
+- Las vistas audit-drive y replaced-images asignan callbacks que invalidan generaciones; el cierre de imágenes reemplazadas también cierra el lightbox hijo.
+- main.js serializa navegación desde el menú hacia Inbox, Dashboard, Changelog, DevTools y secciones.
+- Nueva suite Services/Test/OverlayMenuModalHistory.js (12 escenarios) y README actualizado.
+Validación en esta iteración: revisión estática y pruebas de contrato preparadas; la ejecución literal Node CLI y navegador real aún no se han ejecutado. No se modificó la rama base ni endpoints/deployments/datos productivos.
+Siguiente acción: revisar transiciones asíncronas y cierres directos, ejecutar el harness disponible, corregir hallazgos locales y completar evidencia de AUG-071 antes de cerrar.
+================================================================================
