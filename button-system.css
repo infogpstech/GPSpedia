@@ -1,0 +1,222 @@
+/* Sistema compartido de botones GPSpedia.
+   Solo afecta elementos que declaran la clase .btn; no modifica inputs ni selects. */
+:root {
+    --btn-radius: 0.5rem;
+    --btn-primary-bg: #0b5ed7;
+    --btn-primary-hover: #084298;
+    --btn-secondary-bg: #5c636a;
+    --btn-secondary-hover: #4c535a;
+    --btn-danger-bg: #b02a37;
+    --btn-danger-hover: #842029;
+    --btn-warning-bg: #ffc107;
+    --btn-warning-hover: #ffca2c;
+    --btn-warning-text: #212529;
+    --btn-success-bg: #146c43;
+    --btn-success-hover: #0f5132;
+    --btn-info-bg: #0a58ca;
+    --btn-info-hover: #084298;
+    --btn-outline-border: #6c757d;
+    --btn-outline-text: #343a40;
+    --btn-focus-ring: rgba(13, 110, 253, 0.5);
+}
+
+body.dark-mode {
+    --btn-primary-bg: #1f6feb;
+    --btn-primary-hover: #1158c7;
+    --btn-secondary-bg: #495057;
+    --btn-secondary-hover: #3d444b;
+    --btn-danger-bg: #b02a37;
+    --btn-danger-hover: #842029;
+    --btn-warning-bg: #ffc107;
+    --btn-warning-hover: #ffca2c;
+    --btn-success-bg: #146c43;
+    --btn-success-hover: #0f5132;
+    --btn-info-bg: #0a58ca;
+    --btn-info-hover: #084298;
+    --btn-outline-border: #adb5bd;
+    --btn-outline-text: #f8f9fa;
+    --btn-focus-ring: rgba(121, 184, 255, 0.7);
+}
+
+.btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 100%;
+    padding: 0.55rem 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--btn-radius);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    white-space: normal;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+        box-shadow 0.18s ease, transform 0.12s ease, filter 0.18s ease;
+}
+
+a.btn {
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: var(--btn-secondary-bg);
+    border-color: var(--btn-secondary-bg);
+    color: #fff;
+}
+
+.btn-danger {
+    background-color: var(--btn-danger-bg);
+    border-color: var(--btn-danger-bg);
+    color: #fff;
+}
+
+.btn-warning {
+    background-color: var(--btn-warning-bg);
+    border-color: var(--btn-warning-bg);
+    color: var(--btn-warning-text);
+}
+
+.btn-success {
+    background-color: var(--btn-success-bg);
+    border-color: var(--btn-success-bg);
+    color: #fff;
+}
+
+.btn-info {
+    background-color: var(--btn-info-bg);
+    border-color: var(--btn-info-bg);
+    color: #fff;
+}
+
+.btn-outline {
+    background: transparent;
+    border-color: var(--btn-outline-border);
+    color: var(--btn-outline-text);
+}
+
+.btn-light {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #212529;
+}
+
+.btn-dark {
+    background: #212529;
+    border-color: #212529;
+    color: #fff;
+}
+
+.btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-loading) {
+    filter: brightness(0.93);
+}
+
+.btn:active:not(:disabled):not([aria-disabled="true"]):not(.btn-loading) {
+    transform: translateY(1px);
+}
+
+.btn:focus-visible {
+    outline: 3px solid var(--btn-focus-ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.btn:disabled,
+.btn[disabled],
+.btn[aria-disabled="true"] {
+    opacity: 0.58;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: none;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-compact,
+.btn-sm {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    min-height: 48px;
+    padding: 0.7rem 1.25rem;
+    font-size: 1rem;
+}
+
+.btn-icon {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.btn-block {
+    display: flex;
+    width: 100%;
+}
+
+.btn.dev-action-full {
+    justify-content: flex-start;
+}
+
+/* Estado de carga compartido para botones estándar y controles especializados. */
+.btn-loading {
+    position: relative !important;
+    color: transparent !important;
+    pointer-events: none !important;
+    cursor: wait !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-top: -9px;
+    margin-left: -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin-button 0.6s linear infinite;
+    z-index: 5;
+}
+
+.btn-warning.btn-loading::after {
+    border-color: rgba(33, 37, 41, 0.22);
+    border-top-color: #212529;
+}
+
+@keyframes spin-button {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn {
+        transition: none;
+    }
+    .btn-loading::after {
+        animation-duration: 1.5s;
+    }
+}
