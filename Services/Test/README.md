@@ -838,3 +838,14 @@ cp Services/Test/VehicleShareLinks.js Services/Test/VehicleShareLinks.mjs && nod
 ```
 
 La suite contiene 19 escenarios para construcción/decodificación de URLs, compatibilidad #search=, IDs y metadatos duplicados, variantes, aislamiento de Cortes frente a otras secciones, Web Share exitoso/cancelado/rechazado, fallback Clipboard y errores síncronos/asíncronos. Los permisos de navegador y el contexto seguro requieren validación Beta.
+
+
+## AUG-073 — Accesibilidad del indicador de conectividad
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/ConnectionStatusAccessibility.js Services/Test/ConnectionStatusAccessibility.mjs && node Services/Test/ConnectionStatusAccessibility.mjs; RESULT=$?; rm -f Services/Test/ConnectionStatusAccessibility.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite contiene 8 escenarios para role=status/aria-live, texto accesible online/offline, precisión de navigator.onLine, preservación del punto de 3px y prefers-reduced-motion. Lector de pantalla y cambios reales de conectividad se validan en Beta.
