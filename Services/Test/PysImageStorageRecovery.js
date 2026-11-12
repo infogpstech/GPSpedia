@@ -70,7 +70,7 @@ function buildHarness(feedback, options = {}) {
     state.file = file;
 
     const sheet = {
-        getLastRow: () => state.rows.length,
+        getLastRow: () => { if (options.failReferenceScan && state.fileCreated) throw new Error("Spreadsheet read failed"); return state.rows.length; },
         getLastColumn: () => 10,
         getRange: (row, col, numRows = 1, numCols = 1) => ({
             setValues: values => {
@@ -121,9 +121,10 @@ function buildHarness(feedback, options = {}) {
     };
 
     const folderHelpers = extract(feedback, "function extractDriveFileIds(value) {", "function getVehicleYearFolderName(vehicleInfo) {");
+    const pysParser = extract(feedback, "function parseModelosAsociados(rawVal) {", "function handleGetPysData() {");
     const pysHelpers = extract(feedback, "const PYS_IMAGE_MAX_BYTES", "function handleAddSolution(payload) {");
     vm.runInNewContext(
-        'const DRIVE_FOLDER_ID = "root-cortes";\n' + folderHelpers + "\n" + pysHelpers +
+        'const DRIVE_FOLDER_ID = "root-cortes";\n' + folderHelpers + "\n" + pysParser + "\n" + pysHelpers +
         "\nthis.api = { validate: validatePysImageDataUrl_, getFolder: getPysImagesFolder_, " +
         "checkPermissions: assertPysImageFolderPermissions_, normalize: normalizePysImageReference_, " +
         "findReferences: findPysImageReferences_, markRecovery: markPysImageForRecovery_, " +
@@ -156,7 +157,7 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
         assert.throws(() => h.api.validate("data:image/svg+xml;base64,PHN2Zz4="), /JPEG, PNG o WebP/);
         assert.throws(() => h.api.validate("data:image/gif;base64,R0lGODlh"), /JPEG, PNG o WebP/);
         assert.throws(() => h.api.validate(""), /obligatoria/);
-        assert.throws(() => h.api.validate("data:image/png;base64,%%%"), /Base64|decodificar|firma/);
+        assert.throws(() => h.api.validate("data:image/png;base64,%%%"), /Base64|decodificar|firma|debe ser/);
     });
 
     test("rechaza MIME declarado que no coincide con la firma", () => {
