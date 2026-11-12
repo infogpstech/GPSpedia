@@ -1638,3 +1638,27 @@ ADENDA DE VALIDACIÓN — AUG-100 — 2026-11-12
 - Se añadió entrada ejecutable Node ESM al test; el comando reproducible está en Services/Test/README.md. Node CLI no fue ejecutado en este entorno.
 - Último commit de escritura confirmado: 5005bea4115bbed25ebcba16b8fcda2f63d056e4. Rama de trabajo GPSpedia2.2.5_work; comparación posterior: ahead, 0 behind. Rama base GPSpedia2.2.5 sin modificaciones.
 - Siguiente tarea canónica: AUG-101 — Separar clasificación de marcas reales y tipos sintéticos de sección.
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-101 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD verificado antes de publicar este checkpoint: 60fc61f65e093b1d2a288ce22df5503018d843b7.
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- La inspección de navigation.js, search-utils.js y ui.js confirmó que la lógica vigente ya asigna _sectionType explícito a cada resultado y limita la vista de logos a resultados exclusivamente de Cortes. Relay, Tutorial y PyS no se infieren como marcas; no fue necesario modificar lógica de producción.
+- Services/Test/GlobalSearch.js amplía los escenarios para títulos exactos de sección, coincidencia exacta de modelo, consulta por marca y resultados mixtos entre Cortes, Relay, Tutorial y PyS.
+- El backlog AUG-101 queda cerrado y se conserva la evidencia de la clasificación vigente.
+- No se modificaron endpoints, permisos, datos ni deployments.
+
+Validación local:
+- Harness Node focalizado de clasificación: 7/7 PASS.
+- Sintaxis de los nuevos casos de prueba: PASS.
+- La suite completa GlobalSearch.js (23 casos) no se ejecutó desde un checkout del repositorio en esta sesión. La evidencia previa de 21/21 corresponde a la suite base registrada durante AUG-098; los nuevos escenarios se verificaron de forma focalizada.
+- La interacción/renderizado en navegador real queda registrada para Beta en lista_beta.txt.
+
+Archivos: Services/Test/GlobalSearch.js, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Publicación secuencial mediante operaciones de actualización de archivo, sin reescritura de historial ni force update.
+Siguiente tarea: AUG-102 — Alinear el tema oscuro del banner de validación y completar sus tokens. No iniciar hasta la siguiente interacción/sesión.
+================================================================================
