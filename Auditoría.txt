@@ -631,3 +631,21 @@ Evidencia inicial:
 Impacto: entradas residuales, cierres que podían consumir una capa incorrecta y desincronización entre menú, modal visible e historial.
 Criterio: cada overlay debe tener una identidad estable y una sola entrada; el menú debe completar su popstate antes de abrir el destino; los cierres administrativos deben invalidar su generación y cerrar descendientes; conservar estado previo de búsqueda/sección.
 ================================================================================
+
+
+================================================================================
+AUG-071 — ADENDA DE CIERRE — 2026-11-12
+H-AUD-071-001: RESUELTO EN FUENTES.
+Correcciones:
+- overlayHistory.js expone has(id); main.js registra IDs estables y callbacks personalizados, reemplaza overlays superiores sin duplicar entradas y reconcilia entradas cuyo elemento ya fue ocultado antes de popstate.
+- El menú lateral comparte la pila LIFO. openSideMenu() no duplica su entrada; closeSideMenuAndRun() espera la confirmación de popstate antes de abrir el destino.
+- setupModal() cierra la entrada propia; Inbox, Dashboard, Changelog, DevTools y navegación de secciones desde el menú usan transición serializada.
+- Audit Drive e imágenes reemplazadas registran callbacks de cierre que invalidan generaciones; imágenes reemplazadas también cierra el lightbox hijo y libera su lista. contact-form cierra mediante la identidad de su modal.
+Validación local adaptada:
+- OverlayMenuModalHistory: 13/13 PASS ejecutando el contenido de la suite con gestor overlayHistory.js real y fuentes vigentes de main.js/ui.js.
+- OverlayHistoryStack: 19/19 PASS.
+- ReplacedImagesLightboxHistory: 6/6 PASS.
+- Parsing V8: overlayHistory.js y main.js completos PASS; bloques modificados setupModal, menú, openAuditDriveModal y openReplacedImagesModal PASS.
+- El parsing del ui.js completo falla con «Invalid regular expression: missing /» tanto en el HEAD previo como en el actual; no es regresión atribuible a AUG-071. Los bloques modificados compilan.
+Límites: Node CLI literal no ejecutado en este entorno; los comandos quedan documentados para ejecución en el repositorio local. DOM/navegador real, backdrop físico, gestos nativos y dispositivos quedan diferidos a Beta. No se modificaron endpoints, deployments, datos productivos ni la rama base.
+================================================================================
