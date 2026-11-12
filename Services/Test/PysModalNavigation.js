@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { captureModalViewState, restoreModalViewState } from '../../modalNavigation.js';
+import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from '../../modalNavigation.js';
 const ui=readFileSync(new URL('../../ui.js',import.meta.url),'utf8'),main=readFileSync(new URL('../../main.js',import.meta.url),'utf8');
 let passed=0;function test(name,fn){fn();passed++;console.log('PASS',name);}
 function classes(initial=[]){const s=new Set(initial);return{contains:v=>s.has(v),add:v=>s.add(v),remove:v=>s.delete(v)};}
@@ -20,7 +20,24 @@ test('deferred restoration does not reset vertical scroll after asynchronous con
  assert.equal(detail.scrollTop,700);assert.equal(again.pendingHorizontalScrolls.length,1);
  assert.match(ui,/pendingAccordion[\s\S]*pendingTracks/);
 });
+test('records only real modal transitions and suppresses edit/restore rerenders',()=>{
+ const origin={type:'pys',item:{id_problem:7},navOptions:{originModal:'vehicle'}};
+ assert.equal(shouldRecordModalTransition('corte','pys',true,{fromOriginModal:origin}),true);
+ assert.equal(shouldRecordModalTransition('corte','corte',true,{fromOriginModal:origin}),false);
+ assert.equal(shouldRecordModalTransition('pys','corte',false,{fromOriginModal:origin}),false);
+ assert.equal(shouldRecordModalTransition('pys','corte',true,{fromOriginModal:origin,_restoreFromStack:true}),false);
+});
+test('nested PyS–vehicle navigation restores exactly one LIFO context at a time',()=>{
+ const stack=[],pys={id_problem:1},vehicle={id:22},vehicleOptions={originModal:'pys'};
+ assert.equal(pushModalNavigationContext(stack,{type:'pys',item:pys,navOptions:{}},{scrollTop:120}),true);
+ assert.equal(pushModalNavigationContext(stack,{type:'vehicle',item:vehicle,navOptions:vehicleOptions},{scrollTop:340}),true);
+ const first=popModalNavigationContext(stack);
+ assert.equal(first.type,'vehicle');assert.equal(first.item,vehicle);assert.deepEqual(first.navOptions,vehicleOptions);assert.equal(stack.length,1);
+ const second=popModalNavigationContext(stack);
+ assert.equal(second.type,'pys');assert.equal(second.item,pys);assert.equal(stack.length,0);
+ assert.equal(popModalNavigationContext(stack),null);
+});
 test('keeps navigation options when vehicle and PyS modals are opened from one another',()=>{assert.match(ui,/function createPysCard\([\s\S]*?navigationOptions = \{\}/);assert.match(ui,/navOptions: navigationOptions \|\| \{\}/);assert.match(ui,/createPysCard\(relatedProblems\[0\], 'vehicle',[\s\S]*?\}, navOptions\)/);assert.match(ui,/fromOriginModal:\s*\{\s*type:\s*'pys',[\s\S]*?navOptions: navOptions \|\| \{\}/);});
-test('does not push duplicate stack entries when rerendering or editing the same modal',()=>{assert.match(ui,/currentType\s*!==\s*targetType\s*&&\s*origin/);assert.match(ui,/if\(navOptions\._restoreFromStack\)return/);assert.match(ui,/mostrarDetalleModal\(editedItemBuffer, true, navOptions\)/);assert.match(ui,/exitModalEditMode\(saveChanges, vehicleId, skipReopen = false, navOptions = \{\}\)/);});
+test('does not push duplicate stack entries when rerendering or editing the same modal',()=>{assert.match(ui,/shouldRecordModalTransition\(targetType,currentType,modalWasVisible,navOptions\)/);assert.match(ui,/if\(navOptions\._restoreFromStack\)return/);assert.match(ui,/mostrarDetalleModal\(editedItemBuffer, true, navOptions\)/);assert.match(ui,/exitModalEditMode\(saveChanges, vehicleId, skipReopen = false, navOptions = \{\}\)/);});
 test('manual close and browser popstate share one-level context restoration',()=>{assert.match(ui,/function closeModalToPreviousContext_\(\)/);assert.match(ui,/closeModalToPreviousContext_\(\)/);assert.match(ui,/export function restoreModalNavigationContext\(\)/);assert.match(main,/if\s*\(ui\.restoreModalNavigationContext\(\)\)\s*return/);assert.doesNotMatch(main,/const prevContext = navStack\.pop\(\)/);});
-console.log('PysModalNavigation:',passed+'/6 PASS');
+console.log('PysModalNavigation:',passed+'/8 PASS');
