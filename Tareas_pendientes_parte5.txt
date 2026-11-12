@@ -176,7 +176,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   4. Mantener visible el padre al cerrar el submodal; no cerrar #modalDetalle ni restaurar catálogo mientras exista un overlay hijo.
   5. Probar todos los constructores, backdrop, X, submit, cancelación, overlays anidados, apertura desde ficha de vehículo y retroceso durante una carga YouTube activa en add_cortes.html.
 - **Relación:** AUD-T-007; amplía H-AUD-005-008 sin duplicarlo.
-- **Estado:** EN PROGRESO; módulo base integrado en `main.js` para overlays `.info-modal` (excepto carga YouTube, pendiente). Se registra apertura/cierre observado, reemplazo del overlay superior y prioridad del estado administrado en `popstate`. Sintaxis de `main.js` y suite lógica del gestor: 10/10 PASS en V8 adaptado. Falta validar el observador DOM y conectar el ciclo de vida especial de `youtubeUpload.js` sin perder confirmación/aborto de carga.
+- **Estado:** EN PROGRESO; módulo base integrado en `main.js` para overlays `.info-modal` (excepto carga YouTube, pendiente). Se registra apertura/cierre observado, reemplazo del overlay superior y prioridad del estado administrado en `popstate`. El listener `popstate` también prioriza la pila administrada cuando el estado de destino es el del modal padre, evitando cerrar padre e hijo con una sola pulsación. Sintaxis de `main.js` y suite lógica del gestor: 10/10 PASS en V8 adaptado. Falta validar el observador DOM y conectar el ciclo de vida especial de `youtubeUpload.js` sin perder confirmación/aborto de carga.
 
 ### AUG-069 — Sincronizar los botones internos «Volver» con el historial nativo
 - **Origen:** H-AUD-007-002. **Prioridad:** Alta.
