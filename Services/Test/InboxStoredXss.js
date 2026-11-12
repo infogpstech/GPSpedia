@@ -68,10 +68,9 @@ function runInboxStoredXssTests(sources) {
     });
     run("confirmación de reporte usa plantilla estática y reportId como texto", () => {
         assert(typeof parseFunction(functions.success) === "function");
-        const template = functions.success.match(/content\\.innerHTML\\s*=\\s*`([\\s\\S]*?)`;/);
-        assert(template && !/\\$\\{/.test(template[1]));
-        assert(/identity\\.querySelector\\("strong"\\)\\.textContent\\s*=\\s*String\\(reportId/.test(functions.success));
-        assert(!/\\$\\{(?:reportId|corteNum)/.test(template[1]));
+        assert(functions.success.includes("content.innerHTML = `"));
+        assert(!functions.success.includes("${"));
+        assert(functions.success.includes('identity.querySelector("strong").textContent = String(reportId || "")'));
     });
     run("modal de reporte usa plantilla estática", () => {
         const template = functions.report.match(/content\.innerHTML\s*=\s*`([\s\S]*?)`;/);
