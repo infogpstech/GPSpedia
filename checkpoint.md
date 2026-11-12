@@ -739,3 +739,15 @@ YouTubeUploadCheckpointRecovery: 2/2 PASS en runtime V8 adaptado:
 Se ejecutó además parsing sintáctico de youtubeUpload.js en V8 adaptado, retirando import/export para la evaluación aislada.
 El primer intento de ejecutar el nuevo test reveló un error en el extractor de la prueba (no conservaba async); se corrigió y la ejecución posterior pasó 2/2.
 No equivale a Node CLI en Codespaces ni a YouTube API real. La validación de API externa queda diferida a Beta; las pruebas locales reproducibles de esta iteración aprobaron.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3H — RECUPERACIÓN DE BORRADORES SIN REFERENCIA — 2026-11-12
+Hallazgo: openYouTubeUploadModal solo iniciaba findPendingYouTubeUploadRecord_ cuando initialUserId y referenceId eran truthy. Sin embargo, el módulo admite referenceId opcional, y los registros nuevos guardan String(referenceId), que para un borrador sin referencia es "null". Por tanto, las transferencias pausadas de borradores no podían localizarse al reabrir el modal.
+Corrección: la búsqueda se inicia cuando existe usuario autenticado, aunque referenceId sea null. La comparación existente usa String(referenceId), por lo que null coincide con el valor persistido "null"; no se altera la separación por usuario ni tipo de contenido.
+Prueba nueva: Services/Test/YouTubeUploadDraftRecovery.js, con IndexedDB simulado; cubre borrador sin referencia, contenido con referencia y condición de invocación desde el modal.
+Archivos modificados: youtubeUpload.js, Services/Test/YouTubeUploadDraftRecovery.js, Services/Test/README.md.
+Estado de validación: pendiente ejecutar prueba local adaptada y parsing. No declarar Node CLI/Codespaces ni navegador real si no se ejecutaron.
+ChangesLogs.txt no se modifica por rotación normativa. Rama base intacta.
+Siguiente acción: validar los tres escenarios; si pasan, registrar checkpoint y commit. Luego revisar la transición de registros uploaded sin depender del File persistido. No iniciar AUG-069.
+================================================================================

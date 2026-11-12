@@ -382,7 +382,7 @@ export function openYouTubeUploadModal(options = {}) {
     let recoveryLookupError = null;
     const currentUser = getState().currentUser;
     const initialUserId = String(currentUser && currentUser.ID || "").trim();
-    const recoveryLookupPromise = initialUserId && referenceId
+    const recoveryLookupPromise = initialUserId
         ? findPendingYouTubeUploadRecord_(initialUserId, contentType, referenceId)
             .then(record => {
                 recoveredUploadRecord = record;

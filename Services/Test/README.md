@@ -740,3 +740,14 @@ cp Services/Test/YouTubeUploadCheckpointRecovery.js Services/Test/YouTubeUploadC
 ```
 
 La prueba ejecuta las funciones reales de consulta de offset, envío de bloques y reanudación extraídas de `youtubeUpload.js`, con XMLHttpRequest simulado. Verifica que se persistan los offsets confirmados por YouTube y que una cancelación durante un bloque conserve el último offset confirmado sin iniciar otro bloque. No sustituye la validación con YouTube API real en Beta.
+
+
+## AUG-068 — Recuperación de borradores sin referenceId
+
+Desde la raíz del repositorio:
+
+```bash
+cp Services/Test/YouTubeUploadDraftRecovery.js Services/Test/YouTubeUploadDraftRecovery.mjs && node Services/Test/YouTubeUploadDraftRecovery.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadDraftRecovery.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+Comprueba la búsqueda IndexedDB de operaciones cuyo referenceId es null y conserva la búsqueda por referencia para contenido asociado. La prueba simula IndexedDB; no sustituye la validación de persistencia en navegador real.
