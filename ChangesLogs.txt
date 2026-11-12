@@ -179,3 +179,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/PysImageStorageRecovery.js: harness actualizado para ledger PysOperations; conserva 22 escenarios de AUG-083.
 - Validación local: 25/25 y 22/22 PASS en harness V8 adaptado con dobles. Node CLI literal, Apps Script/Drive/Spreadsheet reales, concurrencia real, ACL y navegador quedan para Beta aislada.
 ================================================================================
+
+
+2026-11-12 — AUG-084 — NORMALIZACIÓN FINAL DEL LEDGER PyS
+- readPysOperations_ compara problemId por sufijo numérico seguro; rechaza duplicados equivalentes con distinto relleno (isue-001/isue-1), sufijos cero o no seguros.
+- Comprueba coherencia de imageFileId/imageUrl según estado del ledger para evitar reintentos sobre referencias incompletas.
+- PysCreationIntegrity amplía el caso de duplicidad del ledger a IDs numéricamente equivalentes.
+- Reejecución local adaptada: PysCreationIntegrity 25/25 PASS; PysImageStorageRecovery 22/22 PASS.

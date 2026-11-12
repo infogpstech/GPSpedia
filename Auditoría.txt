@@ -845,3 +845,7 @@ Evidencia: Services/Test/PysCreationIntegrity.js (25/25 PASS) y Services/Test/Py
 Límites: no se ejecutó Node CLI literal, Apps Script real, Spreadsheet/Drive real, dos ejecuciones simultáneas reales, ACL efectiva ni navegador real. Esas verificaciones quedan explícitamente en lista_beta.txt. No se afirma despliegue ni modificación de datos productivos.
 Estado: CORREGIDO EN CÓDIGO; VALIDACIÓN DE INTEGRACIÓN PENDIENTE EN BETA AISLADA.
 ================================================================================
+
+
+Aclaración de cierre H-AUD-011-004:
+El ledger PysOperations normaliza problemId por sufijo numérico seguro al comprobar unicidad; valores equivalentes como isue-001 e isue-1 se consideran duplicados. También se comprueba la coherencia de imageFileId/imageUrl con el estado PENDING, UPLOAD_PENDING o LINKED. La suite PysCreationIntegrity cubre la colisión numérica del ledger. Reejecución: 25/25 PASS; recuperación AUG-083: 22/22 PASS en harness V8 adaptado.

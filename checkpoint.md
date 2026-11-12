@@ -1390,3 +1390,11 @@ Archivos: Services/feedback.js, ui.js, Services/Test/PysCreationIntegrity.js, Se
 Integración real y concurrencia simultánea quedan pendientes en lista_beta.txt. No desplegar a producción.
 Siguiente tarea: AUG-085 — revisar la siguiente tarea disponible del backlog.
 ================================================================================
+
+
+Refinamiento final AUG-084:
+- readPysOperations_ normaliza el sufijo de problemId a valor numérico seguro, por lo que también detecta duplicados como isue-001/isue-1; rechaza sufijos cero o fuera del rango seguro.
+- Valida consistencia de imageFileId/imageUrl con el estado del ledger (PENDING sin archivo; UPLOAD_PENDING/LINKED con ID y URL canónica).
+- Reejecución tras el refinamiento: PysCreationIntegrity 25/25 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado.
+Commits de implementación: 0b746b0a0589abb2a2e04c842859806c64270025; refinamiento 1906628fe937482d4d732597123e46d732b93f3a. Cierre documental previo: 332ee23ed9f46039a0abb13f958b947720e20d67.
+HEAD de trabajo verificado antes de este apunte: 1906628fe937482d4d732597123e46d732b93f3a. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
