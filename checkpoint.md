@@ -505,3 +505,18 @@ Límites y Beta: no se ejecutó navegador real ni una matriz visual de imágenes
 Publicación: los registros y documentación se actualizaron mediante commits secuenciales en la rama de trabajo, debido a que la integración de publicación actualiza un archivo por operación. Verificar HEAD, diffs, padre y rama base tras las publicaciones.
 Siguiente tarea autorizada por secuencia: AUG-067 — discriminar eje horizontal y vertical en gestos del carrusel de cables. No se inició en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-067 — CIERRE LOCAL — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. No se modificó la rama base.
+Resolución:
+- ui.js: el carrusel de cables registra X/Y y acepta únicamente desplazamientos horizontales superiores a 50 px cuyo eje X domina al eje Y. Los inicios multitáctiles y los gestos sobre controles interactivos se ignoran; touchcancel y secuencias incompletas restablecen el estado. Los listeners pasivos preservan el scroll vertical nativo.
+- Services/Test/CableCarouselSwipeAxis.js: suite que extrae el helper real de ui.js y verifica 15 escenarios.
+- Services/Test/README.md: se añadió el comando compatible para ejecutar la suite con copia temporal .mjs.
+- Tareas_pendientes_parte5.txt y ChangesLogs.txt: cierre y evidencia registrados.
+Validación local: runtime V8 adaptado sobre el helper extraído de la fuente vigente de ui.js: 15/15 PASS; se verificó la presencia de los tres listeners táctiles. La ejecución Node CLI de la suite nueva no se realizó en esta sesión.
+Pendiente para Beta: probar gestos reales en navegador móvil y PWA standalone, incluidos scroll vertical, controles táctiles y ajuste de altura del acordeón.
+Siguiente tarea en la secuencia: AUG-068 — unificar el registro y el cierre por historial de overlays dinámicos. No se inició en esta iteración.
+================================================================================
