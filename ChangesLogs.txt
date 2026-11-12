@@ -401,3 +401,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - users.html: tabla ajustada al ancho disponible con texto envolvente, acciones apiladas y botones táctiles; modales limitados al viewport con scroll interno y controles de 44 px.
 - Se añadió Services/Test/ResponsiveFormsUsers.js y se documentó su ejecución.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-106 — COLISIÓN ENTRE RANGOS DE GENERACIONES
+- Services/feedback.js: se encapsuló la comparación inclusiva de intervalos en yearRangesOverlapInclusive_; el handler autoritativo compara ambos extremos del rango propuesto y de cada generación coincidente.
+- Services/Test/YearRangeCollision.js: nueva cobertura de solapamiento parcial, contención, límites, huecos, rangos anteriores/posteriores e intervalos inválidos; incluye contratos backend/UI.
+- Services/Test/README.md: se documentó el comando y alcance de la suite.
+- La condición backend ya comparaba ambos extremos en el HEAD de inicio; se formalizó y cubrió para evitar regresiones, sin cambiar el resultado funcional válido.
+================================================================================
