@@ -751,3 +751,7 @@ Estado de validación: pendiente ejecutar prueba local adaptada y parsing. No de
 ChangesLogs.txt no se modifica por rotación normativa. Rama base intacta.
 Siguiente acción: validar los tres escenarios; si pasan, registrar checkpoint y commit. Luego revisar la transición de registros uploaded sin depender del File persistido. No iniciar AUG-069.
 ================================================================================
+
+
+ADENDA DE AJUSTE DE PRUEBA — ITERACIÓN 3H
+La primera ejecución adaptada reveló que el extractor de la nueva prueba omitía el prefijo async de findPendingYouTubeUploadRecord_. Se corrigió el extractor para conservar la declaración async, siguiendo el mismo criterio aplicado en la prueba de reanudación. El error estaba en el harness de prueba, no en la implementación de IndexedDB ni en youtubeUpload.js. Se repetirá la validación.

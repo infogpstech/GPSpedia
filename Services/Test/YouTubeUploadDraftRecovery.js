@@ -7,11 +7,12 @@ function extractFunction(name) {
     const marker = `function ${name}(`;
     const start = source.indexOf(marker);
     assert.notEqual(start, -1, `No se encontró ${name}`);
+    const declarationStart = source.slice(0, start).endsWith("async ") ? start - 6 : start;
     const open = source.indexOf("{", start);
     let depth = 0;
     for (let i = open; i < source.length; i++) {
         if (source[i] === "{") depth++;
-        if (source[i] === "}" && --depth === 0) return source.slice(start, i + 1);
+        if (source[i] === "}" && --depth === 0) return source.slice(declarationStart, i + 1);
     }
     assert.fail(`Función ${name} sin cerrar`);
 }
