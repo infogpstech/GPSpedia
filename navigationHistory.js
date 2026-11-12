@@ -110,7 +110,10 @@ export function navigateBackToState(targetState, options = {}) {
         return 'back';
     }
 
-    const fallbackPrevious = previousNavigation ||
+    // El destino puede traer su propio antecesor. Debe prevalecer sobre la
+    // metadata de la vista actual, que puede pertenecer a una ruta obsoleta.
+    const targetPreviousNavigation = pickNavigationState(targetState.previousState);
+    const fallbackPrevious = targetPreviousNavigation || previousNavigation ||
         pickNavigationState(options.previousNavigationState);
     historyObject.replaceState({
         ...target,
@@ -119,7 +122,7 @@ export function navigateBackToState(targetState, options = {}) {
     if (typeof options.renderFallback === 'function') {
         options.renderFallback({
             ...target,
-            previousState: targetState.previousState || fallbackPrevious
+            previousState: fallbackPrevious
         });
     }
     return 'replace';
