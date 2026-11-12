@@ -147,10 +147,11 @@ a.btn {
     box-shadow: none;
 }
 
+/* Compact controls retain a reliable touch target. */
 .btn-compact,
 .btn-sm {
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 40px;
+    min-height: 40px;
     padding: 0.4rem 0.7rem;
     font-size: 0.875rem;
 }
@@ -180,14 +181,16 @@ a.btn {
 }
 
 /* Estado de carga compartido para botones estándar y controles especializados. */
-.btn-loading {
+.btn-loading,
+.btn[aria-busy="true"] {
     position: relative !important;
     color: transparent !important;
     pointer-events: none !important;
     cursor: wait !important;
 }
 
-.btn-loading::after {
+.btn-loading::after,
+.btn[aria-busy="true"]::after {
     content: "";
     position: absolute;
     width: 18px;
@@ -203,7 +206,8 @@ a.btn {
     z-index: 5;
 }
 
-.btn-warning.btn-loading::after {
+.btn-warning.btn-loading::after,
+.btn-warning[aria-busy="true"]::after {
     border-color: rgba(33, 37, 41, 0.22);
     border-top-color: #212529;
 }
