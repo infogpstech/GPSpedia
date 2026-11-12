@@ -211,7 +211,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.match(feedback, /const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
         assert.match(feedback, /userName: actor\.userName/);
         assert.match(feedback, /const collaborator = normalizeTutorialField_\(source\.userName/);
-        assert.match(feedback, /userRole\s*\}\s*\)\s*\{/);
+        const updateHandler = extract_(feedback, "function handleUpdateTutorialItem(payload)", "function handleUpdatePysItem(payload)");
+        assert.doesNotMatch(updateHandler, /userRole/);
     });
 
     test("catálogo conserva las siete columnas históricas y expone Colaborador en H", () => {
