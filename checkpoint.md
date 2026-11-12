@@ -1219,3 +1219,15 @@ AUG-077 — NOTA DE PUBLICACIÓN DE PRUEBAS
 La suite `Services/Test/ReportImageAttachment.js` quedó publicada en `081b543ee06a87ba63242a21234d0870946ee5a1` (18 casos para ejecutar en el checkout local). En este entorno se ejecutó con Node v22.16.0 un harness aislado de lógica binaria y metadata: 12/12 PASS. El checkout completo no pudo clonarse porque el entorno no resuelve github.com por DNS; por ello la suite de 18 casos no se declara ejecutada aquí. La validación V8 de funciones modificadas y parsing de suite fueron PASS.
 
 Nota de trazabilidad: el HEAD de `GPSpedia2.2.5_work` se comparó con la referencia de rama y resultó idéntico (`e5341fe...`); la actualización posterior de este checkpoint crea el nuevo HEAD. La rama base permanece separada; no se escribieron commits en ella. El HEAD inicial exacto no se pudo reconstruir de forma fiable, por lo que no se atribuye a la referencia antigua del checkpoint.
+
+
+================================================================================
+AUG-078 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD previo verificado: 5669bd6d4e77006e014ee92428d2f277bf351645. Commit de código: 1c79083ac8debe15c7d4d2634ed165ee2c969eac. Commit de suite: f4a192986275c4d26ca1e1a54b70c582f1030535.
+
+Cambio: handleSuggestCutChange exige reportId real y único, valida metadata del reporte y su columna ID_vehiculo, coteja corteIndex y valida vehículo único y slot ocupado/identificado (tipo + ubicación) en Cortes. Toda validación ocurre antes de crear archivos, calcular idempotencia o escribir Feedbacks. No crea metadata ni altera Cortes. Los reportes históricos sin metadata permanecen intactos y no pueden originar sugerencias nuevas sin vínculo verificable.
+
+Validación Node.js v22.16.0: 11/11 PASS con mocks aislados para metadata y catálogo. Parsing V8 de Services/feedback.js y suite: PASS. Beta pendiente: ejecutar integración en deployment FEEDBACK y Spreadsheet aislados, verificando no escritura/no cambios en Cortes.
+
+Siguiente tarea: AUG-079 — Robustecer carga y política de acceso de imágenes de sugerencias. No iniciada; fuera de esta iteración.
+================================================================================
