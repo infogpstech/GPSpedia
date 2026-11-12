@@ -428,3 +428,29 @@ VALIDACIÓN EN BETA AISLADA:
 
 No marcar PASS si no se verificó que los payloads no se ejecutan en navegador real. La suite local 20/20 no representa prueba de ejecución DOM.
 ================================================================================
+
+
+================================================================================
+AUG-077 — VALIDACIÓN BETA DE ADJUNTOS
+
+ANTES DE PROBAR, sincronizar desde la raíz:
+
+```bash
+set -e
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "ERROR: origin incorrecto"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar"; exit 1; }
+git switch GPSpedia2.2.5_work
+git fetch origin
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+PRUEBA NODE:
+
+```bash
+cp Services/Test/ReportImageAttachment.js Services/Test/ReportImageAttachment.mjs && node Services/Test/ReportImageAttachment.mjs; RESULT=$?; rm -f Services/Test/ReportImageAttachment.mjs; printf "Resultado Node: %s\\n" "$RESULT"; test "$RESULT" -eq 0
+```
+
+BETA AISLADA (nunca producción): 1) reportar sin imagen; 2) cargar JPEG/PNG/WebP y verificar metadata y archivo en `Cortes/Reportes individuales`; 3) abrir Inbox con cuenta revisora y confirmar permisos heredados sin ANYONE_WITH_LINK; 4) probar MIME/firma inválidos, archivo vacío, >3 MB, FileReader error/abort y error Drive; 5) reenviar mismo reportId/hash y verificar no duplicado; mismo reportId/hash distinto debe rechazarse; 6) confirmar compatibilidad histórica; 7) simular fallo de metadata y comprobar rollback/papelera. No declarar PASS hasta comprobar Drive y acceso reales.
+================================================================================
