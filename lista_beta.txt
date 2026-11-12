@@ -352,3 +352,41 @@ PRUEBAS EN DISPOSITIVOS/NAVEGADORES REALES:
 
 Registrar dispositivo, versión de sistema, navegador, versión, user-agent/plataforma cuando sea posible, pasos y resultado. No marcar estas pruebas como ejecutadas hasta realizarlas en Beta.
 ================================================================================
+
+================================================================================
+AUG-075 — VALIDACIÓN DE SEGURIDAD DE REPORTES Y SUGERENCIAS — PENDIENTE DE BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guárdalos o confírmalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, el remoto no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado.
+
+PRUEBA LOCAL EN NODE.JS:
+Ejecutar desde la raíz. El comando crea dobles locales para LockService y CacheService; no representa concurrencia ni servicios Apps Script reales.
+
+```bash
+node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+```
+
+VALIDACIÓN DE INTEGRACIÓN EN ENTORNO AISLADO:
+1. Usar únicamente el deployment FEEDBACK de pruebas y una copia aislada de Spreadsheet/Drive; no apuntar api-config.js a endpoints productivos ni utilizar datos reales.
+2. Iniciar sesión con cuentas de prueba de cada rol activo permitido (Desarrollador, Gefe, Jefe, Supervisor, Técnico y Técnico Exterior). Enviar un reporte y una sugerencia; confirmar que ambos se registran con ID y nombre resueltos desde Users.
+3. Enviar una sesión ausente, token inválido, token de sesión revocada/expirada y combinación userId/token de usuarios distintos. Confirmar rechazo antes de crear registros en Feedbacks, archivos en Drive o entradas en ActividadUsuario.
+4. Alterar userName/userRole en el payload conservando la sesión válida. Confirmar que se registra la identidad real del usuario y nunca la identidad enviada por el navegador.
+5. Repetir desde la interfaz web con reporte de corte y sugerencia de cambio; comprobar envío, respuesta, reintentos y mensajes de error.
+6. Registrar rol, escenario, respuesta, estado de Feedbacks/Drive/ActividadUsuario antes y después, navegador y resultado. No marcar PASS si no se verifican los tres destinos de escritura.
+
+No se ha ejecutado esta validación de deployment ni de navegador; permanece pendiente para Beta.
+================================================================================
