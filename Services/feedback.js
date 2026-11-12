@@ -1976,17 +1976,47 @@ function handleSuggestCutChange(payload) {
     return result;
 }
 
+function normalizeModelosAsociadosList_(values) {
+    if (!Array.isArray(values)) throw new Error("modelos_asociados debe ser una lista.");
+    const normalized = [];
+    const seen = new Set();
+    values.forEach(value => {
+        if (value === null || value === undefined) return;
+        if (typeof value !== "string" && typeof value !== "number") {
+            throw new Error("modelos_asociados contiene un identificador inválido.");
+        }
+        const id = String(value).trim();
+        if (!id) return;
+        if (id.length > 100 || /[,/\\;\[\]"'\u0000-\u001F\u007F]/.test(id)) {
+            throw new Error("modelos_asociados contiene un identificador con formato inválido.");
+        }
+        if (!seen.has(id)) {
+            seen.add(id);
+            normalized.push(id);
+        }
+    });
+    return normalized;
+}
+
 function parseModelosAsociados(rawVal) {
-    if (!rawVal) return [];
+    if (rawVal === null || rawVal === undefined) return [];
+    if (Array.isArray(rawVal)) return normalizeModelosAsociadosList_(rawVal);
+    if (typeof rawVal !== "string" && typeof rawVal !== "number") {
+        throw new Error("modelos_asociados tiene un formato incompatible.");
+    }
     const str = String(rawVal).trim();
     if (!str) return [];
-    if (str.startsWith("[") && str.endsWith("]")) {
+    if (str.startsWith("[") || str.endsWith("]")) {
+        let parsed;
         try {
-            const arr = JSON.parse(str);
-            if (Array.isArray(arr)) return arr.map(String).filter(Boolean);
-        } catch (e) {}
+            parsed = JSON.parse(str);
+        } catch (error) {
+            throw new Error("modelos_asociados contiene una lista JSON inválida.");
+        }
+        if (!Array.isArray(parsed)) throw new Error("modelos_asociados debe contener una lista JSON.");
+        return normalizeModelosAsociadosList_(parsed);
     }
-    return str.split(/[,/\\;]+/).map(s => s.trim()).filter(Boolean);
+    return normalizeModelosAsociadosList_(str.split(/[,/\\;]+/));
 }
 
 
@@ -2327,81 +2357,100 @@ function handleDeleteFeedbackItem(payload) {
     }
 }
 
-/* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */
-function handleAddVehicleToProblem(payload) {
-    const { problemId, vehicleId } = payload;
-    if (!problemId || !vehicleId) {
-        throw new Error("Se requieren problemId y vehicleId.");
-    }
+function normalizePysAssociationId_(value, fieldName) {
+    const normalized = normalizeModelosAsociadosList_([value])[0] || "";
+    if (!normalized) throw new Error("Se requiere un " + fieldName + " válido.");
+    return normalized;
+}
 
-    const sheet = getPysSheet_(false);
-    if (!sheet) throw new Error("Hoja pys no encontrada.");
+function normalizePysProblemId_(value) {
+    const problemId = normalizePysAssociationId_(value, "problemId");
+    const match = problemId.match(/^isue-(\d+)$/i);
+    if (!match || !Number.isSafeInteger(Number(match[1])) || Number(match[1]) < 1) {
+        throw new Error("problemId tiene un formato inválido.");
+    }
+    return problemId.toLowerCase();
+}
+
+function findUniqueCortesVehicleForPys_(value) {
+    const requestedId = normalizePysAssociationId_(value, "vehicleId");
+    const sheet = getSafeSheet(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error("Hoja Cortes no encontrada.");
     const lastRow = sheet.getLastRow();
-    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+    if (lastRow < 2) throw new Error("No hay vehículos registrados en Cortes.");
 
-    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
-    let rowIndex = -1;
-    let currentRaw = "";
+    const idHeader = String(sheet.getRange(1, COLS_CORTES.id).getDisplayValues()[0][0] || "").trim().toLowerCase();
+    if (idHeader !== "id") throw new Error("El encabezado ID de Cortes no coincide; no se modificó la relación.");
 
-    for (let i = 0; i < data.length; i++) {
-        if (String(data[i][0]) === String(problemId)) {
-            rowIndex = i + 2;
-            currentRaw = data[i][9] || "";
-            break;
-        }
+    const matches = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues()
+        .map((row, index) => ({ id: String(row[0] === null || row[0] === undefined ? "" : row[0]).trim(), rowNumber: index + 2 }))
+        .filter(entry => entry.id === requestedId);
+    if (matches.length !== 1) {
+        throw new Error("vehicleId debe corresponder a exactamente un registro de Cortes.");
     }
+    return matches[0].id;
+}
 
-    if (rowIndex === -1) throw new Error("Problema no encontrado.");
-
-    const currentList = parseModelosAsociados(currentRaw);
-    if (!currentList.includes(String(vehicleId))) {
-        currentList.push(String(vehicleId));
-        sheet.getRange(rowIndex, 10).setValue(JSON.stringify(currentList));
+function persistModelosAsociados_(sheet, rowNumber, values) {
+    const normalized = normalizeModelosAsociadosList_(values);
+    const serialized = normalized.length ? JSON.stringify(normalized) : "";
+    const cell = sheet.getRange(rowNumber, 10);
+    const currentValue = cell.getValue();
+    const currentSerialized = currentValue === null || currentValue === undefined ? "" : String(currentValue);
+    if (currentSerialized !== serialized) {
+        cell.setValue(serialized);
         SpreadsheetApp.flush();
     }
 
-    return { status: 'success', message: 'Vehículo asociado al problema correctamente.', modelosAsociados: currentList };
+    const persisted = parseModelosAsociados(cell.getValue());
+    if (JSON.stringify(persisted) !== JSON.stringify(normalized)) {
+        throw new Error("No se pudo confirmar la colección de vehículos persistida en pys.");
+    }
+    return persisted;
+}
+
+/* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */
+function handleAddVehicleToProblem(payload) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    return withPysMutationLock_(() => {
+        const problemId = normalizePysProblemId_(source.problemId);
+        const vehicleId = findUniqueCortesVehicleForPys_(source.vehicleId);
+        const sheet = getPysSheet_(false);
+        if (!sheet) throw new Error("Hoja pys no encontrada.");
+
+        const matches = findPysRowsById_(sheet, problemId);
+        if (matches.length !== 1) {
+            throw new Error(matches.length ? "El problema tiene un ID ambiguo." : "Problema no encontrado.");
+        }
+        const currentList = parseModelosAsociados(matches[0].row[9]);
+        if (!currentList.includes(vehicleId)) currentList.push(vehicleId);
+        const persisted = persistModelosAsociados_(sheet, matches[0].rowNumber, currentList);
+        return { status: "success", message: "Vehículo asociado al problema correctamente.", modelosAsociados: persisted };
+    });
 }
 
 /* TAREA 6: ELIMINAR RELACIÓN ENTRE PROBLEMA Y MODELO DE VEHÍCULO */
 function handleRemoveVehicleFromProblem(payload) {
-    const { problemId, vehicleId, userRole } = payload;
-    if (!problemId || !vehicleId) {
-        throw new Error("Se requieren problemId y vehicleId.");
-    }
-
-    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al Desarrollador
-    const allowedRoles = ['Desarrollador'];
-    if (!userRole || !allowedRoles.includes(userRole)) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    if (normalizeFeedbackRole(source.userRole) !== "desarrollador") {
         throw new Error("No tienes permisos suficientes para eliminar relaciones.");
     }
 
-    const sheet = getPysSheet_(false);
-    if (!sheet) throw new Error("Hoja pys no encontrada.");
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+    return withPysMutationLock_(() => {
+        const problemId = normalizePysProblemId_(source.problemId);
+        const vehicleId = findUniqueCortesVehicleForPys_(source.vehicleId);
+        const sheet = getPysSheet_(false);
+        if (!sheet) throw new Error("Hoja pys no encontrada.");
 
-    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
-    let rowIndex = -1;
-    let currentRaw = "";
-
-    for (let i = 0; i < data.length; i++) {
-        if (String(data[i][0]) === String(problemId)) {
-            rowIndex = i + 2;
-            currentRaw = data[i][9] || "";
-            break;
+        const matches = findPysRowsById_(sheet, problemId);
+        if (matches.length !== 1) {
+            throw new Error(matches.length ? "El problema tiene un ID ambiguo." : "Problema no encontrado.");
         }
-    }
-
-    if (rowIndex === -1) throw new Error("Problema no encontrado.");
-
-    let currentList = parseModelosAsociados(currentRaw);
-    currentList = currentList.filter(id => String(id) !== String(vehicleId));
-
-    sheet.getRange(rowIndex, 10).setValue(currentList.length > 0 ? JSON.stringify(currentList) : "");
-    SpreadsheetApp.flush();
-
-    return { status: 'success', message: 'Relación retirada con éxito.', modelosAsociados: currentList };
+        const currentList = parseModelosAsociados(matches[0].row[9]);
+        const nextList = currentList.filter(id => id !== vehicleId);
+        const persisted = persistModelosAsociados_(sheet, matches[0].rowNumber, nextList);
+        return { status: "success", message: "Relación retirada con éxito.", modelosAsociados: persisted };
+    });
 }
 
 function handleClearActivityLogs(payload) {
