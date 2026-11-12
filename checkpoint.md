@@ -589,3 +589,19 @@ No se modifica la rama base. ChangesLogs.txt no se modifica en esta iteración p
 
 AUG-068 — ADENDA DE VALIDACIÓN — CIERRE CANCELABLE — 2026-11-11
 La regresión nueva de cancelación de cierre y los diez escenarios previos de la pila se ejecutaron en Node v22.16.0 mediante un harness local adaptado a partir de la implementación y la suite vigentes: **11/11 PASS**, código de salida 0. Se verificaron conservación del estado, cierre superior, orden LIFO, reemplazo, cierre manual, errores, IDs inválidos/inexistentes, clear y restauración de la entrada al cancelar popstate. La ejecución se realizó con una reproducción local del módulo y de los escenarios; no fue una ejecución CLI sobre un checkout de Codespaces. La integración de youtubeUpload.js continúa pendiente y no se declara validada.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3B — INTEGRACIÓN DEL MODAL YOUTUBE — 2026-11-11
+Estado: EN PROGRESO. Integración inicial publicada; pendiente validación de comportamiento en navegador y pruebas de regresión de ciclo de vida.
+Rama: GPSpedia2.2.5_work. HEAD de partida: e9f48e1e6aabe440db2107860d5e727e35e111c4. Rama base verificada antes del cambio: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Cambios en youtubeUpload.js:
+- El modal registra una entrada propia en window.overlayHistory, dado que main.js lo excluye del MutationObserver genérico.
+- El botón X, Cancelar y el botón Atrás utilizan la ruta centralizada de cierre.
+- El callback devuelve false si el usuario rechaza pausar la transferencia; el gestor conserva/restaura la entrada del historial.
+- Si el usuario confirma, se marca uploadCancelled, se aborta activeXhr y se cierra el modal; el flujo de error conserva el registro de recuperación como estado paused.
+- Las tres rutas de cierre automático tras detectar una solicitud pendiente/aprobada o completar la subida usan closeAfterUpload para sincronizar el historial sin pedir confirmación de pausa.
+Validación realizada: revisión estática del archivo recuperado de GitHub. Se comprobaron registro explícito, cancelación con retorno false, aborto XHR, conexión de ambos botones, tres cierres automáticos centralizados y una sola llamada directa a modal.remove() dentro del callback. No se ejecutó Node CLI, suite de integración DOM ni navegador real; no declarar esas validaciones aprobadas.
+Archivos modificados en esta iteración: youtubeUpload.js. No se modificó ChangesLogs.txt por superar 180,000 caracteres y requerir rotación normativa sin pérdida.
+Continuidad: en la siguiente iteración ejecutar validaciones reproducibles (sintaxis y suite), revisar sincronización del historial al reemplazar una instancia existente del modal y probar cancelación/confirmación con transferencia activa. No iniciar AUG-069.
+================================================================================
