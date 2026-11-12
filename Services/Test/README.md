@@ -1105,7 +1105,7 @@ Regresión relacionada: ejecutar también las suites `VideoApprovalPublishing.js
 
 Ejecutar las suites aisladas de publicación y coordinación cargando sus dependencias en un proyecto temporal de pruebas:
 
-- `runVideoApprovalPublishingTests()`: 26 escenarios previstos para tipo `video_approval`, JSON válido, estado pendiente tanto en el payload como en la fila Feedbacks, coincidencia de `ID_vehiculo` con `referenceId`, unicidad del ID de solicitud, rechazo de estados terminales, reintentos idempotentes y destinos Cortes/PyS/Tutorial.
+- `runVideoApprovalPublishingTests()`: 27 escenarios previstos para tipo `video_approval`, JSON válido, estado pendiente tanto en el payload como en la fila Feedbacks, coincidencia de `ID_vehiculo` con `referenceId`, unicidad del ID de solicitud, rechazo de estados terminales, reintentos idempotentes y destinos Cortes/PyS/Tutorial.
 - `runSharedMutationCoordinatorTests()`: 32 escenarios previstos; incluye exclusión mutua entre decisiones simultáneas de aprobación y rechazo.
 
 Las suites usan dobles en memoria. La ejecución integrada con sesiones reales y Spreadsheet aislada se valida en Beta; no usar datos ni despliegues productivos.
