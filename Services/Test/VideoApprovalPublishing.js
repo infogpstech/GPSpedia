@@ -1,4 +1,4 @@
-const TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEncontrarlo", "Detalles", "Video", "Colaborador"];
+const VIDEO_TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEncontrarlo", "Detalles", "Video", "Colaborador"];
 
 // Pruebas aisladas de publicación, rechazo y recuperación de vídeos aprobados.
 // Requiere cargar Services/feedback.js.
@@ -40,7 +40,7 @@ function runVideoApprovalPublishingTests() {
         const cuts=makeSheet_([cutHeaders,(()=>{const row=new Array(45).fill("");row[0]="veh-1";row[9]=options.currentUrl||"";return row;})()]);
         const pysHeaders=["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"];
         const pys=makeSheet_([pysHeaders,["pys-1","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
-        const tutHeaders=TUTORIAL_HEADERS.slice();
+        const tutHeaders=VIDEO_TUTORIAL_HEADERS.slice();
         const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?3:null});
         const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutorial":tutorial };
         if(options.missingTarget)delete map[type==="corte"?SHEET_NAMES.CORTES:type==="pys"?"pys" :"Tutorial"];
