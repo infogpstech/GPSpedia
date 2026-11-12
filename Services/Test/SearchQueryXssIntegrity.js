@@ -32,7 +32,8 @@ function createNode(tagName) {
 
 const resultsFnSource = extract(ui, "export function mostrarResultadosDeBusqueda(", "export function showNoResultsMessage(")
     .replace(/\bexport\s+(?=function)/, "");
-const noResultsFnSource = extract(ui, "export function showNoResultsMessage(", "// Normaliza el indicador técnico");
+const noResultsFnSource = extract(ui, "export function showNoResultsMessage(", "// Normaliza el indicador técnico")
+    .replace(/\bexport\s+(?=function)/, "");
 const createRenderers = () => {
     const container = createNode("div");
     const documentStub = {
