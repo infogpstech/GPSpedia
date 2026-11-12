@@ -564,7 +564,20 @@ Siguiente: AUG-092 — Alinear esquema, persistencia y autorización del módulo
   5. Exigir sesión backend, derivar identidad desde Users y definir roles de alta.
   6. Validar URL/payload, deduplicar por ID/clave estable e idempotencia bajo concurrencia.
   7. Probar datos históricos, alta, edición, duplicados y sesiones/roles.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; validaciones locales aprobadas en harness adaptado, Apps Script/Spreadsheet aislados y navegador real pendientes para Beta.
+
+
+================================================================================
+AUG-092 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- Hoja canónica Tutorial: A:G conservadas; H Colaborador añadida solo si está vacía y sin datos históricos sin encabezado. No se migró ni reinterpretó la hoja plural heredada.
+- Services/feedback.js: alta en Tutorial con ID tut- derivado de operationId, validación de campos y tema normalizado, reintento idempotente, recuperación tras flush incierto, edición por ID y escritura atómica B:F. Las ediciones históricas sin ID conservan compatibilidad por tema único; los vídeos pendientes protegen también referencias históricas por título.
+- Autorización: addTutorial y updateTutorialItem exigen sesión Desarrollador; el colaborador se deriva del perfil Users verificado, no del payload de navegador.
+- Services/catalog.js y ui.js: lectura de Colaborador, formularios con todos los campos de contenido, detalle con colaborador al final, imagen/vídeo y referencia estable para aprobación; alta visible solo a Desarrollador.
+- Services/Coordinator.js: recurso compartido TUTORIAL para alta, edición, solicitud, aprobación y rechazo; evita carreras entre acciones FEEDBACK y publicación.
+- Servicios/Test: TutorialIntegrity 21/21 PASS; VideoApprovalPublishing 18/18 PASS; SharedMutationCoordinator 31/31 PASS. Parsing de feedback.js, catalog.js, Coordinator.js y bloques UI modificados PASS. PysVehicleRelationIntegrity 18/18 PASS como regresión relacionada.
+- Limitación: pruebas ejecutadas mediante harness JavaScript adaptado; no se ejecutó Node CLI, Apps Script desplegado, Spreadsheet real ni navegador. Esas verificaciones se reservan para Beta aislada. No se desplegó ni se modificaron datos productivos.
+Siguiente: AUG-093 — Validar tipo y estado antes de aprobar/rechazar vídeos.
+================================================================================
 
 ### AUG-093 — Validar tipo y estado antes de aprobar/rechazar vídeos
 - Hallazgo origen: H-AUD-013-005. Tarea AUD-T-013. Sesión/checkpoint: AUD-20261108-S031/AUD-CP-0031. Prioridad: Alta.
