@@ -27,6 +27,7 @@ function buildHarness(feedback, options = {}) {
     const state = { rows: options.initialRows ? [HEADER.slice(), ...options.initialRows.map(row => row.slice())] : [],
         createdBlob: null, trashed: false, description: "", setSharingCalls: 0, fileCreated: false };
     const driveRoot = { getId: () => "drive-root" };
+    const wrongParent = { getId: () => "other-parent" };
     const makeFolder = (id, name, parent) => ({
         getId: () => id,
         getName: () => name,
@@ -47,7 +48,7 @@ function buildHarness(feedback, options = {}) {
         getSharingAccess: () => "ANYONE_WITH_LINK",
         getSharingPermission: () => "VIEW"
     });
-    const cortesFolder = makeFolder(options.wrongRootName ? "root-cortes" : "root-cortes", options.wrongRootName ? "Otra carpeta" : "Cortes", driveRoot);
+    const cortesFolder = makeFolder("root-cortes", options.wrongRootName ? "Otra carpeta" : "Cortes", options.wrongRootParent ? wrongParent : driveRoot);
     state.childFolders = (options.duplicateFolders ? [
         makeFolder("pys-folder-duplicate-0000001", "Problemas y Soluciones", cortesFolder),
         makeFolder("pys-folder-duplicate-0000002", "Problemas y Soluciones", cortesFolder)
@@ -206,6 +207,8 @@ export function runPysImageStorageRecoveryTests({ feedback, ui }) {
         assert.throws(() => wrongName.api.getFolder(), /no corresponde a la carpeta/);
         const wrongId = buildHarness(feedback, { wrongRootId: true });
         assert.throws(() => wrongId.api.getFolder(), /Authorized Drive root unavailable/);
+        const wrongParent = buildHarness(feedback, { wrongRootParent: true });
+        assert.throws(() => wrongParent.api.getFolder(), /no está ubicada directamente/);
     });
 
     test("exige que el archivo conserve el acceso heredado de la carpeta", () => {
