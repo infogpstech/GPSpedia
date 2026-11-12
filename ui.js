@@ -14,7 +14,7 @@ import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { shouldAutoOpenVehicleDetail } from './search-utils.js';
-import { pushNavigationState, navigateBackToState } from './navigationHistory.js';
+import { pushNavigationState, replaceNavigationState, navigateBackToState } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData } from './pys-data.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
@@ -2230,10 +2230,15 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         logoImg.style.cursor = 'pointer';
         logoImg.onclick = () => {
             document.getElementById("modalDetalle").classList.remove("visible");
-            setState({ navigationState: { level: "modelosPorMarca", marca: activeItem.marca, origin: "marca", previousState: {} } });
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState({ level: "modelosPorMarca", marca: activeItem.marca, origin: "marca" }, '', window.location.pathname + window.location.search);
-            }
+            const previousNavigationState = getState().navigationState || { level: 'categorias' };
+            const targetState = {
+                level: "modelosPorMarca",
+                marca: activeItem.marca,
+                origin: "marca",
+                previousState: previousNavigationState
+            };
+            setState({ navigationState: targetState });
+            replaceNavigationState(targetState, { previousNavigationState });
             mostrarModelosPorMarca(activeItem.marca);
         };
         // El tamaño se controla ahora desde style.css para mantener la consistencia.
@@ -2488,10 +2493,17 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
              catSpan.textContent = activeItem.categoria;
              catSpan.onclick = () => {
                  document.getElementById("modalDetalle").classList.remove("visible");
-                 setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
-                 if (window.history && window.history.replaceState) {
-                     window.history.replaceState({ level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria" }, '', window.location.pathname + window.location.search);
-                 }
+                 const previousNavigationState = getState().navigationState || { level: 'categorias' };
+                 const targetState = {
+                     level: "modelos",
+                     categoria: activeItem.categoria,
+                     marca: activeItem.marca,
+                     origin: "categoria",
+                     versionEquipamiento: null,
+                     previousState: previousNavigationState
+                 };
+                 setState({ navigationState: targetState });
+                 replaceNavigationState(targetState, { previousNavigationState });
                  mostrarModelos(activeItem.categoria, activeItem.marca);
              };
              subHeaderText.appendChild(catSpan);
