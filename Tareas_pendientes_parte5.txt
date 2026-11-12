@@ -245,6 +245,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   5. Mostrar confirmación visible de copia y un error recuperable cuando no sea posible compartir/copiar; permitir acceder al enlace para copiarlo manualmente.
   6. Centralizar la construcción del URL para Web Share y Clipboard; no generar destinos diferentes.
   7. Probar metadatos duplicados, varias variantes, resultado multi-sección, Web Share exitoso/cancelado/rechazado, Clipboard ausente/rechazado y navegadores móviles/escritorio en contexto seguro.
+- **Estado:** EN PROGRESO; utilidades de enlace estable y primera integración de deep link/compartir implementadas; validación y revisión pendientes.
 
 ### AUG-073 — Hacer accesible y semánticamente preciso el indicador de conectividad
 - **Origen:** H-AUD-008-004. **Prioridad:** Baja.
