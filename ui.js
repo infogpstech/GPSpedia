@@ -14,6 +14,7 @@ import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { shouldAutoOpenVehicleDetail } from './search-utils.js';
+import { pushNavigationState, navigateBackToState } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData } from './pys-data.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
@@ -30,6 +31,55 @@ function mountRichTextToolbars(root) {
 }
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+
+function renderNavigationBackButton(container, targetState) {
+    const button = document.createElement('span');
+    button.className = 'backBtn';
+    button.innerHTML = `${backSvg} Volver`;
+    button.addEventListener('click', () => volverAEstado(targetState));
+    container.prepend(button);
+}
+
+function renderNavigationTarget_(targetState) {
+    const state = targetState || { level: 'categorias' };
+    const searchInput = document.getElementById('searchInput');
+    if (state.level === 'busqueda' || state.level === 'busqueda_focused') {
+        if (searchInput) {
+            searchInput.value = state.query || '';
+            if (searchInput.parentElement) searchInput.parentElement.classList.toggle('has-text', Boolean(state.query));
+        }
+        document.body.classList.toggle('search-active', state.level === 'busqueda_focused');
+        if (window.navigation && window.navigation.filtrarContenido) window.navigation.filtrarContenido(state.query || '', true);
+        return;
+    }
+    switch (state.level) {
+        case 'marcas': mostrarMarcas(state.categoria); break;
+        case 'modelosPorMarca': mostrarModelosPorMarca(state.marca); break;
+        case 'modelos': mostrarModelos(state.categoria, state.marca, state.versionEquipamiento || null); break;
+        case 'tiposEncendido': mostrarTiposEncendido(state.categoria, state.marca, state.versionEquipamiento || null, state.modelo); break;
+        case 'versiones': {
+            const cortes = (getState().catalogData || {}).cortes || [];
+            const filas = cortes.filter(item => item.categoria === state.categoria &&
+                item.marca === state.marca && item.modelo === state.modelo &&
+                (!state.versionEquipamiento || item.versionesAplicables === state.versionEquipamiento) &&
+                (!state.tipoEncendido || item.tipoEncendido === state.tipoEncendido));
+            mostrarVersiones(filas, state.categoria, state.marca, state.modelo);
+            break;
+        }
+        case 'versionesEquipamiento': mostrarVersionesEquipamiento(state.categoria, state.marca, state.modelo); break;
+        case 'categorias':
+        default:
+            if (window.navigation && window.navigation.irAPaginaPrincipal) window.navigation.irAPaginaPrincipal(true);
+    }
+}
+
+export function volverAEstado(targetState) {
+    const target = targetState && targetState.level ? targetState : { level: 'categorias' };
+    return navigateBackToState(target, {
+        previousNavigationState: getState().navigationState,
+        renderFallback: renderNavigationTarget_
+    });
+}
 
 
 export function cleanColaboradorName(name) {
@@ -1088,15 +1138,15 @@ export function mostrarCategorias() {
 }
 
 export function mostrarMarcas(categoria) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState: previousState } = getState();
     const { cortes } = catalogData;
-
-    setState({ navigationState: { level: "marcas", categoria: categoria, origin: "categoria" } });
-    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "marcas")) {
-        window.history.pushState({ level: "marcas", categoria: categoria, origin: "categoria" }, '', window.location.pathname + window.location.search);
-    }
+    const nextState = { level: "marcas", categoria, origin: "categoria" };
+    setState({ navigationState: nextState });
+    pushNavigationState(nextState, { previousNavigationState: previousState || { level: 'categorias' } });
     const cont = document.getElementById("contenido");
-    cont.innerHTML = `<span class="backBtn" onclick="window.navigation.irAPaginaPrincipal()">${backSvg} Volver</span><h4>Marcas de ${categoria}</h4>`;
+    cont.innerHTML = `<h4>Marcas de ${categoria}</h4>`;
+    renderNavigationBackButton(cont, { level: 'categorias' });
+    const cont = document.getElementById("contenido");
     const itemsInCategory = cortes.filter(item => item.categoria === categoria);
     const marcas = [...new Set(itemsInCategory.map(item => item.marca))].filter(m => m).sort();
 
@@ -1130,22 +1180,17 @@ export function mostrarMarcas(categoria) {
 export function mostrarModelosPorMarca(marca) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
-
-    // Se establece el estado de navegación actual capturando el estado previo.
     const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "modelosPorMarca", marca: marca, origin: "marca", previousState } });
-    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelosPorMarca")) {
-        window.history.pushState({ level: "modelosPorMarca", marca: marca, origin: "marca" }, '', window.location.pathname + window.location.search);
-    }
+    const nextState = { level: "modelosPorMarca", marca, origin: "marca", previousState };
+    setState({ navigationState: nextState });
+    pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-
-    // Lógica dinámica para el botón "Volver": regresa a búsqueda si ese era el origen.
-    const backAction = previousState.level === 'busqueda'
-        ? 'window.ui.regresarABusqueda()'
-        : 'window.navigation.irAPaginaPrincipal()';
-
-    // Se limpia el contenido y se añade el botón de regreso dinámico.
-    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Modelos de ${marca}</h4>`;
+    const backTarget = ['busqueda', 'busqueda_focused'].includes(previousState.level)
+        ? previousState
+        : { level: 'categorias' };
+    cont.innerHTML = `<h4>Modelos de ${marca}</h4>`;
+    renderNavigationBackButton(cont, backTarget);
+    const cont = document.getElementById("contenido");
 
     // Se filtran los cortes para obtener todos los modelos de la marca seleccionada, excluyendo motocicletas
     const modelosFiltrados = cortes.filter(item => item.marca === marca && item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()));
@@ -1243,26 +1288,20 @@ function navegarADetallesDeModelo(categoria, marca, modelo) {
 export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-
     const previousState = navigationState || {};
     const origin = previousState.origin || "categoria";
-    setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, origin, previousState } });
-    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelos")) {
-        window.history.pushState({ level: "modelos", categoria, marca, versionEquipamiento, origin }, '', window.location.pathname + window.location.search);
-    }
+    const nextState = { level: "modelos", categoria, marca, versionEquipamiento, origin, previousState };
+    setState({ navigationState: nextState });
+    pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-
-    // Lógica dinámica para el botón "Volver"
-    let backAction;
-    if (versionEquipamiento) {
-        backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}')`;
-    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
-        backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
-    } else {
-        backAction = `window.ui.mostrarMarcas('${categoria}')`;
-    }
-
-    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Modelos de ${marca} ${versionEquipamiento || ''}</h4>`;
+    let backTarget;
+    if (['busqueda', 'busqueda_focused'].includes(previousState.level)) backTarget = previousState;
+    else if (versionEquipamiento) backTarget = { level: 'versionesEquipamiento', categoria, marca, modelo: previousState.modelo };
+    else if (origin === 'marca' || previousState.level === 'modelosPorMarca') backTarget = { level: 'modelosPorMarca', marca, origin: 'marca' };
+    else backTarget = { level: 'marcas', categoria, origin: 'categoria' };
+    cont.innerHTML = `<h4>Modelos de ${marca} ${versionEquipamiento || ''}</h4>`;
+    renderNavigationBackButton(cont, backTarget);
+    const cont = document.getElementById("contenido");
 
     let modelosFiltrados = cortes.filter(item => item.categoria === categoria && item.marca === marca);
     if (versionEquipamiento) {
@@ -1297,30 +1336,21 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
 }
 
 export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo) {
-     const { catalogData, navigationState } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
     const previousState = navigationState || {};
     const origin = previousState.origin || "categoria";
-    setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin, previousState } });
-    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "tiposEncendido")) {
-        window.history.pushState({ level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin }, '', window.location.pathname + window.location.search);
-    }
-
+    const nextState = { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin, previousState };
+    setState({ navigationState: nextState });
+    pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-
-    // Comentario: Lógica dinámica para el botón "Volver".
-    // Regresa a `mostrarVersionesEquipamiento` si ese fue el paso anterior, si no, a `mostrarModelos`.
-    // Se añade soporte para el flujo de navegación por marca (modelosPorMarca).
-    let backAction;
-    if (previousState.level === 'versionesEquipamiento') {
-        backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
-    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
-        backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
-    } else {
-        backAction = `window.ui.mostrarModelos('${categoria}', '${marca}')`;
-    }
-
-    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Tipos de Encendido para ${modelo} ${versionEquipamiento || ''}</h4>`;
+    let backTarget;
+    if (['busqueda', 'busqueda_focused'].includes(previousState.level) || previousState.level === 'versionesEquipamiento') backTarget = previousState;
+    else if (origin === 'marca' || previousState.level === 'modelosPorMarca') backTarget = { level: 'modelosPorMarca', marca, origin: 'marca' };
+    else backTarget = { level: 'modelos', categoria, marca, origin };
+    cont.innerHTML = `<h4>Tipos de Encendido para ${modelo} ${versionEquipamiento || ''}</h4>`;
+    renderNavigationBackButton(cont, backTarget);
+    const cont = document.getElementById("contenido");
 
     let vehiculos = cortes.filter(item =>
         item.categoria === categoria &&
@@ -1361,34 +1391,18 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     const { navigationState } = getState();
     const previousState = navigationState || {};
     const origin = previousState.origin || "categoria";
-    setState({ navigationState: { level: "versiones", categoria, marca, modelo, origin, previousState } });
-    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versiones")) {
-        window.history.pushState({ level: "versiones", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
-    }
+    const nextState = { level: "versiones", categoria, marca, modelo, origin, previousState };
+    setState({ navigationState: nextState });
+    pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-
-    // Comentario: Lógica dinámica MEJORADA para el botón "Volver".
-    // Determina si el paso anterior fue una búsqueda, selección de tipo de encendido o de versión de equipamiento.
-    let backAction;
-    if (previousState.level === 'busqueda' || previousState.level === 'busqueda_focused') {
-        // Si venimos de una búsqueda, el botón debe regresar a los resultados de esa búsqueda.
-        backAction = `window.ui.regresarABusqueda()`;
-    } else if (previousState.level === 'tiposEncendido') {
-        // Comentario: Se corrige el bug que pasaba 'null' como string.
-        // Se asegura que si no hay versión de equipamiento, se pase el valor literal `null`.
-        const veq = previousState.versionEquipamiento ? `'${previousState.versionEquipamiento}'` : null;
-        backAction = `window.ui.mostrarTiposEncendido('${categoria}', '${marca}', ${veq}, '${modelo}')`;
-    } else if (previousState.level === 'versionesEquipamiento') {
-        backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
-    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
-        // Soporte para el flujo de navegación por marca (modelosPorMarca).
-        backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
-    } else {
-        // Fallback seguro, regresa a la lista de modelos.
-        backAction = `window.ui.mostrarModelos('${categoria}', '${marca}')`;
-    }
-
-    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Años de ${modelo}</h4>`;
+    let backTarget;
+    if (['busqueda', 'busqueda_focused'].includes(previousState.level)) backTarget = previousState;
+    else if (previousState.level === 'tiposEncendido' || previousState.level === 'versionesEquipamiento') backTarget = previousState;
+    else if (origin === 'marca' || previousState.level === 'modelosPorMarca') backTarget = { level: 'modelosPorMarca', marca, origin: 'marca' };
+    else backTarget = { level: 'modelos', categoria, marca, origin };
+    cont.innerHTML = `<h4>Años de ${modelo}</h4>`;
+    renderNavigationBackButton(cont, backTarget);
+    const cont = document.getElementById("contenido");
     const grid = document.createElement("div"); grid.className = "grid";
     filas.forEach(item => {
         const card = crearCardVehiculo(item);
@@ -1403,40 +1417,31 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
  */
 export function regresarABusqueda() {
     const { navigationState } = getState();
-    // CORRECCIÓN DEFINITIVA: La lógica ahora inspecciona el `previousState` anidado.
-    // Cuando se llama a esta función, el estado actual es 'versiones', pero el estado
-    // que contiene la información de la búsqueda es el 'previousState'.
-    const prevState = navigationState ? navigationState.previousState : null;
-
-    if (prevState && (prevState.level === 'busqueda' || prevState.level === 'busqueda_focused') && prevState.query) {
-        // Vuelve a ejecutar la función de filtrado con el término de búsqueda guardado en el estado anterior.
-        window.navigation.filtrarContenido(prevState.query);
-    } else {
-        // Si el estado anterior no es de búsqueda, regresa a la página principal como fallback seguro.
-        window.navigation.irAPaginaPrincipal();
-    }
+    const previousState = navigationState ? navigationState.previousState : null;
+    const target = previousState && ['busqueda', 'busqueda_focused'].includes(previousState.level)
+        ? previousState
+        : { level: 'categorias' };
+    return volverAEstado(target);
 }
 
 /* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-
     const previousState = navigationState || {};
     const origin = previousState.origin || "categoria";
-    setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, origin, previousState } });
-    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versionesEquipamiento")) {
-        window.history.pushState({ level: "versionesEquipamiento", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
-    }
+    const nextState = { level: "versionesEquipamiento", categoria, marca, modelo, origin, previousState };
+    setState({ navigationState: nextState });
+    pushNavigationState(nextState, { previousNavigationState: previousState });
     const cont = document.getElementById("contenido");
-
-    // Comentario: Lógica dinámica para el botón "Volver".
-    // Se añade soporte para el flujo de navegación por marca (modelosPorMarca).
-    const backAction = origin === 'marca' || previousState.level === 'modelosPorMarca'
-        ? `window.ui.mostrarModelosPorMarca('${marca}')`
-        : `window.ui.mostrarModelos('${categoria}', '${marca}')`;
-
-    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Versiones de ${modelo}</h4>`;
+    const backTarget = ['busqueda', 'busqueda_focused'].includes(previousState.level)
+        ? previousState
+        : (origin === 'marca' || previousState.level === 'modelosPorMarca')
+            ? { level: 'modelosPorMarca', marca, origin: 'marca' }
+            : { level: 'modelos', categoria, marca, origin };
+    cont.innerHTML = `<h4>Versiones de ${modelo}</h4>`;
+    renderNavigationBackButton(cont, backTarget);
+    const cont = document.getElementById("contenido");
 
     // Comentario: Se filtra por modelo específico para mostrar solo las versiones relevantes.
     const vehiculosDelModelo = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
