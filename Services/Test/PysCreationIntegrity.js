@@ -159,6 +159,11 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         const h=buildHarness(feedback,ui);const a=h.api.add(h.validPayload(OP_A));const b=h.api.add(h.validPayload(OP_B,{titulo:"Otra falla"}));
         assert.equal(a.problemId,"isue-001");assert.equal(b.problemId,"isue-002");
     });
+    test("serializa altas independientes y libera el lock en cada operación",()=>{
+        const h=buildHarness(feedback,ui);const a=h.api.add(h.validPayload(OP_A));const b=h.api.add(h.validPayload(OP_B,{titulo:"Otra falla"}));
+        assert.equal(a.problemId,"isue-001");assert.equal(b.problemId,"isue-002");
+        assert.equal(h.state.lockWaits,2);assert.equal(h.state.lockReleases,2);
+    });
     test("un append fallido compensa el archivo y permite reintentar con el mismo ID",()=>{
         const h=buildHarness(feedback,ui,{failAppendOnce:true});
         assert.throws(()=>h.api.add(h.validPayload()),/append failed/);
