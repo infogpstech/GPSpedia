@@ -84,7 +84,7 @@ function buildHarness(feedback, options = {}) {
         releaseLock() { state.lockReleases++; state.locked = false; }
     };
     const context = {
-        console, Date, JSON, Math, Number, String, Object, Array, RegExp, Error, Set, Map,
+        console: console, Date: Date, JSON: JSON, Math: Math, Number: Number, String: String, Object: Object, Array: Array, RegExp: RegExp, Error: Error, Set: Set, Map: Map,
         SHEET_NAMES: { CORTES: "Cortes" },
         COLS_CORTES: { id: 1 },
         LockService: { getScriptLock: () => lock },
