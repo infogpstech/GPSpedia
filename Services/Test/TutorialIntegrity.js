@@ -238,6 +238,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.match(ui, /tutorialId: item\.ID \|\| ""/);
         assert.match(ui, /comoIdentificarlo: newComo/);
         assert.match(ui, /dondeEncontrarlo: newDonde/);
+        assert.match(ui, /createRichTextToolbar\("edit-tutorial-details-textarea"\)/);
     });
 
     test("autorización backend exige Desarrollador y obtiene identidad de Users", () => {
