@@ -377,7 +377,7 @@ PRUEBA LOCAL EN NODE.JS:
 Ejecutar desde la raíz. El comando crea dobles locales para LockService y CacheService; no representa concurrencia ni servicios Apps Script reales.
 
 ```bash
-node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
 ```
 
 VALIDACIÓN DE INTEGRACIÓN EN ENTORNO AISLADO:
