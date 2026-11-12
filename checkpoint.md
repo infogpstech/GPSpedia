@@ -669,3 +669,15 @@ Durante la preparación de la ejecución reproducible se detectó que OverlayHis
 Validación de esta corrección: revisión de los 11 casos y comprobación estática de la documentación y el contador. No se declara ejecución Node CLI ni navegador real. La rama base permanece intacta.
 Siguiente acción: ejecutar en Codespaces las suites OverlayHistoryStack (11/11), YouTubeUploadOverlayLifecycle (8/8) y YouTubeUploadCloseDuringTransfer (4/4); revisar cualquier fallo antes de ampliar la cobertura de las rutas de recuperación y cierre automático. No iniciar AUG-069.
 ================================================================================
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3E — DISPONIBILIDAD DEL CIERRE X DURANTE TRANSFERENCIA — 2026-11-12
+Hallazgo: el callback closeModal sí solicitaba confirmación, marcaba uploadCancelled y abortaba activeXhr; sin embargo, el botón X se ocultaba al comenzar la transferencia. Por tanto, el cierre X probado por la suite no estaba disponible realmente en la interfaz mientras se subía el archivo.
+Corrección:
+- youtubeUpload.js: se elimina la instrucción que ocultaba closeBtn durante la transferencia. La X permanece visible y utiliza requestOverlayClose, por lo que la confirmación de pausa y conservación del progreso se mantiene como protección.
+- Services/Test/YouTubeUploadCloseDuringTransfer.js: se añade una aserción para impedir que la X vuelva a ocultarse.
+Validación adaptada pendiente tras el cambio: ejecutar nuevamente la prueba de cierre durante transferencia y comprobar el contador actualizado. No se ejecutó Node CLI ni navegador real.
+La rama base no se modifica. ChangesLogs.txt permanece sin cambios por superar el umbral de rotación normativa.
+Siguiente acción: validar la nueva aserción y continuar la revisión de cierres automáticos/recuperación dentro de AUG-068. No iniciar AUG-069.
+================================================================================

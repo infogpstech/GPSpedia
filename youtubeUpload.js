@@ -508,7 +508,6 @@ export function openYouTubeUploadModal(options = {}) {
         submitBtn.disabled = true;
         discardBtn.disabled = true;
         submitBtn.style.display = "none";
-        closeBtn.style.display = "none";
         progressContainer.style.display = "flex";
 
         const userSnapshot = getState().currentUser;

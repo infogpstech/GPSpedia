@@ -26,6 +26,7 @@ const closeModalExpression = extractArrow("closeModal");
 const requestCloseExpression = extractArrow("requestOverlayClose");
 assert.match(source, /closeBtn\.onclick = requestOverlayClose;/);
 assert.match(source, /cancelBtn\.onclick = requestOverlayClose;/);
+assert.doesNotMatch(source, /closeBtn\.style\.display\s*=\s*"none"/, "La X debe permanecer disponible durante la transferencia");
 
 function createFakeHistory() {
     const entries = [{ state: { level: "catalogo", marker: "preserved" } }];
