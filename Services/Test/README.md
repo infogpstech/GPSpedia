@@ -773,3 +773,14 @@ cp Services/Test/YouTubeUploadRecordPersistence.js Services/Test/YouTubeUploadRe
 ```
 
 La suite verifica el ciclo de lectura/escritura/eliminación de los estados `new`, `uploading`, `paused`, `interrupted` y `uploaded`; el aislamiento por usuario, tipo y referencia; el rechazo de registros duplicados; y los errores/abortos de transacción, incluso cuando una lectura ya recibió su resultado pero la transacción se aborta antes de completarse.
+
+
+## AUG-068 — Historial del overlay YouTube en add_cortes.html
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/AddCortesYouTubeOverlayHistory.js Services/Test/AddCortesYouTubeOverlayHistory.mjs && node Services/Test/AddCortesYouTubeOverlayHistory.mjs; RESULT=$?; rm -f Services/Test/AddCortesYouTubeOverlayHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+Verifica que la página independiente inicialice el gestor compartido de overlays y que Atrás cierre la carga YouTube antes de abandonar la vista. También comprueba que, si el lightbox está por encima, se cierre primero y el overlay YouTube permanezca registrado hasta el siguiente retroceso.
