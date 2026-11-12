@@ -112,7 +112,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
     });
 
     test("recupera un alta cuyo flush falla si la fila completa quedó persistida", () => {
-        const h = buildHarness_(feedback, { missingSheet: true, failFlush: true });
+        const h = buildHarness_(feedback, { rows: [headers], failFlush: true });
         const result = h.api.add(base);
         assert.equal(result.status, "success");
         assert.equal(result.recovered, true);
@@ -193,7 +193,7 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.state.lockWaits, 1);
         assert.equal(h.state.lockReleases, 1);
         const u = buildHarness_(feedback, { rows: [headers, ["tut-1", "Tema", "", "", "", "", "", "Autor"]], failSetValues: true });
-        assert.throws(() => u.api.update({ tutorialId: "tut-1", detalles: "fallo" }), /simulated write failure/);
+        assert.throws(() => u.api.update({ tutorialId: "tut-1", detalles: "fallo" }), /simulated range write failure/);
         assert.equal(u.state.lockReleases, 1);
     });
 
