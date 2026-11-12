@@ -602,3 +602,43 @@ EJECUCIÓN EN ENTORNO BETA AISLADO (Apps Script FEEDBACK, Spreadsheet y Drive de
 
 No declarar PASS sin comprobar filas y archivos en recursos aislados. No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
 ================================================================================
+
+================================================================================
+AUG-082 — SEGURIDAD STORED XSS EN PyS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN NAVEGADOR/DOM AISLADO (NO PRODUCCIÓN):
+1. Ejecutar la suite local:
+   ```bash
+   set -e
+   TEST_TMP=Services/Test/PysStoredXss.mjs
+   cp Services/Test/PysStoredXss.js "$TEST_TMP"
+   trap 'rm -f "$TEST_TMP"' EXIT
+   node "$TEST_TMP"
+   ```
+2. Sembrar en un entorno aislado Problema y Colaborador con texto HTML, SVG, comillas, etiquetas img y atributos onerror/onload. Abrir tarjetas y modal; confirmar que se muestran literalmente y no ejecutan código.
+3. Probar Video con javascript:, data:, HTTP, youtube.com.evil.test, credenciales, rutas no permitidas, ID corto/largo y parámetros v duplicados. Confirmar que no se crea iframe ni enlace.
+4. Probar URLs HTTPS válidas de youtube.com/watch, youtu.be, /embed, /shorts y /live. Confirmar que el iframe apunta únicamente a https://www.youtube.com/embed/{ID validado}.
+5. Probar una URL de embed manipulada y un ID arbitrario que contenga markup; confirmar que no se crea recurso externo.
+6. Comprobar que descripción, solución y prevención con formato enriquecido permitido siguen renderizando a través de sanitizeHtmlContent.
+7. Verificar reproducción y cierre del iframe en navegador real; confirmar que el modal no ejecuta scripts almacenados ni navega a hosts no autorizados.
+
+No declarar PASS sin inspección del DOM y verificación de ausencia de ejecución. No usar cuentas, videos, carpetas o datos productivos.
+================================================================================
