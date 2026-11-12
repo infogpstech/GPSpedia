@@ -109,6 +109,9 @@ test('main popstate reconcilia un modal ya oculto por un cierre directo', () => 
     const fallback = source.slice(start, end);
     assert.match(fallback, /targetOverlayIds\.includes\(topOverlayId\)/);
     assert.match(fallback, /overlayHistory\.handlePopState\(state\)/);
+    assert.match(source, /function isManagedOverlayVisible_\(id\)/);
+    assert.match(source, /!isManagedOverlayVisible_\(topOverlayId\)/);
+    assert.match(source, /replaced-images-lightbox/);
 });
 
 test('ui.js registra el menú idempotentemente y serializa su cierre', () => {
