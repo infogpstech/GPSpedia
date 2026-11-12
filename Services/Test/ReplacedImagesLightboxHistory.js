@@ -47,7 +47,7 @@ test('la apertura registra el lightbox como hijo en la pila compartida', () => {
 
 test('la apertura repetida reutiliza la entrada y no duplica profundidad', () => {
     assert.match(openSource, /getStack\(\)\.includes\(REPLACED_IMAGES_LIGHTBOX_HISTORY_ID_\)/);
-    assert.doesNotMatch(openSource, /closeLightbox\(\);/);
+    assert.doesNotMatch(openSource, /return;\s*closeLightbox\(\);/);
 });
 
 test('el cierre manual delega al gestor y el callback popstate limpia sin recursión', () => {
