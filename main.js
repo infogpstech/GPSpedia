@@ -14,7 +14,7 @@ import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
 import { decodeSearchHash } from './search-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
-import { createOverlayHistoryManager, overlayHistoryStateKey } from './overlayHistory.js';
+import { createOverlayHistoryManager } from './overlayHistory.js';
 import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 
 let deferredPrompt;
