@@ -379,7 +379,7 @@ function runSharedMutationCoordinatorTests() {
     });
 
     test_("FEEDBACK PyS vehicle relations read Cortes and conflict with vehicle writes", function() {
-        ["addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
+        ["addProblem", "addVehicleToProblem", "removeVehicleFromProblem"].forEach(function(action) {
             const policy = coordinatorPolicy_("FEEDBACK", action);
             assert_(policy.readResources.includes("CORTES"), action + " debe reservar lectura de Cortes.");
             assert_(policy.writeResources.includes("FEEDBACK"), action + " debe serializar la hoja pys.");
