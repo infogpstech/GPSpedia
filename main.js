@@ -333,16 +333,18 @@ async function initializeApp() {
 
         stale.forEach(([id]) => {
             overlayElements.delete(id);
-            overlayHistory.close(id);
+            if (overlayHistory.has(id)) overlayHistory.close(id);
         });
         fresh.forEach(element => {
-            const id = 'info-modal-' + (++overlaySequence);
+            const id = element.dataset.gpOverlayHistoryId || 'info-modal-' + (++overlaySequence);
             element.dataset.gpOverlayHistoryId = id;
             overlayElements.set(id, element);
-            overlayHistory.register(id, () => {
-                element.style.display = 'none';
-                element.classList.remove('visible');
-            });
+            if (!overlayHistory.has(id)) {
+                overlayHistory.register(id, () => {
+                    element.style.display = 'none';
+                    element.classList.remove('visible');
+                });
+            }
         });
     }
 
@@ -360,9 +362,12 @@ async function initializeApp() {
             });
         };
 
+        const stack = overlayHistory.getStack();
+        const stackOrder = new Map(stack.map((id, index) => [id, index]));
         const sideMenu = document.getElementById('side-menu');
         if (sideMenu && sideMenu.classList.contains('open')) {
-            add(sideMenu, 'side-menu', () => ui.closeSideMenu(true));
+            add(sideMenu, 'side-menu', () => overlayHistory.handlePopState(state),
+                stackOrder.has('side-menu') ? stackOrder.get('side-menu') : 0);
         }
 
         const lightbox = document.getElementById('lightbox');
@@ -375,8 +380,6 @@ async function initializeApp() {
             add(termsModal, 'terms', () => window.history.pushState(state, ''));
         }
 
-        const stack = overlayHistory.getStack();
-        const stackOrder = new Map(stack.map((id, index) => [id, index]));
         Array.from(document.querySelectorAll('.info-modal')).forEach(element => {
             if (!isOverlayVisible_(element)) return;
             const id = element.dataset.gpOverlayHistoryId;
