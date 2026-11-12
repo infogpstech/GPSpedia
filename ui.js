@@ -10206,6 +10206,16 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
                     modelosAsociadosIds = rawModelos.split(/[,\/\\;]+/).map(id => id.trim()).filter(Boolean);
                 }
             }
+            const uniqueModelosAsociados = new Set();
+            modelosAsociadosIds = modelosAsociadosIds.reduce((normalized, value) => {
+                if (value === null || value === undefined) return normalized;
+                const id = String(value).trim();
+                if (id && !uniqueModelosAsociados.has(id)) {
+                    uniqueModelosAsociados.add(id);
+                    normalized.push(id);
+                }
+                return normalized;
+            }, []);
             const canEditPys = userRole === 'desarrollador';
 
             modelosAsociadosIds.forEach(vId => {
