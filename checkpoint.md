@@ -902,3 +902,35 @@ Commits de esta iteración:
 
 Siguiente acción: AUG-068 cerrada. No iniciar AUG-069 hasta una nueva instrucción.
 ================================================================================
+
+
+================================================================================
+AUG-069 — ITERACIÓN 1 — 2026-11-12 — OPERACIÓN CENTRAL DE RETROCESO CON HISTORY API
+Estado: EN PROGRESO. Se resolvió la primera brecha de sincronización; la tarea permanece abierta para completar la matriz de rutas y regresiones.
+Rama: GPSpedia2.2.5_work. HEAD antes de este checkpoint: a112e49f5c947cdcbd911a1105873a9da7b152db. Rama base: GPSpedia2.2.5 (aheadBy 1050, behindBy 0; sin cambios en la base).
+
+Problema y cambios:
+- Los botones «Volver» de los niveles de categoría, marca, modelo, equipamiento, tipo de encendido y años llamaban directamente a renderizadores. Al volver, esos renderizadores podían agregar otra entrada y conservar la vista profunda en el historial.
+- Nuevo `navigationHistory.js`: registra el estado anterior de navegación, compara destino completo, usa `history.back()` cuando el destino coincide y, si no coincide, reemplaza la entrada actual y renderiza el destino sin agregar profundidad. Conserva query, origin, categoría, marca, modelo, equipamiento, encendido y sección.
+- `ui.js`: los seis botones de catálogo usan `volverAEstado`; las rutas de búsqueda y los accesos desde el modal de detalle conservan el estado anterior. Las secciones usan el mismo helper para no duplicar entradas al seleccionar repetidamente la sección activa.
+- `main.js`: los estados de búsqueda enfocada/desenfocada ya no crean dos entradas duplicadas. Al pulsar Atrás con el buscador enfocado se conserva la consulta en una sola entrada desenfocada; el listener restaura el antecesor guardado y conserva Forward.
+- `navigation.js`: la sincronización del historial de búsqueda se realiza antes de la salida por cero resultados; los estados vacíos también conservan el antecesor.
+- Nueva suite `Services/Test/NavigationBackHistory.js` con 17 escenarios. `Services/Test/README.md` documenta su ejecución.
+
+Validación local:
+- `NavigationBackHistory`: 17/17 PASS en runtime V8 adaptado, usando `navigationHistory.js` real y comprobaciones de contrato sobre `ui.js`, `main.js` y `navigation.js`.
+- Parsing V8 aislado de los 18 bloques modificados (renderizadores, helpers, callbacks de búsqueda, popstate y accesos del modal) más el módulo `navigationHistory.js`: 19/19 PASS.
+- Incluye secuencia multinivel Atrás/Adelante, búsqueda enfocada, consulta sin resultados, hash deep-link, secciones repetidas, accesos desde detalle y ausencia de bucles en la pila simulada.
+- No se ejecutó Node CLI en Codespaces ni navegador/DOM real. Botón físico, gestos del dispositivo, deep links en navegador real y Forward real quedan diferidos a Beta; no se presentan como ejecutados.
+
+Archivos funcionales: `navigationHistory.js` (nuevo), `ui.js`, `main.js`, `navigation.js`.
+Pruebas/documentación: `Services/Test/NavigationBackHistory.js` (nuevo), `Services/Test/README.md`, `Tareas_pendientes_parte5.txt`.
+`ChangesLogs.txt` no se modificó por el estado de rotación documental ya identificado; no se agregó contenido al registro acumulativo sin preparar su rotación sin pérdida.
+
+Publicación:
+- Se publicaron commits secuenciales por archivo mediante la API de contenidos; no se reescribió historial ni se modificó la rama base.
+- HEAD verificado antes de checkpoint: `a112e49f5c947cdcbd911a1105873a9da7b152db`.
+- AUG-069 sigue EN PROGRESO. No iniciar AUG-070.
+
+Siguiente iteración: completar la revisión de las rutas de ida/vuelta restantes y la matriz de deep link/búsqueda/origin, y corregir cualquier inconsistencia local reproducible. Mantener una sola tarea activa.
+================================================================================
