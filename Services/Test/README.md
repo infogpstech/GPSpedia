@@ -826,4 +826,4 @@ Ejecutar desde la raíz:
 cp Services/Test/OverlayMenuModalHistory.js Services/Test/OverlayMenuModalHistory.mjs && node Services/Test/OverlayMenuModalHistory.mjs; RESULT=$?; rm -f Services/Test/OverlayMenuModalHistory.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
-La suite contiene 12 escenarios para el registro idempotente del menú, la transición menú→Inbox/Dashboard/Changelog/DevTools, cierres por popstate y cierre directo, conservación de búsqueda/sección, reemplazo de modales, vistas administrativas y envío exitoso de contact-form. History se simula; navegador real y gestos nativos permanecen como validación Beta.
+La suite contiene 13 escenarios para el registro idempotente del menú, la transición menú→Inbox/Dashboard/Changelog/DevTools, cierres por popstate y cierre directo, conservación de búsqueda/sección, reemplazo de modales, vistas administrativas y envío exitoso de contact-form. History se simula; navegador real y gestos nativos permanecen como validación Beta.
