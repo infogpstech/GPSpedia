@@ -789,3 +789,22 @@ Validación local: ReportSuggestionSchemaValidation.js 16/16 PASS y SuggestionCo
 
 Beta pendiente: FEEDBACK, Spreadsheet y Drive aislados; pruebas de límites y rechazo antes de escritura, propuestas parciales, no-op, testigo y lectura histórica. No se modificaron deployments ni datos productivos.
 ================================================================================
+
+================================================================================
+ADENDA H-AUD-011-001 / AUG-082 — 2026-11-12
+Estado: RESUELTO EN FUENTES; validación DOM/navegador diferida a Beta.
+
+Evidencia y corrección:
+- createPysCard ya no interpola item.Problema en overlay.innerHTML. El título y estado se construyen como nodos; el título usa textContent.
+- openPysDetailModal asigna item.Problema y cleanColaboradorName(item.Colaborador) mediante textContent. cleanColaboradorName permanece como normalizador de nombre, no se considera sanitizador.
+- El video PyS se procesa con URL y allowlist exacta: HTTPS; hosts youtube.com/www.youtube.com/m.youtube.com/youtube-nocookie.com/www.youtube-nocookie.com o youtu.be; rutas watch, embed, shorts y live con ID válido, o ID puro de 11 caracteres. Se rechazan hosts falsos, credenciales, esquemas distintos, rutas desconocidas, IDs inválidos y parámetros v duplicados.
+- El iframe se crea mediante DOM y su src se construye desde el ID validado y origen canónico. Se elimina el fallback que aceptaba cualquier cadena con embed/ y el href que concatenaba item.Video. Un valor no válido no genera recurso navegable.
+- sanitizeHtmlContent continúa siendo la única frontera HTML para descripción, solución y prevención enriquecidas. Los demás textos almacenados se asignan como texto.
+
+Validación local:
+- PysStoredXss: 10/10 PASS en harness V8 adaptado; por ausencia del global URL en ese runtime se utilizó un adaptador de interfaz URL para ejecutar la matriz. La suite publicada usa URL nativo de Node.
+- Parsing V8 de helper, createPysCard, openPysDetailModal y módulo de pruebas: PASS.
+- Revisión de sinks del modal PyS: innerHTML restante limitado a limpieza de contenedor, plantillas constantes/estáticas y sanitizeHtmlContent para contenido enriquecido; no quedan interpolaciones de Problema, Colaborador o Video en HTML/atributos.
+
+Límites: Node CLI no ejecutado en esta sesión. No se ejecutaron pruebas DOM/navegador real, CSP ni reproducción de YouTube. No se modificaron backend, endpoints, permisos, deployments ni datos productivos. La validación de navegador se difiere a Beta aislada.
+================================================================================
