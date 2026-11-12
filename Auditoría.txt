@@ -662,3 +662,22 @@ Evidencia:
 - El deep link inicial solo decodificaba #search= y no tenía una ruta de resolución por identidad de Cortes.
 Criterio: URL único con ID y búsqueda; resolver exclusivamente contra catalogData.cortes y rechazar IDs duplicados; mantener enlaces históricos; no copiar en AbortError; validar y capturar fallos de Clipboard/Web Share; confirmar éxito y mostrar URL manual ante fallo.
 ================================================================================
+
+
+================================================================================
+AUG-072 — ADENDA DE CIERRE — 2026-11-12
+H-AUD-072-001: RESUELTO EN FUENTES.
+- share-utils.js centraliza la construcción del URL para Web Share y Clipboard. El enlace nuevo contiene vehicle=<id>&search=<consulta>; cuando no hay ID, conserva #search=<consulta>.
+- decodeSharedVehicleHash mantiene compatibilidad histórica y rechaza identificadores/consultas contradictorios en vez de seleccionar valores arbitrarios.
+- resolveSharedVehicleById resuelve exclusivamente en catalogData.cortes y devuelve null ante ausencia o duplicidad de ID. main.js abre el registro exacto cuando existe; si no, ejecuta el fallback de búsqueda sin abrir un registro de otra sección.
+- El botón usa el mismo URL para compartir/copiar, reconoce AbortError sin copiar, intenta Clipboard ante otros fallos, comprueba writeText, captura errores síncronos/asíncronos, muestra confirmación y ofrece un campo accesible para copia manual.
+- service-worker.js incluye share-utils.js en CORE_ASSETS y cambia a gpsepedia-cache-v16 para que la dependencia esté disponible sin conexión.
+Validación local adaptada:
+- VehicleShareLinks: 19/19 PASS.
+- ServiceWorkerCache: 6/6 PASS.
+- OverlayMenuModalHistory: 13/13 PASS.
+- OverlayHistoryStack: 19/19 PASS.
+- ReplacedImagesLightboxHistory: 6/6 PASS.
+- Parsing V8: share-utils.js, main.js y bloque de compartir de ui.js: PASS.
+Límites: Node CLI literal no ejecutado en este entorno. Web Share/Clipboard real, permisos, contexto seguro, lectores de pantalla y navegación en dispositivos requieren validación Beta. No se modificaron endpoints ni datos productivos.
+================================================================================
