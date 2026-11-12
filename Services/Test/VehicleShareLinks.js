@@ -7,6 +7,7 @@ import {
     copyTextToClipboard,
     shareVehicleLink
 } from '../../share-utils.js';
+import { buildGlobalSearchResults } from '../../search-utils.js';
 
 let passed = 0;
 function test(name, fn) {
@@ -83,6 +84,20 @@ test('resuelve la identidad exacta de Cortes aunque existan metadatos duplicados
 test('no abre un ID repetido dentro de Cortes; deja que actúe la búsqueda alternativa', () => {
     const catalog = { cortes: [{ id: 'DUP' }, { id: 'DUP' }] };
     assert.equal(resolveSharedVehicleById(catalog, 'DUP'), null);
+});
+
+test('una búsqueda multi-sección conserva la identidad exacta del vehículo', () => {
+    const vehicle = { id: 'CUT-9', marca: 'Toyota', modelo: 'Corolla', versionesAplicables: 'LE / SE', anoDesde: 2020 };
+    const results = buildGlobalSearchResults({
+        query: 'Toyota Corolla',
+        cortes: [vehicle],
+        relay: [{ ID: 'R-9', configuracion: 'Toyota Corolla' }],
+        tutoriales: [{ ID: 'T-9', Tema: 'Toyota Corolla' }],
+        pys: [{ id: 'P-9', Problema: 'Toyota Corolla' }]
+    });
+    assert.ok(results.length > 1);
+    assert.ok(results.some(item => item._sectionType !== 'corte'));
+    assert.equal(resolveSharedVehicleById({ cortes: [vehicle] }, 'CUT-9'), vehicle);
 });
 
 test('no resuelve IDs que solo pertenecen a Relay, Tutoriales o PyS', () => {
@@ -183,4 +198,4 @@ test('main.js resuelve el ID solo contra Cortes y conserva fallback de búsqueda
     assert.match(source, /navigation\.filtrarContenido\(query\)/);
 });
 
-console.log('VehicleShareLinks:', passed + '/18 PASS');
+console.log('VehicleShareLinks:', passed + '/19 PASS');
