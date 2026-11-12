@@ -1140,3 +1140,22 @@ Validación local adaptada:
 Publicación: cambios en GPSpedia2.2.5_work; HEAD de cierre pendiente de verificación posterior a registros. Rama base GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente tarea identificada en backlog: AUG-074 — Completar la detección e instalación PWA en iOS/iPadOS.
 ================================================================================
+
+
+================================================================================
+AUG-074 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD de partida de cierre: ac81802657468a4d57196e88e05573ec32e5e316. Rama base: GPSpedia2.2.5 (sin modificaciones).
+Resultado:
+- main.js reconoce iPhone/iPad/iPod por user-agent y iPadOS en modo escritorio mediante platform === 'MacIntel' y maxTouchPoints > 1. Mac de escritorio sin pantalla táctil o con un único punto táctil no se clasifica como iPad.
+- En iOS/iPadOS, standalone se detecta por display-mode o navigator.standalone. Los flags locales/de sesión heredados de otros navegadores no suprimen las instrucciones manuales de Safari.
+- index.html declara apple-touch-icon local y metadatos Apple; manifest.json continúa como manifest estándar PWA. El Service Worker ya incluye los iconos locales como recursos opcionales.
+- Las instrucciones manuales contemplan iPhone y iPad; el botón se muestra en navegador iOS no instalado y se oculta en standalone.
+- Se conserva el flujo beforeinstallprompt/appinstalled para navegadores compatibles.
+Validación local:
+- PWAInstallDetection: 20/20 PASS en runtime V8 adaptado con fuentes vigentes.
+- Parsing V8 del bloque de detección y service-worker.js: PASS.
+- manifest.json: JSON válido.
+- Node CLI literal no ejecutado por falta de checkout local/DNS de GitHub; no se declara PASS de Node.
+Validación Beta pendiente: Safari iPhone; iPadOS con UA móvil y de escritorio; instalación y apertura standalone; navegador normal; beforeinstallprompt en navegador compatible; Mac de escritorio como control negativo. Requiere comprobar icono/título en pantalla de inicio y visibilidad del botón.
+Siguiente tarea del backlog: AUG-075 — Autenticar reportes y sugerencias y derivar identidad desde sesión. No iniciada en esta iteración.
+================================================================================
