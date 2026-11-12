@@ -1169,3 +1169,13 @@ AUG-090 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - Harness JavaScript adaptado; Node CLI literal, Apps Script real y concurrencia/Spreadsheet aisladas quedan para Beta. Sin despliegue ni cambios productivos.
 Siguiente: AUG-091 — Alinear el título del acordeón con la especificación de PyS.
 ================================================================================
+
+================================================================================
+AUG-091 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- El acordeón de problemas relacionados muestra el título exacto «Problemas relacionados a este vehículo».
+- El título se separa de la flecha, usa el contraste existente del botón en modo claro/oscuro y se ajusta en pantallas móviles sin desplazar el indicador.
+- PysAccordionTitle 6/6 PASS; parsing del bloque UI modificado PASS. Harness JavaScript adaptado; Node CLI y navegador real no ejecutados. La comprobación visual real queda para Beta.
+- La referencia histórica Tareas.txt 1511–1521 no coincide con la copia activa (1171 líneas), que no contiene actualmente el requisito 12.5; se aplicó el texto exacto aprobado en el backlog AUG-091, sin documentar sustitución.
+- Sin despliegue ni cambios productivos.
+Siguiente: AUG-092 — Alinear esquema, persistencia y autorización del módulo Tutorial.
+================================================================================
