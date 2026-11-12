@@ -943,3 +943,31 @@ Pruebas en una implementación Apps Script y Spreadsheet aisladas, sin cuentas n
 
 No desplegar a producción ni modificar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-094 — INYECCIÓN HTML EN EL MODAL UNIFICADO DE SUBIDA YOUTUBE
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+Pruebas en navegador y datos aislados, sin subir archivos reales a YouTube:
+37. Abrir el modal desde Corte, PyS y Tutorial con títulos y descripciones que contengan comillas simples/dobles, ampersands, acentos, etiquetas HTML, atributos `onerror`/`onclick` y texto `</textarea><script>...`.
+38. Confirmar que los valores aparecen como texto editable literal, no crean nodos HTML, no ejecutan eventos/scripts y no rompen la estructura del modal.
+39. Verificar que acentos, comillas, ampersands y saltos de línea se conservan al abrir, recuperar una subida interrumpida y descartar una sesión local.
+40. Probar títulos superiores a 100 caracteres y descripciones superiores a 5000; confirmar truncamiento en los límites definidos sin alterar la codificación.
+41. Repetir con el modal abierto desde cada punto de entrada; comprobar que ninguna llamada construye HTML a partir de initialTitle/initialDescription y que el flujo de subida/reanudación no cambia.
+
+No iniciar transferencias reales ni modificar datos productivos.
+================================================================================
