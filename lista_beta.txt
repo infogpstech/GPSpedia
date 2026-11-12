@@ -1217,3 +1217,30 @@ Pruebas en navegador real:
 7. Confirmar que los colores contextuales, iconos, logotipos, imágenes y gráficas mantienen sus significados.
 No modificar datos productivos, ejecutar operaciones backend ni desplegar.
 ================================================================================
+
+
+================================================================================
+AUG-104 — VALIDACIÓN DE ZOOM Y REFLUJO EN ADD_CORTES
+Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador real:
+1. Abrir add_cortes.html en viewport de 320, 375, 768 y 1280 px; comprobar vertical y horizontal.
+2. Probar zoom del navegador al 200 % y 400 % (incluyendo emulación de 320 CSS px).
+3. Recorrer las etapas del formulario: cuadrícula a una columna, campos, etiquetas, selectores, botones, acordeones y mensajes.
+4. Enfocar y editar cada control con teclado físico y virtual; verificar que el campo enfocado permanezca visible y no quede oculto por el teclado.
+5. Comprobar que no aparezca scroll horizontal en el documento; el contenido largo debe refluír y las acciones deben poder alcanzarse.
+6. Abrir/cerrar el Lightbox repetidamente y comprobar que el zoom de página siga disponible.
+7. Confirmar que imágenes, carrusel y navegación del Lightbox conservan su funcionamiento.
+8. Abrir users.html e index.html y comprobar que su política de zoom previa no cambió al cerrar el Lightbox.
+No modificar datos productivos, ejecutar operaciones backend ni desplegar.
+================================================================================

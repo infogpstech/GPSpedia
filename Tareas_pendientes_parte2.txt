@@ -43,10 +43,9 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-104 — Permitir zoom del navegador en add_cortes.html
 - Origen: H-AUD-016-003. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Evidencia: add_cortes.html:6 limita maximum-scale=1.0 y establece user-scalable=no.
-- Problema: los usuarios móviles no pueden ampliar libremente el formulario mediante el zoom del navegador.
-- Criterios: retirar restricciones innecesarias de zoom; probar 200 % y 400 % con reflujo, foco y controles accesibles; confirmar que no aparezca scroll horizontal global.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Resultado: se eliminó la limitación de escala del viewport y los bloqueos de zoom por rueda, teclado y multitáctil en add_cortes.html. Se añadió reflujo de formulario a una columna y reorganización de acciones en viewports estrechos. lightbox.js restaura el viewport original de cada página al cerrar, sin imponer una política distinta.
+- Validación local: BrowserZoomAccessibility.js cubre viewport, ausencia de bloqueos, reflujo y ciclo abrir/cerrar Lightbox con simulación DOM.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Verificación visual 200 %/400 % y overflow en navegadores reales pendiente en Beta.
 
 ### AUG-105 — Completar el layout responsive de formularios y gestión de usuarios
 - Origen: H-AUD-016-004. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.

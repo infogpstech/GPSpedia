@@ -1712,3 +1712,26 @@ Validación local:
 Archivos: style.css, users.html, add_cortes.html, Services/Test/ThemeTokenConsistency.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-104 — Permitir zoom del navegador en add_cortes.html. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-104 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida verificado: f1da344358d14bcf4aa30ac498cf9950a0bef4a7.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- add_cortes.html: viewport sin maximum-scale/user-scalable restrictivos; eliminados los bloqueos de zoom por rueda, teclado y gestos multitáctiles.
+- Se añadió reflujo responsive a una columna y ajuste de acciones para viewports estrechos.
+- lightbox.js guarda el contenido original del viewport al abrir y lo restaura al cerrar, tanto inmediatamente como en la actualización diferida. Conserva la política previa de cada página: add_cortes mantiene zoom y las páginas que lo restringen no cambian su comportamiento.
+- No se modificó main.js ni la política global de zoom de index.html.
+
+Validación local:
+- BrowserZoomAccessibility.js: 12 escenarios; incluye simulación DOM del ciclo de apertura/cierre del Lightbox para viewport permisivo y restringido.
+- Suite y sintaxis ejecutadas en harness V8 sobre el contenido fuente; PASS.
+- No se ejecutó navegador real; comprobaciones visuales 200 %/400 %, foco, reflujo y scroll horizontal quedan diferidas a Beta mediante lista_beta.txt.
+- Sin cambios en endpoints, permisos, datos ni deployments.
+
+Archivos: add_cortes.html, lightbox.js, Services/Test/BrowserZoomAccessibility.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-105 — Completar el layout responsive de formularios y gestión de usuarios. No iniciar hasta la siguiente interacción.
+================================================================================

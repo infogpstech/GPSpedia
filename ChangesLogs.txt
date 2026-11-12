@@ -385,3 +385,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Se añadió Services/Test/ThemeTokenConsistency.js y se documentó su ejecución.
 - Se preservaron excepciones de estados operativos, marcas/logotipos, imágenes, sombras, overlays y elementos gráficos.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-104 — ZOOM DEL NAVEGADOR EN ADD_CORTES
+- add_cortes.html: se retiraron maximum-scale/user-scalable restrictivos y los listeners que cancelaban zoom por rueda, teclado y multitáctil. Se añadió reflujo a una columna y ajuste de acciones para viewports estrechos.
+- lightbox.js: el ciclo de apertura/cierre conserva y restaura la configuración original del viewport de la página, evitando que el cierre del visor vuelva a deshabilitar el zoom o altere la política de otras páginas.
+- Se añadió Services/Test/BrowserZoomAccessibility.js y se documentó su ejecución.
+================================================================================

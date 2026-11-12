@@ -1226,3 +1226,16 @@ node --experimental-default-type=module Services/Test/ThemeTokenConsistency.js
 ThemeTokenConsistency.js compara los 21 tokens semánticos de index.html (style.css), users.html y add_cortes.html en `:root` y `body.dark-mode`; valida igualdad de valores, alias heredados y uso de tokens en componentes comunes. Comprueba contraste WCAG AA para texto principal/secundario e información (4.5:1) y foco (3:1).
 
 Se conservan como excepciones los colores contextuales/operativos, marcas y logotipos, imágenes, sombras, overlays y elementos gráficos específicos. El banner de validación mantiene tokens especializados compatibles con la paleta común. La inspección visual en navegador real queda para Beta.
+
+
+## AUG-104 — Zoom del navegador en el formulario colaborativo
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/BrowserZoomAccessibility.js
+```
+
+BrowserZoomAccessibility.js comprueba que add_cortes.html no imponga límites de escala ni cancele zoom por rueda, teclado o gestos multitáctiles; verifica el reflujo a una columna y la reorganización de acciones en viewports estrechos. También ejecuta abrir/cerrar Lightbox con un DOM mínimo simulado para confirmar que se restaura el contenido original del viewport: así add_cortes conserva el zoom y las páginas que ya lo restringen mantienen su política original.
+
+La prueba no sustituye la validación visual en navegadores reales. En Beta comprobar 200 % y 400 %, orientación vertical/horizontal, foco, campos, botones, carga de imágenes, Lightbox y ausencia de scroll horizontal global.
