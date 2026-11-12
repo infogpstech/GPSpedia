@@ -156,4 +156,56 @@ test('el flujo estándar beforeinstallprompt y appinstalled permanece activo', (
     assert.match(mainSource, /deferredPrompt\.prompt\(\)/);
 });
 
-console.log('PWAInstallDetection:', passed + '/15 PASS');
+
+test('iPhone Safari muestra las instrucciones manuales cuando no está instalado', () => {
+    const env = createEnv({
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
+        platform: 'iPhone',
+        maxTouchPoints: 5
+    });
+    env.detection.checkPWAInstallStatus();
+    assert.equal(env.installButton.style.display, 'block');
+});
+
+test('iPadOS con user-agent de escritorio muestra las instrucciones manuales', () => {
+    const env = createEnv({
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15',
+        platform: 'MacIntel',
+        maxTouchPoints: 5
+    });
+    env.detection.checkPWAInstallStatus();
+    assert.equal(env.installButton.style.display, 'block');
+});
+
+test('un Mac de escritorio de control no muestra el botón manual de iOS', () => {
+    const env = createEnv({
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)',
+        platform: 'MacIntel',
+        maxTouchPoints: 0
+    });
+    env.detection.checkPWAInstallStatus();
+    assert.equal(env.installButton.style.display, 'none');
+});
+
+test('flags antiguos no ocultan las instrucciones en iPhone Safari', () => {
+    const env = createEnv({
+        userAgent: 'iPhone',
+        platform: 'iPhone',
+        maxTouchPoints: 5,
+        localStorage: { pwa_installed: 'true' },
+        sessionStorage: { pwa_installed_session: 'true' }
+    });
+    env.detection.checkPWAInstallStatus();
+    assert.equal(env.installButton.style.display, 'block');
+});
+
+test('un navegador estándar sin beforeinstallprompt mantiene oculto el botón', () => {
+    const env = createEnv({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        platform: 'Win32'
+    });
+    env.detection.checkPWAInstallStatus();
+    assert.equal(env.installButton.style.display, 'none');
+});
+
+console.log('PWAInstallDetection:', passed + '/20 PASS');
