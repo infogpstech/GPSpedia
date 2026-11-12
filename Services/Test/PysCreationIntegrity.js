@@ -185,7 +185,7 @@ export function runPysCreationIntegrityTests({feedback,ui}){
         assert.throws(()=>h.api.add(h.validPayload()),/identificadores duplicados/);assert.equal(h.state.createdFiles,0);
     });
     test("rechaza problemId duplicado en PysOperations",()=>{
-        const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-001","PENDING","","","now","now"];
+        const hash="a".repeat(64),a=[OP_A,hash,"isue-001","PENDING","","","now","now"],b=[OP_B,hash,"isue-1","PENDING","","","now","now"];
         const h=buildHarness(feedback,ui,{opsRows:[OPS_HEADERS,a,b]});
         assert.throws(()=>h.api.add(h.validPayload()),/identificadores duplicados/);assert.equal(h.state.createdFiles,0);
     });
