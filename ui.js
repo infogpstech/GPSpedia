@@ -18,6 +18,7 @@ import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
+import { captureModalViewState, restoreModalViewState } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
 
@@ -139,10 +140,40 @@ const pendingAdminImageUploadsLoaded = new Set();
 const modalNavStack = [];
 window.modalNavStack = modalNavStack;
 
-export function clearModalNavStack() {
-    modalNavStack.length = 0;
+export function clearModalNavStack(){modalNavStack.length=0;}
+let pendingModalViewRestore_=null;
+function registerModalNavigationTransition_(targetType,currentType,modalWasVisible,navOptions={}){
+ if(navOptions._restoreFromStack)return;
+ const origin=navOptions.fromOriginModal;
+ if(modalWasVisible&&currentType&&currentType!==targetType&&origin&&(origin.type==='vehicle'||origin.type==='pys')){
+  pendingModalViewRestore_=null;
+  modalNavStack.push({type:origin.type,item:origin.item,navOptions:origin.navOptions||{},viewState:captureModalViewState(document.getElementById("modalDetalle"))});
+  return;
+ }
+ if((!modalWasVisible||(currentType&&currentType!==targetType))&&!navOptions.originModal){modalNavStack.length=0;pendingModalViewRestore_=null;}
 }
-
+function applyPendingModalViewRestore_(){
+ if(!pendingModalViewRestore_)return false;
+ const result=restoreModalViewState(document.getElementById("modalDetalle"),pendingModalViewRestore_);
+ if(!pendingModalViewRestore_.accordion||result.accordionRestored)pendingModalViewRestore_=null;
+ return true;
+}
+function stopModalDetailMedia_(){
+ const cont=document.getElementById("detalleCompleto");if(!cont)return;
+ cont.querySelectorAll("iframe").forEach(iframe=>{try{if(iframe.contentWindow)iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}','*');}catch(error){}iframe.src="";iframe.remove();});
+}
+export function restoreModalNavigationContext(){
+ const context=modalNavStack[modalNavStack.length-1];
+ if(!context||!context.item||!["vehicle","pys"].includes(context.type))return false;
+ modalNavStack.pop();stopModalDetailMedia_();pendingModalViewRestore_=context.viewState||null;
+ const restoreOptions={...(context.navOptions||{}),_restoreFromStack:true};
+ if(context.type==="vehicle")mostrarDetalleModal(context.item,true,restoreOptions);else openPysDetailModal(context.item,restoreOptions);
+ return true;
+}
+function closeModalToPreviousContext_(){
+ if(window.history&&window.history.state&&window.history.state.modalOpen){window.history.back();return true;}
+ return restoreModalNavigationContext();
+}
 window.inEditMode = false;
 
 async function precargarDropdownOptions() {
@@ -340,7 +371,7 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
     }
 }
 
-async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
+async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false, navOptions = {}) {
     const editSession = getCurrentEditOwnerContext_();
     if (!editSession) {
         showSavingIndicator("error", "La sesión de edición no está disponible. Inicia sesión nuevamente.");
@@ -431,7 +462,7 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
             clearInMemoryEditBackup_();
             showSavingIndicator("success", "Cambios descartados; los reemplazos de imagen ya confirmados se conservaron.");
 
-            if (!skipReopen) mostrarDetalleModal(updatedItem);
+            if (!skipReopen) mostrarDetalleModal(updatedItem, true, navOptions);
             else document.getElementById("modalDetalle").classList.remove("visible");
         } catch (error) {
             console.warn("No se pudo completar el descarte verificado.", error && error.message === "EDIT_SESSION_CHANGED" ? "EDIT_SESSION_CHANGED" : error && error.name || "DiscardError");
@@ -454,7 +485,7 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
                 if (response && response.data) {
                     setState({ catalogData: response.data });
                     const updatedItem = response.data.cortes.find(item => String(item.id) === cleanVehicleId);
-                    if (updatedItem) mostrarDetalleModal(updatedItem);
+                    if (updatedItem) mostrarDetalleModal(updatedItem, true, navOptions);
                 }
             }).catch(error => console.warn("No se pudo actualizar el catálogo al cerrar la edición.", error && error.name || "CatalogError"));
         } else {
@@ -2020,23 +2051,12 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     const { relay: datosRelay } = catalogData;
 
-    const modalDetalle = document.getElementById("modalDetalle");
-    if (modalDetalle) {
-        modalDetalle.dataset.modalType = 'corte';
-        modalDetalle.dataset.vehicleId = String(activeItem.id);
-    }
-
-    // Gestión contextual de pila de navegación anti-bucle
-    if (navOptions && navOptions.fromOriginModal) {
-        modalNavStack.push({
-            type: navOptions.fromOriginModal.type,
-            item: navOptions.fromOriginModal.item,
-            navOptions: navOptions.fromOriginModal.navOptions || {}
-        });
-    } else if (!isNavigation && (!navOptions || !navOptions.originModal)) {
-        // Apertura independiente desde catálogo o buscador: limpiar pila previa
-        modalNavStack.length = 0;
-    }
+    const modalDetalle=document.getElementById("modalDetalle");
+    const modalWasVisible=Boolean(modalDetalle&&modalDetalle.classList.contains("visible"));
+    const currentModalType=modalDetalle&&modalDetalle.dataset.modalType;
+    const sameModalViewState=modalWasVisible&&currentModalType==='corte'?captureModalViewState(modalDetalle):null;
+    registerModalNavigationTransition_('corte',currentModalType,modalWasVisible,navOptions);
+    if(modalDetalle){modalDetalle.dataset.modalType='corte';modalDetalle.dataset.vehicleId=String(activeItem.id);}
 
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -2134,7 +2154,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             resetBtn.className = "share-modal-btn";
             resetBtn.title = "Descartar cambios";
             resetBtn.style.fontSize = "1.2em";
-            resetBtn.onclick = () => exitModalEditMode(false, activeItem.id);
+            resetBtn.onclick = () => exitModalEditMode(false, activeItem.id, false, navOptions);
             headerDiv.appendChild(resetBtn);
 
             // Botón Guardar (✅)
@@ -2143,7 +2163,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             saveBtn.className = "share-modal-btn";
             saveBtn.title = "Guardar cambios y finalizar";
             saveBtn.style.fontSize = "1.2em";
-            saveBtn.onclick = () => exitModalEditMode(true, activeItem.id);
+            saveBtn.onclick = () => exitModalEditMode(true, activeItem.id, false, navOptions);
             headerDiv.appendChild(saveBtn);
         } else {
             // Botón de lápiz de Edición
@@ -2198,7 +2218,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 if (!pendingImagesLoaded) {
                     showSavingIndicator("warning", "No se pudo consultar IndexedDB; los reemplazos de imagen quedarán bloqueados hasta verificar su estado.");
                 }
-                mostrarDetalleModal(editedItemBuffer);
+                mostrarDetalleModal(editedItemBuffer, true, navOptions);
             };
             headerDiv.appendChild(editBtn);
         }
@@ -2206,40 +2226,13 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     const closeBtn = document.createElement("button");
     closeBtn.innerHTML = "&times;";
-    closeBtn.onclick = () => {
-        if (inEditMode) {
-            exitModalEditMode(false, activeItem.id);
-        }
-
-        // Detener cualquier video de YouTube que se esté reproduciendo en el modal
-        const iframe = cont.querySelector('iframe');
-        if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
-        }
-
-        // Comprobar si hay un modal previo en la pila para retorno contextual
-        if (modalNavStack.length > 0) {
-            const prevContext = modalNavStack.pop();
-            if (prevContext && prevContext.type === 'pys') {
-                openPysDetailModal(prevContext.item, prevContext.navOptions || {});
-                return;
-            }
-        }
-
-        // Restaurar foco a la barra de búsqueda al cerrar manualmente
-        const searchInput = document.getElementById('searchInput');
-        const isSearchActive = document.body.classList.contains('search-active');
-
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
-        } else {
-            document.getElementById("modalDetalle").classList.remove("visible");
-            modalNavStack.length = 0;
-            // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
-            if (isSearchActive && searchInput) {
-                setTimeout(() => searchInput.focus(), 300);
-            }
-        }
+    closeBtn.onclick=async()=>{
+        if(inEditMode){const discarded=await exitModalEditMode(false,activeItem.id,false,navOptions);if(!discarded)return;}
+        stopModalDetailMedia_();
+        if(modalNavStack.length>0){closeModalToPreviousContext_();return;}
+        const searchInput=document.getElementById('searchInput'),isSearchActive=document.body.classList.contains('search-active');
+        if(window.history&&window.history.state&&window.history.state.modalOpen)window.history.back();
+        else{document.getElementById("modalDetalle").classList.remove("visible");modalNavStack.length=0;if(isSearchActive&&searchInput)setTimeout(()=>searchInput.focus(),300);}
     };
     closeBtn.className = "info-close-btn";
     closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
@@ -2702,6 +2695,8 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     modalDetalle.dataset.modalType = 'corte';
     modalDetalle.classList.add("visible");
+    if(sameModalViewState)requestAnimationFrame(()=>restoreModalViewState(modalDetalle,sameModalViewState));
+    applyPendingModalViewRestore_();
 }
 
 /**
@@ -3006,7 +3001,7 @@ async function insertNewVehicleFluently(item) {
 }
 
 /* TAREA 3.1 & TAREA 9.3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» CON ORIGEN CONTEXTUAL */
-function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlinkSuccess = null) {
+function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlinkSuccess = null, navigationOptions = {}) {
     const cardWrapper = document.createElement("div");
     cardWrapper.style.cssText = "position: relative; display: inline-block;";
 
@@ -3022,7 +3017,7 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
         fromOriginModal: vehicleToUnlink ? {
             type: 'vehicle',
             item: vehicleToUnlink,
-            navOptions: {}
+            navOptions: navigationOptions || {}
         } : null
     });
 
@@ -3133,6 +3128,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
 
         // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
         if (relatedProblems.length === 0) {
+            applyPendingModalViewRestore_();
             return;
         }
 
@@ -3152,9 +3148,8 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             const singleCardContainer = document.createElement("div");
             singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap;";
             const singleCard = createPysCard(relatedProblems[0], 'vehicle', activeItem, () => {
-                // Si se eliminó el único problema, refrescar acordeón
                 renderPosiblesProblemasAccordion(container, activeItem, navOptions);
-            });
+            }, navOptions);
             singleCardContainer.appendChild(singleCard);
 
             // Tarjeta para agregar o vincular problema sin borde discontinuo
@@ -3176,7 +3171,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             relatedProblems.forEach(p => {
                 const card = createPysCard(p, 'vehicle', activeItem, () => {
                     renderPosiblesProblemasAccordion(container, activeItem, navOptions);
-                });
+                }, navOptions);
                 carouselTrack.appendChild(card);
             });
 
@@ -3267,6 +3262,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
 
         wrapper.appendChild(btn);
         wrapper.appendChild(panel);
+        applyPendingModalViewRestore_();
     };
 
     // 1. Evaluar si ya existen datos en caché en el estado
@@ -9872,27 +9868,14 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
 }
 
 /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
-export function openPysDetailModal(item, navOptions = {}, inEditModePys = false) {
-    const cont = document.getElementById("detalleCompleto");
-    cont.innerHTML = "";
-
-    const modalDetalle = document.getElementById("modalDetalle");
-    if (modalDetalle) {
-        modalDetalle.dataset.modalType = 'pys';
-        modalDetalle.classList.add("visible");
-    }
-
-    // Gestión contextual de pila de navegación anti-bucle
-    if (navOptions && navOptions.fromOriginModal) {
-        modalNavStack.push({
-            type: navOptions.fromOriginModal.type,
-            item: navOptions.fromOriginModal.item,
-            navOptions: navOptions.fromOriginModal.navOptions || {}
-        });
-    } else if (!inEditModePys && (!navOptions || !navOptions.originModal)) {
-        // Apertura independiente: limpiar pila previa
-        modalNavStack.length = 0;
-    }
+export function openPysDetailModal(item,navOptions={},inEditModePys=false){
+    const modalDetalle=document.getElementById("modalDetalle");
+    const modalWasVisible=Boolean(modalDetalle&&modalDetalle.classList.contains("visible"));
+    const currentModalType=modalDetalle&&modalDetalle.dataset.modalType;
+    const sameModalViewState=modalWasVisible&&currentModalType==='pys'?captureModalViewState(modalDetalle):null;
+    registerModalNavigationTransition_('pys',currentModalType,modalWasVisible,navOptions);
+    const cont=document.getElementById("detalleCompleto");cont.innerHTML="";
+    if(modalDetalle){modalDetalle.dataset.modalType='pys';modalDetalle.classList.add("visible");}
 
     const sessionData = localStorage.getItem('gpsepedia_session');
     const userRole = getUiSessionContext_()?.role || null;
@@ -9956,21 +9939,9 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             iframe.remove();
         });
 
-        // Comprobar si hay un modal previo en la pila para retorno contextual
-        if (modalNavStack.length > 0) {
-            const prevContext = modalNavStack.pop();
-            if (prevContext && prevContext.type === 'vehicle') {
-                mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
-                return;
-            }
-        }
-
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
-        } else {
-            document.getElementById("modalDetalle").classList.remove("visible");
-            modalNavStack.length = 0;
-        }
+        if(modalNavStack.length>0){closeModalToPreviousContext_();return;}
+        if(window.history&&window.history.state&&window.history.state.modalOpen)window.history.back();
+        else{document.getElementById("modalDetalle").classList.remove("visible");modalNavStack.length=0;}
     };
 
     const closeBtn = document.createElement("button");
@@ -10386,6 +10357,8 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         modalDetalle.dataset.modalType = 'pys';
         modalDetalle.classList.add("visible");
     }
+    if(sameModalViewState)requestAnimationFrame(()=>restoreModalViewState(modalDetalle,sameModalViewState));
+    applyPendingModalViewRestore_();
 }
 
 
