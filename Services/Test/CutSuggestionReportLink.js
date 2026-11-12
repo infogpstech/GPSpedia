@@ -1,5 +1,7 @@
+import vm from "node:vm";
+import assert from "node:assert/strict";
+import fs from "node:fs";
 export function runCutSuggestionReportLinkTests({feedback}) {
- const vm = require("node:vm");
  const results=[]; let passed=0,failed=0;
  const test=(name,fn)=>{try{fn();passed++;results.push({name,status:"PASS"});}catch(error){failed++;results.push({name,status:"FAIL",message:String(error.message||error)});}};
  const extract=(a,b)=>{const i=feedback.indexOf(a),j=feedback.indexOf(b,i+a.length);if(i<0||j<0)throw Error("No se encontró "+a);return feedback.slice(i,j);};
@@ -40,10 +42,10 @@ export function runCutSuggestionReportLinkTests({feedback}) {
  test("rechaza slot vacío",()=>{const p=make({slot:false});assert.throws(()=>sandbox.validate(p.reportId,p.vehicleId,p.corteIndex),/no está ocupado/);});
  test("rechaza registro histórico sin metadata",()=>{const p=make({metadataColumn:false});assert.throws(()=>sandbox.validate(p.reportId,p.vehicleId,p.corteIndex),/no tiene metadata/);});
  test("rechaza vehículo inexistente y duplicado",()=>{let p=make({catalogVehicleId:"VEH-2"});assert.throws(()=>sandbox.validate(p.reportId,p.vehicleId,p.corteIndex),/no existe/);p=make({cutRows:[(()=>{const x=Array(42).fill("");x[0]="VEH-1";x[11]="Tipo";x[12]="Ubicación";return x;})(),(()=>{const x=Array(42).fill("");x[0]="VEH-1";x[11]="Tipo";x[12]="Ubicación";return x;})()]});assert.throws(()=>sandbox.validate(p.reportId,p.vehicleId,p.corteIndex),/duplicado/);});
+ test("handler valida la asociación antes de crear o escribir la sugerencia",()=>{const i=feedback.indexOf("function handleSuggestCutChange"),j=feedback.indexOf("function parseModelosAsociados",i);const body=feedback.slice(i,j);assert.ok(body.includes("validateCutSuggestionReportContext_"));assert.ok(!body.includes('"N/A"'));assert.ok(body.indexOf("validateCutSuggestionReportContext_")<body.indexOf("buildCutSuggestionRequestFingerprint_"));assert.ok(body.indexOf("validateCutSuggestionReportContext_")<body.indexOf("DriveApp"));assert.ok(body.indexOf("validateCutSuggestionReportContext_")<body.indexOf("sheet.getRange(newRowNumber"));
+ });
  return {status:failed?"FAIL":"PASS",passed,failed,results};
 }
-const assert=require("node:assert/strict");
-const fs=require("node:fs");
 const result=runCutSuggestionReportLinkTests({feedback:fs.readFileSync("Services/feedback.js","utf8")});
 console.log(JSON.stringify(result,null,2));
 if(result.status!=="PASS")process.exitCode=1;
