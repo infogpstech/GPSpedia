@@ -444,6 +444,7 @@ AUG-085 — Unificar validación de campos y URL de vídeo PyS
 
 - 2026-11-08 — AUD-T-011: nuevas AUG-082 a AUG-087; adendas a AUG-040 y AUG-057. Inventario: 86 IDs únicos dentro de AUG-001 a AUG-087; AUG-015 continúa ausente y no se infiere ni renumera.
 ================================================================================
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). TTL, deduplicación, invalidación y aviso de caché obsoleta implementados; DOM/navegador y API real quedan en lista_beta.txt.
 
 ## Hallazgos derivados de AUD-T-012 — 2026-11-08
 

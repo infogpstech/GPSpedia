@@ -878,3 +878,18 @@ Corrección:
 Evidencia local: PysCreationIntegrity 48/48 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; parsing de backend y modal UI afectado PASS.
 Límites: no se ejecutó Node CLI literal, Apps Script concurrente real, Spreadsheet real ni navegador real. No se modificaron deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-011-007 / AUG-087 — 2026-11-12
+Estado: CORREGIDO EN FUENTES; verificación de interfaz real diferida a Beta.
+Hallazgo: las vistas y la búsqueda solicitaban getPysData repetidamente; la promesa compartida no tenía TTL y el uso de caché local no comunicaba su antigüedad ni invalidaba de forma uniforme tras mutaciones.
+Corrección:
+- pys-data.js centraliza caché en memoria/localStorage, TTL de cinco minutos, timestamp y deduplicación de solicitudes en curso.
+- Invalidación por generación evita que una respuesta anterior a una mutación reemplace datos nuevos. Se invalida tras alta, solución, prevención, edición y asociación.
+- Si la API falla y existe caché, se conserva y se marca stale/error; la UI muestra aviso. Si no existe caché, el error no se oculta.
+- Backoff de 30 segundos reduce reintentos idénticos durante una caída; refresh explícito puede forzar nueva consulta.
+- Se conserva la clave local existente y se acepta [] como caché válida; datos corruptos se descartan y se intenta recuperar desde backend.
+Evidencia local: PysDataCache 12/12 PASS; PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; sintaxis de módulos y bloques UI modificados PASS.
+Límites: no se ejecutó Node CLI literal, API desplegada, DOM/navegador ni navegación real. No se modificaron deployments ni datos productivos.
+================================================================================

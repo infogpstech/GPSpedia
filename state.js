@@ -5,6 +5,12 @@
 
 let state = {
     currentUser: null,
+    pysData: null,
+    pysDataUpdatedAt: 0,
+    pysDataStale: false,
+    pysDataError: null,
+    pysDataLoading: false,
+    pysDataLastAttemptAt: 0,
     catalogData: {
         cortes: [],
         tutoriales: [],

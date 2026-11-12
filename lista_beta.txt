@@ -794,3 +794,37 @@ PRUEBAS EN BETA AISLADA — FEEDBACK y Spreadsheet de prueba; nunca producción:
 
 No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
 ================================================================================
+
+================================================================================
+AUG-087 — VALIDACIÓN BETA DE CACHÉ Y FRESCURA PyS
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — nunca producción:
+1. Ejecutar PysDataCache.js, PysCreationIntegrity.js y PysImageStorageRecovery.js con los comandos de Services/Test/README.md.
+2. Cambiar repetidamente entre PyS, detalle de vehículo, búsqueda y modal de asociación. Verificar que datos frescos dentro de cinco minutos se reutilizan sin nueva consulta.
+3. Abrir simultáneamente sección PyS, acordeón de vehículo y búsqueda mientras getPysData está pendiente. Confirmar una única solicitud de red y render correcto para todos los consumidores.
+4. Probar caché local reciente, vencida, vacía, corrupta, sin timestamp y localStorage bloqueado. Verificar recuperación o error visible sin romper la vista.
+5. Desconectar red con caché disponible: confirmar que se muestran datos guardados con aviso explícito de posible obsolescencia. Desconectar sin caché: confirmar que se muestra error real y no una lista vacía como si fuera actual.
+6. Restaurar red y confirmar que una navegación posterior actualiza la caché; validar backoff de 30 s y que refresh explícito fuerza consulta.
+7. Crear/editar PyS, agregar solución, prevención y asociar a vehículo. Verificar invalidación, actualización de estado y que una respuesta iniciada antes de la mutación no sobrescriba el resultado posterior.
+8. Registrar solicitudes de red, timestamps, cambios de estado, errores y capturas de los avisos stale. No usar datos productivos.
+
+No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================

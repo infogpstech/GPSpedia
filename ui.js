@@ -17,7 +17,7 @@ import { shouldAutoOpenVehicleDetail } from './search-utils.js';
 import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
-import { loadPysData } from './pys-data.js';
+import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
 
@@ -3106,6 +3106,15 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
     const updateAccordion = (rawPysData) => {
         wrapper.innerHTML = "";
         const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        const freshness = getPysDataFreshness();
+        if (freshness.hasCache && freshness.stale) {
+            const staleNotice = document.createElement("p");
+            staleNotice.className = "pys-stale-notice";
+            staleNotice.textContent = "Los datos PyS guardados podrían estar desactualizados.";
+            staleNotice.style.cssText = "font-size:0.78rem;color:var(--text-disabled);margin:4px 0 8px;";
+            wrapper.appendChild(staleNotice);
+        }
+
         // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
         const seenIds = new Set();
         const relatedProblems = [];
@@ -3261,13 +3270,13 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
     };
 
     // 1. Evaluar si ya existen datos en caché en el estado
-    const cachedPys = getState().pysData;
+    const cachedPys = getCachedPysData();
     if (Array.isArray(cachedPys) && cachedPys.length > 0) {
         updateAccordion(cachedPys);
     }
 
     // 2. Actualizar en segundo plano usando la misma promesa compartida que búsqueda y autenticación.
-    loadPysData({ refresh: true }).then(updateAccordion).catch(err => {
+    loadPysData().then(updateAccordion).catch(err => {
         console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
     });
 }
@@ -9298,6 +9307,16 @@ export async function renderPysSection() {
 
     const renderGridWithItems = (rawItems) => {
         cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
+        const freshness = getPysDataFreshness();
+        if (freshness.hasCache && freshness.stale) {
+            const staleNotice = document.createElement("p");
+            staleNotice.className = "pys-stale-notice";
+            staleNotice.textContent = freshness.error
+                ? "Sin conexión con el servidor. Se muestran datos guardados que podrían estar desactualizados."
+                : "Se muestran datos guardados mientras se actualizan; podrían estar desactualizados.";
+            staleNotice.style.cssText = "font-size:0.82rem;color:var(--text-disabled);margin:4px 0 10px;";
+            cont.appendChild(staleNotice);
+        }
         const grid = document.createElement("div");
         grid.className = "grid";
 
@@ -9326,30 +9345,18 @@ export async function renderPysSection() {
 
     // TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones»
     // Se presenta la sección inmediatamente con su estructura y tarjeta de creación (+) igual que Tutoriales y Relay
-    let cachedData = getState().pysData;
-    if ((!cachedData || cachedData.length === 0)) {
-        try {
-            const rawStored = localStorage.getItem('gpsepedia_pys_cache');
-            if (rawStored) {
-                const parsed = JSON.parse(rawStored);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    cachedData = parsed;
-                    setState({ pysData: parsed });
-                }
-            }
-        } catch(e) {}
-    }
-    const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
+    const cachedData = getCachedPysData();
+    const hasCache = Array.isArray(cachedData);
+    const freshnessBeforeLoad = getPysDataFreshness();
     renderGridWithItems(hasCache ? cachedData : []);
 
-    // Sincronización en segundo plano con el backend
+    // Usa datos recientes si están dentro del TTL y comparte cualquier solicitud en curso.
     try {
-        const freshItems = await loadPysData({ refresh: true });
-
-        // Si no había caché o si los datos cambiaron, renderizar con datos frescos
+        const freshItems = await loadPysData();
         const cacheHash = JSON.stringify(cachedData || []);
         const freshHash = JSON.stringify(freshItems || []);
-        if (!hasCache || cacheHash !== freshHash) {
+        const freshnessAfterLoad = getPysDataFreshness();
+        if (!hasCache || cacheHash !== freshHash || freshnessBeforeLoad.stale !== freshnessAfterLoad.stale || freshnessBeforeLoad.error !== freshnessAfterLoad.error) {
             renderGridWithItems(freshItems);
         }
     } catch(err) {
@@ -9611,6 +9618,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             }
 
             completed = true;
+            invalidatePysDataCache();
             modal.remove();
             renderPysSection();
             if (confirm("El problema se registró sin vídeo. ¿Deseas subir ahora un vídeo para enviarlo a aprobación?")) {
@@ -9621,7 +9629,8 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
                     referenceId: created.problemId,
                     metadata: { alcance: payload.alcance, modelosAsociados: payload.modelosAsociados },
                     onSuccess: async () => {
-                        await loadPysData({ refresh: true });
+                        invalidatePysDataCache();
+                        await loadPysData();
                     }
                 });
             }
@@ -10056,7 +10065,8 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             referenceId: item.id_problem || item.id,
             metadata: { problemId: item.id_problem || item.id },
             onSuccess: async () => {
-                await loadPysData({ refresh: true });
+                invalidatePysDataCache();
+                        await loadPysData();
             }
         });
         form.appendChild(uploadPysVideoBtn);
@@ -10092,6 +10102,8 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                         userRole
                     });
                     if (res && res.status === 'success') {
+                        invalidatePysDataCache();
+                        await loadPysData();
                         item.Problema = newTitle;
                         item.Descripcion = newDesc;
                         item.Solucion = newSol;
@@ -10324,14 +10336,16 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                     if (result && result.status === "conflict") {
                         showGlobalError(result.message || "Otro colaborador ya registró una solución diferente.");
                         document.getElementById("modalDetalle").classList.remove("visible");
-                        await loadPysData({ refresh: true });
+                        invalidatePysDataCache();
+                        await loadPysData();
                         renderPysSection();
                         return;
                     }
                     if (!result || result.status !== "success") throw new Error("El servidor no confirmó la solución.");
                     alert(result.recovered ? "La solución ya estaba registrada; no se duplicó." : "Solución agregada con éxito.");
                     document.getElementById("modalDetalle").classList.remove("visible");
-                    await loadPysData({ refresh: true });
+                    invalidatePysDataCache();
+                        await loadPysData();
                     renderPysSection();
                 }).catch(e => showGlobalError("Error: " + e.message));
             }
@@ -10351,14 +10365,16 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                     if (result && result.status === "conflict") {
                         showGlobalError(result.message || "Otro colaborador ya registró una prevención diferente.");
                         document.getElementById("modalDetalle").classList.remove("visible");
-                        await loadPysData({ refresh: true });
+                        invalidatePysDataCache();
+                        await loadPysData();
                         renderPysSection();
                         return;
                     }
                     if (!result || result.status !== "success") throw new Error("El servidor no confirmó la prevención.");
                     alert(result.recovered ? "La prevención ya estaba registrada; no se duplicó." : "Prevención agregada con éxito.");
                     document.getElementById("modalDetalle").classList.remove("visible");
-                    await loadPysData({ refresh: true });
+                    invalidatePysDataCache();
+                        await loadPysData();
                     renderPysSection();
                 }).catch(e => showGlobalError("Error: " + e.message));
             }
@@ -11468,7 +11484,7 @@ export async function openAssociateExistingProblemModal(vehicle) {
     // Obtener problemas de la sección PyS
     let allPys = [];
     try {
-        allPys = await loadPysData({ refresh: true });
+        allPys = await loadPysData();
     } catch (e) {
         console.error("Error al obtener datos PyS:", e);
     }
@@ -11478,6 +11494,13 @@ export async function openAssociateExistingProblemModal(vehicle) {
 
     const renderProblemsList = (query = "") => {
         resultsContainer.innerHTML = "";
+        const freshness = getPysDataFreshness();
+        if (freshness.hasCache && freshness.stale) {
+            const staleNotice = document.createElement("p");
+            staleNotice.className = "pys-stale-notice";
+            staleNotice.textContent = "Los datos guardados podrían estar desactualizados.";
+            resultsContainer.appendChild(staleNotice);
+        }
         const vehicleIdStr = String(vehicle.id);
 
         // Condiciones obligatorias de disponibilidad (Requisito 2.3):
@@ -11501,7 +11524,10 @@ export async function openAssociateExistingProblemModal(vehicle) {
         });
 
         if (filtered.length === 0) {
-            resultsContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-disabled); font-size:0.9em;">No hay problemas disponibles para asociar a este vehículo.</div>`;
+            const empty = document.createElement("div");
+            empty.style.cssText = "text-align:center;padding:20px;color:var(--text-disabled);font-size:0.9em;";
+            empty.textContent = "No hay problemas disponibles para asociar a este vehículo.";
+            resultsContainer.appendChild(empty);
             return;
         }
 
@@ -11541,6 +11567,8 @@ export async function openAssociateExistingProblemModal(vehicle) {
                     });
                     if (res && res.status === "success") {
                         mostrarNotificacion("Problema vinculado con éxito.", "success");
+                        invalidatePysDataCache();
+                        await loadPysData();
                         closeModal();
                         // Actualizar inmediatamente el modal de detalle del vehículo
                         const panel = document.getElementById("detalleCompleto");

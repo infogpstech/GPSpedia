@@ -207,3 +207,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: gestiona respuesta conflict, informa, refresca el catálogo PyS y no presenta conflicto como éxito.
 - Services/Test/PysCreationIntegrity.js: agrega cinco escenarios de replay, conflictos, estado incoherente, lock ya adquirido y liberación tras fallo; suite acumulada 48 escenarios.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-087 — CACHÉ Y FRESCURA DE DATOS PyS
+- pys-data.js: sustituye la deduplicación de promesas sin TTL por caché centralizada de 5 minutos, timestamp local, promesa única en curso, invalidación por generación y backoff de 30 s tras fallo de red.
+- Conserva gpsepedia_pys_cache y añade gpsepedia_pys_cache_updated_at; valida la colección y acepta arrays vacíos como caché válida.
+- Mantiene datos previos y marca estado stale/error cuando falla la red; listeners se notifican al completar una lectura remota.
+- state.js: agrega estado de frescura, carga, error y último intento.
+- ui.js: reutiliza caché fresca en navegación; invalida después de alta, solución, prevención, edición y asociación; muestra aviso cuando los datos mostrados pueden estar obsoletos.
+- Services/Test/PysDataCache.js: 12 escenarios de TTL, concurrencia, invalidación, fallos de red, caché vacía/corrupta, backoff y contrato UI.
+================================================================================

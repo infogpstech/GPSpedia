@@ -1434,3 +1434,22 @@ Archivos: Services/feedback.js, ui.js, Services/Test/PysCreationIntegrity.js, Se
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Siguiente tarea: AUG-087 — evitar consultas PyS redundantes y gestionar frescura de caché.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-087 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Tarea: evitar consultas PyS redundantes y gestionar frescura de caché.
+Implementación:
+- pys-data.js centraliza caché de memoria/localStorage, TTL 5 min, timestamp, promesa compartida y estado stale/error.
+- Mantiene gpsepedia_pys_cache y agrega gpsepedia_pys_cache_updated_at; [] se acepta como caché válida.
+- invalidatePysDataCache invalida por generación después de alta, solución, prevención, edición y asociación; respuestas iniciadas antes de la invalidación no se guardan como actuales.
+- Fallo de red con caché: devuelve datos anteriores, marca stale y muestra aviso. Sin caché: conserva error. Backoff de 30 s evita reintentos repetidos; refresh explícito fuerza consulta.
+- state.js incorpora metadatos de frescura/carga/error.
+- UI reutiliza datos frescos en sección, acordeón y modal de asociación; muestra aviso de datos potencialmente obsoletos.
+Pruebas locales: PysDataCache 12/12 PASS; PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; sintaxis módulos/bloques UI PASS.
+Pendiente Beta: navegación y búsqueda reales, API desplegada, DOM/navegador, fallos reales de red/localStorage; ver lista_beta.txt.
+Archivos: pys-data.js, state.js, ui.js, Services/Test/PysDataCache.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, Tareas.txt, checkpoint.md, ChangesLogs.txt, Auditoría.txt y lista_beta.txt.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Siguiente: AUG-088 — mantener el contexto anti-ciclo después de asociar problemas desde un vehículo anidado.
+================================================================================

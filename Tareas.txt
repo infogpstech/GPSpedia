@@ -1121,3 +1121,17 @@ Evitar sobrescrituras concurrentes de solución y prevención PyS.
 - Node CLI literal, dos ejecuciones Apps Script simultáneas, Spreadsheet real y navegador real no ejecutados; quedan en Beta aislada. No se modificaron datos ni deployments productivos.
 Siguiente: AUG-087 — evitar consultas PyS redundantes y gestionar frescura de caché.
 ================================================================================
+
+
+================================================================================
+AUG-087 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Evitar consultas PyS redundantes y gestionar frescura de caché.
+- pys-data.js centraliza TTL de 5 minutos, caché de memoria/localStorage, timestamp, deduplicación de promesas concurrentes, estado de carga/error y listeners.
+- La clave local histórica gpsepedia_pys_cache se conserva; gpsepedia_pys_cache_updated_at registra frescura. Una colección vacía es una caché válida.
+- invalidatePysDataCache se ejecuta después de altas, soluciones, prevenciones, ediciones y asociaciones. Una generación de caché impide que una respuesta iniciada antes de la mutación sobrescriba los datos posteriores.
+- Ante fallo de red se conserva la última colección y se marca stale con mensaje visible en sección PyS, acordeón de vehículo y modal de asociación. Backoff de 30 s evita repetir consultas fallidas en cada navegación; refresh explícito lo omite.
+- state.js incorpora pysData, pysDataUpdatedAt, pysDataStale, pysDataError, pysDataLoading y pysDataLastAttemptAt.
+- Pruebas locales adaptadas: PysDataCache 12/12 PASS; PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS; sintaxis de módulos/bloques UI afectados PASS.
+- Node CLI literal, API desplegada, DOM/navegador y navegación real no ejecutados; quedan en Beta aislada. No se desplegó ni se modificaron datos productivos.
+Siguiente: AUG-088 — mantener el contexto anti-ciclo después de asociar problemas desde un vehículo anidado.
+================================================================================

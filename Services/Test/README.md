@@ -1017,3 +1017,20 @@ Ejecutar la suite con el comando ESM temporal indicado en AUG-085. La suite `Pys
 - Prevención de sobrescritura; contenido idéntico se trata como replay idempotente y contenido distinto devuelve `status: "conflict"` / `PYS_CONFLICT`.
 - Rechazo de estado histórico incoherente, liberación del lock tras fallo y simulación de lock previamente adquirido.
 Validación local adaptada: PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS; sintaxis de backend y modal UI modificado PASS. La concurrencia real de Apps Script/Spreadsheet permanece en Beta aislada.
+
+## AUG-087 — Caché, frescura y deduplicación de consultas PyS
+
+Ejecutar la suite con Node.js desde la raíz del repositorio:
+
+```bash
+TEST_TMP=Services/Test/PysDataCache.mjs
+cp Services/Test/PysDataCache.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite contiene 12 escenarios: reutilización dentro del TTL de cinco minutos, vencimiento, promesas concurrentes, caché local vacía/corrupta, invalidación tras mutaciones, invalidación durante una petición en curso, API caída con/sin caché, backoff de reintento de 30 segundos, persistencia de timestamp y avisos/invalidation en UI. La colección vacía se considera una caché válida.
+
+`pys-data.js` centraliza el estado y la caché local; conserva la clave histórica `gpsepedia_pys_cache` y agrega `gpsepedia_pys_cache_updated_at`. Los datos vencidos se muestran con aviso mientras se intenta actualizar. Si la red falla, se conserva la última colección y se comunica que puede estar desactualizada. Una invalidación durante una petición impide que una respuesta iniciada antes de la mutación sobrescriba el estado posterior.
+
+Validación local adaptada: PysDataCache 12/12 PASS; PysCreationIntegrity 48/48 PASS; PysImageStorageRecovery 22/22 PASS. Node CLI literal, DOM/navegador, API desplegada y navegación real no se ejecutaron; se reservan para Beta aislada.
