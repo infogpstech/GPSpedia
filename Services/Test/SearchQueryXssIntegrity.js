@@ -147,8 +147,8 @@ test("el módulo UI conserva sintaxis válida tras retirar imports y exports", (
 
 test("los errores de búsqueda se presentan como texto plano", () => {
     const globalError = extract(ui, "export function showGlobalError(message)", "/* TAREA 1: Alias y función unificada");
-    assert.match(globalError, /toast\\.textContent\\s*=\\s*message/);
-    assert.doesNotMatch(globalError, /innerHTML\\s*=/);
+    assert.match(globalError, /toast\.textContent\s*=\s*message/);
+    assert.doesNotMatch(globalError, /innerHTML\s*=/);
 });
 console.log(JSON.stringify({ suite: "SearchQueryXssIntegrity", status: failed ? "FAIL" : "PASS", passed, failed, results }, null, 2));
 if (failed) process.exitCode = 1;
