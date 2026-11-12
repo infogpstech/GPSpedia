@@ -1988,8 +1988,9 @@ function handleUpdateVehicleField(payload, logMessage) {
 
     const actualRow = rowIndex + 2;
     let valueToStore = value !== undefined ? value : "";
-    if (["apertura", "cableAlimen", "cableAlimen2", "cableAlimen3"].includes(fieldName)) {
+    if (["apertura", "cableAlimen", "cableAlimen2", "cableAlimen3", "notaImportante"].includes(fieldName)) {
         if (value !== undefined && value !== null && typeof value !== "string") throw new Error("El contenido enriquecido debe ser texto.");
+        if (String(value || "").length > 5000) throw new Error("El contenido enriquecido no puede exceder 5000 caracteres.");
         valueToStore = sanitizeSupplementaryRichText_(value);
     }
     sheet.getRange(actualRow, colIndex).setValue(valueToStore);
@@ -2923,7 +2924,7 @@ function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
 function buildSupplementaryInfoPlan_(payload,current){
  payload=payload&&typeof payload==="object"?Object.assign({},payload):{};current=current&&typeof current==="object"?current:{};
  ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].forEach(k=>{const v=payload[k];if(v!==undefined&&v!==null&&typeof v!=="string")throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" debe contener texto válido.");});
- ["apertura","cableAlimen","cableAlimen2","cableAlimen3"].forEach(k=>{if(payload[k]!==undefined&&payload[k]!==null)payload[k]=sanitizeSupplementaryRichText_(payload[k]);});
+ ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante"].forEach(k=>{if(payload[k]!==undefined&&payload[k]!==null){if(payload[k].length>5000)throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" no puede exceder 5000 caracteres.");payload[k]=sanitizeSupplementaryRichText_(payload[k]);}});
  const aperture=hasSupplementaryValue_(payload.apertura)||hasSupplementaryValue_(payload.imgApertura),note=hasSupplementaryValue_(payload.notaImportante);
  const pairs=[{text:payload.cableAlimen,image:payload.imgCableAlimen},{text:payload.cableAlimen2,image:payload.imgCableAlimen2},{text:payload.cableAlimen3,image:payload.imgCableAlimen3}].filter(x=>hasSupplementaryValue_(x.text)||hasSupplementaryValue_(x.image));
  if(!aperture&&!note&&!pairs.length)throw createSupplementaryInfoError_("SUPPLEMENTARY_EMPTY_PAYLOAD","No se recibió información suplementaria válida para guardar.");
