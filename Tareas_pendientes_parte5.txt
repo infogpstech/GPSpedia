@@ -329,7 +329,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
 
 ### AUG-079 — Robustecer carga y política de acceso de imágenes de sugerencias
 - **Origen:** H-AUD-010-005. **Prioridad:** Media.
-- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Suite local de seguridad de imágenes: 22/22 PASS en harness V8 aislado; parsing de FEEDBACK, modal UI y suite PASS. Integración Drive/Spreadsheet y permisos de revisores pendiente de Beta aislada.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Suite local de seguridad de imágenes: 24/24 PASS en harness V8 aislado; parsing de FEEDBACK, modal UI y suite PASS. Integración Drive/Spreadsheet y permisos de revisores pendiente de Beta aislada.
 - **Problema:** FileReader carece de error/abort; Drive puede fallar y aun así la sugerencia se confirma; los bytes se declaran siempre image/jpeg y se comparten con ANYONE_WITH_LINK.
 - **Criterios de aceptación:**
   1. Gestionar load/error/abort y liberar el estado de envío en todos los resultados; no dejar promesas pendientes.
