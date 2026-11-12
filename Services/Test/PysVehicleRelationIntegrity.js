@@ -111,7 +111,7 @@ function buildHarness(feedback, options = {}) {
     return { api: context.api, state };
 }
 
-export function runPysVehicleRelationIntegrityTests({ feedback }) {
+export function runPysVehicleRelationIntegrityTests({ feedback, ui }) {
     const results = [];
     let passed = 0, failed = 0;
     function test(name, callback) {
@@ -119,6 +119,12 @@ export function runPysVehicleRelationIntegrityTests({ feedback }) {
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     }
     const list = value => Array.from(value || []);
+
+    test("renderTrackVehicles elimina tarjetas duplicadas y omite IDs sin vehículo", () => {
+        assert.match(ui, /uniqueModelosAsociados = new Set\(\)/);
+        assert.match(ui, /if \(!v\) return;/);
+        assert.match(ui, /modelosAsociadosIds = modelosAsociadosIds\.reduce/);
+    });
 
     test("normaliza JSON y formatos heredados sin duplicados", () => {
         const h = buildHarness(feedback);
