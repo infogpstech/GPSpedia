@@ -151,6 +151,15 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.equal(h.sheet.data[2][7], base.userName);
     });
 
+    test("no convierte datos de H sin encabezado en colaboradores históricos", () => {
+        const rows = [headers.slice(0, 7).concat(""), ["", "Tutorial antiguo", "", "", "", "", "", "Dato sin encabezado"]];
+        const h = buildHarness_(feedback, { rows });
+        assert.throws(() => h.api.add({ ...base, operationId: "33333333333333333333333333333333" }), /datos históricos sin encabezado/);
+        assert.equal(h.sheet.data[0][7], "");
+        assert.equal(h.sheet.data[1][7], "Dato sin encabezado");
+        assert.equal(h.sheet.data.length, 2);
+    });
+
     test("rechaza el esquema A:E heredado sin modificarlo ni crear Tutoriales alternativo", () => {
         const rows = [["Tema", "Imagen", "Video", "Descripción", "Colaborador"], ["Tutorial antiguo", "", "", "", "Autor"]];
         const h = buildHarness_(feedback, { rows });
