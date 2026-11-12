@@ -8361,27 +8361,28 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
+        <div style="font-size:2.5rem; color:#28a745; margin-bottom:10px;">
             <i class="fa-solid fa-circle-check"></i>
         </div>
-        <h3 style="margin: 0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
-        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 15px;">
-            Tu reporte para el Corte #${corteNum} ha sido registrado bajo el identificador <strong>${reportId}</strong>.
-        </p>
-        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 20px;">
+        <h3 style="margin:0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
+        <p id="report-success-identity" style="font-size:0.9em; color:var(--text-color); margin-bottom:15px;"></p>
+        <p style="font-size:0.9em; color:var(--text-color); margin-bottom:20px;">
             ¿Deseas proponer una sugerencia de cambio técnica para este corte ahora mismo?
         </p>
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-            <button id="btn-suggest-change-action" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button id="btn-suggest-change-action" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
                 <i class="fa-solid fa-pen-to-square"></i> Sugerir cambio
             </button>
-            <button id="btn-close-report-success" class="btn btn-secondary">
-                Cerrar
-            </button>
+            <button id="btn-close-report-success" class="btn btn-secondary">Cerrar</button>
         </div>
     `;
 
-    mountRichTextToolbars(content);
+    const identity = content.querySelector("#report-success-identity");
+    identity.append(
+        document.createTextNode(`Tu reporte para el Corte #${String(corteNum)} ha sido registrado bajo el identificador `),
+        document.createElement("strong")
+    );
+    identity.querySelector("strong").textContent = String(reportId || "");
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -8389,14 +8390,12 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     const close = () => modal.remove();
     content.querySelector(".info-close-btn").onclick = close;
     content.querySelector("#btn-close-report-success").onclick = close;
-
     content.querySelector("#btn-suggest-change-action").onclick = () => {
         modal.remove();
         openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
     };
 }
 
-/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
