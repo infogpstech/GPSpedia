@@ -22,7 +22,11 @@ export function sameNavigationState(left, right) {
     return NAVIGATION_FIELDS.every(key => {
         const hasA = Object.prototype.hasOwnProperty.call(a, key);
         const hasB = Object.prototype.hasOwnProperty.call(b, key);
-        return hasA === hasB && (!hasA || a[key] === b[key]);
+        const valueA = hasA ? a[key] : undefined;
+        const valueB = hasB ? b[key] : undefined;
+        // Una dimensión opcional sin selección equivale tanto si se omite como si vale null.
+        if (valueA == null && valueB == null) return true;
+        return hasA === hasB && valueA === valueB;
     });
 }
 
