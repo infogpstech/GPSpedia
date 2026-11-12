@@ -7610,15 +7610,17 @@ function mostrarTutorialesGrid() {
     const grid = document.createElement('div');
     grid.className = 'grid';
 
-    // First card: Add Tutorial Card (+)
-    const createCard = document.createElement('div');
-    createCard.className = 'card card-create-tutorial';
-    createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 6px;"></i>
-        <span style="font-size: 0.95rem;">Agregar Tutorial</span>
-    `;
-    createCard.onclick = () => openAddTutorialModal();
-    grid.appendChild(createCard);
+    // El alta de tutoriales está reservada a usuarios Desarrollador.
+    if (getUiSessionContext_()?.role === "desarrollador") {
+        const createCard = document.createElement("div");
+        createCard.className = "card card-create-tutorial";
+        createCard.innerHTML = `
+            <i class="fa-solid fa-plus" style="font-size:2rem; margin-bottom:6px;"></i>
+            <span style="font-size:0.95rem;">Agregar Tutorial</span>
+        `;
+        createCard.onclick = () => openAddTutorialModal();
+        grid.appendChild(createCard);
+    }
 
     tutoriales.forEach((item, index) => {
         if (!item) return;
@@ -7671,47 +7673,33 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
-    const sessionData = localStorage.getItem('gpsepedia_session');
     const userRole = getUiSessionContext_()?.role || null;
-    const isDeveloper = userRole === 'desarrollador';
-
+    const isDeveloper = userRole === "desarrollador";
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
-    const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
-
+    headerDiv.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px;";
     const title = document.createElement("h2");
-    title.textContent = item.Tema;
-    title.style.color = "#007bff";
-    title.style.margin = "0";
-    titleContainer.appendChild(title);
-    headerDiv.appendChild(titleContainer);
+    title.textContent = item.Tema || "Tutorial";
+    title.style.cssText = "color:#007bff; margin:0; flex:1;";
+    headerDiv.appendChild(title);
 
     const controlsContainer = document.createElement("div");
-    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
-
+    controlsContainer.style.cssText = "display:flex; align-items:center; gap:8px;";
     if (isDeveloper) {
         if (inEditModeTutorial) {
-            // Botón Descartar (↩️)
             const resetBtn = document.createElement("button");
-            resetBtn.innerHTML = '↩️';
+            resetBtn.textContent = "↩️";
             resetBtn.className = "share-modal-btn";
             resetBtn.title = "Descartar cambios";
-            resetBtn.style.fontSize = "1.2em";
             resetBtn.onclick = () => mostrarDetalleTutorialModal(item, false);
             controlsContainer.appendChild(resetBtn);
 
-            // Botón Guardar (✅)
             const saveBtn = document.createElement("button");
-            saveBtn.innerHTML = '✅';
+            saveBtn.textContent = "✅";
             saveBtn.className = "share-modal-btn";
             saveBtn.title = "Guardar cambios";
-            saveBtn.style.fontSize = "1.2em";
             saveBtn.id = "btn-save-tutorial-edit";
             controlsContainer.appendChild(saveBtn);
         } else {
-            // Botón de lápiz de Edición
             const editBtn = document.createElement("button");
             editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
             editBtn.className = "share-modal-btn";
@@ -7723,112 +7711,99 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
 
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
-    closeBtn.onclick = () => {
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
-        } else {
-            document.getElementById("modalDetalle").classList.remove("visible");
-        }
-    };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) window.history.back();
+        else document.getElementById("modalDetalle").classList.remove("visible");
+    };
     controlsContainer.appendChild(closeBtn);
     headerDiv.appendChild(controlsContainer);
     cont.appendChild(headerDiv);
 
     if (inEditModeTutorial) {
-        // Formulario in-modal de edición de tutorial
         const form = document.createElement("div");
-        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
-
-        const temaLabel = document.createElement("label");
-        temaLabel.style.fontWeight = "bold";
-        temaLabel.textContent = "Tema / Título (máx 30 caracteres):";
-        const temaInput = document.createElement("input");
-        temaInput.type = "text";
-        temaInput.maxLength = 30;
-        temaInput.value = item.Tema || "";
-        temaInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+        form.style.cssText = "display:flex; flex-direction:column; gap:10px; margin-top:10px;";
+        const addField = (labelText, value, options = {}) => {
+            const label = document.createElement("label");
+            label.style.fontWeight = "bold";
+            label.textContent = labelText;
+            const field = options.multiline ? document.createElement("textarea") : document.createElement("input");
+            if (!options.multiline) field.type = "text";
+            field.maxLength = options.maxLength || 700;
+            if (options.multiline) field.rows = 3;
+            field.value = value || "";
+            field.style.cssText = "padding:8px; border:1px solid var(--border-color, #007bff); border-radius:4px; width:100%; box-sizing:border-box;";
+            form.append(label, field);
+            return field;
+        };
+        const temaInput = addField("Tema / Título (máx. 30 caracteres)", item.Tema, { maxLength: 30 });
+        const identificarInput = addField("Cómo identificarlo", item.comoIdentificarlo, { multiline: true });
+        const encontrarInput = addField("Dónde encontrarlo", item.dondeEncontrarlo, { multiline: true });
+        const detallesInput = addField("Detalles", item.Detalles || item.Descripcion, { multiline: true });
 
         const videoLabel = document.createElement("label");
         videoLabel.style.fontWeight = "bold";
-        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        videoLabel.textContent = "Vídeo de YouTube (solo mediante aprobación)";
         const videoInput = document.createElement("input");
         videoInput.type = "url";
         videoInput.value = item.Video || "";
         videoInput.readOnly = true;
-        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+        videoInput.style.cssText = "padding:8px; border:1px solid var(--border-color, #007bff); border-radius:4px; width:100%; box-sizing:border-box;";
+        form.append(videoLabel, videoInput);
 
-        const descLabel = document.createElement("label");
-        descLabel.style.fontWeight = "bold";
-        descLabel.textContent = "Descripción / Detalles (máx 700 caracteres):";
-        const descInput = document.createElement("textarea");
-        descInput.id = "edit-tutorial-desc-textarea";
-        descInput.maxLength = 200;
-        descInput.rows = 4;
-        descInput.value = item.Detalles || item.Descripcion || "";
-        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
-
-        form.appendChild(temaLabel);
-        form.appendChild(temaInput);
-        form.appendChild(videoLabel);
-        form.appendChild(videoInput);
-        const uploadTutorialVideoBtn = document.createElement("button");
-        uploadTutorialVideoBtn.type = "button";
-        uploadTutorialVideoBtn.className = "btn btn-primary";
-        uploadTutorialVideoBtn.textContent = item.Video ? "El tutorial ya tiene un vídeo" : "Solicitar subida de vídeo";
-        uploadTutorialVideoBtn.disabled = Boolean(item.Video);
-        uploadTutorialVideoBtn.onclick = () => openYouTubeUploadModal({
+        const uploadVideoBtn = document.createElement("button");
+        uploadVideoBtn.type = "button";
+        uploadVideoBtn.className = "btn btn-primary";
+        uploadVideoBtn.textContent = item.Video ? "El tutorial ya tiene un vídeo" : "Solicitar subida de vídeo";
+        uploadVideoBtn.disabled = Boolean(item.Video);
+        uploadVideoBtn.onclick = () => openYouTubeUploadModal({
             initialTitle: item.Tema || "Tutorial técnico",
             initialDescription: item.Detalles || item.Descripcion || "",
             contentType: "tutorial",
-            referenceId: item.Tema,
-            metadata: { tema: item.Tema },
+            referenceId: item.ID || item.Tema,
+            metadata: { tutorialId: item.ID || "", tema: item.Tema || "" },
             onSuccess: async () => {
                 const fresh = await routeAction("getCatalogData");
                 if (fresh && fresh.data) setState({ catalogData: fresh.data });
             }
         });
-        form.appendChild(uploadTutorialVideoBtn);
-        form.appendChild(descLabel);
-        form.appendChild(createRichTextToolbar("edit-tutorial-desc-textarea"));
-        form.appendChild(descInput);
+        form.appendChild(uploadVideoBtn);
         cont.appendChild(form);
 
         const saveBtn = controlsContainer.querySelector("#btn-save-tutorial-edit");
         if (saveBtn) {
             saveBtn.onclick = async () => {
                 const newTema = temaInput.value.trim();
-                const newVideo = videoInput.value.trim();
-                if (newVideo && !getValidatedYouTubeVideoId(newVideo)) { mostrarNotificacion("La URL de YouTube no es válida.", "error"); return; }
-                const newDesc = descInput.value.trim();
-                if (newDesc.length > 200) { mostrarNotificacion("La descripción no puede superar 200 caracteres.", "error"); return; }
-                if (!newTema) {
-                    mostrarNotificacion("El tema no puede estar vacío.", "error");
+                const newComo = identificarInput.value.trim();
+                const newDonde = encontrarInput.value.trim();
+                const newDetalles = detallesInput.value.trim();
+                if (!newTema) { mostrarNotificacion("El tema no puede estar vacío.", "error"); return; }
+                if (newTema.length > 30 || newComo.length > 700 || newDonde.length > 700 || newDetalles.length > 700) {
+                    mostrarNotificacion("Revisa los límites de caracteres de los campos.", "error");
                     return;
                 }
                 saveBtn.disabled = true;
                 showSavingIndicator("saving", "Guardando cambios...");
                 try {
-                    const res = await routeAction('updateTutorialItem', {
-                        originalTema: item.Tema,
+                    const res = await routeAction("updateTutorialItem", {
+                        tutorialId: item.ID || "",
+                        originalTema: item.Tema || "",
                         tema: newTema,
-                        videoUrl: newVideo,
-                        descripcion: newDesc,
-                        ...getSessionPayload_(),
-                        userRole
+                        comoIdentificarlo: newComo,
+                        dondeEncontrarlo: newDonde,
+                        detalles: newDetalles,
+                        ...getSessionPayload_()
                     });
-                    if (res && res.status === 'success') {
-                        item.Tema = newTema;
-                        item.Video = newVideo;
-                        item.Detalles = newDesc;
-                        item.Descripcion = newDesc;
-                        showSavingIndicator("success", "Tutorial guardado");
-                        mostrarNotificacion("Tutorial actualizado con éxito.", "success");
-                        mostrarDetalleTutorialModal(item, false);
-                    } else {
-                        throw new Error((res && res.message) || "Error al actualizar");
-                    }
+                    if (!res || res.status !== "success") throw new Error((res && res.message) || "Error al actualizar");
+                    item.Tema = newTema;
+                    item.comoIdentificarlo = newComo;
+                    item.dondeEncontrarlo = newDonde;
+                    item.Detalles = newDetalles;
+                    item.Descripcion = newDetalles;
+                    showSavingIndicator("success", "Tutorial guardado");
+                    mostrarNotificacion("Tutorial actualizado con éxito.", "success");
+                    mostrarDetalleTutorialModal(item, false);
                 } catch (err) {
                     console.error("Error guardando tutorial:", err);
                     showSavingIndicator("error", "Error al guardar");
@@ -7838,30 +7813,37 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             };
         }
     } else {
-        // Visualización normal del tutorial
+        if (item.Imagen) {
+            const image = document.createElement("img");
+            image.alt = item.Tema || "Imagen del tutorial";
+            image.loading = "lazy";
+            image.style.cssText = "display:block; width:100%; max-height:320px; object-fit:contain; border-radius:8px; margin-bottom:12px;";
+            setOptimizedImage(image, item.Imagen, IMG_SIZE_LARGE);
+            cont.appendChild(image);
+        }
         if (item.Video) {
-            const videoContainer = document.createElement('div');
+            const videoContainer = document.createElement("div");
             const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
-            videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+            videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:8px;"></iframe>`;
             cont.appendChild(videoContainer);
         }
 
-        const details = [
-            createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
-            createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
-            createDetailParagraph('Detalles', item.Detalles || item.Descripcion)
-        ];
+        [
+            createDetailParagraph("Cómo Identificarlo", item.comoIdentificarlo),
+            createDetailParagraph("Dónde Encontrarlo", item.dondeEncontrarlo),
+            createDetailParagraph("Detalles", item.Detalles || item.Descripcion)
+        ].forEach(detail => { if (detail) cont.appendChild(detail); });
 
-        details.forEach(detail => {
-            if (detail) cont.appendChild(detail);
-        });
+        if (item.Colaborador) {
+            const collaborator = createDetailParagraph("Colaborador", item.Colaborador);
+            if (collaborator) cont.appendChild(collaborator);
+        }
     }
 
     const modalDetalle = document.getElementById("modalDetalle");
-    modalDetalle.dataset.modalType = 'tutorial';
+    modalDetalle.dataset.modalType = "tutorial";
     modalDetalle.classList.add("visible");
 }
-
 function mostrarDetalleRelayModal(item) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -10378,6 +10360,10 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
 
 /* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
 export function openAddTutorialModal() {
+    if (getUiSessionContext_()?.role !== "desarrollador") {
+        showGlobalError("Solo un usuario Desarrollador puede registrar tutoriales.");
+        return;
+    }
     const existing = document.getElementById("add-tutorial-modal");
     if (existing) existing.remove();
 
@@ -10388,19 +10374,25 @@ export function openAddTutorialModal() {
 
     const content = document.createElement("div");
     content.className = "info-modal-content";
-    content.style.maxWidth = "500px";
-
+    content.style.maxWidth = "560px";
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
         <h2><i class="fa-solid fa-book-open"></i> Agregar Nuevo Tutorial</h2>
-
         <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <div class="form-group">
-                <label>Tema / Título (Máx 30 caracteres)</label>
+                <label for="tut-tema">Tema / Título (máx. 30 caracteres)</label>
                 <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
-                <label>Descripción / Detalles (Máx 700 caracteres)</label>
+                <label for="tut-como-identificarlo">Cómo identificarlo</label>
+                <textarea id="tut-como-identificarlo" maxlength="700" rows="3" placeholder="Describe cómo reconocer el elemento..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="tut-donde-encontrarlo">Dónde encontrarlo</label>
+                <textarea id="tut-donde-encontrarlo" maxlength="700" rows="3" placeholder="Indica su ubicación..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="tut-desc">Detalles (máx. 700 caracteres)</label>
                 <div class="rich-editor-toolbar" data-rich-target="tut-desc"></div>
                 <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
@@ -10409,48 +10401,57 @@ export function openAddTutorialModal() {
     `;
 
     mountRichTextToolbars(content);
-
     modal.appendChild(content);
     document.body.appendChild(modal);
-
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
     const form = content.querySelector("#add-tutorial-form");
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const { currentUser } = getState();
-        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
-
+    form.onsubmit = async event => {
+        event.preventDefault();
+        if (getUiSessionContext_()?.role !== "desarrollador") {
+            showGlobalError("La sesión ya no tiene permisos para registrar tutoriales.");
+            return;
+        }
         const submitBtn = form.querySelector('button[type="submit"]');
+        const tema = content.querySelector("#tut-tema").value.trim();
+        const comoIdentificarlo = content.querySelector("#tut-como-identificarlo").value.trim();
+        const dondeEncontrarlo = content.querySelector("#tut-donde-encontrarlo").value.trim();
+        const detalles = content.querySelector("#tut-desc").value.trim();
+        if (!tema || tema.length > 30 || comoIdentificarlo.length > 700 ||
+            dondeEncontrarlo.length > 700 || detalles.length > 700) {
+            showGlobalError("Revisa el tema y los límites de caracteres de los campos.");
+            return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.innerText = "Guardando...";
-
+        const operationId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+            .map(value => value.toString(16).padStart(2, "0")).join("");
         const payload = {
-            tema: content.querySelector("#tut-tema").value.trim(),
-            videoUrl: "",
-            descripcion: content.querySelector("#tut-desc").value.trim(),
-            ...getSessionPayload_(),
-            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+            operationId, tema, comoIdentificarlo, dondeEncontrarlo, detalles,
+            videoUrl: "", ...getSessionPayload_()
         };
 
         try {
             const created = await addTutorial(payload);
-            if (!created || created.status !== "success" || !created.referenceId) throw new Error("El servidor no confirmó el destino del tutorial.");
+            if (!created || created.status !== "success" || !created.referenceId) {
+                throw new Error("El servidor no confirmó el destino del tutorial.");
+            }
             modal.remove();
             const res = await routeAction("getCatalogData");
             if (res && res.data) setState({ catalogData: res.data });
             openYouTubeUploadModal({
-                initialTitle: payload.tema,
-                initialDescription: payload.descripcion,
+                initialTitle: tema,
+                initialDescription: detalles,
                 contentType: "tutorial",
                 referenceId: created.referenceId,
-                metadata: { tema: payload.tema },
+                metadata: { tutorialId: created.referenceId, tema },
                 onSuccess: async () => {
                     const fresh = await routeAction("getCatalogData");
                     if (fresh && fresh.data) setState({ catalogData: fresh.data });
                 }
             });
-        } catch(err) {
+        } catch (err) {
             console.error(err);
             showGlobalError("Error al registrar tutorial: " + err.message);
             submitBtn.disabled = false;
@@ -10458,7 +10459,6 @@ export function openAddTutorialModal() {
         }
     };
 }
-
 window.applyRichFormat = function(targetId, format) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
