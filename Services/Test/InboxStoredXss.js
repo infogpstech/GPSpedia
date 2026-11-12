@@ -68,8 +68,11 @@ function runInboxStoredXssTests(sources) {
     });
     run("confirmación de reporte usa plantilla estática y reportId como texto", () => {
         assert(typeof parseFunction(functions.success) === "function");
-        assert(functions.success.includes("content.innerHTML = `"));
-        assert(!functions.success.includes("${"));
+        const start = functions.success.indexOf("content.innerHTML = `");
+        const end = functions.success.indexOf("`; ", start);
+        const template = functions.success.slice(start, functions.success.indexOf("`;", start) + 1);
+        assert(start >= 0 && template.length > 0);
+        assert(!template.includes("${"));
         assert(functions.success.includes('identity.querySelector("strong").textContent = String(reportId || "")'));
     });
     run("modal de reporte usa plantilla estática", () => {
