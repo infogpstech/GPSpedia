@@ -336,7 +336,14 @@
         import { getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation } from './offline.js';
         import './lightbox.js';
         import { openYouTubeUploadModal } from './youtubeUpload.js';
+        import { createOverlayHistoryManager, overlayHistoryStateKey } from './overlayHistory.js';
         import { createRichTextToolbar, applyRichTextFormat, applyRichTextColor } from './rich-text.js';
+
+        // add_cortes.html funciona como página independiente y no carga main.js.
+        // Inicializa el mismo gestor para que el modal YouTube participe en el historial.
+        const overlayHistory = createOverlayHistoryManager(window.history);
+        window.overlayHistory = overlayHistory;
+
         const SESSION_KEY = 'gpsepedia_session';
         const state = {
             vehicleInfo: {},
@@ -1516,10 +1523,18 @@
 
         // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
         window.addEventListener('popstate', (event) => {
-            // 1. Cerrar Lightbox si está abierto
+            // El lightbox se abrió después del overlay y debe cerrarse primero.
             const lightbox = document.getElementById('lightbox');
             if (lightbox && lightbox.classList.contains('visible')) {
                 window.cerrarLightbox(true); // Pasar true para evitar bucle de back()
+                return;
+            }
+
+            // Después del lightbox, cerrar solo el overlay superior administrado.
+            const state = event.state || {};
+            if (overlayHistory.getStack().length > 0 ||
+                Object.prototype.hasOwnProperty.call(state, overlayHistoryStateKey)) {
+                overlayHistory.handlePopState(state);
                 return;
             }
         });
