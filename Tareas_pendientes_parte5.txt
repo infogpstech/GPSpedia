@@ -947,3 +947,11 @@ Beta pendiente: FEEDBACK desplegado en entorno aislado, Spreadsheet/Drive de pru
 
 Siguiente tarea: consultar el backlog vigente después de AUG-081; no iniciar otra tarea dentro de este cierre.
 ================================================================================
+
+================================================================================
+AUG-082 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+H-AUD-011-001 resuelto en ui.js. Título de tarjeta, título de modal y colaborador se asignan mediante textContent/nodos DOM. El video se acepta únicamente tras validación URL/HTTPS/host/ruta/ID y el iframe recibe un src canónico; se retiran los fallbacks y enlaces arbitrarios. sanitizeHtmlContent se mantiene para texto enriquecido.
+Validación local: 10/10 escenarios en harness V8 adaptado; parsing de bloques modificados PASS. Node CLI y navegador real no ejecutados.
+Beta pendiente: renderizado DOM, payloads de ataque, interacción del enlace y reproducción real de videos.
+Siguiente: AUG-083 — Completar almacenamiento y recuperación de imágenes PyS.
+================================================================================
