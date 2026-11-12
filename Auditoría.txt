@@ -849,3 +849,17 @@ Estado: CORREGIDO EN CÓDIGO; VALIDACIÓN DE INTEGRACIÓN PENDIENTE EN BETA AISL
 
 Aclaración de cierre H-AUD-011-004:
 El ledger PysOperations normaliza problemId por sufijo numérico seguro al comprobar unicidad; valores equivalentes como isue-001 e isue-1 se consideran duplicados. También se comprueba la coherencia de imageFileId/imageUrl con el estado PENDING, UPLOAD_PENDING o LINKED. La suite PysCreationIntegrity cubre la colisión numérica del ledger. Reejecución: 25/25 PASS; recuperación AUG-083: 22/22 PASS en harness V8 adaptado.
+
+
+================================================================================
+ADENDA H-AUD-011-005 / AUG-085 — 2026-11-12
+Estado: CORREGIDO EN FUENTES; integración real diferida a Beta.
+Evidencia del backlog: los límites de título/descripción no coincidían con los requisitos originales (30/700 en lugar de 15/200), el prompt de prevención anunciaba 100 aunque el backend/UI admitían 700, y la validación server-side coercionaba tipos y usaba extracción permisiva de IDs YouTube.
+Corrección:
+- Backend centraliza límites 15/200/700 y rechaza tipos no string, contenido HTML enriquecido vacío y valores no booleanos en sinSolucion.
+- Alta, solución, prevención y edición aplican validación server-side antes de escribir.
+- URL YouTube se valida por HTTPS, allowlist exacta de hosts/rutas e ID de 11 caracteres. La alta mantiene la aprobación obligatoria; no se habilita la asociación directa de URLs.
+- UI sincroniza etiquetas/maxlength, el prompt de prevención y validación temprana de edición.
+Evidencia local: PysCreationIntegrity 43/43 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; parsing backend y bloques UI afectados PASS.
+Límites: Node CLI literal, Apps Script/Spreadsheet/Drive reales, DOM/navegador y YouTube API real no ejecutados. No se desplegó ni se modificaron datos productivos.
+================================================================================

@@ -2140,8 +2140,41 @@ function buildPysExpectedRow_(id,p,url,models){return[id,p.titulo,p.descripcion,
 function pysRowMatchesPayload_(row,expected){return expected.every((v,i)=>String(row[i]==null?"":row[i])===String(v));}
 function verifyPendingPysImageFile_(r,image,folder){const file=DriveApp.getFileById(r.imageFileId);if(!file||(typeof file.isTrashed==="function"&&file.isTrashed()===true)||String(file.getMimeType())!==image.mimeType||Number(file.getSize())!==image.sizeBytes||r.imageUrl!=="https://drive.google.com/file/d/"+r.imageFileId+"/view")throw new Error("La imagen pendiente de la operación PyS no coincide con el contenido recibido; requiere revisión.");const d=String(file.getDescription()||"");if(!d.includes("problemId="+r.problemId)||!d.includes("fileId="+r.imageFileId))throw new Error("Los metadatos de la imagen pendiente PyS no permiten confirmar su asociación.");const parents=file.getParents();let direct=false;while(parents.hasNext())if(String(parents.next().getId())===String(folder.getId()))direct=true;if(!direct)throw new Error("La imagen pendiente no pertenece a la carpeta PyS autorizada.");assertPysImageFolderPermissions_(file,folder);return file;}
 function handleGetPysData(){const sheet=getPysSheet_(false);if(!sheet||sheet.getLastRow()<2)return{status:"success",data:[]};const rows=sheet.getRange(2,1,sheet.getLastRow()-1,10).getValues();return{status:"success",data:rows.filter(r=>r.some(v=>v!==""&&v!==null&&v!==undefined)).map(r=>({id_problem:r[0],Problema:r[1],Descripcion:r[2],Se_soluciono:r[3],Solucion:r[4],Prevenir:r[5],Imagen:normalizePysImageReference_(r[6]),Video:r[7],Colaborador:r[8]||"",modelosAsociados:parseModelosAsociados(r[9]||"")}))};}
+
+const PYS_TITLE_MAX_LENGTH=15;
+const PYS_DESCRIPTION_MAX_LENGTH=200;
+const PYS_SOLUTION_MAX_LENGTH=700;
+function normalizePysField_(value,label,maxLength,required,richText){
+    if(typeof value!=="string")throw new Error(label+" debe ser texto.");
+    const normalized=value.replace(/\u00a0/g," ").replace(/[ \t\f\v]+/g," ").trim();
+    const visible=richText?normalized.replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim():normalized;
+    if(required&&!visible)throw new Error(label+" es obligatorio y no puede estar vacío.");
+    if(normalized.length>maxLength)throw new Error(label+" no puede superar "+maxLength+" caracteres.");
+    return normalized;
+}
+function getPysYouTubeVideoId_(value){
+    if(typeof value!=="string")return "";
+    const candidate=value.trim();if(!candidate)return "";
+    const parts=candidate.match(/^https:\/\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?(?:#.*)?$/i);
+    if(!parts)return "";
+    const authority=parts[1].toLowerCase();
+    if(authority.includes("@")||authority.includes(":"))return "";
+    const host=authority,path=parts[2]||"/",query=parts[3]||"",idPattern=/^[A-Za-z0-9_-]{11}$/;
+    if(host==="youtu.be"){const m=path.match(/^\/([A-Za-z0-9_-]{11})\/?$/);return m&&idPattern.test(m[1])?m[1]:"";}
+    if(!["youtube.com","www.youtube.com","m.youtube.com","youtube-nocookie.com","www.youtube-nocookie.com"].includes(host))return "";
+    if(path==="/watch"){
+        const ids=[];
+        try{query.split("&").filter(Boolean).forEach(part=>{const pair=part.split("="),key=decodeURIComponent(pair.shift().replace(/\+/g," "));if(key==="v")ids.push(decodeURIComponent(pair.join("=").replace(/\+/g," ")));});}
+        catch(error){return "";}
+        return ids.length===1&&idPattern.test(ids[0])?ids[0]:"";
+    }
+    const match=path.match(/^\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})\/?$/);
+    return match&&idPattern.test(match[1])?match[1]:"";
+}
+function getCanonicalPysYouTubeUrl_(value){const id=getPysYouTubeVideoId_(value);return id?"https://www.youtube.com/watch?v="+id:"";}
+
 function handleAddProblem(source) {
- source=source||{};const opId=String(source.opId||"").trim();if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId))throw new Error("El identificador de operación PyS es obligatorio y debe ser válido.");const titulo=String(source.titulo||"").trim(),descripcion=String(source.descripcion||"").trim(),solucion=String(source.solucion||"").trim(),prevenir=String(source.prevenir||"").trim(),userId=String(source.userId||"").trim(),userName=String(source.userName||"").trim();if(!titulo||!descripcion)throw new Error("Título y descripción son obligatorios.");if(titulo.length>30||descripcion.length>700)throw new Error("Título o descripción superan la longitud permitida.");if(!source.sinSolucion&&!solucion)throw new Error("Debe proporcionar una solución si no marca 'Sin solución'.");if(solucion.length>700)throw new Error("La solución no puede superar 700 caracteres.");if(prevenir.length>700)throw new Error("La prevención no puede superar 700 caracteres.");if(!userId||!userName)throw new Error("La sesión verificada no proporcionó un colaborador válido.");if(String(source.videoUrl||"").trim())throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");const image=validatePysImageDataUrl_(source.imgBase64),models=source.alcance==="especifico"&&Array.isArray(source.modelosAsociados)?Array.from(new Set(source.modelosAsociados.map(String).map(v=>v.trim()).filter(Boolean))):[];const p={titulo,descripcion,sinSolucion:Boolean(source.sinSolucion),solucion,prevenir,userId,userName,alcance:source.alcance,modelosAsociados:models},hash=buildPysPayloadHash_(p,image,models);const lock=LockService.getScriptLock();lock.waitLock(15000);let sheet=null,opsSheet=null,op=null,file=null,url="",fileId="",problemId="";
+ source=source||{};const opId=String(source.opId||"").trim();if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId))throw new Error("El identificador de operación PyS es obligatorio y debe ser válido.");const titulo=normalizePysField_(source.titulo,"El título",PYS_TITLE_MAX_LENGTH,true,false),descripcion=normalizePysField_(source.descripcion,"La descripción",PYS_DESCRIPTION_MAX_LENGTH,true,true),sinSolucion=source.sinSolucion;if(typeof sinSolucion!=="boolean")throw new Error("El indicador «Sin solución» debe ser booleano.");const solucion=normalizePysField_(source.solucion===undefined&&sinSolucion?"":source.solucion,"La solución",PYS_SOLUTION_MAX_LENGTH,!sinSolucion,true),prevenir=normalizePysField_(source.prevenir===undefined?"":source.prevenir,"La prevención",PYS_SOLUTION_MAX_LENGTH,false,true),userId=String(source.userId||"").trim(),userName=String(source.userName||"").trim(),videoUrl=source.videoUrl===undefined?"":source.videoUrl;if(typeof videoUrl!=="string")throw new Error("La URL de YouTube debe ser texto.");if(videoUrl.trim()){if(!getPysYouTubeVideoId_(videoUrl))throw new Error("La URL de YouTube no tiene un host, ruta o ID permitido.");throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");}if(!userId||!userName)throw new Error("La sesión verificada no proporcionó un colaborador válido.");const image=validatePysImageDataUrl_(source.imgBase64),models=source.alcance==="especifico"&&Array.isArray(source.modelosAsociados)?Array.from(new Set(source.modelosAsociados.map(String).map(v=>v.trim()).filter(Boolean))):[];const p={titulo,descripcion,sinSolucion,solucion,prevenir,userId,userName,alcance:source.alcance,modelosAsociados:models},hash=buildPysPayloadHash_(p,image,models);const lock=LockService.getScriptLock();lock.waitLock(15000);let sheet=null,opsSheet=null,op=null,file=null,url="",fileId="",problemId="";
 try{sheet=getPysSheet_(true);validatePysRecords_(sheet);opsSheet=getPysOperationsSheet_();const ops=readPysOperations_(opsSheet);op=ops.find(x=>x.opId===opId)||null;if(op){if(op.payloadHash!==hash)throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");if(op.status==="RECOVERY_REQUIRED")throw new Error("La operación PyS requiere recuperación manual; no se creó otro problema.");problemId=op.problemId;const existing=findPysRowsById_(sheet,problemId);if(existing.length>1)throw new Error("El ID del problema aparece más de una vez; se detuvo la recuperación.");if(existing.length===1){const storedUrl=normalizePysImageReference_(existing[0].row[6]),expected=buildPysExpectedRow_(problemId,p,storedUrl,models);if(!storedUrl||!pysRowMatchesPayload_(existing[0].row,expected))throw new Error("El registro PyS existente no coincide con la operación; requiere revisión.");if(op.status!=="LINKED")op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageUrl:storedUrl,updatedAt:new Date().toISOString()}));return{status:"success",message:"Problema registrado correctamente.",problemId,recovered:true};}if(op.status==="LINKED")throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");fileId=op.imageFileId;url=op.imageUrl;}else{problemId=getPysNextId_(sheet,ops);op=writePysOperation_(opsSheet,0,{opId,payloadHash:hash,problemId,status:"PENDING",imageFileId:"",imageUrl:"",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});}
 const folder=getPysImagesFolder_().folder;if(fileId){if(op.status!=="UPLOAD_PENDING")throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");try{file=verifyPendingPysImageFile_(op,image,folder);}catch(e){try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"RECOVERY_REQUIRED",updatedAt:new Date().toISOString()}));}catch(ledgerError){}throw e;}}else{if(op.status!=="PENDING")throw new Error("El estado de la operación PyS no permite reintentar automáticamente.");file=folder.createFile(Utilities.newBlob(image.bytes,image.mimeType,problemId+"_"+Date.now()+"."+image.extension));if(!file)throw new Error("Drive no confirmó la creación de la imagen.");fileId=String(file.getId()||"").trim();if(!/^[A-Za-z0-9_-]{10,110}$/.test(fileId))throw new Error("Drive no devolvió un identificador válido para la imagen.");url="https://drive.google.com/file/d/"+fileId+"/view";file.setDescription(["GPSpedia PyS — UPLOAD_PENDING","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes].join("\n"));assertPysImageFolderPermissions_(file,folder);op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"UPLOAD_PENDING",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));}
 const expected=buildPysExpectedRow_(problemId,p,url,models);sheet.appendRow(expected);SpreadsheetApp.flush();const stored=findPysRowsById_(sheet,problemId);if(stored.length!==1||!pysRowMatchesPayload_(stored[0].row,expected))throw new Error("No se pudo confirmar una única fila PyS con los datos enviados.");op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));try{file.setDescription(["GPSpedia PyS — LINKED","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes].join("\n"));}catch(metadataError){console.warn("No se pudo actualizar el estado auxiliar de la imagen PyS:",metadataError);}try{logUserActivity(userId,userName,"add_problem",problemId,titulo);}catch(logError){console.error("No se pudo registrar la actividad de alta PyS:",logError);}return{status:"success",message:"Problema registrado correctamente.",problemId};
@@ -2151,9 +2184,8 @@ const expected=buildPysExpectedRow_(problemId,p,url,models);sheet.appendRow(expe
 
 function handleAddSolution(payload) {
     const { problemId, solucion, userId, userName } = payload || {};
-    const normalizedSolution = String(solucion || "").trim();
-    if (!problemId || !normalizedSolution || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
-    if (normalizedSolution.length > 700) throw new Error("La solución no puede superar 700 caracteres.");
+    const normalizedSolution = normalizePysField_(solucion, "La solución", PYS_SOLUTION_MAX_LENGTH, true, true);
+    if (!problemId || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
     const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
@@ -2172,9 +2204,8 @@ function handleAddSolution(payload) {
 
 function handleAddPrevention(payload) {
     const { problemId, prevenir, userId, userName } = payload || {};
-    const normalizedPrevention = String(prevenir || "").trim();
-    if (!problemId || !normalizedPrevention || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
-    if (normalizedPrevention.length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
+    const normalizedPrevention = normalizePysField_(prevenir, "La prevención", PYS_SOLUTION_MAX_LENGTH, true, true);
+    if (!problemId || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
     const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
@@ -2225,11 +2256,7 @@ function handleAddTutorial(payload) {
     return { status: "success", referenceId: title, message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
 }
 
-function extractYouTubeId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : "";
-}
+function extractYouTubeId(url) { return getPysYouTubeVideoId_(url); }
 
 function handleDeleteFeedbackItem(payload) {
     const { id, type } = payload;
@@ -2540,7 +2567,8 @@ function handleSubmitVideoForApproval(payload) {
     const { title, description, contentType, referenceId, metadata, videoId, videoUrl, userName, userId, opVideoId } = payload || {};
     const operationId = String(opVideoId || "").trim();
     const actualVideoId = String(videoId || "").trim();
-    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(actualVideoId)
+    const validatedVideoId = getPysYouTubeVideoId_(videoUrl);
+    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(actualVideoId) && validatedVideoId === actualVideoId
         ? "https://www.youtube.com/watch?v=" + actualVideoId : "";
     if (!title || !String(title).trim()) throw new Error("El título del vídeo es obligatorio.");
     if (!/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) throw new Error("Identificador de operación de vídeo inválido.");
@@ -2859,50 +2887,36 @@ function handleRejectVideo(payload) {
 
 /* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
 function handleUpdatePysItem(payload) {
+    payload=payload&&typeof payload==="object"?payload:{};
     const { problemId, titulo, descripcion, solucion, prevenir, videoUrl, userRole } = payload;
     if (!problemId) throw new Error("problemId es obligatorio.");
-
-    const allowedRoles = ['Desarrollador'];
-    if (!userRole || !allowedRoles.includes(userRole)) {
-        throw new Error("No tienes permisos de Desarrollador para editar este problema.");
+    if (userRole !== "Desarrollador") throw new Error("No tienes permisos de Desarrollador para editar este problema.");
+    const updates={};
+    if (Object.prototype.hasOwnProperty.call(payload,"titulo")) updates.titulo=normalizePysField_(titulo,"El título",PYS_TITLE_MAX_LENGTH,true,false);
+    if (Object.prototype.hasOwnProperty.call(payload,"descripcion")) updates.descripcion=normalizePysField_(descripcion,"La descripción",PYS_DESCRIPTION_MAX_LENGTH,true,true);
+    if (Object.prototype.hasOwnProperty.call(payload,"solucion")) updates.solucion=normalizePysField_(solucion,"La solución",PYS_SOLUTION_MAX_LENGTH,false,true);
+    if (Object.prototype.hasOwnProperty.call(payload,"prevenir")) updates.prevenir=normalizePysField_(prevenir,"La prevención",PYS_SOLUTION_MAX_LENGTH,false,true);
+    if (videoUrl !== undefined && typeof videoUrl !== "string") throw new Error("La URL de YouTube debe ser texto.");
+    const sheet=getPysSheet_(false);
+    if(!sheet)throw new Error("Hoja pys no encontrada.");
+    const lastRow=sheet.getLastRow();
+    if(lastRow<2)throw new Error("No hay problemas registrados.");
+    const ids=sheet.getRange(2,1,lastRow-1,1).getValues().flat(),matches=[];
+    ids.forEach((id,index)=>{if(String(id)===String(problemId))matches.push(index+2);});
+    if(matches.length!==1)throw new Error(matches.length>1?"El ID del problema está duplicado; no se modificó.":"Problema no encontrado.");
+    const rowIndex=matches[0],currentVideo=String(sheet.getRange(rowIndex,8).getValue()||"").trim();
+    if(videoUrl!==undefined){
+        const requested=videoUrl.trim(),currentCanonical=currentVideo?getCanonicalPysYouTubeUrl_(currentVideo):"";
+        if(requested&&!getPysYouTubeVideoId_(requested))throw new Error("La URL de YouTube no tiene un host, ruta o ID permitido.");
+        if(currentVideo&&!currentCanonical)throw new Error("El vídeo existente de PyS no tiene una URL válida; requiere revisión.");
+        if(requested!==currentVideo)throw new Error("El vídeo de PyS solo puede cambiarse mediante una solicitud de aprobación de YouTube.");
     }
-
-    if (titulo && titulo.length > 30) throw new Error("El título no puede exceder 30 caracteres.");
-    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
-    if (solucion && solucion.length > 700) throw new Error("La solución no puede exceder 700 caracteres.");
-    if (prevenir && prevenir.length > 700) throw new Error("La prevención no puede exceder 700 caracteres.");
-
-    const sheet = getPysSheet_(false);
-    if (!sheet) throw new Error("Hoja pys no encontrada.");
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) throw new Error("No hay problemas registrados.");
-
-    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-    const matches = [];
-    ids.forEach((id, index) => { if (String(id) === String(problemId)) matches.push(index + 2); });
-    if (matches.length !== 1) {
-        throw new Error(matches.length > 1 ? "El ID del problema está duplicado; no se modificó." : "Problema no encontrado.");
-    }
-
-    const rowIndex = matches[0];
-    const currentVideo = String(sheet.getRange(rowIndex, 8).getValue() || "").trim();
-    if (videoUrl !== undefined && String(videoUrl || "").trim() !== currentVideo) {
-        throw new Error("El vídeo de PyS solo puede cambiarse mediante una solicitud de aprobación de YouTube.");
-    }
-    if (titulo !== undefined) sheet.getRange(rowIndex, 2).setValue(titulo);
-    if (descripcion !== undefined) sheet.getRange(rowIndex, 3).setValue(descripcion);
-    if (solucion !== undefined) {
-        sheet.getRange(rowIndex, 5).setValue(solucion);
-        sheet.getRange(rowIndex, 4).setValue(solucion ? "x" : "");
-    }
-    if (prevenir !== undefined) sheet.getRange(rowIndex, 6).setValue(prevenir);
-
+    if(Object.prototype.hasOwnProperty.call(updates,"titulo"))sheet.getRange(rowIndex,2).setValue(updates.titulo);
+    if(Object.prototype.hasOwnProperty.call(updates,"descripcion"))sheet.getRange(rowIndex,3).setValue(updates.descripcion);
+    if(Object.prototype.hasOwnProperty.call(updates,"solucion")){sheet.getRange(rowIndex,5).setValue(updates.solucion);sheet.getRange(rowIndex,4).setValue(updates.solucion?"x":"");}
+    if(Object.prototype.hasOwnProperty.call(updates,"prevenir"))sheet.getRange(rowIndex,6).setValue(updates.prevenir);
     SpreadsheetApp.flush();
-    return {
-        status: "success",
-        message: "Problema actualizado exitosamente in-modal.",
-        updated: { problemId, titulo, descripcion, solucion, prevenir, videoUrl }
-    };
+    return {status:"success",message:"Problema actualizado exitosamente in-modal.",updated:{problemId,...updates,videoUrl:videoUrl===undefined?currentVideo:videoUrl.trim()}};
 }
 
 /* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */

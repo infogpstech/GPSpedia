@@ -1094,3 +1094,16 @@ Estado: IMPLEMENTADA; pruebas locales con dobles completadas; integración real 
 - Pruebas: PysCreationIntegrity 25/25 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado con dobles; Node CLI literal y servicios reales quedan para Beta.
 Siguiente: AUG-085 — revisar la siguiente tarea disponible del backlog.
 ================================================================================
+
+
+================================================================================
+AUG-085 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Unificación de validación de campos y URL de vídeo PyS.
+- Services/feedback.js: título máximo 15 y descripción máxima 200; solución y prevención máximo 700. Campos de texto validan tipo string, normalizan espacios y rechazan contenido enriquecido vacío. sinSolucion exige booleano real.
+- Services/feedback.js: altas, addSolution, addPrevention y edición in-modal aplican los límites y tipos en backend. La edición rechaza tipos incorrectos antes de escribir.
+- Services/feedback.js: nuevo parser estricto YouTube HTTPS con allowlist exacta de hosts, rutas e ID de 11 caracteres; rechaza credenciales, puertos, hosts falsos, esquemas inseguros y parámetros v duplicados. El flujo de alta conserva la aprobación obligatoria y no acepta URLs directas.
+- ui.js: límites sincronizados en formulario y edición; prompt de prevención actualizado a 700; validación temprana de edición.
+- Pruebas locales adaptadas: PysCreationIntegrity 43/43 PASS; PysImageStorageRecovery 22/22 PASS; parsing de backend y bloques UI modificados PASS.
+- Node CLI literal, Apps Script/Spreadsheet/Drive reales, navegador/DOM y YouTube API real no ejecutados; quedan en Beta aislada. No se desplegó ni se modificaron datos productivos.
+Siguiente: AUG-086 — evitar sobrescrituras concurrentes de solución y prevención.
+================================================================================

@@ -992,3 +992,19 @@ node "$TEST_TMP"
 La suite cubre esquema exacto de las diez columnas de `pys`, columnas adicionales, IDs vacíos/malformados/duplicados, secuencias con huecos y fuera de orden, ledger `PysOperations`, colisiones de `opId`/contenido, reintentos idénticos, rechazo de payload distinto, recuperación de imagen `UPLOAD_PENDING`, respuesta parcial tras persistir la fila, compensación segura, estado `RECOVERY_REQUIRED`, liberación del lock y contrato UI del identificador estable. Incluye escenarios de serialización de altas independientes; la concurrencia real de dos ejecuciones simultáneas se confirma en Beta aislada.
 
 La suite usa dobles de Drive/Spreadsheet y no invoca servicios reales. Validación local de esta iteración: 25/25 escenarios PyS nuevos y 22/22 escenarios de recuperación de imágenes, ejecutados en harness V8 adaptado. Node CLI literal, Apps Script, Drive/Spreadsheet reales, ACL efectiva y navegador real quedan para Beta aislada.
+
+## AUG-085 — Validación estricta de campos y vídeos PyS
+
+Ejecutar con Node.js desde la raíz del repositorio:
+
+```bash
+set -e
+TEST_TMP=Services/Test/PysCreationIntegrity.mjs
+cp Services/Test/PysCreationIntegrity.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite ampliada contiene 43 escenarios. Comprueba límites exactos y límite +1 (título 15, descripción 200, solución/previsión 700), tipos estrictos, normalización de espacios, contenido HTML enriquecido vacío, booleano estricto para `sinSolucion`, alta/edición, addSolution/addPrevention y URL YouTube mediante HTTPS, hosts/rutas/ID permitidos. Rechaza hosts falsos, esquemas inseguros, rutas no admitidas, puertos, credenciales y parámetros `v` duplicados. Las altas PyS continúan enviando vídeos únicamente mediante el flujo de aprobación; un enlace directo no elude la moderación.
+
+La suite usa dobles locales para Drive/Spreadsheet. En esta iteración se ejecutó en un harness V8 adaptado: 43/43 PASS. La suite de regresión `PysImageStorageRecovery.js` conserva 22/22 PASS. El comando Node CLI literal, Apps Script/Spreadsheet/Drive reales, DOM/navegador y YouTube API real no se ejecutaron; se reservan para Beta aislada.

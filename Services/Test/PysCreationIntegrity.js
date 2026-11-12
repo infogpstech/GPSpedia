@@ -31,6 +31,7 @@ function makeSheet(rows,name,state,options){
         getRange(row,col,numRows=1,numCols=1){
             return {
                 setValues(values){for(let r=0;r<values.length;r++){const target=rows[row-1+r]||(rows[row-1+r]=[]);for(let c=0;c<values[r].length;c++)target[col-1+c]=values[r][c];}},
+                setValue(value){const target=rows[row-1]||(rows[row-1]=[]);target[col-1]=value;},
                 clearContent(){for(let r=0;r<numRows;r++){const target=rows[row-1+r]||(rows[row-1+r]=[]);for(let c=0;c<numCols;c++)target[col-1+c]="";}},
                 getValues(){
                     if(name==="pys"&&options.failReferenceScan&&state.fileCreated&&row>=2&&numCols>1)throw new Error("Spreadsheet read failed");
@@ -98,14 +99,31 @@ function buildHarness(feedback,ui,options={}){
         extractDriveFileIds:value=>{const m=String(value||"").match(/\/d\/([A-Za-z0-9_-]{10,110})/);return m?[m[1]]:[];},
         logUserActivity:()=>{}
     };
-    const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleAddSolution(payload) {");
-    vm.runInNewContext(parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData};",context);
+    const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleAddTutorial(payload) {");
+    vm.runInNewContext(parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
     const validPayload=(opId=OP_A,overrides={})=>Object.assign({
         opId,titulo:"Falla eléctrica",descripcion:"Detalle del problema",sinSolucion:true,solucion:"",
         prevenir:"Revisar conexiones",videoUrl:"",userId:"user-1",userName:"Técnico",
         alcance:"general",modelosAsociados:[],imgBase64:dataUrl()
     },overrides);
     return {api:context.api,state,validPayload,ui};
+}
+
+function buildUpdateHarness(feedback, videoUrl=""){
+    const helpers=extract(feedback,"const PYS_TITLE_MAX_LENGTH=15;","function handleAddProblem(source) {");
+    const update=extract(feedback,"function handleUpdatePysItem(payload) {","/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */");
+    const rows=[HEADERS.slice(),["isue-001","Título","Descripción","","Solución","Prevención","",""+videoUrl,"Técnico",""]];
+    const sheet={
+        getLastRow:()=>rows.length,
+        getRange(row,col,numRows=1,numCols=1){return{
+            getValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>(rows[row-1+r]||[])[col-1+c]??"")),
+            getValue:()=>(rows[row-1]||[])[col-1]??"",
+            setValue:value=>{(rows[row-1]||(rows[row-1]=[]))[col-1]=value;}
+        };}
+    };
+    const context={console,Date,JSON,Math,Number,String,Object,Array,RegExp,Error,Set,Map,getPysSheet_:()=>sheet,SpreadsheetApp:{flush:()=>{}}};
+    vm.runInNewContext(helpers+"\n"+update+"\nthis.update=handleUpdatePysItem;",context);
+    return{update:context.update,rows};
 }
 
 export function runPysCreationIntegrityTests({feedback,ui}){
@@ -222,6 +240,104 @@ export function runPysCreationIntegrityTests({feedback,ui}){
     test("libera el lock después de un fallo de validación de esquema",()=>{
         const h=buildHarness(feedback,ui,{pysRows:[["incorrecto"]]});
         assert.throws(()=>h.api.add(h.validPayload()));assert.equal(h.state.lockWaits,1);assert.equal(h.state.lockReleases,1);
+    });
+    test("acepta exactamente los límites de título, descripción, solución y prevención",()=>{
+        const h=buildHarness(feedback,ui);
+        h.api.add(h.validPayload(OP_A,{titulo:"T".repeat(15),descripcion:"D".repeat(200),sinSolucion:false,solucion:"S".repeat(700),prevenir:"P".repeat(700)}));
+        assert.equal(h.state.pysRows[1][1].length,15);assert.equal(h.state.pysRows[1][2].length,200);
+        assert.equal(h.state.pysRows[1][4].length,700);assert.equal(h.state.pysRows[1][5].length,700);
+    });
+    test("rechaza título que supera 15 caracteres antes de crear imagen",()=>{
+        const h=buildHarness(feedback,ui);assert.throws(()=>h.api.add(h.validPayload(OP_A,{titulo:"T".repeat(16)})),/15 caracteres/);assert.equal(h.state.createdFiles,0);
+    });
+    test("rechaza descripción que supera 200 caracteres antes de crear imagen",()=>{
+        const h=buildHarness(feedback,ui);assert.throws(()=>h.api.add(h.validPayload(OP_A,{descripcion:"D".repeat(201)})),/200 caracteres/);assert.equal(h.state.createdFiles,0);
+    });
+    test("rechaza solución y prevención mayores de 700 caracteres",()=>{
+        const h=buildHarness(feedback,ui);
+        assert.throws(()=>h.api.add(h.validPayload(OP_A,{sinSolucion:false,solucion:"S".repeat(701)})),/700 caracteres/);
+        assert.throws(()=>h.api.add(h.validPayload(OP_B,{prevenir:"P".repeat(701)})),/700 caracteres/);
+        assert.equal(h.state.createdFiles,0);
+    });
+    test("rechaza tipos no string en campos PyS",()=>{
+        const h=buildHarness(feedback,ui);
+        assert.throws(()=>h.api.add(h.validPayload(OP_A,{titulo:123})),/debe ser texto/);
+        assert.throws(()=>h.api.add(h.validPayload(OP_B,{descripcion:{html:"texto"}})),/debe ser texto/);
+        assert.equal(h.state.createdFiles,0);
+    });
+    test("exige booleano estricto para sinSolucion",()=>{
+        const h=buildHarness(feedback,ui);assert.throws(()=>h.api.add(h.validPayload(OP_A,{sinSolucion:"true"})),/debe ser booleano/);assert.equal(h.state.createdFiles,0);
+    });
+    test("rechaza descripción HTML enriquecida sin texto visible",()=>{
+        const h=buildHarness(feedback,ui);
+        for(const descripcion of ["<p><br></p>","<div>&nbsp;</div>","<p> &#160; </p>"])assert.throws(()=>h.api.add(h.validPayload(OP_A,{descripcion})),/no puede estar vacío/);
+        assert.equal(h.state.createdFiles,0);
+    });
+    test("normaliza espacios sin convertir campos no textuales",()=>{
+        const h=buildHarness(feedback,ui);
+        assert.equal(h.api.normalize("  Falla   eléctrica  ","Título",15,true,false),"Falla eléctrica");
+        assert.equal(h.api.normalize("<p>Detalle   técnico</p>","Descripción",200,true,true),"<p>Detalle técnico</p>");
+        assert.throws(()=>h.api.normalize(["texto"],"Título",15,true,false),/debe ser texto/);
+    });
+    test("acepta únicamente hosts y rutas YouTube permitidos",()=>{
+        const h=buildHarness(feedback,ui),id="dQw4w9WgXcQ";
+        for(const url of ["https://www.youtube.com/watch?v="+id,"https://youtu.be/"+id,"https://youtube.com/embed/"+id,"https://m.youtube.com/shorts/"+id,"https://www.youtube-nocookie.com/embed/"+id])assert.equal(h.api.youtube(url),id);
+    });
+    test("rechaza esquemas, hosts, rutas, puertos e IDs YouTube inválidos",()=>{
+        const h=buildHarness(feedback,ui),bad=["http://www.youtube.com/watch?v=dQw4w9WgXcQ","javascript:alert(1)","https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ","https://youtu.be.evil.test/dQw4w9WgXcQ","https://youtube.com/v/dQw4w9WgXcQ","https://youtube.com/watch?v=dQw4w9WgXcQ&v=aaaaaaaaaaa","https://youtube.com:444/watch?v=dQw4w9WgXcQ","https://user@youtube.com/watch?v=dQw4w9WgXcQ","https://youtube.com/watch?v=short"];
+        for(const url of bad)assert.equal(h.api.youtube(url),"",url);
+    });
+    test("alta rechaza URL directa inválida y conserva el flujo de aprobación para una válida",()=>{
+        const h=buildHarness(feedback,ui);
+        assert.throws(()=>h.api.add(h.validPayload(OP_A,{videoUrl:"javascript:alert(1)"})),/URL de YouTube/);
+        assert.throws(()=>h.api.add(h.validPayload(OP_B,{videoUrl:"https://youtu.be/dQw4w9WgXcQ"})),/flujo de aprobación/);
+        assert.equal(h.state.createdFiles,0);
+    });
+    test("edición y alta de aprobación usan el validador estricto del backend",()=>{
+        assert.match(feedback,/function handleUpdatePysItem\(payload\)[\s\S]*?getPysYouTubeVideoId_\(requested\)/);
+        assert.match(feedback,/function handleSubmitVideoForApproval\(payload\)[\s\S]*?getPysYouTubeVideoId_\(videoUrl\)/);
+        assert.match(ui,/getValidatedYouTubeVideoId\(newVideo\)/);
+    });
+    test("UI anuncia y aplica los mismos límites de campo",()=>{
+        assert.match(ui,/pys-titulo" maxlength="15"/);assert.match(ui,/pys-detalle" maxlength="200"/);
+        assert.match(ui,/titleInput\.maxLength = 15/);assert.match(ui,/descInput\.maxLength = 200/);
+        assert.match(ui,/solución \(máx 700 caracteres\)/i);assert.match(ui,/prevención \(máx 700 caracteres\)/i);
+        assert.match(ui,/recomendación preventiva \(máx 700 caracteres\)/i);
+    });
+    test("addSolution aplica tipo, normalización y límite 700 en backend",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows});
+        h.api.addSolution({problemId:"isue-001",solucion:"  "+ "S".repeat(699)+"  ",userId:"u",userName:"T"});
+        assert.equal(h.state.pysRows[1][4].length,699);
+        assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:"S".repeat(701),userId:"u",userName:"T"}),/700 caracteres/);
+        assert.throws(()=>h.api.addSolution({problemId:"isue-001",solucion:123,userId:"u",userName:"T"}),/debe ser texto/);
+    });
+    test("addPrevention aplica tipo, normalización y límite 700 en backend",()=>{
+        const rows=[HEADERS.slice(),["isue-001","Falla","Detalle","","","","","","Técnico",""]];
+        const h=buildHarness(feedback,ui,{pysRows:rows});
+        h.api.addPrevention({problemId:"isue-001",prevenir:"  Revisar   cableado  ",userId:"u",userName:"T"});
+        assert.equal(h.state.pysRows[1][5],"Revisar cableado");
+        assert.throws(()=>h.api.addPrevention({problemId:"isue-001",prevenir:"P".repeat(701),userId:"u",userName:"T"}),/700 caracteres/);
+        assert.throws(()=>h.api.addPrevention({problemId:"isue-001",prevenir:{text:"x"},userId:"u",userName:"T"}),/debe ser texto/);
+    });
+    test("edición acepta los límites exactos y guarda campos normalizados",()=>{
+        const h=buildUpdateHarness(feedback);
+        h.update({problemId:"isue-001",userRole:"Desarrollador",titulo:"T".repeat(15),descripcion:"D".repeat(200),solucion:"S".repeat(700),prevenir:"P".repeat(700),videoUrl:""});
+        assert.equal(h.rows[1][1].length,15);assert.equal(h.rows[1][2].length,200);assert.equal(h.rows[1][4].length,700);assert.equal(h.rows[1][5].length,700);
+    });
+    test("edición rechaza tipos y longitudes fuera de contrato sin escribir",()=>{
+        const h=buildUpdateHarness(feedback);
+        assert.throws(()=>h.update({problemId:"isue-001",userRole:"Desarrollador",titulo:"T".repeat(16)}),/15 caracteres/);
+        assert.throws(()=>h.update({problemId:"isue-001",userRole:"Desarrollador",descripcion:123}),/debe ser texto/);
+        assert.throws(()=>h.update({problemId:"isue-001",userRole:"Desarrollador",descripcion:"<p><br></p>"}),/no puede estar vacío/);
+        assert.equal(h.rows[1][1],"Título");assert.equal(h.rows[1][2],"Descripción");
+    });
+    test("edición valida URL YouTube y no permite saltarse aprobación",()=>{
+        const h=buildUpdateHarness(feedback);
+        assert.throws(()=>h.update({problemId:"isue-001",userRole:"Desarrollador",videoUrl:"https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ"}),/URL de YouTube/);
+        assert.throws(()=>h.update({problemId:"isue-001",userRole:"Desarrollador",videoUrl:"https://youtu.be/dQw4w9WgXcQ"}),/solicitud de aprobación/);
+        const linked=buildUpdateHarness(feedback,"https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        linked.update({problemId:"isue-001",userRole:"Desarrollador",videoUrl:"https://www.youtube.com/watch?v=dQw4w9WgXcQ"});
     });
     test("el formulario genera una clave aleatoria estable y la adjunta al payload",()=>{
         assert.match(ui,/pendingPysOperationId/);assert.match(ui,/pendingPysOperationSignature !== operationSignature/);

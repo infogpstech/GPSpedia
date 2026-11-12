@@ -7755,7 +7755,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
         descLabel.textContent = "Descripción / Detalles (máx 700 caracteres):";
         const descInput = document.createElement("textarea");
         descInput.id = "edit-tutorial-desc-textarea";
-        descInput.maxLength = 700;
+        descInput.maxLength = 200;
         descInput.rows = 4;
         descInput.value = item.Detalles || item.Descripcion || "";
         descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
@@ -7791,7 +7791,9 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
             saveBtn.onclick = async () => {
                 const newTema = temaInput.value.trim();
                 const newVideo = videoInput.value.trim();
+                if (newVideo && !getValidatedYouTubeVideoId(newVideo)) { mostrarNotificacion("La URL de YouTube no es válida.", "error"); return; }
                 const newDesc = descInput.value.trim();
+                if (newDesc.length > 200) { mostrarNotificacion("La descripción no puede superar 200 caracteres.", "error"); return; }
                 if (!newTema) {
                     mostrarNotificacion("El tema no puede estar vacío.", "error");
                     return;
@@ -9400,17 +9402,17 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             </div>
 
             <div class="form-group">
-                <label>Título del Problema (Máx 30 caracteres)</label>
-                <input type="text" id="pys-titulo" maxlength="30" required placeholder="Ej. Falla relay pump">
+                <label>Título del Problema (Máx 15 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
             </div>
             <div class="form-group">
                 <label>Imagen del Problema</label>
                 <input type="file" id="pys-img-file" accept="image/jpeg,image/png,image/webp" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 700 caracteres)</label>
+                <label>Detalle del Problema (Máx 200 caracteres)</label>
                 <div class="rich-editor-toolbar" data-rich-target="pys-detalle"></div>
-                <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
+                <textarea id="pys-detalle" maxlength="200" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
@@ -9979,16 +9981,16 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
 
         const titleLabel = document.createElement("label");
         titleLabel.style.fontWeight = "bold";
-        titleLabel.textContent = "Título del Problema (máx 30 caracteres):";
+        titleLabel.textContent = "Título del Problema (máx 15 caracteres):";
         const titleInput = document.createElement("input");
         titleInput.type = "text";
-        titleInput.maxLength = 30;
+        titleInput.maxLength = 15;
         titleInput.value = item.Problema || "";
         titleInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
 
         const descLabel = document.createElement("label");
         descLabel.style.fontWeight = "bold";
-        descLabel.textContent = "Descripción (máx 700 caracteres):";
+        descLabel.textContent = "Descripción (máx 200 caracteres):";
         const descInput = document.createElement("textarea");
         descInput.id = "edit-pys-desc-textarea";
         descInput.maxLength = 700;
@@ -10064,9 +10066,12 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         if (saveBtn) {
             saveBtn.onclick = async () => {
                 const newTitle = titleInput.value.trim();
+                if (!newTitle || newTitle.length > 15) { mostrarNotificacion("El título debe contener entre 1 y 15 caracteres.", "error"); return; }
                 const newDesc = descInput.value.trim();
                 const newSol = solInput.value.trim();
+                if (newSol.length > 700) { mostrarNotificacion("La solución no puede superar 700 caracteres.", "error"); return; }
                 const newPrev = prevInput.value.trim();
+                if (newPrev.length > 700) { mostrarNotificacion("La prevención no puede superar 700 caracteres.", "error"); return; }
                 const newVideo = videoInput.value.trim();
 
                 if (!newTitle) {
@@ -10331,7 +10336,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         addPrevBtn.style.marginLeft = "10px";
         addPrevBtn.innerText = "+ Agregar Prevención";
         addPrevBtn.onclick = () => {
-            const prevText = window.prompt("Introduce recomendación preventiva (máx 100 caracteres):");
+            const prevText = window.prompt("Introduce recomendación preventiva (máx 700 caracteres):");
             if (prevText && prevText.trim()) {
                 routeAction("addPrevention", { ...getSessionPayload_(), problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
                     alert("Prevención agregada con éxito.");

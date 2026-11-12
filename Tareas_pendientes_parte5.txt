@@ -408,7 +408,7 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
   4. Añadir opId estable por alta; mismo opId y mismo payload devuelve el resultado previo, mismo opId con payload distinto se rechaza.
   5. Probar filas borradas, huecos, IDs desordenados/duplicados, hoja con encabezados incompatibles, concurrencia y respuesta perdida seguida de reintento.
 
-### Estado de AUG-084: IMPLEMENTADA EN CÓDIGO Y VALIDADA CON DOBLES LOCALES (2026-11-12). Pys mantiene sus diez columnas sin cambios. Se añadieron validación estricta de esquema/IDs, secuencia por máximo sufijo, ledger PysOperations e idempotencia por opId/hash bajo ScriptLock, recuperación de operaciones parciales y clave estable en UI. Suites locales adaptadas: PysCreationIntegrity 25/25 PASS; PysImageStorageRecovery 22/22 PASS. Node CLI literal y servicios reales quedan para Beta aislada según lista_beta.txt.
+### Estado de AUG-084: IMPLEMENTADA EN CÓDIGO Y VALIDADA CON DOBLES LOCALES (2026-11-12). Pys mantiene sus diez columnas sin cambios. Se añadieron validación estricta de esquema/IDs, secuencia por máximo sufijo, ledger PysOperations e idempotencia por opId/hash bajo ScriptLock, recuperación de operaciones parciales y clave estable en UI. Suites locales adaptadas: PysCreationIntegrity 43/43 PASS tras AUG-085; PysImageStorageRecovery 22/22 PASS. Node CLI literal y servicios reales quedan para Beta aislada según lista_beta.txt.
 
 AUG-085 — Unificar validación de campos y URL de vídeo PyS
 - **Origen:** H-AUD-011-005. **Prioridad:** Media.
@@ -419,6 +419,7 @@ AUG-085 — Unificar validación de campos y URL de vídeo PyS
   3. Validar en servidor que los campos sean cadenas, normalizar espacios, validar sinSolucion como booleano y aplicar límites incluso en llamadas directas.
   4. Validar URL YouTube mediante host/ruta/ID permitidos tanto en alta como en edición; rechazar esquemas, hosts y formatos no válidos.
   5. Probar límites exactos, límite +1, tipos incorrectos, HTML enriquecido vacío, checkbox y enlaces válidos/no válidos.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Implementación y pruebas locales aprobadas; integración Apps Script/Spreadsheet/Drive, DOM/navegador y YouTube API real quedan en lista_beta.txt.
 
 ### AUG-086 — Evitar sobrescrituras concurrentes de solución y prevención
 - **Origen:** H-AUD-011-006. **Prioridad:** Media.

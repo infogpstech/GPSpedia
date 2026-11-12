@@ -1398,3 +1398,21 @@ Refinamiento final AUG-084:
 - Reejecución tras el refinamiento: PysCreationIntegrity 25/25 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado.
 Commits de implementación: 0b746b0a0589abb2a2e04c842859806c64270025; refinamiento 1906628fe937482d4d732597123e46d732b93f3a. Cierre documental previo: 332ee23ed9f46039a0abb13f958b947720e20d67.
 HEAD de trabajo verificado antes de este apunte: 1906628fe937482d4d732597123e46d732b93f3a. Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-085 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Tarea: unificar validación de campos y URL de vídeo PyS.
+Implementación:
+- Services/feedback.js: límites title 15, descripción 200, solución/previsión 700; normalización de espacios; validación estricta de tipos y contenido HTML enriquecido vacío; sinSolucion booleano.
+- Validación aplicada a alta, aportes de solución/prevención y edición in-modal.
+- URL YouTube estricta por HTTPS, hosts/rutas allowlist e ID de 11 caracteres; rechaza hosts falsos, puertos, credenciales, esquemas y parámetros v duplicados.
+- Se conserva aprobación obligatoria: la alta no admite URLs directas y la edición no cambia el vídeo fuera del flujo de aprobación.
+- ui.js alinea etiquetas/maxlength, corrige prompt de prevención a 700 y valida edición antes de enviar.
+Pruebas locales: PysCreationIntegrity 43/43 PASS y PysImageStorageRecovery 22/22 PASS en harness V8 adaptado; sintaxis backend y bloques UI modificados PASS.
+Pendiente Beta: Node CLI literal, Apps Script/Spreadsheet/Drive aislados, DOM/navegador y YouTube API real; instrucciones en lista_beta.txt.
+Archivos modificados: Services/feedback.js, ui.js, Services/Test/PysCreationIntegrity.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, Tareas.txt, checkpoint.md, ChangesLogs.txt, Auditoría.txt y lista_beta.txt.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Siguiente tarea: AUG-086 — evitar sobrescrituras concurrentes de solución y prevención.
+================================================================================

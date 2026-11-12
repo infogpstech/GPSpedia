@@ -724,3 +724,38 @@ Ejecutar exclusivamente en una copia aislada del proyecto Apps Script, una copia
 
 No desplegar a producción, no alterar la hoja histórica de diez columnas y no modificar ACL globales.
 ================================================================================
+
+================================================================================
+AUG-085 — VALIDACIÓN BETA DE CAMPOS Y URL YOUTUBE PyS
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — copia FEEDBACK, Spreadsheet y Drive de prueba; nunca producción:
+1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de Services/Test/README.md.
+2. Enviar altas con título de 15 y 16 caracteres; descripción de 200 y 201; solución/previsión de 700 y 701. Verificar aceptación/rechazo y que los inválidos no creen filas ni archivos.
+3. Enviar campos con null, número, array, objeto, HTML enriquecido vacío, espacios y entidades de espacio. Confirmar rechazo server-side antes de crear recursos y normalización consistente.
+4. Probar sinSolucion con true, false, null, string "true" y número. Solo booleanos deben admitirse.
+5. Probar addSolution/addPrevention y edición in-modal con límites exactos, límite +1, tipo incorrecto y HTML vacío; revisar que un rechazo no cambie la fila.
+6. Probar URLs HTTPS válidas: youtube.com/watch?v=ID, youtu.be/ID, /embed/ID, /shorts/ID y /live/ID. Probar HTTP, javascript:, hosts falsos, credenciales, puertos, IDs cortos/largos, rutas no permitidas y parámetro v duplicado.
+7. Confirmar que alta PyS no acepta URL directa aunque sea válida y que el vídeo solo se adjunta mediante el flujo de aprobación. Verificar que la edición no cambia el vídeo fuera de ese flujo.
+8. En navegador real, verificar maxlength, rich editor, mensajes de validación y prompt de prevención de 700; revisar títulos/descripciones existentes mayores al nuevo límite antes de guardarlos.
+9. Registrar payloads, respuestas, filas antes/después, IDs de archivos y evidencia del flujo de aprobación. No usar cuentas ni datos productivos.
+
+No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================

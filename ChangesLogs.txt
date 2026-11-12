@@ -186,3 +186,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Comprueba coherencia de imageFileId/imageUrl según estado del ledger para evitar reintentos sobre referencias incompletas.
 - PysCreationIntegrity amplía el caso de duplicidad del ledger a IDs numéricamente equivalentes.
 - Reejecución local adaptada: PysCreationIntegrity 25/25 PASS; PysImageStorageRecovery 22/22 PASS.
+
+
+================================================================================
+2026-11-12 — AUG-085 — VALIDACIÓN ESTRICTA DE CAMPOS Y URL DE VÍDEO PyS
+- Services/feedback.js: agrega límites centralizados (título 15, descripción 200, solución/previsión 700), validación de tipos string, normalización de espacios y detección de contenido HTML enriquecido vacío.
+- Services/feedback.js: sinSolucion exige booleano; altas, aportes de solución/prevención y edición in-modal reutilizan validadores server-side.
+- Services/feedback.js: parser YouTube estricto por HTTPS, allowlist de host/ruta e ID; alta directa mantiene el flujo de aprobación y edición no puede cambiar el vídeo fuera de ese flujo.
+- ui.js: alinea maxlength y etiquetas de creación/edición; corrige el prompt de prevención de 100 a 700 caracteres y valida los campos antes de enviar la edición.
+- Services/Test/PysCreationIntegrity.js: amplía cobertura de 25 a 43 escenarios para límites, tipos, HTML vacío, checkbox, URLs y edición.
+================================================================================
