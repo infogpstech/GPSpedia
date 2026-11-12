@@ -718,3 +718,14 @@ cp Services/Test/YouTubeUploadOverlayLifecycle.js Services/Test/YouTubeUploadOve
 ```
 
 La prueba de contrato verifica que una segunda apertura no retire directamente una instancia existente, que una transferencia activa y un modal cubierto por otro overlay se conserven, que se respete la cancelación del cierre y que el reemplazo reutilice la entrada superior del historial.
+
+
+## AUG-068 — Cierre del modal YouTube durante transferencia activa
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/YouTubeUploadCloseDuringTransfer.js Services/Test/YouTubeUploadCloseDuringTransfer.mjs && node Services/Test/YouTubeUploadCloseDuringTransfer.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadCloseDuringTransfer.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La prueba ejecuta los callbacks reales `closeModal` y `requestOverlayClose` extraídos de `youtubeUpload.js`, junto con el gestor real de `overlayHistory.js`. Comprueba Atrás, X y Cancelar cuando hay una transferencia activa, tanto al rechazar como al confirmar la pausa. El historial se simula; no sustituye una prueba DOM/navegador real.

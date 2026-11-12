@@ -661,3 +661,11 @@ cp Services/Test/YouTubeUploadCloseDuringTransfer.js Services/Test/YouTubeUpload
 
 Siguiente acción: ejecutar la prueba 4/4 y la suite OverlayHistoryStack en Codespaces; resolver cualquier fallo reproducible. Después revisar el flujo de cancelación/recuperación y las rutas de cierre automático. No iniciar AUG-069.
 ================================================================================
+
+
+================================================================================
+AUG-068 — ADENDA ITERACIÓN 3D — REGISTRO Y CONTADOR DE PRUEBAS — 2026-11-12
+Durante la preparación de la ejecución reproducible se detectó que OverlayHistoryStack contiene 11 escenarios, pero su mensaje final indicaba 11/10. Se corrigió el denominador a 11. También se añadió a Services/Test/README.md el comando Node CLI y el alcance de YouTubeUploadCloseDuringTransfer.js, que faltaban en la documentación.
+Validación de esta corrección: revisión de los 11 casos y comprobación estática de la documentación y el contador. No se declara ejecución Node CLI ni navegador real. La rama base permanece intacta.
+Siguiente acción: ejecutar en Codespaces las suites OverlayHistoryStack (11/11), YouTubeUploadOverlayLifecycle (8/8) y YouTubeUploadCloseDuringTransfer (4/4); revisar cualquier fallo antes de ampliar la cobertura de las rutas de recuperación y cierre automático. No iniciar AUG-069.
+================================================================================

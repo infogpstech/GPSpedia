@@ -168,4 +168,4 @@ test('cancelar un cierre por popstate restaura la entrada del overlay', () => {
     assert.equal(attempts, 2);
 });
 
-console.log('OverlayHistoryStack:', passed + '/10 PASS');
+console.log('OverlayHistoryStack:', passed + '/11 PASS');
