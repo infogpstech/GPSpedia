@@ -887,3 +887,14 @@ cp Services/Test/ReportImageAttachment.js Services/Test/ReportImageAttachment.mj
 ```
 
 18 pruebas de lógica y contrato (suite incorporada; ejecutar desde el checkout local): firmas JPEG/PNG/WebP, MIME/Base64, tamaño máximo 3 MB, SHA-256, nombre, metadata histórica, URL canónica, almacenamiento simulado, ausencia de permisos públicos, limpieza de archivos huérfanos y contratos UI/API/FEEDBACK/Inbox. Usa dobles locales; no invoca Apps Script, Spreadsheet ni Drive reales.
+
+
+## AUG-078 — Asociación de sugerencias con reporte, vehículo y corte
+
+Ejecutar desde la raíz con Node.js:
+
+```bash
+cp Services/Test/CutSuggestionReportLink.js Services/Test/CutSuggestionReportLink.mjs && node Services/Test/CutSuggestionReportLink.mjs; RESULT=$?; rm -f Services/Test/CutSuggestionReportLink.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+11 escenarios: vínculo válido; ID ausente/sintético; reporte inexistente/duplicado; vehículo cruzado en metadata/fila; corte distinto; slot vacío; reporte histórico sin metadata; vehículo inexistente/duplicado; validación antes de Drive y escrituras. Los dobles de Spreadsheet no sustituyen integración Beta.
