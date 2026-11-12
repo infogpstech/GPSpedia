@@ -789,3 +789,29 @@ Regresiones relacionadas: YouTubeUploadCheckpointRecovery 2/2 PASS; YouTubeUploa
 Parsing sintáctico de youtubeUpload.js: PASS en V8 adaptado, retirando import/export para evaluación aislada.
 Revisión del diff entre 96cae67 y f75a409: únicamente youtubeUpload.js, la prueba nueva, Services/Test/README.md y checkpoint.md.
 Limitaciones: no se ejecutó Node CLI en Codespaces ni IndexedDB/navegador real. La prueba usa funciones reales extraídas y lógica simulada; persistencia real queda para Beta.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3J — ERRORES Y FINALIZACIÓN DE TRANSACCIONES INDEXEDDB
+Estado: EN PROGRESO. Se resolvió un defecto reproducible en el ciclo de persistencia local de las subidas de YouTube.
+
+Hallazgo:
+- deleteYouTubeUploadRecord_ no atendía tx.onabort ni tx.onerror; una transacción abortada podía dejar pendiente indefinidamente la promesa de limpieza.
+- getYouTubeUploadRecord_ y findPendingYouTubeUploadRecord_ resolvían al completarse la solicitud individual, sin esperar tx.oncomplete ni manejar el aborto/error de la transacción. Una lectura podía anunciar éxito antes de que la transacción terminara correctamente.
+- saveYouTubeUploadRecord_ ya manejaba los eventos de error/aborto, pero su lógica de cierre/settlement era independiente.
+
+Corrección:
+- Se añadió watchYouTubeUploadTransaction_ para resolver/rechazar una sola vez, cerrar la conexión y esperar la finalización de la transacción.
+- save/get/find/delete utilizan el mismo control; las lecturas solo entregan resultados después de tx.oncomplete.
+- Se conserva el rechazo de múltiples registros pendientes para la misma combinación usuario/tipo/referencia y el filtro de los cinco estados recuperables.
+- Nueva suite Services/Test/YouTubeUploadRecordPersistence.js: round-trip de cinco estados, aislamiento, duplicados, eliminación, error/aborto de las cuatro operaciones y aborto posterior a la solicitud en lecturas.
+
+Validación local:
+- 12/12 PASS en runtime V8 adaptado, ejecutando las funciones reales extraídas de youtubeUpload.js con IndexedDB simulado.
+- Parsing de la fuente modificada y del harness Node: PASS.
+- No se ejecutó Node CLI en Codespaces ni IndexedDB real de navegador; esas comprobaciones quedan para Beta.
+- ChangesLogs.txt no se modificó: contiene 180,542 caracteres y requiere rotación documental sin pérdida antes de nuevas adiciones.
+
+Rama base intacta. No iniciar AUG-069.
+Siguiente acción: ejecutar la suite reproducible en Node CLI de Codespaces y continuar la revisión final del ciclo de vida YouTube dentro de AUG-068.
+================================================================================
