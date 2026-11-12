@@ -837,4 +837,4 @@ Ejecutar desde la raíz:
 cp Services/Test/VehicleShareLinks.js Services/Test/VehicleShareLinks.mjs && node Services/Test/VehicleShareLinks.mjs; RESULT=$?; rm -f Services/Test/VehicleShareLinks.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
-La suite contiene 18 escenarios para construcción/decodificación de URLs, compatibilidad #search=, IDs y metadatos duplicados, variantes, aislamiento de Cortes frente a otras secciones, Web Share exitoso/cancelado/rechazado, fallback Clipboard y errores síncronos/asíncronos. Los permisos de navegador y el contexto seguro requieren validación Beta.
+La suite contiene 19 escenarios para construcción/decodificación de URLs, compatibilidad #search=, IDs y metadatos duplicados, variantes, aislamiento de Cortes frente a otras secciones, Web Share exitoso/cancelado/rechazado, fallback Clipboard y errores síncronos/asíncronos. Los permisos de navegador y el contexto seguro requieren validación Beta.
