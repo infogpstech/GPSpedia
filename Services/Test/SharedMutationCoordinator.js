@@ -456,6 +456,19 @@ function runSharedMutationCoordinatorTests() {
             "El envío de vídeo debe reservar lectura de Tutorial para validar el destino.");
     });
 
+    test_("approveVideo y rejectVideo no pueden decidir simultáneamente la misma cola FEEDBACK", function() {
+        const r = createRuntime_();
+        const approval = acquire_(r, "FEEDBACK", "approveVideo");
+        const rejection = acquire_(r, "FEEDBACK", "rejectVideo");
+        assert_(approval.status === "success", "La primera decisión debe adquirir el lease.");
+        assert_(rejection.status === "error" && rejection.code === "busy",
+            "La decisión opuesta debe esperar a que termine la primera.");
+        release_(r, "FEEDBACK", "approveVideo", approval.token);
+        const retry = acquire_(r, "FEEDBACK", "rejectVideo");
+        assert_(retry.status === "success", "La segunda decisión debe reintentarse tras liberar el lease.");
+        release_(r, "FEEDBACK", "rejectVideo", retry.token);
+    });
+
     test_("FEEDBACK ya no habilita assignCollaborator obsoleto", function() {
         expectThrow_(() => coordinatorPolicy_("FEEDBACK", "assignCollaborator"), "política");
     });
