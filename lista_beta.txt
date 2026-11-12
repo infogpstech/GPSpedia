@@ -859,7 +859,12 @@ PRUEBAS EN BETA AISLADA — cuenta y datos de prueba:
 5. Repetir con un PyS y vehículo diferentes; probar vista de tarjeta única y carrusel.
 6. Registrar capturas antes/después y confirmar que no se alteraron asociaciones ajenas.
 
+AUG-089 — PILA MODAL Y POSICIÓN PyS–VEHÍCULO
+7. Desde un vehículo normal, abrir un PyS relacionado y regresar con el botón X; comprobar que vuelve al mismo vehículo.
+8. Repetir el recorrido usando el botón Atrás del navegador/dispositivo; verificar que cada retroceso restaura un solo nivel y no duplica la pila.
+9. Antes de abrir el PyS, desplazar verticalmente el detalle, abrir el acordeón «Posibles problemas» y mover su carrusel; al regresar, comprobar scroll, acordeón activo y posición horizontal.
+10. Repetir con el carrusel de vehículos relacionados del detalle PyS; comprobar su posición horizontal al regresar.
+11. Repetir los recorridos editando, guardando y descartando cambios; confirmar que el contexto se conserva y que el descarte termina antes del retorno.
+
 No desplegar a producción ni modificar datos productivos.
 ================================================================================
-
-- [ ] AUG-089 — PyS–vehículo: validar en navegador real retorno de varios niveles con Atrás y cierre X; confirmar scroll vertical, scroll horizontal, acordeón abierto, edición/descartar/guardar y ausencia de entradas duplicadas.
