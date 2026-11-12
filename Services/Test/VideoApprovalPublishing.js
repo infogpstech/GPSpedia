@@ -31,7 +31,7 @@ function runVideoApprovalPublishingTests() {
     function env_(type,options){
         options=options||{};
         const feedbackRows=[["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido"]];
-        const approval=approval_(type,options.referenceId||({corte:"veh-1",pys:"pys-1",tutorial:"tut-1"}[type]));
+        const approval=approval_(type,options.referenceId||({corte:"veh-1",pys:"isue-001",tutorial:"tut-1"}[type]));
         const requestRow=["vid-1","Owner",approval.referenceId,JSON.stringify(approval),"pending",false,"","",""];
         if(!options.noRequest)feedbackRows.push(requestRow);
         if(options.duplicateRequest)feedbackRows.push(requestRow.slice());
@@ -39,7 +39,7 @@ function runVideoApprovalPublishingTests() {
         const cutHeaders=new Array(45).fill("");cutHeaders[0]="id";cutHeaders[9]="videoGuiaDesarmeUrl";
         const cuts=makeSheet_([cutHeaders,(()=>{const row=new Array(45).fill("");row[0]="veh-1";row[9]=options.currentUrl||"";return row;})()]);
         const pysHeaders=["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"];
-        const pys=makeSheet_([pysHeaders,["pys-1","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
+        const pys=makeSheet_([pysHeaders,["isue-001","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
         const tutHeaders=VIDEO_TUTORIAL_HEADERS.slice();
         const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?3:null});
         const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutorial":tutorial };
@@ -58,7 +58,7 @@ function runVideoApprovalPublishingTests() {
         run_("mantiene vacíos los tres destinos hasta la aprobación",()=>{
             ["corte","pys","tutorial"].forEach(type=>{
                 withEnv_(type,{noRequest:true},e=>{
-                    const referenceId={corte:"veh-1",pys:"pys-1",tutorial:"tut-1"}[type];
+                    const referenceId={corte:"veh-1",pys:"isue-001",tutorial:"tut-1"}[type];
                     const result=handleSubmitVideoForApproval({
                         opVideoId:"q".repeat(32),userId:"owner-1",userName:"Owner",
                         title:"Video",description:"",contentType:type,referenceId,
