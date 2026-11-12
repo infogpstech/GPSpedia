@@ -1090,3 +1090,25 @@ Trabajo publicado:
 Validación inicial adaptada: suite VehicleShareLinks PASS en V8 con share-utils.js/search-utils.js reales y contratos de main.js/ui.js. Parsing V8 de share-utils.js/main.js y del handler de compartir: PASS. Node CLI literal, DOM/navegadores móviles/escritorio, permisos Clipboard/Web Share y contexto seguro aún no ejecutados.
 Siguiente acción: revisar el ciclo completo de deep link con el catálogo real, probar las rutas de fallback y errores, ampliar cobertura de variantes/resultados multi-sección, ejecutar suites relacionadas y cerrar documentación con evidencia.
 ================================================================================
+
+
+================================================================================
+AUG-072 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Resultado:
+- share-utils.js genera un URL canónico con ID estable y consulta. Si el ID no está disponible, genera el formato histórico #search=.
+- El parser acepta enlaces históricos y nuevos; los parámetros contradictorios no seleccionan un ID arbitrario.
+- La resolución consulta únicamente catalogData.cortes; un ID ausente o duplicado cae a búsqueda. Los IDs repetidos en otras secciones no abren esos registros.
+- main.js espera la sesión/carga del catálogo, aplica la consulta como contexto y abre el registro exacto por ID; si no existe, ejecuta fallback de búsqueda.
+- ui.js usa el mismo URL para Web Share y Clipboard; AbortError no copia automáticamente; fallos recuperables intentan Clipboard; fallos finales muestran aviso y un campo readonly accesible para copiar manualmente.
+- service-worker.js precarga share-utils.js y usa gpsepedia-cache-v16.
+Validación local adaptada:
+- VehicleShareLinks: 19/19 PASS.
+- ServiceWorkerCache: 6/6 PASS.
+- OverlayMenuModalHistory: 13/13 PASS.
+- OverlayHistoryStack: 19/19 PASS.
+- ReplacedImagesLightboxHistory: 6/6 PASS.
+- Parsing V8 de share-utils.js, main.js y handler de compartir en ui.js: PASS.
+- Node CLI literal no ejecutado. Web Share/Clipboard real, permisos y contexto seguro, lectores de pantalla y dispositivos quedan diferidos a Beta.
+Publicación: cambios en GPSpedia2.2.5_work; HEAD de cierre pendiente de verificación posterior a registros. Rama base GPSpedia2.2.5 permanece intacta en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente tarea identificada en backlog: AUG-073 — Hacer accesible y semánticamente preciso el indicador de conectividad.
+================================================================================
