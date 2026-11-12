@@ -1143,9 +1143,13 @@ export function mostrarCategorias() {
 }
 
 export function mostrarMarcas(categoria) {
-    const { catalogData, navigationState: previousState } = getState();
+    const { catalogData, navigationState: currentNavigationState } = getState();
     const { cortes } = catalogData;
-    const nextState = { level: "marcas", categoria, origin: "categoria", previousState: previousState || null };
+    const previousState = currentNavigationState && currentNavigationState.level === 'marcas' &&
+        currentNavigationState.categoria === categoria
+        ? (currentNavigationState.previousState || {})
+        : (currentNavigationState || {});
+    const nextState = { level: "marcas", categoria, origin: "categoria", previousState };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState || { level: 'categorias' } });
     const cont = document.getElementById("contenido");
@@ -1187,7 +1191,10 @@ export function mostrarMarcas(categoria) {
 export function mostrarModelosPorMarca(marca) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
-    const previousState = getState().navigationState || {};
+    const currentNavigationState = getState().navigationState || {};
+    const previousState = currentNavigationState.level === 'modelosPorMarca' && currentNavigationState.marca === marca
+        ? (currentNavigationState.previousState || {})
+        : currentNavigationState;
     const nextState = { level: "modelosPorMarca", marca, origin: "marca", previousState };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
@@ -1294,8 +1301,12 @@ function navegarADetallesDeModelo(categoria, marca, modelo) {
 export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-    const previousState = navigationState || {};
-    const origin = previousState.origin || "categoria";
+    const currentNavigationState = navigationState || {};
+    const isSameView = currentNavigationState.level === 'modelos' &&
+        currentNavigationState.categoria === categoria && currentNavigationState.marca === marca &&
+        (currentNavigationState.versionEquipamiento || null) === (versionEquipamiento || null);
+    const previousState = isSameView ? (currentNavigationState.previousState || {}) : currentNavigationState;
+    const origin = previousState.origin || currentNavigationState.origin || "categoria";
     const nextState = { level: "modelos", categoria, marca, versionEquipamiento, origin, previousState };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
@@ -1343,8 +1354,13 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
 export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-    const previousState = navigationState || {};
-    const origin = previousState.origin || "categoria";
+    const currentNavigationState = navigationState || {};
+    const isSameView = currentNavigationState.level === 'tiposEncendido' &&
+        currentNavigationState.categoria === categoria && currentNavigationState.marca === marca &&
+        currentNavigationState.modelo === modelo &&
+        (currentNavigationState.versionEquipamiento || null) === (versionEquipamiento || null);
+    const previousState = isSameView ? (currentNavigationState.previousState || {}) : currentNavigationState;
+    const origin = previousState.origin || currentNavigationState.origin || "categoria";
     const nextState = { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin, previousState };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
@@ -1393,8 +1409,12 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
 
 export function mostrarVersiones(filas, categoria, marca, modelo) {
     const { navigationState } = getState();
-    const previousState = navigationState || {};
-    const origin = previousState.origin || "categoria";
+    const currentNavigationState = navigationState || {};
+    const isSameView = currentNavigationState.level === 'versiones' &&
+        currentNavigationState.categoria === categoria && currentNavigationState.marca === marca &&
+        currentNavigationState.modelo === modelo;
+    const previousState = isSameView ? (currentNavigationState.previousState || {}) : currentNavigationState;
+    const origin = previousState.origin || currentNavigationState.origin || "categoria";
     const versionValues = [...new Set((Array.isArray(filas) ? filas : []).map(item => item && item.versionesAplicables).filter(Boolean))];
     const ignitionValues = [...new Set((Array.isArray(filas) ? filas : []).map(item => item && item.tipoEncendido).filter(Boolean))];
     const versionEquipamiento = versionValues.length === 1 ? versionValues[0] : (previousState.versionEquipamiento || null);
@@ -1435,8 +1455,12 @@ export function regresarABusqueda() {
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-    const previousState = navigationState || {};
-    const origin = previousState.origin || "categoria";
+    const currentNavigationState = navigationState || {};
+    const isSameView = currentNavigationState.level === 'versionesEquipamiento' &&
+        currentNavigationState.categoria === categoria && currentNavigationState.marca === marca &&
+        currentNavigationState.modelo === modelo;
+    const previousState = isSameView ? (currentNavigationState.previousState || {}) : currentNavigationState;
+    const origin = previousState.origin || currentNavigationState.origin || "categoria";
     const nextState = { level: "versionesEquipamiento", categoria, marca, modelo, origin, previousState };
     setState({ navigationState: nextState });
     pushNavigationState(nextState, { previousNavigationState: previousState });
