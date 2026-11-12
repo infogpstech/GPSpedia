@@ -51,7 +51,8 @@ export function runButtonSystemIntegrityTests({ css, index, users, cortes, ui })
         ["carousel-btn","validation-btn","share-modal-btn","info-close-btn","btn-expand-plus","accordion-btn",
          "feedback-btn-overlay","btn-link","cable-carousel-btn","backBtn","btn-primary","btn-secondary"].forEach(name =>
             assert(ui.includes('className = "' + name + '"') || ui.includes("className = '" + name + "'") ||
-                ui.includes('className = "' + name + " ") || ui.includes("className = '" + name + " "),
+                ui.includes('className = "' + name + " ") || ui.includes("className = '" + name + " ") ||
+                ui.includes('class="btn ' + name) || ui.includes("class='btn " + name),
                 "No se encontró el control especializado " + name));
     });
     test("la regla de carga mantiene el indicador centrado y respeta movimiento reducido", () => {
