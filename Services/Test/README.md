@@ -876,3 +876,14 @@ La suite contiene 50 escenarios de seguridad FEEDBACK. Incluye autorización de 
 - `Services/Test/InboxStoredXss.js` — cargar junto con el contenido vigente de `ui.js` e invocar `runInboxStoredXssTests({ui})`. Comprueba sintaxis de los cinco renderizadores afectados, ausencia de interpolación de datos externos en plantillas HTML, uso de `textContent`/nodos/valores DOM, frontera del sanitizador para contenido enriquecido, opciones del catálogo y validación de URLs.
 - La matriz incluye payloads HTML, SVG, `onerror`, `onload`, atributos de evento, comillas, `iframe/srcdoc` y enlaces `javascript:`. La suite es un contrato estático de fuentes; no ejecuta un navegador ni sustituye la prueba DOM real.
 - Comando Node CLI documentado en `lista_beta.txt`; en Beta se debe abrir Inbox, detalle, confirmación de reporte y ambos formularios con registros sembrados en un entorno aislado. Verificar que ningún payload se ejecute y que el texto legítimo, enlaces permitidos y contenido enriquecido sigan funcionando.
+
+
+## AUG-077 — Adjuntos de imágenes en reportes individuales
+
+Ejecutar desde la raíz con Node.js:
+
+```bash
+cp Services/Test/ReportImageAttachment.js Services/Test/ReportImageAttachment.mjs && node Services/Test/ReportImageAttachment.mjs; RESULT=$?; rm -f Services/Test/ReportImageAttachment.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+18 pruebas de lógica y contrato (suite incorporada; ejecutar desde el checkout local): firmas JPEG/PNG/WebP, MIME/Base64, tamaño máximo 3 MB, SHA-256, nombre, metadata histórica, URL canónica, almacenamiento simulado, ausencia de permisos públicos, limpieza de archivos huérfanos y contratos UI/API/FEEDBACK/Inbox. Usa dobles locales; no invoca Apps Script, Spreadsheet ni Drive reales.
