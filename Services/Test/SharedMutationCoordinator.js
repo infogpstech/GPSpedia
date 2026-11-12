@@ -386,6 +386,26 @@ function runSharedMutationCoordinatorTests() {
             assert_(policy.writeResources.includes("ACTIVITY"), action + " debe conservar el recurso de actividad.");
         });
 
+        const concurrent = createRuntime_();
+        const firstAdd = acquire_(concurrent, "FEEDBACK", "addVehicleToProblem");
+        const secondAdd = acquire_(concurrent, "FEEDBACK", "addVehicleToProblem");
+        assert_(secondAdd.status === "error" && secondAdd.code === "busy",
+            "Dos altas simultáneas deben compartir el bloqueo de FEEDBACK.");
+        release_(concurrent, "FEEDBACK", "addVehicleToProblem", firstAdd.token);
+        const addRetry = acquire_(concurrent, "FEEDBACK", "addVehicleToProblem");
+        assert_(addRetry.status !== "error", "El reintento debe poder adquirir el recurso tras liberar el lease.");
+        release_(concurrent, "FEEDBACK", "addVehicleToProblem", addRetry.token);
+
+        const mixed = createRuntime_();
+        const addLease = acquire_(mixed, "FEEDBACK", "addVehicleToProblem");
+        const removeLease = acquire_(mixed, "FEEDBACK", "removeVehicleFromProblem");
+        assert_(removeLease.status === "error" && removeLease.code === "busy",
+            "Alta y baja concurrentes deben serializarse sobre FEEDBACK.");
+        release_(mixed, "FEEDBACK", "addVehicleToProblem", addLease.token);
+        const removeRetry = acquire_(mixed, "FEEDBACK", "removeVehicleFromProblem");
+        assert_(removeRetry.status !== "error", "La baja debe poder reintentarse tras liberar el lease.");
+        release_(mixed, "FEEDBACK", "removeVehicleFromProblem", removeRetry.token);
+
         const first = createRuntime_();
         const cutWrite = acquire_(first, "WRITE", "addOrUpdateCut");
         const relationRead = acquire_(first, "FEEDBACK", "addVehicleToProblem");
