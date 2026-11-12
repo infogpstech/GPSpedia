@@ -1086,3 +1086,16 @@ node --input-type=module -e 'import fs from "node:fs"; import { runPysAccordionT
 ```
 
 Seis escenarios verifican el texto exacto «Problemas relacionados a este vehículo», la separación entre título y flecha, ausencia del título anterior, contraste claro/oscuro, distribución flexible y ajuste del texto en pantallas móviles. La comprobación visual en navegador real queda para Beta.
+
+
+## AUG-092 — Integridad del módulo Tutorial
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/TutorialIntegrity.js
+```
+
+La suite cubre el esquema canónico A:G de la hoja `Tutorial`, la extensión H para `Colaborador` sin reinterpretar datos históricos, alta idempotente por `operationId`, duplicados por tema normalizado, recuperación tras respuesta incierta de `flush`, edición atómica por ID con compatibilidad de registros históricos sin ID, límites de payload, contrato de autorización Desarrollador, identidad derivada desde Users, campos y colaborador en UI, mapeo de catálogo y exclusión mutua del recurso `TUTORIAL` en el coordinador. Usa dobles de Spreadsheet/LockService; no accede a datos reales.
+
+Regresión relacionada: ejecutar también las suites `VideoApprovalPublishing.js` y `SharedMutationCoordinator.js`. La integración con Apps Script/Spreadsheet aislada y la comprobación visual en navegador se reservan para Beta.
