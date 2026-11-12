@@ -1565,3 +1565,16 @@ Regresión local en harness adaptado: YouTubeUploadXssIntegrity 5/5; VideoApprov
 Limitación: Node CLI y navegador real no ejecutados; la inspección visual y de interacción se reserva para Beta. No se realizaron transferencias reales ni cambios productivos.
 Siguiente tarea: AUG-095 — Sanitización autoritativa del contenido enriquecido en backend.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-096 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Recuperación: el checkpoint previo estaba desactualizado y terminaba en AUG-094; el backlog ya registraba AUG-095 y AUG-096 como siguiente tarea. Se continuó desde el estado real de ui.js, sin repetir AUG-095.
+Implementación: el rótulo de cada cable en el carrusel ahora se inserta como texto plano mediante textContent; el cuerpo enriquecido se conserva separado y se procesa mediante sanitizeHtmlContent. La vista sin carrusel ya sanitizaba activeContent y se mantuvo. Detalle PyS, Inbox y ficha de impresión revisados; offline.js no contiene sinks HTML.
+Pruebas locales en harness adaptado: DescriptiveContentRendering 9/9; CableCarouselSwipeAxis 15/15 PASS. RichTextContentSecurity 38/39 PASS; la única falla es la comparación literal preexistente entre los sanitizadores WRITE y ADMIN, fuera del alcance de esta tarea. No se modificaron esos servicios; se requiere seguimiento independiente. Parsing del bloque UI modificado y suite nueva PASS.
+No se ejecutó Node CLI ni navegador real. Beta pendiente: payloads de catálogo, rótulos hostiles, formato enriquecido, gestos, detalle, Inbox, impresión/exportación, modo offline y viewports/temas. No se migraron datos ni se desplegó a producción.
+Archivos modificados: ui.js, Services/Test/DescriptiveContentRendering.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Publicación secuencial en GPSpedia2.2.5_work mediante operaciones condicionadas a SHA por archivo. Último commit de escritura confirmado: d604ae97eb58e463b46b7d9f60f1fb0817911d7f. La comparación de ramas mantiene GPSpedia2.2.5_work ahead y 0 commits behind; base GPSpedia2.2.5 sin modificaciones.
+Siguiente: recuperar el primer requisito pendiente posterior a AUG-096 en el backlog y comprobar dependencias antes de implementarlo.
+================================================================================
