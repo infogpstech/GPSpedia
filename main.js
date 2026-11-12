@@ -12,7 +12,7 @@ import * as ui from './ui.js';
 import * as navigation from './navigation.js';
 import './lightbox.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
-import { decodeSearchHash } from './search-utils.js';
+import { decodeSharedVehicleHash, resolveSharedVehicleById } from './share-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
 import { createOverlayHistoryManager, selectTopmostOverlay, overlayHistoryStateKey } from './overlayHistory.js';
 import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
@@ -1087,14 +1087,38 @@ async function initializeApp() {
         await auth.checkSession();
         installSessionRevalidation_();
 
-        // --- LÓGICA DE DEEP LINKING PARA BÚSQUEDA ---
-        const query = decodeSearchHash(window.location.hash);
-        if (query) {
+        // --- DEEP LINKING: IDENTIDAD ESTABLE CON COMPATIBILIDAD HISTÓRICA ---
+        const sharedLink = decodeSharedVehicleHash(window.location.hash);
+        if (sharedLink) {
+            const query = sharedLink.query || '';
             const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
+            if (searchInput && query) {
                 searchInput.value = query;
-                searchInput.parentElement.classList.add('has-text');
+                searchInput.parentElement?.classList.add('has-text');
             }
+
+            const openSharedTarget = () => {
+                const latestState = state.getState();
+                const vehicle = sharedLink.vehicleId
+                    ? resolveSharedVehicleById(latestState.catalogData, sharedLink.vehicleId)
+                    : null;
+
+                if (vehicle) {
+                    if (query) navigation.filtrarContenido(query, true);
+                    ui.mostrarDetalleModal(vehicle);
+                    return;
+                }
+
+                if (query) {
+                    if (sharedLink.vehicleId) {
+                        ui.showGlobalError('No se encontró el vehículo del enlace. Se mostrarán los resultados de búsqueda disponibles.');
+                    }
+                    navigation.filtrarContenido(query);
+                    return;
+                }
+
+                ui.showGlobalError('No se encontró el vehículo indicado en el enlace compartido.');
+            };
 
             // Si aún no hay sesión, el listener espera al login. La carga del catálogo
             // notifica estados terminales mediante state.js; no se usa polling.
@@ -1109,7 +1133,7 @@ async function initializeApp() {
                     }
                     if (latestState.catalogLoadStatus === 'ready' || latestState.catalogLoadStatus === 'stale') {
                         stopRecoveryWait();
-                        navigation.filtrarContenido(query);
+                        openSharedTarget();
                     }
                 };
                 stopRecoveryWait = state.subscribe(applyAfterRecovery);
@@ -1121,19 +1145,19 @@ async function initializeApp() {
                 stopWaitingForLogin();
                 state.waitForCatalogReadiness(27000).then(result => {
                     if (result.status === 'ready' || result.status === 'stale') {
-                        navigation.filtrarContenido(query);
+                        openSharedTarget();
                         return;
                     }
                     if (result.status === 'timeout') {
-                        ui.showGlobalError('La carga del catálogo está tardando demasiado. Comprueba tu conexión; la búsqueda se abrirá cuando los datos estén disponibles.');
+                        ui.showGlobalError('La carga del catálogo está tardando demasiado. Comprueba tu conexión; el enlace se abrirá cuando los datos estén disponibles.');
                         waitForCatalogRecovery();
                         return;
                     }
-                    ui.showGlobalError('No se pudo cargar el catálogo para abrir la búsqueda. Puedes reintentar desde el aviso de estado del catálogo.');
+                    ui.showGlobalError('No se pudo cargar el catálogo para abrir el enlace. Puedes reintentar cuando el catálogo esté disponible.');
                     waitForCatalogRecovery();
                 }).catch(error => {
-                    console.warn('No se pudo esperar la carga del catálogo para el deep link:', error);
-                    ui.showGlobalError('No se pudo preparar la búsqueda. Comprueba tu conexión e inténtalo nuevamente.');
+                    console.warn('No se pudo esperar la carga del catálogo para el enlace compartido:', error);
+                    ui.showGlobalError('No se pudo preparar el enlace compartido. Comprueba tu conexión e inténtalo nuevamente.');
                     waitForCatalogRecovery();
                 });
             };
