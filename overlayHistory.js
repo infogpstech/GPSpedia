@@ -125,12 +125,17 @@ export function createOverlayHistoryManager(historyApi, onError = null) {
         return entries.map(entry => entry.id);
     }
 
+    function has(id) {
+        const normalizedId = String(id || "").trim();
+        return Boolean(normalizedId) && entries.some(entry => entry.id === normalizedId);
+    }
+
     function clear(reason = "clear") {
         while (entries.length) invokeClose(entries.pop(), reason);
         publishState("replaceState");
     }
 
-    return Object.freeze({ register, replaceTop, close, handlePopState, getStack, clear });
+    return Object.freeze({ register, replaceTop, close, handlePopState, getStack, has, clear });
 }
 
 export const overlayHistoryStateKey = OVERLAY_HISTORY_KEY;
