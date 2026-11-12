@@ -980,3 +980,31 @@ Validación:
 
 Siguiente acción: ejecutar la suite completa en entorno Node, revisar todos los estados de ida/vuelta, corregir cualquier fallo local y cerrar AUG-069 como COMPLETADA CON VALIDACIÓN DIFERIDA únicamente cuando las pruebas locales estén aprobadas.
 ================================================================================
+
+
+================================================================================
+AUG-069 — CIERRE — 2026-11-11 — COMPLETADA CON VALIDACIÓN DIFERIDA
+HEAD de partida de esta fase: 1b82c1274e257601eec93848d585d3d7691ce5e0.
+Resultado:
+- La operación central de retroceso se mantiene para niveles de catálogo y búsqueda.
+- El fallback conserva el antecesor explícito del destino, no metadata de una vista profunda obsoleta.
+- mostrarSeccion() sincroniza state.navigationState con History API y conserva el antecesor al entrar o restaurar una sección.
+- Se amplió NavigationBackHistory a 21 escenarios; Services/Test/README.md refleja el alcance.
+
+Validación local:
+- NavigationBackHistory: 21/21 PASS en runtime V8 adaptado, ejecutando las funciones reales de navigationHistory.js y search-utils.js y las verificaciones de contrato de ui.js, main.js y navigation.js.
+- mostrarSeccion(): compilación y ejecución aislada PASS con History simulado; se verificaron el estado en memoria, el estado de History y el antecesor.
+- Parsing V8: navigationHistory.js, main.js, navigation.js y search-utils.js PASS; el bloque modificado de mostrarSeccion() compiló y ejecutó correctamente.
+- Revisión del diff: siete archivos de AUG-069 más los registros de la rotación de ChangesLogs; sin cambios funcionales ajenos a la tarea.
+- No se ejecutó Node CLI del Codespace ni navegador real.
+
+Validación diferida a Beta:
+- Botón físico Atrás, gestos nativos, Forward real y deep links en navegador/dispositivo.
+- No bloquean el cierre local según NORMAS_DESAROLLO.md.
+
+Documentación:
+- Tareas_pendientes_parte5.txt: AUG-069 pasa a COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Auditoría.txt: adenda de cierre para H-AUD-069-001 y H-AUD-069-002.
+- ChangesLogs.txt: rotación exacta de 180542 caracteres en dos partes; reconstrucción verificada sin pérdida; manifiesto en ChangesLogs_Archive/manifest.md.
+- Rama base GPSpedia2.2.5 intacta. No se inicia AUG-070 dentro de esta tarea; queda como siguiente tarea del backlog.
+================================================================================
