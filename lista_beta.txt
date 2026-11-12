@@ -390,3 +390,41 @@ VALIDACIÓN DE INTEGRACIÓN EN ENTORNO AISLADO:
 
 No se ha ejecutado esta validación de deployment ni de navegador; permanece pendiente para Beta.
 ================================================================================
+
+================================================================================
+AUG-076 — VALIDACIÓN DE STORED XSS EN INBOX Y FORMULARIOS — PENDIENTE DE BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guárdalos o confírmalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, el remoto no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado.
+
+PRUEBA LOCAL EN NODE.JS:
+Ejecutar desde la raíz. Esta suite comprueba contratos de fuentes y sintaxis; no simula un DOM ni sustituye navegador real.
+
+```bash
+node -e 'const fs=require("fs"),vm=require("vm");const ui=fs.readFileSync("ui.js","utf8");const test=fs.readFileSync("Services/Test/InboxStoredXss.js","utf8");const run=vm.runInThisContext(test+"\nrunInboxStoredXssTests;");const result=run({ui});console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+```
+
+VALIDACIÓN EN BETA AISLADA:
+1. Usar deployment FEEDBACK de pruebas y Spreadsheet aislado; sembrar mensajes de prueba con subject, user, vehicleId, reportId, responder, contentType, reportMetadata, suggestionData y proposedValues que incluyan HTML, SVG, atributos onerror/onload, eventos inline, comillas, iframe/srcdoc y enlaces javascript:. No utilizar datos productivos.
+2. Abrir Inbox y cada detalle. Confirmar que el payload se muestra como texto, no ejecuta código, no crea elementos/atributos activos y no altera el DOM fuera del contenedor esperado.
+3. Abrir modal de reporte, modal de sugerencia y confirmación de reporte con vehicleId, reportId, currentCutData y dropdownOptions maliciosos. Confirmar que se muestran como texto/valores y que no se crean nodos ejecutables.
+4. Probar enlaces YouTube válidos e inválidos y enlaces de imagen de Drive; verificar que solo los destinos HTTPS permitidos quedan activos y que los enlaces externos conservan rel=noopener noreferrer.
+5. Confirmar que item.content e item.reply conservan únicamente el formato permitido por sanitizeHtmlContent; probar script, SVG, onerror/onload, iframe y javascript: dentro del contenido enriquecido.
+6. Verificar envío y funcionamiento normal de reporte/sugerencia, botones de Inbox, respuesta y acciones de administración; registrar navegador, versión, payload, paso y resultado.
+
+No marcar PASS si no se verificó que los payloads no se ejecutan en navegador real. La suite local 20/20 no representa prueba de ejecución DOM.
+================================================================================
