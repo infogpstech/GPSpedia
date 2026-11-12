@@ -15,6 +15,7 @@ import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from '
 import { decodeSearchHash } from './search-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
 import { createOverlayHistoryManager, overlayHistoryStateKey } from './overlayHistory.js';
+import { pushNavigationState, replaceNavigationState } from './navigationHistory.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
@@ -184,17 +185,19 @@ async function initializeApp() {
 
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
-        const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
+        const previousNavigationState = window.state.getState().navigationState || null;
+        const searchState = { level: "busqueda", query: currentQuery };
+        const focusedState = { level: "busqueda_focused", query: currentQuery };
 
-        window.state.setState({ navigationState: { level: "busqueda_focused", query: currentQuery } });
+        window.state.setState({ navigationState: focusedState });
 
         if (currentState.level === 'busqueda_focused') {
-            history.replaceState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+            replaceNavigationState(focusedState, { previousNavigationState });
         } else if (currentState.level === 'busqueda') {
-            history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+            pushNavigationState(focusedState, { previousNavigationState: currentState });
         } else {
-            history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
-            history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+            pushNavigationState(searchState, { previousNavigationState });
+            pushNavigationState(focusedState, { previousNavigationState: searchState });
         }
     });
 
@@ -204,9 +207,9 @@ async function initializeApp() {
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
         if (currentState.level === 'busqueda_focused') {
-            const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
-            history.replaceState({ level: "busqueda", query: currentQuery }, '', newUrl);
-            window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
+            const searchState = { level: "busqueda", query: currentQuery };
+            replaceNavigationState(searchState, { previousNavigationState: window.state.getState().navigationState });
+            window.state.setState({ navigationState: searchState });
         }
 
         // Se utiliza un timeout para evitar el cierre inmediato al hacer clic en el botón de limpiar (X)
