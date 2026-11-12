@@ -282,10 +282,16 @@ async function initializeApp() {
     // --- LÓGICA DE ESTADO DE CONEXIÓN ---
     const connectionStatus = document.getElementById('connection-status');
     if (connectionStatus) {
+        const connectionStatusLabel = connectionStatus.querySelector('#connection-status-label');
         const updateStatus = () => {
-            const isOnline = navigator.onLine;
-            connectionStatus.className = isOnline ? 'online' : 'offline';
-            connectionStatus.title = isOnline ? 'Conectado' : 'Trabajando Offline';
+            const isOnline = navigator.onLine !== false;
+            const message = isOnline
+                ? 'El navegador indica que hay conexión de red; esto no confirma que los servicios de GPSpedia estén disponibles.'
+                : 'El navegador indica que no hay conexión de red; algunos datos guardados pueden seguir disponibles.';
+            connectionStatus.classList.toggle('online', isOnline);
+            connectionStatus.classList.toggle('offline', !isOnline);
+            connectionStatus.title = message;
+            if (connectionStatusLabel) connectionStatusLabel.textContent = message;
         };
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
