@@ -842,3 +842,31 @@ ChangesLogs.txt no se modificó por la rotación documental ya identificada. Ram
 Estado de AUG-068: EN PROGRESO. No iniciar AUG-069.
 Siguiente acción: continuar el inventario de constructores dinámicos restantes y comprobar la reconciliación del observador DOM con la pila compartida.
 ================================================================================
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3L — RECONCILIACIÓN DE OVERLAYS .info-modal CON HISTORIAL COMPARTIDO
+Estado: EN PROGRESO. Se corrigió una inconsistencia local de historial; AUG-068 continúa abierta.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 218d0141b9a28503d1aff77a378861a86a686877. Rama base: GPSpedia2.2.5.
+
+Inventario y hallazgo:
+- index.html contiene overlays .info-modal estáticos; ui.js crea además 15 instancias dinámicas con esa clase. main.js observa inserciones, visibilidad y retirada de estos elementos y los registra en overlayHistory.js.
+- youtube-upload-modal está excluido del observador y usa registro explícito; add_cortes.html inicializa su propio gestor porque no carga main.js. lightbox.js conserva su historial independiente y su prioridad de cierre.
+- ui.js todavía añadía estados paralelos history.pushState({modalOpen:true}) en cinco rutas de overlays .info-modal; renderRelayInfoModal tenía además su propio cierre ligado a ese estado. El observador y la pila compartida podían quedar con entradas antiguas al reemplazar overlays.
+
+Corrección:
+- ui.js: se eliminaron los cinco pushState paralelos restantes; el modal relay dinámico delega el cierre en window.overlayHistory.close usando el ID asignado por el observador.
+- Los demás cierres manuales conservan sus cambios de visibilidad; el MutationObserver detecta la retirada/ocultamiento y reconcilia la entrada con el gestor compartido.
+- No se modificaron overlayHistory.js ni el algoritmo del observador en main.js.
+- Services/Test/OverlayHistoryStack.js: se añadieron dos regresiones para reemplazo de modal relay y ausencia de estados de historial paralelos. Total: 13 escenarios.
+- Services/Test/README.md actualizado.
+
+Validación:
+- OverlayHistoryStack: 13/13 PASS en runtime V8 adaptado, usando overlayHistory.js real y el código fuente actual de ui.js para el contrato.
+- Parsing aislado de renderRelayInfoModal: PASS.
+- ui.js no contiene ya history.pushState({modalOpen:true}) (conteo verificado: 0).
+- El intento de parsing completo de ui.js en este runtime falla con “Invalid regular expression: missing /” también sobre la versión previa de ui.js en HEAD 218d014; no se atribuye a esta modificación. No se ejecutó Node CLI en Codespaces ni prueba DOM/navegador real.
+- La validación DOM/navegador real y Node CLI permanecen pendientes para Beta/entorno local correspondiente.
+
+Siguiente acción: revisar si quedan constructores dinámicos de overlays fuera de .info-modal que requieran integración explícita o exclusión del observador. AUG-068 permanece EN PROGRESO; no iniciar AUG-069.
+================================================================================
