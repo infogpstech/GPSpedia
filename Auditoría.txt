@@ -574,3 +574,14 @@ Evidencia: ui.js, rich-text.js, Services/write.js, Services/admin.js y Services/
 AUG-065 — EVIDENCIA DE CORRECCIÓN EN CURSO — H-AUD-006-001
 Las claves de miniaturas quedan vinculadas a ID normalizado y ancho; la lectura valida key/fileId/width/Blob y descarta entradas históricas ambiguas. Drive mantiene la URL fuente original para preservar transparencia; Canvas genera PNG locales de 300/800/1600 px, con proporción y sin ampliación. Validación local integral pendiente.
 ================================================================================
+
+
+================================================================================
+H-AUD-069-001 — MEDIA — CORREGIDO EN FUENTES — 2026-11-11
+Origen: continuación de AUG-069, revisión del fallback de los botones internos «Volver».
+Ubicación: navigationHistory.js, sameNavigationState().
+Evidencia: navigateBackToState() reemplaza la entrada actual cuando el estado anterior no coincide con el destino y después reconstruye la vista. Algunos renderizadores completan dimensiones opcionales omitidas en el destino (por ejemplo, versionEquipamiento) con null. La comparación anterior distinguía una propiedad ausente de la misma propiedad con valor null; al reconstruir, pushNavigationState() interpretaba el estado como distinto y agregaba una entrada adicional.
+Impacto: el retroceso interno podía dejar una entrada redundante y hacer que Atrás regresara a la vista profunda que acababa de abandonarse.
+Corrección: sameNavigationState() considera equivalentes la ausencia y null para dimensiones opcionales, sin equiparar valores seleccionados diferentes. Se agregó regresión del fallback y la normalización del renderizador.
+Validación: regresión aislada de comparación y reconstrucción 3/3 PASS con Node v22.16.0. La suite completa ampliada a 18 escenarios queda pendiente de ejecución en el Codespace; no se declara como ejecutada.
+================================================================================
