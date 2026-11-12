@@ -112,6 +112,14 @@ test("el plan WRITE rechaza campos no textuales y longitudes superiores al lími
     assert.throws(() => supplementary.buildSupplementaryInfoPlan_({ apertura: "x".repeat(5001) }, {}), /5000 caracteres/);
 });
 
+test("rechaza campos suplementarios compuestos solo por saltos o espacios no separables", () => {
+    assert.throws(() => supplementary.buildSupplementaryInfoPlan_({ notaImportante: "<p><br></p>" }, {}), /contenido visible/);
+    assert.throws(() => supplementary.buildSupplementaryInfoPlan_({ notaImportante: "<p>&nbsp;</p>" }, {}), /contenido visible/);
+});
+test("conserva NBSP como entidad y lo trata como espacio al validar contenido PyS", () => {
+    assert.equal(pys.sanitizePysRichText_("<p>&nbsp;</p>"), "<p>&nbsp;</p>");
+    assert.throws(() => pys.normalizePysField_("<p>&nbsp;</p>", "Descripción", 200, true, true), /obligatorio/);
+});
 test("el plan WRITE no persiste una solicitud compuesta solo por markup activo", () => {
     assert.throws(() => supplementary.buildSupplementaryInfoPlan_({ notaImportante: "<script>alert(1)</script>" }, {}), /información suplementaria válida/);
 });
