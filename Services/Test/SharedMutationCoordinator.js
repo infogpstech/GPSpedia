@@ -436,6 +436,26 @@ function runSharedMutationCoordinatorTests() {
         });
     });
 
+    test_("FEEDBACK serializa altas, edición y publicación de Tutorial sobre el mismo recurso", function() {
+        ["addTutorial", "updateTutorialItem", "approveVideo", "rejectVideo"].forEach(function(action) {
+            const policy = coordinatorPolicy_("FEEDBACK", action);
+            assert_(policy.writeResources.includes("TUTORIAL"), action + " debe reservar Tutorial para escritura.");
+        });
+        const r = createRuntime_();
+        const create = acquire_(r, "FEEDBACK", "addTutorial");
+        const approval = acquire_(r, "FEEDBACK", "approveVideo");
+        assert_(approval.status === "error" && approval.code === "busy",
+            "La aprobación de vídeo debe esperar mientras se registra un Tutorial.");
+        release_(r, "FEEDBACK", "addTutorial", create.token);
+        const retry = acquire_(r, "FEEDBACK", "approveVideo");
+        assert_(retry.status === "success", "La aprobación debe reintentarse al liberar Tutorial.");
+        release_(r, "FEEDBACK", "approveVideo", retry.token);
+
+        const submitPolicy = coordinatorPolicy_("FEEDBACK", "submitVideoForApproval");
+        assert_(submitPolicy.readResources.includes("TUTORIAL"),
+            "El envío de vídeo debe reservar lectura de Tutorial para validar el destino.");
+    });
+
     test_("FEEDBACK ya no habilita assignCollaborator obsoleto", function() {
         expectThrow_(() => coordinatorPolicy_("FEEDBACK", "assignCollaborator"), "política");
     });
