@@ -695,3 +695,14 @@ cp Services/Test/CableCarouselSwipeAxis.js Services/Test/CableCarouselSwipeAxis.
 ```
 
 La suite extrae el helper real de `ui.js` y comprueba swipes horizontales, gestos verticales/diagonales, umbral, multitáctil, controles interactivos, `touchcancel`, coordenadas inválidas y un solo cambio por gesto. Los listeners son pasivos y no bloquean el desplazamiento vertical nativo.
+
+
+## AUG-068 — Pila centralizada de historial de overlays
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite verifica la pila anidada, cierre del overlay superior con Atrás, cierre manual, reemplazo de un overlay sin agregar profundidad, reconciliación LIFO, preservación de otros campos de history.state y manejo de errores.
