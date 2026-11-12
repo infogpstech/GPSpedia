@@ -176,7 +176,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   4. Mantener visible el padre al cerrar el submodal; no cerrar #modalDetalle ni restaurar catálogo mientras exista un overlay hijo.
   5. Probar todos los constructores, backdrop, X, submit, cancelación, overlays anidados, apertura desde ficha de vehículo y retroceso durante una carga YouTube activa en add_cortes.html.
 - **Relación:** AUD-T-007; amplía H-AUD-005-008 sin duplicarlo.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO; primera iteración: módulo base de pila de historial y suite lógica añadidos. Integración con constructores dinámicos y popstate global pendiente.
 
 ### AUG-069 — Sincronizar los botones internos «Volver» con el historial nativo
 - **Origen:** H-AUD-007-002. **Prioridad:** Alta.
