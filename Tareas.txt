@@ -1158,3 +1158,14 @@ AUG-089 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - Navegador real, scroll táctil y gesto Atrás pendientes para Beta. No se desplegó ni se modificaron datos productivos.
 Siguiente: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
 ================================================================================
+
+
+================================================================================
+AUG-090 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+- Las altas y bajas de relaciones PyS–vehículos validan problemId único y vehicleId único en Cortes, normalizan JSON/formatos heredados, eliminan duplicados y persisten bajo ScriptLock con lectura dentro del lock y liberación en finally.
+- Las altas y bajas son idempotentes, confirman la colección leída después de escribir y devuelven el valor realmente persistido. El alta preasociada de PyS valida también sus IDs antes de crear archivos o filas.
+- Coordinator 1.1.1 reserva lectura CORTES para addProblem, addVehicleToProblem y removeVehicleFromProblem; la UI elimina tarjetas duplicadas y omite relaciones sin vehículo.
+- Pruebas locales: PysVehicleRelationIntegrity 18/18; PysCreationIntegrity 48/48; SharedMutationCoordinator 30/30 PASS. Parsing de feedback.js, modal de vehículos ui.js y Coordinator.js PASS.
+- Harness JavaScript adaptado; Node CLI literal, Apps Script real y concurrencia/Spreadsheet aisladas quedan para Beta. Sin despliegue ni cambios productivos.
+Siguiente: AUG-091 — Alinear el título del acordeón con la especificación de PyS.
+================================================================================
