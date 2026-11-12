@@ -42,18 +42,18 @@ const createRenderers = () => {
     const renderResults = new Function(
         "document", "getLogoUrlForMarca", "setOptimizedImage", "mostrarModelosPorMarca",
         "crearCardVehiculo", "shouldAutoOpenVehicleDetail", "mostrarDetalleModal",
-        resultsFnSource + "\\nreturn mostrarResultadosDeBusqueda;"
+        resultsFnSource + "\nreturn mostrarResultadosDeBusqueda;"
     )(documentStub, () => "", () => {}, () => {}, () => createNode("div"), () => false, () => {});
-    const renderEmpty = new Function("document", noResultsFnSource + "\\nreturn showNoResultsMessage;")(documentStub);
+    const renderEmpty = new Function("document", noResultsFnSource + "\nreturn showNoResultsMessage;")(documentStub);
     return { container, renderResults, renderEmpty };
 };
 
 function createDecodeHelpers() {
     const decodeSearchSource = extract(search, "export function decodeSearchHash(", "/** Crea una única promesa");
-    const decodeSearchHash = new Function(decodeSearchSource.replace(/^export /, "") + "\\nreturn decodeSearchHash;")();
+    const decodeSearchHash = new Function(decodeSearchSource.replace(/^export /, "") + "\nreturn decodeSearchHash;")();
     const decodeSharedSource = extract(share, "export function decodeSharedVehicleHash(", "/**\n * Solo resuelve registros");
     const decodeSharedVehicleHash = new Function("decodeSearchHash", "URLSearchParams",
-        decodeSharedSource.replace(/^export /, "") + "\\nreturn decodeSharedVehicleHash;"
+        decodeSharedSource.replace(/^export /, "") + "\nreturn decodeSharedVehicleHash;"
     )(decodeSearchHash, URLSearchParams);
     return { decodeSearchHash, decodeSharedVehicleHash };
 }
@@ -93,10 +93,10 @@ test("el estado sin resultados representa payloads hostiles como texto", () => {
 });
 
 test("las funciones de renderizado no interpolan query/textoBusqueda en innerHTML", () => {
-    assert.doesNotMatch(resultsFnSource, /innerHTML\\s*=.*query/);
-    assert.doesNotMatch(noResultsFnSource, /innerHTML\\s*=.*textoBusqueda/);
-    assert.match(resultsFnSource, /heading\\.textContent\\s*=/);
-    assert.match(noResultsFnSource, /message\\.textContent\\s*=/);
+    assert.doesNotMatch(resultsFnSource, /innerHTML\s*=.*query/);
+    assert.doesNotMatch(noResultsFnSource, /innerHTML\s*=.*textoBusqueda/);
+    assert.match(resultsFnSource, /heading\.textContent\s*=/);
+    assert.match(noResultsFnSource, /message\.textContent\s*=/);
 });
 
 test("los deep links codificados conservan la consulta sin interpretarla como HTML", () => {
@@ -108,21 +108,21 @@ test("los deep links codificados conservan la consulta sin interpretarla como HT
 });
 
 test("main.js restaura el deep link en el value del input y navega con la consulta", () => {
-    assert.match(main, /searchInput\\.value\\s*=\\s*query/);
-    assert.match(main, /navigation\\.filtrarContenido\\(query/);
-    assert.doesNotMatch(main, /innerHTML\\s*=.*query/);
+    assert.match(main, /searchInput\.value\s*=\s*query/);
+    assert.match(main, /navigation\.filtrarContenido\(query/);
+    assert.doesNotMatch(main, /innerHTML\s*=.*query/);
 });
 
 test("navigation.js pasa la consulta original al renderer sin crear HTML", () => {
-    assert.match(navigation, /mostrarResultadosDeBusqueda\\(\\{ type: resultType, query: textoBusqueda/);
-    assert.doesNotMatch(navigation, /innerHTML\\s*=.*(?:busqueda|textoBusqueda)/i);
+    assert.match(navigation, /mostrarResultadosDeBusqueda\(\{ type: resultType, query: textoBusqueda/);
+    assert.doesNotMatch(navigation, /innerHTML\s*=.*(?:busqueda|textoBusqueda)/i);
 });
 
 test("el módulo UI conserva sintaxis válida tras retirar imports y exports", () => {
     const moduleSource = ui
-        .replace(/^import[\\s\\S]*?;\\s*/gm, "")
-        .replace(/^export\\s*\\{[^}]*\\};?\\s*$/gm, "")
-        .replace(/\\bexport\\s+(?=(?:async\\s+)?(?:function|const|let|class))/g, "");
+        .replace(/^import[\s\S]*?;\s*/gm, "")
+        .replace(/^export\s*\{[^}]*\};?\s*$/gm, "")
+        .replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let|class))/g, "");
     assert.doesNotThrow(() => new Function(moduleSource));
 });
 
