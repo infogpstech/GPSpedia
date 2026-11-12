@@ -24,6 +24,32 @@ import * as offline from './offline.js';
 
 let datosFiltrados = [];
 let searchDebounceTimer = null;
+
+function syncSearchNavigationState_(query, isRestoring) {
+    const currentNavigationState = getState().navigationState || null;
+    const previousNavigationState = currentNavigationState &&
+        ['busqueda', 'busqueda_focused'].includes(currentNavigationState.level) &&
+        currentNavigationState.previousState
+        ? currentNavigationState.previousState
+        : currentNavigationState;
+    const nextNavigationState = {
+        level: "busqueda_focused",
+        query,
+        previousState: previousNavigationState
+    };
+    setState({ navigationState: nextNavigationState });
+
+    if (!isRestoring) {
+        const historyState = window.history.state || {};
+        const wasAlreadySearching = historyState.level === "busqueda" || historyState.level === "busqueda_focused";
+        if (wasAlreadySearching) {
+            replaceNavigationState(nextNavigationState, { previousNavigationState });
+        } else {
+            pushNavigationState(nextNavigationState, { previousNavigationState });
+        }
+    }
+    return nextNavigationState;
+}
 function getCurrentOwnerId() {
     const user = getState().currentUser;
     return String(user && (user.ID || user.id) || '').trim();
@@ -80,16 +106,20 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         if (isRestoring) {
             irAPaginaPrincipal(true);
         } else {
+            const currentNavigationState = getState().navigationState || null;
+            const previousNavigationState = currentNavigationState &&
+                ['busqueda', 'busqueda_focused'].includes(currentNavigationState.level) &&
+                currentNavigationState.previousState
+                ? currentNavigationState.previousState
+                : currentNavigationState;
             // Mostrar categorías en el contenedor principal sin salir de la vista de búsqueda
             mostrarCategorias();
 
-            // Mantener el estado de búsqueda activo con query vacía
             const isFocused = document.activeElement === document.getElementById('searchInput');
             const level = isFocused ? "busqueda_focused" : "busqueda";
-
-            setState({ navigationState: { level, query: "" } });
-
-            replaceNavigationState({ level, query: "", previousState: getState().navigationState?.previousState || null });
+            const emptySearchState = { level, query: "", previousState: previousNavigationState };
+            setState({ navigationState: emptySearchState });
+            replaceNavigationState(emptySearchState, { previousNavigationState });
         }
         return;
     }
@@ -158,9 +188,9 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         if (matchedVehicle) datosFiltrados.unshift({ ...matchedVehicle, _sectionType: 'corte', _searchPriority: -1 });
     }
 
+    syncSearchNavigationState_(textoBusqueda, isRestoring);
     if (datosFiltrados.length === 0) {
         showNoResultsMessage(textoBusqueda);
-        setState({ navigationState: { level: "busqueda" } });
         return;
     }
 
@@ -178,27 +208,6 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
             });
         }
     }, 1500);
-
-    // Conservar el nivel previo para que el retorno interno y el retroceso nativo
-    // compartan la misma cadena de navegación.
-    const currentNavigationState = getState().navigationState || null;
-    const previousNavigationState = currentNavigationState &&
-        ['busqueda', 'busqueda_focused'].includes(currentNavigationState.level) &&
-        currentNavigationState.previousState
-        ? currentNavigationState.previousState
-        : currentNavigationState;
-    const nextNavigationState = { level: "busqueda_focused", query: textoBusqueda, previousState: previousNavigationState };
-    setState({ navigationState: nextNavigationState });
-
-    if (!isRestoring) {
-        const historyState = window.history.state || {};
-        const wasAlreadySearching = historyState.level === "busqueda" || historyState.level === "busqueda_focused";
-        if (wasAlreadySearching) {
-            replaceNavigationState(nextNavigationState, { previousNavigationState });
-        } else {
-            pushNavigationState(nextNavigationState, { previousNavigationState });
-        }
-    }
 
     const resultType = vinChoiceItems.length ? 'modelo' : classifySearchResults(datosFiltrados, busqueda);
     const renderResults = resultType === 'marca'
