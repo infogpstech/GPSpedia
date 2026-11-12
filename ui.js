@@ -3037,10 +3037,16 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     overlay.className = "overlay";
     const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
     const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
-    overlay.innerHTML = `
-        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
-        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
-    `;
+    const title = document.createElement("div");
+    title.className = "overlay-text-primary";
+    title.style.cssText = "font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;";
+    title.textContent = item.Problema || "Problema";
+
+    const status = document.createElement("div");
+    status.className = "overlay-text-secondary";
+    status.style.cssText = `font-size: 0.75rem; color: ${statusColor}; font-weight: bold;`;
+    status.textContent = statusText;
+    overlay.append(title, status);
     card.appendChild(overlay);
     cardWrapper.appendChild(card);
 
@@ -6715,6 +6721,49 @@ export function renderInboxDetail(item) {
     }
 }
 
+export function getValidatedYouTubeVideoId(value) {
+    if (typeof value !== "string") return null;
+    const candidate = value.trim();
+    if (!candidate) return null;
+
+    // Se admiten IDs puros solo con el formato exacto de YouTube.
+    if (/^[A-Za-z0-9_-]{11}$/.test(candidate)) return candidate;
+
+    let parsed;
+    try {
+        parsed = new URL(candidate);
+    } catch (error) {
+        return null;
+    }
+
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.port) return null;
+    const host = parsed.hostname.toLowerCase();
+    const idPattern = "[A-Za-z0-9_-]{11}";
+    let match = null;
+
+    if (host === "youtu.be") {
+        match = parsed.pathname.match(new RegExp("^/(" + idPattern + ")/?$"));
+    } else if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+        if (parsed.pathname === "/watch") {
+            const ids = parsed.searchParams.getAll("v");
+            if (ids.length === 1 && new RegExp("^" + idPattern + "$").test(ids[0])) {
+                return ids[0];
+            }
+            return null;
+        }
+        match = parsed.pathname.match(new RegExp("^/(?:embed|shorts|live)/(" + idPattern + ")/?$"));
+    } else {
+        return null;
+    }
+
+    return match ? match[1] : null;
+}
+
+export function getValidatedYouTubeVideoEmbedUrl(value) {
+    const videoId = getValidatedYouTubeVideoId(value);
+    return videoId ? `https://www.youtube.com/embed/${videoId}?enablejsapi=1` : null;
+}
+
 function getYouTubeEmbedUrl(url) {
     if (!url) return null;
     const trimmed = url.trim();
@@ -9796,7 +9845,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
     titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
 
     const title = document.createElement("h2");
-    title.innerText = item.Problema;
+    title.textContent = item.Problema || "Problema técnico";
     title.style.cssText = "margin: 0; font-size: 1.5rem; font-weight: bold; color: var(--text-color, #222);";
     titleContainer.appendChild(title);
     headerDiv.appendChild(titleContainer);
@@ -10053,7 +10102,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
 
     // 6. Video del problema (al final del contenido)
     if (item.Video) {
-        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || (item.Video.includes("embed/") ? item.Video : null);
+        const videoEmbedUrl = getValidatedYouTubeVideoEmbedUrl(item.Video);
         const videoBlock = document.createElement("div");
         videoBlock.style.cssText = "margin-top: 16px;";
 
@@ -10063,14 +10112,24 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         videoBlock.appendChild(videoHeader);
 
         if (videoEmbedUrl) {
-            const videoContainer = document.createElement('div');
+            const videoContainer = document.createElement("div");
             videoContainer.style.margin = "8px 0 12px 0";
-            videoContainer.innerHTML = `<iframe width="100%" height="280" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; border: none; display: block; max-width: 100%;"></iframe>`;
+            const iframe = document.createElement("iframe");
+            iframe.width = "100%";
+            iframe.height = "280";
+            iframe.src = videoEmbedUrl;
+            iframe.title = "Video guía de Problemas y Soluciones";
+            iframe.setAttribute("frameborder", "0");
+            iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
+            iframe.setAttribute("allowfullscreen", "");
+            iframe.referrerPolicy = "strict-origin-when-cross-origin";
+            iframe.style.cssText = "border-radius: 8px; border: none; display: block; max-width: 100%;";
+            videoContainer.appendChild(iframe);
             videoBlock.appendChild(videoContainer);
         } else {
             const vid = document.createElement("p");
             vid.style.margin = "6px 0";
-            vid.innerHTML = '<a href="' + item.Video + '" target="_blank" rel="noopener noreferrer" style="color:#007bff; font-weight:600; text-decoration:underline;">Ver guía en YouTube</a>';
+            vid.textContent = "El enlace del video no es válido y no se mostrará.";
             videoBlock.appendChild(vid);
         }
         cont.appendChild(videoBlock);
@@ -10193,7 +10252,10 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
     if (item.Colaborador) {
         const colDiv = document.createElement("div");
         colDiv.style.cssText = "margin-top: 15px; font-size: 0.85rem; color: var(--text-disabled); text-align: right;";
-        colDiv.innerHTML = "Registrado por: <strong>" + cleanColaboradorName(item.Colaborador) + "</strong>";
+        const label = document.createTextNode("Registrado por: ");
+        const collaborator = document.createElement("strong");
+        collaborator.textContent = cleanColaboradorName(item.Colaborador);
+        colDiv.append(label, collaborator);
         cont.appendChild(colDiv);
     }
 
