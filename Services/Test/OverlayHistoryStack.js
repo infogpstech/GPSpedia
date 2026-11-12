@@ -149,4 +149,23 @@ test('clear cierra en orden inverso y reemplaza el estado actual', () => {
     assert.deepEqual(history.state[overlayHistoryStateKey], []);
 });
 
+test('cancelar un cierre por popstate restaura la entrada del overlay', () => {
+    const history = createFakeHistory();
+    let attempts = 0;
+    const manager = createOverlayHistoryManager(history);
+    history.setPopStateHandler(state => manager.handlePopState(state));
+    manager.register('youtube-upload', () => {
+        attempts++;
+        return attempts > 1;
+    });
+    history.back();
+    assert.deepEqual(manager.getStack(), ['youtube-upload']);
+    assert.deepEqual(history.state[overlayHistoryStateKey], ['youtube-upload']);
+    assert.equal(history.length, 2);
+    history.back();
+    assert.deepEqual(manager.getStack(), []);
+    assert.equal(Object.prototype.hasOwnProperty.call(history.state, overlayHistoryStateKey), false);
+    assert.equal(attempts, 2);
+});
+
 console.log('OverlayHistoryStack:', passed + '/10 PASS');

@@ -571,3 +571,17 @@ No se inició AUG-069. La rama base permanece intacta.
 AUG-068 — ADENDA ITERACIÓN 2 — 2026-11-11
 Corrección detectada en revisión del flujo: al volver desde un overlay hijo, el estado histórico anterior puede ser el del modal padre y no contener __gpOverlayStack. Por ello, el listener popstate ahora también consulta si la pila administrada aún tiene elementos; si los hay, reconcilia la pila con el estado de destino y retorna antes de ejecutar el cierre de #modalDetalle. Esto evita que una pulsación cierre simultáneamente el overlay hijo y el padre.
 Validación: la sintaxis de main.js y los 10 escenarios lógicos del gestor se volvieron a comprobar tras la corrección; ambos PASS en V8 adaptado. Sigue pendiente una prueba de integración DOM que verifique el ciclo MutationObserver + popstate y los flujos de youtubeUpload.js.
+
+
+================================================================================
+AUG-068 — ITERACIÓN 3A — CIERRE CANCELABLE DE OVERLAYS — 2026-11-11
+Estado: EN PROGRESO. Se resolvió una dependencia necesaria antes de integrar youtubeUpload.js.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 3d8541ba3bcf92ef22cac4ae07a3f92a9bd959e6. Rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Hallazgo: el gestor eliminaba la entrada al recibir popstate antes de ejecutar el callback de cierre. Un callback que solicitara confirmación y devolviera cancelación podía dejar el modal visible pero fuera de la pila y con el historial desincronizado.
+Cambio:
+- overlayHistory.js: invokeClose ahora propaga la cancelación explícita (retorno false). handlePopState restaura la entrada y crea un estado de historial equivalente cuando el usuario cancela el cierre.
+- Services/Test/OverlayHistoryStack.js: se añade regresión para cancelar el primer retroceso y aceptar el segundo; la suite pasa de 10 a 11 escenarios.
+Validación prevista: ejecutar la suite Node CLI completa y revisar diff/sintaxis antes de publicar. No se ha integrado todavía youtubeUpload.js.
+Continuidad: siguiente iteración, conectar el callback de cierre de youtubeUpload.js con el gestor y devolver false cuando el usuario rechace pausar una transferencia activa. Preservar el aborto XHR y las rutas de cierre por éxito.
+No se modifica la rama base. ChangesLogs.txt no se modifica en esta iteración porque supera el umbral de rotación de 180,000 caracteres; su rotación debe completarse antes de la próxima entrada.
+================================================================================

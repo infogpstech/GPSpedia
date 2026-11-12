@@ -22,12 +22,13 @@ export function createOverlayHistoryManager(historyApi, onError = null) {
 
     function invokeClose(entry, reason) {
         try {
-            entry.close({ id: entry.id, reason });
+            return entry.close({ id: entry.id, reason }) !== false;
         } catch (error) {
             if (typeof onError === "function") onError(error, entry.id, reason);
             else if (typeof console !== "undefined" && console.error) {
                 console.error("No se pudo cerrar el overlay:", entry.id, error);
             }
+            return true;
         }
     }
 
@@ -84,7 +85,14 @@ export function createOverlayHistoryManager(historyApi, onError = null) {
         const targetIds = normalizeState(state)[OVERLAY_HISTORY_KEY];
         const target = Array.isArray(targetIds) ? targetIds : [];
         while (entries.length && !target.includes(entries[entries.length - 1].id)) {
-            invokeClose(entries.pop(), "popstate");
+            const entry = entries.pop();
+            if (!invokeClose(entry, "popstate")) {
+                // El usuario canceló el cierre (por ejemplo, no desea pausar una carga).
+                // Se restaura la entrada del overlay para mantener sincronizados UI e historial.
+                entries.push(entry);
+                publishState("pushState");
+                break;
+            }
         }
         return entries.length;
     }
