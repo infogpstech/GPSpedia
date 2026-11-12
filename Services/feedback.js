@@ -37,8 +37,9 @@ function getSafeSheet(name) {
  * No utiliza el rol, nombre ni ID de actor enviados como datos de autorización por el navegador.
  */
 function normalizeFeedbackRole(role) {
-    return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .trim().replace(/\s+/g, " ").toLowerCase();
+    const normalized = Array.from(String(value || "").normalize("NFD"))
+        .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
+    return normalized.trim().replace(new RegExp(String.fromCharCode(92) + "s+", "g"), " ").toLowerCase();
 
 function getSessionExpirationStatus_(row,now=new Date()){
  if(!row)return{expired:true,reason:'missing_session'};
