@@ -680,7 +680,7 @@ Ejecutar `node --experimental-default-type=module Services/Test/ImageResolutionV
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/ImageBlendModeScope.js Services/Test/ImageBlendModeScope.mjs && node Services/Test/ImageBlendModeScope.mjs; RESULT=$?; rm -f Services/Test/ImageBlendModeScope.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/ImageBlendModeScope.js Services/Test/ImageBlendModeScope.mjs && node Services/Test/ImageBlendModeScope.mjs; RESULT=$?; rm -f Services/Test/ImageBlendModeScope.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La prueba comprueba que `mix-blend-mode: lighten` exista en una sola regla opt-in: `.gps-transparent-asset`, excluyendo `.img-vehiculo-modal`. No se asigna automáticamente la clase a imágenes del catálogo porque el modelo actual no aporta metadatos fiables que distingan PNG con alfa de PNG opacos, JPEG, fotografías o diagramas. Solo debe añadirse a un recurso después de confirmar que requiere la corrección. Las imágenes sin esa marca conservan su composición normal.
@@ -691,7 +691,7 @@ La prueba comprueba que `mix-blend-mode: lighten` exista en una sola regla opt-i
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/CableCarouselSwipeAxis.js Services/Test/CableCarouselSwipeAxis.mjs && node Services/Test/CableCarouselSwipeAxis.mjs; RESULT=$?; rm -f Services/Test/CableCarouselSwipeAxis.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/CableCarouselSwipeAxis.js Services/Test/CableCarouselSwipeAxis.mjs && node Services/Test/CableCarouselSwipeAxis.mjs; RESULT=$?; rm -f Services/Test/CableCarouselSwipeAxis.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite extrae el helper real de `ui.js` y comprueba swipes horizontales, gestos verticales/diagonales, umbral, multitáctil, controles interactivos, `touchcancel`, coordenadas inválidas y un solo cambio por gesto. Los listeners son pasivos y no bloquean el desplazamiento vertical nativo.
@@ -702,7 +702,7 @@ La suite extrae el helper real de `ui.js` y comprueba swipes horizontales, gesto
 Ejecutar desde la raíz:
 
 ```bash
-cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+cp Services/Test/OverlayHistoryStack.js Services/Test/OverlayHistoryStack.mjs && node Services/Test/OverlayHistoryStack.mjs; RESULT=$?; rm -f Services/Test/OverlayHistoryStack.mjs; printf 'Resultado Node: %s\n' "$RESULT"; test "$RESULT" -eq 0
 ```
 
 La suite verifica la pila anidada, cierre del overlay superior con Atrás, cierre manual, reemplazo de un overlay sin agregar profundidad, reconciliación LIFO, preservación de otros campos de history.state y manejo de errores. También comprueba que renderRelayInfoModal delegue el cierre al gestor compartido y que ui.js no cree entradas paralelas con history.pushState para overlays .info-modal.
