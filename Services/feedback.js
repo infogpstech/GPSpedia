@@ -3134,11 +3134,16 @@ function handleUpdateTutorialItem(payload) {
         if (!sheet) throw new Error("Hoja Tutorial no encontrada.");
         const target = findTutorialRow_(sheet, reference, true);
         const titleKey = normalizeTutorialTitle_(updates.tema !== undefined ? updates.tema : target.row[1]);
-        if (updates.tema !== undefined && !String(target.row[0] || "").trim() &&
-            titleKey !== normalizeTutorialTitle_(target.row[1])) {
+        if (updates.tema !== undefined && titleKey !== normalizeTutorialTitle_(target.row[1])) {
             const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-            if (feedbackSheet && findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", reference)) {
-                throw new Error("No se puede cambiar el tema de un tutorial histórico mientras exista una solicitud de vídeo pendiente.");
+            const currentTitle = String(target.row[1] || "").trim();
+            const hasPendingVideo = feedbackSheet && (
+                findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", reference) ||
+                (currentTitle && currentTitle !== reference &&
+                    findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", currentTitle))
+            );
+            if (hasPendingVideo) {
+                throw new Error("No se puede cambiar el tema mientras exista una solicitud de vídeo pendiente para este tutorial.");
             }
         }
         if (updates.tema !== undefined) {
