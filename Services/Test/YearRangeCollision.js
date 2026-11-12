@@ -51,6 +51,7 @@ test("la UI mantiene la comprobación de ambos límites para el año puntual", (
 test("la UI confirma el registro backend antes de guardar la respuesta local", () => {
     assert.ok(ui.includes("await confirmValidationBeforeCache("));
     assert.ok(ui.includes("() => suggestYear("));
+    assert.ok(/if\s*\(collision\s*&&\s*String\(collision\.id\)\s*!==\s*String\(item\.id\)\)/.test(ui));
 });
 
 console.log("YearRangeCollision:", passed, "/ 12");
