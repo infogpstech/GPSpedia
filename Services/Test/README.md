@@ -1201,3 +1201,15 @@ node --experimental-default-type=module Services/Test/ButtonSystemIntegrity.js
 La suite comprueba la carga única de button-system.css en index.html, users.html y add_cortes.html; variantes semánticas, icono/compactas, tema oscuro, foco visible, hover, active, disabled, loading/aria-busy, target táctil y aislamiento respecto de inputs/selects. También verifica que los botones estáticos de users.html y add_cortes.html usan .btn y mantiene un inventario cerrado de excepciones en index.html.
 
 Los controles especializados creados en ui.js conservan estilos propios porque representan navegación, carruseles, divulgación/acordeones, cierre de overlays, validación, compartir o accesos compactos con geometría/semántica particular: carousel-btn, cable-carousel-btn, validation-btn, share-modal-btn, info-close-btn, btn-expand-plus, accordion-btn, feedback-btn-overlay, btn-link y backBtn. No se reemplazan por variantes genéricas para evitar alterar su interacción o dimensiones. Los botones de acción ordinarios usan .btn y sus variantes.
+
+## AUG-102 — Tema del banner de validación
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/ValidationBannerTheme.js
+```
+
+ValidationBannerTheme.js verifica los tokens semánticos del banner en tema claro/oscuro, la correspondencia con el selector `body.dark-mode`, los estilos del mensaje, botones y campo de entrada, el foco visible y los contrastes WCAG AA (4.5:1) de texto, placeholder y botones. Comprueba además que no queden referencias al token inexistente `--text-primary` ni al selector `[data-theme="dark"]` dentro del componente.
+
+El banner hereda el tema global mediante los tokens definidos en `:root` y redefinidos en `body.dark-mode`; no requiere un atributo de tema adicional ni cambios en el flujo de validación de `ui.js`. La comprobación visual de mensajes, botones, campo y contraste en navegador real queda para Beta.
