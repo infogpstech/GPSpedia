@@ -240,6 +240,12 @@ test('empty and no-result searches retain their query ancestry before rendering'
     assert.match(navigationSource, /const emptySearchState = \{ level, query: "", previousState: previousNavigationState \}/);
 });
 
+test('vehicle detail shortcuts preserve the previous navigation context', () => {
+    const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+    assert.equal((uiSource.match(/replaceNavigationState\(targetState, \{ previousNavigationState \}\)/g) || []).length, 2);
+    assert.match(uiSource, /previousState: previousNavigationState/);
+});
+
 test('native popstate restores previous navigation metadata and section states', () => {
     const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
     const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
@@ -282,4 +288,4 @@ test('multi-level back and forward traversal does not create a loop', () => {
     assert.equal(history.entries.length, 5);
 });
 
-console.log('NavigationBackHistory:', passed + '/16 PASS');
+console.log('NavigationBackHistory:', passed + '/17 PASS');
