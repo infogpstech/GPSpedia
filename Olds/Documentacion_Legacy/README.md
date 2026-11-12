@@ -105,3 +105,11 @@ Consultar `Plan_auditoría/Normas_Gestion_Documental.md`. Los nombres activos ca
 - Partes: 1.
   - `Olds/Documentacion_Legacy/checkpoint_legacy_parte_006.md`: 179935 caracteres; blob `3a37b6a08040a67b2f466c04aec05849f15f1384`.
 - Integridad: copia exacta del archivo activo antes de la rotación, sin corrección, normalización ni pérdida. El archivo activo `checkpoint.md` se conserva como índice y registro de continuidad vigente.
+
+
+## checkpoint.md — rotación incremental 2026-11-12
+- SHA del archivo fuente rotado: `52a0ce1c2c0d003c9f87e4b2e2715d0c1da34568`
+- Caracteres Unicode: 179499.
+- Partes: 1.
+  - `Olds/Documentacion_Legacy/checkpoint_legacy_parte_007.md`: 179499 caracteres; blob fuente idéntico verificado al preparar la rotación.
+- Integridad: copia exacta del archivo activo antes de la rotación; la reconstrucción del contenido desde la parte 007 coincide carácter por carácter con el checkpoint original. El archivo activo se conserva como índice y registro de continuidad vigente.

@@ -1298,3 +1298,30 @@ En entorno Beta aislado, con catálogo de prueba:
 
 Usar únicamente Spreadsheet y servicios Apps Script aislados. No ejecutar endpoints operativos, no modificar catálogo productivo y no desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-107 — VALIDACIÓN REAL DE CONFIRMACIÓN BACKEND Y CACHÉ DE VALIDACIÓN
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En navegador real, con usuario y vehículo de prueba, y FEEDBACK/Spreadsheet aislados:
+1. Enviar una validación y comprobar que la interfaz permanece en estado pendiente mientras suggestYear no responda; solo después de recorded=true debe mostrar confirmación y guardar validationCache.
+2. Simular desconexión antes de enviar y timeout durante la solicitud. Confirmar que se muestra error/reintento y que no se crea la caché local.
+3. Simular pérdida de la respuesta después de que FEEDBACK haya persistido el aporte. Recargar la página y reintentar la misma respuesta; comprobar que no se duplica la fila y que la respuesta de recuperación comunica el estado real antes de permitir la caché.
+4. Probar respuestas info con recorded=false y recorded=true; solo la segunda puede generar caché.
+5. Forzar fallo de IndexedDB después de una confirmación backend: la interfaz debe informar que el aporte sí fue registrado, pero que la caché local no pudo guardarse.
+6. Probar el flujo «Modelo confirmado»: no debe avanzar al siguiente paso hasta recibir confirmación backend.
+7. Repetir con conexión restablecida y recarga real; comprobar que el usuario puede reintentar sin registrar dos veces el mismo aporte.
+
+Usar únicamente deployments y Spreadsheet aislados. No invocar endpoints operativos, modificar catálogo productivo ni desplegar a producción.
+================================================================================

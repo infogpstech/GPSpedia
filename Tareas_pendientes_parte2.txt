@@ -64,10 +64,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-107 — Confirmar el registro backend antes de marcar la validación como completada
 - Origen: H-AUD-017-002. Prioridad: Alta.
-- Evidencia: ui.js:1323–1324 envía suggestYear sin await y guarda de inmediato validationCache.
-- Problema: fallos de red/servicio pueden ocultar la consulta aunque el aporte no se haya registrado.
-- Criterios: estados pendiente/confirmado/fallido; confirmación backend antes de completar o cola recuperable; reintento idempotente; pruebas de timeout, offline y recarga.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia inicial: el flujo cliente podía guardar validationCache antes de recibir la respuesta de suggestYear.
+- Resolución: el comportamiento ya quedó corregido y cubierto en H-AUD-040-014. ui.js espera confirmValidationBeforeCache antes de guardar la caché o avanzar; los estados pendientes, confirmados y fallidos se reflejan en la interfaz, con reintento explícito. validationSubmission.js solo permite guardar caché cuando el backend confirma recorded=true; errores de red/estados desconocidos no generan caché. FEEDBACK devuelve recorded=false en recuperaciones o respuestas no registradas y mantiene la deduplicación por aportante, vehículo y año para reintentos.
+- Validación local existente: ValidationCacheConfirmation.js 7/7 PASS; runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ui.js, Services/feedback.js, validationSubmission.js y suites asociadas PASS, según evidencia H-AUD-040-014 y su adenda.
+- Validación diferida a Beta: timeout/offline con navegador real, pérdida de respuesta después de persistencia, recarga y reintento idempotente con Apps Script/Spreadsheet aislados, y persistencia IndexedDB real.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). No se duplicó la implementación existente ni se modificaron endpoints, deployments o datos productivos.
 
 ### AUG-108 — Individualizar validationCache por usuario y vehículo
 - Origen: H-AUD-017-003. Prioridad: Media.

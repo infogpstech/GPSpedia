@@ -410,3 +410,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/README.md: se documentó el comando y alcance de la suite.
 - La condición backend ya comparaba ambos extremos en el HEAD de inicio; se formalizó y cubrió para evitar regresiones, sin cambiar el resultado funcional válido.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-107 — CONFIRMACIÓN BACKEND ANTES DE CACHÉ LOCAL
+- Se comprobó que la corrección funcional ya estaba implementada mediante H-AUD-040-014: ui.js espera la respuesta de suggestYear antes de guardar validationCache o avanzar el flujo.
+- validationSubmission.js exige confirmación recorded=true; respuestas no registradas, estados desconocidos y fallos de red no guardan caché. La interfaz mantiene estado de envío, resultado y reintento.
+- FEEDBACK distingue las respuestas registradas de las recuperaciones/no-op y deduplica por aportante, vehículo y año para permitir reintentos sin duplicar aportes.
+- Evidencia local existente: ValidationCacheConfirmation 7/7 PASS; runFeedbackWriteSecurityTests 44/44 PASS; parsing de módulos y suites PASS. No se repitieron pruebas ya vigentes ni se modificó código funcional.
+- lista_beta.txt incorpora escenarios reales de timeout, offline, respuesta perdida, recarga, reintento e IndexedDB. Sin deployments ni datos productivos.
+================================================================================
