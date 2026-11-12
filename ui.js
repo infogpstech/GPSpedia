@@ -6225,7 +6225,11 @@ export const openFAQ = setupModal('faq-modal', () => {
 });
 
 export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
-    document.getElementById('terms-agreement-modal').style.display = 'flex';
+    const modal = document.getElementById('terms-agreement-modal');
+    const termsNotice = document.getElementById('terms-modal');
+    // El acuerdo abierto desde el aviso es una capa hija y debe quedar visualmente encima.
+    modal.style.zIndex = termsNotice && termsNotice.style.display === 'flex' ? '3200' : '';
+    modal.style.display = 'flex';
 });
 
 export function renderInboxList(items) {
