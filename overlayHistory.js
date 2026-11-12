@@ -84,15 +84,21 @@ export function createOverlayHistoryManager(historyApi, onError = null) {
     function handlePopState(state) {
         const targetIds = normalizeState(state)[OVERLAY_HISTORY_KEY];
         const target = Array.isArray(targetIds) ? targetIds : [];
-        while (entries.length && !target.includes(entries[entries.length - 1].id)) {
-            const entry = entries.pop();
-            if (!invokeClose(entry, "popstate")) {
-                // El usuario canceló el cierre (por ejemplo, no desea pausar una carga).
-                // Se restaura la entrada del overlay para mantener sincronizados UI e historial.
-                entries.push(entry);
-                publishState("pushState");
-                break;
-            }
+        const top = entries[entries.length - 1];
+        if (!top || target.includes(top.id)) return entries.length;
+
+        // Un popstate cierra únicamente la capa superior. Si el destino del navegador
+        // omitió varias capas, las inferiores permanecen y se reconstruye su estado.
+        const entry = entries.pop();
+        if (!invokeClose(entry, "popstate")) {
+            // El usuario canceló el cierre; restaurar exactamente la capa rechazada.
+            entries.push(entry);
+            publishState("pushState");
+            return entries.length;
+        }
+
+        if (entries.length && !target.includes(entries[entries.length - 1].id)) {
+            publishState("pushState");
         }
         return entries.length;
     }
