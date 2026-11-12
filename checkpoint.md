@@ -1511,3 +1511,13 @@ Pruebas locales: PysVehicleRelationIntegrity 18/18; PysCreationIntegrity 48/48; 
 Limitación: harness JavaScript adaptado; no se ejecutó Node CLI ni Apps Script real. Concurrencia real entre ejecuciones y pruebas Spreadsheet aisladas quedan para Beta. Sin despliegue ni cambios productivos.
 Siguiente tarea: AUG-091 — Alinear el título del acordeón con la especificación de PyS.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-091 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5, sin modificaciones.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+UI: acordeón de problemas relacionados actualizado al texto exacto «Problemas relacionados a este vehículo»; título y flecha separados; flex layout y ajuste móvil; contraste heredado del botón en modo claro/oscuro.
+Validación: PysAccordionTitle 6/6 PASS; parsing del bloque UI modificado PASS. Harness JavaScript adaptado; no Node CLI ni navegador real. Comprobación visual real de temas y viewport móvil pendiente para Beta. Sin despliegue ni cambios productivos.
+Nota de trazabilidad: la referencia histórica Tareas.txt 1511–1521 no coincide con la copia activa; se usó el criterio explícito del backlog AUG-091.
+Siguiente tarea: AUG-092 — Alinear esquema, persistencia y autorización del módulo Tutorial.
+================================================================================
