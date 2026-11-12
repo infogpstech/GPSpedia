@@ -148,8 +148,25 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         assert.throws(() => save({ bytes: [1], mimeType: "image/jpeg", name: "x", size: 1, sha256: "a".repeat(64) }, "V", 1), /verificar el acceso/);
         assert.strictEqual(trashed, true);
     });
+    test("fallo de creación en Drive se propaga", () => {
+        const save = new Function("DriveApp", "Utilities", "findOrCreateSubFolder", "getCortesRootFolder", saveBlock + "\nreturn saveSuggestionImageAttachment_;")(
+            { Access: { ANYONE: "ANYONE", ANYONE_WITH_LINK: "ANYONE_WITH_LINK" } },
+            { newBlob: () => ({}) },
+            () => ({ createFile() { throw new Error("Drive temporalmente no disponible"); } }), () => ({}));
+        assert.throws(() => save({ bytes: [1], mimeType: "image/jpeg", name: "x", size: 1, sha256: "a".repeat(64) }, "V", 1), /Drive temporalmente no disponible/);
+    });
+    test("rechaza y retira archivo si Drive no devuelve ID válido", () => {
+        let trashed = false;
+        const file = { getSharingAccess: () => "PRIVATE", getId: () => "", setTrashed() { trashed = true; } };
+        const save = new Function("DriveApp", "Utilities", "findOrCreateSubFolder", "getCortesRootFolder", saveBlock + "\nreturn saveSuggestionImageAttachment_;")(
+            { Access: { ANYONE: "ANYONE", ANYONE_WITH_LINK: "ANYONE_WITH_LINK" } },
+            { newBlob: () => ({}) }, () => ({ createFile: () => file }), () => ({}));
+        assert.throws(() => save({ bytes: [1], mimeType: "image/jpeg", name: "x", size: 1, sha256: "a".repeat(64) }, "V", 1), /identificador válido/);
+        assert.strictEqual(trashed, true);
+    });
     test("handler propaga fallos de Drive y no confirma una sugerencia con imagen faltante", () => {
         assert.ok(handlerBlock.includes("saveSuggestionImageAttachment_(normalizedImage"));
+        assert.ok(handlerBlock.indexOf("saveSuggestionImageAttachment_(normalizedImage") < handlerBlock.indexOf("sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario"));
         assert.ok(handlerBlock.includes("throw error;"));
         assert.ok(!/catch\s*\(\s*e\s*\)\s*\{\s*console\.error\("Error subiendo imagen/.test(handlerBlock));
         assert.ok(handlerBlock.includes("imageAttached: Boolean(imageMetadata)"));
