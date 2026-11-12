@@ -1233,3 +1233,5 @@ Siguiente tarea: AUG-079 — Robustecer carga y política de acceso de imágenes
 ================================================================================
 
 Verificación de sintaxis posterior a los commits de AUG-078: parsing V8 completo de Services/feedback.js y de la suite ESM: PASS. La suite Node ESM se ejecutó en harness aislado con dobles y funciones de validación extraídas: 11/11 PASS. El checkout completo no estuvo disponible en este entorno; la ejecución contra el archivo FEEDBACK completo queda reproducible con el comando documentado.
+
+Actualización de cierre: el backlog marca AUG-078 como COMPLETADA CON VALIDACIÓN DIFERIDA en el commit 167ef718ab9cebf4843d6e5062f1fe632622a092. No iniciar AUG-079 en esta iteración.
