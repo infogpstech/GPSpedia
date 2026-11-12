@@ -5,7 +5,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey, ensureV
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -19,7 +19,7 @@ import { pushNavigationState, replaceNavigationState, navigateBackToState, pickN
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
-import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
+import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
 
 function mountRichTextToolbars(root) {
@@ -3936,9 +3936,42 @@ export async function openInbox() {
     return openInboxModal_();
 }
 
+function initializeRichTextModeControl_() {
+    const select = document.getElementById("rich-text-mode-select");
+    const status = document.getElementById("rich-text-mode-status");
+    if (!select) return;
+
+    select.value = getRichTextMode();
+    if (select.dataset.richModeBound !== "true") {
+        select.addEventListener("change", () => {
+            const context = getUiSessionContext_();
+            try {
+                const mode = setRichTextMode(select.value, context && context.role);
+                refreshRichTextToolbars();
+                if (status) {
+                    status.textContent = mode === "advanced"
+                        ? "Modo avanzado guardado en este navegador. Las barras abiertas se actualizaron."
+                        : "Modo estricto guardado en este navegador. Las barras abiertas se actualizaron.";
+                }
+            } catch (error) {
+                select.value = getRichTextMode();
+                if (status) status.textContent = error.message || "No se pudo cambiar el modo.";
+            }
+        });
+        select.dataset.richModeBound = "true";
+    }
+
+    if (status) {
+        status.textContent = select.value === "advanced"
+            ? "Modo avanzado activo en este navegador."
+            : "Modo estricto activo (predeterminado).";
+    }
+}
+
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 const openDevToolsModal_ = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
+    initializeRichTextModeControl_();
     initAdminPanelListeners();
     if (window.triggerAdminPanelPing) {
         window.triggerAdminPanelPing();
