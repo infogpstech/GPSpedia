@@ -300,6 +300,7 @@
 <script type="module">
 import { routeAction } from './api-config.js';
 import * as offline from './offline.js';
+import { createOverlayHistoryManager } from './overlayHistory.js';
 // COMPONENT VERSION: 3.9.1
 // --- LÓGICA DE DEPURACIÓN REMOTA ---
 function remoteLog(level, message, data = {}) {
@@ -445,20 +446,33 @@ function setupEventListeners() {
     const userModal = document.getElementById('user-modal');
     const passwordModal = document.getElementById('password-modal');
     const closeBtns = document.querySelectorAll('.close-btn');
+    const modalHistory = createOverlayHistoryManager(window.history);
+    window.userOverlayHistory = modalHistory;
+    window.registerUserModalOverlay = modal => {
+        if (!modal) return false;
+        const id = 'users:' + modal.id;
+        if (modalHistory.getStack().includes(id)) return false;
+        modalHistory.register(id, () => { modal.style.display = 'none'; });
+        return true;
+    };
+    window.closeUserModalOverlay = modalId => {
+        const id = 'users:' + modalId;
+        if (modalHistory.getStack().includes(id)) return modalHistory.close(id);
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'none';
+        return false;
+    };
 
     document.getElementById('create-user-btn').addEventListener('click', () => openUserModal());
     document.getElementById('change-password-btn').addEventListener('click', () => {
         passwordModal.style.display = 'block';
-        if (window.history && window.history.pushState) {
-            window.history.pushState({ modalOpen: true }, '');
-        }
+        window.registerUserModalOverlay(passwordModal);
     });
     document.getElementById('edit-name-btn').addEventListener('click', () => {
         document.getElementById('new-fullname').value = currentUser.Nombre_Completo;
-        document.getElementById('name-modal').style.display = 'block';
-        if (window.history && window.history.pushState) {
-            window.history.pushState({ modalOpen: true }, '');
-        }
+        const nameModal = document.getElementById('name-modal');
+        nameModal.style.display = 'block';
+        window.registerUserModalOverlay(nameModal);
     });
 
     closeBtns.forEach(btn => {
@@ -474,21 +488,16 @@ function setupEventListeners() {
     });
 
     function closeModal(modal, isFromPopState = false) {
-        modal.style.display = 'none';
-        if (!isFromPopState && window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
+        if (!modal) return;
+        if (!isFromPopState && window.closeUserModalOverlay) {
+            window.closeUserModalOverlay(modal.id);
+            return;
         }
+        modal.style.display = 'none';
     }
 
-    // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
-    window.addEventListener('popstate', (event) => {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            if (modal.style.display === 'block') {
-                closeModal(modal, true);
-            }
-        });
-    });
+    // Cada popstate retira solo la capa superior registrada; las inferiores siguen visibles.
+    window.addEventListener('popstate', event => modalHistory.handlePopState(event.state || {}));
 
     document.getElementById('user-form').addEventListener('submit', handleUserFormSubmit);
     document.getElementById('password-form').addEventListener('submit', handleChangePasswordSubmit);
@@ -532,9 +541,7 @@ function openUserModal(user = null) {
     if(passwordGroup)passwordGroup.style.display=user&&(!isDeveloper||String(user.ID)===String(currentUser.ID))?'none':'block';
 
     modal.style.display = 'block';
-    if (window.history && window.history.pushState) {
-        window.history.pushState({ modalOpen: true }, '');
-    }
+    if (window.registerUserModalOverlay) window.registerUserModalOverlay(modal);
 }
 
 async function handleUserFormSubmit(e) {
@@ -626,11 +633,8 @@ async function handleUserFormSubmit(e) {
             if (!isSubmittingSessionCurrent()) return;
             alert('Usuario creado');
         }
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
-        } else {
-            document.getElementById('user-modal').style.display = 'none';
-        }
+        if (window.closeUserModalOverlay) window.closeUserModalOverlay('user-modal');
+        else document.getElementById('user-modal').style.display = 'none';
         if (!isSubmittingSessionCurrent()) return;
         await fetchUsers();
         if (!isSubmittingSessionCurrent()) return;
@@ -832,11 +836,8 @@ async function handleEditNameSubmit(e) {
         displayProfile();
 
         alert('Nombre actualizado correctamente.');
-        if (window.history && window.history.state && window.history.state.modalOpen) {
-            window.history.back();
-        } else {
-            document.getElementById('name-modal').style.display = 'none';
-        }
+        if (window.closeUserModalOverlay) window.closeUserModalOverlay('name-modal');
+        else document.getElementById('name-modal').style.display = 'none';
     } catch (error) {
         // Error handled
     } finally {
