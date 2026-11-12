@@ -913,3 +913,33 @@ Pruebas en un proyecto Apps Script y una Spreadsheet aislados, nunca en producci
 
 No migrar automáticamente datos de una hoja histórica `Tutoriales` ni reordenar filas. No desplegar a producción ni modificar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-093 — VALIDACIÓN DEL TIPO Y ESTADO DE SOLICITUDES DE VÍDEO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+Pruebas en una implementación Apps Script y Spreadsheet aisladas, sin cuentas ni datos productivos:
+30. Sembrar una fila de Feedbacks con JSON válido de tipo distinto de `video_approval`; intentar aprobar y rechazar. Ambas operaciones deben rechazarse y no alterar el destino.
+31. Probar JSON malformado, IDs de solicitud inexistentes/duplicados y referencia cruzada entre `ID_vehiculo` y `referenceId`; confirmar rechazo sin publicar ni retirar vídeos.
+32. Probar solicitudes con `status` pending, approved y rejected, variando también `Respuesta` y `Se resolvio` de Feedbacks. Solo una solicitud pendiente y coherente puede aprobarse o rechazarse.
+33. Intentar aprobar una solicitud rechazada, rechazar una aprobada y repetir decisiones terminales. Deben rechazarse; un reintento de aprobación ya completada solo puede confirmar el mismo destino y estado sin reescritura.
+34. Lanzar aprobación y rechazo simultáneos para el mismo ID; comprobar que el coordinador serializa las decisiones y que solo una transición termina aplicada.
+35. Verificar que solicitudes válidas de Corte, PyS y Tutorial continúen publicando o retirando exclusivamente el destino y vídeo exactos, con confirmación posterior de Feedbacks.
+36. Revisar Inbox con estados pendiente, aprobado, rechazado y registros JSON malformados; comprobar que solo las solicitudes pendientes ofrecen acciones de decisión y que los mensajes no válidos no se convierten en aprobaciones.
+
+No desplegar a producción ni modificar datos productivos.
+================================================================================
