@@ -1,11 +1,11 @@
 const PREVIOUS_NAVIGATION_KEY = '__gpPreviousNavigation';
 const NAVIGATION_FIELDS = [
     'level', 'query', 'categoria', 'marca', 'modelo',
-    'versionEquipamiento', 'tipoEncendido', 'origin'
+    'versionEquipamiento', 'tipoEncendido', 'origin', 'section'
 ];
 
 export function pickNavigationState(state) {
-    if (!state || typeof state !== 'object' || !state.level) return null;
+    if (!state || typeof state !== 'object' || (!state.level && !state.section)) return null;
     const picked = {};
     NAVIGATION_FIELDS.forEach(key => {
         if (Object.prototype.hasOwnProperty.call(state, key) && state[key] !== undefined) {
@@ -44,6 +44,7 @@ function buildNavigationUrl(state, locationObject) {
     if ((state.level === 'busqueda' || state.level === 'busqueda_focused') && state.query) {
         return base + '#search=' + encodeURIComponent(state.query);
     }
+    if (state.section) return base + (state.section === 'cortes' ? '' : '#' + state.section);
     return base;
 }
 
