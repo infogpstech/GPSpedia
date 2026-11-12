@@ -2194,7 +2194,7 @@ function normalizePysField_(value,label,maxLength,required,richText){
     const normalized=value.replace(/\u00a0/g," ").replace(/[ \t\f\v]+/g," ").trim();
     if(normalized.length>maxLength)throw new Error(label+" no puede superar "+maxLength+" caracteres.");
     const safeValue=richText?sanitizePysRichText_(normalized):normalized;
-    const visible=richText?safeValue.replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim():safeValue;
+    const visible=richText?safeValue.replace(/<br\s*\/?>/gi," ").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim():safeValue;
     if(required&&!visible)throw new Error(label+" es obligatorio y no puede estar vacío.");
     return safeValue;
 }
