@@ -1033,3 +1033,11 @@ Validación diferida a Beta:
 
 Siguiente acción: AUG-070 cerrada. AUG-071 permanece pendiente; no se inicia en esta iteración.
 ================================================================================
+
+
+================================================================================
+AUG-070 — ADENDA DE VALIDACIÓN FINAL — 2026-11-12
+HEAD previo a esta adenda: 96fd13027d5a455c4a32e2d9d5436603ae633fb5.
+
+Se amplió la suite Services/Test/OverlayHistoryStack.js con una comprobación explícita de que el lightbox (z-index 2200) prevalece sobre el modal de detalle (z-index 1600), y otra que verifica que el reproductor/iframe solo se detiene o elimina cuando el detalle es la capa superior que se cierra. Resultado final: **19/19 PASS** en runtime V8 adaptado. ReplacedImagesLightboxHistory.js: **6/6 PASS**. Parsing V8: main.js completo, módulo de users.html y bloque legal modificado de ui.js: PASS. README, backlog, auditoría y ChangesLogs reflejan 19/19. Esta adenda no modifica código funcional; las pruebas DOM/navegador real, botón físico y gestos nativos siguen reservadas para Beta.
+================================================================================
