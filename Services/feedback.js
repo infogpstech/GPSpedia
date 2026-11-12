@@ -165,22 +165,32 @@ function ensureReportMetadataColumn(sheet) {
     return newColumn;
 }
 
+function normalizeReportImageMetadata_(source) {
+    if (!source || typeof source !== "object" || Array.isArray(source)) return null;
+    const imageFileId = String(source.imageFileId || "").trim(), imageUrl = String(source.imageUrl || "").trim();
+    const imageName = String(source.imageName || "").trim(), imageMimeType = String(source.imageMimeType || "").trim().toLowerCase();
+    const imageSize = Number(source.imageSize), imageSha256 = String(source.imageSha256 || "").trim().toLowerCase();
+    const expectedUrl = imageFileId ? "https://drive.google.com/file/d/" + imageFileId + "/view" : "";
+    if (!/^[A-Za-z0-9_-]{10,}$/.test(imageFileId) || imageUrl !== expectedUrl ||
+        !["image/jpeg","image/png","image/webp"].includes(imageMimeType) || !imageName || imageName.length > 120 ||
+        !Number.isInteger(imageSize) || imageSize < 1 || imageSize > 3 * 1024 * 1024 || !/^[a-f0-9]{64}$/.test(imageSha256)) return null;
+    return { imageFileId, imageUrl, imageName, imageMimeType, imageSize, imageSha256 };
+}
 function parseReportMetadata(rawValue, rowVehicleId) {
     if (typeof rawValue !== "string" || !rawValue.trim()) return null;
     try {
         const parsed = JSON.parse(rawValue);
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-        const reportId = String(parsed.reportId || "").trim();
-        const vehicleId = String(parsed.vehicleId || "").trim();
+        const reportId = String(parsed.reportId || "").trim(), vehicleId = String(parsed.vehicleId || "").trim();
         const corteIndex = Number(parsed.corteIndex);
-        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) ||
-            !vehicleId || vehicleId !== String(rowVehicleId || "").trim() ||
-            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3 ||
-            typeof parsed.activaTestigoMotor !== "boolean") return null;
-        return { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor };
-    } catch (error) {
-        return null;
-    }
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) || !vehicleId ||
+            vehicleId !== String(rowVehicleId || "").trim() || !Number.isInteger(corteIndex) ||
+            corteIndex < 1 || corteIndex > 3 || typeof parsed.activaTestigoMotor !== "boolean") return null;
+        const metadata = { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor };
+        const imageMetadata = normalizeReportImageMetadata_(parsed);
+        if (imageMetadata) Object.assign(metadata, imageMetadata);
+        return metadata;
+    } catch (error) { return null; }
 }
 
 function isPositiveYearSuggestionRow(row) {
@@ -1225,109 +1235,140 @@ function findReportByReportId_(sheet, reportId, metadataColumn) {
     return matches[0] || null;
 }
 
-function handleReportProblem(payload) {
-    const { vehicleId, problemText, userId, userName } = payload;
-    if (!vehicleId || !problemText || !userId || !userName) {
-        throw new Error("Faltan datos para reportar el problema (vehicleId, problemText, userId, userName).");
+const REPORT_IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+function validateReportImageAttachment_(source) {
+    if (source == null) return null;
+    if (!source || typeof source !== "object" || Array.isArray(source)) throw new Error("El adjunto de imagen tiene un formato inválido.");
+    const dataUrl = String(source.dataUrl || "").trim();
+    const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/i);
+    const mimeType = String(source.mimeType || "").trim().toLowerCase();
+    if (!match || match[1].toLowerCase() !== mimeType) throw new Error("El tipo MIME o el contenido Base64 de la imagen no es válido.");
+    if (match[2].length > Math.ceil(REPORT_IMAGE_MAX_BYTES / 3) * 4) throw new Error("La imagen supera el tamaño máximo permitido de 3 MB.");
+    let bytes;
+    try { bytes = Utilities.base64Decode(match[2]); } catch (error) { throw new Error("No se pudo decodificar la imagen adjunta."); }
+    if (!bytes || !bytes.length || bytes.length > REPORT_IMAGE_MAX_BYTES) throw new Error("La imagen está vacía o supera el tamaño máximo permitido de 3 MB.");
+    if (Utilities.base64Encode(bytes) !== match[2]) throw new Error("La codificación Base64 de la imagen no es canónica.");
+    const at = index => Number(bytes[index]) & 255;
+    const signatureValid =
+        (mimeType === "image/jpeg" && bytes.length >= 3 && at(0) === 255 && at(1) === 216 && at(2) === 255) ||
+        (mimeType === "image/png" && bytes.length >= 8 && [137,80,78,71,13,10,26,10].every((v,i)=>at(i)===v)) ||
+        (mimeType === "image/webp" && bytes.length >= 12 && String.fromCharCode(at(0),at(1),at(2),at(3)) === "RIFF" && String.fromCharCode(at(8),at(9),at(10),at(11)) === "WEBP");
+    if (!signatureValid) throw new Error("El contenido real del archivo no coincide con su tipo de imagen declarado.");
+    const declaredSize = Number(source.size);
+    if (!Number.isInteger(declaredSize) || declaredSize !== bytes.length) throw new Error("El tamaño declarado de la imagen no coincide con los bytes recibidos.");
+    const name = String(source.name || "imagen").replace(/^.*[\\/]/, "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0,120);
+    if (!name) throw new Error("El nombre del archivo de imagen no es válido.");
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bytes);
+    const sha256 = Array.from(digest).map(v=>(v&255).toString(16).padStart(2,"0")).join("");
+    return { bytes, name, mimeType, size: bytes.length, sha256 };
+}
+function saveReportImageAttachment_(image, reportId) {
+    const extensions = { "image/jpeg":"jpg", "image/png":"png", "image/webp":"webp" };
+    const extension = extensions[image.mimeType];
+    if (!extension) throw new Error("El formato de imagen no está permitido.");
+    const baseName = image.name.replace(/\.[^.]*$/,"").replace(/[^A-Za-z0-9_-]/g,"_").slice(0,60) || "imagen";
+    const fileName = String(reportId) + "_" + Date.now() + "_" + baseName + "." + extension;
+    const folder = findOrCreateSubFolder(getCortesRootFolder(), "Reportes individuales");
+    const file = folder.createFile(Utilities.newBlob(image.bytes,image.mimeType,fileName));
+    if (!file) throw new Error("Drive no confirmó la creación de la imagen del reporte.");
+    const imageFileId = String(file.getId() || "").trim();
+    if (!/^[A-Za-z0-9_-]{10,}$/.test(imageFileId)) {
+        try { file.setTrashed(true); } catch (error) {}
+        throw new Error("Drive no devolvió un identificador válido para la imagen.");
     }
-
-    const hasReportContext = payload.reportId !== undefined ||
-        payload.corteIndex !== undefined || payload.activaTestigoMotor !== undefined;
+    return { file, metadata: { imageFileId, imageUrl:"https://drive.google.com/file/d/"+imageFileId+"/view",
+        imageName:image.name, imageMimeType:image.mimeType, imageSize:image.size, imageSha256:image.sha256 } };
+}
+function trashReportImageUpload_(upload) {
+    if (!upload || !upload.file) return;
+    try { upload.file.setTrashed(true); } catch (error) { console.error("No se pudo retirar una imagen no asociada a un reporte:",error); }
+}
+function handleReportProblem(payload) {
+    payload = payload && typeof payload === "object" ? payload : {};
+    const { vehicleId, problemText, userId, userName } = payload;
+    if (!vehicleId || !problemText || !userId || !userName) throw new Error("Faltan datos para reportar el problema (vehicleId, problemText, userId, userName).");
+    const hasReportContext = payload.reportId !== undefined || payload.corteIndex !== undefined || payload.activaTestigoMotor !== undefined;
     let reportContext = null;
     if (hasReportContext) {
-        const reportId = String(payload.reportId || "").trim();
-        const corteIndex = Number(payload.corteIndex);
-        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId)) {
-            throw new Error("El identificador del reporte no tiene un formato válido.");
-        }
-        if (!Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
-            throw new Error("El número de corte no es válido.");
-        }
-        if (typeof payload.activaTestigoMotor !== "boolean") {
-            throw new Error("El indicador del testigo del motor debe ser booleano.");
-        }
-        reportContext = {
-            reportId,
-            vehicleId: String(vehicleId),
-            corteIndex,
-            activaTestigoMotor: payload.activaTestigoMotor
-        };
+        const reportId=String(payload.reportId||"").trim(), corteIndex=Number(payload.corteIndex);
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId)) throw new Error("El identificador del reporte no tiene un formato válido.");
+        if (!Number.isInteger(corteIndex)||corteIndex<1||corteIndex>3) throw new Error("El número de corte no es válido.");
+        if (typeof payload.activaTestigoMotor!=="boolean") throw new Error("El indicador del testigo del motor debe ser booleano.");
+        reportContext={reportId,vehicleId:String(vehicleId),corteIndex,activaTestigoMotor:payload.activaTestigoMotor};
     }
-
-    const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-    let generatedReportId = "";
-    let duplicateReport = false;
+    const imageAttachment=validateReportImageAttachment_(payload.imageAttachment);
+    if(imageAttachment&&!reportContext) throw new Error("El adjunto requiere un identificador de reporte individual válido.");
+    const lock=LockService.getScriptLock(); lock.waitLock(10000);
+    let generatedReportId="",duplicateReport=false,uploadedImage=null,resolvedImageUrl="";
+    let pendingSheet=null,pendingRowNumber=0,pendingMetadataColumn=0,pendingExistingMetadata=null;
     try {
-        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-        const metadataColumn = reportContext ? ensureReportMetadataColumn(sheet) : 0;
-        if (reportContext) {
-            const existing = findReportByReportId_(sheet, reportContext.reportId, metadataColumn);
-            if (existing) {
-                const sameReport =
-                    String(existing.row[COLS_FEEDBACKS.Usuario - 1] || "") === String(userName) &&
-                    String(existing.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "") === String(vehicleId) &&
-                    String(existing.row[COLS_FEEDBACKS.Problema - 1] || "") === String(problemText) &&
-                    String(existing.metadata.vehicleId || "") === String(vehicleId) &&
-                    Number(existing.metadata.corteIndex) === reportContext.corteIndex &&
-                    existing.metadata.activaTestigoMotor === reportContext.activaTestigoMotor &&
-                    (!existing.metadata.userId || String(existing.metadata.userId) === String(userId));
-                if (!sameReport) {
-                    throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
-                }
-                generatedReportId = reportContext.reportId;
-                duplicateReport = true;
+        const sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS); pendingSheet=sheet;
+        const metadataColumn=reportContext?ensureReportMetadataColumn(sheet):0; pendingMetadataColumn=metadataColumn;
+        if(reportContext) {
+            const existing=findReportByReportId_(sheet,reportContext.reportId,metadataColumn);
+            if(existing) {
+                const sameReport=String(existing.row[COLS_FEEDBACKS.Usuario-1]||"")===String(userName)&&
+                    String(existing.row[COLS_FEEDBACKS.ID_vehiculo-1]||"")===String(vehicleId)&&
+                    String(existing.row[COLS_FEEDBACKS.Problema-1]||"")===String(problemText)&&
+                    String(existing.metadata.vehicleId||"")===String(vehicleId)&&Number(existing.metadata.corteIndex)===reportContext.corteIndex&&
+                    existing.metadata.activaTestigoMotor===reportContext.activaTestigoMotor&&
+                    (!existing.metadata.userId||String(existing.metadata.userId)===String(userId));
+                if(!sameReport) throw new Error("El identificador del reporte ya pertenece a un reporte distinto; no se creó otro registro.");
+                const oldImage=normalizeReportImageMetadata_(existing.metadata);
+                if(imageAttachment) {
+                    if(oldImage) {
+                        if(oldImage.imageSha256!==imageAttachment.sha256) throw new Error("El reporte ya tiene una imagen distinta asociada; no se reemplazó.");
+                        resolvedImageUrl=oldImage.imageUrl;
+                    } else {
+                        uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
+                        pendingExistingMetadata={rowIndex:existing.rowIndex,column:metadataColumn,value:JSON.stringify(existing.metadata)};
+                        sheet.getRange(existing.rowIndex,metadataColumn).setValue(JSON.stringify(Object.assign({},existing.metadata,uploadedImage.metadata)));
+                        SpreadsheetApp.flush(); resolvedImageUrl=uploadedImage.metadata.imageUrl;
+                        uploadedImage=null; pendingExistingMetadata=null;
+                    }
+                } else if(oldImage) resolvedImageUrl=oldImage.imageUrl;
+                generatedReportId=reportContext.reportId; duplicateReport=true;
             }
         }
-
-        if (!duplicateReport) {
-            const lastRow = sheet.getLastRow();
-            const newRowNumber = lastRow + 1;
-            const FORMULA_ROW = 2;
-            const lastCol = reportContext
-                ? Math.max(sheet.getLastColumn(), metadataColumn, 8)
-                : (sheet.getLastColumn() || 8);
-
-            if (lastRow >= FORMULA_ROW) {
-                const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-                const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-                formulaRange.copyTo(newRowRange);
-                if (lastCol > 1) {
-                    sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-                }
+        if(!duplicateReport) {
+            const lastRow=sheet.getLastRow(),newRowNumber=lastRow+1; pendingRowNumber=newRowNumber;
+            const FORMULA_ROW=2,lastCol=reportContext?Math.max(sheet.getLastColumn(),metadataColumn,8):(sheet.getLastColumn()||8);
+            if(lastRow>=FORMULA_ROW) {
+                sheet.getRange(FORMULA_ROW,1,1,lastCol).copyTo(sheet.getRange(newRowNumber,1,1,lastCol));
+                if(lastCol>1) sheet.getRange(newRowNumber,2,1,lastCol-1).clearContent();
             }
-
-            const values = [[userName, vehicleId, problemText]];
-            sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-
-            if (reportContext) {
-                const metadata = {
-                    reportId: reportContext.reportId,
-                    userId: String(userId),
-                    vehicleId: String(vehicleId),
-                    corteIndex: reportContext.corteIndex,
-                    activaTestigoMotor: reportContext.activaTestigoMotor
-                };
-                sheet.getRange(newRowNumber, metadataColumn).setValue(JSON.stringify(metadata));
+            if(imageAttachment) uploadedImage=saveReportImageAttachment_(imageAttachment,reportContext.reportId);
+            sheet.getRange(newRowNumber,COLS_FEEDBACKS.Usuario,1,3).setValues([[userName,vehicleId,problemText]]);
+            if(reportContext) {
+                const metadata={reportId:reportContext.reportId,userId:String(userId),vehicleId:String(vehicleId),
+                    corteIndex:reportContext.corteIndex,activaTestigoMotor:reportContext.activaTestigoMotor};
+                if(uploadedImage) Object.assign(metadata,uploadedImage.metadata);
+                sheet.getRange(newRowNumber,metadataColumn).setValue(JSON.stringify(metadata));
+                if(uploadedImage) resolvedImageUrl=uploadedImage.metadata.imageUrl;
             }
             SpreadsheetApp.flush();
-
-            const idVal = sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).getValue();
-            generatedReportId = reportContext ? reportContext.reportId : `REP-${idVal || Date.now()}`;
+            const idVal=sheet.getRange(newRowNumber,COLS_FEEDBACKS.ID).getValue();
+            generatedReportId=reportContext?reportContext.reportId:"REP-"+(idVal||Date.now());
+            uploadedImage=null;
         }
-    } finally {
-        lock.releaseLock();
-    }
-
-    if (!duplicateReport) {
-        logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
-    }
-    return {
-        status: 'success',
-        message: duplicateReport ? 'El reporte ya estaba registrado; se devolvió el identificador existente.' : 'Problema reportado.',
-        reportId: generatedReportId,
-        alreadyReported: duplicateReport
-    };
+    } catch(error) {
+        trashReportImageUpload_(uploadedImage);
+        if(pendingSheet&&pendingExistingMetadata) {
+            try { pendingSheet.getRange(pendingExistingMetadata.rowIndex,pendingExistingMetadata.column).setValue(pendingExistingMetadata.value); SpreadsheetApp.flush(); }
+            catch(rollbackError) { console.error("No se pudo restaurar metadata previa del reporte:",rollbackError); }
+        }
+        if(pendingSheet&&pendingRowNumber) {
+            try {
+                pendingSheet.getRange(pendingRowNumber,COLS_FEEDBACKS.Usuario,1,3).clearContent();
+                if(pendingMetadataColumn) pendingSheet.getRange(pendingRowNumber,pendingMetadataColumn).clearContent();
+                SpreadsheetApp.flush();
+            } catch(rollbackError) { console.error("No se pudo revertir completamente la fila del reporte:",rollbackError); }
+        }
+        throw error;
+    } finally { lock.releaseLock(); }
+    if(!duplicateReport) logUserActivity(userId,userName,"report_problem",vehicleId,problemText);
+    return {status:"success",message:duplicateReport?"El reporte ya estaba registrado; se devolvió el identificador existente.":"Problema reportado.",
+        reportId:generatedReportId,alreadyReported:duplicateReport,imageAttached:Boolean(resolvedImageUrl),imageUrl:resolvedImageUrl};
 }
 function enforceFeedbackRateLimit_(scope, limit, windowSeconds) {
     const cache = CacheService.getScriptCache();
