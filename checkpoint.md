@@ -489,3 +489,19 @@ Siguiente acción: ejecutar `git pull --ff-only origin GPSpedia2.2.5_work`, comp
 
 AUG-066 — ADENDA DE EVIDENCIA — 2026-11-11
 La captura posterior a la sincronización muestra la salida de `grep -n -A5 -B2 "AUG-066" Services/Test/README.md`: la línea 682 todavía documenta el comando incompatible `node --experimental-default-type=module Services/Test/ImageBlendModeScope.js`. La rama visible en Codespaces es `GPSpedia2.2.5_work` y el directorio de trabajo es `/workspaces/GPSpedia`. La captura no permite confirmar de forma legible el resultado de `git status -sb` ni el SHA de `git log -1`; deben comprobarse antes de editar. Siguiente acción: corregir únicamente la instrucción de ejecución de AUG-066 para usar la copia temporal `.mjs` (sin dejar archivo temporal en el repositorio), validar el diff y la prueba; no iniciar AUG-067.
+
+
+================================================================================
+AUG-066 — CIERRE LOCAL — 2026-11-11
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Rama: GPSpedia2.2.5_work. La tarea se cerró únicamente en la rama de trabajo; no se modificó la rama base.
+Resolución:
+- style.css: el modo de fusión lighten queda limitado a `.dark-mode img.gps-transparent-asset:not(.img-vehiculo-modal)`; se eliminó de los selectores generales de tarjetas, resultados y vista previa.
+- Services/Test/ImageBlendModeScope.js: contrato estático que verifica la única regla opt-in y bloquea la reintroducción de selectores globales.
+- Services/Test/README.md: se documenta el comando compatible con Node v24.22.2 mediante copia temporal .mjs, limpieza del temporal y propagación del código de salida.
+- Tareas_pendientes_parte5.txt: estado actualizado a COMPLETADA CON VALIDACIÓN DIFERIDA.
+Validación local confirmada por el usuario: `ImageBlendModeScope.js` 7/7 PASS; código de salida 0. La ejecución se hizo mediante `ImageBlendModeScope.mjs` temporal, posteriormente eliminado.
+Límites y Beta: no se ejecutó navegador real ni una matriz visual de imágenes con alfa/opacas, bordes semitransparentes, colores oscuros y modos claro/oscuro. Esa comprobación queda pendiente para Beta y no bloquea el cierre local según NORMAS_DESAROLLO.md. No se asigna automáticamente la clase a recursos sin metadatos fiables.
+Publicación: los registros y documentación se actualizaron mediante commits secuenciales en la rama de trabajo, debido a que la integración de publicación actualiza un archivo por operación. Verificar HEAD, diffs, padre y rama base tras las publicaciones.
+Siguiente tarea autorizada por secuencia: AUG-067 — discriminar eje horizontal y vertical en gestos del carrusel de cables. No se inició en esta iteración.
+================================================================================
