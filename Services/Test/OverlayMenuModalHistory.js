@@ -82,6 +82,7 @@ test('la publicación conserva búsqueda y sección ajenas a la pila', () => {
 
 test('reemplazar un modal conserva su identidad y callback personalizados', () => {
     const history = createFakeHistory(), closed = [], manager = createOverlayHistoryManager(history);
+    history.setPopStateHandler(state => manager.handlePopState(state));
     manager.register('modal:old', () => closed.push('old'));
     manager.replaceTop('ui-modal:audit-drive-modal', () => closed.push('audit'));
     assert.deepEqual(manager.getStack(), ['ui-modal:audit-drive-modal']);
