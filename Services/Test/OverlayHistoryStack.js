@@ -118,7 +118,7 @@ test('renderRelayInfoModal delega el cierre al gestor compartido', () => {
     assert.ok(start >= 0 && end > start, 'No se encontró renderRelayInfoModal completo');
     const relaySource = uiSource.slice(start, end);
     assert.match(relaySource, /window\.overlayHistory\.close\(overlayId\)/);
-    assert.doesNotMatch(relaySource, /history\.pushState\(\{\s*modalOpen:\s*true\s*\}/);
+    assert.doesNotMatch(uiSource, /history\.pushState\(\{\s*modalOpen:\s*true\s*\}/);
 });
 
 test('cerrar manualmente un padre con hijos retrocede hasta su entrada', () => {
