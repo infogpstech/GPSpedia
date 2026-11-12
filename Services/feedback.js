@@ -2262,7 +2262,7 @@ function handleAddProblem(payload) {
                         "mimeType=" + image.mimeType,
                         "sizeBytes=" + image.sizeBytes,
                         "recoveredAfterPartialFailure=true"
-                    ].join("\\n"));
+                    ].join("\n"));
                 } catch (metadataError) {
                     console.warn("No se pudo actualizar metadata de la imagen PyS recuperada:", metadataError);
                 }
