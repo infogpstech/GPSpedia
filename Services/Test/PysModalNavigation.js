@@ -18,9 +18,9 @@ test('deferred restoration does not reset vertical scroll after asynchronous con
  const deferred={accordion:state.accordion,horizontalScrolls:result.pendingHorizontalScrolls};
  const again=restoreModalViewState(empty,deferred);
  assert.equal(detail.scrollTop,700);assert.equal(again.pendingHorizontalScrolls.length,1);
- assert.match(ui,/pendingAccordion[\\s\\S]*pendingTracks/);
+ assert.match(ui,/pendingAccordion[\s\S]*pendingTracks/);
 });
 test('keeps navigation options when vehicle and PyS modals are opened from one another',()=>{assert.match(ui,/function createPysCard\([\s\S]*?navigationOptions = \{\}/);assert.match(ui,/navOptions: navigationOptions \|\| \{\}/);assert.match(ui,/createPysCard\(relatedProblems\[0\], 'vehicle',[\s\S]*?\}, navOptions\)/);assert.match(ui,/fromOriginModal:\s*\{\s*type:\s*'pys',[\s\S]*?navOptions: navOptions \|\| \{\}/);});
 test('does not push duplicate stack entries when rerendering or editing the same modal',()=>{assert.match(ui,/currentType\s*!==\s*targetType\s*&&\s*origin/);assert.match(ui,/if\(navOptions\._restoreFromStack\)return/);assert.match(ui,/mostrarDetalleModal\(editedItemBuffer, true, navOptions\)/);assert.match(ui,/exitModalEditMode\(saveChanges, vehicleId, skipReopen = false, navOptions = \{\}\)/);});
 test('manual close and browser popstate share one-level context restoration',()=>{assert.match(ui,/function closeModalToPreviousContext_\(\)/);assert.match(ui,/closeModalToPreviousContext_\(\)/);assert.match(ui,/export function restoreModalNavigationContext\(\)/);assert.match(main,/if\s*\(ui\.restoreModalNavigationContext\(\)\)\s*return/);assert.doesNotMatch(main,/const prevContext = navStack\.pop\(\)/);});
-console.log('PysModalNavigation:',passed+'/5 PASS');
+console.log('PysModalNavigation:',passed+'/6 PASS');
