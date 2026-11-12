@@ -37,10 +37,9 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-103 — Consolidar tokens de color y tema entre las páginas
 - Origen: H-AUD-016-002. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Evidencia: style.css:38–69, users.html:12–30 y add_cortes.html:12–26 mantienen sistemas separados; persisten colores fijos en reglas y estilos inline.
-- Problema: las páginas tienen contratos de color independientes y excepciones que dificultan mantener contraste y consistencia.
-- Criterios: definir tokens semánticos comunes; aplicarlos en index/users/add_cortes; documentar excepciones; validar contraste en ambos temas.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Resultado: contrato común de 21 tokens semánticos para ambos temas en index.html, users.html y add_cortes.html. Los alias históricos se conservaron como referencias al contrato compartido y se migraron colores de componentes comunes. Se documentaron excepciones para estados operativos, marcas, imágenes, sombras, overlays y gráficos.
+- Validación local: ThemeTokenConsistency.js compara valores, alias y uso de tokens; comprueba contraste WCAG AA.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Revisión visual de las tres páginas, ambos temas y viewports pendiente en Beta.
 
 ### AUG-104 — Permitir zoom del navegador en add_cortes.html
 - Origen: H-AUD-016-003. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
