@@ -350,3 +350,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Se mantiene la búsqueda directa, el botón de limpieza y la sincronización de focus/blur; no se reintroducen controles ni estilos de filtros rápidos.
 - Services/Test/SearchFilterCleanup.js: 8/8 PASS, incluyendo blur con consulta vacía/activa y modal visible.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-100 — SISTEMA UNIVERSAL DE BOTONES
+- button-system.css: los controles compactos conservan un target táctil mínimo de 40px; el estado de carga admite tanto .btn-loading como aria-busy=true, incluido el indicador y variante warning.
+- Services/Test/ButtonSystemIntegrity.js: nueva suite de contrato para variantes, estados, tema, carga de hojas de estilo, cobertura de botones estáticos y excepciones especializadas.
+- Services/Test/README.md: documenta ejecución y excepciones de controles dinámicos cuya semántica/geometría requiere estilos propios.
+================================================================================
