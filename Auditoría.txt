@@ -721,3 +721,12 @@ Corrección:
 Pruebas: Services/Test/InboxStoredXss.js — 20/20 PASS en runtime V8 adaptado; parsing individual de los cinco componentes: PASS.
 Límites: la suite es un contrato estático de fuentes, no un DOM real. Node CLI literal, ejecución de payloads en navegador y validación visual/funcional quedan pendientes de Beta aislada.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-010-003 / AUG-077 — 2026-11-12
+Estado: RESUELTO EN CÓDIGO; integración externa pendiente de Beta.
+Evidencia: UI transmite bytes separados del texto libre y gestiona errores/abortos; API conserva compatibilidad de cuatro argumentos; FEEDBACK valida MIME, Base64 canónico, tamaño y firma binaria, calcula SHA-256, almacena en `Cortes/Reportes individuales` sin cambiar ACL y vincula ID/URL/nombre/MIME/tamaño/hash a reportId. Inbox presenta URL HTTPS canónica. No se habilita ANYONE_WITH_LINK.
+Controles: mismo reportId/hash reutiliza evidencia; hash distinto no reemplaza; fallo de escritura intenta restaurar metadata/fila y retirar archivo huérfano. Registros históricos sin imagen siguen válidos.
+Validación local: harness Node aislado para firma binaria, tamaño, MIME, SHA-256 y parsing de metadata: 12/12 PASS; parsing V8 de funciones modificadas PASS. Se incorporó suite reproducible de 18 casos para ejecutar en el checkout completo. Beta pendiente: Apps Script/Spreadsheet/Drive aislados y comprobación de acceso real del revisor.
+================================================================================
