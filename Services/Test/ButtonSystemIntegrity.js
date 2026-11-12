@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 /* Contrato local del sistema compartido de botones GPSpedia. */
 export function runButtonSystemIntegrityTests({ css, index, users, cortes, ui }) {
     const results = [];
@@ -62,3 +64,13 @@ export function runButtonSystemIntegrityTests({ css, index, users, cortes, ui })
 
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }
+
+const result = runButtonSystemIntegrityTests({
+    css: fs.readFileSync(new URL("../../button-system.css", import.meta.url), "utf8"),
+    index: fs.readFileSync(new URL("../../index.html", import.meta.url), "utf8"),
+    users: fs.readFileSync(new URL("../../users.html", import.meta.url), "utf8"),
+    cortes: fs.readFileSync(new URL("../../add_cortes.html", import.meta.url), "utf8"),
+    ui: fs.readFileSync(new URL("../../ui.js", import.meta.url), "utf8")
+});
+console.log(JSON.stringify(result, null, 2));
+if (result.status !== "PASS") process.exitCode = 1;
