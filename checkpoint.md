@@ -730,3 +730,12 @@ Siguiente acción: validar ambos escenarios; después revisar persistencia de re
 
 ADENDA DE AJUSTE DE PRUEBA — ITERACIÓN 3G
 En la primera ejecución adaptada de YouTubeUploadCheckpointRecovery se detectó un defecto en el extractor de funciones de la propia prueba: omitía el prefijo async de uploadYouTubeFileResumable_, por lo que el evaluador dinámico no podía analizar await. Se corrigió el extractor para conservar la declaración async. No es un defecto de youtubeUpload.js. Se repite la validación tras esta corrección.
+
+
+ADENDA DE VALIDACIÓN — ITERACIÓN 3G
+YouTubeUploadCheckpointRecovery: 2/2 PASS en runtime V8 adaptado:
+- Reanudación desde un registro pausado: consulta el offset confirmado en el servidor, persiste el offset reconciliado, transfiere el bloque restante, persiste el nuevo offset y obtiene el ID final.
+- Cancelación durante un bloque: aborta la solicitud activa, rechaza la transferencia, conserva el último offset confirmado y no inicia un bloque adicional.
+Se ejecutó además parsing sintáctico de youtubeUpload.js en V8 adaptado, retirando import/export para la evaluación aislada.
+El primer intento de ejecutar el nuevo test reveló un error en el extractor de la prueba (no conservaba async); se corrigió y la ejecución posterior pasó 2/2.
+No equivale a Node CLI en Codespaces ni a YouTube API real. La validación de API externa queda diferida a Beta; las pruebas locales reproducibles de esta iteración aprobaron.
