@@ -540,3 +540,29 @@ Pendiente de la siguiente iteración: integrar el gestor con main.js popstate y 
 Registro: ChangesLogs.txt está en 183,671 bytes, por encima del umbral normativo de 180,000; no se añadió una entrada que aumente el archivo sin preparar primero su rotación. La implementación y evidencia quedan trazadas en este checkpoint y en el backlog. La rotación del registro acumulativo debe resolverse antes de la siguiente adición a ChangesLogs.txt.
 No se inició AUG-069. No se modificó la rama base.
 ================================================================================
+
+
+================================================================================
+AUG-068 — ITERACIÓN 2 — INTEGRACIÓN INICIAL CON main.js — 2026-11-11
+Estado: EN PROGRESO. Se integró la pila centralizada con los overlays .info-modal observables; el flujo especial de youtubeUpload.js y la validación del observador DOM quedan para la siguiente iteración.
+Rama: GPSpedia2.2.5_work. HEAD de partida: d51b69b674cee21c78acc27be0290b551a6994d0. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Cambios:
+- main.js importa createOverlayHistoryManager y overlayHistoryStateKey desde overlayHistory.js.
+- Se instaló un MutationObserver que detecta apertura, ocultamiento y retirada de .info-modal; crea entradas para overlays visibles y sincroniza los cierres manuales con el historial.
+- Cuando un overlay nuevo sustituye al overlay superior retirado en el mismo ciclo de mutaciones, replaceTop reutiliza la entrada para evitar agregar un nivel adicional de Atrás. Se limita el reemplazo al elemento que realmente está en la cima de la pila.
+- El listener popstate procesa primero los estados que contienen __gpOverlayStack y retorna antes de cerrar #modalDetalle o restaurar el catálogo; así se conserva el modal padre cuando el overlay hijo es el objetivo del retroceso.
+- youtube-upload-modal se excluyó deliberadamente de este observador genérico. Su cierre exige conservar la confirmación de pausa y el aborto de XHR; se integrará mediante su propio callback en la siguiente iteración.
+Correcciones durante la integración:
+- Se corrigió la detección de elementos ya registrados: la colección se compara contra los valores del Map, evitando registrar el mismo modal más de una vez por mutaciones posteriores.
+- Se restringió replaceTop a cuando el overlay retirado era realmente el último elemento de la pila.
+Validación local:
+- Parsing/sintaxis de main.js mediante compilación V8 tras retirar únicamente las declaraciones import: PASS.
+- Gestor overlayHistory.js extraído de la fuente vigente y ejecutado con historial simulado: 10/10 PASS (preservación de estado, cierre superior, LIFO, cierre manual, replaceTop, cierre de padre, errores, duplicados, ID inexistente y clear).
+- No se ejecutó Node CLI ni una integración real con DOM/navegador en esta iteración.
+Riesgos y pendientes:
+- El MutationObserver y el reemplazo de overlays deben recibir pruebas de integración DOM simulada; no se debe declarar validada su ejecución real por el mero parsing de main.js.
+- Integrar youtubeUpload.js con el gestor sin duplicar confirmaciones, conservar pausa/aborto de XHR y manejar las rutas de éxito que eliminan el modal.
+- Revisar el ciclo de vida de overlays creados desde modalDetalle y los botones de cerrar, backdrop, submit/cancelación.
+- No añadir ChangesLogs.txt todavía: continúa por encima del umbral normativo de 180,000 caracteres y requiere rotación sin pérdida con manifiesto antes de una nueva entrada.
+No se inició AUG-069. La rama base permanece intacta.
+================================================================================
