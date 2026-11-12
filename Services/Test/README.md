@@ -762,3 +762,14 @@ cp Services/Test/YouTubeUploadCompletedRecordRecovery.js Services/Test/YouTubeUp
 ```
 
 Comprueba que un registro con ID final válido y todos los bytes confirmados puede continuar al envío/recuperación de aprobación aunque el objeto File no esté disponible. Rechaza registros incompletos, sin ID o con tamaño inválido.
+
+
+## AUG-068 — Persistencia de estados y errores de IndexedDB en YouTube
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/YouTubeUploadRecordPersistence.js Services/Test/YouTubeUploadRecordPersistence.mjs && node Services/Test/YouTubeUploadRecordPersistence.mjs; RESULT=$?; rm -f Services/Test/YouTubeUploadRecordPersistence.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite verifica el ciclo de lectura/escritura/eliminación de los estados `new`, `uploading`, `paused`, `interrupted` y `uploaded`; el aislamiento por usuario, tipo y referencia; el rechazo de registros duplicados; y los errores/abortos de transacción, incluso cuando una lectura ya recibió su resultado pero la transacción se aborta antes de completarse.
