@@ -1735,3 +1735,17 @@ Validación local:
 Archivos: add_cortes.html, lightbox.js, Services/Test/BrowserZoomAccessibility.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-105 — Completar el layout responsive de formularios y gestión de usuarios. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-105 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de partida verificado: 6d3952e6345c9aba405efc5fcb9c7c30e67467ca.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- add_cortes.html: reflujo responsive hasta 760 px; cuadrícula de una columna, elementos encogibles, tarjetas e imágenes adaptables, grupos de carga envolventes, mensajes/acordeones y botones reorganizados. A 420 px los controles usan texto de 16 px.
+- users.html: tabla semántica al ancho disponible, columnas proporcionales, texto envolvente y acciones apiladas; modales limitados al viewport con scroll interno y controles táctiles de al menos 44 px; soporte para orientación horizontal de poca altura.
+- No se modificaron scripts de flujo, contratos API, autenticación, roles, permisos ni datos.
+Validación local: ResponsiveFormsUsers.js 16/16 PASS en harness V8; parsing de módulos JavaScript y balance CSS PASS. Node CLI y navegador real no ejecutados; inspección visual 320–1440 px, orientación, foco, teclado virtual, zoom y overflow global quedan para Beta mediante lista_beta.txt.
+Archivos: users.html, add_cortes.html, Services/Test/ResponsiveFormsUsers.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente: AUG-106 — Corregir la condición de colisión entre rangos de generaciones. No iniciar hasta la siguiente interacción.
+================================================================================
