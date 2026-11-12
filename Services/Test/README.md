@@ -1145,3 +1145,19 @@ node --experimental-default-type=module Services/Test/CableCarouselSwipeAxis.js
 DescriptiveContentRendering.js comprueba el rótulo del carrusel como texto plano, sanitización del contenido enriquecido en carrusel y vista individual, detalle PyS, ficha de impresión, Inbox y ausencia de sinks HTML en offline.js. CableCarouselSwipeAxis.js cubre los gestos del carrusel. La allow-list de etiquetas, atributos, estilos y URLs se valida adicionalmente con las suites de rich-text existentes.
 
 La comprobación con navegador real, payloads de catálogo en ambos modos de presentación, impresión y funcionamiento offline se reserva para Beta. No requiere migrar datos ni modificar servicios o datos productivos.
+
+## AUG-097 — Modo estricto/avanzado de texto enriquecido
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/RichTextModeConfiguration.js
+node --experimental-default-type=module Services/Test/ServiceWorkerCache.js
+node --experimental-default-type=module Services/Test/RichTextContentSecurity.js
+```
+
+RichTextModeConfiguration.js valida el modo estricto por defecto, valores ausentes/inválidos, persistencia local, autorización del setter para Desarrollador, controles reales de ambas barras, políticas CSS, allow-lists y compatibilidad con texto plano/saltos. ServiceWorkerCache.js verifica la actualización del App Shell a v18. RichTextContentSecurity.js es regresión relacionada; mantiene una discrepancia conocida en la igualdad literal de los sanitizadores WRITE y ADMIN, independiente del modo local.
+
+La preferencia `gpsepedia_rich_text_mode` se guarda por navegador. Solo el panel de Desarrollador expone el cambio y el setter exige ese rol; el valor local no se considera una autoridad de seguridad. En ambos modos el sanitizador mantiene su allow-list y bloquea contenido activo. El backend conserva su sanitización autoritativa segura, independiente de la preferencia de presentación del cliente.
+
+La verificación en Beta debe probar modo estricto y avanzado con datos de catálogo aislados, registros históricos de texto plano, cambio de modo con barras abiertas, varias pestañas y los formularios principales. No se despliega ni se modifica contenido productivo.
