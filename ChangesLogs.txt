@@ -84,3 +84,11 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Validación de deployment FEEDBACK, sesión real, registros en Feedbacks/Drive/ActividadUsuario y flujo de navegador quedan diferidos a Beta sobre entorno aislado.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+================================================================================
+AUG-076 — Stored XSS en Inbox y formularios de corte
+- ui.js: renderInboxList y renderInboxDetail construyen contenido visible con nodos DOM/textContent; los únicos datos enriquecidos que se asignan a innerHTML son item.content e item.reply después de sanitizeHtmlContent.
+- ui.js: report/suggest forms y report success modal usan HTML estático; los datos de catálogo, IDs y dropdownOptions se asignan mediante textContent/value/option APIs. Se restringen los hosts/protocolos de enlaces externos y se añade rel seguro.
+- Services/Test/InboxStoredXss.js: nueva suite de contratos de seguridad con matriz de payloads y parsing de cinco componentes.
+- Services/Test/README.md, Tareas_pendientes_parte5.txt, Auditoría.txt, checkpoint.md y lista_beta.txt documentan el cierre y las validaciones pendientes.
+================================================================================
