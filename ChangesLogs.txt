@@ -30,3 +30,13 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Services/Test/OverlayMenuModalHistory.js: nueva cobertura de 12 escenarios; Services/Test/README.md documenta ejecución.
 - Validación pendiente: ejecución Node CLI de la nueva suite y revisión final del diff. Navegador/DOM real, gestos nativos y APIs externas quedan para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-071 — CIERRE Y VALIDACIÓN LOCAL ADAPTADA
+- Se cerró la brecha de entradas residuales del menú y los modales. Los cierres directos que ocultan el elemento antes de popstate ahora reconcilian la entrada superior sin consumir el padre.
+- Las transiciones del menú a Inbox, Dashboard, Changelog, DevTools y secciones esperan el cierre del menú antes de abrir el destino.
+- Validación adaptada: OverlayMenuModalHistory 13/13 PASS; OverlayHistoryStack 19/19 PASS; ReplacedImagesLightboxHistory 6/6 PASS. Parsing V8 de overlayHistory.js/main.js y de los bloques ui.js modificados: PASS.
+- Node CLI literal no ejecutado en este entorno. Navegador/DOM real, backdrop, gestos y dispositivos quedan diferidos a Beta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
