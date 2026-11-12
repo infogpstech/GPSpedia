@@ -147,7 +147,7 @@ test('index.html declara icono y metadatos Apple sin sustituir el manifest está
 
 test('las instrucciones manuales incluyen iPhone e iPad y la acción Añadir a pantalla de inicio', () => {
     assert.match(htmlSource, /Instala GPSpedia en tu iPhone o iPad/);
-    assert.match(htmlSource, /Añadir a pantalla de inicio/);
+    assert.match(htmlSource, /Añadir a la pantalla de inicio/);
 });
 
 test('el flujo estándar beforeinstallprompt y appinstalled permanece activo', () => {
