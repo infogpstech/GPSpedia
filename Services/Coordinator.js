@@ -79,7 +79,7 @@ function coordinatorPolicy_(service, operation) {
         FEEDBACK: {
             recordLike: { read: feedbackRead, write: ["CORTES", "FEEDBACK", "ACTIVITY"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
-            addProblem: { read: feedbackRead, write: [...feedbackWrite, "DRIVE"] },
+            addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
             addSolution: { read: feedbackRead, write: feedbackWrite },
             addPrevention: { read: feedbackRead, write: feedbackWrite },
             addVehicleToProblem: { read: [...feedbackRead, "CORTES"], write: feedbackWrite },
