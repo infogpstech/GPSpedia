@@ -883,7 +883,7 @@ function sanitizeSupplementaryRichText_(value) {
 
 function createSupplementaryInfoError_(code,message){const e=new Error(message);e.code=code;return e;}
 function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
-function hasSupplementaryRichTextContent_(value){const visible=String(value||"").replace(/<br\\s*\\/?>/gi," ").replace(/<img\\b[^>]*>/gi," imagen ").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim();return visible!=="";}
+function hasSupplementaryRichTextContent_(value){const visible=String(value||"").replace(/<br\s*\/?>/gi," ").replace(/<img\b[^>]*>/gi," imagen ").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim();return visible!=="";}
 function buildSupplementaryInfoPlan_(payload,current){
  payload=payload&&typeof payload==="object"?Object.assign({},payload):{};current=current&&typeof current==="object"?current:{};
  ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].forEach(k=>{const v=payload[k];if(v!==undefined&&v!==null&&typeof v!=="string")throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" debe contener texto válido.");});
