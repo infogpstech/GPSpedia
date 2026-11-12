@@ -2308,6 +2308,13 @@ function getTutorialSheet_(createIfMissing) {
         throw new Error("El esquema A:G de la hoja Tutorial no coincide; no se modificaron registros.");
     }
     if (!headers[7]) {
+        const lastRow = sheet.getLastRow();
+        const existingExtensionData = lastRow > 1
+            ? sheet.getRange(2, 8, lastRow - 1, 1).getDisplayValues().flat()
+            : [];
+        if (existingExtensionData.some(value => String(value || "").trim())) {
+            throw new Error("La columna H contiene datos históricos sin encabezado; no se reinterpretaron como Colaborador.");
+        }
         sheet.getRange(1, 8).setValue("Colaborador");
         SpreadsheetApp.flush();
     } else if (headers[7] !== "Colaborador") {
