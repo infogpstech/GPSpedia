@@ -451,3 +451,21 @@ Rama: GPSpedia2.2.5_work. HEAD de partida: d1755ce61fbc8eef30d2a792f3384422fc9fa
 - Nueva prueba Services/Test/ImageBlendModeScope.js: contrato estático para verificar el selector opt-in y la ausencia de reglas globales. La misma lógica se ejecutó sobre el CSS vigente en runtime V8: 7/7 PASS. Node CLI literal pendiente.
 Siguiente acción: ejecutar la prueba con Node en Codespace, revisar el diff y corregir cualquier fallo reproducible. No iniciar AUG-067.
 ================================================================================
+
+
+
+================================================================================
+AUG-066 — CHECKPOINT — 2026-11-11 — COMANDO NODE CLI NO COMPATIBLE CON EL ENTORNO
+Estado: EN PROGRESO. La prueba Node CLI no llegó a ejecutarse; el rechazo corresponde a una opción de Node no reconocida.
+Rama: GPSpedia2.2.5_work. HEAD de referencia: 3ee5d75fbd49f765a7a93d07e1102fdb9fe353e1. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Evidencia recibida desde Codespaces:
+- Se sincronizó correctamente la rama GPSpedia2.2.5_work mediante `git pull --ff-only origin GPSpedia2.2.5_work`.
+- Al ejecutar `node --experimental-default-type=module Services/Test/ImageBlendModeScope.js`, Node respondió: `node: bad option: --experimental-default-type=module`.
+- El proceso rechazó el argumento antes de cargar el archivo; por tanto, ImageBlendModeScope.js no se ejecutó y no existe resultado PASS/FAIL de la prueba CLI.
+- La validación V8 adaptada 7/7 PASS registrada en el checkpoint anterior se conserva como evidencia independiente; no sustituye la ejecución Node CLI solicitada.
+Siguiente acción:
+1. Consultar `node --version` y revisar el campo `type` de package.json para identificar el modo de módulos disponible.
+2. Determinar un comando compatible con la versión instalada y ejecutar la prueba sin modificar su contrato.
+3. Si el entorno no admite el modo requerido, usar una versión compatible de Node en Codespaces y repetir la prueba.
+AUG-066 permanece EN PROGRESO. No iniciar AUG-067.
+================================================================================
