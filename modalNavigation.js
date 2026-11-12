@@ -22,3 +22,20 @@ export function restoreModalViewState(modal,snapshot) {
  }
  return{restored:true,accordionRestored,pendingHorizontalScrolls};
 }
+
+export function shouldRecordModalTransition(targetType,currentType,modalWasVisible,navOptions={}) {
+ const origin=navOptions.fromOriginModal;
+ return !navOptions._restoreFromStack&&Boolean(modalWasVisible&&currentType&&currentType!==targetType&&origin&&
+  (origin.type==="vehicle"||origin.type==="pys")&&origin.item);
+}
+export function pushModalNavigationContext(stack,origin,viewState) {
+ if(!Array.isArray(stack)||!origin||!origin.item||!["vehicle","pys"].includes(origin.type))return false;
+ stack.push({type:origin.type,item:origin.item,navOptions:origin.navOptions||{},viewState:viewState||null});
+ return true;
+}
+export function popModalNavigationContext(stack) {
+ if(!Array.isArray(stack)||!stack.length)return null;
+ const context=stack[stack.length-1];
+ if(!context||!context.item||!["vehicle","pys"].includes(context.type))return null;
+ return stack.pop();
+}
