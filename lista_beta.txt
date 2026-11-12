@@ -278,3 +278,43 @@ AUG-041 — UTILITIES — VALIDACIÓN DIFERIDA A BETA
 - Probar origen vacío, destino incompatible/protegido, permisos copyTo/rename/delete y limpieza del backup.
 - No llamar endpoints operativos ni usar hojas, Drive o datos productivos.
 ================================================================================
+
+
+================================================================================
+PREPARACIÓN OBLIGATORIA DEL REPOSITORIO Y PRUEBAS NODE CLI — AUG-069 / AUG-070
+
+Ejecutar desde la raíz del repositorio. Esta secuencia debe completarse antes de cualquier prueba Beta. Si hay cambios locales (incluidos archivos sin seguimiento), detenerse y guardarlos/confirmarlos antes de continuar; no descartarlos para sincronizar.
+
+1. Comprobar estado y sincronizar exclusivamente la rama de trabajo:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guarda o confirma esos cambios antes de sincronizar."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si `git switch` o `git pull --ff-only` falla, detenerse y revisar el estado; no usar reset, clean ni force-push para resolverlo. Confirmar que el HEAD corresponde a la última versión publicada de `GPSpedia2.2.5_work` antes de seguir.
+
+2. Ejecutar las suites Node CLI desde la raíz. Requiere Node.js instalado. Los archivos temporales `.mjs` se eliminan tanto si la prueba pasa como si falla:
+
+```bash
+for name in NavigationBackHistory OverlayHistoryStack ReplacedImagesLightboxHistory; do
+  cp "Services/Test/${name}.js" "Services/Test/${name}.mjs" || exit 1
+  if node "Services/Test/${name}.mjs"; then
+    rm -f "Services/Test/${name}.mjs"
+  else
+    result=$?
+    rm -f "Services/Test/${name}.mjs"
+    echo "FALLO: ${name} (código ${result})"
+    exit "${result}"
+  fi
+done
+```
+
+Cobertura esperada según las suites actuales: NavigationBackHistory (21 escenarios), OverlayHistoryStack (19 escenarios) y ReplacedImagesLightboxHistory (6 escenarios). Registrar el resultado real de cada ejecución; no asumir PASS por el número esperado ni por las ejecuciones V8 adaptadas anteriores. Si una suite falla, conservar la salida completa y no marcar Node CLI como aprobado.
+
+3. Validaciones Beta en navegador/dispositivo real (pendientes; no sustituidas por Node CLI): probar Atrás/Adelante del navegador, botón físico Atrás y gestos nativos; comprobar cierre secuencial de overlays, stacking contexts y conservación de capas inferiores; repetir navegación multinivel, deep links y búsqueda; verificar lightbox sobre ficha y que el reproductor/iframe solo se detenga al cerrar la ficha cuando corresponda. Registrar navegador, dispositivo, versión, pasos y resultado, incluidos fallos reproducibles. No afirmar que estas validaciones se ejecutaron hasta realizarlas en Beta.
+================================================================================
