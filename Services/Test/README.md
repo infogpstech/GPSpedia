@@ -849,3 +849,14 @@ cp Services/Test/ConnectionStatusAccessibility.js Services/Test/ConnectionStatus
 ```
 
 La suite contiene 8 escenarios para role=status/aria-live, texto accesible online/offline, precisión de navigator.onLine, preservación del punto de 3px y prefers-reduced-motion. Lector de pantalla y cambios reales de conectividad se validan en Beta.
+
+
+## AUG-074 — Detección e instalación PWA en iOS/iPadOS
+
+Ejecutar desde la raíz:
+
+```bash
+cp Services/Test/PWAInstallDetection.js Services/Test/PWAInstallDetection.mjs && node Services/Test/PWAInstallDetection.mjs; RESULT=$?; rm -f Services/Test/PWAInstallDetection.mjs; printf 'Resultado Node: %s\\n' "$RESULT"; test "$RESULT" -eq 0
+```
+
+La suite contiene 20 escenarios para iPhone/iPad, iPadOS con user-agent móvil y de escritorio, control negativo Mac, estado standalone, visibilidad de instrucciones, metadatos Apple, iconos locales y compatibilidad con beforeinstallprompt/appinstalled. La ejecución Node CLI y las pruebas en dispositivos reales se registran por separado; no se consideran aprobadas por una simulación V8.
