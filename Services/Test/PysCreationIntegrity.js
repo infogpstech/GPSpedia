@@ -100,7 +100,7 @@ function buildHarness(feedback,ui,options={}){
         extractDriveFileIds:value=>{const m=String(value||"").match(/\/d\/([A-Za-z0-9_-]{10,110})/);return m?[m[1]]:[];},
         logUserActivity:()=>{}
     };
-    const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleAddTutorial(payload) {");
+    const parser=extract(feedback,"function parseModelosAsociados(rawVal) {","function handleClearActivityLogs(payload) {");
     vm.runInNewContext(parser+"\nthis.api={add:handleAddProblem,read:handleGetPysData,addSolution:handleAddSolution,addPrevention:handleAddPrevention,normalize:normalizePysField_,youtube:getPysYouTubeVideoId_};",context);
     const validPayload=(opId=OP_A,overrides={})=>Object.assign({
         opId,titulo:"Falla eléctrica",descripcion:"Detalle del problema",sinSolucion:true,solucion:"",
