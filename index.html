@@ -454,6 +454,17 @@
                         </div>
 
                         <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-text-height"></i> Formato de texto enriquecido</strong>
+                            <p>Define qué formatos pueden utilizar los campos descriptivos. La preferencia se guarda únicamente en este navegador; el modo estricto es el predeterminado.</p>
+                            <label for="rich-text-mode-select">Modo de formato</label>
+                            <select id="rich-text-mode-select" class="dev-input">
+                                <option value="strict">Estricto / Liviano (recomendado)</option>
+                                <option value="advanced">Avanzado HTML/CSS</option>
+                            </select>
+                            <p id="rich-text-mode-status" class="dev-empty-state" role="status" aria-live="polite">Modo estricto activo (predeterminado).</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-database"></i> Caché local del cliente</strong>
                             <p class="dev-warning-copy">Esta acción elimina la caché local de IndexedDB/Storage y recarga la aplicación.</p>
                             <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
