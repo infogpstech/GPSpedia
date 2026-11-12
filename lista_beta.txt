@@ -1002,3 +1002,31 @@ Pruebas exclusivamente en proyectos Apps Script y Spreadsheet aislados:
 
 No ejecutar migraciones masivas, no usar datos productivos y no desplegar a producción.
 ================================================================================
+
+================================================================================
+AUG-096 — VALIDACIÓN DE RUTAS DE RENDERIZADO DESCRIPTIVO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador/dispositivo y catálogo de prueba, sin desplegar a producción:
+1. Cargar un vehículo con varios cables y etiquetas que contengan texto como `<img src=x onerror=alert(1)>`; confirmar que el rótulo se muestra literalmente y no crea elementos ni ejecuta código.
+2. Probar contenido enriquecido autorizado (negrita, listas, enlaces seguros, saltos y estilos permitidos) en cada diapositiva; confirmar que conserva el formato.
+3. Repetir con un solo cable y con contenido descriptivo sin carrusel; comprobar que scripts, iframe, SVG, eventos, URL javascript/data y CSS no permitido se eliminan.
+4. Comprobar flechas, gestos táctiles y cambio de diapositiva después de la separación entre rótulo y contenido.
+5. Abrir detalle PyS e Inbox con contenido enriquecido y payloads hostiles controlados; confirmar renderizado seguro.
+6. Generar la ficha de impresión/exportación y revisar descripción de cortes, alimentación, apertura y nota técnica; confirmar formato autorizado y ausencia de ejecución de contenido activo.
+7. Abrir los datos guardados en modo offline y comprobar que no se crean sinks HTML ni se altera el contenido almacenado.
+8. Repetir en modo claro/oscuro y viewport móvil; revisar saltos de línea, desbordamiento y legibilidad.
+
+No usar datos productivos, no modificar registros históricos y no desplegar a producción.
+================================================================================
