@@ -72,6 +72,7 @@ function installCatalogStatusBanner_() {
         message.id = 'catalog-status-message';
         const retryButton = document.createElement('button');
         retryButton.id = 'catalog-status-retry';
+        retryButton.className = 'btn btn-secondary btn-compact';
         retryButton.type = 'button';
         retryButton.textContent = 'Reintentar';
         retryButton.hidden = true;
