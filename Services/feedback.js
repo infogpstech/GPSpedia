@@ -2122,183 +2122,39 @@ function markPysImageForRecovery_(file, problemId, imageFileId, reason) {
     catch (error) { console.error("No se pudo registrar metadata de recuperación para la imagen PyS:", error); }
 }
 
-function handleGetPysData() {
-    const sheet = getSafeSheet("pys");
-    if (!sheet) return { status: "success", data: [] };
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return { status: "success", data: [] };
 
-    const lastCol = Math.max(10, sheet.getLastColumn());
-    const data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
-    const result = data.map(row => ({
-        id_problem: row[0],
-        Problema: row[1],
-        Descripcion: row[2],
-        Se_soluciono: row[3],
-        Solucion: row[4],
-        Prevenir: row[5],
-        Imagen: normalizePysImageReference_(row[6]),
-        Video: row[7],
-        Colaborador: row[8] || "",
-        modelosAsociados: parseModelosAsociados(row[9] || "")
-    }));
-    return { status: "success", data: result };
+const PYS_HEADERS=Object.freeze(["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"]);
+const PYS_OPERATIONS_HEADERS=Object.freeze(["opId","payloadHash","problemId","status","imageFileId","imageUrl","createdAt","updatedAt"]);
+const PYS_OPERATION_STATES=Object.freeze(["PENDING","UPLOAD_PENDING","LINKED","RECOVERY_REQUIRED"]);
+function validatePysHeaders_(sheet,expected,label){if(sheet.getLastColumn()>expected.length)throw new Error("El esquema de "+label+" contiene columnas adicionales; no se modificó la hoja.");const a=sheet.getRange(1,1,1,expected.length).getDisplayValues()[0];if(expected.some((v,i)=>String(a[i]==null?"":a[i])!==v))throw new Error("Los encabezados/orden de "+label+" no coinciden con el esquema autorizado; no se modificó la hoja.");}
+function validatePysRecords_(sheet){const last=sheet.getLastRow(),seen=Object.create(null);let max=0;if(last<2)return{maxSuffix:0,ids:seen};sheet.getRange(2,1,last-1,10).getValues().forEach((r,i)=>{if(!r.some(v=>v!==""&&v!==null&&v!==undefined))return;const id=String(r[0]==null?"":r[0]).trim(),m=id.match(/^isue-(\d+)$/i);if(!m)throw new Error("La fila "+(i+2)+" de pys contiene un ID vacío o malformado; no se creó el problema.");const n=Number(m[1]),k=String(n);if(!Number.isSafeInteger(n)||n<1)throw new Error("La fila "+(i+2)+" de pys contiene un sufijo de ID inválido.");if(seen[k])throw new Error("La hoja pys contiene IDs duplicados; no se creó el problema.");seen[k]=true;max=Math.max(max,n);});return{maxSuffix:max,ids:seen};}
+function getPysSheet_(createIfMissing){let sheet=getSafeSheet("pys");if(!sheet){if(!createIfMissing)return null;sheet=getSpreadsheet().insertSheet("pys");}if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){if(!createIfMissing)return sheet;sheet.getRange(1,1,1,10).setValues([PYS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_HEADERS,"pys");validatePysRecords_(sheet);return sheet;}
+function readPysOperations_(sheet){const last=sheet.getLastRow();if(last<2)return[];const so=Object.create(null),si=Object.create(null);return sheet.getRange(2,1,last-1,8).getValues().map((r,i)=>{if(!r.some(v=>v!==""&&v!==null&&v!==undefined))return null;const opId=String(r[0]||"").trim(),hash=String(r[1]||"").trim().toLowerCase(),problemId=String(r[2]||"").trim(),status=String(r[3]||"").trim();if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId)||!/^[a-f0-9]{64}$/.test(hash)||!/^isue-\d+$/i.test(problemId)||!PYS_OPERATION_STATES.includes(status))throw new Error("La hoja PysOperations contiene una fila incompatible; no se modificó.");if(so[opId]||si[problemId.toLowerCase()])throw new Error("La hoja PysOperations contiene identificadores duplicados; no se modificó.");so[opId]=true;si[problemId.toLowerCase()]=true;return{rowNumber:i+2,opId,payloadHash:hash,problemId,status,imageFileId:String(r[4]||""),imageUrl:String(r[5]||""),createdAt:String(r[6]||""),updatedAt:String(r[7]||"")};}).filter(Boolean);}
+function getPysOperationsSheet_(){let sheet=getSafeSheet("PysOperations");if(!sheet)sheet=getSpreadsheet().insertSheet("PysOperations");if(sheet.getLastRow()===0&&sheet.getLastColumn()===0){sheet.getRange(1,1,1,8).setValues([PYS_OPERATIONS_HEADERS.slice()]);SpreadsheetApp.flush();}validatePysHeaders_(sheet,PYS_OPERATIONS_HEADERS,"PysOperations");readPysOperations_(sheet);return sheet;}
+function writePysOperation_(sheet,rowNumber,r){const values=[[r.opId,r.payloadHash,r.problemId,r.status,r.imageFileId||"",r.imageUrl||"",r.createdAt,r.updatedAt]],target=rowNumber||(sheet.getLastRow()+1);sheet.getRange(target,1,1,8).setValues(values);SpreadsheetApp.flush();const stored=sheet.getRange(target,1,1,8).getValues()[0];if(values[0].some((v,i)=>String(v==null?"":v)!==String(stored[i]==null?"":stored[i])))throw new Error("No se pudo confirmar el registro de idempotencia PyS.");return Object.assign({},r,{rowNumber:target});}
+function findPysRowsById_(sheet,id){const last=sheet.getLastRow();if(last<2)return[];const target=String(id||"").trim().toLowerCase();return sheet.getRange(2,1,last-1,10).getValues().map((row,i)=>({rowNumber:i+2,row})).filter(x=>String(x.row[0]||"").trim().toLowerCase()===target);}
+function getPysNextId_(sheet,ops){let max=validatePysRecords_(sheet).maxSuffix;ops.forEach(o=>{const m=o.problemId.match(/^isue-(\d+)$/i),n=m?Number(m[1]):NaN;if(!Number.isSafeInteger(n)||n<1)throw new Error("La hoja PysOperations contiene un problemId inválido.");max=Math.max(max,n);});if(max>=Number.MAX_SAFE_INTEGER)throw new Error("Se agotó la secuencia segura de identificadores PyS.");return"isue-"+String(max+1).padStart(3,"0");}
+function getPysSha256_(v){return Array.from(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,v)).map(b=>(b&255).toString(16).padStart(2,"0")).join("");}
+function buildPysPayloadHash_(p,image,models){return getPysSha256_(JSON.stringify({titulo:p.titulo,descripcion:p.descripcion,sinSolucion:Boolean(p.sinSolucion),solucion:p.solucion,prevenir:p.prevenir,userId:String(p.userId).trim(),userName:String(p.userName).trim(),alcance:p.alcance==="especifico"?"especifico":"general",modelosAsociados:models,imageMimeType:image.mimeType,imageSha256:getPysSha256_(image.bytes)}));}
+function buildPysExpectedRow_(id,p,url,models){return[id,p.titulo,p.descripcion,p.sinSolucion?"":"x",p.sinSolucion?"":p.solucion,p.prevenir,url,"",p.userName,models.length?JSON.stringify(models):""];}
+function pysRowMatchesPayload_(row,expected){return expected.every((v,i)=>String(row[i]==null?"":row[i])===String(v));}
+function verifyPendingPysImageFile_(r,image,folder){const file=DriveApp.getFileById(r.imageFileId);if(!file||(typeof file.isTrashed==="function"&&file.isTrashed()===true)||String(file.getMimeType())!==image.mimeType||Number(file.getSize())!==image.sizeBytes||r.imageUrl!=="https://drive.google.com/file/d/"+r.imageFileId+"/view")throw new Error("La imagen pendiente de la operación PyS no coincide con el contenido recibido; requiere revisión.");const d=String(file.getDescription()||"");if(!d.includes("problemId="+r.problemId)||!d.includes("fileId="+r.imageFileId))throw new Error("Los metadatos de la imagen pendiente PyS no permiten confirmar su asociación.");const parents=file.getParents();let direct=false;while(parents.hasNext())if(String(parents.next().getId())===String(folder.getId()))direct=true;if(!direct)throw new Error("La imagen pendiente no pertenece a la carpeta PyS autorizada.");assertPysImageFolderPermissions_(file,folder);return file;}
+function handleGetPysData(){const sheet=getPysSheet_(false);if(!sheet||sheet.getLastRow()<2)return{status:"success",data:[]};const rows=sheet.getRange(2,1,sheet.getLastRow()-1,10).getValues();return{status:"success",data:rows.filter(r=>r.some(v=>v!==""&&v!==null&&v!==undefined)).map(r=>({id_problem:r[0],Problema:r[1],Descripcion:r[2],Se_soluciono:r[3],Solucion:r[4],Prevenir:r[5],Imagen:normalizePysImageReference_(r[6]),Video:r[7],Colaborador:r[8]||"",modelosAsociados:parseModelosAsociados(r[9]||"")}))};}
+function handleAddProblem(source) {
+ source=source||{};const opId=String(source.opId||"").trim();if(!/^[A-Za-z0-9_-]{20,80}$/.test(opId))throw new Error("El identificador de operación PyS es obligatorio y debe ser válido.");const titulo=String(source.titulo||"").trim(),descripcion=String(source.descripcion||"").trim(),solucion=String(source.solucion||"").trim(),prevenir=String(source.prevenir||"").trim(),userId=String(source.userId||"").trim(),userName=String(source.userName||"").trim();if(!titulo||!descripcion)throw new Error("Título y descripción son obligatorios.");if(titulo.length>30||descripcion.length>700)throw new Error("Título o descripción superan la longitud permitida.");if(!source.sinSolucion&&!solucion)throw new Error("Debe proporcionar una solución si no marca 'Sin solución'.");if(solucion.length>700)throw new Error("La solución no puede superar 700 caracteres.");if(prevenir.length>700)throw new Error("La prevención no puede superar 700 caracteres.");if(!userId||!userName)throw new Error("La sesión verificada no proporcionó un colaborador válido.");if(String(source.videoUrl||"").trim())throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");const image=validatePysImageDataUrl_(source.imgBase64),models=source.alcance==="especifico"&&Array.isArray(source.modelosAsociados)?Array.from(new Set(source.modelosAsociados.map(String).map(v=>v.trim()).filter(Boolean))):[];const p={titulo,descripcion,sinSolucion:Boolean(source.sinSolucion),solucion,prevenir,userId,userName,alcance:source.alcance,modelosAsociados:models},hash=buildPysPayloadHash_(p,image,models);const lock=LockService.getScriptLock();lock.waitLock(15000);let sheet=null,opsSheet=null,op=null,file=null,url="",fileId="",problemId="";
+try{sheet=getPysSheet_(true);validatePysRecords_(sheet);opsSheet=getPysOperationsSheet_();const ops=readPysOperations_(opsSheet);op=ops.find(x=>x.opId===opId)||null;if(op){if(op.payloadHash!==hash)throw new Error("El identificador de operación ya pertenece a otro contenido PyS; no se creó otro problema.");if(op.status==="RECOVERY_REQUIRED")throw new Error("La operación PyS requiere recuperación manual; no se creó otro problema.");problemId=op.problemId;const existing=findPysRowsById_(sheet,problemId);if(existing.length>1)throw new Error("El ID del problema aparece más de una vez; se detuvo la recuperación.");if(existing.length===1){const storedUrl=normalizePysImageReference_(existing[0].row[6]),expected=buildPysExpectedRow_(problemId,p,storedUrl,models);if(!storedUrl||!pysRowMatchesPayload_(existing[0].row,expected))throw new Error("El registro PyS existente no coincide con la operación; requiere revisión.");if(op.status!=="LINKED")op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageUrl:storedUrl,updatedAt:new Date().toISOString()}));return{status:"success",message:"Problema registrado correctamente.",problemId,recovered:true};}if(op.status==="LINKED")throw new Error("La operación PyS figura vinculada, pero no existe su registro; requiere revisión.");fileId=op.imageFileId;url=op.imageUrl;}else{problemId=getPysNextId_(sheet,ops);op=writePysOperation_(opsSheet,0,{opId,payloadHash:hash,problemId,status:"PENDING",imageFileId:"",imageUrl:"",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});}
+const folder=getPysImagesFolder_().folder;if(fileId){if(op.status!=="UPLOAD_PENDING")throw new Error("La operación PyS contiene una referencia de imagen inesperada; requiere revisión.");try{file=verifyPendingPysImageFile_(op,image,folder);}catch(e){try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"RECOVERY_REQUIRED",updatedAt:new Date().toISOString()}));}catch(ledgerError){}throw e;}}else{if(op.status!=="PENDING")throw new Error("El estado de la operación PyS no permite reintentar automáticamente.");file=folder.createFile(Utilities.newBlob(image.bytes,image.mimeType,problemId+"_"+Date.now()+"."+image.extension));if(!file)throw new Error("Drive no confirmó la creación de la imagen.");fileId=String(file.getId()||"").trim();if(!/^[A-Za-z0-9_-]{10,110}$/.test(fileId))throw new Error("Drive no devolvió un identificador válido para la imagen.");url="https://drive.google.com/file/d/"+fileId+"/view";file.setDescription(["GPSpedia PyS — UPLOAD_PENDING","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes].join("\n"));assertPysImageFolderPermissions_(file,folder);op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"UPLOAD_PENDING",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));}
+const expected=buildPysExpectedRow_(problemId,p,url,models);sheet.appendRow(expected);SpreadsheetApp.flush();const stored=findPysRowsById_(sheet,problemId);if(stored.length!==1||!pysRowMatchesPayload_(stored[0].row,expected))throw new Error("No se pudo confirmar una única fila PyS con los datos enviados.");op=writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));try{file.setDescription(["GPSpedia PyS — LINKED","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes].join("\n"));}catch(metadataError){console.warn("No se pudo actualizar el estado auxiliar de la imagen PyS:",metadataError);}try{logUserActivity(userId,userName,"add_problem",problemId,titulo);}catch(logError){console.error("No se pudo registrar la actividad de alta PyS:",logError);}return{status:"success",message:"Problema registrado correctamente.",problemId};
+}catch(error){if(file&&sheet&&op&&problemId){let refs;try{refs=findPysImageReferences_(sheet,fileId,url);}catch(readError){markPysImageForRecovery_(file,problemId,fileId,"No se pudo comprobar la hoja PyS después del fallo: "+String(readError&&readError.message||readError));try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"RECOVERY_REQUIRED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));}catch(ledgerError){}throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para recuperación manual. Detalle: "+String(error&&error.message||error));}const own=findPysRowsById_(sheet,problemId);if(own.length===1&&pysRowMatchesPayload_(own[0].row,buildPysExpectedRow_(problemId,p,url,models))){try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"LINKED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));try{file.setDescription(["GPSpedia PyS — LINKED","problemId="+problemId,"fileId="+fileId,"mimeType="+image.mimeType,"sizeBytes="+image.sizeBytes,"recoveredAfterPartialFailure=true"].join("\n"));}catch(e){}return{status:"success",message:"Problema registrado y verificado tras una respuesta parcial.",problemId,recovered:true};}catch(e){markPysImageForRecovery_(file,problemId,fileId,"La fila quedó vinculada, pero no se confirmó el ledger.");throw new Error("La fila PyS quedó vinculada, pero su operación requiere reconciliación; no se eliminó la imagen.");}}if(refs.length>0||own.length>0){markPysImageForRecovery_(file,problemId,fileId,"La imagen o el ID aparecen asociados a una fila distinta o ambigua; no se eliminó.");try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"RECOVERY_REQUIRED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));}catch(e){}throw new Error("La imagen está referenciada por un registro PyS distinto o ambiguo; se conservó para evitar pérdida de datos.");}try{file.setTrashed(true);SpreadsheetApp.flush();if(typeof file.isTrashed==="function"&&file.isTrashed()!==true)throw new Error("Drive no confirmó que la imagen no vinculada quedara en papelera.");writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"PENDING",imageFileId:"",imageUrl:"",updatedAt:new Date().toISOString()}));}catch(e){markPysImageForRecovery_(file,problemId,fileId,"Falló la compensación automática: "+String(e&&e.message||e));try{writePysOperation_(opsSheet,op.rowNumber,Object.assign({},op,{status:"RECOVERY_REQUIRED",imageFileId:fileId,imageUrl:url,updatedAt:new Date().toISOString()}));}catch(ledgerError){}throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; quedó marcada para recuperación manual.");}}throw error;}finally{lock.releaseLock();}
 }
 
-/* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */
-function handleAddProblem(payload) {
-    const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload || {};
-    const normalizedTitle = String(titulo || "").trim();
-    const normalizedDescription = String(descripcion || "").trim();
-    const normalizedSolution = String(solucion || "").trim();
-    const normalizedPrevention = String(prevenir || "").trim();
-    if (!normalizedTitle || !normalizedDescription) throw new Error("Título y descripción son obligatorios.");
-    if (normalizedTitle.length > 30 || normalizedDescription.length > 700) throw new Error("Título o descripción superan la longitud permitida.");
-    if (!sinSolucion && !normalizedSolution) throw new Error("Debe proporcionar una solución si no marca 'Sin solución'.");
-    if (normalizedSolution.length > 700) throw new Error("La solución no puede superar 700 caracteres.");
-    if (normalizedPrevention.length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
-    if (!userId || !userName) throw new Error("La sesión verificada no proporcionó un colaborador válido.");
-    if (String(videoUrl || "").trim()) throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
-
-    // Validar la imagen antes de reservar fila o crear recursos en Drive.
-    const image = validatePysImageDataUrl_(imgBase64);
-    const lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-
-    let imageFile = null, imageUrl = "", imageFileId = "", problemId = "", sheet = null;
-    try {
-        sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
-        if (sheet.getLastRow() === 0) {
-            sheet.getRange(1, 1, 1, 10).setValues([[
-                "id_problem", "Problema", "Descripción", "Se soluciono", "Solucion",
-                "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"
-            ]]);
-        }
-
-        const lastRow = sheet.getLastRow();
-        problemId = "isue-" + String(lastRow > 1 ? lastRow : 1).padStart(3, "0");
-        const existingIds = lastRow > 1
-            ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat().map(value => String(value || "").trim())
-            : [];
-        if (existingIds.includes(problemId)) {
-            throw new Error("El ID calculado del problema ya existe; no se creó un registro duplicado.");
-        }
-
-        const { folder } = getPysImagesFolder_();
-        const fileName = problemId + "_" + Date.now() + "." + image.extension;
-        const blob = Utilities.newBlob(image.bytes, image.mimeType, fileName);
-        imageFile = folder.createFile(blob);
-        if (!imageFile) throw new Error("Drive no confirmó la creación de la imagen.");
-        imageFileId = String(imageFile.getId() || "").trim();
-        if (!/^[A-Za-z0-9_-]{10,110}$/.test(imageFileId)) {
-            throw new Error("Drive no devolvió un identificador válido para la imagen.");
-        }
-
-        // No se modifica el ACL del archivo: hereda exactamente el acceso de la carpeta PyS.
-        imageFile.setDescription([
-            "GPSpedia PyS — UPLOAD_PENDING",
-            "problemId=" + problemId,
-            "fileId=" + imageFileId,
-            "mimeType=" + image.mimeType,
-            "sizeBytes=" + image.sizeBytes
-        ].join("\n"));
-        assertPysImageFolderPermissions_(imageFile, folder);
-
-        imageUrl = "https://drive.google.com/file/d/" + imageFileId + "/view";
-        const models = alcance === "especifico" && Array.isArray(modelosAsociados)
-            ? Array.from(new Set(modelosAsociados.map(String).map(value => value.trim()).filter(Boolean)))
-            : [];
-
-        sheet.appendRow([
-            problemId, normalizedTitle, normalizedDescription,
-            sinSolucion ? "" : "x", sinSolucion ? "" : normalizedSolution,
-            normalizedPrevention, imageUrl, "", userName,
-            models.length ? JSON.stringify(models) : ""
-        ]);
-        SpreadsheetApp.flush();
-
-        const persisted = sheet.getDataRange().getDisplayValues().slice(1).filter(row =>
-            String(row[0] || "").trim() === problemId &&
-            normalizePysImageReference_(row[6]) === imageUrl
-        );
-        if (persisted.length !== 1) {
-            throw new Error("No se pudo verificar una única fila PyS vinculada a la imagen.");
-        }
-
-        try {
-            imageFile.setDescription([
-                "GPSpedia PyS — LINKED",
-                "problemId=" + problemId,
-                "fileId=" + imageFileId,
-                "mimeType=" + image.mimeType,
-                "sizeBytes=" + image.sizeBytes
-            ].join("\n"));
-        } catch (metadataError) {
-            console.warn("No se pudo actualizar el estado auxiliar de la imagen PyS:", metadataError);
-        }
-
-        try { logUserActivity(userId, userName, "add_problem", problemId, normalizedTitle); }
-        catch (logError) { console.error("No se pudo registrar la actividad de alta PyS:", logError); }
-        return { status: "success", message: "Problema registrado correctamente.", problemId };
-    } catch (error) {
-        if (imageFile) {
-            let references;
-            try {
-                references = findPysImageReferences_(sheet, imageFileId, imageUrl);
-            } catch (readError) {
-                markPysImageForRecovery_(imageFile, problemId, imageFileId,
-                    "No se pudo comprobar la hoja PyS después del fallo: " + String(readError && readError.message || readError));
-                throw new Error("No se pudo verificar si la imagen quedó vinculada; se conserva para recuperación manual. Detalle: " + String(error && error.message || error));
-            }
-
-            if (references.length === 1 &&
-                references[0].problemId === problemId &&
-                normalizePysImageReference_(references[0].imageUrl) === imageUrl) {
-                try {
-                    imageFile.setDescription([
-                        "GPSpedia PyS — LINKED",
-                        "problemId=" + problemId,
-                        "fileId=" + imageFileId,
-                        "mimeType=" + image.mimeType,
-                        "sizeBytes=" + image.sizeBytes,
-                        "recoveredAfterPartialFailure=true"
-                    ].join("\n"));
-                } catch (metadataError) {
-                    console.warn("No se pudo actualizar metadata de la imagen PyS recuperada:", metadataError);
-                }
-                return { status: "success", message: "Problema registrado y verificado tras una respuesta parcial.", problemId, recovered: true };
-            }
-
-            if (references.length > 0) {
-                markPysImageForRecovery_(imageFile, problemId, imageFileId,
-                    "El archivo aparece referenciado por otro registro o por una fila ambigua; no se eliminó.");
-                throw new Error("La imagen está referenciada por un registro PyS; se conservó para evitar pérdida de datos. Requiere revisión.");
-            }
-
-            try {
-                imageFile.setTrashed(true);
-                SpreadsheetApp.flush();
-                if (typeof imageFile.isTrashed === "function" && imageFile.isTrashed() !== true) {
-                    throw new Error("Drive no confirmó que la imagen no vinculada quedara en papelera.");
-                }
-            } catch (cleanupError) {
-                markPysImageForRecovery_(imageFile, problemId, imageFileId,
-                    "Falló la compensación automática: " + String(cleanupError && cleanupError.message || cleanupError));
-                throw new Error("La imagen se creó, pero no pudo vincularse ni compensarse; quedó marcada para recuperación manual.");
-            }
-        }
-        throw error;
-    } finally {
-        lock.releaseLock();
-    }
-}
 
 function handleAddSolution(payload) {
     const { problemId, solucion, userId, userName } = payload || {};
     const normalizedSolution = String(solucion || "").trim();
     if (!problemId || !normalizedSolution || !userId || !userName) throw new Error("problemId, solución y sesión verificada son requeridos.");
     if (normalizedSolution.length > 700) throw new Error("La solución no puede superar 700 caracteres.");
-    const sheet = getSafeSheet("pys");
+    const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
@@ -2319,7 +2175,7 @@ function handleAddPrevention(payload) {
     const normalizedPrevention = String(prevenir || "").trim();
     if (!problemId || !normalizedPrevention || !userId || !userName) throw new Error("problemId, prevención y sesión verificada son requeridos.");
     if (normalizedPrevention.length > 700) throw new Error("La prevención no puede superar 700 caracteres.");
-    const sheet = getSafeSheet("pys");
+    const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
@@ -2417,7 +2273,7 @@ function handleAddVehicleToProblem(payload) {
         throw new Error("Se requieren problemId y vehicleId.");
     }
 
-    const sheet = getSafeSheet("pys");
+    const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
@@ -2459,7 +2315,7 @@ function handleRemoveVehicleFromProblem(payload) {
         throw new Error("No tienes permisos suficientes para eliminar relaciones.");
     }
 
-    const sheet = getSafeSheet("pys");
+    const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");
@@ -2837,7 +2693,7 @@ function getVideoApprovalTarget_(videoData) {
         return { type: "corte", sheet, record: findUniqueVideoTargetRow_(sheet, referenceId, COLS_CORTES.id, "Cortes"), videoColumn: COLS_CORTES.videoGuiaDesarmeUrl };
     }
     if (videoData.contentType === "pys") {
-        const sheet = getSafeSheet("pys");
+        const sheet = getPysSheet_(false);
         if (!sheet) throw new Error("Hoja pys no encontrada.");
         const headers = sheet.getRange(1, 1, 1, Math.max(10, sheet.getLastColumn())).getDisplayValues()[0];
         if (String(headers[0] || "").trim() !== "id_problem" || String(headers[7] || "").trim() !== "Video") {
@@ -3016,7 +2872,7 @@ function handleUpdatePysItem(payload) {
     if (solucion && solucion.length > 700) throw new Error("La solución no puede exceder 700 caracteres.");
     if (prevenir && prevenir.length > 700) throw new Error("La prevención no puede exceder 700 caracteres.");
 
-    const sheet = getSafeSheet("pys");
+    const sheet = getPysSheet_(false);
     if (!sheet) throw new Error("Hoja pys no encontrada.");
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) throw new Error("No hay problemas registrados.");

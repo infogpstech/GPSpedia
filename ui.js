@@ -9527,6 +9527,8 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
     };
 
     const form = content.querySelector("#add-pys-form");
+    let pendingPysOperationId = "";
+    let pendingPysOperationSignature = "";
     form.onsubmit = async (e) => {
         e.preventDefault();
 
@@ -9585,6 +9587,21 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
                 modelosAsociados: Array.from(selectedVehicleIds),
                 imgBase64
             };
+
+            const operationSignaturePayload = Object.fromEntries(
+                Object.entries(payload).filter(([key]) => !/token/i.test(key))
+            );
+            const operationSignature = JSON.stringify(operationSignaturePayload);
+            if (!pendingPysOperationId || pendingPysOperationSignature !== operationSignature) {
+                if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
+                    throw new Error("Este navegador no permite generar un identificador seguro para el registro. Actualiza el navegador e inténtalo nuevamente.");
+                }
+                const randomBytes = new Uint8Array(16);
+                window.crypto.getRandomValues(randomBytes);
+                pendingPysOperationId = Array.from(randomBytes, byte => byte.toString(16).padStart(2, "0")).join("");
+                pendingPysOperationSignature = operationSignature;
+            }
+            payload.opId = pendingPysOperationId;
 
             const created = await routeAction("addProblem", payload);
             if (!created || created.status !== "success" || !created.problemId) {
