@@ -693,3 +693,17 @@ Evidencia:
 - La animación pulse-offline no contempla prefers-reduced-motion.
 Alcance: conservar el punto minimalista, anunciar el estado con texto accesible, precisar el significado de navigator.onLine y desactivar únicamente la animación bajo movimiento reducido. No se añadirá health check backend porque el indicador actual no presenta disponibilidad de servicios; cualquier estado backend deberá ser independiente y tener timeout acotado.
 ================================================================================
+
+
+================================================================================
+AUG-073 — ADENDA DE CIERRE — 2026-11-12
+H-AUD-073-001: RESUELTO EN FUENTES.
+- index.html conserva #connection-status de 3×3 px y añade role=status, aria-live=polite, aria-atomic=true y un span visualmente oculto cuyo texto cambia con el estado.
+- main.js actualiza classList, title y texto accesible al iniciar y ante eventos online/offline. El mensaje aclara que navigator.onLine informa conectividad de red del navegador/dispositivo y no confirma disponibilidad de servicios de GPSpedia.
+- style.css mantiene el estado amarillo offline y desactiva solo pulse-offline bajo prefers-reduced-motion: reduce.
+- No se implementó health check backend: el indicador no presenta disponibilidad de servicios y un estado backend requeriría un componente separado con timeout limitado.
+Validación local adaptada:
+- ConnectionStatusAccessibility: 8/8 PASS.
+- Parsing V8 de main.js y del bloque updateStatus: PASS.
+Límites: Node CLI literal no ejecutado. Lector de pantalla, eventos reales online/offline, red disponible con backend inaccesible y prefers-reduced-motion en navegador/dispositivo quedan diferidos a Beta.
+================================================================================
