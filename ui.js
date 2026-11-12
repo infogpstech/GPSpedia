@@ -3134,10 +3134,10 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             return;
         }
 
-        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        // Crear el acordeón con el título aprobado en la especificación de PyS.
         const btn = document.createElement("button");
         btn.className = "accordion-btn";
-        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+        btn.innerHTML = `<span class="accordion-title">Problemas relacionados a este vehículo</span><span class="accordion-arrow">▼</span>`;
 
         const panel = document.createElement("div");
         panel.className = "panel-desplegable";
