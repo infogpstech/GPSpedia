@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 
 function extractRule(css, selector) {
     const escaped = selector.replaceAll(".", "\\.");
-    const match = css.match(new RegExp(escaped + "\\s*\\{([^}]*)\\}"));
-    assert(match, "No se encontró la regla CSS: " + selector);
-    return match[1];
+    const matches = [...css.matchAll(new RegExp(escaped + "\\s*\\{([^}]*)\\}", "g"))];
+    assert(matches.length, "No se encontró la regla CSS: " + selector);
+    return matches[matches.length - 1][1];
 }
 
 function extractTokens(css, selector) {
@@ -131,6 +131,8 @@ export function runValidationBannerThemeTests({ css, main, ui }) {
     test("el texto del campo de entrada alcanza contraste WCAG AA", () => {
         assert.ok(contrastRatio(root["--validation-text"], root["--validation-input-bg"]) >= 4.5);
         assert.ok(contrastRatio(dark["--validation-text"], dark["--validation-input-bg"]) >= 4.5);
+        assert.ok(contrastRatio(root["--validation-muted"], root["--validation-input-bg"]) >= 4.5);
+        assert.ok(contrastRatio(dark["--validation-muted"], dark["--validation-input-bg"]) >= 4.5);
     });
 
     test("el módulo UI conserva las clases del banner, mensajes, botones y campo", () => {
