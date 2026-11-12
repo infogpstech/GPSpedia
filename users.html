@@ -101,22 +101,9 @@
         .dark-mode .user-table th {
             background-color: rgba(255,255,255,0.05);
         }
-        .actions-cell .btn {
+        .actions-cell .btn-sm {
             margin-right: 5px;
-            padding: 5px 10px;
-            font-size: 0.9em;
         }
-        .btn {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }
-        .btn-primary { background-color: var(--primary-color); color: var(--light-text); }
-        .btn-warning { background-color: #ffc107; color: var(--secondary-color); }
-        .btn-danger { background-color: var(--error-color); color: var(--light-text); }
 
         /* Modal Styles */
         .modal {
@@ -167,33 +154,8 @@
             box-sizing: border-box;
         }
 
-        /* --- ANIMACIONES DE CARGA EN BOTONES --- */
-        .btn-loading {
-            position: relative !important;
-            color: transparent !important;
-            pointer-events: none !important;
-        }
-
-        .btn-loading::after {
-            content: "";
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            top: 50%;
-            left: 50%;
-            margin-top: -9px;
-            margin-left: -9px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin-button 0.6s linear infinite;
-            z-index: 5;
-        }
-
-        @keyframes spin-button {
-            to { transform: rotate(360deg); }
-        }
     </style>
+    <link rel="stylesheet" href="button-system.css">
 </head>
 <body>
     <div class="container">
@@ -203,7 +165,7 @@
             <p><strong>Nombre de Usuario:</strong> <span id="profile-username"></span></p>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <p style="margin: 0;"><strong>Nombre Completo:</strong> <span id="profile-fullname"></span></p>
-                <button id="edit-name-btn" class="btn btn-warning" style="padding: 2px 8px; font-size: 0.8rem;">Editar</button>
+                <button id="edit-name-btn" class="btn btn-warning btn-sm">Editar</button>
             </div>
             <p><strong>Rol:</strong> <span id="profile-role"></span></p>
             <button id="change-password-btn" class="btn btn-primary">Cambiar Contraseña</button>
