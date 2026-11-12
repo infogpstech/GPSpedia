@@ -1145,7 +1145,10 @@ export function mostrarMarcas(categoria) {
     pushNavigationState(nextState, { previousNavigationState: previousState || { level: 'categorias' } });
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<h4>Marcas de ${categoria}</h4>`;
-    renderNavigationBackButton(cont, { level: 'categorias' });
+    const backTarget = ['busqueda', 'busqueda_focused'].includes(previousState && previousState.level)
+        ? previousState
+        : { level: 'categorias' };
+    renderNavigationBackButton(cont, backTarget);
     const itemsInCategory = cortes.filter(item => item.categoria === categoria);
     const marcas = [...new Set(itemsInCategory.map(item => item.marca))].filter(m => m).sort();
 
