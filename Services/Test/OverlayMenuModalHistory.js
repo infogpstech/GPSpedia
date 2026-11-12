@@ -101,6 +101,16 @@ test('main.js integra menú y modales en la misma pila y usa callbacks personali
     assert.match(source, /overlayHistory\.replaceTop\(id, closeOverlay\)/);
 });
 
+test('main popstate reconcilia un modal ya oculto por un cierre directo', () => {
+    const source = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
+    const start = source.indexOf('if (!topOverlay)');
+    const end = source.indexOf("const searchInput", start);
+    assert.ok(start >= 0 && end > start);
+    const fallback = source.slice(start, end);
+    assert.match(fallback, /targetOverlayIds\.includes\(topOverlayId\)/);
+    assert.match(fallback, /overlayHistory\.handlePopState\(state\)/);
+});
+
 test('ui.js registra el menú idempotentemente y serializa su cierre', () => {
     const source = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
     assert.match(source, /const SIDE_MENU_HISTORY_ID_ = 'side-menu'/);
@@ -133,4 +143,4 @@ test('el éxito de contact-form cierra mediante el gestor compartido', () => {
     assert.match(source, /historyManager\.close\(contactOverlayId\)/);
 });
 
-console.log('OverlayMenuModalHistory:', passed + '/12 PASS');
+console.log('OverlayMenuModalHistory:', passed + '/13 PASS');
