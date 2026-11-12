@@ -1709,8 +1709,12 @@ function normalizeSuggestionImageAttachment_(imageAttachment, legacyImgBase64) {
         const dataUrl = String(legacyImgBase64).trim();
         const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,/i);
         if (!match) throw new Error("La imagen de sugerencia tiene un formato no permitido.");
+        const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
+        if (encoded.length > Math.ceil(REPORT_IMAGE_MAX_BYTES / 3) * 4) {
+            throw new Error("La imagen supera el tamaño máximo permitido de 3 MB.");
+        }
         let bytes;
-        try { bytes = Utilities.base64Decode(dataUrl.slice(dataUrl.indexOf(",") + 1)); }
+        try { bytes = Utilities.base64Decode(encoded); }
         catch (error) { throw new Error("No se pudo decodificar la imagen de sugerencia."); }
         source = { dataUrl, mimeType: match[1].toLowerCase(), size: bytes.length, name: "sugerencia" };
     }
