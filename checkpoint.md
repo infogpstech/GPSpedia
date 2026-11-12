@@ -1486,7 +1486,7 @@ CHECKPOINT DE CIERRE — AUG-089 — 2026-11-12
 Rama de trabajo: GPSpedia2.2.5_work. Rama base verificada: GPSpedia2.2.5 (sin cambios).
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Implementación: pila contextual sin duplicados en re-render/edición; navOptions preservado; scroll vertical, acordeón y carruseles restaurados; restauración diferida no sobrescribe el scroll vertical posterior; cierre manual y popstate consumen un solo nivel. modalNavigation.js incluido en App Shell, caché v17.
-Validación local en harness JavaScript de sesión: PysModalNavigation 6/6; PysNavigationContext 6/6; OverlayHistoryStack 19/19; ServiceWorkerCache 6/6. Parsing focalizado de los cinco bloques UI modificados, main.js, modalNavigation.js y service-worker.js PASS. No se ejecutó Node CLI.
+Validación local en harness JavaScript de sesión: PysModalNavigation 8/8; PysNavigationContext 6/6; OverlayHistoryStack 19/19; ServiceWorkerCache 6/6. Parsing focalizado de los cinco bloques UI modificados, main.js, modalNavigation.js y service-worker.js PASS. No se ejecutó Node CLI.
 Beta pendiente: navegación en navegador/dispositivo real, gesto Atrás, cierre X, scroll táctil, acordeón/carruseles, edición, guardado y descarte. No se desplegó ni se modificaron datos productivos.
 Siguiente tarea: AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos.
 HEAD final de trabajo pendiente de verificación al concluir esta actualización documental.
