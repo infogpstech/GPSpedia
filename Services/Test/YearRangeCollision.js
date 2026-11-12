@@ -48,10 +48,9 @@ test("el handler backend aplica el comparador a los dos extremos de ambos rangos
 test("la UI mantiene la comprobación de ambos límites para el año puntual", () => {
     assert.ok(/yearVal\s*>=\s*\(parseInt\(c\.anoDesde\)\s*\|\|\s*0\)[\s\S]*?yearVal\s*<=\s*\(parseInt\(c\.anoHasta\)\s*\|\|\s*parseInt\(c\.anoDesde\)\s*\|\|\s*0\)/.test(ui));
 });
-test("la UI excluye el registro actual y deja el backend como autoridad", () => {
-    const check = ui.slice(ui.indexOf("// Validar colisión con otras generaciones registradas"), ui.indexOf("if (collision &&", ui.indexOf("// Validar colisión con otras generaciones registradas")));
-    assert.ok(check.includes("yearVal >=") && check.includes("yearVal <="));
-    assert.ok(ui.includes("await suggestYear"));
+test("la UI confirma el registro backend antes de guardar la respuesta local", () => {
+    assert.ok(/await\\s+confirmValidationBeforeCache\\s*\\(/.test(ui));
+    assert.ok(ui.includes("() => suggestYear("));
 });
 
 console.log("YearRangeCollision:", passed, "/ 12");
