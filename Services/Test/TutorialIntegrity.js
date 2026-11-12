@@ -254,7 +254,6 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
                 }
                 return actor;
             },
-            FEEDBACK_PUBLIC_ACTIONS: new Set(["getPysData", "sendContactForm"])
         };
         vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", authContext);
         const authorized = authContext.authorize("addTutorial", {
@@ -272,7 +271,6 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
                 if (!payload.sessionToken) throw new Error("Sesión inválida.");
                 return { userId: "USR-TECH", userName: "Técnico", role: "Tecnico" };
             },
-            FEEDBACK_PUBLIC_ACTIONS: new Set(["getPysData", "sendContactForm"])
         };
         vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", technicianContext);
         assert.throws(() => technicianContext.authorize("addTutorial", { userId: "USR-TECH", sessionToken: "SESSION-TECH" }), /Rol no autorizado/);
