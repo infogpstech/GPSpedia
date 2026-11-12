@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createOverlayHistoryManager, overlayHistoryStateKey } from '../../overlayHistory.js';
 
 function createFakeHistory() {
@@ -94,6 +95,32 @@ test('reemplazar overlay superior conserva una sola entrada', () => {
     assert.deepEqual(manager.getStack(), ['parent']);
 });
 
+test('reemplazar un modal relay no deja una entrada de historial ajena al gestor', () => {
+    const history = createFakeHistory();
+    const closed = [];
+    const manager = createOverlayHistoryManager(history);
+    history.setPopStateHandler(state => manager.handlePopState(state));
+    manager.register('parent', () => closed.push('parent'));
+    manager.register('relay-info-old', () => closed.push('relay-info-old'));
+    manager.replaceTop('relay-info-new', () => closed.push('relay-info-new'));
+    assert.equal(history.length, 3);
+    assert.deepEqual(manager.getStack(), ['parent', 'relay-info-new']);
+    history.back();
+    assert.deepEqual(closed, ['relay-info-new']);
+    assert.deepEqual(manager.getStack(), ['parent']);
+    assert.deepEqual(history.state[overlayHistoryStateKey], ['parent']);
+});
+
+test('renderRelayInfoModal delega el cierre al gestor compartido', () => {
+    const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+    const start = uiSource.indexOf('function renderRelayInfoModal(relayInfo)');
+    const end = uiSource.indexOf('\nlet inboxCacheData', start);
+    assert.ok(start >= 0 && end > start, 'No se encontró renderRelayInfoModal completo');
+    const relaySource = uiSource.slice(start, end);
+    assert.match(relaySource, /window\.overlayHistory\.close\(overlayId\)/);
+    assert.doesNotMatch(relaySource, /history\.pushState\(\{\s*modalOpen:\s*true\s*\}/);
+});
+
 test('cerrar manualmente un padre con hijos retrocede hasta su entrada', () => {
     const history = createFakeHistory();
     const closed = [];
@@ -168,4 +195,4 @@ test('cancelar un cierre por popstate restaura la entrada del overlay', () => {
     assert.equal(attempts, 2);
 });
 
-console.log('OverlayHistoryStack:', passed + '/11 PASS');
+console.log('OverlayHistoryStack:', passed + '/13 PASS');
