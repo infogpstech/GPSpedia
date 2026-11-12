@@ -367,3 +367,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - La validación focalizada de clasificación ejecutada en Node aprobó 7/7 escenarios; la sintaxis de los nuevos casos PASS. La suite completa del repositorio no se ejecutó porque esta sesión no dispone de un checkout local.
 - La comprobación de renderizado e interacción en navegador real queda para Beta. Sin cambios de datos, endpoints ni deployments.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-102 — ALINEACIÓN DEL TEMA DEL BANNER DE VALIDACIÓN
+- style.css: el banner utiliza el selector de tema ya establecido por la aplicación (body.dark-mode) mediante tokens semánticos para fondo, borde, texto, placeholder, entrada, botones y foco.
+- Se reemplazaron las referencias inexistentes a --text-primary y el selector [data-theme="dark"] que no coincidía con el mecanismo real del tema.
+- Se definieron valores claros/oscuros con contraste WCAG AA para texto, placeholder, botones principales/secundarios y entrada; se agregó foco visible para teclado.
+- Services/Test/ValidationBannerTheme.js incorpora 12 escenarios de contrato y contraste; Services/Test/README.md documenta su ejecución.
+- No se modificaron ui.js, main.js, servicios, datos ni deployments. La revisión visual en navegador real queda para Beta.
+================================================================================
