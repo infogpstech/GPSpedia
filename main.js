@@ -890,20 +890,28 @@ async function initializeApp() {
     // 3. PWA installation prompt handler
     const installButton = document.getElementById('install-button');
 
-    const isPWAInstalled = () => {
-        // Standalone mode check
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            return true;
-        }
-        // Local/Session storage check
-        if (localStorage.getItem('pwa_installed') === 'true' || sessionStorage.getItem('pwa_installed_session') === 'true') {
-            return true;
-        }
-        return false;
+    const isIOSDevice = () => {
+        const userAgent = navigator.userAgent || '';
+        const platform = navigator.platform || '';
+        const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+        const isIOSUserAgent = /iPad|iPhone|iPod/i.test(userAgent);
+        // iPadOS puede identificarse como Macintosh cuando Safari solicita el sitio de escritorio.
+        const isIPadOSDesktop = platform === 'MacIntel' && maxTouchPoints > 1;
+        return !window.MSStream && (isIOSUserAgent || isIPadOSDesktop);
     };
 
-    const isIOSDevice = () => {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isPWAInstalled = () => {
+        const isStandalone = (typeof window.matchMedia === 'function' &&
+            window.matchMedia('(display-mode: standalone)').matches) ||
+            window.navigator.standalone === true;
+        if (isStandalone) return true;
+
+        // Safari en iOS no expone beforeinstallprompt ni un evento de instalación fiable.
+        // No usar flags persistentes de otros navegadores para ocultar las instrucciones manuales.
+        if (isIOSDevice()) return false;
+
+        return localStorage.getItem('pwa_installed') === 'true' ||
+            sessionStorage.getItem('pwa_installed_session') === 'true';
     };
 
     const checkPWAInstallStatus = () => {
