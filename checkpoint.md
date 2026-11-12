@@ -934,3 +934,29 @@ Publicación:
 
 Siguiente iteración: completar la revisión de las rutas de ida/vuelta restantes y la matriz de deep link/búsqueda/origin, y corregir cualquier inconsistencia local reproducible. Mantener una sola tarea activa.
 ================================================================================
+
+
+================================================================================
+AUG-069 — ITERACIÓN 2 — 2026-11-11 — NORMALIZACIÓN DE DIMENSIONES OPCIONALES EN FALLBACK
+Estado: EN PROGRESO. Se corrigió una duplicación reproducible de historial durante la reconstrucción de una vista de destino.
+Rama: GPSpedia2.2.5_work. HEAD de partida: 333462fdb6eaa51bc62d7f73db8a890a0e8cfc76. Rama base: GPSpedia2.2.5 (sin modificaciones; aheadBy 1051, behindBy 0).
+
+Hallazgo:
+- navigateBackToState() reemplaza la entrada actual cuando el destino no coincide con el estado anterior y después invoca renderNavigationTarget_().
+- Algunos renderizadores completan dimensiones opcionales omitidas en el destino con null (por ejemplo, versionEquipamiento).
+- sameNavigationState() distinguía propiedad ausente de propiedad presente con valor null. La reconstrucción podía interpretarse como una navegación nueva y ejecutar pushState después del replaceState, dejando una entrada redundante.
+
+Corrección:
+- navigationHistory.js: sameNavigationState() considera equivalentes ausencia y null para campos opcionales; los valores seleccionados diferentes siguen distinguiéndose.
+- Services/Test/NavigationBackHistory.js: se añade una regresión que reproduce el fallback y la normalización de versionEquipamiento; la suite pasa de 17 a 18 escenarios.
+- Services/Test/README.md y Tareas_pendientes_parte5.txt actualizados.
+- Auditoría.txt registra H-AUD-069-001 con evidencia, impacto y criterio de corrección.
+- ChangesLogs.txt no se modifica por la rotación documental pendiente; no se agrega contenido al registro acumulativo.
+
+Validación:
+- Regresión aislada de comparación y reconstrucción: 3/3 PASS con Node v22.16.0.
+- No se ejecutó la suite completa 18/18 ni el comando Node CLI en Codespaces. No se ejecutaron pruebas DOM/navegador real; estas últimas permanecen diferidas a Beta.
+- La rama base no se modificó.
+
+Siguiente acción: continuar la matriz de rutas de ida/vuelta y deep links, manteniendo AUG-069 como única tarea activa. No iniciar AUG-070.
+================================================================================
