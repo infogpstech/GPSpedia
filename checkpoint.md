@@ -1467,3 +1467,15 @@ Archivos: ui.js, Services/Test/PysNavigationContext.js, Services/Test/README.md,
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Siguiente: AUG-089 — preservar pila modal y posición de navegación en recorridos PyS–vehículo.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CONTINUIDAD — AUG-089 — 2026-11-12
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Tarea: preservar pila modal y posición de navegación en recorridos PyS–vehículo.
+Implementación: registro de transiciones reales, propagación de navOptions, helper de captura/restauración de scroll vertical, acordeón y carruseles, retorno compartido por cierre manual/popstate. modalNavigation.js se incorpora al App Shell (gpsepedia-cache-v17).
+Suite: Services/Test/PysModalNavigation.js; regresión de caché: Services/Test/ServiceWorkerCache.js.
+Estado: EN PROGRESO hasta ejecutar y aprobar pruebas locales y revisar diff.
+Archivos: ui.js, main.js, modalNavigation.js, service-worker.js, Services/Test/PysModalNavigation.js, Services/Test/ServiceWorkerCache.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, Auditoría.txt, checkpoint.md y lista_beta.txt.
+Siguiente: ejecutar suites, corregir fallos reproducibles y revisar diff. No iniciar AUG-090 antes del cierre.
+================================================================================
