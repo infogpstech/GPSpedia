@@ -407,6 +407,19 @@ async function initializeApp() {
         return selectTopmostOverlay(candidates);
     }
 
+    function isManagedOverlayVisible_(id) {
+        if (id === 'side-menu') {
+            const menu = document.getElementById('side-menu');
+            return Boolean(menu && menu.classList.contains('open'));
+        }
+        if (id === 'replaced-images-lightbox') {
+            const lightbox = document.getElementById('replaced-image-lightbox');
+            return Boolean(lightbox && lightbox.style.display !== 'none' &&
+                window.getComputedStyle(lightbox).display !== 'none');
+        }
+        return isOverlayVisible_(overlayElements.get(id));
+    }
+
     const overlayObserver = new MutationObserver(registerVisibleOverlays_);
     overlayObserver.observe(document.body, {
         childList: true,
@@ -420,6 +433,14 @@ async function initializeApp() {
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};
+        const overlayStack = overlayHistory.getStack();
+        const targetOverlayIds = Array.isArray(state[overlayHistoryStateKey])
+            ? state[overlayHistoryStateKey] : [];
+        const topOverlayId = overlayStack[overlayStack.length - 1];
+        if (topOverlayId && !targetOverlayIds.includes(topOverlayId) && !isManagedOverlayVisible_(topOverlayId)) {
+            overlayHistory.handlePopState(state);
+            return;
+        }
         const topOverlay = getTopmostVisibleOverlay_(state);
         if (topOverlay && topOverlay.kind !== 'detail') {
             topOverlay.close();
