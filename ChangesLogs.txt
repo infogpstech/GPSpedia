@@ -334,3 +334,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js parseVinCollection: se corrige la expresión regular inválida que impedía parsear el módulo UI al dividir colecciones heredadas por coma, slash, barra inversa o punto y coma.
 - Services/Test/VinVersionPresentation.js: se amplía cobertura a los tres delimitadores adicionales; suite 11/11 PASS.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-098 — SEGURIDAD DE CONSULTAS DE BÚSQUEDA
+- ui.js: encabezado de resultados y mensaje sin coincidencias se renderizan con nodos DOM y textContent; showGlobalError conserva presentación como texto plano.
+- SearchQueryXssIntegrity.js: cobertura de etiquetas, eventos, SVG, comillas, ampersand, Unicode y deep links codificados.
+- Se revisaron navigation.js, main.js, search-utils.js y share-utils.js: la consulta se conserva como dato de texto desde el input/deep link hasta el renderer.
+- Dependencia de sintaxis: se escapó el slash en el parser VIN de navigation.js y se agregó NavigationVinCollection.js.
+- Pruebas locales: SearchQueryXssIntegrity 8/8; GlobalSearch 21/21; NavigationVinCollection 6/6; VinVersionPresentation 11/11 PASS.
+================================================================================
