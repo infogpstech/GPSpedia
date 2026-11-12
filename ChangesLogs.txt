@@ -228,3 +228,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - No se modifica la relación persistida; la supresión del acordeón continúa dependiendo del origen contextual pys.
 - Se añade Services/Test/PysNavigationContext.js con seis pruebas de contrato UI.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-089 — PILA MODAL Y RESTAURACIÓN DE POSICIÓN PyS–VEHÍCULO
+- ui.js: evita entradas duplicadas durante re-render/edición, conserva navOptions y centraliza retorno contextual de un nivel.
+- modalNavigation.js: helper para capturar/restaurar scroll vertical, acordeón activo y carruseles.
+- main.js: popstate delega el retorno a la misma función usada por el cierre manual.
+- service-worker.js: incorpora modalNavigation.js al App Shell y renueva caché a gpsepedia-cache-v17.
+- Services/Test/PysModalNavigation.js y ServiceWorkerCache.js: cobertura local añadida/actualizada.
+================================================================================
