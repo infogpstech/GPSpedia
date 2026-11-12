@@ -1946,7 +1946,10 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     const cont = document.getElementById("contenido");
     // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
     // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
-    cont.innerHTML = `<h4>Resultados para: "${query}"</h4>`;
+    const heading = document.createElement("h4");
+    heading.textContent = `Resultados para: "${String(query ?? "")}"`;
+    cont.textContent = "";
+    cont.appendChild(heading);
 
     const hasAmbiguousVinChoices = Array.isArray(results) && results.some(item => item && item._vinAmbiguousChoice);
     if (hasAmbiguousVinChoices) {
@@ -2001,7 +2004,13 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
 }
 
 export function showNoResultsMessage(textoBusqueda) {
-    document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
+    const cont = document.getElementById("contenido");
+    if (!cont) return;
+    const message = document.createElement("p");
+    message.style.cssText = "text-align:center; padding: 20px;";
+    message.textContent = `No se encontraron resultados para "${String(textoBusqueda ?? "")}".`;
+    cont.textContent = "";
+    cont.appendChild(message);
 }
 
 // Normaliza el indicador técnico sin convertir «No aplica / no especificado» en false.
