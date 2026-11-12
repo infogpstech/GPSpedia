@@ -69,15 +69,21 @@ export function createOverlayHistoryManager(historyApi, onError = null) {
             historyApi.back();
             return true;
         }
-        if (historyApi && distance > 1 && typeof historyApi.go === "function") {
-            historyApi.go(-distance);
-            return true;
-        }
 
+        // Un cierre manual solicitado sobre un padre sí retira sus descendientes;
+        // la regla de una capa aplica a cada evento popstate, no a esta acción explícita.
         for (let cursor = entries.length - 1; cursor >= index; cursor--) {
-            invokeClose(entries.pop(), "manual");
+            const entry = entries.pop();
+            if (!invokeClose(entry, "manual")) {
+                entries.push(entry);
+                publishState("replaceState");
+                return false;
+            }
         }
         publishState("replaceState");
+        if (historyApi && distance > 1 && typeof historyApi.go === "function") {
+            historyApi.go(-distance);
+        }
         return true;
     }
 
