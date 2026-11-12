@@ -4,7 +4,7 @@ const TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEnc
 // Requiere cargar Services/feedback.js.
 function runVideoApprovalPublishingTests() {
     const results=[];let passed=0,failed=0;
-    const oldGetSafe=getSafeSheet,oldUuid=Utilities.getUuid,oldFormat=Utilities.formatDate,oldTimezone=Session.getScriptTimeZone,oldFlush=SpreadsheetApp.flush;
+    const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldUuid=Utilities.getUuid,oldFormat=Utilities.formatDate,oldTimezone=Session.getScriptTimeZone,oldFlush=SpreadsheetApp.flush;
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
@@ -40,7 +40,7 @@ function runVideoApprovalPublishingTests() {
         const cuts=makeSheet_([cutHeaders,(()=>{const row=new Array(45).fill("");row[0]="veh-1";row[9]=options.currentUrl||"";return row;})()]);
         const pysHeaders=["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"];
         const pys=makeSheet_([pysHeaders,["pys-1","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
-        const tutHeaders=["Tema","Imagen","Video","Descripción","Colaborador"];
+        const tutHeaders=TUTORIAL_HEADERS.slice();
         const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?3:null});
         const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutorial":tutorial };
         if(options.missingTarget)delete map[type==="corte"?SHEET_NAMES.CORTES:type==="pys"?"pys" :"Tutorial"];
@@ -49,6 +49,7 @@ function runVideoApprovalPublishingTests() {
             target.data.push(target.data[1].slice());
         }
         getSafeSheet=name=>map[name]||null;
+        getSpreadsheet=()=>({getSheetByName:name=>map[name]||null});
         return{feedback,cuts,pys,tutorial,approval,restore:()=>{getSafeSheet=oldGetSafe;}};
     }
     function withEnv_(type,options,fn){const e=env_(type,options);try{fn(e);}finally{e.restore();}}
@@ -157,6 +158,7 @@ function runVideoApprovalPublishingTests() {
         }));
     }finally{
         getSafeSheet=oldGetSafe;
+        getSpreadsheet=oldGetSpreadsheet;
         Utilities.getUuid=oldUuid;
         Utilities.formatDate=oldFormat;
         Session.getScriptTimeZone=oldTimezone;
