@@ -61,7 +61,9 @@ function buildHarness_(feedback, options = {}) {
         state
     };
     const helpers = extract_(feedback, "const TUTORIAL_HEADERS", "function extractYouTubeId(url)");
-    const update = extract_(feedback, "function handleUpdateTutorialItem(payload)", "\nfunction");
+    const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
+    if (updateStart < 0) throw new Error("No se encontró handleUpdateTutorialItem.");
+    const update = feedback.slice(updateStart);
     vm.runInNewContext(helpers + "\n" + update + "\nthis.api = { add: handleAddTutorial, update: handleUpdateTutorialItem, headers: TUTORIAL_HEADERS };", context);
     return { api: context.api, sheet, state };
 }
@@ -211,7 +213,8 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         assert.match(feedback, /const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
         assert.match(feedback, /userName: actor\.userName/);
         assert.match(feedback, /const collaborator = normalizeTutorialField_\(source\.userName/);
-        const updateHandler = extract_(feedback, "function handleUpdateTutorialItem(payload)", "\nfunction");
+        const updateStart = feedback.indexOf("function handleUpdateTutorialItem(payload)");
+        const updateHandler = feedback.slice(updateStart);
         assert.doesNotMatch(updateHandler, /userRole/);
     });
 
