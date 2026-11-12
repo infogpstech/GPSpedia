@@ -1553,3 +1553,15 @@ Pruebas locales en harness adaptado: VideoApprovalPublishing 27/27; SharedMutati
 Beta pendiente: Node CLI, Apps Script/Spreadsheet aislados, sesiones reales, concurrencia entre ejecuciones y revisión del Inbox integrado. Sin despliegue ni cambios productivos.
 Siguiente tarea: AUG-094 — Eliminar inyección HTML en el modal unificado de subida YouTube.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-094 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD verificado antes de este checkpoint: 3d5daa3f3114a407ff151913b2d18a58f645d8ab.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+youtubeUpload.js conserva una plantilla HTML estructural estática; los valores de initialTitle e initialDescription se asignan mediante .value con setYouTubeUploadInitialValues_ al abrir, recuperar y descartar. Se conservan acentos, comillas, ampersands y saltos de línea; límites de 100/5000 caracteres.
+Services/Test/YouTubeUploadXssIntegrity.js valida la ausencia de interpolación HTML, asignación segura y puntos de entrada de Corte/PyS/Tutorial.
+Regresión local en harness adaptado: YouTubeUploadXssIntegrity 5/5; VideoApprovalPublishing 27/27; SharedMutationCoordinator 32/32; TutorialIntegrity 21/21; PysVehicleRelationIntegrity 18/18 PASS. Parsing de youtubeUpload.js, feedback.js, Coordinator.js, UI modal y suite PASS.
+Limitación: Node CLI y navegador real no ejecutados; la inspección visual y de interacción se reserva para Beta. No se realizaron transferencias reales ni cambios productivos.
+Siguiente tarea: AUG-095 — Sanitización autoritativa del contenido enriquecido en backend.
+================================================================================
