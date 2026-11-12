@@ -174,14 +174,11 @@ async function initializeApp() {
         });
     }
 
-    // TAREA 1.6: Retirada la barra de filtros rápidos (#catalog-filters-bar y #btn-toggle-filters)
-
     // --- LÓGICA DE ANIMACIÓN DE LA BARRA DE BÚSQUEDA ---
     // Estabilización de la clase 'search-active' para evitar saltos visuales al limpiar búsqueda.
     searchInput.addEventListener('focus', () => {
         if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
         document.body.classList.add('search-active');
-        // TAREA 1.6: retirado
 
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
@@ -230,10 +227,6 @@ async function initializeApp() {
             // No quitar la clase 'search-active' si el modal está visible para mantener la animación del header
             if (!isModalVisible) {
                 document.body.classList.remove('search-active');
-                if (toggleFiltersBtn && !searchInput.value) {
-                    toggleFiltersBtn.style.display = 'none';
-                    if (filtersBar) filtersBar.style.display = 'none';
-                }
             }
         }, 250);
     });
