@@ -827,6 +827,14 @@ function completeFeedbackYearApplication_(application, context) {
     };
 }
 
+function yearRangesOverlapInclusive_(startA, endA, startB, endB) {
+    const aStart = Number(startA), aEnd = Number(endA);
+    const bStart = Number(startB), bEnd = Number(endB);
+    if (![aStart, aEnd, bStart, bEnd].every(Number.isFinite) ||
+        aEnd < aStart || bEnd < bStart) return false;
+    return aStart <= bEnd && aEnd >= bStart;
+}
+
 function handleSuggestYearLocked(payload) {
     const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
@@ -1045,7 +1053,7 @@ function handleSuggestYearLocked(payload) {
                 }
                 return { status: "warning", message: "No se pudo validar la separación entre generaciones porque otra fila coincidente tiene un rango de años inválido. Se requiere revisión manual." };
             }
-            if (proposedAnoDesde <= otherAnoHasta && proposedAnoHasta >= otherAnoDesde) {
+            if (yearRangesOverlapInclusive_(proposedAnoDesde, proposedAnoHasta, otherAnoDesde, otherAnoHasta)) {
                 if (!alreadyReported) {
                     logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
                         "Rango propuesto " + proposedAnoDesde + "-" + proposedAnoHasta +
