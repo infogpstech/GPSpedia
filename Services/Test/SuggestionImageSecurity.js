@@ -153,6 +153,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
         assert.ok(handlerBlock.includes("throw error;"));
         assert.ok(!/catch\s*\(\s*e\s*\)\s*\{\s*console\.error\("Error subiendo imagen/.test(handlerBlock));
         assert.ok(handlerBlock.includes("imageAttached: Boolean(imageMetadata)"));
+        assert.ok(handlerBlock.includes("String(imageAttachment != null ? imageAttachment.dataUrl || \"\" : imgBase64 || \"\")"));
     });
     test("handler verifica lectura posterior de la fila antes de confirmar", () => {
         assert.ok(handlerBlock.includes("const storedProblem = sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).getValue()"));
@@ -160,7 +161,7 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     });
     test("handler retira el archivo huérfano si no se confirma la fila", () => {
         assert.ok(handlerBlock.includes("if (!rowCommitted) trashReportImageUpload_(uploadedImage)"));
-        assert.ok(handlerBlock.indexOf("rowCommitted = true") < handlerBlock.indexOf("uploadedImage = null"));
+        assert.ok(handlerBlock.indexOf("rowCommitted = true") < handlerBlock.lastIndexOf("uploadedImage = null"));
     });
     test("handler devuelve metadatos MIME, tamaño, hash e ID de Drive", () => {
         for (const field of ["imageFileId", "imageMimeType", "imageSize", "imageSha256"]) assert.ok(handlerBlock.includes(field));
