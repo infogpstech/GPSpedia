@@ -1521,3 +1521,15 @@ Validación: PysAccordionTitle 6/6 PASS; parsing del bloque UI modificado PASS. 
 Nota de trazabilidad: la referencia histórica Tareas.txt 1511–1521 no coincide con la copia activa; se usó el criterio explícito del backlog AUG-091.
 Siguiente tarea: AUG-092 — Alinear esquema, persistencia y autorización del módulo Tutorial.
 ================================================================================
+================================================================================
+CHECKPOINT DE CIERRE — AUG-092 — 2026-11-12
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de trabajo verificado antes de este checkpoint: 925eed46860a1c9854da2e897d21b6841785cf17.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+Implementación: hoja Tutorial canónica A:G preservada y H Colaborador añadida solo si está vacía; alta con ID estable por operationId, deduplicación de título, reintentos idempotentes y recuperación de flush; edición por ID con escritura verificada B:F y compatibilidad de filas históricas sin ID; sesión Desarrollador obligatoria e identidad desde Users; UI completa con colaborador al final; publicación de vídeo por ID en C/G; recurso TUTORIAL coordinado para alta, edición y flujo de aprobación.
+Pruebas locales en harness adaptado: TutorialIntegrity 21/21; VideoApprovalPublishing 18/18; SharedMutationCoordinator 31/31; PysVehicleRelationIntegrity 18/18 PASS. Parsing de feedback.js, catalog.js, Coordinator.js y bloques UI modificados PASS. Node CLI no ejecutado.
+Beta pendiente: Apps Script/Spreadsheet aislados, concurrencia real, autorización con sesiones desplegadas, flujo de aprobación en servicios integrados y visualización real en navegador/móvil/temas. No se desplegó ni se modificaron datos productivos.
+Nota operativa: durante la creación de la suite se omitió el parámetro de rama en una operación create_file, por lo que el archivo de prueba llegó brevemente a la rama predeterminada; se eliminó en el commit siguiente. El archivo no permanece en esa rama, no se reescribió historial y la rama base GPSpedia2.2.5 no fue modificada.
+Archivos: Services/feedback.js, Services/catalog.js, Services/Coordinator.js, ui.js, Spreadsheet/GPSpedia_DB_columnas.md, Services/Test/TutorialIntegrity.js, Services/Test/VideoApprovalPublishing.js, Services/Test/SharedMutationCoordinator.js, Services/Test/FeedbackWriteSecurity.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-093 — Validar tipo y estado antes de aprobar/rechazar vídeos.
+================================================================================
