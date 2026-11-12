@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { decodeSearchHash } from '../../search-utils.js';
 import { readFileSync } from 'node:fs';
 import {
     pushNavigationState,
@@ -331,4 +332,36 @@ test('fallback rendering does not push a duplicate when optional dimensions norm
     assert.equal(history.replaceCalls, 2);
 });
 
-console.log('NavigationBackHistory:', passed + '/18 PASS');
+test('fallback keeps the destination ancestry instead of stale current metadata', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    pushNavigationState(
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota' },
+        { historyObject: history, locationObject }
+    );
+    history.entries[history.index].state[navigationHistoryStateKey] = {
+        level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris'
+    };
+    const action = navigateBackToState(
+        { level: 'marcas', categoria: 'Autos', previousState: { level: 'categorias' } },
+        { historyObject: history, locationObject }
+    );
+    assert.equal(action, 'replace');
+    assert.deepEqual(history.state[navigationHistoryStateKey], { level: 'categorias' });
+    history.back();
+    assert.equal(history.state.level, 'categorias');
+});
+
+test('section rendering synchronizes the in-memory navigation context with History API', () => {
+    const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
+    assert.match(uiSource, /pickNavigationState\(activeHistoryState\[navigationHistoryStateKey\]\)/);
+    assert.match(uiSource, /setState\(\{ navigationState: \{ section: sectionName, previousState: parentNavigationState \|\| null \} \}\)/);
+    assert.match(uiSource, /pushNavigationState\(\{ section: sectionName \}, \{ previousNavigationState \}\)/);
+});
+
+test('search deep links round-trip reserved characters and malformed escapes remain recoverable', () => {
+    const query = 'Toyota Hilux 2025 + edición';
+    assert.equal(decodeSearchHash('#search=' + encodeURIComponent(query)), query);
+    assert.equal(decodeSearchHash('#search=%E0%A4%A'), '%E0%A4%A');
+});
+
+console.log('NavigationBackHistory:', passed + '/21 PASS');
