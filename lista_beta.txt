@@ -1142,3 +1142,27 @@ Pruebas visuales en navegador real:
 
 No modificar datos productivos ni desplegar a producción.
 ================================================================================
+
+================================================================================
+AUG-101 — VALIDACIÓN DE CLASIFICACIÓN DE BÚSQUEDA GLOBAL EN NAVEGADOR
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador real:
+1. Buscar el título exacto «Relay 5 pines», «Instalación de GPS» y «GPS sin señal»; cada resultado debe conservar su sección y mostrarse como tarjeta de registro, nunca como logo de marca.
+2. Buscar «Corolla» y confirmar que abre resultados de modelos; buscar «Toyota» cuando solo existan Cortes de esa marca y confirmar la vista de logos.
+3. Repetir una consulta que produzca resultados mixtos de Cortes, Relay, Tutorial y PyS; todos deben mostrarse como registros de sus secciones, sin convertir el conjunto en marcas.
+4. Buscar una marca con vehículos de varias marcas en los resultados y confirmar que se mantiene la vista de modelos.
+5. Verificar que seleccionar cada resultado abre su detalle o sección correcta y que una coincidencia mixta no dispara la autoapertura de un vehículo.
+
+No modificar datos productivos ni desplegar a producción.
+================================================================================
