@@ -8037,14 +8037,13 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             reportId: reportRef,
             vehicleId,
             corteIndex: validCorteNum,
-            ...getSessionPayload_(),
             details: content.querySelector("#sug-detalles").value.trim(),
             imgBase64,
             proposedValues
         };
 
         try {
-            await suggestCutChange(payload);
+            await suggestCutChange(payload, getSessionPayload_());
             modal.remove();
             showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
         } catch (err) {
