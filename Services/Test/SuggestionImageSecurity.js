@@ -29,8 +29,8 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     };
     const validationFactory = new Function("Utilities", validatorBlock + "\nreturn validateReportImageAttachment_;");
     const validate = validationFactory(utilities);
-    const normalizerFactory = new Function("Utilities", "validateReportImageAttachment_", normalizerBlock + "\nreturn normalizeSuggestionImageAttachment_;");
-    const normalize = normalizerFactory(utilities, validate);
+    const normalizerFactory = new Function("Utilities", "validateReportImageAttachment_", "REPORT_IMAGE_MAX_BYTES", normalizerBlock + "\nreturn normalizeSuggestionImageAttachment_;");
+    const normalize = normalizerFactory(utilities, validate, 3 * 1024 * 1024);
     const fixtures = {
         "image/jpeg": [255, 216, 255, 1],
         "image/png": [137, 80, 78, 71, 13, 10, 26, 10],
@@ -95,6 +95,15 @@ export function runSuggestionImageSecurityTests({ feedback, ui }) {
     test("normalizador conserva compatibilidad con Data URL legado y valida bytes", () => {
         const source = attachment("image/webp");
         assert.strictEqual(normalize(null, source.dataUrl).mimeType, "image/webp");
+    });
+    test("normalizador limita Data URL legado antes de decodificar", () => {
+        let decodeCalls = 0;
+        const guardedUtilities = Object.assign({}, utilities, {
+            base64Decode(value) { decodeCalls++; return utilities.base64Decode(value); }
+        });
+        const guardedNormalize = normalizerFactory(guardedUtilities, validate, 3 * 1024 * 1024);
+        assert.throws(() => guardedNormalize(null, "data:image/jpeg;base64," + "A".repeat(4 * 1024 * 1024 + 8)), /3 MB/);
+        assert.strictEqual(decodeCalls, 0);
     });
     test("normalizador rechaza dos fuentes de imagen simultáneas", () => {
         const source = attachment("image/png");
