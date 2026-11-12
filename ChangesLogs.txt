@@ -376,3 +376,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/ValidationBannerTheme.js incorpora 12 escenarios de contrato y contraste; Services/Test/README.md documenta su ejecución.
 - No se modificaron ui.js, main.js, servicios, datos ni deployments. La revisión visual en navegador real queda para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-103 — CONSOLIDACIÓN DE TOKENS DE COLOR Y TEMA
+- style.css, users.html y add_cortes.html declaran un contrato común de 21 tokens semánticos para tema claro y oscuro.
+- Se conservaron los alias históricos vinculados al contrato y se migraron colores de componentes comunes, incluidos estados informativos, deshabilitados, bordes, acentos y foco.
+- Se añadió Services/Test/ThemeTokenConsistency.js y se documentó su ejecución.
+- Se preservaron excepciones de estados operativos, marcas/logotipos, imágenes, sombras, overlays y elementos gráficos.
+================================================================================
