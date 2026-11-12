@@ -945,3 +945,17 @@ node "$TEST_TMP"
 La suite contiene 16 escenarios sobre normalización y obligatoriedad del reporte/justificación, límites de longitud, esquema permitido de `proposedValues`, tipos estrictos, propuestas parciales/múltiples, rechazo de no-op, compatibilidad de lectura histórica, validación server-side y límites de UI. Usa funciones reales extraídas de `Services/feedback.js` y contratos estáticos de `ui.js`; no invoca servicios Apps Script, Spreadsheet ni Drive reales.
 
 Límites canónicos del backend: descripción completa del reporte 2000 caracteres; justificación de propuesta 2000; `tipo` 80; `ubicacion` 300; `colorCable` 120; `configRelay` 120. `activaTestigo` solo acepta boolean o null. El navegador limita los campos de texto y conserva la validación autoritativa en servidor. Se rechazan propuestas sin cambio respecto al corte registrado.
+
+## AUG-082 — Seguridad contra stored XSS en tarjetas y modal PyS
+
+Ejecutar desde la raíz del repositorio con Node.js:
+
+```bash
+set -e
+TEST_TMP=Services/Test/PysStoredXss.mjs
+cp Services/Test/PysStoredXss.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite contiene 10 escenarios sobre IDs y URLs HTTPS de YouTube permitidos, rutas y hosts falsos, esquemas peligrosos, parámetros ambiguos, construcción canónica del iframe, uso de `textContent` en tarjetas/título/colaborador, conservación de `sanitizeHtmlContent()` para descripción/solución/prevención y ausencia de interpolación de `item.Video` en HTML. Es una prueba de lógica y contratos estáticos; no sustituye el renderizado DOM ni la reproducción real en navegador.
