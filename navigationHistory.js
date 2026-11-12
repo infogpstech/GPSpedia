@@ -103,12 +103,18 @@ export function navigateBackToState(targetState, options = {}) {
         return 'back';
     }
 
+    const fallbackPrevious = previousNavigation ||
+        pickNavigationState(options.previousNavigationState);
     historyObject.replaceState({
         ...target,
-        [PREVIOUS_NAVIGATION_KEY]: previousNavigation ||
-            pickNavigationState(options.previousNavigationState)
+        [PREVIOUS_NAVIGATION_KEY]: fallbackPrevious
     }, '', buildNavigationUrl(target, locationObject));
-    if (typeof options.renderFallback === 'function') options.renderFallback(target);
+    if (typeof options.renderFallback === 'function') {
+        options.renderFallback({
+            ...target,
+            previousState: targetState.previousState || fallbackPrevious
+        });
+    }
     return 'replace';
 }
 
