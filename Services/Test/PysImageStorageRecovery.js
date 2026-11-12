@@ -128,7 +128,7 @@ function buildHarness(feedback, options = {}) {
         "\nthis.api = { validate: validatePysImageDataUrl_, getFolder: getPysImagesFolder_, " +
         "checkPermissions: assertPysImageFolderPermissions_, normalize: normalizePysImageReference_, " +
         "findReferences: findPysImageReferences_, markRecovery: markPysImageForRecovery_, " +
-        "add: payload => handleAddProblem(Object.assign({ opId: "legacy-test-operation-000000000001" }, payload)), read: handleGetPysData };",
+        "add: payload => handleAddProblem(Object.assign({ opId: 'legacy-test-operation-000000000001' }, payload)), read: handleGetPysData };",
         context
     );
     return { api: context.api, state, sheet, context, file, cortesFolder };
