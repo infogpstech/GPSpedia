@@ -815,3 +815,8 @@ Validación local:
 Rama base intacta. No iniciar AUG-069.
 Siguiente acción: ejecutar la suite reproducible en Node CLI de Codespaces y continuar la revisión final del ciclo de vida YouTube dentro de AUG-068.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — ITERACIÓN 3J
+La suite Services/Test/YouTubeUploadRecordPersistence.js se ejecutó completa con las funciones reales extraídas de youtubeUpload.js y el IndexedDB simulado: 14/14 PASS. Se incluyen los 12 escenarios iniciales y dos regresiones adicionales que fuerzan el aborto después de que get/getAll entregan su resultado; ambas confirman que la lectura no se resuelve antes de tx.oncomplete.
+Se corrigió el mensaje final del harness de 12/12 a 14/14. La ejecución fue en runtime V8 adaptado; no equivale a Node CLI/Codespaces ni IndexedDB real de navegador.
