@@ -1057,4 +1057,4 @@ trap 'rm -f "$TEST_TMP"' EXIT
 node "$TEST_TMP"
 ```
 
-Seis escenarios: captura/restauración de scroll vertical, acordeón activo y carruseles; propagación del contexto PyS/vehículo; ausencia de entradas duplicadas durante edición/re-render; y retorno de un nivel desde cierre manual/popstate. Navegador y gestos táctiles reales quedan para Beta.
+Ocho escenarios: captura/restauración de scroll vertical, acordeón activo y carruseles; restauración diferida sin saltos de scroll; decisión de registrar transiciones; pila anidada LIFO; propagación del contexto PyS/vehículo; ausencia de entradas duplicadas durante edición/re-render; y retorno de un nivel desde cierre manual/popstate. Navegador y gestos táctiles reales quedan para Beta.
