@@ -1176,3 +1176,26 @@ Beta pendiente: ejecutar el comando documentado en Services/Test/README.md; prob
 Documentación: Services/Test/README.md, Tareas_pendientes_parte5.txt, ChangesLogs.txt y lista_beta.txt.
 Siguiente tarea: AUG-076 — Eliminar stored XSS en Inbox y modales de reporte/sugerencia. No iniciada.
 ================================================================================
+
+================================================================================
+AUG-076 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
+Rama: GPSpedia2.2.5_work. HEAD de partida: 15e00d228931f94117e858516920d3dea14a2fb4. Rama base: GPSpedia2.2.5 (d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+
+Corrección:
+- ui.js / renderInboxList(): reemplaza innerHTML por nodos DOM y textContent para subject e ID.
+- ui.js / renderInboxDetail(): construye estructura, metadata, identidad, vehículo, tipo de contenido, estado, acciones y enlaces mediante nodos DOM. item.content e item.reply son los únicos datos enriquecidos que llegan a innerHTML y ambos pasan por sanitizeHtmlContent.
+- Los enlaces de YouTube solo aceptan HTTPS y hosts explícitos youtube.com/www.youtube.com/m.youtube.com/youtu.be. Las imágenes de sugerencias solo aceptan URLs HTTPS de drive.google.com. Enlaces externos con target blank llevan rel=noopener noreferrer.
+- ui.js / openReportCutModal() y openSuggestCutModal(): plantillas HTML estáticas; corte, vehículo, reportId, currentCutData y dropdownOptions se asignan con textContent, value y nodos option.
+- ui.js / showReportSuccessModal(): se incluyó en el endurecimiento porque reportId procede de la respuesta del servicio; se representa como texto, no como HTML.
+- Services/Test/InboxStoredXss.js: nueva suite con 20 contratos, matriz de payloads HTML/SVG/eventos inline/atributos/comillas/iframe/javascript: y parsing de los cinco componentes.
+
+Validación local:
+- InboxStoredXss: 20/20 PASS en runtime V8 adaptado; ejecuta parsing individual de renderInboxList, renderInboxDetail, showReportSuccessModal, openReportCutModal y openSuggestCutModal.
+- Contratos estáticos: sin interpolación de datos externos en plantillas HTML; el sanitizador queda reservado a item.content e item.reply.
+- Revisión de integridad de ui.js: 156 declaraciones de función antes y después; ninguna función duplicada ni eliminada. Se comparó el bloque funcional con el HEAD de partida y se retiró un bloque duplicado introducido durante la edición antes del cierre.
+- No se ejecutó Node CLI literal ni DOM/navegador real. No se afirma que los payloads hayan sido ejecutados en navegador.
+- Beta pendiente: Node CLI documentado; sembrar mensajes maliciosos en Spreadsheet aislado; abrir Inbox, detalle, confirmación y formularios en navegador real; verificar no ejecución y funcionamiento normal. No usar datos productivos.
+
+Documentación: Services/Test/InboxStoredXss.js, Services/Test/README.md, Tareas_pendientes_parte5.txt, Auditoría.txt, ChangesLogs.txt y lista_beta.txt.
+Siguiente tarea: AUG-077 — Implementar el adjunto real de imágenes en reportes individuales. No iniciada.
+================================================================================
