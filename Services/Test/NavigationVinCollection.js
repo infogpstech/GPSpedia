@@ -32,7 +32,7 @@ test("conserva compatibilidad con JSON canónico", () => {
 });
 test("el módulo navigation.js conserva sintaxis válida", () => {
     const moduleSource = navigation
-        .replace(/^import[\s\\S]*?from\s+['"][^'"]+['"];?\s*$/gm, "")
+        .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, "")
         .replace(/\bexport\s+(?=(?:async\s+)?(?:function|const|let|class))/g, "");
     assert.doesNotThrow(() => new Function(moduleSource));
 });
