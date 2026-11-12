@@ -730,3 +730,12 @@ Evidencia: UI transmite bytes separados del texto libre y gestiona errores/abort
 Controles: mismo reportId/hash reutiliza evidencia; hash distinto no reemplaza; fallo de escritura intenta restaurar metadata/fila y retirar archivo huérfano. Registros históricos sin imagen siguen válidos.
 Validación local: harness Node aislado para firma binaria, tamaño, MIME, SHA-256 y parsing de metadata: 12/12 PASS; parsing V8 de funciones modificadas PASS. Se incorporó suite reproducible de 18 casos para ejecutar en el checkout completo. Beta pendiente: Apps Script/Spreadsheet/Drive aislados y comprobación de acceso real del revisor.
 ================================================================================
+
+
+================================================================================
+ADENDA H-AUD-010-004 / AUG-078 — 2026-11-12
+Estado: CORREGIDO EN CÓDIGO.
+Evidencia: handleSuggestCutChange antes de fingerprint, Drive o escritura exige reportId con formato REP- real y único en Feedbacks.reportMetadata; coteja reportId, vehicleId y corteIndex con metadata y con Feedbacks.ID_vehiculo; verifica que el vehículo exista una sola vez en Cortes y que el slot indicado tenga tipo y ubicación. Se elimina el fallback N/A.
+Impacto mitigado: asociación de sugerencias a reportes/vehículos/cortes incorrectos, inexistentes o ambiguos. Los registros históricos sin metadata se conservan sin migración ni modificación y no se aceptan como origen de nuevas sugerencias.
+Validación local: suite Node 11/11 PASS. Integración real con Spreadsheet/FEEDBACK y datos históricos permanece para Beta aislada.
+================================================================================
