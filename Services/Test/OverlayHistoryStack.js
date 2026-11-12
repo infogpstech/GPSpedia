@@ -257,12 +257,26 @@ test('la capa superior respeta z-index y desempata por orden de apertura', () =>
     const candidates = [
         { id: 'parent', zIndex: 2100, order: 0, domOrder: 8 },
         { id: 'opened-later', zIndex: 2100, order: 2, domOrder: 1 },
+        { id: 'detail', zIndex: 1600, order: 0, domOrder: 3 },
         { id: 'lightbox', zIndex: 2200, order: 0, domOrder: 2 },
         { id: 'side-menu', zIndex: 2500, order: 0, domOrder: 0 }
     ];
     assert.equal(selectTopmostOverlay(candidates).id, 'side-menu');
+    assert.equal(selectTopmostOverlay(candidates.filter(item => item.id !== 'side-menu')).id, 'lightbox');
     assert.equal(selectTopmostOverlay(candidates.slice(0, 2)).id, 'opened-later');
     assert.equal(selectTopmostOverlay([]), null);
 });
 
-console.log('OverlayHistoryStack:', passed + '/18 PASS');
+
+test('el reproductor de detalle solo se limpia cuando el detalle es la capa superior', () => {
+    const mainSource = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
+    const detailStart = mainSource.indexOf("if (topOverlay && topOverlay.kind === 'detail'");
+    const detailEnd = mainSource.indexOf('// Tarea 1:', detailStart);
+    assert.ok(detailStart >= 0 && detailEnd > detailStart);
+    const detailClose = mainSource.slice(detailStart, detailEnd);
+    assert.match(detailClose, /stopVideo/);
+    assert.match(detailClose, /iframe\.src = ""/);
+    assert.match(mainSource, /const topOverlay = getTopmostVisibleOverlay_\(state\)/);
+});
+
+console.log('OverlayHistoryStack:', passed + '/19 PASS');
