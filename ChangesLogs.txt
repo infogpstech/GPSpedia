@@ -319,3 +319,18 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/README.md: instrucciones de ejecución y alcance de Beta documentados.
 - Tareas_pendientes_parte5.txt: AUG-096 cerrada con validación diferida; lista_beta.txt registra las comprobaciones reales pendientes.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-097 — CONFIGURACIÓN DE TEXTO ENRIQUECIDO
+- api-config.js: se centraliza la preferencia local gpsepedia_rich_text_mode, con strict por defecto, validación de valores y setter limitado al rol Desarrollador.
+- rich-text.js: toolbar y sanitizador aplican políticas coherentes para modo estricto y avanzado; se refrescan barras abiertas y se limita el teclado de listas al modo avanzado.
+- ui.js/index.html: selector de modo en el panel de Desarrollador; la preferencia se guarda en el navegador.
+- service-worker.js: App Shell actualizado a gpsepedia-cache-v18; Services/Test/ServiceWorkerCache.js refleja la nueva versión.
+- Services/Test/RichTextModeConfiguration.js: pruebas de persistencia, autorización, políticas y controles de ambas barras.
+================================================================================
+
+================================================================================
+2026-11-12 — CORRECCIÓN DE REGRESIÓN VIN — DEPENDENCIA DETECTADA DURANTE AUG-097
+- ui.js parseVinCollection: se corrige la expresión regular inválida que impedía parsear el módulo UI al dividir colecciones heredadas por coma, slash, barra inversa o punto y coma.
+- Services/Test/VinVersionPresentation.js: se amplía cobertura a los tres delimitadores adicionales; suite 11/11 PASS.
+================================================================================
