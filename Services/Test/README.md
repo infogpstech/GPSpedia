@@ -1109,3 +1109,14 @@ Ejecutar las suites aisladas de publicación y coordinación cargando sus depend
 - `runSharedMutationCoordinatorTests()`: 32 escenarios previstos; incluye exclusión mutua entre decisiones simultáneas de aprobación y rechazo.
 
 Las suites usan dobles en memoria. La ejecución integrada con sesiones reales y Spreadsheet aislada se valida en Beta; no usar datos ni despliegues productivos.
+
+
+## AUG-094 — Inyección HTML en el modal de subida YouTube
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/YouTubeUploadXssIntegrity.js
+```
+
+La suite verifica que la plantilla estructural del modal no interpole datos externos y que título/descripción se asignen exclusivamente mediante `.value`, tanto al abrir, recuperar como descartar una subida. Incluye comillas, ampersands, etiquetas, atributos/eventos, cierre de `textarea`, acentos, saltos de línea y límites de longitud. También comprueba los puntos de entrada de Corte, PyS y Tutorial. No ejecuta scripts ni requiere servicios externos.
