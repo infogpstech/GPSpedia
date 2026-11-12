@@ -1377,3 +1377,29 @@ En un deployment FEEDBACK de pruebas y Spreadsheet aislada:
 
 No ejecutar contra Spreadsheet productiva, no desplegar a producción y no modificar el catálogo real.
 ================================================================================
+
+
+================================================================================
+AUG-110 — VALIDACIÓN DEL CICLO DEL BANNER COMUNITARIO
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En navegador real, con catálogo y cuentas de prueba:
+1. Abrir vehículos sin imagen principal y comprobar que la validación aparece si el vehículo es elegible.
+2. Abrir vehículos con imágenes ausentes, rotas o que fallen al descargar; confirmar que el banner no depende del evento de imagen.
+3. Abrir vehículos con varios cortes alternativos lazy; comprobar que solo se solicita una validación y el banner aparece sin expandir acordeones.
+4. Navegar rápidamente entre dos vehículos y cerrar el modal mientras se consulta elegibilidad; una respuesta tardía no debe mostrar un banner en el detalle equivocado.
+5. Verificar que los vehículos no elegibles y los que ya tienen respuesta en caché no muestran el banner.
+6. Confirmar la ubicación debajo de la imagen principal cuando existe, o después de la cabecera cuando no existe.
+
+Usar catálogo de prueba y navegador aislado. No modificar datos productivos ni desplegar a producción.
+================================================================================

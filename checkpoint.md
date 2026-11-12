@@ -87,3 +87,24 @@ Pruebas:
 Archivos actualizados: Services/Test/FeedbackWriteSecurity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-110 — Desacoplar la validación comunitaria de la carga de imágenes. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-110 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- La validación comunitaria se inicia al construir el modal de vehículo, no desde img.onload del corte recomendado.
+- El flujo cubre vehículos sin imagen principal, cortes sin imagen y cortes alternativos lazy; una sola solicitud se inicia por vehículo/modal.
+- Los resultados se descartan si el modal se cerró o cambió de vehículo antes de completar la comprobación.
+- Se conserva showValidationBanner y su anclaje visual actual: debajo de la imagen principal cuando existe; en su ausencia, usa la cabecera.
+
+Pruebas locales:
+- Services/Test/ValidationBannerLifecycle.js: 6/6 PASS (Node.js); parsing de validationBannerLifecycle.js y de la suite: PASS.
+- La validación real en navegador con imágenes/IndexedDB y catálogo aislado queda para Beta; no se ejecutaron deployments ni se modificaron datos productivos.
+
+Archivos: ui.js, validationBannerLifecycle.js, Services/Test/ValidationBannerLifecycle.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-111 — Documentar suggestionActorKey en el esquema de Feedbacks. No iniciar dentro de esta tarea.
+================================================================================

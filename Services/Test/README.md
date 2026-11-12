@@ -1267,3 +1267,11 @@ YearRangeCollision.js prueba la comparación inclusiva de rangos en el backend: 
 
 ## AUG-109 — Confianza de aportaciones anónimas
 La suite `Services/Test/FeedbackWriteSecurity.js` cubre que los reportes anónimos reciban `anon:unverified` independientemente del identificador del navegador, no cuenten para el umbral automático de tres usuarios autenticados, permanezcan para revisión manual y no generen filas/actividad duplicadas al repetir el envío incluso si el cliente regenera su identificador. El límite de 30 solicitudes por hora se aplica en backend mediante CacheService. La suite usa dobles locales; el límite y el flujo de revisión deben comprobarse además en FEEDBACK de pruebas con CacheService y Spreadsheet aislados.
+
+
+## AUG-110 — Ciclo de vida del banner de validación
+
+- ValidationBannerLifecycle.js valida el inicio de elegibilidad desde el ciclo del modal, sin depender de img.onload ni de la carga inmediata/diferida de cortes.
+- Casos: imagen ausente/rota/lazy/cargada, múltiples cortes, duplicación de solicitudes, navegación a otro vehículo, cierre del modal y vehículo no elegible.
+- Ejecución local: node Services/Test/ValidationBannerLifecycle.js.
+- La validación visual y el comportamiento con imágenes/IndexedDB reales quedan para Beta en navegador aislado.

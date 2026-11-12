@@ -440,3 +440,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Se documentó el límite backend de 30 solicitudes por hora. Es un control global de frecuencia, no una verificación por IP/persona.
 - No se modificó el flujo de negocio ni se habilitó ponderación automática de aportes anónimos.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-110 — DESACOPLAR VALIDACIÓN COMUNITARIA DE IMÁGENES
+- La elegibilidad de validación comunitaria se inicia al construir el modal de vehículo, incluso si no existe imagen principal o imagen de corte.
+- Se eliminó la dependencia de img.onload en el corte recomendado; los cortes alternativos lazy ya no controlan si aparece el banner.
+- Se añadió protección contra solicitudes duplicadas y contra resultados tardíos después de cerrar el modal o navegar a otro vehículo.
+- Se añadió suite unitaria independiente para el ciclo de vida del banner.
+================================================================================
