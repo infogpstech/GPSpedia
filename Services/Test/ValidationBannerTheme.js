@@ -5,7 +5,7 @@ function extractRule(css, selector) {
     const escaped = selector.replaceAll(".", "\\.");
     const matches = [...css.matchAll(new RegExp(escaped + "\\s*\\{([^}]*)\\}", "g"))];
     assert(matches.length, "No se encontró la regla CSS: " + selector);
-    const declarations = matches.filter(match => /(?:^|;)\\s*(?:background|--validation-bg)\\s*:/m.test(match[1]));
+    const declarations = matches.filter(match => /(?:^|;)\s*(?:background|--validation-bg)\s*:/m.test(match[1]));
     return (declarations.length ? declarations : matches)[(declarations.length ? declarations : matches).length - 1][1];
 }
 
