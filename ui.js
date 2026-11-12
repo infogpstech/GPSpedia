@@ -14,7 +14,7 @@ import { confirmValidationBeforeCache } from './validationSubmission.js';
 import { applyConfirmedLikeState } from './likeState.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
 import { shouldAutoOpenVehicleDetail } from './search-utils.js';
-import { pushNavigationState, replaceNavigationState, navigateBackToState } from './navigationHistory.js';
+import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData } from './pys-data.js';
 import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
@@ -7293,12 +7293,19 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
     if (sectionElement) sectionElement.style.display = 'block';
     if (buttonElement) buttonElement.classList.add('active');
 
-    // Registrar una sola entrada por sección; repetir la sección actual no aumenta la pila.
+    // Mantener el estado de la sección en memoria y en History API. Si el usuario
+    // cambia de sección desde una vista profunda, el botón «Volver» debe regresar
+    // a la sección real y no a un estado de catálogo que ya quedó atrás.
+    const historyStateBefore = window.history && window.history.state || {};
+    const previousNavigationState = pickNavigationState(historyStateBefore) ||
+        pickNavigationState(getState().navigationState);
     if (!isFromPopState && window.history && window.history.pushState) {
-        pushNavigationState({ section: sectionName }, {
-            previousNavigationState: getState().navigationState
-        });
+        pushNavigationState({ section: sectionName }, { previousNavigationState });
     }
+    const activeHistoryState = window.history && window.history.state || {};
+    const parentNavigationState = pickNavigationState(activeHistoryState[navigationHistoryStateKey]) ||
+        previousNavigationState;
+    setState({ navigationState: { section: sectionName, previousState: parentNavigationState || null } });
 
     switch (sectionName) {
         case 'cortes':
