@@ -56,7 +56,7 @@ function createBlurHandler({ value = "", historyState = { level: "categorias" },
     };
     const windowStub = {
         history: { state: historyState },
-        state: { getState: () => ({ navigationState: { previousState: null } }) }
+        state: { getState: () => ({ navigationState: { previousState: null } }), setState() {} }
     };
     const handler = new Function(
         "isBackGestureBlurring", "searchInput", "window", "document", "setState", "replaceNavigationState", "setTimeout",
