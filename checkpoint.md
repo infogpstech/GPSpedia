@@ -1630,3 +1630,11 @@ CHECKPOINT DE CIERRE — AUG-100 — 2026-11-12 — COMPLETADA CON VALIDACIÓN D
 - Sin cambios de endpoints, permisos, datos ni deployments.
 Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-100.
 ================================================================================
+
+
+
+ADENDA DE VALIDACIÓN — AUG-100 — 2026-11-12
+- Se ejecutó ButtonSystemIntegrity.js en harness JavaScript adaptado: 9/9 PASS. La primera ejecución detectó un falso negativo en el reconocimiento de variantes .btn-primary/.btn-secondary dentro de plantillas HTML; se corrigió la aserción y se repitió la suite completa con resultado PASS.
+- Se añadió entrada ejecutable Node ESM al test; el comando reproducible está en Services/Test/README.md. Node CLI no fue ejecutado en este entorno.
+- Último commit de escritura confirmado: 5005bea4115bbed25ebcba16b8fcda2f63d056e4. Rama de trabajo GPSpedia2.2.5_work; comparación posterior: ahead, 0 behind. Rama base GPSpedia2.2.5 sin modificaciones.
+- Siguiente tarea canónica: AUG-101 — Separar clasificación de marcas reales y tipos sintéticos de sección.
