@@ -8085,7 +8085,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             </div>
             <div class="form-group">
                 <label for="sug-img-file">Imagen de Referencia del Corte (Opcional)</label>
-                <input type="file" id="sug-img-file" accept="image/*">
+                <input type="file" id="sug-img-file" accept="image/jpeg,image/png,image/webp">
             </div>
             <div class="form-group">
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
@@ -8147,37 +8147,49 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         submitBtn.innerText = "Enviando...";
 
         const fileInput = content.querySelector("#sug-img-file");
-        let imgBase64 = "";
-        if (fileInput.files && fileInput.files[0]) {
-            const file = fileInput.files[0];
-            imgBase64 = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (re) => resolve(re.target.result);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        const proposedValues = {
-            tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
-            ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
-            colorCable: content.querySelector("#sug-color").value.trim(),
-            configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
-            activaTestigo: content.querySelector("#sug-check-engine").value === "true" ? true :
-                (content.querySelector("#sug-check-engine").value === "false" ? false : null)
-        };
-        const payload = {
-            reportId: reportRef, vehicleId, corteIndex: validCorteNum,
-            details: content.querySelector("#sug-detalles").value.trim(),
-            imgBase64, proposedValues
-        };
-
         try {
-            await suggestCutChange(payload, getSessionPayload_());
+            let imageAttachment = null;
+            const selectedFile = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            if (selectedFile) {
+                const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+                const maxImageBytes = 3 * 1024 * 1024;
+                const mimeType = String(selectedFile.type || "").toLowerCase();
+                if (!allowedMimeTypes.includes(mimeType)) throw new Error("Formato no permitido. Utiliza JPG, PNG o WebP.");
+                if (!Number.isFinite(selectedFile.size) || selectedFile.size < 1 || selectedFile.size > maxImageBytes) {
+                    throw new Error("La imagen debe pesar como máximo 3 MB.");
+                }
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => typeof reader.result === "string" && reader.result.startsWith("data:")
+                        ? resolve(reader.result) : reject(new Error("No se pudo leer el contenido de la imagen."));
+                    reader.onerror = () => reject(new Error("Ocurrió un error al leer la imagen seleccionada."));
+                    reader.onabort = () => reject(new Error("La lectura de la imagen fue cancelada."));
+                    try { reader.readAsDataURL(selectedFile); } catch (error) { reject(error); }
+                });
+                imageAttachment = { dataUrl, name: String(selectedFile.name || "imagen"), mimeType, size: selectedFile.size };
+            }
+            const proposedValues = {
+                tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
+                ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+                colorCable: content.querySelector("#sug-color").value.trim(),
+                configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
+                activaTestigo: content.querySelector("#sug-check-engine").value === "true" ? true :
+                    (content.querySelector("#sug-check-engine").value === "false" ? false : null)
+            };
+            const payload = {
+                reportId: reportRef, vehicleId, corteIndex: validCorteNum,
+                details: content.querySelector("#sug-detalles").value.trim(), imageAttachment, proposedValues
+            };
+            const response = await suggestCutChange(payload, getSessionPayload_());
+            if (!response || response.status !== "success") throw new Error(response && response.message || "El servidor no confirmó la sugerencia.");
+            if (imageAttachment && (response.imageAttached !== true || !response.imageUrl)) {
+                throw new Error("El servidor no confirmó que la imagen quedara guardada; la sugerencia no se marcará como exitosa.");
+            }
             modal.remove();
             showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
         } catch (err) {
             console.error("Error al guardar la sugerencia:", err);
-            showGlobalError("Error al guardar la sugerencia. Por favor inténtalo de nuevo.");
+            showGlobalError("No se pudo enviar la sugerencia: " + String(err && err.message || "inténtalo de nuevo."));
             submitBtn.disabled = false;
             submitBtn.classList.remove("btn-loading");
             submitBtn.innerText = "Enviar Sugerencia";
