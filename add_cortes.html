@@ -154,6 +154,32 @@
         #loading-overlay { /* ... */ }
         .spinner { /* ... */ }
         .suggestion { /* ... */ }
+
+/* AUG-105: reflujo adicional de formularios en tabletas y móviles. */
+@media (max-width: 760px) {
+ .container { width: 100%; min-width: 0; padding: 16px 12px; }
+ .form-grid { grid-template-columns: minmax(0, 1fr); }
+ .form-grid > *, .form-group, .match-card-info { min-width: 0; }
+ .match-card-header { flex-wrap: wrap; }
+ .match-card-img { width: clamp(88px, 30%, 120px); max-width: 100%; }
+ .match-card-info { overflow-wrap: anywhere; }
+ .btn-container { flex-wrap: wrap; }
+ .btn-container > * { flex: 1 1 140px; min-width: 0; white-space: normal; }
+ .image-upload-group { flex-wrap: wrap; min-width: 0; }
+ .image-upload-group > * { min-width: 0; max-width: 100%; }
+ .info-msg { align-items: flex-start; flex-wrap: wrap; }
+ .accordion-header { align-items: flex-start; gap: 10px; }
+ .inline-actions .btn { max-width: 100%; white-space: normal; }
+}
+@media (max-width: 420px) {
+ input, select, textarea { min-width: 0; font-size: 16px; }
+ .container { padding: 12px 10px; }
+ .match-card-header { gap: 10px; }
+ .match-card-img { width: 88px; height: 72px; }
+ .btn-container > * { flex-basis: 100%; }
+ .image-upload-group { gap: 8px; }
+}
+@media (max-height: 520px) and (orientation: landscape) { #lightbox img { max-height: 88vh; }}
     </style>
     <link rel="stylesheet" href="button-system.css">
 </head>
