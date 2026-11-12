@@ -371,7 +371,7 @@ async function resolvePendingAdminImageOperationsBeforeDiscard_(vehicleId) {
     }
 }
 
-async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false, navOptions = {}) {
+export async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false, navOptions = {}) {
     const editSession = getCurrentEditOwnerContext_();
     if (!editSession) {
         showSavingIndicator("error", "La sesión de edición no está disponible. Inicia sesión nuevamente.");
