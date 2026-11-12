@@ -267,9 +267,11 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
         h.api.add({ ...authorized, operationId: "55555555555555555555555555555555", tema: "Tutorial autenticado" });
         assert.equal(h.sheet.data[1][7], "Nombre desde Users");
         const technicianContext = {
-            assertFeedbackSession(payload) {
+            assertFeedbackSession(payload, allowedRoles) {
                 if (!payload.sessionToken) throw new Error("Sesión inválida.");
-                return { userId: "USR-TECH", userName: "Técnico", role: "Tecnico" };
+                const actor = { userId: "USR-TECH", userName: "Técnico", role: "Tecnico" };
+                if (Array.isArray(allowedRoles) && !allowedRoles.some(role => String(role).toLowerCase() === actor.role.toLowerCase())) throw new Error("Rol no autorizado.");
+                return actor;
             },
         };
         vm.runInNewContext(authBlock + "\nthis.authorize = authorizeFeedbackAction_;", technicianContext);
