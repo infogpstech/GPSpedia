@@ -52,3 +52,14 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Node CLI literal y navegadores reales no ejecutados en este entorno; permisos, contexto seguro y pruebas de dispositivo quedan diferidos a Beta.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-073 — ACCESIBILIDAD DEL INDICADOR DE CONECTIVIDAD
+- index.html: indicador 3px con role=status, aria-live=polite, aria-atomic y texto accesible oculto.
+- main.js: el estado actualiza clase, title y texto; aclara que navigator.onLine no verifica los servicios backend.
+- style.css: se conserva la animación offline para usuarios generales y se desactiva bajo prefers-reduced-motion sin eliminar el color/estado.
+- No se añadió health check backend porque no forma parte del indicador de conectividad del navegador.
+- Validación adaptada: ConnectionStatusAccessibility 8/8 PASS; parsing V8 del bloque de actualización y main.js PASS. Lector de pantalla y conectividad real quedan para Beta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
