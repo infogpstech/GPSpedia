@@ -212,7 +212,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   4. Al abrir Inbox/Dashboard/Changelog desde el menú, cerrar el menú y su entrada sin dejar sideMenuOpen obsoleto debajo del modal.
   5. Cubrir openAuditDriveModal(), openReplacedImagesModal(), envío de contact-form y demás cierres directos; probar historial previo de búsqueda/sección.
 - **Relación:** AUD-T-007; AUG-017/AUG-042 para cambio de cuenta y cierre de overlays privilegiados, sin duplicar su limpieza de sesión.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO; integración del menú y reconciliación de modales en implementación.
 
 ### Adenda derivada de AUD-T-007 — AUG-047
 - Incluir el caso #terms-modal + #terms-agreement-modal: el aviso inicial permanece como capa inferior y el acuerdo superior debe cerrarse primero mediante Atrás.
