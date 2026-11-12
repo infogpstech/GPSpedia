@@ -2347,6 +2347,9 @@ function findTutorialRow_(sheet, reference, preferId) {
     const byId = find(0, key);
     if (byId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; no se modificó.");
     if (byId.length === 1) return byId[0];
+    if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) {
+        throw new Error("Tutorial no encontrado.");
+    }
     if (preferId) {
         const byTitle = find(1, key);
         if (byTitle.length > 1) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
@@ -3131,6 +3134,13 @@ function handleUpdateTutorialItem(payload) {
         if (!sheet) throw new Error("Hoja Tutorial no encontrada.");
         const target = findTutorialRow_(sheet, reference, true);
         const titleKey = normalizeTutorialTitle_(updates.tema !== undefined ? updates.tema : target.row[1]);
+        if (updates.tema !== undefined && !String(target.row[0] || "").trim() &&
+            titleKey !== normalizeTutorialTitle_(target.row[1])) {
+            const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+            if (feedbackSheet && findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", reference)) {
+                throw new Error("No se puede cambiar el tema de un tutorial histórico mientras exista una solicitud de vídeo pendiente.");
+            }
+        }
         if (updates.tema !== undefined) {
             const rows = sheet.getDataRange().getValues().slice(1);
             const duplicate = rows.some((row, index) => index + 2 !== target.rowIndex &&
