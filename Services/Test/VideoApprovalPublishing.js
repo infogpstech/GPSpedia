@@ -50,7 +50,7 @@ function runVideoApprovalPublishingTests() {
         }
         getSafeSheet=name=>map[name]||null;
         getSpreadsheet=()=>({getSheetByName:name=>map[name]||null});
-        return{feedback,cuts,pys,tutorial,approval,restore:()=>{getSafeSheet=oldGetSafe;}};
+        return{feedback,cuts,pys,tutorial,approval,restore:()=>{getSafeSheet=oldGetSafe;getSpreadsheet=oldGetSpreadsheet;}};
     }
     function withEnv_(type,options,fn){const e=env_(type,options);try{fn(e);}finally{e.restore();}}
     function actor_(itemId){return{itemId,userName:"Aprobador",userRole:"Desarrollador"};}
@@ -82,15 +82,15 @@ function runVideoApprovalPublishingTests() {
         run_("aprueba Tutorial por ID y genera miniatura solo si está vacía",()=>withEnv_("tutorial",{},e=>{
             const r=handleApproveVideo(actor_("vid-1"));
             const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
-            assert_(r.targetType==="tutorial"&&e.tutorial.data[1][2]===videoUrl&&e.tutorial.data[1][2]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg"&&saved.status==="approved");
+            assert_(r.targetType==="tutorial"&&e.tutorial.data[1][6]===videoUrl&&e.tutorial.data[1][2]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg"&&saved.status==="approved");
         }));
         run_("si falla la miniatura, no publica la URL del Tutorial",()=>withEnv_("tutorial",{failTutorialImageWrite:true},e=>{
             let error=null;try{handleApproveVideo(actor_("vid-1"));}catch(x){error=x;}
-            assert_(!!error&&e.tutorial.data[1][2]===""&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+            assert_(!!error&&e.tutorial.data[1][6]===""&&JSON.parse(e.feedback.data[1][3]).status==="pending");
         }));
         run_("preserva miniatura personalizada del Tutorial",()=>withEnv_("tutorial",{currentImage:"imagen-propia"},e=>{
             handleApproveVideo(actor_("vid-1"));
-            assert_(e.tutorial.data[1][1]==="imagen-propia"&&e.tutorial.data[1][2]===videoUrl);
+            assert_(e.tutorial.data[1][2]==="imagen-propia"&&e.tutorial.data[1][6]===videoUrl);
         }));
         run_("no sobrescribe un vídeo diferente en el destino",()=>withEnv_("corte",{currentUrl:"https://www.youtube.com/watch?v=zzzzzzzzzzz"},e=>{
             expect_(()=>handleApproveVideo(actor_("vid-1")),"otro vídeo");
@@ -101,7 +101,7 @@ function runVideoApprovalPublishingTests() {
             assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
         }));
         run_("no aprueba si el destino es ambiguo",()=>withEnv_("pys",{duplicateTarget:true},e=>{
-            expect_(()=>handleApproveVideo(actor_("vid-1")),"más de una vez");
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"IDs duplicados");
             assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
         }));
         run_("reintento completa estado tras fallo de escritura de Feedbacks",()=>withEnv_("corte",{failFeedbackWrite:true},e=>{
@@ -136,7 +136,7 @@ function runVideoApprovalPublishingTests() {
         }));
         run_("rechazo retira enlace y miniatura pendientes de Tutorial",()=>withEnv_("tutorial",{currentImage:"https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg",currentUrl:videoUrl},e=>{
             const r=handleRejectVideo({...actor_("vid-1"),reason:"No cumple"});
-            assert_(r.status==="success"&&e.tutorial.data[1][2]===""&&e.tutorial.data[1][1]===""&&JSON.parse(e.feedback.data[1][3]).status==="rejected");
+            assert_(r.status==="success"&&e.tutorial.data[1][6]===""&&e.tutorial.data[1][2]===""&&JSON.parse(e.feedback.data[1][3]).status==="rejected");
         }));
         run_("rechazo retira el enlace pendiente de PyS",()=>withEnv_("pys",{currentUrl:videoUrl},e=>{
             const r=handleRejectVideo({...actor_("vid-1"),reason:"No cumple"});
