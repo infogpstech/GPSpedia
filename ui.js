@@ -6352,6 +6352,7 @@ export function renderInboxList(items) {
     });
 }
 
+/* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
 export function createInboxRichTextToolbar(targetId) {
     const toolbar = createRichTextToolbar(targetId);
     toolbar.classList.add("inbox-rich-toolbar");
@@ -8377,6 +8378,8 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
         </div>
     `;
 
+    mountRichTextToolbars(content);
+
     const identity = content.querySelector("#report-success-identity");
     identity.append(
         document.createTextNode(`Tu reporte para el Corte #${String(corteNum)} ha sido registrado bajo el identificador `),
@@ -8396,6 +8399,7 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     };
 }
 
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
