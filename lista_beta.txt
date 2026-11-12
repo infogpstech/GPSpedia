@@ -934,7 +934,7 @@ git rev-parse HEAD
 
 Pruebas en una implementación Apps Script y Spreadsheet aisladas, sin cuentas ni datos productivos:
 30. Sembrar una fila de Feedbacks con JSON válido de tipo distinto de `video_approval`; intentar aprobar y rechazar. Ambas operaciones deben rechazarse y no alterar el destino.
-31. Probar JSON malformado, IDs de solicitud inexistentes/duplicados y referencia cruzada entre `ID_vehiculo` y `referenceId`; confirmar rechazo sin publicar ni retirar vídeos.
+31. Probar JSON malformado, identidad creadora ausente, IDs de solicitud inexistentes/duplicados y referencia cruzada entre `ID_vehiculo` y `referenceId`; confirmar rechazo sin publicar ni retirar vídeos.
 32. Probar solicitudes con `status` pending, approved y rejected, variando también `Respuesta` y `Se resolvio` de Feedbacks. Solo una solicitud pendiente y coherente puede aprobarse o rechazarse.
 33. Intentar aprobar una solicitud rechazada, rechazar una aprobada y repetir decisiones terminales. Deben rechazarse; un reintento de aprobación ya completada solo puede confirmar el mismo destino y estado sin reescritura.
 34. Lanzar aprobación y rechazo simultáneos para el mismo ID; comprobar que el coordinador serializa las decisiones y que solo una transición termina aplicada.
