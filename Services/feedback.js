@@ -2283,40 +2283,134 @@ function handleAddPrevention(payload) {
     return result;
 }
 
+const TUTORIAL_HEADERS = Object.freeze([
+    "ID", "Tema", "Imagen", "comoIdentificarlo", "dondeEncontrarlo", "Detalles", "Video", "Colaborador"
+]);
+
+function getTutorialSheet_(createIfMissing) {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName("Tutorial");
+    if (!sheet && createIfMissing) sheet = ss.insertSheet("Tutorial");
+    if (!sheet) return null;
+
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, TUTORIAL_HEADERS.length).setValues([TUTORIAL_HEADERS.slice()]);
+        SpreadsheetApp.flush();
+        return sheet;
+    }
+
+    const width = Math.max(TUTORIAL_HEADERS.length, sheet.getLastColumn());
+    const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0]
+        .map(value => String(value || "").trim());
+    if (TUTORIAL_HEADERS.slice(0, 7).some((header, index) => headers[index] !== header)) {
+        throw new Error("El esquema A:G de la hoja Tutorial no coincide; no se modificaron registros.");
+    }
+    if (!headers[7]) {
+        sheet.getRange(1, 8).setValue("Colaborador");
+        SpreadsheetApp.flush();
+    } else if (headers[7] !== "Colaborador") {
+        throw new Error("La columna H de Tutorial debe estar vacía o llamarse Colaborador; no se modificó la hoja.");
+    }
+    return sheet;
+}
+
+function normalizeTutorialTitle_(value) {
+    return String(value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+        .trim().replace(/\\s+/g, " ").toLowerCase();
+}
+
+function normalizeTutorialField_(value, label, maxLength, required) {
+    const text = String(value === null || value === undefined ? "" : value).trim();
+    if (required && !text) throw new Error(label + " es obligatorio.");
+    if (text.length > maxLength) throw new Error(label + " no puede exceder " + maxLength + " caracteres.");
+    return text;
+}
+
+function findTutorialRow_(sheet, reference, preferId) {
+    const key = String(reference || "").trim();
+    if (!key) throw new Error("Se requiere un ID o tema válido para identificar el tutorial.");
+    const data = sheet.getDataRange().getValues();
+    const find = (column, value) => data.slice(1).reduce((matches, row, index) => {
+        if (String(row[column] || "").trim() === value) matches.push({ rowIndex: index + 2, row });
+        return matches;
+    }, []);
+    const byId = find(0, key);
+    if (byId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; no se modificó.");
+    if (byId.length === 1) return byId[0];
+    if (preferId) {
+        const byTitle = find(1, key);
+        if (byTitle.length > 1) throw new Error("El tema del tutorial aparece más de una vez; no se modificó.");
+        if (byTitle.length === 1) return byTitle[0];
+    }
+    throw new Error("Tutorial no encontrado.");
+}
+
 function handleAddTutorial(payload) {
-    const { tema, videoUrl, descripcion, userName } = payload || {};
-    const title = String(tema || "").trim();
-    if (!title) throw new Error("El tema del tutorial es obligatorio.");
-    if (!String(userName || "").trim()) throw new Error("La sesión verificada no proporcionó un colaborador válido.");
-    if (String(videoUrl || "").trim()) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    const title = normalizeTutorialField_(source.tema, "El tema del tutorial", 30, true);
+    const comoIdentificarlo = normalizeTutorialField_(source.comoIdentificarlo, "Cómo identificarlo", 700, false);
+    const dondeEncontrarlo = normalizeTutorialField_(source.dondeEncontrarlo, "Dónde encontrarlo", 700, false);
+    const detalles = normalizeTutorialField_(source.detalles !== undefined ? source.detalles : source.descripcion,
+        "Los detalles", 700, false);
+    const collaborator = normalizeTutorialField_(source.userName, "El colaborador verificado", 120, true);
+    const operationId = String(source.operationId || "").trim();
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
+        throw new Error("Identificador de operación de tutorial inválido.");
+    }
+    if (String(source.videoUrl || "").trim()) {
         throw new Error("El vídeo debe cargarse mediante el flujo de aprobación de YouTube; no se aceptan enlaces directos.");
     }
 
-    const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial") || getSpreadsheet().insertSheet("Tutoriales");
-    const expectedHeaders = ["Tema", "Imagen", "Video", "Descripción", "Colaborador"];
-    if (sheet.getLastRow() === 0) {
-        sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
-        SpreadsheetApp.flush();
+    const tutorialId = "tut-" + operationId;
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        const sheet = getTutorialSheet_(true);
+        const existingId = sheet.getDataRange().getValues().slice(1)
+            .map((row, index) => ({ rowIndex: index + 2, row }))
+            .filter(item => String(item.row[0] || "").trim() === tutorialId);
+        if (existingId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; requiere revisión.");
+        if (existingId.length === 1) {
+            const row = existingId[0].row;
+            const same = String(row[1] || "").trim() === title &&
+                String(row[3] || "").trim() === comoIdentificarlo &&
+                String(row[4] || "").trim() === dondeEncontrarlo &&
+                String(row[5] || "").trim() === detalles &&
+                String(row[7] || "").trim() === collaborator;
+            if (!same) throw new Error("El identificador de operación ya pertenece a otro tutorial.");
+            return { status: "success", referenceId: tutorialId, alreadyCreated: true,
+                message: "El tutorial ya existía; se devolvió el registro original." };
+        }
+
+        const titleKey = normalizeTutorialTitle_(title);
+        const duplicate = sheet.getDataRange().getValues().slice(1)
+            .some(row => normalizeTutorialTitle_(row[1]) === titleKey);
+        if (duplicate) throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
+
+        const newRow = [tutorialId, title, "", comoIdentificarlo, dondeEncontrarlo, detalles, "", collaborator];
+        sheet.appendRow(newRow);
+        try {
+            SpreadsheetApp.flush();
+        } catch (flushError) {
+            const recovered = findTutorialRow_(sheet, tutorialId, false);
+            if (recovered && TUTORIAL_HEADERS.every((header, index) =>
+                String(recovered.row[index] || "").trim() === String(newRow[index] || "").trim())) {
+                return { status: "success", referenceId: tutorialId, recovered: true,
+                    message: "Tutorial registrado y verificado después de una respuesta de guardado incierta." };
+            }
+            throw flushError;
+        }
+
+        const saved = findTutorialRow_(sheet, tutorialId, false);
+        if (TUTORIAL_HEADERS.some((header, index) =>
+            String(saved.row[index] || "").trim() !== String(newRow[index] || "").trim())) {
+            throw new Error("La fila guardada del tutorial no coincide con los datos enviados.");
+        }
+        return { status: "success", referenceId: tutorialId,
+            message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
+    } finally {
+        lock.releaseLock();
     }
-    const headers = sheet.getRange(1, 1, 1, Math.max(expectedHeaders.length, sheet.getLastColumn())).getDisplayValues()[0];
-    if (expectedHeaders.some((header, index) => String(headers[index] || "").trim() !== header)) {
-        throw new Error("El esquema A:E de Tutoriales no coincide; no se modificó la hoja.");
-    }
-    const lastRow = sheet.getLastRow();
-    if (lastRow >= 2) {
-        const existing = sheet.getRange(2, 1, lastRow - 1, 1).getDisplayValues().flat()
-            .filter(value => String(value || "").trim() === title);
-        if (existing.length) throw new Error("Ya existe un tutorial con ese tema; utiliza la edición del registro existente.");
-    }
-    const newRow = [title, "", "", String(descripcion || ""), String(userName).trim()];
-    sheet.appendRow(newRow);
-    SpreadsheetApp.flush();
-    const savedRow = sheet.getLastRow();
-    const saved = sheet.getRange(savedRow, 1, 1, expectedHeaders.length).getValues()[0];
-    if (String(saved[0] || "").trim() !== title || String(saved[2] || "").trim() !== "") {
-        throw new Error("No se pudo verificar el registro del tutorial sin vídeo.");
-    }
-    return { status: "success", referenceId: title, message: "Tutorial registrado. El vídeo debe enviarse a aprobación antes de publicarse." };
 }
 
 function extractYouTubeId(url) { return getPysYouTubeVideoId_(url); }
@@ -2812,14 +2906,9 @@ function getVideoApprovalTarget_(videoData) {
         return { type: "pys", sheet, record: findUniqueVideoTargetRow_(sheet, referenceId, 1, "PyS"), videoColumn: 8 };
     }
     if (videoData.contentType === "tutorial") {
-        const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial");
-        if (!sheet) throw new Error("Hoja de tutoriales no encontrada.");
-        const headers = sheet.getRange(1, 1, 1, Math.max(5, sheet.getLastColumn())).getDisplayValues()[0].map(value => String(value || "").trim());
-        const expected = ["Tema", "Imagen", "Video", "Descripción", "Colaborador"];
-        if (expected.some((header, index) => headers[index] !== header)) {
-            throw new Error("El esquema A:E de Tutoriales no coincide; no se modificó el destino.");
-        }
-        return { type: "tutorial", sheet, record: findUniqueVideoTargetRow_(sheet, referenceId, 1, "Tutoriales"), videoColumn: 3, imageColumn: 2 };
+        const sheet = getTutorialSheet_(false);
+        if (!sheet) throw new Error("Hoja Tutorial no encontrada.");
+        return { type: "tutorial", sheet, record: findTutorialRow_(sheet, referenceId, true), videoColumn: 7, imageColumn: 3 };
     }
     throw new Error("Tipo de destino de vídeo no reconocido.");
 }
@@ -3001,54 +3090,62 @@ function handleUpdatePysItem(payload) {
     return {status:"success",message:"Problema actualizado exitosamente in-modal.",updated:{problemId,...updates,videoUrl:videoUrl===undefined?currentVideo:videoUrl.trim()}};
 }
 
-/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */
+/* La autorización Desarrollador se valida en authorizeFeedbackAction_ antes de llegar aquí. */
 function handleUpdateTutorialItem(payload) {
-    const { originalTema, tema, descripcion, videoUrl, userRole } = payload;
-    if (!originalTema && !tema) throw new Error("Se requiere el tema del tutorial a editar.");
-
-    const allowedRoles = ['Desarrollador'];
-    if (!userRole || !allowedRoles.includes(userRole)) {
-        throw new Error("No tienes permisos de Desarrollador para editar este tutorial.");
-    }
-
-    if (tema && tema.length > 30) throw new Error("El tema no puede exceder 30 caracteres.");
-    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
-
-    const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial");
-    if (!sheet) throw new Error("Hoja de tutoriales no encontrada.");
-    const lastRow = sheet.getLastRow();
-    if (lastRow < 2) throw new Error("No hay tutoriales registrados.");
-
-    const searchKey = String(originalTema || tema || "").trim();
-    const values = sheet.getRange(2, 1, lastRow - 1, Math.max(5, sheet.getLastColumn())).getValues();
-    const matches = [];
-    for (let i = 0; i < values.length; i++) {
-        if (String(values[i][0] || "").trim() === searchKey) matches.push(i + 2);
-    }
-    if (matches.length !== 1) {
-        throw new Error(matches.length > 1
-            ? "El tema del tutorial aparece más de una vez; no se modificó."
-            : "Tutorial no encontrado.");
-    }
-    const rowIndex = matches[0];
-    if (tema !== undefined && String(tema).trim() !== String(searchKey).trim()) {
-        const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-        if (feedbackSheet && findPendingVideoApprovalForTarget_(feedbackSheet, "tutorial", searchKey)) {
-            throw new Error("No se puede cambiar el tema mientras exista una solicitud de vídeo pendiente para este tutorial.");
+    const source = payload && typeof payload === "object" ? payload : {};
+    const reference = String(source.tutorialId || source.originalTema || "").trim();
+    if (!reference) throw new Error("Se requiere el ID del tutorial a editar.");
+    if (source.videoUrl !== undefined && String(source.videoUrl || "").trim()) {
+        const sheet = getTutorialSheet_(false);
+        const target = sheet ? findTutorialRow_(sheet, reference, true) : null;
+        const currentVideo = target ? String(target.row[6] || "").trim() : "";
+        if (String(source.videoUrl || "").trim() !== currentVideo) {
+            throw new Error("El vídeo del tutorial solo puede cambiarse mediante una solicitud de aprobación de YouTube.");
         }
     }
 
-    const currentVideo = String(sheet.getRange(rowIndex, 3).getValue() || "").trim();
-    if (videoUrl !== undefined && String(videoUrl || "").trim() !== currentVideo) {
-        throw new Error("El vídeo del tutorial solo puede cambiarse mediante una solicitud de aprobación de YouTube.");
+    const updates = {};
+    if (source.tema !== undefined) updates.tema = normalizeTutorialField_(source.tema, "El tema del tutorial", 30, true);
+    if (source.comoIdentificarlo !== undefined) updates.comoIdentificarlo = normalizeTutorialField_(source.comoIdentificarlo, "Cómo identificarlo", 700, false);
+    if (source.dondeEncontrarlo !== undefined) updates.dondeEncontrarlo = normalizeTutorialField_(source.dondeEncontrarlo, "Dónde encontrarlo", 700, false);
+    if (source.detalles !== undefined || source.descripcion !== undefined) {
+        updates.detalles = normalizeTutorialField_(source.detalles !== undefined ? source.detalles : source.descripcion,
+            "Los detalles", 700, false);
     }
-    if (tema !== undefined) sheet.getRange(rowIndex, 1).setValue(tema);
-    if (descripcion !== undefined) sheet.getRange(rowIndex, 4).setValue(descripcion);
+    if (!Object.keys(updates).length) throw new Error("No se recibieron campos editables del tutorial.");
 
-    SpreadsheetApp.flush();
-    return {
-        status: "success",
-        message: "Tutorial actualizado exitosamente in-modal.",
-        updated: { tema: tema || originalTema, descripcion, videoUrl }
-    };
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        const sheet = getTutorialSheet_(false);
+        if (!sheet) throw new Error("Hoja Tutorial no encontrada.");
+        const target = findTutorialRow_(sheet, reference, true);
+        const titleKey = normalizeTutorialTitle_(updates.tema !== undefined ? updates.tema : target.row[1]);
+        if (updates.tema !== undefined) {
+            const rows = sheet.getDataRange().getValues().slice(1);
+            const duplicate = rows.some((row, index) => index + 2 !== target.rowIndex &&
+                normalizeTutorialTitle_(row[1]) === titleKey);
+            if (duplicate) throw new Error("Ya existe otro tutorial con ese tema; no se modificó el registro.");
+        }
+
+        if (updates.tema !== undefined) sheet.getRange(target.rowIndex, 2).setValue(updates.tema);
+        if (updates.comoIdentificarlo !== undefined) sheet.getRange(target.rowIndex, 4).setValue(updates.comoIdentificarlo);
+        if (updates.dondeEncontrarlo !== undefined) sheet.getRange(target.rowIndex, 5).setValue(updates.dondeEncontrarlo);
+        if (updates.detalles !== undefined) sheet.getRange(target.rowIndex, 6).setValue(updates.detalles);
+        SpreadsheetApp.flush();
+
+        return {
+            status: "success",
+            message: "Tutorial actualizado exitosamente.",
+            updated: {
+                tutorialId: String(target.row[0] || "").trim(),
+                tema: updates.tema !== undefined ? updates.tema : String(target.row[1] || ""),
+                comoIdentificarlo: updates.comoIdentificarlo !== undefined ? updates.comoIdentificarlo : String(target.row[3] || ""),
+                dondeEncontrarlo: updates.dondeEncontrarlo !== undefined ? updates.dondeEncontrarlo : String(target.row[4] || ""),
+                detalles: updates.detalles !== undefined ? updates.detalles : String(target.row[5] || "")
+            }
+        };
+    } finally {
+        lock.releaseLock();
+    }
 }
