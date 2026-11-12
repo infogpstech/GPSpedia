@@ -288,4 +288,47 @@ test('multi-level back and forward traversal does not create a loop', () => {
     assert.equal(history.entries.length, 5);
 });
 
-console.log('NavigationBackHistory:', passed + '/17 PASS');
+test('fallback rendering does not push a duplicate when optional dimensions normalize to null', () => {
+    assert.equal(sameNavigationState(
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota' },
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota', versionEquipamiento: null }
+    ), true);
+    assert.equal(sameNavigationState(
+        { level: 'versiones', tipoEncendido: 'Push' },
+        { level: 'versiones', tipoEncendido: null }
+    ), false);
+
+    const history = createFakeHistory({
+        level: 'versiones',
+        categoria: 'Autos',
+        marca: 'Toyota',
+        modelo: 'Yaris'
+    });
+    const target = { level: 'modelos', categoria: 'Autos', marca: 'Toyota', origin: 'categoria' };
+    const action = navigateBackToState(target, {
+        historyObject: history,
+        locationObject,
+        previousNavigationState: { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris' },
+        renderFallback: state => {
+            // mostrarModelos completa la dimensión opcional ausente con null al reconstruir la vista.
+            pushNavigationState({
+                level: 'modelos',
+                categoria: 'Autos',
+                marca: 'Toyota',
+                versionEquipamiento: null,
+                origin: 'categoria',
+                previousState: state.previousState
+            }, {
+                historyObject: history,
+                locationObject,
+                previousNavigationState: state.previousState
+            });
+        }
+    });
+    assert.equal(action, 'replace');
+    assert.equal(history.entries.length, 1);
+    assert.equal(history.pushCalls, 0);
+    assert.equal(history.replaceCalls, 2);
+});
+
+console.log('NavigationBackHistory:', passed + '/18 PASS');
