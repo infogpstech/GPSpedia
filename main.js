@@ -15,7 +15,7 @@ import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from '
 import { decodeSearchHash } from './search-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
 import { createOverlayHistoryManager, overlayHistoryStateKey } from './overlayHistory.js';
-import { pushNavigationState, replaceNavigationState } from './navigationHistory.js';
+import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
@@ -189,7 +189,8 @@ async function initializeApp() {
         const searchState = { level: "busqueda", query: currentQuery };
         const focusedState = { level: "busqueda_focused", query: currentQuery };
 
-        window.state.setState({ navigationState: focusedState });
+        const focusedNavigationState = { ...focusedState, previousState: previousNavigationState };
+        window.state.setState({ navigationState: focusedNavigationState });
 
         if (currentState.level === 'busqueda_focused') {
             replaceNavigationState(focusedState, { previousNavigationState });
@@ -207,8 +208,13 @@ async function initializeApp() {
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
         if (currentState.level === 'busqueda_focused') {
-            const searchState = { level: "busqueda", query: currentQuery };
-            replaceNavigationState(searchState, { previousNavigationState: window.state.getState().navigationState });
+            const currentNavigationState = window.state.getState().navigationState || {};
+            const searchState = {
+                level: "busqueda",
+                query: currentQuery,
+                previousState: currentNavigationState.previousState || null
+            };
+            replaceNavigationState(searchState, { previousNavigationState: currentNavigationState.previousState });
             window.state.setState({ navigationState: searchState });
         }
 
@@ -489,10 +495,17 @@ async function initializeApp() {
 
         // Manejo de niveles de navegación (Cortes / Categorías)
         if (state.level) {
-            // Rehidratar origin en el estado global para conservar el contexto
-            const origin = state.origin || "categoria";
-            const currentState = window.state.getState().navigationState || {};
-            window.state.setState({ navigationState: { ...currentState, origin } });
+            // Rehidratar el estado completo y su antecesor para que los botones internos
+            // y el historial nativo compartan el mismo contexto de navegación.
+            const { [navigationHistoryStateKey]: previousNavigationState, ...restoredState } = state;
+            const origin = restoredState.origin || "categoria";
+            window.state.setState({
+                navigationState: {
+                    ...restoredState,
+                    origin,
+                    previousState: previousNavigationState || null
+                }
+            });
 
             // Limpieza de búsqueda al salir del nivel de búsqueda hacia un nivel no-búsqueda de catálogo
             const isSearchLevel = state.level === 'busqueda' || state.level === 'busqueda_focused';
@@ -525,7 +538,8 @@ async function initializeApp() {
                         c.marca === state.marca &&
                         c.modelo === state.modelo &&
                         c.categoria === state.categoria &&
-                        (!state.versionEquipamiento || c.versionesAplicables === state.versionEquipamiento)
+                        (!state.versionEquipamiento || c.versionesAplicables === state.versionEquipamiento) &&
+                        (!state.tipoEncendido || c.tipoEncendido === state.tipoEncendido)
                     );
                     ui.mostrarVersiones(filter, state.categoria, state.marca, state.modelo);
                     break;
