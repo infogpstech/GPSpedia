@@ -1702,88 +1702,130 @@ function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
     return { reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex };
 }
 
+function normalizeSuggestionImageAttachment_(imageAttachment, legacyImgBase64) {
+    if (imageAttachment != null && legacyImgBase64) throw new Error("Envía la imagen de sugerencia en un solo campo.");
+    let source = imageAttachment;
+    if (source == null && legacyImgBase64) {
+        const dataUrl = String(legacyImgBase64).trim();
+        const match = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,/i);
+        if (!match) throw new Error("La imagen de sugerencia tiene un formato no permitido.");
+        let bytes;
+        try { bytes = Utilities.base64Decode(dataUrl.slice(dataUrl.indexOf(",") + 1)); }
+        catch (error) { throw new Error("No se pudo decodificar la imagen de sugerencia."); }
+        source = { dataUrl, mimeType: match[1].toLowerCase(), size: bytes.length, name: "sugerencia" };
+    }
+    return source == null ? null : validateReportImageAttachment_(source);
+}
+function saveSuggestionImageAttachment_(image, vehicleId, corteIndex) {
+    const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const extension = extensions[image.mimeType];
+    if (!extension) throw new Error("El formato de imagen de sugerencia no está permitido.");
+    const baseName = image.name.replace(/\.[^.]*$/, "").replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 48) || "sugerencia";
+    const fileName = "sug_" + String(vehicleId).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 48) +
+        "_corte" + String(corteIndex) + "_" + Date.now() + "_" + baseName + "." + extension;
+    const folder = findOrCreateSubFolder(getCortesRootFolder(), "SugerenciasCortes");
+    let file = null;
+    try {
+        file = folder.createFile(Utilities.newBlob(image.bytes, image.mimeType, fileName));
+        if (!file) throw new Error("Drive no confirmó la creación de la imagen de sugerencia.");
+        if (typeof file.getSharingAccess !== "function") throw new Error("No se pudo verificar el acceso heredado de la imagen de sugerencia.");
+        const access = file.getSharingAccess();
+        const publicAccess = [DriveApp.Access.ANYONE, DriveApp.Access.ANYONE_WITH_LINK].filter(value => value !== undefined && value !== null);
+        if (!access || publicAccess.includes(access)) throw new Error("La carpeta de sugerencias permite acceso público; se rechazó la carga.");
+        const imageFileId = String(file.getId() || "").trim();
+        if (!/^[A-Za-z0-9_-]{10,}$/.test(imageFileId)) throw new Error("Drive no devolvió un identificador válido para la imagen de sugerencia.");
+        return { file, metadata: {
+            imageFileId, imageUrl: "https://drive.google.com/file/d/" + imageFileId + "/view",
+            imageName: image.name, imageMimeType: image.mimeType, imageSize: image.size, imageSha256: image.sha256
+        }};
+    } catch (error) {
+        if (file) {
+            try { file.setTrashed(true); }
+            catch (cleanupError) { console.error("No se pudo retirar una imagen de sugerencia sin acceso verificable:", cleanupError); }
+        }
+        throw error;
+    }
+}
 function handleSuggestCutChange(payload) {
-    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload || {};
+    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, imageAttachment, proposedValues } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
     const normalizedCorteIndex = Number(corteIndex);
-    if (!normalizedVehicleId || !userId || !userName ||
-        !Number.isInteger(normalizedCorteIndex) || normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
+    if (!normalizedVehicleId || !userId || !userName || !Number.isInteger(normalizedCorteIndex) ||
+        normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
         throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
     const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
+    const normalizedImage = normalizeSuggestionImageAttachment_(imageAttachment, imgBase64);
+    const imageDataUrl = normalizedImage ? String(imageAttachment != null ? imageAttachment.dataUrl || "" : imgBase64 || "") : "";
     const reportContext = validateCutSuggestionReportContext_(reportId, normalizedVehicleId, normalizedCorteIndex);
     const normalizedReportId = reportContext.reportId;
     const normalizedUserId = String(userId);
     const normalizedDetails = String(details || "");
-    const requestFingerprint = buildCutSuggestionRequestFingerprint_(normalizedDetails, normalizedProposedValues, imgBase64);
+    const requestFingerprint = buildCutSuggestionRequestFingerprint_(normalizedDetails, normalizedProposedValues, imageDataUrl);
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
+    let uploadedImage = null, pendingSheet = null, pendingRowNumber = 0, rowCommitted = false, result = null;
     try {
         const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+        pendingSheet = sheet;
         const existing = findCutSuggestionByRequest_(sheet, normalizedReportId, normalizedVehicleId, normalizedCorteIndex, normalizedUserId);
         if (existing) {
             if (!existing.record.requestFingerprint || existing.record.requestFingerprint !== requestFingerprint) {
                 throw new Error("El identificador del reporte ya fue utilizado con datos distintos; no se creó otra sugerencia.");
             }
             return {
-                status: "success",
-                message: "La sugerencia ya estaba registrada; se devolvió el registro existente.",
-                reportId: normalizedReportId,
-                alreadySuggested: true,
+                status: "success", message: "La sugerencia ya estaba registrada; se devolvió el registro existente.",
+                reportId: normalizedReportId, alreadySuggested: true,
+                imageAttached: Boolean(existing.record.imageUrl), imageUrl: String(existing.record.imageUrl || ""),
                 suggestionData: existing.record
             };
         }
-
         const createdAt = new Date().toISOString();
-        let imageUrl = "";
-        if (imgBase64) {
-            try {
-                const folderName = "SugerenciasCortes";
-                const folders = DriveApp.getFoldersByName(folderName);
-                let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-                const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${normalizedVehicleId}_corte${normalizedCorteIndex}_${Date.now()}.jpg`);
-                const file = folder.createFile(blob);
-                file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-                imageUrl = file.getUrl();
-            } catch(e) {
-                console.error("Error subiendo imagen de sugerencia:", e);
-            }
-        }
-        // La sugerencia se conserva como registro independiente en Feedbacks; no modifica Cortes.
-        const lastRow = sheet.getLastRow();
-        const newRowNumber = lastRow + 1;
-        const FORMULA_ROW = 2;
-        const lastCol = sheet.getLastColumn() || 8;
+        const lastRow = sheet.getLastRow(), newRowNumber = lastRow + 1;
+        pendingRowNumber = newRowNumber;
+        const FORMULA_ROW = 2, lastCol = sheet.getLastColumn() || 8;
         if (lastRow >= FORMULA_ROW) {
-            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-            formulaRange.copyTo(newRowRange);
+            sheet.getRange(FORMULA_ROW, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
             if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
         }
+        if (normalizedImage) uploadedImage = saveSuggestionImageAttachment_(normalizedImage, normalizedVehicleId, normalizedCorteIndex);
+        const imageMetadata = uploadedImage ? uploadedImage.metadata : null;
         const suggestionRecord = {
-            subType: "suggestion_cut", schemaVersion: 2,
-            reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
-            userId: normalizedUserId, userName: String(userName), createdAt,
-            imageUrl: imageUrl || "", details: normalizedDetails,
-            proposedValues: normalizedProposedValues, requestFingerprint,
-            status: "pendiente_revision"
+            subType: "suggestion_cut", schemaVersion: 2, reportId: normalizedReportId,
+            vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex, userId: normalizedUserId,
+            userName: String(userName), createdAt, imageUrl: imageMetadata ? imageMetadata.imageUrl : "",
+            imageFileId: imageMetadata ? imageMetadata.imageFileId : "", imageName: imageMetadata ? imageMetadata.imageName : "",
+            imageMimeType: imageMetadata ? imageMetadata.imageMimeType : "", imageSize: imageMetadata ? imageMetadata.imageSize : 0,
+            imageSha256: imageMetadata ? imageMetadata.imageSha256 : "", details: normalizedDetails,
+            proposedValues: normalizedProposedValues, requestFingerprint, status: "pendiente_revision"
         };
         const problemDesc = JSON.stringify(suggestionRecord);
-        const values = [[String(userName), normalizedVehicleId, problemDesc]];
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-        if (COLS_FEEDBACKS['Se resolvio']) sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, 3).setValues([[String(userName), normalizedVehicleId, problemDesc]]);
+        if (COLS_FEEDBACKS["Se resolvio"]) sheet.getRange(newRowNumber, COLS_FEEDBACKS["Se resolvio"]).setValue(false);
         SpreadsheetApp.flush();
-        logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, problemDesc);
-        return {
-            status: "success",
-            message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
-            reportId: normalizedReportId,
-            suggestionData: suggestionRecord
+        const storedProblem = sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).getValue();
+        if (String(storedProblem || "") !== problemDesc) throw new Error("No se pudo confirmar la escritura de la sugerencia; la imagen no quedará asociada.");
+        rowCommitted = true;
+        result = {
+            status: "success", message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
+            reportId: normalizedReportId, imageAttached: Boolean(imageMetadata),
+            imageUrl: imageMetadata ? imageMetadata.imageUrl : "", suggestionData: suggestionRecord
         };
-    } finally {
-        lock.releaseLock();
-    }
+        uploadedImage = null;
+    } catch (error) {
+        if (!rowCommitted && pendingSheet && pendingRowNumber) {
+            try {
+                pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS.Usuario, 1, 3).clearContent();
+                if (COLS_FEEDBACKS["Se resolvio"]) pendingSheet.getRange(pendingRowNumber, COLS_FEEDBACKS["Se resolvio"]).clearContent();
+                SpreadsheetApp.flush();
+            } catch (rollbackError) { console.error("No se pudo revertir completamente la fila de sugerencia:", rollbackError); }
+        }
+        if (!rowCommitted) trashReportImageUpload_(uploadedImage);
+        throw error;
+    } finally { lock.releaseLock(); }
+    logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, JSON.stringify(result.suggestionData));
+    return result;
 }
 
 function parseModelosAsociados(rawVal) {
