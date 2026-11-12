@@ -148,3 +148,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - UI incorpora maxlength, validación previa y transmisión del estado de testigo del reporte al modal de sugerencia.
 - Se añade suite de 16 escenarios y se actualiza la suite de idempotencia para probar los nuevos validadores (20 escenarios).
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-082 — SEGURIDAD STORED XSS EN PyS
+- ui.js: tarjetas PyS construyen el título y el estado con nodos DOM y textContent; el modal usa textContent para título y colaborador, sin interpolarlos en innerHTML.
+- ui.js: nuevo validador de video basado en URL, HTTPS, allowlist exacta de hosts/rutas y ID de 11 caracteres. El iframe PyS se crea con createElement y src canónico construido solo desde el ID validado; se elimina el fallback embed arbitrario y el enlace href con item.Video. Los valores inválidos se muestran como texto y no crean enlaces/iframes.
+- Se conserva sanitizeHtmlContent para el contenido enriquecido de descripción, solución y prevención.
+- Services/Test/PysStoredXss.js: 10 escenarios de allowlist, payloads/esquemas/hosts/rutas inválidos y contratos de sinks DOM.
+================================================================================
