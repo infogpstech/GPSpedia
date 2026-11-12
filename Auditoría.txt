@@ -707,3 +707,17 @@ Validación local adaptada:
 - Parsing V8 de main.js y del bloque updateStatus: PASS.
 Límites: Node CLI literal no ejecutado. Lector de pantalla, eventos reales online/offline, red disponible con backend inaccesible y prefers-reduced-motion en navegador/dispositivo quedan diferidos a Beta.
 ================================================================================
+
+================================================================================
+H-AUD-010-002 — ADENDA DE CIERRE — 2026-11-12 — RESUELTO EN FUENTES
+Origen: AUG-076.
+Ubicaciones: ui.js — renderInboxList(), renderInboxDetail(), showReportSuccessModal(), openReportCutModal() y openSuggestCutModal().
+Corrección:
+- Inbox lista y detalle construyen etiquetas y datos visibles mediante textContent y nodos DOM; subject, user, vehicleId, reportId, datos del catálogo, metadata, responder y contentType ya no se interpolan en HTML.
+- El contenido y la respuesta enriquecidos continúan pasando por sanitizeHtmlContent antes de asignarse a innerHTML.
+- Enlaces de YouTube se limitan a HTTPS y hosts permitidos; las imágenes de sugerencias se aceptan solo desde drive.google.com. Los enlaces externos usan rel=noopener noreferrer.
+- Los formularios de reporte y sugerencia usan plantillas HTML estáticas; currentCutData y dropdownOptions se asignan mediante value/textContent y nodos option.
+- El modal de confirmación de reporte también se endureció porque recibe reportId de la respuesta del servicio.
+Pruebas: Services/Test/InboxStoredXss.js — 20/20 PASS en runtime V8 adaptado; parsing individual de los cinco componentes: PASS.
+Límites: la suite es un contrato estático de fuentes, no un DOM real. Node CLI literal, ejecución de payloads en navegador y validación visual/funcional quedan pendientes de Beta aislada.
+================================================================================
