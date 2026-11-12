@@ -1240,7 +1240,7 @@ Actualización de cierre: el backlog marca AUG-078 como COMPLETADA CON VALIDACI�
 ================================================================================
 AUG-079 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 
-Rama: GPSpedia2.2.5_work. HEAD previo verificado: 76338855b5776960d370f8f79ea0843a4f54d9ea. Commits de implementación: Services/feedback.js 269707bd61259d80470fa60b37f2a9a5af75c022; ui.js 31b972721cfc4d11ffadb56c81b4cf3a100e3547. Suite: 04f3aa2188d3c1f54c709085b6c250b6450f207f, revisiones 070199ea4047f327d6783b181ebc0905143f1c31, a925c4c488628e4fba5e940d92c76f8fe1f6b6c8 y f883eb6416dd4b929c280e3cc235ca1ac6f66ef5. Documentación: ChangesLogs 1097e03bad621902fe67b1aa31761aaf00647caa; Auditoría 2eb02d3e74b108f0fc9e17e1d3af59a8fa0ba01b; lista_beta b19a332726f0df27aa192abad0c78e3924efe0d7; Test README b316ece6ad0626db6b2ffe7407932e6f5da3629a; backlog c419fb79143f1bfaca486b90f9b2baa3af124299.
+Rama: GPSpedia2.2.5_work. HEAD previo verificado: 76338855b5776960d370f8f79ea0843a4f54d9ea. Commits de implementación: Services/feedback.js 269707bd61259d80470fa60b37f2a9a5af75c022 y endurecimiento de límite Base64 legado fe72053b5955e172555b305edebce850a07ef2dd; ui.js 31b972721cfc4d11ffadb56c81b4cf3a100e3547. Suite: 04f3aa2188d3c1f54c709085b6c250b6450f207f, revisiones 070199ea4047f327d6783b181ebc0905143f1c31, a925c4c488628e4fba5e940d92c76f8fe1f6b6c8 y f883eb6416dd4b929c280e3cc235ca1ac6f66ef5; prueba de límite previo a decodificación 8c8b25104d6337ac429db21f21d8a4ac34251130. Documentación: ChangesLogs 4823810b4946c2322f4c66ffc60973a7872af7da; Auditoría e0f59de06f08af2de484d7a1a310de4833fc6380; lista_beta d1f9e69a9b2067562b3235b2494bdd36bad92601; Test README c1bcba373f6f530a1606065b70f6831dc420cb12; backlog d0198e6f328f1fb061d72b3c620980ace186af79.
 
 Implementación:
 - ui.js: selector limitado a JPEG/PNG/WebP y 3 MB; FileReader gestiona load/error/abort dentro del try del envío; el catch restablece botón y muestra el error. El cliente requiere status success y, si hay imagen, imageAttached=true e imageUrl antes de cerrar el modal y mostrar éxito.
@@ -1249,7 +1249,7 @@ Implementación:
 - Feedbacks incluye metadatos de archivo (ID, URL canónica, nombre, MIME, tamaño y SHA-256). La fila se confirma mediante read-back. Si la escritura no queda confirmada, se intenta limpiar la fila y enviar el archivo a papelera. Reintentos idénticos devuelven imageAttached/imageUrl existentes.
 - No se migran ni cambian automáticamente permisos de imágenes históricas.
 
-Validación local: suite de seguridad 24/24 PASS en harness V8 aislado; parsing completo de Services/feedback.js, modal de ui.js y suite PASS. Se probaron formatos, MIME discordante, tamaño, compatibilidad Data URL, MIME/extensión de Blob, ACL pública/no verificable, fallo de creación Drive, ID inválido, read-back, rollback, metadatos e idempotencia. No se ejecutó Node CLI desde un checkout completo en este entorno; el comando queda documentado en Services/Test/README.md y lista_beta.txt.
+Validación local: suite de seguridad 25/25 PASS en harness V8 aislado; parsing completo de Services/feedback.js, modal de ui.js y suite PASS. Se probaron formatos, MIME discordante, tamaño, compatibilidad Data URL, MIME/extensión de Blob, ACL pública/no verificable, fallo de creación Drive, ID inválido, read-back, rollback, metadatos e idempotencia. No se ejecutó Node CLI desde un checkout completo en este entorno; el comando queda documentado en Services/Test/README.md y lista_beta.txt.
 
 Beta pendiente: deployment FEEDBACK, Spreadsheet y Drive aislados; ACL efectiva de Cortes/SugerenciasCortes, acceso de revisores y denegación a usuarios no autorizados; FileReader real, errores Drive, rollback real y compatibilidad histórica. No se desplegó a producción.
 
@@ -1257,3 +1257,5 @@ Siguiente tarea: AUG-080 — Serializar e idempotentizar la inserción de sugere
 ================================================================================
 
 Corrección de trazabilidad: la adenda H-AUD-010-005 quedó corregida a 24/24 PASS en Auditoría.txt, commit ba0abb98be818c806b5eba4858e75ce0f0ab9961. Esta cifra corresponde al harness V8 aislado; no se afirma ejecución Node CLI ni integración real de Drive/Spreadsheet.
+
+Ajuste final de AUG-079: se añadió límite de longitud Base64 antes de decodificar el formato imgBase64 legado, evitando decodificación de cargas sobredimensionadas. Suite actualizada a 25/25 PASS en harness V8 aislado. Commit de backend fe72053b5955e172555b305edebce850a07ef2dd; suite 8c8b25104d6337ac429db21f21d8a4ac34251130. Documentación de evidencia actualizada; Auditoría commit e0f59de06f08af2de484d7a1a310de4833fc6380.
