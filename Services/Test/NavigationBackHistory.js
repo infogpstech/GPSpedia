@@ -1,0 +1,173 @@
+import assert from 'node:assert/strict';
+import {
+    pushNavigationState,
+    replaceNavigationState,
+    navigateBackToState,
+    navigationHistoryStateKey,
+    sameNavigationState
+} from '../../navigationHistory.js';
+
+function createFakeHistory(initialState = { level: 'categorias' }) {
+    const entries = [{ state: initialState, url: '/' }];
+    let index = 0;
+    let backCalls = 0;
+    let pushCalls = 0;
+    let replaceCalls = 0;
+    return {
+        get state() { return entries[index].state; },
+        get index() { return index; },
+        get entries() { return entries; },
+        get backCalls() { return backCalls; },
+        get pushCalls() { return pushCalls; },
+        get replaceCalls() { return replaceCalls; },
+        pushState(state, _title, url) {
+            entries.splice(index + 1);
+            entries.push({ state, url });
+            index++;
+            pushCalls++;
+        },
+        replaceState(state, _title, url) {
+            entries[index] = { state, url };
+            replaceCalls++;
+        },
+        back() {
+            backCalls++;
+            if (index > 0) index--;
+        },
+        forward() {
+            if (index < entries.length - 1) index++;
+        }
+    };
+}
+
+const locationObject = { pathname: '/catalog', search: '?mode=all' };
+let passed = 0;
+function test(name, callback) {
+    callback();
+    passed++;
+    console.log('PASS', name);
+}
+
+test('push stores the exact previous navigation context', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    const action = pushNavigationState(
+        { level: 'marcas', categoria: 'Autos', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    assert.equal(action, 'push');
+    assert.deepEqual(history.state[navigationHistoryStateKey], { level: 'categorias' });
+});
+
+test('internal back uses native history when the previous entry is the requested target', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    pushNavigationState(
+        { level: 'marcas', categoria: 'Autos', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    const action = navigateBackToState(
+        { level: 'categorias' },
+        { historyObject: history, locationObject }
+    );
+    assert.equal(action, 'back');
+    assert.equal(history.backCalls, 1);
+    assert.equal(history.index, 0);
+    assert.equal(history.state.level, 'categorias');
+});
+
+test('fallback replaces the current entry and renders without adding a history entry', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    pushNavigationState(
+        { level: 'modelos', categoria: 'Autos', marca: 'Toyota', origin: 'categoria' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    let rendered = null;
+    const action = navigateBackToState(
+        { level: 'marcas', categoria: 'Autos', origin: 'categoria' },
+        {
+            historyObject: history,
+            locationObject,
+            renderFallback: state => { rendered = state; }
+        }
+    );
+    assert.equal(action, 'replace');
+    assert.equal(history.entries.length, 2);
+    assert.equal(history.state.level, 'marcas');
+    assert.deepEqual(rendered, {
+        level: 'marcas',
+        categoria: 'Autos',
+        origin: 'categoria',
+        previousState: { level: 'categorias' }
+    });
+});
+
+test('same level with different parameters creates a distinct entry', () => {
+    const history = createFakeHistory({ level: 'marcas', categoria: 'Autos' });
+    const action = pushNavigationState(
+        { level: 'marcas', categoria: 'Motocicletas' },
+        { historyObject: history, locationObject, previousNavigationState: history.state }
+    );
+    assert.equal(action, 'push');
+    assert.equal(history.entries.length, 2);
+    assert.equal(history.state.categoria, 'Motocicletas');
+});
+
+test('reopening the same navigation state replaces instead of duplicating', () => {
+    const history = createFakeHistory({ level: 'marcas', categoria: 'Autos' });
+    const action = pushNavigationState(
+        { level: 'marcas', categoria: 'Autos' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    assert.equal(action, 'replace');
+    assert.equal(history.entries.length, 1);
+});
+
+test('search focused and unfocused states preserve query and original ancestry', () => {
+    const history = createFakeHistory({ level: 'categorias' });
+    pushNavigationState(
+        { level: 'busqueda', query: 'Toyota' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'categorias' } }
+    );
+    pushNavigationState(
+        { level: 'busqueda_focused', query: 'Toyota' },
+        { historyObject: history, locationObject, previousNavigationState: { level: 'busqueda', query: 'Toyota' } }
+    );
+    replaceNavigationState(
+        { level: 'busqueda', query: 'Toyota' },
+        { historyObject: history, locationObject }
+    );
+    assert.equal(history.state.query, 'Toyota');
+    assert.deepEqual(history.state[navigationHistoryStateKey], { level: 'categorias' });
+    const action = navigateBackToState(
+        { level: 'categorias' },
+        { historyObject: history, locationObject }
+    );
+    assert.equal(action, 'back');
+    assert.equal(history.state.level, 'categorias');
+});
+
+test('category, brand, model, equipment and ignition fields are compared', () => {
+    assert.equal(sameNavigationState(
+        { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', versionEquipamiento: 'X', tipoEncendido: 'Push' },
+        { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', versionEquipamiento: 'X', tipoEncendido: 'Push' }
+    ), true);
+    assert.equal(sameNavigationState(
+        { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', versionEquipamiento: 'X', tipoEncendido: 'Push' },
+        { level: 'versiones', categoria: 'Autos', marca: 'Toyota', modelo: 'Yaris', versionEquipamiento: 'X', tipoEncendido: 'Key' }
+    ), false);
+});
+
+test('search fallback restores the deep-link hash', () => {
+    const history = createFakeHistory({ level: 'modelos', categoria: 'Autos', marca: 'Toyota' });
+    navigateBackToState(
+        { level: 'busqueda', query: 'Toyota Hilux' },
+        {
+            historyObject: history,
+            locationObject,
+            renderFallback: () => {}
+        }
+    );
+    assert.equal(history.state.level, 'busqueda');
+    assert.equal(history.entries[0].url, '/catalog?mode=all#search=Toyota%20Hilux');
+});
+
+console.log('NavigationBackHistory:', passed + '/8 PASS');
