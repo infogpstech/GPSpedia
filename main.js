@@ -346,7 +346,7 @@ async function initializeApp() {
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};
-        if (Object.prototype.hasOwnProperty.call(state, overlayHistoryStateKey)) {
+        if (overlayHistory.getStack().length > 0 || Object.prototype.hasOwnProperty.call(state, overlayHistoryStateKey)) {
             overlayHistory.handlePopState(state);
             return;
         }
