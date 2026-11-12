@@ -1651,6 +1651,57 @@ function findCutSuggestionByRequest_(sheet, reportId, vehicleId, corteIndex, use
     return matches.length ? matches[0] : null;
 }
 
+
+function validateCutSuggestionReportContext_(reportId, vehicleId, corteIndex) {
+    const normalizedReportId = String(reportId || "").trim();
+    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedCorteIndex = Number(corteIndex);
+    if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(normalizedReportId)) {
+        throw new Error("Se requiere el identificador real del reporte individual.");
+    }
+    if (!normalizedVehicleId || !Number.isInteger(normalizedCorteIndex) ||
+        normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
+        throw new Error("El vehículo o el número de corte no son válidos.");
+    }
+
+    const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!feedbackSheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const metadataColumn = getReportMetadataColumn(feedbackSheet);
+    if (!metadataColumn) throw new Error("El reporte no tiene metadata verificable; no se aceptan sugerencias sin asociación real.");
+    const report = findReportByReportId_(feedbackSheet, normalizedReportId, metadataColumn);
+    if (!report) throw new Error("No existe un reporte individual único con ese identificador.");
+    const metadata = report.metadata || {};
+    const rowVehicleId = String(report.row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+    if (String(metadata.reportId || "").trim() !== normalizedReportId ||
+        String(metadata.vehicleId || "").trim() !== normalizedVehicleId ||
+        rowVehicleId !== normalizedVehicleId ||
+        Number(metadata.corteIndex) !== normalizedCorteIndex) {
+        throw new Error("El reporte no corresponde al mismo vehículo y corte indicado en la sugerencia.");
+    }
+
+    const cutsSheet = getSafeSheet(SHEET_NAMES.CORTES);
+    if (!cutsSheet) throw new Error("Hoja Cortes no encontrada.");
+    const rows = cutsSheet.getDataRange().getValues();
+    const vehicles = [];
+    for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) {
+            vehicles.push({ row: rows[i], rowIndex: i + 1 });
+        }
+    }
+    if (vehicles.length !== 1) {
+        throw new Error(vehicles.length ? "El vehículo tiene un ID duplicado en el catálogo." : "El vehículo no existe en el catálogo.");
+    }
+    const vehicle = vehicles[0].row;
+    const typeColumn = COLS_CORTES["tipoCorte" + normalizedCorteIndex];
+    const locationColumn = COLS_CORTES["ubicacionCorte" + normalizedCorteIndex];
+    if (!typeColumn || !locationColumn ||
+        !String(vehicle[typeColumn - 1] || "").trim() ||
+        !String(vehicle[locationColumn - 1] || "").trim()) {
+        throw new Error("El corte indicado no está ocupado e identificado en el catálogo del vehículo.");
+    }
+    return { reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex };
+}
+
 function handleSuggestCutChange(payload) {
     const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload || {};
     const normalizedVehicleId = String(vehicleId || "").trim();
@@ -1660,7 +1711,8 @@ function handleSuggestCutChange(payload) {
         throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
     const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
-    const normalizedReportId = String(reportId || "N/A").trim() || "N/A";
+    const reportContext = validateCutSuggestionReportContext_(reportId, normalizedVehicleId, normalizedCorteIndex);
+    const normalizedReportId = reportContext.reportId;
     const normalizedUserId = String(userId);
     const normalizedDetails = String(details || "");
     const requestFingerprint = buildCutSuggestionRequestFingerprint_(normalizedDetails, normalizedProposedValues, imgBase64);
