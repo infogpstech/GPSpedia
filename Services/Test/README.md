@@ -1176,3 +1176,15 @@ node --experimental-default-type=module Services/Test/VinVersionPresentation.js
 SearchQueryXssIntegrity.js verifica que el encabezado de resultados, el estado sin coincidencias y los errores globales usan texto plano; comprueba payloads HTML/SVG/eventos, comillas, ampersand, Unicode y consultas recuperadas desde deep links codificados. GlobalSearch.js cubre la clasificación y decodificación de búsquedas. NavigationVinCollection.js y VinVersionPresentation.js verifican los parsers VIN y la sintaxis de navegación/UI.
 
 La consulta permanece como dato de texto desde el input o el deep link hasta el renderizador. Los resultados dinámicos siguen construyéndose con nodos DOM; no se concatenan consultas en HTML. Validar adicionalmente con teclado, búsqueda normal, historial, estados vacíos, enlaces compartidos y navegación atrás en Beta.
+
+## AUG-099 — Retirar referencias residuales a filtros rápidos
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/SearchFilterCleanup.js
+```
+
+SearchFilterCleanup.js comprueba que main.js no conserve referencias a toggleFiltersBtn/filtersBar ni IDs cancelados, que index.html/style.css/ui.js no contengan controles o selectores de filtros rápidos, y que el flujo de búsqueda directa permanezca activo. También ejecuta el handler blur con consulta vacía, consulta activa y modal visible para detectar ReferenceError y confirmar la animación del encabezado.
+
+La eliminación es deliberada: no se reintroducen filtros rápidos ni se sustituyen por controles equivalentes. Validar en Beta el input, botón de limpieza, blur, navegación, modal y viewports móviles.
