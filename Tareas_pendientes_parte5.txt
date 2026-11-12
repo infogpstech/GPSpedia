@@ -314,6 +314,7 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   3. Mostrar la evidencia en Inbox mediante un enlace seguro; reportes históricos sin imagen siguen siendo válidos.
   4. Validar MIME, tamaño y errores de lectura/carga; no confirmar éxito si el adjunto seleccionado no quedó guardado.
   5. Mantener compatibilidad con llamadores históricos de cuatro argumentos y reportes sin imagen.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Suite Node de 18 casos incorporada para ejecución en checkout local; harness Node aislado de validación binaria/metadata: 12/12 PASS. Parsing V8 de funciones modificadas PASS. Integración real de Apps Script/Drive y permisos heredados pendiente de Beta aislada.
 
 ### AUG-078 — Validar la relación entre reporte, vehículo y corte en sugerencias
 - **Origen:** H-AUD-010-004. **Prioridad:** Media.
