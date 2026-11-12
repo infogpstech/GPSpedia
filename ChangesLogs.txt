@@ -20,3 +20,13 @@ Historial anterior archivado sin pérdida: ChangesLogs_Archive/manifest.md.
 - Services/Test/README.md, Tareas_pendientes_parte5.txt, Auditoría.txt y checkpoint.md: cobertura, estado y evidencia actualizados.
 - Validación en runtime V8 adaptado con History simulado; navegador/DOM real y gestos nativos no ejecutados, quedan para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-071 — UNIFICACIÓN DEL HISTORIAL DE MENÚ Y MODALES
+- overlayHistory.js: se añade consulta has(id) para evitar registros duplicados y reconciliar cierres con identidad estable.
+- main.js: el menú lateral participa en la pila LIFO compartida; los modales visibles reutilizan IDs explícitos cuando existen; popstate delega el cierre al gestor. Las transiciones desde el menú esperan el cierre de su entrada antes de abrir Inbox, Dashboard, Changelog, DevTools o una sección.
+- ui.js: setupModal cierra su propia entrada; openSideMenu evita duplicados; closeSideMenuAndRun serializa navegación. Audit Drive e imágenes reemplazadas invalidan generaciones al cerrar; imágenes reemplazadas cierra su lightbox hijo. El envío exitoso de contact-form reconcilia su modal.
+- Services/Test/OverlayMenuModalHistory.js: nueva cobertura de 12 escenarios; Services/Test/README.md documenta ejecución.
+- Validación pendiente: ejecución Node CLI de la nueva suite y revisión final del diff. Navegador/DOM real, gestos nativos y APIs externas quedan para Beta.
+================================================================================
