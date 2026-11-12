@@ -1,543 +1,89 @@
-GPSpedia — Tareas pendientes — Parte 2
-Fecha de corte: 2026-11-09
-Fuente: Aug_Tareas legacy, IDs AUG-100 a AUG-152 y adendas.
-Estado operativo: PENDIENTE DE REVALIDACIÓN; conservar los estados originales como antecedente.
-
-
-Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
-
-### AUG-100 — Consolidar un sistema universal de estilos y estados de botones
-- Origen: H-AUD-015-003. AUD-T-015/Tarea 15. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
-- Evidencia: index.html carga solo Font Awesome y style.css; style.css no define una base universal .btn/variantes; users.html:104–119 y add_cortes.html:81–86 definen sistemas .btn independientes; ui.js crea numerosos botones dinámicos.
-- Problema: los botones dependen de estilos locales/específicos y no existe un contrato común completo de estados/tema.
-- Criterios:
-  1. Definir clases/variables compartidas para primaria, secundaria, destructiva, advertencia, icono y acciones compactas.
-  2. Aplicarlas en index.html, users.html y add_cortes.html sin afectar inputs/selects.
-  3. Cubrir focus-visible, disabled, loading, hover y active, contraste y targets táctiles.
-  4. Migrar botones dinámicos o documentar excepciones.
-  5. Validar tema claro/oscuro, responsive y todos los modales/paneles.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-101 — Separar clasificación de marcas reales y tipos sintéticos de sección
-- Origen: H-AUD-015-004. AUD-T-015/Tarea 14. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
-- Evidencia: navigation.js:197/202/207 asigna marca='Relay'/'Tutorial'/'Problema'; 249–256 usa todos los valores marca para inferir type='marca'; ui.js:1572–1596 representa type='marca' como logos.
-- Problema: consultas de una sola sección pueden ser clasificadas como marca y no presentar los registros correctos.
-- Criterios:
-  1. Limitar inferencia de marcas a entidades Corte o a un tipo explícito.
-  2. No inferir marca desde valores sintéticos de Relay/Tutorial/PyS.
-  3. Probar consulta por sección, título exacto, nombre de marca y resultados mixtos.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). La clasificación segura ya está implementada en search-utils.js; se amplió GlobalSearch.js para cubrir títulos exactos de sección, coincidencia exacta de modelo, consulta por marca y resultados mixtos.
-
-### AUG-102 — Alinear el tema oscuro del banner de validación y completar sus tokens
-- Origen: H-AUD-016-001. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Evidencia: main.js:517–532 alterna body.dark-mode sin establecer data-theme; style.css:1260 depende de [data-theme="dark"]; style.css:1253/1322/1337 usa --text-primary sin declaración.
-- Problema: la variante oscura del banner no coincide con el selector activo y el color textual usa un token inexistente.
-- Criterios: unificar selector/atributo de tema; definir tokens semánticos; probar banner, mensajes, botones y contraste en tema claro/oscuro.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). style.css utiliza body.dark-mode y tokens semánticos independientes para banner, mensajes, botones, entrada y foco; se agregó ValidationBannerTheme.js con 12 pruebas, incluidos contrastes WCAG AA. La inspección confirma que ui.js conserva las clases y el flujo de validación sin cambios.
-
-### AUG-103 — Consolidar tokens de color y tema entre las páginas
-- Origen: H-AUD-016-002. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Resultado: contrato común de 21 tokens semánticos para ambos temas en index.html, users.html y add_cortes.html. Los alias históricos se conservaron como referencias al contrato compartido y se migraron colores de componentes comunes. Se documentaron excepciones para estados operativos, marcas, imágenes, sombras, overlays y gráficos.
-- Validación local: ThemeTokenConsistency.js compara valores, alias y uso de tokens; comprueba contraste WCAG AA.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Revisión visual de las tres páginas, ambos temas y viewports pendiente en Beta.
-
-### AUG-104 — Permitir zoom del navegador en add_cortes.html
-- Origen: H-AUD-016-003. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Resultado: se eliminó la limitación de escala del viewport y los bloqueos de zoom por rueda, teclado y multitáctil en add_cortes.html. Se añadió reflujo de formulario a una columna y reorganización de acciones en viewports estrechos. lightbox.js restaura el viewport original de cada página al cerrar, sin imponer una política distinta.
-- Validación local: BrowserZoomAccessibility.js cubre viewport, ausencia de bloqueos, reflujo y ciclo abrir/cerrar Lightbox con simulación DOM.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Verificación visual 200 %/400 % y overflow en navegadores reales pendiente en Beta.
-
-### AUG-105 — Completar el layout responsive de formularios y gestión de usuarios
-- Origen: H-AUD-016-004. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
-- Resultado: add_cortes.html adapta su cuadrícula, tarjetas de coincidencias, grupos de imágenes, mensajes y acciones hasta 760 px; los campos conservan tamaño legible en móviles. users.html mantiene la tabla semántica y ajusta sus cuatro columnas y acciones al ancho disponible, con texto envolvente y sin depender del scroll horizontal. Los modales limitan su altura al viewport y permiten scroll interno; controles táctiles de 44 px.
-- Validación local: ResponsiveFormsUsers.js comprueba 15 contratos responsive, estructura CSS y sintaxis JavaScript.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Inspección visual real 320–1440 px, orientación, foco y teclado virtual pendiente en Beta.
-
-## Hallazgos derivados de AUD-T-017 — 2026-11-08
-
-### AUG-106 — Corregir la condición de colisión entre rangos de generaciones
-- Origen: H-AUD-017-001. Sesión/checkpoint: AUD-20261108-S035/AUD-CP-0035. Prioridad: Alta.
-- Evidencia inicial: la auditoría identificó una comparación backend de un solo extremo. En el HEAD de inicio de esta tarea, la condición ya comparaba ambos extremos inclusivos; la corrección funcional estaba presente, aunque no tenía una prueba de regresión específica.
-- Resolución: se encapsuló la comparación en `yearRangesOverlapInclusive_` y el handler backend autoritativo utiliza inicio/fin del rango propuesto contra inicio/fin de cada generación coincidente. Se conserva la validación puntual de ambos límites en la UI.
-- Validación local: `Services/Test/YearRangeCollision.js` cubre superposición parcial, contención, límites inclusivos, huecos, rangos anteriores/posteriores e intervalos inválidos, además de los contratos del backend/UI.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Pruebas locales sintéticas; validación con Spreadsheet/Apps Script aislados y navegador real pendiente de Beta. Sin endpoints operativos ni datos productivos.
-
-### AUG-107 — Confirmar el registro backend antes de marcar la validación como completada
-- Origen: H-AUD-017-002. Prioridad: Alta.
-- Evidencia inicial: el flujo cliente podía guardar validationCache antes de recibir la respuesta de suggestYear.
-- Resolución: el comportamiento ya quedó corregido y cubierto en H-AUD-040-014. ui.js espera confirmValidationBeforeCache antes de guardar la caché o avanzar; los estados pendientes, confirmados y fallidos se reflejan en la interfaz, con reintento explícito. validationSubmission.js solo permite guardar caché cuando el backend confirma recorded=true; errores de red/estados desconocidos no generan caché. FEEDBACK devuelve recorded=false en recuperaciones o respuestas no registradas y mantiene la deduplicación por aportante, vehículo y año para reintentos.
-- Validación local existente: ValidationCacheConfirmation.js 7/7 PASS; runFeedbackWriteSecurityTests() 44/44 PASS; parsing de ui.js, Services/feedback.js, validationSubmission.js y suites asociadas PASS, según evidencia H-AUD-040-014 y su adenda.
-- Validación diferida a Beta: timeout/offline con navegador real, pérdida de respuesta después de persistencia, recarga y reintento idempotente con Apps Script/Spreadsheet aislados, y persistencia IndexedDB real.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). No se duplicó la implementación existente ni se modificaron endpoints, deployments o datos productivos.
-
-### AUG-108 — Individualizar validationCache por usuario y vehículo
-- Origen: H-AUD-017-003. Prioridad: Media.
-- Evidencia de resolución: offline.js:719–731 usa una clave compuesta por ownerId y vehicleId; valida ambos campos al recuperar. ui.js:1551–1553 consulta usando la identidad de la cuenta activa.
-- Política: solo las cuentas con ownerId válido pueden guardar o leer la caché. Los usuarios anónimos no guardan entradas compartidas ni heredan respuestas de otras cuentas; podrán volver a recibir la consulta.
-- Prueba existente: Services/Test/IndexedDBTransactions.js, caso «validationCache aislado por cuenta», comprueba lectura por user-a, aislamiento frente a user-b y rechazo de escritura sin propietario. La cobertura local histórica de AUG-051 incluyó esta prueba en runtime V8 adaptado.
-- Resultado: la implementación ya existía como parte de AUG-051; se reconoce la duplicidad del backlog y no se modifica código funcional.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). En Beta queda comprobar dos cuentas escribiendo el mismo vehículo en el mismo perfil, cambio de cuenta y sesiones separadas reales.
-
-### AUG-109 — Definir controles de confianza para aportaciones anónimas
-- Origen: H-AUD-017-004. Prioridad: Alta.
-- Política de confianza: una aportación anónima es un reporte no verificado, no una identidad humana ni un voto independiente. Se conserva para revisión manual, pero no participa en el umbral automático de tres aportantes autenticados que permite modificar el catálogo.
-- Control de identidad: el backend ignora anonymousReporterId y asigna anon:unverified a todas las aportaciones anónimas. Los aportes autenticados usan user:<ID> derivado de la sesión validada. Las claves anónimas no satisfacen isVerifiedSuggestionActorKey_.
-- Control de abuso: suggestYear limita las solicitudes anónimas a 30 por hora mediante CacheService; la deduplicación por actor/vehículo/año evita que reintentos o IDs de navegador regenerados creen votos distintos. El límite es global para el proyecto/ventana, no una garantía por IP o persona.
-- Pruebas: Services/Test/FeedbackWriteSecurity.js verifica que el aporte anónimo no complete el umbral, que permanezca para revisión manual, que identificadores fabricados/regenerados produzcan la misma clave y que la repetición no cree otra fila ni actividad.
-- Resultado: política y controles ya existían en el backend; se reforzó la regresión local para repetición y regeneración. No se introdujo ponderación de votos anónimos porque estos no activan cambios automáticos.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12). Beta debe comprobar el límite con CacheService real, envíos concurrentes y revisión manual de aportes anónimos en un entorno aislado.
-
-### AUG-110 — Desacoplar la validación comunitaria de la carga de imágenes
-- Origen: H-AUD-017-005. Prioridad: Media.
-- Evidencia: ui.js:2991–2995 inicia elegibilidad desde img.onload; la ruta lazy no instala ese callback.
-- Problema: sin imagen, con error de carga o en ruta lazy puede no aparecer el banner.
-- Criterios: iniciar validación desde ciclo del modal; evitar duplicados; probar imágenes ausentes/rotas/lazy y varios cortes.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-111 — Documentar suggestionActorKey en el esquema de Feedbacks
-- Origen: H-AUD-017-006. Prioridad: Media.
-- Evidencia: Services/feedback.js:106–139 crea la columna; Spreadsheet/GPSpedia_DB_columnas.md:215–230 solo enumera nueve columnas.
-- Problema: el esquema documentado no refleja la columna auxiliar usada para deduplicar aportantes.
-- Criterios: documentar encabezado, ubicación, formatos user:/anon:, creación idempotente, compatibilidad histórica y backup/restore.
-- Estado: NUEVA; documentación y pruebas de esquema pendientes.
-
-### AUG-112 — Reconciliar la entrada de AUD-T-016 en Auditoría.txt
-- Origen: H-AUD-017-007. Prioridad: Media.
-- Evidencia: Auditoría.txt termina en AUD-T-015; Plan_Auditoria.md, Consolidacion_Auditoria.md, ChangesLogs.txt y checkpoint.md registran AUD-T-016.
-- Problema: los hallazgos de AUD-T-016 no aparecen en el registro principal obligatorio.
-- Criterios: reconstruir H-AUD-016-001 a 004 únicamente con los documentos existentes; preservar el historial; verificar referencias AUG-102 a AUG-105.
-- Estado: NUEVA; reconciliación documental pendiente.
-
-## Hallazgos derivados de AUD-T-018 — 2026-11-08
-
-### AUG-113 — Corregir XSS almacenado en el dashboard de actividad
-- Origen: H-AUD-018-001. Sesión/checkpoint: AUD-20261108-S036/AUD-CP-0036. Prioridad: Alta.
-- Evidencia: Services/feedback.js:302–318, 884–920 y 928–962; ui.js:3221–3226.
-- Problema: recordLike no exige sesión, acepta userName del cliente y lo registra; el dashboard lo inserta con innerHTML.
-- Criterios: derivar actor o clasificar anónimo en backend; renderizar actividad con textContent/DOM seguro; validar historial previo; probar payloads XSS directos.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-114 — Corregir XSS y validación de URL en Inbox
-- Origen: H-AUD-018-002. Prioridad: Alta.
-- Evidencia: Services/feedback.js:1044–1070, 1161–1217 y 1799–1821; ui.js:5534–5542 y 5612–5626.
-- Problema: campos de formulario y metadatos se guardan sin normalización y se interpolan como HTML; videoUrl se usa directamente en href.
-- Criterios: renderizar campos como texto; validar URL en backend con allowlist; sanear registros históricos; probar nombre, título, URL, comillas y atributos HTML.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-115 — Unificar el campo de rol utilizado por el Inbox
-- Origen: H-AUD-018-003. Prioridad: Media.
-- Evidencia: ui.js:5578–5579 usa currentUser.Rol; Services/Auth.js:355–363 entrega Privilegios.
-- Problema: los botones de aprobación/rechazo no se muestran para los roles permitidos.
-- Criterios: usar propiedad canónica; mantener RBAC backend; probar Desarrollador, Gefe, Supervisor y roles no autorizados.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-116 — Integrar la caché real de Inbox con identidad e invalidación
-- Origen: H-AUD-018-004. Prioridad: Media.
-- Evidencia: main.js:585 llama openInbox; ui.js:3235–3260 vuelve a consultar; loadAndRenderInbox en 10133–10155 no tiene caller.
-- Problema: la caché no participa en la ruta habitual y el backend devuelve todas las filas sin paginación.
-- Criterios: conectar cache helper; scope por userId/rol/sesión; invalidar tras reply/resolve/delete/approve/reject; limpiar al logout/cambio de cuenta; fallback seguro y paginación.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-117 — Proteger la última cuenta Desarrollador y limpiar sesiones al eliminar usuarios
-- Origen: H-AUD-018-005. Prioridad: Alta.
-- Evidencia: users.html:406–410; Services/users.js:357–389 y 398–425.
-- Problema: se puede autodegradar/autoborrar o eliminar/degradar al último Desarrollador; deleteUser deja filas en ActiveSessions.
-- Criterios: impedir operaciones destructivas sobre el último Desarrollador; confirmar actor y objetivo; lock/operación atómica; limpiar sesiones y registrar auditoría.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-118 — Refrescar perfil y rol cacheados desde sesión autenticada
-- Origen: H-AUD-018-006. Prioridad: Media.
-- Evidencia: auth.js:181–208; Services/Auth.js:377–395; users.html:350–351 y 653–673.
-- Problema: checkSession valida token pero no reemplaza el perfil/rol local tras cambios hechos desde otra sesión.
-- Criterios: endpoint de perfil autenticado o respuesta de validación con datos mínimos; TTL/invalidation; scope por actor; pruebas de cambios remotos y cambio de cuenta.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-119 — Registrar reply, resolve y delete del Inbox en historial inmutable
-- Origen: H-AUD-018-007. Prioridad: Media.
-- Evidencia: Services/feedback.js:1220–1265 y 1529–1561 no llaman logUserActivity.
-- Problema: no hay traza uniforme de quién respondió, resolvió o eliminó; delete borra el registro fuente.
-- Criterios: evento inmutable con actor, acción, tipo/ID y timestamp antes de mutar; no depender de la fila operativa; probar tras recarga.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-120 — Optimizar la lectura del dashboard de actividad
-- Origen: H-AUD-018-008. Prioridad: Media.
-- Evidencia: Services/feedback.js:1268–1288 carga todo el rango y luego conserva 100 registros.
-- Problema: el coste crece con el historial completo; no existe cursor ni paginación.
-- Criterios: lectura acotada de últimas N filas o cursor; orden descendente estable; prueba con historial grande.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-121 — Rechazar itemType no soportados al responder Inbox
-- Origen: H-AUD-018-009. Prioridad: Baja.
-- Evidencia: Services/feedback.js:1226–1248 procesa dos tipos y devuelve success fuera de las ramas.
-- Problema: un tipo inválido recibe éxito aunque no se haya actualizado ningún registro.
-- Criterios: allowlist estricta; error explícito; pruebas para problem_report, contact_form, video_approval y tipo arbitrario.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-## Hallazgos derivados de AUD-T-019 — 2026-11-08
-
-### AUG-122 — Exigir sesión y rol en WRITE.addSupplementaryInfo
-- Origen: H-AUD-019-001. Prioridad: Alta.
-- Evidencia: Services/write.js:169–205, 783–864; ui.js:7823–7828, 7915–7917 y 8053–8058.
-- Criterios: validar sesión activa en backend; derivar actor del servidor; definir roles permitidos; probar sin token, token inválido/revocado y roles no autorizados.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-123 — Proteger y serializar la migración UTILITIES
-- Origen: H-AUD-019-002. Prioridad: Alta.
-- Evidencia: api-config.js:7–15, 27; Services/Utilities.js:35–55, 62–96 y 138–141.
-- Criterios: autenticación Desarrollador; ScriptLock; snapshot y validación previa; ejecución recuperable; pruebas de fallo y concurrencia en copia.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-124 — Unificar esquema e identidad de Tutoriales entre FEEDBACK y CATALOG
-- Origen: H-AUD-019-003. Prioridad: Alta.
-- Evidencia: Services/catalog.js:61–69, 339–347; Services/feedback.js:23–30, 1498–1520 y 2000–2046.
-- Problema: addTutorial crea/usa «Tutoriales» con cinco columnas, pero CATALOG lee «Tutorial» con siete; la edición puede caer en «Tutorial» y sobrescribir ID/columnas.
-- Criterios: contrato único de hoja y encabezados; validar esquema antes de escribir; usar ID estable; migración compatible; probar hoja vacía, esquema actual, registros antiguos, duplicados de tema y lectura posterior por CATALOG.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-125 — Hacer recuperables las restauraciones de DB y Drive
-- Origen: H-AUD-019-004. Prioridad: Alta.
-- Evidencia: Services/admin.js:882–928 y 933–963.
-- Criterios: staging; validar backup completo y esquema; verificar conteos/recursos; swap solo tras validación; rollback probado ante fallos parciales.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-126 — Validar payload completo antes de reservar fila/ID en WRITE
-- Origen: H-AUD-019-005. Prioridad: Alta.
-- Evidencia: Services/write.js:420–427, 633–676, 684–692 y 696–729.
-- Criterios: validar tipos, requeridos, rango de años, enums, longitudes e imágenes antes de escribir; compensación completa; no dejar filas/opIds/archivos huérfanos.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-127 — Corregir el contrato de vídeo suplementario
-- Origen: H-AUD-019-006. Prioridad: Media.
-- Evidencia: ui.js:8053–8058; Services/write.js:791–863.
-- Criterios: alinear nombres de campos; allowlist de campo y URL; no devolver success sin escritura; comprobar catálogo tras recarga.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-128 — Validar referencias PyS–vehículos y serializar cambios
-- Origen: H-AUD-019-007. Prioridad: Media.
-- Evidencia: Services/feedback.js:1429–1444, 1565–1598 y 1601–1638.
-- Criterios: verificar vehicleId en Cortes; normalizar IDs y duplicados; lock común en altas/bajas; verificar integridad relacional y concurrencia.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-129 — Restringir campos editables por ADMIN y proteger ID
-- Origen: H-AUD-019-008. Prioridad: Media.
-- Evidencia: Services/admin.js:344–354 y 1798–1819.
-- Criterios: allowlist de campos; excluir ID/campos calculados; validación específica de tipo, longitud y dominio; pruebas de valores inválidos y duplicados.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-130 — Hacer atómicas las mutaciones de USERS
-- Origen: H-AUD-019-009. Prioridad: Media.
-- Evidencia: Services/users.js:342–425.
-- Criterios: validar todas las propiedades antes de escribir; actualización agrupada/rollback; lock común para create/update/delete/reset; verificar ID y fila bajo concurrencia.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-131 — Validar destino y transición de estado al aprobar vídeos
-- Origen: H-AUD-019-010. Prioridad: Media.
-- Evidencia: Services/feedback.js:1847–1906 y 1911–1955.
-- Criterios: allowlist contentType; existencia del destino; estado previo pending; lock; persistencia compensable en Feedbacks/Cortes.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-132 — Aplicar validación estricta al VIN
-- Origen: H-AUD-019-011. Prioridad: Baja.
-- Evidencia: Services/write.js:1720–1724 y 1788–1823.
-- Criterios: validar longitud/formato del VIN admitido; rechazar caracteres inválidos; normalizar después de validar; probar límites y colisiones.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-133 — Implementar suite automatizada reproducible para pruebas 31–38
-- Origen: H-AUD-019-012. Prioridad: Media.
-- Evidencia: Services/Test/README.md:1–41; Services/Test/Auth.js y users.js son copias de servicios, sin runner/asserts.
-- Criterios: runner por servicio; fixtures y Spreadsheet aislada; cobertura WRITE/ADMIN/FEEDBACK/CATALOG/UTILITIES/AUTH/USERS; límites, RBAC, integridad, concurrencia y regresión 31–38; resultados reproducibles sin producción.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores
-- Origen: H-AUD-019-013. Prioridad: Baja.
-- Evidencia: api-config.js:18–34; Services/write.js:169–205; Services/Utilities.js:35–45.
-- Criterios: contrato único; cada acción mapeada debe tener handler; cada handler público debe estar mapeado/documentado; prueba automática de paridad.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-135 — Reconciliar política de publicación de microservicios y README
-- Origen: H-AUD-019-014. Prioridad: Media.
-- Evidencia: README.md:102–105; árbol de GPSpedia2.2.5_work contiene Services/Auth.js, catalog.js, feedback.js, write.js, admin.js, users.js y Utilities.js.
-- Criterios: decidir visibilidad de fuentes; retirar fuentes y revisar historial si deben ser privadas, o documentar su publicación y separar configuración; verificar ACL de Spreadsheet/Drive y deployments.
-- Estado: NUEVA; decisión, implementación y revisión de exposición pendientes.
-
-## Hallazgos derivados de AUD-T-020 — 2026-11-08
-
-### Adenda AUD-T-020 a AUG-036 — parsers VIN/versiones divergentes
-- **Nueva evidencia:** ui.js:423, 439 y 7124; navigation.js:78; Services/write.js:1668 y 1684; VinDifferentialEngine.js:34.
-- **Ampliación:** unificar los delimitadores admitidos y el tratamiento de arrays/JSON; definir si punto y coma es válido; deduplicar versiones de forma consistente; aplicar el mismo filtro de tokens OP-/OP_/IDOPERACION en visualización, búsqueda y backend.
-- **Pruebas adicionales:** valores con coma/diagonal/diagonal inversa/punto y coma, arrays, JSON, duplicados por mayúsculas, valores vacíos y tokens de idempotencia.
-- **Estado:** EXISTENTE; ampliada; diseño, implementación y pruebas pendientes. No duplicar AUG-036.
-
-### Adenda AUD-T-020 a AUG-104 — zoom global de la aplicación
-- **Nueva evidencia:** main.js:816–839 bloquea zoom por rueda, teclado y gestos multitáctiles en toda la aplicación principal; index.html:6 permite escalado, pero los listeners lo cancelan. add_cortes.html:6 y :1398–1415 mantienen restricciones propias.
-- **Ampliación:** retirar restricciones de zoom en index.html/main.js además de add_cortes.html; probar 200% y 400%, reflujo, foco, controles, orientación y Lightbox.
-- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-104.
-
-### AUG-136 — Unificar utilidades compartidas de Drive, nomenclatura e imágenes
-- **Origen:** H-AUD-020-003. **Prioridad:** Media.
-- **Problema:** FEEDBACK, WRITE y ADMIN mantienen copias de helpers de carpetas, normalización, nombres canónicos y cargas de imágenes. La normalización Unicode y las estructuras de entrada no son idénticas; los cambios pueden divergir entre deployments independientes.
-- **Criterios:** definir un contrato común/versionado para getCortesRootFolder, getFolderCanonicalName, findOrCreateSubFolder, findOrCreateVehicleFolder, nombres de imágenes y uploadImageToDrive; si los proyectos Apps Script siguen separados, utilizar biblioteca compartida o fuente generada/versionada; documentar deliberadamente los contratos distintos de mapRowToObject; probar diacríticos, espacios, carpetas equivalentes, colisiones, renombrado automático, raíces inválidas e idempotencia de cargas.
-- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; contrato local aprobado, comprobación visual real pendiente para Beta.
-
-### AUG-137 — Retirar funciones huérfanas y markup de depuración obsoleto
-- **Origen:** H-AUD-020-004. **Prioridad:** Baja.
-- **Problema:** hay helpers internos sin referencias y un contenedor #debug-console sin consumidores encontrados; también existen exports UI sin uso interno aparente.
-- **Criterios:** construir call graph del código y revisar triggers/consumidores externos; confirmar el contrato público de clearModalNavStack y loadAndRenderInbox; retirar solo funciones/markup sin consumidores; mantener separado el panel activo #dev-console-log; probar navegación, Inbox, consola administrativa y operaciones Drive afectadas.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-138 — Sanitizar logs de recuperación y operaciones en add_cortes
-- **Origen:** H-AUD-020-002. **Prioridad:** Media.
-- **Problema:** la recuperación imprime pendingOp completo, incluidos campos Base64 de imágenes; existen mensajes PING-PONG y respuestas completas de servicios en consola.
-- **Criterios:** no registrar objetos pendingOp, Base64, imágenes, tokens ni payloads completos; incorporar logger con niveles y activación explícita; limitar producción a etapa, identificador no sensible y estado resumido; probar recuperación offline, reintentos, error de cuota y respuesta perdida.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-139 — Definir la política real de protección anti-debugging
-- **Origen:** H-AUD-020-001. **Prioridad:** Media.
-- **Problema:** los bloqueos de contextmenu y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U son eludibles y no protegen código cliente ni datos; la documentación los presenta como protección técnica.
-- **Criterios:** separar disuasión de seguridad real; no depender de bloqueos frontend para proteger datos/operaciones; verificar autenticación, autorización y validación backend; decidir explícitamente si se mantienen atajos como disuasión; actualizar README para no prometer protección que el navegador no puede garantizar; coordinar el zoom con AUG-104.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-- 2026-11-08 — AUD-T-020: AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas. Inventario: 138 IDs únicos dentro de AUG-001 a AUG-139; AUG-015 continúa ausente y no se infiere ni renumera.
-
-## Hallazgos derivados de AUD-T-021 — 2026-11-08
-
-### Adenda AUD-T-021 a AUG-096 — sinks de metadatos y títulos en ficha imprimible
-- **Nueva evidencia:** ui.js:9232, 9291, 9337, 9379, 9912 y 9919–9935; getImageUrl():607–616.
-- **Ampliación:** incluir title, marca, modelo, categoría, años, tipoEncendido, versionesAplicables, VIN, tipo de corte y URLs de imagen que se interpolan en document.write() sin escape. Los campos de descripción que ya usan sanitizeHtmlContent() no cubren estas etiquetas/atributos.
-- **Criterios adicionales:** usar escape de texto/atributos y textContent para identificadores; permitir HTML enriquecido únicamente en campos autorizados; validar esquema y host de imágenes; probar payloads controlados en cada campo y confirmar que no se ejecute markup en la ventana de impresión.
-- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-096.
-
-### AUG-140 — Alinear márgenes y contrato de paginación de la ficha imprimible
-- **Origen:** H-AUD-021-001. **Prioridad:** Media.
-- **Problema:** Tarea 2.2/README indican una página Carta vertical con 10 mm; Bloque 7 permite paginar cuando una página perjudica la legibilidad; el código usa 5 mm.
-- **Criterios:** decidir el margen físico definitivo; documentar cuándo se usa una o varias páginas; alinear @page, altura útil, README y Tareas; comprobar Carta vertical y márgenes reales sin recortar contenido.
-- **Estado:** NUEVA; decisión, diseño, implementación y pruebas pendientes.
-
-### AUG-141 — Completar la representación de Check Engine y el aviso de testigo
-- **Origen:** H-AUD-021-002. **Prioridad:** Media.
-- **Problema:** la ficha no incorpora una imagen específica de Check Engine; el aviso se inserta dentro de .tech-item-info antes de la imagen y el documento independiente no carga Font Awesome.
-- **Criterios:** definir el recurso/campo autorizado de Check Engine; preservar proporción; colocar el aviso debajo de la imagen; incluir iconografía/estilos locales cuando se requieran; probar activo/inactivo y cortes con/sin imagen.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-142 — Asegurar la disponibilidad de todos los recursos antes de imprimir
-- **Origen:** H-AUD-021-003. **Prioridad:** Media.
-- **Problema:** la espera cubre únicamente imágenes de tarjetas técnicas; foto principal, QR y logos quedan fuera; imagen completa con naturalWidth=0 se trata como resuelta y no hay fallback explícito.
-- **Criterios:** esperar carga/decodificación de todos los recursos obligatorios; distinguir error de ausencia opcional; proporcionar fallback visible; evitar que beforeprint calcule con dimensiones desconocidas; espera acotada y estado listo; probar lentitud, error, URL inválida y offline.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-143 — Hacer la paginación consciente de altura real y preservar orden/prioridad
-- **Origen:** H-AUD-021-004 y H-AUD-021-005. **Prioridad:** Media.
-- **Problema:** los grupos se deciden por aspecto y cantidad de imágenes, no por altura total de texto/metadatos/avisos/pie; rowMaxHeight fuerza 80 px mínimos; las tarjetas sin imagen se trasladan a la última página y pueden perder orden/prioridad.
-- **Criterios:** medir el contenido real de cada página; detectar overflow; reagrupar tarjetas completas sin cortar asociaciones texto/imagen; no forzar altura mínima que rebase el espacio; conservar prioridad y secuencia técnica con tarjetas con/sin imagen; corregir el comentario obsoleto de cuatro imágenes; probar páginas iniciales/intermedias/finales y textos extensos.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-144 — Proteger enlaces de vídeos no listados al generar QR
-- **Origen:** H-AUD-021-006. **Prioridad:** Media.
-- **Problema:** api.qrserver.com recibe la URL completa del vídeo como parámetro GET; README define vídeos unlisted. No hay generación local ni fallback offline y la resolución de 85×85 no está validada.
-- **Criterios:** preferir generación local o servicio expresamente aprobado con análisis de privacidad; validar URL de YouTube/modelo; conservar QR condicional y sin URL visible; probar escaneo real en PDF/papel, contraste, resolución, red y offline sin revelar enlaces no listados a terceros.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-145 — Corregir los modos duplicados del selector de distribución
-- **Origen:** H-AUD-021-007. **Prioridad:** Baja.
-- **Problema:** las reglas posteriores de .sheet-page-wrapper y las clases de layout adaptativo prevalecen sobre parte del modo Vertical; Automática y Vertical terminan con una composición esencialmente igual.
-- **Criterios:** definir de forma inequívoca cada modo; ajustar cascada/especificidad o retirar opción duplicada; comprobar Automática, Horizontal, Vertical e Imagen ampliada en pares, tríos, mezclas y una imagen.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-146 — Corregir referencias históricas de AUD-T-021 en el plan maestro
-- **Origen:** H-AUD-021-009. **Prioridad:** Baja.
-- **Problema:** Plan_Auditoria atribuye 6d7fbb9c a la ficha imprimible, pero el commit corresponde al panel de desarrollador y formulario PyS.
-- **Criterios:** conservar trazabilidad y corregir la lista de fuentes para incluir únicamente commits que afecten la ficha imprimible; revisar los mensajes/diffs antes de atribuir cambios.
-- **Estado:** NUEVA; corrección documental pendiente.
-
-- 2026-11-08 — AUD-T-021: AUG-140 a AUG-146 nuevas; AUG-096 ampliada. Inventario: 145 IDs únicos dentro de AUG-001 a AUG-146; AUG-015 continúa ausente y no se infiere ni renumera.
-
-## Hallazgos derivados de AUD-T-022 — 2026-11-08
-
-### AUG-147 — Revocar sesión en servidor y limpiar estado/overlays al cerrar sesión
-- **Origen:** H-AUD-022-001. **Prioridad:** Alta.
-- **Problema:** auth.logout() elimina solo la clave local y muestra login; no limpia state.currentUser ni elimina el registro de ActiveSessions. getDeveloperSessionPayload() usa el estado en memoria, y window.state/window.ui están expuestos. El modal de desarrollador tampoco se oculta al mostrar login.
-- **Criterios:** crear una acción AUTH de logout/revocación que valide userId+sessionToken y elimine exclusivamente la sesión activa correspondiente bajo LockService; limpiar currentUser y estado transitorio en cliente; borrar almacenamiento local; cerrar modales y overlays; ocultar accesos de rol; rechazar el token revocado en AUTH y ADMIN; probar logout, expiración, cierre remoto, cambio de cuenta y acciones después de logout.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-148 — Implementar semántica accesible y gestión de foco del modal de desarrollador
-- **Origen:** H-AUD-022-002. **Prioridad:** Media.
-- **Problema:** #dev-tools-modal no declara dialog/aria-modal/aria-labelledby; el cierre es un span sin nombre ni teclado; no hay foco inicial, contención, restauración ni Escape.
-- **Criterios:** botón real con aria-label; role=dialog, aria-modal y nombre asociado; foco inicial al abrir; focus trap; restauración al disparador; Escape y botón de cierre coordinados con History API; pruebas con teclado y lector de pantalla.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-149 — Unificar la semántica accesible de pestañas y paneles del desarrollador
-- **Origen:** H-AUD-022-003. **Prioridad:** Media.
-- **Problema:** input radio y label role=tab se mezclan dentro de tablist; faltan aria-controls/aria-selected y el panel referencia al input en lugar de un tab semánticamente consistente.
-- **Criterios:** elegir pestañas ARIA completas o grupo nativo de radios; relacionar control/panel; expresar selección y foco; implementar flechas/Home/End si se elige tablist; validar las cinco secciones con teclado y lector de pantalla.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-### AUG-150 — Reportar correctamente los errores HTTP, de red y de aplicación en consola ADMIN
-- **Origen:** H-AUD-022-004. **Prioridad:** Baja.
-- **Problema:** las rutas individual y por lotes asignan literalmente HTTP 500 a cualquier excepción; en la ruta por lotes ambas ramas del ternario devuelven 500.
-- **Criterios:** propagar status HTTP estructurado desde routeAction; distinguir error HTTP, fallo sin respuesta, JSON inválido y status:error de aplicación; no inventar status; probar 401, 403, 404, 500, desconexión, timeout, JSON inválido y error lógico.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
-
-- 2026-11-08 — AUD-T-022: AUG-147 a AUG-150 nuevas. Inventario: 149 IDs únicos dentro de AUG-001 a AUG-150; AUG-015 continúa ausente y no se infiere ni renumera.
-
+# Checkpoint activo — GPSpedia
+
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Este archivo conserva únicamente continuidad vigente; el historial anterior permanece inmutable en el archivo legacy.
+
+## Historial rotado
+- Archivo: `Olds/Documentacion_Legacy/checkpoint_legacy_parte_007.md`
+- Blob fuente: `52a0ce1c2c0d003c9f87e4b2e2715d0c1da34568`
+- Caracteres Unicode: 179499.
+- Manifiesto e integridad: `Olds/Documentacion_Legacy/README.md`, rotación incremental 2026-11-12.
 
 ================================================================================
-ADENDA AUD-T-001 — REVALIDACIÓN DE TAREAS EXISTENTES
-- AUG-008: se confirma en auth.js:160–178 que el retorno temprano ante lock vigente no resuelve el estado visual de la pestaña; la coordinación debe impedir que el splash quede sin transición y contemplar la validación asíncrona. Mantener la solución en esta tarea existente; no duplicar.
-- AUG-049: ampliar los criterios de deep linking para exigir un estado explícito loading/ready/error del catálogo, tratar catálogo vacío como estado terminal válido, cancelar la espera al cambiar navegación y evitar polling indefinido cada 100 ms. Manejar errores de decodeURIComponent en hashes mal codificados.
-- AUG-099: H-AUD-015-002 vuelve a observarse en main.js:123–125; conservar como referencia y no crear tarea duplicada.
+CHECKPOINT DE CIERRE — AUG-107 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: 0de1f233b3aeb47970dc6249981aa6cef063a5a6.
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin modificaciones.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
-### AUG-151 — Validar el procesamiento y la disponibilidad del catálogo durante el arranque
-- **Origen:** H-AUD-001-002. **Prioridad:** Alta.
-- **Evidencia:** auth.js:34–35, 54–56 y 79–80 marcan catalogLoaded=true después de processCatalogData(); auth.js:102–120 absorbe excepciones sin propagar resultado.
-- **Problema:** un payload de catálogo inválido o un error de procesamiento puede tratarse como carga exitosa, impedir el fallback y dejar la interfaz sin datos ni error terminal.
-- **Criterios de aceptación:**
-  1. Validar explícitamente el objeto recibido y la estructura de sus colecciones antes de procesarlo.
-  2. Hacer que processCatalogData comunique éxito/fallo mediante resultado explícito o excepción; no absorber errores que deban activar recuperación.
-  3. Marcar catálogo como cargado solo después de actualizar correctamente el estado.
-  4. Diferenciar catálogo válido vacío, catálogo pendiente y catálogo inválido.
-  5. Si falla la red, intentar una caché que también haya pasado validación; si ninguna fuente es válida, mostrar error terminal y estado coherente.
-  6. Probar respuesta válida, vacía, parcial, malformada, elementos nulos, error durante normalización/procesamiento, caché corrupta y recuperación posterior.
-- **Relación:** AUD-T-001, AUD-T-009/AUG-048 y AUD-T-037; coordinar con AUG-049 para deep links sin duplicar su lógica.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+Resultado:
+- La revisión confirmó que AUG-107 ya estaba resuelta funcionalmente por H-AUD-040-014 y su adenda, sin necesidad de duplicar cambios de código.
+- ui.js espera la respuesta de suggestYear mediante confirmValidationBeforeCache antes de guardar validationCache; el flujo «Modelo confirmado» también espera la respuesta.
+- validationSubmission.js solo permite persistir la caché ante recorded=true. Fallos de red, estados desconocidos y respuestas info no confirmadas no se convierten en validaciones locales.
+- La interfaz presenta estado pendiente, confirmación o error y permite reintentar; un fallo de IndexedDB se diferencia de un fallo del registro backend.
+- FEEDBACK diferencia los aportes efectivamente registrados de los no-op/recuperados y mantiene deduplicación por actor, vehículo y año.
 
-- 2026-11-08 — AUD-T-001: AUG-151 nueva; adendas a AUG-008/AUG-049; H-AUD-015-002 se mantiene en AUG-099. Inventario: 150 IDs únicos dentro de AUG-001 a AUG-151; AUG-015 continúa ausente y no se infiere ni renumera.
+Evidencia local existente:
+- ValidationCacheConfirmation.js: 7/7 PASS.
+- runFeedbackWriteSecurityTests(): 44/44 PASS.
+- Parsing de ui.js, Services/feedback.js, validationSubmission.js y suites asociadas: PASS.
+- Evidencia recuperada de Auditoría.txt, H-AUD-040-014 y adenda de validación del 2026-11-10. No se repitieron pruebas con evidencia vigente.
 
+Validación Beta pendiente: timeout/offline en navegador real, pérdida de respuesta tras persistencia, recarga y reintento contra FEEDBACK/Spreadsheet aislados, IndexedDB real y flujo «Modelo confirmado». No se ejecutaron deployments ni se modificaron datos productivos.
 
-## Revalidación de AUD-T-002 — 2026-11-08
-Sesión: AUD-20261108-S042 | Checkpoint: AUD-CP-0042 | Estado: E1 estática completada.
-- Se revalidaron los seis hallazgos históricos H-AUD-001 a H-AUD-006 y las tareas existentes AUG-005 a AUG-010 contra Services/users.js, Services/Auth.js, auth.js, users.html y api-config.js vigentes.
-- Los seis hallazgos continúan abiertos; no se crea una tarea derivada nueva ni se duplica ninguna adenda.
-- AUG-005 conserva la adenda AUD-T-024 sobre autodeleción y revocación; AUG-006 mantiene logout remoto; AUG-007 sigue pendiente de decisión de política; AUG-008 conserva sus adendas de coordinación y respuestas obsoletas; AUG-009 requiere validación backend del nombre; AUG-010 conserva su dependencia con AUD-T-033 y la coordinación AUTH/USERS.
-- Los riesgos de concurrencia y consistencia de sesiones se relacionan con AUG-016; hashing y migración de credenciales se mantienen en AUD-T-023/AUG-011 a AUG-014, sin trasladar ni duplicar su alcance.
-- No se detectaron nuevos hallazgos que justifiquen una AUG adicional. Pruebas funcionales y verificación de deployments permanecen pendientes.
-
-
-### Adenda AUD-T-016 a AUG-103 — contraste medible de botones y texto fijo
-- **Nueva evidencia:** style.css:50/68/1298–1320 aplica texto blanco sobre --accent-color (#007bff claro; #58a6ff oscuro); users.html:11/16/22/117 aplica texto blanco sobre --primary-color; add_cortes.html:83 usa blanco sobre #007bff y :50 usa #888 sobre fondo de tarjeta blanco.
-- **Contraste calculado con colores sólidos:** blanco/#007bff = 3.98:1; blanco/#58a6ff = 2.53:1; #888/#fff = 3.54:1. Son valores estáticos, no mediciones de estilos computados en navegador.
-- **Ampliación:** definir combinaciones de texto/fondo que cumplan 4.5:1 para texto normal y 3:1 para texto grande/elementos gráficos aplicables; revisar estados hover, focus y disabled en index.html, users.html y add_cortes.html.
-- **Pruebas:** incorporar los pares y estados a VAL-25, con medición de estilos computados en ambos temas.
-- **Estado:** EXISTENTE; ampliada; diseño, implementación y validación pendientes. No crear AUG adicional.
-
-
-### Adenda AUD-T-039 a AUG-001 — criterios verificables de protección y revisión
-- **Nueva evidencia:** la API de GPSpedia2.2.5 devuelve protected=false, protection.enabled=false y required_status_checks off/sin contexts. GET /rulesets?includes_parents=true devuelve []. La rama de trabajo también está sin protección. La rama predeterminada es main y GPSpedia2.2.5 requiere una coincidencia explícita.
-- **Ampliación:** aplicar la regla al nombre exacto GPSpedia2.2.5; exigir PR; definir aprobaciones y revisores autorizados; descartar aprobaciones obsoletas tras nuevos commits; exigir resolución de conversaciones; bloquear force-push y eliminación; definir bypass de emergencia y método de merge/historial lineal.
-- **CI:** el árbol actual no contiene .github/workflows y no hay checks de estado. No exigir nombres de checks inexistentes; decidir primero si se incorpora CI y después fijar checks reales.
-- **Alcance relacionado:** decidir si GPSpedia2.2.5_work también requiere protección, sin cambiar el criterio de que los commits ordinarios se realizan en la rama de trabajo autorizada.
-- **Validación:** VAL-33 debe comprobar la regla activa desde una cuenta administrativa, PR de prueba, aprobaciones, conversaciones, bypass, force-push, borrado y checks disponibles.
-- **Estado:** EXISTENTE; ampliada por AUD-T-039. No crear otra AUG para la misma tarea. Configuración administrativa pendiente.
-
-ADENDAS Y CONTINUIDAD DEL REGISTRO ORIGINAL
-- AUG-005 conserva la adenda AUD-T-024 sobre autodeleción y revocación; AUG-006 mantiene logout remoto; AUG-007 sigue pendiente de decisión de política; AUG-008 conserva sus adendas de coordinación y respuestas obsoletas; AUG-009 requiere validación backend del nombre; AUG-010 conserva su dependencia con AUD-T-033 y la coordinación AUTH/USERS.
-- Los riesgos de concurrencia y consistencia de sesiones se relacionan con AUG-016; hashing y migración de credenciales se mantienen en AUD-T-023/AUG-011 a AUG-014, sin trasladar ni duplicar su alcance.
-- No se detectaron nuevos hallazgos que justifiquen una AUG adicional. Pruebas funcionales y verificación de deployments permanecen pendientes.
-
-
-### Adenda AUD-T-016 a AUG-103 — contraste medible de botones y texto fijo
-- **Nueva evidencia:** style.css:50/68/1298–1320 aplica texto blanco sobre --accent-color (#007bff claro; #58a6ff oscuro); users.html:11/16/22/117 aplica texto blanco sobre --primary-color; add_cortes.html:83 usa blanco sobre #007bff y :50 usa #888 sobre fondo de tarjeta blanco.
-- **Contraste calculado con colores sólidos:** blanco/#007bff = 3.98:1; blanco/#58a6ff = 2.53:1; #888/#fff = 3.54:1. Son valores estáticos, no mediciones de estilos computados en navegador.
-- **Ampliación:** definir combinaciones de texto/fondo que cumplan 4.5:1 para texto normal y 3:1 para texto grande/elementos gráficos aplicables; revisar estados hover, focus y disabled en index.html, users.html y add_cortes.html.
-- **Pruebas:** incorporar los pares y estados a VAL-25, con medición de estilos computados en ambos temas.
-- **Estado:** EXISTENTE; ampliada; diseño, implementación y validación pendientes. No crear AUG adicional.
-
-
-### Adenda AUD-T-039 a AUG-001 — criterios verificables de protección y revisión
-- **Nueva evidencia:** la API de GPSpedia2.2.5 devuelve protected=false, protection.enabled=false y required_status_checks off/sin contexts. GET /rulesets?includes_parents=true devuelve []. La rama de trabajo también está sin protección. La rama predeterminada es main y GPSpedia2.2.5 requiere una coincidencia explícita.
-- **Ampliación:** aplicar la regla al nombre exacto GPSpedia2.2.5; exigir PR; definir aprobaciones y revisores autorizados; descartar aprobaciones obsoletas tras nuevos commits; exigir resolución de conversaciones; bloquear force-push y eliminación; definir bypass de emergencia y método de merge/historial lineal.
-- **CI:** el árbol actual no contiene .github/workflows y no hay checks de estado. No exigir nombres de checks inexistentes; decidir primero si se incorpora CI y después fijar checks reales.
-- **Alcance relacionado:** decidir si GPSpedia2.2.5_work también requiere protección, sin cambiar el criterio de que los commits ordinarios se realizan en la rama de trabajo autorizada.
-- **Validación:** VAL-33 debe comprobar la regla activa desde una cuenta administrativa, PR de prueba, aprobaciones, conversaciones, bypass, force-push, borrado y checks disponibles.
-- **Estado:** EXISTENTE; ampliada por AUD-T-039. No crear otra AUG para la misma tarea. Configuración administrativa pendiente.
-
-### AUG-152 — Rediseñar Inbox como centro de conversaciones bidireccionales y notificaciones
-- **Origen:** solicitud de producto 2026-11-09; complementa AUD-T-010/AUD-T-018. **Prioridad:** Alta.
-- **Problema:** Inbox administra feedback y respuestas ligadas a un item, pero no permite iniciar un mensaje nuevo dirigido a un usuario ni mantiene conversaciones bidireccionales multi-mensaje. El modal requiere scroll interno estable en escritorio y móvil.
-- **Criterios:** (1) altura máxima del viewport dinámico, encabezado estable y scroll independiente lista/detalle; móvil lista/detalle de una columna, sin scroll del fondo ni overflow horizontal; (2) preservar selección y scroll tras actualizar/enviar/volver; (3) «Nuevo mensaje» del Desarrollador con destinatario USERS, asunto, categoría, cuerpo y plantillas editables de bienvenida; individual, sin broadcast por defecto; (4) «Consultar al desarrollador» para que el usuario inicie y responda un hilo; (5) Conversation/Message con IDs estables, participantes, autor, asunto, cuerpo, categoría, fechas, lectura, archivo, estado e idempotencyKey; (6) separar mensajes directos de Feedback y preservar históricos con migración/backups/rollback; (7) Recibidos, No leídos, Enviados, Archivados, contadores, búsqueda, paginación y lectura; (8) notificaciones internas y sincronización acotada; (9) sesión/rol/participantes validados en backend; límites, idempotencia y rate limit; (10) renderizado seguro y auditoría inmutable; (11) estados loading/empty/error/offline/sending/sent y borrador recuperable; (12) accesibilidad de diálogo, foco, teclado, lector, contraste, temas y responsive; (13) compatibilidad con reportes/sugerencias/vídeos y rechazo de tipos no soportados.
-- **Dependencias sin duplicación:** AUG-075–081, AUG-113–121, AUG-147–149, AUG-040/AUG-043. No sustituyen ni cierran estas tareas.
-- **Archivos potenciales:** index.html, ui.js, main.js, style.css, api-config.js, auth.js/state.js, users.html, Services/feedback.js, Services/users.js, esquema y pruebas aisladas.
-- **Validación:** VAL-34 — roles/participantes, bienvenida, consulta, respuesta multi-turno, lectura, archivo, búsqueda/paginación, idempotencia, timeout, XSS, sesión revocada, responsive/scroll, teclado/foco, offline y compatibilidad. Solo entornos aislados.
-- **Estado:** NUEVA; análisis, diseño, implementación y pruebas pendientes.
-
-
-TAREAS DOCUMENTALES ABIERTAS
-DOC-README-2026-001 — Retirar del README la afirmación de que los filtros rápidos están activos. Requisitos: revisar todas las referencias activas; declarar cancelación; verificar que no se describen como disponibles; no tocar legacy ni reintroducir código.
-Estado: COMPLETADA — DOCUMENTAL. Evidencia: README.md actualizado; mención de funcionalidad activa sustituida por nota explícita de cancelación. Sintaxis de código: N/A (sin cambios de código). Revisión documental y diff contra respaldo: aprobados.
-DOC-README-2026-002 — Reconciliar la descripción de microservicios y carpeta Services. Requisitos: confirmar visibilidad del repositorio y contenido real; distinguir fuentes, deployments y endpoints; revisar exposición; no borrar ni publicar archivos por inferencia; actualizar README solo tras confirmar política autorizada.
-Estado: COMPLETADA — DOCUMENTAL. README ahora describe Services/ como fuentes temporales durante implementación/corrección y establece su eliminación al cierre de esa fase. Distingue código fuente de deployments y endpoints. No se borró ni modificó ningún archivo de Services/.
-DOC-LEGACY-2026-001 — Revalidar cierres históricos [X]. Requisitos: contrastar cada tarea con commit/diff; revisar sintaxis de cada archivo afectado; registrar herramienta/versión/resultado; comprobar pruebas funcionales y Code Review; promover solo con evidencia; mantener legacy inmutable.
-Estado: PARCIAL — NO CERRADA. Se inventariaron 20 marcas [X] y TAREA 4 [~]; commits relacionados identificados; E1/VAL revisados; pruebas funcionales y Code Review individual no acreditados. Sintaxis actual verificada solo parcialmente; parser ESM/HTML/CSS y snapshots históricos pendientes. H-AUD-051 y H-AUD-052 abiertos. No modificar legacy ni promover marcas.
-
-
-
-
-ADENDA DE TRAZABILIDAD — DOC-README-2026-002
-La corrección del README fue publicada en 8b2bec3. La auditoría y el checkpoint inicial que el cierre original declaró incorporados no estaban en ese commit. La omisión se registra en H-AUD-050 y se corrige mediante DOC-TRACE-2026-001, sin reescribir el historial del commit original. DOC-README-2026-002 queda validada documentalmente después de la verificación del commit correctivo.
+Archivos actualizados: Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt, checkpoint.md y Olds/Documentacion_Legacy/README.md; se archivó el checkpoint previo sin modificar su contenido.
+Siguiente tarea: AUG-108 — Individualizar validationCache por usuario y vehículo. No iniciar hasta la siguiente interacción/sesión.
 ================================================================================
 
 
 ================================================================================
-### AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH
-- Origen: H-AUD-056 y H-AUD-057. Fecha: 2026-11-09. Prioridad: Crítica — integridad de sesiones.
-- Problema: AUTH y USERS son proyectos Apps Script separados y sus ScriptLock no se comparten. AUTH.login/logout y USERS.resetUserSessions modificaban ActiveSessions desde proyectos distintos; una eliminación concurrente podía invalidar índices de fila y afectar sesiones ajenas o dejar sesiones objetivo activas.
-- Criterios de aceptación:
-  1. AUTH es la única autoridad que escribe en ActiveSessions para login, logout y resetUserSessions.
-  2. Mover resetUserSessions a AUTH; validar el token invocante contra ActiveSessions y derivar ID/rol desde Users, sin confiar en identidad/rol del cliente.
-  3. Exigir rol Desarrollador, impedir auto-cierre, exigir unicidad de sesión y cuentas solicitante/destino y rechazar tokens duplicados antes de mutar.
-  4. Eliminar las sesiones destino en orden descendente bajo el mismo ScriptLock usado por login/logout; preservar sesiones ajenas e idempotencia.
-  5. Enrutar resetUserSessions a AUTH desde api-config.js y retirar ruta/handler de escritura de USERS y Services/Test/users.js.
-  6. Sincronizar Services/Test/Auth.js conservando el Spreadsheet ID de pruebas; documentar la ruta de prueba sin introducir URLs live.
-  7. Inventariar todos los escritores de ActiveSessions y demostrar que los demás consumidores son de solo lectura.
-  8. Probar en entorno aislado intercalados reales de login/logout/reset con objetivo al inicio/medio/final, mismo usuario/usuarios distintos, duplicados, reintentos y fallos parciales.
-  9. No ejecutar contra endpoints operativos ni datos productivos.
-- Dependencias: bloquea el cierre de H-AUD-056 y la aprobación/despliegue de AUG-006. AUG-005/H-AUD-053/H-AUD-054 permanecen independientes.
-- Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; pruebas aisladas y validación concurrente pendientes.
+CHECKPOINT DE CIERRE — AUG-108 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: af26e1f0e4a1e4bf5ca0feacd86ced81995de360.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
-ADENDA DE RANGO — 2026-11-09
-La descripción inicial de esta parte indicaba AUG-100 a AUG-152 como rango de corte. Con la incorporación de AUG-153, el rango operativo queda extendido a AUG-100–AUG-153. AUG-015 continúa ausente y no se crea ni reutiliza.
+Resultado:
+- Se confirmó que la individualización de validationCache ya estaba implementada en AUG-051; AUG-108 duplicaba el requisito en el backlog.
+- offline.js guarda con clave compuesta ownerId/vehicleId y comprueba ambos valores al recuperar.
+- ui.js consulta con la identidad de la cuenta activa.
+- No se permite guardar ni recuperar caché sin ownerId válido. Los usuarios anónimos no comparten respuestas locales.
+- No se duplicó código funcional.
+
+Evidencia:
+- Services/Test/IndexedDBTransactions.js contiene el caso «validationCache aislado por cuenta»: user-a recupera su respuesta, user-b no la ve y la escritura sin propietario se rechaza.
+- La cobertura histórica de AUG-051 incluyó esta prueba en la suite IndexedDBTransactions ejecutada en runtime V8 adaptado.
+- No se ejecutó Node CLI ni IndexedDB/navegador real en esta interacción.
+
+Validación Beta pendiente:
+- Dos cuentas escribiendo el mismo vehículo en el mismo perfil del navegador.
+- Cambio de cuenta/logout y sesiones separadas en pestañas o ventanas.
+- Confirmar que una sesión anónima no recibe caché de cuentas registradas ni guarda una entrada compartida.
+
+Archivos actualizados: Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-109 — Definir controles de confianza para aportaciones anónimas. No iniciar dentro de esta tarea.
 ================================================================================
 
 
 ================================================================================
-ACTUALIZACIÓN DE ESTADO — AUG-153 — 2026-11-09
-Estado vigente: COMPLETADA (validación local aprobada; concurrencia real en Apps Script diferida a Beta).
-Implementación verificada:
-- AUTH es el único servicio que escribe `ActiveSessions` para login, logout, resetUserSessions y deleteUser.
-- USERS ya no expone ni despacha `resetUserSessions`; sus operaciones de sesión son de lectura.
-- `api-config.js` enruta `resetUserSessions` a AUTH y `users.html` conserva el control administrativo Cerrar sesiones.
-- AUTH valida el token solicitante contra ActiveSessions, deriva identidad/rol desde Users, exige cuenta Desarrollador activa, rechaza aut cierre, cuentas no únicas/inactivas y tokens duplicados, y elimina las sesiones destino en orden descendente bajo el mismo ScriptLock de login/logout.
-- La copia aislada `Services/Test/Auth.js` está sincronizada; `Services/Test/users.js` no contiene mutaciones de ActiveSessions.
-Validaciones locales: sintaxis PASS en AUTH/USERS de producción y prueba; revisión de ruteo/dispatch PASS; USERS sin escrituras de ActiveSessions PASS; harness de revocación remota 5/5 PASS. Los escenarios incluyeron preservar sesiones ajenas, múltiples sesiones objetivo, rechazo de rol no autorizado, aut cierre, cuenta inactiva y token duplicado.
-La prueba de intercalados reales con LockService y Spreadsheet de Google Apps Script, así como fallos físicos de escritura, queda diferida a Beta. No se ejecutaron endpoints operativos ni se modificaron datos productivos.
-================================================================================
+CHECKPOINT DE CIERRE — AUG-109 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado: 7688414112a42ef751f45b6b7a6cb1e8ab3f197b.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
+Política y resultado:
+- Las aportaciones anónimas se conservan para revisión manual; no se consideran identidad humana ni aportante independiente.
+- El backend asigna anon:unverified e ignora identificadores enviados por el navegador.
+- Solo las claves user:<ID> derivadas de sesiones validadas participan en el umbral de tres aportantes para cambios automáticos.
+- suggestYear limita aportes anónimos a 30 solicitudes por hora mediante CacheService. Es un límite global del proyecto/ventana, no una defensa por IP/persona.
+- La deduplicación actor/vehículo/año impide que el mismo aporte anónimo, incluso con un ID de navegador regenerado, genere otra fila o actividad.
 
-================================================================================
-AUG-154 — Recuperación de escrituras parciales en USERS
-Estado: NUEVA; pendiente. Hallazgo H-AUD-066 identificado durante las pruebas de fallo de AUG-010. La segunda escritura de updateUser puede fallar después de guardar Nombre_Completo, dejando un resultado parcial aunque la API responda error. Diseñar compensación/estado parcial seguro y probar reintentos; no asumir transacciones ni lock interproyectos. Mantener separado de AUG-010.
-================================================================================
+Pruebas:
+- Services/Test/FeedbackWriteSecurity.js se amplió para probar repetición y regeneración de anonymousReporterId.
+- La suite fue ejecutada en un runtime V8 adaptado con stubs globales. Los casos de anonimato/umbral/repetición y derivación de actor aprobaron; la suite completa no quedó verde en ese runtime porque faltaron contratos globales de Apps Script en casos ajenos al alcance (SpreadsheetApp y dobles de PyS/sheets). No se declara PASS global.
+- Beta pendiente: CacheService real, concurrencia, revisión manual y comportamiento multi-dispositivo en deployment y Spreadsheet aislados.
 
-
-ADENDA DE RANGO — 2026-11-09
-Con AUG-154, el rango operativo de esta parte queda extendido a AUG-100–AUG-154. AUG-015 continúa ausente y no se crea ni reutiliza.
-
-
-================================================================================
-ADENDA DE CIERRE — AUG-147 — 2026-11-10
-Estado: COMPLETADA — implementación y todas las pruebas locales aprobadas (32/32 PASS).
-Se implementó la validación del par userId+sessionToken en AUTH, limpieza acotada de sesiones/identidad, revocación de login request vinculada al usuario, cierre de overlays y limpieza de estado/controles privilegiados. Services/Test/Auth.js quedó sincronizado. AUTH/ADMIN ya rechazaban tokens revocados y sus controles se conservaron.
-Pruebas locales: sintaxis, revocación, identidad cruzada, duplicados, idempotencia, expiración, cierre remoto, cambio de cuenta, overlays, rol Developer y ruteo: 32/32 PASS.
-Beta pendiente: pruebas funcionales reales, integración, concurrencia física LockService y deployments. No se ejecutaron endpoints operativos ni se modificaron datos productivos.
-La ficha original AUG-147 se conserva; esta adenda actualiza su estado sin borrar historial.
-================================================================================
-
-
-================================================================================
-AUG-100 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
-- Se verificó el sistema existente button-system.css y su inclusión única en index.html, users.html y add_cortes.html; los botones ordinarios estáticos ya utilizan .btn y variantes semánticas.
-- Se reforzaron los controles compactos a 40px y se integró aria-busy=true al estado loading.
-- Se creó Services/Test/ButtonSystemIntegrity.js con 9 escenarios de contrato; la documentación enumera las excepciones especializadas de UI que conservan estilos propios.
-- Validación automatizada local por contrato estático; no se ejecutó navegador real ni Node CLI en esta sesión. La revisión visual en temas/viewports queda para Beta.
-- Sin cambios de endpoints, permisos, datos ni deployments.
-Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-100.
+Archivos actualizados: Services/Test/FeedbackWriteSecurity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-110 — Desacoplar la validación comunitaria de la carga de imágenes. No iniciar dentro de esta tarea.
 ================================================================================
