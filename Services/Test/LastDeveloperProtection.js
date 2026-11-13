@@ -70,7 +70,7 @@ function runLastDeveloperProtectionTests(sources) {
         const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],['T1','tech','pw','Tecnico','','','Nombre anterior',markerValue,'']];
         const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],['T1','tech','token-target',new Date(),'','']];
         const properties=new Map([['role:T1',JSON.stringify(markerData)]]);
-        let failName=true,failCommitFlush=false;
+        let failName=true,failCommitFlush=false,flushCalls=0;
         const usersSheet={
             getDataRange:()=>({getValues:()=>users.map(row=>row.slice())}),
             getRange:(row,col)=>({
@@ -103,7 +103,7 @@ function runLastDeveloperProtectionTests(sources) {
             })},
             value=>String(value||'').trim(),normalizeRole,
             row=>active(row),id=>'role:'+id,
-            ()=>({pending:false}),{flush:()=>{if(failCommitFlush){failCommitFlush=false;throw new Error('flush final simulado');}}}
+            ()=>({pending:false}),{flush:()=>{flushCalls++;if(failCommitFlush){failCommitFlush=false;throw new Error('flush final simulado');}}}
         );
         const first=reconcile(usersSheet,sessionsSheet,'T1');
         assert(first.pending,'El fallo de la segunda escritura debe dejar recuperación pendiente.');
@@ -112,7 +112,7 @@ function runLastDeveloperProtectionTests(sources) {
         equal(sessions[1][2],'','El token debe seguir invalidado aunque falle el perfil.');
         failCommitFlush=true;
         const second=reconcile(usersSheet,sessionsSheet,'T1');
-        assert(second.pending,'Un fallo de flush debe conservar el marcador incluso si el valor parece escrito.');
+        assert(second.pending,'Un fallo de flush debe conservar el marcador incluso si el valor parece escrito: '+JSON.stringify(second)+' flushCalls='+flushCalls+' fail='+failCommitFlush);
         equal(users[1][6],'Nombre nuevo');assert(String(users[1][7]).startsWith(prefix));
         const third=reconcile(usersSheet,sessionsSheet,'T1');
         assert(!third.pending,'El segundo reintento debe completar la operación.');
