@@ -81,4 +81,38 @@ test('el botón y el encabezado conservan foco visible en ambos temas', () => {
     assert.match(css, /#dev-tools-modal #dev-tools-title:focus-visible/);
 });
 
+
+test('las cinco opciones usan un único grupo nativo de radios con etiquetas asociadas', () => {
+    const tabsStart = html.indexOf('<div class="dev-tools-tabs"');
+    const tabsEnd = html.indexOf('<div class="dev-tools-panels">', tabsStart);
+    const tabs = html.slice(tabsStart, tabsEnd);
+    assert.match(tabs, /role="group" aria-label="Secciones del panel de desarrollador"/);
+    for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
+        assert.match(tabs, new RegExp('<input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-' + id + '" aria-controls="dev-panel-' + id + '"'));
+        assert.match(tabs, new RegExp('<label class="dev-tab-link" for="dev-tab-' + id + '"'));
+    }
+    assert.equal((tabs.match(/type="radio" name="dev-tools-section"/g) || []).length, 5);
+    assert.equal((tabs.match(/checked>/g) || []).length, 1);
+});
+test('los paneles son regiones con encabezados propios y relaciones correctas', () => {
+    for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
+        assert.match(html, new RegExp('<section id="dev-panel-' + id + '" class="dev-tab-panel dev-panel-' + id + '" role="region" aria-labelledby="dev-panel-title-' + id + '">'));
+        assert.match(html, new RegExp('<h3 id="dev-panel-title-' + id + '">'));
+    }
+});
+test('no mezcla roles tab/tablist/tabpanel con controles radio nativos', () => {
+    const start = html.indexOf('<div class="dev-tools-tabs"');
+    const end = html.indexOf('<!-- =========', start);
+    const tabs = html.slice(start, end);
+    assert.doesNotMatch(tabs, /role="tablist"|role="tab"|role="tabpanel"/);
+    assert.match(tabs, /role="group"/);
+    assert.match(tabs, /type="radio" name="dev-tools-section"/);
+});
+test('los selectores CSS conservan visibilidad y foco para las cinco opciones', () => {
+    for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
+        assert.match(css, new RegExp('#dev-tools-modal #dev-tab-' + id + ':checked'));
+        assert.match(css, new RegExp('#dev-tools-modal #dev-tab-' + id + ':focus-visible'));
+    }
+});
+
 console.log('DevToolsModalAccessibility: ' + passed + '/' + passed + ' PASS');

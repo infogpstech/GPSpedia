@@ -208,37 +208,37 @@
         <button type="button" class="info-close-btn" aria-label="Cerrar opciones de desarrollador">&times;</button>
         <h2 id="dev-tools-title" class="dev-tools-title" tabindex="-1"><i class="fa-solid fa-screwdriver-wrench"></i> Opciones de desarrollador</h2>
 
-        <div class="dev-tools-tabs">
-            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" checked>
-            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-backups">
-            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-database">
-            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-images">
-            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-system">
+        <div class="dev-tools-tabs" role="group" aria-label="Secciones del panel de desarrollador">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" aria-controls="dev-panel-diagnostics" checked>
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-backups" aria-controls="dev-panel-backups">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-database" aria-controls="dev-panel-database">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-images" aria-controls="dev-panel-images">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-system" aria-controls="dev-panel-system">
 
             <div class="dev-tools-layout">
-                <nav class="dev-tools-sidebar" role="tablist" aria-label="Secciones del panel de desarrollador">
-                    <label class="dev-tab-link" for="dev-tab-diagnostics" role="tab" aria-label="Diagnóstico" title="Diagnóstico">
+                <div class="dev-tools-sidebar">
+                    <label class="dev-tab-link" for="dev-tab-diagnostics" title="Diagnóstico">
                         <i class="fa-solid fa-stethoscope"></i><span>Diagnóstico</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-backups" role="tab" aria-label="Respaldos" title="Respaldos">
+                    <label class="dev-tab-link" for="dev-tab-backups" title="Respaldos">
                         <i class="fa-solid fa-shield-halved"></i><span>Respaldos</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-database" role="tab" aria-label="Base de datos" title="Base de datos">
+                    <label class="dev-tab-link" for="dev-tab-database" title="Base de datos">
                         <i class="fa-solid fa-database"></i><span>Base de datos</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-images" role="tab" aria-label="Imágenes y Drive" title="Imágenes y Drive">
+                    <label class="dev-tab-link" for="dev-tab-images" title="Imágenes y Drive">
                         <i class="fa-solid fa-images"></i><span>Imágenes y Drive</span>
                     </label>
-                    <label class="dev-tab-link" for="dev-tab-system" role="tab" aria-label="Sistema" title="Sistema">
+                    <label class="dev-tab-link" for="dev-tab-system" title="Sistema">
                         <i class="fa-solid fa-gears"></i><span>Sistema</span>
                     </label>
-                </nav>
+                </div>
 
                 <div class="dev-tools-panels">
                     <!-- Diagnóstico -->
-                    <section class="dev-tab-panel dev-panel-diagnostics" role="tabpanel" aria-labelledby="dev-tab-diagnostics">
+                    <section id="dev-panel-diagnostics" class="dev-tab-panel dev-panel-diagnostics" role="region" aria-labelledby="dev-panel-title-diagnostics">
                         <div class="dev-panel-heading">
-                            <h3><i class="fa-solid fa-stethoscope"></i> Diagnóstico</h3>
+                            <h3 id="dev-panel-title-diagnostics"><i class="fa-solid fa-stethoscope"></i> Diagnóstico</h3>
                             <p>Estado y diagnóstico de los servicios conectados.</p>
                         </div>
 
@@ -264,9 +264,9 @@
                     </section>
 
                     <!-- Respaldos: acceso secundario a las herramientas ubicadas en Base de datos -->
-                    <section class="dev-tab-panel dev-panel-backups" role="tabpanel" aria-labelledby="dev-tab-backups">
+                    <section id="dev-panel-backups" class="dev-tab-panel dev-panel-backups" role="region" aria-labelledby="dev-panel-title-backups">
                         <div class="dev-panel-heading">
-                            <h3><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</h3>
+                            <h3 id="dev-panel-title-backups"><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</h3>
                             <p>Las operaciones de respaldo y restauración se administran desde «Base de datos» mediante un único campo compartido.</p>
                         </div>
                         <div class="dev-card dev-tools-card">
@@ -277,9 +277,9 @@
                     </section>
 
                     <!-- Base de datos -->
-                    <section class="dev-tab-panel dev-panel-database" role="tabpanel" aria-labelledby="dev-tab-database">
+                    <section id="dev-panel-database" class="dev-tab-panel dev-panel-database" role="region" aria-labelledby="dev-panel-title-database">
                         <div class="dev-panel-heading">
-                            <h3><i class="fa-solid fa-database"></i> Base de datos</h3>
+                            <h3 id="dev-panel-title-database"><i class="fa-solid fa-database"></i> Base de datos</h3>
                             <p>Herramientas de organización, diagnóstico y mantenimiento de registros.</p>
                         </div>
 
@@ -389,9 +389,9 @@
                     </section>
 
                     <!-- Imágenes y Drive -->
-                    <section class="dev-tab-panel dev-panel-images" role="tabpanel" aria-labelledby="dev-tab-images">
+                    <section id="dev-panel-images" class="dev-tab-panel dev-panel-images" role="region" aria-labelledby="dev-panel-title-images">
                         <div class="dev-panel-heading">
-                            <h3><i class="fa-solid fa-images"></i> Imágenes y Google Drive</h3>
+                            <h3 id="dev-panel-title-images"><i class="fa-solid fa-images"></i> Imágenes y Google Drive</h3>
                             <p>Organiza archivos, administra logotipos y revisa el historial de imágenes.</p>
                         </div>
 
@@ -437,9 +437,9 @@
                     </section>
 
                     <!-- Sistema -->
-                    <section class="dev-tab-panel dev-panel-system" role="tabpanel" aria-labelledby="dev-tab-system">
+                    <section id="dev-panel-system" class="dev-tab-panel dev-panel-system" role="region" aria-labelledby="dev-panel-title-system">
                         <div class="dev-panel-heading">
-                            <h3><i class="fa-solid fa-gears"></i> Sistema</h3>
+                            <h3 id="dev-panel-title-system"><i class="fa-solid fa-gears"></i> Sistema</h3>
                             <p>Herramientas que afectan el almacenamiento local de esta instalación.</p>
                         </div>
 
