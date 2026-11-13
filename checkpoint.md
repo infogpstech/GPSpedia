@@ -1006,3 +1006,44 @@ Commits secuenciales de esta tarea:
 - 8a5249996424cc26bb7f336041229950fa036dd8
 Siguiente tarea según el plan maestro: AUG-018 — Restauraciones recuperables y verificación integral de respaldos DB/Drive.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-038 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de código validado: 3019afab0892168b87c538e3ac328cb8647aab13
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Implementación:
+- Services/admin.js: unicidad estricta de vehicleId; compensación verificable de URL activa, historial REP-<opId>, ledger AdminImageUploads y metadatos/estado del archivo Drive.
+- Una operación linked con archivo eliminado o ausente no reactiva el recurso ni confirma el reemplazo; se escala a requires_review mediante helper terminal que alinea los estados disponibles y conserva evidencia.
+- Los fallos de compensación no se etiquetan como cancelled; el ledger/historial se escalan a revisión.
+- ui.js: el descarte consulta siempre el catálogo fresco y restaura cada campo mediante compare-and-set, evitando sobrescribir cambios concurrentes. La copia local se elimina solo después de verificar el resultado completo.
+- Se conservan los reemplazos ya confirmados y se reconcilian usando el mismo opId.
+
+Validación local/CI:
+- AdminImageReplacementCompensation: 9/9 PASS.
+- GitHub Actions run 43425740603 SUCCESS.
+- Node.js 22.23.4; 27 suites; 351 pruebas aprobadas; 0 fallos.
+- La suite valida unicidad, archivo linked en papelera, verificación de reversión de URL, historial, metadatos Drive, orden/estado de compensación, lectura fresca, compare-and-set y conservación del baseline de reemplazos.
+- Parsing V8 de Services/admin.js y de la suite nueva: PASS. ui.js fue validado por node --check en el workflow como ES module.
+
+Commits de implementación/pruebas:
+- 451a579ae6ea4c71693cd289c893c03387bb431a
+- 20ef93d56151cb7d6554dc8d5075d13bf8194a03
+- 98f374b7a296d4ba13fa03e7e09a308b9d874f65
+- bb3becd20baf832b0abf14953b36e20639521604
+- 52fe83086e2e8de4e03bcc54bc7a69b1455bd92b
+- d1fd45fa6128053cd4169bca6545e96759ebbb3e
+- 57e8ea7b07252e8d820ac6e6cd5091be10a19201
+- 7c386bdf041086c2b20ffa53b9bae8435f20ebaf
+- 2008347f4a5f3a626458dce544b584fda5eccb6c
+- 3019afab0892168b87c538e3ac328cb8647aab13
+
+Validación Beta pendiente: Apps Script ADMIN, Spreadsheet/Drive aislados, eliminación real posterior de archivos linked, fallos inyectados de escritura/verificación en historial/ledger/Drive y concurrencia entre editores reales. No se modificaron deployments ni recursos productivos.
+
+Siguiente tarea del backlog: AUG-039 — completar autorización y minimización de datos en WRITE. Dependencias a revisar: AUD-T-032, AUD-T-024/AUG-016, AUD-T-033/AUG-003 y AUD-T-035. Antes de implementar, revisar el contrato real de sesiones y todos los callsites indicados en el backlog.
+================================================================================
