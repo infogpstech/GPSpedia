@@ -2859,7 +2859,7 @@ function findUniqueAdminVehicleRow_(sheet, vehicleId) {
  * El ID y los campos calculados quedan fuera de la allowlist y nunca se escriben.
  */
 function handleUpdateVehicleField(payload, logMessage) {
-    const { vehicleId, fieldName, value } = payload || {};
+    const { vehicleId, fieldName, value, enforceExpectedCurrentValue, expectedCurrentValue } = payload || {};
     const cleanVehicleId = String(vehicleId == null ? "" : vehicleId).trim();
     if (!cleanVehicleId || !fieldName || typeof fieldName !== "string") throw new Error("Parámetros de edición de campo incompletos.");
     if (!isAdminModalEditField_(fieldName) || fieldName === "id" || fieldName === "timestamp" || fieldName === "contadorBusqueda") {
@@ -2881,6 +2881,7 @@ function handleUpdateVehicleField(payload, logMessage) {
         const valueToStore = validateAdminModalFieldValue_(sheet, fieldName, value, rowValues);
         const target = sheet.getRange(actualRow, colIndex);
         const previousValue = target.getValue();
+        if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue);
         try {
             target.setValue(valueToStore);
             SpreadsheetApp.flush();
@@ -3032,6 +3033,55 @@ function findReplacedImageRecordById(sheet, replacementId) {
     return { rowIndex: rowIndex, values: sheet.getRange(rowIndex, 1, 1, 11).getValues()[0] };
 }
 
+function assertAdminModalExpectedValue_(actualValue, expectedValue) {
+    const actual = String(actualValue == null ? "" : actualValue);
+    const expected = String(expectedValue == null ? "" : expectedValue);
+    if (actual !== expected) {
+        throw new Error("El campo cambió desde la última lectura del catálogo; no se sobrescribió una modificación concurrente.");
+    }
+    return true;
+}
+
+function restoreAdminImageActiveCell_(activeCell, originalUrl) {
+    if (!activeCell || typeof activeCell.setValue !== "function" || typeof activeCell.getValue !== "function") {
+        throw new Error("No se pudo verificar la celda de imagen durante la compensación.");
+    }
+    const expected = String(originalUrl || "").trim();
+    activeCell.setValue(expected);
+    SpreadsheetApp.flush();
+    const actual = String(activeCell.getValue() || "").trim();
+    if (actual !== expected) throw new Error("La referencia anterior no se confirmó por lectura posterior.");
+    return true;
+}
+
+function updateAdminImageReplacementHistoryStatus_(historySheet, rowIndex, status) {
+    if (!historySheet || !rowIndex || !["cancelada", "requiere_revision"].includes(status)) {
+        throw new Error("No se pudo identificar el registro histórico que debe compensarse.");
+    }
+    const target = historySheet.getRange(rowIndex, 11);
+    target.setValue(status);
+    SpreadsheetApp.flush();
+    const actual = String(target.getValue() || "").trim();
+    if (actual !== status) throw new Error("El estado del historial no se confirmó por lectura posterior.");
+    return true;
+}
+
+function updateAdminImageUploadFileState_(file, operationId, contentHash, state, trashAfter) {
+    if (!file || !["cancelled", "requires_review"].includes(state)) {
+        throw new Error("No se pudo identificar el archivo Drive de la compensación.");
+    }
+    const expectedDescription = buildAdminImageUploadDescription(operationId, contentHash, state);
+    file.setDescription(expectedDescription);
+    if (String(file.getDescription() || "") !== expectedDescription) {
+        throw new Error("El estado del archivo Drive no se confirmó por lectura posterior.");
+    }
+    if (trashAfter === true) {
+        file.setTrashed(true);
+        if (file.isTrashed() !== true) throw new Error("El archivo Drive no confirmó su traslado a papelera.");
+    }
+    return true;
+}
+
 /**
  * Subir una imagen modificada a la subcarpeta del vehículo en Drive
  */
@@ -3141,17 +3191,14 @@ function handleUploadAdminImage(payload, logMessage) {
     let newImageUrl = "";
     let previousNewImageUrl = "";
     let operationConflict = false;
+    let operationContentHash = "";
 
     try {
         logMessage("Edición In-Modal", "Procesando el intento " + operationId + " para el campo '" + fieldName + "' del vehículo ID: " + vehicleId + "...");
 
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         if (!sheet || sheet.getLastRow() < 2) throw new Error("No hay registros disponibles en la hoja Cortes.");
-        const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
-        const rowIndex = ids.findIndex(id => String(id) === String(vehicleId));
-        if (rowIndex === -1) throw new Error("Vehículo ID '" + vehicleId + "' no encontrado.");
-
-        const actualRow = rowIndex + 2;
+        const actualRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId).trim());
         const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
         const colIndex = COLS_CORTES[fieldName];
         if (!colIndex) throw new Error("El campo '" + fieldName + "' no tiene una columna válida en Cortes.");
@@ -3173,6 +3220,7 @@ function handleUploadAdminImage(payload, logMessage) {
         const decodedData = Utilities.base64Decode(cleanBase64);
         if (!decodedData || !decodedData.length) throw new Error("La imagen recibida está vacía.");
         const contentHash = calculateAdminImageUploadHash(decodedData);
+        operationContentHash = contentHash;
         const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => actualMimeType });
         if (!extension) throw new Error("No se pudo determinar la extensión original de la imagen a partir del nombre o MIME.");
         const newFilename = buildCanonicalImageBaseName(mapRowToObject(rowValues, COLS_CORTES), fieldName) + extension;
@@ -3230,7 +3278,25 @@ function handleUploadAdminImage(payload, logMessage) {
                     const linkedFileId = String(values[5] || extractDriveFileId(newImageUrl) || "");
                     if (!linkedFileId) throw new Error("La operación figura vinculada, pero no contiene un ID de archivo verificable.");
                     newFile = DriveApp.getFileById(linkedFileId);
-                    if (newFile.isTrashed()) newFile.setTrashed(false);
+                    if (newFile.isTrashed()) {
+                        const reviewReason = "El archivo de una operación ya vinculada fue enviado a papelera posteriormente. No se reactivó automáticamente para respetar la eliminación y conservar la evidencia.";
+                        operationRecord.values[9] = "requires_review";
+                        operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+                        try { saveAdminImageUploadOperation(operationSheet, operationRecord); }
+                        catch (ledgerError) { logMessage("Edición In-Modal", "No se pudo persistir requires_review para " + operationId + ": " + ledgerError.message, 0, 0, true, true); }
+                        if (originalUrl) {
+                            try {
+                                const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+                                const existingHistory = historySheet && findReplacedImageRecordById(historySheet, "REP-" + operationId);
+                                if (existingHistory) updateAdminImageReplacementHistoryStatus_(historySheet, existingHistory.rowIndex, "requiere_revision");
+                            } catch (historyError) {
+                                logMessage("Edición In-Modal", "No se pudo marcar el historial para revisión: " + historyError.message, 0, 0, true, true);
+                            }
+                        }
+                        logMessage("Edición In-Modal", reviewReason, 0, 0, true, true);
+                        return { status: "error", operationStatus: "requires_review", imageUrl: newImageUrl,
+                            currentImageUrl: latestLinkedUrl, message: reviewReason };
+                    }
                     verifyAdminImageUploadFile(newFile, actualMimeType, contentHash);
                     if (originalUrl) {
                         historyRecord = recordReplacedImage({
@@ -3358,14 +3424,15 @@ function handleUploadAdminImage(payload, logMessage) {
     } catch (error) {
         let rollbackMessage = "";
         let rollbackFailed = false;
+        let historySheet = null;
+        let historyRowIndex = null;
 
         if (activeCell && newImageUrl) {
             try {
                 const currentValue = String(activeCell.getValue() || "").trim();
                 if ((currentValue === newImageUrl || currentValue === previousNewImageUrl) &&
                     currentValue !== originalUrl) {
-                    activeCell.setValue(originalUrl);
-                    SpreadsheetApp.flush();
+                    restoreAdminImageActiveCell_(activeCell, originalUrl);
                 } else if (currentValue !== originalUrl &&
                     currentValue !== newImageUrl &&
                     currentValue !== previousNewImageUrl) {
@@ -3378,54 +3445,83 @@ function handleUploadAdminImage(payload, logMessage) {
             }
         }
 
-        if (newFile && fileCreatedThisAttempt) {
-            try { newFile.setTrashed(true); }
-            catch (fileError) {
+        try {
+            if (historyRecord) {
+                historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+                if (!historySheet) throw new Error("No se encontró la hoja de historial.");
+                historyRowIndex = historyRecord.rowIndex;
+            } else if (operationRecord && originalUrl) {
+                historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+                if (!historySheet) throw new Error("No se encontró la hoja de historial.");
+                const existingHistory = findReplacedImageRecordById(historySheet, "REP-" + operationId);
+                if (existingHistory) historyRowIndex = existingHistory.rowIndex;
+            }
+        } catch (historyLookupError) {
+            rollbackFailed = true;
+            rollbackMessage += " No se pudo localizar el registro histórico para compensarlo: " + historyLookupError.message + ".";
+        }
+
+        if (historySheet && historyRowIndex) {
+            try {
+                updateAdminImageReplacementHistoryStatus_(
+                    historySheet, historyRowIndex,
+                    rollbackFailed || operationConflict ? "requiere_revision" : "cancelada"
+                );
+            } catch (historyError) {
                 rollbackFailed = true;
-                rollbackMessage += " No se pudo enviar el archivo nuevo a papelera: " + fileError.message + ".";
+                rollbackMessage += " No se pudo actualizar y verificar el estado del registro histórico: " + historyError.message + ".";
             }
         }
 
-        if (operationSheet && operationRecord) {
+        if (newFile && operationContentHash) {
             try {
-                operationRecord.values[9] = rollbackFailed || operationConflict ? "requires_review" : "cancelled";
+                updateAdminImageUploadFileState_(
+                    newFile, operationId, operationContentHash,
+                    rollbackFailed || operationConflict ? "requires_review" : "cancelled",
+                    fileCreatedThisAttempt && !rollbackFailed && !operationConflict
+                );
+            } catch (fileError) {
+                rollbackFailed = true;
+                rollbackMessage += " No se pudo verificar el estado compensatorio del archivo Drive: " + fileError.message + ".";
+                try { updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false); }
+                catch (reviewFileError) { rollbackMessage += " Tampoco se pudo marcar el archivo para revisión: " + reviewFileError.message + "."; }
+            }
+        }
+
+        if (rollbackFailed && historySheet && historyRowIndex) {
+            try { updateAdminImageReplacementHistoryStatus_(historySheet, historyRowIndex, "requiere_revision"); }
+            catch (historyReviewError) { rollbackMessage += " No se pudo confirmar requires_review en el historial: " + historyReviewError.message + "."; }
+        }
+
+        if (operationSheet && operationRecord) {
+            const finalStatus = rollbackFailed || operationConflict ? "requires_review" : "cancelled";
+            try {
+                operationRecord.values[9] = finalStatus;
                 operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
                 saveAdminImageUploadOperation(operationSheet, operationRecord);
             } catch (ledgerError) {
                 rollbackFailed = true;
-                rollbackMessage += " No se pudo actualizar el ledger de la operación: " + ledgerError.message + ".";
-            }
-        }
-
-        if (historyRecord) {
-            try {
-                const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-                if (historySheet) {
-                    historySheet.getRange(historyRecord.rowIndex, 11)
-                        .setValue(rollbackFailed || operationConflict ? "requiere_revision" : "cancelada");
-                    SpreadsheetApp.flush();
+                rollbackMessage += " No se pudo actualizar/verificar el ledger de la operación: " + ledgerError.message + ".";
+                try {
+                    operationRecord.values[9] = "requires_review";
+                    operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+                    saveAdminImageUploadOperation(operationSheet, operationRecord);
+                } catch (reviewLedgerError) {
+                    rollbackMessage += " Tampoco se pudo confirmar requires_review en el ledger: " + reviewLedgerError.message + ".";
                 }
-            } catch (historyError) {
-                rollbackMessage += " No se pudo actualizar el estado del registro histórico: " + historyError.message + ".";
-            }
-        } else if (operationRecord && originalUrl) {
-            try {
-                const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-                if (historySheet) {
-                    const existingHistory = findReplacedImageRecordById(historySheet, "REP-" + operationId);
-                    if (existingHistory) {
-                        historySheet.getRange(existingHistory.rowIndex, 11)
-                            .setValue(rollbackFailed || operationConflict ? "requiere_revision" : "cancelada");
-                        SpreadsheetApp.flush();
-                    }
+                if (historySheet && historyRowIndex) {
+                    try { updateAdminImageReplacementHistoryStatus_(historySheet, historyRowIndex, "requiere_revision"); }
+                    catch (historyReviewError) { rollbackMessage += " No se pudo alinear el historial con requires_review: " + historyReviewError.message + "."; }
                 }
-            } catch (historyError) {
-                rollbackMessage += " No se pudo reconciliar el registro histórico existente: " + historyError.message + ".";
+                if (newFile && operationContentHash) {
+                    try { updateAdminImageUploadFileState_(newFile, operationId, operationContentHash, "requires_review", false); }
+                    catch (fileReviewError) { rollbackMessage += " No se pudo alinear el archivo Drive con requires_review: " + fileReviewError.message + "."; }
+                }
             }
         }
 
         logMessage("Edición In-Modal", "Reemplazo " + operationId + " no confirmado. Motivo: " + error.message + rollbackMessage, 0, 0, true, true);
-        throw new Error("No se completó el reemplazo; se intentó conservar la referencia anterior. " + error.message + rollbackMessage);
+        throw new Error("No se completó el reemplazo; se intentó compensar y verificar todos los recursos. " + error.message + rollbackMessage);
     } finally {
         lock.releaseLock();
     }
