@@ -423,7 +423,7 @@ AUG-018 — RESTAURACIONES RECUPERABLES Y RESPALDOS DB/DRIVE — 2026-11-13
 - Se completó la extensión del respaldo Drive con manifiesto v2, inventario de identidad y estructura, copia por lotes, cursores persistidos y reanudación idempotente mediante el mismo ID.
 - Los contenedores incompletos o con manifiestos alterados no se aceptan para restauración. DB/Drive conservan staging y rollback verificables; los escritores se coordinan mediante la lease compartida ADMIN de AUG-003.
 - Se corrigió la interfaz para propagar estados in_progress y errores reanudables. Se añadió regresión para archivos legítimos que comparten el nombre del manifiesto.
-- Validación CI: Node.js 22.23.4, AdminRestoreRecovery y AdminBackupResumeUI; resultado final y SHA se registran en checkpoint.md.
+- Validación CI: run 43424235639 SUCCESS, Node.js 22.23.4, 26 suites y 342/342 PASS; AdminRestoreRecovery 18/18 y AdminBackupResumeUI 8/8. HEAD final 10413822d6bf4b485aad04a0e7bc95b35a4a279c.
 - Beta pendiente: Apps Script ADMIN y Spreadsheet/Drive aislados, reanudación tras interrupción real, mutación del origen entre lotes y fallos inyectados de staging/promoción/rollback. No se ejecutaron recursos ni deployments productivos.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
