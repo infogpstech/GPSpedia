@@ -466,8 +466,8 @@ check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmu
             };
         }
     };
-    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
-    const scan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+    const source=fnSource(admin,"extractDriveFileIds")+"\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\nreturn collectCortesImageReferences;")(
         ()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
     const result=scan(true);
     for(const id of [FILE_A,FILE_B,FILE_C,FILE_D,FILE_E])assert.ok(result.references.has(id),"Falta referencia "+id);
@@ -493,7 +493,7 @@ check("La pertenencia a Cortes memoiza ancestros por petición sin marcar como v
     const root=makeFolder("root-folder"),inside=makeFolder("inside-folder",[root]),leaf=makeFolder("leaf-folder",[inside]);
     const outsideRoot=makeFolder("outside-root"),outside=makeFolder("outside-folder",[outsideRoot]);
     const mixed=makeFolder("mixed-folder",[outside,inside]),cache=new Map();
-    const fn=new Function("Map",fnSource(admin,"isFolderInsideCortes")+"\\nreturn isFolderInsideCortes;")(Map);
+    const fn=new Function("Map",fnSource(admin,"isFolderInsideCortes")+"\nreturn isFolderInsideCortes;")(Map);
     assert.equal(fn(leaf,"root-folder",cache),true);
     const before=inside.calls;
     assert.equal(fn(inside,"root-folder",cache),true);
