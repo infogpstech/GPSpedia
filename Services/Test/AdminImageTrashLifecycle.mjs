@@ -214,6 +214,12 @@ check("Restaurar desde papelera recupera el estado anterior y no cambia celdas a
     assert.equal(b.sheet.cells[1][10],"requiere_revision");
     assert.equal(b.sheet.cells[1][23],"requiere_revision");
 });
+check("El desarrollador puede restaurar un registro requiere_revision si Drive confirma que está en papelera",()=>{
+    const b=makeBase({status:"requiere_revision",previous:"historica",trashed:true});
+    assert.equal(runRestore(b).status,"success");
+    assert.equal(b.file.trashed,false);
+    assert.equal(b.sheet.cells[1][10],"historica");
+});
 check("Restaurar desde papelera conserva el estado histórico restablecida",()=>{
     const b=makeBase({status:"en_papelera",previous:"restablecida",trashed:true});
     assert.equal(runRestore(b).status,"success");
@@ -272,6 +278,15 @@ check("La eliminación definitiva ejecuta GET, DELETE y GET de verificación ant
     assert.equal(result.status,"success");
     assert.equal(deps.requestCalls,3);
     assert.equal(b.sheet.cells[1][10],"eliminada");
+});
+check("El desarrollador puede eliminar definitivamente un registro requiere_revision solo si Drive confirma papelera",()=>{
+    const b=makeBase({status:"requiere_revision",previous:"historica",trashed:true});
+    const {result}=runPermanent(b,[ok(),noContent(),gone()]);
+    assert.equal(result.status,"success");
+    assert.equal(b.sheet.cells[1][10],"eliminada");
+    const activeFile=makeBase({status:"requiere_revision",previous:"historica",trashed:false});
+    assert.throws(()=>runPermanent(activeFile,[ok({trashed:false})]),/ya no está en papelera/);
+    assert.equal(activeFile.sheet.cells[1][10],"requiere_revision");
 });
 check("Una respuesta de permisos Drive API no provoca eliminación",()=>{
     const b=makeBase({status:"en_papelera",previous:"historica",trashed:true});
