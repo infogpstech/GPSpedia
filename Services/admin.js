@@ -5812,97 +5812,209 @@ function handleAddColumn(payload, logMessage) {
     return { status: 'success', message: `Columna '${columnName}' agregada en la posicion ${newColIndex}.`, columnIndex: newColIndex };
 }
 
+function getDriveParentFolders_(resource) {
+    try {
+        const parents = resource && resource.getParents();
+        if (!parents || typeof parents.hasNext !== "function" || typeof parents.next !== "function") return null;
+        const result = [];
+        while (parents.hasNext()) result.push(parents.next());
+        return result;
+    } catch (error) {
+        return null;
+    }
+}
+
+function isDriveFolderWithinCortes_(folder, rootFolderId, visitedIds = []) {
+    if (!folder || !rootFolderId) return false;
+    let folderId;
+    try { folderId = String(folder.getId() || ""); } catch (error) { return false; }
+    if (!folderId) return false;
+    if (folderId === String(rootFolderId)) return true;
+    if (visitedIds.includes(folderId)) return false;
+
+    const parents = getDriveParentFolders_(folder);
+    if (!parents || parents.length === 0) return false;
+    const nextVisited = visitedIds.concat(folderId);
+    return parents.every(parent => isDriveFolderWithinCortes_(parent, rootFolderId, nextVisited));
+}
+
+function isDriveFileWithinCortes_(file, rootFolderId) {
+    const parents = getDriveParentFolders_(file);
+    return Boolean(parents && parents.length > 0 &&
+        parents.every(parent => isDriveFolderWithinCortes_(parent, rootFolderId)));
+}
+
+function getValidatedCortesTerminalFolder_(folderId, rootFolder) {
+    let folder;
+    try {
+        folder = folderId ? DriveApp.getFolderById(folderId) : rootFolder;
+    } catch (error) {
+        throw new Error("La carpeta solicitada no existe o no está disponible dentro de Cortes.");
+    }
+    if (!isDriveFolderWithinCortes_(folder, rootFolder.getId())) {
+        throw new Error("Acceso denegado: la terminal Drive solo permite operar dentro del árbol Cortes.");
+    }
+    return folder;
+}
+
+function getCortesTerminalChildFolders_(folder, rootFolderId) {
+    const result = [];
+    const iterator = folder.getFolders();
+    while (iterator.hasNext()) {
+        const child = iterator.next();
+        if (isDriveFolderWithinCortes_(child, rootFolderId)) result.push(child);
+    }
+    return result;
+}
+
+function getCortesTerminalFiles_(folder, rootFolderId) {
+    const result = [];
+    const iterator = folder.getFiles();
+    while (iterator.hasNext()) {
+        const file = iterator.next();
+        if (isDriveFileWithinCortes_(file, rootFolderId)) result.push(file);
+    }
+    return result;
+}
+
+function hasDirectDriveParent_(resource, parentId) {
+    const parents = getDriveParentFolders_(resource);
+    return Boolean(parents && parents.some(parent => String(parent.getId()) === String(parentId)));
+}
+
 function handleDriveCommand(payload, logMessage) {
-    const { command, currentFolderId, args } = payload;
+    const input = payload && typeof payload === "object" ? payload : {};
+    const { command, currentFolderId, args } = input;
     const rootFolder = getCortesRootFolder();
-    let activeFolder = currentFolderId ? DriveApp.getFolderById(currentFolderId) : rootFolder;
+    const rootFolderId = String(rootFolder.getId());
+    let activeFolder = getValidatedCortesTerminalFolder_(currentFolderId, rootFolder);
+    const cmd = String(command || "").toLowerCase().trim();
 
-    const cmd = (command || '').toLowerCase().trim();
-
-    if (cmd === 'dir' || cmd === 'ls') {
-        const folders = [];
-        const files = [];
-
-        const subFolders = activeFolder.getFolders();
-        while (subFolders.hasNext()) {
-            const f = subFolders.next();
-            folders.push({ id: f.getId(), name: f.getName(), type: 'folder' });
-        }
-
-        const subFiles = activeFolder.getFiles();
-        while (subFiles.hasNext()) {
-            const file = subFiles.next();
-            files.push({ id: file.getId(), name: file.getName(), size: file.getSize(), mimeType: file.getMimeType(), type: 'file' });
-        }
-
+    if (cmd === "dir" || cmd === "ls") {
+        const folders = getCortesTerminalChildFolders_(activeFolder, rootFolderId).map(folder => ({
+            id: folder.getId(), name: folder.getName(), type: "folder"
+        }));
+        const files = getCortesTerminalFiles_(activeFolder, rootFolderId).map(file => ({
+            id: file.getId(), name: file.getName(), size: file.getSize(),
+            mimeType: file.getMimeType(), type: "file"
+        }));
         return {
-            status: 'success',
+            status: "success",
             currentFolder: { id: activeFolder.getId(), name: activeFolder.getName() },
-            isRoot: activeFolder.getId() === rootFolder.getId(),
-            folders: folders,
-            files: files
+            isRoot: String(activeFolder.getId()) === rootFolderId,
+            folders,
+            files
         };
-    } else if (cmd === 'cd') {
-        const target = args ? args.trim() : '';
-        if (target === '\\' || target === '/') {
-            return {
-                status: 'success',
-                currentFolder: { id: rootFolder.getId(), name: rootFolder.getName() }
-            };
-        } else if (target === '..') {
-            const parents = activeFolder.getParents();
-            if (parents.hasNext()) {
-                const parent = parents.next();
-                return {
-                    status: 'success',
-                    currentFolder: { id: parent.getId(), name: parent.getName() }
-                };
-            } else {
-                return { status: 'success', currentFolder: { id: rootFolder.getId(), name: rootFolder.getName() } };
-            }
-        } else {
-            const subFolders = activeFolder.getFoldersByName(target);
-            if (subFolders.hasNext()) {
-                const found = subFolders.next();
-                return {
-                    status: 'success',
-                    currentFolder: { id: found.getId(), name: found.getName() }
-                };
-            } else {
-                throw new Error(`Carpeta '${target}' no encontrada en '${activeFolder.getName()}'.`);
-            }
-        }
-    } else if (cmd === 'mkdir') {
-        if (!args) throw new Error("Nombre de carpeta requerido para mkdir.");
-        const newSub = activeFolder.createFolder(args.trim());
-        return { status: 'success', message: `Carpeta '${newSub.getName()}' creada con ID: ${newSub.getId()}`, folderId: newSub.getId() };
-    } else if (cmd === 'move') {
-        // args: { fileId, targetFolderId }
-        const { fileId, targetFolderId } = payload;
-        if (!fileId || !targetFolderId) throw new Error("ID de archivo y ID de carpeta destino requeridos.");
-        const file = DriveApp.getFileById(fileId);
-        const targetDir = DriveApp.getFolderById(targetFolderId);
-        file.moveTo(targetDir);
-        return { status: 'success', message: `Archivo '${file.getName()}' movido a '${targetDir.getName()}'.` };
-    } else if (cmd === 'tree') {
-        function buildTree(folder, depth = 0) {
-            if (depth > 2) return `${'  '.repeat(depth)}... (profundidad maxima)\n`;
-            let result = `${'  '.repeat(depth)}📁 [${folder.getName()}]\n`;
-            const files = folder.getFiles();
-            while (files.hasNext()) {
-                result += `${'  '.repeat(depth + 1)}📄 ${files.next().getName()}\n`;
-            }
-            const subs = folder.getFolders();
-            while (subs.hasNext()) {
-                result += buildTree(subs.next(), depth + 1);
-            }
-            return result;
-        }
-        const treeStr = buildTree(activeFolder);
-        return { status: 'success', tree: treeStr };
     }
 
-    throw new Error(`Comando de terminal '${command}' no reconocido.`);
+    if (cmd === "cd") {
+        const target = String(args || "").trim();
+        if (target === "\\" || target === "/") {
+            return { status: "success", currentFolder: { id: rootFolderId, name: rootFolder.getName() }, isRoot: true };
+        }
+        if (target === "..") {
+            if (String(activeFolder.getId()) === rootFolderId) {
+                return { status: "success", currentFolder: { id: rootFolderId, name: rootFolder.getName() }, isRoot: true };
+            }
+            const parents = getDriveParentFolders_(activeFolder);
+            if (!parents || parents.length !== 1 ||
+                !isDriveFolderWithinCortes_(parents[0], rootFolderId)) {
+                throw new Error("No se puede determinar de forma única la carpeta padre dentro de Cortes.");
+            }
+            return {
+                status: "success",
+                currentFolder: { id: parents[0].getId(), name: parents[0].getName() },
+                isRoot: String(parents[0].getId()) === rootFolderId
+            };
+        }
+
+        const matches = [];
+        const iterator = activeFolder.getFoldersByName(target);
+        while (iterator.hasNext()) matches.push(iterator.next());
+        if (matches.length !== 1) {
+            if (matches.length > 1) throw new Error("Hay varias carpetas con ese nombre; utiliza una ruta inequívoca.");
+            throw new Error("Carpeta '" + target + "' no encontrada en '" + activeFolder.getName() + "'.");
+        }
+        const found = matches[0];
+        if (!isDriveFolderWithinCortes_(found, rootFolderId) ||
+            !hasDirectDriveParent_(found, activeFolder.getId())) {
+            throw new Error("Acceso denegado: la carpeta seleccionada no pertenece a la ruta actual dentro de Cortes.");
+        }
+        return {
+            status: "success",
+            currentFolder: { id: found.getId(), name: found.getName() },
+            isRoot: String(found.getId()) === rootFolderId
+        };
+    }
+
+    if (cmd === "mkdir") {
+        const folderName = String(args || "").trim();
+        if (!folderName) throw new Error("Nombre de carpeta requerido para mkdir.");
+        const newSub = activeFolder.createFolder(folderName);
+        if (!isDriveFolderWithinCortes_(newSub, rootFolderId) ||
+            !hasDirectDriveParent_(newSub, activeFolder.getId())) {
+            throw new Error("La carpeta creada no pudo verificarse dentro de la carpeta actual de Cortes.");
+        }
+        logMessage && logMessage("Drive", "Carpeta creada dentro del árbol Cortes: " + newSub.getName());
+        return {
+            status: "success",
+            message: "Carpeta '" + newSub.getName() + "' creada con ID: " + newSub.getId(),
+            folderId: newSub.getId()
+        };
+    }
+
+    if (cmd === "move") {
+        const fileId = String(input.fileId || "").trim();
+        const targetFolderId = String(input.targetFolderId || "").trim();
+        if (!fileId || !targetFolderId) throw new Error("ID de archivo y ID de carpeta destino requeridos.");
+
+        let file, targetDir;
+        try {
+            file = DriveApp.getFileById(fileId);
+            targetDir = DriveApp.getFolderById(targetFolderId);
+        } catch (error) {
+            throw new Error("El archivo o la carpeta destino no existe o no está disponible.");
+        }
+        if (!isDriveFileWithinCortes_(file, rootFolderId)) {
+            throw new Error("Acceso denegado: el archivo de origen no pertenece al árbol Cortes.");
+        }
+        if (!isDriveFolderWithinCortes_(targetDir, rootFolderId)) {
+            throw new Error("Acceso denegado: la carpeta destino no pertenece al árbol Cortes.");
+        }
+
+        // Revalidar justo antes de la escritura para reducir la ventana ante cambios externos en Drive.
+        if (!isDriveFileWithinCortes_(file, rootFolderId) ||
+            !isDriveFolderWithinCortes_(targetDir, rootFolderId)) {
+            throw new Error("La ubicación del archivo o del destino cambió durante la validación; no se realizó el movimiento.");
+        }
+        file.moveTo(targetDir);
+        if (!isDriveFileWithinCortes_(file, rootFolderId) ||
+            !hasDirectDriveParent_(file, targetDir.getId())) {
+            throw new Error("El movimiento se ejecutó, pero no pudo verificarse su ubicación final dentro de Cortes. Revisa el archivo antes de reintentar.");
+        }
+        return { status: "success", message: "Archivo '" + file.getName() + "' movido a '" + targetDir.getName() + "'." };
+    }
+
+    if (cmd === "tree") {
+        const visited = new Set();
+        function buildTree(folder, depth = 0) {
+            const folderId = String(folder.getId());
+            if (visited.has(folderId)) return "";
+            visited.add(folderId);
+            if (depth > 2) return "  ".repeat(depth) + "... (profundidad maxima)\n";
+            let result = "  ".repeat(depth) + "📁 [" + folder.getName() + "]\n";
+            getCortesTerminalFiles_(folder, rootFolderId).forEach(file => {
+                result += "  ".repeat(depth + 1) + "📄 " + file.getName() + "\n";
+            });
+            getCortesTerminalChildFolders_(folder, rootFolderId).forEach(child => {
+                result += buildTree(child, depth + 1);
+            });
+            return result;
+        }
+        return { status: "success", tree: buildTree(activeFolder) };
+    }
+
+    throw new Error("Comando de terminal '" + String(command || "") + "' no reconocido.");
 }
 
 // ============================================================================

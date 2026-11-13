@@ -71,6 +71,7 @@ runGroup('32','ADMIN',()=>{
  recordResult('ADMIN compensación de reemplazos in-modal/AUG-038',loadFunction('Services/Test/AdminImageReplacementCompensation.js','runAdminImageReplacementCompensationTests')(read('ui.js'),a));
  recordResult('ADMIN respaldo/restauración/rollback',loadFunction('Services/Test/AdminRestoreRecovery.js','runAdminRestoreRecoveryTests')(a));
  runCli('ADMIN reanudación de respaldo Drive y sintaxis Node.js','Services/Test/AdminBackupResumeUI.mjs');
+ runCli('AUG-019 alcance de terminal Drive y protección de árbol Cortes','Services/Test/DriveTerminalScope.mjs');
 });
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('Services/feedback.js');

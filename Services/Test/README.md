@@ -1688,3 +1688,10 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - Verifica que solo se exponga un status HTTP realmente recibido, que las métricas conserven el resultado y que las rutas individual y por lotes de ADMIN usen el mismo diagnóstico sin asignar 500 por defecto.
 - Ejecutar con `node --experimental-default-type=module Services/Test/RouteActionErrors.mjs` o mediante el grupo integrado de `RunServiceTests.mjs`.
 - Resultado verificado: RouteActionErrors 12/12 PASS; GitHub Actions run 43452605704 SUCCESS, 61 suites y 861/861 pruebas; Node.js --check PASS.
+
+
+## AUG-019 — Alcance seguro de la terminal Drive
+
+- `DriveTerminalScope.mjs` extrae y ejecuta las funciones reales de validación de ascendencia y `handleDriveCommand` con dobles locales de DriveApp.
+- Cubre navegación desde Cortes y subcarpetas, rechazo de IDs externos y ancestros ambiguos, `cd ..` en la raíz, `mkdir` solo dentro del árbol y `move` con archivo/destino dentro o fuera de Cortes. También comprueba que listados y árbol no expongan recursos con padres externos.
+- Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/DriveTerminalScope.mjs`.
