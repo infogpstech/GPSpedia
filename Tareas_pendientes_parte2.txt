@@ -242,10 +242,13 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-128 — Validar referencias PyS–vehículos y serializar cambios
 - Origen: H-AUD-019-007. Prioridad: Media.
-- Evidencia: Services/feedback.js:1429–1444, 1565–1598 y 1601–1638.
-- Criterios: verificar vehicleId en Cortes; normalizar IDs y duplicados; lock común en altas/bajas; verificar integridad relacional y concurrencia.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
-
+- Evidencia revisada: Services/feedback.js, funciones parseModelosAsociados(), normalizeModelosAsociadosList_(), normalizePysProblemId_(), findUniqueCortesVehicleForPys_(), persistModelosAsociados_(), withPysMutationLock_(), handleAddVehicleToProblem() y handleRemoveVehicleFromProblem().
+- Resolución: el código vigente ya valida problemId con formato canónico y exige una única fila PyS; valida vehicleId contra el encabezado ID y exige exactamente una coincidencia en Cortes; normaliza listas JSON y formatos heredados, elimina duplicados y rechaza elementos malformados. Altas y bajas leen, modifican, escriben, hacen flush y verifican el valor persistido bajo el mismo ScriptLock, liberándolo en finally. El alta preasociada de handleAddProblem valida cada vehículo bajo su ScriptLock antes de crear la fila. La autorización de baja permanece restringida a Desarrollador.
+- Pruebas locales existentes: Services/Test/PysVehicleRelationIntegrity.js, 18/18 PASS según el registro de validación de AUG-090; incluye referencias inexistentes/duplicadas, encabezado incompatible, normalización/deduplicación, idempotencia, lecturas/escrituras bajo lock, liberación ante error, confirmación de persistencia, reintento tras fallo de flush y secuencia alta/baja. No se atribuye una ejecución nueva a esta sesión.
+- Resultado de revisión: los criterios de implementación de AUG-128 ya estaban cubiertos por el código y la suite existentes; no se justificó duplicar cambios funcionales ni alterar contratos.
+- Validación diferida: concurrencia real entre ejecuciones independientes y persistencia en FEEDBACK/Spreadsheet aislados, en Beta. No se ejecutaron Apps Script desplegados, endpoints ni datos productivos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+ 
 ### AUG-129 — Restringir campos editables por ADMIN y proteger ID
 - Origen: H-AUD-019-008. Prioridad: Media.
 - Evidencia: Services/admin.js:344–354 y 1798–1819.
