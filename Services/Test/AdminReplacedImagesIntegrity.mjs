@@ -507,12 +507,44 @@ check("La captura de Cortes limita memoria por bloques y conserva filas posterio
     assert.equal(result.references.get(targetId)[0].row,502);
     assert.equal(result.metrics.rows,501);
     assert.equal(result.metrics.cells,4008);
-    assert.equal(result.metrics.rowChunkSize,500);
+    assert.equal(result.metrics.initialRowChunkSize,500);
+    assert.equal(result.metrics.minRowChunkSize,50);
+    assert.equal(result.metrics.maxRowChunkSize,500);
+    assert.equal(result.metrics.finalRowChunkSize,500);
     assert.equal(result.metrics.captureBudgetMs,12000);
+    assert.equal(result.metrics.targetChunkMs,1500);
     assert.equal(result.metrics.chunks,16);
     assert.equal(calls.length,16);
     assert.ok(calls.every(item=>item.numRows<=500));
+    for(const metric of ["displayReadMs","rawReadMs","formulaReadMs","richTextReadMs","referenceParseMs","maxChunkElapsedMs","adaptiveChunkChanges"]) {
+        assert.ok(Number.isFinite(result.metrics[metric]),"Métrica ausente o inválida: "+metric);
+    }
     assert.equal(Math.max(...calls.map(item=>item.row+item.numRows-1)),502);
+});
+check("La captura reduce automáticamente el lote tras un bloque lento sin omitir filas",()=>{
+    const columns={imagenVehiculo:9,imgCorte1:10,imgCorte2:11,imgCorte3:12,imgApertura:13,imgCableAlimen:14,imgCableAlimen2:15,imgCableAlimen3:16};
+    let clock=0,readCalls=0;
+    class FakeDate { static now(){ return clock; } }
+    const sheet={
+        getLastRow:()=>502,
+        getRange(row,col,numRows,numCols){
+            return {
+                getDisplayValues(){ clock+=readCalls++<4?500:50; return Array.from({length:numRows},()=>Array(numCols).fill("")); },
+                getValues(){ clock+=readCalls++<4?500:50; return Array.from({length:numRows},()=>Array(numCols).fill("")); },
+                getFormulas(){ clock+=readCalls++<4?500:50; return Array.from({length:numRows},()=>Array(numCols).fill("")); },
+                getRichTextValues(){ clock+=readCalls++<4?500:50; return Array.from({length:numRows},()=>Array(numCols).fill("")); }
+            };
+        }
+    };
+    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("Date","getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+        FakeDate,()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
+    const result=scan(false);
+    assert.equal(result.metrics.rows,501);
+    assert.equal(result.metrics.chunks,2);
+    assert.equal(result.metrics.adaptiveChunkChanges,1);
+    assert.equal(result.metrics.maxChunkElapsedMs,2000);
+    assert.equal(result.metrics.finalRowChunkSize,375);
 });
 check("El escáner global delega Cortes a los ocho campos y mantiene imágenes superpuestas y otras hojas",()=>{
     const scanner=fnSource(admin,"collectActiveDriveReferences");
