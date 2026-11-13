@@ -1006,3 +1006,19 @@ Validación local: suite de contratos ejecutada con fuentes vigentes 30/30 PASS;
 Validación diferida a Beta: filas históricas maliciosas y URL manipuladas en Spreadsheet aislada; inspección DOM y ausencia de ejecución en navegador real; solicitudes de vídeo con metadatos válidos/inválidos mediante deployment FEEDBACK aislado. No usar datos ni endpoints productivos.
 Estado: CORREGIDO EN FUENTES — VALIDACIÓN LOCAL APROBADA.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-003 / UTILITIES — 2026-11-13
+La nota histórica que describía UTILITIES como servicio sin coordinación interproyectos reflejaba el estado de aquella revisión y se conserva sin reescritura. En esta adenda se registra el estado actual:
+
+- Contrato: api-config.js dirige migrateTimestamps a UTILITIES; Services/Utilities.js admite solo esa acción y la expone mediante el handler migrateTimestamps(). No se encontraron consumidores frontend en las fuentes versionadas revisadas.
+- Lecturas: Users y ActiveSessions para autenticación; Cortes, columna I; metadatos de Drive.
+- Escrituras: Hoja 1, columna A, más staging/backup temporal. No escribe Cortes ni Drive.
+- Coordinación: Shared Mutation Coordinator v1.1.2 incorpora UTILITIES/migrateTimestamps con lectura de USERS, ACTIVE_SESSIONS, CORTES y DRIVE, y escritura del recurso UTILITIES. La lease se adquiere antes del ScriptLock local. Las operaciones conflictivas y el mantenimiento integral quedan serializados.
+- Fallo seguro: sin URL/secreto, con respuesta/lease inválida o con lease ocupada, la acción se detiene antes de abrir la Spreadsheet. El cliente libera la lease en finally; una liberación no confirmada queda protegida por el TTL central.
+- Evidencia local: UtilitiesSecurity 17/17 PASS; SharedMutationCoordinator 33/33 PASS; ActionDispatchContract 12/12 PASS; parsing V8 PASS.
+- Límites: no se modificaron deployments, ScriptProperties ni datos productivos. Configuración real y concurrencia entre proyectos pendientes de Beta.
+
+Estado AUG-003: COMPLETADA CON VALIDACIÓN DIFERIDA. Esta adenda no reescribe ni altera entradas históricas.
+================================================================================
