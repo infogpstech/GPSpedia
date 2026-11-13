@@ -32,7 +32,7 @@ function runUsersAtomicMutationTests(usersSource, authSource) {
         "const SHEET_NAMES={USERS:'Users'};\n" +
         "const USERS_ALLOWED_ROLES_=Object.freeze(['Desarrollador','Gefe','Supervisor','Tecnico','Tecnico_exterior']);\n" +
         names.map(name => extract(source, name)).join("\n") +
-        "\nreturn {normalizeNewUserInput_,normalizeUserProfileUpdates_,findUniqueUserRow_,writeUserRangeAtomically_,handleCreateUser,handleUpdateProfile,withUsersMutationLock_};";
+        "\nreturn {normalizeNewUserInput_,normalizeUserProfileUpdates_,findUniqueUserRow_,findNextUserRow_,writeUserRangeAtomically_,handleCreateUser,handleUpdateProfile,withUsersMutationLock_};";
     function fixture(options) {
         options = options || {};
         const rows = (options.rows || [
@@ -194,6 +194,23 @@ function runUsersAtomicMutationTests(usersSource, authSource) {
         const f=fixture({rows,getVerifiedSession:()=>({userId:"USR-0002",role:"Tecnico"})});
         let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
         assert(rejected);equal(f.sheet._rows[1][6],"Nombre anterior");equal(f.stats.releases,1);
+    });
+    run("No reutiliza una fila que contiene fórmulas prellenadas",()=>{
+        const rows=[
+            ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
+            ["","","","","","","","",""]
+        ];
+        const f=fixture({rows,formulas:[{row:2,col:2,formula:'=IF(A2="","",A2)'}]});
+        equal(f.api.findNextUserRow_(f.sheet),3);
+    });
+    run("Un timeout al adquirir el lock no ejecuta escrituras ni libera un lock no adquirido",()=>{
+        const rows=[
+            ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
+            ["USR-0001","usuario","","Tecnico","","","Nombre anterior","",""]
+        ];
+        const f=fixture({rows,lockTimeout:true});
+        let rejected=false;try{f.api.handleUpdateProfile({userId:"USR-0001",updates:{Nombre_Completo:"Cambio"},sessionToken:"SESSION"});}catch(_){rejected=true;}
+        assert(rejected);equal(f.sheet._rows[1][6],"Nombre anterior");equal(f.stats.waits,1);equal(f.stats.releases,0);
     });
     run("El wrapper compartido coordina create/update y AUTH conserva delete/reset",()=>{
         const usersWrapper=extract(source,"isSharedMutationAction_");
