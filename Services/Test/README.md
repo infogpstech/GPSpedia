@@ -227,6 +227,14 @@ Las suites aisladas no sustituyen la validación real con YouTube OAuth/API, XHR
 - `Services/Test/LikeClientCounter.js` — ejecutar con `node --experimental-default-type=module Services/Test/LikeClientCounter.js`. Verifica likes nuevos, reintentos idempotentes, recuperación, deduplicación de estado local y preservación del contador ante respuestas inválidas.
 - La suite no requiere navegador ni servicios externos.
 
+## AUG-003 — Contrato y coordinación compartida del servicio UTILITIES
+
+- `migrateTimestamps` es la única acción del router `Services/Utilities.js`; `api-config.js` la dirige a UTILITIES. No se encontraron llamadas en `ui.js`, `index.html`, `users.html` ni en el formulario de alta; no se atribuye un consumidor frontend inexistente.
+- Lee Users/ActiveSessions para validar identidad, Cortes (columna I) para obtener URLs y metadatos de Drive para resolver fechas. Escribe Hoja 1 (columna A) y las hojas temporales de staging/backup.
+- Ejecuta primero la lease compartida `UTILITIES/migrateTimestamps` y después el ScriptLock local. La política reserva lectura de USERS, ACTIVE_SESSIONS, CORTES y DRIVE, y escritura de UTILITIES. Los backups/restores integrales de ADMIN bloquean la migración; las escrituras de identidad, Cortes y Drive también entran en conflicto.
+- Ejecutar el runner reproducible; el grupo UTILITIES carga `SharedMutationClient.js`, `Services/Utilities.js` y `Services/Test/UtilitiesSecurity.js`. El grupo INTEGRATION prueba la política en `Services/Test/SharedMutationCoordinator.js`.
+- Los dobles verifican orden de locks, fallo cerrado sin coordinador/lease, liberación en éxito/error y conflictos con AUTH/WRITE/ADMIN. No se conectan Spreadsheet, Drive ni deployments reales. La configuración del proyecto UTILITIES y la concurrencia entre deployments se validan en Beta.
+
 ## Seguridad y recuperación del servicio UTILITIES (AUG-041)
 
 - `Services/Test/UtilitiesSecurity.js` — cargar junto con `Services/Utilities.js` en un runner V8 e invocar `runUtilitiesSecurityTests()`. Usa dobles en memoria para sesión/rol, staging, verificación, promoción, rollback, lock ocupado, origen vacío, destino incompatible y recuperación de respaldo interrumpido.
@@ -1403,7 +1411,7 @@ La suite valida la allowlist de roles y el helper de autenticación del servidor
 
 ## Serialización y recuperación de migración UTILITIES (AUG-123)
 
-- Ejecutar `runUtilitiesSecurityTests()` cargando `Services/Utilities.js` y `Services/Test/UtilitiesSecurity.js` en el mismo runtime V8 aislado.
+- Ejecutar `runUtilitiesSecurityTests()` cargando `Services/SharedMutationClient.js`, `Services/Utilities.js` y `Services/Test/UtilitiesSecurity.js` en el mismo runtime V8 aislado.
 - Comprueba sesión Desarrollador bajo ScriptLock, snapshots de Cortes y Hoja 1 previos a la conversión, verificación del respaldo antes de promover y rechazo de POST concurrente.
 - Incluye fallos de lectura, staging, validación del respaldo, promoción, rollback, recuperación de respaldo interrumpido y liberación del lock.
 - Usa dobles en memoria; no accede a Apps Script desplegado, Spreadsheet ni Drive reales.
