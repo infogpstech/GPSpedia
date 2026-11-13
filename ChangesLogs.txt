@@ -894,3 +894,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/AdminRestoreRecovery.js: corrige contratos de inventario y dobles de movimiento; añade regresión de colisión de nombre. Services/Test/AdminBackupResumeUI.mjs valida interfaz, reanudación y parsing/sintaxis Node.js; integrado en RunServiceTests.mjs.
 - Documentación: backlog AUG-018, guía de pruebas, auditoría y lista Beta. lista_beta.txt se rotó sin pérdida en lista_beta_parte1.txt y lista_beta_parte2.txt; se verificó la reconstrucción exacta antes de actualizar los casos AUG-018/AUG-125.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-038 — COMPENSACIÓN DE REEMPLAZOS IN-MODAL Y DESCARTE SEGURO
+- Services/admin.js: unicidad de vehicleId; reconciliación terminal requires_review para archivos linked eliminados/ausentes; verificación posterior de URL activa, historial, ledger y metadatos Drive; escalado de fallos de compensación.
+- ui.js: lectura fresca del catálogo y compare-and-set al restaurar campos en descarte, evitando sobrescribir cambios concurrentes.
+- Services/Test/AdminImageReplacementCompensation.js: 9 pruebas de regresión; integrado en RunServiceTests.mjs.
+- Validación CI: GitHub Actions run 43425740603 SUCCESS, Node.js 22.23.4, 27 suites, 351 pruebas aprobadas y 0 fallos.
+- Beta pendiente: validación real de Apps Script, Spreadsheet/Drive aislados, fallos de escritura y concurrencia entre editores.
+================================================================================
