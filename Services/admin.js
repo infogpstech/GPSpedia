@@ -7442,6 +7442,10 @@ function handleGetReplacedImageDownloadUrl(payload,logMessage,developerContext){
     return {status:"success",downloadUrl,fileName:file.getName()};
 }
 
+function getDriveAuditReferenceSnapshotConfig_() {
+    return { maxLength: 750000, chunkSize: 75000, ttlSeconds: 21600,
+        mimeType: "application/json; charset=utf-8", encoding: "utf-8", schemaVersion: 2 };
+}
 function cleanupExpiredDriveAuditServerStates_() {
     const properties = PropertiesService.getScriptProperties();
     const all = properties.getProperties();
@@ -7451,9 +7455,30 @@ function cleanupExpiredDriveAuditServerStates_() {
         try {
             const state = JSON.parse(all[key]);
             const age = now - Number(state && state.updatedAt);
-            if (!Number.isFinite(age) || age > 21600000 || age < -60000) properties.deleteProperty(key);
+            if (!Number.isFinite(age) || age > 21600000 || age < -60000) {
+                clearExpiredDriveAuditCacheState_(state);
+                properties.deleteProperty(key);
+            }
         } catch (error) { properties.deleteProperty(key); }
     });
+}
+function clearExpiredDriveAuditCacheState_(state) {
+    if (!state || !/^[0-9a-f-]{36}$/i.test(String(state.auditId || ""))) return;
+    const cache = CacheService.getScriptCache(), keys = [];
+    const pageCount = Number(state.pageCount);
+    if (Number.isInteger(pageCount) && pageCount > 0 && pageCount <= 10000) {
+        for (let i = 0; i < pageCount; i++) keys.push(getDriveAuditPageResultCacheKey_(state.auditId, i));
+    }
+    if (state.lastResponseCacheKey) keys.push(String(state.lastResponseCacheKey));
+    for (let i = 0; i < 10; i++) keys.push("gp_audit_refs_" + state.auditId + "_" + i);
+    keys.push("gp_audit_refs_" + state.auditId + "_manifest");
+    if (keys.length) cache.removeAll(keys);
+    const owner = String(state.ownerId || "").trim();
+    if (owner) {
+        const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(owner).slice(0, 32);
+        const properties = PropertiesService.getScriptProperties();
+        if (properties.getProperty(latestKey) === state.auditId) properties.deleteProperty(latestKey);
+    }
 }
 function getDriveAuditServerStateKey_(auditId) {
     const id = String(auditId || "").trim();
@@ -7542,13 +7567,16 @@ function loadDriveAuditSeenIds_(auditId, pageCount) {
     if (!Number.isInteger(pageCount) || pageCount < 0) throw new Error("Cantidad de páginas de deduplicación inválida.");
     const cache = CacheService.getScriptCache(), files = new Set(), folders = new Set();
     for (let page = 0; page < pageCount; page++) {
-        const raw = cache.get(getDriveAuditSeenPageCacheKey_(auditId, page));
+        const key = getDriveAuditSeenPageCacheKey_(auditId, page), raw = cache.get(key);
         if (raw === null) throw new Error("Falta una página de IDs procesados; inicia una auditoría nueva para evitar duplicados.");
         let values;
         try { values = JSON.parse(raw); } catch (error) { throw new Error("Una página de IDs procesados está corrupta."); }
-        if (!values || typeof values !== "object" || !Array.isArray(values.files) || !Array.isArray(values.folders)) throw new Error("Una página de IDs procesados tiene una estructura inválida.");
+        if (!values || typeof values !== "object" || !Array.isArray(values.files) || !Array.isArray(values.folders) || !Array.isArray(values.unused)) throw new Error("Una página de IDs procesados tiene una estructura inválida.");
         normalizeDriveAuditFileIds_(values.files).forEach(id => files.add(id));
         normalizeDriveAuditFileIds_(values.folders).forEach(id => folders.add(id));
+        normalizeDriveAuditFileIds_(values.unused);
+        cache.put(key, raw, getDriveAuditReferenceSnapshotConfig_().ttlSeconds);
+        if (cache.get(key) !== raw) throw new Error("No se pudo renovar la retención de una página de auditoría.");
     }
     return { fileIds: Array.from(files).sort(), folderIds: Array.from(folders).sort() };
 }
@@ -7688,69 +7716,119 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
     }
 }
 
-function storeAuditDriveReferenceSnapshot(auditId, snapshot) {
-    const cache = CacheService.getScriptCache();
-    const cachePrefix = `gp_audit_refs_${auditId}`;
-    const cacheKeys = [];
-    const chunkSize = 75000;
-    const maxSnapshotLength = 750000;
+function validateAuditDriveReferenceSnapshot_(snapshot) {
+    if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot) ||
+        !Array.isArray(snapshot.activeDriveIds) || !Array.isArray(snapshot.historicalDriveIds) ||
+        !Number.isSafeInteger(Number(snapshot.unverifiableReferenceCount)) || Number(snapshot.unverifiableReferenceCount) < 0) {
+        throw new Error("El contenido no cumple la estructura del snapshot de referencias.");
+    }
+    normalizeDriveAuditFileIds_(snapshot.activeDriveIds);
+    normalizeDriveAuditFileIds_(snapshot.historicalDriveIds);
+    if (snapshot.protectedDriveIds !== undefined) {
+        if (!Array.isArray(snapshot.protectedDriveIds)) throw new Error("La lista de referencias protegidas no es válida.");
+        normalizeDriveAuditFileIds_(snapshot.protectedDriveIds);
+    }
+    return true;
+}
+function removeAuditDriveReferenceSnapshotCache_(auditId) {
+    const cache = CacheService.getScriptCache(), prefix = "gp_audit_refs_" + String(auditId);
+    const keys = [];
+    for (let i = 0; i < 10; i++) keys.push(prefix + "_" + i);
+    keys.push(prefix + "_manifest");
+    cache.removeAll(keys);
+}
+function storeAuditDriveReferenceSnapshot(auditId, snapshot, options) {
+    const cache = CacheService.getScriptCache(), config = getDriveAuditReferenceSnapshotConfig_();
+    const cachePrefix = "gp_audit_refs_" + String(auditId), cacheKeys = [];
     try {
+        if (!/^[0-9a-f-]{36}$/i.test(String(auditId || ""))) throw new Error("ID de auditoría inválido.");
+        validateAuditDriveReferenceSnapshot_(snapshot);
         const serialized = JSON.stringify(snapshot);
-        if (!serialized || serialized.length > maxSnapshotLength) throw new Error("El conjunto de referencias supera la capacidad temporal disponible. No se clasificaron archivos.");
-        const chunkCount = Math.ceil(serialized.length / chunkSize);
-        for (let i = 0; i < chunkCount; i++) {
-            const key = `${cachePrefix}_${i}`;
-            cacheKeys.push(key);
-            cache.put(key, serialized.slice(i * chunkSize, (i + 1) * chunkSize), 21600);
+        const byteLength = Utilities.newBlob(serialized, config.mimeType).getBytes().length;
+        if (!serialized || serialized.length > config.maxLength || byteLength > config.maxLength) {
+            throw new Error("El conjunto de referencias supera la capacidad temporal de 750,000 caracteres/bytes. No se clasificaron archivos.");
         }
-        const manifestKey = `${cachePrefix}_manifest`;
+        const chunkCount = Math.ceil(serialized.length / config.chunkSize);
+        if (chunkCount < 1 || chunkCount > 10) throw new Error("La cantidad de bloques supera la capacidad temporal admitida.");
+        const chunkHashes = [];
+        for (let i = 0; i < chunkCount; i++) {
+            const key = cachePrefix + "_" + i, chunk = serialized.slice(i * config.chunkSize, (i + 1) * config.chunkSize);
+            const chunkBytes = Utilities.newBlob(chunk, config.mimeType).getBytes().length;
+            if (!chunk || chunk.length > config.chunkSize || chunkBytes > config.chunkSize) throw new Error("El bloque temporal " + i + " supera el tamaño seguro de 75,000 bytes.");
+            cache.put(key, chunk, config.ttlSeconds);
+            if (cache.get(key) !== chunk) throw new Error("Google Apps Script no conservó íntegro el bloque temporal " + i + ".");
+            cacheKeys.push(key);
+            chunkHashes.push(hashDriveAuditValue_(chunk));
+        }
+        const now = Date.now(), createdAt = Number(options && options.createdAt) || now;
+        const manifest = { schemaVersion: config.schemaVersion, chunkCount, length: serialized.length, byteLength,
+            chunkSize: config.chunkSize, encoding: config.encoding, mimeType: config.mimeType,
+            sha256: hashDriveAuditValue_(serialized), chunkHashes, createdAt, updatedAt: now, ttlSeconds: config.ttlSeconds };
+        const manifestKey = cachePrefix + "_manifest", manifestText = JSON.stringify(manifest);
+        cache.put(manifestKey, manifestText, config.ttlSeconds);
         cacheKeys.push(manifestKey);
-        cache.put(manifestKey, JSON.stringify({ chunkCount: chunkCount, length: serialized.length, encoding: "json" }), 21600);
-        cacheKeys.forEach(key => { if (cache.get(key) === null) throw new Error("Google Apps Script no conservó todos los bloques del estado temporal."); });
+        if (cache.get(manifestKey) !== manifestText) throw new Error("No se pudo verificar el manifiesto temporal de auditoría.");
+        return manifest;
     } catch (error) {
-        try { if (cacheKeys.length) cache.removeAll(cacheKeys); } catch (cleanupError) { console.error("No se pudieron retirar todos los bloques temporales de auditoría:", cleanupError); }
+        try { removeAuditDriveReferenceSnapshotCache_(auditId); }
+        catch (cleanupError) { console.error("No se pudieron retirar todos los bloques temporales de auditoría:", cleanupError); }
         throw new Error("No se pudo conservar el estado temporal de la auditoría: " + error.message);
     }
 }
-
 function loadAuditDriveReferenceSnapshot(auditId) {
-    const cache = CacheService.getScriptCache();
-    const cachePrefix = `gp_audit_refs_${auditId}`;
+    const cache = CacheService.getScriptCache(), config = getDriveAuditReferenceSnapshotConfig_();
+    const cachePrefix = "gp_audit_refs_" + String(auditId);
     try {
-        const manifestText = cache.get(`${cachePrefix}_manifest`);
+        if (!/^[0-9a-f-]{36}$/i.test(String(auditId || ""))) throw new Error("ID de auditoría inválido.");
+        const manifestText = cache.get(cachePrefix + "_manifest");
         if (!manifestText) throw new Error("El manifiesto expiró o dejó de estar disponible.");
-        const manifest = JSON.parse(manifestText);
-        if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1 || !Number.isInteger(manifest.length) || manifest.length < 1 || manifest.encoding !== "json") {
-            throw new Error("El manifiesto del estado temporal está incompleto.");
+        const manifest = JSON.parse(manifestText), now = Date.now(), age = now - Number(manifest.updatedAt);
+        if (!manifest || manifest.schemaVersion !== config.schemaVersion ||
+            !Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1 || manifest.chunkCount > 10 ||
+            !Number.isInteger(manifest.length) || manifest.length < 1 || manifest.length > config.maxLength ||
+            !Number.isInteger(manifest.byteLength) || manifest.byteLength < 1 || manifest.byteLength > config.maxLength ||
+            manifest.chunkSize !== config.chunkSize || manifest.encoding !== config.encoding ||
+            manifest.mimeType !== config.mimeType || manifest.ttlSeconds !== config.ttlSeconds ||
+            !Array.isArray(manifest.chunkHashes) || manifest.chunkHashes.length !== manifest.chunkCount ||
+            !/^[a-f0-9]{64}$/i.test(String(manifest.sha256 || "")) ||
+            !Number.isFinite(age) || age < -60000 || age > config.ttlSeconds * 1000 ||
+            !Number.isFinite(Number(manifest.createdAt)) || Number(manifest.createdAt) > now + 60000) {
+            throw new Error("El manifiesto está incompleto, alterado o expiró.");
         }
-        let serialized = "";
+        const expectedChunkCount = Math.ceil(manifest.length / config.chunkSize);
+        if (expectedChunkCount !== manifest.chunkCount) throw new Error("La cantidad de bloques no coincide con la longitud declarada.");
+        let serialized = "", actualBytes = 0;
         for (let i = 0; i < manifest.chunkCount; i++) {
-            const chunk = cache.get(`${cachePrefix}_${i}`);
-            if (chunk === null) throw new Error(`Falta el bloque temporal ${i}.`);
+            const chunk = cache.get(cachePrefix + "_" + i);
+            if (chunk === null) throw new Error("Falta el bloque temporal " + i + ".");
+            const expectedLength = Math.min(config.chunkSize, manifest.length - i * config.chunkSize);
+            const chunkBytes = Utilities.newBlob(chunk, config.mimeType).getBytes().length;
+            if (chunk.length !== expectedLength || chunkBytes > config.chunkSize ||
+                hashDriveAuditValue_(chunk) !== manifest.chunkHashes[i]) throw new Error("El bloque temporal " + i + " no coincide con su tamaño o firma.");
             serialized += chunk;
+            actualBytes += chunkBytes;
         }
-        if (serialized.length !== manifest.length) throw new Error("La longitud del estado temporal no coincide con el manifiesto.");
+        if (serialized.length !== manifest.length || actualBytes !== manifest.byteLength ||
+            hashDriveAuditValue_(serialized) !== manifest.sha256) throw new Error("La longitud o la firma SHA-256 del snapshot no coincide con el manifiesto.");
         const snapshot = JSON.parse(serialized);
-        if (!snapshot || !Array.isArray(snapshot.activeDriveIds) || !Array.isArray(snapshot.historicalDriveIds) || !Number.isFinite(Number(snapshot.unverifiableReferenceCount))) {
-            throw new Error("El contenido recuperado no cumple la estructura del snapshot de referencias.");
-        }
+        validateAuditDriveReferenceSnapshot_(snapshot);
         return snapshot;
     } catch (error) {
+        try { removeAuditDriveReferenceSnapshotCache_(auditId); } catch (cleanupError) {}
         throw new Error("El estado temporal de la auditoría dejó de estar disponible: " + error.message + ". Inicia una auditoría nueva.");
     }
 }
+function refreshAuditDriveReferenceSnapshot_(auditId, snapshot) {
+    const cache = CacheService.getScriptCache(), manifestText = cache.get("gp_audit_refs_" + String(auditId) + "_manifest");
+    if (!manifestText) throw new Error("El manifiesto expiró; inicia una auditoría nueva.");
+    let manifest;
+    try { manifest = JSON.parse(manifestText); }
+    catch (error) { throw new Error("El manifiesto está corrupto; inicia una auditoría nueva."); }
+    if (!Number.isFinite(Number(manifest.createdAt))) throw new Error("No se puede renovar un snapshot sin fecha de creación verificable.");
+    return storeAuditDriveReferenceSnapshot(auditId, snapshot, { createdAt: Number(manifest.createdAt) });
+}
 function clearAuditDriveReferenceSnapshot(auditId) {
-    const cache = CacheService.getScriptCache();
-    const cachePrefix = `gp_audit_refs_${auditId}`;
-    const manifestText = cache.get(`${cachePrefix}_manifest`);
-    if (!manifestText) return;
-
-    const manifest = JSON.parse(manifestText);
-    const keys = [`${cachePrefix}_manifest`];
-    for (let i = 0; i < manifest.chunkCount; i++) {
-        keys.push(`${cachePrefix}_${i}`);
-    }
-    cache.removeAll(keys);
+    removeAuditDriveReferenceSnapshotCache_(auditId);
 }
 
 /**
@@ -8405,6 +8483,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         if (state.status !== "running" || state.expectedCursorFingerprint !== inputFingerprint) throw new Error("El cursor no coincide con la última continuación emitida por ADMIN. No se aceptó el lote.");
         if (!Array.isArray(cursor.stack) || cursor.stack.length === 0 || Number(cursor.totalAnalyzed) !== Number(state.totalAnalyzed) || Number(cursor.foldersVisited) !== Number(state.foldersVisited)) throw new Error("El cursor está incompleto o sus contadores no coinciden con el estado del servidor.");
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
+        refreshAuditDriveReferenceSnapshot_(auditId, referenceSnapshot);
         cursor.stack.forEach(item => { if (!item || !item.folderId || !isFolderInsideCortes(DriveApp.getFolderById(item.folderId), DRIVE_FOLDER_ID)) throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes»."); });
         stack = cursor.stack;
         totalDiscovered = Number(state.totalDiscovered) || 0; totalAnalyzed = Number(state.totalAnalyzed) || 0;
