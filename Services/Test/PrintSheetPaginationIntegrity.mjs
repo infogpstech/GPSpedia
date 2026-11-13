@@ -38,12 +38,17 @@ check('El algoritmo conserva tarjetas sin imagen en su posición original', () =
   assert.doesNotMatch(print, /pageIndex === pageCount - 1\) textCards/);
 });
 check('La altura de página corresponde al área útil Carta', () => {
-  assert.equal((print.match(/height: 259\.4mm;/g) || []).length, 2);
-  assert.match(print, /min-height: 259\.4mm/);
+  const pageRules = [...print.matchAll(/\.sheet-page-wrapper\\s*\\{([^}]+)\\}/g)];
+  assert.equal(pageRules.length, 2);
+  for (const rule of pageRules) {
+    assert.match(rule[1], /(?:^|\\s)height: 259\\.4mm;/);
+    assert.match(rule[1], /min-height: 259\\.4mm;/);
+  }
 });
 check('No se fuerza altura mínima de imagen de 80 px', () => {
   assert.doesNotMatch(print, /Math\.max\(80,/);
-  assert.match(print, /Math\.max\(0, \(availableHeight \/ rowCount\) - 4\)/);
+  assert.match(print, /measuredImageHeight > 0 \? measuredImageHeight : modeMaxHeight/);
+  assert.doesNotMatch(print, /Math\.max\(80,/);
 });
 check('La altura de imagen se calcula con el espacio de contenido real', () => {
   assert.match(print, /main\.clientHeight - contentHeight/);

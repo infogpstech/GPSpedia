@@ -872,3 +872,9 @@ Implementación: reemplazada agrupación por número/orientación por paginació
 Nueva suite: Services/Test/PrintSheetPaginationIntegrity.mjs (12 contratos y node --check), integrada en INTEGRATION.
 Estado: EN PROGRESO hasta CI y revisión.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — AUG-143 — 2026-11-13
+- Primer CI run 43417011085: fallo exclusivo en el test de altura, que contaba `min-height` dentro de `height`. Sintaxis ui.js PASS; 11/12 verificaciones de la suite PASS.
+- Corregida la aserción para inspeccionar las dos reglas de página; alineada altura fija en pantalla/impresión y preservación de imagen cuando no hay espacio libre, para que el overflow pueda resolverse sin ocultar la imagen.
+- Reejecutar CI en el commit correctivo.

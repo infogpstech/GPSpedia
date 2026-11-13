@@ -806,3 +806,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Las imágenes se ajustan al espacio real disponible sin imponer el mínimo anterior de 80 px. Las tarjetas individuales que superan el espacio se identifican sin ocultar contenido.
 - Los wrappers se fijan al área útil Carta de 259.4 mm. Se añade PrintSheetPaginationIntegrity.mjs con 12 contratos, node --check e integración CI.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-143 — AJUSTE POST-CI
+- Primer CI identificó una expectativa de test que contaba min-height como height; se corrige para inspeccionar por separado las dos reglas de .sheet-page-wrapper.
+- Se alinea también height fija en @media print y se evita colapsar una imagen a 0 px cuando no existe espacio medido: en ese caso se conserva su límite normal y el overflow se detecta para mover la tarjeta o señalar una tarjeta individual excesiva.
+- Se marca el overflow residual de una tarjeta que permanece sola en una página después de mover la siguiente.
+================================================================================

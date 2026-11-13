@@ -11239,7 +11239,7 @@ export function exportVehiclePrintSheet(item) {
                     body { padding: 0; }
                     #print-pages { display: block; }
                     .sheet-page-wrapper {
-                        height: auto;
+                        height: 259.4mm;
                         min-height: 259.4mm;
                         max-height: none;
                         break-after: page;
@@ -11426,7 +11426,8 @@ export function exportVehiclePrintSheet(item) {
             });
             const rowCount = Math.max(1, rowTops.length);
             const modeMaxHeight = printDocument.body.dataset.printLayout === 'image-focus' ? 620 : 520;
-            const rowMaxHeight = Math.min(modeMaxHeight, Math.max(0, (availableHeight / rowCount) - 4));
+            const measuredImageHeight = Math.min(modeMaxHeight, (availableHeight / rowCount) - 4);
+            const rowMaxHeight = measuredImageHeight > 0 ? measuredImageHeight : modeMaxHeight;
             images.forEach(img => { img.style.maxHeight = rowMaxHeight + 'px'; });
         };
 
@@ -11483,6 +11484,9 @@ export function exportVehiclePrintSheet(item) {
                     applyPageTemplate(current.grid, current.cards);
                     current.page.dataset.imageCount = String(current.cards.filter(item => Boolean(getImage(item))).length);
                     fitImagesToAvailablePageSpace(current.page);
+                    if (pageOverflows(current.page) && current.cards.length === 1) {
+                        current.page.dataset.contentOverflow = 'true';
+                    }
 
                     current = createPage(pages.length);
                     pages.push(current);
