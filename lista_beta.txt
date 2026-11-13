@@ -1437,7 +1437,7 @@ AUG-113 — VALIDACIÓN BETA DEL DASHBOARD DE ACTIVIDAD — PENDIENTE
 
 PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
 
-\`\`\`bash
+```bash
 set -e
 test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
 case "$(git remote get-url origin)" in
@@ -1449,7 +1449,7 @@ git switch GPSpedia2.2.5_work
 git pull --ff-only origin GPSpedia2.2.5_work
 git status --short --branch
 git rev-parse HEAD
-\`\`\`
+```
 
 Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
 
@@ -1533,7 +1533,7 @@ AUG-116 — CACHÉ Y PAGINACIÓN DEL INBOX — VALIDACIÓN BETA PENDIENTE
 
 PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
 
-\`\`\`bash
+```bash
 set -e
 test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
 case "$(git remote get-url origin)" in
@@ -1545,7 +1545,7 @@ git switch GPSpedia2.2.5_work
 git pull --ff-only origin GPSpedia2.2.5_work
 git status --short --branch
 git rev-parse HEAD
-\`\`\`
+```
 
 Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
 
@@ -1567,7 +1567,7 @@ AUG-117 — ÚLTIMA CUENTA DESARROLLADOR Y LIMPIEZA DE SESIONES — VALIDACIÓN 
 
 PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
 
-\`\`\`bash
+```bash
 set -e
 test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
 case "$(git remote get-url origin)" in
@@ -1579,7 +1579,7 @@ git switch GPSpedia2.2.5_work
 git pull --ff-only origin GPSpedia2.2.5_work
 git status --short --branch
 git rev-parse HEAD
-\`\`\`
+```
 
 Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
 
@@ -1603,7 +1603,7 @@ AUG-118 — REFRESCO DE PERFIL Y ROL DESDE SESIÓN AUTENTICADA — VALIDACIÓN B
 
 PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
 
-\`\`\`bash
+```bash
 set -e
 test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
 case "$(git remote get-url origin)" in
@@ -1616,7 +1616,7 @@ git switch GPSpedia2.2.5_work
 git pull --ff-only origin GPSpedia2.2.5_work
 git status --short --branch
 git rev-parse HEAD
-\`\`\`
+```
 
 Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
 
@@ -1639,7 +1639,7 @@ AUG-119 — HISTORIAL INMUTABLE DE OPERACIONES DEL INBOX — VALIDACIÓN BETA PE
 
 PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
 
-\`\`\`bash
+```bash
 set -e
 test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
 case "$(git remote get-url origin)" in
@@ -1652,7 +1652,7 @@ git switch GPSpedia2.2.5_work
 git pull --ff-only origin GPSpedia2.2.5_work
 git status --short --branch
 git rev-parse HEAD
-\`\`\`
+```
 
 Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
 
@@ -1676,7 +1676,7 @@ AUG-120 — VALIDACIÓN BETA PENDIENTE
 
 PREPARACIÓN OBLIGATORIA:
 
-\`\`\`bash
+```bash
 set -e
 test -z "$(git status --porcelain)" || { echo "ERROR: árbol local no limpio; conserva cambios."; exit 1; }
 case "$(git remote get-url origin)" in
@@ -1689,7 +1689,7 @@ git switch GPSpedia2.2.5_work
 git pull --ff-only origin GPSpedia2.2.5_work
 git status --short --branch
 git rev-parse HEAD
-\`\`\`
+```
 
 Si existe cualquier cambio local, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
 

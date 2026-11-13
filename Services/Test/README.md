@@ -1290,9 +1290,9 @@ La prueba comprueba que el inventario de Feedbacks conserva las nueve columnas b
 
 Ejecutar desde la raíz del repositorio con Node.js:
 
-\`\`\`bash
+```bash
 node --experimental-default-type=module Services/Test/ActivityDashboardStoredXss.js
-\`\`\`
+```
 
 La suite comprueba renderizado DOM con \`textContent\` para nombre, tipo y detalle, payloads HTML/SVG almacenados, valores ausentes/mixtos, limpieza de resultados previos, integración del renderer en el dashboard y el contrato de sesión/identidad de \`recordLike\`. La regresión de POST directo con identidad falsificada se mantiene en \`Services/Test/FeedbackWriteSecurity.js\` y usa el harness FEEDBACK aislado. Las pruebas DOM usan un documento simulado; no sustituyen inspección en navegador real ni integración con Spreadsheet.
 
@@ -1319,9 +1319,9 @@ La suite valida que `getUiSessionContext_()` derive el rol exclusivamente de `cu
 
 Ejecutar desde la raíz del repositorio:
 
-\`\`\`bash
+```bash
 node --experimental-default-type=module Services/Test/InboxCachePagination.js
-\`\`\`
+```
 
 La suite prueba el caché en memoria por identidad completa de sesión (usuario, rol y token), TTL, fallback stale explícito, invalidación por sesión, límite de páginas y paginación del backend entre Feedbacks y Contactanos. Verifica cursor inválido y pageSize máximo. También ejecuta contratos estáticos de integración de UI/API. No accede a Apps Script, Spreadsheet ni deployments. La regresión XSS de lectura histórica permanece en Services/Test/InboxStoredXss.js y el contrato de roles en Services/Test/InboxRoleContract.js.
 
@@ -1330,9 +1330,9 @@ La suite prueba el caché en memoria por identidad completa de sesión (usuario,
 
 Ejecutar desde la raíz del repositorio:
 
-\`\`\`bash
+```bash
 node --experimental-default-type=module Services/Test/LastDeveloperProtection.js
-\`\`\`
+```
 
 La suite ejecuta los mismos 12 escenarios contra `Services/Auth.js` y `Services/Test/Auth.js` (24 ejecuciones), con dobles aislados:
 - Conteo de cuentas activas con rol Desarrollador, excluyendo tombstones.
@@ -1347,9 +1347,9 @@ No accede a Apps Script, Spreadsheet, endpoints ni deployments reales. El espejo
 
 Ejecutar desde la raíz del repositorio:
 
-\`\`\`bash
+```bash
 node --experimental-default-type=module Services/Test/SessionProfileRefresh.js
-\`\`\`
+```
 
 La suite ejecuta 19 escenarios:
 - 5 contra Services/Auth.js y los mismos 5 contra Services/Test/Auth.js: perfil actual desde Users, ausencia de contraseña/token, rechazo de ID distinto, ID duplicado y revocación de rol pendiente.
@@ -1361,19 +1361,19 @@ No accede a Apps Script, Spreadsheet, endpoints ni deployments. La integración 
 
 Ejecutar desde la raíz del repositorio:
 
-\`\`\`bash
+```bash
 node --experimental-default-type=module Services/Test/InboxAuditTrail.js
-\`\`\`
+```
 
 La suite valida el registro previo a la mutación para reply, resolve y delete en Feedbacks y Contactanos; identidad derivada de la sesión; esquema estricto; rechazo de mutaciones cuando falla la escritura del evento; persistencia después de eliminar la fila fuente y lectura posterior desde el dashboard. El ledger \`InboxAuditLog\` es append-only desde FEEDBACK y no se elimina al limpiar la actividad ordinaria. La prueba usa dobles aislados y no accede a Apps Script, Spreadsheet, endpoints ni deployments reales.
 
 
 ## AUG-120 — Lectura acotada del dashboard de actividad
 
-\`\`\`bash
+```bash
 node --experimental-default-type=module Services/Test/ActivityLogsBoundedRead.js
 node --experimental-default-type=module Services/Test/InboxAuditTrail.js
 node --experimental-default-type=module Services/Test/ActivityDashboardStoredXss.js
-\`\`\`
+```
 
 ActivityLogsBoundedRead.js prueba con 10,000 registros de actividad y 500 eventos Inbox que cada fuente lee como máximo sus 100 filas finales, combina ambas fuentes en orden cronológico descendente estable, devuelve como máximo 100 elementos y no utiliza getDataRange. También cubre hojas vacías y el contrato de campos del dashboard. InboxAuditTrail y ActivityDashboardStoredXss cubren regresión del ledger y renderizado seguro. Pruebas aisladas sin Apps Script, Spreadsheet, endpoints ni deployments.
