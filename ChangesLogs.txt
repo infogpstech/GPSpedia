@@ -1174,3 +1174,17 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - node --check ui.js, offline.js y Services/admin.js: PASS.
 - Sin deployment ni operaciones productivas.
 ================================================================================
+
+================================================================================
+2026-11-13 — AUG-031 — PERSISTENCIA INCREMENTAL Y AISLAMIENTO DE AUDITORÍAS
+- offline.js: estado de auditoría dividido en metadatos, páginas incrementales, confirmaciones y puntero latest por propietario/auditId.
+- Guardado atómico por transacción IndexedDB; compare-and-swap de revisión, reintento idempotente y validación de firma/estructura de cada página.
+- Restauración reconstruye páginas, deduplica fileId y bloquea reanudación si faltan páginas o el contenido no coincide con su firma.
+- Migración diferida de estado DB_VERSION 4; el registro anterior se elimina únicamente al confirmar el conjunto migrado.
+- Puntero latest ordenado por createdAt; dos pestañas no comparten ni sobrescriben silenciosamente el progreso de auditorías distintas.
+- Limpieza por propietario con token de exclusión y recuperación de marcador pendiente al abrir el modal.
+- ui.js: envía auditId, createdAt, revisión e índice de página; inventario ligado al mismo auditId.
+- AdminDriveAuditIndexedDB: 13 casos añadidos a RunServiceTests; harness dirigido de la fuente actual 6 PASS y recuperación de limpieza PASS; sintaxis de cuatro archivos PASS.
+- No se declara CI SUCCESS: el conector no expuso el resultado de Node CLI/GitHub Actions asociado a estos commits.
+- Sin deployment ni operaciones productivas.
+================================================================================
