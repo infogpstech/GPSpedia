@@ -2,9 +2,22 @@ function runSupplementaryVideoContractTests(sources) {
     const results = [];
     let passed = 0, failed = 0;
     function assert_(value, message) { if (!value) throw new Error(message || "Aserción fallida."); }
+    const pendingRuns = [];
     function run_(name, callback) {
-        try { callback(); passed++; results.push({ name, status: "PASS" }); }
-        catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error && error.message || error) }); }
+        try {
+            const result = callback();
+            if (result && typeof result.then === "function") {
+                pendingRuns.push(result.then(() => {
+                    passed++; results.push({ name, status: "PASS" });
+                }).catch(error => {
+                    failed++; results.push({ name, status: "FAIL", message: String(error && error.message || error) });
+                }));
+            } else {
+                passed++; results.push({ name, status: "PASS" });
+            }
+        } catch (error) {
+            failed++; results.push({ name, status: "FAIL", message: String(error && error.message || error) });
+        }
     }
     function extractFunction_(source, signature, nextSignature) {
         const start = String(source || "").indexOf(signature);
@@ -221,5 +234,5 @@ function runSupplementaryVideoContractTests(sources) {
             alert > addCortes.indexOf("verifySupplementaryCatalogWrite_(writeResult, payload)", start));
     });
 
-    return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
+    return Promise.all(pendingRuns).then(() => ({ status: failed === 0 ? "PASS" : "FAIL", passed, failed, results }));
 }
