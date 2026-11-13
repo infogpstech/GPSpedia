@@ -1188,3 +1188,16 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - No se declara CI SUCCESS: el conector no expuso el resultado de Node CLI/GitHub Actions asociado a estos commits.
 - Sin deployment ni operaciones productivas.
 ================================================================================
+
+================================================================================
+2026-11-13 — AUG-032 — CAPACIDAD E INTEGRIDAD DEL SNAPSHOT TEMPORAL
+- Services/admin.js: define capacidad máxima de 750,000 caracteres/bytes UTF-8, bloques de 75,000 y máximo de 10 bloques.
+- El snapshot usa MIME JSON UTF-8 explícito y manifiesto versión 2 con longitud, tamaño en bytes, TTL, fechas, SHA-256 del contenido y firma por bloque.
+- Escritura verificada de cada bloque; el manifiesto se confirma al final. Errores de escritura/lectura eliminan el snapshot parcial.
+- La restauración verifica esquema, fechas, conteo, longitud, bytes, firmas individuales y SHA-256 global antes de aceptar el snapshot.
+- En cada continuación se renueva el TTL del snapshot de referencias y de las páginas anteriores de deduplicación; una pausa mayor de seis horas exige una auditoría nueva.
+- La limpieza de estados expirados elimina cachés de páginas/respuestas, snapshot y puntero latest; la limpieza explícita elimina también bloques huérfanos.
+- Services/Test/AdminReplacedImagesIntegrity.mjs: seis pruebas adicionales de capacidad, integridad, corrupción, renovación, expiración y limpieza.
+- Validación adaptada V8: 44/44 PASS; parsing de admin.js, suite y runner: 3/3 PASS. Node CLI/GitHub Actions no ejecutado desde esta sesión.
+- Sin deployment ni operaciones productivas.
+================================================================================
