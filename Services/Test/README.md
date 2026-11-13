@@ -1438,5 +1438,5 @@ La suite usa dobles locales; no ejecuta `DriveApp`, `SpreadsheetApp`, Apps Scrip
 runCutPayloadValidationTests(writeSource)
 ```
 
-La suite ejecuta 34 escenarios de estructura/allowlist, requeridos, enums, años, tipos, longitudes, VIN, opId/SHA-256, imágenes y contratos de compensación. La validación se realiza antes de cualquier mutación; los fallos revierten fila, registro de Idempotencia y contador de IDs cuando corresponde. Las cargas no enlazadas se conservan trazadas en ImageUploadLedger para reconciliación.
+La suite ejecuta 35 escenarios de estructura/allowlist, requeridos, enums, años, tipos, longitudes, VIN, opId/SHA-256, imágenes y contratos de compensación. La validación se realiza antes de cualquier mutación; los fallos revierten fila, registro de Idempotencia y contador de IDs cuando corresponde. Las cargas no enlazadas se conservan trazadas en ImageUploadLedger para reconciliación.
 
