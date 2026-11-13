@@ -15,19 +15,22 @@ function runAdminRestoreRecoveryTests(adminSource) {
     };
     const functionSource = name => section("function " + name + "(", "\nfunction ").trim();
     run("El respaldo DB verifica copia completa antes de registrarla", () => {
-        const body = section("function handleBackupDatabase(", "\n/**\n * 2. Respaldo de Drive");
+        const body = section("function handleBackupDatabase(", "\nfunction handleBackupDrive");
         assert(/adminRestoreValidateDatabaseSchema_\(ss\)/.test(body), "No valida el esquema del origen.");
         assert(/adminRestoreValidateDatabaseSchema_\(verifiedSpreadsheet\)/.test(body), "No valida el esquema de la copia.");
         assert(/adminRestoreValidateDatabaseSchema_\(verifiedSpreadsheet\)/.test(body), "No verifica el esquema e inventario copiados.");
         assert(/fingerprint\s*!==\s*sourceManifest\.fingerprint/.test(body), "No compara huellas completas.");
         assert(/setTrashed\(true\)/.test(body), "No retira una copia fallida.");
-        assert(/setDescription\(JSON\.stringify/.test(body), "No persiste el manifiesto de integridad.");
+        assert(/status: "incomplete"/.test(body) && /status: "complete"/.test(body), "No diferencia estado incompleto y completo.");
+        assert(/persistedManifest\.status !== "complete"/.test(body), "No verifica el estado persistido.");
     });
-    run("El respaldo Drive compara recursos y limpia copias parciales", () => {
-        const body = section("function handleBackupDrive(", "\nfunction copyFolderRecursively");
-        assert(/adminRestoreDriveManifest_\(rootFolder\)/.test(body) && /adminRestoreDriveManifest_\(createdBackupFolder\)/.test(body), "No compara inventarios.");
-        assert(/adminRestoreManifestsEqual_/.test(body), "No verifica conteos y huella.");
-        assert(/setTrashed\(true\)/.test(body), "No limpia la carpeta parcial.");
+    run("El respaldo Drive procesa lotes y permite reanudar por ID", () => {
+        const body = section("function handleBackupDrive(", "\nfunction attemptRestoreImage");
+        assert(/payload\.backupId/.test(body) && /adminRestoreReadDriveBackupState_/.test(body), "No recupera el estado del contenedor.");
+        assert(/nextFolderIndex/.test(body) && /nextFileIndex/.test(body) && /ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_/.test(body), "No mantiene cursor ni tamaño de lote.");
+        assert(/status: "in_progress"/.test(body) && /resumable: true/.test(body), "No devuelve estado reanudable.");
+        assert(/adminRestoreCopyDriveFolderEntry_/.test(body) && /adminRestoreCopyDriveFileEntry_/.test(body), "No procesa recursos por lote.");
+        assert(/sourceIdentityFingerprint/.test(body) && /adminRestoreVerifyDriveBackupState_/.test(body), "No verifica que el origen y las copias sigan coincidiendo.");
     });
     run("El manifiesto DB incluye valores, fórmulas y todas las hojas", () => {
         const body = section("function adminRestoreSpreadsheetManifest_(", "\nfunction adminRestoreDriveManifest_");
@@ -64,7 +67,7 @@ function runAdminRestoreRecoveryTests(adminSource) {
     });
     run("Drive prepara y verifica staging antes de mover el destino original", () => {
         const body = section("function handleRestoreDrive(", "\nfunction clearFolderContents");
-        assert(body.indexOf("adminRestoreCopyFolderRecursively_") < body.indexOf("adminRestoreMoveFolderContents_(targetFolder, rollbackFolder)"), "Mueve el origen antes de validar staging.");
+        assert(body.indexOf("adminRestoreCopyFolderRecursively_(backupFolder, stagingFolder, storedManifest)") < body.indexOf("adminRestoreMoveFolderContents_(targetFolder, rollbackFolder)"), "Mueve el origen antes de validar staging o no aplica el manifiesto.");
         assert(/adminRestoreManifestsEqual_\(backupManifest,\s*adminRestoreDriveManifest_\(stagingFolder\)\)/.test(body), "No compara staging con respaldo.");
         assert(/adminRestoreManifestsEqual_\(originalManifest,\s*adminRestoreDriveManifest_\(rollbackFolder\)\)/.test(body), "No verifica el contenido previo recuperable.");
         assert(!/clearFolderContents\(targetFolder\)/.test(body), "La restauración todavía limpia destructivamente el destino.");
@@ -78,6 +81,7 @@ function runAdminRestoreRecoveryTests(adminSource) {
     run("Los manifiestos Drive comparan ruta, MIME, tamaño y conteos", () => {
         const body = section("function adminRestoreDriveManifest_(", "\nfunction adminRestoreManifestsEqual_");
         assert(/getMimeType\(\)/.test(body) && /getSize\(\)/.test(body) && /entries\.sort\(\)/.test(body), "El inventario no compara metadatos/rutas.");
+        assert(/parentId/.test(body) && /identityFingerprint/.test(body) && /id: String\(/.test(body), "No conserva identidad y relación padre/hijo.");
         assert(/folderCount/.test(body) && /fileCount/.test(body) && /totalBytes/.test(body), "No cuenta todos los recursos.");
     });
     run("Los respaldos validan ubicación, tipo MIME e identidad del recurso", () => {
@@ -91,11 +95,12 @@ function runAdminRestoreRecoveryTests(adminSource) {
         assert(/setName\(entry\.name\)/.test(helper) && /SpreadsheetApp\.flush\(\)/.test(helper), "No recupera y verifica nombres.");
         assert(/reversión de nombres no pudo verificarse/.test(helper), "No diferencia rollback fallido.");
     });
-    run("Los backups históricos sin manifiesto se advierten sin omitir esquema", () => {
+    run("DB y Drive rechazan contenedores sin estado completo", () => {
         const db = section("function handleRestoreDatabase(", "\nfunction handleRestoreDrive");
         const drive = section("function handleRestoreDrive(", "\nfunction clearFolderContents");
-        assert(/Respaldo histórico sin manifiesto/.test(db) && /Respaldo histórico sin manifiesto/.test(drive), "No advierte falta de manifiesto.");
-        assert(db.indexOf("adminRestoreValidateDatabaseSchema_") < db.indexOf("Respaldo histórico sin manifiesto"), "El backup histórico evita validar esquema.");
+        assert(/storedManifest\.version !== 2/.test(db) && /storedManifest\.status !== "complete"/.test(db), "DB acepta manifiestos sin estado completo v2.");
+        assert(/adminRestoreReadDriveBackupState_\(backupFolder\)/.test(drive) && /storedManifest\.status !== "complete"/.test(drive), "Drive acepta contenedores sin estado completo.");
+        assert(!/Respaldo histórico sin manifiesto/.test(db + drive), "Se conserva una ruta de restauración de respaldos no verificables.");
     });
 
     run("El intercambio DB real conserva hojas extra y elimina snapshots solo tras verificar", () => {
@@ -161,8 +166,8 @@ function runAdminRestoreRecoveryTests(adminSource) {
     run("El traslado de recursos Drive preserva IDs y puede revertirse", () => {
         const parentHelper = functionSource("adminRestoreHasParent_");
         const moveHelper = functionSource("adminRestoreMoveFolderContents_");
-        const factory = new Function("adminRestoreHasParent_", parentHelper + "\n" + moveHelper + "\nreturn adminRestoreMoveFolderContents_;");
-        const move = factory(new Function("return (" + parentHelper + ")")());
+        const factory = new Function("adminRestoreHasParent_", "adminRestoreIsDriveManifestFile_", parentHelper + "\n" + moveHelper + "\nreturn adminRestoreMoveFolderContents_;");
+        const move = factory(new Function("return (" + parentHelper + ")")(), () => false);
         const makeIterator = values => { let i=0; return {hasNext:()=>i<values.length,next:()=>values[i++]}; };
         const parents = new Map([["file-1",new Set(["source"])],["folder-1",new Set(["source"])]]);
         const resource = id => ({getId:()=>id,getParents:()=>makeIterator(Array.from(parents.get(id),pid=>({getId:()=>pid})))});
@@ -186,8 +191,8 @@ function runAdminRestoreRecoveryTests(adminSource) {
     run("El traslado Drive recupera una operación parcial que falla al retirar el padre original", () => {
         const parentHelper = functionSource("adminRestoreHasParent_");
         const moveHelper = functionSource("adminRestoreMoveFolderContents_");
-        const factory = new Function("adminRestoreHasParent_", parentHelper + "\n" + moveHelper + "\nreturn adminRestoreMoveFolderContents_;");
-        const move = factory(new Function("return (" + parentHelper + ")")());
+        const factory = new Function("adminRestoreHasParent_", "adminRestoreIsDriveManifestFile_", parentHelper + "\n" + moveHelper + "\nreturn adminRestoreMoveFolderContents_;");
+        const move = factory(new Function("return (" + parentHelper + ")")(), () => false);
         const parents=new Set(["source"]);let failOnce=true;
         const file={getId:()=>"file-1",getName:()=>"image.jpg",getParents:()=>({hasNext:(()=>{let done=false;return()=>!done;})(),next:()=>({getId:()=>"source"})})};
         const iterator=values=>{let i=0;return{hasNext:()=>i<values.length,next:()=>values[i++]};};
