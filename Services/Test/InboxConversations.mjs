@@ -141,6 +141,8 @@ run("Rechaza identidad falsificada con token de otra cuenta", () => {
 });
 run("El destinatario solo ve sus conversaciones y el contador unread inicial", () => {
     const result = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"received" });
+    console.log("DEBUG inbox states", JSON.stringify(spreadsheet.getSheetByName("InboxConversationState").rows));
+    console.log("DEBUG inbox summaries", JSON.stringify(result));
     assert.equal(result.data.length,1);
     assert.equal(result.data[0].conversationId,first.conversationId);
     assert.equal(result.data[0].unreadCount,1);
