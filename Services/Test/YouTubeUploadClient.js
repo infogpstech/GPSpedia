@@ -12,14 +12,13 @@ async function runYouTubeUploadClientTests() {
             transaction:()=>{
                 const tx={
                     objectStore:()=>({
-                        put(record){store.set(record.opVideoId,record);},
-                        get(id){const req={};Promise.resolve().then(()=>{req.result=store.get(id)||null;if(req.onsuccess)req.onsuccess();});return req;},
-                        getAll(){const req={};Promise.resolve().then(()=>{req.result=Array.from(store.values());if(req.onsuccess)req.onsuccess();});return req;},
-                        delete(id){store.delete(id);}
+                        put(record){store.set(record.opVideoId,record);Promise.resolve().then(()=>{if(tx.oncomplete)tx.oncomplete();});},
+                        get(id){const req={};Promise.resolve().then(()=>{req.result=store.get(id)||null;if(req.onsuccess)req.onsuccess();if(tx.oncomplete)tx.oncomplete();});return req;},
+                        getAll(){const req={};Promise.resolve().then(()=>{req.result=Array.from(store.values());if(req.onsuccess)req.onsuccess();if(tx.oncomplete)tx.oncomplete();});return req;},
+                        delete(id){store.delete(id);Promise.resolve().then(()=>{if(tx.oncomplete)tx.oncomplete();});}
                     }),
                     oncomplete:null,onerror:null,onabort:null
                 };
-                Promise.resolve().then(()=>{if(tx.oncomplete)tx.oncomplete();});
                 return tx;
             },
             close(){}
