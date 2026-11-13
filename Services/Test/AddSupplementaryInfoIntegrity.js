@@ -58,13 +58,14 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  const authColsUsers={ID:1,Nombre_Usuario:2,Privilegios:3,Nombre_Completo:4,SessionToken:5};
  function authHarness(role,options){
   options=options||{};
-  const session=["token-1","user-1","","","","",options.expired?"expired":""];
-  const user=["user-1",options.deleted?"__deleted__:tecnico":"tecnico",role||"Tecnico","Nombre Servidor",options.revoked?"ROLE-REVOCATION:pending":"token-1"];
-  const rows={ActiveSessions:[["token","userId"],session],Users:[["id","username","role","name","session"],user]};
+  const now=new Date().toISOString();
+  const session=["user-1","tecnico","token-1",options.expired?"expired":now,"",now];
+  const user=["user-1",options.deleted?"__deleted__:tecnico":"tecnico","","",role||"Tecnico","","Nombre Servidor",options.revoked?"__role_revocation_pending__:pending":"token-1",""];
+  const rows={ActiveSessions:[["userId","username","token","createdAt","logs","lastActivityAt"],session],Users:[["id","username","password","role","phone","email","fullName","session","terms"],user]};
   if(options.duplicate)rows.ActiveSessions.push(session.slice());
   const sheets={getSheetByName:name=>rows[name]?{getDataRange:()=>({getValues:()=>rows[name]})}:null};
   const getAuth=new Function("getSpreadsheet","SHEET_NAMES","COLS_ACTIVE_SESSIONS","COLS_USERS","ROLE_REVOCATION_SHARED_PREFIX","getSessionExpirationStatus_",authSource+";return getAuthenticatedCollaborator;")(
-   ()=>sheets,authNames,authColsSessions,authColsUsers,"ROLE-REVOCATION",row=>({expired:row[6]==="expired"}));
+   ()=>sheets,authNames,{ActiveSessions:3,ID_Usuario:1},{ID:1,Nombre_Usuario:2,Privilegios:4,Nombre_Completo:7,SessionToken:8},"__role_revocation_pending__:",row=>({expired:row[3]==="expired"}));
   return {getAuth,rows};
  }
  const allowedSupplementaryRoles=["desarrollador","gefe","jefe","supervisor","tecnico","tecnico_exterior"];
