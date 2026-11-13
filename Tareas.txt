@@ -1408,3 +1408,23 @@ Alcance técnico para continuar AUG-027:
 
 Estado: EN PROGRESO — decisiones funcionales y análisis técnico completados; implementación y pruebas pendientes. No se modificó código ni se accedió a Spreadsheet/Drive productivos.
 ================================================================================
+
+
+================================================================================
+AUG-027 — Avance de implementación — 2026-11-13
+
+Implementado en GPSpedia2.2.5_work:
+- Los handlers de consulta del historial, restauración histórica, papelera, movimiento, descarga, guardado del inventario, organización por lotes y auditoría Drive ahora utilizan collectActiveDriveReferences() para comprobar referencias en todas las hojas pertinentes.
+- La restauración histórica compara también el nombre de la hoja, evitando confundir una referencia en otra hoja con la celda de Cortes de destino.
+- Se añadió el estado en_uso, la acción ADMIN markReplacedImageInUse y su control en el modal. La acción valida el registro, identidad del archivo, estado de papelera, MIME y pertenencia al árbol Cortes; la auditoría y el guardado del inventario preservan esa protección.
+- Se actualizó el texto del gestor y se añadieron comprobaciones de contrato en AdminReplacedImagesIntegrity.mjs.
+
+Pendiente antes de cerrar AUG-027:
+1. Acciones manuales de requiere_revision para enviar a papelera y restaurar desde papelera.
+2. Eliminación definitiva con validación global, estado en papelera, Drive API y verificación posterior.
+3. Pruebas funcionales de escáner multihoja, estado en_uso, permisos, concurrencia, errores parciales y compensación; ejecutar CI y revisar resultados.
+4. Actualizar documentación de acciones ADMIN y comprobar que el gestor presenta historial e inventario sin mezclar sus estados.
+5. Validación Beta aislada de permisos reales de Spreadsheet/Drive. No operar sobre datos productivos durante desarrollo.
+
+No se marca AUG-027 como completada. No se afirma que CI haya aprobado estos cambios.
+================================================================================
