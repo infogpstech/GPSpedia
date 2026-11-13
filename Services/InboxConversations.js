@@ -59,9 +59,10 @@ function inboxConversationHash_(value) {
     return digest.map(byte => ((byte + 256) % 256).toString(16).padStart(2, "0")).join("");
 }
 function inboxConversationActor_(payload) {
-    const id = String(payload && payload.userId || "").trim();
-    const name = String(payload && payload.userName || "").trim();
-    const role = normalizeFeedbackRole(payload && payload.userRole);
+    const verified = assertFeedbackSession(payload, null);
+    const id = String(verified && verified.userId || "").trim();
+    const name = String(verified && verified.userName || "").trim();
+    const role = normalizeFeedbackRole(verified && verified.role);
     if (!id || !name || !INBOX_ACTIVE_ROLES_.has(role)) throw new Error("La sesión no contiene una identidad válida para Inbox.");
     return { id, name, role };
 }
@@ -162,7 +163,10 @@ function inboxAppendMessage_(sheet, conversationId, actor, body, key, hash, now)
 }
 function inboxUpdateConversationForMessage_(sheet, found, message, now) {
     const row = found.row.slice();
-    if (String(row[13] || "") !== String(message[0])) {
+    const currentTime = new Date(row[14] || 0).getTime();
+    const messageTime = new Date(message[2]).getTime();
+    const isCurrentMessage = String(row[13] || "") === String(message[0]);
+    if (!isCurrentMessage && (!Number.isFinite(currentTime) || messageTime >= currentTime)) {
         row[2] = now; row[13] = message[0]; row[14] = message[2];
         row[15] = String(message[6] || "").slice(0,180); row[16] = Math.max(0,Number(row[16]) || 0) + 1;
         sheet.getRange(found.rowNumber,1,1,INBOX_CONVERSATION_HEADERS_.length).setValues([row]);
@@ -334,6 +338,7 @@ function handleMarkInboxRead(payload) {
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
         const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), row = state.row.slice();
+        const previousUnread = Math.max(0, Number(row[3]) || 0);
         const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length).filter(item => String(item[1]) === conversationId);
         const throughId = String(payload.throughMessageId || "");
         const throughIndex = throughId ? messages.findIndex(item => String(item[0]) === throughId) : -1;
@@ -345,7 +350,7 @@ function handleMarkInboxRead(payload) {
         row[3] = unread;
         row[7] = new Date().toISOString();
         inboxWriteState_(sheets.states,state,row);
-        if (Number(state.row[3]) > unread) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,throughId,"Lectura confirmada hasta el mensaje indicado.");
+        if (previousUnread > unread) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,throughId,"Lectura confirmada hasta el mensaje indicado.");
         return {status:"success",conversationId,unreadCount:unread};
     });
 }
