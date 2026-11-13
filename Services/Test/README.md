@@ -1469,3 +1469,14 @@ node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=r
 ~~~
 
 La suite ejecuta 14 escenarios locales: validación de campos de creación, rechazo de propiedades/roles/tipos/formato inválidos, escritura agrupada ID:H, duplicidad de username, rollback con restauración de fórmulas, actualización de perfil, allowlist, IDs inexistentes/duplicados, rollback por fallo de flush, sesión ajena y contratos de lease compartida entre USERS/AUTH. Usa hojas, locks y flush simulados; no llama Apps Script ni datos reales. La copia Services/Test/users.js conserva el ID de la Spreadsheet aislada y se sincroniza con el servicio fuente.
+
+
+## AUG-131 — Validación de destino y transición de aprobación de vídeos
+
+Ejecutar desde la raíz del repositorio:
+
+~~~bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const feedback=readFileSync("Services/feedback.js","utf8"); const tests=readFileSync("Services/Test/VideoApprovalPublishing.js","utf8"); const run=new Function("LockService","SpreadsheetApp","Utilities","Session",feedback+tests+"; return runVideoApprovalPublishingTests();"); const lock={getScriptLock:()=>({waitLock(){},releaseLock(){}})}; const result=run(lock,{flush(){}},{getUuid:()=>"test-uuid",formatDate:()=>"2026-11-12"},{getScriptTimeZone:()=>"GMT-6"}); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+~~~
+
+La suite cubre allowlist de tipo de contenido, destino único por ID, coherencia entre referenceId e ID de la fila FEEDBACK, esquemas de Cortes/PyS/Tutorial, estados pendientes/terminales, publicación sin sobrescritura, miniatura de tutorial, rechazo que solo retira el enlace exacto, reintentos ante respuesta/escritura fallida y serialización local de aprobación/rechazo con el mismo ScriptLock. Resultado local: 28/28 PASS. Usa hojas simuladas; no llama Apps Script desplegado, Spreadsheet, Drive, YouTube ni endpoints reales.
