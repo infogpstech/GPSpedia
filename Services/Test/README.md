@@ -1695,3 +1695,11 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - `DriveTerminalScope.mjs` extrae y ejecuta las funciones reales de validación de ascendencia y `handleDriveCommand` con dobles locales de DriveApp.
 - Cubre navegación desde Cortes y subcarpetas, rechazo de IDs externos y ancestros ambiguos, `cd ..` en la raíz, `mkdir` solo dentro del árbol y `move` con archivo/destino dentro o fuera de Cortes. También comprueba que listados y árbol no expongan recursos con padres externos.
 - Ejecutar desde la raíz: `node --experimental-default-type=module Services/Test/DriveTerminalScope.mjs`.
+
+
+## AUG-020 — Lectura acotada y retención segura de ActividadUsuario
+
+- `ActivityLogsBoundedRead.js` verifica que getActivityLogs lea solo las últimas 100 filas de cada fuente y entregue un máximo de 100 registros ordenados.
+- `ActivityLogRetention.mjs` ejecuta el handler real de purga con una hoja simulada: fechas Date/ISO, límite exacto de siete días, valores vacíos/ilegibles/números, futuro, agrupación de borrados y vaciado total explícito.
+- Los timestamps vacíos o no clasificables se conservan y se informan mediante `unclassifiedCount`; la purga lee únicamente la columna de fecha y elimina bloques contiguos de abajo hacia arriba.
+- Ejecutar: `node --experimental-default-type=module Services/Test/ActivityLogRetention.mjs`.

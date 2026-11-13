@@ -98,6 +98,8 @@ runGroup('33','FEEDBACK',()=>{
   {getOAuthToken:()=> 'oauth-token'},{fetch:()=>({getAllHeaders:()=>({}),getResponseCode:()=>500,getContentText:()=>''})},{log(){}});
  recordResult('FEEDBACK precondiciones de subida resumable',init);
  recordResult('FEEDBACK ledger Inbox',loadFunction('Services/Test/InboxAuditTrail.js','runInboxAuditTrailTests','\n\nimport {')({feedback}));
+ recordResult('FEEDBACK lectura acotada de ActividadUsuario/AUG-120',loadFunction('Services/Test/ActivityLogsBoundedRead.js','runActivityLogsBoundedReadTests','\n\nimport {')({feedback}));
+ runCli('AUG-020 purga segura y clasificación de timestamps de ActividadUsuario','Services/Test/ActivityLogRetention.mjs');
  recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('Services/Test/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
   ui:read('ui.js'),feedback
  }));

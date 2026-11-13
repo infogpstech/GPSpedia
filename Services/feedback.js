@@ -2623,44 +2623,84 @@ function handleClearActivityLogs(payload) {
     const keepLastWeek = payload && payload.keepLastWeek === true;
     const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
     if (!sheet) {
-        return { status: 'success', message: 'Hoja de actividad no encontrada, nada que limpiar.', deletedCount: 0 };
+        return { status: "success", message: "Hoja de actividad no encontrada, nada que limpiar.", deletedCount: 0, unclassifiedCount: 0 };
     }
 
     const lastRow = sheet.getLastRow();
     if (lastRow <= 1) {
-        return { status: 'success', message: 'No hay registros de actividad para eliminar.', deletedCount: 0 };
+        return { status: "success", message: "No hay registros de actividad para eliminar.", deletedCount: 0, unclassifiedCount: 0 };
     }
 
     if (!keepLastWeek) {
-        // Borrar todos los registros excepto el encabezado
+        // La acción explícita de vaciado total incluye también registros sin fecha clasificable.
         sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
         SpreadsheetApp.flush();
-        return { status: 'success', message: 'Todos los registros de actividad han sido eliminados.', deletedCount: lastRow - 1 };
-    } else {
-        // Borrar registros con antigüedad mayor a 7 días
-        const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
-        const now = new Date().getTime();
-        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-        let deletedCount = 0;
-
-        // Recorrer de abajo hacia arriba para poder borrar filas sin desfasar índices
-        for (let i = data.length - 1; i >= 0; i--) {
-            const rawTimestamp = data[i][COLS_ACTIVIDAD_USUARIO.timestamp - 1];
-            let entryTime = 0;
-            if (rawTimestamp instanceof Date) {
-                entryTime = rawTimestamp.getTime();
-            } else if (rawTimestamp) {
-                entryTime = new Date(rawTimestamp).getTime();
-            }
-
-            if (entryTime > 0 && (now - entryTime) > sevenDaysMs) {
-                sheet.deleteRow(i + 2);
-                deletedCount++;
-            }
-        }
-        SpreadsheetApp.flush();
-        return { status: 'success', message: `Se eliminaron ${deletedCount} registros con antigüedad mayor a una semana.`, deletedCount };
+        return {
+            status: "success",
+            message: "Todos los registros de actividad han sido eliminados.",
+            deletedCount: lastRow - 1,
+            unclassifiedCount: 0
+        };
     }
+
+    // Solo se lee la columna temporal necesaria; las filas sin fecha válida se conservan para revisión.
+    const timestampColumn = COLS_ACTIVIDAD_USUARIO.timestamp;
+    const timestampRows = sheet.getRange(2, timestampColumn, lastRow - 1, 1).getValues();
+    const now = new Date().getTime();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const rowsToDelete = [];
+    let unclassifiedCount = 0;
+
+    for (let index = timestampRows.length - 1; index >= 0; index--) {
+        const rawTimestamp = timestampRows[index] && timestampRows[index][0];
+        let entryTime = null;
+        if (rawTimestamp instanceof Date) {
+            const parsed = rawTimestamp.getTime();
+            if (Number.isFinite(parsed)) entryTime = parsed;
+        } else if (typeof rawTimestamp === "string" && rawTimestamp.trim() &&
+            !/^[+-]?\d+(?:\.\d+)?$/.test(rawTimestamp.trim())) {
+            const parsed = new Date(rawTimestamp.trim()).getTime();
+            if (Number.isFinite(parsed)) entryTime = parsed;
+        }
+
+        if (entryTime === null) {
+            unclassifiedCount++;
+            continue;
+        }
+        if ((now - entryTime) > sevenDaysMs) rowsToDelete.push(index + 2);
+    }
+
+    // Las filas se agrupan y eliminan de abajo hacia arriba para evitar desplazamientos de índices.
+    let cursor = 0;
+    while (cursor < rowsToDelete.length) {
+        let groupStart = rowsToDelete[cursor];
+        const highestRow = groupStart;
+        let groupCount = 1;
+        cursor++;
+        while (cursor < rowsToDelete.length && rowsToDelete[cursor] === groupStart - 1) {
+            groupStart = rowsToDelete[cursor];
+            groupCount++;
+            cursor++;
+        }
+        if (typeof sheet.deleteRows === "function") {
+            sheet.deleteRows(groupStart, groupCount);
+        } else {
+            for (let row = highestRow; row >= groupStart; row--) sheet.deleteRow(row);
+        }
+    }
+
+    SpreadsheetApp.flush();
+    const deletedCount = rowsToDelete.length;
+    const retainedMessage = unclassifiedCount
+        ? " Se conservaron " + unclassifiedCount + " registros con fecha vacía o no válida para revisión; no se eliminan por antigüedad inferida."
+        : "";
+    return {
+        status: "success",
+        message: "Se eliminaron " + deletedCount + " registros con antigüedad mayor a una semana." + retainedMessage,
+        deletedCount,
+        unclassifiedCount,
+        retainedUnclassifiedCount: unclassifiedCount
+    };
 }
 
 
