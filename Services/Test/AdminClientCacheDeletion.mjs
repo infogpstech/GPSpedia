@@ -42,7 +42,7 @@ function createDatabase(options = {}) {
                 },
                 abort() { this.aborted = true; }
             };
-            queueMicrotask(() => {
+            Promise.resolve().then(() => {
                 if (options.error) { if (tx.onerror) tx.onerror(); }
                 else if (tx.oncomplete) tx.oncomplete();
             });
@@ -94,7 +94,7 @@ await check("La limpieza de Cache Storage solicita confirmación al Service Work
     let sent = null;
     const worker = { postMessage(message, ports) {
         sent = message;
-        queueMicrotask(() => ports[0].peer.onmessage({ data: { status: "success", removedCount: 4, preservedCount: 12 } }));
+        Promise.resolve().then(() => ports[0].peer.onmessage({ data: { status: "success", removedCount: 4, preservedCount: 12 } }));
     }};
     const windowRef = {
         navigator: { serviceWorker: { controller: worker, getRegistration: async () => ({ active: worker }) } },
