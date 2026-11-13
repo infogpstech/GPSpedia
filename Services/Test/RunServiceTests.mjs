@@ -78,7 +78,7 @@ runGroup('33','FEEDBACK',()=>{
   {getScriptLock:()=>({waitLock(){},releaseLock(){}})},{flush(){}},{getUuid:()=>'test-uuid',formatDate:()=>'2026-11-12'},{getScriptTimeZone:()=>'GMT-6'});
  recordResult('FEEDBACK aprobación/rechazo/recuperación',video);
  recordResult('FEEDBACK ledger Inbox',loadFunction('Services/Test/InboxAuditTrail.js','runInboxAuditTrailTests','\n\nimport {')({feedback}));
- recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('Services/Test/InboxRoleContract.js','runInboxRoleContractTests','\\n\\nimport {')({
+ recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('Services/Test/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
   ui:read('ui.js'),feedback
  }));
 
@@ -98,7 +98,7 @@ runGroup('36','AUTH',()=>{
  recordResult('AUTH operativo y copia aislada',{passed:a.passed+b.passed,failed:a.failed+b.failed,total:a.passed+a.failed+b.passed+b.failed,results:[...a.results,...b.results]});
  if(normalizedCopy(auth)!==normalizedCopy(testAuth)) throw new Error('La copia AUTH difiere fuera del ID aislado.');
  recordResult('AUTH fixture/paridad',{passed:1,failed:0,total:1});
- recordResult('AUTH perfil remoto y revocación/AUG-118',loadFunction('Services/Test/SessionProfileRefresh.js','runSessionProfileRefreshTests','\\nimport {')({
+ recordResult('AUTH perfil remoto y revocación/AUG-118',loadFunction('Services/Test/SessionProfileRefresh.js','runSessionProfileRefreshTests','\nimport {')({
   auth,testAuth,client:read('auth.js')
  }));
  recordResult('UI invalidación de sesión y rol/AUG-042',loadFunction('Services/Test/SessionUiRoleInvalidation.js','runSessionUiRoleInvalidationTests')({
