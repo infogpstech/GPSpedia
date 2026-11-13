@@ -370,6 +370,9 @@ function collectCortesImageReferences(includeLocations = true) {
                 }
             });
             rowsRead = Math.max(rowsRead, offset + chunkRows);
+            if (Date.now() - startedAt >= captureBudgetMs) {
+                throw new Error("La captura de referencias de «Cortes» superó el presupuesto temporal seguro; no se guardó un snapshot parcial. Reintenta la auditoría.");
+            }
         }
     });
 
