@@ -1126,3 +1126,15 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 
 
 2026-11-13 — AUG-027 — CI GitHub Actions: run 43488754071 SUCCESS sobre ac504feab1472731720c2a4b14529a0113492a56; Node 22.23.4; 70 suites, 975 pruebas, 0 fallos. Evidencia: https://github.com/infogpstech/GPSpedia/actions/runs/43488754071. CI no sustituye Beta ni cierra las acciones pendientes de papelera/restauración/eliminación definitiva.
+
+
+================================================================================
+2026-11-13 — AUG-027 — ciclo de vida global de imágenes
+- Services/admin.js: escáner global ampliado a valores visibles/nativos, fórmulas, RichText, CellImage y getImages(); imágenes incrustadas sin ID verificable bloquean operaciones destructivas.
+- Services/admin.js: acciones de papelera para registros válidos requiere_revision, persistencia de estado_previo_papelera, restauración de archivos desde papelera y eliminación definitiva Drive API v3 con eliminacion_pendiente y verificación GET 404.
+- Services/admin.js, api-config.js y Services/Coordinator.js: dispatcher, mapa de rutas y lease compartida para restoreReplacedImageFromTrash y permanentlyDeleteReplacedImage.
+- ui.js e index.html: acciones de revisión/restauración/eliminación en el gestor y controles de auditoría/inventario desde la pestaña Imágenes y Drive del modal Desarrollador.
+- Services/ADMIN_ACTIONS.md: contratos, estados y límites del ciclo de imágenes.
+- Services/Test/AdminReplacedImagesIntegrity.mjs, Services/Test/AdminImageTrashLifecycle.mjs y Services/Test/RunServiceTests.mjs: pruebas de esquema, referencias multihoja e incrustadas, permisos, estados, errores, compensación e idempotencia.
+- Sin deployments, cambios en la rama base ni operaciones sobre datos productivos.
+================================================================================
