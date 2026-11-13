@@ -80,7 +80,7 @@ function runAdminRestoreRecoveryTests(adminSource) {
     });
     run("Los manifiestos Drive comparan ruta, MIME, tamaño y conteos", () => {
         const body = section("function adminRestoreDriveManifest_(", "\nfunction adminRestoreManifestsEqual_");
-        assert(/getMimeType\(\)/.test(body) && /getSize\(\)/.test(body) && /entries\.sort\(\)/.test(body), "El inventario no compara metadatos/rutas.");
+        assert(/getMimeType\(\)/.test(body) && /getSize\(\)/.test(body) && /entries\.sort\(/.test(body), "El inventario no compara metadatos/rutas.");
         assert(/parentId/.test(body) && /identityFingerprint/.test(body) && /id: String\(/.test(body), "No conserva identidad y relación padre/hijo.");
         assert(/folderCount/.test(body) && /fileCount/.test(body) && /totalBytes/.test(body), "No cuenta todos los recursos.");
     });
@@ -174,7 +174,7 @@ function runAdminRestoreRecoveryTests(adminSource) {
         const file=Object.assign(resource("file-1"),{getName:()=>"image.jpg"});
         const child=Object.assign(resource("folder-1"),{getName:()=>"brand"});
         const makeFolder=(id,children)=>({
-            getId:()=>id,
+            getId:()=>id, getName:()=>id === "source" ? "Cortes" : "rollback",
             getFiles:()=>makeIterator(children.filter(x=>x.getName&&parents.get(x.getId()).has(id)&&x.getId().startsWith("file"))),
             getFolders:()=>makeIterator(children.filter(x=>x.getName&&parents.get(x.getId()).has(id)&&x.getId().startsWith("folder"))),
             addFile:x=>parents.get(x.getId()).add(id), removeFile:x=>parents.get(x.getId()).delete(id),
@@ -197,8 +197,8 @@ function runAdminRestoreRecoveryTests(adminSource) {
         const file={getId:()=>"file-1",getName:()=>"image.jpg",getParents:()=>({hasNext:(()=>{let done=false;return()=>!done;})(),next:()=>({getId:()=>"source"})})};
         const iterator=values=>{let i=0;return{hasNext:()=>i<values.length,next:()=>values[i++]};};
         file.getParents=()=>iterator(Array.from(parents,p=>({getId:()=>p})));
-        const source={getId:()=>"source",getFiles:()=>iterator(parents.has("source")?[file]:[]),getFolders:()=>iterator([]),addFile:()=>parents.add("source"),removeFile:()=>{if(failOnce){failOnce=false;throw Error("partial move");}parents.delete("source");}};
-        const staging={getId:()=>"staging",getFiles:()=>iterator(parents.has("staging")?[file]:[]),getFolders:()=>iterator([]),addFile:()=>parents.add("staging"),removeFile:()=>parents.delete("staging")};
+        const source={getId:()=>"source",getName:()=>"Cortes",getFiles:()=>iterator(parents.has("source")?[file]:[]),getFolders:()=>iterator([]),addFile:()=>parents.add("source"),removeFile:()=>{if(failOnce){failOnce=false;throw Error("partial move");}parents.delete("source");}};
+        const staging={getId:()=>"staging",getName:()=>"staging",getFiles:()=>iterator(parents.has("staging")?[file]:[]),getFolders:()=>iterator([]),addFile:()=>parents.add("staging"),removeFile:()=>parents.delete("staging")};
         let failedMove=false;try{move(source,staging);}catch(e){failedMove=true;}
         assert(failedMove&&parents.has("source")&&parents.has("staging"),"No reprodujo el estado parcial esperado.");
         move(staging,source);
