@@ -27,12 +27,13 @@ class FakeAbortController {
     abort() { this.signal.aborted = true; }
 }
 function createRunner(routeAction, options = {}) {
-    return new Function("routeAction", "AbortController", "setTimeout", "clearTimeout",
+    const execute = new Function("routeAction", "AbortController", "setTimeout", "clearTimeout",
         helperSource + "\nreturn routeActionWithRetry;")(
         routeAction, FakeAbortController,
         options.setTimeout || ((callback, delay) => ({ callback, delay })),
         options.clearTimeout || (() => {})
     );
+    return (action, payload, settings = {}) => execute(action, payload, Object.assign({}, options, settings));
 }
 function routeError(kind, httpStatus = null) {
     const error = new Error("simulated " + kind);
