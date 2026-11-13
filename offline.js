@@ -454,16 +454,19 @@ export async function saveDriveAuditState(state, userId) {
             pageRequest.onsuccess = () => {
                 const existing = pageRequest.result;
                 const signature = getDriveAuditLocalPageSignature(batchFiles);
+                const existingIsValid = !!existing && existing.ownerId === ownerId && existing.auditId === auditId &&
+                    existing.pageIndex === batchIndex && Array.isArray(existing.files) &&
+                    existing.signature === getDriveAuditLocalPageSignature(existing.files);
                 if (batchIndex < currentPageCount) {
-                    if (!existing || existing.signature !== signature) {
-                        control.abort(new Error('El lote ya existe con otro contenido; no se sobrescribió el progreso de otra pestaña.'));
+                    if (!existingIsValid || existing.signature !== signature) {
+                        control.abort(new Error('El lote ya existe con otro contenido o estructura; no se sobrescribió el progreso de otra pestaña.'));
                         return;
                     }
                     saveMeta(currentPageCount);
                     return;
                 }
-                if (existing && existing.signature !== signature) {
-                    control.abort(new Error('La página local pendiente ya contiene otros resultados; no se sobrescribió.'));
+                if (existing && (!existingIsValid || existing.signature !== signature)) {
+                    control.abort(new Error('La página local pendiente ya contiene otros resultados o una estructura inválida; no se sobrescribió.'));
                     return;
                 }
                 if (!existing) store.put({ key: pageKey, ownerId, auditId, pageIndex: batchIndex,
@@ -505,7 +508,10 @@ export async function getDriveAuditState(userId, requestedAuditId = '') {
         const pageKey = getDriveAuditPageKey(ownerId, auditId, pageIndex);
         const page = entriesByKey.get(pageKey);
         if (!page || page.ownerId !== ownerId || page.auditId !== auditId || page.pageIndex !== pageIndex ||
-            !Array.isArray(page.files)) { missingPage = true; continue; }
+            !Array.isArray(page.files) || page.signature !== getDriveAuditLocalPageSignature(page.files)) {
+            missingPage = true;
+            continue;
+        }
         page.files.forEach(file => {
             const fileId = String(file && file.fileId || '').trim();
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { missingPage = true; return; }
