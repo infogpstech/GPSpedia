@@ -5,6 +5,7 @@ const admin=readFileSync(new URL("../admin.js",import.meta.url),"utf8");
 const ui=readFileSync(new URL("../../ui.js",import.meta.url),"utf8");
 const apiConfig=readFileSync(new URL("../../api-config.js",import.meta.url),"utf8");
 const coordinator=readFileSync(new URL("../Coordinator.js",import.meta.url),"utf8");
+const indexHtml=readFileSync(new URL("../../index.html",import.meta.url),"utf8");
 let passed=0;
 function check(name,fn){fn();passed++;console.log("PASS "+name);}
 function fnSource(source,name){
@@ -261,6 +262,17 @@ check("Las rutas ADMIN y lease compartida incluyen las dos acciones nuevas",()=>
     assert.match(admin,/\"restoreReplacedImageFromTrash\",\"permanentlyDeleteReplacedImage\"/);
     assert.match(admin,/case 'restoreReplacedImageFromTrash':/);
     assert.match(admin,/case 'permanentlyDeleteReplacedImage':/);
+});
+check("La auditoría, organización e historial permanecen accesibles desde la misma pestaña del Desarrollador",()=>{
+    const start=indexHtml.indexOf('<section id="dev-panel-images"');
+    const end=indexHtml.indexOf("</section>",start);
+    const panel=indexHtml.slice(start,end);
+    assert.ok(start>=0&&end>start);
+    assert.match(panel,/btn-admin-view-replaced-images/);
+    assert.match(panel,/btn-admin-audit-drive-images/);
+    assert.match(ui,/ensureUiSessionRole_\(\['desarrollador'\]\)/);
+    assert.match(ui,/function openReplacedImagesModal/);
+    assert.match(ui,/function openAuditDriveModal/);
 });
 check("La interfaz del desarrollador ofrece enviar a papelera, restaurar y eliminar definitivamente",()=>{
     assert.match(ui,/status === 'requiere_revision'/);
