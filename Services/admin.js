@@ -1508,9 +1508,9 @@ function adminRestoreCreateCompletedDriveManifest_(folder, manifest, runId, sour
     });
     const manifestFile = folder.createFile(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_, JSON.stringify(state), "application/json");
     state.manifestFileId = manifestFile.getId();
+    manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
     folder.setDescription(JSON.stringify({ kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2,
         status: "in_progress", backupFolderId: folder.getId(), manifestFileId: state.manifestFileId }));
-    manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
     adminRestoreWriteDriveBackupState_(manifestFile, state);
     adminRestoreSetDriveBackupFolderStatus_(folder, state, "complete");
     const loaded = adminRestoreReadDriveBackupState_(folder);
@@ -1658,9 +1658,7 @@ function adminRestoreMoveFolderContents_(source, destination) {
     const fileIterator = source.getFiles(), files = [];
     while (fileIterator.hasNext()) {
         const file = fileIterator.next();
-        if (adminRestoreIsDriveManifestFile_(file, source) ||
-            (String(source.getName() || "").startsWith("GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_") &&
-                String(file.getName() || "") === ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_)) continue;
+        if (adminRestoreIsDriveManifestFile_(file, source)) continue;
         files.push(file);
     }
     files.forEach(file => {
@@ -1712,7 +1710,7 @@ function adminRestoreCopyFolderRecursively_(source, target, storedManifest) {
         adminRestoreCopyFolderRecursively_(child, targetChild, storedManifest);
     }
 }
-// END ADMIN RESTORE RECOVERY// END ADMIN RESTORE RECOVERY
+// END ADMIN RESTORE RECOVERY
 
 /**
  * Restaurar la base de datos completa a partir de un ID de copia
