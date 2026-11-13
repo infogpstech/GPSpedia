@@ -13,7 +13,7 @@ function doPost(e){
   const body=JSON.parse(raw);
   if(!body||body.action!=="migrateTimestamps")throw new Error("Acción no soportada.");
   const payload=body.payload&&typeof body.payload==="object"&&!Array.isArray(body.payload)?body.payload:{};
-  response=withSharedMutationLease_("UTILITIES","migrateTimestamps",function(){return migrateTimestampsSafe_(payload);});
+  response=migrateTimestamps(payload);
  }catch(error){response={status:"error",message:"No se pudo ejecutar la migración de utilidades.",details:String(error&&error.message?error.message:error)};}
  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -40,6 +40,9 @@ function getUtilitiesSessionExpiration_(row,now){
  if(!created||!activity)return{expired:true};
  if(now>=add(created,3)||now>=add(activity,1))return{expired:true};
  return{expired:false};
+}
+function migrateTimestamps(payload){
+ return withSharedMutationLease_("UTILITIES","migrateTimestamps",function(){return migrateTimestampsSafe_(payload);});
 }
 function migrateTimestampsSafe_(payload){
  const lock=LockService.getScriptLock();let acquired=false;
