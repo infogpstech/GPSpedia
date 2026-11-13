@@ -794,3 +794,28 @@ ADENDA DE CIERRE Y VALIDACIÓN — AUG-139 — 2026-11-13
 - HEAD de implementación validado por CI: 1acd26e029fd07aa59f316f98bd9cfabb72c0699. Se agrega esta adenda documental en commit posterior sin cambiar el código probado.
 - AUG-139: COMPLETADA CON VALIDACIÓN DIFERIDA. La comprobación en navegador real y las operaciones contra servicios Beta aislados siguen reservadas a Beta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-140 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de inicio verificado: ac64792c46fdf52f51746c9cd5f69f1a628e5ca3.
+Estado: IMPLEMENTACIÓN Y SUITE LOCAL PREPARADAS; CI posterior a publicación pendiente de resultado.
+
+Decisión y resultado:
+- Papel Carta vertical exacto: 215.9 × 279.4 mm.
+- Margen CSS/físico de referencia: 10 mm por lado; área útil: 195.9 × 259.4 mm.
+- ui.js: @page, tamaño de wrapper y altura útil quedan alineados en vista previa e impresión.
+- Contrato documentado: una página cuando el contenido cabe legiblemente; páginas adicionales cuando el agrupamiento técnico lo requiere; no reducir márgenes ni recortar imágenes para forzar una sola hoja.
+- Se conserva el algoritmo actual de agrupación por orientación (hasta dos imágenes, tres cuando todas son verticales); la redistribución por altura real corresponde a AUG-143.
+- Encabezado y pie se repiten en cada página; los metadatos del vehículo se muestran solo en la primera.
+- README, backlog y documentación de pruebas alineados. No se modificaron datos, endpoints, servicios ni deployments.
+
+Validación:
+- Añadida Services/Test/PrintSheetPageContract.mjs con 10 verificaciones de contrato y regresión; integrada en el grupo INTEGRATION.
+- Pendiente ejecutar Node.js 22/GitHub Actions tras publicar.
+- Beta pendiente: vista previa real, PDF/impresión Carta, medición de márgenes y verificación de recortes según navegador e impresora. La zona no imprimible depende del dispositivo.
+
+Siguiente tarea pendiente del backlog: AUG-141 — completar la representación de Check Engine y el aviso de testigo. No se inicia en este checkpoint.
+================================================================================

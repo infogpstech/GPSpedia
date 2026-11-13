@@ -10717,8 +10717,8 @@ export function exportVehiclePrintSheet(item) {
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
                 @page {
-                    size: 216mm 279mm portrait;
-                    margin: 5mm;
+                    size: letter portrait;
+                    margin: 10mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -10739,7 +10739,7 @@ export function exportVehiclePrintSheet(item) {
                 ul[data-gp-marker="bullet"] > li::before { content: "•"; }
                 .sheet-page-wrapper {
                     height: auto;
-                    min-height: 269mm;
+                    min-height: 259.4mm;
                     max-height: none;
                     display: flex;
                     flex-direction: column;
@@ -11202,7 +11202,7 @@ export function exportVehiclePrintSheet(item) {
                     #print-pages { display: block; }
                     .sheet-page-wrapper {
                         height: auto;
-                        min-height: 269mm;
+                        min-height: 259.4mm;
                         max-height: none;
                         break-after: page;
                         page-break-after: always;
@@ -11328,6 +11328,10 @@ export function exportVehiclePrintSheet(item) {
             return dimensions.width > 0 && dimensions.height > 0 ? dimensions.aspect : 1;
         };
 
+        // Contrato de impresión Carta: @page reserva 10 mm por lado (área útil 195.9 × 259.4 mm).
+        // Se mantiene una sola hoja cuando el grupo técnico cabe con legibilidad; si la cantidad/orientación
+        // de imágenes requiere más grupos, se crean hojas adicionales sin reducir los márgenes.
+        // La redistribución por altura real y el reordenamiento por overflow se desarrollan en AUG-143.
         const choosePageGroups = cards => {
             const groups = [];
             let cursor = 0;

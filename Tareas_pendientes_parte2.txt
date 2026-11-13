@@ -368,7 +368,12 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-021-001. **Prioridad:** Media.
 - **Problema:** Tarea 2.2/README indican una página Carta vertical con 10 mm; Bloque 7 permite paginar cuando una página perjudica la legibilidad; el código usa 5 mm.
 - **Criterios:** decidir el margen físico definitivo; documentar cuándo se usa una o varias páginas; alinear @page, altura útil, README y Tareas; comprobar Carta vertical y márgenes reales sin recortar contenido.
-- **Estado:** NUEVA; decisión, diseño, implementación y pruebas pendientes.
+- **Decisión:** Carta vertical exacta (215.9 × 279.4 mm), márgenes físicos/CSS de referencia de 10 mm y área útil de 195.9 × 259.4 mm.
+- **Contrato:** una página cuando el contenido cabe legiblemente; páginas adicionales cuando la distribución técnica lo exige. No reducir márgenes ni recortar contenido para forzar una sola hoja. Encabezado y pie repetidos; metadatos solo en la primera página.
+- **Implementación:** `@page size: letter portrait; margin: 10mm`; altura mínima de cada wrapper alineada a 259.4 mm.
+- **Validación local:** suite `PrintSheetPageContract.mjs` integrada en INTEGRATION; Node.js 22/GitHub Actions pendiente de ejecución.
+- **Beta pendiente:** imprimir/guardar PDF real en tamaño Carta, medir márgenes con regla, revisar contenido de una y varias páginas y comprobar ausencia de recortes según impresora/navegador.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-141 — Completar la representación de Check Engine y el aviso de testigo
 - **Origen:** H-AUD-021-002. **Prioridad:** Media.

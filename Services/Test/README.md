@@ -1537,3 +1537,16 @@ La suite `UiOrphanCleanup.js` se ejecuta dentro del grupo INTEGRATION del runner
 ## AUG-138 — Diagnóstico seguro de add_cortes
 
 `Services/Test/AddCortesDiagnostics.mjs` valida el logger por lista permitida, niveles de producción y activación explícita con `?gpDebug=1`; además ejecuta el flujo de recuperación para respuesta perdida antes/después del commit, reintentos, operación offline y fallo `QuotaExceededError`. Ejecutar con el runner general o directamente mediante `node --experimental-default-type=module Services/Test/AddCortesDiagnostics.mjs`.
+
+
+## AUG-140 — Contrato de página Carta y márgenes de impresión
+
+La ficha imprimible utiliza tamaño Carta vertical (215.9 × 279.4 mm), con margen CSS de 10 mm por lado. El área de contenido resultante es 195.9 × 259.4 mm. Los wrappers de página usan esa altura útil como mínimo tanto en vista previa como en impresión. Una ficha ocupa una página cuando la distribución cabe de forma legible; cuando la cantidad/orientación de imágenes requiere más grupos, se crean páginas adicionales. El encabezado y pie se repiten y los metadatos del vehículo aparecen solo en la primera página. El cuadro de impresión debe conservar tamaño Carta y márgenes predeterminados para respetar `@page`.
+
+Ejecutar directamente:
+
+```bash
+node --experimental-default-type=module Services/Test/PrintSheetPageContract.mjs
+```
+
+La suite está integrada en `--only=INTEGRATION` y comprueba tamaño/márgenes, altura útil, reglas de salto, agrupación conservada, repetición de encabezado/pie y coherencia documental. La medición física con impresora real, la vista previa del navegador y el PDF final quedan para Beta; el margen efectivo puede variar por el área no imprimible del equipo.

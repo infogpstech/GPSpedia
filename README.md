@@ -139,7 +139,7 @@ No se deben trasladar el token OAuth ni la URL Resumable a archivos estáticos, 
 - **Estandarización de Imagen:** La imagen del problema adopta exactamente las mismas proporciones y estilos que la imagen del modelo de vehículo (`.img-vehiculo-modal`).
 
 ### Optimización de Ficha Técnica para Impresión y Límites de Contenido
-- **Densidad Visual Adaptativa en Ficha de Impresión:** Ajuste inteligente de densidad (`.card-expanded` y `.card-compact`) para garantizar que la ficha técnica vehicular encaje perfectamente en una sola página Carta vertical con márgenes de 10mm.
+- **Ficha de impresión Carta:** Formato vertical de 215.9 × 279.4 mm con márgenes CSS de 10 mm y área útil de 195.9 × 259.4 mm. Se utiliza una sola página cuando el contenido cabe de forma legible; se generan páginas adicionales cuando la distribución técnica lo requiere, sin reducir los márgenes ni recortar imágenes. El encabezado y pie se repiten; los metadatos del vehículo aparecen en la primera página. La paginación por altura real y el reagrupamiento ante contenido extenso continúan en AUG-143. En el cuadro de impresión debe conservarse el tamaño Carta y la configuración de márgenes predeterminados para respetar `@page`.
 - **Ampliación Sincronizada a 700 Caracteres:** Límites de caracteres extendidos y validados tanto en el frontend como en los microservicios backend para los campos de solución y prevención.
 - **Coordinación de Acordeones:** Exclusión mutua entre el acordeón de posibles problemas y las secciones de cortes/apertura/alimentación en el modal de detalle.
 

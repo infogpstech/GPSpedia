@@ -738,3 +738,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - AntiDebuggingPolicy: 10/10 PASS; AddCortesDiagnostics: 12/12 PASS; UiOrphanCleanup: 6/6 PASS; ActionDispatchContract: 12/12 PASS.
 - La ejecución inicial había fallado únicamente por una expectativa textual del test; corregida y revalidada con CI exitoso.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-140 — CONTRATO DE MÁRGENES Y PAGINACIÓN DE FICHA IMPRIMIBLE
+- ui.js: la ficha ahora declara papel Carta vertical (215.9 × 279.4 mm) mediante `@page size: letter portrait`, con margen de 10 mm.
+- ui.js: la altura mínima de los wrappers se ajusta a 259.4 mm, equivalente al área vertical disponible tras reservar ambos márgenes. Se alinean las reglas de vista previa e impresión.
+- ui.js: se documenta el contrato vigente de una o varias páginas sin reducir márgenes para forzar compacidad. Se conserva el agrupamiento técnico actual, la repetición de encabezado/pie y los metadatos solo en la primera página.
+- README.md, Tareas_pendientes_parte2.txt y Services/Test/README.md: dimensiones, margen, contrato y límites de validación alineados.
+- Services/Test/PrintSheetPageContract.mjs: nueva suite de 10 verificaciones, integrada en INTEGRATION. La impresión física y medición con regla quedan para Beta.
+================================================================================
