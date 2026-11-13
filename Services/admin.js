@@ -299,6 +299,10 @@ function collectCortesImageReferences(includeLocations = true) {
     const imageColumns = imageFields.map(field => ({ field, column: COLS_CORTES[field] }))
         .filter(item => Number.isInteger(item.column) && item.column > 0)
         .sort((a, b) => a.column - b.column);
+    if (imageColumns.length !== imageFields.length ||
+        new Set(imageColumns.map(item => item.column)).size !== imageFields.length) {
+        throw new Error("La configuración de las ocho columnas de imagen de «Cortes» está incompleta o contiene columnas duplicadas. No se clasificaron archivos.");
+    }
     const references = new Map();
     let unverifiableReferenceCount = 0;
     const lastRow = sheet.getLastRow();
