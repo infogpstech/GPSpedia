@@ -323,6 +323,8 @@ check("El backend exige sesión Desarrollador antes de despachar las nuevas acci
     assert.match(dispatcher,/handleRestoreReplacedImageFromTrash\(payload, logMessage, developerContext\)/);
     assert.match(dispatcher,/case 'permanentlyDeleteReplacedImage':/);
     assert.match(dispatcher,/handlePermanentlyDeleteReplacedImage\(payload, logMessage, developerContext\)/);
+    assert.match(fnSource(ui,"openReplacedImagesModal"),/ensureUiSessionRole_\(\['desarrollador'\]\)/);
+    assert.match(fnSource(ui,"openAuditDriveModal"),/ensureUiSessionRole_\(\['desarrollador'\]\)/);
 });
 check("Las rutas ADMIN y lease compartida incluyen las dos acciones nuevas",()=>{
     assert.match(apiConfig,/'restoreReplacedImageFromTrash': 'ADMIN'/);
