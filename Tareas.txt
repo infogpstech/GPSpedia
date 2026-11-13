@@ -1533,3 +1533,18 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
 - Sin deployment ni operaciones sobre Drive/Spreadsheet productivos.
 Siguiente tarea: AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración.
 ================================================================================
+
+================================================================================
+AUG-032 — CAPACIDAD, INTEGRIDAD Y EXPIRACIÓN DEL SNAPSHOT TEMPORAL
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- Capacidad máxima definida: 750,000 caracteres y bytes UTF-8; 75,000 por bloque, máximo 10 bloques.
+- Manifiesto JSON UTF-8 versión 2 con MIME explícito, longitudes, fechas, TTL, SHA-256 del snapshot y firma SHA-256 por bloque.
+- Escritura por bloques verificada y manifiesto al final; si hay error se retiran los bloques para impedir restaurar contenido parcial.
+- Restauración valida estructura, capacidad, fechas, longitud exacta, bytes y hashes antes de devolver el snapshot.
+- Renovación deslizante de seis horas en cada continuación, tanto para el snapshot de referencias como para las páginas previas de deduplicación. Una pausa superior al TTL requiere una auditoría nueva.
+- Limpieza de estados expirados retira páginas, respuestas, snapshot y puntero latest; la limpieza explícita también elimina bloques huérfanos.
+- AdminReplacedImagesIntegrity: 44/44 PASS en harness V8 adaptado; sintaxis de admin.js, suite y runner: 3/3 PASS.
+- Node CLI/GitHub Actions real no ejecutado desde este entorno; no se declara CI SUCCESS. Integración real de CacheService/Apps Script pendiente de Beta aislada.
+- Sin deployment ni operaciones productivas.
+Siguiente tarea: AUG-033 — Rendimiento del recorrido Drive y captura de referencias.
+================================================================================
