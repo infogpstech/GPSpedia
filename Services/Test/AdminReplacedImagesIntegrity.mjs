@@ -472,9 +472,18 @@ function auditHarness() {
         deleteProperty: key => properties.delete(key)
     }) };
     const cacheTtl = new Map();
+    let failPutKey = "", evictPageOnManifest = false;
     const CacheService = { getScriptCache: () => ({
         get: key => cache.has(key) ? cache.get(key) : null,
-        put: (key, value, ttl) => { cache.set(key, String(value)); if (ttl !== undefined) cacheTtl.set(key, ttl); },
+        put: (key, value, ttl) => {
+            if (failPutKey === key) throw new Error("simulated cache write failure");
+            cache.set(key, String(value));
+            if (ttl !== undefined) cacheTtl.set(key, ttl);
+            if (evictPageOnManifest && key.endsWith("_manifest")) {
+                cache.delete(key.replace("_manifest", "_0"));
+                evictPageOnManifest = false;
+            }
+        },
         remove: key => cache.delete(key),
         removeAll: keys => keys.forEach(key => cache.delete(key))
     }) };
@@ -498,7 +507,9 @@ function auditHarness() {
     const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds",auditHelperSource+
         "\nreturn {cleanupExpiredDriveAuditServerStates_,clearExpiredDriveAuditCacheState_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_,getDriveAuditReferenceSnapshotConfig_,validateAuditDriveReferenceSnapshot_,removeAuditDriveReferenceSnapshotCache_,storeAuditDriveReferenceSnapshot,loadAuditDriveReferenceSnapshot,refreshAuditDriveReferenceSnapshot_,clearAuditDriveReferenceSnapshot};")(
             PropertiesService,CacheService,Utilities,extractDriveFileIds);
-    return { ...api, properties, cache, cacheTtl };
+    return { ...api, properties, cache, cacheTtl,
+        setFailPutKey: key => { failPutKey = String(key || ""); },
+        setEvictPageOnManifest: value => { evictPageOnManifest = value === true; } };
 }
 const AUDIT_ID = "123e4567-e89b-42d3-a456-426614174000";
 const AUDIT_OWNER = "USR-DEVELOPER-1";
@@ -527,6 +538,12 @@ check("El snapshot de referencias usa manifiesto versionado, MIME JSON, límites
     }
     assert.deepEqual(h.loadAuditDriveReferenceSnapshot(AUDIT_ID),snapshot);
 });
+check("La escritura vuelve a verificar todos los bloques después de publicar el manifiesto",()=>{
+    const h=auditHarness();
+    h.setEvictPageOnManifest(true);
+    assert.throws(()=>h.storeAuditDriveReferenceSnapshot(AUDIT_ID,makeReferenceSnapshot()),/desalojada|completo/);
+    assert.equal([...h.cache.keys()].some(key=>key.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
+});
 check("Un snapshot que excede la capacidad se rechaza sin conservar bloques parciales",()=>{
     const h=auditHarness(), snapshot=makeReferenceSnapshot(40000);
     assert.throws(()=>h.storeAuditDriveReferenceSnapshot(AUDIT_ID,snapshot),/750,000/);
@@ -554,6 +571,8 @@ check("La renovación cercana al TTL conserva la fecha original y extiende la re
         assert.equal(refreshed.createdAt,createdAt);
         assert.equal(refreshed.updatedAt,now);
         assert.ok(refreshed.updatedAt>first.updatedAt);
+        assert.equal(h.cacheTtl.get("gp_audit_refs_"+AUDIT_ID+"_0"),21600);
+        assert.equal(h.cacheTtl.get("gp_audit_refs_"+AUDIT_ID+"_manifest"),21600);
         const pageKey=h.getDriveAuditSeenPageCacheKey_(AUDIT_ID,0);
         h.storeDriveAuditPageResults_(AUDIT_ID,0,[FILE_A]);
         h.storeDriveAuditSeenPage_(AUDIT_ID,0,[FILE_A],[FILE_A]);
@@ -561,6 +580,31 @@ check("La renovación cercana al TTL conserva la fecha original y extiende la re
         h.loadDriveAuditSeenIds_(AUDIT_ID,1);
         assert.equal(h.cacheTtl.get(pageKey),21600);
     }finally{Date.now=originalNow;}
+});
+check("Una falla al renovar TTL conserva el snapshot anterior íntegro y reintentable",()=>{
+    const h=auditHarness(), snapshot=makeReferenceSnapshot(3);
+    h.storeAuditDriveReferenceSnapshot(AUDIT_ID,snapshot);
+    const manifestKey="gp_audit_refs_"+AUDIT_ID+"_manifest", pageKey="gp_audit_refs_"+AUDIT_ID+"_0";
+    const previousManifest=h.cache.get(manifestKey), previousPage=h.cache.get(pageKey);
+    h.setFailPutKey(pageKey);
+    assert.throws(()=>h.refreshAuditDriveReferenceSnapshot_(AUDIT_ID,snapshot),/simulated cache write failure/);
+    h.setFailPutKey("");
+    assert.equal(h.cache.get(manifestKey),previousManifest);
+    assert.equal(h.cache.get(pageKey),previousPage);
+    assert.deepEqual(h.loadAuditDriveReferenceSnapshot(AUDIT_ID),snapshot);
+});
+check("Un snapshot legado JSON se valida y migra al manifiesto íntegro versión 2",()=>{
+    const h=auditHarness(), snapshot=makeReferenceSnapshot(2);
+    const prefix="gp_audit_refs_"+AUDIT_ID, serialized=JSON.stringify(snapshot);
+    h.cache.set(prefix+"_0",serialized);
+    h.cache.set(prefix+"_manifest",JSON.stringify({chunkCount:1,length:serialized.length,encoding:"json"}));
+    assert.deepEqual(h.loadAuditDriveReferenceSnapshot(AUDIT_ID),snapshot);
+    const refreshed=h.refreshAuditDriveReferenceSnapshot_(AUDIT_ID,snapshot);
+    const manifest=JSON.parse(h.cache.get(prefix+"_manifest"));
+    assert.equal(refreshed.schemaVersion,2);
+    assert.equal(manifest.schemaVersion,2);
+    assert.equal(manifest.chunkHashes.length,1);
+    assert.equal(manifest.sha256.length,64);
 });
 check("Un snapshot pausado más de seis horas expira y no devuelve contenido parcial",()=>{
     const h=auditHarness(), originalNow=Date.now;let now=1800000000000;Date.now=()=>now;
