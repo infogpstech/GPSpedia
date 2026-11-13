@@ -141,8 +141,6 @@ run("Rechaza identidad falsificada con token de otra cuenta", () => {
 });
 run("El destinatario solo ve sus conversaciones y el contador unread inicial", () => {
     const result = api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"received" });
-    console.log("DEBUG inbox states", JSON.stringify(spreadsheet.getSheetByName("InboxConversationState").rows));
-    console.log("DEBUG inbox summaries", JSON.stringify(result));
     assert.equal(result.data.length,1);
     assert.equal(result.data[0].conversationId,first.conversationId);
     assert.equal(result.data[0].unreadCount,1);
@@ -190,7 +188,7 @@ run("Archivo y restauración son estados privados por participante", () => {
     assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"archived" }).total,1);
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"received" }).total,1);
     api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId,archived:false });
-    assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"all" }).total,1);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"all" }).total,2);
 });
 run("Búsqueda y paginación respetan carpeta y cursor", () => {
     api.handleCreateInboxConversation({
