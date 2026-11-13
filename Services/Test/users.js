@@ -264,13 +264,16 @@ function findNextUserRow_(userSheet) {
     const lastRow = userSheet.getLastRow();
     if (lastRow < 2) return 2;
 
-    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
-    const rows = userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1).getValues();
+    const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.TermsAcceptance);
+    const range = userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, lastColumn - 1);
+    const rows = range.getValues();
+    const formulas = range.getFormulas();
     for (let i = 0; i < rows.length; i++) {
-        const rowIsEmpty = rows[i].every(value =>
+        const valuesEmpty = rows[i].every(value =>
             String(value === null || value === undefined ? '' : value).trim() === ''
         );
-        if (rowIsEmpty) return i + 2;
+        const formulasEmpty = formulas[i].every(formula => !String(formula || '').trim());
+        if (valuesEmpty && formulasEmpty) return i + 2;
     }
     return lastRow + 1;
 }
