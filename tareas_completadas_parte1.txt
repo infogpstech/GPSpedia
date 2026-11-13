@@ -427,3 +427,15 @@ AUG-018 — RESTAURACIONES RECUPERABLES Y RESPALDOS DB/DRIVE — 2026-11-13
 - Beta pendiente: Apps Script ADMIN y Spreadsheet/Drive aislados, reanudación tras interrupción real, mutación del origen entre lotes y fallos inyectados de staging/promoción/rollback. No se ejecutaron recursos ni deployments productivos.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+
+================================================================================
+AUG-038 — COMPENSACIÓN COHERENTE DE REEMPLAZOS IN-MODAL Y DESCARTE DE EDICIÓN — 2026-11-13
+- Se exige unicidad de vehicleId al reemplazar imágenes.
+- Las operaciones linked con archivos eliminados/ausentes pasan a requires_review; no se reactivan recursos enviados a papelera.
+- La compensación verifica la referencia activa, el historial REP, el ledger y los metadatos/estado Drive por lectura posterior. Si alguna fase falla, no se declara cancelled y se conserva evidencia para revisión.
+- El descarte lee el catálogo actualizado y restaura campos con compare-and-set para evitar pisar cambios concurrentes. Solo elimina la copia local después de verificar la restauración.
+- Pruebas: AdminImageReplacementCompensation 9/9; CI run 43425740603 SUCCESS, 27 suites, 351/351 pruebas, 0 fallos.
+- Beta pendiente: integración real con Apps Script/Spreadsheet/Drive aislados, fallos inyectados y concurrencia real.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+================================================================================
