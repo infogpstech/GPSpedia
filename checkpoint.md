@@ -1047,3 +1047,28 @@ Validación Beta pendiente: Apps Script ADMIN, Spreadsheet/Drive aislados, elimi
 
 Siguiente tarea del backlog: AUG-039 — completar autorización y minimización de datos en WRITE. Dependencias a revisar: AUD-T-032, AUD-T-024/AUG-016, AUD-T-033/AUG-003 y AUD-T-035. Antes de implementar, revisar el contrato real de sesiones y todos los callsites indicados en el backlog.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-039 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de código validado: d40445a478a2d247c305a5b1c3837f4e9c06a108 (constantes locales Users/ActiveSessions incluidas).
+HEAD de pruebas integradas: 12a18ccc161661919f6b014f5cbc59f91cf71a55.
+HEAD de documentación de cierre: 8ae2acec1e2f476cdc5a57ed40562586d1e927b4.
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- WRITE define columnas locales físicas para Users y ActiveSessions, alineadas con AUTH y sin depender de globals entre deployments.
+- addSupplementaryInfo exige sesión única, vigente y vinculada a perfil activo; valida antes y después del lock, autoriza roles operativos y atribuye el actor desde Users. UI y formulario transmiten credenciales; silentRegister continúa por ADMIN con assertDeveloperSession.
+- checkOperation exige sesión y devuelve metadatos mínimos sin rowData. Decisión documentada: no vincular ownerUserId al esquema A:F; opId aleatorio de 128 bits es correlación, no autorización. El endpoint sigue autenticado y el riesgo residual de consulta de metadatos por otro colaborador autenticado se declara explícitamente.
+- allocateVehicleId valida sesión y privilegio Desarrollador desde Users antes y después del lock. Se rechaza rol ordinario/revocado sin incrementar el contador.
+- Regresiones addOrUpdateCut, addVinToVehicle y freezeCortesIds preservadas.
+- Suites: AddSupplementaryInfoIntegrity 53/53; CheckOperationSecurity 12/12; WriteAuthorizationContracts 10/10; WriteAuthorizationMinimization 13/13.
+- GitHub Actions run 43426964327 SUCCESS sobre HEAD 12a18ccc: 34 suites, 517 pruebas PASS, 0 fallos. Node --check de módulos afectados PASS.
+- Beta pendiente: proyectos WRITE/ADMIN y Spreadsheet aislados, sesiones/revocación/cambio de rol reales, ausencia de mutaciones ante rechazo, asignación de IDs y consulta mínima entre cuentas. No se desplegaron endpoints ni se accedió a datos productivos.
+
+Registros actualizados: Tareas_pendientes_parte1.txt, ChangesLogs.txt, Auditoría.txt, Services/Test/README.md, lista_beta_parte2.txt y checkpoint.md.
+Siguiente acción: reevaluar backlog desde AUG-040; no reabrir AUG-039 salvo evidencia nueva de Beta.
+================================================================================
