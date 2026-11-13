@@ -1548,3 +1548,18 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
 - Sin deployment ni operaciones productivas.
 Siguiente tarea: AUG-033 — Rendimiento del recorrido Drive y captura de referencias.
 ================================================================================
+
+================================================================================
+AUG-033 — RENDIMIENTO DE RECORRIDO DRIVE Y CAPTURA DE REFERENCIAS
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- Captura de los ocho campos de imagen de Cortes por rangos acotados; conserva valores visibles, valores nativos/CellImage, fórmulas y RichText.
+- Tamaño de bloque adaptativo 50–500 filas, objetivo 1,500 ms por bloque y presupuesto total de 12,000 ms. El exceso de presupuesto aborta antes de devolver/guardar un snapshot parcial.
+- Métricas desglosadas por etapa y volumen: lectura display/raw/formulas/RichText, análisis, filas, celdas, rangos, bloques, duración máxima y adaptación de tamaño.
+- Se mantienen el presupuesto de recorrido Drive, los topes por lote, la serialización del cursor y las métricas de respuesta.
+- Reintento cliente y protección del cursor ya existentes verificados: timeout, backoff, hasta tres intentos para continuaciones, payload/cursor idéntico, AbortController nuevo y cancelación.
+- Validación de pertenencia por caché compartida durante cada petición, sin aceptar ramas externas.
+- AdminReplacedImagesIntegrity: 54/54 PASS en harness V8 adaptado. AdminDriveAuditClientRetry: 7/7 PASS en harness V8 adaptado. Parsing: admin.js, suites y runner PASS.
+- Node CLI literal y GitHub Actions no ejecutados desde esta sesión; no declarar CI SUCCESS. Apps Script/Drive/Spreadsheet reales pendientes de Beta aislada.
+- Sin deployment ni cambios en recursos productivos.
+Siguiente tarea: consultar el siguiente elemento pendiente del backlog y sus dependencias.
+================================================================================
