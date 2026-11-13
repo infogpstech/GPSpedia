@@ -1619,3 +1619,21 @@ Cobertura integrada:
 Decisión de privacidad: Idempotencia conserva esquema A:F sin ownerUserId. opId es un identificador de correlación de 128 bits, no un mecanismo de autorización; checkOperation exige una sesión vigente y devuelve solo estado, vehículo, timestamp y hash de integridad. Un colaborador autenticado que conozca un opId puede consultar esos metadatos mínimos. Si se requiere aislamiento por actor, debe diseñarse una migración versionada del esquema.
 
 La ejecución local simulada no sustituye la prueba Beta. En Apps Script/Spreadsheet aislados se deben comprobar sesiones válidas/ausentes/cruzadas/expiradas/revocadas, cambio de rol entre validaciones, ausencia de escrituras y cargas Drive ante rechazo, contador de IDs para rol ordinario/Desarrollador, respuesta mínima de checkOperation y registro silencioso por ADMIN. No utilizar endpoints ni datos productivos.
+
+
+## AUG-042 — Invalidación de sesión y estado privilegiado del cliente
+
+Ejecución integrada:
+```bash
+node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=AUTH
+node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=FEEDBACK
+```
+
+Suites:
+- `SessionUiRoleInvalidation.js` — 13 contratos: logout token-aware, limpieza de estado/modales/cachés, reset al cambiar cuenta/rol, guardas de apertura, revalidación remota, aislamiento de `window.state/window.ui`, auto-cambio de rol y política Jefe/Inbox.
+- `InboxRoleContract.js` — 8 contratos: matriz de roles, autoridad FEEDBACK y uso del mismo `Privilegios` normalizado para visibilidad y acciones approve/reject.
+- `SessionProfileRefresh.js` — 19 contratos: sincronización de perfil y revocación/invalidación de sesiones.
+
+El cierre previo H-AUD-042-001 a 011 se conserva como evidencia histórica en Auditoria_Archive/Auditoria_2026-11-10_parte_002.txt. La regresión H-AUD-042-012 (variable `userRole` no declarada en renderInboxDetail) se corrige declarando el rol desde `context.role`.
+
+Validación CI: run 43429506713 SUCCESS, 37 suites y 557 pruebas PASS; `node --check` de `ui.js` PASS. La suite usa contratos/dobles y no sustituye la validación Beta con DOM, IndexedDB, cuentas y sesiones reales.
