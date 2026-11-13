@@ -31,7 +31,7 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         assert(reviewHelper.includes('"requires_review"'), "El helper no marca requires_review en el ledger.");
         assert(reviewHelper.includes('"requiere_revision"'), "El helper no marca requiere_revision en el historial.");
         assert(reviewHelper.includes("updateAdminImageUploadFileState_"), "El helper no alinea el estado del archivo Drive.");
-        assert(linkedBlock.includes('status: "error"'), "La UI podría interpretar la operación como confirmada.");
+        assert(reviewHelper.includes('status: "error"'), "La UI podría interpretar la operación como confirmada.");
         assert(!/setTrashed\(false\)/.test(linkedBlock), "Se reactiva automáticamente un archivo eliminado.");
     });
     run("La reversión de Cortes verifica la URL restaurada por lectura posterior", () => {
