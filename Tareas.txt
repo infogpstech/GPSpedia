@@ -1336,6 +1336,6 @@ Estado: COMPLETADA LOCALMENTE; validación de deployments diferida a Beta.
 - Contratos de identidad/estado JSON para siete servicios fuente; LEGACY desconocido sin identidad verificable y sin consulta de red.
 - Estados online, slow, unavailable, error, unknown y stale; timeouts 8 s por servicio y 5 s para ping ADMIN; umbral slow 2 s y stale 5 min.
 - Backend debug redacted, panel con HTTP/motivo y explicación de que endpoint no implica disponibilidad Sheets/Drive.
-- Pruebas locales y GitHub Actions final a registrar en checkpoint tras el commit.
+- ServiceHealthContract 16/16 PASS; GitHub Actions run 43475746110 SUCCESS: 68 suites, 944/944 pruebas aprobadas, 0 fallos; módulos modificados pasan node --check.
 Siguiente: AUG-025 — Corregir vigencia y precisión temporal de la telemetría local.
 ================================================================================

@@ -1495,7 +1495,7 @@ CHECKPOINT DE CIERRE — AUG-024 — 2026-11-13
 Repositorio: infogpstech/GPSpedia
 Rama de trabajo: GPSpedia2.2.5_work
 Rama base: GPSpedia2.2.5
-HEAD de trabajo al preparar el cierre: c279b6b8e06727253864f70b08025c99d7550899
+Commit de implementación/cierre: 517fc29c5cb250a1d090479e6d7e999831af8361
 PR #128: abierto, Draft.
 
 Estado: COMPLETADA LOCALMENTE; validación externa diferida a Beta.
@@ -1513,8 +1513,9 @@ Archivos de implementación modificados: api-config.js, ui.js, style.css, Servic
 Archivos de cierre: Services/SERVICE_HEALTH.md, Services/Test/ServiceHealthContract.mjs, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, Auditoría.txt, lista_beta_parte2.txt y checkpoint.md.
 
 Validación:
-- GitHub Actions run 43463464379 SUCCESS en HEAD previo a la corrección final de no consultar servicios sin identidad.
-- ServiceHealthContract y suite completa se volverán a ejecutar tras el commit final.
+- ServiceHealthContract 16/16 PASS.
+- GitHub Actions run 43475746110 SUCCESS: Node.js 22, 68 suites, 944/944 pruebas aprobadas, 0 fallos de suite.
+- Los módulos modificados pasan node --check; ui.js pasa también node --check en modo ES module.
 - No se consultaron deployments reales ni se ejecutaron pruebas de Apps Script/Sheets/Drive.
 
 Beta pendiente:
