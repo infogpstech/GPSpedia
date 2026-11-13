@@ -552,7 +552,7 @@ Resultado:
 - updateProfile admite únicamente Nombre_Completo, valida texto y longitud, exige sesión del mismo usuario y resuelve exactamente una fila por ID bajo lock. Confirma escritura y ejecuta rollback ante fallo.
 - Se unificó el uso del helper withUsersMutationLock_ en createUser y updateProfile. Se conserva la lease compartida de USERS y los wrappers AUTH existentes para deleteUser/resetUserSessions; no se alteró Services/Auth.js.
 - Services/Test/users.js se sincronizó con Services/users.js conservando el SPREADSHEET_ID de pruebas.
-- Services/Test/UsersAtomicMutations.js: 13/13 PASS en harness local con hojas, lock y flush simulados; incluye verificación de conflictos de recursos del Coordinator.
+- Services/Test/UsersAtomicMutations.js: 14/14 PASS en harness local con hojas, lock y flush simulados; incluye IDs históricos duplicados y verificación de conflictos de recursos del Coordinator.
 - Parsing V8: Services/users.js PASS, Services/Auth.js PASS, Services/Coordinator.js PASS y suite PASS.
 - No se ejecutaron Apps Script desplegados, Spreadsheet real, endpoints ni datos productivos.
 
