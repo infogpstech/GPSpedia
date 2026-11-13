@@ -708,7 +708,7 @@ CHECKPOINT DE CIERRE — AUG-137 — 2026-11-13
 Repositorio: infogpstech/GPSpedia.
 Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
 HEAD de inicio verificado: 057263b1779822cadb267a4fd4d713f4f7a4152d.
-Estado: COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a resultado de CI del commit de cierre.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 Resultado:
 - Retirado el markup obsoleto #debug-console de index.html y las referencias de limpieza asociadas en ui.js.
@@ -719,7 +719,8 @@ Resultado:
 - Añadida la suite Services/Test/UiOrphanCleanup.js al grupo INTEGRATION y documentada en Services/Test/README.md.
 
 Validación y límites:
-- Parsing de archivos modificados y suite automatizada Node.js 22 mediante GitHub Actions; registrar el resultado real después de ejecutar CI.
+- `UiOrphanCleanup.js`: 6/6 PASS ejecutadas en runtime V8. Parsing V8 de `ui.js`, `main.js` y la suite: PASS.
+- El runner completo Node.js 22/GitHub Actions no se ejecutó: la conexión no ofrece acción de dispatch y no se generó un run para el SHA de cierre. No se declara CI aprobado.
 - Beta pendiente: navegación/modal, Inbox, consola administrativa y operaciones Drive en navegador real, con recursos aislados. No se invocaron endpoints ni se modificaron datos/deployments.
 
 Archivos: index.html, ui.js, Services/Test/UiOrphanCleanup.js, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.

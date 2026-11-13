@@ -334,7 +334,8 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Resultado:** call graph y consumidores revisados. `clearModalNavStack` se conserva porque `main.js` lo invoca al cerrar/restaurar la navegación del modal. `loadAndRenderInbox` se conserva porque tiene llamadas internas activas y forma parte del módulo UI expuesto mediante `window.ui`. La exposición global `window.ui = ui` obliga a tratar los exports como contrato potencialmente público; no se retiraron exports solo por ausencia de llamadas internas.
 - **Retirada:** eliminado de `index.html` el contenedor legacy `#debug-console` y sus controles sin consumidores (`debug-header`, `debug-clear`, `debug-close`, `debug-log`, `debug-resize-handle`). Eliminadas de `ui.js` las referencias de limpieza asociadas. El panel activo `#dev-console-log` permanece intacto.
 - **Regresión:** añadida `Services/Test/UiOrphanCleanup.js` al grupo INTEGRATION para verificar ausencia del markup/referencias legacy, conservación de `#dev-console-log` y contratos de navegación/Inbox.
-- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; pruebas automatizadas y revisión estática aprobadas al cierre. Navegación, Inbox, consola administrativa y operaciones Drive en navegador real quedan para Beta.
+- **Validación:** `UiOrphanCleanup.js` ejecutada en runtime V8: 6/6 PASS. Parsing V8 de `ui.js`, `main.js` y la suite: PASS. El runner completo Node.js 22/GitHub Actions no se ejecutó: la conexión no ofrece acción de dispatch y no se generó un run para este SHA. No se presenta como aprobado.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; navegación, Inbox, consola administrativa y operaciones Drive en navegador real quedan para Beta.
 
 ### AUG-138 — Sanitizar logs de recuperación y operaciones en add_cortes
 - **Origen:** H-AUD-020-002. **Prioridad:** Media.

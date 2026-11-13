@@ -382,6 +382,7 @@ Validación GitHub Actions 43366270381 sobre commit a9ecfd6c6180b5037261b1d26f22
 AUG-137 — RETIRAR MARKUP DE DEPURACIÓN OBSOLETO Y PRESERVAR CONTRATOS UI — 2026-11-13
 Se retiró de index.html el contenedor #debug-console y sus controles sin consumidores. ui.js ya no intenta ocultarlo ni limpiar #debug-log. El panel administrativo #dev-console-log se conserva.
 La revisión de referencias confirmó que clearModalNavStack sigue siendo invocada por main.js y que loadAndRenderInbox mantiene llamadas internas activas. Como main.js expone el módulo mediante window.ui, no se eliminaron exports por ausencia de llamadas internas.
-Se añadirá Services/Test/UiOrphanCleanup.js al grupo INTEGRATION para prevenir la reintroducción del markup legacy y verificar los contratos públicos y el panel activo.
-Estado: EN PROGRESO; cierre condicionado a validación automatizada y publicación. La interacción de navegador real (navegación, Inbox, consola administrativa y Drive) queda para Beta.
+Se añadió Services/Test/UiOrphanCleanup.js al grupo INTEGRATION para prevenir la reintroducción del markup legacy y verificar los contratos públicos y el panel activo.
+Validación V8: UiOrphanCleanup.js 6/6 PASS; parsing de ui.js, main.js y la suite PASS. El runner completo Node.js 22/GitHub Actions no se ejecutó porque la conexión no expone dispatch y no se generó un run asociado al SHA. No se afirma que CI haya aprobado.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. La interacción de navegador real (navegación, Inbox, consola administrativa y Drive) queda para Beta.
 ================================================================================
