@@ -6714,7 +6714,7 @@ function handleGetReplacedImages(payload, logMessage) {
     const headers=schema.headers,rows=schema.sheet.getDataRange().getValues();
     const columnIndex=name=>headers.indexOf(name),valueAt=(row,name)=>{const i=columnIndex(name);return i>=0?row[i]:"";};
     let referenceSnapshot=null,referenceCheckStatus="unavailable";
-    try{referenceSnapshot=collectCortesImageReferences(true);referenceCheckStatus=referenceSnapshot.unverifiableReferenceCount>0?"unverifiable":"verified";}catch(error){referenceCheckStatus="unavailable";}
+    try{referenceSnapshot=collectActiveDriveReferences(true);referenceCheckStatus=referenceSnapshot.unverifiableReferenceCount>0?"unverifiable":"verified";}catch(error){referenceCheckStatus="unavailable";}
     const idCounts=new Map();
     for(let r=1;r<rows.length;r++){const id=String(rows[r][0]||"").trim();if(id)idCounts.set(id,(idCounts.get(id)||0)+1);}
     const data=[],review=[];
@@ -6746,7 +6746,7 @@ function handleGetReplacedImages(payload, logMessage) {
     }
     const warnings=[];
     if(schema.missingHeaders.length)warnings.push("El esquema requiere migración coordinada: "+schema.missingHeaders.join(", "));
-    if(referenceCheckStatus!=="verified")warnings.push("No se pudo confirmar completamente el estado de referencias activas en Cortes.");
+    if(referenceCheckStatus!=="verified")warnings.push("No se pudo confirmar completamente el estado de referencias activas en todas las hojas del Spreadsheet.");
     logMessage&&logMessage("Historial e inventario de imágenes","Se consultaron "+data.length+" registros válidos y se enviaron "+review.length+" filas a revisión.");
     return {status:"success",data:data.reverse(),review,schemaStatus:schema.missingHeaders.length?"migration_required":"ready",
         missingHeaders:schema.missingHeaders,referenceCheckStatus,warnings};
@@ -6805,10 +6805,10 @@ function handleRecoverReplacedImage(payload, logMessage) {
         if(vehicleMatches.length!==1)throw new Error(vehicleMatches.length?"El ID del vehículo está duplicado en Cortes; no se restauró ninguna fila.":"Vehículo ID '"+registroId+"' no encontrado en el catálogo.");
         const actualRow=vehicleMatches[0],activeCell=cortesSheet.getRange(actualRow,COLS_CORTES[campo]),currentActiveUrl=String(activeCell.getValue()||"").trim();
         if(currentActiveUrl&&extractDriveFileIds(currentActiveUrl).length!==1)throw new Error("La imagen activa actual no contiene un único ID de Drive reconocible.");
-        const referenceSnapshot=collectCortesImageReferences(true);
-        if(referenceSnapshot.unverifiableReferenceCount>0)throw new Error("No se puede restaurar mientras existan referencias de Drive no interpretables en Cortes.");
+        const referenceSnapshot=collectActiveDriveReferences(true);
+        if(referenceSnapshot.unverifiableReferenceCount>0)throw new Error("No se puede restaurar mientras existan referencias de Drive no interpretables en el Spreadsheet.");
         const conflicts=referenceSnapshot.references.get(driveId)||[];
-        if(conflicts.some(reference=>reference.row!==actualRow||reference.column!==COLS_CORTES[campo]))throw new Error("La imagen histórica ya está referenciada en otra ubicación de Cortes; no se duplicará su asociación.");
+        if(conflicts.some(reference=>reference.sheet!==SHEET_NAMES.CORTES||reference.row!==actualRow||reference.column!==COLS_CORTES[campo]))throw new Error("La imagen histórica ya está referenciada en otra ubicación de Cortes; no se duplicará su asociación.");
         if(currentActiveUrl===urlHistorica&&previousHistoryStatus==="restablecida")return {status:"success",message:"La imagen ya estaba activa y el historial confirma el estado restablecida.",restoredUrl:urlHistorica,unchanged:true};
         let swappedRecord=null;
         if(currentActiveUrl&&currentActiveUrl!==urlHistorica)swappedRecord=recordReplacedImage({tipoContenido:"vehiculo",registroId,campo,imagenAnteriorUrl:currentActiveUrl,sustituidaPorUrl:urlHistorica,nombreVehiculo:repData[9]||""});
@@ -6944,9 +6944,9 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
         const rowIndex=existing.rowIndex,row=existing.values,type=getReplacedImageRecordType(row,headers);
         const status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
         if(!isKnownReplacedImageStatus_(type,status)||(type==="sin_uso_detectado"&&status!=="sin_uso_detectado")||(type==="reemplazada"&&!["historica","restablecida"].includes(status)))throw new Error("El estado del registro no permite enviar esta imagen a papelera.");
-        const driveId=getReplacedImageRecordIdentity_(row,headers,true),references=collectCortesImageReferences(),active=references.references.get(driveId)||[];
-        if(active.length)throw new Error("Operación bloqueada: la imagen mantiene referencias activas en Cortes.");
-        if(references.unverifiableReferenceCount>0)throw new Error("Operación bloqueada: existen referencias de Drive no interpretables en Cortes.");
+        const driveId=getReplacedImageRecordIdentity_(row,headers,true),references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
+        if(active.length)throw new Error("Operación bloqueada: la imagen mantiene referencias activas en una o más hojas del Spreadsheet.");
+        if(references.unverifiableReferenceCount>0)throw new Error("Operación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
         const file=DriveApp.getFileById(driveId);if(file.isTrashed())throw new Error("La imagen ya se encuentra en la papelera de Google Drive.");
         if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
         const root=getCortesRootFolder(),source=getSingleParentFolderInsideCortes(file,root.getId()),sourcePath=getFolderPathInsideCortes(source,root.getId());
@@ -7072,9 +7072,9 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
 
         const driveId = getReplacedImageRecordIdentity_(row, headers, true);
         if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
-        const referenceSnapshot = collectCortesImageReferences();
+        const referenceSnapshot = collectActiveDriveReferences();
         if (referenceSnapshot.references.has(driveId)) {
-            throw new Error("Operación bloqueada: la imagen tiene referencias activas en la Spreadsheet.");
+            throw new Error("Operación bloqueada: la imagen tiene referencias activas en una o más hojas del Spreadsheet.");
         }
         if (referenceSnapshot.unverifiableReferenceCount > 0) {
             throw new Error("Operación bloqueada: existen referencias de Drive que no pudieron interpretarse; no es posible confirmar que la imagen esté sin uso.");
@@ -7216,8 +7216,8 @@ function handleGetReplacedImageDownloadUrl(payload,logMessage,developerContext){
     const existing=findReplacedImageRecordById(schema.sheet,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
     const row=existing.values,type=getReplacedImageRecordType(row,schema.headers),status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
     if(!isKnownReplacedImageStatus_(type,status)||(type==="sin_uso_detectado"&&status!=="sin_uso_detectado")||(type==="reemplazada"&&!["historica","restablecida"].includes(status)))throw new Error("El estado del registro no permite descargar esta imagen.");
-    const driveId=getReplacedImageRecordIdentity_(row,schema.headers,true),references=collectCortesImageReferences(false);
-    if(references.unverifiableReferenceCount>0||references.references.has(driveId))throw new Error("La descarga está bloqueada porque no se pudo confirmar que la imagen siga sin uso en Cortes.");
+    const driveId=getReplacedImageRecordIdentity_(row,schema.headers,true),references=collectActiveDriveReferences(false);
+    if(references.unverifiableReferenceCount>0||references.references.has(driveId))throw new Error("La descarga está bloqueada porque no se pudo confirmar que la imagen siga sin uso en el Spreadsheet.");
     const file=DriveApp.getFileById(driveId);if(file.isTrashed())throw new Error("La imagen está en la papelera de Google Drive.");
     if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro ya no es una imagen.");
     const root=getCortesRootFolder(),parent=getSingleParentFolderInsideCortes(file,root.getId());
@@ -7316,9 +7316,9 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
     catch (e) { throw new Error("No se pudo bloquear la actualización del inventario. Intenta nuevamente."); }
 
     try {
-        const references = collectCortesImageReferences(false);
+        const references = collectActiveDriveReferences(false);
         if (references.unverifiableReferenceCount > 0) {
-            throw new Error("No se actualizó el inventario porque existen referencias de Drive que no pudieron verificarse.");
+            throw new Error("No se actualizó el inventario porque existen referencias de Drive que no pudieron verificarse en el Spreadsheet.");
         }
 
         const rootFolder = getCortesRootFolder();
@@ -7484,7 +7484,7 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             inventoryRows.set(driveId, { rowIndex: r + 1, row: row });
         }
 
-        const referenceSnapshot = collectCortesImageReferences(false);
+        const referenceSnapshot = collectActiveDriveReferences(false);
         let destination = null, destinationPath = "", destinationCreationError = "";
         if (referenceSnapshot.unverifiableReferenceCount === 0) {
             try {
@@ -7531,7 +7531,7 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
             if (referenceSnapshot.unverifiableReferenceCount > 0 || referenceSnapshot.references.has(fileId)) {
                 const reason = referenceSnapshot.unverifiableReferenceCount > 0
                     ? "No se pudo confirmar la ausencia de referencias porque existen enlaces de Drive no interpretables en la Spreadsheet."
-                    : "La imagen volvió a tener referencias activas en «Cortes» antes del movimiento.";
+                    : "La imagen volvió a tener referencias activas en el Spreadsheet antes del movimiento.";
                 try { updateOrganization({ state: "bloqueada", error: reason, status: "no_confirmada_en_ultima_auditoria" }); } catch (writeError) {}
                 blockedCount++;
                 recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "Organización bloqueada para " + fileId + ": " + reason);
@@ -7684,7 +7684,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
     } else {
         auditId = Utilities.getUuid();
-        const references = collectCortesImageReferences(false);
+        const references = collectActiveDriveReferences(false);
         const historicalDriveIds = new Set();
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (historySheet) {
