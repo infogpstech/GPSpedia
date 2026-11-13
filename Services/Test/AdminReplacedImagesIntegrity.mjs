@@ -491,6 +491,7 @@ check("El escáner global delega Cortes a los ocho campos y mantiene imágenes s
     assert.ok(scanner.includes("sheet.getImages()"));
     assert.ok(scanner.includes("rawValue.getContentUrl"));
     assert.ok(scanner.includes("richText.getRuns"));
+    assert.ok(scanner.includes("metrics: { cortes: cortesScanMetrics }"));
 });
 check("La pertenencia a Cortes memoiza ancestros por petición sin marcar como válidas ramas externas",()=>{
     const makeFolder=(id,parents=[])=>{let calls=0;return{id,getId:()=>id,getParents(){calls++;let i=0;return{hasNext:()=>i<parents.length,next:()=>parents[i++]};},get calls(){return calls;}};};
@@ -513,7 +514,7 @@ check("Cada petición de auditoría conserva un presupuesto temporal y expone m�
     assert.ok(audit.includes("Date.now() - batchStartedAt < batchBudgetMs"));
     for(const metric of ["referenceCaptureMs","historyCaptureMs","snapshotLoadMs","snapshotPersistMs",
         "cursorValidationMs","deduplicationLoadMs","driveTraversalMs","cachePersistenceMs",
-        "activeReferenceCount","snapshotBytes","responseBytes","folderMembershipCacheEntries"]) {
+        "activeReferenceCount","snapshotBytes","responseBytes","folderMembershipCacheEntries","cortesCellsRead","cortesReadRanges"]) {
         assert.ok(audit.includes(metric),"Falta métrica "+metric);
     }
 });
