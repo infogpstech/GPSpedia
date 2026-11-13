@@ -3921,6 +3921,9 @@ function activateLegalModalFocus_(modal, options = {}) {
     const initialFocus = options.initialFocus || null;
     const allowEscape = options.allowEscape === true;
     const close = typeof options.close === 'function' ? options.close : () => { modal.style.display = 'none'; };
+    const parentNotice = modal.id === 'terms-agreement-modal' ? document.getElementById('terms-modal') : null;
+    const previousNoticeAriaHidden = parentNotice ? parentNotice.getAttribute('aria-hidden') : null;
+    if (parentNotice && parentNotice.style.display === 'flex') parentNotice.setAttribute('aria-hidden', 'true');
     let observer = null, cleaned = false;
 
     const cleanup = (restoreFocus = true) => {
@@ -3929,6 +3932,10 @@ function activateLegalModalFocus_(modal, options = {}) {
         document.removeEventListener('keydown', handleKeydown, true);
         if (observer) observer.disconnect();
         legalModalFocusCleanups_.delete(modal);
+        if (parentNotice) {
+            if (previousNoticeAriaHidden === null) parentNotice.removeAttribute('aria-hidden');
+            else parentNotice.setAttribute('aria-hidden', previousNoticeAriaHidden);
+        }
         if (restoreFocus && previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') {
             previousFocus.focus();
         }

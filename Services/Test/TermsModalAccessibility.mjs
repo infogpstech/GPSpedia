@@ -69,6 +69,8 @@ test('el foco del acuerdo se inicia en el encabezado, se contiene y se restaura 
     assert.match(ui, /event\.key !== 'Tab'/);
     assert.match(ui, /modal\.contains\(active\)/);
     assert.match(ui, /previousFocus\.focus\(\)/);
+    assert.match(ui, /parentNotice\.setAttribute\('aria-hidden', 'true'\)/);
+    assert.match(ui, /parentNotice\.removeAttribute\('aria-hidden'\)/);
     assert.match(ui, /initialFocus: modal\.querySelector\('#terms-agreement-title'\)/);
     assert.match(ui, /allowEscape: true/);
 });
