@@ -313,3 +313,30 @@ Validación Beta pendiente: verificar en proyecto AUTH y Spreadsheet aislados lo
 Archivos: Services/Auth.js, Services/Test/Auth.js, auth.js, Services/Test/SessionProfileRefresh.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-119 — Registrar reply, resolve y delete del Inbox en historial inmutable. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-119 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: aaad6537418af8eed6465ae9feefc773d16ca36a.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- FEEDBACK crea y valida InboxAuditLog con ocho columnas: eventId, timestamp, actorId, actorName, action, itemType, itemId y details.
+- reply, resolve y delete registran el evento y confirman su persistencia antes de modificar Feedbacks o Contactanos. La identidad se deriva de la sesión validada por authorizeFeedbackAction_/assertFeedbackSession.
+- Los IDs inexistentes o duplicados no generan eventos. Si falla la escritura o verificación del ledger, la mutación se aborta.
+- handleGetActivityLogs combina la actividad ordinaria con los eventos InboxAuditLog y consulta como máximo las 100 filas más recientes del ledger. La limpieza de actividad ordinaria no borra el ledger; los eventos sobreviven a la eliminación de la fila operativa.
+- No se almacena el texto de la respuesta en el registro de auditoría.
+
+Validación local:
+- Services/Test/InboxAuditTrail.js: 11/11 PASS en harness aislado con dobles.
+- Se cubrieron reply de Feedbacks/Contactanos, resolve, delete de ambas fuentes, orden de escritura, identidad, esquema, IDs ausentes/duplicados, fallo del ledger, lectura posterior y conservación ante limpieza ordinaria.
+- Parsing sintáctico de Services/feedback.js y Services/Test/InboxAuditTrail.js: PASS.
+- No se ejecutaron Apps Script, endpoints, deployments ni hojas productivas.
+
+Validación Beta pendiente: creación y esquema real de InboxAuditLog; operaciones reply/resolve/delete en FEEDBACK/Spreadsheet aislados; lectura tras recarga; retención ante limpieza ordinaria; fallo parcial de escritura; permisos por rol. No desplegar a producción.
+
+Archivos: Services/feedback.js, Services/Test/InboxAuditTrail.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-120 — Optimizar la lectura del dashboard de actividad. No iniciar dentro de esta tarea.
+================================================================================

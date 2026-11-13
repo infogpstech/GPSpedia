@@ -525,3 +525,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/SessionProfileRefresh.js: 19 escenarios con AUTH operativo, AUTH de pruebas y cliente.
 - Tareas_pendientes_parte2.txt, Services/Test/README.md, lista_beta.txt y checkpoint.md: cierre y continuidad.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-119 — HISTORIAL INMUTABLE DE OPERACIONES DEL INBOX
+- Services/feedback.js: añade InboxAuditLog append-only con esquema validado, eventId y timestamp; registra actor autenticado, acción, tipo e ID antes de responder, resolver o eliminar elementos de Feedbacks/Contactanos.
+- El evento se confirma mediante flush y lectura posterior antes de permitir la mutación. Un fallo de auditoría aborta la operación; IDs inexistentes o ambiguos no generan eventos.
+- handleGetActivityLogs incorpora los eventos persistidos al dashboard y limita la lectura del ledger a sus 100 filas más recientes. clearActivityLogs conserva InboxAuditLog, por lo que eliminar la fila operativa o limpiar la actividad ordinaria no borra esta trazabilidad.
+- Services/Test/InboxAuditTrail.js: 11 escenarios para orden de escritura, actor, reply/resolve/delete, persistencia tras eliminación/lectura posterior, limpieza ordinaria, fallos y esquema.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: cobertura, estado y validación Beta documentados.
+================================================================================

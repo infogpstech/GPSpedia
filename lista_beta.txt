@@ -1632,3 +1632,40 @@ PRUEBAS EN AUTH Y SPREADSHEET AISLADOS:
 
 No declarar PASS sin verificar perfil visible, localStorage, currentUser y token de sesión en el proyecto aislado. No desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-119 — HISTORIAL INMUTABLE DE OPERACIONES DEL INBOX — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN FEEDBACK Y SPREADSHEET AISLADOS:
+1. Confirmar que la primera operación crea InboxAuditLog con los ocho encabezados contractuales y que un encabezado incompatible detiene la mutación.
+2. Ejecutar reply para problem_report y contact_form; comprobar que el evento contiene actorId/actorName derivados de la sesión, acción reply, tipo, ID y timestamp, y que se escribe antes de la respuesta.
+3. Ejecutar resolve sobre un reporte y confirmar que el evento precede al cambio de Se resolvio.
+4. Ejecutar delete para Feedbacks y Contactanos. Confirmar que el evento persiste aunque se elimine la fila fuente.
+5. Recargar la aplicación y consultar Actividad: los eventos Inbox deben reaparecer ordenados por timestamp y asociados al actor/registro correcto.
+6. Limpiar la actividad ordinaria con la operación administrativa de prueba; comprobar que InboxAuditLog permanece intacto y sigue apareciendo en el historial.
+7. Simular fallo de escritura/confirmación del ledger: la operación reply/resolve/delete debe abortarse sin modificar la fila operativa.
+8. Verificar que ID inexistente o duplicado no produce evento y que no se almacena el texto privado de la respuesta.
+9. Comprobar permisos con cuentas sintéticas Desarrollador, Gefe, Jefe y Supervisor; los roles no autorizados deben seguir siendo rechazados por FEEDBACK.
+
+No declarar PASS sin verificar el contenido persistido de InboxAuditLog y la UI después de recargar. No desplegar ni modificar datos productivos.
+================================================================================

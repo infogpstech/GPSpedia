@@ -1355,3 +1355,14 @@ La suite ejecuta 19 escenarios:
 - 5 contra Services/Auth.js y los mismos 5 contra Services/Test/Auth.js: perfil actual desde Users, ausencia de contraseña/token, rechazo de ID distinto, ID duplicado y revocación de rol pendiente.
 - 9 contratos del cliente: persistencia en localStorage y currentUser, coincidencia de ID/token, cambio de cuenta durante una respuesta tardía, allowlist de campos, rechazo de perfil sin ID, validación inválida, reautenticación ante cambio de rol y TTL ligado a la sesión.
 No accede a Apps Script, Spreadsheet, endpoints ni deployments. La integración real se reserva para Beta aislado.
+
+
+## AUG-119 — Historial inmutable de operaciones del Inbox
+
+Ejecutar desde la raíz del repositorio:
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/InboxAuditTrail.js
+\`\`\`
+
+La suite valida el registro previo a la mutación para reply, resolve y delete en Feedbacks y Contactanos; identidad derivada de la sesión; esquema estricto; rechazo de mutaciones cuando falla la escritura del evento; persistencia después de eliminar la fila fuente y lectura posterior desde el dashboard. El ledger \`InboxAuditLog\` es append-only desde FEEDBACK y no se elimina al limpiar la actividad ordinaria. La prueba usa dobles aislados y no accede a Apps Script, Spreadsheet, endpoints ni deployments reales.

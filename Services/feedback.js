@@ -257,6 +257,9 @@ const COLS_ACTIVIDAD_USUARIO = {
     detalle: 7
 };
 
+const INBOX_AUDIT_SHEET_NAME = "InboxAuditLog";
+const INBOX_AUDIT_HEADERS = Object.freeze(["eventId","timestamp","actorId","actorName","action","itemType","itemId","details"]);
+
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
@@ -1618,75 +1621,75 @@ function handleGetFeedbackItems(payload) {
  const nextOffset=offset+data.length,hasMore=nextOffset<total;
  return{status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total};
 }
+
+function ensureInboxAuditSheet_() {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(INBOX_AUDIT_SHEET_NAME);
+    if (!sheet) sheet = ss.insertSheet(INBOX_AUDIT_SHEET_NAME);
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, INBOX_AUDIT_HEADERS.length).setValues([INBOX_AUDIT_HEADERS]);
+        SpreadsheetApp.flush();
+    }
+    const actual = sheet.getRange(1, 1, 1, INBOX_AUDIT_HEADERS.length).getValues()[0].map(value => String(value || "").trim());
+    if (INBOX_AUDIT_HEADERS.some((header,index) => actual[index] !== header)) throw new Error("El esquema de InboxAuditLog no coincide con el contrato esperado.");
+    return sheet;
+}
+function appendInboxAuditEvent_(payload, action, itemType, itemId) {
+    const source = payload && typeof payload === "object" ? payload : {};
+    const actorId = String(source.userId || "").trim(), actorName = String(source.userName || "").trim();
+    const normalizedItemId = String(itemId === null || itemId === undefined ? "" : itemId).trim();
+    if (!actorId || !actorName || !action || !itemType || !normalizedItemId) throw new Error("No se puede registrar la operación del Inbox sin identidad y referencia verificadas.");
+    const sheet = ensureInboxAuditSheet_();
+    const event = [Utilities.getUuid(),new Date().toISOString(),actorId,actorName,String(action),String(itemType),normalizedItemId,
+        "Operación "+String(action)+" solicitada para "+String(itemType)+" "+normalizedItemId+" antes de la mutación."];
+    const rowNumber = sheet.getLastRow()+1;
+    sheet.getRange(rowNumber,1,1,event.length).setValues([event]);
+    SpreadsheetApp.flush();
+    const persisted = sheet.getRange(rowNumber,1,1,event.length).getValues()[0];
+    if (event.some((value,index)=>String(persisted[index])!==String(value))) throw new Error("No se pudo confirmar el evento inmutable del Inbox; la operación no continuará.");
+    return {eventId:event[0],timestamp:event[1]};
+}
+
+
 function handleReplyToFeedback(payload) {
-    const { itemId, itemType, replyText, responderName } = payload;
-    if (!itemId || !itemType || !replyText || !responderName) {
-        throw new Error("Datos insuficientes para enviar la respuesta.");
-    }
-
-    if (itemType === 'problem_report') {
-        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-        const ids = sheet.getRange(2, COLS_FEEDBACKS.ID, sheet.getLastRow() -1, 1).getValues().flat();
-        const rowIndex = ids.findIndex(id => id == itemId);
-        if (rowIndex !== -1) {
-            sheet.getRange(rowIndex + 2, COLS_FEEDBACKS.Respuesta).setValue(replyText);
-            sheet.getRange(rowIndex + 2, COLS_FEEDBACKS.Responde).setValue(responderName);
-        } else {
-            throw new Error("No se encontró el reporte de problema.");
-        }
-    } else if (itemType === 'contact_form') {
-        const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
-        const ids = sheet.getRange(2, COLS_CONTACTANOS.Contacto_ID, sheet.getLastRow() - 1, 1).getValues().flat();
-        const rowIndex = ids.findIndex(id => id == itemId);
-        if (rowIndex !== -1) {
-            sheet.getRange(rowIndex + 2, COLS_CONTACTANOS.Respuesta_mensaje).setValue(replyText);
-            sheet.getRange(rowIndex + 2, COLS_CONTACTANOS.ID_usuario_responde).setValue(responderName);
-        } else {
-            throw new Error("No se encontró el mensaje de contacto.");
-        }
-    }
-
-    return { status: 'success', message: 'Respuesta enviada.' };
+    const source=payload&&typeof payload==="object"?payload:{};
+    const itemId=String(source.itemId||"").trim(),itemType=String(source.itemType||"").trim();
+    const replyText=source.replyText,responderName=String(source.responderName||"").trim();
+    if(!itemId||!itemType||!replyText||!responderName)throw new Error("Datos insuficientes para enviar la respuesta.");
+    let sheet,idColumn,replyColumn,responderColumn;
+    if(itemType==="problem_report"){sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);idColumn=COLS_FEEDBACKS.ID;replyColumn=COLS_FEEDBACKS.Respuesta;responderColumn=COLS_FEEDBACKS.Responde;}
+    else if(itemType==="contact_form"){sheet=getSafeSheet(SHEET_NAMES.CONTACTANOS);idColumn=COLS_CONTACTANOS.Contacto_ID;replyColumn=COLS_CONTACTANOS.Respuesta_mensaje;responderColumn=COLS_CONTACTANOS.ID_usuario_responde;}
+    else return {status:"success",message:"Respuesta enviada."};
+    if(!sheet)throw new Error("No se encontró la hoja correspondiente al mensaje.");
+    const lastRow=sheet.getLastRow(),ids=lastRow>1?sheet.getRange(2,idColumn,lastRow-1,1).getValues().flat():[],matches=[];
+    ids.forEach((id,index)=>{if(String(id===null||id===undefined?"":id).trim()===itemId)matches.push(index+2);});
+    if(matches.length!==1)throw new Error(matches.length?"El identificador del Inbox está duplicado; no se respondió.":(itemType==="problem_report"?"No se encontró el reporte de problema.":"No se encontró el mensaje de contacto."));
+    appendInboxAuditEvent_(source,"reply",itemType,itemId);
+    sheet.getRange(matches[0],replyColumn).setValue(replyText);sheet.getRange(matches[0],responderColumn).setValue(responderName);SpreadsheetApp.flush();
+    return {status:"success",message:"Respuesta enviada."};
 }
-
 function handleMarkAsResolved(payload) {
-    const { itemId } = payload;
-    if (!itemId) throw new Error("ID del item es requerido.");
-
-    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    const ids = sheet.getRange(2, COLS_FEEDBACKS.ID, sheet.getLastRow() - 1, 1).getValues().flat();
-    const rowIndex = ids.findIndex(id => id == itemId);
-
-    if (rowIndex !== -1) {
-        sheet.getRange(rowIndex + 2, COLS_FEEDBACKS['Se resolvio']).setValue(true);
-    } else {
-        throw new Error("No se encontró el reporte de problema para marcar como resuelto.");
-    }
-
-    return { status: 'success', message: 'Reporte marcado como resuelto.' };
+    const source=payload&&typeof payload==="object"?payload:{},itemId=String(source.itemId||"").trim();
+    if(!itemId)throw new Error("ID del item es requerido.");
+    const sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);if(!sheet)throw new Error("No se encontró la hoja de Feedbacks.");
+    const lastRow=sheet.getLastRow(),ids=lastRow>1?sheet.getRange(2,COLS_FEEDBACKS.ID,lastRow-1,1).getValues().flat():[],matches=[];
+    ids.forEach((id,index)=>{if(String(id===null||id===undefined?"":id).trim()===itemId)matches.push(index+2);});
+    if(matches.length!==1)throw new Error(matches.length?"El identificador del reporte está duplicado; no se modificó.":"No se encontró el reporte de problema para marcar como resuelto.");
+    appendInboxAuditEvent_(source,"resolve","problem_report",itemId);
+    sheet.getRange(matches[0],COLS_FEEDBACKS["Se resolvio"]).setValue(true);SpreadsheetApp.flush();
+    return {status:"success",message:"Reporte marcado como resuelto."};
 }
+
+
 
 function handleGetActivityLogs(payload) {
-    const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
-    if (!sheet) return { status: 'success', data: [] };
-
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return { status: 'success', data: [] };
-
-    data.shift(); // Remove headers
-
-    // Reverse and take last 100 logs
-    const logs = data.map(row => ({
-        id: row[COLS_ACTIVIDAD_USUARIO.id - 1],
-        timestamp: row[COLS_ACTIVIDAD_USUARIO.timestamp - 1],
-        idUsuario: row[COLS_ACTIVIDAD_USUARIO.idUsuario - 1],
-        nombreUsuario: row[COLS_ACTIVIDAD_USUARIO.nombreUsuario - 1],
-        tipoActividad: row[COLS_ACTIVIDAD_USUARIO.tipoActividad - 1],
-        idElementoAsociado: row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado - 1],
-        detalle: row[COLS_ACTIVIDAD_USUARIO.detalle - 1]
-    })).reverse().slice(0, 100);
-
-    return { status: 'success', data: logs };
+    const sheet=getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
+    const data=sheet&&sheet.getLastRow()>1?sheet.getDataRange().getValues().slice(1):[];
+    const result=data.map(row=>({id:row[COLS_ACTIVIDAD_USUARIO.id-1],timestamp:row[COLS_ACTIVIDAD_USUARIO.timestamp-1],idUsuario:row[COLS_ACTIVIDAD_USUARIO.idUsuario-1],nombreUsuario:row[COLS_ACTIVIDAD_USUARIO.nombreUsuario-1],tipoActividad:row[COLS_ACTIVIDAD_USUARIO.tipoActividad-1],idElementoAsociado:row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado-1],detalle:row[COLS_ACTIVIDAD_USUARIO.detalle-1]}));
+    const audit=getSpreadsheet().getSheetByName(INBOX_AUDIT_SHEET_NAME),last=audit?audit.getLastRow():0;
+    if(last>1){const start=Math.max(2,last-99);audit.getRange(start,1,last-start+1,INBOX_AUDIT_HEADERS.length).getValues().forEach(row=>result.push({id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]}));}
+    result.sort((a,b)=>{const ta=new Date(a.timestamp).getTime(),tb=new Date(b.timestamp).getTime();return(Number.isFinite(tb)?tb:0)-(Number.isFinite(ta)?ta:0);});
+    return {status:"success",data:result.slice(0,100)};
 }
 
 
@@ -2471,39 +2474,20 @@ function handleAddTutorial(payload) {
 
 function extractYouTubeId(url) { return getPysYouTubeVideoId_(url); }
 
-function handleDeleteFeedbackItem(payload) {
-    const { id, type } = payload;
-    if (!id || !type) {
-        throw new Error("Se requieren ID y Tipo de mensaje para eliminar.");
-    }
 
-    if (type === 'problem_report') {
-        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-        if (!sheet) throw new Error("No se encontró la hoja de Feedbacks.");
-        const data = sheet.getDataRange().getValues();
-        for (let i = 1; i < data.length; i++) {
-            if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(id)) {
-                sheet.deleteRow(i + 1);
-                SpreadsheetApp.flush();
-                return { status: 'success', message: 'Reporte de problema eliminado correctamente.' };
-            }
-        }
-        throw new Error("No se encontró el reporte especificado.");
-    } else if (type === 'contact_form') {
-        const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
-        if (!sheet) throw new Error("No se encontró la hoja de Contactanos.");
-        const data = sheet.getDataRange().getValues();
-        for (let i = 1; i < data.length; i++) {
-            if (String(data[i][COLS_CONTACTANOS.Contacto_ID - 1]) === String(id)) {
-                sheet.deleteRow(i + 1);
-                SpreadsheetApp.flush();
-                return { status: 'success', message: 'Mensaje de contacto eliminado correctamente.' };
-            }
-        }
-        throw new Error("No se encontró el mensaje de contacto especificado.");
-    } else {
-        throw new Error("Tipo de mensaje desconocido.");
-    }
+function handleDeleteFeedbackItem(payload) {
+    const source=payload&&typeof payload==="object"?payload:{},id=String(source.id||"").trim(),type=String(source.type||"").trim();
+    if(!id||!type)throw new Error("Se requieren ID y Tipo de mensaje para eliminar.");
+    let sheet,idColumn,missing;
+    if(type==="problem_report"){sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);idColumn=COLS_FEEDBACKS.ID;missing="No se encontró el reporte especificado.";}
+    else if(type==="contact_form"){sheet=getSafeSheet(SHEET_NAMES.CONTACTANOS);idColumn=COLS_CONTACTANOS.Contacto_ID;missing="No se encontró el mensaje de contacto especificado.";}
+    else throw new Error("Tipo de mensaje desconocido.");
+    if(!sheet)throw new Error("No se encontró la hoja correspondiente al mensaje.");
+    const data=sheet.getDataRange().getValues(),matches=[];
+    for(let i=1;i<data.length;i++)if(String(data[i][idColumn-1]===null||data[i][idColumn-1]===undefined?"":data[i][idColumn-1]).trim()===id)matches.push(i+1);
+    if(matches.length!==1)throw new Error(matches.length>1?"El identificador del Inbox está duplicado; no se eliminó.":missing);
+    appendInboxAuditEvent_(source,"delete",type,id);sheet.deleteRow(matches[0]);SpreadsheetApp.flush();
+    return {status:"success",message:type==="problem_report"?"Reporte de problema eliminado correctamente.":"Mensaje de contacto eliminado correctamente."};
 }
 
 function normalizePysAssociationId_(value, fieldName) {

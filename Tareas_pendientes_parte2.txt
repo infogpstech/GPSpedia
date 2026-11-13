@@ -169,10 +169,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-119 — Registrar reply, resolve y delete del Inbox en historial inmutable
 - Origen: H-AUD-018-007. Prioridad: Media.
-- Evidencia: Services/feedback.js:1220–1265 y 1529–1561 no llaman logUserActivity.
-- Problema: no hay traza uniforme de quién respondió, resolvió o eliminó; delete borra el registro fuente.
-- Criterios: evento inmutable con actor, acción, tipo/ID y timestamp antes de mutar; no depender de la fila operativa; probar tras recarga.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: FEEDBACK crea/valida la hoja append-only InboxAuditLog y registra eventId, timestamp, actorId, actorName, action, itemType, itemId y detalle antes de mutar Feedbacks o Contactanos. La identidad procede de authorizeFeedbackAction_/assertFeedbackSession, no del actor declarado por el navegador.
+- Lectura: getActivityLogs combina el historial ordinario con los eventos InboxAuditLog; limpiar la actividad ordinaria no elimina el ledger. El texto de la respuesta no se copia al registro de auditoría.
+- Validación local: Services/Test/InboxAuditTrail.js, 11 escenarios PASS; parsing y revisión del diff completados.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Beta pendiente: verificar creación/esquema de InboxAuditLog en Spreadsheet aislada; comprobar reply/resolve/delete de Feedbacks y Contactanos, identidad de actor, orden previo a mutación, persistencia tras recarga, retención al limpiar actividad ordinaria y recuperación ante fallo de escritura. No usar endpoints ni datos productivos.
 
 ### AUG-120 — Optimizar la lectura del dashboard de actividad
 - Origen: H-AUD-018-008. Prioridad: Media.
