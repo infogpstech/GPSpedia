@@ -1447,3 +1447,14 @@ La suite ejecuta 35 escenarios de estructura/allowlist, requeridos, enums, años
 - Regresión: `runAddSupplementaryInfoIntegrityTests({ write, admin, coordinator, ui })` 53/53; `runYouTubeAddCortesContractTests(addCortes)` 4/4; `runVehicleExpansionDetailRefreshTests({ ui, catalog })` 30/30.
 - YouTube: `runYouTubeApprovalTests()` 15/15; `runYouTubeApprovalInitTests()` 8/8; `runVideoApprovalPublishingTests()` 27/27.
 - OAuth/API reales, aprobación en FEEDBACK desplegado, Spreadsheet real y lectura después de recargar navegador permanecen para Beta aislada.
+
+
+## AUG-129 — Validación de edición del modal ADMIN
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const admin=readFileSync("Services/admin.js","utf8"); const tests=readFileSync("Services/Test/AdminModalEditIntegrity.js","utf8"); const run=new Function("adminSource",tests+"; return runAdminModalEditIntegrityTests(adminSource);"); const result=run(admin); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+```
+
+La suite comprueba la allowlist y exclusión de ID/campos calculados, tipos, longitudes, dominios de categoría/encendido/corte/Relay, coherencia del rango de años, sanitización de texto enriquecido, referencias de Drive, IDs inexistentes/duplicados, sintaxis V8 de los handlers y contratos de lock/reversión. Resultado local de esta tarea: 9/9 PASS. La suite utiliza fixtures y dobles; no llama Apps Script, Spreadsheet, Drive ni endpoints reales.
