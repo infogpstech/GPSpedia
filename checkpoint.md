@@ -785,3 +785,12 @@ Siguiente tarea pendiente: AUG-140 — Alinear márgenes y contrato de paginaci�
 ADENDA DE VALIDACIÓN — AUG-139 — 2026-11-13
 - Primer CI run 43405153032 detectó un único fallo en la expectativa textual del test: README utiliza la frase «nunca sustituyen la autorización del servidor». No fue un fallo de la política ni de las vistas.
 - Corregida la expectativa de AntiDebuggingPolicy.mjs para coincidir exactamente con la redacción documental. Se vuelve a ejecutar CI en el commit correctivo.
+
+
+ADENDA DE CIERRE Y VALIDACIÓN — AUG-139 — 2026-11-13
+- Commit de implementación: 4f8b177c65376edc87138215a832e3d5869c56d2; commit correctivo de expectativa: 1acd26e029fd07aa59f316f98bd9cfabb72c0699.
+- GitHub Actions run 43405250012: COMPLETED / SUCCESS, Node.js 22.23.4.
+- Resultado de regresión: 19 suites; 267/267 pruebas PASS; 0 fallos. AntiDebuggingPolicy: 10/10 PASS; AddCortesDiagnostics: 12/12 PASS; UiOrphanCleanup: 6/6 PASS; ActionDispatchContract: 12/12 PASS.
+- HEAD de implementación validado por CI: 1acd26e029fd07aa59f316f98bd9cfabb72c0699. Se agrega esta adenda documental en commit posterior sin cambiar el código probado.
+- AUG-139: COMPLETADA CON VALIDACIÓN DIFERIDA. La comprobación en navegador real y las operaciones contra servicios Beta aislados siguen reservadas a Beta.
+================================================================================
