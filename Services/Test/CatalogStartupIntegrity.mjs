@@ -7,10 +7,13 @@ const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
 function extract(name) {
     const start = authSource.indexOf('function ' + name + '(');
     if (start < 0) throw new Error('No se encontró ' + name);
-    const nextFunction = /(?:^|\n)(?:export\\s+)?(?:async\\s+)?function\\s+[A-Za-z_$][\\w$]*\\s*\\(/gm;
-    nextFunction.lastIndex = start + 12;
-    const next = nextFunction.exec(authSource);
-    return authSource.slice(start, next ? next.index : authSource.length);
+    const candidates = [
+        authSource.indexOf('\nfunction ', start + 12),
+        authSource.indexOf('\nexport function ', start + 12),
+        authSource.indexOf('\nexport async function ', start + 12)
+    ].filter(index => index >= 0);
+    const end = candidates.length ? Math.min(...candidates) : authSource.length;
+    return authSource.slice(start, end);
 }
 function snapshot(cortes = [{ id: 'C-1', marca: 'toyota', modelo: 'hilux', categoria: 'pickup' }]) {
     return { cortes, tutoriales: [], relay: [], logos: [] };
