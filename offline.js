@@ -369,7 +369,8 @@ async function migrateLegacyDriveAuditState_(ownerId, legacy) {
                 });
                 store.put(meta);
                 store.put({ key: latestKey, ownerId, auditId, updatedAt: Date.now() });
-                if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds, updatedAt: Date.now() });
+                if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds,
+                    signature: JSON.stringify(confirmedIds), updatedAt: Date.now() });
                 store.delete(legacyKey);
                 store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
                 control.setResult({ status: 'migrated', auditId });
@@ -415,11 +416,20 @@ export async function saveDriveAuditState(state, userId) {
                 const nextMeta = buildDriveAuditMetaEntry(state, ownerId, auditId, metaKey, pageCount, currentRevision + 1);
                 store.put(nextMeta);
                 if (!current) store.put({ key: latestKey, ownerId, auditId, revision: nextMeta.revision, updatedAt: Date.now() });
-                if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds, updatedAt: Date.now() });
-                else store.delete(confirmedKey);
-                store.delete(legacyKey);
-                store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
-                control.setResult({ key: metaKey, auditId, revision: nextMeta.revision, pageCount });
+                const confirmedRequest = store.get(confirmedKey);
+                confirmedRequest.onsuccess = () => {
+                    const existingConfirmed = confirmedRequest.result;
+                    const confirmedSignature = JSON.stringify(confirmedIds);
+                    if (confirmedIds.length) {
+                        if (!existingConfirmed || existingConfirmed.signature !== confirmedSignature) {
+                            store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds,
+                                signature: confirmedSignature, updatedAt: Date.now() });
+                        }
+                    } else if (existingConfirmed) store.delete(confirmedKey);
+                    store.delete(legacyKey);
+                    store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
+                    control.setResult({ key: metaKey, auditId, revision: nextMeta.revision, pageCount });
+                };
             };
             if (batchIndex === null) { saveMeta(currentPageCount); return; }
             if (batchIndex > currentPageCount) {
@@ -481,7 +491,8 @@ export async function getDriveAuditState(userId, requestedAuditId = '') {
     for (let pageIndex = 0; pageIndex < Number(meta.pageCount); pageIndex++) {
         const pageKey = getDriveAuditPageKey(ownerId, auditId, pageIndex);
         const page = entriesByKey.get(pageKey);
-        if (!page || !Array.isArray(page.files)) { missingPage = true; continue; }
+        if (!page || page.ownerId !== ownerId || page.auditId !== auditId || page.pageIndex !== pageIndex ||
+            !Array.isArray(page.files)) { missingPage = true; continue; }
         page.files.forEach(file => {
             const fileId = String(file && file.fileId || '').trim();
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { missingPage = true; return; }
@@ -492,7 +503,8 @@ export async function getDriveAuditState(userId, requestedAuditId = '') {
     const confirmedEntry = entriesByKey.get(getDriveAuditConfirmedKey(ownerId, auditId));
     const state = Object.assign({}, meta, {
         files,
-        inventoryConfirmedFileIds: confirmedEntry && Array.isArray(confirmedEntry.ids) ? normalizeDriveAuditLocalIds(confirmedEntry.ids) : [],
+        inventoryConfirmedFileIds: confirmedEntry && confirmedEntry.ownerId === ownerId && confirmedEntry.auditId === auditId &&
+            Array.isArray(confirmedEntry.ids) ? normalizeDriveAuditLocalIds(confirmedEntry.ids) : [],
         uiDuplicateFileCount: Math.max(0, Number(meta.uiDuplicateFileCount) || 0) + duplicateCount
     });
     if (missingPage) {
