@@ -564,7 +564,10 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Aprobar vídeos con lock/coordinación, confirmar que el vehículo existe y que videoGuiaDesarmeUrl quedó escrito; implementar idempotencia/reconciliación si falla una de las dos hojas.
   6. Probar peticiones directas, identidad falsificada, roles, votos duplicados/anónimos, destino ausente y concurrencia interservicios.
 - **Relación:** AUD-T-033/AUG-034; AUD-T-035 para contratos de acciones.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Cierre recuperado de auditoría 2026-11-10:** criterios 1–6 completados en código. FEEDBACK declara explícitamente acciones públicas (solo getPysData y sendContactForm) y rechaza acciones no declaradas; assignCollaborator fue retirado. recordLike exige sesión, deriva actor desde servidor e idempotencia por actor/vehículo/corte. suggestYear no confía en IDs anónimos del navegador ni los suma al umbral; los votos anónimos quedan para revisión y solo cuentan aportantes verificados distintos. approveVideo coordina y recupera escrituras Feedbacks/Cortes, verifica vehículo destino y confirma videoGuiaDesarmeUrl.
+- **Evidencia histórica:** H-AUD-040-001 a H-AUD-040-018 corregidos; FeedbackWriteSecurity 47/47, VideoApprovalPublishing 18/18, VideoApprovalState 13/13, VideoApprovalSessions 10/10, YouTubeApproval 15/15, YouTubeApprovalInit 8/8, VideoApprovalContracts 8/8, SharedMutationCoordinator 28/28, LikeClientCounter 6/6 y ValidationCacheConfirmation 7/7; total 160/160 PASS y parsing V8 17/17 PASS, según cierre consolidado de Auditoría.txt.
+- **Verificación actual:** CI run 43426964327 cubre VideoApprovalPublishing y las suites compartidas actuales; 34 suites/517 pruebas PASS. La suite histórica FeedbackWriteSecurity.js no está integrada en el runner actual y sus fixtures no reflejan contratos PyS/reportMetadata posteriores; no se usa como evidencia del CI actual. No se modificó código productivo durante esta recuperación.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-041 — Asegurar y alinear el servicio UTILITIES
 - **Origen:** H-AUD-033-006 y H-AUD-033-007; adenda a AUG-003. **Prioridad:** Alta.
