@@ -547,6 +547,23 @@ check("La captura reduce automáticamente el lote tras un bloque lento sin omiti
     assert.equal(result.metrics.smallestAdaptiveRowChunkSize,375);
     assert.equal(result.metrics.finalRowChunkSize,500);
 });
+check("La captura detiene un lote que excede el presupuesto y nunca devuelve un snapshot parcial",()=>{
+    const columns={imagenVehiculo:9,imgCorte1:10,imgCorte2:11,imgCorte3:12,imgApertura:13,imgCableAlimen:14,imgCableAlimen2:15,imgCableAlimen3:16};
+    let clock=0,readCalls=0;
+    class FakeDate { static now(){ return clock; } }
+    const sheet={
+        getLastRow:()=>502,
+        getRange(_row,_col,numRows,numCols){
+            const values=()=>Array.from({length:numRows},()=>Array(numCols).fill(""));
+            const slow=()=>{clock+=4000;return values();};
+            return {getDisplayValues:slow,getValues:slow,getFormulas:slow,getRichTextValues:slow};
+        }
+    };
+    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("Date","getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+        FakeDate,()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
+    assert.throws(()=>scan(false),/presupuesto temporal seguro/);
+});
 check("El escáner global delega Cortes a los ocho campos y mantiene imágenes superpuestas y otras hojas",()=>{
     const scanner=fnSource(admin,"collectActiveDriveReferences");
     assert.ok(scanner.includes("collectCortesImageReferences(includeLocations)"));
