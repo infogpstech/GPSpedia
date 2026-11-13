@@ -1993,3 +1993,47 @@ En un proyecto ADMIN y Spreadsheet completamente aislados, con filas sintéticas
 7. Probar imágenes válidas de Drive y referencias externas/múltiples inválidas; confirmar que las operaciones de carga/reemplazo existentes siguen funcionando.
 
 No utilizar datos productivos ni URLs operativas. No crear ni reemplazar deployments live durante esta validación.
+
+
+## AUG-130 — Mutaciones atómicas de USERS (Beta aislada)
+
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;;
+  *) echo "El remoto origin no corresponde a $EXPECTED_REPO"; exit 1 ;;
+esac
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Hay cambios locales sin guardar; se detiene la sincronización."
+  exit 1
+fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Prueba reproducible local:
+
+~~~bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("Services/users.js","utf8"); const auth=readFileSync("Services/Auth.js","utf8"); const tests=readFileSync("Services/Test/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource);"); const result=run(users,auth); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+~~~
+
+En proyectos USERS y AUTH de Apps Script separados, conectados únicamente a la Spreadsheet aislada:
+1. Ejecutar creación concurrente de dos cuentas distintas y dos cuentas con el mismo username; confirmar IDs únicos, sin filas parciales ni usernames duplicados.
+2. Ejecutar createUser en USERS simultáneamente con deleteUser y resetUserSessions en AUTH sobre usuarios de prueba; confirmar que la lease compartida serializa las mutaciones y no deja cuentas parcialmente creadas o reactivadas.
+3. Ejecutar updateProfile simultáneo con deleteUser/updateUser/resetUserSessions para el mismo ID; comprobar identidad única, orden de operaciones y que no se actualice una cuenta desactivada.
+4. Inyectar fallos en escritura de ID:H, escritura de Nombre_Completo y Spreadsheet.flush(); verificar rollback de valores y fórmulas, liberación de locks y reintento seguro.
+5. Probar IDs vacíos/duplicados, filas con datos sin ID, usernames repetidos, roles inválidos, campos extra, correo/teléfono inválidos y límites de longitud. Confirmar que no hay escrituras antes de completar todas las validaciones.
+6. Verificar que la creación conserva formato/validaciones, reemplaza de forma segura la fórmula de ID de la fila plantilla y no modifica columnas fuera de ID:H.
+7. Confirmar que AUTH sigue siendo autoridad para deleteUser/resetUserSessions y que USERS no escribe en ActiveSessions.
+
+No usar datos productivos, URLs operativas ni deployments live. No reemplazar deployments existentes.
