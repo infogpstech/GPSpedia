@@ -687,17 +687,18 @@ function clearAdminState(action) {
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
+const ADMIN_SERVICE_VERSION = "2.6.1";
 function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Admin',
-            version: '2.6.0',
+            version: ADMIN_SERVICE_VERSION,
             status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.JSON);
     }
-    const defaultResponse = { status: 'success', message: 'GPSpedia Admin-SERVICE v2.6.0 is active.' };
+    const defaultResponse = { status: 'success', message: 'GPSpedia Admin-SERVICE v' + ADMIN_SERVICE_VERSION + ' is active.' };
     return ContentService.createTextOutput(JSON.stringify(defaultResponse))
         .setMimeType(ContentService.MimeType.TEXT);
 }
@@ -6772,47 +6773,67 @@ function handleGetDriveStorage(payload, logMessage) {
 }
 
 function handleGetReplacedImages(payload, logMessage) {
-    const schema=getReplacedImagesReadSchema_();
-    if(!schema.sheet)return {status:"success",data:[],review:[],schemaStatus:"not_initialized",missingHeaders:schema.missingHeaders,referenceCheckStatus:"unavailable"};
-    const headers=schema.headers,rows=schema.sheet.getDataRange().getValues();
-    const columnIndex=name=>headers.indexOf(name),valueAt=(row,name)=>{const i=columnIndex(name);return i>=0?row[i]:"";};
-    let referenceSnapshot=null,referenceCheckStatus="unavailable";
-    try{referenceSnapshot=collectActiveDriveReferences(true);referenceCheckStatus=referenceSnapshot.unverifiableReferenceCount>0?"unverifiable":"verified";}catch(error){referenceCheckStatus="unavailable";}
-    const idCounts=new Map();
-    for(let r=1;r<rows.length;r++){const id=String(rows[r][0]||"").trim();if(id)idCounts.set(id,(idCounts.get(id)||0)+1);}
-    const data=[],review=[];
-    for(let r=1;r<rows.length;r++){
-        const row=rows[r];if(!row.some(value=>String(value==null?"":value).trim()!==""))continue;
-        const id=String(row[0]||"").trim();
-        const reviewEntry={rowNumber:r+1,id_reemplazo:id||"Sin ID",nombre_archivo:String(row[6]||"").slice(0,180),estado:String(row[10]||"Sin estado"),reason:""};
-        let type="",status="";
-        try{
-            if(!id)throw new Error("Fila con datos pero sin id_reemplazo.");
-            if(idCounts.get(id)!==1)throw new Error("id_reemplazo duplicado; no se habilitan acciones para ninguna fila coincidente.");
-            type=getReplacedImageRecordType(row,headers);
-            status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica")).trim();
-            if(!isKnownReplacedImageStatus_(type,status))throw new Error("Estado histórico desconocido o incompatible con el tipo de registro.");
-            getReplacedImageRecordIdentity_(row,headers,schema.missingHeaders.length===0);
-        }catch(error){reviewEntry.reason=String(error&&error.message||"Registro inválido.");review.push(reviewEntry);continue;}
-        const driveId=extractDriveFileIds(row[5])[0],activeReferences=referenceSnapshot&&referenceSnapshot.references.get(driveId);
-        data.push({
-            id_reemplazo:id,fecha_reemplazo:row[1],tipo_contenido:row[2],registro_id:row[3],campo:row[4],
-            archivo_drive_id:row[5],nombre_archivo:row[6],url_anterior:row[7],sustituida_por_url:row[8],
-            referencia_texto:row[9],estado:status,origen_registro:valueAt(row,"origen_registro")||"reemplazo",
-            tipo_registro:type,tipo_mime:valueAt(row,"tipo_mime"),ubicacion_original:valueAt(row,"ubicacion_original"),
-            fecha_creacion_drive:valueAt(row,"fecha_creacion_drive"),fecha_deteccion:valueAt(row,"fecha_deteccion"),
-            url_visualizacion:valueAt(row,"url_visualizacion"),ubicacion_actual:valueAt(row,"ubicacion_actual"),
-            ultima_auditoria_id:valueAt(row,"ultima_auditoria_id"),estado_previo_papelera:valueAt(row,"estado_previo_papelera"),estado_organizacion:valueAt(row,"estado_organizacion"),
-            error_organizacion:valueAt(row,"error_organizacion"),fecha_organizacion:valueAt(row,"fecha_organizacion"),
-            reference_check_status:referenceCheckStatus,active_reference_count:Array.isArray(activeReferences)?activeReferences.length:activeReferences?1:0
-        });
+    const schema = getReplacedImagesReadSchema_();
+    if (!schema.sheet) return { status: "success", data: [], review: [], schemaStatus: "not_initialized", missingHeaders: schema.missingHeaders, referenceCheckStatus: "unavailable", duplicateDriveIdCount: 0 };
+    const headers = schema.headers, rows = schema.sheet.getDataRange().getValues();
+    const columnIndex = name => headers.indexOf(name), valueAt = (row, name) => { const index = columnIndex(name); return index >= 0 ? row[index] : ""; };
+    let referenceSnapshot = null, referenceCheckStatus = "unavailable";
+    try { referenceSnapshot = collectActiveDriveReferences(true); referenceCheckStatus = referenceSnapshot.unverifiableReferenceCount > 0 ? "unverifiable" : "verified"; }
+    catch (error) { referenceCheckStatus = "unavailable"; }
+    const idCounts = new Map(), idRows = new Map();
+    for (let r = 1; r < rows.length; r++) {
+        const id = String(rows[r][0] || "").trim(); if (!id) continue;
+        idCounts.set(id, (idCounts.get(id) || 0) + 1);
+        if (!idRows.has(id)) idRows.set(id, []);
+        idRows.get(id).push(r + 1);
     }
-    const warnings=[];
-    if(schema.missingHeaders.length)warnings.push("El esquema requiere migración coordinada: "+schema.missingHeaders.join(", "));
-    if(referenceCheckStatus!=="verified")warnings.push("No se pudo confirmar completamente el estado de referencias activas en todas las hojas del Spreadsheet.");
-    logMessage&&logMessage("Historial e inventario de imágenes","Se consultaron "+data.length+" registros válidos y se enviaron "+review.length+" filas a revisión.");
-    return {status:"success",data:data.reverse(),review,schemaStatus:schema.missingHeaders.length?"migration_required":"ready",
-        missingHeaders:schema.missingHeaders,referenceCheckStatus,warnings};
+    const duplicateDriveGroups = getDuplicateDriveImageRows_(rows);
+    const duplicateDriveRows = new Map(duplicateDriveGroups.map(group => [group.fileId, group.rowNumbers]));
+    const data = [], review = [];
+    for (let r = 1; r < rows.length; r++) {
+        const row = rows[r]; if (!row.some(value => String(value == null ? "" : value).trim() !== "")) continue;
+        const id = String(row[0] || "").trim();
+        const rawIds = new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7])));
+        const rawDriveId = rawIds.size === 1 ? Array.from(rawIds)[0] : "";
+        const reviewEntry = { rowNumber: r + 1, id_reemplazo: id || "Sin ID", nombre_archivo: String(row[6] || "").slice(0, 180),
+            estado: String(row[10] || "Sin estado"), driveFileId: rawDriveId, reason: "" };
+        let type = "", status = "", driveId = "";
+        try {
+            if (!id) throw new Error("Fila con datos pero sin id_reemplazo.");
+            if (idCounts.get(id) !== 1) throw new Error("id_reemplazo duplicado; no se habilitan acciones para ninguna fila coincidente.");
+            type = getReplacedImageRecordType(row, headers);
+            status = String(row[10] || (type === "sin_uso_detectado" ? "sin_uso_detectado" : "historica")).trim();
+            if (!isKnownReplacedImageStatus_(type, status)) throw new Error("Estado histórico desconocido o incompatible con el tipo de registro.");
+            driveId = getReplacedImageRecordIdentity_(row, headers, schema.missingHeaders.length === 0);
+            if (duplicateDriveRows.has(driveId)) throw new Error("Drive ID duplicado en las filas " + duplicateDriveRows.get(driveId).join(", ") + "; se bloquearon las acciones y se requiere reconciliación manual.");
+        } catch (error) {
+            reviewEntry.reason = String(error && error.message || "Registro inválido.");
+            const rowsToReconcile = (rawDriveId && duplicateDriveRows.get(rawDriveId)) || (id && idRows.get(id) && idRows.get(id).length > 1 ? idRows.get(id) : []);
+            if (rowsToReconcile && rowsToReconcile.length > 1) {
+                reviewEntry.duplicateRowNumbers = rowsToReconcile;
+                reviewEntry.reconciliationUrl = getReplacedImageReconciliationUrl_(schema.sheet, rowsToReconcile);
+            }
+            review.push(reviewEntry); continue;
+        }
+        const activeReferences = referenceSnapshot && referenceSnapshot.references.get(driveId);
+        data.push({ id_reemplazo: id, fecha_reemplazo: row[1], tipo_contenido: row[2], registro_id: row[3], campo: row[4],
+            archivo_drive_id: row[5], nombre_archivo: row[6], url_anterior: row[7], sustituida_por_url: row[8], referencia_texto: row[9],
+            estado: status, origen_registro: valueAt(row, "origen_registro") || "reemplazo", tipo_registro: type,
+            tipo_mime: valueAt(row, "tipo_mime"), ubicacion_original: valueAt(row, "ubicacion_original"),
+            fecha_creacion_drive: valueAt(row, "fecha_creacion_drive"), fecha_deteccion: valueAt(row, "fecha_deteccion"),
+            url_visualizacion: valueAt(row, "url_visualizacion"), ubicacion_actual: valueAt(row, "ubicacion_actual"),
+            ultima_auditoria_id: valueAt(row, "ultima_auditoria_id"), estado_previo_papelera: valueAt(row, "estado_previo_papelera"),
+            estado_organizacion: valueAt(row, "estado_organizacion"), error_organizacion: valueAt(row, "error_organizacion"),
+            fecha_organizacion: valueAt(row, "fecha_organizacion"), reference_check_status: referenceCheckStatus,
+            active_reference_count: Array.isArray(activeReferences) ? activeReferences.length : activeReferences ? 1 : 0 });
+    }
+    const warnings = [];
+    if (schema.missingHeaders.length) warnings.push("El esquema requiere migración coordinada: " + schema.missingHeaders.join(", "));
+    if (referenceCheckStatus !== "verified") warnings.push("No se pudo confirmar completamente el estado de referencias activas en todas las hojas del Spreadsheet.");
+    if (duplicateDriveGroups.length) warnings.push("Se detectaron " + duplicateDriveGroups.length + " IDs de Drive duplicados. Las filas afectadas no habilitan acciones; usa el enlace de reconciliación para revisar la hoja.");
+    logMessage && logMessage("Historial e inventario de imágenes", "Se consultaron " + data.length + " registros válidos y se enviaron " + review.length + " filas a revisión; " + duplicateDriveGroups.length + " grupos de Drive duplicados.");
+    return { status: "success", data: data.reverse(), review, schemaStatus: schema.missingHeaders.length ? "migration_required" : "ready",
+        missingHeaders: schema.missingHeaders, referenceCheckStatus, warnings, duplicateDriveIdCount: duplicateDriveGroups.length };
 }
 function getReplacedImageRecordType(row, headers) {
     const typeIndex = headers.indexOf("tipo_registro");
@@ -7447,8 +7468,8 @@ function getDriveAuditCursorFingerprint_(cursor) {
         throw new Error("Cursor de auditoría inválido o incompleto.");
     }
     return hashDriveAuditValue_(JSON.stringify({
-        stack: cursor.stack, totalAnalyzed: Number(cursor.totalAnalyzed),
-        foldersVisited: Number(cursor.foldersVisited), referenceCacheId: String(cursor.referenceCacheId)
+        stack: cursor.stack, referenceCacheId: String(cursor.referenceCacheId),
+        scanVersion: String(cursor.scanVersion || "")
     }));
 }
 function normalizeDriveAuditFileIds_(files) {
@@ -7492,6 +7513,59 @@ function getDriveAuditPageResultCacheKey_(auditId, pageIndex) {
 }
 function getDriveAuditResponseCacheKey_(auditId, fingerprint) {
     return "gp_audit_response_" + String(auditId) + "_" + String(fingerprint);
+}
+function getDriveAuditSeenPageCacheKey_(auditId, pageIndex) {
+    const id = String(auditId || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !Number.isInteger(pageIndex) || pageIndex < 0) throw new Error("Clave de página de deduplicación inválida.");
+    return "gp_audit_seen_" + id + "_" + pageIndex;
+}
+function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds) {
+    const payload = { files: normalizeDriveAuditFileIds_(fileIds), folders: normalizeDriveAuditFileIds_(folderIds) };
+    const serialized = JSON.stringify(payload), cache = CacheService.getScriptCache();
+    const key = getDriveAuditSeenPageCacheKey_(auditId, pageIndex);
+    cache.put(key, serialized, 21600);
+    if (cache.get(key) !== serialized) throw new Error("No se pudo verificar la página de IDs procesados de la auditoría.");
+}
+function loadDriveAuditSeenIds_(auditId, pageCount) {
+    if (!Number.isInteger(pageCount) || pageCount < 0) throw new Error("Cantidad de páginas de deduplicación inválida.");
+    const cache = CacheService.getScriptCache(), files = new Set(), folders = new Set();
+    for (let page = 0; page < pageCount; page++) {
+        const raw = cache.get(getDriveAuditSeenPageCacheKey_(auditId, page));
+        if (raw === null) throw new Error("Falta una página de IDs procesados; inicia una auditoría nueva para evitar duplicados.");
+        let values;
+        try { values = JSON.parse(raw); } catch (error) { throw new Error("Una página de IDs procesados está corrupta."); }
+        if (!values || typeof values !== "object" || !Array.isArray(values.files) || !Array.isArray(values.folders)) throw new Error("Una página de IDs procesados tiene una estructura inválida.");
+        normalizeDriveAuditFileIds_(values.files).forEach(id => files.add(id));
+        normalizeDriveAuditFileIds_(values.folders).forEach(id => folders.add(id));
+    }
+    return { fileIds: Array.from(files).sort(), folderIds: Array.from(folders).sort() };
+}
+function getDuplicateDriveImageRows_(rows) {
+    const groups = new Map();
+    (Array.isArray(rows) ? rows.slice(1) : []).forEach((row, index) => {
+        const ids = new Set([].concat(extractDriveFileIds(row && row[5]), extractDriveFileIds(row && row[7])));
+        if (ids.size !== 1) return;
+        const fileId = Array.from(ids)[0];
+        if (!groups.has(fileId)) groups.set(fileId, []);
+        groups.get(fileId).push(index + 2);
+    });
+    return Array.from(groups.entries()).filter(entry => entry[1].length > 1).map(entry => ({ fileId: entry[0], rowNumbers: entry[1].sort((a,b)=>a-b) }));
+}
+function getReplacedImageReconciliationUrl_(sheet, rowNumbers) {
+    if (!sheet || !Array.isArray(rowNumbers) || !rowNumbers.length) return "";
+    const validRows = rowNumbers.filter(row => Number.isInteger(row) && row >= 2);
+    if (!validRows.length) return "";
+    const first = Math.min.apply(null, validRows), last = Math.max.apply(null, validRows);
+    const range = sheet.getRange(first, 1, last - first + 1, sheet.getLastColumn()).getA1Notation();
+    return sheet.getParent().getUrl() + "#gid=" + sheet.getSheetId() + "&range=" + encodeURIComponent(range);
+}
+function buildVerifiedDriveVisualizationUrl_(fileId) {
+    const id = String(fileId || "").trim();
+    if (!/^[a-zA-Z0-9_-]{20,}$/.test(id)) throw new Error("ID de Drive inválido para la miniatura.");
+    const url = "https://lh3.googleusercontent.com/d/" + id;
+    const match = url.match(/^https:\/\/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]{20,})$/);
+    if (!match || match[1] !== id) throw new Error("La URL de visualización no coincide con el ID de Drive.");
+    return url;
 }
 function storeDriveAuditPageResults_(auditId, pageIndex, unusedFileIds) {
     if (!Number.isInteger(pageIndex) || pageIndex < 0) throw new Error("Índice de página de auditoría inválido.");
@@ -7840,7 +7914,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 setField("ubicacion_original", String(row[column("ubicacion_original") - 1] || folderPath || "Cortes"));
                 setField("fecha_creacion_drive", createdAt);
                 setField("fecha_deteccion", Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss"));
-                setField("url_visualizacion", "https://lh3.googleusercontent.com/d/" + fileId);
+                setField("url_visualizacion", buildVerifiedDriveVisualizationUrl_(fileId));
                 setField("ubicacion_actual", previousOrganizationState === "movida_manual" && previousManualLocation
                     ? previousManualLocation : (folderPath || "Cortes"));
                 setField("ultima_auditoria_id", auditId);
@@ -8296,190 +8370,133 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     const rootFolder = getCortesRootFolder();
     if (!rootFolder) throw new Error("No se pudo acceder a la carpeta principal 'Cortes'.");
     const cursor = payload && payload.cursor ? payload.cursor : null;
-    let auditId, state, referenceSnapshot, stack, totalAnalyzed, foldersVisited, pageIndex, inputFingerprint;
-
+    let auditId, state, referenceSnapshot, stack, totalDiscovered, totalAnalyzed, foldersVisited;
+    let errorCount, duplicateFileCount, duplicateFolderCount, pageIndex, inputFingerprint;
     if (cursor) {
         auditId = String(cursor.referenceCacheId || "").trim();
         state = loadDriveAuditServerState_(auditId);
         if (state.ownerId !== ownerId) throw new Error("El cursor pertenece a otra sesión Desarrollador.");
+        if (state.scanVersion !== ADMIN_SERVICE_VERSION || String(cursor.scanVersion || "") !== ADMIN_SERVICE_VERSION) throw new Error("La auditoría fue creada con otra versión del servicio; inicia una auditoría nueva para aplicar la deduplicación global.");
         inputFingerprint = getDriveAuditCursorFingerprint_(cursor);
         if (state.lastRequestFingerprint === inputFingerprint && state.lastResponseCacheKey) {
             const cachedResponse = CacheService.getScriptCache().get(state.lastResponseCacheKey);
-            if (cachedResponse !== null) {
-                try { return JSON.parse(cachedResponse); }
-                catch (cacheError) { throw new Error("La respuesta reanudable de auditoría está corrupta. Inicia una auditoría nueva."); }
-            }
+            if (cachedResponse !== null) { try { return JSON.parse(cachedResponse); } catch (cacheError) { throw new Error("La respuesta reanudable de auditoría está corrupta. Inicia una auditoría nueva."); } }
             throw new Error("La respuesta de este lote expiró; inicia una auditoría nueva para evitar duplicar resultados.");
         }
-        if (state.status !== "running" || state.expectedCursorFingerprint !== inputFingerprint) {
-            throw new Error("El cursor no coincide con la última continuación emitida por ADMIN. No se aceptó el lote.");
-        }
-        if (!Array.isArray(cursor.stack) || cursor.stack.length === 0 ||
-            Number(cursor.totalAnalyzed) !== Number(state.totalAnalyzed) ||
-            Number(cursor.foldersVisited) !== Number(state.foldersVisited)) {
-            throw new Error("El cursor está incompleto o sus contadores no coinciden con el estado del servidor.");
-        }
+        if (state.status !== "running" || state.expectedCursorFingerprint !== inputFingerprint) throw new Error("El cursor no coincide con la última continuación emitida por ADMIN. No se aceptó el lote.");
+        if (!Array.isArray(cursor.stack) || cursor.stack.length === 0 || Number(cursor.totalAnalyzed) !== Number(state.totalAnalyzed) || Number(cursor.foldersVisited) !== Number(state.foldersVisited)) throw new Error("El cursor está incompleto o sus contadores no coinciden con el estado del servidor.");
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
-        cursor.stack.forEach(item => {
-            if (!item || !item.folderId ||
-                !isFolderInsideCortes(DriveApp.getFolderById(item.folderId), DRIVE_FOLDER_ID)) {
-                throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes».");
-            }
-        });
+        cursor.stack.forEach(item => { if (!item || !item.folderId || !isFolderInsideCortes(DriveApp.getFolderById(item.folderId), DRIVE_FOLDER_ID)) throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes»."); });
         stack = cursor.stack;
-        totalAnalyzed = Number(state.totalAnalyzed) || 0;
-        foldersVisited = Number(state.foldersVisited) || 0;
+        totalDiscovered = Number(state.totalDiscovered) || 0; totalAnalyzed = Number(state.totalAnalyzed) || 0;
+        foldersVisited = Number(state.foldersVisited) || 1; errorCount = Number(state.errorCount) || 0;
+        duplicateFileCount = Number(state.duplicateFileCount) || 0; duplicateFolderCount = Number(state.duplicateFolderCount) || 0;
         pageIndex = Number(state.pageCount) || 0;
     } else {
         cleanupExpiredDriveAuditServerStates_();
-        auditId = Utilities.getUuid();
-        inputFingerprint = "START";
-        state = { auditId: auditId, ownerId: ownerId, status: "running",
-            createdAt: Date.now(), pageCount: 0, totalAnalyzed: 0, foldersVisited: 0 };
-        const references = collectActiveDriveReferences(false);
-        const historicalDriveIds = new Set();
-        const protectedDriveIds = new Set();
+        auditId = Utilities.getUuid(); inputFingerprint = "START";
+        state = { auditId, ownerId, status: "running", scanVersion: ADMIN_SERVICE_VERSION, createdAt: Date.now(),
+            pageCount: 0, totalDiscovered: 0, totalAnalyzed: 0, foldersVisited: 1, errorCount: 0, duplicateFileCount: 0, duplicateFolderCount: 0 };
+        const references = collectActiveDriveReferences(false), historicalDriveIds = new Set(), protectedDriveIds = new Set();
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (historySheet) {
             const historyRows = historySheet.getDataRange().getValues();
             const historyHeaders = historyRows.length ? historyRows[0].map(value => String(value || "").trim()) : [];
-            const originIndex = historyHeaders.indexOf("origen_registro");
-            const typeIndex = historyHeaders.indexOf("tipo_registro");
+            const originIndex = historyHeaders.indexOf("origen_registro"), typeIndex = historyHeaders.indexOf("tipo_registro");
             for (let r = 1; r < historyRows.length; r++) {
-                const row = historyRows[r];
-                const origin = originIndex >= 0 ? String(row[originIndex] || "") : "";
-                const status = String(row[10] || "historica");
-                const recordType = typeIndex >= 0 ? String(row[typeIndex] || "reemplazada") : "reemplazada";
+                const row = historyRows[r], origin = originIndex >= 0 ? String(row[originIndex] || "") : "";
+                const status = String(row[10] || "historica"), recordType = typeIndex >= 0 ? String(row[typeIndex] || "reemplazada") : "reemplazada";
                 if (status === "eliminada") continue;
-                const ids = new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7])));
-                ids.forEach(id => {
+                new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7]))).forEach(id => {
                     if (status === "en_uso") protectedDriveIds.add(id);
-                    else if (status === "requiere_revision" || status === "eliminacion_pendiente" ||
-                        status === "en_papelera" || (origin !== "auditoria_drive" && recordType === "reemplazada")) {
-                        historicalDriveIds.add(id);
-                    }
+                    else if (status === "requiere_revision" || status === "eliminacion_pendiente" || status === "en_papelera" || (origin !== "auditoria_drive" && recordType === "reemplazada")) historicalDriveIds.add(id);
                 });
             }
         }
-        referenceSnapshot = {
-            activeDriveIds: Array.from(references.references.keys()),
-            historicalDriveIds: Array.from(historicalDriveIds),
-            protectedDriveIds: Array.from(protectedDriveIds),
-            unverifiableReferenceCount: references.unverifiableReferenceCount
-        };
+        referenceSnapshot = { activeDriveIds: Array.from(references.references.keys()), historicalDriveIds: Array.from(historicalDriveIds),
+            protectedDriveIds: Array.from(protectedDriveIds), unverifiableReferenceCount: references.unverifiableReferenceCount };
         storeAuditDriveReferenceSnapshot(auditId, referenceSnapshot);
-        state.unverifiableReferenceCount = references.unverifiableReferenceCount;
-        saveDriveAuditServerState_(state);
-        stack = [{ folderId: DRIVE_FOLDER_ID, path: rootFolder.getName(),
-            fileToken: null, folderToken: null, filesDone: false, foldersDone: false }];
-        totalAnalyzed = 0;
-        foldersVisited = 0;
-        pageIndex = 0;
+        state.unverifiableReferenceCount = references.unverifiableReferenceCount; saveDriveAuditServerState_(state);
+        stack = [{ folderId: DRIVE_FOLDER_ID, path: rootFolder.getName(), fileToken: null, folderToken: null, filesDone: false, foldersDone: false }];
+        totalDiscovered = 0; totalAnalyzed = 0; foldersVisited = 1; errorCount = 0; duplicateFileCount = 0; duplicateFolderCount = 0; pageIndex = 0;
         logMessage && logMessage("Referencias", `Snapshot preparado: ${referenceSnapshot.activeDriveIds.length} referencias activas y ${referenceSnapshot.historicalDriveIds.length} históricas.`);
     }
-
-    const activeDriveIds = new Set(referenceSnapshot.activeDriveIds);
-    const historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds);
-    const protectedDriveIds = new Set(referenceSnapshot.protectedDriveIds || []);
-    let batchFiles = 0, batchFolders = 0;
-    const auditResults = [];
-    const batchFilesLimit = 25, batchFoldersLimit = 20;
-
-    while (stack.length && batchFiles < batchFilesLimit && batchFolders < batchFoldersLimit) {
-        const current = stack[stack.length - 1];
-        const folder = DriveApp.getFolderById(current.folderId);
+    const processed = loadDriveAuditSeenIds_(auditId, pageIndex), seenFileIds = new Set(processed.fileIds), seenFolderIds = new Set(processed.folderIds);
+    const pageFileIds = [], pageFolderIds = [];
+    if (!cursor && !seenFolderIds.has(DRIVE_FOLDER_ID)) { seenFolderIds.add(DRIVE_FOLDER_ID); pageFolderIds.push(DRIVE_FOLDER_ID); }
+    const activeDriveIds = new Set(referenceSnapshot.activeDriveIds), historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds), protectedDriveIds = new Set(referenceSnapshot.protectedDriveIds || []);
+    let batchFiles = 0, batchFolders = 0, batchFileEntries = 0, batchFolderEntries = 0;
+    const auditResults = [], batchFilesLimit = 25, batchFoldersLimit = 20, batchFileEntriesLimit = 50, batchFolderEntriesLimit = 40;
+    while (stack.length && batchFiles < batchFilesLimit && batchFolders < batchFoldersLimit && batchFileEntries < batchFileEntriesLimit && batchFolderEntries < batchFolderEntriesLimit) {
+        const current = stack[stack.length - 1], folder = DriveApp.getFolderById(current.folderId);
         if (!current.filesDone) {
             const files = current.fileToken ? DriveApp.continueFileIterator(current.fileToken) : folder.getFiles();
-            while (files.hasNext() && batchFiles < batchFilesLimit) {
-                const file = files.next();
+            while (files.hasNext() && batchFiles < batchFilesLimit && batchFileEntries < batchFileEntriesLimit) {
+                const file = files.next(); batchFileEntries++;
+                let fileId = ""; try { fileId = String(file.getId() || "").trim(); } catch (idError) { errorCount++; continue; }
+                if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { errorCount++; continue; }
+                if (seenFileIds.has(fileId)) { duplicateFileCount++; continue; }
+                seenFileIds.add(fileId); pageFileIds.push(fileId); totalDiscovered++;
                 let fileName = "Archivo no verificable", mimeType = "", size = 0, lastUpdated = "", classification = "No verificable";
-                const fileId = file.getId();
                 try {
-                    fileName = file.getName();
-                    mimeType = file.getMimeType();
-                    size = file.getSize();
+                    fileName = file.getName(); mimeType = file.getMimeType(); size = file.getSize();
                     lastUpdated = Utilities.formatDate(file.getLastUpdated(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
                     if (activeDriveIds.has(fileId) || protectedDriveIds.has(fileId)) classification = "En uso";
                     else if (historicalDriveIds.has(fileId)) classification = "Histórica";
                     else if (!String(mimeType).startsWith("image/")) classification = "No verificable";
                     else if (referenceSnapshot.unverifiableReferenceCount > 0) classification = "No verificable";
                     else classification = "Sin uso detectado";
-                } catch (fileError) { classification = "No verificable"; }
-                auditResults.push({ fileId: fileId, fileName: fileName, folderId: current.folderId,
-                    folderPath: current.path, mimeType: mimeType, size: size, lastUpdated: lastUpdated,
-                    classification: classification });
-                batchFiles++;
-                totalAnalyzed++;
+                } catch (fileError) { classification = "No verificable"; errorCount++; }
+                auditResults.push({ fileId, fileName, folderId: current.folderId, folderPath: current.path, mimeType, size, lastUpdated, classification });
+                batchFiles++; totalAnalyzed++;
             }
             if (files.hasNext()) { current.fileToken = files.getContinuationToken(); break; }
-            current.fileToken = null;
-            current.filesDone = true;
+            current.fileToken = null; current.filesDone = true;
         }
         if (current.foldersDone) { stack.pop(); continue; }
         const subFolders = current.folderToken ? DriveApp.continueFolderIterator(current.folderToken) : folder.getFolders();
-        if (subFolders.hasNext()) {
-            const childFolder = subFolders.next();
+        let pushedChild = false;
+        while (subFolders.hasNext() && batchFolderEntries < batchFolderEntriesLimit && batchFolders < batchFoldersLimit) {
+            const childFolder = subFolders.next(); batchFolderEntries++;
+            const childFolderId = String(childFolder.getId() || "").trim();
+            current.folderToken = subFolders.hasNext() ? subFolders.getContinuationToken() : null;
+            if (!current.folderToken) current.foldersDone = true;
+            if (!/^[a-zA-Z0-9_-]{20,}$/.test(childFolderId)) { errorCount++; continue; }
+            if (seenFolderIds.has(childFolderId)) { duplicateFolderCount++; continue; }
             if (!isFolderInsideCortes(childFolder, DRIVE_FOLDER_ID)) throw new Error("Se detectó una subcarpeta fuera del árbol «Cortes».");
-            if (subFolders.hasNext()) {
-                current.folderToken = subFolders.getContinuationToken();
-            } else {
-                current.folderToken = null;
-                current.foldersDone = true;
-            }
-            stack.push({ folderId: childFolder.getId(), path: `${current.path}/${childFolder.getName()}`,
-                fileToken: null, folderToken: null, filesDone: false, foldersDone: false });
-            batchFolders++;
-            foldersVisited++;
-        } else {
-            current.foldersDone = true;
-            stack.pop();
+            seenFolderIds.add(childFolderId); pageFolderIds.push(childFolderId);
+            stack.push({ folderId: childFolderId, path: `${current.path}/${childFolder.getName()}`, fileToken: null, folderToken: null, filesDone: false, foldersDone: false });
+            batchFolders++; foldersVisited++; pushedChild = true; break;
         }
+        if (pushedChild) continue;
+        if (subFolders.hasNext()) { current.folderToken = subFolders.getContinuationToken(); current.foldersDone = false; break; }
+        current.folderToken = null; current.foldersDone = true; stack.pop();
     }
-
     const complete = stack.length === 0;
-    const nextCursor = complete ? null : { stack: stack, totalAnalyzed: totalAnalyzed,
-        foldersVisited: foldersVisited, referenceCacheId: auditId };
-    storeDriveAuditPageResults_(auditId, pageIndex,
-        auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
-    const nextPageCount = pageIndex + 1;
-    const response = {
-        status: "success", auditId: auditId, serverCompletionVerified: complete,
-        rootFolderName: rootFolder.getName(), rootFolderId: DRIVE_FOLDER_ID,
-        batchAnalyzed: batchFiles, totalAnalyzed: totalAnalyzed, foldersVisited: foldersVisited,
-        complete: complete, partial: !complete,
-        unverifiableReferenceCount: referenceSnapshot.unverifiableReferenceCount,
-        files: auditResults, cursor: nextCursor
-    };
-    const responseCacheKey = getDriveAuditResponseCacheKey_(auditId, inputFingerprint);
-    const responseJson = JSON.stringify(response);
+    const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
+    storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
+    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds);
+    const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
+    const response = { status: "success", auditId, serverCompletionVerified: complete, serviceVersion: ADMIN_SERVICE_VERSION, serverTimestamp,
+        rootFolderName: rootFolder.getName(), rootFolderId: DRIVE_FOLDER_ID, batchAnalyzed: batchFiles, totalDiscovered, totalAnalyzed,
+        foldersVisited, pendingFolderCount: stack.length, errorCount, duplicateFileCount, duplicateFolderCount,
+        complete, partial: !complete, unverifiableReferenceCount: referenceSnapshot.unverifiableReferenceCount, files: auditResults, cursor: nextCursor };
+    const responseCacheKey = getDriveAuditResponseCacheKey_(auditId, inputFingerprint), responseJson = JSON.stringify(response);
     CacheService.getScriptCache().put(responseCacheKey, responseJson, 21600);
-    if (CacheService.getScriptCache().get(responseCacheKey) !== responseJson) {
-        throw new Error("No se pudo conservar la respuesta reanudable del lote de auditoría.");
-    }
-    state.pageCount = nextPageCount;
-    state.totalAnalyzed = totalAnalyzed;
-    state.foldersVisited = foldersVisited;
-    state.unverifiableReferenceCount = referenceSnapshot.unverifiableReferenceCount;
-    state.lastRequestFingerprint = inputFingerprint;
-    state.lastResponseCacheKey = responseCacheKey;
+    if (CacheService.getScriptCache().get(responseCacheKey) !== responseJson) throw new Error("No se pudo conservar la respuesta reanudable del lote de auditoría.");
+    state.pageCount = nextPageCount; state.totalDiscovered = totalDiscovered; state.totalAnalyzed = totalAnalyzed; state.foldersVisited = foldersVisited;
+    state.errorCount = errorCount; state.duplicateFileCount = duplicateFileCount; state.duplicateFolderCount = duplicateFolderCount;
+    state.unverifiableReferenceCount = referenceSnapshot.unverifiableReferenceCount; state.lastRequestFingerprint = inputFingerprint; state.lastResponseCacheKey = responseCacheKey;
     if (complete) {
         const allUnusedIds = loadDriveAuditUnusedFileIds_(auditId, nextPageCount);
-        state.status = "complete";
-        state.completedAt = Date.now();
-        state.expectedUnusedCount = allUnusedIds.length;
-        state.expectedUnusedDigest = hashDriveAuditFileIds_(allUnusedIds);
-        state.expectedCursorFingerprint = "";
-        const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(ownerId).slice(0, 32);
-        const properties = PropertiesService.getScriptProperties();
+        state.status = "complete"; state.completedAt = Date.now(); state.expectedUnusedCount = allUnusedIds.length;
+        state.expectedUnusedDigest = hashDriveAuditFileIds_(allUnusedIds); state.expectedCursorFingerprint = "";
+        const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(ownerId).slice(0, 32), properties = PropertiesService.getScriptProperties();
         properties.setProperty(latestKey, auditId);
         if (properties.getProperty(latestKey) !== auditId) throw new Error("No se pudo verificar la referencia a la última auditoría completa.");
-    } else {
-        state.status = "running";
-        state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor);
-    }
+    } else { state.status = "running"; state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor); }
     saveDriveAuditServerState_(state);
     if (complete) clearAuditDriveReferenceSnapshot(auditId);
-    logMessage && logMessage("Auditoría Drive", `Lote analizado: ${batchFiles} archivos. Total acumulado: ${totalAnalyzed}. Estado: ${complete ? "completo" : "parcial"}.`);
+    logMessage && logMessage("Auditoría Drive", `Lote analizado: ${batchFiles} archivos únicos. Total acumulado: ${totalAnalyzed}. Duplicados omitidos: ${duplicateFileCount + duplicateFolderCount}. Estado: ${complete ? "completo" : "parcial"}.`);
     return response;
 }
-
