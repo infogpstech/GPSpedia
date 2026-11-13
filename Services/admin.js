@@ -7029,7 +7029,8 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
 }
 
 function requestAdminDriveFile_(fileId,method){
-    const url="https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(fileId)+"?supportsAllDrives=true";
+    const query=method==="get"?"?supportsAllDrives=true&fields=id,name,mimeType,trashed,parents":"?supportsAllDrives=true";
+    const url="https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(fileId)+query;
     const response=UrlFetchApp.fetch(url,{method,headers:{Authorization:"Bearer "+ScriptApp.getOAuthToken()},muteHttpExceptions:true});
     const code=response.getResponseCode();let body={};
     if(code>=200&&code<300){try{body=JSON.parse(response.getContentText()||"{}");}catch(error){throw new Error("Drive API devolvió una respuesta JSON inválida.");}}
