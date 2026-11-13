@@ -2343,10 +2343,161 @@ function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage) {
     } finally { lock.releaseLock(); }
 }
 
+function getAdminModalDomainValues_(sheet, fieldName) {
+    const lastRow = sheet.getLastRow();
+    const readColumn = column => lastRow > 1
+        ? sheet.getRange(2, column, lastRow - 1, 1).getValues().flat()
+            .map(value => String(value == null ? "" : value).trim()).filter(Boolean)
+        : [];
+    if (fieldName === "categoria") return readColumn(COLS_CORTES.categoria);
+    if (fieldName === "tipoEncendido") return readColumn(COLS_CORTES.tipoEncendido);
+    if (/^tipoCorte[1-3]$/.test(fieldName)) {
+        return [COLS_CORTES.tipoCorte1, COLS_CORTES.tipoCorte2, COLS_CORTES.tipoCorte3]
+            .flatMap(readColumn);
+    }
+    if (/^configRelay[1-3]$/.test(fieldName)) {
+        const relaySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.RELAY);
+        if (!relaySheet || relaySheet.getLastRow() < 2 || relaySheet.getLastColumn() < 2) {
+            throw new Error("No se pudo comprobar el dominio de configuraciones Relay; no se realizó ninguna escritura.");
+        }
+        return relaySheet.getRange(2, 2, relaySheet.getLastRow() - 1, 1).getValues().flat()
+            .map(value => String(value == null ? "" : value).trim()).filter(Boolean);
+    }
+    return [];
+}
+
+function validateAdminModalFieldValue_(sheet, fieldName, rawValue, rowValues) {
+    if (fieldName === "vin") throw new Error("La colección VIN debe validarse mediante su flujo especializado.");
+    const value = rawValue === undefined || rawValue === null ? "" : rawValue;
+    const richFields = new Set(["apertura", "cableAlimen", "cableAlimen2", "cableAlimen3", "notaImportante"]);
+    const imageFields = new Set(["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"]);
+    const maxLengths = {
+        categoria: 80, modelo: 120, versionesAplicables: 300, tipoEncendido: 100,
+        notaImportante: 5000, apertura: 5000, cableAlimen: 5000, cableAlimen2: 5000, cableAlimen3: 5000,
+        ubicacionCorte1: 1000, ubicacionCorte2: 1000, ubicacionCorte3: 1000,
+        colorCableCorte1: 200, colorCableCorte2: 200, colorCableCorte3: 200,
+        tipoCorte1: 100, tipoCorte2: 100, tipoCorte3: 100,
+        configRelay1: 200, configRelay2: 200, configRelay3: 200
+    };
+    if (fieldName === "anoDesde" || fieldName === "anoHasta") {
+        const numeric = typeof value === "number" ? value : (typeof value === "string" && /^\d{4}$/.test(value.trim()) ? Number(value.trim()) : NaN);
+        if (!Number.isInteger(numeric) || numeric < 1886 || numeric > 2100) {
+            throw new Error("El año debe ser un número entero entre 1886 y 2100.");
+        }
+        const otherField = fieldName === "anoDesde" ? "anoHasta" : "anoDesde";
+        const otherColumn = COLS_CORTES[otherField];
+        const otherRaw = rowValues[otherColumn - 1];
+        if (otherRaw !== "" && otherRaw !== null && otherRaw !== undefined && Number.isFinite(Number(otherRaw))) {
+            if (fieldName === "anoDesde" && numeric > Number(otherRaw)) throw new Error("El año inicial no puede ser posterior al año final.");
+            if (fieldName === "anoHasta" && numeric < Number(otherRaw)) throw new Error("El año final no puede ser anterior al año inicial.");
+        }
+        return numeric;
+    }
+    if (typeof value !== "string") throw new Error("El campo '" + fieldName + "' debe enviarse como texto.");
+    const clean = value.trim();
+    const maxLength = maxLengths[fieldName];
+    if (maxLength && clean.length > maxLength) throw new Error("El campo '" + fieldName + "' supera el máximo de " + maxLength + " caracteres.");
+    if ((fieldName === "categoria" || fieldName === "modelo") && !clean) throw new Error("El campo '" + fieldName + "' es obligatorio.");
+    if (["categoria", "tipoEncendido"].includes(fieldName) || /^(tipoCorte|configRelay)[1-3]$/.test(fieldName)) {
+        if (clean) {
+            const domain = getAdminModalDomainValues_(sheet, fieldName);
+            if (!domain.some(item => item.toLowerCase() === clean.toLowerCase())) {
+                throw new Error("El valor de '" + fieldName + "' no pertenece a las opciones registradas.");
+            }
+        }
+    }
+    if (imageFields.has(fieldName)) {
+        if (clean && extractDriveFileIds(clean).length !== 1) throw new Error("El campo '" + fieldName + "' debe contener una única referencia válida de Google Drive.");
+        return clean;
+    }
+    if (richFields.has(fieldName)) return sanitizeSupplementaryRichText_(clean);
+    return clean;
+}
+
+function findUniqueAdminVehicleRow_(sheet, vehicleId) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No se encontraron vehículos registrados.");
+    const ids = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getValues().flat();
+    const matches = [];
+    ids.forEach((id, index) => {
+        if (String(id == null ? "" : id).trim() === vehicleId) matches.push(index + 2);
+    });
+    if (matches.length === 0) throw new Error("No se encontró el vehículo con ID '" + vehicleId + "' en la base de datos.");
+    if (matches.length !== 1) throw new Error("El ID '" + vehicleId + "' está duplicado en Cortes; se detuvo la edición para evitar modificar una fila ambigua.");
+    return matches[0];
+}
+
 /**
- * Actualizar de manera silenciosa una celda en Google Sheets por ID de vehículo y columna/campo
+ * Actualizar de manera silenciosa un campo permitido del modal administrativo.
+ * El ID y los campos calculados quedan fuera de la allowlist y nunca se escriben.
  */
 function handleUpdateVehicleField(payload, logMessage) {
+    const { vehicleId, fieldName, value } = payload || {};
+    const cleanVehicleId = String(vehicleId == null ? "" : vehicleId).trim();
+    if (!cleanVehicleId || !fieldName || typeof fieldName !== "string") throw new Error("Parámetros de edición de campo incompletos.");
+    if (!isAdminModalEditField_(fieldName) || fieldName === "id" || fieldName === "timestamp" || fieldName === "contadorBusqueda") {
+        throw new Error("El campo '" + fieldName + "' no forma parte de la edición permitida del modal de detalle.");
+    }
+    if (fieldName === "vin") return handleUpdateVehicleVinCollection_(cleanVehicleId, value, logMessage);
+    if (!Object.prototype.hasOwnProperty.call(COLS_CORTES, fieldName) || COLS_CORTES[fieldName] <= COLS_CORTES.id) {
+        throw new Error("El campo '" + fieldName + "' no corresponde a una columna editable del catálogo.");
+    }
+
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo obtener el bloqueo para editar el vehículo. Intenta nuevamente."); }
+    try {
+        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+        const actualRow = findUniqueAdminVehicleRow_(sheet, cleanVehicleId);
+        const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const colIndex = COLS_CORTES[fieldName];
+        const valueToStore = validateAdminModalFieldValue_(sheet, fieldName, value, rowValues);
+        const target = sheet.getRange(actualRow, colIndex);
+        const previousValue = target.getValue();
+        try {
+            target.setValue(valueToStore);
+            SpreadsheetApp.flush();
+            const persisted = target.getValue();
+            if (String(persisted == null ? "" : persisted) !== String(valueToStore == null ? "" : valueToStore)) {
+                throw new Error("El valor guardado no coincide con el valor validado.");
+            }
+        } catch (writeError) {
+            try {
+                target.setValue(previousValue);
+                SpreadsheetApp.flush();
+                if (String(target.getValue() == null ? "" : target.getValue()) !== String(previousValue == null ? "" : previousValue)) {
+                    throw new Error("No se pudo verificar la restauración del valor anterior.");
+                }
+            } catch (rollbackError) {
+                throw new Error("Falló la edición y también su reversión: " + writeError.message + "; " + rollbackError.message);
+            }
+            throw writeError;
+        }
+
+        logMessage("Edición In-Modal", "Actualizando campo '" + fieldName + "' para el vehículo ID: " + cleanVehicleId + "...");
+        let folderSyncWarning = false;
+        const folderMetadataFields = new Set(["categoria", "marca", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta"]);
+        if (folderMetadataFields.has(fieldName)) {
+            try {
+                const updatedValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+                const syncResult = movePrimaryVehicleImageToCanonicalFolder(sheet, actualRow, mapRowToObject(updatedValues, COLS_CORTES), null, logMessage);
+                folderSyncWarning = Boolean(syncResult && syncResult.warning);
+                if (folderSyncWarning && syncResult.reason) logMessage("Edición In-Modal", "El metadato se guardó, pero la imagen principal no se movió: " + syncResult.reason, 0, 0, true);
+            } catch (syncError) {
+                folderSyncWarning = true;
+                logMessage("Edición In-Modal", "El campo se guardó, pero no se pudo sincronizar la carpeta de imagenVehiculo: " + syncError.message, 0, 0, true, true);
+            }
+        }
+        logMessage("Edición In-Modal", "Campo '" + fieldName + "' actualizado y verificado para el vehículo ID: " + cleanVehicleId + ".");
+        return {
+            status: "success",
+            folderSyncWarning: folderSyncWarning,
+            message: "El campo '" + fieldName + "' fue guardado y verificado en el registro de la fila " + actualRow + "."
+        };
+    } finally {
+        lock.releaseLock();
+    }
+}
     const { vehicleId, fieldName, value } = payload || {};
     if (!vehicleId || !fieldName) throw new Error("Parámetros de edición de campo incompletos.");
     if (!isAdminModalEditField_(fieldName)) {
