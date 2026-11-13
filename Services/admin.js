@@ -2495,61 +2495,6 @@ function handleUpdateVehicleField(payload, logMessage) {
         lock.releaseLock();
     }
 }
-    const { vehicleId, fieldName, value } = payload || {};
-    if (!vehicleId || !fieldName) throw new Error("Parámetros de edición de campo incompletos.");
-    if (!isAdminModalEditField_(fieldName)) {
-        throw new Error("El campo '" + fieldName + "' no forma parte de la edición del modal de detalle.");
-    }
-    if (fieldName === "vin") return handleUpdateVehicleVinCollection_(vehicleId, value, logMessage);
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    const colIndex = fieldName === "vin" ? getVinColumnIndex(sheet) : COLS_CORTES[fieldName];
-    if (!colIndex) throw new Error("El campo '" + fieldName + "' no existe en el esquema del catálogo.");
-
-    logMessage("Edición In-Modal", `Actualizando campo '${fieldName}' para el vehículo ID: ${vehicleId}...`);
-    const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
-    const rowIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
-    if (rowIndex === -1) {
-        throw new Error(`No se encontró el vehículo con ID '${vehicleId}' en la base de datos.`);
-    }
-
-    const actualRow = rowIndex + 2;
-    let valueToStore = value !== undefined ? value : "";
-    if (["apertura", "cableAlimen", "cableAlimen2", "cableAlimen3", "notaImportante"].includes(fieldName)) {
-        if (value !== undefined && value !== null && typeof value !== "string") throw new Error("El contenido enriquecido debe ser texto.");
-        if (String(value || "").length > 5000) throw new Error("El contenido enriquecido no puede exceder 5000 caracteres.");
-        valueToStore = sanitizeSupplementaryRichText_(value);
-    }
-    sheet.getRange(actualRow, colIndex).setValue(valueToStore);
-    SpreadsheetApp.flush();
-
-    let folderSyncWarning = false;
-    const folderMetadataFields = new Set([
-        "categoria", "marca", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta"
-    ]);
-    if (folderMetadataFields.has(fieldName)) {
-        try {
-            const updatedValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
-            const syncResult = movePrimaryVehicleImageToCanonicalFolder(
-                sheet, actualRow, mapRowToObject(updatedValues, COLS_CORTES), null, logMessage
-            );
-            folderSyncWarning = Boolean(syncResult && syncResult.warning);
-            if (folderSyncWarning && syncResult.reason) {
-                logMessage("Edición In-Modal", "El metadato se guardó, pero la imagen principal no se movió: " + syncResult.reason, 0, 0, true);
-            }
-        } catch (syncError) {
-            folderSyncWarning = true;
-            logMessage("Edición In-Modal", "El campo se guardó, pero no se pudo sincronizar la carpeta de imagenVehiculo: " + syncError.message, 0, 0, true, true);
-        }
-    }
-
-    logMessage("Edición In-Modal", "Campo '" + fieldName + "' actualizado silenciosamente con éxito.");
-    return {
-        status: 'success',
-        folderSyncWarning: folderSyncWarning,
-        message: "El campo '" + fieldName + "' fue guardado silenciosamente en el registro de la fila " + actualRow + "."
-    };
-}
-
 const ADMIN_IMAGE_UPLOAD_SHEET_NAME = "AdminImageUploads";
 const ADMIN_IMAGE_UPLOAD_HEADERS = [
     "opId", "vehicleId", "fieldName", "urlAnterior", "urlNueva", "archivoDriveId",
