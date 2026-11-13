@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const admin = readFileSync(new URL("../admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../../ui.js", import.meta.url), "utf8");
@@ -77,19 +78,20 @@ const BASE_HEADERS = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registr
     "archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
 const EXT_HEADERS = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion",
     "url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion",
-    "error_organizacion","fecha_organizacion","estado_previo_papelera"];
+    "error_organizacion","fecha_organizacion","estado_previo_papelera","ultima_operacion_inventario_id",
+    "resultado_inventario","detalle_resultado_inventario"];
 const HEADERS = [...BASE_HEADERS, ...EXT_HEADERS];
 const FILE_A = "abcdefghij1234567890";
 const FILE_B = "bcdefghij12345678901";
 function makeRow({id="REP-1", status="historica", type="reemplazada", fileId=FILE_A,
     originalId=fileId, visualId=fileId, origin=type === "reemplazada" ? "reemplazo" : "auditoria_drive",
     contentType=type === "reemplazada" ? "vehiculo" : "inventario_sin_uso", name="imagen.jpg"} = {}) {
-    const row = Array(24).fill("");
+    const row = Array(27).fill("");
     row[0]=id; row[1]=new Date("2026-01-01T00:00:00Z"); row[2]=contentType;
     row[3]="VEH-1"; row[4]="imagenVehiculo"; row[5]=fileId; row[6]=name;
     row[7]="https://drive.google.com/file/d/"+originalId+"/view"; row[8]="https://drive.google.com/file/d/REPLACED00000000000000/view";
     row[9]="Vehículo de prueba"; row[10]=status; row[11]=origin; row[12]="image/jpeg";
-    row[16]="https://lh3.googleusercontent.com/d/"+visualId; row[19]=type; row[23]="";
+    row[16]="https://lh3.googleusercontent.com/d/"+visualId; row[19]=type; row[23]=""; row[24]=""; row[25]=""; row[26]="";
     return row;
 }
 function lockHarness() {
@@ -133,7 +135,7 @@ check("Los 13 encabezados dinámicos se migran de forma idempotente y se verific
     const sheet=createSheet([BASE_HEADERS,row]);
     const lock=lockHarness(),api=buildHelpers({sheet,lock});
     const headers=api.ensureReplacedImagesInventoryColumns(sheet);
-    assert.equal(headers.length,24);
+    assert.equal(headers.length,27);
     assert.deepEqual(headers.slice(11),EXT_HEADERS);
     assert.equal(sheet.cells[1][19],"reemplazada");
     assert.equal(sheet.cells[1][16],"https://lh3.googleusercontent.com/d/"+FILE_A);
@@ -400,7 +402,7 @@ check("La acción de migración coordina el lock, ejecuta el esquema y devuelve 
     assert.equal(result.status,"success");
     assert.equal(result.migrated,true);
     assert.equal(result.rowCount,3);
-    assert.equal(result.columnCount,24);
+    assert.equal(result.columnCount,27);
     assert.equal(creates,1);
     assert.equal(migrations,1);
     assert.equal(waits,1);
@@ -425,6 +427,99 @@ check("La interfaz muestra estados históricos y filas inválidas en una secció
     assert.ok(ui.includes("['historica', 'restablecida'].includes(status)"));
     assert.ok(ui.includes("referenceSafe"));
     assert.ok(ui.includes("schemaWarnings"));
+});
+
+
+const auditHelperNames = [
+    "getDriveAuditServerStateKey_", "hashDriveAuditValue_", "getDriveAuditCursorFingerprint_",
+    "normalizeDriveAuditFileIds_", "hashDriveAuditFileIds_", "saveDriveAuditServerState_",
+    "loadDriveAuditServerState_", "getDriveAuditPageResultCacheKey_", "getDriveAuditResponseCacheKey_",
+    "storeDriveAuditPageResults_", "loadDriveAuditUnusedFileIds_", "getLatestDriveAuditIdForUser_",
+    "validateCompletedDriveAudit_"
+];
+const auditHelperSource = auditHelperNames.map(name => fnSource(admin, name)).join("\n");
+function auditHarness() {
+    const properties = new Map(), cache = new Map();
+    const PropertiesService = { getScriptProperties: () => ({
+        getProperty: key => properties.has(key) ? properties.get(key) : null,
+        setProperty: (key, value) => { properties.set(key, String(value)); },
+        deleteProperty: key => properties.delete(key)
+    }) };
+    const CacheService = { getScriptCache: () => ({
+        get: key => cache.has(key) ? cache.get(key) : null,
+        put: (key, value) => { cache.set(key, String(value)); },
+        remove: key => cache.delete(key)
+    }) };
+    const Utilities = {
+        DigestAlgorithm: { SHA_256: "SHA-256" }, Charset: { UTF_8: "utf8" },
+        computeDigest: (_algorithm, value) => Array.from(createHash("sha256").update(String(value), "utf8").digest())
+    };
+    const api = new Function("PropertiesService","CacheService","Utilities",auditHelperSource+
+        "\nreturn {getDriveAuditServerStateKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
+            PropertiesService,CacheService,Utilities);
+    return { ...api, properties, cache };
+}
+const AUDIT_ID = "123e4567-e89b-42d3-a456-426614174000";
+const AUDIT_OWNER = "USR-DEVELOPER-1";
+check("El cursor de auditoría se firma por contenido y rechaza una pila vacía o alterada",()=>{
+    const h=auditHarness();
+    const cursor={stack:[{folderId:"folder-id-0000000000000001",fileToken:"token-a",filesDone:false}],
+        totalAnalyzed:25,foldersVisited:2,referenceCacheId:AUDIT_ID};
+    const fingerprint=h.getDriveAuditCursorFingerprint_(cursor);
+    assert.match(fingerprint,/^[a-f0-9]{64}$/);
+    assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,totalAnalyzed:26}));
+    assert.throws(()=>h.getDriveAuditCursorFingerprint_({...cursor,stack:[]}),/Cursor de auditoría inválido/);
+});
+check("El estado de auditoría se conserva en servidor y queda vinculado a su propietario",()=>{
+    const h=auditHarness();
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running",pageCount:1});
+    assert.equal(h.loadDriveAuditServerState_(AUDIT_ID).ownerId,AUDIT_OWNER);
+    const key=h.getDriveAuditServerStateKey_(AUDIT_ID);
+    const state=JSON.parse(h.properties.get(key));
+    state.updatedAt=Date.now()-21600001;
+    h.properties.set(key,JSON.stringify(state));
+    assert.throws(()=>h.loadDriveAuditServerState_(AUDIT_ID),/expiró/);
+});
+check("El marcador completo exige todas las páginas y coincide con la lista exacta de archivos",()=>{
+    const h=auditHarness(), ids=[FILE_A,FILE_B].sort();
+    h.storeDriveAuditPageResults_(AUDIT_ID,0,[FILE_A]);
+    h.storeDriveAuditPageResults_(AUDIT_ID,1,[FILE_B,FILE_A]);
+    assert.deepEqual(h.loadDriveAuditUnusedFileIds_(AUDIT_ID,2),ids);
+    const digest=h.hashDriveAuditFileIds_(ids);
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"complete",
+        completedAt:Date.now(),expectedUnusedCount:2,expectedUnusedDigest:digest});
+    assert.equal(h.validateCompletedDriveAudit_(AUDIT_ID,AUDIT_OWNER,[{fileId:FILE_A},{fileId:FILE_B}]).auditId,AUDIT_ID);
+    assert.throws(()=>h.validateCompletedDriveAudit_(AUDIT_ID,"USR-OTHER",[FILE_A,FILE_B]),/otra sesión/);
+    assert.throws(()=>h.validateCompletedDriveAudit_(AUDIT_ID,AUDIT_OWNER,[FILE_A]),/no coincide/);
+});
+check("Una auditoría parcial o una página perdida no puede autorizar el inventario",()=>{
+    const h=auditHarness();
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running",completedAt:Date.now()});
+    assert.throws(()=>h.validateCompletedDriveAudit_(AUDIT_ID,AUDIT_OWNER,[]),/no ha confirmado/);
+    assert.throws(()=>h.loadDriveAuditUnusedFileIds_(AUDIT_ID,1),/Falta una página/);
+});
+check("El inventario y la organización usan la misma auditoría y operación verificadas",()=>{
+    const audit=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
+    const save=fnSource(admin,"handleSaveUnusedImagesInventory");
+    const organize=fnSource(admin,"handleOrganizeUnusedImagesBatch");
+    assert.ok(audit.includes("expectedCursorFingerprint"));
+    assert.ok(audit.includes("lastRequestFingerprint"));
+    assert.ok(audit.includes("serverCompletionVerified"));
+    assert.ok(save.includes("validateCompletedDriveAudit_"));
+    assert.ok(save.includes("ultima_operacion_inventario_id"));
+    assert.ok(save.includes("resultado_inventario"));
+    assert.ok(save.includes("results.push"));
+    assert.ok(save.includes("getDuplicateReplacedImageIds_"));
+    assert.ok(organize.includes("storedOperationId !== inventoryOperationId"));
+    assert.ok(organize.includes('inventoryResult !== "confirmado"'));
+});
+check("El esquema del inventario conserva las columnas nuevas de trazabilidad de forma idempotente",()=>{
+    const ensure=fnSource(admin,"ensureReplacedImagesInventoryColumns");
+    const readSchema=fnSource(admin,"getReplacedImagesReadSchema_");
+    for(const field of ["ultima_operacion_inventario_id","resultado_inventario","detalle_resultado_inventario"]){
+        assert.ok(ensure.includes(field));
+        assert.ok(readSchema.includes(field));
+    }
 });
 
 console.log("AdminReplacedImagesIntegrity: "+passed+"/"+passed+" PASS");
