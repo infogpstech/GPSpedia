@@ -531,7 +531,7 @@ Resultado:
 - Se incorporó validación backend de tipo, longitud y dominio para categoría, encendido, tipo de corte y Relay; años enteros en el dominio 1980–2027 (alineado con el editor) y coherencia anoDesde/anoHasta; sanitización de contenido enriquecido y validación de referencias de Drive.
 - La edición ordinaria obtiene ScriptLock, resuelve una única fila por ID, valida antes de escribir, verifica persistencia y restaura el valor anterior si falla la escritura/verificación.
 - La colección VIN usa la misma resolución de ID único y rechaza filas ambiguas.
-- Se añadió Services/Test/AdminModalEditIntegrity.js. Resultado del harness V8 aislado: 9/9 PASS. Parsing de Services/admin.js y de los handlers modificados: PASS.
+- Se añadió Services/Test/AdminModalEditIntegrity.js. Harness V8: 9/9 PASS; regresiones AdminModalEditSecurity 13/13 y AdminModalEditRestoreContract 12/12 PASS. Parsing de Services/admin.js y handlers modificados: PASS.
 - No se ejecutaron Apps Script desplegados, Spreadsheet/Drive reales, endpoints ni datos productivos.
 
 Validación Beta pendiente: roles y sesiones reales, Spreadsheet ADMIN aislada, IDs duplicados, dominios/valores inválidos, fallos físicos de escritura/flush, preservación de ID/campos calculados y regresión de carga de imágenes. Secuencia registrada en lista_beta.txt.
