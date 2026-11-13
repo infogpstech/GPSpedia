@@ -1,0 +1,140 @@
+// AUG-117 — protección de última cuenta Desarrollador y limpieza de sesiones.
+function runLastDeveloperProtectionTests(sources) {
+    const auth=String(sources.auth||''),html=String(sources.html||'');
+    const results=[];let passed=0,failed=0;
+    const assert=(v,m)=>{if(!v)throw new Error(m||'Aserción fallida');};
+    const equal=(a,b,m)=>{if(a!==b)throw new Error(m||'Esperado '+b+', recibido '+a);};
+    const run=(name,fn)=>{try{fn();passed++;results.push({name,status:'PASS'});}catch(e){failed++;results.push({name,status:'FAIL',message:String(e.message||e)});}};
+    const extract=(src,name,endMarker)=>{const s=src.indexOf('function '+name+'(');assert(s>=0,'No se encontró '+name);const e=endMarker?src.indexOf(endMarker,s):src.indexOf('\nfunction ',s+10);assert(!endMarker||e>s,'No se encontró fin de '+name);return src.slice(s,e>s?e:src.length).trim();};
+    const normalize=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+    const active=row=>Boolean(row&&String(row[1]||'').trim()&&!String(row[1]).startsWith('__deleted__:')&&['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalize(row[3])));
+    const userCols={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9};
+    const sessionCols={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6};
+    const helper=extract(auth,'countActiveDevelopers_');
+    const count=new Function('COLS_USERS','isActiveAuthUserRecord','normalizeRoleName',helper+'\nreturn countActiveDevelopers_;')(userCols,active,normalize);
+    const makeHarness=(userRows,sessionRows,failOnce=false)=>{
+        const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],...userRows.map(r=>r.slice())];
+        const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],...sessionRows.map(r=>r.slice())];let fail=failOnce;
+        const makeSheet=(rows,isSessions)=>({
+            getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),
+            getLastRow:()=>rows.length,
+            getRange:(row,col)=>({
+                setValues:values=>values.forEach((r,i)=>r.forEach((v,j)=>rows[row-1+i][col-1+j]=v)),
+                setValue:value=>{rows[row-1][col-1]=value;},
+                getValue:()=>rows[row-1][col-1],
+                clearContent:()=>{rows[row-1][col-1]='';}
+            }),
+            deleteRow:row=>{if(isSessions&&fail){fail=false;throw new Error('Fallo simulado al eliminar fila');}rows.splice(row-1,1);},
+            _rows:rows
+        });
+        const usersSheet=makeSheet(users,false),sessionsSheet=makeSheet(sessions,true),logs=[];
+        const context={
+            SPREADSHEET_ID:'TEST',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},
+            ROLE_REVOCATION_SHARED_PREFIX:'__role_revocation_pending__:',
+            COLS_USERS:userCols,COLS_ACTIVE_SESSIONS:sessionCols,
+            normalizeUserId:v=>String(v===null||v===undefined?'':v).trim(),
+            normalizeRoleName:normalize,isActiveAuthUserRecord:active,countActiveDevelopers_:count,
+            getSessionExpirationStatus_:()=>({expired:false}),assertRequesterRoleRevocationClear_:()=>{},
+            hasPendingRoleRevocation_:()=>false,revokePendingLoginRequestsForUserUnderLock_:()=>({pending:false}),
+            roleRevocationPropertyKey_:id=>'role:'+id,parseSharedRoleRevocationMarker_:()=>null,
+            parseRoleRevocationMarker_:()=>null,sameRoleRevocationMarker_:()=>true,
+            reconcileRoleRevocationUnderLock_:(us,ss,id)=>{
+                const row=us._rows.find(r=>String(r[0])===String(id));
+                const marker=String(row[7]||''),data=JSON.parse(marker.slice(marker.indexOf('{')));
+                row[3]=data.newRole;row[7]='';
+                return {revokedSessions:0,pending:false,cleanupPending:false};
+            },
+            LockService:{getScriptLock:()=>({waitLock:()=>{},releaseLock:()=>{}})},
+            SpreadsheetApp:{openById:()=>({getSheetByName:n=>n==='Users'?usersSheet:n==='ActiveSessions'?sessionsSheet:null}),flush:()=>{}},
+            PropertiesService:{getScriptProperties:()=>({getProperty:()=>null,setProperty:()=>{},deleteProperty:()=>{}})},
+            Utilities:{getUuid:()=>'uuid-test'},logToSheet:(...args)=>logs.push(args),console:{error:()=>{}}
+        };
+        const update=new Function(...Object.keys(context),extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS')+'\nreturn handleUpdateUser;')(...Object.values(context));
+        const remove=new Function(...Object.keys(context),extract(auth,'handleDeleteUser')+'\nreturn handleDeleteUser;')(...Object.values(context));
+        return {update,remove,users,sessions,logs};
+    };
+    run('Cuenta solo Desarrolladores activos',()=>{
+        equal(count([['D1','dev1','','Desarrollador'],['D2','dev2','','desarrollador'],['D3','__deleted__:x','','Desarrollador'],['T1','tech','','Tecnico']]),2);
+    });
+    run('Bloquea la degradación del último Desarrollador antes de escribir',()=>{
+        const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1']],[['D1','dev','tok1',new Date(),'','']]);
+        let error;try{h.update({userId:'D1',updates:{Privilegios:'Gefe',Nombre_Completo:'No escribir'},sessionToken:'tok1'});}catch(e){error=e;}
+        assert(error&&/última cuenta activa/.test(error.message),'No se rechazó la degradación del último Desarrollador');
+        equal(h.users[1][3],'Desarrollador');equal(h.users[1][6],'','Hubo una escritura antes del rechazo');
+    });
+    run('Permite degradar si queda otro Desarrollador activo',()=>{
+        const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['D2','dev2','pw','Desarrollador']],[['D1','dev','tok1',new Date(),'','']]);
+        const result=h.update({userId:'D2',updates:{Privilegios:'Gefe'},sessionToken:'tok1'});
+        equal(result.status,'success');equal(h.users[2][3],'Gefe');equal(count(h.users.slice(1)),1);
+    });
+    run('Eliminar usuario limpia todas sus sesiones y registra auditoría',()=>{
+        const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['T1','tech','pw','Tecnico','','','','tok2']],[['D1','dev','tok1',new Date(),'',''],['T1','tech','tok2',new Date(),'',''],['T1','tech','tok3',new Date(),'','']]);
+        const result=h.remove({userId:'T1',sessionToken:'tok1'});
+        equal(result.status,'success');equal(result.closedSessions,2);equal(h.sessions.length,2);
+        assert(h.sessions.slice(1).every(row=>row[0]!=='T1'));assert(h.logs.some(row=>row[1]==='Account logically deleted in AUTH.'));
+    });
+    run('Permite eliminar un Desarrollador cuando otro permanece activo',()=>{
+        const h=makeHarness([['D1','dev1','pw','Desarrollador','','','','tok1'],['D2','dev2','pw','Desarrollador','','','','tok2']],[['D1','dev1','tok1',new Date(),'',''],['D2','dev2','tok2',new Date(),'','']]);
+        const result=h.remove({userId:'D2',sessionToken:'tok1'});
+        equal(result.status,'success');equal(count(h.users.slice(1)),1);equal(h.sessions.length,2);
+    });
+    run('No permite eliminar la cuenta solicitante',()=>{
+        const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1']],[['D1','dev','tok1',new Date(),'','']]);
+        let error;try{h.remove({userId:'D1',sessionToken:'tok1'});}catch(e){error=e;}
+        assert(error&&/No puedes eliminar tu propia cuenta/.test(error.message));equal(h.sessions.length,2);equal(h.users[1][1],'dev');
+    });
+    run('La limpieza parcial queda desactivada y se completa al reintentar',()=>{
+        const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['T1','tech','pw','Tecnico','','','','tok2']],[['D1','dev','tok1',new Date(),'',''],['T1','tech','tok2',new Date(),'','']],true);
+        const first=h.remove({userId:'T1',sessionToken:'tok1'});equal(first.status,'error');equal(first.disabled,true);
+        assert(String(h.users[2][1]).startsWith('__deleted__:'));
+        const second=h.remove({userId:'T1',sessionToken:'tok1'});equal(second.status,'success');equal(h.sessions.length,2);
+    });
+    run('La UI confirma actor y objetivo al eliminar y degradar',()=>{
+        assert(html.includes('Confirmar eliminación de cuenta. Actor:')&&html.includes('Confirmar cambio de privilegios. Actor:')&&html.includes('Cuenta objetivo:'));
+        assert(html.includes('deleteUser(user.ID, user.Nombre_Usuario, e.currentTarget)'));
+    });
+    run('Ambas mutaciones usan lock y validan actor y objetivo únicos',()=>{
+        const u=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS'),d=extract(auth,'handleDeleteUser');
+        assert(u.includes('LockService.getScriptLock()')&&d.includes('LockService.getScriptLock()'));
+        assert(u.includes('requesterRows.length !== 1')&&u.includes('targetRows.length !== 1'));
+        assert(d.includes('requesterRows.length !== 1')&&d.includes('targetRows.length !== 1'));
+    });
+    run('La protección de degradación ocurre antes de cualquier escritura de perfil',()=>{
+        const u=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS'),d=extract(auth,'handleDeleteUser');
+        assert(u.indexOf('No se puede degradar la última cuenta')<u.indexOf('if (updates.Nombre_Completo)'));
+        assert(d.includes("targetRole === 'desarrollador'")&&d.includes('countActiveDevelopers_(usersData.slice(1)) <= 1'));
+    });
+    run('AUTH verifica ausencia de sesiones residuales después de eliminar',()=>{
+        const d=extract(auth,'handleDeleteUser');
+        assert(d.includes('remainingSessions.length')&&d.includes('Quedaron filas de sesión asociadas'));
+        assert(d.indexOf('remainingSessions.length')>d.indexOf('sessionsSheet.deleteRow'));
+    });
+    run('Handlers AUTH y confirmaciones UI tienen sintaxis válida',()=>{
+        const update=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS');
+        const remove=extract(auth,'handleDeleteUser');
+        const helper=extract(auth,'countActiveDevelopers_');
+        const uiStart=html.indexOf('async function deleteUser(');
+        const uiEnd=html.indexOf('\nasync function resetUserSessions',uiStart);
+        assert(uiStart>=0&&uiEnd>uiStart,'No se encontró handler UI deleteUser');
+        [update,remove,helper,html.slice(uiStart,uiEnd)].forEach((source,index)=>{try{new Function('return ('+source+');');}catch(e){throw new Error('Sintaxis '+index+': '+e.message);}});
+    });
+    return {status:failed===0?'PASS':'FAIL',passed,failed,results};
+}
+
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+const html=readFileSync(resolve(root,'users.html'),'utf8');
+const suites=[
+    ['AUTH operativo',readFileSync(resolve(root,'Services/Auth.js'),'utf8')],
+    ['AUTH aislado de pruebas',readFileSync(resolve(root,'Services/Test/Auth.js'),'utf8')]
+];
+let totalPassed=0,totalFailed=0;
+for(const [label,auth] of suites){
+    const result=runLastDeveloperProtectionTests({auth,html});
+    totalPassed+=result.passed;totalFailed+=result.failed;
+    result.results.forEach(item=>console.log(item.status+' ['+label+'] '+item.name+(item.message?' — '+item.message:'')));
+}
+console.log('AUG-117: '+totalPassed+'/'+(totalPassed+totalFailed)+' pruebas aprobadas en ambos proyectos AUTH.');
+if(totalFailed)process.exitCode=1;

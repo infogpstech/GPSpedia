@@ -505,3 +505,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/InboxCachePagination.js: pruebas locales de identidad, TTL, fallback stale, invalidación, límite de memoria y paginación entre hojas. InboxStoredXss.js actualizado para verificar el nuevo helper de mapeo sin perder cobertura histórica.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones, estado y validaciones Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-117 — PROTECCIÓN DE LA ÚLTIMA CUENTA DESARROLLADOR
+- Services/Auth.js y Services/Test/Auth.js: helper countActiveDevelopers_ y guardias dentro de handleUpdateUser/handleDeleteUser para impedir degradar o eliminar la última cuenta activa con rol Desarrollador. Las comprobaciones ocurren bajo ScriptLock y antes de escribir/desactivar; se conserva el Spreadsheet ID aislado de Test/Auth.js.
+- Services/Auth.js: handleDeleteUser verifica después de retirar las filas ActiveSessions que no queden filas residuales para el userId; los fallos mantienen la cuenta desactivada y permiten reintentar la limpieza.
+- users.html: confirmaciones explícitas identifican al actor y a la cuenta objetivo antes de degradar una cuenta Desarrollador o eliminar un usuario; el handler de eliminación rechaza localmente la cuenta activa y muestra el resultado del backend.
+- Services/Test/LastDeveloperProtection.js: 12 escenarios con dobles aislados, ejecutados contra ambos archivos AUTH (24 ejecuciones) para conteo, bloqueo/permiso de cambios de rol, borrado, limpieza de sesiones, auditoría y recuperación tras fallo parcial.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones y continuidad.
+================================================================================

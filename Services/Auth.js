@@ -918,6 +918,17 @@ function isActiveAuthUserRecord(row) {
     return Boolean(username) && !username.startsWith('__deleted__:') &&
         ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
 }
+
+// Cuenta únicamente cuentas activas con identidad de rol Desarrollador.
+// Acepta filas directas o registros { row } usados por los handlers.
+function countActiveDevelopers_(records) {
+    if (!Array.isArray(records)) return 0;
+    return records.filter(record => {
+        const row = Array.isArray(record) ? record : record && record.row;
+        return isActiveAuthUserRecord(row) &&
+            normalizeRoleName(row[COLS_USERS.Privilegios - 1]) === 'desarrollador';
+    }).length;
+}
 function normalizeRoleName(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 }
@@ -1231,6 +1242,12 @@ function handleUpdateUser(payload) {
             }
         }
 
+        // La última cuenta Desarrollador no puede perder el rol. Se evalúa bajo el mismo lock
+        // y antes de cualquier escritura, incluida la actualización del nombre.
+        if (normalizedTargetRole === 'desarrollador' && normalizeRoleName(nextRole) !== 'desarrollador' && countActiveDevelopers_(users) <= 1) {
+            throw new Error('No se puede degradar la última cuenta activa con rol Desarrollador. Asigna primero ese rol a otra cuenta.');
+        }
+
         // Nombre_Completo se valida/escribe antes del rol; el cambio de rol y su revocación quedan bajo este mismo lock.
         if (updates.Nombre_Completo) {
             usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
@@ -1530,6 +1547,9 @@ function handleDeleteUser(payload) {
         if (alreadyDeleted && requesterRole !== 'desarrollador') {
             throw new Error('Solo Desarrollador puede completar la limpieza.');
         }
+        if (!alreadyDeleted && targetRole === 'desarrollador' && countActiveDevelopers_(usersData.slice(1)) <= 1) {
+            throw new Error('No se puede eliminar la última cuenta activa con rol Desarrollador. Asigna primero ese rol a otra cuenta.');
+        }
 
         const targetSessionRows = [];
         const seenTokens = new Set();
@@ -1585,6 +1605,17 @@ function handleDeleteUser(payload) {
             }
         }
         SpreadsheetApp.flush();
+        // Confirmar la limpieza por identidad; una fila residual mantiene la operación reintentable.
+        try {
+            const remainingSessions = sessionsSheet.getDataRange().getValues().slice(1).filter(row =>
+                normalizeUserId(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) === userId
+            );
+            if (remainingSessions.length) {
+                deletionError = deletionError || new Error('Quedaron filas de sesión asociadas a la cuenta desactivada.');
+            }
+        } catch (verificationError) {
+            deletionError = deletionError || verificationError;
+        }
     } finally {
         if (lockAcquired) lock.releaseLock();
     }

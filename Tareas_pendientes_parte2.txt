@@ -154,10 +154,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-117 — Proteger la última cuenta Desarrollador y limpiar sesiones al eliminar usuarios
 - Origen: H-AUD-018-005. Prioridad: Alta.
-- Evidencia: users.html:406–410; Services/users.js:357–389 y 398–425.
-- Problema: se puede autodegradar/autoborrar o eliminar/degradar al último Desarrollador; deleteUser deja filas en ActiveSessions.
-- Criterios: impedir operaciones destructivas sobre el último Desarrollador; confirmar actor y objetivo; lock/operación atómica; limpiar sesiones y registrar auditoría.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia revisada: las rutas updateUser/deleteUser se despachan a AUTH. El backend ya validaba actor/objetivo únicos, usaba ScriptLock, impedía el auto-borrado, desactivaba primero la cuenta y retiraba sus filas ActiveSessions con registro de auditoría. La observación histórica de que deleteUser no limpiaba sesiones no coincide con la implementación vigente; se añadió verificación posterior de cero filas residuales y reintento seguro.
+- Implementación: countActiveDevelopers_ cuenta únicamente cuentas activas; handleUpdateUser rechaza degradar al último Desarrollador antes de cualquier escritura; handleDeleteUser incorpora guardia explícita antes de desactivar una cuenta Desarrollador. Ambas comprobaciones ocurren dentro del lock de AUTH. El mismo cambio se aplica al espejo AUTH aislado en Services/Test/Auth.js, conservando su Spreadsheet ID de pruebas. users.html identifica actor y objetivo en confirmaciones de degradación y eliminación.
+- Validación local: suite LastDeveloperProtection 24/24 PASS (12 casos en Services/Auth.js y los mismos 12 en Services/Test/Auth.js); incluye bloqueo de autodegradación última, transición permitida si queda otro Desarrollador, eliminación con limpieza de varias sesiones, eliminación de un Desarrollador cuando queda otro, auto-borrado rechazado y recuperación tras fallo parcial. Parsing de ambos AUTH y handlers UI PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Beta pendiente: probar cuentas sintéticas en AUTH/Spreadsheet aislados, operaciones concurrentes y verificación de sesiones después de eliminar. No se ejecutaron endpoints ni hojas productivas.
 
 ### AUG-118 — Refrescar perfil y rol cacheados desde sesión autenticada
 - Origen: H-AUD-018-006. Prioridad: Media.

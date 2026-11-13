@@ -430,7 +430,7 @@ function renderUserTable() {
             const deleteButton = document.createElement('button');
             deleteButton.className = 'btn btn-danger btn-sm';
             deleteButton.textContent = 'Eliminar';
-            deleteButton.addEventListener('click', (e) => deleteUser(user.ID, e.currentTarget));
+            deleteButton.addEventListener('click', (e) => deleteUser(user.ID, user.Nombre_Usuario, e.currentTarget));
             actionsCell.appendChild(deleteButton);
         }
 
@@ -584,6 +584,16 @@ async function handleUserFormSubmit(e) {
         window.location.replace('index.html');
         return;
     }
+    if (userId) {
+        const originalUser = allUsers.find(user => String(user.ID) === String(userId));
+        const wasDeveloper = String(originalUser && originalUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
+        const willLoseDeveloperRole = String(userData.Privilegios || '').trim().toLowerCase() !== 'desarrollador';
+        if (wasDeveloper && willLoseDeveloperRole) {
+            const actorName = String(currentUser.Nombre_Usuario || submittingSession.userId);
+            const targetName = String(originalUser && originalUser.Nombre_Usuario || userId);
+            if (!confirm('Confirmar cambio de privilegios. Actor: ' + actorName + '. Cuenta objetivo: ' + targetName + '. Se cambiará Desarrollador por ' + userData.Privilegios + '. Si es la última cuenta Desarrollador, el servidor rechazará la operación. ¿Continuar?')) return;
+        }
+    }
 
     try {
         submitBtn.classList.add('btn-loading');
@@ -725,25 +735,29 @@ async function handleUserFormSubmit(e) {
     }
 }
 
-async function deleteUser(userId, btnElement) {
+async function deleteUser(userId, username, btnElement) {
     if (btnElement && btnElement.classList.contains('btn-loading')) return;
-
-    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-        try {
-            if (btnElement) {
-                btnElement.classList.add('btn-loading');
-                btnElement.disabled = true;
-            }
-            await postToAction('deleteUser', { userId, sessionToken: currentUser.SessionToken });
-            alert('Usuario eliminado');
-            await fetchUsers();
-        } catch (error) {
-            // Error handled in postToAction
-        } finally {
-            if (btnElement) {
-                btnElement.classList.remove('btn-loading');
-                btnElement.disabled = false;
-            }
+    if (!currentUser || !currentUser.SessionToken || !userId || String(userId) === String(currentUser.ID || currentUser.id || '')) {
+        alert('No se puede eliminar la cuenta activa ni continuar sin una sesión válida.');
+        return;
+    }
+    const actorName = String(currentUser.Nombre_Usuario || currentUser.ID || currentUser.id || 'sesión activa');
+    const targetName = String(username || userId);
+    if (!confirm('Confirmar eliminación de cuenta. Actor: ' + actorName + '. Cuenta objetivo: ' + targetName + '. Se desactivará la cuenta y se revocarán sus sesiones. ¿Continuar?')) return;
+    try {
+        if (btnElement) {
+            btnElement.classList.add('btn-loading');
+            btnElement.disabled = true;
+        }
+        const result = await postToAction('deleteUser', { userId, sessionToken: currentUser.SessionToken });
+        alert(result && result.message ? result.message : 'Cuenta eliminada y sesiones revocadas.');
+        await fetchUsers();
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        if (btnElement) {
+            btnElement.classList.remove('btn-loading');
+            btnElement.disabled = false;
         }
     }
 }

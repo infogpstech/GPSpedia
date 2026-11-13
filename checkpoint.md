@@ -260,3 +260,30 @@ Validación Beta pendiente: navegador real; más de 40 registros de prueba repar
 Archivos: inboxPageCache.js, ui.js, api-config.js, Services/feedback.js, Services/Test/InboxCachePagination.js, Services/Test/InboxStoredXss.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-117 — Proteger la última cuenta Desarrollador y limpiar sesiones al eliminar usuarios. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-117 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- La política de último Desarrollador se aplica en AUTH operativo y en el espejo AUTH de pruebas, dentro del mismo ScriptLock que serializa updateUser/deleteUser. El Spreadsheet ID de Services/Test/Auth.js se conserva sin cambios.
+- countActiveDevelopers_ considera solo filas que cumplen isActiveAuthUserRecord y tienen Privilegios normalizado a desarrollador.
+- handleUpdateUser impide que una cuenta Desarrollador pierda ese rol si el conteo activo es uno. El guard se ejecuta antes de actualizar Nombre_Completo o escribir el marcador de revocación.
+- handleDeleteUser rechaza desactivar la última cuenta Desarrollador. El auto-borrado ya estaba prohibido y se conserva.
+- El actor se deriva de la sesión verificada y el objetivo se resuelve por ID único. La UI añade confirmación con el nombre del actor y de la cuenta objetivo antes de eliminar o degradar una cuenta Desarrollador.
+- La eliminación lógica ya revocaba y borraba filas ActiveSessions bajo lock; ahora verifica después de la escritura que no quede ninguna fila para el userId. Si la limpieza falla o quedan filas, la cuenta permanece desactivada, se registra error y el flujo puede reintentarse por un Desarrollador.
+
+Validación local:
+- LastDeveloperProtection: 24/24 PASS: 12 escenarios contra Services/Auth.js y los mismos 12 contra Services/Test/Auth.js, con dobles de Spreadsheet/Lock/Properties.
+- Casos: conteo de activos, rechazo de autodegradación última antes de escribir, degradación permitida cuando queda otro Desarrollador, borrado de usuario y sesiones múltiples, borrado de uno de dos Desarrolladores, auto-borrado rechazado, fallo parcial y reintento de limpieza.
+- Parsing de Services/Auth.js y handlers UI afectados: PASS.
+- No se ejecutaron Apps Script, endpoints, deployments ni hojas productivas.
+
+Validación Beta pendiente: probar con cuentas sintéticas en Spreadsheet/AUTH aislados; verificar bloqueo de la última cuenta y transición permitida con dos Desarrolladores; comprobar la ausencia de filas ActiveSessions tras eliminación; repetir con varias sesiones, reintentos y operaciones concurrentes. No usar cuentas productivas.
+
+Archivos: Services/Auth.js, Services/Test/Auth.js, users.html, Services/Test/LastDeveloperProtection.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-118 — Refrescar perfil y rol cacheados desde sesión autenticada. No iniciar dentro de esta tarea.
+================================================================================

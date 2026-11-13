@@ -1560,3 +1560,39 @@ EJECUCIÓN EN ENTORNO BETA AISLADO:
 
 No declarar PASS sin inspección del navegador y FEEDBACK/Spreadsheet aislados. No ejecutar endpoints operativos ni desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-117 — ÚLTIMA CUENTA DESARROLLADOR Y LIMPIEZA DE SESIONES — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN AUTH Y SPREADSHEET AISLADOS:
+1. Crear cuentas sintéticas: una cuenta Desarrollador y cuentas de otros roles, con sesiones de prueba. Nunca usar cuentas productivas.
+2. Aplicar el cambio a los proyectos AUTH operativo y AUTH de pruebas manteniendo el Spreadsheet ID aislado en el segundo. Con un solo Desarrollador, intentar degradar su propio rol a Gefe/Supervisor/Técnico desde la UI. Debe pedir confirmación y AUTH debe rechazarlo sin cambiar nombre, rol, token ni datos.
+3. Intentar el mismo cambio mediante POST directo a updateUser con token válido de prueba. Debe rechazarse igual; el rol del actor se deriva de AUTH, no de un campo enviado por el cliente.
+4. Intentar eliminar la única cuenta Desarrollador. La UI no ofrece auto-borrado; POST directo a deleteUser con el mismo ID como actor/objetivo debe rechazarse.
+5. Crear un segundo Desarrollador de prueba. Comprobar que degradar o eliminar uno está permitido solo si el otro permanece activo; después repetir con el único restante y confirmar el rechazo.
+6. Eliminar una cuenta técnica con varias filas ActiveSessions. Confirmar que la cuenta queda marcada como desactivada, que no queda ninguna fila de sesión con su userId y que AUTH registra actor, objetivo y sesiones cerradas.
+7. Simular un fallo controlado de eliminación de fila en un entorno aislado. La respuesta debe indicar limpieza incompleta y cuenta desactivada; al reintentar como Desarrollador, debe terminar la limpieza.
+8. Ejecutar dos cambios concurrentes que podrían degradar/eliminar cuentas Desarrollador. El ScriptLock debe serializarlos y nunca dejar el sistema sin una cuenta Desarrollador activa.
+9. Revisar Logs y las filas Users/ActiveSessions antes y después. No ejecutar acciones contra el Spreadsheet ni endpoints productivos.
+
+No declarar PASS sin comprobar el estado de Users, ActiveSessions y Logs en el entorno aislado. No desplegar a producción.
+================================================================================

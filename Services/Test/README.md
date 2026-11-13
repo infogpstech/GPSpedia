@@ -1324,3 +1324,20 @@ node --experimental-default-type=module Services/Test/InboxCachePagination.js
 \`\`\`
 
 La suite prueba el caché en memoria por identidad completa de sesión (usuario, rol y token), TTL, fallback stale explícito, invalidación por sesión, límite de páginas y paginación del backend entre Feedbacks y Contactanos. Verifica cursor inválido y pageSize máximo. También ejecuta contratos estáticos de integración de UI/API. No accede a Apps Script, Spreadsheet ni deployments. La regresión XSS de lectura histórica permanece en Services/Test/InboxStoredXss.js y el contrato de roles en Services/Test/InboxRoleContract.js.
+
+
+## AUG-117 — Protección de la última cuenta Desarrollador y sesiones
+
+Ejecutar desde la raíz del repositorio:
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/LastDeveloperProtection.js
+\`\`\`
+
+La suite ejecuta los mismos 12 escenarios contra `Services/Auth.js` y `Services/Test/Auth.js` (24 ejecuciones), con dobles aislados:
+- Conteo de cuentas activas con rol Desarrollador, excluyendo tombstones.
+- Rechazo de la degradación del último Desarrollador antes de cualquier escritura y permiso cuando queda otra cuenta activa.
+- Eliminación de usuarios, retiro de varias filas ActiveSessions, verificación de cero residuos y registro de auditoría.
+- Eliminación de uno de dos Desarrolladores, protección del auto-borrado y reintento después de una limpieza parcial.
+- Contratos de confirmación UI, actor/objetivo únicos, ScriptLock y sintaxis de los handlers.
+No accede a Apps Script, Spreadsheet, endpoints ni deployments reales. El espejo `Services/Test/Auth.js` conserva el Spreadsheet ID reservado a pruebas. La validación de concurrencia y la integración con AUTH/Spreadsheet se reservan para Beta aislado.
