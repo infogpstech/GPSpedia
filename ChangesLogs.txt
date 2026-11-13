@@ -884,3 +884,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Validación local: UtilitiesSecurity 17/17 PASS; SharedMutationCoordinator 33/33 PASS; ActionDispatchContract 12/12 PASS; parsing V8 PASS.
 - Sin deployment, cambios de ScriptProperties productivas ni acceso a datos reales. Concurrencia real entre proyectos diferida a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-018 — RESPALDOS DRIVE REANUDABLES Y CIERRE DE RECUPERACIÓN
+- Services/admin.js: manifiesto Drive v2 con inventario de identidad/estructura, IDs de origen/copia, rutas, padres, MIME, tamaños, conteos y cursores; copia por lotes con etiquetas idempotentes, reanudación por ID y rechazo de manifiestos incompletos. Se elimina una exclusión por nombre que podía omitir archivos legítimos coincidentes con el nombre del manifiesto.
+- Services/admin.js: restauración DB/Drive valida estado completo, prepara staging, conserva rollback y verifica promoción/reversión; las operaciones pasan por la lease compartida ADMIN de AUG-003.
+- ui.js e index.html: progreso de lotes, respuesta preservada para estados intermedios/reanudables y control para continuar con el mismo ID.
+- Services/Test/AdminRestoreRecovery.js: corrige contratos de inventario y dobles de movimiento; añade regresión de colisión de nombre. Services/Test/AdminBackupResumeUI.mjs valida interfaz, reanudación y parsing/sintaxis Node.js; integrado en RunServiceTests.mjs.
+- Documentación: backlog AUG-018, guía de pruebas, auditoría y lista Beta. lista_beta.txt se rotó sin pérdida en lista_beta_parte1.txt y lista_beta_parte2.txt; se verificó la reconstrucción exacta antes de actualizar los casos AUG-018/AUG-125.
+================================================================================
