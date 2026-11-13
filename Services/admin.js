@@ -980,14 +980,14 @@ function handleBackupDrive(payload, logMessage) {
             const folders = sourceManifest.entries.filter(entry => entry.type === "folder")
                 .sort((a, b) => a.path.split("/").length - b.path.split("/").length || a.path.localeCompare(b.path))
                 .map(entry => ({
-                    sourceId: entry.id, parentSourceId: entry.parentId, name: entry.name, path: entry.path,
+                    type: "folder", sourceId: entry.id, parentSourceId: entry.parentId, name: entry.name, path: entry.path,
                     mimeType: entry.mimeType, size: entry.size, sourceDescription: entry.description,
                     sourceLastUpdated: entry.lastUpdated, copyId: null, parentCopyId: null
                 }));
             const files = sourceManifest.entries.filter(entry => entry.type === "file")
                 .sort((a, b) => a.path.localeCompare(b.path))
                 .map(entry => ({
-                    sourceId: entry.id, parentSourceId: entry.parentId, name: entry.name, path: entry.path,
+                    type: "file", sourceId: entry.id, parentSourceId: entry.parentId, name: entry.name, path: entry.path,
                     mimeType: entry.mimeType, size: entry.size, sourceDescription: entry.description,
                     sourceLastUpdated: entry.lastUpdated, copyId: null, parentCopyId: null
                 }));
@@ -1290,13 +1290,12 @@ function adminRestoreDriveManifest_(folder) {
     };
     visit(folder, "", 0);
     entries.sort((a, b) => a.path.localeCompare(b.path) || a.type.localeCompare(b.type) || a.id.localeCompare(b.id));
-    const structural = entries.map(entry => entry.type === "folder"
-        ? "D|" + entry.path
-        : "F|" + entry.path + "|" + entry.mimeType + "|" + entry.size).join("\n");
-    const identity = entries.map(entry => [
+    const structural = entries.map(entry => JSON.stringify(entry.type === "folder"
+        ? ["D", entry.path] : ["F", entry.path, entry.mimeType, entry.size])).join("\n");
+    const identity = entries.map(entry => JSON.stringify([
         entry.type, entry.id, entry.parentId, entry.path, entry.mimeType, entry.size,
         entry.lastUpdated, entry.description
-    ].join("|")).join("\n");
+    ])).join("\n");
     return {
         folderCount, fileCount, totalBytes,
         fingerprint: adminRestoreHash_(structural),
@@ -1471,7 +1470,7 @@ function adminRestoreVerifyDriveBackupState_(state, backupFolder, actualManifest
     expectedEntries.forEach(entry => {
         if (!entry.copyId || !entry.parentCopyId) throw new Error("Falta el ID de copia o de carpeta padre para " + entry.path + ".");
         const actual = actualById.get(String(entry.copyId));
-        if (!actual || actual.type !== (state.folders.includes(entry) ? "folder" : "file") ||
+        if (!actual || actual.type !== entry.type ||
             actual.path !== entry.path || actual.name !== entry.name ||
             String(actual.parentId) !== String(entry.parentCopyId) ||
             actual.mimeType !== entry.mimeType || Number(actual.size) !== Number(entry.size)) {
@@ -1495,7 +1494,7 @@ function adminRestoreCreateCompletedDriveManifest_(folder, manifest, runId, sour
     manifest.entries.forEach(entry => {
         const parentCopyId = String(entry.parentId) === String(sourceRootId) ? folder.getId() : String(entry.parentId);
         const item = {
-            sourceId: entry.id, copyId: entry.id, parentSourceId: entry.parentId,
+            type: entry.type, sourceId: entry.id, copyId: entry.id, parentSourceId: entry.parentId,
             parentCopyId, name: entry.name, path: entry.path, mimeType: entry.mimeType,
             size: entry.size, sourceDescription: entry.description,
             sourceLastUpdated: entry.lastUpdated
