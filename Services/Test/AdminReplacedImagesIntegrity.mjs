@@ -536,15 +536,16 @@ check("La captura reduce automáticamente el lote tras un bloque lento sin omiti
             };
         }
     };
-    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
-    const scan=new Function("Date","getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+    const source=fnSource(admin,"extractDriveFileIds")+"\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("Date","getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\nreturn collectCortesImageReferences;")(
         FakeDate,()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
     const result=scan(false);
     assert.equal(result.metrics.rows,501);
     assert.equal(result.metrics.chunks,2);
     assert.equal(result.metrics.adaptiveChunkChanges,1);
     assert.equal(result.metrics.maxChunkElapsedMs,2000);
-    assert.equal(result.metrics.finalRowChunkSize,375);
+    assert.equal(result.metrics.smallestAdaptiveRowChunkSize,375);
+    assert.equal(result.metrics.finalRowChunkSize,500);
 });
 check("El escáner global delega Cortes a los ocho campos y mantiene imágenes superpuestas y otras hojas",()=>{
     const scanner=fnSource(admin,"collectActiveDriveReferences");
