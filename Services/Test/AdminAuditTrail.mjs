@@ -159,6 +159,13 @@ check("Un fallo al guardar el inicio impide continuar",()=>{
         error=>error.code==="ADMIN_AUDIT_START_FAILED");
     assert.equal(actionExecuted,false);
 });
+check("Un timeout del ScriptLock impide ejecutar la operación sensible",()=>{
+    const f=createHarness({lockFail:true});
+    assert.throws(()=>f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date()),
+        error=>error.code==="ADMIN_AUDIT_START_FAILED");
+    assert.equal(f.properties.writeCount,0);
+    assert.equal(f.lockReleases,0);
+});
 check("Un fallo al cerrar deja el evento STARTED sin afirmar éxito",()=>{
     const f=createHarness({failOnWrite:2});
     const event=f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date());
@@ -167,6 +174,13 @@ check("Un fallo al cerrar deja el evento STARTED sin afirmar éxito",()=>{
     const record=JSON.parse(f.properties.getProperty(event.key));
     assert.equal(record.outcome,"started");
     assert.equal(record.finishedAt,null);
+});
+check("Rechaza la doble finalización de un mismo evento",()=>{
+    const f=createHarness();
+    const event=f.api.beginAdminAuditEvent_("driveCommand",{}, {userId:"user-1",role:"Desarrollador"},new Date());
+    f.api.finalizeAdminAuditEvent_(event,{response:{status:"success"},payload:{},stage:"Fin",durationMs:50});
+    assert.throws(()=>f.api.finalizeAdminAuditEvent_(event,{response:{status:"success"},payload:{},stage:"Fin",durationMs:60}),
+        error=>error.code==="ADMIN_AUDIT_EVENT_STATE_INVALID");
 });
 check("La lista de acciones auditadas coincide con mutaciones ADMIN sensibles",()=>{
     assert.equal(h.api.isSharedMutationAction_("driveCommand"),true);
