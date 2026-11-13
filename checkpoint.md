@@ -883,3 +883,9 @@ ADENDA DE VALIDACIÓN — AUG-143 — 2026-11-13
 ADENDA DE VALIDACIÓN — AUG-143 — REGRESIÓN CRUZADA
 - CI run 43417195650: PrintSheetPaginationIntegrity 12/12 PASS y node --check PASS; falló una expectativa obsoleta de PrintSheetPageContract (AUG-140) que exigía el algoritmo choosePageGroups retirado por AUG-143.
 - Se alinea la prueba de AUG-140 con el nuevo contrato de overflow medido y preservación secuencial; no se cambia la implementación por este fallo.
+
+
+ADENDA DE CIERRE — AUG-143 — 2026-11-13
+- CI run 43417267856 SUCCESS; Node.js 22.23.4; 23 suites, 311/311 PASS; PrintSheetPaginationIntegrity 12/12 PASS.
+- Paginación por altura real; tarjetas completas y ordenadas, prioridad conservada, tarjetas sin imagen intercaladas en su secuencia; no se fuerza mínimo de 80 px. Las tarjetas individuales que exceden el área se marcan sin ocultar contenido.
+- AUG-143: COMPLETADA CON VALIDACIÓN DIFERIDA. La inspección de PDFs reales y tarjetas individuales muy extensas se reserva a Beta.

@@ -820,3 +820,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 2026-11-13 — AUG-143 — ACTUALIZACIÓN DE REGRESIÓN CRUZADA AUG-140
 - PrintSheetPageContract.mjs conservaba una expectativa de la agrupación anterior por aspecto (choosePageGroups). Se actualiza al contrato vigente de paginación por overflow medido y secuencia técnica.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-143 — VALIDACIÓN FINAL CI
+- CI run 43417267856: SUCCESS sobre 09cf9b787562c9ec2fab7b63430385398e8729b9; Node.js 22.23.4.
+- Regresión completa: 23 suites, 311/311 PASS, 0 fallos. PrintSheetPageContract 11/11, PrintSheetWarningIndicator 9/9, PrintSheetResourceReadiness 12/12 y PrintSheetPaginationIntegrity 12/12 PASS.
+- Se corrigió la expectativa obsoleta de AUG-140 que todavía exigía choosePageGroups; ahora valida paginación por overflow medido.
+================================================================================
