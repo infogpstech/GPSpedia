@@ -46,14 +46,21 @@ function migrateTimestampsSafe_(payload){
  try{
   lock.waitLock(30000);acquired=true;
   const ss=SpreadsheetApp.openById(SPREADSHEET_ID);assertUtilitiesDeveloperSession_(payload,ss);
+  recoverUtilitiesInterruptedMigration_(ss);
   const source=ss.getSheetByName(SHEET_NAMES.SOURCE);if(!source)throw new Error("Hoja 'Cortes' no existe.");
-  const last=source.getLastRow(),urls=last<2?[]:source.getRange(2,SOURCE_COLS.imagenVehiculo,last-1,1).getValues();
-  return replaceUtilitiesTargetSafely_(ss,urls.map(r=>[resolveTimestamp_(r[0])]));
+  const last=source.getLastRow(),sourceValues=last<2?[]:source.getRange(2,SOURCE_COLS.imagenVehiculo,last-1,1).getValues();
+  if(!Array.isArray(sourceValues))throw new Error("No se pudo crear la instantánea de Cortes.");
+  const sourceSnapshot=sourceValues.map((row,index)=>{if(!Array.isArray(row)||row.length!==1)throw new Error("Instantánea de Cortes inválida en la fila "+(index+2)+".");return row[0];});
+  const target=ss.getSheetByName(SHEET_NAMES.TARGET),targetSnapshot=target?target.getDataRange().getValues().map(row=>row.slice()):null;
+  if(target&&(!Array.isArray(targetSnapshot)||!targetSnapshot.length))throw new Error("No se pudo validar la instantánea de Hoja 1.");
+  const output=sourceSnapshot.map(url=>[resolveTimestamp_(url)]);
+  return replaceUtilitiesTargetSafely_(ss,output,targetSnapshot);
  }finally{if(acquired)lock.releaseLock();}
 }
-function replaceUtilitiesTargetSafely_(ss,output){
- recoverUtilitiesInterruptedMigration_(ss);
- const target=ss.getSheetByName(SHEET_NAMES.TARGET);let staging;
+function replaceUtilitiesTargetSafely_(ss,output,targetSnapshot){
+ const target=ss.getSheetByName(SHEET_NAMES.TARGET);
+ if(Boolean(target)!==Array.isArray(targetSnapshot))throw new Error("El destino cambió después de tomar la instantánea; se cancela la migración.");
+ let staging;
  try{
   staging=target?target.copyTo(ss).setName(SHEET_NAMES.STAGING):ss.insertSheet(SHEET_NAMES.STAGING);
   staging.clearContents();ensureUtilitiesSheetRows_(staging,output.length+1);
@@ -67,7 +74,7 @@ function replaceUtilitiesTargetSafely_(ss,output){
  }
  const original=ss.getSheetByName(SHEET_NAMES.TARGET);
  try{
-  if(original)original.setName(SHEET_NAMES.BACKUP);
+  if(original){original.setName(SHEET_NAMES.BACKUP);if(!sameUtilitiesMatrix_(original.getDataRange().getValues(),targetSnapshot))throw new Error("La copia de recuperación no coincide con la instantánea del destino.");}
   staging.setName(SHEET_NAMES.TARGET);
   const promoted=ss.getSheetByName(SHEET_NAMES.TARGET),expected=[["timestamp"],...output];
   if(!sameUtilitiesColumn_(promoted.getRange(1,1,expected.length,1).getValues(),expected))throw new Error("La verificación posterior al reemplazo falló.");
@@ -92,6 +99,11 @@ function recoverUtilitiesInterruptedMigration_(ss){
  if(staging)ss.deleteSheet(staging);
 }
 function ensureUtilitiesSheetRows_(sheet,required){const current=sheet.getMaxRows();if(current<required)sheet.insertRowsAfter(current,required-current);}
+function sameUtilitiesMatrix_(actual,expected){
+ if(!Array.isArray(actual)||!Array.isArray(expected)||actual.length!==expected.length)return false;
+ for(let i=0;i<expected.length;i++){if(!Array.isArray(actual[i])||!Array.isArray(expected[i])||actual[i].length!==expected[i].length)return false;for(let j=0;j<expected[i].length;j++){const a=actual[i][j],b=expected[i][j];if(a instanceof Date||b instanceof Date){if(!(a instanceof Date)||!(b instanceof Date)||a.getTime()!==b.getTime())return false;}else if(typeof a!==typeof b||a!==b)return false;}}
+ return true;
+}
 function sameUtilitiesColumn_(actual,expected){
  if(!Array.isArray(actual)||actual.length!==expected.length)return false;
  for(let i=0;i<expected.length;i++){const a=actual[i][0]==null?"":actual[i][0],b=expected[i][0]==null?"":expected[i][0];if(String(a)!==String(b))return false;}
