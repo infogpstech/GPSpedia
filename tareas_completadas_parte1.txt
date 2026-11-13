@@ -519,3 +519,15 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Pruebas:** ServiceMetricsTelemetry 10/10 PASS; GitHub Actions run 43476653609 SUCCESS: 69 suites, 954/954 pruebas aprobadas, 0 fallos; módulos modificados pasan node --check.
 - **Commit:** 54997b017de2b72acb86763fc1f9063b644a9ec3.
 - **Beta:** probar inactividad >15 minutos, límites exactos, 600+ eventos, solicitudes largas/concurrentes y modal/diagnóstico oculto/visible. Sin datos productivos.
+
+
+### AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Implementación:** la consulta del historial no crea ni migra la hoja; expone estados históricos y filas inválidas/duplicadas en revisión. La migración de doce columnas es explícita, idempotente, coordinada por lock/lease y verifica encabezados. Las acciones validan unicidad e identidad de Drive, tipo MIME, referencias y estados previos; las compensaciones restauran celda/archivo/estado histórico o dejan requiere_revision cuando no pueden confirmarse.
+- **Interfaz y esquema:** se documentaron los doce campos adicionales, estados y reglas de migración en Spreadsheet/GPSpedia_DB_columnas.md; el panel distingue historial recuperable, estados no accionables y registros para revisión.
+- **Pruebas:** AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions run 43481271693 SUCCESS, Node.js 22, 70 suites, 973/973 pruebas aprobadas, 0 fallos. La primera ejecución detectó que la acción explícita de migración faltaba en ACTION_TO_SERVICE_MAP; se corrigió y la ejecución final aprobó.
+- **Commits:** 2c6ff63f6ebc0111ba92e71789f861d2572dd9ce (mapa ADMIN); cierre documental en el commit siguiente.
+- **Beta:** probar Apps Script/Spreadsheet/Drive aislados, permisos y ACL, estados y transiciones reales, fallos de setValue/flush, archivos en papelera, rollback y filas parciales. No usar recursos productivos.
+
+Siguiente tarea: AUG-027 — definir alcance de referencias y separación entre historial e inventario sin uso. Requiere decisión funcional; no implementar por inferencia.
+================================================================================

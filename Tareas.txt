@@ -1352,3 +1352,15 @@ Estado: COMPLETADA LOCALMENTE; validación visual en navegador diferida a Beta.
 - Beta: navegador real, inactividad superior a 15 minutos, modal/diagnóstico oculto y visible, 600+ eventos y solicitudes largas/concurrentes. No usar datos productivos.
 Siguiente tarea: AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes reemplazadas.
 ================================================================================
+
+
+================================================================================
+AUG-026 — Integridad y recuperación del historial de imágenes — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Consulta de solo lectura; migración explícita, idempotente y coordinada de doce columnas.
+- Estados históricos visibles y filas inválidas/duplicadas en revisión; validación de unicidad e identidad de Drive y URL.
+- Restauración/eliminación con validación de estado y compensación verificada; requiere_revision si no se confirma el rollback.
+- AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions 43481271693 SUCCESS: 70 suites, 973/973 PASS.
+- No se ejecutaron recursos externos/productivos; validación real reservada a Beta.
+Siguiente tarea: AUG-027 — decisión pendiente sobre alcance de referencias (todas las hojas vs. columnas de imagen de Cortes), separación UI historial/inventario y política de restauración desde papelera/requiere_revision. No modificar hasta documentar la decisión.
+================================================================================

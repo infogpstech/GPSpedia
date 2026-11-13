@@ -1671,3 +1671,27 @@ git rev-parse HEAD
 
 No utilizar cuentas de usuarios finales ni almacenar telemetría en recursos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-026 — Historial de imágenes reemplazadas (entorno aislado)
+
+Antes de iniciar cualquier prueba, verificar repositorio/rama y sincronizar de forma segura:
+```bash
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || exit 1
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || exit 1
+test -z "$(git status --porcelain)" || { echo "Árbol sucio; detenerse y preservar cambios."; exit 1; }
+git fetch origin GPSpedia2.2.5_work && git pull --ff-only origin GPSpedia2.2.5_work
+git status --short
+git rev-parse HEAD
+```
+
+1. Usar un proyecto Apps Script y una Spreadsheet de prueba con copia desechable del esquema; comprobar ACL/editores y rechazo de roles no autorizados.
+2. Consultar el historial sin hoja y con esquema antiguo: confirmar que la lectura no crea ni modifica la Spreadsheet; ejecutar la migración explícita y comprobar idempotencia de los doce encabezados.
+3. Probar filas historica, restablecida, en_papelera, requiere_revision y cancelada; verificar que todas se muestran y que solo los estados autorizados habilitan restauración.
+4. Probar IDs duplicados, archivo_drive_id/url_anterior/url_visualizacion mismatched, fila parcial, estado desconocido, MIME no imagen y archivo Drive en papelera; confirmar que se presentan para revisión y no se modifican.
+5. Simular en Spreadsheet aislada fallos de setValue/flush durante restauración/eliminación; confirmar rollback de celda, archivo y estado histórico, o requiere_revision si no puede verificarse la compensación.
+6. Probar permisos y referencias activas antes de acciones mutantes. Confirmar que no se toca ningún archivo fuera de la carpeta autorizada.
+
+No usar cuentas, hojas, archivos Drive ni deployments productivos.
+================================================================================

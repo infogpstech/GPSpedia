@@ -1100,3 +1100,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ServiceMetricsTelemetry 10/10 PASS; GitHub Actions run 43476653609 SUCCESS: 69 suites, 954/954 pruebas PASS; node --check de módulos modificados y ui.js PASS.
 - No se ejecutaron pruebas de navegador real ni se modificaron datos/deployments productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-026 — Integridad y recuperación del historial de imágenes
+- Se separó la consulta de solo lectura de la inicialización/migración del esquema; la migración explícita queda coordinada y verificable.
+- Se documentaron los doce campos adicionales y los estados históricos/organizativos; la UI presenta registros inválidos y duplicados en revisión.
+- Las operaciones validan identidad de IDs y estados previos; los fallos de compensación se marcan requiere_revision en lugar de afirmar éxito.
+- La integración de la migración explícita a ADMIN se añadió en api-config.js tras detectarse la ruta ausente en CI.
+- AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions run 43481271693 SUCCESS: 70 suites, 973/973 pruebas, 0 fallos.
+- Las pruebas externas reales quedan para Beta aislada; no se modificaron deployments ni datos productivos.
+================================================================================

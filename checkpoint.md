@@ -1563,3 +1563,40 @@ Beta pendiente:
 
 Siguiente tarea: AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes reemplazadas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-026 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+PR #128: abierto, Draft.
+
+HEAD previo a cierre: 2c6ff63f6ebc0111ba92e71789f861d2572dd9ce.
+
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- La lectura del historial es de solo lectura; no crea hoja ni migra columnas.
+- migrateReplacedImagesSchema es una acción explícita, idempotente, coordinada y con verificación de encabezados. Su ruta quedó declarada en ACTION_TO_SERVICE_MAP como ADMIN.
+- Se exponen historica, restablecida, en_papelera, requiere_revision y cancelada; filas inválidas, duplicadas y con identidad inconsistente aparecen en una sección de revisión.
+- Las acciones validan unicidad e identidad de archivo, URL original y URL de visualización, estado previo, referencias y MIME antes de modificar.
+- La restauración y eliminación verifican escrituras y compensaciones. Si no puede confirmarse la compensación, el estado queda requiere_revision.
+- Spreadsheet/GPSpedia_DB_columnas.md documenta los doce campos adicionales y sus reglas.
+
+Archivos principales: api-config.js, ui.js, Services/admin.js, Spreadsheet/GPSpedia_DB_columnas.md, Services/Test/AdminReplacedImagesIntegrity.mjs, Services/Test/RunServiceTests.mjs y Services/Test/README.md.
+
+Validación:
+- AdminReplacedImagesIntegrity: 19/19 PASS.
+- GitHub Actions run 43481271693 SUCCESS: Node.js 22; 70 suites, 973/973 pruebas aprobadas, 0 fallos.
+- La ejecución previa 43480881234 detectó una ruta de migración ausente en ACTION_TO_SERVICE_MAP; se añadió el mapeo ADMIN y la ejecución posterior aprobó.
+- No se ejecutaron Apps Script/Spreadsheet/Drive reales, navegador real ni recursos productivos.
+
+Commits:
+- 2c6ff63f6ebc0111ba92e71789f861d2572dd9ce — corrección del mapeo de migración ADMIN.
+- El commit documental de este checkpoint cierra la tarea sin reescribir commits previos.
+
+Beta pendiente: verificar ACL y roles reales, migración/lectura en Spreadsheet aislada, identidad y MIME de Drive, archivos en papelera, permisos, fallos reales setValue/flush y compensaciones. No usar recursos productivos.
+
+Siguiente tarea: AUG-027 — definir el alcance de referencias protegidas y la separación entre historial de reemplazos e inventario de imágenes sin uso. Requiere decisión funcional expresa; no implementar por inferencia.
+================================================================================

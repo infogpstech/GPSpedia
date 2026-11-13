@@ -1254,3 +1254,18 @@ Limitación: el repositorio no proporciona evidencia del código actualmente des
 
 Riesgo residual: `available` confirma únicamente la respuesta del endpoint y el contrato de identidad, no la disponibilidad de Sheets/Drive. No se añadieron probes de dependencia porque no hay fuente segura y verificable de solo lectura. La UI comunica expresamente esta limitación.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-027-001/002/003/005/006 — AUG-026 — 2026-11-13
+Estado: RESUELTO EN CÓDIGO; PRUEBAS AISLADAS Y CI APROBADAS; INTEGRACIÓN EXTERNA DIFERIDA A BETA.
+
+- La lectura de Imagenes_Reemplazadas no inicializa la hoja ni escribe encabezados. La acción migrateReplacedImagesSchema realiza la migración de forma explícita, idempotente, protegida por ScriptLock y lease ADMIN.
+- La consulta incluye los estados históricos recuperables, en papelera, cancelados y requiere_revision; filas vacías se ignoran, pero filas parciales, duplicadas, con estados desconocidos o IDs inconsistentes se devuelven en review con motivo.
+- Las operaciones de restauración/eliminación validan estado, unicidad de id_reemplazo, coincidencia de archivo_drive_id/url_anterior/url_visualizacion, MIME y referencias antes de actuar. Los cambios de estado se verifican por lectura posterior y se compensan; si la compensación no puede confirmarse, el historial queda requiere_revision.
+- Spreadsheet/GPSpedia_DB_columnas.md documenta las doce columnas adicionales y separa estado histórico de estado de organización.
+- Hallazgo de integración durante CI: migrateReplacedImagesSchema tenía handler ADMIN y consumidor UI, pero faltaba su entrada en ACTION_TO_SERVICE_MAP. Se corrigió en 2c6ff63f6ebc0111ba92e71789f861d2572dd9ce; la ejecución posterior aprobó.
+- AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions run 43481271693 SUCCESS: Node.js 22, 70 suites, 973/973 pruebas, 0 fallos.
+
+Pendiente Beta: validar ACL y roles reales, migración y lecturas en Spreadsheet aislada, Drive/MIME/papelera, errores reales de setValue/flush, rollback y permisos. No se usaron recursos productivos.
+================================================================================

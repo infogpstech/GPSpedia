@@ -341,7 +341,10 @@ Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
   5. Separar la inicialización/migración de esquema de la consulta de lectura o protegerla con una operación idempotente y coordinada.
   6. Probar historica, restablecida, en_papelera, requiere_revision y cancelada; fallos de setValue/flush; archivo en papelera; IDs duplicados/mismatched; MIME inválido; filas parciales y permisos.
 - **Relación:** AUG-021 para trazabilidad; AUD-T-033/AUG-003 para coordinación interproyectos.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13).
+- **Resultado:** lectura sin escrituras y sin migración implícita; migración explícita, idempotente y coordinada; vista de estados históricos completa y sección de revisión para filas inválidas; validación de unicidad/identidad y transiciones seguras; compensaciones verificadas.
+- **Pruebas:** AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions run 43481271693 SUCCESS: Node.js 22, 70 suites, 973/973 pruebas aprobadas, 0 fallos.
+- **Beta:** Apps Script/Spreadsheet/Drive aislados, ACL, estados reales, permisos, fallos de escritura/flush y reconciliación. Sin datos productivos.
 
 ### AUG-027 — Definir alcance de referencias y separación entre historial e inventario sin uso
 - **Origen:** H-AUD-027-007 y H-AUD-027-008. **Prioridad:** Media; requiere decisión funcional antes de modificar código.
