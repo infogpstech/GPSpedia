@@ -144,6 +144,7 @@ function state(auditId, revision, batchIndex, batchFiles, extra = {}) {
         files: batchFiles, cursor: null, complete: false, status: 'partial',
         totalDiscovered: batchFiles.length, totalAnalyzed: batchFiles.length,
         foldersVisited: 1, pendingFolderCount: 1, batches: batchIndex === null ? 0 : batchIndex + 1,
+        createdAt: extra.createdAt || Date.now(),
         inventoryConfirmedFileIds: [], ...extra
     };
 }
@@ -213,11 +214,11 @@ await check('Dos pestañas con la misma revisión no pueden sobrescribir el prog
     assert.equal(restored.files.length, 2);
     assert.ok([B, C].includes(restored.files[1].fileId));
 });
-await check('Auditorías distintas permanecen aisladas por ID y no alteran el puntero de la más reciente', async () => {
+await check('Auditorías distintas permanecen aisladas y el puntero respeta la fecha real de inicio', async () => {
     const h = createHarness();
-    const first = await h.saveDriveAuditState(state('AUDIT-ONE', 0, 0, [{ fileId: A }]), 'user-one');
-    await h.saveDriveAuditState(state('AUDIT-TWO', 0, 0, [{ fileId: B }]), 'user-one');
-    await h.saveDriveAuditState(state('AUDIT-ONE', first.revision, 1, [{ fileId: C }]), 'user-one');
+    await h.saveDriveAuditState(state('AUDIT-TWO', 0, 0, [{ fileId: B }], { createdAt: 200 }), 'user-one');
+    const first = await h.saveDriveAuditState(state('AUDIT-ONE', 0, 0, [{ fileId: A }], { createdAt: 100 }), 'user-one');
+    await h.saveDriveAuditState(state('AUDIT-ONE', first.revision, 1, [{ fileId: C }], { createdAt: 100 }), 'user-one');
     await h.saveDriveAuditState(state('AUDIT-OTHER-USER', 0, 0, [{ fileId: D }]), 'user-two');
     assert.equal((await h.getDriveAuditState('user-one')).auditId, 'AUDIT-TWO');
     assert.deepEqual((await h.getDriveAuditState('user-one')).files.map(file => file.fileId), [B]);
