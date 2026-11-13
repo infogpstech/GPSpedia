@@ -1619,3 +1619,20 @@ Registros actualizados: Tareas.txt y Auditoría.txt con el alcance y criterios a
 
 Siguiente paso: inspección de fuentes y contratos que enumeran referencias, calculan inventario sin uso, ejecutan organización automática y exponen acciones de administración. Identificar todas las hojas con imágenes desde el esquema/código real y diseñar pruebas locales para protección global, marca en uso, requiere_revision, permisos, concurrencia e idempotencia.
 ================================================================================
+
+
+================================================================================
+AUG-027 — Continuidad técnica — 2026-11-13
+
+HEAD de la rama verificado al reanudar: 0bb036a0b74443f9c8e48bf2f6771fc726fbcd7c (commit «AUG-027 iniciar continuidad con decisiones aprobadas»). Comparación actual GPSpedia2.2.5_work vs. GPSpedia2.2.5: 1966 commits ahead, 0 behind; base HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1. Se rectifica la referencia anterior a c7ffcb/1963 commits, que era un estado previo y no el HEAD actual.
+
+Análisis técnico confirmado:
+- Hojas/campos de imagen documentados: Cortes, pys, LogosMarca, Tutorial y Relay; Feedbacks contiene metadatos JSON de adjuntos.
+- Los recursos inspeccionados están organizados bajo Drive/Cortes y sus subcarpetas (incluidos Logos y Problemas y Soluciones); la auditoría recursiva de Cortes cubre esas ubicaciones conocidas.
+- Existe collectActiveDriveReferences(), pero las operaciones del gestor siguen usando collectCortesImageReferences() en varios handlers. El escáner global debe convertirse en autoridad para las operaciones del inventario y administración, sin cambiar las rutinas Cortes-específicas de sincronización de carpetas de vehículos.
+- requiere_revision no dispone de flujo manual completo; no existe estado persistente en_uso ni acción de eliminación definitiva. La restauración actual no admite archivos en papelera ni registros requiere_revision.
+
+Hallazgos añadidos a Auditoría.txt: H-AUD-027-009 (referencias fuera de Cortes, alto), H-AUD-027-010 (resolución manual incompleta) y H-AUD-027-011 (falta eliminación definitiva).
+
+Estado: EN PROGRESO. No se ha modificado código ni se han ejecutado operaciones sobre Spreadsheet/Drive productivos. Próximo paso: implementar escáner global, protección persistente en_uso, resolución manual de requiere_revision, restauración desde papelera y eliminación definitiva con verificación/compensación; añadir pruebas de regresión y validar CI en la rama autorizada.
+================================================================================
