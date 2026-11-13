@@ -232,6 +232,46 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
     }
 }
 
+export async function routeActionWithRetry(action, payload = {}, options = {}) {
+    const settings = options && typeof options === "object" ? options : {};
+    const request = typeof settings.routeAction === "function" ? settings.routeAction : routeAction;
+    const Controller = settings.AbortController ||
+        (typeof AbortController === "function" ? AbortController : null);
+    if (typeof request !== "function") throw new Error("La función de solicitud no está disponible.");
+    if (typeof Controller !== "function") throw new Error("AbortController no está disponible; no se puede limitar el tiempo de espera.");
+    const timeoutMs = Math.min(120000, Math.max(1000, Number(settings.timeoutMs) || 45000));
+    const maxAttempts = Math.min(3, Math.max(1, Math.floor(Number(settings.maxAttempts) || 3)));
+    const retryDelayMs = Math.min(5000, Math.max(0, Number(settings.retryDelayMs) || 500));
+    const schedule = typeof settings.setTimeout === "function" ? settings.setTimeout : setTimeout;
+    const cancel = typeof settings.clearTimeout === "function" ? settings.clearTimeout : clearTimeout;
+    const wait = typeof settings.wait === "function"
+        ? settings.wait
+        : delay => new Promise(resolve => schedule(resolve, delay));
+    const shouldContinue = typeof settings.shouldContinue === "function" ? settings.shouldContinue : () => true;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const controller = new Controller();
+        let timeoutId = null;
+        try {
+            timeoutId = schedule(() => controller.abort(), timeoutMs);
+            return await request(action, payload, null, { signal: controller.signal });
+        } catch (error) {
+            const kind = String(error && error.kind || "");
+            const status = Number(error && error.httpStatus);
+            const retryable = kind === "abort" || kind === "network" ||
+                (kind === "http" && ([408, 425, 429].includes(status) || status >= 500));
+            if (!retryable || attempt >= maxAttempts || !shouldContinue()) throw error;
+            await wait(retryDelayMs * attempt);
+            if (!shouldContinue()) throw error;
+        } finally {
+            if (timeoutId !== null) {
+                try { cancel(timeoutId); } catch (timerError) {}
+            }
+        }
+    }
+    throw new Error("La solicitud de auditoría terminó sin respuesta.");
+}
+
 // 3. FUNCIONES DE CONVENIENCIA (HELPERS)
 function createLoginRequestId_() {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
