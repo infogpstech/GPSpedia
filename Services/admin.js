@@ -662,7 +662,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
 }
 
 function doPost(e) {
@@ -1070,6 +1070,12 @@ function doPostInternal_(e) {
                 break;
             case 'deleteReplacedImage':
                 response = handleDeleteReplacedImage(payload, logMessage, developerContext);
+                break;
+            case 'restoreReplacedImageFromTrash':
+                response = handleRestoreReplacedImageFromTrash(payload, logMessage, developerContext);
+                break;
+            case 'permanentlyDeleteReplacedImage':
+                response = handlePermanentlyDeleteReplacedImage(payload, logMessage, developerContext);
                 break;
             case 'markReplacedImageInUse':
                 response = handleMarkReplacedImageInUse(payload, logMessage, developerContext);
@@ -6412,7 +6418,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
         const baseHeaders = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
         const actualBaseHeaders = sheet.getRange(1,1,1,baseHeaders.length).getDisplayValues()[0].map(value=>String(value||"").trim());
         if (baseHeaders.some((header,index)=>actualBaseHeaders[index]!==header)) throw new Error("La estructura base de «Imagenes_Reemplazadas» no coincide con el esquema esperado. No se modificó el inventario.");
-        const requiredHeaders = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion"];
+        const requiredHeaders = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera"];
         let headers = sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),baseHeaders.length)).getDisplayValues()[0].map(value=>String(value||"").trim());
         const duplicateRequiredHeaders=requiredHeaders.filter(header=>headers.filter(value=>value===header).length>1);
         if(duplicateRequiredHeaders.length)throw new Error("Hay encabezados dinámicos duplicados; se detuvo la migración: "+duplicateRequiredHeaders.join(", "));
@@ -6456,7 +6462,7 @@ function ensureReplacedImagesInventoryColumns(sheet) {
 }
 function getReplacedImagesReadSchema_(){
     const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-    const requiredHeaders=["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion"];
+    const requiredHeaders=["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion","url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion","error_organizacion","fecha_organizacion","estado_previo_papelera"];
     if(!sheet)return {sheet:null,headers:[],missingHeaders:requiredHeaders};
     const baseHeaders=["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
     const headers=sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),baseHeaders.length)).getDisplayValues()[0].map(value=>String(value||"").trim());
@@ -6474,8 +6480,8 @@ function getReplacedImageRecordIdentity_(row,headers,requireVisualUrl){
     return storedIds[0];
 }
 function isKnownReplacedImageStatus_(type,status){
-    const allowed=type==="reemplazada"?["historica","restablecida","en_papelera","requiere_revision","cancelada","en_uso","eliminada"]:
-        ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminada","en_uso"];
+    const allowed=type==="reemplazada"?["historica","restablecida","en_papelera","requiere_revision","cancelada","en_uso","eliminacion_pendiente","eliminada"]:
+        ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminacion_pendiente","eliminada","en_uso"];
     return allowed.includes(status);
 }
 function getDuplicateReplacedImageIds_(rows){
@@ -6484,9 +6490,21 @@ function getDuplicateReplacedImageIds_(rows){
     return new Set([...counts.entries()].filter(entry=>entry[1]>1).map(entry=>entry[0]));
 }
 function setReplacedImageHistoryStatusVerified_(sheet,rowIndex,status){
-    if(!sheet||!Number.isInteger(rowIndex)||rowIndex<2||!["historica","restablecida","en_papelera","requiere_revision","cancelada","sin_uso_detectado","no_confirmada_en_ultima_auditoria","eliminada","en_uso"].includes(status))throw new Error("No se pudo identificar una transición válida del historial de imágenes.");
+    if(!sheet||!Number.isInteger(rowIndex)||rowIndex<2||!["historica","restablecida","en_papelera","requiere_revision","cancelada","sin_uso_detectado","no_confirmada_en_ultima_auditoria","eliminacion_pendiente","eliminada","en_uso"].includes(status))throw new Error("No se pudo identificar una transición válida del historial de imágenes.");
     const cell=sheet.getRange(rowIndex,11);cell.setValue(status);SpreadsheetApp.flush();
     if(String(cell.getValue()||"").trim()!==status)throw new Error("El estado del historial no se confirmó por lectura posterior.");
+    return true;
+}
+
+function setReplacedImageTrashPreviousStatusVerified_(sheet,rowIndex,headers,status){
+    const column=Array.isArray(headers)?headers.indexOf("estado_previo_papelera")+1:0;
+    if(!sheet||!Number.isInteger(rowIndex)||rowIndex<2||column<1||
+        !["historica","restablecida","requiere_revision","sin_uso_detectado","no_confirmada_en_ultima_auditoria"].includes(status)){
+        throw new Error("No se pudo identificar el estado previo a papelera.");
+    }
+    const cell=sheet.getRange(rowIndex,column);
+    cell.setValue(status);SpreadsheetApp.flush();
+    if(String(cell.getValue()||"").trim()!==status)throw new Error("El estado previo a papelera no se confirmó por lectura posterior.");
     return true;
 }
 
@@ -6742,7 +6760,7 @@ function handleGetReplacedImages(payload, logMessage) {
             tipo_registro:type,tipo_mime:valueAt(row,"tipo_mime"),ubicacion_original:valueAt(row,"ubicacion_original"),
             fecha_creacion_drive:valueAt(row,"fecha_creacion_drive"),fecha_deteccion:valueAt(row,"fecha_deteccion"),
             url_visualizacion:valueAt(row,"url_visualizacion"),ubicacion_actual:valueAt(row,"ubicacion_actual"),
-            ultima_auditoria_id:valueAt(row,"ultima_auditoria_id"),estado_organizacion:valueAt(row,"estado_organizacion"),
+            ultima_auditoria_id:valueAt(row,"ultima_auditoria_id"),estado_previo_papelera:valueAt(row,"estado_previo_papelera"),estado_organizacion:valueAt(row,"estado_organizacion"),
             error_organizacion:valueAt(row,"error_organizacion"),fecha_organizacion:valueAt(row,"fecha_organizacion"),
             reference_check_status:referenceCheckStatus,active_reference_count:Array.isArray(activeReferences)?activeReferences.length:activeReferences?1:0
         });
@@ -6946,30 +6964,117 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
         const existing=findReplacedImageRecordById(sheetRep,idReemplazo);if(!existing)throw new Error("Registro de imagen no encontrado.");
         const rowIndex=existing.rowIndex,row=existing.values,type=getReplacedImageRecordType(row,headers);
         const status=String(row[10]||(type==="sin_uso_detectado"?"sin_uso_detectado":"historica"));
-        if(!isKnownReplacedImageStatus_(type,status)||(type==="sin_uso_detectado"&&status!=="sin_uso_detectado")||(type==="reemplazada"&&!["historica","restablecida"].includes(status)))throw new Error("El estado del registro no permite enviar esta imagen a papelera.");
+        const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision"]:["historica","restablecida","requiere_revision"];
+        if(!isKnownReplacedImageStatus_(type,status)||!allowed.includes(status))throw new Error("El estado del registro no permite enviar esta imagen a papelera.");
         const driveId=getReplacedImageRecordIdentity_(row,headers,true),references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
         if(active.length)throw new Error("Operación bloqueada: la imagen mantiene referencias activas en una o más hojas del Spreadsheet.");
         if(references.unverifiableReferenceCount>0)throw new Error("Operación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
         const file=DriveApp.getFileById(driveId);if(file.isTrashed())throw new Error("La imagen ya se encuentra en la papelera de Google Drive.");
         if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
         const root=getCortesRootFolder(),source=getSingleParentFolderInsideCortes(file,root.getId()),sourcePath=getFolderPathInsideCortes(source,root.getId());
-        file.setTrashed(true);
-        try{if(file.isTrashed()!==true)throw new Error("Drive no confirmó el traslado del archivo a papelera.");setReplacedImageHistoryStatusVerified_(sheetRep,rowIndex,"en_papelera");}
-        catch(historyError){
+        setReplacedImageTrashPreviousStatusVerified_(sheetRep,rowIndex,headers,status);
+        try{
+            file.setTrashed(true);
+            if(file.isTrashed()!==true)throw new Error("Drive no confirmó el traslado del archivo a papelera.");
+            setReplacedImageHistoryStatusVerified_(sheetRep,rowIndex,"en_papelera");
+        }catch(operationError){
             let rollbackError=null;
-            try{file.setTrashed(false);if(file.isTrashed()!==false)throw new Error("Drive no confirmó la restauración del archivo.");setReplacedImageHistoryStatusVerified_(sheetRep,rowIndex,status);}
-            catch(error){rollbackError=error;try{setReplacedImageHistoryStatusVerified_(sheetRep,rowIndex,"requiere_revision");}catch(reviewError){}}
-            if(rollbackError)throw new Error("Falló la actualización del historial y no se confirmó la compensación: "+historyError.message+"; "+rollbackError.message);
-            throw new Error("No se pudo actualizar el estado del registro; la operación fue revertida: "+historyError.message);
+            try{
+                if(file.isTrashed()){file.setTrashed(false);if(file.isTrashed()!==false)throw new Error("Drive no confirmó la restauración del archivo.");}
+                setReplacedImageHistoryStatusVerified_(sheetRep,rowIndex,status);
+            }catch(error){
+                rollbackError=error;
+                try{setReplacedImageHistoryStatusVerified_(sheetRep,rowIndex,"requiere_revision");}catch(reviewError){}
+            }
+            if(rollbackError)throw new Error("Falló el traslado a papelera y no se confirmó la compensación: "+operationError.message+"; "+rollbackError.message);
+            throw new Error("No se pudo completar el traslado a papelera; la operación fue revertida: "+operationError.message);
         }
-        recordImageAdministrationActivity(developerContext,"admin_image_trash",idReemplazo,"Imagen "+file.getName()+" enviada a papelera desde "+sourcePath+"; resultado: correcto.");
+        recordImageAdministrationActivity(developerContext,"admin_image_trash",idReemplazo,"Imagen "+file.getName()+" enviada a papelera desde "+sourcePath+"; estado previo: "+status+"; resultado: correcto.");
         logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue enviada a la papelera de Google Drive.");
         return {status:"success",message:"La imagen fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."};
     }finally{lock.releaseLock();}
 }
-/**
- * Protege manualmente una imagen en revisión para excluirla de cualquier organización automática.
- */
+function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext){
+    const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
+    const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la restauración desde papelera. Intenta nuevamente.");}
+    try{
+        const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
+        const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
+        const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
+        if(status!=="en_papelera")throw new Error("Solo se pueden restaurar desde Drive los registros que están en_papelera.");
+        const driveId=getReplacedImageRecordIdentity_(row,headers,true),previousIndex=headers.indexOf("estado_previo_papelera");
+        const fallback=type==="sin_uso_detectado"?"sin_uso_detectado":"historica";
+        const previous=String(previousIndex>=0?row[previousIndex]||"": "").trim()||fallback;
+        const allowed=type==="sin_uso_detectado"?["sin_uso_detectado","requiere_revision","no_confirmada_en_ultima_auditoria"]:["historica","restablecida","requiere_revision"];
+        if(!allowed.includes(previous))throw new Error("El estado previo a papelera no es válido para este tipo de registro; requiere revisión.");
+        const file=DriveApp.getFileById(driveId);
+        if(!file.isTrashed())throw new Error("Drive indica que el archivo no está en papelera; se requiere reconciliar el historial.");
+        if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro ya no es una imagen.");
+        const root=getCortesRootFolder(),parent=getSingleParentFolderInsideCortes(file,root.getId()),path=getFolderPathInsideCortes(parent,root.getId());
+        file.setTrashed(false);
+        try{
+            if(file.isTrashed()!==false)throw new Error("Drive no confirmó la restauración del archivo.");
+            setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,previous);
+        }catch(operationError){
+            let rollbackError=null;
+            try{file.setTrashed(true);if(file.isTrashed()!==true)throw new Error("Drive no confirmó el retorno a papelera.");setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"en_papelera");}
+            catch(error){rollbackError=error;try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"requiere_revision");}catch(reviewError){}}
+            if(rollbackError)throw new Error("Falló la actualización del historial y no se confirmó la compensación: "+operationError.message+"; "+rollbackError.message);
+            throw new Error("No se pudo actualizar el historial; el archivo fue devuelto a papelera: "+operationError.message);
+        }
+        recordImageAdministrationActivity(developerContext,"admin_image_restore_from_trash",id,"Imagen "+file.getName()+" restaurada desde papelera a "+path+"; estado anterior recuperado: "+previous+".");
+        logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue restaurada desde papelera.");
+        return {status:"success",message:"La imagen fue restaurada desde la papelera de Google Drive. No se modificó ninguna referencia del Spreadsheet."};
+    }finally{lock.releaseLock();}
+}
+
+function requestAdminDriveFile_(fileId,method){
+    const url="https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(fileId)+"?supportsAllDrives=true";
+    const response=UrlFetchApp.fetch(url,{method,headers:{Authorization:"Bearer "+ScriptApp.getOAuthToken()},muteHttpExceptions:true});
+    const code=response.getResponseCode();let body={};
+    if(code>=200&&code<300){try{body=JSON.parse(response.getContentText()||"{}");}catch(error){throw new Error("Drive API devolvió una respuesta JSON inválida.");}}
+    return {code,body};
+}
+
+function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContext){
+    const id=String(payload&&payload.id_reemplazo||"").trim();if(!id)throw new Error("ID de registro de imagen requerido.");
+    const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(error){throw new Error("No se pudo bloquear la eliminación definitiva. Intenta nuevamente.");}
+    try{
+        const sheet=getOrCreateReplacedImagesSheet(),headers=ensureReplacedImagesInventoryColumns(sheet);
+        const existing=findReplacedImageRecordById(sheet,id);if(!existing)throw new Error("Registro de imagen no encontrado.");
+        const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
+        if(!["en_papelera","eliminacion_pendiente"].includes(status))throw new Error("La eliminación definitiva requiere que la imagen esté en papelera.");
+        const driveId=getReplacedImageRecordIdentity_(row,headers,true),references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
+        if(active.length)throw new Error("Eliminación bloqueada: la imagen tiene referencias activas en el Spreadsheet.");
+        if(references.unverifiableReferenceCount>0)throw new Error("Eliminación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
+        const current=requestAdminDriveFile_(driveId,"get");
+        if(current.code===404){
+            setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminada");
+            recordImageAdministrationActivity(developerContext,"admin_image_permanent_delete",id,"Drive confirmó que la imagen ya no existe; se reconcilió el historial como eliminada.");
+            return {status:"success",message:"La imagen ya no existe en Drive y el historial quedó reconciliado como eliminada.",reconciled:true};
+        }
+        if(current.code<200||current.code>=300)throw new Error("No se pudo verificar el archivo en Drive API (HTTP "+current.code+").");
+        if(!String(current.body.mimeType||"").startsWith("image/"))throw new Error("El archivo asociado al registro no es una imagen.");
+        if(current.body.trashed!==true)throw new Error("El archivo ya no está en papelera; se bloqueó la eliminación definitiva.");
+        const file=DriveApp.getFileById(driveId);
+        if(!file.isTrashed())throw new Error("DriveApp no confirma que el archivo esté en papelera.");
+        const root=getCortesRootFolder();getSingleParentFolderInsideCortes(file,root.getId());
+        if(status==="en_papelera")setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminacion_pendiente");
+        const deletion=requestAdminDriveFile_(driveId,"delete");
+        if(deletion.code!==404&&(deletion.code<200||deletion.code>=300)){
+            try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"en_papelera");}
+            catch(statusError){try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"requiere_revision");}catch(reviewError){}}
+            throw new Error("Drive API no confirmó la eliminación definitiva (HTTP "+deletion.code+").");
+        }
+        const verification=requestAdminDriveFile_(driveId,"get");
+        if(verification.code!==404)throw new Error("La eliminación fue solicitada, pero Drive no confirmó la ausencia del archivo. El registro queda eliminacion_pendiente para reconciliación.");
+        setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminada");
+        recordImageAdministrationActivity(developerContext,"admin_image_permanent_delete",id,"Imagen "+driveId+" eliminada definitivamente y ausencia confirmada por Drive API.");
+        logMessage&&logMessage("Inventario e historial de imágenes","La imagen "+driveId+" fue eliminada definitivamente.");
+        return {status:"success",message:"La imagen fue eliminada definitivamente de Google Drive y la ausencia del archivo fue verificada."};
+    }finally{lock.releaseLock();}
+}
+
 function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
     const id = String(payload && payload.id_reemplazo || "").trim();
     if (!id) throw new Error("ID de registro de imagen requerido.");
