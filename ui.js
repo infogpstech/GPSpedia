@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -3780,17 +3780,27 @@ function closeReplacedImagesLightbox_(fromHistory = false) {
 function resetRoleScopedViews_() {
     inboxViewGeneration_ += 1;
     inboxDetailGeneration_ += 1;
+    stopInboxSync_();
+    clearInboxDraftsForUser_(lastShownAppContext && lastShownAppContext.userId);
     const inboxModal = document.getElementById('inbox-modal');
     const dashboardModal = document.getElementById('dashboard-modal');
     const inboxList = document.getElementById('inbox-list');
     const inboxDetail = document.getElementById('inbox-detail');
     const activityLogs = document.getElementById('activity-logs');
-
-    if (inboxModal) inboxModal.style.display = 'none';
+    if (inboxModal) {
+        inboxModal.style.display = 'none';
+        inboxModal.setAttribute('aria-hidden', 'true');
+        deactivateLegalModalFocus_(inboxModal, false);
+    }
+    document.body.classList.remove('inbox-open');
     if (dashboardModal) dashboardModal.style.display = 'none';
-    if (inboxList) inboxList.innerHTML = '';
-    if (inboxDetail) inboxDetail.innerHTML = '';
-    if (activityLogs) activityLogs.innerHTML = '';
+    if (inboxList) inboxList.replaceChildren();
+    if (inboxDetail) inboxDetail.replaceChildren();
+    ['inbox-conversation-list','inbox-conversation-detail','inbox-conversation-status'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.replaceChildren();
+    });
+    if (activityLogs) activityLogs.replaceChildren();
     invalidateInboxCache_();
 }
 
@@ -4064,20 +4074,628 @@ export async function openDashboard() {
     return openDashboardModal_();
 }
 
-const openInboxModal_ = setupModal('inbox-modal', async () => {
+const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
     const context = getUiSessionContext_();
     if (!context) return;
     const modal = document.getElementById('inbox-modal');
     modal.style.display = 'flex';
-    const detailContainer = document.getElementById('inbox-detail');
-    if (detailContainer) detailContainer.replaceChildren();
-    await loadAndRenderInbox({ context, reset: true });
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('inbox-open');
+    bindInboxControls_();
+    const requestsTab = document.getElementById('inbox-requests-tab');
+    if (requestsTab) requestsTab.hidden = !inboxCanSeeRequests_(context.role);
+    const newMessageButton = document.getElementById('inbox-new-message');
+    const consultButton = document.getElementById('inbox-consult-developer');
+    if (newMessageButton) newMessageButton.hidden = context.role !== 'desarrollador';
+    if (consultButton) consultButton.hidden = context.role === 'desarrollador';
+    const closeButton = modal.querySelector('.info-close-btn');
+    if (closeButton && closeButton.dataset.inboxCloseBound !== 'true') {
+        closeButton.addEventListener('click', closeInboxModal_);
+        closeButton.dataset.inboxCloseBound = 'true';
+    }
+    if (modal.dataset.inboxBackdropBound !== 'true') {
+        modal.addEventListener('click', event => { if (event.target === modal) closeInboxModal_(); });
+        modal.dataset.inboxBackdropBound = 'true';
+    }
+    activateLegalModalFocus_(modal, {
+        initialFocus: modal.querySelector('#inbox-conversation-search'),
+        returnFocus: options.returnFocus, allowEscape: true, close: closeInboxModal_
+    });
+    await setInboxView_('conversations', { reset: true });
+    startInboxSync_();
 });
 
 export async function openInbox() {
-    const context = await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor']);
+    const returnFocus = document.activeElement;
+    const context = await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
     if (!context) return;
-    return openInboxModal_();
+    return openInboxModal_({ returnFocus });
+}
+
+
+
+// AUG-152 — Centro de conversaciones y notificaciones privadas.
+let inboxConversationFolder_ = "received";
+let inboxConversationQuery_ = "";
+let inboxConversationPageStack_ = [0];
+let inboxConversationPageIndex_ = 0;
+let inboxConversationItems_ = [];
+let inboxConversationCounts_ = {};
+let inboxConversationNextCursor_ = null;
+let inboxConversationHasMore_ = false;
+let inboxConversationSelectedId_ = "";
+let inboxConversationSelected_ = null;
+let inboxConversationMessages_ = [];
+let inboxConversationMessagesCursor_ = null;
+let inboxConversationMessagesHasMore_ = false;
+let inboxConversationGeneration_ = 0;
+let inboxConversationDetailGeneration_ = 0;
+let inboxConversationSyncTimer_ = null;
+let inboxConversationSyncBusy_ = false;
+let inboxConversationCurrentView_ = "conversations";
+let inboxConnectivityBound_ = false;
+const INBOX_CONVERSATION_PAGE_SIZE_ = 20;
+const INBOX_MESSAGE_PAGE_SIZE_ = 50;
+const INBOX_SYNC_INTERVAL_MS_ = 60000;
+
+function inboxCanSeeRequests_(role) {
+    return ["desarrollador", "gefe", "jefe", "supervisor"].includes(normalizeUiRole_(role));
+}
+function inboxSessionPayload_() { return getUiSessionContext_() || {}; }
+function inboxNewIdempotencyKey_() {
+    try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID().replace(/-/g, "_");
+    } catch (_) {}
+    return "inbox_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2);
+}
+function inboxDraftKey_(userId, kind) {
+    return "gpsepedia-inbox-draft:" + String(userId || "unknown") + ":" + String(kind || "new");
+}
+function inboxReadDraft_(kind) {
+    const context = getUiSessionContext_();
+    if (!context || typeof sessionStorage === "undefined") return {};
+    try {
+        const parsed = JSON.parse(sessionStorage.getItem(inboxDraftKey_(context.userId, kind)) || "{}");
+        return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_) { return {}; }
+}
+function inboxSaveDraft_(kind, draft) {
+    const context = getUiSessionContext_();
+    if (!context || typeof sessionStorage === "undefined") return;
+    try { sessionStorage.setItem(inboxDraftKey_(context.userId, kind), JSON.stringify(draft || {})); } catch (_) {}
+}
+function inboxClearDraft_(kind) {
+    const context = getUiSessionContext_();
+    if (!context || typeof sessionStorage === "undefined") return;
+    try { sessionStorage.removeItem(inboxDraftKey_(context.userId, kind)); } catch (_) {}
+}
+function clearInboxDraftsForUser_(userId) {
+    if (!userId || typeof sessionStorage === "undefined") return;
+    const prefix = inboxDraftKey_(userId, "");
+    try {
+        const keys = [];
+        for (let index = 0; index < sessionStorage.length; index++) {
+            const key = sessionStorage.key(index);
+            if (key && key.startsWith(prefix)) keys.push(key);
+        }
+        keys.forEach(key => sessionStorage.removeItem(key));
+    } catch (_) {}
+}
+function inboxSetStatus_(message, isError) {
+    const status = document.getElementById("inbox-conversation-status");
+    if (!status) return;
+    status.textContent = String(message || "");
+    status.classList.toggle("is-error", Boolean(isError));
+    status.classList.toggle("is-success", Boolean(message) && !isError);
+}
+function inboxFormatDate_(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
+}
+function inboxCreateNode_(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = String(text);
+    return node;
+}
+function inboxUpdateUnreadBadge_(counts) {
+    const badge = document.getElementById("inbox-notification-count");
+    if (!badge) return;
+    const unread = Math.max(0, Number(counts && counts.unread) || 0);
+    badge.textContent = unread > 99 ? "99+" : String(unread);
+    badge.hidden = unread <= 0;
+    badge.setAttribute("aria-label", unread + " conversaciones sin leer");
+}
+function bindInboxControls_() {
+    const viewTabs = document.getElementById("inbox-view-tabs");
+    if (viewTabs && viewTabs.dataset.bound !== "true") {
+        viewTabs.addEventListener("click", event => {
+            const button = event.target.closest("[data-inbox-view]");
+            if (button && !button.disabled) setInboxView_(button.dataset.inboxView);
+        });
+        viewTabs.dataset.bound = "true";
+    }
+    const folderNav = document.getElementById("inbox-folder-nav");
+    if (folderNav && folderNav.dataset.bound !== "true") {
+        folderNav.addEventListener("click", event => {
+            const button = event.target.closest("[data-inbox-folder]");
+            if (!button) return;
+            inboxConversationFolder_ = button.dataset.inboxFolder || "received";
+            inboxConversationSelectedId_ = "";
+            inboxConversationSelected_ = null;
+            inboxConversationPageStack_ = [0];
+            inboxConversationPageIndex_ = 0;
+            inboxConversationMessages_ = [];
+            document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+            folderNav.querySelectorAll("[data-inbox-folder]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+            loadInboxConversations_({ reset: true });
+        });
+        folderNav.dataset.bound = "true";
+    }
+    const searchForm = document.getElementById("inbox-conversation-search-form");
+    if (searchForm && searchForm.dataset.bound !== "true") {
+        searchForm.addEventListener("submit", event => {
+            event.preventDefault();
+            const input = document.getElementById("inbox-conversation-search");
+            inboxConversationQuery_ = String(input && input.value || "").trim().slice(0, 80);
+            inboxConversationPageStack_ = [0];
+            inboxConversationPageIndex_ = 0;
+            loadInboxConversations_({ reset: true });
+        });
+        searchForm.dataset.bound = "true";
+    }
+    const refresh = document.getElementById("inbox-conversation-refresh");
+    if (refresh && refresh.dataset.bound !== "true") {
+        refresh.addEventListener("click", refreshInboxConversations_);
+        refresh.dataset.bound = "true";
+    }
+    const newMessage = document.getElementById("inbox-new-message");
+    if (newMessage && newMessage.dataset.bound !== "true") {
+        newMessage.addEventListener("click", openInboxNewConversationForm_);
+        newMessage.dataset.bound = "true";
+    }
+    const consult = document.getElementById("inbox-consult-developer");
+    if (consult && consult.dataset.bound !== "true") {
+        consult.addEventListener("click", openInboxNewConversationForm_);
+        consult.dataset.bound = "true";
+    }
+    const previous = document.getElementById("inbox-conversation-previous");
+    if (previous && previous.dataset.bound !== "true") {
+        previous.addEventListener("click", () => {
+            if (inboxConversationPageIndex_ <= 0) return;
+            inboxConversationPageIndex_ -= 1;
+            loadInboxConversations_({ preserveScroll: true });
+        });
+        previous.dataset.bound = "true";
+    }
+    const next = document.getElementById("inbox-conversation-next");
+    if (next && next.dataset.bound !== "true") {
+        next.addEventListener("click", () => {
+            if (!inboxConversationHasMore_ || inboxConversationNextCursor_ === null) return;
+            inboxConversationPageStack_ = inboxConversationPageStack_.slice(0, inboxConversationPageIndex_ + 1);
+            inboxConversationPageStack_.push(Number(inboxConversationNextCursor));
+            inboxConversationPageIndex_ += 1;
+            loadInboxConversations_();
+        });
+        next.dataset.bound = "true";
+    }
+    if (!inboxConnectivityBound_) {
+        window.addEventListener("online", () => {
+            if (document.getElementById("inbox-modal")?.style.display !== "none") refreshInboxConversations_();
+        });
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible" && document.getElementById("inbox-modal")?.style.display !== "none") refreshInboxConversations_();
+        });
+        inboxConnectivityBound_ = true;
+    }
+}
+async function setInboxView_(view, options = {}) {
+    const context = getUiSessionContext_();
+    const nextView = view === "requests" && inboxCanSeeRequests_(context && context.role) ? "requests" : "conversations";
+    inboxConversationCurrentView_ = nextView;
+    const conversations = document.getElementById("inbox-conversations-view");
+    const requests = document.getElementById("inbox-requests-view");
+    const tabs = document.getElementById("inbox-view-tabs");
+    if (conversations) { conversations.hidden = nextView !== "conversations"; conversations.setAttribute("aria-hidden", String(nextView !== "conversations")); }
+    if (requests) { requests.hidden = nextView !== "requests"; requests.setAttribute("aria-hidden", String(nextView !== "requests")); }
+    if (tabs) tabs.querySelectorAll("[data-inbox-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.inboxView === nextView)));
+    if (nextView === "requests") {
+        stopInboxSync_();
+        if (context) await loadAndRenderInbox({ context, reset: Boolean(options.reset) });
+    } else {
+        await loadInboxConversations_({ reset: Boolean(options.reset) });
+        startInboxSync_();
+    }
+}
+async function loadInboxConversations_(options = {}) {
+    const context = getUiSessionContext_();
+    if (!context || inboxConversationCurrentView_ !== "conversations") return;
+    const list = document.getElementById("inbox-conversation-list");
+    if (!list) return;
+    if (options.reset) { inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0; }
+    const cursor = inboxConversationPageStack_[inboxConversationPageIndex_] || 0;
+    const generation = ++inboxConversationGeneration_;
+    const previousScroll = list.scrollTop;
+    if (!options.preserveScroll || !inboxConversationItems_.length) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message", "Cargando conversaciones…"));
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        inboxSetStatus_("Sin conexión. Los borradores se conservarán en esta sesión.", true);
+        return;
+    }
+    try {
+        const response = await getInboxConversations(context, { cursor, pageSize: INBOX_CONVERSATION_PAGE_SIZE_, folder: inboxConversationFolder_, query: inboxConversationQuery_ });
+        if (generation !== inboxConversationGeneration_ || !isCurrentUiSessionContext_(context)) return;
+        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar Inbox.");
+        inboxConversationItems_ = Array.isArray(response.data) ? response.data : [];
+        inboxConversationCounts_ = response.counts || {};
+        inboxConversationNextCursor_ = response.nextCursor === undefined ? null : response.nextCursor;
+        inboxConversationHasMore_ = response.hasMore === true;
+        inboxUpdateUnreadBadge_(inboxConversationCounts_);
+        renderInboxConversationList_();
+        renderInboxConversationPagination_();
+        list.scrollTop = options.preserveScroll ? previousScroll : 0;
+        if (inboxConversationSelectedId_) {
+            const refreshed = inboxConversationItems_.find(item => item.conversationId === inboxConversationSelectedId_);
+            if (refreshed) inboxConversationSelected_ = refreshed;
+        }
+        inboxSetStatus_("", false);
+    } catch (error) {
+        if (generation !== inboxConversationGeneration_) return;
+        inboxSetStatus_(error && error.message ? error.message : "No se pudo cargar Inbox.", true);
+        if (!inboxConversationItems_.length) list.replaceChildren(inboxCreateNode_("p", "inbox-state-message is-error", "No se pudieron cargar las conversaciones."));
+    }
+}
+function renderInboxConversationList_() {
+    const list = document.getElementById("inbox-conversation-list");
+    if (!list) return;
+    list.replaceChildren();
+    if (!inboxConversationItems_.length) {
+        list.appendChild(inboxCreateNode_("p", "inbox-state-message", inboxConversationQuery_ ? "No hay conversaciones que coincidan con la búsqueda." : "No hay conversaciones en esta carpeta."));
+        return;
+    }
+    inboxConversationItems_.forEach(item => {
+        const button = inboxCreateNode_("button", "inbox-conversation-item");
+        button.type = "button";
+        button.dataset.conversationId = item.conversationId;
+        button.setAttribute("aria-pressed", String(item.conversationId === inboxConversationSelectedId_));
+        const names = Array.isArray(item.otherParticipants) ? item.otherParticipants.map(user => user && user.name).filter(Boolean).join(", ") : "";
+        button.append(
+            inboxCreateNode_("strong", "inbox-conversation-item-title", names || "Conversación"),
+            inboxCreateNode_("span", "inbox-conversation-item-subject", item.subject || "Sin asunto"),
+            inboxCreateNode_("span", "inbox-conversation-item-preview", item.lastMessagePreview || "Sin mensajes"),
+            inboxCreateNode_("span", "inbox-conversation-item-meta", [item.category || "general", inboxFormatDate_(item.lastMessageAt || item.updatedAt)].filter(Boolean).join(" · "))
+        );
+        if (Number(item.unreadCount) > 0) button.appendChild(inboxCreateNode_("span", "inbox-conversation-unread", String(item.unreadCount)));
+        button.addEventListener("click", () => selectInboxConversation_(item));
+        list.appendChild(button);
+    });
+}
+function renderInboxConversationPagination_() {
+    const previous = document.getElementById("inbox-conversation-previous");
+    const next = document.getElementById("inbox-conversation-next");
+    const label = document.getElementById("inbox-conversation-page-label");
+    if (previous) previous.disabled = inboxConversationPageIndex_ <= 0;
+    if (next) next.disabled = !inboxConversationHasMore_;
+    if (label) label.textContent = "Página " + (inboxConversationPageIndex_ + 1);
+}
+async function selectInboxConversation_(item) {
+    inboxConversationSelectedId_ = String(item.conversationId || "");
+    inboxConversationSelected_ = item;
+    inboxConversationMessages_ = [];
+    inboxConversationMessagesCursor_ = null;
+    inboxConversationMessagesHasMore_ = false;
+    document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
+    renderInboxConversationDetail_();
+    await loadInboxMessages_(inboxConversationSelectedId_, { reset: true, markRead: true });
+}
+async function loadInboxMessages_(conversationId, options = {}) {
+    const context = getUiSessionContext_();
+    if (!context || !conversationId) return;
+    const generation = ++inboxConversationDetailGeneration_;
+    const detail = document.getElementById("inbox-conversation-detail");
+    const before = detail && detail.querySelector(".inbox-thread-messages");
+    const previousScroll = before ? before.scrollTop : 0;
+    const previousHeight = before ? before.scrollHeight : 0;
+    const wasAtBottom = before ? before.scrollHeight - before.scrollTop - before.clientHeight < 48 : true;
+    if (!options.older && !options.preserveScroll) renderInboxConversationDetail_({ loading: true });
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        inboxSetStatus_("Sin conexión. El borrador del mensaje se conserva.", true);
+        return;
+    }
+    try {
+        const cursor = options.older ? inboxConversationMessagesCursor_ : 0;
+        const response = await getInboxMessages(conversationId, context, { cursor, pageSize: INBOX_MESSAGE_PAGE_SIZE_ });
+        if (generation !== inboxConversationDetailGeneration_ || !isCurrentUiSessionContext_(context) || inboxConversationSelectedId_ !== conversationId) return;
+        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo cargar el historial.");
+        const incoming = Array.isArray(response.data) ? response.data : [];
+        if (options.older) inboxConversationMessages_ = incoming.concat(inboxConversationMessages_);
+        else if (options.preserveScroll && inboxConversationMessages_.length) {
+            const byId = new Map(inboxConversationMessages_.map(message => [message.messageId, message]));
+            incoming.forEach(message => byId.set(message.messageId, message));
+            inboxConversationMessages_ = Array.from(byId.values()).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+        } else inboxConversationMessages_ = incoming;
+        inboxConversationMessagesCursor_ = response.nextCursor === undefined ? null : response.nextCursor;
+        inboxConversationMessagesHasMore_ = response.hasMore === true;
+        renderInboxConversationDetail_();
+        const messageList = document.getElementById("inbox-conversation-messages");
+        if (messageList) {
+            if (options.older) messageList.scrollTop = previousScroll + Math.max(0, messageList.scrollHeight - previousHeight);
+            else if (options.preserveScroll && !wasAtBottom) messageList.scrollTop = previousScroll;
+            else messageList.scrollTop = messageList.scrollHeight;
+        }
+        if (options.markRead !== false && inboxConversationMessages_.length) {
+            const latest = inboxConversationMessages_[inboxConversationMessages_.length - 1];
+            await markInboxRead(conversationId, latest.messageId, context);
+            if (generation === inboxConversationDetailGeneration_) await loadInboxConversations_({ preserveScroll: true });
+        }
+        inboxSetStatus_("", false);
+    } catch (error) {
+        if (generation !== inboxConversationDetailGeneration_) return;
+        inboxSetStatus_(error && error.message ? error.message : "No se pudo cargar el historial.", true);
+        if (!inboxConversationMessages_.length) renderInboxConversationDetail_({ error: true });
+    }
+}
+function renderInboxConversationDetail_(options = {}) {
+    const detail = document.getElementById("inbox-conversation-detail");
+    if (!detail) return;
+    detail.replaceChildren();
+    if (!inboxConversationSelected_ && !options.loading) {
+        detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Selecciona una conversación para consultar sus mensajes."));
+        return;
+    }
+    if (options.loading) { detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Cargando conversación…")); return; }
+    if (options.error) { detail.appendChild(inboxCreateNode_("p", "inbox-state-message is-error", "No se pudo cargar esta conversación.")); return; }
+    const item = inboxConversationSelected_;
+    const header = inboxCreateNode_("header", "inbox-thread-header");
+    const back = inboxCreateNode_("button", "inbox-mobile-back", "Volver a conversaciones");
+    back.type = "button";
+    back.addEventListener("click", () => {
+        document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+        const target = Array.from(document.getElementById("inbox-conversation-list")?.querySelectorAll("[data-conversation-id]") || [])
+            .find(element => element.dataset.conversationId === item.conversationId);
+        if (target) target.focus();
+    });
+    const titleBlock = inboxCreateNode_("div", "inbox-thread-title-block");
+    titleBlock.append(
+        inboxCreateNode_("h3", "", item.subject || "Conversación"),
+        inboxCreateNode_("p", "inbox-thread-participants", (item.otherParticipants || []).map(user => user && user.name).filter(Boolean).join(", ") || "Participante"),
+        inboxCreateNode_("span", "inbox-thread-category", item.category || "general")
+    );
+    const archive = inboxCreateNode_("button", "inbox-thread-archive", item.archived ? "Restaurar" : "Archivar");
+    archive.type = "button";
+    archive.addEventListener("click", () => toggleInboxConversationArchive_(item));
+    header.append(back, titleBlock, archive);
+    detail.appendChild(header);
+    const messages = inboxCreateNode_("div", "inbox-thread-messages");
+    messages.id = "inbox-conversation-messages";
+    messages.setAttribute("role", "log");
+    messages.setAttribute("aria-live", "polite");
+    messages.setAttribute("aria-relevant", "additions text");
+    if (inboxConversationMessagesHasMore_) {
+        const older = inboxCreateNode_("button", "inbox-load-older", "Cargar mensajes anteriores");
+        older.type = "button";
+        older.addEventListener("click", () => loadInboxMessages_(item.conversationId, { older: true, markRead: false }));
+        messages.appendChild(older);
+    }
+    if (!inboxConversationMessages_.length) messages.appendChild(inboxCreateNode_("p", "inbox-state-message", "Todavía no hay mensajes."));
+    inboxConversationMessages_.forEach(message => {
+        const own = message.authorId === (getUiSessionContext_() || {}).userId;
+        const bubble = inboxCreateNode_("article", "inbox-message-bubble" + (own ? " is-own" : ""));
+        bubble.append(
+            inboxCreateNode_("div", "inbox-message-meta", String(message.authorName || "Usuario") + " · " + inboxFormatDate_(message.createdAt)),
+            inboxCreateNode_("p", "inbox-message-body", message.body || "")
+        );
+        messages.appendChild(bubble);
+    });
+    detail.appendChild(messages);
+    if (item.status === "open") renderInboxReplyForm_(detail, item);
+    else detail.appendChild(inboxCreateNode_("p", "inbox-state-message", "Esta conversación está cerrada."));
+}
+function renderInboxReplyForm_(detail, item) {
+    const context = getUiSessionContext_(), draftKind = "reply:" + item.conversationId, draft = inboxReadDraft_(draftKind);
+    const form = inboxCreateNode_("form", "inbox-composer");
+    const label = inboxCreateNode_("label", "", "Escribe un mensaje");
+    label.htmlFor = "inbox-reply-body";
+    const textarea = inboxCreateNode_("textarea", "inbox-message-input");
+    textarea.id = "inbox-reply-body"; textarea.rows = 3; textarea.maxLength = 5000; textarea.required = true;
+    textarea.value = String(draft.body || "");
+    const status = inboxCreateNode_("p", "inbox-form-status");
+    status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
+    const send = inboxCreateNode_("button", "inbox-primary-button", "Enviar mensaje");
+    send.type = "submit";
+    form.append(label, textarea, status, send);
+    textarea.addEventListener("input", () => {
+        const current = inboxReadDraft_(draftKind), body = textarea.value;
+        if (current.lastAttemptBody && current.lastAttemptBody !== body) current.idempotencyKey = "";
+        inboxSaveDraft_(draftKind, { ...current, body });
+    });
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const body = textarea.value.trim();
+        if (!body) { status.textContent = "Escribe un mensaje antes de enviarlo."; return; }
+        if (typeof navigator !== "undefined" && navigator.onLine === false) { status.textContent = "Sin conexión. El borrador quedó guardado."; return; }
+        const current = inboxReadDraft_(draftKind), idempotencyKey = current.idempotencyKey || inboxNewIdempotencyKey_();
+        inboxSaveDraft_(draftKind, { ...current, body, idempotencyKey, lastAttemptBody: body });
+        send.disabled = true; status.textContent = "Enviando…";
+        try {
+            const result = await sendInboxMessage({ ...(context || {}), conversationId: item.conversationId, body, idempotencyKey });
+            if (!result || result.status !== "success") throw new Error(result && result.message || "No se pudo enviar el mensaje.");
+            inboxClearDraft_(draftKind);
+            status.textContent = "Mensaje enviado.";
+            await loadInboxMessages_(item.conversationId, { reset: true, markRead: true });
+            await loadInboxConversations_({ preserveScroll: true });
+        } catch (error) {
+            status.textContent = error && error.message ? error.message : "No se pudo enviar. El borrador se conservó.";
+            inboxSetStatus_(status.textContent, true);
+        } finally { send.disabled = false; }
+    });
+    detail.appendChild(form);
+}
+async function openInboxNewConversationForm_() {
+    const context = getUiSessionContext_();
+    if (!context) return;
+    const isDeveloper = context.role === "desarrollador", mode = isDeveloper ? "direct" : "consult";
+    const draftKind = "new:" + mode, detail = document.getElementById("inbox-conversation-detail");
+    if (!detail) return;
+    inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
+    document.getElementById("inbox-modal-content")?.classList.add("is-detail-open");
+    detail.replaceChildren();
+    const status = inboxCreateNode_("p", "inbox-form-status", "Cargando destinatarios…");
+    status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
+    detail.appendChild(inboxCreateNode_("h3", "inbox-new-title", isDeveloper ? "Nuevo mensaje" : "Consultar al desarrollador"));
+    detail.appendChild(status);
+    let recipients = [];
+    try {
+        const response = await getInboxRecipients(context);
+        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudieron cargar los destinatarios.");
+        recipients = Array.isArray(response.recipients) ? response.recipients : [];
+    } catch (error) {
+        status.textContent = error && error.message ? error.message : "No se pudieron cargar los destinatarios.";
+        inboxSetStatus_(status.textContent, true); return;
+    }
+    if (!recipients.length) {
+        status.textContent = isDeveloper ? "No hay usuarios activos disponibles." : "No hay una cuenta Desarrollador disponible.";
+        inboxSetStatus_(status.textContent, true); return;
+    }
+    detail.replaceChildren();
+    const heading = inboxCreateNode_("h3", "inbox-new-title", isDeveloper ? "Nuevo mensaje" : "Consultar al desarrollador");
+    const form = inboxCreateNode_("form", "inbox-new-conversation-form");
+    const addField = (labelText, id, control) => {
+        const label = inboxCreateNode_("label", "", labelText); label.htmlFor = id;
+        control.id = id; control.classList.add("inbox-form-control");
+        form.append(label, control); return control;
+    };
+    const recipient = addField("Destinatario", "inbox-new-recipient", document.createElement("select"));
+    recipient.required = true;
+    recipients.forEach(user => {
+        const option = inboxCreateNode_("option", "", user.name + " · " + user.role);
+        option.value = user.id; recipient.appendChild(option);
+    });
+    const draft = inboxReadDraft_(draftKind);
+    if (draft.recipientId && recipients.some(user => user.id === draft.recipientId)) recipient.value = draft.recipientId;
+    const templateLabel = inboxCreateNode_("label", "", "Plantilla editable");
+    templateLabel.htmlFor = "inbox-welcome-template";
+    const template = document.createElement("select"); template.id = "inbox-welcome-template"; template.className = "inbox-form-control";
+    const templates = [
+        { id: "", label: "Sin plantilla", subject: "", body: "" },
+        { id: "welcome-general", label: "Bienvenida general", subject: "Bienvenido a GPSpedia", body: "Hola. Te damos la bienvenida a GPSpedia. Este canal está disponible para consultas y comunicación directa. Puedes responder a este mensaje cuando lo necesites." },
+        { id: "welcome-technician", label: "Bienvenida para técnicos", subject: "Bienvenido al equipo técnico de GPSpedia", body: "Hola. Te damos la bienvenida. Utiliza este canal para compartir consultas técnicas, comunicar incidencias y dar seguimiento a los temas relacionados con GPSpedia." }
+    ];
+    templates.forEach(item => { const option = inboxCreateNode_("option", "", item.label); option.value = item.id; template.appendChild(option); });
+    if (!isDeveloper) { templateLabel.hidden = true; template.hidden = true; }
+    const subject = addField("Asunto", "inbox-new-subject", document.createElement("input"));
+    subject.type = "text"; subject.maxLength = 150; subject.required = true;
+    subject.value = String(draft.subject || (isDeveloper ? "" : "Consulta al desarrollador"));
+    const category = addField("Categoría", "inbox-new-category", document.createElement("select"));
+    ["general","soporte","acceso","contenido","instalacion","otro"].forEach(value => {
+        const option = inboxCreateNode_("option", "", value.charAt(0).toUpperCase() + value.slice(1)); option.value = value; category.appendChild(option);
+    });
+    category.value = String(draft.category || "general");
+    const body = addField("Mensaje", "inbox-new-body", document.createElement("textarea"));
+    body.rows = 6; body.maxLength = 5000; body.required = true; body.classList.add("inbox-message-input");
+    body.value = String(draft.body || "");
+    if (draft.templateId) template.value = draft.templateId;
+    if (isDeveloper) {
+        const subjectLabel = form.querySelector('label[for="inbox-new-subject"]');
+        if (subjectLabel) {
+            form.insertBefore(templateLabel, subjectLabel);
+            form.insertBefore(template, subjectLabel);
+        }
+    }
+    const formStatus = inboxCreateNode_("p", "inbox-form-status");
+    formStatus.setAttribute("role", "status"); formStatus.setAttribute("aria-live", "polite");
+    const send = inboxCreateNode_("button", "inbox-primary-button", isDeveloper ? "Enviar mensaje" : "Enviar consulta");
+    send.type = "submit"; form.append(formStatus, send); detail.append(heading, form);
+    const persist = () => {
+        const current = inboxReadDraft_(draftKind), fingerprint = [recipient.value,subject.value,category.value,body.value].join("|");
+        if (current.lastAttemptFingerprint && current.lastAttemptFingerprint !== fingerprint) current.idempotencyKey = "";
+        inboxSaveDraft_(draftKind, { ...current, recipientId: recipient.value, subject: subject.value, category: category.value, body: body.value, templateId: template.value });
+    };
+    [recipient,subject,category,body].forEach(element => { element.addEventListener("input", persist); element.addEventListener("change", persist); });
+    template.addEventListener("change", () => {
+        const selected = templates.find(item => item.id === template.value);
+        if (selected && selected.id) { subject.value = selected.subject; body.value = selected.body; category.value = "general"; }
+        persist();
+    });
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const recipientId = recipient.value, subjectValue = subject.value.trim(), bodyValue = body.value.trim();
+        if (!recipientId || !subjectValue || !bodyValue) { formStatus.textContent = "Completa destinatario, asunto y mensaje."; return; }
+        if (typeof navigator !== "undefined" && navigator.onLine === false) { formStatus.textContent = "Sin conexión. El borrador quedó guardado."; return; }
+        const current = inboxReadDraft_(draftKind), fingerprint = [recipientId,subjectValue,category.value,bodyValue].join("|");
+        const idempotencyKey = current.idempotencyKey || inboxNewIdempotencyKey_();
+        inboxSaveDraft_(draftKind, { ...current, recipientId, subject: subjectValue, category: category.value, body: bodyValue, idempotencyKey, lastAttemptFingerprint: fingerprint });
+        send.disabled = true; formStatus.textContent = "Enviando…";
+        try {
+            const result = await createInboxConversation({ ...(context || {}), recipientId, subject: subjectValue, category: category.value, body: bodyValue, idempotencyKey });
+            if (!result || result.status !== "success" || !result.conversationId) throw new Error(result && result.message || "No se pudo crear la conversación.");
+            inboxClearDraft_(draftKind); inboxConversationFolder_ = "sent"; inboxConversationPageStack_ = [0]; inboxConversationPageIndex_ = 0;
+            document.getElementById("inbox-folder-nav")?.querySelectorAll("[data-inbox-folder]").forEach(button =>
+                button.setAttribute("aria-pressed", String(button.dataset.inboxFolder === "sent")));
+            await loadInboxConversations_({ reset: true });
+            const created = inboxConversationItems_.find(item => item.conversationId === result.conversationId) || {
+                conversationId: result.conversationId, subject: subjectValue, category: category.value,
+                otherParticipants: recipients.filter(user => user.id === recipientId).map(user => ({ id: user.id, name: user.name, role: user.role })),
+                unreadCount: 0, archived: false, status: "open"
+            };
+            await selectInboxConversation_(created);
+            inboxSetStatus_("Mensaje enviado.", false);
+        } catch (error) {
+            formStatus.textContent = error && error.message ? error.message : "No se pudo enviar. El borrador se conservó.";
+            inboxSetStatus_(formStatus.textContent, true);
+        } finally { send.disabled = false; }
+    });
+}
+async function toggleInboxConversationArchive_(item) {
+    const context = getUiSessionContext_();
+    if (!context || !item) return;
+    try {
+        const response = await archiveInboxConversation(item.conversationId, !item.archived, context);
+        if (!response || response.status !== "success") throw new Error(response && response.message || "No se pudo actualizar el archivo.");
+        inboxConversationSelected_ = { ...item, archived: !item.archived };
+        await loadInboxConversations_({ reset: true, preserveScroll: true });
+        const shouldClearSelection = (inboxConversationFolder_ !== "archived" && inboxConversationSelected_.archived) ||
+            (inboxConversationFolder_ === "archived" && !inboxConversationSelected_.archived);
+        if (shouldClearSelection) {
+            inboxConversationSelectedId_ = ""; inboxConversationSelected_ = null; inboxConversationMessages_ = [];
+            document.getElementById("inbox-modal-content")?.classList.remove("is-detail-open");
+            renderInboxConversationDetail_();
+        } else renderInboxConversationDetail_();
+        inboxSetStatus_(item.archived ? "Conversación restaurada." : "Conversación archivada.", false);
+    } catch (error) { inboxSetStatus_(error && error.message ? error.message : "No se pudo actualizar el archivo.", true); }
+}
+async function refreshInboxConversations_() {
+    if (inboxConversationSyncBusy_ || inboxConversationCurrentView_ !== "conversations") return;
+    inboxConversationSyncBusy_ = true;
+    try {
+        await loadInboxConversations_({ preserveScroll: true });
+        if (inboxConversationSelectedId_) await loadInboxMessages_(inboxConversationSelectedId_, { preserveScroll: true, markRead: true });
+    } finally { inboxConversationSyncBusy_ = false; }
+}
+function startInboxSync_() {
+    stopInboxSync_();
+    inboxConversationSyncTimer_ = window.setInterval(() => {
+        const modal = document.getElementById("inbox-modal");
+        if (!modal || modal.style.display === "none" || document.visibilityState === "hidden" ||
+            (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+        refreshInboxConversations_();
+    }, INBOX_SYNC_INTERVAL_MS_);
+}
+function stopInboxSync_() {
+    if (inboxConversationSyncTimer_ !== null) {
+        window.clearInterval(inboxConversationSyncTimer_);
+        inboxConversationSyncTimer_ = null;
+    }
+    inboxConversationSyncBusy_ = false;
+}
+function closeInboxModal_() {
+    const modal = document.getElementById("inbox-modal");
+    if (!modal) return;
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("inbox-open");
+    stopInboxSync_();
+    deactivateLegalModalFocus_(modal, true);
 }
 
 function initializeRichTextModeControl_() {
@@ -7668,7 +8286,7 @@ export function showApp(user) {
 
     const inboxBtn = document.getElementById('inbox-btn');
     if (inboxBtn) {
-        inboxBtn.style.display = ['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(userRole) ? 'flex' : 'none';
+        inboxBtn.style.display = ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');

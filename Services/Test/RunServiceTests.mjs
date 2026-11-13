@@ -142,6 +142,7 @@ runGroup('37','USERS',()=>{
 });
 runGroup('38','INTEGRATION',()=>{
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','Services/Test/InboxConversations.mjs');
+ runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','Services/Test/InboxUi.mjs');
  runCli('OVERLAY pila de menú y modales administrativos','Services/Test/OverlayMenuModalHistory.js');
  runCli('AUG-148 accesibilidad y foco del modal de desarrollador','Services/Test/DevToolsModalAccessibility.mjs');
  runCli('CATALOG reintentos y cancelación','Services/Test/CatalogRequestRetry.js');

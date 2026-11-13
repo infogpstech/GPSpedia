@@ -1671,3 +1671,10 @@ Resultado de referencia: GitHub Actions run `43439140720`, 53 suites, 748/748 PA
 `CatalogStartupIntegrity.mjs` ejecuta el flujo real extraído de `auth.js` con caché/red/estado controlados: respuesta válida y vacía, respuesta parcial, elementos nulos, caché corrupta, error de normalización, error al actualizar estado, recuperación desde caché vacía y cancelación con respuesta tardía. `CatalogSnapshotSync.js` valida estructura y elementos de todas las colecciones; `CatalogRequestRetry.js` y `PWAStartupScenarios.js` también se ejecutan desde el runner.
 
 Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PASS; CatalogStartupIntegrity 10/10, CatalogSnapshotSync 19/19, CatalogRequestRetry 7/7 y PWAStartupScenarios 10/10. Node.js `--check` PASS.
+
+
+## AUG-152 — Centro de conversaciones Inbox
+
+- `InboxConversations.mjs`: permisos por participante, creación y respuesta idempotentes, lectura, archivo privado, paginación, límites y auditoría.
+- `InboxUi.mjs`: contrato de interfaz accesible, separación de solicitudes históricas, uso seguro de texto, borradores de sesión, filtros, paginación y sincronización acotada.
+- Ejecutar con `node --experimental-default-type=module Services/Test/InboxUi.mjs` y el conjunto integrado mediante `node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=INTEGRATION`.

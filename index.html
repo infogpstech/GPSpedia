@@ -164,19 +164,58 @@
 </div>
 
 <!-- ========= MODAL DE INBOX ========= -->
-<div id="inbox-modal" class="info-modal">
-    <div class="info-modal-content" id="inbox-modal-content">
-        <span class="info-close-btn">&times;</span>
-        <h2 class="inbox-modal-title"><i class="fa-solid fa-inbox"></i> Bandeja de Entrada</h2>
-        <div class="inbox-layout-wrapper">
-            <div id="inbox-list">
-                <!-- List of items will be rendered here -->
+<div id="inbox-modal" class="info-modal" aria-hidden="true">
+    <section class="info-modal-content inbox-modal-content" id="inbox-modal-content" role="dialog" aria-modal="true" aria-labelledby="inbox-modal-title" tabindex="-1">
+        <button class="info-close-btn inbox-close-button" type="button" aria-label="Cerrar bandeja de entrada">&times;</button>
+        <header class="inbox-modal-header">
+            <div class="inbox-heading-block">
+                <h2 class="inbox-modal-title" id="inbox-modal-title">Bandeja de entrada</h2>
+                <span id="inbox-notification-count" class="inbox-notification-count" role="status" aria-live="polite" hidden>0</span>
             </div>
-            <div id="inbox-detail">
-                <!-- Detail of selected item will be rendered here -->
+            <div class="inbox-header-actions">
+                <button id="inbox-new-message" class="inbox-primary-button" type="button" hidden>Nuevo mensaje</button>
+                <button id="inbox-consult-developer" class="inbox-primary-button" type="button" hidden>Consultar al desarrollador</button>
+                <button id="inbox-conversation-refresh" class="inbox-secondary-button" type="button">Actualizar</button>
             </div>
-        </div>
-    </div>
+        </header>
+        <nav id="inbox-view-tabs" class="inbox-view-tabs" aria-label="Secciones de la bandeja">
+            <button type="button" data-inbox-view="conversations" aria-pressed="true">Conversaciones</button>
+            <button type="button" id="inbox-requests-tab" data-inbox-view="requests" aria-pressed="false" hidden>Solicitudes</button>
+        </nav>
+        <section id="inbox-conversations-view" class="inbox-conversations-view">
+            <aside class="inbox-conversation-sidebar" aria-label="Lista de conversaciones">
+                <nav id="inbox-folder-nav" class="inbox-folder-nav" aria-label="Carpetas de conversaciones">
+                    <button type="button" data-inbox-folder="received" aria-pressed="true">Recibidos</button>
+                    <button type="button" data-inbox-folder="unread" aria-pressed="false">No leídos</button>
+                    <button type="button" data-inbox-folder="sent" aria-pressed="false">Enviados</button>
+                    <button type="button" data-inbox-folder="archived" aria-pressed="false">Archivados</button>
+                </nav>
+                <form id="inbox-conversation-search-form" class="inbox-search-form" role="search">
+                    <label for="inbox-conversation-search">Buscar conversaciones</label>
+                    <div class="inbox-search-row">
+                        <input id="inbox-conversation-search" type="search" maxlength="80" autocomplete="off" placeholder="Asunto, persona o mensaje">
+                        <button class="inbox-secondary-button" type="submit">Buscar</button>
+                    </div>
+                </form>
+                <div id="inbox-conversation-list" class="inbox-conversation-list" aria-live="polite" aria-relevant="additions text"></div>
+                <nav class="inbox-pagination" aria-label="Paginación de conversaciones">
+                    <button id="inbox-conversation-previous" class="inbox-secondary-button" type="button" disabled>Anterior</button>
+                    <span id="inbox-conversation-page-label" aria-live="polite">Página 1</span>
+                    <button id="inbox-conversation-next" class="inbox-secondary-button" type="button" disabled>Siguiente</button>
+                </nav>
+            </aside>
+            <section id="inbox-conversation-detail" class="inbox-conversation-detail" aria-label="Detalle de conversación" aria-live="polite">
+                <p class="inbox-state-message">Selecciona una conversación para consultar sus mensajes.</p>
+            </section>
+        </section>
+        <section id="inbox-requests-view" class="inbox-requests-view" hidden aria-hidden="true">
+            <div class="inbox-layout-wrapper">
+                <div id="inbox-list"><!-- Solicitudes históricas --></div>
+                <div id="inbox-detail"><!-- Detalle de solicitudes --></div>
+            </div>
+        </section>
+        <p id="inbox-conversation-status" class="inbox-status" role="status" aria-live="polite"></p>
+    </section>
 </div>
 
 <!-- ========= MODAL DE DASHBOARD ========= -->
