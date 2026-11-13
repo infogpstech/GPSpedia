@@ -1439,6 +1439,13 @@ La suite `Services/Test/AdminRestoreRecovery.js` valida los contratos de respald
 La suite usa dobles locales; no ejecuta `DriveApp`, `SpreadsheetApp`, Apps Script ni endpoints. La creación y restauración reales deben probarse en un proyecto ADMIN y recursos aislados, según `lista_beta.txt`.
 
 
+### Extensión AUG-018 — respaldo Drive por lotes y reanudación
+
+La misma suite cubre los manifiestos v2 y el rechazo de contenedores incompletos. La suite adicional `Services/Test/AdminBackupResumeUI.mjs` valida el contrato de respuestas `in_progress`/reanudables, el control de continuación, el límite de lotes automáticos y ejecuta comprobaciones de sintaxis Node.js sobre los archivos afectados. El caso de colisión del nombre del manifiesto se prueba en el traslado de recursos Drive.
+
+Ejecución integrada: `node --experimental-default-type=module Services/Test/RunServiceTests.mjs`. La integración real con DriveApp/SpreadsheetApp, interrupciones de Apps Script y restauración de recursos se reserva a Beta aislada.
+
+
 ## AUG-126 — Validación previa de payload en WRITE
 
 ```js
