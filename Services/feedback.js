@@ -2980,7 +2980,7 @@ function removeRejectedVideoFromDestination_(videoData) {
     return { targetType: target.type, rowIndex: target.record.rowIndex };
 }
 
-function handleApproveVideo(payload) {
+function handleApproveVideoUnlocked_(payload) {
     const { itemId, userName, userRole } = payload || {};
     const allowedRoles = ["Desarrollador", "Gefe", "Supervisor"];
     if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para aprobar vídeos.");
@@ -3045,7 +3045,7 @@ function handleApproveVideo(payload) {
 /**
  * Rechaza una solicitud de vídeo y elimina únicamente el enlace pendiente exacto si ya estuviera publicado.
  */
-function handleRejectVideo(payload) {
+function handleRejectVideoUnlocked_(payload) {
     const { itemId, userName, reason, userRole } = payload || {};
     const allowedRoles = ["Desarrollador", "Gefe", "Supervisor"];
     if (!userRole || !allowedRoles.includes(userRole)) throw new Error("No tienes permisos suficientes para rechazar vídeos.");
@@ -3076,6 +3076,29 @@ function handleRejectVideo(payload) {
         throw new Error("El enlace pendiente se retiró del destino, pero no se pudo confirmar el rechazo. Reintenta la misma solicitud.");
     }
     return { status: "success", message: "Vídeo rechazado.", statusState: "rejected", targetType: targetResult.targetType };
+}
+
+/**
+ * Serializa aprobación/rechazo dentro de FEEDBACK. La lease compartida del router
+ * coordina los recursos entre proyectos; este ScriptLock protege además las
+ * ejecuciones concurrentes del mismo proyecto durante la transición completa.
+ */
+function withVideoApprovalMutationLock_(callback) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        return callback();
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function handleApproveVideo(payload) {
+    return withVideoApprovalMutationLock_(() => handleApproveVideoUnlocked_(payload));
+}
+
+function handleRejectVideo(payload) {
+    return withVideoApprovalMutationLock_(() => handleRejectVideoUnlocked_(payload));
 }
 
 /* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
