@@ -1370,3 +1370,19 @@ H-AUD-029-001 — CERRADO EN CÓDIGO — 2026-11-13
 
 Límite de validación: no se usaron Spreadsheet/Drive productivos ni se desplegó el servicio. La integración real queda pendiente de Beta aislada.
 ================================================================================
+
+================================================================================
+H-AUD-029-003 / H-AUD-029-008 — AUG-031 — CERRADO EN CÓDIGO; CI PENDIENTE DE CONFIRMACIÓN — 2026-11-13
+
+- El estado local de cada auditoría se particiona por propietario y auditId. Los resultados se almacenan por páginas incrementales; metadatos/cursor y confirmaciones quedan separados.
+- Cada lote y su actualización de metadatos se escriben en una transacción IndexedDB. El fallo intermedio revierte la página y conserva el estado previo.
+- Compare-and-swap por revisión: una pestaña obsoleta recibe conflicto explícito. Auditorías diferentes conservan páginas independientes; el puntero latest considera createdAt.
+- Reintentos idénticos no duplican páginas. Las páginas se validan por propietario, auditId, índice y firma; una página ausente o alterada bloquea la reanudación.
+- La migración DB_VERSION 4 convierte el estado legado a páginas. El registro legado solo se elimina en la misma transacción que confirma metadatos, páginas y puntero; un fallo conserva el origen.
+- La limpieza de una cuenta no elimina datos de otra; el token de limpieza evita dos procesos simultáneos y el modal puede recuperar un marcador interrumpido.
+- La UI mantiene auditId, createdAt, revisión y pageCount local; el inventario usa el mismo auditId de la auditoría y no depende del puntero latest de otra pestaña.
+- Evidencia: harness dirigido sobre la fuente actual de offline.js (6 verificaciones PASS), recuperación de limpieza interrumpida PASS, análisis sintáctico de cuatro archivos PASS. AdminDriveAuditIndexedDB.mjs agrega 13 casos al runner Node CLI.
+- Límite: no se obtuvo un resultado Node CLI/GitHub Actions asociado a estos commits mediante el conector. No declarar CI SUCCESS hasta consultar el workflow real.
+- Sin deployment, Drive o Spreadsheet productivos.
+
+================================================================================
