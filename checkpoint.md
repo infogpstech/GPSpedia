@@ -499,3 +499,22 @@ Validación Beta pendiente: OAuth/YouTube API reales, escritura/aprobación en F
 Archivos: Services/write.js, Services/admin.js, Services/catalog.js, ui.js, add_cortes.html, Services/Test/SupplementaryVideoContract.js, Services/Test/YouTubeApproval.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-128 — Validar referencias PyS–vehículos y serializar cambios. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-128 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD verificado al iniciar la tarea: a7e122ca626eac198e5cefd770bbd6d7ef834d7d.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- La revisión del backend confirmó que vehicleId se normaliza y debe corresponder a exactamente una fila de Cortes con encabezado ID válido; problemId debe ser válido y corresponder a una única fila PyS.
+- Las listas JSON y formatos heredados se normalizan y deduplican; los elementos malformados se rechazan.
+- handleAddVehicleToProblem y handleRemoveVehicleFromProblem comparten withPysMutationLock_; todas las lecturas y escrituras de cada mutación ocurren bajo ScriptLock, la escritura se verifica tras flush y el lock se libera en finally. El alta preasociada de handleAddProblem valida referencias bajo su ScriptLock.
+- La baja conserva autorización exclusiva de Desarrollador.
+- No se modificó código funcional porque la implementación y la cobertura ya existían. Services/Test/PysVehicleRelationIntegrity.js cuenta con evidencia local histórica de 18/18 PASS registrada en AUG-090; no se afirma una nueva ejecución en esta sesión.
+
+Validación Beta pendiente: concurrencia real entre ejecuciones independientes, persistencia y recuperación ante timeout/fallo de flush en FEEDBACK/Spreadsheet aislados. Se añadió la secuencia de pruebas a lista_beta.txt. No se ejecutaron Apps Script desplegados, endpoints ni datos productivos.
+Archivos actualizados: Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md. Código funcional sin cambios.
+Siguiente tarea: AUG-129 — Restringir campos editables por ADMIN y proteger ID. No iniciar hasta la siguiente interacción.
+================================================================================
