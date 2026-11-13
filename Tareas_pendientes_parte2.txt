@@ -251,9 +251,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
  
 ### AUG-129 — Restringir campos editables por ADMIN y proteger ID
 - Origen: H-AUD-019-008. Prioridad: Media.
-- Evidencia: Services/admin.js:344–354 y 1798–1819.
-- Criterios: allowlist de campos; excluir ID/campos calculados; validación específica de tipo, longitud y dominio; pruebas de valores inválidos y duplicados.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Criterios: allowlist explícita; excluir ID y campos calculados; validar tipo, longitud y dominio antes de escribir; rechazar IDs inexistentes o duplicados.
+- Implementación: Services/admin.js valida los campos permitidos, aplica dominios tomados de Cortes/Relay, valida años y rangos, limita longitudes, sanitiza texto enriquecido y valida referencias de Drive. Las ediciones ordinarias y VIN se resuelven por ID único bajo ScriptLock; las escrituras se verifican y se intenta restaurar el valor previo ante fallo.
+- Pruebas: Services/Test/AdminModalEditIntegrity.js, 9/9 PASS en harness V8 aislado; parsing V8 de Services/admin.js PASS.
+- Beta pendiente: ADMIN/Spreadsheet aislados, RBAC real, IDs duplicados, dominios/valores inválidos, fallos de escritura/flush y preservación de ID/campos calculados.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 
 ### AUG-130 — Hacer atómicas las mutaciones de USERS
 - Origen: H-AUD-019-009. Prioridad: Media.
