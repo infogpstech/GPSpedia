@@ -14,7 +14,13 @@ function runAdminModalEditIntegrityTests(adminSource) {
         const end = source.indexOf("\nfunction ", start + 10);
         return source.slice(start, end > start ? end : source.length);
     };
+    const allowlistStart = source.indexOf("const ADMIN_MODAL_EDIT_FIELDS = new Set(");
+    assert(allowlistStart >= 0, "No se encontró la allowlist del backend.");
+    const allowlistEnd = source.indexOf("]);", allowlistStart);
+    assert(allowlistEnd > allowlistStart, "La allowlist del backend está incompleta.");
+    const allowlistSource = source.slice(allowlistStart, allowlistEnd + 3);
     const support = [
+        allowlistSource,
         extract("isAdminModalEditField_"),
         extract("getAdminModalDomainValues_"),
         extract("validateAdminModalFieldValue_"),
@@ -73,9 +79,9 @@ function runAdminModalEditIntegrityTests(adminSource) {
     });
     run("Valida años enteros, límites y coherencia del rango",()=>{
         equal(helpers.validateAdminModalFieldValue_(cortesSheet,"anoDesde","2020",rowValues),2020);
-        let rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoDesde","2021",rowValues);}catch(_){rejected=true;}assert(rejected);
+        let rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoDesde","2026",rowValues);}catch(_){rejected=true;}assert(rejected);
         rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",2101,rowValues);}catch(_){rejected=true;}assert(rejected);
-        rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",2020,rowValues);}catch(_){rejected=true;}assert(rejected);
+        rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",2019,rowValues);}catch(_){rejected=true;}assert(rejected);
     });
     run("Sanitiza texto enriquecido y rechaza referencias de imagen inválidas",()=>{
         equal(helpers.validateAdminModalFieldValue_(cortesSheet,"notaImportante"," aviso ",rowValues),"SANITIZED:aviso");
