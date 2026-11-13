@@ -585,3 +585,25 @@ Beta pendiente: concurrencia real entre aprobaciones/rechazos y ediciones del de
 Archivos: Services/feedback.js, Services/Test/VideoApprovalPublishing.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-132 — Aplicar validación estricta al VIN. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-132 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- WRITE `extractVinPrefix` y ADMIN `extractVinPrefixForAdmin` admiten exclusivamente letras ASCII, dígitos, espacios y guiones como formato de entrada. Cualquier otro carácter se rechaza expresamente; ya no se descarta silenciosamente mediante una limpieza genérica.
+- Tras validar el formato, ambos normalizan a mayúsculas y eliminan únicamente espacios/guiones. El valor normalizado debe medir entre 6 y 18 caracteres. Se conserva el contrato de prefijo: los últimos cinco caracteres se reservan para el serial y no forman parte de la clave almacenada.
+- `validateAddOrUpdateCutPayload_` llama al validador autoritativo, de modo que los payloads directos no evitan las reglas del formulario. Las rutas ADMIN de edición y alta mantienen el mismo validador.
+
+Validación local:
+- `Services/Test/VinAuthoritativeValidation.js`: 12/12 PASS; incluye límites 5/6/18/19, símbolos, underscore, caracteres acentuados, espacios/guiones permitidos, rechazo antes de consulta a Sheets, duplicados, edición ADMIN, rollback y contratos de altas.
+- Parsing V8 de Services/write.js, Services/admin.js y suite: PASS.
+- Sin deployments, llamadas Apps Script, Spreadsheet real ni datos productivos.
+
+Beta pendiente: navegador real, alta/edición en proyecto y Spreadsheet aislados, payloads directos manipulados, caracteres no permitidos, duplicados/slots y compatibilidad de registros históricos. Procedimiento registrado en lista_beta.txt.
+
+Archivos: Services/write.js, Services/admin.js, Services/Test/VinAuthoritativeValidation.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: revisar AUG-133 en el backlog; no iniciar hasta la siguiente interacción.
+================================================================================
