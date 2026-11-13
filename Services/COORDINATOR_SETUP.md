@@ -5,6 +5,7 @@
 - `Coordinator.js`: servicio Apps Script independiente. Mantiene las leases en ScriptProperties y no accede a Spreadsheet ni Drive.
 - `SharedMutationClient.js`: cliente servidor-a-servidor que debe incluirse en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 - Los routers de esos servicios delegan las acciones mutadoras al coordinador antes de ejecutar sus handlers. Los locks locales existentes se conservan.
+- En FEEDBACK, `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation` reservan lectura de `USERS/ACTIVE_SESSIONS` y escritura de `FEEDBACK`; las lecturas de Inbox no adquieren lease mutadora.
 
 ## Configuración de cada entorno
 

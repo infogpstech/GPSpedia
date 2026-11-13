@@ -1190,3 +1190,23 @@ Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTERFAZ REAL DIFERIDA A BETA.
 - Pruebas locales: DevToolsModalAccessibility 13/13 PASS. GitHub Actions run 43443245846 SUCCESS: 58 suites, 805/805 PASS; Node.js --check PASS.
 - Beta pendiente: teclado y lectores de pantalla reales, compatibilidad de :has() en navegadores mínimos soportados, responsive y temas. No se alteró la lógica de acciones administrativas ni el control de acceso.
 ================================================================================
+
+
+================================================================================
+CIERRE TÉCNICO — AUG-152 — 2026-11-13
+Estado: HALLAZGOS RESUELTOS EN FUENTES; VALIDACIÓN LOCAL NODE/CI APROBADA; INTEGRACIÓN REAL DIFERIDA A BETA.
+
+H-AUD-152-001 — Mutaciones de Inbox fuera del coordinador compartido
+Severidad: Alta — consistencia de identidad/sesión.
+Evidencia: Services/feedback.js:isSharedMutationAction_ no incluía createInboxConversation, sendInboxMessage, markInboxRead ni archiveInboxConversation; Services/Coordinator.js tampoco tenía políticas para esas acciones. Aunque el backend validaba sesión, las escrituras de Inbox podían ejecutarse sin una lease que serializara la lectura de USERS/ACTIVE_SESSIONS con las mutaciones de AUTH.
+Resolución: se añadieron las cuatro acciones al wrapper de FEEDBACK y políticas deny-by-default con readResources USERS/ACTIVE_SESSIONS y writeResources FEEDBACK. Se conservan los locks locales. Pruebas: contrato estático de las cuatro rutas y SharedMutationCoordinator comprueba conflicto con AUTH.updateUser y con otra escritura FEEDBACK.
+Estado: RESUELTO.
+
+H-AUD-152-002 — Solicitud de lectura tardía podía retroceder el marcador
+Severidad: Media — consistencia de estado/unread.
+Evidencia: handleMarkInboxRead reemplazaba lastReadMessageId por el ID solicitado sin comparar su posición con el marcador vigente. Una solicitud antigua que terminara después de una más reciente podía volver a marcar mensajes como no leídos.
+Resolución: se resuelve la posición del marcador anterior y se conserva max(previousIndex, requestedIndex); un marcador previo que no exista en el historial se rechaza sin sobrescribirlo. Prueba de regresión: marcar el mensaje más reciente y después enviar una solicitud antigua conserva el marcador nuevo y unreadCount=0.
+Estado: RESUELTO.
+
+Validación: GitHub Actions run 43449918635 SUCCESS; InboxConversations 28/28, InboxUi 15/15, Coordinador compartido 34/34; 60 suites, 849 pruebas, 0 fallos. Node.js --check PASS. No se ejecutaron Apps Script/Spreadsheet reales, despliegues, endpoints operativos ni datos productivos; esos escenarios quedan para Beta aislada.
+================================================================================

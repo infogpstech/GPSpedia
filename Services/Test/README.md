@@ -1675,6 +1675,8 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 
 ## AUG-152 — Centro de conversaciones Inbox
 
-- `InboxConversations.mjs`: permisos por participante, creación y respuesta idempotentes, lectura, archivo privado, paginación, límites y auditoría.
-- `InboxUi.mjs`: contrato de interfaz accesible, separación de solicitudes históricas, uso seguro de texto, borradores de sesión, filtros, paginación y sincronización acotada.
-- Ejecutar con `node --experimental-default-type=module Services/Test/InboxUi.mjs` y el conjunto integrado mediante `node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=INTEGRATION`.
+- `InboxConversations.mjs`: aislamiento por participante, destinatario único, mensajes solo de texto, idempotencia, rate limit, lectura monotónica, archivo privado, paginación y auditoría por actor.
+- `InboxUi.mjs`: accesibilidad contractual, separación de solicitudes históricas, renderizado seguro, borradores de sesión, filtros, paginación y sincronización acotada.
+- La suite verifica que las mutaciones de Inbox adquieran leases compartidas y se serialicen con cambios de identidad AUTH y otras escrituras FEEDBACK.
+- Comandos: `node --experimental-default-type=module Services/Test/InboxUi.mjs` y `node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=INTEGRATION`.
+- GitHub Actions run 43449918635: InboxConversations 28/28, InboxUi 15/15, coordinador compartido 34/34; conjunto completo 60 suites, 849/849 PASS; Node.js --check PASS.

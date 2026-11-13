@@ -636,3 +636,36 @@ Validación local: runInboxStoredXssTests({ui, feedback}) 30/30 PASS; parsing co
 Beta pendiente: DOM/navegador real con registros históricos maliciosos y URL alteradas; envío de solicitudes mediante FEEDBACK/Spreadsheet aislados; comprobar títulos, nombres, descripciones, metadatos y enlaces. No se ejecutaron deployments ni se modificaron datos productivos.
 Siguiente tarea: AUG-115 — Unificar el campo de rol utilizado por el Inbox. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-152 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Implementación:
+- Inbox incorpora conversaciones directas individuales y bidireccionales, plantillas editables, consulta al Desarrollador, filtros Recibidos/No leídos/Enviados/Archivados, búsqueda, paginación, contadores, borradores de sesión y sincronización acotada.
+- El backend separa Conversation/Message/State/Audit de Feedbacks y Contactanos históricos. Valida sesión, rol, destinatario, participantes, texto, límites, rate limit, claves idempotentes y tipos admitidos; rechaza difusión y adjuntos no soportados. Las escrituras y auditorías se confirman mediante lectura posterior.
+- Se endureció la inicialización de las cuatro hojas con preflight de todos los esquemas y rollback de hojas/encabezados creados parcialmente.
+- Las cuatro mutaciones Inbox usan el coordinador compartido: lectura de USERS/ACTIVE_SESSIONS y escritura FEEDBACK. Se mantiene el lock local.
+- El marcador de lectura es monotónico: solicitudes antiguas o respuestas tardías no pueden hacer retroceder el último mensaje leído. Un marcador previo ajeno al historial se rechaza sin sobrescribirlo.
+- Se conserva la auditoría por actor y la semántica correcta de idempotentReplay; los históricos de reportes/sugerencias/vídeos no se migran ni alteran.
+
+Dependencias verificadas en sus registros canónicos:
+- AUG-075–081: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- AUG-113–121: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- AUG-147–149: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- AUG-040 y AUG-043: COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- AUG-153–155: cierres vigentes verificados; no se asumió que AUG-152 los sustituyera.
+
+Hallazgos nuevos resueltos: H-AUD-152-001 (mutaciones Inbox fuera de la lease compartida) y H-AUD-152-002 (retroceso del marcador de lectura). Evidencia en Auditoría.txt.
+
+Validación Node.js/CLI y GitHub Actions:
+- InboxConversations.mjs: 28/28 PASS.
+- InboxUi.mjs: 15/15 PASS.
+- Coordinador compartido: 34/34 PASS.
+- GitHub Actions run 43449918635 SUCCESS: 60 suites; 849/849 pruebas; 0 fallos.
+- Node.js --check PASS en los archivos JavaScript modificados.
+- Las correcciones de pruebas de adjuntos y paginación se volvieron a ejecutar dentro del run exitoso.
+
+Beta pendiente: Spreadsheet/Apps Script aislados, configuración real de URL/secreto del coordinador en cada proyecto, concurrencia física entre despliegues, navegador real (móvil/escritorio, foco, lector de pantalla, contraste, scroll), IndexedDB/almacenamiento y comportamiento con desconexiones. No se ejecutaron deployments, endpoints operativos ni datos productivos.
+================================================================================

@@ -1002,3 +1002,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - DevToolsModalAccessibility 13/13 PASS; GitHub Actions run 43443245846 SUCCESS: 58 suites, 805/805 PASS; Node.js --check PASS.
 - Teclado/lector de pantalla y compatibilidad de navegador real quedan para Beta. Sin cambios de endpoints ni permisos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-152 — Centro de conversaciones Inbox
+- Se completó la experiencia de conversaciones directas individuales y bidireccionales, plantillas editables, consulta al Desarrollador, filtros, búsqueda, paginación, contador de no leídos, borradores de sesión y sincronización acotada.
+- Se mantuvieron los flujos históricos de reportes, sugerencias y aprobaciones de vídeo separados de las nuevas hojas Conversation/Message/State/Audit.
+- Se reforzaron validaciones de destinatario único, texto sin adjuntos, sesión/rol/participantes, límites, rate limit, idempotencia y auditoría append-only.
+- Se integraron las cuatro mutaciones de Inbox con el coordinador compartido y se hizo monotónico el marcador de lectura para tolerar solicitudes tardías.
+- Archivos de código: Services/InboxConversations.js, Services/feedback.js, Services/Coordinator.js, ui.js, api-config.js, index.html y style.css. Pruebas: Services/Test/InboxConversations.mjs, InboxUi.mjs, SharedMutationCoordinator.js y RunServiceTests.mjs. Documentación: README.md, Services/Test/README.md y Services/COORDINATOR_SETUP.md.
+- GitHub Actions run 43449918635 SUCCESS: 60 suites, 849/849 PASS; Node.js --check PASS. Beta real diferida; sin deployments ni datos productivos.
+================================================================================

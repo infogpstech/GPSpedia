@@ -1234,3 +1234,26 @@ Beta pendiente: teclado/lectores de pantalla reales, compatibilidad CSS :has() e
 
 Siguiente decisión: AUG-152 es la próxima tarea de prioridad alta tras resolver sus dependencias. Verificar AUG-075–081, AUG-113–121, AUG-147–149 y AUG-040/AUG-043 contra sus registros canónicos; AUG-150 (baja) permanece pendiente y no es dependencia declarada de AUG-152.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-152 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de implementación y pruebas: b749a0c69138bbab17e2a0585ee64581ef506bb4.
+Commits de corrección de esta continuidad: 9e652b6881596ed78bc75dff828782a7e1f630d7 y b749a0c69138bbab17e2a0585ee64581ef506bb4.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+AUG-152 implementa conversaciones directas bidireccionales y de destinatario único, separadas de los registros históricos de Feedback. Incluye destinatarios validados desde USERS, asunto/categoría/plantillas, respuesta multi-mensaje, Recibidos/No leídos/Enviados/Archivados, búsqueda, paginación, contadores, lectura, archivo privado, borradores de sesión y sincronización acotada. El backend aplica sesión/rol/participantes, validación de texto y tipos, rate limit, idempotencia y auditoría append-only; rechaza difusión y adjuntos.
+
+La revisión adicional corrigió dos defectos: las mutaciones Inbox ahora adquieren leases compartidas contra cambios de identidad AUTH y otras escrituras FEEDBACK; el marcador de lectura no retrocede ante solicitudes tardías. Se endureció la validación/preflight de las hojas y la recuperación de inicialización parcial.
+
+Dependencias verificadas en registros canónicos: AUG-075–081, AUG-113–121, AUG-147–149 y AUG-040/AUG-043 completadas; AUG-153–155 conservan cierres propios. No se repitieron auditorías funcionales ya cerradas.
+
+Pruebas: InboxConversations 28/28; InboxUi 15/15; Coordinador compartido 34/34. GitHub Actions run 43449918635 SUCCESS: 60 suites, 849/849 pruebas, 0 fallos; Node.js --check PASS. Las correcciones de paginación y expectativas de adjuntos se incluyen en el run final exitoso.
+
+Beta pendiente: Spreadsheet/Apps Script aislados, secretos/URL del coordinador en proyectos desplegados, concurrencia física entre proyectos, navegador real (responsive, foco, teclado, lectores de pantalla, contraste y scroll), IndexedDB/almacenamiento y desconexiones. No se ejecutaron deployments, endpoints operativos ni datos productivos.
+
+Siguiente tarea pendiente del backlog: AUG-150 — Reportar correctamente errores HTTP, de red y de aplicación en consola ADMIN (prioridad baja; no era dependencia de AUG-152).
+================================================================================

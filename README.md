@@ -102,7 +102,8 @@ La confidencialidad y la integridad no dependen de ocultar el frontend: los serv
 - **Exportación e Impresión de Fichas Técnicas:** Botón con icono de impresora (`exportVehiclePrintSheet`) en el modal de detalle para generar e imprimir fichas técnicas limpias optimizadas para formato físico/PDF para técnicos instaladores en campo.
 - **Filtros rápidos de catálogo:** Funcionalidad cancelada; no forma parte de la versión vigente de GPSpedia y no debe considerarse disponible.
 - **Navegación Jerárquica Progresiva de Búsqueda:** Búsqueda agrupada por Modelo único -> Versiones de Equipamiento -> Rangos de Años -> Modal de Detalle (auto-abriendo si sólo existe 1 modelo, 1 versión y 1 rango de año).
-- **Gestión Completa del Inbox:** Opción de eliminación permanente de mensajes y reportes (`deleteFeedbackItem`) en el panel del Inbox.
+- **Centro de conversaciones Inbox:** conversaciones directas bidireccionales individuales con destinatario, asunto, categoría, plantillas editables, respuesta multi-mensaje, Recibidos/No leídos/Enviados/Archivados, búsqueda, paginación, contador de no leídos y borradores de sesión recuperables. Las solicitudes históricas de reportes, sugerencias y vídeos conservan sus flujos separados.
+- **Gestión del Inbox histórico:** opción de eliminación permanente de mensajes y reportes (`deleteFeedbackItem`) en el panel del Inbox.
 
 ---
 
