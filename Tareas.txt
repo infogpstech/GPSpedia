@@ -1386,3 +1386,25 @@ Criterios de implementación:
 
 Siguiente acción: inspeccionar contratos y consumidores actuales de referencias, inventario sin uso, historial y modal de desarrollador; delimitar cambios mínimos y pruebas antes de editar.
 ================================================================================
+
+
+================================================================================
+AUG-027 — Adenda de análisis técnico — 2026-11-13
+
+Hallazgos confirmados en el código y el esquema:
+- El Spreadsheet documenta campos de imagen en Cortes (imagenVehiculo, imgCorte1-3, imgApertura, imgCableAlimen-3), pys (Imagen), LogosMarca (urlLogo), Tutorial (Imagen) y Relay (imagen). Feedbacks también conserva metadatos JSON de adjuntos.
+- Los flujos inspeccionados almacenan los recursos dentro del árbol Drive Cortes: vehículos en carpetas por catálogo, Logos en Cortes/Logos y PyS en Cortes/Problemas y Soluciones; también hay carpetas de reportes y sugerencias bajo esa raíz. La auditoría recursiva del árbol Cortes cubre esas ubicaciones conocidas.
+- ADMIN ya dispone de collectActiveDriveReferences(), que recorre hojas no administrativas y lee valores visibles, fórmulas y vínculos RichText. Sin embargo, los handlers del inventario, auditoría, consulta, movimiento, descarga, restauración y papelera todavía usan collectCortesImageReferences(), limitado a campos de Cortes. Existe riesgo de clasificar/mover una imagen como no usada aunque siga referenciada desde pys, LogosMarca, Tutorial, Relay o metadatos de Feedbacks.
+- El estado requiere_revision se presenta, pero las filas válidas no tienen decisiones manuales completas; la sección de filas estructuralmente inválidas es deliberadamente no accionable por falta de identidad verificable.
+- La matriz de estados no contiene una marca persistente en_uso. La organización automática no tiene actualmente una protección manual equivalente.
+- deleteReplacedImage únicamente envía a papelera mediante setTrashed(true); no existe una acción de eliminación definitiva. recoverReplacedImage rechaza en_papelera y requiere_revision, y su restauración actual solo reescribe campos admitidos de Cortes.
+
+Alcance técnico para continuar AUG-027:
+1. Unificar las comprobaciones de referencias de las operaciones de administración con el escáner global, manteniendo las comprobaciones Cortes-específicas de sincronización de carpetas de vehículos donde correspondan.
+2. Añadir estado persistente en_uso y excluirlo de auditoría de sin uso, organización automática, papelera y eliminación.
+3. Añadir resolución manual de requiere_revision para registros con identidad/MIME/ubicación verificables. Las filas inválidas sin identidad inequívoca seguirán bloqueadas hasta corrección manual de sus metadatos.
+4. Diferenciar restaurar archivo desde papelera, reactivar la referencia histórica y eliminar definitivamente; esta última exige confirmación del servidor y verificación posterior de Drive.
+5. Mantener las acciones bajo sesión Desarrollador, lease ADMIN, ScriptLock, revalidación global y comprobación posterior. Probar errores parciales, compensación, concurrencia e idempotencia.
+
+Estado: EN PROGRESO — decisiones funcionales y análisis técnico completados; implementación y pruebas pendientes. No se modificó código ni se accedió a Spreadsheet/Drive productivos.
+================================================================================
