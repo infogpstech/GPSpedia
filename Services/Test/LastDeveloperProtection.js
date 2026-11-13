@@ -88,7 +88,7 @@ function runLastDeveloperProtectionTests(sources) {
             }),
             deleteRow:row=>sessions.splice(row-1,1)
         };
-        const normalizeRole=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+        const normalizeRole=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
         const code=helperCode;
         const reconcile=new Function(
             'COLS_USERS','COLS_ACTIVE_SESSIONS','ROLE_REVOCATION_SHARED_PREFIX','PropertiesService',
