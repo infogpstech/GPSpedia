@@ -1322,3 +1322,29 @@ Validación: no se ejecutó Node CLI en un entorno local ni se obtuvo un resulta
 
 
 CI AUG-027 — 2026-11-13: GitHub Actions run 43488754071, commit ac504feab1472731720c2a4b14529a0113492a56, SUCCESS. Node 22.23.4; 70 suites; 975 pruebas; 0 fallos de suite. Verifica los contratos automatizados y sintaxis incluidos en RunServiceTests.mjs. H-AUD-027-009/010 siguen parcialmente corregidos hasta pruebas Beta; H-AUD-027-011 permanece abierto. Este CI no prueba integraciones reales con Drive/Spreadsheet ni implementaciones aún pendientes.
+
+
+================================================================================
+AUG-027 — Resolución local de hallazgos y validación diferida — 2026-11-13
+
+H-AUD-027-009 — CERRADO EN CÓDIGO; integración real diferida a Beta.
+- Los handlers del gestor usan collectActiveDriveReferences() en todas las hojas funcionales.
+- El escáner cubre valores visibles/nativos, fórmulas, RichText, CellImage y getImages() (imágenes sobre cuadrícula).
+- Una imagen incrustada sin ID verificable se contabiliza como referencia no interpretable; las operaciones destructivas se bloquean. No se presume que ese recurso esté libre de referencias.
+- Pruebas aisladas: referencias distribuidas entre Cortes, pys, LogosMarca, Tutorial, Relay y Feedbacks; CellImage y over-grid con/sin URL identificable.
+
+H-AUD-027-010 — CERRADO EN CÓDIGO; permisos reales diferidos a Beta.
+- requiere_revision dispone de acciones manuales para marcar en uso, enviar a papelera, restaurar desde papelera y eliminar definitivamente cuando Drive confirma que el archivo está en papelera.
+- Las filas malformadas, IDs duplicados y registros con identidad no verificable permanecen no accionables.
+- estado_previo_papelera permite recuperar el estado anterior; la restauración del archivo no reescribe referencias del Spreadsheet.
+
+H-AUD-027-011 — CERRADO EN CÓDIGO; permisos reales diferidos a Beta.
+- Eliminación definitiva mediante Drive API v3 DELETE, protegida por estado, identidad, MIME, árbol Cortes y referencias globales.
+- Estado eliminacion_pendiente antes de DELETE; GET posterior debe confirmar 404 para registrar eliminada. Reintentos reconcilian resultados pendientes.
+
+CI final de código/pruebas:
+- GitHub Actions run 43491364671 SUCCESS, commit 0aa65f5f186880c6cd8bc95810d48884d7ec0d67.
+- 71 suites; 1,015 pruebas aprobadas; 0 fallos. AdminReplacedImagesIntegrity 21/21 y AdminImageTrashLifecycle 40/40.
+- La aprobación CI no representa pruebas contra Google Drive/Spreadsheet reales. Esas verificaciones se ejecutarán únicamente en Beta aislada.
+- Sin deployment ni cambios en recursos productivos.
+================================================================================
