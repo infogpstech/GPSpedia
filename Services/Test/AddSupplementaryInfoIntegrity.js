@@ -54,8 +54,8 @@ function runAddSupplementaryInfoIntegrityTests(sources) {
  const authEnd=String(sources.write).indexOf("\n// ============================================================================",authStart);
  const authSource=String(sources.write).slice(authStart,authEnd);
  const authNames={ACTIVE_SESSIONS:"ActiveSessions",USERS:"Users"};
- const authColsSessions={ActiveSessions:1,ID_Usuario:2};
- const authColsUsers={ID:1,Nombre_Usuario:2,Privilegios:3,Nombre_Completo:4,SessionToken:5};
+ const authColsSessions={ActiveSessions:3,ID_Usuario:1};
+ const authColsUsers={ID:1,Nombre_Usuario:2,Privilegios:4,Nombre_Completo:7,SessionToken:8};
  function authHarness(role,options){
   options=options||{};
   const now=new Date().toISOString();
