@@ -6080,22 +6080,62 @@ function getExistingEntities(sheet) {
 // FUNCIONES DE GESTIÓN AVANZADA DE SPREADSHEET Y TERMINAL DE DRIVE
 // ============================================================================
 
+function validateAdminSheetName_(value) {
+    if (typeof value !== "string") throw new Error("El nombre de hoja debe ser texto.");
+    const name = value.trim();
+    if (!name || name.length > 100 || /[:\\\/?*\[\]\u0000-\u001f\u007f]/.test(name)) {
+        throw new Error("El nombre de hoja debe tener entre 1 y 100 caracteres y no contener caracteres reservados.");
+    }
+    return name;
+}
+
+function validateAdminColumnName_(value) {
+    if (typeof value !== "string") throw new Error("El nombre de columna debe ser texto.");
+    const name = value.trim();
+    if (!name || name.length > 100 || /[\u0000-\u001f\u007f]/.test(name)) {
+        throw new Error("El nombre de columna debe tener entre 1 y 100 caracteres y no contener caracteres de control.");
+    }
+    return name;
+}
+
+function validateAdminHeaders_(value) {
+    if (value === undefined || value === null) return [];
+    if (!Array.isArray(value)) throw new Error("Los encabezados deben enviarse como una lista de textos.");
+    return value.map((header, index) => {
+        if (typeof header !== "string" || header.length > 100 || /[\u0000-\u001f\u007f]/.test(header)) {
+            throw new Error("El encabezado en la posición " + (index + 1) + " debe ser texto de hasta 100 caracteres sin controles.");
+        }
+        return header;
+    });
+}
+
+function validateAdminIdFormula_(value) {
+    if (value === undefined || value === null || value === "") return "";
+    if (typeof value !== "string") throw new Error("La fórmula de ID debe ser texto.");
+    const formula = value.trim();
+    if (!formula.startsWith("=") || formula.length > 500 || /[\u0000-\u001f\u007f]/.test(formula)) {
+        throw new Error("La fórmula de ID debe ser una expresión de hasta 500 caracteres iniciada con '='.");
+    }
+    return formula;
+}
+
 function handleCreateSheet(payload, logMessage) {
-    const { sheetName, headers, idFormula } = payload;
-    if (!sheetName) throw new Error("Nombre de hoja requerido.");
+    const source = payload && typeof payload === "object" ? payload : {};
+    const sheetName = validateAdminSheetName_(source.sheetName);
+    const headers = validateAdminHeaders_(source.headers);
+    const idFormula = validateAdminIdFormula_(source.idFormula);
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(sheetName);
     if (sheet) throw new Error(`La hoja '${sheetName}' ya existe en el libro.`);
 
     sheet = ss.insertSheet(sheetName);
-    if (Array.isArray(headers) && headers.length > 0) {
+    if (headers.length > 0) {
         sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
         sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f3f3");
     }
 
-    if (idFormula && headers && headers.length > 0) {
-        // Asignar plantilla de fórmula de ID a la primera columna si se especificó
-        sheet.getRange(2, 1).setFormula(idFormula || '=ROW()-1');
+    if (idFormula && headers.length > 0) {
+        sheet.getRange(2, 1).setFormula(idFormula);
     }
 
     logMessage && logMessage("Spreadsheet", `Hoja '${sheetName}' creada con exito.`);
@@ -6103,8 +6143,9 @@ function handleCreateSheet(payload, logMessage) {
 }
 
 function handleAddColumn(payload, logMessage) {
-    const { sheetName, columnName } = payload;
-    if (!sheetName || !columnName) throw new Error("Nombre de hoja y nombre de columna requeridos.");
+    const source = payload && typeof payload === "object" ? payload : {};
+    const sheetName = validateAdminSheetName_(source.sheetName);
+    const columnName = validateAdminColumnName_(source.columnName);
     const ss = getSpreadsheet();
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) throw new Error(`La hoja '${sheetName}' no existe.`);

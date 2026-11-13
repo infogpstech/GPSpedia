@@ -1721,3 +1721,11 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - `onblocked` se reporta como resultado no exitoso; aunque la solicitud pueda completarse más tarde al cerrarse otras conexiones, esa ejecución no anuncia éxito ni recarga automáticamente.
 - Ejecutar: `node --experimental-default-type=module Services/Test/AdminClientCacheDeletion.mjs`.
 - La suite usa solicitudes simuladas; no sustituye la validación con IndexedDB real, conexiones en otras pestañas ni navegadores móviles, reservada para Beta.
+
+
+## AUG-023 — Contrato de acciones ADMIN createSheet/addColumn
+
+- `AdminSheetActionsContract.mjs` ejecuta los validadores y handlers reales de `Services/admin.js` con dobles de Spreadsheet. Verifica nombres de hoja, encabezados, fórmula opcional, nombre de columna, hoja duplicada/inexistente y que payloads inválidos no creen hojas ni escriban encabezados.
+- Comprueba el mapa canónico `ACTION_TO_SERVICE_MAP`, los casos del dispatcher, la autenticación Desarrollador previa al switch, la clasificación como mutación compartida/auditada y la ausencia de consumidores frontend versionados.
+- `createSheet` y `addColumn` se conservan como acciones ADMIN internas/manuales. No se agrega interfaz ni se retiran rutas: los consumidores externos no pueden enumerarse desde este repositorio.
+- Ejecutar: `node --experimental-default-type=module Services/Test/AdminSheetActionsContract.mjs`.

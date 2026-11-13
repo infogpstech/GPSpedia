@@ -146,6 +146,7 @@ runGroup('37','USERS',()=>{
 });
 runGroup('38','INTEGRATION',()=>{
  runCli('AUG-022 eliminación asíncrona de caché IndexedDB ADMIN','Services/Test/AdminClientCacheDeletion.mjs');
+ runCli('AUG-023 contrato y validación de acciones ADMIN createSheet/addColumn','Services/Test/AdminSheetActionsContract.mjs');
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','Services/Test/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','Services/Test/InboxConversations.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','Services/Test/InboxUi.mjs');
