@@ -463,3 +463,20 @@ Validación Beta pendiente: verificar copias reales en proyecto ADMIN y Spreadsh
 Archivos: Services/admin.js, Services/Test/AdminRestoreRecovery.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-126 — Validar payload completo antes de reservar fila/ID en WRITE. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-126 — 2026-11-13
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- addOrUpdateCut valida el payload antes de cualquier mutación: estructura/allowlist, requeridos, enums de categoría/encendido/tipo de corte/Relay, rango de años, tipos, longitudes, VIN, opId/hash e imágenes Base64/MIME/tamaño.
+- La validación ocurre antes de ensureTestigoColumns, reserva de fila/ID, registro de Idempotencia y operaciones Drive.
+- Ante fallos, el coordinador conserva y restaura el snapshot de la fila existente o elimina la fila nueva, restaura/elimina el registro de Idempotencia y revierte el contador central de IDs si cambió. Los archivos Drive no enlazados permanecen registrados en ImageUploadLedger para reconciliación; no se eliminan a ciegas.
+
+Validación local: CutPayloadValidation 34/34 PASS en runtime V8 aislado; parsing V8 de Services/write.js y Services/Test/CutPayloadValidation.js PASS. La suite incluye validaciones de payload, límite de imágenes, orden previo a mutación y presencia de rutas de compensación.
+Validación Beta pendiente: ejecución en WRITE/Spreadsheet/Drive aislados, inyección de fallos físicos en cada fase, restauración de filas y ledger, contador de IDs y conciliación de ImageUploadLedger. No se ejecutaron Apps Script, endpoints ni recursos productivos.
+Archivos: Services/write.js, Services/Test/CutPayloadValidation.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-127 — Corregir el contrato de vídeo suplementario. No iniciar hasta la siguiente interacción.
+================================================================================
