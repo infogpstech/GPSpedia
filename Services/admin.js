@@ -7419,6 +7419,19 @@ function handleGetReplacedImageDownloadUrl(payload,logMessage,developerContext){
     return {status:"success",downloadUrl,fileName:file.getName()};
 }
 
+function cleanupExpiredDriveAuditServerStates_() {
+    const properties = PropertiesService.getScriptProperties();
+    const all = properties.getProperties();
+    const now = Date.now();
+    Object.keys(all).forEach(key => {
+        if (!key.startsWith("GPSpedia_DRIVE_AUDIT_STATE_")) return;
+        try {
+            const state = JSON.parse(all[key]);
+            const age = now - Number(state && state.updatedAt);
+            if (!Number.isFinite(age) || age > 21600000 || age < -60000) properties.deleteProperty(key);
+        } catch (error) { properties.deleteProperty(key); }
+    });
+}
 function getDriveAuditServerStateKey_(auditId) {
     const id = String(auditId || "").trim();
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("ID de auditoría inválido.");
@@ -8126,6 +8139,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         foldersVisited = Number(state.foldersVisited) || 0;
         pageIndex = Number(state.pageCount) || 0;
     } else {
+        cleanupExpiredDriveAuditServerStates_();
         auditId = Utilities.getUuid();
         inputFingerprint = "START";
         state = { auditId: auditId, ownerId: ownerId, status: "running",
@@ -8141,14 +8155,17 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
             const typeIndex = historyHeaders.indexOf("tipo_registro");
             for (let r = 1; r < historyRows.length; r++) {
                 const row = historyRows[r];
-                if (originIndex >= 0 && String(row[originIndex] || "") === "auditoria_drive") continue;
+                const origin = originIndex >= 0 ? String(row[originIndex] || "") : "";
                 const status = String(row[10] || "historica");
                 const recordType = typeIndex >= 0 ? String(row[typeIndex] || "reemplazada") : "reemplazada";
                 if (status === "eliminada") continue;
                 const ids = new Set([].concat(extractDriveFileIds(row[5]), extractDriveFileIds(row[7])));
                 ids.forEach(id => {
                     if (status === "en_uso") protectedDriveIds.add(id);
-                    else if (recordType === "reemplazada") historicalDriveIds.add(id);
+                    else if (status === "requiere_revision" || status === "eliminacion_pendiente" ||
+                        status === "en_papelera" || (origin !== "auditoria_drive" && recordType === "reemplazada")) {
+                        historicalDriveIds.add(id);
+                    }
                 });
             }
         }
