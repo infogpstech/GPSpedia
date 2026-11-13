@@ -316,6 +316,14 @@ check("El bloqueo concurrente detiene la papelera antes de tocar Drive",()=>{
     assert.throws(()=>runDelete(b),/No se pudo bloquear/);
     assert.equal(b.file.trashed,false);
 });
+check("El backend exige sesión Desarrollador antes de despachar las nuevas acciones",()=>{
+    const dispatcher=fnSource(admin,"doPostInternal_");
+    assert.match(dispatcher,/assertDeveloperSession\(payload\)/);
+    assert.match(dispatcher,/case 'restoreReplacedImageFromTrash':/);
+    assert.match(dispatcher,/handleRestoreReplacedImageFromTrash\(payload, logMessage, developerContext\)/);
+    assert.match(dispatcher,/case 'permanentlyDeleteReplacedImage':/);
+    assert.match(dispatcher,/handlePermanentlyDeleteReplacedImage\(payload, logMessage, developerContext\)/);
+});
 check("Las rutas ADMIN y lease compartida incluyen las dos acciones nuevas",()=>{
     assert.match(apiConfig,/'restoreReplacedImageFromTrash': 'ADMIN'/);
     assert.match(apiConfig,/'permanentlyDeleteReplacedImage': 'ADMIN'/);
