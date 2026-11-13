@@ -1925,3 +1925,27 @@ En un proyecto Beta aislado:
 7. Registrar IDs de solicitud, videoId, referencia, estado de aprobación, URL canónica y resultados de lectura. No ejecutar contra endpoints productivos ni datos reales.
 
 No declarar PASS sin comprobar OAuth/YouTube, FEEDBACK, Spreadsheet y CATALOG en el proyecto aislado. No desplegar a producción.
+
+
+## AUG-128 — Integridad y concurrencia de relaciones PyS–vehículos
+
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local `GPSpedia`. Verifica repositorio/rama, detiene la sincronización si hay cambios locales y usa únicamente fast-forward:
+
+```bash
+git -C GPSpedia rev-parse --show-toplevel
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia rev-parse HEAD
+```
+
+En un proyecto FEEDBACK y Spreadsheet aislados:
+1. Probar alta y baja con vehicleId existente, inexistente, vacío y duplicado en Cortes; comprobar que no se modifica PyS ante referencias ambiguas.
+2. Probar encabezado ID incompatible, problemId inexistente/malformado y IDs PyS duplicados; confirmar rechazo sin escrituras.
+3. Probar listas JSON y formatos heredados con espacios y duplicados; verificar que la colección persistida quede normalizada y sin duplicados.
+4. Ejecutar solicitudes simultáneas de alta/alta, alta/baja sobre el mismo vínculo y altas sobre vehículos distintos. Verificar que el ScriptLock serializa cada mutación, no se pierden cambios y el valor devuelto coincide con la celda persistida.
+5. Comprobar liberación del lock ante errores, timeout y fallo de flush; reintentar sin duplicar asociaciones.
+6. Confirmar que solo Desarrollador puede retirar relaciones y que el rol enviado por el cliente no sustituye la autorización de sesión.
+
+Registrar IDs sintéticos, orden/resultado de cada ejecución y valores antes/después. No usar endpoints ni datos productivos; no desplegar a producción.
