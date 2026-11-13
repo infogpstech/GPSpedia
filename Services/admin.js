@@ -8011,7 +8011,8 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
                     if (candidateOrigin === "auditoria_drive") {
                         inventoryMatches.push({ rowNumber: r + 1, row: candidateRow });
                     } else if (candidateStatus !== "eliminada" &&
-                        (candidateStatus === "en_uso" || candidateStatus === "requiere_revision" ||
+                        (!isKnownReplacedImageStatus_(candidateType, candidateStatus) ||
+                         candidateStatus === "en_uso" || candidateStatus === "requiere_revision" ||
                          candidateStatus === "eliminacion_pendiente" || candidateStatus === "en_papelera" ||
                          candidateType === "reemplazada")) {
                         historyConflict = "Existe un registro histórico no resuelto para este archivo.";
