@@ -931,59 +931,187 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
 }
 
 function handleBackupDrive(payload, logMessage) {
-    logMessage("Respaldo Drive", "Iniciando respaldo completo de la estructura de carpetas de Drive...");
-    const rootFolder = getCortesRootFolder();
-    const sourceManifest = adminRestoreDriveManifest_(rootFolder);
-    const parentFolder = DriveApp.getRootFolder();
-    const runId = adminRestoreRunId_();
-    const backupFolderName = `GPSpedia_Drive_BACKUP_${runId}`;
-    logMessage("Respaldo Drive", `Creando carpeta contenedora de respaldo '${backupFolderName}' en la raíz...`);
-    const createdBackupFolder = parentFolder.createFolder(backupFolderName);
+    let backupFolder = null, manifestFile = null, state = null;
     try {
-        logMessage("Respaldo Drive", "Copiando de forma jerárquica las carpetas y archivos de imágenes...");
-        copyFolderRecursively(rootFolder, createdBackupFolder, logMessage);
-        const copiedManifest = adminRestoreDriveManifest_(createdBackupFolder);
-        if (!adminRestoreManifestsEqual_(sourceManifest, copiedManifest)) {
-            throw new Error("La copia de Drive no coincide con el inventario del origen; no se registró como respaldo válido.");
+        const requestedBackupId = extractBackupFolderId(payload && payload.backupId);
+        if (requestedBackupId) {
+            backupFolder = DriveApp.getFolderById(requestedBackupId);
+            if (backupFolder.getId() !== requestedBackupId || backupFolder.isTrashed() ||
+                !String(backupFolder.getName() || "").startsWith("GPSpedia_Drive_BACKUP_") ||
+                !isDirectChildOfDriveRoot(backupFolder)) {
+                throw new Error("La carpeta indicada no es un respaldo reanudable de Drive dentro de la ubicación autorizada.");
+            }
+            const loaded = adminRestoreReadDriveBackupState_(backupFolder);
+            manifestFile = loaded.file;
+            state = loaded.state;
+            if (state.status === "complete") {
+                const completedManifest = adminRestoreDriveManifest_(backupFolder);
+                adminRestoreVerifyDriveBackupState_(state, backupFolder, completedManifest);
+                adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "complete");
+                return {
+                    status: "success", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+                    timestamp: state.createdAt, folderCount: state.sourceFolderCount,
+                    fileCount: state.sourceFileCount, totalBytes: state.sourceTotalBytes,
+                    message: "El respaldo de Drive ya estaba completo y fue verificado."
+                };
+            }
+            if (state.status !== "copying") throw new Error("El respaldo no está en un estado reanudable; no se modificó.");
+            if (state.sourceRootId !== DRIVE_FOLDER_ID) {
+                state.status = "incomplete";
+                state.lastError = "La carpeta de origen configurada no coincide con el manifiesto.";
+                adminRestoreWriteDriveBackupState_(manifestFile, state);
+                adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "incomplete");
+                return { status: "error", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+                    resumable: false, message: state.lastError + " Debe generarse un respaldo nuevo." };
+            }
+        } else {
+            logMessage("Respaldo Drive", "Generando inventario verificable antes de iniciar la copia por lotes...");
+            const sourceRoot = getCortesRootFolder();
+            const sourceManifest = adminRestoreDriveManifest_(sourceRoot);
+            const runId = adminRestoreRunId_();
+            const backupFolderName = "GPSpedia_Drive_BACKUP_" + runId;
+            backupFolder = DriveApp.getRootFolder().createFolder(backupFolderName);
+            backupFolder.setDescription(JSON.stringify({
+                kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete",
+                createdAt: runId, sourceRootId: sourceRoot.getId()
+            }));
+            const folders = sourceManifest.entries.filter(entry => entry.type === "folder")
+                .sort((a, b) => a.path.split("/").length - b.path.split("/").length || a.path.localeCompare(b.path))
+                .map(entry => ({
+                    sourceId: entry.id, parentSourceId: entry.parentId, name: entry.name, path: entry.path,
+                    mimeType: entry.mimeType, size: entry.size, sourceDescription: entry.description,
+                    sourceLastUpdated: entry.lastUpdated, copyId: null, parentCopyId: null
+                }));
+            const files = sourceManifest.entries.filter(entry => entry.type === "file")
+                .sort((a, b) => a.path.localeCompare(b.path))
+                .map(entry => ({
+                    sourceId: entry.id, parentSourceId: entry.parentId, name: entry.name, path: entry.path,
+                    mimeType: entry.mimeType, size: entry.size, sourceDescription: entry.description,
+                    sourceLastUpdated: entry.lastUpdated, copyId: null, parentCopyId: null
+                }));
+            state = {
+                kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2, status: "copying",
+                runId, createdAt: runId, backupFolderId: backupFolder.getId(), manifestFileId: "",
+                sourceRootId: sourceRoot.getId(), sourceRootName: sourceRoot.getName(),
+                sourceFingerprint: sourceManifest.fingerprint,
+                sourceIdentityFingerprint: sourceManifest.identityFingerprint,
+                sourceFolderCount: sourceManifest.folderCount, sourceFileCount: sourceManifest.fileCount,
+                sourceTotalBytes: sourceManifest.totalBytes, folders, files,
+                nextFolderIndex: 0, nextFileIndex: 0, batchSize: ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_
+            };
+            manifestFile = backupFolder.createFile(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_, JSON.stringify(state), "application/json");
+            manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
+            state.manifestFileId = manifestFile.getId();
+            adminRestoreWriteDriveBackupState_(manifestFile, state);
+            adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "in_progress");
         }
-        const backupId = createdBackupFolder.getId(), backupUrl = createdBackupFolder.getUrl();
-        if (backupId === DRIVE_FOLDER_ID || createdBackupFolder.isTrashed() ||
-            createdBackupFolder.getName() !== backupFolderName || !isDirectChildOfDriveRoot(createdBackupFolder) ||
-            !isBackupUrlForResource(backupUrl, `https://drive.google.com/drive/folders/${backupId}`)) {
-            throw new Error("La carpeta creada no pudo verificarse como un respaldo de Drive válido.");
+
+        const sourceRoot = DriveApp.getFolderById(state.sourceRootId);
+        if (sourceRoot.getId() !== DRIVE_FOLDER_ID || sourceRoot.getName() !== state.sourceRootName) {
+            const integrityError = new Error("La carpeta de origen ya no coincide con la captura inicial.");
+            integrityError.nonResumable = true;
+            throw integrityError;
         }
-        createdBackupFolder.setDescription(JSON.stringify({
-            kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
-            folderCount: copiedManifest.folderCount, fileCount: copiedManifest.fileCount,
-            totalBytes: copiedManifest.totalBytes, fingerprint: copiedManifest.fingerprint
-        }));
-        logMessage("Respaldo Drive", `Copia comparada y verificada: ${copiedManifest.folderCount} carpetas y ${copiedManifest.fileCount} archivos.`);
-        return { status: 'success', backupId, backupUrl, timestamp: runId,
-            folderCount: copiedManifest.folderCount, fileCount: copiedManifest.fileCount,
-            totalBytes: copiedManifest.totalBytes,
-            message: "Respaldo de Drive creado y verificado correctamente." };
+        const batchSize = Math.max(1, Math.min(ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_, Number(state.batchSize) || ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_));
+        let processedThisBatch = 0;
+        while (state.nextFolderIndex < state.folders.length && processedThisBatch < batchSize) {
+            const entry = state.folders[state.nextFolderIndex];
+            const copy = adminRestoreCopyDriveFolderEntry_(entry, state, backupFolder);
+            entry.copyId = copy.getId();
+            state.nextFolderIndex++;
+            adminRestoreWriteDriveBackupState_(manifestFile, state);
+            processedThisBatch++;
+        }
+        while (state.nextFolderIndex >= state.folders.length &&
+            state.nextFileIndex < state.files.length && processedThisBatch < batchSize) {
+            const entry = state.files[state.nextFileIndex];
+            const copy = adminRestoreCopyDriveFileEntry_(entry, state, backupFolder);
+            entry.copyId = copy.getId();
+            state.nextFileIndex++;
+            adminRestoreWriteDriveBackupState_(manifestFile, state);
+            processedThisBatch++;
+        }
+
+        const processed = state.nextFolderIndex + state.nextFileIndex;
+        const total = state.folders.length + state.files.length;
+        if (processed < total) {
+            adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "in_progress");
+            logMessage("Respaldo Drive", `Lote verificado: ${processed}/${total} recursos. El respaldo permanece incompleto y puede reanudarse.`);
+            return {
+                status: "in_progress", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+                timestamp: state.createdAt, processed, total, resumable: true,
+                message: "Respaldo en progreso. Continúe con el mismo ID para procesar el siguiente lote."
+            };
+        }
+
+        const currentSourceManifest = adminRestoreDriveManifest_(sourceRoot);
+        if (currentSourceManifest.identityFingerprint !== state.sourceIdentityFingerprint ||
+            !adminRestoreManifestsEqual_({
+                folderCount: state.sourceFolderCount, fileCount: state.sourceFileCount,
+                totalBytes: state.sourceTotalBytes, fingerprint: state.sourceFingerprint
+            }, currentSourceManifest)) {
+            state.status = "incomplete";
+            state.lastError = "El origen cambió durante la copia; el contenedor no se puede registrar como respaldo completo.";
+            adminRestoreWriteDriveBackupState_(manifestFile, state);
+            adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "incomplete");
+            return { status: "error", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+                resumable: false, processed, total, message: state.lastError };
+        }
+
+        const copiedManifest = adminRestoreDriveManifest_(backupFolder);
+        if (!adminRestoreManifestsEqual_({
+            folderCount: state.sourceFolderCount, fileCount: state.sourceFileCount,
+            totalBytes: state.sourceTotalBytes, fingerprint: state.sourceFingerprint
+        }, copiedManifest)) {
+            state.status = "incomplete";
+            state.lastError = "La copia no coincide con el inventario inicial; el contenedor permanece incompleto.";
+            adminRestoreWriteDriveBackupState_(manifestFile, state);
+            adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "incomplete");
+            return { status: "error", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+                resumable: false, processed, total, message: state.lastError };
+        }
+        adminRestoreVerifyDriveBackupState_(state, backupFolder, copiedManifest);
+        state.status = "complete";
+        state.completedAt = new Date().toISOString();
+        state.lastError = "";
+        adminRestoreWriteDriveBackupState_(manifestFile, state);
+        adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "complete");
+        const finalState = adminRestoreReadDriveBackupState_(backupFolder).state;
+        const finalManifest = adminRestoreDriveManifest_(backupFolder);
+        adminRestoreVerifyDriveBackupState_(finalState, backupFolder, finalManifest);
+        logMessage("Respaldo Drive", `Copia completa y verificada: ${finalManifest.folderCount} carpetas y ${finalManifest.fileCount} archivos.`);
+        return {
+            status: "success", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+            timestamp: state.createdAt, folderCount: finalManifest.folderCount,
+            fileCount: finalManifest.fileCount, totalBytes: finalManifest.totalBytes,
+            message: "Respaldo de Drive creado por lotes, reanudable y verificado correctamente."
+        };
     } catch (error) {
-        try { createdBackupFolder.setTrashed(true); } catch (cleanupError) {
-            logMessage("Respaldo Drive", `No se pudo retirar la copia incompleta ${createdBackupFolder.getId()}: ${cleanupError.message}`, 0, 0, true);
+        if (backupFolder && state && manifestFile) {
+            state.lastError = String(error && error.message || error);
+            if (error && error.nonResumable) state.status = "incomplete";
+            try {
+                adminRestoreWriteDriveBackupState_(manifestFile, state);
+                adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, state.status === "incomplete" ? "incomplete" : "in_progress");
+            } catch (persistError) {
+                state.status = "incomplete";
+                try { adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "incomplete"); } catch (statusError) {}
+            }
+            return {
+                status: "error", backupId: backupFolder.getId(), backupUrl: backupFolder.getUrl(),
+                resumable: state.status === "copying", message: state.lastError +
+                    (state.status === "copying" ? " Puede reanudarse con el mismo ID." : " Genere un respaldo nuevo.")
+            };
+        }
+        if (backupFolder) {
+            try {
+                backupFolder.setDescription(JSON.stringify({
+                    kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete",
+                    createdAt: adminRestoreRunId_(), error: String(error && error.message || error)
+                }));
+            } catch (statusError) {}
         }
         throw error;
-    }
-}
-
-function copyFolderRecursively(source, target, logMessage) {
-    // Copiar archivos del nivel actual
-    const files = source.getFiles();
-    while (files.hasNext()) {
-        const file = files.next();
-        file.makeCopy(file.getName(), target);
-    }
-
-    // Copiar subcarpetas
-    const subFolders = source.getFolders();
-    while (subFolders.hasNext()) {
-        const subFolder = subFolders.next();
-        const targetSubFolder = target.createFolder(subFolder.getName());
-        copyFolderRecursively(subFolder, targetSubFolder, logMessage);
     }
 }
 
