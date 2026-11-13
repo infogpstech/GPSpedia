@@ -319,20 +319,35 @@ function collectCortesImageReferences(includeLocations = true) {
         } else groups.push({ start: item.column, width: 1, items: [item] });
     });
 
-    const rowChunkSize = 500, captureBudgetMs = 12000;
-    let rangesRead = 0, chunksRead = 0, rowsRead = 0;
+    const maxRowChunkSize = 500, minRowChunkSize = 50, targetChunkMs = 1500, captureBudgetMs = 12000;
+    let rowChunkSize = maxRowChunkSize, rangesRead = 0, chunksRead = 0, rowsRead = 0;
+    let displayReadMs = 0, rawReadMs = 0, formulaReadMs = 0, richTextReadMs = 0;
+    let referenceParseMs = 0, maxChunkElapsedMs = 0, adaptiveChunkChanges = 0;
+    const assertCaptureBudget = () => {
+        if (Date.now() - startedAt >= captureBudgetMs) {
+            throw new Error("La captura de referencias de «Cortes» superó el presupuesto temporal seguro; no se guardó un snapshot parcial. Reintenta la auditoría.");
+        }
+    };
     groups.forEach(group => {
-        for (let offset = 0; offset < lastRow - 1; offset += rowChunkSize) {
-            if (Date.now() - startedAt >= captureBudgetMs) {
-                throw new Error("La captura de referencias de «Cortes» superó el presupuesto temporal seguro; no se guardó un snapshot parcial. Reintenta la auditoría.");
-            }
+        for (let offset = 0; offset < lastRow - 1;) {
+            assertCaptureBudget();
             const chunkRows = Math.min(rowChunkSize, lastRow - 1 - offset);
+            const chunkStartedAt = Date.now();
             const range = sheet.getRange(2 + offset, group.start, chunkRows, group.width);
+            let stageStartedAt = Date.now();
             const values = range.getDisplayValues();
+            displayReadMs += Date.now() - stageStartedAt;
+            stageStartedAt = Date.now();
             const rawValues = range.getValues();
+            rawReadMs += Date.now() - stageStartedAt;
+            stageStartedAt = Date.now();
             const formulas = range.getFormulas();
+            formulaReadMs += Date.now() - stageStartedAt;
+            stageStartedAt = Date.now();
             const richTextValues = range.getRichTextValues();
+            richTextReadMs += Date.now() - stageStartedAt;
             rangesRead++; chunksRead++;
+            stageStartedAt = Date.now();
             group.items.forEach(item => {
                 const c = item.column - group.start;
                 for (let r = 0; r < values.length; r++) {
@@ -369,17 +384,29 @@ function collectCortesImageReferences(includeLocations = true) {
                     if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
                 }
             });
+            referenceParseMs += Date.now() - stageStartedAt;
+            const chunkElapsedMs = Date.now() - chunkStartedAt;
+            maxChunkElapsedMs = Math.max(maxChunkElapsedMs, chunkElapsedMs);
             rowsRead = Math.max(rowsRead, offset + chunkRows);
-            if (Date.now() - startedAt >= captureBudgetMs) {
-                throw new Error("La captura de referencias de «Cortes» superó el presupuesto temporal seguro; no se guardó un snapshot parcial. Reintenta la auditoría.");
-            }
+            offset += chunkRows;
+            const nextChunkSize = chunkElapsedMs > targetChunkMs
+                ? Math.max(minRowChunkSize, Math.floor(rowChunkSize * targetChunkMs / chunkElapsedMs))
+                : chunkElapsedMs < targetChunkMs / 2
+                    ? Math.min(maxRowChunkSize, Math.max(rowChunkSize + 1, Math.floor(rowChunkSize * 1.5)))
+                    : rowChunkSize;
+            if (nextChunkSize !== rowChunkSize) adaptiveChunkChanges++;
+            rowChunkSize = nextChunkSize;
+            assertCaptureBudget();
         }
     });
 
     return { references, unverifiableReferenceCount,
         metrics: { rows: rowsRead, columns: imageColumns.length,
             cells: rowsRead * imageColumns.length, ranges: rangesRead, chunks: chunksRead,
-            rowChunkSize, captureBudgetMs, elapsedMs: Date.now() - startedAt } };
+            initialRowChunkSize: maxRowChunkSize, minRowChunkSize, maxRowChunkSize,
+            targetChunkMs, finalRowChunkSize: rowChunkSize, adaptiveChunkChanges, maxChunkElapsedMs,
+            displayReadMs, rawReadMs, formulaReadMs, richTextReadMs, referenceParseMs,
+            captureBudgetMs, elapsedMs: Date.now() - startedAt } };
 }
 function isFolderInsideCortes(folder, rootFolderId, membershipCache) {
     if (!folder) return false;
