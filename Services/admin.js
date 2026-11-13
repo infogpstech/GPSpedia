@@ -662,7 +662,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
 }
 
 function doPost(e) {
@@ -1070,6 +1070,9 @@ function doPostInternal_(e) {
                 break;
             case 'deleteReplacedImage':
                 response = handleDeleteReplacedImage(payload, logMessage, developerContext);
+                break;
+            case 'markReplacedImageInUse':
+                response = handleMarkReplacedImageInUse(payload, logMessage, developerContext);
                 break;
             case 'auditDriveImagesInCortes':
                 response = handleAuditDriveImagesInCortes(payload, logMessage);
@@ -6471,8 +6474,8 @@ function getReplacedImageRecordIdentity_(row,headers,requireVisualUrl){
     return storedIds[0];
 }
 function isKnownReplacedImageStatus_(type,status){
-    const allowed=type==="reemplazada"?["historica","restablecida","en_papelera","requiere_revision","cancelada"]:
-        ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminada"];
+    const allowed=type==="reemplazada"?["historica","restablecida","en_papelera","requiere_revision","cancelada","en_uso","eliminada"]:
+        ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminada","en_uso"];
     return allowed.includes(status);
 }
 function getDuplicateReplacedImageIds_(rows){
@@ -6481,7 +6484,7 @@ function getDuplicateReplacedImageIds_(rows){
     return new Set([...counts.entries()].filter(entry=>entry[1]>1).map(entry=>entry[0]));
 }
 function setReplacedImageHistoryStatusVerified_(sheet,rowIndex,status){
-    if(!sheet||!Number.isInteger(rowIndex)||rowIndex<2||!["historica","restablecida","en_papelera","requiere_revision","cancelada","sin_uso_detectado","no_confirmada_en_ultima_auditoria","eliminada"].includes(status))throw new Error("No se pudo identificar una transición válida del historial de imágenes.");
+    if(!sheet||!Number.isInteger(rowIndex)||rowIndex<2||!["historica","restablecida","en_papelera","requiere_revision","cancelada","sin_uso_detectado","no_confirmada_en_ultima_auditoria","eliminada","en_uso"].includes(status))throw new Error("No se pudo identificar una transición válida del historial de imágenes.");
     const cell=sheet.getRange(rowIndex,11);cell.setValue(status);SpreadsheetApp.flush();
     if(String(cell.getValue()||"").trim()!==status)throw new Error("El estado del historial no se confirmó por lectura posterior.");
     return true;
@@ -6964,6 +6967,36 @@ function handleDeleteReplacedImage(payload,logMessage,developerContext){
         return {status:"success",message:"La imagen fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."};
     }finally{lock.releaseLock();}
 }
+/**
+ * Protege manualmente una imagen en revisión para excluirla de cualquier organización automática.
+ */
+function handleMarkReplacedImageInUse(payload, logMessage, developerContext) {
+    const id = String(payload && payload.id_reemplazo || "").trim();
+    if (!id) throw new Error("ID de registro de imagen requerido.");
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (error) { throw new Error("No se pudo bloquear la protección de la imagen. Intenta nuevamente."); }
+    try {
+        const sheet = getOrCreateReplacedImagesSheet();
+        const headers = ensureReplacedImagesInventoryColumns(sheet);
+        const existing = findReplacedImageRecordById(sheet, id);
+        if (!existing) throw new Error("Registro de imagen no encontrado.");
+        const row = existing.values, type = getReplacedImageRecordType(row, headers);
+        if (String(row[10] || "") !== "requiere_revision") throw new Error("Solo se pueden marcar en uso los registros que requieren revisión.");
+        const driveId = getReplacedImageRecordIdentity_(row, headers, true);
+        const file = DriveApp.getFileById(driveId);
+        if (file.isTrashed()) throw new Error("La imagen está en papelera. Restáurala antes de marcarla en uso.");
+        if (!String(file.getMimeType() || "").startsWith("image/")) throw new Error("El archivo asociado ya no es una imagen.");
+        const root = getCortesRootFolder();
+        getSingleParentFolderInsideCortes(file, root.getId());
+        setReplacedImageHistoryStatusVerified_(sheet, existing.rowIndex, "en_uso");
+        recordImageAdministrationActivity(developerContext, "admin_image_mark_in_use", id,
+            "Imagen " + file.getName() + " marcada manualmente en uso; se excluye de organización y eliminación automáticas.");
+        logMessage && logMessage("Protección de imágenes", "La imagen quedó marcada en uso y protegida frente a la organización automática.");
+        return { status: "success", message: "La imagen quedó marcada en uso y protegida frente a la organización automática." };
+    } finally { lock.releaseLock(); }
+}
+
 function handleGetCortesImageFolders(payload, logMessage) {
     const rootFolder = getCortesRootFolder();
     const folders = [];
@@ -7326,7 +7359,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
         const headers = ensureReplacedImagesInventoryColumns(sheet);
         const column = name => headers.indexOf(name) + 1;
         const rows = sheet.getDataRange().getValues();
-        const existingInventoryRows = new Map(), historicalDriveIds = new Set();
+        const existingInventoryRows = new Map(), historicalDriveIds = new Set(), manuallyProtectedDriveIds = new Set();
         const duplicateIds = getDuplicateReplacedImageIds_(rows);
         if (duplicateIds.size) throw new Error("Hay id_reemplazo duplicados en el historial; el inventario no se modificó.");
         const seenInventoryDriveIds = new Set();
@@ -7339,6 +7372,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             const recordType = getReplacedImageRecordType(row, headers);
             const status = String(row[10] || (recordType === "sin_uso_detectado" ? "sin_uso_detectado" : "historica"));
             if (!isKnownReplacedImageStatus_(recordType, status)) throw new Error("Hay un estado histórico desconocido; el inventario no se modificó.");
+            if (status === "en_uso") manuallyProtectedDriveIds.add(driveId);
             if (origin === "auditoria_drive") {
                 if (seenInventoryDriveIds.has(driveId)) throw new Error("El inventario contiene más de una fila para el mismo archivo Drive.");
                 seenInventoryDriveIds.add(driveId); existingInventoryRows.set(driveId, r + 1);
@@ -7349,6 +7383,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
         uniqueFiles.forEach(item => {
             const fileId = item.fileId;
             if (references.references.has(fileId)) throw new Error("La imagen " + fileId + " ahora tiene referencias activas; no se registrará como imagen sin uso.");
+            if (manuallyProtectedDriveIds.has(fileId)) throw new Error("La imagen " + fileId + " está protegida porque el Desarrollador la marcó como en uso.");
             if (historicalDriveIds.has(fileId)) throw new Error("La imagen " + fileId + " ya pertenece al historial de reemplazos y no se registrará como imagen sin uso.");
 
             const file = DriveApp.getFileById(fileId);
@@ -7380,7 +7415,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
         existingInventoryRows.forEach((rowNumber, fileId) => {
             if (currentIds.has(fileId)) return;
             const oldRow = rows[rowNumber - 1] || [];
-            if (["en_papelera", "eliminada"].includes(String(oldRow[10] || ""))) return;
+            if (["en_papelera", "eliminada", "en_uso"].includes(String(oldRow[10] || ""))) return;
             sheet.getRange(rowNumber, column("estado")).setValue("no_confirmada_en_ultima_auditoria");
             sheet.getRange(rowNumber, column("ultima_auditoria_id")).setValue(auditId);
             sheet.getRange(rowNumber, column("estado_organizacion")).setValue("no_confirmada");
@@ -7686,6 +7721,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         auditId = Utilities.getUuid();
         const references = collectActiveDriveReferences(false);
         const historicalDriveIds = new Set();
+        const protectedDriveIds = new Set();
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (historySheet) {
             const historyRows = historySheet.getDataRange().getValues();
@@ -7698,8 +7734,9 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
                 const status = String(historyRows[r][10] || "historica");
                 const typeIndex = historyHeaders.indexOf("tipo_registro");
                 const recordType = typeIndex >= 0 ? String(historyRows[r][typeIndex] || "reemplazada") : "reemplazada";
-                if (recordType !== "reemplazada" || !["historica", "restablecida"].includes(status)) continue;
                 const id = extractDriveFileId(historyRows[r][5]) || extractDriveFileId(historyRows[r][7]);
+                if (status === "en_uso" && id) { protectedDriveIds.add(id); continue; }
+                if (recordType !== "reemplazada" || !["historica", "restablecida"].includes(status)) continue;
                 if (id) historicalDriveIds.add(id);
             }
         }
@@ -7707,6 +7744,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         referenceSnapshot = {
             activeDriveIds: Array.from(references.references.keys()),
             historicalDriveIds: Array.from(historicalDriveIds),
+            protectedDriveIds: Array.from(protectedDriveIds),
             unverifiableReferenceCount: references.unverifiableReferenceCount
         };
         storeAuditDriveReferenceSnapshot(auditId, referenceSnapshot);
@@ -7715,6 +7753,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
 
     const activeDriveIds = new Set(referenceSnapshot.activeDriveIds);
     const historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds);
+    const protectedDriveIds = new Set(referenceSnapshot.protectedDriveIds || []);
     let stack;
     let totalAnalyzed = 0;
     let foldersVisited = 0;
@@ -7764,7 +7803,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
                     mimeType = file.getMimeType();
                     size = file.getSize();
                     lastUpdated = Utilities.formatDate(file.getLastUpdated(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
-                    if (activeDriveIds.has(fileId)) classification = "En uso";
+                    if (activeDriveIds.has(fileId) || protectedDriveIds.has(fileId)) classification = "En uso";
                     else if (historicalDriveIds.has(fileId)) classification = "Histórica";
                     else if (!String(mimeType).startsWith("image/")) classification = "No verificable";
                     else if (referenceSnapshot.unverifiableReferenceCount > 0) classification = "No verificable";
