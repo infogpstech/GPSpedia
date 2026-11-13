@@ -18,7 +18,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
   5. Validar tema claro/oscuro, responsive y todos los modales/paneles.
 - Implementación: mostrarDetalleModal inicia la elegibilidad una sola vez por vehículo al construir el modal, independientemente de imágenes del vehículo/corte o carga lazy. Los resultados tardíos se descartan si el modal se cerró o cambió de vehículo.
 - Pruebas: Services/Test/ValidationBannerLifecycle.js cubre imagen ausente/rota/lazy/cargada, múltiples cortes, elegibilidad negativa, cierre y navegación durante la consulta.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12); sistema de estilos universales y prueba de contrato 9/9 PASS; navegador real queda para Beta.
 
 ### AUG-101 — Separar clasificación de marcas reales y tipos sintéticos de sección
 - Origen: H-AUD-015-004. AUD-T-015/Tarea 14. Sesión/checkpoint: AUD-20261108-S033/AUD-CP-0033. Prioridad: Media.
@@ -300,6 +300,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Resultado: las 81 acciones del mapa ya coincidían con sus routers. No se alteraron rutas ni endpoints funcionales; se reforzó el contrato para detectar futuras divergencias.
 - Validación final: GitHub Actions run 43366270381, Node.js 22.23.4, 16 suites, 239/239 pruebas PASS, 0 fallos. Incluye la nueva paridad de acciones 12/12.
 
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; GitHub Actions run 43366270381 SUCCESS, Node 22, 16 suites y 239/239 pruebas PASS.
 ### AUG-135 — Reconciliar política de publicación de microservicios y README
 - Origen: H-AUD-019-014. Prioridad: Media.
 - Evidencia: README.md y árbol del repositorio; API de GitHub confirma `private:false` para `infogpstech/GPSpedia`.
@@ -308,7 +309,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - YouTube: no se encontró una API key permanente en `youtubeUpload.js`. FEEDBACK obtiene OAuth en Apps Script mediante `ScriptApp.getOAuthToken()` e inicia una URL Resumable de YouTube. El frontend conserva esa URL temporal en IndexedDB para reanudación y elimina el registro al completar o descartar; cerrar el modal pausa y conserva la operación. No se expone el token OAuth en el frontend.
 - README actualizado para describir la visibilidad real del repositorio, separar fuentes de deployments y documentar el flujo OAuth/URL Resumable. No se añadieron interpretaciones legales.
 - Límite de verificación: no hay conector disponible en esta sesión para inspeccionar ACL reales de Google Drive/Spreadsheet ni deployments de Apps Script. No se afirma que hayan sido verificados; quedan en Beta.
-- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (documentación y revisión estática).
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; política de publicación y README reconciliados mediante revisión estática; ACL/Drive reales quedan para Beta.
 
 ## Hallazgos derivados de AUD-T-020 — 2026-11-08
 
@@ -421,7 +422,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-022-001. **Prioridad:** Alta.
 - **Problema:** auth.logout() elimina solo la clave local y muestra login; no limpia state.currentUser ni elimina el registro de ActiveSessions. getDeveloperSessionPayload() usa el estado en memoria, y window.state/window.ui están expuestos. El modal de desarrollador tampoco se oculta al mostrar login.
 - **Criterios:** crear una acción AUTH de logout/revocación que valide userId+sessionToken y elimine exclusivamente la sesión activa correspondiente bajo LockService; limpiar currentUser y estado transitorio en cliente; borrar almacenamiento local; cerrar modales y overlays; ocultar accesos de rol; rechazar el token revocado en AUTH y ADMIN; probar logout, expiración, cierre remoto, cambio de cuenta y acciones después de logout.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; revocación remota y limpieza de estado/overlays implementadas, pruebas locales 32/32 PASS; navegador/deployments reales quedan para Beta.
 
 ### AUG-148 — Implementar semántica accesible y gestión de foco del modal de desarrollador
 - **Origen:** H-AUD-022-002. **Prioridad:** Media.
@@ -445,7 +446,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-022-004. **Prioridad:** Baja.
 - **Problema:** las rutas individual y por lotes asignan literalmente HTTP 500 a cualquier excepción; en la ruta por lotes ambas ramas del ternario devuelven 500.
 - **Criterios:** propagar status HTTP estructurado desde routeAction; distinguir error HTTP, fallo sin respuesta, JSON inválido y status:error de aplicación; no inventar status; probar 401, 403, 404, 500, desconexión, timeout, JSON inválido y error lógico.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; RouteActionErrors 12/12 PASS y GitHub Actions run 43452605704 SUCCESS, 61 suites/861 pruebas PASS.
 
 - 2026-11-08 — AUD-T-022: AUG-147 a AUG-150 nuevas. Inventario: 149 IDs únicos dentro de AUG-001 a AUG-150; AUG-015 continúa ausente y no se infiere ni renumera.
 
@@ -530,7 +531,7 @@ ADENDAS Y CONTINUIDAD DEL REGISTRO ORIGINAL
 - **Dependencias sin duplicación:** AUG-075–081, AUG-113–121, AUG-147–149, AUG-040/AUG-043. No sustituyen ni cierran estas tareas.
 - **Archivos potenciales:** index.html, ui.js, main.js, style.css, api-config.js, auth.js/state.js, users.html, Services/feedback.js, Services/users.js, esquema y pruebas aisladas.
 - **Validación:** VAL-34 — roles/participantes, bienvenida, consulta, respuesta multi-turno, lectura, archivo, búsqueda/paginación, idempotencia, timeout, XSS, sesión revocada, responsive/scroll, teclado/foco, offline y compatibilidad. Solo entornos aislados.
-- **Estado:** NUEVA; análisis, diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; InboxConversations 28/28, InboxUi 15/15, coordinador 34/34 y GitHub Actions run 43449918635 SUCCESS, 60 suites/849 pruebas PASS.
 
 
 TAREAS DOCUMENTALES ABIERTAS
@@ -564,7 +565,7 @@ La corrección del README fue publicada en 8b2bec3. La auditoría y el checkpoin
   8. Probar en entorno aislado intercalados reales de login/logout/reset con objetivo al inicio/medio/final, mismo usuario/usuarios distintos, duplicados, reintentos y fallos parciales.
   9. No ejecutar contra endpoints operativos ni datos productivos.
 - Dependencias: bloquea el cierre de H-AUD-056 y la aprobación/despliegue de AUG-006. AUG-005/H-AUD-053/H-AUD-054 permanecen independientes.
-- Estado: IMPLEMENTADA_PENDIENTE_DE_SINTAXIS; pruebas aisladas y validación concurrente pendientes.
+- **Estado:** COMPLETADA EN FUENTES CON VALIDACIÓN DIFERIDA; los cierres AUG-153–155 fueron verificados al cerrar AUG-152; concurrencia física entre deployments queda para Beta.
 
 ADENDA DE RANGO — 2026-11-09
 La descripción inicial de esta parte indicaba AUG-100 a AUG-152 como rango de corte. Con la incorporación de AUG-153, el rango operativo queda extendido a AUG-100–AUG-153. AUG-015 continúa ausente y no se crea ni reutiliza.
