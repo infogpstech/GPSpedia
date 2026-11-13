@@ -141,6 +141,17 @@ function runUsersAtomicMutationTests(usersSource, authSource, coordinatorSource)
         const result=f.api.handleCreateUser({newUser:validUser(),sessionToken:"SESSION"});
         equal(result.status,"error");equal(JSON.stringify(f.sheet._rows),before);
     });
+    run("Bloquea la creación cuando existen IDs históricos duplicados",()=>{
+        const rows=[
+            ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
+            ["USR-0001","usuario1","HASH:x","Tecnico","","","Uno","",""],
+            ["USR-0001","usuario2","HASH:y","Tecnico","","","Dos","",""]
+        ];
+        const f=fixture({rows});
+        const before=JSON.stringify(f.sheet._rows);
+        let rejected=false;try{f.api.handleCreateUser({newUser:validUser(),sessionToken:"SESSION"});}catch(_){rejected=true;}
+        assert(rejected);equal(JSON.stringify(f.sheet._rows),before);equal(f.stats.releases,1);
+    });
     run("Restaura valores y fórmulas de plantilla si falla la escritura de creación",()=>{
         const rows=[
             ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
