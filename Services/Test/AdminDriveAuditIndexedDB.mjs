@@ -213,14 +213,16 @@ await check('Dos pestañas con la misma revisión no pueden sobrescribir el prog
     assert.equal(restored.files.length, 2);
     assert.ok([B, C].includes(restored.files[1].fileId));
 });
-await check('Auditorías distintas permanecen aisladas por ID y usuario', async () => {
+await check('Auditorías distintas permanecen aisladas por ID y no alteran el puntero de la más reciente', async () => {
     const h = createHarness();
-    await h.saveDriveAuditState(state('AUDIT-ONE', 0, 0, [{ fileId: A }]), 'user-one');
+    const first = await h.saveDriveAuditState(state('AUDIT-ONE', 0, 0, [{ fileId: A }]), 'user-one');
     await h.saveDriveAuditState(state('AUDIT-TWO', 0, 0, [{ fileId: B }]), 'user-one');
-    await h.saveDriveAuditState(state('AUDIT-OTHER-USER', 0, 0, [{ fileId: C }]), 'user-two');
+    await h.saveDriveAuditState(state('AUDIT-ONE', first.revision, 1, [{ fileId: C }]), 'user-one');
+    await h.saveDriveAuditState(state('AUDIT-OTHER-USER', 0, 0, [{ fileId: D }]), 'user-two');
+    assert.equal((await h.getDriveAuditState('user-one')).auditId, 'AUDIT-TWO');
     assert.deepEqual((await h.getDriveAuditState('user-one')).files.map(file => file.fileId), [B]);
-    assert.deepEqual((await h.getDriveAuditState('user-one', 'AUDIT-ONE')).files.map(file => file.fileId), [A]);
-    assert.deepEqual((await h.getDriveAuditState('user-two')).files.map(file => file.fileId), [C]);
+    assert.deepEqual((await h.getDriveAuditState('user-one', 'AUDIT-ONE')).files.map(file => file.fileId), [A, C]);
+    assert.deepEqual((await h.getDriveAuditState('user-two')).files.map(file => file.fileId), [D]);
 });
 await check('La limpieza elimina todas las páginas de una cuenta y conserva las de otra', async () => {
     const h = createHarness();
