@@ -499,8 +499,8 @@ check("La captura de Cortes limita memoria por bloques y conserva filas posterio
                 getFormulas:()=>make("formula"),getRichTextValues:()=>make("rich")};
         }
     };
-    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
-    const scan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+    const source=fnSource(admin,"extractDriveFileIds")+"\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\nreturn collectCortesImageReferences;")(
         ()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
     const result=scan(true);
     assert.ok(result.references.has(targetId));
