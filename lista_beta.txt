@@ -2338,3 +2338,17 @@ git rev-parse HEAD
 
 En una ficha de prueba, generar QR para vídeo público y unlisted de prueba. Verificar que no se realizan solicitudes a dominios externos al generar el QR, que el ID es correcto y que el escaneo desde PDF/papel abre el vídeo. Probar URLs HTTP, dominios impostores, IDs inválidos y ausencia de URL; confirmar que no se imprime URL visible ni se transmite a terceros. Registrar dispositivo, lector QR, tamaño impreso y resultado. No usar enlaces unlisted reales ni datos productivos.
 ================================================================================
+
+
+AUG-145 — Probar selector de distribución en ficha aislada
+Antes de cualquier prueba, comprobar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+En navegador, abrir ficha con una imagen, dos retratos, dos paisajes, tres retratos y mezcla texto/imagen. Comparar Automática, Horizontal, Vertical e Imagen ampliada en preview y PDF; confirmar orden texto-imagen, ausencia de recortes/overflow y paginación correcta. Probar selector repetidamente y cambio de modo durante carga de recursos.

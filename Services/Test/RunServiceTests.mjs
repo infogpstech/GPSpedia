@@ -78,6 +78,7 @@ runGroup('37','USERS',()=>{
 });
 runGroup('38','INTEGRATION',()=>{
   runCli('AUG-144 QR local y privacidad de vídeos no listados','Services/Test/PrintQrPrivacy.mjs');
+  runCli('AUG-145 modos de distribución de ficha imprimible','Services/Test/PrintSheetLayoutModes.mjs');
   runCli('AUG-143 paginación por altura real y orden técnico','Services/Test/PrintSheetPaginationIntegrity.mjs');
   runCli('AUG-142 disponibilidad y decodificación de recursos de impresión','Services/Test/PrintSheetResourceReadiness.mjs');
   runCli('AUG-141 indicador Check Engine y aviso de testigo','Services/Test/PrintSheetWarningIndicator.mjs');

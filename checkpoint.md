@@ -910,3 +910,12 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Beta: escaneo real en PDF/papel, contraste, tamaño/resolución y offline con dispositivo real.
 Siguiente tarea: AUG-145 — Corregir los modos duplicados del selector de distribución.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE PROGRESO — AUG-145 — 2026-11-13
+HEAD padre: 0bff82f01f04e7d5af5dfa48a576a4e61455200a
+Implementación: reglas específicas de Vertical e Imagen ampliada añadidas después de los límites generales del wrapper; Horizontal conserva dos columnas; Automática conserva clases adaptativas. No se alteró paginación ni tamaño de papel.
+Suite: Services/Test/PrintSheetLayoutModes.mjs (9 contratos, incluye node --check), integrada en INTEGRATION.
+Estado: EN PROGRESO hasta CI.
+================================================================================

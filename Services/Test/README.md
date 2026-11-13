@@ -1580,3 +1580,8 @@ Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetPagin
 El QR se genera dentro del navegador con el módulo local `qrcode-generator.mjs` (MIT, Kazuhiko Arase), sin enviar el enlace a servicios externos. `printQr.js` valida HTTPS y hosts oficiales de YouTube, extrae un ID de 11 caracteres y genera un `data:image/gif` local con URL canónica. No se incluyen parámetros de seguimiento/listas ni se muestra la URL en la ficha. Los enlaces inválidos omiten el QR y muestran un aviso neutro. La licencia completa está en `ThirdPartyLicenses/qrcode-generator-MIT.txt`.
 
 Ejecutar: `node --experimental-default-type=module Services/Test/PrintQrPrivacy.mjs`.
+
+
+## AUG-145 — Modos de distribución de la ficha
+
+Los cuatro modos del selector son distintos: Automática conserva la agrupación adaptativa por clases; Horizontal fuerza texto/imagen en columnas; Vertical fuerza una sola columna con imagen después del texto; Imagen ampliada usa una columna y permite hasta 620 px de alto para la imagen. Las reglas específicas se declaran después de los límites generales del wrapper para evitar que la cascada las anule. Prueba: `node --experimental-default-type=module Services/Test/PrintSheetLayoutModes.mjs`.

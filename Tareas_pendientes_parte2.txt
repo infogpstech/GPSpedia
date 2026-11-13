@@ -405,7 +405,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-021-007. **Prioridad:** Baja.
 - **Problema:** las reglas posteriores de .sheet-page-wrapper y las clases de layout adaptativo prevalecen sobre parte del modo Vertical; Automática y Vertical terminan con una composición esencialmente igual.
 - **Criterios:** definir de forma inequívoca cada modo; ajustar cascada/especificidad o retirar opción duplicada; comprobar Automática, Horizontal, Vertical e Imagen ampliada en pares, tríos, mezclas y una imagen.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO; cascada de los cuatro modos corregida y suite de regresión integrada; CI pendiente.
 
 ### AUG-146 — Corregir referencias históricas de AUD-T-021 en el plan maestro
 - **Origen:** H-AUD-021-009. **Prioridad:** Baja.

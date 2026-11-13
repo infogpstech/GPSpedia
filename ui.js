@@ -11154,6 +11154,30 @@ export function exportVehiclePrintSheet(item) {
                     max-height: 520px;
                     object-fit: contain;
                 }
+
+                /* Los modos explícitos prevalecen sobre los límites adaptativos del wrapper.
+                   Automática conserva las clases layout-single/pair/triple/mosaic calculadas.
+                   Horizontal: texto e imagen lado a lado. Vertical: texto y luego imagen.
+                   Imagen ampliada: una tarjeta por fila y mayor altura disponible. */
+                body[data-print-layout="vertical"] .sheet-page-wrapper .adaptive-tech-grid {
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-content: stretch;
+                }
+                body[data-print-layout="vertical"] .sheet-page-wrapper .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr);
+                    grid-auto-flow: row;
+                }
+                body[data-print-layout="image-focus"] .sheet-page-wrapper .adaptive-tech-grid {
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-content: stretch;
+                }
+                body[data-print-layout="image-focus"] .sheet-page-wrapper .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr);
+                    grid-auto-flow: row;
+                }
+                body[data-print-layout="image-focus"] .sheet-page-wrapper .tech-detail-img {
+                    max-height: 620px;
+                }
                 .meta-note-row > td {
                     padding: 4px 6px;
                     border-top: 1px solid #ffeeba;
