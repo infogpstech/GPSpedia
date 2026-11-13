@@ -270,7 +270,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Origen: H-AUD-019-010. Prioridad: Media.
 - Evidencia: Services/feedback.js:1847–1906 y 1911–1955.
 - Criterios: allowlist contentType; existencia del destino; estado previo pending; lock; persistencia compensable en Feedbacks/Cortes.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: FEEDBACK valida el destino físico único y el esquema antes de publicar; aprobación/rechazo comparten ScriptLock local y mantienen la lease compartida del coordinador entre servicios. Se conservan reintentos idempotentes: si el destino se actualiza pero falla el registro FEEDBACK, la solicitud permanece pendiente y el mismo intento puede completar/verificar la transición sin sobrescribir otro vídeo.
+- Validación local: Services/Test/VideoApprovalPublishing.js, 28/28 PASS; parsing V8 de FEEDBACK y suite PASS.
+- Beta pendiente: concurrencia real entre solicitudes simultáneas y ediciones del destino, fallos físicos de escritura/flush en las hojas destino y Feedbacks, comprobación de rollback/reintento en Spreadsheet aislada y lectura tras recarga del catálogo. No se ejecutaron deployments ni datos productivos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 
 ### AUG-132 — Aplicar validación estricta al VIN
 - Origen: H-AUD-019-011. Prioridad: Baja.
