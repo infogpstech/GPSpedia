@@ -1574,6 +1574,7 @@ function adminRestoreCreateDatabaseRollback_(targetSpreadsheet, runId) {
         }
         return { file: copiedFile, id: copiedFile.getId(), url: copiedFile.getUrl(), manifest: copiedManifest };
     } catch (error) {
+        try { rollbackFile.setDescription(JSON.stringify({ kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete", error: String(error.message || error) })); } catch (stateError) {}
         try { rollbackFile.setTrashed(true); } catch (cleanupError) {}
         throw error;
     }
