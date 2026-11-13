@@ -1804,3 +1804,40 @@ PRUEBAS EN COPIA AISLADA DE SPREADSHEET/UTILITIES:
 
 No declarar PASS sin verificar persistencia y recuperación en la copia aislada. No desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-124 — VALIDACIÓN BETA DEL CONTRATO ÚNICO DE TUTORIALES — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN FEEDBACK/CATALOG Y SPREADSHEET AISLADOS:
+1. Confirmar que ambas versiones desplegadas corresponden a los archivos fuente FEEDBACK y CATALOG de la rama; no desplegar durante la prueba.
+2. Crear una copia aislada de la hoja Tutorial con encabezados A:G históricos y registros antiguos, incluyendo filas sin ID. Confirmar que CATALOG los lee sin cambiar el orden ni inventar Colaborador.
+3. Ejecutar una alta desde FEEDBACK con sesión Desarrollador válida. Verificar que se escribe en Tutorial, con ID tut- estable, A:G preservadas y H Colaborador derivado de Users.
+4. Repetir la misma operación con el mismo operationId; debe devolver el registro existente sin duplicar. Reutilizar operationId con otro contenido y duplicar el tema con variaciones de acentos/mayúsculas/espacios; ambas operaciones deben rechazarse sin mutación.
+5. Verificar migración compatible: si H está vacía, se añade el encabezado Colaborador sin alterar A:G ni sus filas. Si H contiene datos sin encabezado o un encabezado distinto, la operación debe detenerse sin reinterpretar ni sobrescribir información.
+6. Editar por ID y confirmar que solo cambian B y D:F; ID, Imagen, Video y Colaborador permanecen intactos. Confirmar compatibilidad de edición histórica por tema único cuando el ID esté vacío.
+7. Recargar CATALOG y comprobar que el nuevo registro aparece con los ocho campos correctos y el mismo ID utilizado por aprobación de vídeo.
+8. Intentar alta/edición con sesión ausente, inválida, rol Técnico y nombre falsificado; deben rechazarse o usar únicamente el nombre derivado del perfil Users. Confirmar que no aparece hoja plural Tutoriales.
+9. Comprobar que solicitudes de vídeo pendientes continúan vinculadas al ID estable y que el renombrado protegido no rompe referencias históricas por tema.
+
+No declarar PASS sin revisar filas persistidas y lectura posterior desde CATALOG en la copia aislada. No usar Spreadsheet ni endpoints productivos; no desplegar a producción.
+================================================================================
