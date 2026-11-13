@@ -180,7 +180,8 @@ run("Marca como leído hasta el mensaje indicado sin borrar mensajes posteriores
     });
     assert.equal(result.unreadCount,0);
     const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
-    assert.equal(unread.total,0);
+    assert.equal(unread.total,1);
+    assert.equal(unread.data.some(item => item.conversationId === first.conversationId),false);
 });
 run("Archivo y restauración son estados privados por participante", () => {
     api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId,archived:true });
