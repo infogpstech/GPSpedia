@@ -116,7 +116,7 @@ function buildHelpers({sheet=null, spreadsheet=null, lock=lockHarness(), flush=(
 check("Las operaciones del gestor validan referencias globales y no solo Cortes",()=>{
     const names=["handleGetReplacedImages","handleRecoverReplacedImage","handleDeleteReplacedImage",
         "handleMoveReplacedImage","handleGetReplacedImageDownloadUrl","handleSaveUnusedImagesInventory",
-        "handleOrganizeUnusedImagesBatch","handleAuditDriveImagesInCortes"];
+        "handleOrganizeUnusedImagesBatch","handleAuditDriveImagesInCortesLocked_"];
     names.forEach(name=>assert.match(fnSource(admin,name),/collectActiveDriveReferences/,
         name+" debe usar el escáner global de referencias"));
     const scanner=fnSource(admin,"collectActiveDriveReferences");
@@ -129,7 +129,7 @@ check("Las operaciones del gestor validan referencias globales y no solo Cortes"
     assert.match(scanner,/SHEET_NAMES\.IMAGENES_REEMPLAZADAS/);
 });
 
-check("Los 13 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
+check("Los 16 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
     const row=["REP-LEGACY",new Date(),"vehiculo","VEH-1","imagenVehiculo",FILE_A,"old.jpg",
         "https://drive.google.com/file/d/"+FILE_A+"/view","new-url","VEH-1","historica"];
     const sheet=createSheet([BASE_HEADERS,row]);
@@ -431,7 +431,7 @@ check("La interfaz muestra estados históricos y filas inválidas en una secció
 
 
 const auditHelperNames = [
-    "getDriveAuditServerStateKey_", "hashDriveAuditValue_", "getDriveAuditCursorFingerprint_",
+    "cleanupExpiredDriveAuditServerStates_", "getDriveAuditServerStateKey_", "hashDriveAuditValue_", "getDriveAuditCursorFingerprint_",
     "normalizeDriveAuditFileIds_", "hashDriveAuditFileIds_", "saveDriveAuditServerState_",
     "loadDriveAuditServerState_", "getDriveAuditPageResultCacheKey_", "getDriveAuditResponseCacheKey_",
     "storeDriveAuditPageResults_", "loadDriveAuditUnusedFileIds_", "getLatestDriveAuditIdForUser_",
@@ -442,6 +442,7 @@ function auditHarness() {
     const properties = new Map(), cache = new Map();
     const PropertiesService = { getScriptProperties: () => ({
         getProperty: key => properties.has(key) ? properties.get(key) : null,
+        getProperties: () => Object.fromEntries(properties),
         setProperty: (key, value) => { properties.set(key, String(value)); },
         deleteProperty: key => properties.delete(key)
     }) };
@@ -455,12 +456,22 @@ function auditHarness() {
         computeDigest: (_algorithm, value) => Array.from(createHash("sha256").update(String(value), "utf8").digest())
     };
     const api = new Function("PropertiesService","CacheService","Utilities",auditHelperSource+
-        "\nreturn {getDriveAuditServerStateKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
+        "\nreturn {cleanupExpiredDriveAuditServerStates_,getDriveAuditServerStateKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
             PropertiesService,CacheService,Utilities);
     return { ...api, properties, cache };
 }
 const AUDIT_ID = "123e4567-e89b-42d3-a456-426614174000";
 const AUDIT_OWNER = "USR-DEVELOPER-1";
+
+check("La limpieza de estados expirados no conserva cursores obsoletos",()=>{
+    const h=auditHarness(), key=h.getDriveAuditServerStateKey_(AUDIT_ID);
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running"});
+    const expired=JSON.parse(h.properties.get(key));
+    expired.updatedAt=Date.now()-21600001;
+    h.properties.set(key,JSON.stringify(expired));
+    h.cleanupExpiredDriveAuditServerStates_();
+    assert.equal(h.properties.has(key),false);
+});
 check("El cursor de auditoría se firma por contenido y rechaza una pila vacía o alterada",()=>{
     const h=auditHarness();
     const cursor={stack:[{folderId:"folder-id-0000000000000001",fileToken:"token-a",filesDone:false}],
