@@ -1600,3 +1600,22 @@ Ejecutar: `node --experimental-default-type=module Services/Test/PrintQrPrivacy.
 ## AUG-145 — Modos de distribución de la ficha
 
 Los cuatro modos del selector son distintos: Automática conserva la agrupación adaptativa por clases; Horizontal fuerza texto/imagen en columnas; Vertical fuerza una sola columna con imagen después del texto; Imagen ampliada usa una columna y permite hasta 620 px de alto para la imagen. Las reglas específicas se declaran después de los límites generales del wrapper para evitar que la cascada las anule. Prueba: `node --experimental-default-type=module Services/Test/PrintSheetLayoutModes.mjs`.
+
+
+## AUG-039 — Autorización y minimización de datos en WRITE
+
+Ejecutar las regresiones con:
+
+```bash
+node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=WRITE
+```
+
+Cobertura integrada:
+- `AddSupplementaryInfoIntegrity.js`: validación de ActiveSessions/Users, expiración, revocación, roles permitidos, atribución servidor, persistencia/rollback y coordinación.
+- `CheckOperationSecurity.js`: sesión obligatoria, respuesta sin rowData, opId aleatorio de 128 bits y contrato mínimo de recuperación.
+- `WriteAuthorizationContracts.js`: rol Desarrollador para allocateVehicleId, revalidación antes/después del lock, revocación/cambio de rol, consumidores UI, flujo silentRegister y ruta ADMIN.
+- `WriteAuthorizationMinimization.js`: columnas físicas locales Users/ActiveSessions, callsites, router canónico y preservación de addOrUpdateCut/addVinToVehicle/freezeCortesIds.
+
+Decisión de privacidad: Idempotencia conserva esquema A:F sin ownerUserId. opId es un identificador de correlación de 128 bits, no un mecanismo de autorización; checkOperation exige una sesión vigente y devuelve solo estado, vehículo, timestamp y hash de integridad. Un colaborador autenticado que conozca un opId puede consultar esos metadatos mínimos. Si se requiere aislamiento por actor, debe diseñarse una migración versionada del esquema.
+
+La ejecución local simulada no sustituye la prueba Beta. En Apps Script/Spreadsheet aislados se deben comprobar sesiones válidas/ausentes/cruzadas/expiradas/revocadas, cambio de rol entre validaciones, ausencia de escrituras y cargas Drive ante rechazo, contador de IDs para rol ordinario/Desarrollador, respuesta mínima de checkOperation y registro silencioso por ADMIN. No utilizar endpoints ni datos productivos.
