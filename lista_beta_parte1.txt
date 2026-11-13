@@ -71,7 +71,7 @@ Referencias: AUG-100–105, AUG-148 y AUG-149.
 
 ### BETA-09 — Administración, telemetría y mantenimiento
 Referencias: AUG-018–025, AUG-028–033, AUG-134–139 y AUG-150.
-- Restauración recuperable de DB/Drive y auditoría persistente de operaciones sensibles.
+- Respaldos DB/Drive con manifiestos verificables, Drive por lotes y reanudación segura; restauraciones recuperables con staging/rollback y auditoría persistente de operaciones sensibles.
 - Health checks con estados reales y errores HTTP/red/aplicación diferenciados.
 - Inventario, terminal Drive restringida, telemetría y utilidades compartidas con contratos seguros.
 - Política anti-debugging explícita y documentada; no añadir bloqueos que perjudiquen accesibilidad o diagnóstico autorizado.
