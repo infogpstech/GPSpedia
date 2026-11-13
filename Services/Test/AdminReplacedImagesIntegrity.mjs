@@ -111,6 +111,20 @@ function buildHelpers({sheet=null, spreadsheet=null, lock=lockHarness(), flush=(
     return {...api,SpreadsheetApp,lock};
 }
 
+check("Las operaciones del gestor validan referencias globales y no solo Cortes",()=>{
+    const names=["handleGetReplacedImages","handleRecoverReplacedImage","handleDeleteReplacedImage",
+        "handleMoveReplacedImage","handleGetReplacedImageDownloadUrl","handleSaveUnusedImagesInventory",
+        "handleOrganizeUnusedImagesBatch","handleAuditDriveImagesInCortes"];
+    names.forEach(name=>assert.match(fnSource(admin,name),/collectActiveDriveReferences/,
+        name+" debe usar el escáner global de referencias"));
+    const scanner=fnSource(admin,"collectActiveDriveReferences");
+    assert.match(scanner,/getSpreadsheet\(\)\.getSheets\(\)/);
+    assert.match(scanner,/getDisplayValues\(\)/);
+    assert.match(scanner,/getFormulas\(\)/);
+    assert.match(scanner,/getRichTextValues\(\)/);
+    assert.match(scanner,/SHEET_NAMES\.IMAGENES_REEMPLAZADAS/);
+});
+
 check("Los 12 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
     const row=["REP-LEGACY",new Date(),"vehiculo","VEH-1","imagenVehiculo",FILE_A,"old.jpg",
         "https://drive.google.com/file/d/"+FILE_A+"/view","new-url","VEH-1","historica"];
