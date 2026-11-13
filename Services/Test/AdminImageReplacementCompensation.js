@@ -26,7 +26,11 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
     });
     run("Una imagen linked enviada a papelera pasa a revisión sin reactivarse", () => {
         assert(linkedBlock.includes("if (newFile.isTrashed())"), "Falta detectar el archivo eliminado.");
-        assert(linkedBlock.includes('operationRecord.values[9] = "requires_review"'), "No se marca requires_review.");
+        assert(linkedBlock.includes("markAdminImageUploadRequiresReview_"), "La operación linked no delega la reconciliación a requires_review.");
+        const reviewHelper = extractFunction(admin, "markAdminImageUploadRequiresReview_");
+        assert(reviewHelper.includes('"requires_review"'), "El helper no marca requires_review en el ledger.");
+        assert(reviewHelper.includes('"requiere_revision"'), "El helper no marca requiere_revision en el historial.");
+        assert(reviewHelper.includes("updateAdminImageUploadFileState_"), "El helper no alinea el estado del archivo Drive.");
         assert(linkedBlock.includes('status: "error"'), "La UI podría interpretar la operación como confirmada.");
         assert(!/setTrashed\(false\)/.test(linkedBlock), "Se reactiva automáticamente un archivo eliminado.");
     });
