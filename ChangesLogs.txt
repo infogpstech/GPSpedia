@@ -570,3 +570,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/UtilitiesSecurity.js: añade pruebas de POST concurrente, fallo de lectura del origen, discrepancia del respaldo y liberación del lock.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones y validaciones Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-124 — REGRESIÓN DEL CONTRATO FEEDBACK/CATALOG DE TUTORIALES
+- La revisión de Services/feedback.js y Services/catalog.js confirmó que el contrato solicitado ya estaba implementado en AUG-092; no se duplicó ni modificó la lógica de producción.
+- Services/Test/TutorialIntegrity.js amplía la cobertura con alta sobre esquema A:H vigente, ejecución de handleGetCatalogData sobre fixtures A:H y A:G, comprobación de identidad/orden y ausencia de una hoja plural alternativa.
+- Services/Test/README.md documenta la regresión específica de AUG-124.
+================================================================================
