@@ -167,7 +167,9 @@ async function runCatalogSnapshotSyncTests() {
     return { passed, total: 15 };
 }
 
-runCatalogSnapshotSyncTests().catch(error => {
+try {
+    await runCatalogSnapshotSyncTests();
+} catch (error) {
     console.error(error);
     process.exitCode = 1;
-});
+}
