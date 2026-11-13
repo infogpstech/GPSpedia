@@ -71,6 +71,30 @@ function buildHarness_(feedback, options = {}) {
     return { api: context.api, sheet, state };
 }
 
+function readCatalogTutorials_(catalog, tutorialRows) {
+    const tutorialColumns = extract_(catalog, "const COLS_TUTORIALES", "const COLS_RELAY");
+    const relayColumns = extract_(catalog, "const COLS_RELAY", "// ============================================================================");
+    const mapper = extract_(catalog, "function mapRowToObject", "function handleGetCatalogData");
+    const reader = extract_(catalog, "function handleGetCatalogData", "function handleGetDropdownData");
+    const rows = { Cortes: [["id"]], LogosMarca: [["id"]], Tutorial: tutorialRows.map(row => row.slice()), Relay: [["ID"]] };
+    const context = {
+        SHEET_NAMES: { CORTES: "Cortes", LOGOS_MARCA: "LogosMarca", TUTORIALES: "Tutorial", RELAY: "Relay" },
+        COLS_CORTES: {}, COLS_LOGOS_MARCA: { id: 1, nombreMarca: 2, urlLogo: 3 },
+        IMAGE_FIELDS_CORTES: new Set(), IMAGE_FIELDS_LOGOS: new Set(),
+        IMAGE_FIELDS_TUTORIALES: new Set(["Imagen"]), IMAGE_FIELDS_RELAY: new Set(),
+        CacheService: { getScriptCache: () => ({ get: () => null }) },
+        getCortesColumnMap: () => ({}), normalizeAndValidateImageId: value => value,
+        normalizeYouTubeUrl: value => value,
+        getSpreadsheet: () => ({ getSheetByName(name) {
+            if (!Object.prototype.hasOwnProperty.call(rows, name)) return null;
+            return { getDataRange: () => ({ getValues: () => rows[name].map(row => row.slice()) }) };
+        } })
+    };
+    vm.runInNewContext(tutorialColumns + "\n" + relayColumns + "\n" + mapper + "\n" + reader +
+        "\nthis.read = handleGetCatalogData;", context);
+    return context.read({ forceRefresh: true });
+}
+
 export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }) {
     const results = [];
     let passed = 0, failed = 0;
@@ -288,6 +312,44 @@ export function runTutorialIntegrityTests({ feedback, ui, coordinator, catalog }
 
     test("catálogo conserva las siete columnas históricas y expone Colaborador en H", () => {
         assert.match(catalog, /ID:\s*1,[\s\S]*?Tema:\s*2,[\s\S]*?Imagen:\s*3,[\s\S]*?comoIdentificarlo:\s*4,[\s\S]*?dondeEncontrarlo:\s*5,[\s\S]*?Detalles:\s*6,[\s\S]*?Video:\s*7,[\s\S]*?Colaborador:\s*8/);
+    });
+
+    test("alta sobre esquema vigente A:H conserva encabezados y registros existentes", () => {
+        const existing = ["tut-anterior", "Anterior", "imagen", "Cómo", "Dónde", "Detalle", "video", "Autor"];
+        const h = buildHarness_(feedback, { rows: [headers, existing] });
+        const result = h.api.add({ ...base, operationId: "66666666666666666666666666666666", tema: "Tutorial nuevo" });
+        assert.equal(result.status, "success");
+        assert.deepEqual(h.sheet.data[0], headers);
+        assert.deepEqual(h.sheet.data[1], existing);
+        assert.equal(h.sheet.data[2][0], "tut-66666666666666666666666666666666");
+    });
+
+    test("CATALOG lee Tutorial por el mismo contrato de ocho columnas e identidad estable", () => {
+        const row = ["tut-0123456789abcdef0123456789abcdef", "Tema", "drive-image", "Cómo", "Dónde", "Detalle", "https://youtube.com/watch?v=abcdefghijk", "Autora"];
+        const result = readCatalogTutorials_(catalog, [headers, row]);
+        assert.equal(result.status, "success");
+        assert.equal(result.data.tutoriales.length, 1);
+        assert.deepEqual(result.data.tutoriales[0], {
+            ID: row[0], Tema: row[1], Imagen: row[2], comoIdentificarlo: row[3],
+            dondeEncontrarlo: row[4], Detalles: row[5], Video: row[6], Colaborador: row[7]
+        });
+    });
+
+    test("CATALOG conserva lectura de registros históricos A:G sin inventar Colaborador", () => {
+        const legacyRow = ["", "Tutorial histórico", "imagen-propia", "Cómo", "Dónde", "Detalle", "video"];
+        const result = readCatalogTutorials_(catalog, [headers.slice(0, 7), legacyRow]);
+        assert.equal(result.data.tutoriales.length, 1);
+        assert.equal(result.data.tutoriales[0].ID, null);
+        assert.equal(result.data.tutoriales[0].Tema, legacyRow[1]);
+        assert.equal(result.data.tutoriales[0].Imagen, legacyRow[2]);
+        assert.equal(result.data.tutoriales[0].Video, legacyRow[6]);
+        assert.equal(result.data.tutoriales[0].Colaborador, null);
+    });
+
+    test("FEEDBACK y CATALOG declaran Tutorial como única hoja canónica", () => {
+        assert.match(catalog, /TUTORIALES:\s*"Tutorial"/);
+        assert.match(feedback, /getSheetByName\("Tutorial"\)/);
+        assert.doesNotMatch(feedback, /(?:getSheetByName|insertSheet)\("Tutoriales"\)/);
     });
 
     test("coordinador reserva TUTORIAL para alta, edición, solicitud, aprobación y rechazo", () => {
