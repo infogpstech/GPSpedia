@@ -96,11 +96,6 @@ runGroup('33','FEEDBACK',()=>{
  const init=new Function('ScriptApp','UrlFetchApp','Logger',feedback+'\n'+initTest+'\nreturn runYouTubeApprovalInitTests();')(
   {getOAuthToken:()=> 'oauth-token'},{fetch:()=>({getAllHeaders:()=>({}),getResponseCode:()=>500,getContentText:()=>''})},{log(){}});
  recordResult('FEEDBACK precondiciones de subida resumable',init);
- const creationTest=read('Services/Test/VideoApprovalContracts.js');
- const creation=new Function('LockService','SpreadsheetApp','Utilities','DriveApp','logUserActivity',
-  feedback+'\n'+creationTest+'\nreturn runVideoApprovalCreationContractTests();')(
-  lockService,spreadsheet,utilities,null,()=>{});
- recordResult('FEEDBACK alta PyS/Tutorial sin publicación directa',creation);
  recordResult('FEEDBACK ledger Inbox',loadFunction('Services/Test/InboxAuditTrail.js','runInboxAuditTrailTests','\n\nimport {')({feedback}));
  recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('Services/Test/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
   ui:read('ui.js'),feedback

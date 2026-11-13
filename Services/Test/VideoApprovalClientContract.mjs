@@ -69,4 +69,18 @@ test("PyS y Tutorial bloquean cambios directos de URL",()=>{
  assert.match(pys,/solo puede cambiarse mediante una solicitud de aprobación/);
  assert.match(tutorial,/solo puede cambiarse mediante una solicitud de aprobación/);
 });
+test("alta PyS y Tutorial exige ID de operación y rechaza enlaces directos",()=>{
+ const tutorialStart=feedback.indexOf("function handleAddTutorial(payload)");
+ const tutorialEnd=feedback.indexOf("\nfunction ",tutorialStart+20);
+ const tutorial=feedback.slice(tutorialStart,tutorialEnd);
+ assert.match(tutorial,/source\.operationId/);
+ assert.match(tutorial,/source\.videoUrl/);
+ assert.match(tutorial,/no se aceptan enlaces directos/);
+ const pysStart=feedback.indexOf("function handleAddProblem(source)");
+ const pysEnd=feedback.indexOf("\nfunction ",pysStart+20);
+ const pys=feedback.slice(pysStart,pysEnd);
+ assert.match(pys,/source\.opId/);
+ assert.match(pys,/source\.videoUrl/);
+ assert.match(pys,/no se aceptan enlaces directos/);
+});
 console.log("VideoApprovalClientContract: "+passed+"/"+passed+" PASS");
