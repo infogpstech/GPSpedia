@@ -255,7 +255,7 @@ check("Reintentar una restauración ya confirmada es idempotente",()=>{
 });
 check("La eliminación definitiva requiere estado en papelera, imagen válida y ausencia de referencias",()=>{
     const notTrash=makeBase({status:"historica",previous:"historica",trashed:false});
-    assert.throws(()=>runPermanent(notTrash,[ok(),noContent(),gone()]),/requiere que la imagen esté en papelera/);
+    assert.throws(()=>runPermanent(notTrash,[ok(),noContent(),gone()]),/requiere un registro en papelera/);
     const active=makeBase({status:"en_papelera",previous:"historica",trashed:true,references:new Map([[FILE_ID,[{sheet:"Relay",row:4,column:10}]]])});
     assert.throws(()=>runPermanent(active,[ok(),noContent(),gone()]),/referencias activas/);
     assert.equal(active.sheet.cells[1][10],"en_papelera");
