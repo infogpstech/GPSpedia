@@ -99,7 +99,7 @@ function runYouTubeApprovalTests() {
         });
         run_("rechaza opVideoId inválido", () => expectThrow_(() => handleSubmitVideoForApproval({ ...payload, opVideoId: "short" }), "Identificador de operación"));
         run_("rechaza ID provisional o inválido de YouTube", () => expectThrow_(() => handleSubmitVideoForApproval({ ...payload, videoId: opVideoId, videoUrl: "https://www.youtube.com/watch?v=" + opVideoId }), "ID real"));
-        run_("rechaza URL que no coincide con el ID real", () => expectThrow_(() => handleSubmitVideoForApproval({ ...payload, videoUrl: "https://youtu.be/abcdefghijk" }), "URL no coincide"));
+        run_("rechaza URL que no coincide con el ID real", () => expectThrow_(() => handleSubmitVideoForApproval({ ...payload, videoUrl: "https://youtu.be/zyxwvutsrqp" }), "URL no coincide"));
         run_("rechaza tipo de contenido desconocido", () => expectThrow_(() => handleSubmitVideoForApproval({ ...payload, contentType: "relay" }), "Tipo de contenido"));
         run_("rechaza operación sin identidad autenticada", () => expectThrow_(() => handleSubmitVideoForApproval({ ...payload, userId: "" }), "identidad válida"));
         run_("rechaza opVideoId duplicado en dos filas", () => {
