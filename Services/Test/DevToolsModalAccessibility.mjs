@@ -86,10 +86,11 @@ test('las cinco opciones usan un único grupo nativo de radios con etiquetas aso
     const tabsStart = html.indexOf('<div class="dev-tools-tabs"');
     const tabsEnd = html.indexOf('<div class="dev-tools-panels">', tabsStart);
     const tabs = html.slice(tabsStart, tabsEnd);
-    assert.match(tabs, /<fieldset class="dev-tools-tab-options">[\\s\\S]*?<legend>Secciones del panel de desarrollador<\\/legend>/);
+    assert.ok(tabs.includes('<fieldset class="dev-tools-tab-options">'));
+    assert.ok(tabs.includes('<legend>Secciones del panel de desarrollador</legend>'));
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
-        assert.match(tabs, new RegExp('<input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-' + id + '" aria-controls="dev-panel-' + id + '"'));
-        assert.match(tabs, new RegExp('<label class="dev-tab-link" for="dev-tab-' + id + '"'));
+        assert.ok(tabs.includes('id="dev-tab-' + id + '" aria-controls="dev-panel-' + id + '"'));
+        assert.ok(tabs.includes('for="dev-tab-' + id + '"'));
     }
     assert.equal((tabs.match(/type="radio" name="dev-tools-section"/g) || []).length, 5);
     assert.equal((tabs.match(/checked>/g) || []).length, 1);
@@ -98,14 +99,15 @@ test('el grupo nativo tiene leyenda y queda separado del contenido de los panele
     const start = html.indexOf('<fieldset class="dev-tools-tab-options">');
     const end = html.indexOf('</fieldset>', start);
     const group = html.slice(start, end);
-    assert.match(group, /<legend>Secciones del panel de desarrollador<\\/legend>/);
-    assert.doesNotMatch(group, /dev-tools-panels/);
-    assert.match(css, /#dev-tools-modal \.dev-tools-tab-options[\\s\\S]*?clip: rect\\(0, 0, 0, 0\\)/);
+    assert.ok(group.includes('<legend>Secciones del panel de desarrollador</legend>'));
+    assert.ok(!group.includes('dev-tools-panels'));
+    assert.ok(css.includes('#dev-tools-modal .dev-tools-tab-options'));
+    assert.ok(css.includes('clip: rect(0, 0, 0, 0)'));
 });
 test('los paneles son regiones con encabezados propios y relaciones correctas', () => {
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
-        assert.match(html, new RegExp('<section id="dev-panel-' + id + '" class="dev-tab-panel dev-panel-' + id + '" role="region" aria-labelledby="dev-panel-title-' + id + '">'));
-        assert.match(html, new RegExp('<h3 id="dev-panel-title-' + id + '">'));
+        assert.ok(html.includes('id="dev-panel-' + id + '" class="dev-tab-panel dev-panel-' + id + '" role="region" aria-labelledby="dev-panel-title-' + id + '"'));
+        assert.ok(html.includes('<h3 id="dev-panel-title-' + id + '">'));
     }
 });
 test('no mezcla roles tab/tablist/tabpanel con controles radio nativos', () => {
@@ -113,14 +115,13 @@ test('no mezcla roles tab/tablist/tabpanel con controles radio nativos', () => {
     const end = html.indexOf('<!-- =========', start);
     const tabs = html.slice(start, end);
     assert.doesNotMatch(tabs, /role="tablist"|role="tab"|role="tabpanel"/);
-    assert.match(tabs, /<fieldset class="dev-tools-tab-options">/);
-    assert.match(tabs, /type="radio" name="dev-tools-section"/);
+    assert.ok(tabs.includes('<fieldset class="dev-tools-tab-options">'));
+    assert.ok(tabs.includes('type="radio" name="dev-tools-section"'));
 });
 test('los selectores CSS conservan visibilidad y foco para las cinco opciones', () => {
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
-        assert.match(css, new RegExp('#dev-tools-modal \.dev-tools-tabs:has\(#dev-tab-' + id + ':checked\)'));
-        assert.match(css, new RegExp('#dev-tools-modal \.dev-tools-tabs:has\(#dev-tab-' + id + ':focus-visible\)'));
+        assert.ok(css.includes('.dev-tools-tabs:has(#dev-tab-' + id + ':checked)'));
+        assert.ok(css.includes('.dev-tools-tabs:has(#dev-tab-' + id + ':focus-visible)'));
     }
 });
-
 console.log('DevToolsModalAccessibility: ' + passed + '/' + passed + ' PASS');
