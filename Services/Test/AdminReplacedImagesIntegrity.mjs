@@ -818,15 +818,19 @@ check("El estado local conserva auditId, inventoryOperationId y los IDs confirma
     const end=offline.indexOf("\nexport async function getDriveAuditState",start);
     assert.ok(start>=0&&end>start);
     const saveBlock=offline.slice(start,end);
-    assert.ok(saveBlock.includes("inventoryAuditId: String(state.inventoryAuditId || '')"));
-    assert.ok(saveBlock.includes("inventoryOperationId: String(state.inventoryOperationId || '')"));
     assert.ok(saveBlock.includes("const confirmedIds = normalizeDriveAuditLocalIds(state.inventoryConfirmedFileIds)"));
     assert.ok(saveBlock.includes("store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds"));
-    assert.ok(saveBlock.includes("totalDiscovered: Math.max"));
-    assert.ok(saveBlock.includes("lastScanAt: Math.max"));
-    assert.ok(saveBlock.includes("serviceVersion: String"));
-    assert.ok(saveBlock.includes("duplicateFolderCount: Math.max"));
-    assert.ok(saveBlock.includes("Array.from(new Set("));
+    const metaStart=offline.indexOf("function buildDriveAuditMetaEntry(");
+    const metaEnd=offline.indexOf("\\nfunction ",metaStart+10);
+    assert.ok(metaStart>=0&&metaEnd>metaStart);
+    const metaBlock=offline.slice(metaStart,metaEnd);
+    for(const field of ["inventoryAuditId: String(state.inventoryAuditId || '')","inventoryOperationId: String(state.inventoryOperationId || '')",
+        "totalDiscovered: Math.max","lastScanAt: Math.max","serviceVersion: String","duplicateFolderCount: Math.max"]) {
+        assert.ok(metaBlock.includes(field));
+    }
+    const idsStart=offline.indexOf("function normalizeDriveAuditLocalIds(");
+    const idsEnd=offline.indexOf("\\nfunction ",idsStart+10);
+    assert.ok(idsStart>=0&&idsEnd>idsStart&&offline.slice(idsStart,idsEnd).includes("Array.from(new Set("));
 });
 
 console.log("AdminReplacedImagesIntegrity: "+passed+"/"+passed+" PASS");
