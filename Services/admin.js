@@ -8609,9 +8609,12 @@ function handleAuditDriveImagesInCortes(payload, logMessage, developerContext) {
     finally { lock.releaseLock(); }
 }
 function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerContext) {
+    const requestStartedAt = Date.now();
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("La auditoría requiere una sesión Desarrollador verificada.");
+    const rootValidationStartedAt = Date.now();
     const rootFolder = getCortesRootFolder();
+    const rootValidationMs = Date.now() - rootValidationStartedAt;
     if (!rootFolder) throw new Error("No se pudo acceder a la carpeta principal 'Cortes'.");
     const folderMembershipCache = new Map();
     const folderObjectCache = new Map([[String(DRIVE_FOLDER_ID), rootFolder]]);
@@ -8625,6 +8628,8 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     const cursor = payload && payload.cursor ? payload.cursor : null;
     let auditId, state, referenceSnapshot, stack, totalDiscovered, totalAnalyzed, foldersVisited;
     let errorCount, duplicateFileCount, duplicateFolderCount, pageIndex, inputFingerprint;
+    let referenceCaptureMs = 0, historyCaptureMs = 0, snapshotLoadMs = 0, snapshotPersistMs = 0;
+    let cursorValidationMs = 0, snapshotManifest = null;
     if (cursor) {
         auditId = String(cursor.referenceCacheId || "").trim();
         state = loadDriveAuditServerState_(auditId);
@@ -8642,14 +8647,18 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         }
         if (state.status !== "running" || state.expectedCursorFingerprint !== inputFingerprint) throw new Error("El cursor no coincide con la última continuación emitida por ADMIN. No se aceptó el lote.");
         if (!Array.isArray(cursor.stack) || cursor.stack.length === 0 || Number(cursor.totalAnalyzed) !== Number(state.totalAnalyzed) || Number(cursor.foldersVisited) !== Number(state.foldersVisited)) throw new Error("El cursor está incompleto o sus contadores no coinciden con el estado del servidor.");
+        const snapshotLoadStartedAt = Date.now();
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
         refreshAuditDriveReferenceSnapshot_(auditId, referenceSnapshot);
+        snapshotLoadMs = Date.now() - snapshotLoadStartedAt;
+        const cursorValidationStartedAt = Date.now();
         cursor.stack.forEach(item => {
             if (!item || !item.folderId ||
                 !isFolderInsideCortes(getAuditFolderById(item.folderId), DRIVE_FOLDER_ID, folderMembershipCache)) {
                 throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes».");
             }
         });
+        cursorValidationMs = Date.now() - cursorValidationStartedAt;
         stack = cursor.stack;
         totalDiscovered = Number(state.totalDiscovered) || 0; totalAnalyzed = Number(state.totalAnalyzed) || 0;
         foldersVisited = Number(state.foldersVisited) || 1; errorCount = Number(state.errorCount) || 0;
@@ -8660,7 +8669,11 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         auditId = Utilities.getUuid(); inputFingerprint = "START";
         state = { auditId, ownerId, status: "running", scanVersion: ADMIN_SERVICE_VERSION, createdAt: Date.now(),
             pageCount: 0, totalDiscovered: 0, totalAnalyzed: 0, foldersVisited: 1, errorCount: 0, duplicateFileCount: 0, duplicateFolderCount: 0 };
-        const references = collectActiveDriveReferences(false), historicalDriveIds = new Set(), protectedDriveIds = new Set();
+        const referenceCaptureStartedAt = Date.now();
+        const references = collectActiveDriveReferences(false);
+        referenceCaptureMs = Date.now() - referenceCaptureStartedAt;
+        const historyCaptureStartedAt = Date.now();
+        const historicalDriveIds = new Set(), protectedDriveIds = new Set();
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (historySheet) {
             const historyRows = historySheet.getDataRange().getValues();
@@ -8676,25 +8689,41 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
                 });
             }
         }
+        historyCaptureMs = Date.now() - historyCaptureStartedAt;
         referenceSnapshot = { activeDriveIds: Array.from(references.references.keys()), historicalDriveIds: Array.from(historicalDriveIds),
             protectedDriveIds: Array.from(protectedDriveIds), unverifiableReferenceCount: references.unverifiableReferenceCount };
-        storeAuditDriveReferenceSnapshot(auditId, referenceSnapshot);
-        state.unverifiableReferenceCount = references.unverifiableReferenceCount; saveDriveAuditServerState_(state);
+        const snapshotPersistStartedAt = Date.now();
+        snapshotManifest = storeAuditDriveReferenceSnapshot(auditId, referenceSnapshot);
+        snapshotPersistMs = Date.now() - snapshotPersistStartedAt;
+        state.unverifiableReferenceCount = references.unverifiableReferenceCount;
+        state.activeReferenceCount = referenceSnapshot.activeDriveIds.length;
+        state.historicalReferenceCount = referenceSnapshot.historicalDriveIds.length;
+        state.protectedReferenceCount = referenceSnapshot.protectedDriveIds.length;
+        state.snapshotCharacters = snapshotManifest.length;
+        state.snapshotBytes = snapshotManifest.byteLength;
+        state.snapshotChunks = snapshotManifest.chunkCount;
+        saveDriveAuditServerState_(state);
         stack = [{ folderId: DRIVE_FOLDER_ID, path: rootFolder.getName(), fileToken: null, folderToken: null, filesDone: false, foldersDone: false }];
         totalDiscovered = 0; totalAnalyzed = 0; foldersVisited = 1; errorCount = 0; duplicateFileCount = 0; duplicateFolderCount = 0; pageIndex = 0;
         logMessage && logMessage("Referencias", `Snapshot preparado: ${referenceSnapshot.activeDriveIds.length} referencias activas y ${referenceSnapshot.historicalDriveIds.length} históricas.`);
     }
+    const deduplicationLoadStartedAt = Date.now();
     const processed = loadDriveAuditSeenIds_(auditId, pageIndex), seenFileIds = new Set(processed.fileIds), seenFolderIds = new Set(processed.folderIds);
+    const deduplicationLoadMs = Date.now() - deduplicationLoadStartedAt;
     const pageFileIds = [], pageFolderIds = [];
     if (!cursor && !seenFolderIds.has(DRIVE_FOLDER_ID)) { seenFolderIds.add(DRIVE_FOLDER_ID); pageFolderIds.push(DRIVE_FOLDER_ID); }
     const activeDriveIds = new Set(referenceSnapshot.activeDriveIds), historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds), protectedDriveIds = new Set(referenceSnapshot.protectedDriveIds || []);
     let batchFiles = 0, batchFolders = 0, batchFileEntries = 0, batchFolderEntries = 0;
     const auditResults = [], batchFilesLimit = 25, batchFoldersLimit = 20, batchFileEntriesLimit = 50, batchFolderEntriesLimit = 40;
-    while (stack.length && batchFiles < batchFilesLimit && batchFolders < batchFoldersLimit && batchFileEntries < batchFileEntriesLimit && batchFolderEntries < batchFolderEntriesLimit) {
+    const batchBudgetMs = 18000, batchStartedAt = Date.now();
+    while (stack.length && batchFiles < batchFilesLimit && batchFolders < batchFoldersLimit &&
+        batchFileEntries < batchFileEntriesLimit && batchFolderEntries < batchFolderEntriesLimit &&
+        Date.now() - batchStartedAt < batchBudgetMs) {
         const current = stack[stack.length - 1], folder = getAuditFolderById(current.folderId);
         if (!current.filesDone) {
             const files = current.fileToken ? DriveApp.continueFileIterator(current.fileToken) : folder.getFiles();
-            while (files.hasNext() && batchFiles < batchFilesLimit && batchFileEntries < batchFileEntriesLimit) {
+            while (files.hasNext() && batchFiles < batchFilesLimit && batchFileEntries < batchFileEntriesLimit &&
+                Date.now() - batchStartedAt < batchBudgetMs) {
                 const file = files.next(); batchFileEntries++;
                 let fileId = ""; try { fileId = String(file.getId() || "").trim(); } catch (idError) { errorCount++; continue; }
                 if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { errorCount++; continue; }
@@ -8719,7 +8748,8 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         if (current.foldersDone) { stack.pop(); continue; }
         const subFolders = current.folderToken ? DriveApp.continueFolderIterator(current.folderToken) : folder.getFolders();
         let pushedChild = false;
-        while (subFolders.hasNext() && batchFolderEntries < batchFolderEntriesLimit && batchFolders < batchFoldersLimit) {
+        while (subFolders.hasNext() && batchFolderEntries < batchFolderEntriesLimit && batchFolders < batchFoldersLimit &&
+            Date.now() - batchStartedAt < batchBudgetMs) {
             const childFolder = subFolders.next(); batchFolderEntries++;
             const childFolderId = String(childFolder.getId() || "").trim();
             current.folderToken = subFolders.hasNext() ? subFolders.getContinuationToken() : null;
@@ -8738,20 +8768,43 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         if (subFolders.hasNext()) { current.folderToken = subFolders.getContinuationToken(); current.foldersDone = false; break; }
         current.folderToken = null; current.foldersDone = true; stack.pop();
     }
+    const driveTraversalMs = Date.now() - batchStartedAt;
+    const budgetExhausted = stack.length > 0 && driveTraversalMs >= batchBudgetMs;
     const complete = stack.length === 0;
     const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
+    const cachePersistenceStartedAt = Date.now();
     storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
     storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds);
+    const cachePersistenceMs = Date.now() - cachePersistenceStartedAt;
     const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
+    const metrics = {
+        rootValidationMs, referenceCaptureMs, historyCaptureMs, snapshotLoadMs, snapshotPersistMs,
+        cursorValidationMs, deduplicationLoadMs, driveTraversalMs, cachePersistenceMs,
+        totalMs: Date.now() - requestStartedAt, batchBudgetMs, budgetExhausted,
+        batchFiles, batchFolders, batchFileEntries, batchFolderEntries, stackDepth: stack.length,
+        folderMembershipCacheEntries: folderMembershipCache.size, folderObjectCacheEntries: folderObjectCache.size,
+        activeReferenceCount: Number(state.activeReferenceCount) || referenceSnapshot.activeDriveIds.length,
+        historicalReferenceCount: Number(state.historicalReferenceCount) || referenceSnapshot.historicalDriveIds.length,
+        protectedReferenceCount: Number(state.protectedReferenceCount) || (referenceSnapshot.protectedDriveIds || []).length,
+        snapshotCharacters: Number(state.snapshotCharacters) || 0, snapshotBytes: Number(state.snapshotBytes) || 0,
+        snapshotChunks: Number(state.snapshotChunks) || 0,
+        cursorBytes: nextCursor ? Utilities.newBlob(JSON.stringify(nextCursor), "application/json; charset=utf-8").getBytes().length : 0
+    };
     const response = { status: "success", auditId, serverCompletionVerified: complete, serviceVersion: ADMIN_SERVICE_VERSION, serverTimestamp,
         rootFolderName: rootFolder.getName(), rootFolderId: DRIVE_FOLDER_ID, batchAnalyzed: batchFiles, totalDiscovered, totalAnalyzed,
         foldersVisited, pendingFolderCount: stack.length, errorCount, duplicateFileCount, duplicateFolderCount,
-        complete, partial: !complete, unverifiableReferenceCount: referenceSnapshot.unverifiableReferenceCount, files: auditResults, cursor: nextCursor };
-    const responseCacheKey = getDriveAuditResponseCacheKey_(auditId, inputFingerprint), responseJson = JSON.stringify(response);
+        complete, partial: !complete, unverifiableReferenceCount: referenceSnapshot.unverifiableReferenceCount,
+        metrics, files: auditResults, cursor: nextCursor };
+    const responseCacheKey = getDriveAuditResponseCacheKey_(auditId, inputFingerprint);
+    let responseJson = JSON.stringify(response);
+    metrics.responseCharacters = responseJson.length;
+    metrics.responseBytes = Utilities.newBlob(responseJson, "application/json; charset=utf-8").getBytes().length;
+    responseJson = JSON.stringify(response);
     CacheService.getScriptCache().put(responseCacheKey, responseJson, 21600);
     if (CacheService.getScriptCache().get(responseCacheKey) !== responseJson) throw new Error("No se pudo conservar la respuesta reanudable del lote de auditoría.");
     state.pageCount = nextPageCount; state.totalDiscovered = totalDiscovered; state.totalAnalyzed = totalAnalyzed; state.foldersVisited = foldersVisited;
     state.errorCount = errorCount; state.duplicateFileCount = duplicateFileCount; state.duplicateFolderCount = duplicateFolderCount;
+    state.lastBatchMetrics = metrics;
     const previousResponseCacheKey = state.lastResponseCacheKey;
     state.unverifiableReferenceCount = referenceSnapshot.unverifiableReferenceCount;
     state.lastRequestFingerprint = inputFingerprint;
@@ -8773,5 +8826,6 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     }
     if (complete) clearAuditDriveReferenceSnapshot(auditId);
     logMessage && logMessage("Auditoría Drive", `Lote analizado: ${batchFiles} archivos únicos. Total acumulado: ${totalAnalyzed}. Duplicados omitidos: ${duplicateFileCount + duplicateFolderCount}. Estado: ${complete ? "completo" : "parcial"}.`);
+    logMessage && logMessage("Rendimiento auditoría", JSON.stringify(metrics));
     return response;
 }
