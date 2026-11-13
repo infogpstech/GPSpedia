@@ -399,3 +399,21 @@ Beta pendiente: probar roles y sesiones con hojas aisladas; comprobar respuestas
 Archivos: Services/write.js, Services/Test/AddSupplementaryInfoIntegrity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, checkpoint.md y lista_beta.txt.
 Siguiente tarea: AUG-123 — Proteger y serializar la migración UTILITIES. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-123 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: 7950efe46cbc6411e747077d649e3c69761b0682.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+- Services/Utilities.js: captura snapshots de Cortes y Hoja 1 bajo ScriptLock antes de resolver fechas con Drive; valida el respaldo contra el snapshot antes de promover staging y aborta ante discrepancias.
+- Services/Test/UtilitiesSecurity.js: 15/15 PASS; cubre autorización, concurrencia simulada, fallos de snapshot, staging, respaldo, promoción, rollback y recuperación.
+- Parsing sintáctico de Services/Utilities.js y Services/Test/UtilitiesSecurity.js: 2/2 PASS.
+- README de pruebas, backlog, ChangesLogs y lista_beta actualizados.
+- No se ejecutaron Apps Script, Spreadsheet, Drive, endpoints ni datos productivos.
+
+Validación Beta pendiente: comparar el código del deployment UTILITIES y probar concurrencia real, persistencia de snapshots, promoción/rollback e interrupción/reintento en una copia aislada. No desplegar a producción.
+Siguiente tarea: AUG-124 — Unificar esquema e identidad de Tutoriales entre FEEDBACK y CATALOG. No iniciar en esta interacción.
+================================================================================
