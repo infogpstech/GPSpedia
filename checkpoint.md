@@ -436,3 +436,30 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Validación Beta pendiente: comprobar en copias aisladas la persistencia, lectura tras recarga CATALOG, migración de A:G a H, identidad real de Users, permisos y referencias de aprobación de vídeo. No desplegar a producción.
 Siguiente tarea: AUG-125 — Hacer recuperables las restauraciones de DB y Drive. No iniciar en esta interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-125 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: 2f1ec72e65c02016cbd8752f1397c8e7cb66df42.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Los respaldos DB registran un manifiesto SHA-256 de todas las hojas, celdas con contenido y fórmulas. La copia solo se marca como válida después de comparar el Spreadsheet completo y validar identidad, MIME y ubicación; una copia parcial se envía a papelera.
+- Los respaldos Drive inventarían rutas, carpetas, nombres, MIME y tamaños; la copia se registra solo después de comparar conteos, bytes y huella. Una copia parcial se retira.
+- La restauración DB valida el esquema obligatorio (incluida compatibilidad histórica de Tutorial A:G y el esquema actual A:H) y el manifiesto del respaldo. Crea y verifica una copia recuperable del estado actual; copia todas las hojas a staging, verifica sus huellas y realiza un intercambio de hojas completas. Las hojas extra no presentes en el respaldo se conservan. Si la promoción falla, restaura los nombres originales; si la reversión no se puede verificar, conserva los artefactos __GP_RESTORE_* y comunica el ID del respaldo recuperable.
+- La restauración Drive copia el respaldo a staging y lo compara antes de mover el contenido actual. El contenido original se conserva en una carpeta de rollback; la promoción se verifica y, ante fallos parciales, se intenta restaurar el contenido anterior. Si el rollback no puede verificarse, se preservan staging y recuperación y se informan sus IDs.
+- Los backups históricos sin manifiesto se aceptan con advertencia después de validar el esquema/contenido disponible; los manifiestos presentes deben coincidir exactamente.
+
+Validación local:
+- Services/Test/AdminRestoreRecovery.js: 16/16 PASS.
+- Se probaron dinámicamente intercambio DB exitoso, preservación de hojas adicionales, fallo de promoción, fallo de verificación y fallo de reversión.
+- Parsing V8 de Services/admin.js y Services/Test/AdminRestoreRecovery.js: PASS.
+- No se ejecutaron Apps Script, Spreadsheet, Drive, endpoints, deployments ni datos productivos.
+
+Validación Beta pendiente: verificar copias reales en proyecto ADMIN y Spreadsheet/Drive aislados; creación de backups y comparación de manifiestos; restauración DB/Drive; interrupciones y fallos parciales controlados en cada fase; persistencia posterior y recuperación manual desde los IDs devueltos. No desplegar a producción.
+
+Archivos: Services/admin.js, Services/Test/AdminRestoreRecovery.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-126 — Validar payload completo antes de reservar fila/ID en WRITE. No iniciar dentro de esta tarea.
+================================================================================
