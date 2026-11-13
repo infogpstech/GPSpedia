@@ -653,7 +653,7 @@ function doGet(e) {
             status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
+            .setMimeType(ContentService.MimeType.JSON);
     }
     const defaultResponse = { status: 'success', message: 'GPSpedia Admin-SERVICE v2.6.0 is active.' };
     return ContentService.createTextOutput(JSON.stringify(defaultResponse))

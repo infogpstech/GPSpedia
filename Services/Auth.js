@@ -415,7 +415,7 @@ function doGet(e) {
             status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
+            .setMimeType(ContentService.MimeType.JSON);
     }
     // Comportamiento por defecto si no está en modo de depuración
     const defaultResponse = {

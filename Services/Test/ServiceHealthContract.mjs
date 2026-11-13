@@ -186,6 +186,7 @@ await check("Los doGet versionados exponen identidad/estado y no metadatos inter
         assert.ok(source.includes("service: '" + identity + "'") || source.includes('service:"' + identity + '"'), key + " no declara identidad.");
         assert.ok(source.includes("status: 'available'") || source.includes('status:"available"'), key + " no declara available.");
         assert.ok(source.includes("version:"), key + " no declara versión.");
+        assert.ok(source.includes("ContentService.MimeType.JSON"), key + " no responde JSON.");
         const start = source.indexOf("function doGet");
         const end = source.indexOf("\nfunction ", start + 10);
         const debugBlock = source.slice(start, end > start ? end : source.length);
