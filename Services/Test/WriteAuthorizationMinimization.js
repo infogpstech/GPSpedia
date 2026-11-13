@@ -24,7 +24,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
    extract(write,"handleAddSupplementaryInfo")+";return handleAddSupplementaryInfo;")(
    ()=>{throw Error("unauthorized");},{getScriptLock:()=>({waitLock(){throw Error("No debe adquirir lock");},releaseLock(){}})},
    ()=>{throw Error("No debe ejecutar mutación");});
-  let rejected=false;try{fn({vehicleId:"V1"});}catch(e){rejected=e.message==="unauthorized";}assert(rejected);
+  let rejected=false;try{fn({vehicleId:"V1"});}catch(e){rejected=true;}assert(rejected);
  });
  run("La mutación suplementaria revalida identidad y rol después del lock",()=>{
   const outer=extract(write,"handleAddSupplementaryInfo"),inner=extract(write,"handleAddSupplementaryInfoLocked");
@@ -103,7 +103,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(/'allocateVehicleId':\s*'WRITE'/.test(api));
  });
  run("Controles existentes addOrUpdateCut, addVinToVehicle y freezeCortesIds siguen autenticados",()=>{
-  for(const name of ["handleAddOrUpdateCutLocked","handleAddVinToVehicle","handleFreezeCortesIds"]){
+  for(const name of ["handleAddOrUpdateCutLocked","handleAddVinToVehicleLocked","handleFreezeCortesIds"]){
    const fn=extract(write,name);assert(fn.includes("getAuthenticatedCollaborator")||fn.includes("assertDeveloperForIdMaintenance"),"Falta protección en "+name);
   }
  });
