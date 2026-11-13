@@ -1480,3 +1480,8 @@ node --input-type=module -e 'import {readFileSync} from "node:fs"; const feedbac
 ~~~
 
 La suite cubre allowlist de tipo de contenido, destino único por ID, coherencia entre referenceId e ID de la fila FEEDBACK, esquemas de Cortes/PyS/Tutorial, estados pendientes/terminales, publicación sin sobrescritura, miniatura de tutorial, rechazo que solo retira el enlace exacto, reintentos ante respuesta/escritura fallida y serialización local de aprobación/rechazo con el mismo ScriptLock. Resultado local: 28/28 PASS. Usa hojas simuladas; no llama Apps Script desplegado, Spreadsheet, Drive, YouTube ni endpoints reales.
+
+
+## AUG-132 — Validación estricta del VIN
+
+Ejecutar la suite `runVinAuthoritativeValidationTests({ write, admin, ui, addCuts })` cargando las fuentes vigentes de `Services/write.js`, `Services/admin.js`, `ui.js` y `add_cortes.html`. La suite verifica longitudes normalizadas de 5/6/18/19, rechazo de caracteres ajenos al formato, normalización exclusiva de espacios y guiones, rechazo antes de consultar/escribir datos, duplicados y contratos de altas/edición. Resultado local: 12/12 PASS. Parsing V8 de WRITE, ADMIN y la suite: PASS. No requiere Apps Script ni Spreadsheet real.
