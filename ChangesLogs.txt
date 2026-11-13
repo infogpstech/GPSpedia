@@ -619,3 +619,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/AdminModalEditIntegrity.js: suite aislada de 9 escenarios PASS para allowlist, dominios, límites, sanitización, referencias, IDs inexistentes/duplicados y contratos de lock/reversión; regresiones AdminModalEditSecurity 13/13 y AdminModalEditRestoreContract 12/12 PASS.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones, estado y validaciones Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-130 — MUTACIONES ATÓMICAS DE USERS
+- Services/users.js: validación previa de todos los campos admitidos al crear usuarios y allowlist para actualizar perfil.
+- createUser escribe ID y datos de cuenta en una sola operación contigua; updateProfile exige ID único y sesión propia.
+- Ambas mutaciones utilizan el mismo ScriptLock local, verifican persistencia y ejecutan rollback de valores/fórmulas ante fallos. Se conserva la lease compartida del router para coordinar USERS con las mutaciones AUTH.
+- Services/Test/users.js sincronizado con el servicio fuente, preservando el ID de Spreadsheet aislada.
+- Services/Test/UsersAtomicMutations.js: 11 escenarios locales PASS; parsing V8 de USERS, AUTH y suite PASS.
+================================================================================
