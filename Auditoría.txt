@@ -1437,3 +1437,22 @@ Validación Beta pendiente:
 - Validar iteradores/continuation tokens, permisos y pertenencia con árbol Drive aislado; no usar Drive ni Spreadsheet productivos.
 - Sin deployment ni cambios en recursos productivos.
 ================================================================================
+
+================================================================================
+H-AUD-046-002 — ADENDA DE RESOLUCIÓN MEDIANTE AUG-022 — 2026-11-13
+Estado: CERRADO EN CÓDIGO; validación de navegador y multi-pestaña diferida a Beta.
+
+Resolución:
+- Se definió el alcance de «Limpiar cachés locales»: borrar únicamente datos reconstruibles, no ejecutar deleteDatabase sobre GPSpedia_DB completa.
+- IndexedDB GPSpedia_DB: una transacción readwrite limpia catalog, searchHistory, viewedItems, thumbnails y validationCache; la confirmación espera transaction.oncomplete. adminLocalState queda intacto para preservar auditorías y operaciones administrativas recuperables.
+- localStorage: se eliminan gpsepedia_catalog_cache (legado), gpsepedia_pys_cache y gpsepedia_pys_cache_updated_at. Se preservan sesión, preferencias, addCut pendiente, backups de edición, cargas de imagen pendientes y marcadores de recuperación.
+- sessionStorage permanece intacto: borradores de Inbox, referencias de cargas YouTube y estado de instalación por pestaña no se descartan.
+- Cache Storage: el Service Worker recibe GPSEPEDIA_CLEAR_RUNTIME_CACHE, elimina respuestas dinámicas únicamente de cachés GPSpedia y conserva CORE_ASSETS/OPTIONAL_ASSETS; no toca cachés de otros orígenes/aplicaciones.
+- Las ObjectURL de miniaturas se revocan después de confirmar la limpieza completa. La UI no recarga ni comunica éxito total si alguna fuente no confirma.
+
+Validación local:
+- AdminClientCacheDeletion.mjs: 8/8 PASS en harness V8 adaptado; cubre commit, error, preservación de estado, comunicación con Service Worker y limpieza efectiva de respuestas temporales.
+- Parsing de ui.js, offline.js, service-worker.js, suite y runner: PASS.
+- Node CLI literal, navegador real, IndexedDB bloqueada por otras pestañas y pruebas multi-pestaña reales no ejecutados; pendientes para Beta aislada.
+- Sin deployment ni modificación de datos productivos.
+================================================================================
