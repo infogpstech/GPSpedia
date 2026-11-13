@@ -865,43 +865,46 @@ function doPostInternal_(e) {
  */
 function handleBackupDatabase(payload, logMessage, developerContext) {
     logMessage("Respaldo", "Generando respaldo completo de la hoja de cálculo de la base de datos...");
-
     const ss = getSpreadsheet();
+    const sourceManifest = adminRestoreValidateDatabaseSchema_(ss);
     const folder = DriveApp.getRootFolder();
-    const timestamp = Utilities.formatDate(new Date(), "GMT-6", "yyyyMMdd_HHmmss");
-    const backupName = `GPSpedia_DB_BACKUP_${timestamp}`;
-
+    const runId = adminRestoreRunId_();
+    const backupName = `GPSpedia_DB_BACKUP_${runId}`;
     logMessage("Respaldo", `Copiando archivo Spreadsheet '${ss.getName()}' con el nombre '${backupName}'...`);
     const createdBackupFile = DriveApp.getFileById(ss.getId()).makeCopy(backupName, folder);
     const backupId = createdBackupFile.getId();
-    const backupFile = DriveApp.getFileById(backupId);
-    const backupUrl = backupFile.getUrl();
-
-    if (backupFile.getId() !== backupId ||
-        backupId === ss.getId() ||
-        backupFile.isTrashed() ||
-        backupFile.getName() !== backupName ||
-        backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
-        !isDirectChildOfDriveRoot(backupFile) ||
-        !isBackupUrlForResource(backupUrl, `https://docs.google.com/spreadsheets/d/${backupId}`)) {
-        throw new Error("El recurso creado no pudo verificarse como un respaldo de Spreadsheet válido.");
+    try {
+        const backupFile = DriveApp.getFileById(backupId);
+        const backupUrl = backupFile.getUrl();
+        if (backupFile.getId() !== backupId || backupId === ss.getId() || backupFile.isTrashed() ||
+            backupFile.getName() !== backupName || backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+            !isDirectChildOfDriveRoot(backupFile) ||
+            !isBackupUrlForResource(backupUrl, `https://docs.google.com/spreadsheets/d/${backupId}`)) {
+            throw new Error("El recurso creado no pudo verificarse como un respaldo de Spreadsheet válido.");
+        }
+        const verifiedSpreadsheet = SpreadsheetApp.openById(backupId);
+        const copiedManifest = adminRestoreValidateDatabaseSchema_(verifiedSpreadsheet);
+        if (verifiedSpreadsheet.getId() !== backupId || !verifiedSpreadsheet.getSheetByName(SHEET_NAMES.CORTES) ||
+            copiedManifest.fingerprint !== sourceManifest.fingerprint || copiedManifest.sheetCount !== sourceManifest.sheetCount) {
+            throw new Error("La copia de Spreadsheet no coincide íntegramente con el origen; no se registró como respaldo válido.");
+        }
+        backupFile.setDescription(JSON.stringify({
+            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
+            sourceSpreadsheetId: ss.getId(), sheetCount: copiedManifest.sheetCount,
+            rowCount: copiedManifest.rowCount, cellCount: copiedManifest.cellCount,
+            formulaCount: copiedManifest.formulaCount, fingerprint: copiedManifest.fingerprint
+        }));
+        if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo verificado con la sesión de desarrollador.");
+        CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
+        logMessage("Respaldo", `Recurso de respaldo de base de datos creado, comparado y verificado. ID: ${backupId}`);
+        return { status: 'success', backupId, backupUrl, timestamp: runId,
+            message: "Respaldo de base de datos creado y verificado correctamente." };
+    } catch (error) {
+        try { createdBackupFile.setTrashed(true); } catch (cleanupError) {
+            logMessage("Respaldo", `No se pudo retirar la copia incompleta ${backupId}: ${cleanupError.message}`, 0, 0, true);
+        }
+        throw error;
     }
-
-    const verifiedSpreadsheet = SpreadsheetApp.openById(backupId);
-    if (verifiedSpreadsheet.getId() !== backupId || !verifiedSpreadsheet.getSheetByName(SHEET_NAMES.CORTES)) {
-        throw new Error("La Spreadsheet creada no coincide con el identificador del respaldo o no contiene la hoja Cortes.");
-    }
-    if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo verificado con la sesión de desarrollador.");
-    CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
-
-    logMessage("Respaldo", `Recurso de respaldo de base de datos creado y verificado. ID: ${backupId}`);
-    return {
-        status: 'success',
-        backupId: backupId,
-        backupUrl: backupUrl,
-        timestamp: timestamp,
-        message: "Recurso de respaldo de base de datos creado y verificado correctamente."
-    };
 }
 
 /**
@@ -909,38 +912,42 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
  */
 function handleBackupDrive(payload, logMessage) {
     logMessage("Respaldo Drive", "Iniciando respaldo completo de la estructura de carpetas de Drive...");
-
     const rootFolder = getCortesRootFolder();
+    const sourceManifest = adminRestoreDriveManifest_(rootFolder);
     const parentFolder = DriveApp.getRootFolder();
-    const timestamp = Utilities.formatDate(new Date(), "GMT-6", "yyyyMMdd_HHmmss");
-    const backupFolderName = `GPSpedia_Drive_BACKUP_${timestamp}`;
-
+    const runId = adminRestoreRunId_();
+    const backupFolderName = `GPSpedia_Drive_BACKUP_${runId}`;
     logMessage("Respaldo Drive", `Creando carpeta contenedora de respaldo '${backupFolderName}' en la raíz...`);
     const createdBackupFolder = parentFolder.createFolder(backupFolderName);
-
-    logMessage("Respaldo Drive", "Copiando de forma jerárquica las carpetas y archivos de imágenes...");
-    copyFolderRecursively(rootFolder, createdBackupFolder, logMessage);
-
-    const backupId = createdBackupFolder.getId();
-    const backupFolder = DriveApp.getFolderById(backupId);
-    const backupUrl = backupFolder.getUrl();
-    if (backupFolder.getId() !== backupId ||
-        backupId === DRIVE_FOLDER_ID ||
-        backupFolder.isTrashed() ||
-        backupFolder.getName() !== backupFolderName ||
-        !isDirectChildOfDriveRoot(backupFolder) ||
-        !isBackupUrlForResource(backupUrl, `https://drive.google.com/drive/folders/${backupId}`)) {
-        throw new Error("La carpeta creada no pudo verificarse como un respaldo de Drive válido.");
+    try {
+        logMessage("Respaldo Drive", "Copiando de forma jerárquica las carpetas y archivos de imágenes...");
+        copyFolderRecursively(rootFolder, createdBackupFolder, logMessage);
+        const copiedManifest = adminRestoreDriveManifest_(createdBackupFolder);
+        if (!adminRestoreManifestsEqual_(sourceManifest, copiedManifest)) {
+            throw new Error("La copia de Drive no coincide con el inventario del origen; no se registró como respaldo válido.");
+        }
+        const backupId = createdBackupFolder.getId(), backupUrl = createdBackupFolder.getUrl();
+        if (backupId === DRIVE_FOLDER_ID || createdBackupFolder.isTrashed() ||
+            createdBackupFolder.getName() !== backupFolderName || !isDirectChildOfDriveRoot(createdBackupFolder) ||
+            !isBackupUrlForResource(backupUrl, `https://drive.google.com/drive/folders/${backupId}`)) {
+            throw new Error("La carpeta creada no pudo verificarse como un respaldo de Drive válido.");
+        }
+        createdBackupFolder.setDescription(JSON.stringify({
+            kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
+            folderCount: copiedManifest.folderCount, fileCount: copiedManifest.fileCount,
+            totalBytes: copiedManifest.totalBytes, fingerprint: copiedManifest.fingerprint
+        }));
+        logMessage("Respaldo Drive", `Copia comparada y verificada: ${copiedManifest.folderCount} carpetas y ${copiedManifest.fileCount} archivos.`);
+        return { status: 'success', backupId, backupUrl, timestamp: runId,
+            folderCount: copiedManifest.folderCount, fileCount: copiedManifest.fileCount,
+            totalBytes: copiedManifest.totalBytes,
+            message: "Respaldo de Drive creado y verificado correctamente." };
+    } catch (error) {
+        try { createdBackupFolder.setTrashed(true); } catch (cleanupError) {
+            logMessage("Respaldo Drive", `No se pudo retirar la copia incompleta ${createdBackupFolder.getId()}: ${cleanupError.message}`, 0, 0, true);
+        }
+        throw error;
     }
-
-    logMessage("Respaldo Drive", `Carpeta de respaldo de Drive creada y recurso verificado. ID: ${backupId}`);
-    return {
-        status: 'success',
-        backupId: backupId,
-        backupUrl: backupUrl,
-        timestamp: timestamp,
-        message: "Carpeta de respaldo de Drive creada y recurso verificado correctamente."
-    };
 }
 
 function copyFolderRecursively(source, target, logMessage) {
@@ -993,6 +1000,276 @@ function attemptRestoreImage(fileId, expectedBaseName, brandFolder, logMessage) 
     return null;
 }
 
+// BEGIN ADMIN RESTORE RECOVERY
+const ADMIN_RESTORE_REQUIRED_SCHEMA_ = {
+    "Cortes": ["id","categoria","marca","modelo","versionesAplicables","anoDesde","anoHasta","tipoEncendido","imagenVehiculo","videoGuiaDesarmeUrl","contadorBusqueda","tipoCorte1","ubicacionCorte1","colorCableCorte1","configRelay1","imgCorte1","utilCorte1","colaboradorCorte1","tipoCorte2","ubicacionCorte2","colorCableCorte2","configRelay2","imgCorte2","utilCorte2","colaboradorCorte2","tipoCorte3","ubicacionCorte3","colorCableCorte3","configRelay3","imgCorte3","utilCorte3","colaboradorCorte3","apertura","imgApertura","cableAlimen","imgCableAlimen","timestamp","notaImportante","cableAlimen2","imgCableAlimen2","cableAlimen3","imgCableAlimen3"],
+    "LogosMarca": ["id","nombreMarca","urlLogo"],
+    "pys": ["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"],
+    "AdminState": ["Action","LastIndex","Total","Percentage","Date","ProcessId"],
+    "Tutorial": ["ID","Tema","Imagen","comoIdentificarlo","dondeEncontrarlo","Detalles","Video","Colaborador"],
+    "Relay": ["ID","configuracion","funcion","vehiculoDondeSeUtiliza","pin30Entrada","pin85BobinaPositivo","pin86bobinaNegativo","pin87aComunCerrado","pin87ComunmenteAbierto","imagen","observacion"],
+    "ActiveSessions": ["ID_Usuario","Usuario","ActiveSessions","date","Logs","LastActivityAt"],
+    "Feedbacks": ["ID","Usuario","ID_vehiculo","Problema","Respuesta","Se resolvio","Responde","Reporte de util","anoSugerido"],
+    "Contactanos": ["Contacto_ID","User_ID","Asunto","Mensaje","Respuesta_mensaje","ID_usuario_responde"],
+    "Logs": ["Timestamp","Level","Message","Data"],
+    "ActividadUsuario": ["id","timestamp","idUsuario","nombreUsuario","tipoActividad","idElementoAsociado","detalle"],
+    "Users": ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo_Electronico","Nombre_Completo","SessionToken","TermsAcceptance"],
+    "Imagenes_Reemplazadas": ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo","archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"]
+};
+const ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ = "GPSpediaDriveBackup";
+const ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ = "GPSpediaDatabaseBackup";
+
+function adminRestoreRunId_() {
+    return Utilities.formatDate(new Date(), "GMT-6", "yyyyMMdd_HHmmss") + "_" +
+        String(Utilities.getUuid()).replace(/[^a-zA-Z0-9]/g, "").slice(0, 12);
+}
+function adminRestoreHash_(value) {
+    const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(value || ""));
+    return bytes.map(byte => ((byte + 256) % 256).toString(16).padStart(2, "0")).join("");
+}
+function adminRestoreNormalizeCell_(value) {
+    if (value === null || value === undefined || value === "") return "";
+    if (value instanceof Date) return { date: value.toISOString() };
+    if (typeof value === "number" && !Number.isFinite(value)) return String(value);
+    return value;
+}
+function adminRestoreSheetManifest_(sheet) {
+    const lastRow = sheet.getLastRow(), lastColumn = sheet.getLastColumn();
+    const chunks = [];
+    let nonEmptyRows = 0, nonEmptyCells = 0, formulaCount = 0;
+    for (let startRow = 1; startRow <= lastRow && lastColumn > 0; startRow += 200) {
+        const rowCount = Math.min(200, lastRow - startRow + 1);
+        const range = sheet.getRange(startRow, 1, rowCount, lastColumn);
+        const values = range.getValues(), formulas = range.getFormulas();
+        const normalizedRows = values.map((row, rowIndex) => {
+            let rowHasContent = false;
+            const normalized = row.map((value, columnIndex) => {
+                const formula = formulas[rowIndex][columnIndex];
+                if (formula) {
+                    formulaCount++; nonEmptyCells++; rowHasContent = true;
+                    return ["formula", formula];
+                }
+                const cell = adminRestoreNormalizeCell_(value);
+                if (cell !== "") { nonEmptyCells++; rowHasContent = true; }
+                return ["value", cell];
+            });
+            if (rowHasContent) nonEmptyRows++;
+            return normalized;
+        });
+        chunks.push(adminRestoreHash_(JSON.stringify(normalizedRows)));
+    }
+    return { lastRow, lastColumn, nonEmptyRows, nonEmptyCells, formulaCount,
+        fingerprint: adminRestoreHash_(chunks.join("|")) };
+}
+function adminRestoreSpreadsheetManifest_(spreadsheet) {
+    const entries = spreadsheet.getSheets().map(sheet => ({
+        name: sheet.getName(), stats: adminRestoreSheetManifest_(sheet)
+    })).sort((a, b) => a.name.localeCompare(b.name));
+    const totals = entries.reduce((result, entry) => {
+        result.rowCount += entry.stats.nonEmptyRows;
+        result.cellCount += entry.stats.nonEmptyCells;
+        result.formulaCount += entry.stats.formulaCount;
+        return result;
+    }, { rowCount: 0, cellCount: 0, formulaCount: 0 });
+    return { sheetCount: entries.length, rowCount: totals.rowCount, cellCount: totals.cellCount,
+        formulaCount: totals.formulaCount,
+        fingerprint: adminRestoreHash_(entries.map(entry => entry.name + ":" + entry.stats.fingerprint).join("|")),
+        entries };
+}
+function adminRestoreDriveManifest_(folder) {
+    const entries = [];
+    let folderCount = 0, fileCount = 0, totalBytes = 0;
+    const visit = (current, prefix, depth) => {
+        if (depth > 100) throw new Error("La estructura de Drive supera la profundidad permitida para una restauración segura.");
+        const folders = current.getFolders();
+        while (folders.hasNext()) {
+            const child = folders.next();
+            if (child.isTrashed()) throw new Error("El respaldo contiene una subcarpeta en la papelera.");
+            const path = prefix ? prefix + "/" + child.getName() : child.getName();
+            folderCount++;
+            if (folderCount + fileCount > 50000) throw new Error("El respaldo supera el límite de recursos verificables por operación.");
+            entries.push("D|" + path); visit(child, path, depth + 1);
+        }
+        const files = current.getFiles();
+        while (files.hasNext()) {
+            const file = files.next();
+            if (file.isTrashed()) throw new Error("El respaldo contiene un archivo en la papelera.");
+            const path = prefix ? prefix + "/" + file.getName() : file.getName();
+            const size = Number(file.getSize()) || 0;
+            fileCount++; totalBytes += size;
+            if (folderCount + fileCount > 50000) throw new Error("El respaldo supera el límite de recursos verificables por operación.");
+            entries.push("F|" + path + "|" + file.getMimeType() + "|" + size);
+        }
+    };
+    visit(folder, "", 0); entries.sort();
+    return { folderCount, fileCount, totalBytes, fingerprint: adminRestoreHash_(entries.join("\n")) };
+}
+function adminRestoreManifestsEqual_(left, right) {
+    return Boolean(left && right && left.folderCount === right.folderCount &&
+        left.fileCount === right.fileCount && left.totalBytes === right.totalBytes &&
+        left.fingerprint === right.fingerprint);
+}
+function adminRestoreValidateDatabaseSchema_(spreadsheet) {
+    const sheets = spreadsheet.getSheets();
+    const names = new Set(sheets.map(sheet => sheet.getName()));
+    Object.keys(ADMIN_RESTORE_REQUIRED_SCHEMA_).forEach(name => {
+        if (!names.has(name)) throw new Error("El respaldo está incompleto: falta la hoja obligatoria «" + name + "».");
+        const sheet = spreadsheet.getSheetByName(name), expected = ADMIN_RESTORE_REQUIRED_SCHEMA_[name];
+        const expectedHeaders = name === "Tutorial" && sheet.getLastColumn() === 7 ? expected.slice(0, 7) : expected;
+        if (sheet.getLastRow() < 1 || sheet.getLastColumn() < expectedHeaders.length) {
+            throw new Error("El respaldo tiene una estructura incompleta en la hoja «" + name + "».");
+        }
+        const actual = sheet.getRange(1, 1, 1, expectedHeaders.length).getDisplayValues()[0];
+        expectedHeaders.forEach((header, index) => {
+            if (String(actual[index] || "").trim() !== header) {
+                throw new Error("Esquema incompatible en «" + name + "», columna " + (index + 1) + ": se esperaba «" + header + "».");
+            }
+        });
+    });
+    sheets.forEach(sheet => {
+        const name = String(sheet.getName() || "");
+        if (!name || name.indexOf("__GP_RESTORE_") === 0 || name === "TEMP_RESTORE_HOLDER") {
+            throw new Error("El respaldo contiene un nombre de hoja reservado o no válido.");
+        }
+    });
+    return adminRestoreSpreadsheetManifest_(spreadsheet);
+}
+function adminRestoreCreateDatabaseRollback_(targetSpreadsheet, runId) {
+    const sourceManifest = adminRestoreSpreadsheetManifest_(targetSpreadsheet);
+    const sourceFile = DriveApp.getFileById(SPREADSHEET_ID);
+    const rollbackName = "GPSpedia_DB_BACKUP_RESTORE_ROLLBACK_" + runId;
+    const rollbackFile = sourceFile.makeCopy(rollbackName, DriveApp.getRootFolder());
+    try {
+        const copiedFile = DriveApp.getFileById(rollbackFile.getId());
+        const copiedSpreadsheet = SpreadsheetApp.openById(rollbackFile.getId());
+        const copiedManifest = adminRestoreSpreadsheetManifest_(copiedSpreadsheet);
+        if (copiedFile.isTrashed() || copiedFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+            copiedFile.getName() !== rollbackName || !isDirectChildOfDriveRoot(copiedFile) ||
+            sourceManifest.fingerprint !== copiedManifest.fingerprint || sourceManifest.sheetCount !== copiedManifest.sheetCount) {
+            throw new Error("No se pudo verificar el respaldo preventivo del estado actual de la base de datos.");
+        }
+        copiedFile.setDescription(JSON.stringify({
+            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
+            sheetCount: copiedManifest.sheetCount, rowCount: copiedManifest.rowCount,
+            cellCount: copiedManifest.cellCount, formulaCount: copiedManifest.formulaCount,
+            fingerprint: copiedManifest.fingerprint
+        }));
+        return { file: copiedFile, id: copiedFile.getId(), url: copiedFile.getUrl(), manifest: copiedManifest };
+    } catch (error) {
+        try { rollbackFile.setTrashed(true); } catch (cleanupError) {}
+        throw error;
+    }
+}
+function adminRestoreSwapDatabaseSheets_(spreadsheet, originalSheets, stageEntries, runId) {
+    const backupNames = new Set(stageEntries.map(entry => entry.name));
+    const originalEntries = originalSheets.map((sheet, index) => ({
+        sheet, name: sheet.getName(), temporaryName: "__GP_RESTORE_OLD_" + runId + "_" + index,
+        renamed: false
+    }));
+    const promotedEntries = [];
+    try {
+        originalEntries.forEach(entry => {
+            if (!backupNames.has(entry.name)) return;
+            entry.sheet.setName(entry.temporaryName);
+            entry.renamed = true;
+        });
+        stageEntries.forEach(entry => {
+            entry.stage.setName(entry.name);
+            entry.promoted = true;
+            promotedEntries.push(entry);
+        });
+        SpreadsheetApp.flush();
+        stageEntries.forEach(entry => {
+            const restored = spreadsheet.getSheetByName(entry.name);
+            if (!restored || adminRestoreSheetManifest_(restored).fingerprint !== entry.fingerprint) {
+                throw new Error("La hoja restaurada «" + entry.name + "» no coincide con el respaldo después del intercambio.");
+            }
+        });
+    } catch (error) {
+        const rollbackErrors = [];
+        promotedEntries.slice().reverse().forEach(entry => {
+            try { entry.stage.setName("__GP_RESTORE_STAGE_" + runId + "_" + stageEntries.indexOf(entry)); }
+            catch (renameError) { rollbackErrors.push(entry.name + " (retirar staging): " + String(renameError.message || renameError)); }
+        });
+        originalEntries.slice().reverse().forEach(entry => {
+            if (!entry.renamed) return;
+            try { entry.sheet.setName(entry.name); }
+            catch (renameError) { rollbackErrors.push(entry.name + " (recuperar original): " + String(renameError.message || renameError)); }
+        });
+        try { SpreadsheetApp.flush(); }
+        catch (flushError) { rollbackErrors.push("flush: " + String(flushError.message || flushError)); }
+        if (rollbackErrors.length) {
+            throw new Error("Falló el intercambio de hojas y la reversión de nombres no pudo verificarse. Conserva las hojas __GP_RESTORE_* y el respaldo recuperable. " +
+                rollbackErrors.join(" | ") + ". Motivo original: " + String(error.message || error));
+        }
+        throw new Error("Intercambio de hojas abortado; los nombres originales fueron restaurados. Motivo: " + String(error.message || error));
+    }
+
+    const extras = originalEntries.filter(entry => !backupNames.has(entry.name)).map(entry => entry.name);
+    const cleanupErrors = [];
+    originalEntries.filter(entry => entry.renamed).forEach(entry => {
+        try {
+            if (spreadsheet.getSheets().length <= 1) throw new Error("No se puede eliminar la última hoja.");
+            spreadsheet.deleteSheet(entry.sheet);
+        } catch (error) { cleanupErrors.push(entry.name + ": " + String(error.message || error)); }
+    });
+    return { preservedExtraSheets: extras, cleanupErrors };
+}
+function adminRestoreDeleteTemporarySheets_(spreadsheet, sheets) {
+    const errors = [];
+    (sheets || []).forEach(sheet => {
+        if (!sheet) return;
+        try {
+            const current = spreadsheet.getSheetByName(sheet.getName());
+            if (!current) return;
+            if (spreadsheet.getSheets().length <= 1) throw new Error("No se puede eliminar la última hoja.");
+            spreadsheet.deleteSheet(current);
+        } catch (error) { errors.push(String(sheet.getName()) + ": " + String(error.message || error)); }
+    });
+    return errors;
+}
+function adminRestoreHasParent_(resource, parentId) {
+    const parents = resource.getParents();
+    while (parents.hasNext()) if (String(parents.next().getId()) === String(parentId)) return true;
+    return false;
+}
+function adminRestoreMoveFolderContents_(source, destination) {
+    const fileIterator = source.getFiles(), files = [];
+    while (fileIterator.hasNext()) files.push(fileIterator.next());
+    files.forEach(file => {
+        if (!adminRestoreHasParent_(file, destination.getId())) destination.addFile(file);
+        if (adminRestoreHasParent_(file, source.getId())) source.removeFile(file);
+        if (!adminRestoreHasParent_(file, destination.getId()) || adminRestoreHasParent_(file, source.getId())) {
+            throw new Error("No se pudo mover de forma verificable el archivo «" + file.getName() + "».");
+        }
+    });
+    const folderIterator = source.getFolders(), folders = [];
+    while (folderIterator.hasNext()) folders.push(folderIterator.next());
+    folders.forEach(folder => {
+        if (!adminRestoreHasParent_(folder, destination.getId())) destination.addFolder(folder);
+        if (adminRestoreHasParent_(folder, source.getId())) source.removeFolder(folder);
+        if (!adminRestoreHasParent_(folder, destination.getId()) || adminRestoreHasParent_(folder, source.getId())) {
+            throw new Error("No se pudo mover de forma verificable la carpeta «" + folder.getName() + "».");
+        }
+    });
+}
+function adminRestoreCopyFolderRecursively_(source, target) {
+    const files = source.getFiles();
+    while (files.hasNext()) {
+        const file = files.next(), copy = file.makeCopy(file.getName(), target);
+        if (!copy || copy.getName() !== file.getName() || copy.getMimeType() !== file.getMimeType() ||
+            Number(copy.getSize()) !== Number(file.getSize()) || copy.isTrashed()) {
+            throw new Error("No se pudo verificar la copia del archivo «" + file.getName() + "».");
+        }
+    }
+    const folders = source.getFolders();
+    while (folders.hasNext()) {
+        const child = folders.next(), targetChild = target.createFolder(child.getName());
+        adminRestoreCopyFolderRecursively_(child, targetChild);
+    }
+}
+// END ADMIN RESTORE RECOVERY
+
 /**
  * Restaurar la base de datos completa a partir de un ID de copia
  */
@@ -1000,83 +1277,184 @@ function handleRestoreDatabase(payload, logMessage) {
     const backupId = extractDriveFileId(payload && payload.backupId);
     if (!backupId) throw new Error("ID o enlace de respaldo de Google Sheets no válido o no proporcionado.");
     if (backupId === SPREADSHEET_ID) throw new Error("El Spreadsheet productivo no puede utilizarse como origen de su propia restauración.");
-
     const backupFile = DriveApp.getFileById(backupId);
-    if (backupFile.getId() !== backupId ||
-        backupFile.isTrashed() ||
+    if (backupFile.getId() !== backupId || backupFile.isTrashed() ||
         backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
-        !backupFile.getName().startsWith("GPSpedia_DB_BACKUP_") ||
+        !String(backupFile.getName() || "").startsWith("GPSpedia_DB_BACKUP_") ||
         !isDirectChildOfDriveRoot(backupFile)) {
         throw new Error("El recurso indicado no es un respaldo de Spreadsheet válido dentro de la ubicación autorizada.");
     }
-
-    logMessage("Restauración DB", `Respaldo de Spreadsheet validado. Iniciando restauración desde ID: ${backupId}`);
-
     const backupSS = SpreadsheetApp.openById(backupId);
-    if (backupSS.getId() !== backupId || backupSS.getSheets().length === 0) {
-        throw new Error("No se pudo verificar la identidad o el contenido de la Spreadsheet de respaldo.");
+    if (backupSS.getId() !== backupId) throw new Error("No se pudo verificar la identidad de la Spreadsheet de respaldo.");
+    const backupManifest = adminRestoreValidateDatabaseSchema_(backupSS);
+    const rawManifest = String(backupFile.getDescription() || "").trim();
+    if (rawManifest) {
+        let storedManifest;
+        try { storedManifest = JSON.parse(rawManifest); }
+        catch (error) { throw new Error("El manifiesto del respaldo DB está dañado; no se inició la restauración."); }
+        if (storedManifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ || storedManifest.version !== 1 ||
+            storedManifest.sheetCount !== backupManifest.sheetCount || storedManifest.rowCount !== backupManifest.rowCount ||
+            storedManifest.cellCount !== backupManifest.cellCount || storedManifest.formulaCount !== backupManifest.formulaCount ||
+            storedManifest.fingerprint !== backupManifest.fingerprint) {
+            throw new Error("El manifiesto del respaldo DB no coincide con su contenido; no se inició la restauración.");
+        }
+    } else {
+        logMessage("Restauración DB", "Respaldo histórico sin manifiesto: se validará esquema y contenido estructural, pero no existe evidencia previa de integridad del archivo.", 0, 0, true);
     }
+
     const targetSS = SpreadsheetApp.openById(SPREADSHEET_ID);
-
-    logMessage("Restauración DB", "Limpiando hojas del Spreadsheet actual...");
-    const sheets = targetSS.getSheets();
-    const tempSheet = targetSS.insertSheet("TEMP_RESTORE_HOLDER");
-
-    for (let i = 0; i < sheets.length; i++) {
-        targetSS.deleteSheet(sheets[i]);
+    const runId = adminRestoreRunId_();
+    logMessage("Restauración DB", "Respaldo validado. Creando staging y copia recuperable del estado actual antes de modificar hojas...");
+    const rollbackBackup = adminRestoreCreateDatabaseRollback_(targetSS, runId);
+    const originalSheets = targetSS.getSheets().slice();
+    const stageEntries = [];
+    try {
+        backupSS.getSheets().forEach((sourceSheet, index) => {
+            const stage = sourceSheet.copyTo(targetSS);
+            const temporaryName = "__GP_RESTORE_STAGE_" + runId + "_" + index;
+            const entry = { source: sourceSheet, stage, name: sourceSheet.getName(), temporaryName,
+                fingerprint: adminRestoreSheetManifest_(sourceSheet).fingerprint };
+            stageEntries.push(entry);
+            stage.setName(temporaryName);
+            if (adminRestoreSheetManifest_(stage).fingerprint !== entry.fingerprint) {
+                throw new Error("La hoja «" + entry.name + "» no superó la verificación de staging.");
+            }
+        });
+        SpreadsheetApp.flush();
+        const swapResult = adminRestoreSwapDatabaseSheets_(targetSS, originalSheets, stageEntries, runId);
+        logMessage("Restauración DB", "Restauración verificada mediante intercambio de hojas completas. Las hojas adicionales no incluidas en el respaldo se conservaron.");
+        if (swapResult.preservedExtraSheets.length) {
+            logMessage("Restauración DB", "Hojas adicionales conservadas: " + swapResult.preservedExtraSheets.join(", "), 0, 0, true);
+        }
+        if (swapResult.cleanupErrors.length) {
+            logMessage("Restauración DB", "Limpieza de snapshots pendiente: " + swapResult.cleanupErrors.join(" | "), 0, 0, true);
+        }
+        return {
+            status: "success",
+            message: "La base de datos se restauró y verificó. El estado anterior quedó conservado en un respaldo recuperable.",
+            restoredSheetCount: stageEntries.length,
+            preservedExtraSheets: swapResult.preservedExtraSheets,
+            rollbackBackupId: rollbackBackup.id,
+            rollbackBackupUrl: rollbackBackup.url,
+            cleanupPending: swapResult.cleanupErrors.length > 0,
+            cleanupErrors: swapResult.cleanupErrors
+        };
+    } catch (error) {
+        const message = String(error.message || error);
+        if (message.indexOf("reversión de nombres no pudo verificarse") >= 0) {
+            throw new Error("La restauración DB falló y la reversión no pudo verificarse. No elimines hojas __GP_RESTORE_* ni el respaldo recuperable " +
+                rollbackBackup.id + ". Motivo: " + message);
+        }
+        const cleanupErrors = adminRestoreDeleteTemporarySheets_(targetSS,
+            stageEntries.map(entry => entry.stage).filter(Boolean));
+        throw new Error("La restauración DB no se aplicó o fue revertida; conserva el respaldo recuperable " + rollbackBackup.id +
+            ". " + (cleanupErrors.length ? "Limpieza temporal pendiente: " + cleanupErrors.join(" | ") + ". " : "") +
+            "Motivo: " + message);
     }
-
-    logMessage("Restauración DB", "Copiando hojas del respaldo...");
-    const backupSheets = backupSS.getSheets();
-    for (let i = 0; i < backupSheets.length; i++) {
-        const sheet = backupSheets[i];
-        sheet.copyTo(targetSS).setName(sheet.getName());
-    }
-
-    // Eliminar la hoja temporal
-    targetSS.deleteSheet(tempSheet);
-    SpreadsheetApp.flush();
-
-    logMessage("Restauración DB", "Restauración de base de datos finalizada.");
-    return {
-        status: 'success',
-        message: "La base de datos se restauró íntegramente de forma satisfactoria."
-    };
 }
 
-/**
- * Restaurar carpeta de Drive a partir de un ID de respaldo
- */
 function handleRestoreDrive(payload, logMessage) {
     const backupId = extractBackupFolderId(payload && payload.backupId);
     if (!backupId) throw new Error("ID o enlace de carpeta de respaldo de Drive no válido o no proporcionado.");
     if (backupId === DRIVE_FOLDER_ID) throw new Error("La carpeta productiva no puede utilizarse como origen de su propia restauración.");
-
     const backupFolder = DriveApp.getFolderById(backupId);
-    if (backupFolder.getId() !== backupId ||
-        backupFolder.isTrashed() ||
-        !backupFolder.getName().startsWith("GPSpedia_Drive_BACKUP_") ||
+    if (backupFolder.getId() !== backupId || backupFolder.isTrashed() ||
+        !String(backupFolder.getName() || "").startsWith("GPSpedia_Drive_BACKUP_") ||
         !isDirectChildOfDriveRoot(backupFolder)) {
         throw new Error("La carpeta indicada no es un respaldo de Drive válido dentro de la ubicación autorizada.");
     }
-
     const targetFolder = getCortesRootFolder();
-    if (backupFolder.getId() === targetFolder.getId()) {
-        throw new Error("La carpeta de respaldo debe ser distinta de la carpeta productiva.");
+    if (backupFolder.getId() === targetFolder.getId()) throw new Error("La carpeta de respaldo debe ser distinta de la carpeta productiva.");
+    const backupManifest = adminRestoreDriveManifest_(backupFolder);
+    const rawManifest = String(backupFolder.getDescription() || "").trim();
+    if (rawManifest) {
+        let storedManifest;
+        try { storedManifest = JSON.parse(rawManifest); }
+        catch (error) { throw new Error("El manifiesto del respaldo Drive está dañado; no se inició la restauración."); }
+        if (storedManifest.kind !== ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ || storedManifest.version !== 1 ||
+            storedManifest.folderCount !== backupManifest.folderCount || storedManifest.fileCount !== backupManifest.fileCount ||
+            storedManifest.totalBytes !== backupManifest.totalBytes || storedManifest.fingerprint !== backupManifest.fingerprint) {
+            throw new Error("El manifiesto del respaldo Drive no coincide con sus recursos; no se inició la restauración.");
+        }
+    } else {
+        logMessage("Restauración Drive", "Respaldo histórico sin manifiesto: se verificará la copia por estructura, nombres, MIME y tamaños, pero no existe evidencia previa de integridad del archivo.", 0, 0, true);
     }
 
-    logMessage("Restauración Drive", `Respaldo de Drive validado. Iniciando restauración desde ID: ${backupId}`);
-    logMessage("Restauración Drive", "Limpiando archivos de la carpeta de destino actual de forma segura...");
-    clearFolderContents(targetFolder);
+    const runId = adminRestoreRunId_(), rootFolder = DriveApp.getRootFolder();
+    const originalManifest = adminRestoreDriveManifest_(targetFolder);
+    const stagingFolder = rootFolder.createFolder("GPSpedia_Drive_RESTORE_STAGING_" + runId);
+    let rollbackFolder = null, originalMovedCompletely = false;
+    try {
+        logMessage("Restauración Drive", "Copiando el respaldo a una carpeta temporal y verificando todos sus recursos...");
+        adminRestoreCopyFolderRecursively_(backupFolder, stagingFolder);
+        if (!adminRestoreManifestsEqual_(backupManifest, adminRestoreDriveManifest_(stagingFolder))) {
+            throw new Error("El staging de Drive no coincide con el respaldo; la carpeta productiva permanece intacta.");
+        }
+        rollbackFolder = rootFolder.createFolder("GPSpedia_Drive_RESTORE_ROLLBACK_STAGING_" + runId);
+        logMessage("Restauración Drive", "Moviendo el contenido actual a recuperación sin eliminar archivos ni cambiar sus identificadores...");
+        adminRestoreMoveFolderContents_(targetFolder, rollbackFolder);
+        if (!adminRestoreManifestsEqual_(originalManifest, adminRestoreDriveManifest_(rollbackFolder))) {
+            throw new Error("El contenido original no pudo trasladarse íntegramente al área de recuperación.");
+        }
+        rollbackFolder.setName("GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_" + runId);
+        rollbackFolder.setDescription(JSON.stringify({
+            kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
+            folderCount: originalManifest.folderCount, fileCount: originalManifest.fileCount,
+            totalBytes: originalManifest.totalBytes, fingerprint: originalManifest.fingerprint
+        }));
+        originalMovedCompletely = true;
 
-    logMessage("Restauración Drive", "Copiando elementos de respaldo al destino...");
-    copyFolderRecursively(backupFolder, targetFolder, logMessage);
+        logMessage("Restauración Drive", "Intercambiando el contenido validado con la carpeta productiva...");
+        adminRestoreMoveFolderContents_(stagingFolder, targetFolder);
+        const restoredManifest = adminRestoreDriveManifest_(targetFolder);
+        if (!adminRestoreManifestsEqual_(backupManifest, restoredManifest)) {
+            throw new Error("La verificación posterior al intercambio detectó diferencias en Drive.");
+        }
+        let cleanupPending = false;
+        try { stagingFolder.setTrashed(true); }
+        catch (cleanupError) {
+            cleanupPending = true;
+            logMessage("Restauración Drive", "No se pudo retirar la carpeta temporal vacía: " + cleanupError.message, 0, 0, true);
+        }
+        logMessage("Restauración Drive", "Restauración verificada. El contenido anterior se conserva como respaldo recuperable.");
+        return {
+            status: "success",
+            message: "Los recursos de Drive se restauraron y verificaron; el estado anterior quedó conservado como respaldo recuperable.",
+            backupId,
+            rollbackBackupId: rollbackFolder.getId(),
+            rollbackBackupUrl: rollbackFolder.getUrl(),
+            folderCount: restoredManifest.folderCount,
+            fileCount: restoredManifest.fileCount,
+            totalBytes: restoredManifest.totalBytes,
+            cleanupPending
+        };
+    } catch (error) {
+        const rollbackErrors = [];
+        if (originalMovedCompletely && rollbackFolder) {
+            try { rollbackFolder.setName("GPSpedia_Drive_RESTORE_RECOVERY_" + runId); }
+            catch (renameError) { rollbackErrors.push("rename recovery: " + String(renameError.message || renameError)); }
+            try { adminRestoreMoveFolderContents_(targetFolder, stagingFolder); }
+            catch (moveNewError) { rollbackErrors.push("retirar contenido nuevo: " + String(moveNewError.message || moveNewError)); }
+        }
+        if (rollbackFolder) {
+            try { adminRestoreMoveFolderContents_(rollbackFolder, targetFolder); }
+            catch (restoreOldError) { rollbackErrors.push("restaurar contenido anterior: " + String(restoreOldError.message || restoreOldError)); }
+        }
+        try {
+            if (!adminRestoreManifestsEqual_(originalManifest, adminRestoreDriveManifest_(targetFolder))) {
+                rollbackErrors.push("el inventario final no coincide con el estado anterior");
+            }
+        } catch (verifyError) { rollbackErrors.push("verificación: " + String(verifyError.message || verifyError)); }
 
-    logMessage("Restauración Drive", "Restauración de Drive completada.");
-    return {
-        status: 'success',
-        message: "Los archivos e imágenes se restauraron de forma exitosa en el Drive."
-    };
+        if (rollbackErrors.length) {
+            throw new Error("La restauración Drive falló y la reversión automática no pudo verificarse. Conserva las carpetas de recuperación; no las elimines. stagingId=" +
+                stagingFolder.getId() + "; rollbackId=" + (rollbackFolder ? rollbackFolder.getId() : "no creado") +
+                ". Detalles: " + rollbackErrors.join(" | ") + ". Motivo original: " + String(error.message || error));
+        }
+        try { stagingFolder.setTrashed(true); } catch (cleanupError) {}
+        if (rollbackFolder) { try { rollbackFolder.setTrashed(true); } catch (cleanupError) {} }
+        throw new Error("La restauración Drive no se aplicó; el contenido original fue restaurado y verificado. Motivo: " + String(error.message || error));
+    }
 }
 
 function clearFolderContents(folder) {
