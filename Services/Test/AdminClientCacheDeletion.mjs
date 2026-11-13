@@ -169,7 +169,18 @@ await check("El mensaje del Service Worker elimina respuestas dinámicas y conse
         }
     };
     const selfRef = { location: "https://example.test/app/service-worker.js", addEventListener(name, callback) { listeners[name] = callback; } };
-    new Function("self","caches","URL",serviceWorkerSource)(selfRef,cachesRef,URL);
+    const TestURL = function(relative, base) {
+        const origin = String(base).match(/^https?:\\/\\/[^/]+/)[0];
+        const path = String(base).slice(origin.length);
+        const parts = path.split("/");
+        if (!String(base).endsWith("/")) parts.pop();
+        String(relative).split("/").forEach(part => {
+            if (part === "..") parts.pop();
+            else if (part !== "." && part !== "") parts.push(part);
+        });
+        this.href = origin + "/" + parts.filter(Boolean).join("/") + (String(relative).endsWith("/") ? "/" : "");
+    };
+    new Function("self","caches","URL",serviceWorkerSource)(selfRef,cachesRef,TestURL);
     assert.equal(typeof listeners.message,"function");
     let response = null, waitPromise = null;
     listeners.message({
