@@ -142,7 +142,7 @@ async function run() {
             setTimeout: callback => { schedules++; if (schedules === 1) callback(); return schedules; },
             wait: async () => {}
         });
-        assert.equal((await runner("auditDriveImagesInCortes", makePayload())).status, "success");
+        assert.equal((await runner("auditDriveImagesInCortes", makePayload(), { wait: async () => {} })).status, "success");
         assert.equal(calls, 2);
         assert.equal(controllers.length, 2);
     });
