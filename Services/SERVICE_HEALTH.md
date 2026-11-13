@@ -47,4 +47,4 @@ La revisi√≥n local cubre los siete archivos fuente versionados y la clasificaci√
 
 ## Prueba local
 
-`node --experimental-default-type=module Services/Test/ServiceHealthContract.mjs`
+`node --experimental-default-type=module JS/Tests/ServiceHealthContract.mjs`

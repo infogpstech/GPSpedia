@@ -2,9 +2,9 @@
 
 ## Alcance y clasificación
 
-`createSheet` y `addColumn` son acciones soportadas del servicio ADMIN para mantenimiento interno/manual de la estructura de Spreadsheet. No son funciones de interfaz pública: la revisión del código versionado no encontró llamadas desde `ui.js`, `index.html`, `users.html` ni `add_cortes.html`.
+`createSheet` y `addColumn` son acciones soportadas del servicio ADMIN para mantenimiento interno/manual de la estructura de Spreadsheet. No son funciones de interfaz pública: la revisión del código versionado no encontró llamadas desde `JS/Frontend/ui.js`, `index.html`, `HTML/users.html` ni `HTML/add_cortes.html`.
 
-Ambas acciones ya tienen ruta canónica en `ACTION_TO_SERVICE_MAP` hacia ADMIN y casos en el dispatcher de `Services/admin.js`. No pertenecen a `SERVICE_COMPATIBILITY_ACTIONS`. No se agrega una segunda ruta ni controles de interfaz.
+Ambas acciones ya tienen ruta canónica en `ACTION_TO_SERVICE_MAP` hacia ADMIN y casos en el dispatcher de `JS/Services/admin.js`. No pertenecen a `SERVICE_COMPATIBILITY_ACTIONS`. No se agrega una segunda ruta ni controles de interfaz.
 
 No es posible enumerar desde este repositorio scripts, integraciones o consumidores externos no versionados. Por compatibilidad y ausencia de evidencia suficiente, las acciones se conservan; su retirada requiere una tarea posterior con inventario de consumidores y autorización explícita.
 

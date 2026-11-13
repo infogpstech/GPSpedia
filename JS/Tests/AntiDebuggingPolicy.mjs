@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";import fs from "node:fs";
+export function runAntiDebuggingPolicyTests({main,users,addCuts,readme,services}){
+ const checks=[],t=(n,fn)=>{fn();checks.push(n)},views=[main,users,addCuts];
+ t("menú contextual nativo",()=>views.forEach(s=>assert.doesNotMatch(s,/addEventListener\s*\(\s*['"]contextmenu['"][\s\S]{0,250}?preventDefault\s*\(/i)));
+ t("atajos de inspección no interceptados",()=>views.forEach(s=>{assert.doesNotMatch(s,/keyCode\s*===?\s*123|key\s*===?\s*['"]F12['"]/i);assert.doesNotMatch(s,/keyCode\s*===?\s*(?:73|74|67|85)/i)}));
+ t("zoom nativo no cancelado",()=>views.forEach(s=>{assert.doesNotMatch(s,/addEventListener\s*\(\s*['"]wheel['"][\s\S]{0,450}?preventDefault\s*\(/i);assert.doesNotMatch(s,/addEventListener\s*\(\s*['"]touch(?:start|move)['"][\s\S]{0,350}?preventDefault\s*\(/i);assert.doesNotMatch(s,/\[61,\s*107,\s*173,\s*109,\s*187,\s*189,\s*48,\s*96\]/)}));
+ t("README no promete protección cliente",()=>{assert.doesNotMatch(readme,/Zero-Zoom Layout|Bloqueo nativo del menú contextual|desactivación de comandos del sistema/i);assert.match(readme,/no bloquea el menú contextual ni los atajos de inspección/i);assert.match(readme,/nunca sustituyen la autorización del servidor/i);assert.match(readme,/zoom nativo del navegador/i)});
+ t("WRITE autenticación backend",()=>{assert.match(services.write,/function getAuthenticatedCollaborator\s*\(/);assert.ok((services.write.match(/getAuthenticatedCollaborator\s*\(/g)||[]).length>1);assert.match(services.write,/function assertDeveloperForIdMaintenance\s*\(/)});
+ t("ADMIN autorización backend",()=>{assert.match(services.admin,/function assertDeveloperSession\s*\(/);assert.ok((services.admin.match(/assertDeveloperSession\s*\(/g)||[]).length>1);assert.match(services.admin,/function assertModalEditSession\s*\(/)});
+ t("FEEDBACK sesión backend",()=>{assert.match(services.feedback,/function assertFeedbackSession\s*\(/);assert.ok((services.feedback.match(/assertFeedbackSession\s*\(/g)||[]).length>1)});
+ t("USERS token backend",()=>{assert.match(services.users,/function getVerifiedSession\s*\(/);assert.ok((services.users.match(/getVerifiedSession\s*\(/g)||[]).length>1)});
+ t("UTILITIES rol backend",()=>{assert.match(services.utilities,/function assertUtilitiesDeveloperSession_\s*\(/);assert.ok((services.utilities.match(/assertUtilitiesDeveloperSession_\s*\(/g)||[]).length>1)});
+ t("AUTH validación backend",()=>{assert.match(services.auth,/function validateAndTouchSession_\s*\(/);assert.match(services.auth,/function handleValidateSession\s*\(/)});
+ return{status:"PASS",passed:checks.length,failed:0,total:checks.length,results:checks.map(name=>({name,status:"PASS"}))};
+}
+const result=runAntiDebuggingPolicyTests({main:fs.readFileSync("JS/Frontend/main.js","utf8"),users:fs.readFileSync("HTML/users.html","utf8"),addCuts:fs.readFileSync("HTML/add_cortes.html","utf8"),readme:fs.readFileSync("README.md","utf8"),services:{auth:fs.readFileSync("JS/Services/Auth.js","utf8"),write:fs.readFileSync("JS/Services/write.js","utf8"),admin:fs.readFileSync("JS/Services/admin.js","utf8"),feedback:fs.readFileSync("JS/Services/feedback.js","utf8"),users:fs.readFileSync("JS/Services/users.js","utf8"),utilities:fs.readFileSync("JS/Services/Utilities.js","utf8")}});
+console.log(result.passed+"/"+result.total+" PASS");

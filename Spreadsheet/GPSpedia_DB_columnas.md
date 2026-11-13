@@ -235,7 +235,7 @@
 
 #### Columna auxiliar dinámica `suggestionActorKey`
 
-La tabla anterior representa las nueve columnas funcionales del esquema base documentado en el archivo XLSX. El servicio `Services/feedback.js` administra además una columna auxiliar para deduplicar aportantes de sugerencias de año:
+La tabla anterior representa las nueve columnas funcionales del esquema base documentado en el archivo XLSX. El servicio `JS/Services/feedback.js` administra además una columna auxiliar para deduplicar aportantes de sugerencias de año:
 
 - **Encabezado exacto:** `suggestionActorKey`.
 - **Fila de encabezado:** 1.

@@ -17,8 +17,8 @@ La mejora de menor riesgo es separar claramente los usos de los endpoints y, en 
 | Acción | Respuesta / propósito | Uso encontrado en el cliente | Recomendación |
 |---|---|---|---|
 | `getCatalogData` | Instantánea completa: `cortes`, `tutoriales`, `relay`, `logos`, además de metadatos de categorías. | Es la acción llamada por `fetchCatalogData()` desde el flujo de carga del catálogo. | Mantener como endpoint canónico para la carga completa, búsqueda global, detalle y sincronización offline. |
-| `getNavigationData` | Resumen: conteos por categoría, categorías ordenadas, marcas y logos. No entrega las fichas completas de Cortes, tutoriales ni relay. | Está registrado en `ACTION_TO_SERVICE_MAP` y en el router Apps Script, pero no se encontraron llamadas en `main.js`, `add_cortes.html` ni `users.html`. | Reservar para una futura fase de arranque/menú que solo necesite esos metadatos. No usarlo como sustituto del catálogo completo. |
-| `getDropdownData` | Valores para listas desplegables: categorías, marcas, tipos de corte, tipos de encendido y configuración de relay. | `add_cortes.html` lo usa al inicializar el formulario de registro. | Mantenerlo limitado a formularios. No usarlo para alimentar el catálogo ni la búsqueda general. |
+| `getNavigationData` | Resumen: conteos por categoría, categorías ordenadas, marcas y logos. No entrega las fichas completas de Cortes, tutoriales ni relay. | Está registrado en `ACTION_TO_SERVICE_MAP` y en el router Apps Script, pero no se encontraron llamadas en `JS/Frontend/main.js`, `HTML/add_cortes.html` ni `HTML/users.html`. | Reservar para una futura fase de arranque/menú que solo necesite esos metadatos. No usarlo como sustituto del catálogo completo. |
+| `getDropdownData` | Valores para listas desplegables: categorías, marcas, tipos de corte, tipos de encendido y configuración de relay. | `HTML/add_cortes.html` lo usa al inicializar el formulario de registro. | Mantenerlo limitado a formularios. No usarlo para alimentar el catálogo ni la búsqueda general. |
 
 ## Situación real de caché
 
@@ -31,7 +31,7 @@ La mejora de menor riesgo es separar claramente los usos de los endpoints y, en 
 
 ### Cliente (IndexedDB)
 
-- `offline.js` guarda una instantánea completa bajo la clave `current` y valida que contenga las cuatro colecciones (`cortes`, `tutoriales`, `relay`, `logos`), además de IDs estables y no duplicados para Cortes.
+- `JS/Frontend/offline.js` guarda una instantánea completa bajo la clave `current` y valida que contenga las cuatro colecciones (`cortes`, `tutoriales`, `relay`, `logos`), además de IDs estables y no duplicados para Cortes.
 - El flujo de carga primero intenta mostrar esa instantánea local y después solicita la actualización remota mediante `fetchCatalogData()`.
 - Esto mejora el tiempo de presentación en dispositivos con caché local y permite consultar datos previamente guardados sin conexión; **no elimina la solicitud completa de red que realiza la reconciliación en segundo plano**. En consecuencia, no debe contabilizarse como una reducción garantizada de lecturas de Spreadsheet en cada arranque.
 
@@ -56,6 +56,6 @@ Si el tamaño futuro del catálogo exige paginación, el diseño deberá incluir
 
 ## Límites de esta evaluación
 
-La conclusión se basa en el código versionado: handlers de `Services/catalog.js`, mapa de acciones de `api-config.js`, consumidor de `getDropdownData` en `add_cortes.html`, flujo de catálogo en `auth.js` y contrato de persistencia de `offline.js`. No se ejecutaron lecturas contra Spreadsheet productivo ni mediciones de Apps Script; esas validaciones requieren el entorno Beta y no se presentan como realizadas.
+La conclusión se basa en el código versionado: handlers de `JS/Services/catalog.js`, mapa de acciones de `JS/Frontend/api-config.js`, consumidor de `getDropdownData` en `HTML/add_cortes.html`, flujo de catálogo en `JS/Frontend/auth.js` y contrato de persistencia de `JS/Frontend/offline.js`. No se ejecutaron lecturas contra Spreadsheet productivo ni mediciones de Apps Script; esas validaciones requieren el entorno Beta y no se presentan como realizadas.
 
 **Resultado del criterio 4:** evaluación y guía de uso documentadas. No se modificaron endpoints, contratos de respuesta ni despliegues.

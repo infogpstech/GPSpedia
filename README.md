@@ -88,7 +88,7 @@ La confidencialidad y la integridad no dependen de ocultar el frontend: los serv
 - **Migración de idempotencia:** La acción administrativa `migrateCortesOperationIds` realiza una simulación por defecto y solo escribe/limpia las columnas heredadas cuando recibe `confirm: true`. Si `Idempotencia` tiene un esquema incompatible, se conserva sin cambios y se utiliza `Idempotencia_Cortes`; si ambas hojas tienen esquemas incompatibles, la acción se detiene sin modificarlas. La función `renameVinColumnHeader` deja el encabezado de la columna 43 exactamente como `VIN`; también detecta opId escalares heredados aunque esa columna ya esté rotulada VIN y se detiene ante datos mezclados. Los campos de testigo tienen posición fija AT:AV (46–48), aunque existan columnas adicionales después de AV; no se agregan dinámicamente al final. Si las columnas objetivo están ocupadas o los encabezados aparecen duplicados/fuera de posición, WRITE y ADMIN detienen la escritura sin desplazar datos.
 - **Procesamiento de Seguridad:** El sistema solicita el VIN completo de hasta 18 caracteres, pero descarta automáticamente los últimos 5 caracteres para almacenar únicamente el prefijo procesado, resguardando la privacidad de las unidades individuales.
 - **Colecciones de VINs por Equipamiento:** Una sola columna física `VIN` almacena en una misma celda una colección JSON con todos los VIN procesados correspondientes a las versiones de equipamiento registradas en esa fila. La propiedad de datos de los consumidores sigue siendo `vin`. La cantidad máxima de VIN corresponde al número de versiones detectadas en `versionesAplicables`; no se crean columnas `vin2`/`vin3` ni columnas automáticas por versión. La adición de un VIN no modifica la fecha de registro (`timestamp`).
-- **Validación de Duplicados:** Detección de duplicados en tiempo real tanto en el formulario `add_cortes.html` como en el modal de detalle. Muestra el mensaje *"VIN ya está registrado para:"* acompañado de un enlace/botón interactivo para navegar directamente al modelo existente.
+- **Validación de Duplicados:** Detección de duplicados en tiempo real tanto en el formulario `HTML/add_cortes.html` como en el modal de detalle. Muestra el mensaje *"VIN ya está registrado para:"* acompañado de un enlace/botón interactivo para navegar directamente al modelo existente.
 - **Búsqueda Global por VIN:** La barra de búsqueda detecta consultas de VIN de entre 6 y 18 caracteres, extrae el prefijo procesado y filtra el catálogo por coincidencia exacta.
 
 ### Herramientas Avanzadas para el Rol de Desarrollador
@@ -109,7 +109,7 @@ La confidencialidad y la integridad no dependen de ocultar el frontend: los serv
 
 ## 5. Visibilidad de fuentes y separación de servicios
 
-El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. Por lo tanto, todos los archivos versionados en la rama publicada, incluidas las fuentes que se encuentren dentro de `Services/`, son accesibles para quienes puedan consultar el repositorio. Las fuentes backend se mantienen aquí para desarrollo, revisión y pruebas; su presencia no demuestra que un deployment o endpoint haya sido creado, actualizado o publicado desde GitHub.
+El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. Por lo tanto, todos los archivos versionados en la rama publicada, incluidas las fuentes que se encuentren dentro de `JS/Services/`, son accesibles para quienes puedan consultar el repositorio. Las fuentes backend se mantienen aquí para desarrollo, revisión y pruebas; su presencia no demuestra que un deployment o endpoint haya sido creado, actualizado o publicado desde GitHub.
 
 La visibilidad del repositorio y la ejecución de los microservicios son aspectos distintos. Los deployments, endpoints, permisos de Google y datos de Spreadsheet/Drive se administran en sus plataformas respectivas. No se debe inferir su estado ni sus permisos a partir del código versionado.
 
@@ -164,4 +164,4 @@ Drive conserva la URL fuente original (`https://lh3.googleusercontent.com/d/{fil
 
 
 ### QR de vídeos en fichas imprimibles
-Los códigos QR de los vídeos guía se generan localmente en el navegador con el módulo `qrcode-generator.mjs`; el enlace no se envía a servicios de terceros. Solo se admiten URLs HTTPS de hosts oficiales de YouTube con ID de vídeo válido. El QR no expone la URL como texto en la ficha.
+Los códigos QR de los vídeos guía se generan localmente en el navegador con el módulo `JS/Frontend/qrcode-generator.mjs`; el enlace no se envía a servicios de terceros. Solo se admiten URLs HTTPS de hosts oficiales de YouTube con ID de vídeo válido. El QR no expone la URL como texto en la ficha.

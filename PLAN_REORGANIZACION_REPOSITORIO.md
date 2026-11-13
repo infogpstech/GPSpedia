@@ -1,6 +1,6 @@
 # Plan de reorganización estructural del repositorio GPSpedia
 
-**Estado:** PENDIENTE — planificación registrada; no se han movido archivos ni modificado rutas.  
+**Estado:** EN PROGRESO — estructura y rutas reorganizadas en el árbol de trabajo; validaciones automatizadas pendientes.  
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama autorizada:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5`  
@@ -58,9 +58,9 @@ La estructura es una propuesta de destino. Durante el inventario se determinará
 
 ### Excepciones técnicas que deben resolverse antes de mover archivos
 
-1. **Service Worker:** actualmente `service-worker.js` está en la raíz. Su ubicación determina el alcance de control predeterminado del navegador. Moverlo a `JS/Frontend/` puede limitar el control a esa ruta y dejar fuera la aplicación. Antes de moverlo se debe comprobar si el hosting permite establecer `Service-Worker-Allowed: /` o una alternativa compatible. No se debe sacrificar el funcionamiento offline para cumplir la organización de carpetas. Si no existe una solución verificable, se documentará esta excepción técnica y se solicitará decisión antes de continuar con ese archivo.
-2. **Servicios Apps Script:** se debe verificar cómo se copian, publican y consumen los archivos de `Services/`. La nueva ubicación en el repositorio no debe alterar nombres, contenido, orden de carga ni contratos de los proyectos desplegados.
-3. **Pruebas:** los runners pueden leer fuentes mediante rutas relativas. Se actualizarán sus referencias y workflows sin modificar la lógica de las pruebas.
+1. **Service Worker:** `service-worker.js` permanece en la raíz como excepción técnica deliberada. Su ubicación conserva el alcance predeterminado sobre la aplicación completa; trasladarlo a `JS/Frontend/` podría restringirlo. Se actualizaron las rutas de precarga hacia `HTML/`, `JS/Frontend/` e `Images/`, y se incrementó la versión de caché para evitar conservar rutas antiguas. No se requiere ni se presupone una cabecera `Service-Worker-Allowed`.
+2. **Servicios Apps Script:** las fuentes JavaScript se ubican ahora en `JS/Services/`; la carpeta `Services/` conserva documentación y auxiliares no-JS. El procedimiento de copia manual a proyectos Apps Script debe usar las nuevas rutas del repositorio. No se modificaron deployments, nombres de funciones, contenido de fuentes ni contratos.
+3. **Pruebas:** las suites y el runner se ubican ahora en `JS/Tests/`. Se actualizaron referencias de fuentes, HTML, comandos y workflow; se conservaron los nombres y la lógica de las pruebas.
 
 ## 3. Fase 1 — Inventario y mapa de dependencias
 
@@ -187,3 +187,16 @@ La reorganización podrá marcarse como **COMPLETADA** o **COMPLETADA CON VALIDA
 ---
 
 **Resultado esperado:** un repositorio ordenado por tipo y función, con rutas coherentes, sin referencias rotas y sin cambios involuntarios en el comportamiento de GPSpedia.
+
+
+## 12. Registro de ejecución
+
+- Se trasladaron los módulos frontend JavaScript/MJS a `JS/Frontend/`, con la excepción técnica documentada de `service-worker.js` en la raíz.
+- Se trasladaron las fuentes Apps Script JavaScript a `JS/Services/`; `Services/` conserva documentación y auxiliares no-JS.
+- Se trasladaron las suites y el runner a `JS/Tests/`; la guía de pruebas acompaña ahora a las suites.
+- Se trasladaron `add_cortes.html` y `users.html` a `HTML/`; `index.html` permanece en la raíz.
+- Se trasladaron los nueve PNG ubicados en la raíz a `Images/`. Los recursos dentro de `Olds/` permanecen intactos.
+- Se actualizaron referencias en HTML, módulos con rutas de recursos, manifiesto, Service Worker, runner, suites afectadas, workflow y documentación operativa.
+- Se incrementó la caché PWA de `gpsepedia-cache-v20` a `gpsepedia-cache-v21`.
+- El árbol reorganizado conserva 270 archivos; no se eliminaron contenidos. Los archivos Beta y `checkpoint.md` permanecen sin cambios.
+- **Validación pendiente:** ejecutar el workflow de regresión en GitHub y revisar sus resultados antes de cambiar el estado a completado. Las pruebas en navegador real/PWA instalada y las validaciones externas Apps Script/Spreadsheet siguen siendo de Beta.

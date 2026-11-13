@@ -36,8 +36,8 @@ jobs:
           git rev-parse HEAD
       - name: Check syntax of modified JavaScript modules
         run: |
-          node --check ui.js
-          node --check offline.js
-          node --check Services/admin.js
+          node --check JS/Frontend/ui.js
+          node --check JS/Frontend/offline.js
+          node --check JS/Services/admin.js
       - name: Run isolated service regression suites
-        run: node --experimental-default-type=module Services/Test/RunServiceTests.mjs
+        run: node --experimental-default-type=module JS/Tests/RunServiceTests.mjs
