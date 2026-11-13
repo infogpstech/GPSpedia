@@ -141,6 +141,7 @@ runGroup('37','USERS',()=>{
  recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
 });
 runGroup('38','INTEGRATION',()=>{
+ runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','Services/Test/RouteActionErrors.mjs');
  runCli('AUG-152 conversaciones Inbox, participantes, idempotencia y auditoría','Services/Test/InboxConversations.mjs');
  runCli('AUG-152 interfaz Inbox, accesibilidad, borradores y sincronización','Services/Test/InboxUi.mjs');
  runCli('OVERLAY pila de menú y modales administrativos','Services/Test/OverlayMenuModalHistory.js');

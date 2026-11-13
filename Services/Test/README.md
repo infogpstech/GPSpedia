@@ -1680,3 +1680,10 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - La suite verifica que las mutaciones de Inbox adquieran leases compartidas y se serialicen con cambios de identidad AUTH y otras escrituras FEEDBACK.
 - Comandos: `node --experimental-default-type=module Services/Test/InboxUi.mjs` y `node --experimental-default-type=module Services/Test/RunServiceTests.mjs --only=INTEGRATION`.
 - GitHub Actions run 43449918635: InboxConversations 28/28, InboxUi 15/15, coordinador compartido 34/34; conjunto completo 60 suites, 849/849 PASS; Node.js --check PASS.
+
+
+## AUG-150 — Diagnóstico de errores HTTP y de aplicación en consola ADMIN
+
+- `RouteActionErrors.mjs` ejecuta el `routeAction` real aislado con respuestas HTTP 401/403/404/500, ausencia de respuesta, cancelación/timeout, JSON inválido, fallo al leer el cuerpo y `status:error` de aplicación.
+- Verifica que solo se exponga un status HTTP realmente recibido, que las métricas conserven el resultado y que las rutas individual y por lotes de ADMIN usen el mismo diagnóstico sin asignar 500 por defecto.
+- Ejecutar con `node --experimental-default-type=module Services/Test/RouteActionErrors.mjs` o mediante el grupo integrado de `RunServiceTests.mjs`.

@@ -5116,6 +5116,28 @@ function initAdminPanelListeners() {
         }
     }
 
+    function describeAdminActionError_(error) {
+        const source = error && typeof error === "object" ? error : {};
+        const kind = String(source.kind || "unknown");
+        const statusValue = Number(source.httpStatus);
+        const httpStatus = Number.isInteger(statusValue) && statusValue >= 100 && statusValue <= 599
+            ? statusValue : null;
+        const labels = {
+            http: "Error HTTP",
+            network: "Fallo de red",
+            abort: "Solicitud cancelada o tiempo de espera agotado",
+            invalid_response: "Respuesta inválida",
+            application: "Error de aplicación"
+        };
+        return {
+            kind,
+            typeLabel: labels[kind] || "Error no clasificado",
+            httpCode: httpStatus === null ? "No disponible (sin respuesta HTTP)" : String(httpStatus),
+            code: String(source.code || "N/A"),
+            message: String(source.message || "No se pudo completar la operación.")
+        };
+    }
+
     // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
     async function runAction(action, payload = {}) {
         const isBatch = action === 'normalizeImages' || action === 'organizePrimaryVehicleImages';
@@ -5156,6 +5178,7 @@ function initAdminPanelListeners() {
                 setProgress(0);
                 const elapsedMs = Date.now() - startTime;
                 const elapsedSec = (elapsedMs / 1000).toFixed(1);
+                const errorInfo = describeAdminActionError_(error);
                 const detailedErrorMsg = `
 ========================================
 🚨 ERROR DETECTADO
@@ -5178,11 +5201,17 @@ N/A
 Función:
 routeAction
 
+Tipo de error:
+${errorInfo.typeLabel}
+
 Código HTTP:
-500
+${errorInfo.httpCode}
+
+Código:
+${errorInfo.code}
 
 Mensaje:
-${error.message || 'Error de conexión / Servidor no disponible'}
+${errorInfo.message}
 
 Excepción:
 ${error.stack || error.toString()}
@@ -5361,6 +5390,7 @@ ${totalTimeStr}
                 const elapsedSec = (elapsedMs / 1000).toFixed(1);
 
                 // Registro detallado de errores y excepciones
+                const errorInfo = describeAdminActionError_(error);
                 const detailedErrorMsg = `
 ========================================
 🚨 ERROR DETECTADO
@@ -5383,11 +5413,17 @@ ${loopCount}
 Función:
 routeAction
 
+Tipo de error:
+${errorInfo.typeLabel}
+
 Código HTTP:
-${error.message.includes('500') ? '500' : '500'}
+${errorInfo.httpCode}
+
+Código:
+${errorInfo.code}
 
 Mensaje:
-${error.message || 'Error de comunicación con el servidor'}
+${errorInfo.message}
 
 Excepción:
 ${error.stack || error.toString()}
@@ -5398,7 +5434,14 @@ ${elapsedSec}s
 `;
                 log(detailedErrorMsg, false, true);
 
-                log(`[INTERRUPCIÓN] Conexión interrumpida o fallo de tiempo de ejecución. El progreso se ha guardado en el servidor. Podrás reanudar desde el registro actual en la próxima ejecución.`, true, false);
+                const recoveryMessage = errorInfo.kind === "network" || errorInfo.kind === "abort"
+                    ? "No se recibió una respuesta HTTP. Verifica el estado del proceso antes de reintentar."
+                    : errorInfo.kind === "http"
+                        ? "El servidor respondió con un error HTTP. Verifica el estado del proceso antes de reintentar."
+                        : errorInfo.kind === "application"
+                            ? "El servidor rechazó la operación. Corrige la causa antes de reintentar."
+                            : "No se pudo clasificar el error; no hay un status HTTP verificado. Verifica el estado del proceso antes de reintentar.";
+                log(`[INTERRUPCIÓN] ${recoveryMessage}`, true, false);
                 finished = true;
             }
 

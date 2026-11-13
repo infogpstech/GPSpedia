@@ -121,6 +121,23 @@ export function subscribeServiceMetrics(listener) {
     return () => serviceMetricListeners.delete(listener);
 }
 
+function createRouteActionError_(message, options = {}) {
+    const source = options && typeof options === "object" ? options : {};
+    const statusValue = Number(source.httpStatus);
+    const httpStatus = Number.isInteger(statusValue) && statusValue >= 100 && statusValue <= 599
+        ? statusValue : null;
+    const error = new Error(String(message || "No se pudo completar la solicitud."));
+    error.name = "RouteActionError";
+    error.kind = String(source.kind || "unknown");
+    error.code = String(source.code || "ROUTE_ACTION_ERROR");
+    error.httpStatus = httpStatus;
+    error.hasHttpResponse = httpStatus !== null;
+    if (error.kind === "http" && httpStatus !== null) error.status = httpStatus;
+    if (source.details !== undefined) error.details = source.details;
+    if (source.cause) error.cause = source.cause;
+    return error;
+}
+
 const sessionTouchState=new Map();
 const SESSION_TOUCH_INTERVAL_MS=5*60*1000;
 async function ensureSessionTouched_(token){
@@ -129,7 +146,7 @@ async function ensureSessionTouched_(token){
  if(state&&state.lastSuccess&&now-state.lastSuccess<SESSION_TOUCH_INTERVAL_MS)return;
  if(!state)state={lastSuccess:0,pending:null};
  const pending=routeAction('touchSession',{sessionToken:token}).then(result=>{
-  if(!result||result.valid!==true)throw new Error('La sesión no es válida o ha expirado.');
+  if(!result||result.valid!==true)throw createRouteActionError_("La sesión no es válida o ha expirado.",{kind:"application",code:"SESSION_INVALID",httpStatus:null});
   state.lastSuccess=Date.now();
   try{const raw=localStorage.getItem('gpsepedia_session');if(raw){const user=JSON.parse(raw);if(user&&user.SessionToken===token){user.SessionLastActivityAt=result.lastActivityAt||new Date().toISOString();localStorage.setItem('gpsepedia_session',JSON.stringify(user));}}}catch(e){console.warn('No se pudo actualizar la actividad local:',e.message);}
  }).finally(()=>{state.pending=null;sessionTouchState.set(token,state);});
@@ -146,36 +163,87 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
     let outcome = "network_error", httpStatus = null;
     try {
         const token=payload&&typeof payload==='object'&&typeof payload.sessionToken==='string'?payload.sessionToken:'';
-        if(token&&!['login','validateSession','touchSession','logout'].includes(action))await ensureSessionTouched_(token);
-        const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action, payload }),
-            redirect: 'follow',
-            signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
-        });
-        httpStatus = response.status;
+        if(token&&!['login','validateSession','touchSession','logout'].includes(action)) {
+            try {
+                await ensureSessionTouched_(token);
+            } catch (sessionError) {
+                const sessionKind = String(sessionError && sessionError.kind || "");
+                outcome = sessionKind === "http" ? "http_error" :
+                    sessionKind === "application" ? "api_error" :
+                    sessionKind === "invalid_response" ? "invalid_response" : "network_error";
+                httpStatus = sessionError && sessionError.httpStatus !== undefined ? sessionError.httpStatus : null;
+                throw sessionError;
+            }
+        }
+        let response;
+        try {
+            response = await fetch(targetUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action, payload }),
+                redirect: 'follow',
+                signal: requestOptions && requestOptions.signal ? requestOptions.signal : undefined
+            });
+        } catch (fetchError) {
+            const aborted = Boolean(requestOptions && requestOptions.signal && requestOptions.signal.aborted) ||
+                Boolean(fetchError && fetchError.name === "AbortError");
+            outcome = "network_error";
+            throw createRouteActionError_(
+                aborted ? "La solicitud fue cancelada o agotó el tiempo de espera." :
+                    "No se recibió respuesta del servidor: " + String(fetchError && fetchError.message || "fallo de conexión."),
+                { kind: aborted ? "abort" : "network", code: aborted ? "REQUEST_ABORTED" : "NETWORK_ERROR", httpStatus: null, cause: fetchError }
+            );
+        }
+        const receivedStatus = Number(response && response.status);
+        httpStatus = Number.isInteger(receivedStatus) && receivedStatus >= 100 && receivedStatus <= 599
+            ? receivedStatus : null;
+        if (!response || httpStatus === null) {
+            outcome = "network_error";
+            throw createRouteActionError_("No se recibió una respuesta HTTP válida del servidor.", {
+                kind: "network", code: "NO_HTTP_RESPONSE", httpStatus: null
+            });
+        }
         if (!response.ok) {
             outcome = "http_error";
-            const httpError = new Error(`Error de red: ${response.status} ${response.statusText}`);
-            httpError.status = response.status;
-            throw httpError;
+            const statusText = String(response.statusText || "").trim();
+            throw createRouteActionError_(
+                "Error HTTP " + httpStatus + (statusText ? ": " + statusText : "."),
+                { kind: "http", code: "HTTP_ERROR", httpStatus }
+            );
         }
-        const text = await response.text();
+        let text;
+        try {
+            text = await response.text();
+        } catch (readError) {
+            outcome = "invalid_response";
+            throw createRouteActionError_("No se pudo leer el cuerpo de la respuesta del servidor.", {
+                kind: "invalid_response", code: "RESPONSE_READ_ERROR", httpStatus, cause: readError
+            });
+        }
         let result;
-        try { result = JSON.parse(text); }
-        catch (e) {
+        try {
+            result = JSON.parse(text);
+        } catch (parseError) {
             outcome = "invalid_response";
-            throw new Error("La respuesta del servidor no tiene un formato válido.");
+            throw createRouteActionError_("La respuesta del servidor no tiene un formato JSON válido.", {
+                kind: "invalid_response", code: "INVALID_JSON", httpStatus, cause: parseError
+            });
         }
-        if (!result || typeof result !== "object") {
+        if (!result || typeof result !== "object" || Array.isArray(result)) {
             outcome = "invalid_response";
-            throw new Error("La respuesta del servidor no contiene un objeto válido.");
+            throw createRouteActionError_("La respuesta del servidor no contiene un objeto válido.", {
+                kind: "invalid_response", code: "INVALID_RESPONSE", httpStatus
+            });
         }
         if (result.status === 'error') {
             outcome = "api_error";
-            const errorMessage = result.details ? `${result.message}: ${result.details.errorMessage}` : result.message;
-            throw new Error(errorMessage);
+            const detailMessage = typeof result.details === "string" ? result.details :
+                result.details && typeof result.details.errorMessage === "string" ? result.details.errorMessage : "";
+            const errorMessage = [String(result.message || "El servicio rechazó la operación."), detailMessage]
+                .filter(Boolean).join(": ");
+            throw createRouteActionError_(errorMessage, {
+                kind: "application", code: String(result.code || "API_ERROR"), httpStatus, details: result.details
+            });
         }
         outcome = "success";
         return result;
