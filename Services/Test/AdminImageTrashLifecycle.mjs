@@ -97,6 +97,51 @@ const ok=(body={})=>({code:200,body:{id:FILE_ID,mimeType:"image/jpeg",trashed:tr
 const gone=()=>({code:404,body:{}});
 const noContent=()=>({code:204,body:{}});
 
+function scannerSheet(name,{display=[[""]],raw=display,formulas=[[""]],rich=[ [null] ],images=[]}={}){
+    const range={getDisplayValues:()=>display,getValues:()=>raw,getFormulas:()=>formulas,getRichTextValues:()=>rich};
+    return{name,getName:()=>name,getDataRange:()=>range,getImages:()=>images};
+}
+function runScanner(sheets,includeLocations=true){
+    const handler=new Function("getSpreadsheet","SHEET_NAMES","extractDriveFileIds",fnSource(admin,"collectActiveDriveReferences")+"\nreturn collectActiveDriveReferences;")(
+        ()=>({getSheets:()=>sheets}),
+        {IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas",ADMIN_STATE:"AdminState",IDEMPOTENCIA:"Idempotencia",IDEMPOTENCIA_FALLBACK:"IdempotenciaFallback"},
+        extract);
+    return handler(includeLocations);
+}
+check("El escáner global incluye referencias URL de todas las hojas funcionales con imágenes",()=>{
+    const names=["Cortes","pys","LogosMarca","Tutorial","Relay","Feedbacks"];
+    const sheets=names.map((name,index)=>scannerSheet(name,{display:[["https://drive.google.com/file/d/"+("fileid0000000000000"+index).slice(-20)+"/view"]]}));
+    const result=runScanner(sheets);
+    assert.equal(result.references.size,6);
+    assert.ok(names.every(name=>[...result.references.values()].some(list=>list[0].sheet===name)));
+    assert.equal(result.unverifiableReferenceCount,0);
+});
+check("El escáner reconoce CellImage mediante getContentUrl y registra su ID cuando es verificable",()=>{
+    const cellImage={getContentUrl:()=>"https://drive.google.com/file/d/"+FILE_ID+"/view"};
+    const result=runScanner([scannerSheet("Tutorial",{raw:[[cellImage]]})]);
+    assert.equal(result.references.has(FILE_ID),true);
+    assert.equal(result.references.get(FILE_ID)[0].sheet,"Tutorial");
+    assert.equal(result.unverifiableReferenceCount,0);
+});
+check("El escáner bloquea referencias CellImage y over-grid que no puede asociar a un ID",()=>{
+    const cellImage={getContentUrl:()=>"https://lh3.googleusercontent.com/opaque-content"};
+    const overGrid={getAnchorCell:()=>({getRow:()=>3,getColumn:()=>4})};
+    const result=runScanner([scannerSheet("Relay",{raw:[[cellImage]],images:[overGrid]})]);
+    assert.equal(result.unverifiableReferenceCount,2);
+});
+check("El escáner asocia una imagen sobre cuadrícula a su ID y celda de anclaje cuando la URL está disponible",()=>{
+    const overGrid={getUrl:()=>"https://drive.google.com/file/d/"+FILE_ID+"/view",getAnchorCell:()=>({getRow:()=>8,getColumn:()=>10})};
+    const result=runScanner([scannerSheet("LogosMarca",{images:[overGrid]})]);
+    assert.deepEqual(result.references.get(FILE_ID),[{sheet:"LogosMarca",row:8,column:10}]);
+    assert.equal(result.unverifiableReferenceCount,0);
+});
+check("El escáner excluye hojas internas aunque contengan imágenes",()=>{
+    const overGrid={};
+    const internal=scannerSheet("Imagenes_Reemplazadas",{display:[["https://drive.google.com/file/d/"+FILE_ID+"/view"]],images:[overGrid]});
+    const result=runScanner([internal]);
+    assert.equal(result.references.size,0);
+    assert.equal(result.unverifiableReferenceCount,0);
+});
 check("El esquema conserva un campo específico para el estado anterior a papelera",()=>{
     assert.equal(HEADERS.length,24);
     const sheet=createSheet([HEADERS,makeRow()]);
