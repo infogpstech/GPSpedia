@@ -1,6 +1,6 @@
 # Plan de reorganización estructural del repositorio GPSpedia
 
-**Estado:** EN PROGRESO — estructura y rutas reorganizadas en el árbol de trabajo; validaciones automatizadas pendientes.  
+**Estado:** COMPLETADO — estructura y rutas reorganizadas; regresión automatizada aprobada.  
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama autorizada:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5`  
@@ -199,4 +199,7 @@ La reorganización podrá marcarse como **COMPLETADA** o **COMPLETADA CON VALIDA
 - Se actualizaron referencias en HTML, módulos con rutas de recursos, manifiesto, Service Worker, runner, suites afectadas, workflow y documentación operativa.
 - Se incrementó la caché PWA de `gpsepedia-cache-v20` a `gpsepedia-cache-v21`.
 - El árbol reorganizado conserva 270 archivos; no se eliminaron contenidos. Los archivos Beta y `checkpoint.md` permanecen sin cambios.
-- **Validación pendiente:** ejecutar el workflow de regresión en GitHub y revisar sus resultados antes de cambiar el estado a completado. Las pruebas en navegador real/PWA instalada y las validaciones externas Apps Script/Spreadsheet siguen siendo de Beta.
+- **Validación automatizada aprobada:** GitHub Actions, workflow `GPSpedia service regression tests`, ejecución `43522033695`, commit `8748d5a39ad87a3e63d6e4c3d334fe03f454420b`: comprobaciones de sintaxis Node.js aprobadas; 74 suites; 1,124 pruebas aprobadas; 0 fallos.
+- **Validación Beta pendiente:** instalación/actualización PWA y navegación offline en navegador/dispositivo real; comprobación de alcance y ciclo de vida del Service Worker en hosting; copia manual y validación de Apps Script, Spreadsheet, Drive y endpoints externos. No se ejecutaron acciones contra producción.
+
+- Commit de reorganización con regresión aprobada: `8748d5a39ad87a3e63d6e4c3d334fe03f454420b`.
