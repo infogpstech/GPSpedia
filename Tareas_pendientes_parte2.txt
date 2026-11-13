@@ -219,9 +219,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-125 — Hacer recuperables las restauraciones de DB y Drive
 - Origen: H-AUD-019-004. Prioridad: Alta.
-- Evidencia: Services/admin.js:882–928 y 933–963.
-- Criterios: staging; validar backup completo y esquema; verificar conteos/recursos; swap solo tras validación; rollback probado ante fallos parciales.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia inicial: Services/admin.js:882–928 y 933–963.
+- Implementación: respaldos DB/Drive con manifiestos de integridad, verificación de hojas/fórmulas/celdas y de recursos Drive (rutas, MIME, tamaños y conteos); staging completo antes de tocar el destino; validación del esquema obligatorio; intercambio de hojas completas con reversión de nombres; respaldo preventivo recuperable de DB; rollback de Drive preservando IDs del contenido anterior; artefactos conservados y error explícito si la reversión no puede verificarse. Las hojas adicionales no incluidas en un respaldo DB se conservan.
+- Validación local: AdminRestoreRecovery 18/18 PASS; parsing V8 de Services/admin.js y Services/Test/AdminRestoreRecovery.js PASS. Se probaron intercambio exitoso, fallo de promoción, fallo de verificación y fallo de reversión con dobles aislados.
+- Límites: no se ejecutaron Apps Script, Spreadsheet, Drive, endpoints ni deployments reales. Las verificaciones de integración y persistencia quedan en Beta aislada.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-126 — Validar payload completo antes de reservar fila/ID en WRITE
 - Origen: H-AUD-019-005. Prioridad: Alta.
