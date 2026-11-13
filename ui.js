@@ -6192,7 +6192,7 @@ ${elapsedSec}s
     const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
     if (clearCacheBtn) {
         clearCacheBtn.onclick = async () => {
-            if (!confirm("¿Deseas limpiar los datos locales reconstruibles?\\n\\nSe eliminarán catálogo, historial, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline.")) return;
+            if (!confirm("¿Deseas limpiar los datos locales reconstruibles?\n\nSe eliminarán catálogo, historial, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline.")) return;
 
             clearCacheBtn.disabled = true;
             try {
