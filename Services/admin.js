@@ -1308,12 +1308,12 @@ function adminRestoreReadDriveBackupState_(folder) {
     try { description = JSON.parse(String(folder.getDescription() || "")); }
     catch (error) { throw new Error("El respaldo Drive no tiene un estado/manifiesto verificable."); }
     if (description.kind !== ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ || description.version !== 2 ||
-        !["in_progress", "complete"].includes(description.status) || !description.manifestFileId) {
+        description.backupFolderId !== folder.getId() || !["in_progress", "complete"].includes(description.status) || !description.manifestFileId) {
         throw new Error("El contenedor Drive no tiene estado completo o reanudable; no se permite restaurarlo.");
     }
     const file = DriveApp.getFileById(String(description.manifestFileId));
     if (!file || file.isTrashed() || file.getName() !== ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_ ||
-        String(file.getDescription() || "") !== ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_ ||
+        file.getMimeType() !== "application/json" || String(file.getDescription() || "") !== ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_ ||
         !adminRestoreHasParent_(file, folder.getId())) {
         throw new Error("El archivo de manifiesto Drive falta, está alterado o no pertenece al contenedor.");
     }
@@ -1454,27 +1454,27 @@ function adminRestoreCopyDriveFileEntry_(entry, state, backupFolder) {
 }
 function adminRestoreVerifyDriveBackupState_(state, backupFolder, actualManifest) {
     if (!state || state.status !== "complete" && state.status !== "copying") {
-        throw new Error("El estado del manifiesto no permite verificar el respaldo.");
+        throw adminRestoreDriveIntegrityError_("El estado del manifiesto no permite verificar el respaldo.");
     }
     if (state.sourceFolderCount !== actualManifest.folderCount ||
         state.sourceFileCount !== actualManifest.fileCount ||
         state.sourceTotalBytes !== actualManifest.totalBytes ||
         state.sourceFingerprint !== actualManifest.fingerprint) {
-        throw new Error("El inventario real no coincide con el manifiesto del respaldo Drive.");
+        throw adminRestoreDriveIntegrityError_("El inventario real no coincide con el manifiesto del respaldo Drive.");
     }
     const actualById = new Map(actualManifest.entries.map(entry => [String(entry.id), entry]));
     const expectedEntries = (state.folders || []).concat(state.files || []);
     if (expectedEntries.length !== actualManifest.entries.length) {
-        throw new Error("El manifiesto no contiene una relación individual de todos los recursos Drive.");
+        throw adminRestoreDriveIntegrityError_("El manifiesto no contiene una relación individual de todos los recursos Drive.");
     }
     expectedEntries.forEach(entry => {
-        if (!entry.copyId || !entry.parentCopyId) throw new Error("Falta el ID de copia o de carpeta padre para " + entry.path + ".");
+        if (!entry.copyId || !entry.parentCopyId) throw adminRestoreDriveIntegrityError_("Falta el ID de copia o de carpeta padre para " + entry.path + ".");
         const actual = actualById.get(String(entry.copyId));
         if (!actual || actual.type !== entry.type ||
             actual.path !== entry.path || actual.name !== entry.name ||
             String(actual.parentId) !== String(entry.parentCopyId) ||
             actual.mimeType !== entry.mimeType || Number(actual.size) !== Number(entry.size)) {
-            throw new Error("La relación ID/ruta/MIME/tamaño del recurso no coincide: " + entry.path);
+            throw adminRestoreDriveIntegrityError_("La relación ID/ruta/MIME/tamaño del recurso no coincide: " + entry.path);
         }
     });
     return true;
