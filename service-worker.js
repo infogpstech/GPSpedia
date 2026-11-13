@@ -23,6 +23,28 @@ self.addEventListener('activate',event=>{
   names.filter(name=>name.startsWith('gpsepedia-cache-')&&name!==CACHE_NAME).map(name=>caches.delete(name))
  )).then(()=>self.clients.claim()));
 });
+
+self.addEventListener('message',event=>{
+ const message=event.data;
+ if(!message||message.type!=='GPSEPEDIA_CLEAR_RUNTIME_CACHE')return;
+ const reply=event.ports&&event.ports[0];
+ event.waitUntil((async()=>{
+  const keep=new Set([...CORE_ASSETS,...OPTIONAL_ASSETS].map(asset=>new URL(asset,self.location).href));
+  const names=(await caches.keys()).filter(name=>name.startsWith('gpsepedia-cache-'));
+  let removedCount=0,preservedCount=0;
+  for(const name of names){
+   const cache=await caches.open(name);
+   const requests=await cache.keys();
+   for(const request of requests){
+    if(keep.has(request.url)){preservedCount++;continue;}
+    if(await cache.delete(request))removedCount++;
+   }
+  }
+  if(reply)reply.postMessage({status:'success',removedCount,preservedCount});
+ })().catch(error=>{
+  if(reply)reply.postMessage({status:'error',message:error&&error.message?error.message:'No se pudo limpiar Cache Storage.'});
+ }));
+});
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET')return;
  const networkResponse=fetch(event.request);
