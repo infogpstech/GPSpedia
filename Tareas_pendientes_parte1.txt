@@ -444,7 +444,14 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Origen:** H-AUD-029-003 y H-AUD-029-008. **Prioridad:** Alta.
 - **Problema:** cada lote reescribe todos los resultados acumulados bajo una sola clave local compartida entre pestañas. No hay aislamiento por auditId ni coordinación de dos ejecuciones concurrentes.
 - **Criterios de aceptación:** almacenar metadatos/cursor separados de resultados; persistir páginas o archivos incrementalmente con clave estable; evitar duplicados; mantener recuperación coherente ante fallo entre lote y metadatos; aislar auditorías por ID; impedir que dos pestañas sobrescriban progreso sin aviso; migrar de DB_VERSION 4 sin perder el estado existente.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- **Resultado:** el estado local se separa en metadatos/cursor, páginas por auditId y confirmaciones de inventario; cada lote y sus metadatos se escriben en una sola transacción IndexedDB.
+- Las páginas se guardan incrementalmente, se validan mediante firma y se reconstruyen sin duplicar IDs. Páginas ausentes o alteradas bloquean la reanudación.
+- La revisión por auditoría implementa compare-and-swap: dos pestañas que parten de la misma revisión no pueden sobrescribir progreso sin aviso. El puntero de última auditoría respeta la fecha real de inicio.
+- La migración diferida de DB_VERSION 4 convierte el estado legado en páginas; elimina el registro anterior solo después de confirmar la transacción. Un fallo conserva el registro legado.
+- La limpieza se limita al propietario, usa token de exclusión y permite recuperar marcadores de limpieza interrumpida al abrir el modal.
+- La UI envía auditId, createdAt, revisión, índice y contenido del lote; el inventario se correlaciona con el mismo auditId.
+- AdminDriveAuditIndexedDB.mjs: 13 casos incorporados a RunServiceTests.mjs.
 
 ### AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración
 - **Origen:** H-AUD-029-004. **Prioridad:** Media.
