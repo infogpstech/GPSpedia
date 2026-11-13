@@ -1210,3 +1210,20 @@ Estado: RESUELTO.
 
 Validación: GitHub Actions run 43449918635 SUCCESS; InboxConversations 28/28, InboxUi 15/15, Coordinador compartido 34/34; 60 suites, 849 pruebas, 0 fallos. Node.js --check PASS. No se ejecutaron Apps Script/Spreadsheet reales, despliegues, endpoints operativos ni datos productivos; esos escenarios quedan para Beta aislada.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-022-004 / AUG-150 — 2026-11-13
+Severidad: Baja — diagnóstico y trazabilidad de errores en consola ADMIN.
+Estado: RESUELTO EN FUENTES; VALIDACIÓN NODE/CI APROBADA; BETA DIFERIDA.
+
+Evidencia: la tarea AUG-150 registra que la ruta individual asignaba literalmente HTTP 500 a cualquier excepción y que las dos ramas del ternario de la ruta por lotes devolvían 500. El origen H-AUD-022-004 se conserva según el backlog; no se encontró una entrada independiente con ese identificador en Auditoría.txt ni en los dos archivos de Auditoria_Archive, por lo que esta adenda incorpora la resolución sin reconstruir un hallazgo histórico no disponible.
+
+Resolución:
+- api-config.js crea errores estructurados con kind, code, httpStatus, hasHttpResponse y causa; el alias status se conserva solo cuando hubo una respuesta HTTP no exitosa.
+- Se distinguen error HTTP, fallo de red/sin respuesta, cancelación o timeout, cuerpo ilegible, JSON inválido y error lógico status:error. Los errores de sesión se clasifican como aplicación.
+- ui.js presenta el código HTTP real en las rutas individual y por lotes; cuando no hubo respuesta indica que no existe status HTTP verificable. Se eliminó el ternario que siempre devolvía 500 y se corrigió la recomendación de recuperación según el tipo.
+- Services/Test/RouteActionErrors.mjs prueba las respuestas 401, 403, 404, 500, desconexión, timeout, JSON inválido, error de aplicación, respuesta sin objeto, lectura de cuerpo y éxito.
+
+Validación: GitHub Actions run 43452605704 SUCCESS; RouteActionErrors 12/12; 61 suites; 861/861 pruebas; Node.js --check PASS. Beta pendiente para validación visual con respuestas reales de Apps Script y desconexiones. No se ejecutaron operaciones administrativas ni endpoints productivos.
+================================================================================

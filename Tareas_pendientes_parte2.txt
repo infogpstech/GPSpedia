@@ -669,3 +669,24 @@ Validación Node.js/CLI y GitHub Actions:
 
 Beta pendiente: Spreadsheet/Apps Script aislados, configuración real de URL/secreto del coordinador en cada proyecto, concurrencia física entre despliegues, navegador real (móvil/escritorio, foco, lector de pantalla, contraste, scroll), IndexedDB/almacenamiento y comportamiento con desconexiones. No se ejecutaron deployments, endpoints operativos ni datos productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-150 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resolución:
+- routeAction propaga RouteActionError con kind, code, httpStatus y hasHttpResponse; conserva status como alias únicamente para errores HTTP reales.
+- Se distinguen HTTP no exitoso, falta de respuesta, cancelación/timeout, lectura de cuerpo fallida, JSON inválido, respuesta JSON no válida y status:error de aplicación.
+- Los errores de red/abort no reciben un código HTTP inventado; las respuestas inválidas y los rechazos de aplicación conservan el status HTTP realmente recibido, incluso cuando es 200.
+- La consola ADMIN usa el mismo formateador para las rutas individuales y por lotes. Elimina los valores literales 500 y el ternario que devolvía 500 en ambas ramas; los mensajes de recuperación dependen del tipo de error.
+- La validación de sesión rechazada se clasifica como error de aplicación sin inventar status. Las métricas conservan outcome y httpStatus.
+
+Pruebas:
+- RouteActionErrors.mjs: 12/12 PASS; incluye HTTP 401/403/404/500, desconexión, ausencia de Response, timeout/AbortError, lectura fallida, JSON inválido, status:error, arrays inválidos, sesión rechazada y éxito.
+- GitHub Actions run 43452605704 SUCCESS: 61 suites; 861/861 pruebas; 0 fallos.
+- Node.js --check PASS en los archivos JavaScript modificados.
+- Se verificó el log de consola ADMIN para las rutas individual y por lotes; los errores no muestran HTTP 500 por defecto.
+
+Beta pendiente: comprobar desde navegador real la presentación de mensajes ADMIN ante errores HTTP de Apps Script, desconexiones y expiración de sesión; confirmar compatibilidad de AbortSignal/timeout en navegadores objetivo. No se ejecutaron deployments ni endpoints productivos.
+================================================================================

@@ -1013,3 +1013,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Archivos de código: Services/InboxConversations.js, Services/feedback.js, Services/Coordinator.js, ui.js, api-config.js, index.html y style.css. Pruebas: Services/Test/InboxConversations.mjs, InboxUi.mjs, SharedMutationCoordinator.js y RunServiceTests.mjs. Documentación: README.md, Services/Test/README.md y Services/COORDINATOR_SETUP.md.
 - GitHub Actions run 43449918635 SUCCESS: 60 suites, 849/849 PASS; Node.js --check PASS. Beta real diferida; sin deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-150 — Diagnóstico de errores HTTP y de aplicación en consola ADMIN
+- api-config.js: RouteActionError estructurado (kind, code, httpStatus, hasHttpResponse, cause); conserva el status real solo cuando corresponde y clasifica red, abort/timeout, HTTP, cuerpo ilegible, JSON inválido y status:error de aplicación.
+- ui.js: runAction individual y por lotes presentan el status real o indican que no hubo respuesta HTTP; eliminados los 500 literales y el ternario defectuoso. Los mensajes de recuperación distinguen error HTTP, red, aplicación y respuesta inválida.
+- ensureSessionTouched_ clasifica la sesión inválida como error de aplicación sin inventar status; las métricas registran outcome/httpStatus reales.
+- Prueba nueva Services/Test/RouteActionErrors.mjs integrada en RunServiceTests; Services/Test/README.md actualizado.
+- GitHub Actions run 43452605704 SUCCESS: RouteActionErrors 12/12; 61 suites, 861/861 PASS; Node.js --check PASS. Beta real diferida; sin deployments ni endpoints productivos.
+================================================================================

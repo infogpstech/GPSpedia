@@ -1687,3 +1687,4 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - `RouteActionErrors.mjs` ejecuta el `routeAction` real aislado con respuestas HTTP 401/403/404/500, ausencia de respuesta, cancelación/timeout, JSON inválido, fallo al leer el cuerpo y `status:error` de aplicación.
 - Verifica que solo se exponga un status HTTP realmente recibido, que las métricas conserven el resultado y que las rutas individual y por lotes de ADMIN usen el mismo diagnóstico sin asignar 500 por defecto.
 - Ejecutar con `node --experimental-default-type=module Services/Test/RouteActionErrors.mjs` o mediante el grupo integrado de `RunServiceTests.mjs`.
+- Resultado verificado: RouteActionErrors 12/12 PASS; GitHub Actions run 43452605704 SUCCESS, 61 suites y 861/861 pruebas; Node.js --check PASS.

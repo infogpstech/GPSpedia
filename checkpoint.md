@@ -1257,3 +1257,25 @@ Beta pendiente: Spreadsheet/Apps Script aislados, secretos/URL del coordinador e
 
 Siguiente tarea pendiente del backlog: AUG-150 — Reportar correctamente errores HTTP, de red y de aplicación en consola ADMIN (prioridad baja; no era dependencia de AUG-152).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-150 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de implementación y pruebas: 149c634eed1482f34916f809b3c00d6ee5eed078.
+Commit de implementación: 462611bfe59ceaee6a1410c3fb886d5b3a34c574.
+Commit de ajuste de recuperación de respuesta inválida: 149c634eed1482f34916f809b3c00d6ee5eed078.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+AUG-150 corrige la clasificación de errores en routeAction y su presentación en la consola ADMIN. Los errores estructurados conservan kind/code/httpStatus/hasHttpResponse; HTTP 401/403/404/500 se muestran con su código real; las fallas sin respuesta y los abortos no reciben un status inventado; JSON inválido y status:error de aplicación conservan el status HTTP recibido. La validación de sesión rechazada también se identifica como error de aplicación sin asumir un status.
+
+Las rutas individual y por lotes comparten el mismo formateador. Se retiraron los 500 literales y el ternario que asignaba 500 en ambas ramas. Los mensajes de recuperación distinguen red, HTTP, aplicación y respuesta inválida.
+
+Pruebas: RouteActionErrors 12/12 PASS. GitHub Actions run 43452605704 SUCCESS: 61 suites, 861/861 pruebas, 0 fallos; Node.js --check PASS. El run incluye los cambios de implementación y la última corrección de mensajes.
+
+Beta pendiente: navegador real, respuestas de Apps Script para 401/403/404/500, desconexiones y expiración de sesión, timeout/AbortSignal en navegadores objetivo. No se ejecutaron deployments, operaciones administrativas ni endpoints productivos.
+
+Continuidad: AUG-152 y AUG-150 quedan cerradas en esta iteración. El checkpoint no designa otra tarea activa posterior a AUG-150; antes de abrir trabajo nuevo, seleccionar la siguiente prioridad vigente del backlog sin reactivar tareas históricas ya cerradas.
+================================================================================
