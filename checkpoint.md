@@ -699,5 +699,5 @@ Validación y límites:
 - No se ejecutó regresión funcional porque el cambio fue documental.
 
 Archivos: README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt y checkpoint.md.
-Siguiente tarea: AUG-136 — Unificar utilidades compartidas de Drive, nomenclatura e imágenes.
+Siguiente tarea pendiente: AUG-137 — Retirar funciones huérfanas y markup de depuración obsoleto. AUG-136 ya figura como COMPLETADA CON VALIDACIÓN DIFERIDA en el backlog.
 ================================================================================
