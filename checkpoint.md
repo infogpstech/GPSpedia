@@ -1940,3 +1940,37 @@ Estado: ambas tareas locales completadas; validación real diferida a Beta.
 - Sin deployment ni operaciones sobre recursos productivos.
 
 ================================================================================
+
+
+================================================================================
+## Checkpoint de validación automatizada — 2026-11-13
+
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Commit con el resultado de validación: be84f58297954e63d68e25299e0c87d8ad4fd721
+Rama base observada: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+### Ejecución real en GitHub Actions
+- Workflow: .github/workflows/service-tests.yml
+- Ejecución #427: https://github.com/infogpstech/GPSpedia/actions/runs/43518216803
+- Ejecución de confirmación documental: https://github.com/infogpstech/GPSpedia/actions/runs/43518279538
+- Ambas ejecuciones finalizaron SUCCESS.
+- Runtime: Node.js 22 en ubuntu-latest.
+- Verificación de repositorio, rama autorizada y árbol limpio: PASS.
+- node --check ui.js, offline.js y Services/admin.js: PASS.
+- Runner Services/Test/RunServiceTests.mjs: 74 suites, 1124 pruebas PASS, 0 fallos.
+- La segunda ejecución, sobre el commit que incorpora el informe de resultados, repitió 74 suites / 1124 PASS / 0 fallos.
+
+### Artefactos de evidencia
+- Plan_auditoría/Validacion_Servicios_2026-11-13.md registra el alcance, los SHA, los enlaces y las observaciones.
+- El resultado se obtuvo de los logs de GitHub Actions; no es una inferencia por inspección estática.
+
+### Advertencias y límites
+- El runner emitió una advertencia deprecatoria de Node.js sobre punycode; no afectó las pruebas.
+- GitHub advirtió que actions/checkout@v4 y actions/setup-node@v4 serán forzadas a Node.js 24 por la retirada de Node.js 20 en runners.
+- Esta suite no reemplaza la validación Beta de integraciones reales. Permanecen diferidas las pruebas que requieren deployments aislados de Google Apps Script, Spreadsheet/Drive, OAuth/Drive API, navegador físico, IndexedDB real o concurrencia entre pestañas/dispositivos.
+- No se utilizaron endpoints ni datos productivos.
+
+Estado: REGRESIÓN LOCAL/CI COMPLETADA Y APROBADA (1124/1124). VALIDACIÓN BETA EXTERNA SIGUE DIFERIDA.
+================================================================================
