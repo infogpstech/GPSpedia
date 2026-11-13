@@ -1022,3 +1022,24 @@ La nota histórica que describía UTILITIES como servicio sin coordinación inte
 
 Estado AUG-003: COMPLETADA CON VALIDACIÓN DIFERIDA. Esta adenda no reescribe ni altera entradas históricas.
 ================================================================================
+
+
+================================================================================
+ADENDA DE REVISIÓN DE IMPLEMENTACIÓN — AUG-018 — 2026-11-13
+
+H-AUD-074-001 — MEDIA — CORREGIDO
+Ubicación: ui.js, runAction() y createBackup().
+Evidencia: la rama genérica de respuesta distinta de success registraba como error cualquier respuesta no terminal y no devolvía el objeto. Las respuestas status=in_progress y status=error con resumable=true se convertían en undefined.
+Impacto: la interfaz no podía continuar automáticamente los lotes de backupDrive ni conservar el ID de una operación reanudable; el backend sí persistía el manifiesto.
+Corrección: runAction devuelve explícitamente las respuestas intermedias y los errores marcados como reanudables solo para backupDrive. createBackup conserva el ID, limita las continuaciones automáticas y habilita el control de reanudación.
+Validación: AdminBackupResumeUI 8/8 PASS; GitHub Actions run 43423497570 verificó la suite antes del último ajuste de colisión de nombre.
+
+H-AUD-074-002 — ALTA — CORREGIDO
+Ubicación: Services/admin.js, adminRestoreMoveFolderContents_().
+Evidencia: el helper de movimiento excluía por nombre todos los archivos llamados GPSpedia_DRIVE_MANIFEST.json cuando el origen era una carpeta de rollback. Drive permite nombres repetidos; un archivo legítimo del usuario con ese mismo nombre podía omitirse y perderse al retirar la carpeta de rollback.
+Impacto: posible pérdida de un recurso legítimo durante una restauración o reversión.
+Corrección: la exclusión del manifiesto utiliza únicamente su ID registrado en la descripción del contenedor o el marcador exacto del archivo. Se eliminó la exclusión genérica por nombre.
+Validación: se añadió regresión dinámica que incluye un archivo legítimo con el mismo nombre dentro de una carpeta de rollback; CI final pendiente sobre el HEAD actualizado.
+
+Ambos hallazgos se corrigieron dentro de AUG-018; no requieren tareas independientes. No se ejecutaron DriveApp, SpreadsheetApp, Apps Script desplegado ni recursos productivos.
+================================================================================
