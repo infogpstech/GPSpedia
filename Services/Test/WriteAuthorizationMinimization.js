@@ -33,6 +33,12 @@ function runWriteAuthorizationMinimizationTests(sources) {
   assert(inner.includes("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)"));
   assert(inner.indexOf("getAuthenticatedCollaborator")<inner.indexOf("getSpreadsheet()"));
  });
+
+ run("WRITE declara contratos locales idénticos a AUTH para Users y ActiveSessions",()=>{
+  assert(/const COLS_USERS = Object.freeze\\(\\{[\\s\\S]*?ID: 1,[\\s\\S]*?Privilegios: 4,[\\s\\S]*?Nombre_Completo: 7,[\\s\\S]*?SessionToken: 8/.test(write));
+  assert(/const COLS_ACTIVE_SESSIONS = Object.freeze\\(\\{[\\s\\S]*?ID_Usuario: 1,[\\s\\S]*?ActiveSessions: 3,[\\s\\S]*?date: 4,[\\s\\S]*?LastActivityAt: 6/.test(write));
+  assert(write.includes('const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:"'));
+ });
  run("El perfil servidor determina nombre y rol; no se confía en colaborador enviado",()=>{
   const helper=extract(write,"getAuthenticatedCollaborator");
   assert(helper.includes("tokenMatches.length!==1")&&helper.includes("ID_Usuario")&&helper.includes("getSessionExpirationStatus_"));
@@ -51,10 +57,10 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("allocateVehicleId rechaza colaborador ordinario sin incrementar contador",()=>{
   const auth=extract(write,"assertDeveloperForIdMaintenance"),handler=extract(write,"handleAllocateVehicleId");
   let count=0,role="tecnico",locked=0;
-  const getAuth=()=>true,users={getDataRange:()=>({getValues:()=>[["id","user","role"],["U1","tech",role]]})};
+  const getAuth=()=>true,users={getDataRange:()=>({getValues:()=>[["id","user","password","role"],["U1","tech","",role]]})};
   const deps={
    getAuthenticatedCollaborator:getAuth,getSpreadsheet:()=>({getSheetByName:()=>users}),
-   SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:3}
+   SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:4}
   };
   const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
   const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",
@@ -64,7 +70,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
  });
  run("allocateVehicleId permite solo perfil Desarrollador verificado en Users",()=>{
   const auth=extract(write,"assertDeveloperForIdMaintenance"),handler=extract(write,"handleAllocateVehicleId");
-  const users={getDataRange:()=>({getValues:()=>[["id","user","role"],["U1","dev","Desarrollador"]]})};
+  const users={getDataRange:()=>({getValues:()=>[["id","user","password","role"],["U1","dev","","Desarrollador"]]})};
   const deps={getAuthenticatedCollaborator:()=>true,getSpreadsheet:()=>({getSheetByName:()=>users}),SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:3}};
   const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
   let calls=0;const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",handler+";return handleAllocateVehicleId;")(
