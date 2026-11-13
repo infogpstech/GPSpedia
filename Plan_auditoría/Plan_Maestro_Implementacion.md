@@ -287,3 +287,18 @@ Se corrige la atribución histórica de commits de la ficha técnica imprimible 
 - `04c86ce64f98b9e65d2dd0d82ed2d3ee3a2be51b` — `feat: adapt print sheet image layout and prioritize recommended cut`; modifica `ui.js` en la recopilación, prioridad y representación de los cortes de la ficha imprimible.
 
 Los tres diffs anteriores fueron inspeccionados y sus archivos modificados se limitan a `ui.js`, con cambios dentro del flujo de impresión. Esta adenda constituye la corrección activa de trazabilidad; no se altera ni se sustituye el archivo legacy original.
+
+
+## 16. Adenda de cierre — AUG-003 — Contrato y coordinación de UTILITIES — 2026-11-13
+
+**Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Se cerró el análisis del contrato y del alcance real de `Services/Utilities.js` con implementación de coordinación compartida.
+
+- **Ruta y consumidor:** `api-config.js` mapea `migrateTimestamps` a `UTILITIES`; el dispatcher acepta únicamente esa acción y ahora la dirige al handler canónico `migrateTimestamps()`. No se encontraron llamadas en los consumidores frontend versionados revisados; se conserva la ruta operativa/manual y no se inventa un consumidor de interfaz.
+- **Recursos leídos:** `Users` y `ActiveSessions` para validar sesión/rol; `Cortes`, columna I, para obtener las URLs; metadatos de Drive para resolver fechas.
+- **Recursos escritos:** `Hoja 1`, columna A, y hojas temporales de staging/backup. UTILITIES no modifica Cortes ni Drive.
+- **Coordinación:** `Services/Coordinator.js` v1.1.2 autoriza el servicio UTILITIES y su acción `migrateTimestamps`. La política reserva lectura de `USERS`, `ACTIVE_SESSIONS`, `CORTES` y `DRIVE`, y escritura del recurso lógico `UTILITIES`. El servicio obtiene la lease compartida antes del ScriptLock local; los errores de configuración, transporte, autorización o lease ocupada fallan cerrados. La liberación se intenta en `finally`; si no se confirma, la lease expira según el TTL central de 45 minutos.
+- **Conflictos cubiertos:** cambios de identidad, escrituras de Cortes/Drive y mantenimiento integral ADMIN (backup/restore DB) no pueden ejecutarse en paralelo con la migración.
+- **Documentación y pruebas:** actualizados `Services/COORDINATOR_SETUP.md`, `Services/Test/README.md` y el runner. UtilitiesSecurity 17/17, SharedMutationCoordinator 33/33 y ActionDispatchContract 12/12 PASS. Parsing V8 de las fuentes modificadas: PASS.
+- **Límites:** no se desplegó el coordinador ni el proyecto UTILITIES, no se alteraron ScriptProperties productivas y no se accedió a Spreadsheet/Drive reales. La configuración de los dos proyectos y la concurrencia real entre deployments quedan diferidas a Beta.
+
+La dependencia de coordinación declarada por AUG-018 queda resuelta a nivel de código y pruebas locales. La siguiente tarea del plan es AUG-018, restauraciones recuperables y verificación integral de respaldos DB/Drive.
