@@ -854,3 +854,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Imagen ampliada recupera límite de 620 px dentro del wrapper. No se cambió el papel, los márgenes ni el algoritmo de paginación.
 - Nueva suite PrintSheetLayoutModes con nueve contratos e integración al runner.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-145 — CIERRE Y VALIDACIÓN
+- Se restableció la semántica distinta de Automática, Horizontal, Vertical e Imagen ampliada mediante reglas específicas posteriores a los límites generales del wrapper.
+- Automática conserva agrupación adaptativa; Horizontal mantiene texto/imagen en columnas; Vertical fuerza imagen debajo del texto; Imagen ampliada conserva hasta 620 px.
+- CI run 43418371583 SUCCESS, Node.js 22.23.4: 25 suites, 331/331 PASS, 0 fallos; PrintSheetLayoutModes 9/9 PASS.
+- Verificación visual en navegadores/PDF con combinaciones reales queda para Beta.
+================================================================================

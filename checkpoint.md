@@ -919,3 +919,15 @@ Implementación: reglas específicas de Vertical e Imagen ampliada añadidas des
 Suite: Services/Test/PrintSheetLayoutModes.mjs (9 contratos, incluye node --check), integrada en INTEGRATION.
 Estado: EN PROGRESO hasta CI.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-145 — 2026-11-13
+HEAD validado por CI: 0af1c207456b88274843cc44c16c7c3903587807.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Modos Automática, Horizontal, Vertical e Imagen ampliada diferenciados con reglas de cascada dentro del documento de impresión.
+- Automática conserva clases adaptativas; Horizontal usa columnas; Vertical fuerza una columna y orden texto-imagen; Imagen ampliada usa una columna y max-height 620 px.
+- CI run 43418371583 SUCCESS; Node.js 22.23.4; 25 suites, 331/331 PASS; PrintSheetLayoutModes 9/9 PASS.
+- Beta: comparar combinaciones de imágenes/texto en preview/PDF y comprobar recortes/overflow reales.
+Siguiente tarea: AUG-146 — Corregir referencias históricas de AUD-T-021 en el plan maestro.
+================================================================================
