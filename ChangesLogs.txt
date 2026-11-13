@@ -1078,3 +1078,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - AdminSheetActionsContract 9/9 PASS. GitHub Actions run 43460720098 SUCCESS: 67 suites, 928/928 pruebas PASS; node --check admin.js PASS.
 - No se retiraron handlers ni rutas por falta de evidencia de consumidores externos. Beta aislada pendiente.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-024 — Contrato y clasificación de salud de microservicios
+- Se definió un contrato JSON con identidad, versión y estado para los siete servicios fuente versionados; los endpoints debug de backend se limitan a metadatos públicos mínimos y MIME JSON.
+- LEGACY y cualquier servicio sin identidad configurada quedan unknown sin consulta de red; una respuesta HTTP 2xx nunca basta para declararlo online.
+- checkAllServicesHealth aplica timeout individual, umbral slow, vigencia stale, validación estricta de identidad/estado/versión y conserva HTTP/motivos seguros. El ping ADMIN tiene timeout independiente y no bloquea el escaneo.
+- El panel muestra seis estados, HTTP, motivo, última respuesta válida y advierte que el estado del endpoint no prueba dependencias internas Sheets/Drive.
+- Services/SERVICE_HEALTH.md documenta contrato, umbrales, límites de confianza y validaciones Beta.
+- No se consultaron ni modificaron deployments o datos productivos.
+================================================================================

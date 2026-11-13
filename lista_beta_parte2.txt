@@ -1624,3 +1624,27 @@ AUG-023 — Validación de acciones ADMIN internas createSheet/addColumn
 6. Antes de cualquier deprecación futura, revisar scripts externos no versionados que consuman las acciones. Esta tarea no las retira.
 No usar Spreadsheet, deployments ni cuentas productivas.
 ================================================================================
+
+================================================================================
+AUG-024 — Validación Beta de contratos de salud y deployments
+
+Antes de ejecutar cualquier prueba, sincronizar de forma segura la rama autorizada. Desde el directorio local del repositorio GPSpedia:
+
+```sh
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; conservarlos y detener la sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. En un entorno aislado, consultar AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN con `?debug=true`; comprobar HTTP, MIME JSON, identidad exacta, versión y estado. Comparar cada respuesta con `Services/SERVICE_HEALTH.md` y el código fuente desplegado.
+2. Verificar que cada ID configurado en api-config.js corresponde al proyecto/versión esperados y que no se ejecuta una versión anterior. No modificar ni redeplegar desde esta prueba.
+3. Comprobar que las respuestas públicas no contienen spreadsheetId, driveFolderId, cacheKey, nombres de hojas, estructura interna, stack traces, tokens, contraseñas ni secretos. No guardar cuerpos que contengan datos sensibles.
+4. Confirmar que LEGACY permanece unknown hasta obtener identidad y contrato verificables; no inferir identidad por HTTP 2xx ni por el nombre de la URL.
+5. Simular en entorno aislado HTTP 4xx/5xx, timeout, red desconectada, cuerpo vacío, HTML, JSON inválido, objeto/estado/identidad desconocidos y respuesta lenta; confirmar aislamiento entre servicios.
+6. Si existe una fuente de solo lectura aprobada para Sheets/Drive, verificarla por separado del estado HTTP del endpoint. No introducir escrituras ni operaciones de migración/backup como pruebas de salud.
+7. Confirmar que el ping ADMIN puede fallar o agotar timeout sin impedir que el resto del escaneo termine; comprobar que el panel muestra código HTTP, estado, motivo y última respuesta válida.
+
+No usar cuentas de usuarios finales, hojas/archivos productivos ni deployments operativos para pruebas destructivas. No cambiar ACL ni publicar versiones durante esta validación.
+================================================================================

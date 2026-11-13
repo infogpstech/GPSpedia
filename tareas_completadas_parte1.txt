@@ -501,3 +501,12 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Pruebas:** AdminSheetActionsContract 9/9 PASS; GitHub Actions run 43460720098 SUCCESS, 67 suites, 928/928 PASS; node --check Services/admin.js PASS.
 - **Commit:** d1443c147788e9732d775f7bdc1c276b27ba515c.
 - **Beta:** Spreadsheet/Apps Script aislados, roles, lease, auditoría y errores de escritura. No se retiraron handlers ni rutas.
+
+
+### AUG-024 — Contrato de salud e identidad de microservicios
+- **Estado:** COMPLETADA LOCALMENTE; validación de deployments diferida a Beta.
+- **Implementación:** contratos JSON con identidad y estado para AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN; redacción de IDs/estructura interna en endpoints debug; LEGACY y claves sin identidad verificable permanecen unknown y no se consultan.
+- **Clasificación:** online/slow/unavailable/error/unknown/stale; timeout individual 8 s, umbral slow 2 s, vigencia stale 5 min y ping ADMIN 5 s independiente del escaneo.
+- **Interfaz:** muestra HTTP, latencia, última respuesta válida, código de diagnóstico y explicación segura. Se aclara que el endpoint no demuestra disponibilidad interna de Sheets/Drive.
+- **Pruebas:** ServiceHealthContract y GitHub Actions run 43463464379 SUCCESS. Los resultados exactos de suite se registran tras la nueva ejecución que incluye los cambios finales.
+- **Beta:** comprobar identidad y versión de deployments reales, MIME/contrato público, redacción y comportamiento de red/timeout en entorno aislado. No se modificaron deployments.

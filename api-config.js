@@ -459,7 +459,14 @@ export async function checkAllServicesHealth(options = {}) {
         let result;
 
         try {
-            if (typeof fetchImpl !== "function") {
+            if (expectedIdentity === undefined || expectedIdentity === null) {
+                result = makeResult("unknown", startTime, now(), {
+                    errorCode: expectedIdentity === null ? "HEALTH_IDENTITY_UNVERIFIED" : "HEALTH_CONTRACT_UNDEFINED",
+                    error: expectedIdentity === null
+                        ? "El deployment LEGACY es externo y no tiene una identidad verificable desde este repositorio; no se consulta."
+                        : "No existe un contrato de identidad configurado para este servicio; no se consulta."
+                });
+            } else if (typeof fetchImpl !== "function") {
                 const checkedAtMs = now();
                 result = makeResult("error", startTime, checkedAtMs, {
                     errorCode: "FETCH_UNAVAILABLE",
@@ -530,20 +537,6 @@ export async function checkAllServicesHealth(options = {}) {
                                 httpStatus,
                                 errorCode: "INVALID_HEALTH_JSON",
                                 error: "La respuesta está vacía, no es JSON válido o no contiene un objeto de estado."
-                            });
-                        } else if (expectedIdentity === undefined) {
-                            result = makeResult("unknown", startTime, checkedAtMs, {
-                                latency,
-                                httpStatus,
-                                errorCode: "HEALTH_CONTRACT_UNDEFINED",
-                                error: "No existe un contrato de identidad configurado para este servicio."
-                            });
-                        } else if (expectedIdentity === null) {
-                            result = makeResult("unknown", startTime, checkedAtMs, {
-                                latency,
-                                httpStatus,
-                                errorCode: "HEALTH_IDENTITY_UNVERIFIED",
-                                error: "El deployment LEGACY es externo y no tiene una identidad verificable desde este repositorio."
                             });
                         } else if (data.service !== expectedIdentity) {
                             result = makeResult("unknown", startTime, checkedAtMs, {

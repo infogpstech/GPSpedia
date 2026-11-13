@@ -1488,3 +1488,41 @@ Beta pendiente: probar creación y alta de columna en Spreadsheet aislada con se
 
 Siguiente tarea: AUG-024 — Robustecer el contrato de health check y la clasificación de estados de microservicios. Revisar acceso a fuentes/deployments antes de definir cambios; no asumir que los endpoints externos versionados en api-config.js son verificables desde el repositorio.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-024 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de trabajo al preparar el cierre: c279b6b8e06727253864f70b08025c99d7550899
+PR #128: abierto, Draft.
+
+Estado: COMPLETADA LOCALMENTE; validación externa diferida a Beta.
+
+Resultado:
+- checkAllServicesHealth valida identidad, estado y versión opcional, JSON objeto, código HTTP y latencia; clasifica online, slow, unavailable, error, unknown y stale.
+- Timeout individual: 8 s; slow: >=2 s; stale: último resultado válido con más de 5 min; ping ADMIN: 5 s, independiente del escaneo.
+- LEGACY y cualquier servicio sin identidad configurada quedan unknown sin solicitud de red.
+- Los endpoints debug de AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN informan solo identidad/versión/estado y JSON. CATALOG/WRITE retiraron IDs y estructura interna; USERS incorpora endpoint mínimo.
+- El panel presenta HTTP, código/explicación, última respuesta válida y seis estados; aclara que el endpoint no prueba la disponibilidad interna de Sheets/Drive.
+- Services/SERVICE_HEALTH.md define contrato, umbrales, estados, límites de confianza y Beta.
+- No se modificaron deployments, ACL ni datos productivos.
+
+Archivos de implementación modificados: api-config.js, ui.js, style.css, Services/Auth.js, Services/catalog.js, Services/write.js, Services/users.js, Services/feedback.js, Services/Utilities.js, Services/admin.js, Services/Test/Auth.js, Services/Test/users.js.
+Archivos de cierre: Services/SERVICE_HEALTH.md, Services/Test/ServiceHealthContract.mjs, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, Auditoría.txt, lista_beta_parte2.txt y checkpoint.md.
+
+Validación:
+- GitHub Actions run 43463464379 SUCCESS en HEAD previo a la corrección final de no consultar servicios sin identidad.
+- ServiceHealthContract y suite completa se volverán a ejecutar tras el commit final.
+- No se consultaron deployments reales ni se ejecutaron pruebas de Apps Script/Sheets/Drive.
+
+Beta pendiente:
+- Verificar identidad/versión/MIME de deployments reales de los siete servicios y la ausencia de metadatos sensibles.
+- Confirmar LEGACY desconocido hasta que exista identidad verificable.
+- Probar fallos HTTP/red/timeout, cuerpo inválido, respuesta lenta y aislamiento de servicios.
+- Si existe fuente segura aprobada, probar dependencias Sheets/Drive por separado.
+- No usar recursos productivos.
+
+Siguiente tarea: AUG-025 — Corregir vigencia y precisión temporal de la telemetría local.
+================================================================================

@@ -1738,3 +1738,7 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - Los contratos de depuración versionados de AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN se revisan por identidad, versión y estado. LEGACY es externo/no versionado y debe permanecer unknown hasta que se aporte identidad verificable.
 - Ejecutar: `node --experimental-default-type=module Services/Test/ServiceHealthContract.mjs`.
 - Las pruebas no consultan endpoints desplegados. La identidad/versiones y el contrato real de cada deployment, especialmente LEGACY, requieren validación Beta aislada.
+
+
+- `Services/SERVICE_HEALTH.md` documenta identidades fuente, umbrales, semántica de estados, límites de confianza, LEGACY y validación Beta pendiente.
+- Los endpoints sin identidad versionada (incluido LEGACY) se clasifican `unknown` sin emitir solicitudes de red.

@@ -1244,3 +1244,13 @@ Resolución:
 
 No se eliminan handlers ni se declara que no existan consumidores externos: esos consumidores no pueden enumerarse desde el repositorio. La retirada futura requiere inventario y autorización separados. La prueba con Spreadsheet/Apps Script aislados queda para Beta.
 ================================================================================
+
+
+================================================================================
+AUG-024 — Revisión de contrato de salud y metadatos debug — 2026-11-13
+Se revisaron las siete fuentes versionadas AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN. Los endpoints debug entregan identidad, versión y estado sin IDs de Spreadsheet/Drive, nombres de hojas ni claves de caché; se normalizó MIME JSON donde era inconsistente. CATALOG y WRITE retiraron metadatos internos que antes devolvían. USERS incorpora un endpoint debug mínimo. LEGACY no tiene identidad verificable desde el repositorio.
+
+Limitación: el repositorio no proporciona evidencia del código actualmente desplegado ni acceso verificable a la configuración de los proyectos Apps Script. No se declara conformidad de deployments ni de ACL. La comprobación real queda para Beta aislada.
+
+Riesgo residual: `available` confirma únicamente la respuesta del endpoint y el contrato de identidad, no la disponibilidad de Sheets/Drive. No se añadieron probes de dependencia porque no hay fuente segura y verificable de solo lectura. La UI comunica expresamente esta limitación.
+================================================================================

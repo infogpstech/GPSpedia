@@ -1328,3 +1328,14 @@ Fecha de cierre: 2026-11-13. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 - Beta: Spreadsheet aislada, roles/sesiones, lease, auditoría y comportamiento real de Apps Script; inventariar consumidores externos antes de cualquier retirada.
 Siguiente: AUG-024 — Robustecer health check y estados de servicios.
 ================================================================================
+
+
+================================================================================
+AUG-024 — Robustecer el contrato de health check y la clasificación de estados
+Estado: COMPLETADA LOCALMENTE; validación de deployments diferida a Beta.
+- Contratos de identidad/estado JSON para siete servicios fuente; LEGACY desconocido sin identidad verificable y sin consulta de red.
+- Estados online, slow, unavailable, error, unknown y stale; timeouts 8 s por servicio y 5 s para ping ADMIN; umbral slow 2 s y stale 5 min.
+- Backend debug redacted, panel con HTTP/motivo y explicación de que endpoint no implica disponibilidad Sheets/Drive.
+- Pruebas locales y GitHub Actions final a registrar en checkpoint tras el commit.
+Siguiente: AUG-025 — Corregir vigencia y precisión temporal de la telemetría local.
+================================================================================

@@ -300,7 +300,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
   7. Incorporar comprobaciones de solo lectura para Sheets/Drive únicamente cuando exista una fuente segura y verificable; separar endpoint disponible de dependencia interna comprobada.
   8. Probar éxito, HTTP 4xx/5xx, timeout, JSON inválido, HTML, cuerpo vacío, estado backend error/degraded/unknown, endpoint equivocado, dependencia no disponible y servicio lento; un fallo individual no debe bloquear los demás.
 - **Relación:** TAREA ADMIN 2 — Monitor del sistema y estado de servicios; H-AUD-026-001 a H-AUD-026-003.
-- **Estado:** NUEVA; pendiente de acceso a fuentes backend/deployments y diseño del contrato.
+- **Estado:** COMPLETADA LOCALMENTE; validación de deployments diferida a Beta. El contrato, los estados y los siete endpoints fuente versionados quedaron implementados y cubiertos por pruebas. LEGACY y cualquier clave sin contrato se omiten de la red y permanecen unknown.
 
 ### AUG-025 — Corregir vigencia y precisión temporal de la telemetría local
 - **Origen:** H-AUD-026-004 y H-AUD-026-005. **Prioridad:** Media.

@@ -115,11 +115,24 @@ await check("HTTP 200 con estado backend error/degraded no se marca online", asy
     assert.equal(degraded.status, "error");
     assert.equal(offline.status, "unavailable");
 });
-await check("LEGACY permanece unknown sin identidad de deployment verificable", async () => {
+await check("LEGACY permanece unknown y no consulta un deployment sin identidad verificable", async () => {
     assert.equal(contracts.LEGACY, null);
-    const item = await scanOne("LEGACY", response(200, { service: "Legacy", status: "available", version: "1.0" }));
+    let requested = false;
+    const item = await scanOne("LEGACY", async () => {
+        requested = true;
+        return response(200, { service: "Legacy", status: "available", version: "1.0" });
+    });
     assert.equal(item.status, "unknown");
     assert.equal(item.errorCode, "HEALTH_IDENTITY_UNVERIFIED");
+    assert.equal(requested, false);
+});
+await check("Un servicio sin contrato configurado queda unknown sin consultar un endpoint", async () => {
+    const checker = buildChecker({ UNVERIFIED: "https://unverified.invalid/exec" });
+    let requested = false;
+    const result = await checker({ fetchImpl: async () => { requested = true; return response(200, {}); } });
+    assert.equal(result.UNVERIFIED.status, "unknown");
+    assert.equal(result.UNVERIFIED.errorCode, "HEALTH_CONTRACT_UNDEFINED");
+    assert.equal(requested, false);
 });
 await check("Resultado anterior válido pasa a stale tras superar el TTL y fallar la consulta", async () => {
     const lastKnown = new Map();
