@@ -664,3 +664,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - GitHub Actions: ejecución 43363601506 completada con éxito sobre HEAD 092db7917391f48e80cd8670e6793aff61182636.
 - Resultado real en Node.js 22: 16 suites ejecutadas, 238/238 PASS, 0 fallos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-134 — PARIDAD DE MAPA, ROUTERS Y CONSUMIDORES
+- Services/Test/ActionDispatchContract.js amplía el contrato para comprobar que cada acción mapeada resuelve a una función handler declarada, que cada acción pública del router está mapeada o documentada como compatibilidad y que las acciones literales de los consumidores UI existen en el mapa.
+- Se verifica además el registro de acciones externas (servicio, consumidor y origen), las rutas de compatibilidad y el rechazo cerrado de servicios no configurados.
+- Services/Test/RunServiceTests.mjs incorpora api-config.js, add_cortes.html, auth.js, main.js, pys-data.js, ui.js, users.html y youtubeUpload.js como fuentes de consumidores del contrato.
+- Services/Test/README.md documenta cobertura y comando de ejecución.
+- No se cambiaron ACTION_TO_SERVICE_MAP, API_ENDPOINTS, routers, consumidores ni endpoints: la inspección confirmó que las 81 acciones canónicas ya estaban alineadas; el cambio hace automática la detección de divergencias futuras.
+- Validación Node.js 22/CI: pendiente.
+================================================================================

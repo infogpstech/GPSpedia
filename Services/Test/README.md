@@ -1503,3 +1503,22 @@ Las pruebas locales usan fixtures, hojas simuladas e IndexedDB simulado. No invo
 ### Adenda AUG-133 — ejecución CI verificada
 
 El workflow `GPSpedia service regression tests` ejecutó el runner con Node.js 22. La suite terminó correctamente: **16 suites, 238/238 pruebas PASS, 0 fallos**. La suite `CatalogSnapshotSync` espera explícitamente su ejecución asíncrona; su IndexedDB simulado confirma cada transacción mediante `oncomplete`, además de completar la solicitud individual.
+
+
+## AUG-134 — Contrato de acciones, routers y consumidores
+
+La suite Services/Test/ActionDispatchContract.js, ejecutada en el grupo INTEGRATION, comprueba el contrato completo entre ACTION_TO_SERVICE_MAP, API_ENDPOINTS, los routers AUTH/USERS/CATALOG/WRITE/FEEDBACK/ADMIN/UTILITIES y los consumidores de interfaz versionados.
+
+Cobertura automática:
+- Cada acción del mapa debe existir en el dispatcher de su servicio y enlazar con una función handler declarada. La respuesta inline de ADMIN/ping es la única excepción explícita.
+- Cada acción pública de los routers debe estar en el mapa canónico o en SERVICE_COMPATIBILITY_ACTIONS.
+- Las acciones literales consumidas por api-config.js, add_cortes.html, auth.js, main.js, pys-data.js, ui.js, users.html y youtubeUpload.js deben estar mapeadas.
+- Las acciones externas requieren servicio, consumidor y origen documentados en EXTERNAL_ACTIONS; logFrontend conserva su ruta LEGACY.
+- Se preservan las rutas de compatibilidad CATALOG/ADMIN y el rechazo cerrado de servicios no configurados.
+
+Ejecutar:
+~~~bash
+node Services/Test/RunServiceTests.mjs --only=INTEGRATION
+~~~
+
+La validación es estática y reproducible con las fuentes del repositorio; no llama endpoints, deployments ni datos reales. La matriz de acciones vigente no necesitó cambios funcionales: las 81 acciones del mapa ya coincidían con sus routers; el cambio añade detección automática de handlers ausentes y consumidores desincronizados.

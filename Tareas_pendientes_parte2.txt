@@ -295,9 +295,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores
 - Origen: H-AUD-019-013. Prioridad: Baja.
-- Evidencia: api-config.js:18–34; Services/write.js:169–205; Services/Utilities.js:35–45.
-- Criterios: contrato único; cada acción mapeada debe tener handler; cada handler público debe estar mapeado/documentado; prueba automática de paridad.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia: api-config.js; routers AUTH/USERS/CATALOG/WRITE/FEEDBACK/ADMIN/UTILITIES; consumidores add_cortes.html, auth.js, main.js, pys-data.js, ui.js, users.html y youtubeUpload.js.
+- Criterios cumplidos: contrato único; cada acción mapeada enlaza con un handler existente; cada handler público está mapeado o documentado como compatibilidad; consumidores literales verificados; acciones externas documentadas; prueba automática de paridad integrada en la suite INTEGRATION.
+- Resultado: las 81 acciones del mapa ya coincidían con sus routers. No se alteraron rutas ni endpoints funcionales; se reforzó el contrato para detectar futuras divergencias.
+- Validación: pendiente de ejecución Node.js 22/CI antes del cierre.
 
 ### AUG-135 — Reconciliar política de publicación de microservicios y README
 - Origen: H-AUD-019-014. Prioridad: Media.

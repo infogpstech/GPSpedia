@@ -353,3 +353,10 @@ Beta pendiente: deployments y Spreadsheet aislados, concurrencia real interproye
 ADENDA DE VALIDACIÓN — AUG-133 — 2026-11-12
 La primera ejecución CI detectó que CatalogSnapshotSync no esperaba las pruebas asíncronas y que el fixture IndexedDB no notificaba transaction.oncomplete. Se corrigió el fixture y se convirtió el arranque de la suite a top-level await. Verificación final GitHub Actions run 43363601506: Node.js 22, 16 suites, 238/238 PASS, 0 fallos. HEAD probado: 092db7917391f48e80cd8670e6793aff61182636.
 ================================================================================
+
+
+================================================================================
+AUG-134 — PARIDAD DE ACTION_TO_SERVICE_MAP, ROUTERS Y CONSUMIDORES — 2026-11-13
+Se reforzó Services/Test/ActionDispatchContract.js para validar el handler real de cada acción mapeada, la cobertura inversa de todos los handlers públicos, las rutas de compatibilidad y las acciones literales de los consumidores UI. Se incorporó el registro explícito de servicios/consumidores/origen de acciones externas. El runner INTEGRATION ahora carga las fuentes de consumidores versionados.
+La inspección confirmó 81 acciones canónicas alineadas; no fue necesario alterar rutas, handlers, endpoints ni consumidores funcionales. La validación de ejecución Node.js 22/CI se registra al cierre tras su comprobación.
+================================================================================

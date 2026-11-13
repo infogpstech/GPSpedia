@@ -645,3 +645,25 @@ ADENDA FINAL DE VERIFICACIÓN — AUG-133 — 2026-11-12
 - La rama base GPSpedia2.2.5 permanece intacta; comparación final: 1,725 commits adelante y 0 atrás.
 - Siguiente tarea: AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE IMPLEMENTACIÓN — AUG-134 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de inicio verificado: 3a75404731239df200eb48b4b098b7431a37be94.
+Estado: IMPLEMENTACIÓN EN PROGRESO; validación CI pendiente.
+
+Análisis:
+- ACTION_TO_SERVICE_MAP contiene 81 acciones; todas coinciden con sus dispatchers. Los handlers públicos de AUTH, USERS, CATALOG, WRITE, FEEDBACK, ADMIN y UTILITIES están mapeados o declarados como compatibilidad.
+- CATALOG/getSuggestion y ADMIN/checkOperation, addOrUpdateCut, addSupplementaryInfo son rutas directas históricas documentadas; logFrontend es externo y conserva consumidor users.html.
+- No se identificaron cambios funcionales de ruteo necesarios.
+
+Implementación:
+- Services/Test/ActionDispatchContract.js ahora comprueba handler declarado, paridad bidireccional router/mapa, acciones de consumidores literales, metadata de acciones externas y compatibilidad.
+- Services/Test/RunServiceTests.mjs incorpora los consumidores add_cortes.html, api-config.js, auth.js, main.js, pys-data.js, ui.js, users.html y youtubeUpload.js.
+- Services/Test/README.md y registros de tarea actualizados.
+
+Archivos previstos: Services/Test/ActionDispatchContract.js, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt y checkpoint.md.
+Pendiente: ejecutar INTEGRATION y suite completa en Node.js 22 mediante GitHub Actions; corregir cualquier fallo reproducible y volver a ejecutar las validaciones afectadas. No se han modificado endpoints, deployments ni datos productivos.
+================================================================================
