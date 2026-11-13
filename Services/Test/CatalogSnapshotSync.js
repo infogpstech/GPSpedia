@@ -37,7 +37,10 @@ function installFakeIndexedDB() {
         objectStoreNames: { contains: name => stores.has(name) },
         createObjectStore(name) { stores.set(name, new Map()); return {}; },
         transaction() {
-            return {
+            const transaction = {
+                oncomplete: null,
+                onerror: null,
+                onabort: null,
                 objectStore(name) {
                     const store = stores.get(name);
                     return {
@@ -47,6 +50,7 @@ function installFakeIndexedDB() {
                                 store.set(key, structuredClone(value));
                                 request.result = key;
                                 if (request.onsuccess) request.onsuccess();
+                                if (typeof transaction.oncomplete === 'function') transaction.oncomplete();
                             });
                             return request;
                         },
@@ -55,12 +59,14 @@ function installFakeIndexedDB() {
                             queueMicrotask(() => {
                                 request.result = store.get(key);
                                 if (request.onsuccess) request.onsuccess();
+                                if (typeof transaction.oncomplete === 'function') transaction.oncomplete();
                             });
                             return request;
                         }
                     };
                 }
             };
+            return transaction;
         }
     };
     globalThis.indexedDB = {
