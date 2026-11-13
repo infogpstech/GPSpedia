@@ -553,3 +553,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/InboxAuditTrail.js: cuatro escenarios adicionales para video_approval, tipo arbitrario, variante no exacta y ausencia de mutaciones/auditoría ante rechazo.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md actualizados.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-122 — AUTORIZACIÓN DE addSupplementaryInfo EN WRITE
+- Services/write.js: hace explícita la allowlist de roles operativos para addSupplementaryInfo; exige sesión autenticada antes y después del lock y deriva el actor del perfil Users validado en servidor.
+- La atribución del colaborador se registra en Logger; no se acepta identidad proporcionada por el cliente.
+- Services/Test/AddSupplementaryInfoIntegrity.js: añade nueve escenarios de autenticación, autorización, revocación y atribución.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md actualizados.
+================================================================================
