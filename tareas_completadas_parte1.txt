@@ -406,3 +406,13 @@ AUG-146 — CORRECCIÓN DE REFERENCIAS HISTÓRICAS DE AUD-T-021 — 2026-11-13
 - Validación documental y revisión de diffs: PASS. Sintaxis/pruebas de código: N/A por tratarse de un cambio documental.
 Estado: COMPLETADA.
 ================================================================================
+
+================================================================================
+AUG-003 — AUDITORÍA Y COORDINACIÓN DEL SERVICIO UTILITIES — 2026-11-13
+- Acción única: migrateTimestamps; ruta api-config.js -> UTILITIES; sin consumidor frontend versionado.
+- Recursos: lectura USERS/ACTIVE_SESSIONS/CORTES/DRIVE; escritura UTILITIES (Hoja 1 y staging/backup).
+- Se agregó lease compartida antes del ScriptLock local y política deny-by-default en Coordinator v1.1.2.
+- Se documentaron el orden de locks, los conflictos con AUTH/USERS/WRITE/ADMIN/FEEDBACK, el mantenimiento integral y los límites de la coordinación.
+- Pruebas: UtilitiesSecurity 17/17; SharedMutationCoordinator 33/33; ActionDispatchContract 12/12; parsing V8 PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Configuración real de proyectos Apps Script y concurrencia entre deployments quedan para Beta.
+================================================================================
