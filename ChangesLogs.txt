@@ -904,3 +904,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Validación CI: GitHub Actions run 43425740603 SUCCESS, Node.js 22.23.4, 27 suites, 351 pruebas aprobadas y 0 fallos.
 - Beta pendiente: validación real de Apps Script, Spreadsheet/Drive aislados, fallos de escritura y concurrencia entre editores.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-039 — AUTORIZACIÓN Y MINIMIZACIÓN DE DATOS EN WRITE
+- Services/write.js: define contratos locales de columnas Users/ActiveSessions; getAuthenticatedCollaborator valida token único, correspondencia userId, expiración, revocación pendiente, perfil único/activo y rol. addSupplementaryInfo autentica antes y después del lock y deriva el actor de Users.
+- ui.js y add_cortes.html: todos los consumidores suplementarios envían sesión; silentRegister mantiene ruta ADMIN y assertDeveloperSession. ADMIN solicita allocateVehicleId a WRITE con credenciales; WRITE exige rol Desarrollador en Users y revalida dentro del lock.
+- handleCheckOperation exige sesión y devuelve respuesta acotada sin rowData. opId conserva su función de correlación aleatoria de 128 bits; no se agrega vínculo de propietario al esquema Idempotencia A:F. El hash SHA-256 se conserva para verificar integridad de la operación.
+- Services/Test/WriteAuthorizationContracts.js y WriteAuthorizationMinimization.js: pruebas de asignación de IDs, cambios de rol/revocación durante el lock, consumidores frontend, router y controles existentes. Se integran también AddSupplementaryInfoIntegrity y CheckOperationSecurity en RunServiceTests.mjs.
+- Validación CI: GitHub Actions run 43426964327 SUCCESS; 34 suites, 517 pruebas PASS, 0 fallos; Node --check de módulos afectados PASS. Beta de Apps Script/Spreadsheet aislados pendiente.
+================================================================================
