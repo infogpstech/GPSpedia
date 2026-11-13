@@ -7263,7 +7263,7 @@ export async function openAuditDriveModal() {
             .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
         try {
             const inventoryResult = await routeAction('saveUnusedImagesInventory', {
-                ...getDeveloperSessionPayload(), files: unusedFiles
+                ...getDeveloperSessionPayload(), auditId: auditId, files: unusedFiles
             });
             if (!isCurrentRequest()) return;
             if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId ||
