@@ -559,8 +559,8 @@ check("La captura detiene un lote que excede el presupuesto y nunca devuelve un 
             return {getDisplayValues:slow,getValues:slow,getFormulas:slow,getRichTextValues:slow};
         }
     };
-    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
-    const scan=new Function("Date","getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+    const source=fnSource(admin,"extractDriveFileIds")+"\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("Date","getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\nreturn collectCortesImageReferences;")(
         FakeDate,()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
     assert.throws(()=>scan(false),/presupuesto temporal seguro/);
 });
