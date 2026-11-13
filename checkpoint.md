@@ -1663,3 +1663,30 @@ AUG-027 — Resultado CI 2026-11-13
 - Node.js 22.23.4, Ubuntu 26.04; 70 suites, 975 pruebas, 0 fallos de suite.
 - Enlace: https://github.com/infogpstech/GPSpedia/actions/runs/43488754071
 - El resultado no cierra AUG-027: faltan acciones de revisión manual para papelera/restauración/eliminación definitiva y validación Beta de Drive/Spreadsheet. H-AUD-027-011 abierto.
+
+
+================================================================================
+AUG-027 — checkpoint de cierre local — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+HEAD de la rama antes de este checkpoint: 96c4cf963c9eed7a49fd36eb8bef90f2fd4d267c.
+Rama: GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1. Comparación antes de este checkpoint: 2,013 commits ahead, 0 behind.
+
+Resultado de GitHub Actions:
+- Run 43491364671 SUCCESS, commit probado 0aa65f5f186880c6cd8bc95810d48884d7ec0d67.
+- 71 suites; 1,015 pruebas; 0 fallos.
+- AdminReplacedImagesIntegrity 21/21 PASS; AdminImageTrashLifecycle 40/40 PASS.
+- Evidencia: https://github.com/infogpstech/GPSpedia/actions/runs/43491364671
+
+Resultado técnico:
+- Referencias globales en todas las hojas; cobertura de valores, fórmulas, RichText, CellImage y over-grid. Las imágenes incrustadas sin ID identificable bloquean acciones destructivas.
+- Estado en_uso persistente y protección de inventario/organización.
+- requiere_revision: marca en uso, papelera, restauración desde papelera y eliminación definitiva condicionada a Drive.
+- estado_previo_papelera y eliminacion_pendiente permiten recuperación y reconciliación.
+- Drive API v3 DELETE se verifica con GET 404; restauración desde papelera no altera celdas.
+- Acciones ADMIN bajo sesión Desarrollador, lease compartida, ScriptLock y auditoría persistente.
+- UI de inventario/historial y auditoría/organización accesible desde la pestaña Imágenes y Drive del modal Desarrollador.
+
+Pendiente exclusivamente para Beta aislada: scopes/ACL OAuth reales, Spreadsheet/Drive, CellImage/OverGridImage reales, LockService/flush, fallos y concurrencia externos, y navegación de navegador real. No usar datos productivos.
+No hubo deployment ni modificaciones de GPSpedia2.2.5.
+================================================================================
