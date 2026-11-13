@@ -59,6 +59,10 @@ runGroup('31','WRITE',()=>{
  recordResult('WRITE autorización de asignación de IDs y consumidores/AUG-039',loadFunction('Services/Test/WriteAuthorizationContracts.js','runWriteAuthorizationContracts')({
   write,admin,ui:read('ui.js'),addCuts:read('add_cortes.html')
  }));
+ recordResult('WRITE autorización/minimización integrada/AUG-039',loadFunction('Services/Test/WriteAuthorizationMinimization.js','runWriteAuthorizationMinimizationTests')({
+  write,admin,ui:read('ui.js'),addCortes:read('add_cortes.html'),apiConfig:read('api-config.js')
+ }));
+
 
 });
 runGroup('32','ADMIN',()=>{
