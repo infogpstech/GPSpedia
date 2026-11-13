@@ -322,7 +322,7 @@ function collectCortesImageReferences(includeLocations = true) {
     const maxRowChunkSize = 500, minRowChunkSize = 50, targetChunkMs = 1500, captureBudgetMs = 12000;
     let rowChunkSize = maxRowChunkSize, rangesRead = 0, chunksRead = 0, rowsRead = 0;
     let displayReadMs = 0, rawReadMs = 0, formulaReadMs = 0, richTextReadMs = 0;
-    let referenceParseMs = 0, maxChunkElapsedMs = 0, adaptiveChunkChanges = 0;
+    let referenceParseMs = 0, maxChunkElapsedMs = 0, adaptiveChunkChanges = 0, smallestAdaptiveRowChunkSize = maxRowChunkSize;
     const assertCaptureBudget = () => {
         if (Date.now() - startedAt >= captureBudgetMs) {
             throw new Error("La captura de referencias de «Cortes» superó el presupuesto temporal seguro; no se guardó un snapshot parcial. Reintenta la auditoría.");
@@ -396,6 +396,7 @@ function collectCortesImageReferences(includeLocations = true) {
                     : rowChunkSize;
             if (nextChunkSize !== rowChunkSize) adaptiveChunkChanges++;
             rowChunkSize = nextChunkSize;
+            smallestAdaptiveRowChunkSize = Math.min(smallestAdaptiveRowChunkSize, rowChunkSize);
             assertCaptureBudget();
         }
     });
@@ -404,7 +405,7 @@ function collectCortesImageReferences(includeLocations = true) {
         metrics: { rows: rowsRead, columns: imageColumns.length,
             cells: rowsRead * imageColumns.length, ranges: rangesRead, chunks: chunksRead,
             initialRowChunkSize: maxRowChunkSize, minRowChunkSize, maxRowChunkSize,
-            targetChunkMs, finalRowChunkSize: rowChunkSize, adaptiveChunkChanges, maxChunkElapsedMs,
+            targetChunkMs, finalRowChunkSize: rowChunkSize, smallestAdaptiveRowChunkSize, adaptiveChunkChanges, maxChunkElapsedMs,
             displayReadMs, rawReadMs, formulaReadMs, richTextReadMs, referenceParseMs,
             captureBudgetMs, elapsedMs: Date.now() - startedAt } };
 }
