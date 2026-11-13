@@ -1289,3 +1289,32 @@ test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
 git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
 ~~~
 En navegador, abrir ficha con una imagen, dos retratos, dos paisajes, tres retratos y mezcla texto/imagen. Comparar Automática, Horizontal, Vertical e Imagen ampliada en preview y PDF; confirmar orden texto-imagen, ausencia de recortes/overflow y paginación correcta. Probar selector repetidamente y cambio de modo durante carga de recursos.
+
+
+================================================================================
+AUG-039 — AUTORIZACIÓN WRITE, RECUPERACIÓN DE OPERACIONES Y ASIGNACIÓN DE IDs
+Antes de cualquier prueba, confirmar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+
+Entorno: proyectos Apps Script WRITE y ADMIN separados, deployments de prueba nuevos y Spreadsheet aislada con Users, ActiveSessions, Cortes e Idempotencia. No cambiar api-config.js a endpoints de prueba ni invocar URLs operativas.
+
+Casos:
+1. addSupplementaryInfo con sesión válida para cada rol permitido; confirmar actor derivado de Users y escritura en Cortes/Drive.
+2. Rechazar sin mutaciones ni carga Drive: userId ausente, token ausente, token inválido, token asociado a otro userId, token duplicado, sesión expirada, perfil Users duplicado/inactivo y marcador de revocación pendiente.
+3. Revocar sesión o cambiar el rol entre validación inicial y adquisición del lock; confirmar segunda validación y ausencia de mutación. Inyectar timeout del lock y verificar liberación.
+4. Consumidores: modal Apertura, modal Alimentación y handleStage3Submit; comprobar userId/sessionToken. Ejecutar silentRegister únicamente contra ADMIN de prueba y comprobar assertDeveloperSession antes del dispatch; confirmar que ADMIN transmite la sesión a WRITE.
+5. checkOperation: usuario anónimo rechazado antes de leer Cortes; sesión válida con opId inexistente, pendiente y completado; confirmar respuesta sin rowData y solo metadatos mínimos/operationHash. Probar hash discordante. Verificar el comportamiento documentado de consulta por otro colaborador autenticado que conozca el opId, sin asumir que opId sea una credencial.
+6. allocateVehicleId: rol Desarrollador permitido; técnico/colaborador ordinario rechazado sin incrementar ScriptProperties ni contador; cambiar/revocar rol entre validaciones bajo lock y confirmar que no se reserva ID.
+7. Mantener controles addOrUpdateCut, addVinToVehicle y freezeCortesIds; verificar rutas y roles servidor. Ejecutar reintentos concurrentes y comprobar que no hay IDs duplicados.
+8. Registrar respuestas, filas antes/después, estados de ActiveSessions y valores del contador. No utilizar cuentas, datos, Drive, Spreadsheet ni deployments productivos.
+
+Pruebas locales de referencia: AddSupplementaryInfoIntegrity 53/53; CheckOperationSecurity 12/12; WriteAuthorizationContracts 10/10; WriteAuthorizationMinimization 13/13. Las pruebas reales anteriores son exclusivamente Beta.
+================================================================================
