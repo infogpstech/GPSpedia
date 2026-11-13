@@ -873,3 +873,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - La corrección activa se incorporó como adenda a Plan_auditoría/Plan_Maestro_Implementacion.md. El archivo histórico en Olds/Documentacion_Legacy permanece intacto.
 - Sin cambios de código funcional, servicios, endpoints, configuración, permisos ni datos.
 ================================================================================
+
+================================================================================
+2026-11-13 — AUG-003 — CONTRATO Y COORDINACIÓN COMPARTIDA DE UTILITIES
+- Se identificó migrateTimestamps como única acción del servicio UTILITIES, mapeada en api-config.js y sin consumidor frontend versionado.
+- Se documentaron lecturas Users/ActiveSessions, Cortes columna I y metadatos Drive; escrituras Hoja 1 y hojas temporales staging/backup.
+- Se integró la lease UTILITIES/migrateTimestamps antes del ScriptLock local; el coordinador v1.1.2 reserva lectura USERS/ACTIVE_SESSIONS/CORTES/DRIVE y escritura UTILITIES.
+- La política serializa con mutaciones de identidad, Cortes/Drive y mantenimiento integral ADMIN. El cliente falla cerrado y libera la lease en finally.
+- Se actualizó la allowlist, SharedMutationClient, configuración, runner y pruebas.
+- Validación local: UtilitiesSecurity 17/17 PASS; SharedMutationCoordinator 33/33 PASS; ActionDispatchContract 12/12 PASS; parsing V8 PASS.
+- Sin deployment, cambios de ScriptProperties productivas ni acceso a datos reales. Concurrencia real entre proyectos diferida a Beta.
+================================================================================
