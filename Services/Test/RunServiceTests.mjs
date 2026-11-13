@@ -41,6 +41,15 @@ runGroup('31','WRITE',()=>{
  const write=read('Services/write.js'),admin=read('Services/admin.js');
  recordResult('WRITE payload/límites/integridad',loadFunction('Services/Test/CutPayloadValidation.js','runCutPayloadValidationTests')(write));
  recordResult('WRITE/ADMIN VIN',loadFunction('Services/Test/VinAuthoritativeValidation.js','runVinAuthoritativeValidationTests')({write,admin,ui:read('ui.js'),addCuts:read('add_cortes.html')}));
+ recordResult('WRITE información suplementaria/sesiones/rollback',loadFunction('Services/Test/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
+  write,admin,coordinator:read('Services/Coordinator.js'),ui:read('ui.js')
+ }));
+ recordResult('WRITE checkOperation autenticación/minimización',loadFunction('Services/Test/CheckOperationSecurity.js','runCheckOperationSecurityTests')({
+  write,frontend:read('add_cortes.html')
+ }));
+ recordResult('WRITE autorización y minimización/AUG-039',loadFunction('Services/Test/WriteAuthorizationMinimization.js','runWriteAuthorizationMinimizationTests')({
+  write,admin,ui:read('ui.js'),addCortes:read('add_cortes.html'),apiConfig:read('api-config.js')
+ }));
  recordResult('WRITE autorización de información suplementaria/AUG-122',loadFunction('Services/Test/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
   write,admin,ui:read('ui.js'),coordinator:read('Services/Coordinator.js')
  }));
