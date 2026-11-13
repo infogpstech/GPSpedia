@@ -1043,3 +1043,16 @@ Validación: regresión dinámica de archivo legítimo con el mismo nombre dentr
 
 Ambos hallazgos se corrigieron dentro de AUG-018; no requieren tareas independientes. No se ejecutaron DriveApp, SpreadsheetApp, Apps Script desplegado ni recursos productivos.
 ================================================================================
+
+
+================================================================================
+RESOLUCIÓN — AUG-038 / H-AUD-031-001, H-AUD-031-004, H-AUD-031-007, H-AUD-031-008 y H-AUD-031-010 — 2026-11-13
+- Estado: corregidos en código y cubiertos por regresión local.
+- La reconciliación de una operación linked ya no reactiva archivos que fueron enviados a papelera ni confirma una referencia cuyo archivo ya no está disponible. El estado se escala a requires_review.
+- La compensación verifica las escrituras por lectura posterior y alinea URL, ledger, historial REP y metadatos Drive. Los errores parciales fuerzan revisión y preservan evidencia.
+- El descarte obtiene una lectura fresca y aplica compare-and-set por campo. Los cambios concurrentes no se sobrescriben.
+- handleUploadAdminImage exige exactamente una fila Cortes para vehicleId.
+- Evidencia: AdminImageReplacementCompensation 9/9; GitHub Actions run 43425740603 SUCCESS, 27 suites / 351 pruebas, 0 fallos.
+- Validación Beta pendiente: Spreadsheet/Drive aislados, fallos reales de escritura, archivo eliminado después de vinculación y dos editores concurrentes.
+- No se reabre la auditoría histórica ni se altera su evidencia original; esta adenda registra la resolución técnica.
+================================================================================
