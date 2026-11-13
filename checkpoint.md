@@ -1600,3 +1600,22 @@ Beta pendiente: verificar ACL y roles reales, migración/lectura en Spreadsheet 
 
 Siguiente tarea: AUG-027 — definir el alcance de referencias protegidas y la separación entre historial de reemplazos e inventario de imágenes sin uso. Requiere decisión funcional expresa; no implementar por inferencia.
 ================================================================================
+
+
+================================================================================
+INICIO DE TAREA — AUG-027 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD observado en historial reciente: c7ffcbfeb487afa0dd823bc14e684f1d4bbaf164 (AUG-132 fix VIN regression harness). La comparación de ramas confirma GPSpedia2.2.5_work 1963 commits ahead y 0 behind; base HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Decisiones AUG-027 recibidas:
+- Protección de referencias en todas las hojas Spreadsheet que contengan imágenes.
+- Gestión en la misma pestaña: inventario sin uso, organización automática e historial de imágenes reemplazadas.
+- Restauración, papelera y eliminación definitiva solo por Desarrollador desde el modal.
+- requiere_revision no participa en procesos automáticos; el Desarrollador puede restaurar, enviar a papelera, eliminar definitivamente o marcar «en uso».
+
+Registros actualizados: Tareas.txt y Auditoría.txt con el alcance y criterios aprobados. Estado: EN PROGRESO. No se ha modificado código ni se han realizado operaciones sobre Spreadsheet/Drive productivos.
+
+Siguiente paso: inspección de fuentes y contratos que enumeran referencias, calculan inventario sin uso, ejecutan organización automática y exponen acciones de administración. Identificar todas las hojas con imágenes desde el esquema/código real y diseñar pruebas locales para protección global, marca en uso, requiere_revision, permisos, concurrencia e idempotencia.
+================================================================================
