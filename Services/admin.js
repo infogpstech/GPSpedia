@@ -8121,6 +8121,57 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
                     result: String(row[column("resultado_inventario") - 1] || "confirmado"),
                     detail: String(row[column("detalle_resultado_inventario") - 1] || "")
                 };
+                const latestRowsBeforeMove = sheet.getDataRange().getValues();
+                const latestInventoryMatches = [];
+                let latestIdentityAmbiguous = false;
+                let latestHistoryConflict = false;
+                for (let r = 1; r < latestRowsBeforeMove.length; r++) {
+                    const candidate = latestRowsBeforeMove[r];
+                    if (!candidate.some(value => String(value == null ? "" : value).trim() !== "")) continue;
+                    const candidateRawIds = new Set([].concat(extractDriveFileIds(candidate[5]), extractDriveFileIds(candidate[7])));
+                    let candidateIdentity = "";
+                    try { candidateIdentity = getReplacedImageRecordIdentity_(candidate, headers, true); }
+                    catch (identityError) {
+                        if (candidateRawIds.has(fileId)) latestIdentityAmbiguous = true;
+                        continue;
+                    }
+                    if (candidateIdentity !== fileId) {
+                        if (!candidateIdentity && candidateRawIds.has(fileId)) latestIdentityAmbiguous = true;
+                        continue;
+                    }
+                    if (String(candidate[column("origen_registro") - 1] || "") === "auditoria_drive") {
+                        latestInventoryMatches.push(candidate);
+                    } else {
+                        const candidateStatus = String(candidate[10] || "historica");
+                        const candidateType = getReplacedImageRecordType(candidate, headers);
+                        if (candidateStatus !== "eliminada" &&
+                            (candidateStatus === "en_uso" || candidateStatus === "requiere_revision" ||
+                             candidateStatus === "eliminacion_pendiente" || candidateStatus === "en_papelera" ||
+                             candidateType === "reemplazada")) latestHistoryConflict = true;
+                    }
+                }
+                if (latestIdentityAmbiguous || latestHistoryConflict || latestInventoryMatches.length !== 1) {
+                    throw Object.assign(new Error("La identidad, el historial o la unicidad del inventario cambió antes del movimiento; se requiere revisión."), { blocked: true });
+                }
+                const latestInventoryRow = latestInventoryMatches[0];
+                if (String(latestInventoryRow[0] || "").trim() !== recordId ||
+                    String(latestInventoryRow[10] || "") !== "sin_uso_detectado" ||
+                    String(latestInventoryRow[column("ultima_auditoria_id") - 1] || "") !== auditId ||
+                    String(latestInventoryRow[column("ultima_operacion_inventario_id") - 1] || "") !== inventoryOperationId ||
+                    String(latestInventoryRow[column("resultado_inventario") - 1] || "") !== "confirmado" ||
+                    String(latestInventoryRow[column("estado_organizacion") - 1] || "") !== organizationState ||
+                    String(latestInventoryRow[column("ubicacion_actual") - 1] || "") !== storedLocation) {
+                    throw Object.assign(new Error("El estado o la ubicación del inventario cambió antes del movimiento; se requiere una nueva revisión."), { blocked: true });
+                }
+                const latestSourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                if (latestSourceFolder.getId() !== sourceFolder.getId()) {
+                    throw Object.assign(new Error("La ubicación de Drive cambió durante la preparación; se conserva la ubicación actual y se bloquea el movimiento."), { blocked: true });
+                }
+                const latestReferences = collectActiveDriveReferences(false);
+                if (latestReferences.unverifiableReferenceCount > 0 || latestReferences.references.has(fileId)) {
+                    throw Object.assign(new Error("Las referencias activas cambiaron o no pudieron verificarse inmediatamente antes del movimiento."), { blocked: true });
+                }
+
                 let moveError = null;
                 try { file.moveTo(destination); } catch (error) { moveError = error; }
                 let movedParent = null;

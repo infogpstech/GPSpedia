@@ -590,6 +590,9 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     const saveBlock=ui.slice(saveStart,organizeStart);
     assert.equal(saveBlock.includes("mode: 'organize'"),false);
     assert.equal(saveBlock.includes("handleOrganizeUnusedImagesBatch"),false);
+    assert.ok(saveBlock.includes("Array.isArray(inventoryResult.results)"));
+    assert.ok(saveBlock.includes("resultsBySubmittedId.size !== submittedIds.size"));
+    assert.equal(saveBlock.includes(": unusedFiles.map(item => String(item.fileId || ''))"),false);
     const explicitBlock=ui.slice(organizeStart,ui.indexOf("const updateControls",organizeStart));
     assert.ok(explicitBlock.includes("window.confirm("));
     assert.ok(explicitBlock.includes("mode: 'organize'"));
@@ -612,6 +615,10 @@ check("La organización revalida referencias e historial por archivo y protege u
     const save=fnSource(admin,"handleSaveUnusedImagesInventory");
     assert.ok(organize.includes("const currentRows = sheet.getDataRange().getValues()"));
     assert.ok(organize.includes("const references = collectActiveDriveReferences(false)"));
+    assert.ok(organize.includes("const latestRowsBeforeMove = sheet.getDataRange().getValues()"));
+    assert.ok(organize.includes("latestIdentityAmbiguous || latestHistoryConflict || latestInventoryMatches.length !== 1"));
+    assert.ok(organize.includes("const latestSourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId())"));
+    assert.ok(organize.includes("const latestReferences = collectActiveDriveReferences(false)"));
     assert.ok(organize.includes('organizationState === "movida_manual"'));
     assert.ok(organize.includes('organizationState === "organizada"'));
     assert.ok(organize.includes("storedLocation && storedLocation !== sourcePath"));

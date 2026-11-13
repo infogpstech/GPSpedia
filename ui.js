@@ -7199,10 +7199,26 @@ export async function openAuditDriveModal() {
             }
             inventoryAuditId = String(inventoryResult.auditId);
             inventoryOperationId = String(inventoryResult.inventoryOperationId);
-            const confirmedIds = Array.isArray(inventoryResult.results)
-                ? inventoryResult.results.filter(item => item && item.status === 'confirmado').map(item => String(item.fileId || ''))
-                : unusedFiles.map(item => String(item.fileId || ''));
-            inventoryConfirmedFileIds = Array.from(new Set(confirmedIds.filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id))));
+            if (!Array.isArray(inventoryResult.results)) {
+                throw new Error('ADMIN no devolvió resultados individuales verificables; no se habilitará la organización.');
+            }
+            const submittedIds = new Set(unusedFiles.map(item => String(item.fileId || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id)));
+            const resultsBySubmittedId = new Map();
+            inventoryResult.results.forEach(item => {
+                if (!item || !submittedIds.has(String(item.fileId || ''))) return;
+                const fileId = String(item.fileId);
+                if (resultsBySubmittedId.has(fileId)) {
+                    throw new Error('ADMIN devolvió resultados duplicados para una imagen; revisa el inventario antes de organizar.');
+                }
+                if (!['confirmado', 'bloqueado', 'error'].includes(String(item.status || ''))) {
+                    throw new Error('ADMIN devolvió un estado de inventario no reconocido para una imagen.');
+                }
+                resultsBySubmittedId.set(fileId, String(item.status));
+            });
+            if (resultsBySubmittedId.size !== submittedIds.size) {
+                throw new Error('ADMIN no devolvió un resultado individual para cada imagen enviada; no se habilitará la organización.');
+            }
+            inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId => resultsBySubmittedId.get(fileId) === 'confirmado');
             inventoryStatus = 'saved';
             const blockedCount = Math.max(0, Number(inventoryResult.blockedCount) || 0);
             const errorCount = Math.max(0, Number(inventoryResult.errorCount) || 0);
