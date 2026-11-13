@@ -7056,7 +7056,7 @@ function handleRestoreReplacedImageFromTrash(payload,logMessage,developerContext
         if(!allowed.includes(previous))throw new Error("El estado previo a papelera no es válido para este tipo de registro; requiere revisión.");
         const file=DriveApp.getFileById(driveId);
         if(status===previous&&!file.isTrashed()&&String(file.getMimeType()||"").startsWith("image/"))return {status:"success",message:"La imagen ya estaba restaurada desde papelera.",unchanged:true};
-        if(status!=="en_papelera")throw new Error("Solo se pueden restaurar desde Drive los registros que están en_papelera.");
+        if(!["en_papelera","requiere_revision"].includes(status))throw new Error("Solo se pueden restaurar desde Drive registros en_papelera o requiere_revision.");
         if(!file.isTrashed())throw new Error("Drive indica que el archivo no está en papelera; se requiere reconciliar el historial.");
         if(!String(file.getMimeType()||"").startsWith("image/"))throw new Error("El archivo asociado al registro ya no es una imagen.");
         const root=getCortesRootFolder(),parent=getSingleParentFolderInsideCortes(file,root.getId()),path=getFolderPathInsideCortes(parent,root.getId());
@@ -7095,7 +7095,7 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const row=existing.values,type=getReplacedImageRecordType(row,headers),status=String(row[10]||"");
         const driveId=getReplacedImageRecordIdentity_(row,headers,true);
         if(status==="eliminada")return {status:"success",message:"La imagen ya estaba eliminada definitivamente.",unchanged:true};
-        if(!["en_papelera","eliminacion_pendiente"].includes(status))throw new Error("La eliminación definitiva requiere que la imagen esté en papelera.");
+        if(!["en_papelera","eliminacion_pendiente","requiere_revision"].includes(status))throw new Error("La eliminación definitiva requiere un registro en papelera o requiere_revision.");
         const references=collectActiveDriveReferences(),active=references.references.get(driveId)||[];
         if(active.length)throw new Error("Eliminación bloqueada: la imagen tiene referencias activas en el Spreadsheet.");
         if(references.unverifiableReferenceCount>0)throw new Error("Eliminación bloqueada: existen referencias de Drive no interpretables en el Spreadsheet.");
