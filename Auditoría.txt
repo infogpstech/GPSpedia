@@ -1056,3 +1056,24 @@ RESOLUCIÓN — AUG-038 / H-AUD-031-001, H-AUD-031-004, H-AUD-031-007, H-AUD-031
 - Validación Beta pendiente: Spreadsheet/Drive aislados, fallos reales de escritura, archivo eliminado después de vinculación y dos editores concurrentes.
 - No se reabre la auditoría histórica ni se altera su evidencia original; esta adenda registra la resolución técnica.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — AUG-039 / H-AUD-032-001, H-AUD-032-002 Y H-AUD-032-003 — 2026-11-13
+Alcance: autorización de addSupplementaryInfo, minimización de checkOperation y restricción del asignador allocateVehicleId.
+Evidencia:
+- Services/write.js define los índices físicos de Users y ActiveSessions en el propio proyecto WRITE, evitando depender de constantes globales de otro deployment Apps Script.
+- getAuthenticatedCollaborator exige userId/sessionToken, token único en ActiveSessions asociado al mismo usuario, vigencia temporal, perfil Users único/activo y ausencia de marcador compartido de revocación. addSupplementaryInfo autentica antes de adquirir el ScriptLock y vuelve a autenticar dentro de la sección crítica; el nombre del actor se deriva del perfil servidor.
+- ui.js transmite contexto de sesión en los dos consumidores de apertura/alimentación. add_cortes.html handleStage3Submit transmite userId/sessionToken; silentRegister mantiene el override ADMIN, cuyo dispatcher exige assertDeveloperSession antes de ejecutar el handler.
+- handleCheckOperation autentica antes de buscar el opId y no devuelve rowData; la respuesta se limita a exists/pending/operationStatus, vehicleId, timestamp y operationHash. Este último es un digest de integridad requerido por el cliente para validar que la respuesta corresponde al snapshot local.
+- Decisión de vinculación de actor: no se agrega ownerUserId al esquema A:F. opId se genera con 128 bits criptográficamente aleatorios y es un identificador de correlación, no una credencial; checkOperation sigue requiriendo sesión activa y minimiza los metadatos. El riesgo residual es que otro colaborador autenticado que conozca un opId pueda consultar esos metadatos mínimos. Si la política futura exige confidencialidad por actor, se deberá versionar/migrar el esquema, no tratar opId como secreto de autorización.
+- handleAllocateVehicleId valida sesión y privilegio Desarrollador resuelto desde Users antes y después del lock; rechaza roles ordinarios antes de incrementar el contador. ADMIN envía userId/sessionToken y no confía en un rol enviado por el cliente.
+Validación local/CI:
+- AddSupplementaryInfoIntegrity: 53/53 PASS.
+- CheckOperationSecurity: 12/12 PASS.
+- WriteAuthorizationContracts: 10/10 PASS.
+- WriteAuthorizationMinimization: 13/13 PASS.
+- GitHub Actions run 43426964327 SUCCESS: 34 suites, 517 pruebas aprobadas, 0 fallos; comprobaciones Node --check PASS.
+Validación Beta pendiente: despliegues WRITE/ADMIN de prueba, Spreadsheet aislada con ActiveSessions/Users, sesiones inválidas/revocadas, cambio de rol entre validaciones, ausencia de escrituras/Drive ante rechazo, reserva de IDs y consulta mínima entre cuentas. No se invocaron endpoints ni datos productivos.
+Estado: CORREGIDO EN FUENTES — VALIDACIÓN LOCAL APROBADA.
+================================================================================
