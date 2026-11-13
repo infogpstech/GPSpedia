@@ -1507,8 +1507,10 @@ function adminRestoreCreateCompletedDriveManifest_(folder, manifest, runId, sour
         }
     });
     const manifestFile = folder.createFile(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_, JSON.stringify(state), "application/json");
-    manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
     state.manifestFileId = manifestFile.getId();
+    folder.setDescription(JSON.stringify({ kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2,
+        status: "in_progress", backupFolderId: folder.getId(), manifestFileId: state.manifestFileId }));
+    manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
     adminRestoreWriteDriveBackupState_(manifestFile, state);
     adminRestoreSetDriveBackupFolderStatus_(folder, state, "complete");
     const loaded = adminRestoreReadDriveBackupState_(folder);
@@ -1656,7 +1658,9 @@ function adminRestoreMoveFolderContents_(source, destination) {
     const fileIterator = source.getFiles(), files = [];
     while (fileIterator.hasNext()) {
         const file = fileIterator.next();
-        if (adminRestoreIsDriveManifestFile_(file, source)) continue;
+        if (adminRestoreIsDriveManifestFile_(file, source) ||
+            (String(source.getName() || "").startsWith("GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_") &&
+                String(file.getName() || "") === ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_)) continue;
         files.push(file);
     }
     files.forEach(file => {
@@ -1687,14 +1691,24 @@ function adminRestoreCopyFolderRecursively_(source, target, storedManifest) {
             throw new Error("No se pudo verificar la copia del archivo «" + file.getName() + "».");
         }
         const manifestEntry = storedManifest && (storedManifest.files || []).find(entry => String(entry.copyId) === String(file.getId()));
-        if (manifestEntry) copy.setDescription(String(manifestEntry.sourceDescription || ""));
+        if (manifestEntry) {
+            copy.setDescription(String(manifestEntry.sourceDescription || ""));
+            if (String(copy.getDescription() || "") !== String(manifestEntry.sourceDescription || "")) {
+                throw new Error("No se pudo restaurar la descripción original del archivo «" + file.getName() + "».");
+            }
+        }
     }
     const folders = source.getFolders();
     while (folders.hasNext()) {
         const child = folders.next();
         const targetChild = target.createFolder(child.getName());
         const manifestEntry = storedManifest && (storedManifest.folders || []).find(entry => String(entry.copyId) === String(child.getId()));
-        if (manifestEntry) targetChild.setDescription(String(manifestEntry.sourceDescription || ""));
+        if (manifestEntry) {
+            targetChild.setDescription(String(manifestEntry.sourceDescription || ""));
+            if (String(targetChild.getDescription() || "") !== String(manifestEntry.sourceDescription || "")) {
+                throw new Error("No se pudo restaurar la descripción original de la carpeta «" + child.getName() + "».");
+            }
+        }
         adminRestoreCopyFolderRecursively_(child, targetChild, storedManifest);
     }
 }
