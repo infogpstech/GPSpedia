@@ -40,5 +40,8 @@ function runCutPayloadValidationTests(writeSource) {
  rejects("rechaza VIN corto",{...base,cutData:{...base.cutData,vin:"12345"}});
  rejects("rechaza texto de corte demasiado largo",{...base,cutData:{...base.cutData,ubicacionCorte1:"x".repeat(10001)}});
  run("rechaza opId y hash no emparejados de forma explícita",()=>{let rejected=false;try{validate({...base,opId:"OP-123",operationHash:"z".repeat(64)},options);}catch(_){rejected=true;}if(!rejected)throw Error("Hash inválido aceptado.");});
+ rejects("rechaza imagen superior a 10 MB",{...base,cutData:{...base.cutData,imgCorte1:"data:image/png;base64,"+"A".repeat(14*1024*1024+4)}});
+ run("validación previa a toda mutación",()=>{const h=String(writeSource).slice(String(writeSource).indexOf("function handleAddOrUpdateCutLocked(payload)"),String(writeSource).indexOf("function handleAddOrUpdateCutLockedUnsafe_",String(writeSource).indexOf("function handleAddOrUpdateCutLocked(payload)")));const v=h.indexOf("validateAddOrUpdateCutPayload_"),m=h.indexOf("handleAddOrUpdateCutLockedUnsafe_");if(v<0||m<0||v>m)throw Error("El payload no se valida antes de entrar al handler mutador.");});
+ run("compensación cubre fila, Idempotencia y contador",()=>{const h=String(writeSource).slice(String(writeSource).indexOf("function handleAddOrUpdateCutLocked(payload)"),String(writeSource).indexOf("function handleAddOrUpdateCutLockedUnsafe_"));["setValues([existingRowValues])","deleteRow(lastRowBefore + 1)","deleteRow(last)","deleteProperty(CORTES_ID_COUNTER_PROPERTY)"].forEach(token=>{if(!h.includes(token))throw Error("Falta compensación: "+token);});});
  return {passed,failed,results};
 }
