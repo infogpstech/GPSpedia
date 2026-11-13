@@ -1434,7 +1434,9 @@ La suite usa dobles locales; no ejecuta `DriveApp`, `SpreadsheetApp`, Apps Scrip
 ## AUG-126 — Validación previa de payload en WRITE
 
 ```js
+```js
 runCutPayloadValidationTests(writeSource)
 ```
 
-La suite valida estructura y allowlist, requeridos, enums, rangos de años, longitudes, tipos, VIN, opId/SHA-256 e imágenes Base64/MIME/tamaño; incluye la compatibilidad del opId heredado. Se comprueba que la validación ocurra antes de la mutación y que la compensación restaure la fila, el ledger de idempotencia y el contador cuando corresponde. Las cargas no enlazadas permanecen trazadas en ImageUploadLedger para reconciliación.
+La suite ejecuta 34 escenarios de estructura/allowlist, requeridos, enums, años, tipos, longitudes, VIN, opId/SHA-256, imágenes y contratos de compensación. La validación se realiza antes de cualquier mutación; los fallos revierten fila, registro de Idempotencia y contador de IDs cuando corresponde. Las cargas no enlazadas se conservan trazadas en ImageUploadLedger para reconciliación.
+
