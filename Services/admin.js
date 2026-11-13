@@ -192,59 +192,68 @@ function collectActiveDriveReferences(includeLocations = true) {
 
     getSpreadsheet().getSheets().forEach(sheet => {
         if (excludedSheets.has(sheet.getName())) return;
-        const range = sheet.getDataRange();
-        const values = range.getDisplayValues();
-        const rawValues = range.getValues();
-        const formulas = range.getFormulas();
-        const richTextValues = range.getRichTextValues();
+        if (sheet.getName() === SHEET_NAMES.CORTES) {
+            const cortesReferences = collectCortesImageReferences(includeLocations);
+            cortesReferences.references.forEach((locations, id) => {
+                if (includeLocations) {
+                    if (!references.has(id)) references.set(id, []);
+                    references.get(id).push.apply(references.get(id), locations);
+                } else references.set(id, true);
+            });
+            unverifiableReferenceCount += cortesReferences.unverifiableReferenceCount;
+        } else {
+            const range = sheet.getDataRange();
+            const values = range.getDisplayValues();
+            const rawValues = range.getValues();
+            const formulas = range.getFormulas();
+            const richTextValues = range.getRichTextValues();
 
-        for (let r = 0; r < values.length; r++) {
-            for (let c = 0; c < values[r].length; c++) {
-                const candidates = [
-                    String(values[r][c] || ""),
-                    String((formulas[r] && formulas[r][c]) || "")
-                ];
-                const rawValue = rawValues[r] && rawValues[r][c];
-                let cellHasUnverifiableDriveLink = false;
-                if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
-                    try {
-                        const contentUrl = String(rawValue.getContentUrl() || "");
-                        if (contentUrl) candidates.push(contentUrl);
-                        else cellHasUnverifiableDriveLink = true;
-                    } catch (imageValueError) {
-                        cellHasUnverifiableDriveLink = true;
+            for (let r = 0; r < values.length; r++) {
+                for (let c = 0; c < values[r].length; c++) {
+                    const candidates = [
+                        String(values[r][c] || ""),
+                        String((formulas[r] && formulas[r][c]) || "")
+                    ];
+                    const rawValue = rawValues[r] && rawValues[r][c];
+                    let cellHasUnverifiableDriveLink = false;
+                    if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+                        try {
+                            const contentUrl = String(rawValue.getContentUrl() || "");
+                            if (contentUrl) candidates.push(contentUrl);
+                            else cellHasUnverifiableDriveLink = true;
+                        } catch (imageValueError) {
+                            cellHasUnverifiableDriveLink = true;
+                        }
                     }
-                }
-                const richText = richTextValues[r] && richTextValues[r][c];
-                if (richText) {
-                    const wholeCellLink = richText.getLinkUrl();
-                    if (wholeCellLink) candidates.push(wholeCellLink);
-                    const runs = richText.getRuns ? richText.getRuns() : [];
-                    runs.forEach(run => {
-                        const runLink = run.getLinkUrl();
-                        if (runLink) candidates.push(runLink);
+                    const richText = richTextValues[r] && richTextValues[r][c];
+                    if (richText) {
+                        const wholeCellLink = richText.getLinkUrl();
+                        if (wholeCellLink) candidates.push(wholeCellLink);
+                        const runs = richText.getRuns ? richText.getRuns() : [];
+                        runs.forEach(run => {
+                            const runLink = run.getLinkUrl();
+                            if (runLink) candidates.push(runLink);
+                        });
+                    }
+
+                    const cellIds = new Set();
+                    candidates.forEach(candidate => {
+                        if (!candidate) return;
+                        const ids = extractDriveFileIds(candidate);
+                        ids.forEach(id => cellIds.add(id));
+                        if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
+                            cellHasUnverifiableDriveLink = true;
+                        }
                     });
+
+                    cellIds.forEach(id => {
+                        if (includeLocations) {
+                            if (!references.has(id)) references.set(id, []);
+                            references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
+                        } else references.set(id, true);
+                    });
+                    if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
                 }
-
-                const cellIds = new Set();
-                candidates.forEach(candidate => {
-                    if (!candidate) return;
-                    const ids = extractDriveFileIds(candidate);
-                    ids.forEach(id => cellIds.add(id));
-                    if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
-                        cellHasUnverifiableDriveLink = true;
-                    }
-                });
-
-                cellIds.forEach(id => {
-                    if (includeLocations) {
-                        if (!references.has(id)) references.set(id, []);
-                        references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
-                    } else {
-                        references.set(id, true);
-                    }
-                });
-                if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
             }
         }
 
@@ -274,7 +283,6 @@ function collectActiveDriveReferences(includeLocations = true) {
                         } else references.set(id, true);
                     });
                 } else {
-                    // Bloquea acciones destructivas si una imagen incrustada no se puede asociar a un ID de Drive.
                     unverifiableReferenceCount++;
                 }
             });
@@ -284,49 +292,76 @@ function collectActiveDriveReferences(includeLocations = true) {
     return { references, unverifiableReferenceCount };
 }
 function collectCortesImageReferences(includeLocations = true) {
+    const startedAt = Date.now();
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!sheet) throw new Error("No se encontró la hoja «Cortes» para verificar las referencias de imágenes.");
     const imageFields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
-    const imageColumns = imageFields.map(field => ({ field: field, column: COLS_CORTES[field] })).filter(item => Number.isInteger(item.column) && item.column > 0);
+    const imageColumns = imageFields.map(field => ({ field, column: COLS_CORTES[field] }))
+        .filter(item => Number.isInteger(item.column) && item.column > 0)
+        .sort((a, b) => a.column - b.column);
     const references = new Map();
     let unverifiableReferenceCount = 0;
     const lastRow = sheet.getLastRow();
-    if (lastRow < 2) return { references: references, unverifiableReferenceCount: 0 };
-    const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
-    const values = range.getDisplayValues();
-    const formulas = range.getFormulas();
-    const richTextValues = range.getRichTextValues();
-    for (let r = 0; r < values.length; r++) {
-        imageColumns.forEach(item => {
-            const c = item.column - 1;
-            const candidates = [String(values[r][c] || ""), String((formulas[r] && formulas[r][c]) || "")];
-            const richText = richTextValues[r] && richTextValues[r][c];
-            if (richText) {
-                const wholeCellLink = richText.getLinkUrl();
-                if (wholeCellLink) candidates.push(wholeCellLink);
-                const runs = richText.getRuns ? richText.getRuns() : [];
-                runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
-            }
-            const cellIds = new Set();
-            let hasUnverifiableDriveLink = false;
-            candidates.forEach(candidate => {
-                if (!candidate) return;
-                const ids = extractDriveFileIds(candidate);
-                ids.forEach(id => cellIds.add(id));
-                if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
-            });
-            cellIds.forEach(id => {
-                if (includeLocations) {
-                    if (!references.has(id)) references.set(id, []);
-                    references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + 2, column: item.column, field: item.field });
-                } else references.set(id, true);
-            });
-            if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
-        });
-    }
-    return { references: references, unverifiableReferenceCount: unverifiableReferenceCount };
-}
+    if (lastRow < 2) return { references, unverifiableReferenceCount,
+        metrics: { rows: 0, columns: imageColumns.length, cells: 0, ranges: 0, elapsedMs: Date.now() - startedAt } };
 
+    const groups = [];
+    imageColumns.forEach(item => {
+        const last = groups[groups.length - 1];
+        if (last && item.column <= last.start + last.width) {
+            last.width = Math.max(last.width, item.column - last.start + 1);
+            last.items.push(item);
+        } else groups.push({ start: item.column, width: 1, items: [item] });
+    });
+
+    groups.forEach(group => {
+        const range = sheet.getRange(2, group.start, lastRow - 1, group.width);
+        const values = range.getDisplayValues();
+        const rawValues = range.getValues();
+        const formulas = range.getFormulas();
+        const richTextValues = range.getRichTextValues();
+        group.items.forEach(item => {
+            const c = item.column - group.start;
+            for (let r = 0; r < values.length; r++) {
+                const candidates = [String(values[r][c] || ""), String((formulas[r] && formulas[r][c]) || "")];
+                const rawValue = rawValues[r] && rawValues[r][c];
+                let hasUnverifiableDriveLink = false;
+                if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+                    try {
+                        const contentUrl = String(rawValue.getContentUrl() || "");
+                        if (contentUrl) candidates.push(contentUrl);
+                        else hasUnverifiableDriveLink = true;
+                    } catch (imageValueError) { hasUnverifiableDriveLink = true; }
+                }
+                const richText = richTextValues[r] && richTextValues[r][c];
+                if (richText) {
+                    const wholeCellLink = richText.getLinkUrl();
+                    if (wholeCellLink) candidates.push(wholeCellLink);
+                    const runs = richText.getRuns ? richText.getRuns() : [];
+                    runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
+                }
+                const cellIds = new Set();
+                candidates.forEach(candidate => {
+                    if (!candidate) return;
+                    const ids = extractDriveFileIds(candidate);
+                    ids.forEach(id => cellIds.add(id));
+                    if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
+                });
+                cellIds.forEach(id => {
+                    if (includeLocations) {
+                        if (!references.has(id)) references.set(id, []);
+                        references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + 2, column: item.column, field: item.field });
+                    } else references.set(id, true);
+                });
+                if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
+            }
+        });
+    });
+
+    return { references, unverifiableReferenceCount,
+        metrics: { rows: lastRow - 1, columns: imageColumns.length,
+            cells: (lastRow - 1) * imageColumns.length, ranges: groups.length, elapsedMs: Date.now() - startedAt } };
+}
 function isFolderInsideCortes(folder, rootFolderId) {
     const pending = [folder];
     const visited = new Set();
