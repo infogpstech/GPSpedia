@@ -852,3 +852,8 @@ Implementación en ui.js: espera acotada de carga/decodificación para foto prin
 Nueva suite: Services/Test/PrintSheetResourceReadiness.mjs (12 contratos y node --check), integrada en INTEGRATION.
 Estado: EN PROGRESO hasta CI y revisión del resultado.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — AUG-142 — 2026-11-13
+- Primer CI run 43416559372: fallo exclusivo en la expectativa documental del estado listo; 11/12 verificaciones de la suite nuevas PASS y node --check PASS. Se corrige la expectativa a dataset.printReady y se evita un rechazo no gestionado si falla la preparación.
+- Reejecutar regresión completa tras el commit correctivo.

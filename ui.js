@@ -11575,7 +11575,7 @@ export function exportVehiclePrintSheet(item) {
             })().catch(error => {
                 resourceStatus.textContent = 'No se pudo preparar la ficha para imprimir. Recarga la vista previa.';
                 printDocument.body.dataset.printReady = 'false';
-                throw error;
+                return false;
             });
             return printResourcesPromise;
         };

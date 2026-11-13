@@ -782,3 +782,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - El botón de impresión se habilita tras preparar recursos y clonar encabezado/pie. beforeprint evita medir mientras no esté listo.
 - Services/Test/PrintSheetResourceReadiness.mjs: nueva suite de 12 verificaciones, integrada en INTEGRATION.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-142 — CORRECCIÓN POST-CI
+- Primer CI detectó una expectativa de test que buscaba un atributo HTML inexistente; la implementación usa correctamente dataset.printReady. Se alinea la aserción con el contrato real.
+- El manejo de error de preparación ahora deja el botón deshabilitado y presenta el mensaje de recuperación sin propagar un rechazo no gestionado.
+================================================================================

@@ -55,7 +55,7 @@ check('beforeprint no mide recursos antes de que estén listos', () => {
 });
 check('El documento expone estado accesible de preparación', () => {
   assert.match(print, /id="print-resource-status" role="status" aria-live="polite"/);
-  assert.match(print, /data-print-ready = 'true'/);
+  assert.match(print, /printDocument\.body\.dataset\.printReady = 'true'/);
 });
 check('ui.js pasa node --check en modo ES module', () => {
   const result = spawnSync(process.execPath, ['--experimental-default-type=module','--check',new URL('../../ui.js',import.meta.url).pathname], {encoding:'utf8'});
