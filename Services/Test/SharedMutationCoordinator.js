@@ -163,6 +163,21 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "FEEDBACK", "approveVideo", feedback.token);
     });
 
+    test_("Las mutaciones Inbox serializan identidad y escrituras FEEDBACK", function() {
+        const actions = ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"];
+        actions.forEach((operation,index) => {
+            const r = createRuntime_();
+            const inbox = acquire_(r,"FEEDBACK",operation);
+            assert_(inbox.status === "success","FEEDBACK/"+operation+" debe obtener lease.");
+            const auth = acquire_(r,"AUTH","updateUser");
+            assert_(auth.status === "error" && auth.code === "busy","AUTH no debe cambiar identidad mientras corre "+operation+".");
+            const competingOperation = actions[(index + 1) % actions.length];
+            const competing = acquire_(r,"FEEDBACK",competingOperation);
+            assert_(competing.status === "error" && competing.code === "busy","Las mutaciones Inbox no deben escribir FEEDBACK simultáneamente.");
+            release_(r,"FEEDBACK",operation,inbox.token);
+        });
+    });
+
     test_("Mutación USERS bloquea lectura de identidad de WRITE", function() {
         const r = createRuntime_();
         const users = acquire_(r, "USERS", "updateProfile");

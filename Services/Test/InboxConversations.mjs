@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../InboxConversations.js", import.meta.url), "utf8");
+const feedbackSource = readFileSync(new URL("../feedback.js", import.meta.url), "utf8");
+const coordinatorSource = readFileSync(new URL("../Coordinator.js", import.meta.url), "utf8");
 
 class FakeSheet {
     constructor(name) { this.name = name; this.rows = []; }
@@ -123,7 +125,7 @@ run("Rechaza tipos de mensaje y adjuntos no soportados", () => {
     assert.throws(() => api.handleSendInboxMessage({
         ...actor("U1","token-a"),conversationId:first.conversationId,body:"Adjunto",
         attachments:[{name:"archivo.png"}],idempotencyKey:"send-attachment-01"
-    }),/adjuntos no soportados/);
+    }),/adjuntos no están soportados/);
 });
 run("Una clave de creación no se puede reutilizar con otro contenido", () => {
     assert.throws(() => api.handleCreateInboxConversation({
@@ -211,6 +213,18 @@ run("La auditoría distingue la lectura de cada participante", () => {
         .filter(row => row[4] === "read" && row[6] === followup.messageId);
     assert.deepEqual(audit.map(row => row[2]).sort(),["U1","U2"]);
 });
+run("Las solicitudes de lectura tardías no hacen retroceder el marcador", () => {
+    const newest = api.handleSendInboxMessage({
+        ...actor("U2","token-b"),conversationId:first.conversationId,
+        body:"Mensaje más reciente para probar el orden.",idempotencyKey:"read-order-0001"
+    });
+    api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:newest.messageId });
+    const stale = api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:firstMessageId });
+    assert.equal(stale.unreadCount,0);
+    const state = spreadsheet.getSheetByName("InboxConversationState").rows
+        .find(row => row[0] === first.conversationId && row[1] === "U1");
+    assert.equal(state[3],newest.messageId);
+});
 run("Archivo y restauración son estados privados por participante", () => {
     api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId,archived:true });
     assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"archived" }).total,1);
@@ -260,5 +274,17 @@ run("La paginación de mensajes entrega primero los más recientes y permite car
     assert.equal(older.data.length,1);
     assert.equal(older.hasMore,false);
     assert.notEqual(latest.data[0].messageId,older.data[0].messageId);
+});
+run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escrituras FEEDBACK", () => {
+    const match = feedbackSource.match(/function isSharedMutationAction_\(action\)\s*\{[\s\S]*?\n\}/);
+    assert.ok(match,"No se encontró el filtro de mutaciones coordinadas de FEEDBACK.");
+    const isSharedMutationAction = new Function(match[0] + "; return isSharedMutationAction_;")();
+    const coordinatorPolicy = new Function(coordinatorSource + "\nreturn coordinatorPolicy_;");
+    for (const action of ["createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"]) {
+        assert.equal(isSharedMutationAction(action),true,action+" debe adquirir una lease compartida.");
+        assert.deepEqual(coordinatorPolicy()("FEEDBACK",action),{
+            readResources:["USERS","ACTIVE_SESSIONS"],writeResources:["FEEDBACK"],maintenance:false,nestedActions:{}
+        });
+    }
 });
 console.log("InboxConversations: " + passed + "/" + passed + " PASS");

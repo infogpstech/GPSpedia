@@ -99,7 +99,11 @@ function coordinatorPolicy_(service, operation) {
             clearActivityLogs: { read: feedbackRead, write: ["ACTIVITY"] },
             submitVideoForApproval: { read: [...feedbackRead, "TUTORIAL"], write: feedbackWrite },
             approveVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["CORTES", "TUTORIAL", ...feedbackWrite] },
-            rejectVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["TUTORIAL", ...feedbackWrite] }
+            rejectVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["TUTORIAL", ...feedbackWrite] },
+            createInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
+            sendInboxMessage: { read: feedbackRead, write: ["FEEDBACK"] },
+            markInboxRead: { read: feedbackRead, write: ["FEEDBACK"] },
+            archiveInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] }
         }
     };
 

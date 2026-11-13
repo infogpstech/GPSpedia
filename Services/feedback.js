@@ -283,7 +283,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo"].includes(action);
+    return ["recordLike","reportProblem","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","suggestCutChange","suggestYear","addTutorial","sendContactForm","replyToFeedback","markAsResolved","deleteFeedbackItem","clearActivityLogs","submitVideoForApproval","approveVideo","rejectVideo","createInboxConversation","sendInboxMessage","markInboxRead","archiveInboxConversation"].includes(action);
 }
 
 function doPost(e) {

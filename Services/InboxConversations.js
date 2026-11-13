@@ -434,14 +434,18 @@ function handleMarkInboxRead(payload) {
         const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), row = state.row.slice();
         const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length).filter(item => String(item[1]) === conversationId);
         const throughId = String(payload.throughMessageId || "");
-        const throughIndex = throughId ? messages.findIndex(item => String(item[0]) === throughId) : messages.length - 1;
-        if (throughId && throughIndex < 0) throw new Error("El mensaje de lectura no pertenece a la conversación.");
+        const requestedIndex = throughId ? messages.findIndex(item => String(item[0]) === throughId) : messages.length - 1;
+        if (throughId && requestedIndex < 0) throw new Error("El mensaje de lectura no pertenece a la conversación.");
         const previousMarker = String(row[3] || "");
-        row[2] = throughIndex >= 0 ? messages[throughIndex][2] : "";
-        row[3] = throughIndex >= 0 ? String(messages[throughIndex][0]) : "";
+        const previousIndex = previousMarker ? messages.findIndex(item => String(item[0]) === previousMarker) : -1;
+        if (previousMarker && previousIndex < 0) throw new Error("El marcador de lectura no pertenece al historial de la conversación.");
+        // Los reintentos y las respuestas tardías nunca deben hacer retroceder la lectura.
+        const effectiveIndex = Math.max(previousIndex, requestedIndex);
+        row[2] = effectiveIndex >= 0 ? messages[effectiveIndex][2] : "";
+        row[3] = effectiveIndex >= 0 ? String(messages[effectiveIndex][0]) : "";
         row[7] = new Date().toISOString();
         inboxWriteState_(sheets.states,state,row);
-        const unread = messages.slice(throughIndex + 1).filter(item => String(item[3]) !== actor.id).length;
+        const unread = messages.slice(effectiveIndex + 1).filter(item => String(item[3]) !== actor.id).length;
         if (previousMarker !== row[3]) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,row[3],"Lectura confirmada hasta el mensaje indicado.");
         return {status:"success",conversationId,unreadCount:unread};
     });
