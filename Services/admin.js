@@ -444,10 +444,14 @@ function addVinToAvailableSlot(existingCollection, vinPrefix, maxAllowed, reques
 function extractVinPrefixForAdmin(vinRaw) {
     if (vinRaw === null || vinRaw === undefined || String(vinRaw).trim() === "") return "";
     if (typeof vinRaw !== "string") throw new Error("El VIN debe enviarse como texto.");
-    const cleaned = vinRaw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (!cleaned) throw new Error("El VIN no contiene caracteres alfanuméricos válidos.");
+    const raw = vinRaw.trim();
+    if (!/^[A-Za-z0-9 -]+$/.test(raw)) {
+        throw new Error("El VIN contiene caracteres no permitidos; solo se admiten letras, números, espacios y guiones.");
+    }
+    const cleaned = raw.toUpperCase().replace(/[ -]/g, "");
     if (cleaned.length > 18) throw new Error("El VIN normalizado no puede superar 18 caracteres.");
     if (cleaned.length <= 5) throw new Error("El VIN debe contener más de cinco caracteres; los últimos cinco se reservan para el número serial.");
+    if (cleaned.length < 6) throw new Error("El VIN debe contener entre 6 y 18 caracteres alfanuméricos después de normalizarse.");
     return cleaned.substring(0, cleaned.length - 5);
 }
 
