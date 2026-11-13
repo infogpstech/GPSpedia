@@ -127,7 +127,7 @@ check("cd entra únicamente a una subcarpeta directa y válida",()=>{
     assert.equal(result.currentFolder.id,"nested");
 });
 check("cd rechaza nombres de subcarpeta ambiguos",()=>{
-    const duplicate=makeExtraFolder(f,"nested","Marca");
+    const duplicate=makeExtraFolder(f,"cortes-root","Marca");
     rejects(()=>f.handler({command:"cd",args:"Marca"},null),"varias carpetas");
 });
 check("mkdir crea una carpeta dentro de la ubicación activa validada",()=>{
