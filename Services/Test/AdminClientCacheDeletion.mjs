@@ -143,4 +143,43 @@ await check("El Service Worker conserva el shell offline y elimina solo respuest
     assert.ok(serviceWorkerSource.includes("reply.postMessage({status:'success',removedCount,preservedCount})"));
 });
 
+await check("El mensaje del Service Worker elimina respuestas dinámicas y conserva el shell esencial", async () => {
+    const listeners = {};
+    const coreUrl = "https://example.test/app/index.html";
+    const mainUrl = "https://example.test/app/main.js";
+    const runtimeUrl = "https://example.test/app/api/catalog";
+    const oldRuntimeUrl = "https://example.test/app/image?id=1";
+    const entries = new Map([
+        ["gpsepedia-cache-v20", [coreUrl, mainUrl, runtimeUrl, oldRuntimeUrl].map(url => ({ url }))],
+        ["unrelated-cache", [{ url: "https://example.test/other" }]]
+    ]);
+    const cacheCalls = [];
+    const cachesRef = {
+        async keys() { return Array.from(entries.keys()); },
+        async open(name) {
+            cacheCalls.push(name);
+            return {
+                async keys() { return entries.get(name).slice(); },
+                async delete(request) {
+                    const list = entries.get(name), index = list.findIndex(item => item.url === request.url);
+                    if (index < 0) return false;
+                    list.splice(index, 1); return true;
+                }
+            };
+        }
+    };
+    const selfRef = { location: "https://example.test/app/service-worker.js", addEventListener(name, callback) { listeners[name] = callback; } };
+    new Function("self","caches","URL",serviceWorkerSource)(selfRef,cachesRef,URL);
+    assert.equal(typeof listeners.message,"function");
+    let response = null, waitPromise = null;
+    listeners.message({
+        data: { type: "GPSEPEDIA_CLEAR_RUNTIME_CACHE" },
+        ports: [{ postMessage(value) { response = value; } }],
+        waitUntil(promise) { waitPromise = promise; }
+    });
+    await waitPromise;
+    assert.deepEqual(response,{status:"success",removedCount:2,preservedCount:2});
+    assert.deepEqual(entries.get("gpsepedia-cache-v20").map(item=>item.url),[coreUrl,mainUrl]);
+    assert.equal(cacheCalls.includes("unrelated-cache"),false);
+});
 console.log("AdminClientCacheDeletion: " + passed + "/" + passed + " PASS");
