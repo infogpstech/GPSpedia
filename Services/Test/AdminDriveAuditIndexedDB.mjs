@@ -249,4 +249,37 @@ await check('La interfaz escribe páginas nuevas y conserva revisión/identidad 
     assert.ok(uiSource.includes('auditId: auditId, files: unusedFiles'));
     assert.ok(uiSource.includes('localStateRevision = Math.max(0, Number(saved.revision) || localStateRevision)'));
 });
+
+await check('La escritura de página y metadatos es atómica ante un fallo intermedio', async () => {
+    const h = createHarness(), owner = 'atomic-save';
+    const metaKey = 'driveAudit:meta:' + encodeURIComponent(owner) + ':AUDIT-ATOMIC';
+    h.database.failPutKey = metaKey;
+    await assert.rejects(h.saveDriveAuditState(state('AUDIT-ATOMIC', 0, 0, [{ fileId: A }]), owner), /Injected put failure/);
+    h.database.failPutKey = '';
+    assert.equal(h.database.data.has(metaKey), false);
+    assert.equal(Array.from(h.database.data.keys()).some(key => key.startsWith('driveAudit:page:' + encodeURIComponent(owner))), false);
+    assert.equal(h.database.data.has('driveAudit:latest:' + encodeURIComponent(owner)), false);
+});
+await check('Un lote repetido idéntico es idempotente y no duplica páginas', async () => {
+    const h = createHarness(), owner = 'retry-user';
+    const first = await h.saveDriveAuditState(state('AUDIT-RETRY', 0, 0, [{ fileId: A }]), owner);
+    const retry = await h.saveDriveAuditState(state('AUDIT-RETRY', first.revision, 0, [{ fileId: A }]), owner);
+    assert.equal(retry.pageCount, 1);
+    assert.equal(retry.revision, 2);
+    assert.equal(Array.from(h.database.data.keys()).filter(key => key.startsWith('driveAudit:page:' + encodeURIComponent(owner))).length, 1);
+    assert.deepEqual((await h.getDriveAuditState(owner)).files.map(file => file.fileId), [A]);
+});
+await check('Una página ausente invalida la reanudación sin marcar el escaneo como completo', async () => {
+    const h = createHarness(), owner = 'missing-page';
+    const first = await h.saveDriveAuditState(state('AUDIT-MISSING', 0, 0, [{ fileId: A }]), owner);
+    const second = await h.saveDriveAuditState(state('AUDIT-MISSING', first.revision, 1, [{ fileId: B }]), owner);
+    h.database.data.delete('driveAudit:page:' + encodeURIComponent(owner) + ':AUDIT-MISSING:1');
+    const restored = await h.getDriveAuditState(owner);
+    assert.equal(restored.resumeUnavailable, true);
+    assert.equal(restored.cursor, null);
+    assert.equal(restored.complete, false);
+    assert.deepEqual(restored.files.map(file => file.fileId), [A]);
+    assert.equal(second.pageCount, 2);
+});
+
 console.log('AdminDriveAuditIndexedDB: ' + passed + '/' + passed + ' PASS');
