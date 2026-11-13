@@ -1014,66 +1014,7 @@ async function initializeApp() {
         });
     }
 
-    // --- LÓGICA DE SEGURIDAD Y BLOQUEO DE INTERACCIONES ---
-    // Bloqueo de menú contextual (click derecho)
-    document.addEventListener('contextmenu', event => event.preventDefault());
-
-    // Bloqueo de atajos de teclado para inspección y ver código fuente
-    document.addEventListener('keydown', (e) => {
-        // Bloquear F12
-        if (e.keyCode === 123) {
-            e.preventDefault();
-            return false;
-        }
-        // Bloquear Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-            e.preventDefault();
-            return false;
-        }
-        // Bloquear Ctrl+U (Ver código fuente)
-        if (e.ctrlKey && e.keyCode === 85) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    // Bloqueo de Zoom manual (Teclado y Rueda del ratón)
-    // EXCEPCIÓN: Se permite zoom si el lightbox está visible.
-    function isLightboxVisible() {
-        const lightbox = document.getElementById('lightbox');
-        return !!(lightbox && lightbox.classList.contains('visible'));
-    }
-
-    window.isLightboxVisible = isLightboxVisible; // Exponer para otros módulos si es necesario
-
-    document.addEventListener('wheel', (e) => {
-        if (e.ctrlKey && !isLightboxVisible()) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && !isLightboxVisible()) {
-            // Teclas +, -, y 0 (para reset)
-            if ([61, 107, 173, 109, 187, 189, 48, 96].includes(e.keyCode)) {
-                e.preventDefault();
-            }
-        }
-    });
-
-    // Bloqueo de Zoom por gestos (Touch)
-    // EXCEPCIÓN: Se permite zoom si el lightbox está visible.
-    document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1 && !isLightboxVisible()) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
-    document.addEventListener('touchmove', (e) => {
-        if (e.touches.length > 1 && !isLightboxVisible()) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+    // El navegador conserva menú contextual, inspección y zoom nativos; la seguridad se aplica en backend.
 
     // 5. Start the application by checking the user's session
     // Se asegura que todo esté inicializado antes de validar la sesión

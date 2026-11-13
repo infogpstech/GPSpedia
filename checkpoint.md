@@ -756,3 +756,27 @@ Validación Beta pendiente:
 Archivos: add_cortes.html, diagnosticLogger.js, Services/Test/AddCutOperationRecoveryFlow.js, Services/Test/AddCortesDiagnostics.mjs, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea pendiente: AUG-139 — Definir política efectiva de anti-debugging.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-139 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD inicial verificado: 5b03031898444261316f1a2127223c5773e5caf8.
+Estado: IMPLEMENTACIÓN COMPLETADA; validación CI posterior a publicación pendiente de resultado.
+
+Resultado:
+- Retirados de main.js, users.html y add_cortes.html los bloqueos de menú contextual y atajos de inspección F12/Ctrl+Shift+I/J/C/Ctrl+U.
+- Retiradas las cancelaciones globales del zoom por rueda, teclado y gestos táctiles en main.js y users.html. Se conserva la lógica del Lightbox para ampliar imágenes.
+- README actualizado: el cliente no se presenta como mecanismo anti-debugging; la autorización y protección de datos dependen de validaciones backend.
+- Añadida AntiDebuggingPolicy.mjs e integrada en INTEGRATION. Comprueba controles nativos y presencia de validadores de sesión/rol en los servicios.
+- No se modificaron backend, endpoints, deployments, permisos ni datos.
+
+Validación:
+- Revisión estática de vistas y servicios vigentes; validadores existentes de AUTH/WRITE/ADMIN/FEEDBACK/USERS/UTILITIES permanecen presentes.
+- GitHub Actions se ejecutará al publicar este commit; resultado pendiente de verificación.
+- Beta pendiente: menú contextual y atajos reales; zoom con rueda/teclado/pinch; autorización con sesiones y roles válidos/inválidos en servicios Beta aislados.
+
+Archivos: main.js, users.html, add_cortes.html, README.md, Services/Test/AntiDebuggingPolicy.mjs, Services/Test/RunServiceTests.mjs, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea pendiente: AUG-140 — Alinear márgenes y contrato de paginación de la ficha imprimible. No iniciar en esta sesión.
+================================================================================

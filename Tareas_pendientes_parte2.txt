@@ -349,7 +349,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-020-001. **Prioridad:** Media.
 - **Problema:** los bloqueos de contextmenu y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U son eludibles y no protegen código cliente ni datos; la documentación los presenta como protección técnica.
 - **Criterios:** separar disuasión de seguridad real; no depender de bloqueos frontend para proteger datos/operaciones; verificar autenticación, autorización y validación backend; decidir explícitamente si se mantienen atajos como disuasión; actualizar README para no prometer protección que el navegador no puede garantizar; coordinar el zoom con AUG-104.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Resolución:** retirados los bloqueos de menú contextual y atajos de inspección en `main.js`, `users.html` y `add_cortes.html`; retiradas también las cancelaciones globales de zoom en `main.js` y `users.html`. Las vistas conservan controles nativos del navegador.
+- **Política:** el frontend no es un límite de seguridad. La autorización permanece en los servicios; las operaciones protegidas validan sesión/identidad/rol y datos en backend. README actualizado para no prometer protección anti-debugging.
+- **Pruebas:** `Services/Test/AntiDebuggingPolicy.mjs` verifica ausencia de interceptores, disponibilidad de zoom, precisión documental y presencia de validadores backend en AUTH/WRITE/ADMIN/FEEDBACK/USERS/UTILITIES. Integrada en INTEGRATION.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; pruebas de navegador real y servicios Beta aislados quedan en `lista_beta.txt`.
 
 - 2026-11-08 — AUD-T-020: AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas. Inventario: 138 IDs únicos dentro de AUG-001 a AUG-139; AUG-015 continúa ausente y no se infiere ni renumera.
 

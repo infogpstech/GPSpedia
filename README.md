@@ -57,7 +57,7 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Robustecimiento de PWA y Compatibilidad Móvil
 - **Soporte Offline Completo:** Capacidad total de navegación y consulta de fichas técnicas completas en IndexedDB (`GPSpedia_DB`) en zonas con mala o nula cobertura.
-- **Diseño Adaptativo Táctil (Zero-Zoom Layout):** Interfaz móvil bloqueada contra zooms táctiles accidentales en el cuerpo del catálogo, aislando la capacidad de ampliación táctil (pinch-to-zoom) exclusivamente para los diagramas técnicos y diagramas de relay dentro del visor Lightbox de alta resolución.
+- **Zoom y accesibilidad:** Se conserva el zoom nativo del navegador (teclado, rueda y gestos táctiles) en las vistas de la aplicación. El visor Lightbox mantiene además sus controles propios de ampliación de diagramas.
 - **Indicador de Estado de Conexión:** Pequeño indicador LED de red minimalista ubicado al lado del saludo de bienvenida, informando al técnico de forma síncrona sobre su estado de conexión (online/offline).
 
 ### Sistema de Notificaciones Colaborativas
@@ -66,7 +66,13 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Seguridad y Compartición de Información
 - **Botón Compartir Integrado:** Botón interactivo en el modal de detalle que hace uso de la API nativa de compartición del sistema operativo (Web Share API) para enviar la ficha técnica por aplicaciones de mensajería, o copiar un enlace directo optimizado al portapapeles.
-- **Protección de Datos Técnicos:** Bloqueo nativo del menú contextual, desactivación de comandos del sistema que puedan alterar el App Shell y restricciones de selección de texto en áreas no deseadas para prevenir manipulaciones y resguardar el conocimiento técnico de la plataforma.
+- **Seguridad de datos y operaciones:** La interfaz no bloquea el menú contextual ni los atajos de inspección del navegador, porque esas medidas son eludibles y no protegen el código cliente ni los datos. Las operaciones protegidas deben validar sesión, identidad, rol, permisos y contenido en el backend. Las restricciones visuales de selección de texto son únicamente una decisión de presentación y no un control de seguridad.
+
+### Política de seguridad del cliente y anti-debugging
+
+GPSpedia no utiliza bloqueos de F12, Ctrl+Shift+I/J/C/U ni del menú contextual como mecanismo de protección. El código JavaScript y los recursos entregados al navegador pueden inspeccionarse o modificarse; intentar impedirlo desde el cliente solo añade fricción y puede perjudicar la accesibilidad. Por ello, las vistas activas conservan los controles nativos del navegador, incluido el zoom.
+
+La confidencialidad y la integridad no dependen de ocultar el frontend: los servicios deben validar en cada operación protegida la sesión vigente, la identidad vinculada al token, el rol autorizado y los datos recibidos antes de leer o modificar recursos. Los controles visuales del cliente solo mejoran la experiencia y nunca sustituyen la autorización del servidor. Los endpoints y recursos públicos deben tratarse como públicos; no se debe enviar al navegador información que el usuario no esté autorizado a conocer.
 
 ### Accesibilidad y Mejoras Visuales Recientes
 - **Modo Oscuro Integrado y Persistente:** Intercambio fluido de paletas de colores basado en las preferencias locales. Los logotipos de marcas cuentan con un efecto de sombra sutil (drop-shadow) adaptativa en modo oscuro para un contraste y legibilidad óptimos.

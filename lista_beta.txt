@@ -2201,3 +2201,32 @@ Pruebas en navegador, perfil, cuenta y servicios Beta aislados:
 7. Inspeccionar consola y registros para confirmar que no existen etiquetas PING-PONG ni respuestas completas de servicios.
 No usar endpoints productivos, datos personales, tokens reales ni modificar deployments/ACL. Registrar versión de navegador, perfil de prueba y resultados sin incluir datos sensibles.
 ================================================================================
+
+
+================================================================================
+AUG-139 — Verificación de controles nativos y autorización en Beta aislada
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local GPSpedia:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git -C GPSpedia rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git -C GPSpedia branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git -C GPSpedia remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git -C GPSpedia status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git -C GPSpedia fetch origin "$EXPECTED_BRANCH"
+git -C GPSpedia pull --ff-only origin "$EXPECTED_BRANCH"
+git -C GPSpedia status --short
+git -C GPSpedia rev-parse HEAD
+~~~
+
+En navegador real, perfil aislado y sin datos productivos:
+1. En index.html, users.html y add_cortes.html, comprobar menú contextual y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U nativos.
+2. Comprobar zoom con Ctrl+/Ctrl-, rueda con Ctrl y gestos pinch en móvil; confirmar controles de ampliación de Lightbox.
+3. Ejecutar operaciones privilegiadas con sesión válida, expirada/revocada, token cruzado y rol no autorizado. Confirmar rechazo backend aunque el cliente se manipule o invoque directamente la API.
+4. Confirmar que datos no autorizados no se entregan en respuestas públicas y que las lecturas públicas previstas siguen funcionando.
+Registrar navegador/versión, rol y fixture, resultados y errores sin incluir tokens ni datos personales. No usar deployments operativos, cuentas reales ni recursos productivos.
+================================================================================

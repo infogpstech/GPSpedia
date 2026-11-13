@@ -1538,17 +1538,7 @@
             });
         }
 
-        // --- LÓGICA DE SEGURIDAD Y BLOQUEO DE INTERACCIONES ---
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.addEventListener('keydown', (e) => {
-            if (e.keyCode === 123) { e.preventDefault(); return false; }
-            if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
-            if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
-        });
-
-        // Bloqueo de Zoom manual con excepción para Lightbox
-        // El zoom del navegador permanece disponible en el formulario.
-        // Los gestos del Lightbox se gestionan de forma independiente.
+        // El navegador conserva menú contextual, inspección y zoom nativos.
 
         // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
         window.addEventListener('popstate', (event) => {

@@ -77,6 +77,7 @@ runGroup('37','USERS',()=>{
  recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
 });
 runGroup('38','INTEGRATION',()=>{
+  runCli('AUG-139 política anti-debugging, zoom y autorización backend','Services/Test/AntiDebuggingPolicy.mjs');
  recordResult('Coordinador compartido/concurrencia/leases',new Function(read('Services/Coordinator.js')+'\n'+read('Services/SharedMutationClient.js')+'\n'+read('Services/Test/SharedMutationCoordinator.js')+'\nreturn runSharedMutationCoordinatorTests();')());
  runCli('AUG-138 logger seguro y recuperación offline/reintentos/cuota/respuesta perdida','Services/Test/AddCortesDiagnostics.mjs');
  recordResult('Limpieza UI y contratos públicos',loadFunction('Services/Test/UiOrphanCleanup.js','runUiOrphanCleanupTests')({

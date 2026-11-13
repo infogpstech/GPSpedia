@@ -714,3 +714,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Añadido Services/Test/AddCortesDiagnostics.mjs al grupo INTEGRATION y documentado su comando.
 - No se modificaron el contrato de idempotencia, la persistencia durable, endpoints, deployments ni datos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-139 — POLÍTICA ANTI-DEBUGGING Y CONTROLES NATIVOS DEL NAVEGADOR
+- main.js, users.html y add_cortes.html: retirados los interceptores que cancelaban menú contextual, F12, Ctrl+Shift+I/J/C/U y/o zoom del navegador. No se alteraron navegación ni controles propios del Lightbox.
+- README.md: sustituida la afirmación de protección por bloqueos frontend por una política explícita: el código cliente es inspeccionable; la seguridad depende de validación de sesión, identidad, rol y datos en backend. Se documenta la disponibilidad del zoom nativo.
+- Services/Test/AntiDebuggingPolicy.mjs: nueva suite estática de no-regresión para vistas activas, README y validadores de AUTH/WRITE/ADMIN/FEEDBACK/USERS/UTILITIES; integrada en INTEGRATION.
+- No se modificaron endpoints, deployments, datos, permisos ni lógica de autorización backend. Las pruebas de navegador y servicios reales quedan para Beta aislada.
+================================================================================
