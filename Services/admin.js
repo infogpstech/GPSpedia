@@ -2378,8 +2378,8 @@ function validateAdminModalFieldValue_(sheet, fieldName, rawValue, rowValues) {
     };
     if (fieldName === "anoDesde" || fieldName === "anoHasta") {
         const numeric = typeof value === "number" ? value : (typeof value === "string" && /^\d{4}$/.test(value.trim()) ? Number(value.trim()) : NaN);
-        if (!Number.isInteger(numeric) || numeric < 1886 || numeric > 2100) {
-            throw new Error("El año debe ser un número entero entre 1886 y 2100.");
+        if (!Number.isInteger(numeric) || numeric < 1980 || numeric > 2027) {
+            throw new Error("El año debe ser un número entero entre 1980 y 2027.");
         }
         const otherField = fieldName === "anoDesde" ? "anoHasta" : "anoDesde";
         const otherColumn = COLS_CORTES[otherField];
