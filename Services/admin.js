@@ -6808,11 +6808,13 @@ function handleGetReplacedImages(payload, logMessage) {
             if (duplicateDriveRows.has(driveId)) throw new Error("Drive ID duplicado en las filas " + duplicateDriveRows.get(driveId).join(", ") + "; se bloquearon las acciones y se requiere reconciliación manual.");
         } catch (error) {
             reviewEntry.reason = String(error && error.message || "Registro inválido.");
-            const rowsToReconcile = (rawDriveId && duplicateDriveRows.get(rawDriveId)) || (id && idRows.get(id) && idRows.get(id).length > 1 ? idRows.get(id) : []);
-            if (rowsToReconcile && rowsToReconcile.length > 1) {
-                reviewEntry.duplicateRowNumbers = rowsToReconcile;
-                reviewEntry.reconciliationUrl = getReplacedImageReconciliationUrl_(schema.sheet, rowsToReconcile);
-            }
+            const duplicateRowsForDriveId = duplicateDriveGroups
+                .filter(group => group.rowNumbers.includes(r + 1))
+                .flatMap(group => group.rowNumbers);
+            const duplicateRowsForRecordId = id && idRows.get(id) && idRows.get(id).length > 1 ? idRows.get(id) : [];
+            const rowsToReconcile = Array.from(new Set([...duplicateRowsForDriveId, ...duplicateRowsForRecordId])).sort((a,b)=>a-b);
+            if (rowsToReconcile.length > 1) reviewEntry.duplicateRowNumbers = rowsToReconcile;
+            reviewEntry.reconciliationUrl = getReplacedImageReconciliationUrl_(schema.sheet, rowsToReconcile.length ? rowsToReconcile : [r + 1]);
             review.push(reviewEntry); continue;
         }
         const activeReferences = referenceSnapshot && referenceSnapshot.references.get(driveId);
@@ -7520,11 +7522,16 @@ function getDriveAuditSeenPageCacheKey_(auditId, pageIndex) {
 function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds) {
     const cache = CacheService.getScriptCache(), key = getDriveAuditSeenPageCacheKey_(auditId, pageIndex);
     const raw = cache.get(key);
-    let previous = [];
+    let unused = [];
     if (raw !== null) {
-        try { previous = JSON.parse(raw); } catch (error) { throw new Error("La página de resultados no se pudo combinar con sus IDs procesados."); }
+        let previous;
+        try { previous = JSON.parse(raw); }
+        catch (error) { throw new Error("La página de resultados no se pudo combinar con sus IDs procesados."); }
+        if (Array.isArray(previous)) unused = previous;
+        else if (previous && typeof previous === "object" && Array.isArray(previous.unused) &&
+            Array.isArray(previous.files) && Array.isArray(previous.folders)) unused = previous.unused;
+        else throw new Error("La página de resultados contiene una estructura incompleta; no se sobrescribió.");
     }
-    const unused = Array.isArray(previous) ? previous : previous && Array.isArray(previous.unused) ? previous.unused : [];
     const payload = { unused: normalizeDriveAuditFileIds_(unused),
         files: normalizeDriveAuditFileIds_(fileIds), folders: normalizeDriveAuditFileIds_(folderIds) };
     const serialized = JSON.stringify(payload);
@@ -7549,12 +7556,14 @@ function getDuplicateDriveImageRows_(rows) {
     const groups = new Map();
     (Array.isArray(rows) ? rows.slice(1) : []).forEach((row, index) => {
         const ids = new Set([].concat(extractDriveFileIds(row && row[5]), extractDriveFileIds(row && row[7])));
-        if (ids.size !== 1) return;
-        const fileId = Array.from(ids)[0];
-        if (!groups.has(fileId)) groups.set(fileId, []);
-        groups.get(fileId).push(index + 2);
+        ids.forEach(fileId => {
+            if (!groups.has(fileId)) groups.set(fileId, new Set());
+            groups.get(fileId).add(index + 2);
+        });
     });
-    return Array.from(groups.entries()).filter(entry => entry[1].length > 1).map(entry => ({ fileId: entry[0], rowNumbers: entry[1].sort((a,b)=>a-b) }));
+    return Array.from(groups.entries())
+        .filter(entry => entry[1].size > 1)
+        .map(entry => ({ fileId: entry[0], rowNumbers: Array.from(entry[1]).sort((a,b)=>a-b) }));
 }
 function getReplacedImageReconciliationUrl_(sheet, rowNumbers) {
     if (!sheet || !Array.isArray(rowNumbers) || !rowNumbers.length) return "";
@@ -8512,7 +8521,8 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     } else { state.status = "running"; state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor); }
     saveDriveAuditServerState_(state);
     if (previousResponseCacheKey && previousResponseCacheKey !== responseCacheKey) {
-        CacheService.getScriptCache().remove(previousResponseCacheKey);
+        try { CacheService.getScriptCache().remove(previousResponseCacheKey); }
+        catch (cleanupError) { /* La respuesta vigente ya está confirmada; la entrada anterior expira por TTL. */ }
     }
     if (complete) clearAuditDriveReferenceSnapshot(auditId);
     logMessage && logMessage("Auditoría Drive", `Lote analizado: ${batchFiles} archivos únicos. Total acumulado: ${totalAnalyzed}. Duplicados omitidos: ${duplicateFileCount + duplicateFolderCount}. Estado: ${complete ? "completo" : "parcial"}.`);
