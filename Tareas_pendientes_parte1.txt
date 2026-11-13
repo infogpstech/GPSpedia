@@ -457,7 +457,15 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Origen:** H-AUD-029-004. **Prioridad:** Media.
 - **Problema:** el snapshot JSON tiene límite fijo de 750,000 caracteres y TTL de seis horas que no se renueva al continuar. La reanudación local puede sobrevivir al estado temporal de servidor.
 - **Criterios de aceptación:** definir capacidad soportada y comportamiento ante exceso; evaluar compresión con MIME explícito o almacenamiento por bloques/páginas; verificar tamaño por bloque; incorporar integridad del manifiesto/contenido; definir renovación/expiración y limpieza; nunca continuar con snapshot parcial; probar pausa y reanudación cerca y después del TTL.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- **Capacidad soportada:** máximo 750,000 caracteres y 750,000 bytes UTF-8; bloques de hasta 75,000 caracteres/bytes, máximo 10 bloques; MIME explícito `application/json; charset=utf-8`.
+- Manifiesto versión 2 con longitud en caracteres/bytes, codificación, MIME, tamaño de bloque, TTL, fechas, SHA-256 del contenido y SHA-256 individual de cada bloque.
+- Cada bloque se verifica por lectura posterior, tamaño y firma; el manifiesto se escribe al final y se verifica. Un fallo elimina los bloques parciales.
+- La lectura valida manifiesto, conteo, tamaño, fechas, bloques, firmas y estructura del snapshot antes de devolver datos. Una pieza ausente, corrupta o incompleta invalida la reanudación.
+- El TTL de seis horas se renueva al continuar: snapshot de referencias y páginas previas de deduplicación. El límite es deslizante; una pausa superior a seis horas exige iniciar una auditoría nueva.
+- La limpieza de estados expirados elimina también páginas, respuestas, snapshot y puntero latest asociado. El cierre completo elimina todos los bloques, incluso huérfanos sin manifiesto.
+- `AdminReplacedImagesIntegrity.mjs`: seis escenarios adicionales; suite adaptada V8: 44/44 PASS. Sintaxis de admin.js, suite y runner: 3/3 PASS.
+- No se pudo ejecutar Node CLI/GitHub Actions real desde el entorno de esta sesión; no se declara CI SUCCESS. Validación de integración CacheService/Apps Script real pendiente de Beta aislada.
 
 ### AUG-033 — Rendimiento del recorrido Drive y captura de referencias
 - **Origen:** H-AUD-029-005, H-AUD-029-006 y H-AUD-029-007. **Prioridad:** Media.
