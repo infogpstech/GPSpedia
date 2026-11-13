@@ -599,7 +599,8 @@ function validateAddOrUpdateCutPayload_(payload, options) {
         throw new Error("Los datos del vehículo son obligatorios para crear un registro nuevo.");
     }
     if (payload.silent !== undefined && typeof payload.silent !== "boolean") throw new Error("El indicador silent debe ser booleano.");
-    const opId = payload.opId === undefined || payload.opId === null || payload.opId === "" ? "" : String(payload.opId).trim();
+    const legacyOpMatch = !payload.opId && typeof payload.colaborador === "string" ? payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/) : null;
+    const opId = payload.opId === undefined || payload.opId === null || payload.opId === "" ? (legacyOpMatch ? legacyOpMatch[1] : "") : String(payload.opId).trim();
     const operationHash = payload.operationHash === undefined || payload.operationHash === null || payload.operationHash === "" ? "" : String(payload.operationHash).trim().toLowerCase();
     if (opId && !/^OP-[A-Za-z0-9_-]{1,120}$/.test(opId)) throw new Error("El identificador opId no tiene un formato válido.");
     if (opId && !/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("Una operación con opId requiere operationHash SHA-256 válido.");
@@ -645,7 +646,7 @@ function handleAddOrUpdateCutLocked(payload) {
     const validatedPayload = validateAddOrUpdateCutPayload_(payload, options);
     const vehicleId = validatedPayload.vehicleId;
     const lastRowBefore = sheet.getLastRow();
-    let existingRowIndex = null, existingRowValues = null;
+    let existingRowIndex = null, existingRowValues = null, existingRowFormulas = null;
     if (vehicleId) {
         const ids = lastRowBefore > 1 ? sheet.getRange(2, COLS_CORTES.id, lastRowBefore - 1, 1).getValues().flat() : [];
         const matches = [];
@@ -653,6 +654,7 @@ function handleAddOrUpdateCutLocked(payload) {
         if (matches.length !== 1) throw new Error(matches.length ? "El ID del vehículo aparece duplicado; no se realizó ninguna modificación." : "El ID del vehículo no fue encontrado.");
         existingRowIndex = matches[0];
         existingRowValues = sheet.getRange(existingRowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        existingRowFormulas = sheet.getRange(existingRowIndex, 1, 1, sheet.getLastColumn()).getFormulas()[0];
     }
     const properties = PropertiesService.getScriptProperties();
     const counterBefore = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
@@ -671,6 +673,7 @@ function handleAddOrUpdateCutLocked(payload) {
         try {
             if (existingRowIndex && existingRowValues) {
                 sheet.getRange(existingRowIndex, 1, 1, existingRowValues.length).setValues([existingRowValues]);
+                existingRowFormulas.forEach((formula, index) => { if (formula) sheet.getRange(existingRowIndex, index + 1).setFormula(formula); });
                 SpreadsheetApp.flush();
             } else if (sheet.getLastRow() === lastRowBefore + 1) {
                 sheet.deleteRow(lastRowBefore + 1);
