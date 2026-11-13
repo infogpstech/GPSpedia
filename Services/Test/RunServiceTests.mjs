@@ -46,6 +46,7 @@ runGroup('32','ADMIN',()=>{
  const a=read('Services/admin.js');
  recordResult('ADMIN edición modal/RBAC',loadFunction('Services/Test/AdminModalEditIntegrity.js','runAdminModalEditIntegrityTests')(a));
  recordResult('ADMIN respaldo/restauración/rollback',loadFunction('Services/Test/AdminRestoreRecovery.js','runAdminRestoreRecoveryTests')(a));
+ runCli('ADMIN reanudación de respaldo Drive y sintaxis Node.js','Services/Test/AdminBackupResumeUI.mjs');
 });
 runGroup('33','FEEDBACK',()=>{
  const feedback=read('Services/feedback.js'),videoTest=read('Services/Test/VideoApprovalPublishing.js');
