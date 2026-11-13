@@ -779,22 +779,23 @@ No declarar PASS sin revisar filas persistidas y lectura posterior desde CATALOG
 
 
 ================================================================================
-AUG-125 — VALIDACIÓN BETA DE RESTAURACIONES RECUPERABLES DB/DRIVE — PENDIENTE
+AUG-018 / AUG-125 — VALIDACIÓN BETA DE RESPALDOS Y RESTAURACIONES RECUPERABLES DB/DRIVE — PENDIENTE
 
-PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
 
 ```bash
-set -e
-test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
-case "$(git remote get-url origin)" in
-  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
-  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
-esac
-test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
-git fetch origin
-git switch GPSpedia2.2.5_work
-git pull --ff-only origin GPSpedia2.2.5_work
-git status --short --branch
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "ERROR: repositorio remoto incorrecto."; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
 git rev-parse HEAD
 ```
 
@@ -803,13 +804,14 @@ Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-
 EJECUCIÓN EXCLUSIVA EN PROYECTO ADMIN Y RECURSOS AISLADOS:
 1. Crear un proyecto ADMIN de prueba separado y una copia de Spreadsheet/Drive; adaptar únicamente los IDs del proyecto aislado. Confirmar que no se usan IDs ni endpoints productivos y que el código corresponde a Services/admin.js del commit probado.
 2. Crear un respaldo DB. Verificar que el archivo es Spreadsheet, su manifiesto coincide en cantidad de hojas, filas/celdas, fórmulas y huella, y que un respaldo incompleto no se registra como válido.
-3. Crear un respaldo Drive con estructura anidada, archivos repetidos por nombre, archivos de tamaño cero y tipos MIME distintos. Comparar rutas, carpetas, archivos, MIME, tamaños, bytes y manifiesto; comprobar limpieza de una copia parcial.
-4. Probar restauración DB válida, respaldo con hoja obligatoria ausente, encabezado incorrecto, manifiesto alterado y respaldo histórico sin manifiesto. En los rechazos previos al staging, confirmar que el Spreadsheet destino no cambia.
-5. Probar restauración DB con hojas extra en destino. Verificar que se preservan, que las hojas del respaldo se promueven completas y que el respaldo preventivo conserva el estado anterior.
-6. Inyectar fallos controlados en copia a staging, renombrado de hoja, verificación posterior y rollback. Confirmar que se restaura el nombre/hoja original o que se conservan los artefactos __GP_RESTORE_* y el ID de recuperación para intervención manual.
-7. Probar restauración Drive y fallos durante copia staging, traslado del contenido original, promoción de staging y rollback. Comparar inventarios antes/después y confirmar que no se pierden recursos; si rollback falla, conservar staging/rollback y sus IDs.
-8. Repetir tras recarga y nueva ejecución para comprobar persistencia, que no se duplican recursos y que los backups de recuperación siguen accesibles. No eliminar manualmente artefactos de un rollback fallido.
-9. Registrar IDs de recursos, manifiestos, conteos, tamaños, resultados y errores. No ejecutar con Spreadsheet/Drive productivos ni desplegar a producción.
+3. Crear un respaldo Drive con más recursos que el tamaño de lote configurado, estructura anidada, nombres repetidos, archivos de tamaño cero y MIME distintos. Verificar que cada respuesta intermedia es `in_progress`, que el contenedor permanece incompleto y que solo se acepta restauración tras `complete`.
+4. Reanudar varias veces con el mismo `backupId`, incluyendo interrupción después de copiar un recurso. Confirmar que las copias etiquetadas se recuperan sin duplicar archivos/carpetas y que los cursores y las relaciones padre/copia persisten. Verificar el manifiesto final por rutas, IDs de origen/copia, padres, MIME, tamaños, bytes, conteos y huella.
+5. Modificar/agregar/eliminar un recurso de origen entre lotes. Confirmar que el inventario de identidad final detecta el cambio, marca el contenedor como incompleto/no reanudable y nunca permite restaurarlo. Alterar o retirar el manifiesto y confirmar rechazo antes de tocar el destino.
+6. Incluir en el árbol un archivo legítimo llamado `GPSpedia_DRIVE_MANIFEST.json`; comprobar que no se confunde con el manifiesto interno ni se omite durante rollback/restauración.
+7. Probar restauración DB válida, hoja obligatoria ausente, encabezado incorrecto, manifiesto alterado y respaldo histórico sin manifiesto. Este último debe rechazarse; en todos los rechazos previos al staging, confirmar que el Spreadsheet destino no cambia. Probar hojas extra y confirmar que se conservan.
+8. Inyectar fallos controlados en copia a staging, renombrado de hoja, verificación posterior, traslado Drive, promoción y rollback. Confirmar restauración íntegra o conservación de artefactos `__GP_RESTORE_*`, staging/rollback e IDs para recuperación manual.
+9. En la interfaz, verificar progreso por lotes, límite de continuaciones automáticas, conservación del enlace/ID y habilitación del botón de reanudación ante `in_progress` o error reanudable. Recargar el panel e introducir el mismo ID para continuar.
+10. Registrar IDs, manifiestos, conteos, tamaños, resultados y errores. Ejecutar únicamente en proyecto ADMIN y recursos aislados; no desplegar a producción ni usar Spreadsheet/Drive productivos.
 
 No declarar PASS sin comprobar recursos reales y recuperación en el proyecto aislado. No desplegar a producción.
 ================================================================================
