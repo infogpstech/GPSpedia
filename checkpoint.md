@@ -553,7 +553,7 @@ Resultado:
 - Se unificó el uso del helper withUsersMutationLock_ en createUser y updateProfile. Se conserva la lease compartida de USERS y los wrappers AUTH existentes para deleteUser/resetUserSessions; no se alteró Services/Auth.js.
 - Services/Test/users.js se sincronizó con Services/users.js conservando el SPREADSHEET_ID de pruebas.
 - Services/Test/UsersAtomicMutations.js: 13/13 PASS en harness local con hojas, lock y flush simulados; incluye verificación de conflictos de recursos del Coordinator.
-- Parsing V8: Services/users.js PASS, Services/Auth.js PASS y suite PASS.
+- Parsing V8: Services/users.js PASS, Services/Auth.js PASS, Services/Coordinator.js PASS y suite PASS.
 - No se ejecutaron Apps Script desplegados, Spreadsheet real, endpoints ni datos productivos.
 
 Beta pendiente: concurrencia real entre proyectos USERS/AUTH, operaciones simultáneas create/delete/reset/update, fallos reales de escritura/flush, filas con IDs duplicados o fórmulas y comprobación de recuperación. Procedimiento registrado en lista_beta.txt.
