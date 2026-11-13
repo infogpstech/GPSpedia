@@ -76,7 +76,7 @@ function coordinatorPolicy_(service, operation) {
             deleteReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             restoreReplacedImageFromTrash: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             permanentlyDeleteReplacedImage: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
-            saveUnusedImagesInventory: { read: identityRead, write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
+            saveUnusedImagesInventory: { read: [...identityRead, "CORTES"], write: ["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             createCortesImageFolder: { read: identityRead, write: ["DRIVE", "ACTIVITY"] },
             moveReplacedImage: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_INVENTORY", "ACTIVITY"] },
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] }

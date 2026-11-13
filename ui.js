@@ -7023,6 +7023,7 @@ export async function openAuditDriveModal() {
     const auditButton = document.getElementById('btn-admin-audit-drive-images');
     const startButton = document.getElementById('btn-audit-drive-start');
     const resumeButton = document.getElementById('btn-audit-drive-resume');
+    const organizeButton = document.getElementById('btn-audit-drive-organize');
     if (!summaryEl || !container) return;
     if (closeBtn) closeBtn.onclick = () => {
         const historyManager = window.overlayHistory;
@@ -7066,6 +7067,9 @@ export async function openAuditDriveModal() {
     let resumeUnavailable = false;
     let inventoryStatus = '';
     let inventoryMessage = '';
+    let inventoryAuditId = '';
+    let inventoryOperationId = '';
+    let inventoryConfirmedFileIds = [];
     let savedState = null;
     let isRunning = false;
 
@@ -7149,6 +7153,9 @@ export async function openAuditDriveModal() {
             resumeUnavailable: resumeUnavailable,
             inventoryStatus: inventoryStatus,
             inventoryMessage: inventoryMessage,
+            inventoryAuditId: inventoryAuditId,
+            inventoryOperationId: inventoryOperationId,
+            inventoryConfirmedFileIds: inventoryConfirmedFileIds,
             lastError: ''
         };
         Object.assign(state, extra);
@@ -7160,19 +7167,15 @@ export async function openAuditDriveModal() {
         if (!saved) throw new Error('IndexedDB no confirmó la persistencia del progreso de auditoría.');
     };
 
-    const saveUnusedInventory = async (alreadyRunning = false) => {
-        if (!isCurrentRequest() || inventoryStatus === 'saved') return;
-        if (isDriveAuditRunning && !alreadyRunning) return;
 
+    const saveUnusedInventory = async (alreadyRunning = false) => {
+        if (!isCurrentRequest() || inventoryStatus === 'saved' || inventoryStatus === 'organized') return;
+        if (isDriveAuditRunning && !alreadyRunning) return;
         const ownsRun = !alreadyRunning;
-        if (ownsRun) {
-            isRunning = true;
-            isDriveAuditRunning = true;
-            updateControls();
-        }
+        if (ownsRun) { isRunning = true; isDriveAuditRunning = true; updateControls(); }
 
         inventoryStatus = 'pending';
-        inventoryMessage = 'Auditoría completa. Registrando las imágenes sin uso en la Spreadsheet...';
+        inventoryMessage = 'Auditoría completa. Registrando las imágenes sin uso; este paso no mueve archivos.';
         let localPersistenceWarning = '';
         try {
             await persistState('complete');
@@ -7182,65 +7185,37 @@ export async function openAuditDriveModal() {
             localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
         }
 
-        const unusedFiles = allFiles
-            .filter(file => file.classification === 'Sin uso detectado')
+        const unusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado')
             .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
-
         try {
             const inventoryResult = await routeAction('saveUnusedImagesInventory', {
-                ...getDeveloperSessionPayload(),
-                files: unusedFiles
+                ...getDeveloperSessionPayload(), files: unusedFiles
             });
             if (!isCurrentRequest()) return;
-            if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId) {
+            if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId ||
+                !inventoryResult.inventoryOperationId) {
                 throw new Error(inventoryResult && inventoryResult.message
-                    ? inventoryResult.message
-                    : 'El servicio no confirmó la actualización del inventario.');
+                    ? inventoryResult.message : 'ADMIN no confirmó la operación de inventario.');
             }
-
-            let movedCount = 0;
-            let alreadyOrganizedCount = 0;
-            let failedCount = 0;
-            let blockedCount = 0;
-            const organizationBatchSize = 20;
-
-            for (let offset = 0; offset < unusedFiles.length; offset += organizationBatchSize) {
-                const batch = unusedFiles.slice(offset, offset + organizationBatchSize)
-                    .map(file => ({ fileId: file.fileId }));
-                const organizationResult = await routeAction('saveUnusedImagesInventory', {
-                    ...getDeveloperSessionPayload(),
-                    mode: 'organize',
-                    auditId: inventoryResult.auditId,
-                    files: batch
-                });
-                if (!isCurrentRequest()) return;
-                if (!organizationResult || organizationResult.status !== 'success') {
-                    throw new Error(organizationResult && organizationResult.message
-                        ? organizationResult.message
-                        : 'ADMIN no confirmó el lote de organización ' + (Math.floor(offset / organizationBatchSize) + 1) + '.');
-                }
-                movedCount += Math.max(0, Number(organizationResult.movedCount) || 0);
-                alreadyOrganizedCount += Math.max(0, Number(organizationResult.alreadyOrganizedCount) || 0);
-                failedCount += Math.max(0, Number(organizationResult.failedCount) || 0);
-                blockedCount += Math.max(0, Number(organizationResult.blockedCount) || 0);
-                inventoryMessage = 'Inventario registrado. Organización: ' + movedCount + ' movidas, ' +
-                    alreadyOrganizedCount + ' ya organizadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
-                await persistState('complete');
-            if (!isCurrentRequest()) return;
-            }
-
+            inventoryAuditId = String(inventoryResult.auditId);
+            inventoryOperationId = String(inventoryResult.inventoryOperationId);
+            const confirmedIds = Array.isArray(inventoryResult.results)
+                ? inventoryResult.results.filter(item => item && item.status === 'confirmado').map(item => String(item.fileId || ''))
+                : unusedFiles.map(item => String(item.fileId || ''));
+            inventoryConfirmedFileIds = Array.from(new Set(confirmedIds.filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id))));
             inventoryStatus = 'saved';
-            inventoryMessage = 'Auditoría COMPLETA. ' + inventoryResult.savedCount +
-                ' imágenes sin uso registradas; ' + movedCount + ' trasladadas a Imagenes_Sin_Uso, ' +
-                alreadyOrganizedCount + ' ya estaban allí, ' + failedCount + ' con error y ' +
-                blockedCount + ' bloqueadas. Revisa el detalle de organización en el inventario.';
+            const blockedCount = Math.max(0, Number(inventoryResult.blockedCount) || 0);
+            const errorCount = Math.max(0, Number(inventoryResult.errorCount) || 0);
+            inventoryMessage = 'Auditoría COMPLETA. ' + (Number(inventoryResult.savedCount) || 0) +
+                ' imágenes registradas y ' + inventoryConfirmedFileIds.length +
+                ' confirmadas para organización explícita. ' + blockedCount + ' bloqueadas y ' +
+                errorCount + ' con error. No se movió ningún archivo.';
         } catch (inventoryError) {
             if (!isCurrentRequest()) return;
             inventoryStatus = 'error';
-            inventoryMessage = 'Auditoría COMPLETA, pero el registro u organización del inventario quedó parcial: ' +
-                inventoryError.message + '. Puedes volver a ejecutar la actualización; los movimientos confirmados no se repetirán.';
+            inventoryMessage = 'Auditoría COMPLETA, pero el inventario no pudo confirmarse: ' +
+                inventoryError.message + '. No se movió ningún archivo; inicia una auditoría nueva para reintentar.';
         }
-
         try {
             await persistState('complete');
             if (!isCurrentRequest()) return;
@@ -7249,11 +7224,66 @@ export async function openAuditDriveModal() {
                 storageError.message;
         }
         updateSummary(inventoryMessage + localPersistenceWarning);
-
         if (ownsRun && isCurrentRequest()) {
-            isRunning = false;
-            isDriveAuditRunning = false;
-            updateControls();
+            isRunning = false; isDriveAuditRunning = false; updateControls();
+        }
+    };
+
+    const organizeUnusedImages = async () => {
+        if (!isCurrentRequest() || !complete || inventoryStatus !== 'saved' ||
+            !inventoryAuditId || !inventoryOperationId || !inventoryConfirmedFileIds.length ||
+            isRunning || isDriveAuditRunning) return;
+        const fileIds = Array.from(new Set(inventoryConfirmedFileIds));
+        if (typeof window.confirm !== 'function' || !window.confirm(
+            '¿Deseas mover ' + fileIds.length + ' imágenes confirmadas a «Imagenes_Sin_Uso»? ' +
+            'Esta acción mueve archivos de Google Drive, pero no los elimina. Las ubicaciones marcadas como manuales se conservarán.'
+        )) return;
+
+        isRunning = true; isDriveAuditRunning = true; updateControls();
+        let movedCount = 0, alreadyOrganizedCount = 0, manualPreservedCount = 0;
+        let failedCount = 0, blockedCount = 0, loggingErrorCount = 0;
+        const batchSize = 20;
+        try {
+            for (let offset = 0; offset < fileIds.length; offset += batchSize) {
+                const batch = fileIds.slice(offset, offset + batchSize).map(fileId => ({ fileId: fileId }));
+                const result = await routeAction('saveUnusedImagesInventory', {
+                    ...getDeveloperSessionPayload(), mode: 'organize', confirmed: true,
+                    auditId: inventoryAuditId, inventoryOperationId: inventoryOperationId, files: batch
+                });
+                if (!isCurrentRequest()) return;
+                if (!result || result.status !== 'success') {
+                    throw new Error(result && result.message ? result.message : 'ADMIN no confirmó el lote de movimiento.');
+                }
+                movedCount += Math.max(0, Number(result.movedCount) || 0);
+                alreadyOrganizedCount += Math.max(0, Number(result.alreadyOrganizedCount) || 0);
+                manualPreservedCount += Math.max(0, Number(result.manualPreservedCount) || 0);
+                failedCount += Math.max(0, Number(result.failedCount) || 0);
+                blockedCount += Math.max(0, Number(result.blockedCount) || 0);
+                loggingErrorCount += Math.max(0, Number(result.loggingErrorCount) || 0);
+                inventoryMessage = 'Organización explícita en progreso: ' + movedCount + ' movidas, ' +
+                    alreadyOrganizedCount + ' ya organizadas, ' + manualPreservedCount +
+                    ' ubicaciones manuales conservadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
+                await persistState('complete');
+            }
+            const completed = movedCount + alreadyOrganizedCount + manualPreservedCount === fileIds.length &&
+                failedCount === 0 && blockedCount === 0 && loggingErrorCount === 0;
+            inventoryStatus = completed ? 'organized' : 'saved';
+            inventoryMessage = 'Organización explícita ' + (completed ? 'completada' : 'parcial') + ': ' +
+                movedCount + ' movidas, ' + alreadyOrganizedCount + ' ya organizadas, ' +
+                manualPreservedCount + ' ubicaciones manuales conservadas, ' + failedCount +
+                ' fallidas, ' + blockedCount + ' bloqueadas y ' + loggingErrorCount + ' errores de registro.';
+        } catch (organizationError) {
+            if (!isCurrentRequest()) return;
+            inventoryStatus = 'saved';
+            inventoryMessage = 'La organización se detuvo sin repetir movimientos confirmados: ' +
+                organizationError.message + '. Puedes revisar el inventario y volver a intentar los elementos elegibles.';
+        } finally {
+            if (isCurrentRequest()) {
+                try { await persistState('complete'); }
+                catch (storageError) { inventoryMessage += ' No se pudo guardar localmente el resultado: ' + storageError.message; }
+                updateSummary(inventoryMessage);
+                isRunning = false; isDriveAuditRunning = false; updateControls();
+            }
         }
     };
 
@@ -7266,6 +7296,12 @@ export async function openAuditDriveModal() {
             resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
         }
         if (auditButton) auditButton.disabled = isRunning || isDriveAuditRunning;
+        const canOrganize = complete && inventoryStatus === 'saved' &&
+            !!inventoryAuditId && !!inventoryOperationId && inventoryConfirmedFileIds.length > 0;
+        if (organizeButton) {
+            organizeButton.hidden = !canOrganize;
+            organizeButton.disabled = isRunning || isDriveAuditRunning || !canOrganize;
+        }
     };
 
     const restoreState = (state) => {
@@ -7284,6 +7320,11 @@ export async function openAuditDriveModal() {
         resumeUnavailable = state.resumeUnavailable === true;
         inventoryStatus = state.inventoryStatus || '';
         inventoryMessage = state.inventoryMessage || '';
+        inventoryAuditId = String(state.inventoryAuditId || '');
+        inventoryOperationId = String(state.inventoryOperationId || '');
+        inventoryConfirmedFileIds = Array.isArray(state.inventoryConfirmedFileIds)
+            ? Array.from(new Set(state.inventoryConfirmedFileIds.map(id => String(id || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id))))
+            : [];
         savedState = state;
         container.innerHTML = '';
         appendFiles(allFiles);
@@ -7324,6 +7365,9 @@ export async function openAuditDriveModal() {
                 resumeUnavailable = false;
                 inventoryStatus = '';
                 inventoryMessage = '';
+                inventoryAuditId = '';
+                inventoryOperationId = '';
+                inventoryConfirmedFileIds = [];
                 savedState = null;
                 updateSummary('Preparando una auditoría nueva...');
                 await persistState('running');
@@ -7431,6 +7475,7 @@ export async function openAuditDriveModal() {
 
     if (startButton) startButton.onclick = () => runAudit(false);
     if (resumeButton) resumeButton.onclick = () => runAudit(true);
+    if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
 
     try {
         savedState = await offline.getDriveAuditState(requestContext.userId);
