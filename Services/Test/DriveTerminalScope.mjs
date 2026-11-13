@@ -36,6 +36,7 @@ function createDriveFixture() {
     const shared = makeFolder("shared", "Compartida", [nested, outside]);
     const multiInside = makeFolder("multi-inside", "Multi interna", [root, nested]);
     const raceFolder = makeFolder("race-folder", "Cambio concurrente", [root]);
+    root.children = root.children.filter(child => child !== raceFolder);
     let raceParentReads = 0;
     raceFolder.getParents = () => iterator([++raceParentReads === 1 ? root : outside]);
     const fileIn = makeFile("file-in", "corte.jpg", [leaf]);
