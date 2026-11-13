@@ -154,6 +154,6 @@ async function run() {
     assert.ok(uiSource.includes("shouldContinue: isCurrentRequest"));
     assert.ok(uiSource.includes("respuesta de este lote expiró"));
     passed++;
-    console.log("PASS AdminDriveAuditClientRetry: " + passed + "/6 PASS");
+    console.log("PASS AdminDriveAuditClientRetry: " + passed + "/7 PASS");
 }
 await run();
