@@ -47,11 +47,11 @@ const knownStatus=new Function(fnSource(admin,"isKnownReplacedImageStatus_")+"\n
 const find=new Function(fnSource(admin,"findReplacedImageRecordById")+"\nreturn findReplacedImageRecordById;")();
 const setStatusSource=fnSource(admin,"setReplacedImageHistoryStatusVerified_");
 const setPreviousSource=fnSource(admin,"setReplacedImageTrashPreviousStatusVerified_");
-function makeBase({status="requiere_revision",type="reemplazada",previous="requiere_revision",trashed=false,mime="image/jpeg",references=new Map(),unverifiable=0,failStatus=null,failRestoreToTrash=false,failTrash=false,lockFail=false}={}){
+function makeBase({status="requiere_revision",type="reemplazada",previous="requiere_revision",trashed=false,mime="image/jpeg",references=new Map(),unverifiable=0,failStatus=null,failRestoreToTrash=false,failUntrashRollback=false,failTrash=false,lockFail=false}={}){
     const sheet=createSheet([HEADERS,makeRow({status,type,previous,mime})]);
     const lock=lockHarness({fail:lockFail});
     const file={trashed,mime,name:"image.jpg",getMimeType(){return this.mime;},isTrashed(){return this.trashed;},getName(){return this.name;},
-        setTrashed(value){if(value===true&&failRestoreToTrash)throw new Error("rollback trash failed");if(value===true&&failTrash)throw new Error("trash failed");this.trashed=value;}};
+        setTrashed(value){if(value===true&&failRestoreToTrash)throw new Error("rollback trash failed");if(value===false&&failUntrashRollback)throw new Error("rollback untrash failed");if(value===true&&failTrash)throw new Error("trash failed");this.trashed=value;}};
     const flush=()=>{};
     const setStatus=new Function("SpreadsheetApp",setStatusSource+"\nreturn setReplacedImageHistoryStatusVerified_;")({flush});
     let failOnce=failStatus;
@@ -148,7 +148,7 @@ check("La papelera revierte el archivo si falla la confirmación del historial",
     assert.equal(b.sheet.cells[1][10],"historica");
 });
 check("La papelera deja requiere_revision si no puede compensar el traslado",()=>{
-    const b=makeBase({status:"historica",previous:"historica",failStatus:"en_papelera",failRestoreToTrash:true});
+    const b=makeBase({status:"historica",previous:"historica",failStatus:"en_papelera",failUntrashRollback:true});
     assert.throws(()=>runDelete(b),/no se confirmó la compensación/);
     assert.equal(b.file.trashed,true);
     assert.equal(b.sheet.cells[1][10],"requiere_revision");
