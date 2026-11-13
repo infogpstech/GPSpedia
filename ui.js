@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -3879,6 +3879,10 @@ function resetSessionUi_() {
         try { window.adminServiceMetricsUnsubscribe(); } catch (error) {}
     }
     window.adminServiceMetricsUnsubscribe = null;
+    if (window.adminServiceMetricsRefreshInterval) {
+        clearInterval(window.adminServiceMetricsRefreshInterval);
+        window.adminServiceMetricsRefreshInterval = null;
+    }
     window.adminListenersAttached = false;
     window.triggerAdminPanelPing = null;
     closeReplacedImagesLightbox_(true);
@@ -4940,7 +4944,8 @@ function initAdminPanelListeners() {
             detail.appendChild(empty);
             return;
         }
-        const events = getServiceMetricsSnapshot().events.filter(event => event.service === selectedServiceKey);
+        const metricSnapshot = getServiceMetricsSnapshot();
+        const events = metricSnapshot.events.filter(event => event.service === selectedServiceKey);
         const successful = events.filter(event => event.outcome === "success").length;
         const failed = events.length - successful;
         const average = events.length ? Math.round(events.reduce((sum, event) => sum + event.durationMs, 0) / events.length) : null;
@@ -4963,7 +4968,7 @@ function initAdminPanelListeners() {
             createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
             createServiceMetric("Última respuesta válida", formatServiceCheckTime(item.lastSuccessfulAt)),
             createServiceMetric("Latencia del diagnóstico", Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "No disponible"),
-            createServiceMetric("Solicitudes API observadas (15 min)", String(events.length)),
+            createServiceMetric("Solicitudes iniciadas (15 min)", String(events.length)),
             createServiceMetric("Solicitudes correctas", String(successful)),
             createServiceMetric("Solicitudes con error", String(failed)),
             createServiceMetric("Tiempo medio observado", average === null ? "No disponible" : `${average} ms`)
@@ -4971,7 +4976,7 @@ function initAdminPanelListeners() {
         detail.appendChild(metrics);
         const note = document.createElement("p");
         note.className = "dev-service-note";
-        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. Las métricas API corresponden únicamente a esta sesión del navegador.";
+        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. La telemetría agrupa solicitudes por hora de inicio y corresponde únicamente a esta sesión." + (metricSnapshot.truncated ? " La muestra de eventos está truncada por el límite de retención." : "");
         detail.appendChild(note);
         const dependencies = document.createElement("div");
         dependencies.className = "dev-service-dependencies";
@@ -5028,18 +5033,9 @@ function initAdminPanelListeners() {
             container.appendChild(empty);
             return;
         }
-        const bucketCount = 15, bucketSize = 60000;
-        const currentMinute = Math.floor(Date.now() / bucketSize) * bucketSize;
-        const firstMinute = currentMinute - (bucketCount - 1) * bucketSize;
-        const keys = [...new Set([...Object.keys(serviceHealthResults), ...snapshot.events.map(event => event.service)])];
-        const series = keys.map(service => ({ service, counts: Array(bucketCount).fill(0) }));
-        snapshot.events.forEach(event => {
-            const index = Math.floor((event.timestamp - firstMinute) / bucketSize);
-            if (index >= 0 && index < bucketCount) {
-                const target = series.find(item => item.service === event.service);
-                if (target) target.counts[index]++;
-            }
-        });
+        const keys = Object.keys(serviceHealthResults);
+        const bucketed = bucketServiceMetrics(snapshot, keys);
+        const { bucketCount, bucketSize, startAt, series } = bucketed;
         const maxValue = Math.max(1, ...series.flatMap(item => item.counts));
         const width = 920, height = 270, left = 48, right = 18, top = 18, bottom = 42;
         const plotWidth = width - left - right, plotHeight = height - top - bottom;
@@ -5048,7 +5044,7 @@ function initAdminPanelListeners() {
         svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
         svg.setAttribute("class", "dev-service-traffic-svg");
         svg.setAttribute("role", "img");
-        svg.setAttribute("aria-label", "Solicitudes API por minuto observadas desde este navegador durante los últimos quince minutos.");
+        svg.setAttribute("aria-label", "Solicitudes iniciadas por minuto desde este navegador en una ventana móvil exacta de quince minutos.");
         [0, Math.ceil(maxValue / 2), maxValue].filter((v, i, arr) => arr.indexOf(v) === i).forEach(value => {
             const y = top + plotHeight - (value / maxValue) * plotHeight;
             const line = document.createElementNS(ns, "line");
@@ -5066,7 +5062,7 @@ function initAdminPanelListeners() {
             const label = document.createElementNS(ns, "text");
             label.setAttribute("x", x); label.setAttribute("y", height - 12);
             label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "dev-service-traffic-axis");
-            label.textContent = new Date(firstMinute + index * bucketSize).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            label.textContent = new Date(startAt + index * bucketSize).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             svg.appendChild(label);
         });
         series.forEach((item, index) => {
@@ -5090,6 +5086,12 @@ function initAdminPanelListeners() {
             legend.appendChild(entry);
         });
         container.appendChild(legend);
+        const note = document.createElement("p");
+        note.className = "dev-service-note";
+        note.textContent = snapshot.truncated
+            ? `Muestra truncada: se alcanzó el límite de ${snapshot.eventLimit} eventos dentro de la ventana. Los conteos son parciales.`
+            : "Serie agrupada por inicio de solicitud; ventana móvil exacta de quince minutos.";
+        container.appendChild(note);
     }
     function renderServiceDashboard() {
         if (!isAdminPanelCurrent_()) return;
@@ -5123,10 +5125,32 @@ function initAdminPanelListeners() {
     if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
     if (!window.adminServiceMetricsUnsubscribe) {
         window.adminServiceMetricsUnsubscribe = subscribeServiceMetrics(() => {
-            if (!isAdminPanelCurrent_()) return;
+            if (!isAdminPanelCurrent_() || !isServiceDiagnosticsVisible_()) return;
             renderServiceTrafficChart();
             if (selectedServiceKey) renderServiceDetail();
         });
+    }
+    function isServiceDiagnosticsVisible_() {
+        const container = document.getElementById("service-traffic-chart");
+        if (!container || !container.isConnected) return false;
+        try {
+            let current = container;
+            while (current && current.nodeType === 1) {
+                const style = window.getComputedStyle(current);
+                if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return false;
+                current = current.parentElement;
+            }
+            return container.getClientRects().length > 0;
+        } catch (error) {
+            return false;
+        }
+    }
+    if (!window.adminServiceMetricsRefreshInterval) {
+        window.adminServiceMetricsRefreshInterval = window.setInterval(() => {
+            if (!isAdminPanelCurrent_() || !isServiceDiagnosticsVisible_()) return;
+            renderServiceTrafficChart();
+            if (selectedServiceKey) renderServiceDetail();
+        }, 15000);
     }
 
     // Conectividad automática e inicio

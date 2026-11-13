@@ -1742,3 +1742,10 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 
 - `Services/SERVICE_HEALTH.md` documenta identidades fuente, umbrales, semántica de estados, límites de confianza, LEGACY y validación Beta pendiente.
 - Los endpoints sin identidad versionada (incluido LEGACY) se clasifican `unknown` sin emitir solicitudes de red.
+
+
+## AUG-025 — Telemetría temporal de solicitudes API
+
+- `ServiceMetricsTelemetry.mjs` prueba el almacén real de eventos con reloj controlado: inicio de solicitud, expiración exacta, concurrencia fuera de orden, límite de 600, señal de truncamiento, ventana móvil y límites de buckets.
+- Comprueba que `routeAction` registra hora de inicio y duración final, y que el panel etiqueta la serie por inicio, advierte truncamiento y evita renderizar cuando el diagnóstico está oculto.
+- Ejecutar: `node --experimental-default-type=module Services/Test/ServiceMetricsTelemetry.mjs`.

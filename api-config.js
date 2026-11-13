@@ -5,6 +5,7 @@
 
 // 1. CONFIGURACIÓN
 import { runCatalogRequestWithRetry } from './catalogRequest.js';
+import { createServiceMetricsStore } from './serviceMetrics.js';
 
 export const RICH_TEXT_MODE_KEY = "gpsepedia_rich_text_mode";
 export const RICH_TEXT_MODES = Object.freeze({ STRICT: "strict", ADVANCED: "advanced" });
@@ -85,40 +86,16 @@ export const EXTERNAL_ACTIONS = {
     logFrontend: { service: 'LEGACY', consumer: 'users.html: remoteLog', source: 'deployment externo no versionado en este repositorio' }
 };
 
-const SERVICE_METRIC_WINDOW_MS = 15 * 60 * 1000;
-const SERVICE_METRIC_MAX_EVENTS = 600;
-const serviceMetricEvents = [];
-const serviceMetricListeners = new Set();
-const serviceMetricSessionStartedAt = Date.now();
+const serviceMetricsStore = createServiceMetricsStore();
 function recordServiceMetric(event) {
-    const timestamp = Number(event.timestamp) || Date.now();
-    serviceMetricEvents.push({
-        service: String(event.service || "UNKNOWN"),
-        action: String(event.action || "unknown"),
-        timestamp,
-        durationMs: Math.max(0, Number(event.durationMs) || 0),
-        outcome: String(event.outcome || "unknown"),
-        httpStatus: event.httpStatus === null || event.httpStatus === undefined ? null :
-            Number.isFinite(Number(event.httpStatus)) ? Number(event.httpStatus) : null
-    });
-    const cutoff = Date.now() - SERVICE_METRIC_WINDOW_MS;
-    while (serviceMetricEvents.length > SERVICE_METRIC_MAX_EVENTS ||
-        (serviceMetricEvents.length && serviceMetricEvents[0].timestamp < cutoff)) serviceMetricEvents.shift();
-    const snapshot = getServiceMetricsSnapshot();
-    serviceMetricListeners.forEach(listener => {
-        try { listener(snapshot); } catch (error) { console.error("Error notificando métricas locales:", error); }
-    });
+    try { serviceMetricsStore.record(event); }
+    catch (error) { console.error("No se pudo registrar la métrica local:", error); }
 }
 export function getServiceMetricsSnapshot() {
-    const now = Date.now(), cutoff = now - SERVICE_METRIC_WINDOW_MS;
-    while (serviceMetricEvents.length && serviceMetricEvents[0].timestamp < cutoff) serviceMetricEvents.shift();
-    return { windowMs: SERVICE_METRIC_WINDOW_MS, sessionStartedAt: serviceMetricSessionStartedAt,
-        capturedAt: now, events: serviceMetricEvents.map(event => ({ ...event })) };
+    return serviceMetricsStore.getSnapshot();
 }
 export function subscribeServiceMetrics(listener) {
-    if (typeof listener !== "function") return () => {};
-    serviceMetricListeners.add(listener);
-    return () => serviceMetricListeners.delete(listener);
+    return serviceMetricsStore.subscribe(listener);
 }
 
 function createRouteActionError_(message, options = {}) {
@@ -249,7 +226,7 @@ export async function routeAction(action, payload = {}, serviceOverride = null, 
         return result;
     } finally {
         try {
-            recordServiceMetric({ service, action, timestamp: Date.now(),
+            recordServiceMetric({ service, action, timestamp: requestStartedAt,
                 durationMs: Date.now() - requestStartedAt, outcome, httpStatus });
         } catch (metricError) { console.error("No se pudo registrar la métrica local:", metricError); }
     }
