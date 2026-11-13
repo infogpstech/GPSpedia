@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const ui = read('../Frontend/ui.js');
 const readme = read('../../README.md');
-const backlog = read('../../Tareas_pendientes_parte2.txt');
+const backlog = read('../../Olds/Documentacion_Legacy/Tareas_pendientes_legacy_parte_002_2026-11-13.txt');
 const start = ui.indexOf('export function exportVehiclePrintSheet');
 const end = ui.indexOf('\nexport ', start + 20);
 assert.ok(start >= 0, 'exportVehiclePrintSheet debe existir');
