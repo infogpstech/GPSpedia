@@ -695,3 +695,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - No se modificaron IDs, API_ENDPOINTS, endpoints, deployments, ACL ni datos. No se retiraron fuentes ni se reescribió historial.
 - La inspección estática no encontró API key permanente en youtubeUpload.js; el token OAuth se obtiene en Apps Script. La revisión de ACL Google y deployments reales queda pendiente de Beta por falta de acceso a esas plataformas.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-137 — RETIRADA DE CONSOLA DE DEPURACIÓN LEGACY
+- index.html: retirado el contenedor #debug-console y sus controles sin consumidores.
+- ui.js: retiradas las referencias de limpieza a #debug-console y #debug-log; se mantiene #dev-console-log.
+- Se confirmó que clearModalNavStack continúa consumida por main.js y que loadAndRenderInbox tiene llamadas internas activas; los exports UI también se exponen mediante window.ui y se preservan.
+- Se incorporará una suite INTEGRATION para comprobar la ausencia del markup obsoleto y preservar contratos/panel activo.
+================================================================================

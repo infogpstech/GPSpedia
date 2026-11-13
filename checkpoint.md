@@ -701,3 +701,27 @@ Validación y límites:
 Archivos: README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt y checkpoint.md.
 Siguiente tarea pendiente: AUG-137 — Retirar funciones huérfanas y markup de depuración obsoleto. AUG-136 ya figura como COMPLETADA CON VALIDACIÓN DIFERIDA en el backlog.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-137 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de inicio verificado: 057263b1779822cadb267a4fd4d713f4f7a4152d.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a resultado de CI del commit de cierre.
+
+Resultado:
+- Retirado el markup obsoleto #debug-console de index.html y las referencias de limpieza asociadas en ui.js.
+- #dev-console-log permanece intacto y conectado a initAdminPanelListeners.
+- clearModalNavStack se conserva porque main.js lo consume en el flujo de cierre/restauración de modales.
+- loadAndRenderInbox se conserva por sus llamadas internas activas y por su contrato de export en el módulo UI expuesto en window.ui.
+- No se identificaron funciones exportadas que pudieran retirarse con certeza sin romper el contrato global. No se eliminaron helpers por inferencia.
+- Añadida la suite Services/Test/UiOrphanCleanup.js al grupo INTEGRATION y documentada en Services/Test/README.md.
+
+Validación y límites:
+- Parsing de archivos modificados y suite automatizada Node.js 22 mediante GitHub Actions; registrar el resultado real después de ejecutar CI.
+- Beta pendiente: navegación/modal, Inbox, consola administrativa y operaciones Drive en navegador real, con recursos aislados. No se invocaron endpoints ni se modificaron datos/deployments.
+
+Archivos: index.html, ui.js, Services/Test/UiOrphanCleanup.js, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea pendiente: AUG-138 — Sanitizar logs de recuperación y operaciones en add_cortes.
+================================================================================

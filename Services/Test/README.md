@@ -1527,3 +1527,8 @@ La validación es estática y reproducible con las fuentes del repositorio; no l
 ### Resultado AUG-134 (2026-11-13)
 
 GitHub Actions run 43366270381, sobre commit a9ecfd6c6180b5037261b1d26f224527f7b9e7e5, Node.js 22.23.4: 16 suites, 239/239 pruebas aprobadas, 0 fallos. La suite ActionDispatchContract aporta 12 verificaciones nuevas y se ejecuta dentro de INTEGRATION.
+
+
+## Contratos UI y retirada de markup obsoleto
+
+La suite `UiOrphanCleanup.js` se ejecuta dentro del grupo INTEGRATION del runner. Comprueba que el markup y las referencias de la antigua `debug-console` no reaparezcan, que `dev-console-log` siga activo y que los contratos públicos de `clearModalNavStack` y `loadAndRenderInbox` permanezcan conectados.

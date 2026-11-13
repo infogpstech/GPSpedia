@@ -3884,7 +3884,7 @@ function resetSessionUi_() {
         'audit-drive-results-container', 'audit-drive-summary',
         'replaced-images-folder-status', 'selected-logo-file-name',
         'vin-migration-status', 'vin-recalculate-status', 'vin-diagnostic-status',
-        'service-health-detail', 'service-traffic-chart', 'debug-log'
+        'service-health-detail', 'service-traffic-chart'
     ];
     transientAdminIds.forEach(id => {
         const element = document.getElementById(id);
@@ -3895,8 +3895,6 @@ function resetSessionUi_() {
     const logoFileInput = document.getElementById('logo-file-input');
     if (logoFileInput) logoFileInput.value = '';
 
-    const debugConsole = document.getElementById('debug-console');
-    if (debugConsole) debugConsole.style.display = 'none';
     const devProgress = document.getElementById('dev-progress-container');
     if (devProgress) devProgress.style.display = 'none';
 

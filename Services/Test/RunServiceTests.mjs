@@ -78,6 +78,9 @@ runGroup('37','USERS',()=>{
 });
 runGroup('38','INTEGRATION',()=>{
  recordResult('Coordinador compartido/concurrencia/leases',new Function(read('Services/Coordinator.js')+'\n'+read('Services/SharedMutationClient.js')+'\n'+read('Services/Test/SharedMutationCoordinator.js')+'\nreturn runSharedMutationCoordinatorTests();')());
+ recordResult('Limpieza UI y contratos públicos',loadFunction('Services/Test/UiOrphanCleanup.js','runUiOrphanCleanupTests')({
+  index:read('index.html'),ui:read('ui.js'),main:read('main.js')
+ }));
  recordResult('Mapa de acciones y routers',loadFunction('Services/Test/ActionDispatchContract.js','runActionDispatchContractTests')({
   apiConfig:read('api-config.js'),AUTH:read('Services/Auth.js'),USERS:read('Services/users.js'),CATALOG:read('Services/catalog.js'),
   WRITE:read('Services/write.js'),FEEDBACK:read('Services/feedback.js'),ADMIN:read('Services/admin.js'),UTILITIES:read('Services/Utilities.js'),usersHtml:read('users.html'),

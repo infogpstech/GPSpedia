@@ -2139,3 +2139,33 @@ No usar deployments, hojas, carpetas Drive ni datos productivos. Las suites loca
 - Inventariar deployments Apps Script por servicio, versión desplegada, propietario y URL configurada; comparar con los endpoints autorizados en api-config.js sin invocar ni modificar producción.
 - Validar en entorno de prueba el OAuth de YouTube desde FEEDBACK y la sesión Resumable. Confirmar que el token OAuth nunca llega al navegador; la URL temporal solo se entrega tras validar sesión y destino.
 - Verificar IndexedDB: persistencia necesaria para reanudar, limpieza tras completar/descartar y política de expiración para sesiones abandonadas. Cerrar el modal debe seguir siendo una pausa recuperable; el descarte explícito debe eliminar el registro local. No confundir la eliminación local con la revocación inmediata de una sesión ya creada en YouTube.
+
+
+================================================================================
+AUG-137 — Verificación funcional UI en navegador Beta aislado
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local GPSpedia:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git -C GPSpedia rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git -C GPSpedia branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git -C GPSpedia remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git -C GPSpedia status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git -C GPSpedia fetch origin "$EXPECTED_BRANCH"
+git -C GPSpedia pull --ff-only origin "$EXPECTED_BRANCH"
+git -C GPSpedia status --short
+git -C GPSpedia rev-parse HEAD
+~~~
+
+En navegador y cuentas/recursos Beta aislados:
+1. Probar apertura, navegación hacia atrás, cierre y restauración de modales; confirmar que clearModalNavStack limpia únicamente la pila de navegación.
+2. Abrir Inbox, paginar, seleccionar un elemento, volver a la lista y ejecutar acciones permitidas; confirmar que loadAndRenderInbox conserva su carga y refresco.
+3. Abrir la consola administrativa y confirmar que #dev-console-log recibe y conserva los mensajes, comandos y estados esperados.
+4. Ejecutar las operaciones Drive de diagnóstico/administración previstas para Beta y comprobar que la retirada del contenedor legacy no altera sus controles ni resultados.
+5. Revisar consola del navegador por errores de elementos inexistentes asociados a debug-console/debug-log.
+No utilizar endpoints productivos, datos reales ni ejecutar cambios de permisos/despliegues. Registrar navegador/versión, cuenta/rol de prueba y resultados; no incluir tokens ni datos personales.
+================================================================================

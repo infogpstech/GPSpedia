@@ -331,9 +331,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-137 — Retirar funciones huérfanas y markup de depuración obsoleto
 - **Origen:** H-AUD-020-004. **Prioridad:** Baja.
-- **Problema:** hay helpers internos sin referencias y un contenedor #debug-console sin consumidores encontrados; también existen exports UI sin uso interno aparente.
-- **Criterios:** construir call graph del código y revisar triggers/consumidores externos; confirmar el contrato público de clearModalNavStack y loadAndRenderInbox; retirar solo funciones/markup sin consumidores; mantener separado el panel activo #dev-console-log; probar navegación, Inbox, consola administrativa y operaciones Drive afectadas.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Resultado:** call graph y consumidores revisados. `clearModalNavStack` se conserva porque `main.js` lo invoca al cerrar/restaurar la navegación del modal. `loadAndRenderInbox` se conserva porque tiene llamadas internas activas y forma parte del módulo UI expuesto mediante `window.ui`. La exposición global `window.ui = ui` obliga a tratar los exports como contrato potencialmente público; no se retiraron exports solo por ausencia de llamadas internas.
+- **Retirada:** eliminado de `index.html` el contenedor legacy `#debug-console` y sus controles sin consumidores (`debug-header`, `debug-clear`, `debug-close`, `debug-log`, `debug-resize-handle`). Eliminadas de `ui.js` las referencias de limpieza asociadas. El panel activo `#dev-console-log` permanece intacto.
+- **Regresión:** añadida `Services/Test/UiOrphanCleanup.js` al grupo INTEGRATION para verificar ausencia del markup/referencias legacy, conservación de `#dev-console-log` y contratos de navegación/Inbox.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; pruebas automatizadas y revisión estática aprobadas al cierre. Navegación, Inbox, consola administrativa y operaciones Drive en navegador real quedan para Beta.
 
 ### AUG-138 — Sanitizar logs de recuperación y operaciones en add_cortes
 - **Origen:** H-AUD-020-002. **Prioridad:** Media.

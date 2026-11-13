@@ -375,3 +375,13 @@ Validación GitHub Actions 43366270381 sobre commit a9ecfd6c6180b5037261b1d26f22
 - Se conservaron en su ubicación actual los IDs de Spreadsheet y carpeta Drive de prueba de GPSpedia, conforme a la instrucción del usuario.
 - Se documentó el flujo YouTube OAuth server-side y URL Resumable temporal en cliente; no se encontró API key permanente en youtubeUpload.js. La URL se conserva en IndexedDB para reanudación y se elimina al completar o descartar.
 - ACL reales de Google y deployments Apps Script quedan pendientes de verificación en Beta; no se accedió a recursos externos ni se modificaron datos.
+
+
+================================================================================
+
+AUG-137 — RETIRAR MARKUP DE DEPURACIÓN OBSOLETO Y PRESERVAR CONTRATOS UI — 2026-11-13
+Se retiró de index.html el contenedor #debug-console y sus controles sin consumidores. ui.js ya no intenta ocultarlo ni limpiar #debug-log. El panel administrativo #dev-console-log se conserva.
+La revisión de referencias confirmó que clearModalNavStack sigue siendo invocada por main.js y que loadAndRenderInbox mantiene llamadas internas activas. Como main.js expone el módulo mediante window.ui, no se eliminaron exports por ausencia de llamadas internas.
+Se añadirá Services/Test/UiOrphanCleanup.js al grupo INTEGRATION para prevenir la reintroducción del markup legacy y verificar los contratos públicos y el panel activo.
+Estado: EN PROGRESO; cierre condicionado a validación automatizada y publicación. La interacción de navegador real (navegación, Inbox, consola administrativa y Drive) queda para Beta.
+================================================================================
