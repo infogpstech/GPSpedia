@@ -1636,3 +1636,23 @@ Hallazgos añadidos a Auditoría.txt: H-AUD-027-009 (referencias fuera de Cortes
 
 Estado: EN PROGRESO. No se ha modificado código ni se han ejecutado operaciones sobre Spreadsheet/Drive productivos. Próximo paso: implementar escáner global, protección persistente en_uso, resolución manual de requiere_revision, restauración desde papelera y eliminación definitiva con verificación/compensación; añadir pruebas de regresión y validar CI en la rama autorizada.
 ================================================================================
+
+
+================================================================================
+AUG-027 — Checkpoint de implementación parcial — 2026-11-13
+HEAD verificado: 9b2e7814581efe774c3aa68106648220706e7aed (último commit de pruebas de marca en uso).
+Rama: GPSpedia2.2.5_work. Comparación con GPSpedia2.2.5: 1977 commits ahead, 0 behind. Base HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+Cambios de código confirmados en commits de esta fase:
+- dacc854fcd324cf60dc4744ed17566a8907bc8b5: referencias globales en handlers de gestión de imágenes.
+- 8be5281415b936b0950bc74fa75d4839aeac7d10 y f0645b5d74f66abbc9fcb5812634d3b8eb3cb935: actualización y ampliación de pruebas de contrato.
+- 0e02d9028e0ef403b657d2ec26fed3d240382bbd: alcance global aclarado en UI.
+- 5c58ed85f351a9af58aed1506a9a06d6cb158a15: estado en_uso, acción ADMIN y protección del inventario/auditoría.
+- 024d60472ec565dd56bcd12da75f82368f8a5a98: mapa de acciones API.
+- 6bf573244d24ceea04e59e84576b1734de7aa637: botón «Marcar en uso» en el modal.
+- 9b2e7814581efe774c3aa68106648220706e7aed: pruebas de contrato para la protección manual.
+
+Estado AUG-027: EN PROGRESO. Falta papelera manual para requiere_revision, restauración desde papelera, eliminación definitiva, documentación de acciones, pruebas de ejecución y CI, y Beta aislada. Los registros de auditoría mantienen H-AUD-027-009/010 parcialmente corregidos y H-AUD-027-011 abierto.
+
+No se ejecutaron operaciones en Spreadsheet/Drive productivos ni deployments. CI no confirmado; no afirmar PASS hasta obtener un run asociado a esta rama/commit.
+================================================================================
