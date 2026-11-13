@@ -509,8 +509,8 @@ check("La captura de Cortes limita memoria por bloques y conserva filas posterio
     assert.equal(result.metrics.cells,4008);
     assert.equal(result.metrics.rowChunkSize,500);
     assert.equal(result.metrics.captureBudgetMs,12000);
-    assert.equal(result.metrics.chunks,10);
-    assert.equal(calls.length,10);
+    assert.equal(result.metrics.chunks,16);
+    assert.equal(calls.length,16);
     assert.ok(calls.every(item=>item.numRows<=500));
     assert.equal(Math.max(...calls.map(item=>item.row+item.numRows-1)),502);
 });
