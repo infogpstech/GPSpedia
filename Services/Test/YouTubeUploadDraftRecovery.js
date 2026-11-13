@@ -53,7 +53,7 @@ function createIndexedDb(records) {
 }
 
 const lookup = new Function("window", "YOUTUBE_UPLOAD_DB_NAME", "YOUTUBE_UPLOAD_STORE_NAME",
-    openDb + "\n" + watchTransaction + "\n" + findPending + "\nreturn findPendingYouTubeUploadRecord_;
+    openDb + "\n" + watchTransaction + "\n" + findPending + "\nreturn findPendingYouTubeUploadRecord_;"
 )( { indexedDB: createIndexedDb([
     { opVideoId: "draft-1", userId: "u1", contentType: "tutorial",
       referenceId: "null", status: "paused", bytesUploaded: 12 },
