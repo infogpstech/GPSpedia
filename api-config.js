@@ -54,6 +54,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
+    'getInboxRecipients': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK',
     'initYouTubeUpload': 'FEEDBACK', 'getVideoApprovalByOperation': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
     'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateTimestamps': 'UTILITIES',
@@ -239,6 +240,30 @@ export async function fetchCatalogData(options = {}) {
 export async function getFeedbackItems(sessionPayload = {}, pageOptions = {}) {
     const pagination = pageOptions && typeof pageOptions === 'object' ? pageOptions : {};
     return await routeAction('getFeedbackItems', { ...sessionPayload, cursor: pagination.cursor, pageSize: pagination.pageSize });
+}
+
+export async function getInboxRecipients(sessionPayload = {}) {
+    return await routeAction('getInboxRecipients', { ...sessionPayload });
+}
+export async function getInboxConversations(sessionPayload = {}, options = {}) {
+    const source = options && typeof options === 'object' ? options : {};
+    return await routeAction('getInboxConversations', { ...sessionPayload, cursor: source.cursor, pageSize: source.pageSize, folder: source.folder, query: source.query });
+}
+export async function getInboxMessages(conversationId, sessionPayload = {}, options = {}) {
+    const source = options && typeof options === 'object' ? options : {};
+    return await routeAction('getInboxMessages', { ...sessionPayload, conversationId, cursor: source.cursor, pageSize: source.pageSize });
+}
+export async function createInboxConversation(payload = {}) {
+    return await routeAction('createInboxConversation', payload);
+}
+export async function sendInboxMessage(payload = {}) {
+    return await routeAction('sendInboxMessage', payload);
+}
+export async function markInboxRead(conversationId, throughMessageId, sessionPayload = {}) {
+    return await routeAction('markInboxRead', { ...sessionPayload, conversationId, throughMessageId });
+}
+export async function archiveInboxConversation(conversationId, archived, sessionPayload = {}) {
+    return await routeAction('archiveInboxConversation', { ...sessionPayload, conversationId, archived });
 }
 
 export async function replyToFeedback(itemId, itemType, replyText, responderName, sessionPayload = {}) {

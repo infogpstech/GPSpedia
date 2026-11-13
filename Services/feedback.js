@@ -323,6 +323,8 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     replyToFeedback: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
     markAsResolved: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
     deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+    getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
+    createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, archiveInboxConversation: null,
     getActivityLogs: ["Desarrollador", "Gefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
     initYouTubeUpload: null, getVideoApprovalByOperation: null, submitVideoForApproval: null,
     approveVideo: ["Desarrollador", "Gefe", "Supervisor"], rejectVideo: ["Desarrollador", "Gefe", "Supervisor"]
@@ -410,6 +412,27 @@ function doPostInternal_(e) {
                 break;
             case 'deleteFeedbackItem':
                 response = handleDeleteFeedbackItem(payload);
+                break;
+            case 'getInboxRecipients':
+                response = handleGetInboxRecipients(payload);
+                break;
+            case 'getInboxConversations':
+                response = handleGetInboxConversations(payload);
+                break;
+            case 'getInboxMessages':
+                response = handleGetInboxMessages(payload);
+                break;
+            case 'createInboxConversation':
+                response = handleCreateInboxConversation(payload);
+                break;
+            case 'sendInboxMessage':
+                response = handleSendInboxMessage(payload);
+                break;
+            case 'markInboxRead':
+                response = handleMarkInboxRead(payload);
+                break;
+            case 'archiveInboxConversation':
+                response = handleArchiveInboxConversation(payload);
                 break;
             case 'clearActivityLogs':
                 response = handleClearActivityLogs(payload);
