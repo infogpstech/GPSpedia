@@ -2359,6 +2359,18 @@ body.dark-mode .terms-agreement-logo {
     min-height: 0;
 }
 
+#dev-tools-modal .dev-tools-tab-options {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 #dev-tools-modal .dev-tab-radio {
     position: absolute;
     width: 1px;
@@ -2406,11 +2418,11 @@ body.dark-mode .terms-agreement-logo {
     background: var(--button-bg);
 }
 
-#dev-tools-modal #dev-tab-diagnostics:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal #dev-tab-backups:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
-#dev-tools-modal #dev-tab-database:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
-#dev-tools-modal #dev-tab-images:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
-#dev-tools-modal #dev-tab-system:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-backups:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:focus-visible) .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
     outline: 2px solid var(--accent-color);
     outline-offset: 2px;
 }
@@ -2425,19 +2437,19 @@ body.dark-mode .terms-agreement-logo {
     overflow-y: auto;
 }
 
-#dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-panel-diagnostics,
-#dev-tools-modal #dev-tab-backups:checked ~ .dev-tools-layout .dev-panel-backups,
-#dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-panel-database,
-#dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-panel-images,
-#dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-panel-system {
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tools-layout .dev-panel-diagnostics,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-backups:checked) .dev-tools-layout .dev-panel-backups,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tools-layout .dev-panel-database,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tools-layout .dev-panel-images,
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tools-layout .dev-panel-system {
     display: flex;
 }
 
-#dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal #dev-tab-backups:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
-#dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
-#dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
-#dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-diagnostics:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-backups:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-database:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-images:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal .dev-tools-tabs:has(#dev-tab-system:checked) .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
     background: var(--accent-color);
     color: #fff;
 }
