@@ -2,7 +2,7 @@
 // VERSION: 1.5.0 | OUTPUT: Hoja 1 (columna A)
 // AUTH: active developer session verified from Users/ActiveSessions.
 // Mutations acquire a shared lease before the local ScriptLock; see COORDINATOR_SETUP.md.
-const SPREADSHEET_ID="1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
+const SPREADSHEET_ID="1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
 const SOURCE_COLS={imagenVehiculo:9},ROLE_REVOCATION_SHARED_PREFIX="__role_revocation_pending__:";
 function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"available",service:"GPSpedia-Utilities",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
