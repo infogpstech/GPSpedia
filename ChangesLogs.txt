@@ -602,3 +602,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js y add_cortes.html: disponibilidad reconoce Video/videoGuiaDesarmeUrl; el guardado de etapa 3 exige respuesta WRITE confirmada y comprueba los campos con una lectura CATALOG forceRefresh. El modal de corte conserva su vehicleId para refrescarse tras aprobación.
 - Se conserva la aprobación YouTube en FEEDBACK como única vía de publicación. Se añadió SupplementaryVideoContract.js y se corrigió el fixture de YouTubeApproval.js que usaba una URL con el mismo ID esperado.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-128 — INTEGRIDAD DE RELACIONES PyS–VEHÍCULOS
+- Revisión del código vigente confirmó que la validación de IDs, normalización/deduplicación, exclusión mutua de altas/bajas y verificación de persistencia ya estaban implementadas y cubiertas por Services/Test/PysVehicleRelationIntegrity.js.
+- No se duplicó ni alteró código funcional; se actualizó el estado del backlog y se registró la cobertura existente.
+- La concurrencia real entre ejecuciones independientes y la integración con FEEDBACK/Spreadsheet quedan para Beta aislada.
+================================================================================
