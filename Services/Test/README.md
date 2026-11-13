@@ -1418,3 +1418,14 @@ node --experimental-default-type=module Services/Test/TutorialIntegrity.js
 ```
 
 La suite incluye regresiones del contrato compartido: CATALOG lee la hoja canónica `Tutorial` y mapea en orden ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles, Video y Colaborador; también mantiene la lectura de filas históricas A:G sin inventar un colaborador. Verifica que FEEDBACK no cree ni consulte una hoja plural alternativa. La implementación de alta, edición, identidad y migración compatible se conserva de AUG-092; no se duplica.
+
+
+## AUG-125 — Recuperación de respaldos y restauraciones ADMIN
+
+```js
+runAdminRestoreRecoveryTests(adminSource)
+```
+
+La suite `Services/Test/AdminRestoreRecovery.js` valida los contratos de respaldo DB/Drive, manifiestos, esquema, staging, intercambio de hojas completas, preservación de hojas adicionales y rutas de rollback. Incluye simulación dinámica de intercambio DB exitoso, fallo de promoción, fallo de verificación y fallo al recuperar nombres originales.
+
+La suite usa dobles locales; no ejecuta `DriveApp`, `SpreadsheetApp`, Apps Script ni endpoints. La creación y restauración reales deben probarse en un proyecto ADMIN y recursos aislados, según `lista_beta.txt`.
