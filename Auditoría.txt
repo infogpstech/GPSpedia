@@ -1410,3 +1410,30 @@ Pendiente Beta:
 - No se usaron recursos productivos ni se desplegó el servicio.
 
 ================================================================================
+
+================================================================================
+AUG-033 — SEGUIMIENTO DE H-AUD-029-005 / H-AUD-029-006 / H-AUD-029-007 — 2026-11-13
+Estado: CERRADO EN CÓDIGO; integración Apps Script/Drive/Spreadsheet diferida a Beta.
+
+Ubicación principal: Services/admin.js — collectCortesImageReferences, isFolderInsideCortes y handleAuditDriveImagesInCortesLocked_.
+Consumidor cliente revisado: ui.js — routeActionWithRetry para auditDriveImagesInCortes; api-config.js — implementación de timeout/reintento.
+
+Resolución:
+- La captura de Cortes continúa restringida a los ocho campos de imagen y agrupa columnas contiguas. Cada lectura se limita por filas y conserva valores visibles, valores nativos (incluido CellImage), fórmulas y enlaces RichText; no consulta el ancho completo de la hoja.
+- El tamaño de lote se adapta al tiempo real medido por bloque: máximo 500 filas, mínimo 50, objetivo 1,500 ms. El presupuesto total de captura es 12,000 ms. Si se excede, se lanza error antes de devolver referencias y no se puede persistir un snapshot parcial.
+- Se desglosan tiempos de lectura display/raw/formulas/RichText y análisis, junto con filas, celdas, rangos, bloques, tamaño adaptativo, bloque más lento y cantidad de ajustes.
+- El recorrido Drive conserva su presupuesto de 18,000 ms, topes de archivos/carpetas/entradas, estado serializado y cursor emitido por ADMIN.
+- La validación de carpetas comparte folderMembershipCache por petición durante validación de la pila y recorrido de subcarpetas. La prueba confirma que las ramas externas no se marcan como válidas.
+- El cliente ya aplicaba timeout de 45 s, un intento inicial, hasta tres intentos en continuaciones, backoff, AbortController nuevo por intento y cancelación de vista. Se verificó que todos los intentos reciben una copia equivalente del mismo cursor/payload; no se modificó api-config.js ni ui.js.
+
+Evidencia local:
+- AdminReplacedImagesIntegrity.mjs: 54/54 PASS en harness V8 adaptado, incluyendo preservación de fórmulas/RichText/CellImage, adaptación ante bloque lento y rechazo al agotar presupuesto.
+- AdminDriveAuditClientRetry.mjs: 7/7 PASS en harness V8 adaptado; incluye red, HTTP reintentable/no reintentable, error de aplicación, límite de intentos, cancelación y timeout.
+- Parsing de Services/admin.js, suites y runner: PASS.
+- Node CLI literal y GitHub Actions no se ejecutaron desde esta sesión; no se declara CI SUCCESS.
+
+Validación Beta pendiente:
+- Medir rendimiento real de Apps Script con Spreadsheet de prueba de tamaño representativo y comprobar los tiempos/limites de lectura.
+- Validar iteradores/continuation tokens, permisos y pertenencia con árbol Drive aislado; no usar Drive ni Spreadsheet productivos.
+- Sin deployment ni cambios en recursos productivos.
+================================================================================
