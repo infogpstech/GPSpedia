@@ -205,7 +205,9 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Origen: H-AUD-019-002. Prioridad: Alta.
 - Evidencia: api-config.js:7–15, 27; Services/Utilities.js:35–55, 62–96 y 138–141.
 - Criterios: autenticación Desarrollador; ScriptLock; snapshot y validación previa; ejecución recuperable; pruebas de fallo y concurrencia en copia.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: UTILITIES mantiene autenticación de Desarrollador y ejecuta toda la migración bajo ScriptLock. Captura snapshots de Cortes y Hoja 1 antes de resolver fechas con Drive; verifica el respaldo contra la instantánea antes de promover staging y aborta ante discrepancias.
+- Validación local: UtilitiesSecurity.js ampliada con POST concurrente, fallo de lectura del snapshot de origen, discrepancia del respaldo y liberación del lock, además de regresiones de staging/promoción/recuperación. 15/15 PASS; parsing 2/2 PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-124 — Unificar esquema e identidad de Tutoriales entre FEEDBACK y CATALOG
 - Origen: H-AUD-019-003. Prioridad: Alta.
