@@ -931,3 +931,32 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - Beta: comparar combinaciones de imágenes/texto en preview/PDF y comprobar recortes/overflow reales.
 Siguiente tarea: AUG-146 — Corregir referencias históricas de AUD-T-021 en el plan maestro.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-146 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD inicial verificado: 4a6909637331409ed32c0b3bfd268235e9e70aea.
+Estado: COMPLETADA.
+
+Resultado:
+- Revisados los mensajes y diffs de los cuatro commits vinculados a la atribución histórica de AUD-T-021.
+- Excluido 6d7fbb9c962ffb5622a209fa160b79ca0020c494: su alcance es el panel de desarrollador y el formulario PyS, no la ficha imprimible.
+- Fuentes confirmadas: 199ee4bee2f958dda47952ca12a72f4ae825379d, cbbcb0cbd00fb78a4f6438baabaa13e0ab69ef18 y 04c86ce64f98b9e65d2dd0d82ed2d3ee3a2be51b; los tres diffs afectan ui.js en el flujo de impresión.
+- Corrección activa registrada en Plan_auditoría/Plan_Maestro_Implementacion.md. No se reescribió Olds/Documentacion_Legacy/Plan_Auditoria_legacy_parte_001.md, que permanece inmutable.
+
+Validación:
+- Revisión documental y de diffs: PASS.
+- Integridad de referencias completas y consistencia del backlog/ChangesLogs/registro de cierres: PASS.
+- Sintaxis de código: N/A; no se modificó código.
+- Pruebas Node.js/CLI: no aplican al cambio exclusivamente documental.
+- GitHub Actions se ejecutará por el evento push de la rama; resultado pendiente de comprobar tras publicar.
+
+Commits secuenciales de documentación:
+- Plan_auditoría/Plan_Maestro_Implementacion.md: eef62746bea3362ff49ab2cbe8a71539081772d6
+- Tareas_pendientes_parte2.txt: 0360c69d9a3123b1a2f827f801f1630ca09485f4
+- ChangesLogs.txt: 742c1d7e0536251fceec0acffda2fd357348b64e
+- tareas_completadas_parte1.txt: a24726228aa459c8cfd687892240c4bda2d9a03a
+Siguiente tarea: reevaluar el backlog y sus dependencias conforme al plan maestro.
+================================================================================
