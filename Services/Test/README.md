@@ -1763,3 +1763,12 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 ## AUG-028 — integridad de auditoría e inventario
 
 `AdminReplacedImagesIntegrity.mjs` cubre huellas y reanudación del cursor, estado de auditoría del servidor, expiración, páginas parciales, validación exacta de la lista de archivos, aislamiento por propietario, correlación auditId/inventoryOperationId, protección de estados y reintentos/compensación de escrituras parciales. Suite: 29/29 PASS. La regresión completa del 2026-11-13 ejecutó 71 suites y 1,023 pruebas, sin fallos.
+
+## AUG-033 — Rendimiento del recorrido Drive y captura de referencias
+
+- `AdminReplacedImagesIntegrity.mjs` verifica que el escáner de Cortes lea solo los ocho campos de imagen, agrupando columnas contiguas y conservando display values, fórmulas, rich text y objetos CellImage; también prueba que un mapeo incompleto falle cerrado.
+- La misma suite comprueba la memoización de pertenencia a Cortes por petición, el rechazo de ramas externas, el presupuesto de lote de 18 segundos y las métricas de etapa/tamaño.
+- `AdminDriveAuditClientRetry.mjs` ejecuta `routeActionWithRetry` aislado: timeout con AbortController, reintento de red/HTTP 5xx, rechazo de errores de aplicación/HTTP 4xx, máximo de tres intentos, cancelación de la vista y conservación exacta del cursor.
+- Las continuaciones pueden reintentarse con el mismo cursor; el inicio sin cursor usa un solo intento automático para evitar crear auditorías duplicadas si se pierde la respuesta inicial.
+- Ejecutar: `node --experimental-default-type=module Services/Test/AdminReplacedImagesIntegrity.mjs` y `node --experimental-default-type=module Services/Test/AdminDriveAuditClientRetry.mjs`, o mediante `RunServiceTests.mjs --only=INTEGRATION`.
+- Las pruebas usan dobles locales; no sustituyen la medición de Drive/Spreadsheet y CacheService reales en una Beta aislada.
