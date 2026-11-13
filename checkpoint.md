@@ -1093,3 +1093,23 @@ Resultado:
 
 Siguiente tarea pendiente según backlog: AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente. AUG-041 figura completada con validación diferida; no se repite.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-042 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD al cerrar registros: 926988f9d904a83c58b6e118697b57a3e16c8440.
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Cierre anterior H-AUD-042-001 a 011: commit ef7bdc926ade691e22fa397a3b68267435d191cf; limpieza privilegiada, logout token-aware, revocación de sesiones por cambio de rol, revalidación remota, aislamiento DriveAuditState y guards asíncronos.
+- Corrección actual H-AUD-042-012: renderInboxDetail define userRole desde context.role y pasa el rol canónico a approveVideo/rejectVideo.
+- Suites: SessionUiRoleInvalidation 13/13; InboxRoleContract 8/8; SessionProfileRefresh 19/19.
+- GitHub Actions run 43429506713 SUCCESS: 37 suites, 557 pruebas PASS, 0 fallos; Node --check ui.js PASS.
+- Beta pendiente: navegador/DOM/IndexedDB reales, logout con modal abierto, transiciones Developer/Técnico/Supervisor/Jefe, login multi-cuenta, sesión remota revocada, respuestas asíncronas y llamadas globales directas. No se usaron endpoints ni datos productivos.
+
+Registros actualizados: Tareas_pendientes_parte1.txt, ChangesLogs.txt, Auditoría.txt, tareas_completadas_parte1.txt, Services/Test/README.md, lista_beta_parte2.txt y checkpoint.md.
+Siguiente tarea del backlog: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube. Dependencias AUG-006/AUG-016/AUG-039/AUG-040/AUG-042 verificadas como cerradas.
+================================================================================
