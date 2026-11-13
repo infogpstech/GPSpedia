@@ -43,3 +43,28 @@ Los errores de validación se rechazan antes de invocar las escrituras de Spread
 ## Consumidores y mantenimiento
 
 La ruta canónica existe, pero no hay consumidor frontend versionado ni evidencia en este repositorio de consumidor externo concreto. Se clasifican como API administrativa interna/manual, no como acciones retiradas ni como API pública documentada para usuarios finales. Cualquier cambio incompatible debe inventariar primero consumidores externos y coordinar migración.
+
+
+## Ciclo de vida del historial e inventario de imágenes (AUG-027)
+
+Las acciones del gestor de imágenes se ejecutan únicamente desde ADMIN y requieren sesión vigente de rol Desarrollador. El rol se obtiene de la sesión validada por el servidor; los datos de rol enviados por el cliente no conceden autorización. Las mutaciones utilizan la lease compartida ADMIN y la auditoría persistente de operaciones administrativas.
+
+### Acciones
+
+- `deleteReplacedImage`: envía a la papelera un registro histórico o de inventario válido sin referencias activas. También permite resolver manualmente un registro `requiere_revision` si su ID, archivo, MIME, ubicación y ausencia de referencias se pueden verificar. Guarda `estado_previo_papelera` antes de cambiar el estado a `en_papelera`.
+- `restoreReplacedImageFromTrash`: restaura el archivo desde la papelera de Drive a su ubicación conservada. Recupera el estado guardado en `estado_previo_papelera`. No vuelve a escribir una URL en Cortes ni en otra hoja; la restauración del archivo y la restauración de una referencia histórica son operaciones distintas.
+- `permanentlyDeleteReplacedImage`: solo acepta `en_papelera` o `eliminacion_pendiente`. Comprueba referencias globales y referencias no interpretables, MIME, estado de papelera y pertenencia al árbol Cortes. Ejecuta DELETE mediante Drive API v3 y verifica con GET posterior que Drive devuelva 404 antes de marcar `eliminada`.
+
+### Estados y recuperación
+
+- `estado_previo_papelera` conserva el estado anterior a enviar el archivo a papelera; se añade como encabezado dinámico migrable, sin alterar el orden de las columnas base.
+- `eliminacion_pendiente` es un estado de dos fases: se registra antes de la eliminación definitiva. Si la respuesta de Drive se pierde o la verificación no puede completarse, un reintento consulta Drive y puede reconciliar el registro sin repetir una eliminación ya confirmada.
+- `eliminada` se registra solo después de comprobar que el archivo ya no existe. Repetir una operación completada devuelve un resultado sin cambios.
+- Si falla una actualización de historial después de una operación de Drive, se intenta compensar. Si la compensación tampoco se puede confirmar, el registro queda en `requiere_revision` cuando la escritura de estado está disponible; no se informa éxito.
+- Las filas estructuralmente inválidas, con identidad ambigua, ID duplicado o archivo fuera del árbol autorizado siguen sin acciones. No se debe adivinar la identidad del archivo.
+
+### Referencias y límites
+
+- Las operaciones destructivas usan `collectActiveDriveReferences()`, que inspecciona valores, fórmulas y RichText de las hojas funcionales del Spreadsheet, y bloquean referencias no interpretables.
+- La restauración desde papelera solo restaura el archivo; no modifica celdas ni reasigna referencias.
+- La eliminación definitiva usa `UrlFetchApp` con el token OAuth del proyecto y Drive API v3. El proyecto Apps Script debe contar con autorización efectiva para eliminar archivos. Los permisos, scopes y comportamiento real de Drive/Spreadsheet se verificarán en un deployment Beta aislado; no se debe probar contra datos productivos.
