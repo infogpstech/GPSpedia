@@ -103,7 +103,7 @@ function runLastDeveloperProtectionTests(sources) {
             })},
             value=>String(value||'').trim(),normalizeRole,
             row=>active(row),id=>'role:'+id,
-            ()=>({pending:false}),{flush:()=>{}}
+            ()=>({pending:false}),{flush:()=>{if(failCommitFlush){failCommitFlush=false;throw new Error('flush final simulado');}}}
         );
         const first=reconcile(usersSheet,sessionsSheet,'T1');
         assert(first.pending,'El fallo de la segunda escritura debe dejar recuperación pendiente.');
