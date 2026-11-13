@@ -629,3 +629,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/users.js sincronizado con el servicio fuente, preservando el ID de Spreadsheet aislada.
 - Services/Test/UsersAtomicMutations.js: 14 escenarios locales PASS; incluye IDs históricos duplicados y política de conflictos USERS/AUTH del coordinador compartido. Parsing V8 de USERS, AUTH, Coordinator y suite PASS.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-131 — VALIDACIÓN DE DESTINO Y TRANSICIÓN DE VÍDEOS
+- Services/feedback.js: aprobación y rechazo se ejecutan bajo el mismo ScriptLock local; la lease compartida del coordinador mantiene la exclusión entre servicios/proyectos. Se conserva la validación de tipo, estado pendiente, referencia, esquema y destino único antes de modificarlo.
+- La publicación/retiro del enlace exacto se verifica en el destino; la transición en Feedbacks se verifica por lectura posterior. Los reintentos permiten completar una operación cuyo destino ya fue actualizado aunque la respuesta/escritura de Feedbacks haya fallado, sin sobrescribir otro vídeo.
+- Services/Test/VideoApprovalPublishing.js: se añadió regresión para confirmar adquisición/liberación del mismo lock en aprobación y rechazo; batería 28/28 PASS.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones, estado y validaciones Beta documentados.
+================================================================================
