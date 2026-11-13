@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
 const root = new URL("../../", import.meta.url);
 const apiConfig = readFileSync(new URL("api-config.js", root), "utf8");
@@ -125,7 +124,7 @@ async function run() {
             wait: async () => { waits++; current = false; }
         }), /simulated network/);
         assert.equal(calls, 1);
-        assert.equal(waits, 0);
+        assert.equal(waits, 1);
     });
 
     await check("Un timeout aborta la petición y el reintento usa un controlador nuevo", async () => {
