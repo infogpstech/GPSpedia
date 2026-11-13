@@ -279,7 +279,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Origen: H-AUD-019-011. Prioridad: Baja.
 - Evidencia: Services/write.js:1720–1724 y 1788–1823.
 - Criterios: validar longitud/formato del VIN admitido; rechazar caracteres inválidos; normalizar después de validar; probar límites y colisiones.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: `extractVinPrefix` en WRITE y `extractVinPrefixForAdmin` en ADMIN validan primero el alfabeto admitido (letras ASCII, números, espacios y guiones); rechazan cualquier otro carácter en lugar de eliminarlo silenciosamente. Después normalizan a mayúsculas y eliminan solo espacios/guiones; exigen entre 6 y 18 caracteres normalizados y conservan la extracción del prefijo sin los últimos cinco caracteres seriales. El payload de addOrUpdateCut usa el mismo validador autoritativo antes de continuar.
+- Validación local: `Services/Test/VinAuthoritativeValidation.js`, 12/12 PASS; parsing V8 WRITE/ADMIN/suite PASS. Se ampliaron casos de símbolos, guion bajo, caracteres acentuados y normalización permitida; el harness incluye la dependencia real de resolución única de fila para la edición ADMIN.
+- Beta pendiente: probar formularios en navegador real, alta/edición de vehículo nuevo y existente, entrada manual de VIN con separadores admitidos, rechazo de caracteres no permitidos desde llamadas directas, y compatibilidad con registros históricos en Spreadsheet aislada. No se usaron deployments ni datos productivos.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 
 ### AUG-133 — Implementar suite automatizada reproducible para pruebas 31–38
 - Origen: H-AUD-019-012. Prioridad: Media.
