@@ -103,17 +103,17 @@ await run('primera instalación precarga el App Shell y el grafo de módulos', a
     const event = makeEvent();
     worker.listeners.install(event);
     await Promise.all(event.waits);
-    const assets = worker.cacheData.get('gpsepedia-cache-v16');
+    const assets = worker.cacheData.get('gpsepedia-cache-v20');
     assert.ok(assets, 'debe crear el caché de la versión actual');
-    for (const asset of ['./index.html', './main.js', './auth.js', './offline.js', './VinDifferentialEngine.js', './catalogRequest.js', './share-utils.js']) {
+    for (const asset of ['./index.html', './main.js', './auth.js', './offline.js', './VinDifferentialEngine.js', './catalogRequest.js', './share-utils.js', './Logo_TemaOscuro.png', './tracklink_logo.png']) {
         assert.ok(assets.has(asset), 'falta ' + asset);
     }
     assert.equal(worker.skipWaitingCalls, 1);
 });
 
-await run('actualización activa v15, elimina solo el caché anterior de GPSpedia y conserva otros', async () => {
+await run('actualización activa v20, elimina solo el caché anterior de GPSpedia y conserva otros', async () => {
     const worker = createWorkerHarness();
-    worker.cacheData.set('gpsepedia-cache-v14', new Map([['./index.html', { old: true }]]));
+    worker.cacheData.set('gpsepedia-cache-v19', new Map([['./index.html', { old: true }]]));
     worker.cacheData.set('another-app-cache', new Map([['/other', { preserved: true }]]));
     const installEvent = makeEvent();
     worker.listeners.install(installEvent);
@@ -121,20 +121,20 @@ await run('actualización activa v15, elimina solo el caché anterior de GPSpedi
     const activateEvent = makeEvent();
     worker.listeners.activate(activateEvent);
     await Promise.all(activateEvent.waits);
-    assert.equal(worker.cacheData.has('gpsepedia-cache-v14'), false);
+    assert.equal(worker.cacheData.has('gpsepedia-cache-v19'), false);
     assert.equal(worker.cacheData.has('another-app-cache'), true);
-    assert.equal(worker.cacheData.has('gpsepedia-cache-v16'), true);
+    assert.equal(worker.cacheData.has('gpsepedia-cache-v20'), true);
     assert.equal(worker.claimCalls, 1);
 });
 
 await run('fallo de precarga esencial no activa una instalación incompleta ni elimina v14', async () => {
     const quota = Object.assign(new Error('Storage quota exceeded'), { name: 'QuotaExceededError' });
     const worker = createWorkerHarness({ addAllError: quota });
-    worker.cacheData.set('gpsepedia-cache-v14', new Map([['./index.html', { old: true }]]));
+    worker.cacheData.set('gpsepedia-cache-v19', new Map([['./index.html', { old: true }]]));
     const event = makeEvent();
     worker.listeners.install(event);
     await assert.rejects(Promise.all(event.waits), /Storage quota exceeded/);
-    assert.equal(worker.cacheData.has('gpsepedia-cache-v14'), true);
+    assert.equal(worker.cacheData.has('gpsepedia-cache-v19'), true);
     assert.equal(worker.skipWaitingCalls, 0);
 });
 

@@ -141,6 +141,9 @@ runGroup('37','USERS',()=>{
  recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
 });
 runGroup('38','INTEGRATION',()=>{
+ runCli('CATALOG reintentos y cancelación','Services/Test/CatalogRequestRetry.js');
+ runCli('CATALOG escenarios de arranque PWA','Services/Test/PWAStartupScenarios.js');
+ runCli('CATALOG integridad del arranque y recuperación','Services/Test/CatalogStartupIntegrity.mjs');
   runCli('AUG-047 accesibilidad, foco, navegación y offline de modales legales','Services/Test/TermsModalAccessibility.mjs');
   runCli('AUG-144 QR local y privacidad de vídeos no listados','Services/Test/PrintQrPrivacy.mjs');
   runCli('AUG-145 modos de distribución de ficha imprimible','Services/Test/PrintSheetLayoutModes.mjs');

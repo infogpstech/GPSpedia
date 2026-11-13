@@ -601,7 +601,10 @@ export function indexCatalogItemsById(items) {
     if (!Array.isArray(items)) throw new TypeError('La colección Cortes debe ser un arreglo.');
     const index = new Map();
     items.forEach((item, position) => {
-        const rawId = item && item.id;
+        if (!item || typeof item !== 'object' || Array.isArray(item)) {
+            throw new TypeError(`Corte inválido en la posición ${position}.`);
+        }
+        const rawId = item.id;
         const id = rawId === undefined || rawId === null ? '' : String(rawId).trim();
         if (!id) throw new Error(`Corte sin ID estable en la posición ${position}.`);
         if (index.has(id)) throw new Error(`ID de Corte duplicado: ${id}.`);
@@ -612,7 +615,10 @@ export function indexCatalogItemsById(items) {
 
 /** Una respuesta válida de getCatalogData contiene las cuatro colecciones completas. */
 export function isCompleteCatalogSnapshot(data) {
-    if (!data || typeof data !== 'object' || !CATALOG_SNAPSHOT_COLLECTIONS.every(key => Array.isArray(data[key]))) return false;
+    if (!data || typeof data !== 'object' || Array.isArray(data) ||
+        !CATALOG_SNAPSHOT_COLLECTIONS.every(key => Array.isArray(data[key]))) return false;
+    if (!CATALOG_SNAPSHOT_COLLECTIONS.every(key =>
+        data[key].every(item => item !== null && typeof item === 'object' && !Array.isArray(item)))) return false;
     try {
         indexCatalogItemsById(data.cortes);
         return true;

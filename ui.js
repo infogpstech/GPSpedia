@@ -2736,8 +2736,7 @@ export async function performSilentSync(newCatalogData) {
         const { catalogData: oldCatalogData } = getState();
         if (!offline.isCompleteCatalogSnapshot(oldCatalogData)) {
             // Si el estado previo no cumple el contrato, sustituirlo por la instantánea completa.
-            updateFullState(newCatalogData);
-            return;
+            return updateFullState(newCatalogData);
         }
 
         // Comparación completa: Cortes por ID persistente y las demás colecciones por contenido.
@@ -2750,7 +2749,7 @@ export async function performSilentSync(newCatalogData) {
         ];
         if (!snapshotDiff.hasChanges) {
             console.log("Sincronización silenciosa: No se detectaron cambios.");
-            return;
+            return true;
         }
 
         console.log(`Sincronización silenciosa: Detectados ${updatedCortesList.length} cambios.`);
@@ -2770,9 +2769,11 @@ export async function performSilentSync(newCatalogData) {
 
         // 4. Actualizar el estado global con los nuevos datos consolidados
         updateFullState(newCatalogData, { logosChanged: snapshotDiff.collections.logos });
+        return true;
 
     } catch (e) {
         console.error("Error en performSilentSync:", e);
+        throw e;
     }
 }
 
@@ -2865,8 +2866,10 @@ function updateFullState(catalogData, options = {}) {
                 mostrarCategorias();
             }
         }
+        return true;
     } catch (e) {
         console.error("Error actualizando estado global tras sincronización:", e);
+        throw e;
     }
 }
 

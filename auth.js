@@ -170,7 +170,9 @@ async function loadInitialData() {
         if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
             console.log("Cargando catálogo desde caché local...");
             const normalizedCached = normalizeCatalogData(cachedCatalog);
-            processCatalogData(normalizedCached);
+            if (processCatalogData(normalizedCached) !== true) {
+                throw new Error('No se confirmó el procesamiento del catálogo local.');
+            }
             catalogLoaded = true;
             setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
         } else if (cachedCatalog) {
@@ -186,21 +188,26 @@ async function loadInitialData() {
     try {
         const apiResponse = await fetchCatalogData({ signal: loadController.signal, timeoutMs: 8000, retries: 2, baseDelayMs: 400 });
         if (!isCurrentLoad()) return;
-        const catalogData = normalizeCatalogData(apiResponse && apiResponse.data);
-        if (!offline.isCompleteCatalogSnapshot(catalogData)) {
-            throw new Error('El servicio no devolvió una instantánea completa del catálogo.');
+        const rawCatalogData = apiResponse && apiResponse.data;
+        if (!offline.isCompleteCatalogSnapshot(rawCatalogData)) {
+            throw new Error('El servicio no devolvió una instantánea completa con colecciones válidas.');
         }
-
-        // Guardar en caché local para futuros usos (silencioso)
-        offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
+        const catalogData = normalizeCatalogData(rawCatalogData);
 
         if (catalogLoaded) {
-            // Sincronización silenciosa si ya se cargó desde la caché
+            // Sincronización silenciosa: también debe confirmar el procesamiento antes de declarar ready.
             const { performSilentSync } = await import('./ui.js');
-            performSilentSync(catalogData);
-        } else {
-            processCatalogData(catalogData);
+            if (!isCurrentLoad()) return;
+            if (await performSilentSync(catalogData) !== true) {
+                throw new Error('La sincronización del catálogo no confirmó su actualización.');
+            }
+        } else if (processCatalogData(catalogData) !== true) {
+            throw new Error('No se confirmó el procesamiento del catálogo recibido.');
         }
+        if (!isCurrentLoad()) return;
+
+        // Guardar solo una instantánea que ya se procesó correctamente.
+        offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
         catalogLoaded = true;
         setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
@@ -215,15 +222,20 @@ async function loadInitialData() {
         if (!catalogLoaded) {
             try {
                 const cachedCatalog = await offline.getCatalog();
-                if (offline.isCompleteCatalogSnapshot(cachedCatalog) && cachedCatalog.cortes.length > 0) {
+                if (!isCurrentLoad()) return;
+                if (offline.isCompleteCatalogSnapshot(cachedCatalog)) {
                     const normalizedCached = normalizeCatalogData(cachedCatalog);
-                    processCatalogData(normalizedCached);
+                    if (processCatalogData(normalizedCached) !== true) {
+                        throw new Error('No se confirmó la recuperación del catálogo local.');
+                    }
                     catalogLoaded = true;
                     setState({ catalogLoadStatus: 'stale', catalogLoadError: error.message || 'La red no está disponible.' });
                     console.log("Catalog rehydrated from cache after network failure.");
                     return;
                 }
-            } catch (e) { /* silent */ }
+            } catch (e) {
+                console.warn("No se pudo recuperar una instantánea válida de la caché:", e && e.message ? e.message : e);
+            }
 
             // Si llegamos aquí, no hay datos locales ni de red.
             setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
@@ -235,6 +247,7 @@ async function loadInitialData() {
                     cortes: [],
                     tutoriales: [],
                     relay: [],
+                    logos: [],
                     sortedCategories: []
                 }
             });
@@ -256,25 +269,24 @@ export async function retryCatalogLoad() {
 }
 
 function processCatalogData(catalogData) {
-    try {
-        const categoryCounts = catalogData.cortes.reduce((acc, item) => {
-            if (item.categoria) {
-                acc[item.categoria] = (acc[item.categoria] || 0) + 1;
-            }
-            return acc;
-        }, {});
-
-        const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
-
-        setState({
-            catalogData: {
-                ...catalogData,
-                sortedCategories: sortedCategories
-            }
-        });
-    } catch (e) {
-        console.error("Error procesando datos del catálogo:", e);
+    if (!offline.isCompleteCatalogSnapshot(catalogData)) {
+        throw new Error('No se puede procesar un catálogo incompleto o con elementos inválidos.');
     }
+    const categoryCounts = catalogData.cortes.reduce((acc, item) => {
+        if (item.categoria) {
+            acc[item.categoria] = (acc[item.categoria] || 0) + 1;
+        }
+        return acc;
+    }, {});
+
+    const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+    setState({
+        catalogData: {
+            ...catalogData,
+            sortedCategories
+        }
+    });
+    return true;
 }
 
 
@@ -450,7 +462,9 @@ export function logout(reason = null, expectedSession = null) {
  * para evitar intermitencias, duplicidades e inconsistencias debido a diferencias de espaciado o capitalización.
  */
 export function normalizeCatalogData(catalogData) {
-    if (!catalogData || !Array.isArray(catalogData.cortes)) return catalogData;
+    if (!offline.isCompleteCatalogSnapshot(catalogData)) {
+        throw new Error('El catálogo recibido no es una instantánea completa con colecciones válidas.');
+    }
 
     const brandCasingMap = new Map(); // lowercase -> original
     const modelCasingMap = new Map(); // brandLowercase|modelLowercase -> original

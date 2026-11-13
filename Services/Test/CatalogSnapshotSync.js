@@ -93,6 +93,21 @@ async function runCatalogSnapshotSyncTests() {
         assert.equal(isCompleteCatalogSnapshot({ ...snapshot(), logos: undefined }), false);
         assert.equal(isCompleteCatalogSnapshot({ ...snapshot(), relay: {} }), false);
     });
+    test('acepta una instantánea vacía completa como catálogo válido', () => {
+        assert.equal(isCompleteCatalogSnapshot({ cortes: [], tutoriales: [], relay: [], logos: [] }), true);
+    });
+    test('rechaza elementos nulos, primitivos o arrays en cualquier colección', () => {
+        assert.equal(isCompleteCatalogSnapshot(snapshot({ tutoriales: [null] })), false);
+        assert.equal(isCompleteCatalogSnapshot(snapshot({ relay: ['inválido'] })), false);
+        assert.equal(isCompleteCatalogSnapshot(snapshot({ logos: [[]] })), false);
+        const arrayWithId = []; arrayWithId.id = 'C-1';
+        assert.equal(isCompleteCatalogSnapshot(snapshot({ cortes: [arrayWithId] })), false);
+    });
+    test('rechaza una raíz array aunque exponga propiedades de colecciones', () => {
+        const rootArray = [];
+        rootArray.cortes = []; rootArray.tutoriales = []; rootArray.relay = []; rootArray.logos = [];
+        assert.equal(isCompleteCatalogSnapshot(rootArray), false);
+    });
     test('rechaza cortes sin ID y evita colisiones por IDs duplicados', () => {
         assert.equal(isCompleteCatalogSnapshot(snapshot({ cortes: [{ marca: 'Toyota' }] })), false);
         assert.equal(isCompleteCatalogSnapshot(snapshot({ cortes: [{ id: 'C-1' }, { id: 'C-1' }] })), false);
@@ -169,8 +184,8 @@ async function runCatalogSnapshotSyncTests() {
         assert.deepEqual(await getCatalog(), before);
     });
 
-    console.log(`CatalogSnapshotSync: ${passed}/15 PASS`);
-    return { passed, total: 15 };
+    console.log(`CatalogSnapshotSync: ${passed}/18 PASS`);
+    return { passed, total: 18 };
 }
 
 try {
