@@ -3794,13 +3794,13 @@ function resetRoleScopedViews_() {
     }
     document.body.classList.remove('inbox-open');
     if (dashboardModal) dashboardModal.style.display = 'none';
-    if (inboxList) inboxList.replaceChildren();
-    if (inboxDetail) inboxDetail.replaceChildren();
+    if (inboxList) inboxList.innerHTML = '';
+    if (inboxDetail) inboxDetail.innerHTML = '';
     ['inbox-conversation-list','inbox-conversation-detail','inbox-conversation-status'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.replaceChildren();
     });
-    if (activityLogs) activityLogs.replaceChildren();
+    if (activityLogs) activityLogs.innerHTML = '';
     invalidateInboxCache_();
 }
 
