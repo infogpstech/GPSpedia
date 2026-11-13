@@ -127,7 +127,7 @@ await run('actualización activa v20, elimina solo el caché anterior de GPSpedi
     assert.equal(worker.claimCalls, 1);
 });
 
-await run('fallo de precarga esencial no activa una instalación incompleta ni elimina v14', async () => {
+await run('fallo de precarga esencial no activa una instalación incompleta ni elimina v19', async () => {
     const quota = Object.assign(new Error('Storage quota exceeded'), { name: 'QuotaExceededError' });
     const worker = createWorkerHarness({ addAllError: quota });
     worker.cacheData.set('gpsepedia-cache-v19', new Map([['./index.html', { old: true }]]));
