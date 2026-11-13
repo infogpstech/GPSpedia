@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.1";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.2";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -35,6 +35,9 @@ function coordinatorPolicy_(service, operation) {
         USERS: {
             createUser: { read: ["ACTIVE_SESSIONS"], write: ["USERS"] },
             updateProfile: { read: ["ACTIVE_SESSIONS"], write: ["USERS"] }
+        },
+        UTILITIES: {
+            migrateTimestamps: { read: [...identityRead, "CORTES", "DRIVE"], write: ["UTILITIES"] }
         },
         WRITE: {
             addOrUpdateCut: { read: identityRead, write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
@@ -140,7 +143,7 @@ function createSharedMutationCoordinator_(dependencies) {
 
     function authenticate_(payload) {
         const service = String(payload.service || "").trim().toUpperCase();
-        if (!["ADMIN", "WRITE", "FEEDBACK", "AUTH", "USERS"].includes(service)) {
+        if (!["ADMIN", "WRITE", "FEEDBACK", "AUTH", "USERS", "UTILITIES"].includes(service)) {
             throw new Error("Servicio no autorizado para el coordinador compartido.");
         }
         const expected = String(properties.getProperty("GPSpedia_COORDINATOR_SECRET_" + service) || "");
