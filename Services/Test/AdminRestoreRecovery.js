@@ -175,7 +175,7 @@ function runAdminRestoreRecoveryTests(adminSource) {
         const manifestNameCollision=Object.assign(resource("file-manifest-collision"),{getName:()=>"GPSpedia_DRIVE_MANIFEST.json"});
         const child=Object.assign(resource("folder-1"),{getName:()=>"brand"});
         const makeFolder=(id,children)=>({
-            getId:()=>id, getName:()=>id === "source" ? "Cortes" : "rollback",
+            getId:()=>id, getName:()=>id === "source" ? "GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_test" : "Cortes",
             getFiles:()=>makeIterator(children.filter(x=>x.getName&&parents.get(x.getId()).has(id)&&x.getId().startsWith("file"))),
             getFolders:()=>makeIterator(children.filter(x=>x.getName&&parents.get(x.getId()).has(id)&&x.getId().startsWith("folder"))),
             addFile:x=>parents.get(x.getId()).add(id), removeFile:x=>parents.get(x.getId()).delete(id),
