@@ -524,6 +524,52 @@ check("El inventario y la organización usan la misma auditoría y operación ve
     assert.ok(organize.includes("storedOperationId !== inventoryOperationId"));
     assert.ok(organize.includes('inventoryResult !== "confirmado"'));
 });
+
+check("Las escrituras parciales se reintentan y las no reconciliables quedan requiere_revision",()=>{
+    const writeSource=fnSource(admin,"writeDriveInventoryRowVerified_");
+    const extractId=value=>{
+        const text=String(value||"").trim();
+        const match=text.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+        return match?match[1]:(/^[a-zA-Z0-9_-]{20,}$/.test(text)?text:"");
+    };
+    function mockSheet(mode){
+        const cells=[HEADERS.slice()];
+        let writes=0;
+        const ensure=(r,c)=>{while(cells.length<r)cells.push([]);while(cells[r-1].length<c)cells[r-1].push("");};
+        return {cells,get writes(){return writes;},getRange(row,col,numRows=1,numCols=1){
+            return {
+                getValues(){return Array.from({length:numRows},(_,ri)=>Array.from({length:numCols},(_,ci)=>cells[row-1+ri]?.[col-1+ci]??""));},
+                setValues(values){
+                    writes++;
+                    if(mode==="retry"&&writes===1)throw new Error("transient write");
+                    if(mode==="review"&&writes===1){
+                        values[0].slice(0,6).forEach((v,ci)=>{ensure(row,col+ci);cells[row-1][col-1+ci]=v;});
+                        throw new Error("partial write");
+                    }
+                    if(mode==="review"&&writes===2)throw new Error("retry write");
+                    values.forEach((valuesRow,ri)=>valuesRow.forEach((v,ci)=>{ensure(row+ri,col+ci);cells[row-1+ri][col-1+ci]=v;}));
+                    return this;
+                }
+            };
+        }};
+    }
+    const row=makeRow({id:"INV-"+FILE_A,status:"sin_uso_detectado",type:"sin_uso_detectado",fileId:FILE_A,origin:"auditoria_drive"});
+    row[18]="AUDIT-1";row[24]="OP-1";row[25]="confirmado";
+    const factory=sheet=>new Function("SpreadsheetApp","extractDriveFileId",writeSource+"\nreturn writeDriveInventoryRowVerified_;")(
+        {flush(){}},extractId);
+    const retrySheet=mockSheet("retry");
+    const retryWriter=factory(retrySheet);
+    const persisted=retryWriter(retrySheet,2,row,HEADERS,FILE_A,"AUDIT-1","OP-1","sin_uso_detectado","confirmado");
+    assert.equal(retrySheet.writes,2);
+    assert.equal(persisted[25],"confirmado");
+
+    const reviewSheet=mockSheet("review");
+    const reviewWriter=factory(reviewSheet);
+    assert.throws(()=>reviewWriter(reviewSheet,2,row,HEADERS,FILE_A,"AUDIT-1","OP-1","sin_uso_detectado","confirmado"),/no pudo confirmarse/);
+    assert.equal(reviewSheet.cells[1][10],"requiere_revision");
+    assert.equal(reviewSheet.cells[1][25],"error");
+});
+
 check("El esquema del inventario conserva las columnas nuevas de trazabilidad de forma idempotente",()=>{
     const ensure=fnSource(admin,"ensureReplacedImagesInventoryColumns");
     const readSchema=fnSource(admin,"getReplacedImagesReadSchema_");
