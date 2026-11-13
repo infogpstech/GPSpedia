@@ -1282,3 +1282,27 @@ Alcance confirmado por el usuario:
 
 Implicación de seguridad/integridad: no considerar una imagen eliminable por ausencia de referencias en una única hoja; la elegibilidad requiere comprobar todas las hojas pertinentes y volver a validar justo antes de mutar. La marca «en uso» debe actuar como protección persistente. Esta entrada documenta el alcance aprobado; no afirma que el código ya lo implemente ni que se hayan ejecutado pruebas.
 ================================================================================
+
+
+================================================================================
+H-AUD-027-009 — Protección incompleta de referencias fuera de Cortes
+Ubicación: Services/admin.js — collectActiveDriveReferences (aprox. L185), collectCortesImageReferences (aprox. L244), handlers handleGetReplacedImages, handleRecoverReplacedImage, handleDeleteReplacedImage, handleMoveReplacedImage, handleGetReplacedImageDownloadUrl, handleSaveUnusedImagesInventory, handleOrganizeUnusedImagesBatch y handleAuditDriveImagesInCortes.
+Evidencia: existe un escáner global de hojas, valores visibles, fórmulas y vínculos RichText, pero los handlers de inventario/auditoría/administración consultados siguen usando el escáner restringido a los ocho campos de imagen de Cortes. El esquema también documenta imágenes en pys, LogosMarca, Tutorial y Relay; Feedbacks conserva metadatos JSON de adjuntos.
+Impacto: un archivo referenciado desde otra hoja puede clasificarse como sin uso, moverse o enviarse a papelera si no aparece en Cortes. Riesgo ALTO de pérdida temporal de recursos o ruptura de referencias.
+Criterio de corrección: usar la comprobación global para la elegibilidad de inventario, organización, movimiento, descarga, restauración y papelera; bloquear cuando existan referencias no interpretables; conservar la validación especializada Cortes solo para operaciones de sincronización de carpetas de vehículos. Agregar pruebas cruzadas entre hojas.
+Estado: ABIERTO — AUG-027.
+
+H-AUD-027-010 — requiere_revision sin resolución manual completa
+Ubicación: Services/admin.js — handleGetReplacedImages/handleRecoverReplacedImage; ui.js — openReplacedImagesModal/renderList.
+Evidencia: los registros válidos con estado requiere_revision aparecen en la lista principal, pero canManage los deja sin acciones. Las filas estructuralmente inválidas se muestran en cachedReview sin acciones; la matriz de estados no incluye en_uso.
+Impacto: el desarrollador no puede resolver desde el modal los registros válidos que requieren decisión ni proteger manualmente una imagen cuya referencia esté fuera del Spreadsheet.
+Criterio de corrección: añadir una transición persistente en_uso y acciones manuales para registros con identidad inequívoca; mantener bloqueadas las filas cuya identidad o archivo no pueda verificarse.
+Estado: ABIERTO — AUG-027.
+
+H-AUD-027-011 — no existe eliminación definitiva desde el gestor de imágenes
+Ubicación: Services/admin.js — handleDeleteReplacedImage y dispatcher ADMIN; api-config.js; ui.js — acciones del modal.
+Evidencia: deleteReplacedImage solo ejecuta setTrashed(true). No se encontró handler ni acción para eliminar definitivamente un archivo de Drive. recoverReplacedImage rechaza estados en_papelera y requiere_revision.
+Impacto: el flujo solicitado de administración y recuperación no está completo; la papelera no ofrece una decisión terminal desde el gestor.
+Criterio de corrección: añadir acción explícita de eliminación irreversible, solo Desarrollador, con archivo previamente en papelera, referencias globales verificadas, identidad/MIME/ubicación confirmados, registro de auditoría y verificación posterior. Probar fallos y estados ambiguos sin borrar datos.
+Estado: ABIERTO — AUG-027.
+================================================================================
