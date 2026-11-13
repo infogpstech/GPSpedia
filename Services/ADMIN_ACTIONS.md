@@ -52,8 +52,8 @@ Las acciones del gestor de imágenes se ejecutan únicamente desde ADMIN y requi
 ### Acciones
 
 - `deleteReplacedImage`: envía a la papelera un registro histórico o de inventario válido sin referencias activas. También permite resolver manualmente un registro `requiere_revision` si su ID, archivo, MIME, ubicación y ausencia de referencias se pueden verificar. Guarda `estado_previo_papelera` antes de cambiar el estado a `en_papelera`.
-- `restoreReplacedImageFromTrash`: restaura el archivo desde la papelera de Drive a su ubicación conservada. Recupera el estado guardado en `estado_previo_papelera`. No vuelve a escribir una URL en Cortes ni en otra hoja; la restauración del archivo y la restauración de una referencia histórica son operaciones distintas.
-- `permanentlyDeleteReplacedImage`: solo acepta `en_papelera` o `eliminacion_pendiente`. Comprueba referencias globales y referencias no interpretables, MIME, estado de papelera y pertenencia al árbol Cortes. Ejecuta DELETE mediante Drive API v3 y verifica con GET posterior que Drive devuelva 404 antes de marcar `eliminada`.
+- `restoreReplacedImageFromTrash`: restaura el archivo desde la papelera de Drive a su ubicación conservada. Admite `en_papelera` y `requiere_revision` cuando Drive confirma que el archivo está en papelera. Recupera el estado guardado en `estado_previo_papelera`. No vuelve a escribir una URL en Cortes ni en otra hoja; la restauración del archivo y la restauración de una referencia histórica son operaciones distintas.
+- `permanentlyDeleteReplacedImage`: acepta `en_papelera`, `eliminacion_pendiente` o `requiere_revision`; para este último, Drive debe confirmar que el archivo está realmente en papelera. Comprueba referencias globales y referencias no interpretables, MIME, estado de papelera y pertenencia al árbol Cortes. Ejecuta DELETE mediante Drive API v3 y verifica con GET posterior que Drive devuelva 404 antes de marcar `eliminada`.
 
 ### Estados y recuperación
 
@@ -65,6 +65,6 @@ Las acciones del gestor de imágenes se ejecutan únicamente desde ADMIN y requi
 
 ### Referencias y límites
 
-- Las operaciones destructivas usan `collectActiveDriveReferences()`, que inspecciona valores, fórmulas y RichText de las hojas funcionales del Spreadsheet, y bloquean referencias no interpretables.
+- Las operaciones destructivas usan `collectActiveDriveReferences()`, que inspecciona valores, fórmulas, RichText, objetos `CellImage` y objetos de imagen sobre cuadrícula de las hojas funcionales del Spreadsheet. Cuando una imagen incrustada no expone un ID verificable, se contabiliza como referencia no interpretable y se bloquean las operaciones destructivas.
 - La restauración desde papelera solo restaura el archivo; no modifica celdas ni reasigna referencias.
 - La eliminación definitiva usa `UrlFetchApp` con el token OAuth del proyecto y Drive API v3. El proyecto Apps Script debe contar con autorización efectiva para eliminar archivos. Los permisos, scopes y comportamiento real de Drive/Spreadsheet se verificarán en un deployment Beta aislado; no se debe probar contra datos productivos.
