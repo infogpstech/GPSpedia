@@ -1149,3 +1149,16 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Services/Test/AdminReplacedImagesIntegrity.mjs: 29/29 PASS, incluye cursor, expiración, integridad del marcador, lista exacta, escritura parcial y compensación.
 - GitHub Actions 43497439972 SUCCESS: Node.js 22; 71 suites; 1,023 pruebas; 0 fallos. Sin operaciones productivas ni deployment.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-029 — MOVIMIENTO EXPLÍCITO Y CONSERVACIÓN DE UBICACIONES MANUALES
+- ui.js: el registro del inventario exige resultados individuales completos, únicos y reconocidos; no infiere confirmaciones cuando falta la respuesta por archivo.
+- index.html / ui.js: la organización se ofrece mediante botón separado y confirmación explícita; escaneo, reanudación y guardado no mueven archivos.
+- Services/admin.js: el movimiento valida auditId/propietario/operación, identidad e historial únicos, estado confirmado, referencias activas y ubicación dentro de Cortes.
+- Services/admin.js: inmediatamente antes de mover vuelve a leer historial/inventario, compara ubicación actual de Drive y revalida referencias; mantiene rollback, verificación de escritura y registro durable.
+- Las ubicaciones movida_manual se conservan en el inventario y no se vuelven a organizar.
+- Services/Test/AdminReplacedImagesIntegrity.mjs: 33/33 PASS.
+- GitHub Actions 43501277945 SUCCESS: Node.js 22; 71 suites; 1,027 pruebas aprobadas; 0 fallos.
+- Sin deployments ni operaciones sobre Drive/Spreadsheet productivos.
+================================================================================

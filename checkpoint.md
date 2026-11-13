@@ -1727,3 +1727,40 @@ Pendiente exclusivamente para Beta aislada:
 
 Siguiente tarea: AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-029 — 2026-11-13
+
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de código validado: fd23c521adcf455a686f85df1701709120e02190
+HEAD de la rama antes del checkpoint documental: fd23c521adcf455a686f85df1701709120e02190
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Comparación antes del checkpoint documental: 2040 commits ahead, 0 behind.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Implementación:
+- Separación estricta entre escaneo/registro y movimiento explícito de archivos.
+- Resultados individuales obligatorios y completos antes de habilitar organización.
+- Confirmación visible del Desarrollador para mover archivos.
+- Revalidación inmediatamente antes del movimiento: historial, identidad, unicidad, estado de inventario, ubicación Drive y referencias activas.
+- Protección de movida_manual durante auditorías y organización posterior.
+- Rollback, verificación de escritura y registro durable por movimiento.
+
+Validación local/CI:
+- AdminReplacedImagesIntegrity: 33/33 PASS.
+- GitHub Actions run 43501277945 — SUCCESS.
+- Node.js 22; 71 suites; 1,027 pruebas aprobadas; 0 fallos de suite.
+- node --check de los módulos modificados: PASS.
+- Diff revisado; rama base sin cambios.
+- No se desplegó Apps Script ni se ejecutaron operaciones sobre Drive/Spreadsheet productivos.
+
+Pendiente exclusivamente para Beta aislada:
+- Permisos reales y comportamiento de Drive/Spreadsheet.
+- LockService y concurrencia con movimientos manuales desde Drive UI.
+- Fallos reales de red, flush, escritura y compensación.
+- Validación visual del botón y sus estados en navegador real.
+
+Siguiente tarea: AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL.
+================================================================================

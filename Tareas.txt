@@ -1479,3 +1479,21 @@ Estado: COMPLETADA EN CÓDIGO; integración real diferida a Beta.
 - Commit de código validado: 45e852a45f0084ba7b828adca581e5fe8c23f715.
 Siguiente tarea: AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales.
 ================================================================================
+
+
+================================================================================
+AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- El escaneo y el guardado del inventario solo registran resultados; ya no invocan movimientos de Drive.
+- El movimiento se inicia desde una acción explícita del Desarrollador, con confirmación y lotes correlacionados por auditId/inventoryOperationId.
+- ADMIN revalida identidad, historial, referencias activas, ubicación de Drive y estado del inventario inmediatamente antes de cada movimiento.
+- Las ubicaciones movida_manual se conservan en auditorías posteriores y se excluyen de la organización automática.
+- Cada movimiento mantiene verificación de escritura, rollback y registro de actividad; fallos no reconciliables requieren revisión.
+- La respuesta de inventario debe incluir un resultado individual para cada ID enviado; respuestas incompletas, duplicadas o no reconocidas no habilitan movimientos.
+- AdminReplacedImagesIntegrity 33/33 PASS.
+- GitHub Actions 43501277945 SUCCESS: Node.js 22; 71 suites; 1,027 pruebas; 0 fallos.
+- Commit de código: fd23c521adcf455a686f85df1701709120e02190.
+- No se desplegó Apps Script ni se realizaron operaciones sobre Drive/Spreadsheet productivos.
+Validación Beta pendiente: permisos reales, LockService, cambios manuales concurrentes en Drive/Spreadsheet, fallos de flush/red y comportamiento visual del botón.
+Siguiente tarea: AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL.
+================================================================================
