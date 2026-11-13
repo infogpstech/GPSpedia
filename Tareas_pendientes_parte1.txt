@@ -272,7 +272,16 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** ui.js, handler btn-admin-clear-client-cache(), líneas 4473–4494.
 - **Problema:** deleteDatabase() no espera onsuccess/onerror/onblocked y la interfaz reporta éxito inmediatamente.
 - **Criterios de aceptación:** resolver la solicitud IndexedDB mediante sus eventos; diferenciar éxito, error y bloqueo; no anunciar vaciado completo ni recargar como si se hubiera eliminado cuando la operación sigue bloqueada; mantener la limpieza de localStorage y reportar su resultado por separado.
-- **Estado:** NUEVA; pendiente.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- La acción ya no elimina GPSpedia_DB completa. `offline.clearRebuildableClientCache()` limpia en una transacción los almacenes reconstruibles `catalog`, `searchHistory`, `viewedItems`, `thumbnails` y `validationCache`, y espera `transaction.oncomplete`. Ante error/abort informa fallo. Conserva `adminLocalState`, incluidas auditorías administrativas y progreso recuperable.
+- localStorage: elimina únicamente `gpsepedia_catalog_cache` (legado), `gpsepedia_pys_cache` y `gpsepedia_pys_cache_updated_at`. Conserva `gpsepedia_session`, preferencias `darkMode`/instalación, `gpsepedia_pending_operation`, `gpsepedia_edit_backup*`, `adminImageUploadPending:*` y marcadores de recuperación.
+- sessionStorage: no se elimina; conserva borradores Inbox, referencias/idempotencia de cargas YouTube y estado de instalación por pestaña.
+- Bases IndexedDB independientes de cargas YouTube no se modifican.
+- Cache Storage: el mensaje `GPSEPEDIA_CLEAR_RUNTIME_CACHE` elimina únicamente respuestas dinámicas de cachés con prefijo `gpsepedia-cache-`; preserva CORE_ASSETS y OPTIONAL_ASSETS del shell offline, y no toca cachés de otras aplicaciones.
+- Las ObjectURL de miniaturas en memoria se revocan solo después de confirmar todas las limpiezas. La aplicación recarga únicamente si IndexedDB, localStorage y Cache Storage confirman éxito; los estados no disponibles/bloqueados producen advertencia y no se declara vaciado total.
+- `AdminClientCacheDeletion.mjs`: 8/8 PASS en harness V8 adaptado, incluyendo commit transaccional, error, preservación de estado administrativo, respuesta del Service Worker, preservación del shell offline y exclusión de operaciones pendientes. Parsing de ui.js, offline.js, service-worker.js, prueba y runner: PASS.
+- Node CLI literal, navegador real, conexiones IndexedDB abiertas y comportamiento multi-pestaña real no se ejecutaron desde esta sesión; quedan para Beta aislada. No se declara CI SUCCESS.
+
 
 ### AUG-023 — Resolver acciones ADMIN sin ruta canónica ni consumidor
 - **Origen:** H-AUD-025-009. **Prioridad:** Baja.
