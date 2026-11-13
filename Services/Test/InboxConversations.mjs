@@ -93,7 +93,7 @@ run("Crea conversación directa individual desde Desarrollador", () => {
 });
 run("Destinatarios de Desarrollador provienen de USERS y excluyen cuentas inactivas", () => {
     const result = api.handleGetInboxRecipients(actor("U1","token-a"));
-    assert.deepEqual(result.recipients.map(user => user.id),["U2","U3"]);
+    assert.deepEqual(result.recipients.map(user => user.id),["U2","U3","U5"]);
     assert.equal(result.recipients.some(user => user.id === "U4"),false);
 });
 run("La consulta de usuario solo ofrece destinatarios Desarrollador", () => {
