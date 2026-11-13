@@ -561,3 +561,27 @@ Beta pendiente: concurrencia real entre proyectos USERS/AUTH, operaciones simult
 Archivos: Services/users.js, Services/Test/users.js, Services/Test/UsersAtomicMutations.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-131 — Validar destino y transición de estado al aprobar vídeos. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-131 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- FEEDBACK conserva allowlist de contentType (corte, pys, tutorial), valida JSON video_approval, URL/ID de YouTube, referenceId y coincidencia con ID_vehiculo; exige estado pendiente consistente en JSON y columnas de Feedbacks.
+- getVideoApprovalTarget_ verifica el esquema de cada destino y exige una coincidencia única por ID antes de publicar o retirar el enlace.
+- handleApproveVideo y handleRejectVideo comparten withVideoApprovalMutationLock_ y el mismo ScriptLock local durante la transición. El coordinador compartido ya registra approveVideo/rejectVideo con los recursos de destino y Feedbacks, por lo que mantiene la exclusión entre proyectos.
+- Publicación/retiro se verifica mediante lectura posterior. Si la escritura de Feedbacks falla después de actualizar el destino, la solicitud sigue pendiente y el reintento reconoce el mismo enlace exacto, completa la transición y no sobrescribe contenido distinto. La miniatura personalizada de Tutorial se conserva.
+
+Validación local:
+- Services/Test/VideoApprovalPublishing.js: 28/28 PASS, incluidas las tres clases de destino, IDs duplicados/inexistentes, esquemas, estado terminal, referencia cruzada, reintentos, preservación de vídeo distinto y adquisición/liberación del lock.
+- Parsing V8 de Services/feedback.js y la suite: PASS.
+- No se ejecutaron deployments, Apps Script real, Spreadsheet, Drive, YouTube API ni datos productivos.
+
+Beta pendiente: concurrencia real entre aprobaciones/rechazos y ediciones del destino, fallos físicos de escritura/flush en las hojas destino y Feedbacks, recuperación/reintento en Spreadsheet aislada y lectura posterior en CATALOG tras recarga. Procedimiento registrado en lista_beta.txt.
+
+Archivos: Services/feedback.js, Services/Test/VideoApprovalPublishing.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-132 — Aplicar validación estricta al VIN. No iniciar hasta la siguiente interacción.
+================================================================================
