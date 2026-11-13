@@ -74,7 +74,9 @@ function runAdminImageReplacementCompensationTests(uiSource, adminSource) {
         const save = extractFunction(ui, "saveFieldSilently");
         assert(/enforceExpectedCurrentValue: true/.test(save), "No se activa compare-and-set.");
         const backend = extractFunction(admin, "handleUpdateVehicleField");
-        assert(/assertAdminModalExpectedValue_\(previousValue, expectedCurrentValue\)/.test(backend), "El backend no protege cambios concurrentes.");
+        assert(/assertAdminModalExpectedValue_\(previousValue, expectedCurrentValue, fieldName\)/.test(backend), "El backend no protege cambios concurrentes.");
+        const vin = extractFunction(admin, "handleUpdateVehicleVinCollection_");
+        assert(/assertAdminModalExpectedValue_\(previousValue, expectedCurrentValue, "vin"\)/.test(vin), "La restauración VIN no protege cambios concurrentes.");
     });
     run("La comparación condicional rechaza un cambio concurrente", () => {
         const fn = new Function(extractFunction(admin, "assertAdminModalExpectedValue_") + "; return assertAdminModalExpectedValue_;")();
