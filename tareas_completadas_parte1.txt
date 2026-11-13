@@ -447,3 +447,12 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Evidencia:** H-AUD-040-001 a H-AUD-040-018 corregidos; 160/160 pruebas locales y parsing V8 17/17 PASS, según Auditoría.txt (cierre 2026-11-10).
 - **CI actual:** 34 suites/517 PASS en run 43426964327, con VideoApprovalPublishing y coordinación compartida; no incluye la suite histórica FeedbackWriteSecurity.js. Sus fixtures posteriores de PyS/reportMetadata requieren mantenimiento y no se presentan como prueba actual.
 - **Pendiente Beta:** Apps Script, Spreadsheet/Drive reales, OAuth/YouTube, navegador/IndexedDB, HTTP y concurrencia física entre proyectos.
+
+
+### AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Implementación base:** commit ef7bdc926ade691e22fa397a3b68267435d191cf y cierre de H-AUD-042-001 a 011 en Auditoria_Archive/Auditoria_2026-11-10_parte_002.txt.
+- **Corrección de continuidad:** ui.js declara userRole = context.role en renderInboxDetail y entrega el rol canónico a approveVideo/rejectVideo; H-AUD-042-012 resuelto.
+- **Pruebas:** SessionUiRoleInvalidation 13/13; InboxRoleContract 8/8; SessionProfileRefresh 19/19.
+- **CI:** run 43429506713 SUCCESS, 37 suites, 557 pruebas PASS, 0 fallos; Node --check ui.js PASS.
+- **Pendiente Beta:** DOM/IndexedDB real, transiciones de rol, sesiones remotas, multi-cuenta y llamadas globales directas.
