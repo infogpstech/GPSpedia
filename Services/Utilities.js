@@ -1,11 +1,11 @@
 // GPSPEDIA UTILITIES — protected and recoverable migrations
-// VERSION: 1.4.0 | OUTPUT: Hoja 1 (columna A)
+// VERSION: 1.5.0 | OUTPUT: Hoja 1 (columna A)
 // AUTH: active developer session verified from Users/ActiveSessions.
-// This service is not the shared inter-project mutation coordinator.
+// Mutations acquire a shared lease before the local ScriptLock; see COORDINATOR_SETUP.md.
 const SPREADSHEET_ID="1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
 const SOURCE_COLS={imagenVehiculo:9},ROLE_REVOCATION_SHARED_PREFIX="__role_revocation_pending__:";
-function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"success",service:"UTILITIES",version:"1.4.0"})).setMimeType(ContentService.MimeType.JSON);}
+function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"success",service:"UTILITIES",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
 function doPost(e){
  let response;
  try{
@@ -13,7 +13,7 @@ function doPost(e){
   const body=JSON.parse(raw);
   if(!body||body.action!=="migrateTimestamps")throw new Error("Acción no soportada.");
   const payload=body.payload&&typeof body.payload==="object"&&!Array.isArray(body.payload)?body.payload:{};
-  response=migrateTimestampsSafe_(payload);
+  response=withSharedMutationLease_("UTILITIES","migrateTimestamps",function(){return migrateTimestampsSafe_(payload);});
  }catch(error){response={status:"error",message:"No se pudo ejecutar la migración de utilidades.",details:String(error&&error.message?error.message:error)};}
  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
