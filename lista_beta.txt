@@ -2067,3 +2067,33 @@ Pruebas funcionales en proyecto FEEDBACK y Spreadsheet aislados, con hojas Corte
 5. Recargar CATALOG después de aprobar/rechazar y verificar la URL/miniatura visible en el destino correspondiente.
 No usar deployments operativos, hojas productivas ni IDs reales. La suite local 28/28 PASS no sustituye estas pruebas reales.
 ================================================================================
+
+
+================================================================================
+AUG-132 — Validación estricta VIN (Beta aislada)
+Preflight obligatorio antes de ejecutar cualquier prueba:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+En formulario y Spreadsheet aislada:
+1. Probar VIN de 5, 6, 18 y 19 caracteres normalizados; 5 y 19 deben rechazarse, 6 y 18 admitirse.
+2. Probar espacios y guiones como separadores permitidos; comprobar que el backend normaliza únicamente esos separadores.
+3. Probar `_`, puntos, barras, signos, caracteres acentuados, letras no ASCII y controles; deben rechazarse sin mutar Cortes.
+4. Probar llamada directa a WRITE y ADMIN con payload manipulado, sin depender de la validación de UI; confirmar rechazo antes de escrituras y consultas de duplicados.
+5. Verificar duplicados, slots de versión, vehículos nuevos/existentes y lectura de registros VIN históricos sin migrar ni alterar datos.
+Usar proyecto Apps Script y Spreadsheet de prueba; nunca producción. La suite local 12/12 PASS no sustituye estas pruebas reales.
+================================================================================
