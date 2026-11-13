@@ -7538,6 +7538,60 @@ function validateCompletedDriveAudit_(auditId, ownerId, files) {
     return state;
 }
 
+
+function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId, auditId, operationId, expectedStatus, expectedResult) {
+    const operationColumn = headers.indexOf("ultima_operacion_inventario_id") + 1;
+    const auditColumn = headers.indexOf("ultima_auditoria_id") + 1;
+    const resultColumn = headers.indexOf("resultado_inventario") + 1;
+    const detailColumn = headers.indexOf("detalle_resultado_inventario") + 1;
+    if ([operationColumn, auditColumn, resultColumn, detailColumn].some(column => column < 1)) {
+        throw new Error("Faltan columnas para verificar la operación de inventario.");
+    }
+    const readBack = () => sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
+    const matches = persisted => String(persisted[0] || "") === String(row[0] || "") &&
+        extractDriveFileId(persisted[5]) === fileId &&
+        String(persisted[auditColumn - 1] || "") === auditId &&
+        String(persisted[operationColumn - 1] || "") === operationId &&
+        String(persisted[resultColumn - 1] || "") === expectedResult &&
+        String(persisted[10] || "") === expectedStatus;
+    const writeAndVerify = () => {
+        sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
+        SpreadsheetApp.flush();
+        const persisted = readBack();
+        if (!matches(persisted)) throw new Error("La lectura posterior no coincide con la escritura solicitada.");
+        return persisted;
+    };
+    try { return writeAndVerify(); }
+    catch (firstError) {
+        try {
+            const persisted = readBack();
+            if (matches(persisted)) return persisted;
+        } catch (readError) {}
+        try { return writeAndVerify(); }
+        catch (retryError) {
+            let reviewError = "";
+            try {
+                const current = readBack();
+                if (extractDriveFileId(current[5]) === fileId) {
+                    current[10] = "requiere_revision";
+                    current[resultColumn - 1] = "error";
+                    current[detailColumn - 1] = "La escritura parcial no pudo reconciliarse: " +
+                        String(retryError.message || retryError).slice(0, 500);
+                    sheet.getRange(rowNumber, 1, 1, headers.length).setValues([current]);
+                    SpreadsheetApp.flush();
+                    const reviewed = readBack();
+                    if (String(reviewed[10] || "") !== "requiere_revision" ||
+                        String(reviewed[resultColumn - 1] || "") !== "error") {
+                        throw new Error("No se pudo confirmar el estado requiere_revision.");
+                    }
+                }
+            } catch (error) { reviewError = error.message || String(error); }
+            throw new Error("La escritura del inventario no pudo confirmarse; el archivo no será organizado. " +
+                (retryError.message || String(retryError)) + (reviewError ? "; revisión: " + reviewError : ""));
+        }
+    }
+}
+
 function storeAuditDriveReferenceSnapshot(auditId, snapshot) {
     const cache = CacheService.getScriptCache();
     const cachePrefix = `gp_audit_refs_${auditId}`;
@@ -7785,16 +7839,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 setField("detalle_resultado_inventario", "");
 
                 const targetRow = rowNumber || sheet.getLastRow() + 1;
-                sheet.getRange(targetRow, 1, 1, headers.length).setValues([row]);
-                SpreadsheetApp.flush();
-                const persisted = sheet.getRange(targetRow, 1, 1, headers.length).getValues()[0];
-                if (String(persisted[0] || "") !== String(row[0] || "") ||
-                    extractDriveFileId(persisted[5]) !== fileId ||
-                    String(persisted[column("ultima_auditoria_id") - 1] || "") !== auditId ||
-                    String(persisted[column("ultima_operacion_inventario_id") - 1] || "") !== inventoryOperationId ||
-                    String(persisted[column("resultado_inventario") - 1] || "") !== "confirmado") {
-                    throw new Error("La escritura del resultado no pudo verificarse por lectura posterior.");
-                }
+                const persisted = writeDriveInventoryRowVerified_(sheet, targetRow, row, headers, fileId,
+                    auditId, inventoryOperationId, "sin_uso_detectado", "confirmado");
                 if (rowNumber) updatedCount++; else insertedCount++;
                 inventoryRowsByDriveId.set(fileId, [{ rowNumber: targetRow, row: persisted }]);
                 confirmedCount++;
@@ -7814,20 +7860,16 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 const row = record.row;
                 if (String(row[10] || "") !== "sin_uso_detectado") return;
                 try {
-                    sheet.getRange(record.rowNumber, column("estado")).setValue("no_confirmada_en_ultima_auditoria");
-                    sheet.getRange(record.rowNumber, column("ultima_auditoria_id")).setValue(auditId);
-                    sheet.getRange(record.rowNumber, column("ultima_operacion_inventario_id")).setValue(inventoryOperationId);
-                    sheet.getRange(record.rowNumber, column("resultado_inventario")).setValue("no_confirmada");
-                    sheet.getRange(record.rowNumber, column("detalle_resultado_inventario")).setValue("No apareció como imagen sin uso en la auditoría completa.");
-                    sheet.getRange(record.rowNumber, column("estado_organizacion")).setValue("no_confirmada");
-                    sheet.getRange(record.rowNumber, column("error_organizacion")).setValue("El archivo no apareció como imagen sin uso en la última auditoría completa.");
-                    SpreadsheetApp.flush();
-                    const persisted = sheet.getRange(record.rowNumber, 1, 1, headers.length).getValues()[0];
-                    if (String(persisted[10] || "") !== "no_confirmada_en_ultima_auditoria" ||
-                        String(persisted[column("ultima_operacion_inventario_id") - 1] || "") !== inventoryOperationId ||
-                        String(persisted[column("resultado_inventario") - 1] || "") !== "no_confirmada") {
-                        throw new Error("No se pudo verificar el estado no confirmado por lectura posterior.");
-                    }
+                    const staleRow = row.slice(0, headers.length);
+                    staleRow[column("estado") - 1] = "no_confirmada_en_ultima_auditoria";
+                    staleRow[column("ultima_auditoria_id") - 1] = auditId;
+                    staleRow[column("ultima_operacion_inventario_id") - 1] = inventoryOperationId;
+                    staleRow[column("resultado_inventario") - 1] = "no_confirmada";
+                    staleRow[column("detalle_resultado_inventario") - 1] = "No apareció como imagen sin uso en la auditoría completa.";
+                    staleRow[column("estado_organizacion") - 1] = "no_confirmada";
+                    staleRow[column("error_organizacion") - 1] = "El archivo no apareció como imagen sin uso en la última auditoría completa.";
+                    writeDriveInventoryRowVerified_(sheet, record.rowNumber, staleRow, headers, fileId,
+                        auditId, inventoryOperationId, "no_confirmada_en_ultima_auditoria", "no_confirmada");
                     staleCount++;
                     results.push({ fileId: fileId, status: "no_confirmada", message: "No apareció como imagen sin uso en la auditoría completa." });
                 } catch (error) {
