@@ -162,7 +162,7 @@ runGroup('38','INTEGRATION',()=>{
  }));
  recordResult('Mapa de acciones y routers',loadFunction('Services/Test/ActionDispatchContract.js','runActionDispatchContractTests')({
   apiConfig:read('api-config.js'),AUTH:read('Services/Auth.js'),USERS:read('Services/users.js'),CATALOG:read('Services/catalog.js'),
-  WRITE:read('Services/write.js'),FEEDBACK:read('Services/feedback.js'),ADMIN:read('Services/admin.js'),UTILITIES:read('Services/Utilities.js'),usersHtml:read('users.html'),
+  WRITE:read('Services/write.js'),FEEDBACK:read('Services/feedback.js')+'\\n'+read('Services/InboxConversations.js'),ADMIN:read('Services/admin.js'),UTILITIES:read('Services/Utilities.js'),usersHtml:read('users.html'),
   consumerSources:{apiConfig:read('api-config.js'),addCortes:read('add_cortes.html'),auth:read('auth.js'),main:read('main.js'),
    pysData:read('pys-data.js'),ui:read('ui.js'),usersHtml:read('users.html'),youtubeUpload:read('youtubeUpload.js')}
  }));

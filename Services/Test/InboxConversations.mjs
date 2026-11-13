@@ -39,12 +39,13 @@ class FakeSpreadsheet {
 let uuid = 0, lockAcquired = 0, lockReleased = 0;
 const spreadsheet = new FakeSpreadsheet();
 const users = spreadsheet.insertSheet("Users");
-users.getRange(1, 1, 5, 9).setValues([
+users.getRange(1, 1, 6, 9).setValues([
     ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo","Nombre_Completo","SessionToken","TermsAcceptance"],
     ["U1","developer","","Desarrollador","","","Ana Desarrolladora","",""],
     ["U2","tecnico","","Técnico","","","Bruno Técnico","",""],
     ["U3","dev2","","Desarrollador","","","Carla Desarrolladora","",""],
-    ["U4","__deleted__:old","","Técnico","","","Cuenta eliminada","",""]
+    ["U4","__deleted__:old","","Técnico","","","Cuenta eliminada","",""],
+    ["U5","tecnico2","","Técnico","","","Diego Técnico","",""]
 ]);
 const tokens = new Map([["token-a","U1"],["token-b","U2"],["token-c","U3"]]);
 function normalizeRole(value) {
@@ -125,7 +126,7 @@ run("Un usuario puede iniciar una consulta dirigida solo a Desarrollador", () =>
 });
 run("Rechaza destinatarios no Desarrollador para consultas de usuarios", () => {
     assert.throws(() => api.handleCreateInboxConversation({
-        ...actor("U2","token-b"),recipientId:"U3",subject:"Consulta",category:"general",
+        ...actor("U2","token-b"),recipientId:"U5",subject:"Consulta",category:"general",
         body:"No corresponde.",idempotencyKey:"consult-key-002"
     }),/solo pueden dirigirse/);
 });
