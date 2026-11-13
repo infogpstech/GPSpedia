@@ -1215,3 +1215,22 @@ Beta: lector de pantalla, teclado/foco móvil, combinaciones de overlays y compo
 
 Siguiente tarea: AUG-149 — unificar semántica accesible de las cinco pestañas/paneles de desarrollador. AUG-152 permanece pendiente hasta completar sus dependencias AUG-149 y las demás dependencias listadas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-149 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de implementación y pruebas: adc4cfa8b442de54c9245f256b4944d4a3505434.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Se corrigió H-AUD-022-003. Las cinco secciones del panel de desarrollador usan un grupo nativo fieldset/legend y radios exclusivos con etiquetas visibles asociadas. Cada radio enlaza su panel con aria-controls; cada panel es una región etiquetada por su encabezado h3 mediante aria-labelledby. Se eliminaron los roles tablist/tab/tabpanel mezclados. CSS :has() conserva la selección visual, panel visible y foco visible. No se cambió la lógica de herramientas, autorización ni permisos.
+
+Archivos: index.html, style.css y Services/Test/DevToolsModalAccessibility.mjs. La suite quedó integrada en el runner existente.
+GitHub Actions run 43443245846 SUCCESS: 58 suites, 805/805 PASS; DevToolsModalAccessibility 13/13 PASS; Node.js --check PASS.
+
+Beta pendiente: teclado/lectores de pantalla reales, compatibilidad CSS :has() en navegadores mínimos, responsive y ambos temas. Sin despliegues ni operaciones administrativas.
+
+Siguiente decisión: AUG-152 es la próxima tarea de prioridad alta tras resolver sus dependencias. Verificar AUG-075–081, AUG-113–121, AUG-147–149 y AUG-040/AUG-043 contra sus registros canónicos; AUG-150 (baja) permanece pendiente y no es dependencia declarada de AUG-152.
+================================================================================

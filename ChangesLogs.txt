@@ -992,3 +992,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Pruebas DevToolsModalAccessibility 8/8 PASS; GitHub Actions run 43442358110 SUCCESS: 58 suites, 800/800 PASS; Node.js --check PASS.
 - Validación con lector de pantalla y navegador real diferida a Beta. Sin cambios de permisos, endpoints ni datos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-149 — Semántica accesible de las secciones del panel de desarrollador
+- Se reemplazó la mezcla radio/tablist por un fieldset/legend con cinco radios nativos de selección exclusiva y etiquetas visibles asociadas.
+- Cada radio declara aria-controls; cada panel expone role=region y aria-labelledby a su encabezado.
+- Se eliminaron roles ARIA incompatibles; CSS :has() conserva selección, visibilidad y foco sin modificar las funciones internas de cada sección.
+- DevToolsModalAccessibility 13/13 PASS; GitHub Actions run 43443245846 SUCCESS: 58 suites, 805/805 PASS; Node.js --check PASS.
+- Teclado/lector de pantalla y compatibilidad de navegador real quedan para Beta. Sin cambios de endpoints ni permisos.
+================================================================================

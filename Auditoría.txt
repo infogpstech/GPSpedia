@@ -1178,3 +1178,15 @@ Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTERFAZ REAL DIFERIDA A BETA.
 - Pruebas locales: DevToolsModalAccessibility 8/8 PASS; OverlayMenuModalHistory integrada. GitHub Actions run 43442358110 SUCCESS: 58 suites, 800/800 PASS; Node.js --check PASS en los tres archivos JS modificados.
 - Beta pendiente: lectores de pantalla, foco/teclado en navegador móvil y validación real de capas superpuestas/History API. No se ejecutaron operaciones administrativas ni endpoints productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-022-003 / AUG-149 — 2026-11-13
+Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTERFAZ REAL DIFERIDA A BETA.
+
+- Se seleccionó el patrón nativo de grupo de radios en lugar de tablist ARIA. Un fieldset independiente contiene las cinco opciones y su legend; los inputs conservan el mismo name para que el navegador proporcione selección exclusiva y navegación por flechas nativa. Las etiquetas visibles siguen asociadas mediante for/id.
+- Cada radio incluye aria-controls hacia su panel. Los cinco paneles son regiones identificadas por aria-labelledby hacia un encabezado h3 con ID estable. Se eliminaron roles tab, tablist y tabpanel que mezclaban dos patrones incompatibles.
+- CSS :has() actualiza selección visual, visibilidad del panel y foco visible según el radio seleccionado/enfocado. Los inputs siguen disponibles para teclado y lectores de pantalla; el fieldset queda visualmente oculto sin display:none.
+- Pruebas locales: DevToolsModalAccessibility 13/13 PASS. GitHub Actions run 43443245846 SUCCESS: 58 suites, 805/805 PASS; Node.js --check PASS.
+- Beta pendiente: teclado y lectores de pantalla reales, compatibilidad de :has() en navegadores mínimos soportados, responsive y temas. No se alteró la lógica de acciones administrativas ni el control de acceso.
+================================================================================

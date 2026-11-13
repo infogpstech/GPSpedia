@@ -1494,3 +1494,33 @@ git status --short --branch
 
 No ejecutar operaciones administrativas reales ni usar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-149 — VALIDACIÓN BETA DE RADIOS NATIVOS Y PANELES DEL DESARROLLADOR
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+1. Con teclado, entrar al grupo y recorrer las cinco opciones con flechas; verificar selección única, foco visible y actualización del panel.
+2. Confirmar que Tab entra/sale del grupo según el comportamiento nativo de radios y que el foco no queda atrapado en controles ocultos.
+3. Con NVDA, VoiceOver y TalkBack, comprobar que se anuncia la leyenda del grupo, nombre/estado de cada radio y relación con el panel seleccionado.
+4. Verificar que los paneles ocultos no reciben foco ni aparecen en el árbol de accesibilidad; el panel activo anuncia su encabezado.
+5. Repetir en navegadores mínimos soportados para confirmar CSS :has(), escritorio/móvil, zoom 200 % y temas claro/oscuro.
+
+No ejecutar acciones administrativas ni usar datos productivos.
+================================================================================

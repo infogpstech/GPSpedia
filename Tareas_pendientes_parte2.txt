@@ -436,7 +436,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-022-003. **Prioridad:** Media.
 - **Problema:** input radio y label role=tab se mezclan dentro de tablist; faltan aria-controls/aria-selected y el panel referencia al input en lugar de un tab semánticamente consistente.
 - **Criterios:** elegir pestañas ARIA completas o grupo nativo de radios; relacionar control/panel; expresar selección y foco; implementar flechas/Home/End si se elige tablist; validar las cinco secciones con teclado y lector de pantalla.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13).
+- **Resolución:** Se eligió un grupo nativo de cinco radios con fieldset/legend, etiquetas asociadas y navegación de teclado nativa. Cada control declara aria-controls hacia su panel; cada panel es una región con aria-labelledby hacia su encabezado. Se retiraron roles tab/tablist/tabpanel incompatibles con el patrón radio. La selección, visibilidad y foco se reflejan mediante selectores CSS :has(), conservando el comportamiento visual existente.
+- **Pruebas locales:** DevToolsModalAccessibility 13/13 PASS; GitHub Actions run 43443245846 SUCCESS: 58 suites, 805/805 PASS; Node.js --check PASS.
+- **Validación Beta:** navegación real con teclado/lector de pantalla en los cinco paneles, compatibilidad de :has() en navegadores objetivo, responsive y temas claro/oscuro.
 
 ### AUG-150 — Reportar correctamente los errores HTTP, de red y de aplicación en consola ADMIN
 - **Origen:** H-AUD-022-004. **Prioridad:** Baja.
