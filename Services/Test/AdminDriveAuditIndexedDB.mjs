@@ -249,6 +249,7 @@ await check('La interfaz escribe páginas nuevas y conserva revisión/identidad 
     assert.ok(uiSource.includes('pendingBatchIndex = localPageCount'));
     assert.ok(uiSource.includes('auditId: auditId, files: unusedFiles'));
     assert.ok(uiSource.includes('localStateRevision = Math.max(0, Number(saved.revision) || localStateRevision)'));
+    assert.ok(uiSource.includes('processPendingDriveAuditClears_(requestContext.userId)'));
 });
 
 await check('La escritura de página y metadatos es atómica ante un fallo intermedio', async () => {
@@ -295,5 +296,15 @@ await check('Una página alterada se detecta por firma y bloquea la reanudación
     assert.equal(restored.resumeUnavailable, true);
     assert.equal(restored.cursor, null);
     assert.deepEqual(restored.files, []);
+});
+
+await check('Recupera un marcador de limpieza interrumpida y evita dos limpiadores simultáneos', async () => {
+    const h = createHarness(), owner = 'pending-clear';
+    const pendingKey = 'driveAudit:pending-clear:' + encodeURIComponent(owner);
+    h.localStorage.setItem(pendingKey, '1');
+    assert.equal(h.hasPendingDriveAuditClear(owner), true);
+    assert.equal(await h.clearDriveAuditState(owner), false);
+    assert.equal(await h.clearDriveAuditState(owner, true), true);
+    assert.equal(h.hasPendingDriveAuditClear(owner), false);
 });
 console.log('AdminDriveAuditIndexedDB: ' + passed + '/' + passed + ' PASS');
