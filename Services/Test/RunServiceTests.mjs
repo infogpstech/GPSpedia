@@ -60,7 +60,7 @@ runGroup('34','CATALOG',()=>{
  runCli('CATALOG estados de presentación','Services/Test/CatalogStatus.js');
 });
 runGroup('35','UTILITIES',()=>{
- recordResult('UTILITIES Spreadsheet simulado/RBAC/staging/rollback',new Function(read('Services/Utilities.js')+'\n'+read('Services/Test/UtilitiesSecurity.js')+'\nreturn runUtilitiesSecurityTests();')());
+ recordResult('UTILITIES Spreadsheet simulado/RBAC/staging/rollback',new Function(read('Services/SharedMutationClient.js')+'\n'+read('Services/Utilities.js')+'\n'+read('Services/Test/UtilitiesSecurity.js')+'\nreturn runUtilitiesSecurityTests();')());
 });
 runGroup('36','AUTH',()=>{
  const auth=read('Services/Auth.js'),testAuth=read('Services/Test/Auth.js'),html=read('users.html');
