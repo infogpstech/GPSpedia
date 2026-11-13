@@ -914,3 +914,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/WriteAuthorizationContracts.js y WriteAuthorizationMinimization.js: pruebas de asignación de IDs, cambios de rol/revocación durante el lock, consumidores frontend, router y controles existentes. Se integran también AddSupplementaryInfoIntegrity y CheckOperationSecurity en RunServiceTests.mjs.
 - Validación CI: GitHub Actions run 43426964327 SUCCESS; 34 suites, 517 pruebas PASS, 0 fallos; Node --check de módulos afectados PASS. Beta de Apps Script/Spreadsheet aislados pendiente.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-040 — CIERRE DOCUMENTAL DE SEGURIDAD FEEDBACK
+- Se reconcilió el backlog con el cierre consolidado ya presente en Auditoría.txt (2026-11-10); no se repitieron implementaciones ni se reabrieron hallazgos ya corregidos.
+- Acciones públicas explícitas y rechazo por defecto; assignCollaborator retirado; recordLike autenticado e idempotente; suggestYear separa aportantes verificados/anónimos; approveVideo coordina, verifica destino y recupera escrituras parciales Feedbacks/Cortes.
+- Evidencia histórica: 160/160 pruebas y parsing V8 17/17 PASS. La validación Beta de Apps Script/Spreadsheet/Drive, OAuth/YouTube, navegador/IndexedDB y concurrencia física sigue pendiente.
+- Nota de mantenimiento: FeedbackWriteSecurity.js es una suite histórica fuera del runner actual; fixtures de PyS/reportMetadata requieren actualización antes de usarla como evidencia CI. No se considera que la ejecución CI actual la haya ejecutado.
+================================================================================
