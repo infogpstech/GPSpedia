@@ -244,7 +244,7 @@ export function hasPendingDriveAuditClear(userId) {
     const pendingKey = getDriveAuditClearPendingKey(userId);
     if (!pendingKey) return true;
     try {
-        return localStorage.getItem(pendingKey) === '1';
+        return !!localStorage.getItem(pendingKey);
     } catch (error) {
         return true;
     }
@@ -537,15 +537,19 @@ export async function getDriveAuditState(userId, requestedAuditId = '') {
     if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) return null;
     return state;
 }
-export async function clearDriveAuditState(userId) {
+export async function clearDriveAuditState(userId, recoverPending = false) {
     const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
     const pendingKey = getDriveAuditClearPendingKey(ownerId);
     if (!ownerId || !pendingKey) return false;
     const generationKey = getDriveAuditClearGenerationKey(ownerId);
+    let clearToken = '';
     try {
+        const existingPending = localStorage.getItem(pendingKey);
+        if (existingPending && recoverPending !== true) return false;
         const currentGeneration = getDriveAuditClearGeneration(ownerId);
         if (!generationKey || currentGeneration === null || currentGeneration >= Number.MAX_SAFE_INTEGER) return false;
-        localStorage.setItem(pendingKey, '1');
+        clearToken = Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(pendingKey, clearToken);
         localStorage.setItem(generationKey, String(currentGeneration + 1));
     } catch (error) {
         return false;
@@ -555,6 +559,10 @@ export async function clearDriveAuditState(userId) {
         result = await performAdminAuditTransaction((store, control) => {
             const allRequest = store.getAll();
             allRequest.onsuccess = () => {
+                if (localStorage.getItem(pendingKey) !== clearToken) {
+                    control.abort(new Error('Otra pestaña asumió la limpieza del estado de auditoría.'));
+                    return;
+                }
                 allRequest.result.forEach(entry => {
                     const key = String(entry && entry.key || '');
                     if (key === getDriveAuditStateKey(ownerId) || key === getDriveAuditLatestKey(ownerId) ||
@@ -571,6 +579,7 @@ export async function clearDriveAuditState(userId) {
     }
     if (result !== true) return false;
     try {
+        if (localStorage.getItem(pendingKey) !== clearToken) return false;
         localStorage.removeItem(pendingKey);
     } catch (error) {
         return false;
