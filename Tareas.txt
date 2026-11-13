@@ -1563,3 +1563,17 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
 - Sin deployment ni cambios en recursos productivos.
 Siguiente tarea: consultar el siguiente elemento pendiente del backlog y sus dependencias.
 ================================================================================
+
+================================================================================
+AUG-022 — LIMPIEZA SELECTIVA DE CACHÉS LOCALES
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- Se elimina únicamente contenido reconstruible de GPSpedia_DB: catalog, searchHistory, viewedItems, thumbnails y validationCache, en una transacción confirmada por oncomplete.
+- Se preserva adminLocalState y cualquier estado administrativo/operación recuperable.
+- localStorage elimina solo cachés catálogo/PyS; conserva sesión, preferencias, pending_operation, edit_backup, adminImageUploadPending y marcadores de recuperación.
+- sessionStorage y la base IndexedDB independiente de cargas YouTube no se modifican.
+- Cache Storage elimina respuestas dinámicas de GPSpedia, preserva shell/recursos offline esenciales y no modifica otras cachés.
+- La UI solo recarga tras confirmación de las tres fuentes; las ObjectURL se revocan después del éxito completo.
+- AdminClientCacheDeletion: 8/8 PASS en harness V8 adaptado. Parsing de UI, offline, Service Worker, prueba y runner PASS.
+- Node CLI literal y navegador/multi-pestaña reales no ejecutados; pendientes para Beta. Sin deployment ni datos productivos.
+Siguiente: continuar con el siguiente elemento pendiente real del backlog tras revisar dependencias y estado Git.
+================================================================================
