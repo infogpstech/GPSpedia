@@ -471,7 +471,17 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Origen:** H-AUD-029-005, H-AUD-029-006 y H-AUD-029-007. **Prioridad:** Media.
 - **Problema:** la captura de referencias materializa matrices de todas las columnas de Cortes; los lotes son fijos y no consideran presupuesto temporal; cada continuación repite recorridos de ancestros para la pila.
 - **Criterios de aceptación:** medir tiempo por etapa y tamaño de datos en entorno de prueba; optimizar lectura de los ocho campos sin perder fórmulas/rich text; definir presupuesto temporal y tamaño de lote seguro; aplicar timeout/reintento cliente sin perder cursor; memoizar validaciones de ancestros dentro de cada petición y conservar validación de pertenencia a Cortes.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- `collectCortesImageReferences` mantiene la lectura acotada a los ocho campos configurados; conserva valores visibles, fórmulas, RichText y objetos CellImage. No usa `getDataRange()` ni materializa columnas ajenas.
+- Los bloques pasan de un tamaño inicial máximo de 500 filas a un ajuste adaptativo entre 50 y 500, según el tiempo medido por bloque (objetivo 1,500 ms). Presupuesto total de captura: 12,000 ms; si se excede, la función falla sin devolver referencias parciales ni permitir persistir un snapshot incompleto.
+- Métricas por etapa: lectura visible, valores nativos, fórmulas, RichText y análisis; incluye filas/celdas/rangos/bloques, tamaño inicial/mínimo/máximo/final, menor tamaño adaptativo, bloque más lento y cambios de tamaño.
+- Se conservan los límites de recorrido Drive por lote (18,000 ms y topes por archivos/carpetas/entradas), las métricas de etapa y la serialización del cursor.
+- Se verificó el contrato cliente existente: timeout de 45 s, una solicitud inicial y hasta tres intentos al continuar; los reintentos transmiten una copia idéntica del cursor/payload, usan un AbortController nuevo y respetan cancelación de vista.
+- La validación de pertenencia comparte `folderMembershipCache` dentro de cada petición para pila y subcarpetas; las pruebas verifican caché de ancestros y rechazo de ramas externas.
+- `AdminReplacedImagesIntegrity.mjs`: 54/54 PASS en harness V8 adaptado, incluidos ajuste de lotes y rechazo por presupuesto. `AdminDriveAuditClientRetry.mjs`: 7/7 PASS en harness V8 adaptado. Sintaxis de admin.js, suites y runner: aprobada.
+- Node CLI literal y GitHub Actions no se ejecutaron desde este entorno; no se declara CI SUCCESS. Validación con Apps Script, Drive y Spreadsheet aislados queda para Beta.
+- No se modificó `api-config.js` ni `ui.js`: los contratos de reintento y cursor ya cumplían el criterio y quedaron cubiertos por pruebas.
+
 ================================================================================
 
 ### AUG-034 — Coordinación compartida de mutaciones y ventana segura de migración WRITE/ADMIN
