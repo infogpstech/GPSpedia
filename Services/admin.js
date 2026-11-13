@@ -1228,6 +1228,25 @@ function adminRestoreSpreadsheetManifest_(spreadsheet) {
         fingerprint: adminRestoreHash_(entries.map(entry => entry.name + ":" + entry.stats.fingerprint).join("|")),
         entries };
 }
+function adminRestoreDriveManifestFileId_(folder) {
+    try {
+        const description = JSON.parse(String(folder.getDescription() || ""));
+        return description.kind === ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_
+            ? String(description.manifestFileId || "") : "";
+    } catch (error) { return ""; }
+}
+function adminRestoreIsDriveManifestFile_(file, folder) {
+    const manifestId = adminRestoreDriveManifestFileId_(folder);
+    if (manifestId && String(file.getId()) === manifestId) return true;
+    return String(file.getName() || "") === ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_ &&
+        String(file.getDescription() || "") === ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_;
+}
+function adminRestoreDriveTimestamp_(resource) {
+    try {
+        const updated = resource.getLastUpdated();
+        return updated && typeof updated.getTime === "function" ? updated.getTime() : 0;
+    } catch (error) { return 0; }
+}
 function adminRestoreDriveManifest_(folder) {
     const entries = [];
     let folderCount = 0, fileCount = 0, totalBytes = 0;
@@ -1240,21 +1259,258 @@ function adminRestoreDriveManifest_(folder) {
             const path = prefix ? prefix + "/" + child.getName() : child.getName();
             folderCount++;
             if (folderCount + fileCount > 50000) throw new Error("El respaldo supera el límite de recursos verificables por operación.");
-            entries.push("D|" + path); visit(child, path, depth + 1);
+            entries.push({
+                type: "folder", id: String(child.getId()), parentId: String(current.getId()),
+                name: String(child.getName()), path, mimeType: "application/vnd.google-apps.folder",
+                size: 0, lastUpdated: adminRestoreDriveTimestamp_(child),
+                description: String(child.getDescription() || "")
+            });
+            visit(child, path, depth + 1);
         }
         const files = current.getFiles();
         while (files.hasNext()) {
             const file = files.next();
+            if (adminRestoreIsDriveManifestFile_(file, current)) continue;
             if (file.isTrashed()) throw new Error("El respaldo contiene un archivo en la papelera.");
             const path = prefix ? prefix + "/" + file.getName() : file.getName();
             const size = Number(file.getSize()) || 0;
             fileCount++; totalBytes += size;
             if (folderCount + fileCount > 50000) throw new Error("El respaldo supera el límite de recursos verificables por operación.");
-            entries.push("F|" + path + "|" + file.getMimeType() + "|" + size);
+            entries.push({
+                type: "file", id: String(file.getId()), parentId: String(current.getId()),
+                name: String(file.getName()), path, mimeType: String(file.getMimeType()),
+                size, lastUpdated: adminRestoreDriveTimestamp_(file),
+                description: String(file.getDescription() || "")
+            });
         }
     };
-    visit(folder, "", 0); entries.sort();
-    return { folderCount, fileCount, totalBytes, fingerprint: adminRestoreHash_(entries.join("\n")) };
+    visit(folder, "", 0);
+    entries.sort((a, b) => a.path.localeCompare(b.path) || a.type.localeCompare(b.type) || a.id.localeCompare(b.id));
+    const structural = entries.map(entry => entry.type === "folder"
+        ? "D|" + entry.path
+        : "F|" + entry.path + "|" + entry.mimeType + "|" + entry.size).join("\n");
+    const identity = entries.map(entry => [
+        entry.type, entry.id, entry.parentId, entry.path, entry.mimeType, entry.size,
+        entry.lastUpdated, entry.description
+    ].join("|")).join("\n");
+    return {
+        folderCount, fileCount, totalBytes,
+        fingerprint: adminRestoreHash_(structural),
+        identityFingerprint: adminRestoreHash_(identity),
+        entries
+    };
+}
+function adminRestoreReadDriveBackupState_(folder) {
+    let description;
+    try { description = JSON.parse(String(folder.getDescription() || "")); }
+    catch (error) { throw new Error("El respaldo Drive no tiene un estado/manifiesto verificable."); }
+    if (description.kind !== ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ || description.version !== 2 ||
+        !["in_progress", "complete"].includes(description.status) || !description.manifestFileId) {
+        throw new Error("El contenedor Drive no tiene estado completo o reanudable; no se permite restaurarlo.");
+    }
+    const file = DriveApp.getFileById(String(description.manifestFileId));
+    if (!file || file.isTrashed() || file.getName() !== ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_ ||
+        String(file.getDescription() || "") !== ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_ ||
+        !adminRestoreHasParent_(file, folder.getId())) {
+        throw new Error("El archivo de manifiesto Drive falta, está alterado o no pertenece al contenedor.");
+    }
+    let state;
+    try { state = JSON.parse(file.getBlob().getDataAsString()); }
+    catch (error) { throw new Error("El archivo de manifiesto Drive está dañado; no se inició la operación."); }
+    if (!state || state.kind !== ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ || state.version !== 2 ||
+        state.backupFolderId !== folder.getId() || state.manifestFileId !== file.getId() ||
+        !Array.isArray(state.folders) || !Array.isArray(state.files) ||
+        !["copying", "complete"].includes(state.status)) {
+        throw new Error("El estado interno del manifiesto Drive no coincide con el contenedor.");
+    }
+    if (description.status === "complete" && state.status !== "complete") {
+        throw new Error("El contenedor declara estar completo, pero su manifiesto interno no lo confirma.");
+    }
+    if (description.status === "in_progress" && state.status !== "copying" && state.status !== "complete") {
+        throw new Error("El manifiesto Drive no está en un estado reanudable.");
+    }
+    return { description, file, state };
+}
+function adminRestoreWriteDriveBackupState_(file, state) {
+    file.setContent(JSON.stringify(state));
+    const persisted = JSON.parse(file.getBlob().getDataAsString());
+    if (!persisted || persisted.runId !== state.runId || persisted.status !== state.status ||
+        persisted.nextFolderIndex !== state.nextFolderIndex || persisted.nextFileIndex !== state.nextFileIndex ||
+        persisted.manifestFileId !== state.manifestFileId) {
+        throw new Error("No se pudo verificar el avance persistido del manifiesto Drive.");
+    }
+}
+function adminRestoreSetDriveBackupFolderStatus_(folder, state, status) {
+    const description = {
+        kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2, status,
+        createdAt: state.createdAt, backupFolderId: folder.getId(),
+        sourceRootId: state.sourceRootId, manifestFileId: state.manifestFileId,
+        folderCount: state.sourceFolderCount, fileCount: state.sourceFileCount,
+        totalBytes: state.sourceTotalBytes, fingerprint: state.sourceFingerprint
+    };
+    folder.setDescription(JSON.stringify(description));
+    const persisted = JSON.parse(String(folder.getDescription() || ""));
+    if (persisted.kind !== description.kind || persisted.version !== 2 ||
+        persisted.status !== status || persisted.manifestFileId !== state.manifestFileId ||
+        persisted.backupFolderId !== folder.getId()) {
+        throw new Error("No se pudo verificar el estado " + status + " del contenedor Drive.");
+    }
+}
+function adminRestoreDriveIntegrityError_(message) {
+    const error = new Error(message);
+    error.nonResumable = true;
+    return error;
+}
+function adminRestoreVerifyDriveSourceEntry_(entry) {
+    let resource;
+    try {
+        resource = entry.type === "folder"
+            ? DriveApp.getFolderById(entry.sourceId)
+            : DriveApp.getFileById(entry.sourceId);
+    } catch (error) {
+        throw adminRestoreDriveIntegrityError_("El recurso de origen dejó de estar disponible: " + entry.path);
+    }
+    if (!resource || resource.isTrashed() || String(resource.getName()) !== entry.name ||
+        !adminRestoreHasParent_(resource, entry.parentSourceId) ||
+        String(resource.getDescription() || "") !== String(entry.sourceDescription || "")) {
+        throw adminRestoreDriveIntegrityError_("El recurso de origen cambió desde el inventario: " + entry.path);
+    }
+    if (entry.type === "file" &&
+        (String(resource.getMimeType()) !== entry.mimeType || Number(resource.getSize()) !== Number(entry.size) ||
+            (entry.sourceLastUpdated && adminRestoreDriveTimestamp_(resource) !== Number(entry.sourceLastUpdated)))) {
+        throw adminRestoreDriveIntegrityError_("El archivo de origen cambió desde el inventario: " + entry.path);
+    }
+    return resource;
+}
+function adminRestoreFindTaggedDriveCopy_(parent, entry, state, type) {
+    const iterator = type === "folder" ? parent.getFoldersByName(entry.name) : parent.getFilesByName(entry.name);
+    let found = null;
+    while (iterator.hasNext()) {
+        const candidate = iterator.next();
+        let tag;
+        try { tag = JSON.parse(String(candidate.getDescription() || "")); }
+        catch (error) { continue; }
+        if (tag.kind === ADMIN_RESTORE_DRIVE_COPY_TAG_KIND_ && tag.runId === state.runId &&
+            tag.sourceId === entry.sourceId && tag.path === entry.path && tag.type === type) {
+            if (found) throw adminRestoreDriveIntegrityError_("Se detectaron copias duplicadas para " + entry.path + ".");
+            found = candidate;
+        }
+    }
+    return found;
+}
+function adminRestoreCopyDriveFolderEntry_(entry, state, backupFolder) {
+    adminRestoreVerifyDriveSourceEntry_(entry);
+    const parentCopyId = entry.parentSourceId === state.sourceRootId
+        ? backupFolder.getId() : String((state.folderCopyIds || {})[entry.parentSourceId] || "");
+    if (!parentCopyId) throw adminRestoreDriveIntegrityError_("Falta la carpeta padre de destino para " + entry.path + ".");
+    entry.parentCopyId = parentCopyId;
+    const parent = DriveApp.getFolderById(parentCopyId);
+    let copy = adminRestoreFindTaggedDriveCopy_(parent, entry, state, "folder");
+    if (!copy) {
+        copy = parent.createFolder(entry.name);
+        try {
+            copy.setDescription(JSON.stringify({
+                kind: ADMIN_RESTORE_DRIVE_COPY_TAG_KIND_, runId: state.runId,
+                sourceId: entry.sourceId, path: entry.path, type: "folder"
+            }));
+        } catch (error) {
+            throw adminRestoreDriveIntegrityError_("No se pudo etiquetar la carpeta copiada " + entry.path + ".");
+        }
+    }
+    if (!copy || copy.isTrashed() || copy.getName() !== entry.name ||
+        !adminRestoreHasParent_(copy, parentCopyId)) {
+        throw adminRestoreDriveIntegrityError_("La carpeta copiada no pudo verificarse: " + entry.path);
+    }
+    return copy;
+}
+function adminRestoreCopyDriveFileEntry_(entry, state, backupFolder) {
+    const source = adminRestoreVerifyDriveSourceEntry_(entry);
+    const parentCopyId = entry.parentSourceId === state.sourceRootId
+        ? backupFolder.getId() : String((state.folderCopyIds || {})[entry.parentSourceId] || "");
+    if (!parentCopyId) throw adminRestoreDriveIntegrityError_("Falta la carpeta padre de destino para " + entry.path + ".");
+    entry.parentCopyId = parentCopyId;
+    const parent = DriveApp.getFolderById(parentCopyId);
+    let copy = adminRestoreFindTaggedDriveCopy_(parent, entry, state, "file");
+    if (!copy) {
+        copy = source.makeCopy(entry.name, parent);
+        try {
+            copy.setDescription(JSON.stringify({
+                kind: ADMIN_RESTORE_DRIVE_COPY_TAG_KIND_, runId: state.runId,
+                sourceId: entry.sourceId, path: entry.path, type: "file"
+            }));
+        } catch (error) {
+            throw adminRestoreDriveIntegrityError_("No se pudo etiquetar el archivo copiado " + entry.path + ".");
+        }
+    }
+    if (!copy || copy.isTrashed() || copy.getName() !== entry.name ||
+        copy.getMimeType() !== entry.mimeType || Number(copy.getSize()) !== Number(entry.size) ||
+        !adminRestoreHasParent_(copy, parentCopyId)) {
+        throw adminRestoreDriveIntegrityError_("El archivo copiado no pudo verificarse: " + entry.path);
+    }
+    return copy;
+}
+function adminRestoreVerifyDriveBackupState_(state, backupFolder, actualManifest) {
+    if (!state || state.status !== "complete" && state.status !== "copying") {
+        throw new Error("El estado del manifiesto no permite verificar el respaldo.");
+    }
+    if (state.sourceFolderCount !== actualManifest.folderCount ||
+        state.sourceFileCount !== actualManifest.fileCount ||
+        state.sourceTotalBytes !== actualManifest.totalBytes ||
+        state.sourceFingerprint !== actualManifest.fingerprint) {
+        throw new Error("El inventario real no coincide con el manifiesto del respaldo Drive.");
+    }
+    const actualById = new Map(actualManifest.entries.map(entry => [String(entry.id), entry]));
+    const expectedEntries = (state.folders || []).concat(state.files || []);
+    if (expectedEntries.length !== actualManifest.entries.length) {
+        throw new Error("El manifiesto no contiene una relación individual de todos los recursos Drive.");
+    }
+    expectedEntries.forEach(entry => {
+        if (!entry.copyId || !entry.parentCopyId) throw new Error("Falta el ID de copia o de carpeta padre para " + entry.path + ".");
+        const actual = actualById.get(String(entry.copyId));
+        if (!actual || actual.type !== (state.folders.includes(entry) ? "folder" : "file") ||
+            actual.path !== entry.path || actual.name !== entry.name ||
+            String(actual.parentId) !== String(entry.parentCopyId) ||
+            actual.mimeType !== entry.mimeType || Number(actual.size) !== Number(entry.size)) {
+            throw new Error("La relación ID/ruta/MIME/tamaño del recurso no coincide: " + entry.path);
+        }
+    });
+    return true;
+}
+function adminRestoreCreateCompletedDriveManifest_(folder, manifest, runId, sourceRootId) {
+    const state = {
+        kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 2, status: "complete",
+        runId, createdAt: runId, backupFolderId: folder.getId(), manifestFileId: "",
+        sourceRootId, sourceRootName: "", sourceFingerprint: manifest.fingerprint,
+        sourceIdentityFingerprint: manifest.identityFingerprint,
+        sourceFolderCount: manifest.folderCount, sourceFileCount: manifest.fileCount,
+        sourceTotalBytes: manifest.totalBytes, nextFolderIndex: manifest.folderCount,
+        nextFileIndex: manifest.fileCount, batchSize: ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_,
+        folderCopyIds: {}
+    };
+    state.folderCopyIds[sourceRootId] = folder.getId();
+    manifest.entries.forEach(entry => {
+        const parentCopyId = String(entry.parentId) === String(sourceRootId) ? folder.getId() : String(entry.parentId);
+        const item = {
+            sourceId: entry.id, copyId: entry.id, parentSourceId: entry.parentId,
+            parentCopyId, name: entry.name, path: entry.path, mimeType: entry.mimeType,
+            size: entry.size, sourceDescription: entry.description,
+            sourceLastUpdated: entry.lastUpdated
+        };
+        if (entry.type === "folder") {
+            state.folders.push(item);
+            state.folderCopyIds[entry.id] = entry.id;
+        } else {
+            state.files.push(item);
+        }
+    });
+    const manifestFile = folder.createFile(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_, JSON.stringify(state), "application/json");
+    manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
+    state.manifestFileId = manifestFile.getId();
+    adminRestoreWriteDriveBackupState_(manifestFile, state);
+    adminRestoreSetDriveBackupFolderStatus_(folder, state, "complete");
+    const loaded = adminRestoreReadDriveBackupState_(folder);
+    adminRestoreVerifyDriveBackupState_(loaded.state, folder, adminRestoreDriveManifest_(folder));
+    return loaded.state;
 }
 function adminRestoreManifestsEqual_(left, right) {
     return Boolean(left && right && left.folderCount === right.folderCount &&
@@ -1387,7 +1643,11 @@ function adminRestoreHasParent_(resource, parentId) {
 }
 function adminRestoreMoveFolderContents_(source, destination) {
     const fileIterator = source.getFiles(), files = [];
-    while (fileIterator.hasNext()) files.push(fileIterator.next());
+    while (fileIterator.hasNext()) {
+        const file = fileIterator.next();
+        if (adminRestoreIsDriveManifestFile_(file, source)) continue;
+        files.push(file);
+    }
     files.forEach(file => {
         if (!adminRestoreHasParent_(file, destination.getId())) destination.addFile(file);
         if (adminRestoreHasParent_(file, source.getId())) source.removeFile(file);
@@ -1405,22 +1665,29 @@ function adminRestoreMoveFolderContents_(source, destination) {
         }
     });
 }
-function adminRestoreCopyFolderRecursively_(source, target) {
+function adminRestoreCopyFolderRecursively_(source, target, storedManifest) {
     const files = source.getFiles();
     while (files.hasNext()) {
-        const file = files.next(), copy = file.makeCopy(file.getName(), target);
+        const file = files.next();
+        if (adminRestoreIsDriveManifestFile_(file, source)) continue;
+        const copy = file.makeCopy(file.getName(), target);
         if (!copy || copy.getName() !== file.getName() || copy.getMimeType() !== file.getMimeType() ||
             Number(copy.getSize()) !== Number(file.getSize()) || copy.isTrashed()) {
             throw new Error("No se pudo verificar la copia del archivo «" + file.getName() + "».");
         }
+        const manifestEntry = storedManifest && (storedManifest.files || []).find(entry => String(entry.copyId) === String(file.getId()));
+        if (manifestEntry) copy.setDescription(String(manifestEntry.sourceDescription || ""));
     }
     const folders = source.getFolders();
     while (folders.hasNext()) {
-        const child = folders.next(), targetChild = target.createFolder(child.getName());
-        adminRestoreCopyFolderRecursively_(child, targetChild);
+        const child = folders.next();
+        const targetChild = target.createFolder(child.getName());
+        const manifestEntry = storedManifest && (storedManifest.folders || []).find(entry => String(entry.copyId) === String(child.getId()));
+        if (manifestEntry) targetChild.setDescription(String(manifestEntry.sourceDescription || ""));
+        adminRestoreCopyFolderRecursively_(child, targetChild, storedManifest);
     }
 }
-// END ADMIN RESTORE RECOVERY
+// END ADMIN RESTORE RECOVERY// END ADMIN RESTORE RECOVERY
 
 /**
  * Restaurar la base de datos completa a partir de un ID de copia
