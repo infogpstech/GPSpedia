@@ -1870,3 +1870,34 @@ Validación:
 
 Siguiente tarea: AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración.
 ================================================================================
+
+================================================================================
+## Checkpoint de continuidad — AUG-032 (2026-11-13)
+
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD previo a este checkpoint: 419d11ee68bb9d5d22caa83fa35d926821147fc8
+HEAD de código/pruebas de AUG-032: 337c6c814a4438906ca88a3d44c9d448edab9b99 (Services/admin.js); fa5c659767e0d024cc68912d41babe8c3c77ba86 (suite de pruebas y rectificación del contrato); c04b2f9218860c641de0f571263c1a56cf921f9c (prueba de limpieza adicional).
+Referencia de la rama base observada: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificó.
+
+Estado: AUG-032 COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Cambios:
+- Services/admin.js define máximo de 750,000 caracteres/bytes UTF-8, bloques de 75,000 y máximo de 10 bloques.
+- Manifiesto versión 2 con MIME JSON UTF-8, longitudes, TTL, fechas, hash SHA-256 global y hash por bloque.
+- Escritura y lectura verificadas; contenido incompleto, corrupto, alterado o fuera de capacidad no se acepta.
+- Renovación de seis horas al continuar para snapshot y páginas anteriores de deduplicación. Una pausa superior al TTL requiere auditoría nueva.
+- Limpieza de estados expirados elimina páginas, respuesta, snapshot y puntero latest; limpieza explícita retira bloques huérfanos.
+- Services/Test/AdminReplacedImagesIntegrity.mjs agrega cobertura de capacidad, integridad, corrupción, renovación, expiración y limpieza.
+
+Validación ejecutada:
+- Suite AdminReplacedImagesIntegrity en harness V8 adaptado: 44/44 PASS.
+- Parsing de Services/admin.js, suite y runner: 3/3 PASS.
+- Se corrigieron aserciones de contrato que aún esperaban la estructura previa a AUG-031; ahora comprueban metadatos y confirmaciones en sus almacenes separados.
+- Node CLI real y GitHub Actions no se ejecutaron desde el entorno de esta sesión; no declarar CI SUCCESS.
+- CacheService/Utilities.newBlob real y pruebas de pausa/reanudación en Apps Script quedan para Beta aislada.
+- Sin deployment ni operaciones sobre Drive/Spreadsheet productivos.
+
+Siguiente tarea: AUG-033 — Rendimiento del recorrido Drive y captura de referencias.
+================================================================================
