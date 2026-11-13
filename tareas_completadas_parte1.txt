@@ -439,3 +439,11 @@ AUG-038 — COMPENSACIÓN COHERENTE DE REEMPLAZOS IN-MODAL Y DESCARTE DE EDICIÓ
 - Beta pendiente: integración real con Apps Script/Spreadsheet/Drive aislados, fallos inyectados y concurrencia real.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ================================================================================
+
+
+### AUG-040 — Asegurar las escrituras de FEEDBACK sobre Cortes
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
+- **Criterios 1–6:** política explícita de acciones públicas/protegidas y rechazo por defecto; assignCollaborator retirado; recordLike autenticado e idempotente; suggestYear separa actores anónimos de aportantes verificados; approveVideo coordinado, con destino verificado y recuperación de escrituras Feedbacks/Cortes.
+- **Evidencia:** H-AUD-040-001 a H-AUD-040-018 corregidos; 160/160 pruebas locales y parsing V8 17/17 PASS, según Auditoría.txt (cierre 2026-11-10).
+- **CI actual:** 34 suites/517 PASS en run 43426964327, con VideoApprovalPublishing y coordinación compartida; no incluye la suite histórica FeedbackWriteSecurity.js. Sus fixtures posteriores de PyS/reportMetadata requieren mantenimiento y no se presentan como prueba actual.
+- **Pendiente Beta:** Apps Script, Spreadsheet/Drive reales, OAuth/YouTube, navegador/IndexedDB, HTTP y concurrencia física entre proyectos.
