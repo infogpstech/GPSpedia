@@ -101,7 +101,7 @@ runGroup('33','FEEDBACK',()=>{
   ui:read('ui.js'),feedback
  }));
  runCli('AUG-043 contratos de sesión, IDs y publicación en cliente','Services/Test/VideoApprovalClientContract.mjs');
- runCli('AUG-043 persistencia IndexedDB de operaciones','Services/Test/YouTubeUploadRecordPersistence.mjs');
+ runCli('AUG-043 persistencia IndexedDB de operaciones','Services/Test/YouTubeUploadRecordPersistence.js');
  runCli('AUG-043 recuperación de bloques resumables','Services/Test/YouTubeUploadCheckpointRecovery.js');
  runCli('AUG-043 cancelación durante transferencia','Services/Test/YouTubeUploadCloseDuringTransfer.js');
  runCli('AUG-043 recuperación de transferencia completada','Services/Test/YouTubeUploadCompletedRecordRecovery.js');
