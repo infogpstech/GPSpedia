@@ -16,7 +16,7 @@ const names = [
     "ensureReplacedImagesInventoryColumns", "getReplacedImagesReadSchema_",
     "getReplacedImageRecordIdentity_", "isKnownReplacedImageStatus_",
     "getDuplicateReplacedImageIds_", "findReplacedImageRecordById",
-    "setReplacedImageHistoryStatusVerified_", "restoreAdminImageActiveCell_"
+    "setReplacedImageHistoryStatusVerified_", "setReplacedImageTrashPreviousStatusVerified_", "restoreAdminImageActiveCell_"
 ];
 const helperSources = Object.fromEntries(names.map(name => [name, fnSource(admin, name)]));
 function createSheet(initialRows, options = {}) {
@@ -77,19 +77,19 @@ const BASE_HEADERS = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registr
     "archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
 const EXT_HEADERS = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion",
     "url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion",
-    "error_organizacion","fecha_organizacion"];
+    "error_organizacion","fecha_organizacion","estado_previo_papelera"];
 const HEADERS = [...BASE_HEADERS, ...EXT_HEADERS];
 const FILE_A = "abcdefghij1234567890";
 const FILE_B = "bcdefghij12345678901";
 function makeRow({id="REP-1", status="historica", type="reemplazada", fileId=FILE_A,
     originalId=fileId, visualId=fileId, origin=type === "reemplazada" ? "reemplazo" : "auditoria_drive",
     contentType=type === "reemplazada" ? "vehiculo" : "inventario_sin_uso", name="imagen.jpg"} = {}) {
-    const row = Array(23).fill("");
+    const row = Array(24).fill("");
     row[0]=id; row[1]=new Date("2026-01-01T00:00:00Z"); row[2]=contentType;
     row[3]="VEH-1"; row[4]="imagenVehiculo"; row[5]=fileId; row[6]=name;
     row[7]="https://drive.google.com/file/d/"+originalId+"/view"; row[8]="https://drive.google.com/file/d/REPLACED00000000000000/view";
     row[9]="Vehículo de prueba"; row[10]=status; row[11]=origin; row[12]="image/jpeg";
-    row[16]="https://lh3.googleusercontent.com/d/"+visualId; row[19]=type;
+    row[16]="https://lh3.googleusercontent.com/d/"+visualId; row[19]=type; row[23]="";
     return row;
 }
 function lockHarness() {
@@ -131,7 +131,7 @@ check("Los 12 encabezados dinámicos se migran de forma idempotente y se verific
     const sheet=createSheet([BASE_HEADERS,row]);
     const lock=lockHarness(),api=buildHelpers({sheet,lock});
     const headers=api.ensureReplacedImagesInventoryColumns(sheet);
-    assert.equal(headers.length,23);
+    assert.equal(headers.length,24);
     assert.deepEqual(headers.slice(11),EXT_HEADERS);
     assert.equal(sheet.cells[1][19],"reemplazada");
     assert.equal(sheet.cells[1][16],"https://lh3.googleusercontent.com/d/"+FILE_A);
@@ -167,7 +167,7 @@ check("La consulta del esquema no crea ni modifica la hoja cuando no existe",()=
     const api=buildHelpers({spreadsheet});
     const schema=api.getReplacedImagesReadSchema_();
     assert.equal(schema.sheet,null);
-    assert.equal(schema.missingHeaders.length,12);
+    assert.equal(schema.missingHeaders.length,13);
     assert.equal(insertCalls,0);
 });
 
@@ -189,7 +189,7 @@ check("El buscador de historial rechaza IDs duplicados y devuelve el ancho compl
     const uniqueSheet=createSheet([HEADERS,makeRow({id:"UNIQUE"})]);
     const result=api.findReplacedImageRecordById(uniqueSheet,"UNIQUE");
     assert.equal(result.rowIndex,2);
-    assert.equal(result.values.length,23);
+    assert.equal(result.values.length,24);
 });
 
 check("La marca manual en uso requiere revisión, identidad y verificación del archivo",()=>{
@@ -205,9 +205,9 @@ check("La marca manual en uso requiere revisión, identidad y verificación del 
 
 check("La matriz de estados reconoce todos los estados históricos e inventarios",()=>{
     const api=buildHelpers();
-    for(const status of ["historica","restablecida","en_papelera","requiere_revision","cancelada"])
+    for(const status of ["historica","restablecida","en_papelera","requiere_revision","cancelada","eliminacion_pendiente","eliminada","en_uso"])
         assert.equal(api.isKnownReplacedImageStatus_("reemplazada",status),true);
-    for(const status of ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminada"])
+    for(const status of ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminacion_pendiente","eliminada","en_uso"])
         assert.equal(api.isKnownReplacedImageStatus_("sin_uso_detectado",status),true);
     assert.equal(api.isKnownReplacedImageStatus_("reemplazada","unknown"),false);
     assert.equal(api.isKnownReplacedImageStatus_("sin_uso_detectado","historica"),false);
@@ -345,15 +345,16 @@ function buildDelete({status="historica",failStatus=false,failDriveRollback=fals
         if(failStatus&&!failed&&statusValue==="en_papelera"){failed=true;throw new Error("simulated status write failure");}
         return setStatus(sheet,row,statusValue);
     };
+    const setPrevious=new Function("SpreadsheetApp",helperSources.setReplacedImageTrashPreviousStatusVerified_+"\nreturn setReplacedImageTrashPreviousStatusVerified_;")({flush(){}});
     const api=new Function(
         "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
         "getReplacedImageRecordType","isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","collectActiveDriveReferences",
-        "DriveApp","getCortesRootFolder","getSingleParentFolderInsideCortes","getFolderPathInsideCortes",
+        "setReplacedImageTrashPreviousStatusVerified_","DriveApp","getCortesRootFolder","getSingleParentFolderInsideCortes","getFolderPathInsideCortes",
         "setReplacedImageHistoryStatusVerified_","recordImageAdministrationActivity","logMessage",
         fnSource(admin,"handleDeleteReplacedImage")+"\nreturn handleDeleteReplacedImage;"
     )(lock.LockService,()=>historySheet,()=>HEADERS,find,getType,
         new Function(helperSources.isKnownReplacedImageStatus_+"\nreturn isKnownReplacedImageStatus_;")(),
-        getIdentity,()=>({references:new Map(),unverifiableReferenceCount:0}),
+        getIdentity,()=>({references:new Map(),unverifiableReferenceCount:0}),setPrevious,
         {getFileById(){driveCalls++;return file;}},()=>({getId:()=>"ROOT"}),()=>({}),()=>"Cortes/Original",
         wrappedStatus,()=>{},()=>{});
     return {run:()=>api({id_reemplazo:"REP-DELETE"},()=>{}),historySheet,file,driveCalls:()=>driveCalls};
