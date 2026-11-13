@@ -169,9 +169,10 @@ function runAdminRestoreRecoveryTests(adminSource) {
         const factory = new Function("adminRestoreHasParent_", "adminRestoreIsDriveManifestFile_", parentHelper + "\n" + moveHelper + "\nreturn adminRestoreMoveFolderContents_;");
         const move = factory(new Function("return (" + parentHelper + ")")(), () => false);
         const makeIterator = values => { let i=0; return {hasNext:()=>i<values.length,next:()=>values[i++]}; };
-        const parents = new Map([["file-1",new Set(["source"])],["folder-1",new Set(["source"])]]);
+        const parents = new Map([["file-1",new Set(["source"])],["folder-1",new Set(["source"])],["file-manifest-collision",new Set(["source"])]]);
         const resource = id => ({getId:()=>id,getParents:()=>makeIterator(Array.from(parents.get(id),pid=>({getId:()=>pid})))});
         const file=Object.assign(resource("file-1"),{getName:()=>"image.jpg"});
+        const manifestNameCollision=Object.assign(resource("file-manifest-collision"),{getName:()=>"GPSpedia_DRIVE_MANIFEST.json"});
         const child=Object.assign(resource("folder-1"),{getName:()=>"brand"});
         const makeFolder=(id,children)=>({
             getId:()=>id, getName:()=>id === "source" ? "Cortes" : "rollback",
@@ -180,40 +181,15 @@ function runAdminRestoreRecoveryTests(adminSource) {
             addFile:x=>parents.get(x.getId()).add(id), removeFile:x=>parents.get(x.getId()).delete(id),
             addFolder:x=>parents.get(x.getId()).add(id), removeFolder:x=>parents.get(x.getId()).delete(id)
         });
-        const source=makeFolder("source",[file,child]), rollback=makeFolder("rollback",[file,child]);
+        const source=makeFolder("source",[file,manifestNameCollision,child]), rollback=makeFolder("rollback",[file,manifestNameCollision,child]);
         move(source,rollback);
         assert(parents.get("file-1").has("rollback")&&!parents.get("file-1").has("source"),"No movió archivo a rollback.");
         assert(parents.get("folder-1").has("rollback")&&!parents.get("folder-1").has("source"),"No movió subcarpeta a rollback.");
+        assert(parents.get("file-manifest-collision").has("rollback")&&!parents.get("file-manifest-collision").has("source"),"Omitió un archivo legítimo con el nombre del manifiesto.");
         move(rollback,source);
         assert(parents.get("file-1").has("source")&&!parents.get("file-1").has("rollback"),"No recuperó el archivo original.");
         assert(parents.get("folder-1").has("source")&&!parents.get("folder-1").has("rollback"),"No recuperó la subcarpeta original.");
-    });
-    run("El traslado conserva archivos del usuario que comparten el nombre del manifiesto", () => {
-        const parentHelper = functionSource("adminRestoreHasParent_");
-        const moveHelper = functionSource("adminRestoreMoveFolderContents_");
-        const isManifest = (file, folder) => file.getId() === "internal-manifest";
-        const factory = new Function("adminRestoreHasParent_", "adminRestoreIsDriveManifestFile_",
-            parentHelper + "\\n" + moveHelper + "\\nreturn adminRestoreMoveFolderContents_;");
-        const move = factory(new Function("return (" + parentHelper + ")")(), isManifest);
-        const parents = new Set(["source"]);
-        const iterator = values => { let i=0; return {hasNext:()=>i<values.length,next:()=>values[i++]}; };
-        const file = {
-            getId:()=> "user-file", getName:()=> "GPSpedia_DRIVE_MANIFEST.json",
-            getParents:()=>iterator(Array.from(parents,id=>({getId:()=>id})))
-        };
-        const source = {
-            getId:()=> "source", getName:()=> "GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_run",
-            getFiles:()=>iterator(parents.has("source")?[file]:[]), getFolders:()=>iterator([]),
-            addFile:()=>parents.add("source"), removeFile:()=>parents.delete("source")
-        };
-        const destination = {
-            getId:()=> "destination", getName:()=> "Cortes",
-            getFiles:()=>iterator(parents.has("destination")?[file]:[]), getFolders:()=>iterator([]),
-            addFile:()=>parents.add("destination"), removeFile:()=>parents.delete("destination")
-        };
-        move(source,destination);
-        assert(parents.has("destination")&&!parents.has("source"),
-            "Se omitió un archivo legítimo por compartir el nombre del manifiesto.");
+        assert(parents.get("file-manifest-collision").has("source")&&!parents.get("file-manifest-collision").has("rollback"),"No recuperó el archivo con nombre coincidente.");
     });
     run("El traslado Drive recupera una operación parcial que falla al retirar el padre original", () => {
         const parentHelper = functionSource("adminRestoreHasParent_");
