@@ -1407,3 +1407,14 @@ La suite valida la allowlist de roles y el helper de autenticación del servidor
 - Comprueba sesión Desarrollador bajo ScriptLock, snapshots de Cortes y Hoja 1 previos a la conversión, verificación del respaldo antes de promover y rechazo de POST concurrente.
 - Incluye fallos de lectura, staging, validación del respaldo, promoción, rollback, recuperación de respaldo interrumpido y liberación del lock.
 - Usa dobles en memoria; no accede a Apps Script desplegado, Spreadsheet ni Drive reales.
+
+
+## AUG-124 — Contrato único FEEDBACK/CATALOG para Tutoriales
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/TutorialIntegrity.js
+```
+
+La suite incluye regresiones del contrato compartido: CATALOG lee la hoja canónica `Tutorial` y mapea en orden ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles, Video y Colaborador; también mantiene la lectura de filas históricas A:G sin inventar un colaborador. Verifica que FEEDBACK no cree ni consulte una hoja plural alternativa. La implementación de alta, edición, identidad y migración compatible se conserva de AUG-092; no se duplica.
