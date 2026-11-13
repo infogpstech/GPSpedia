@@ -150,7 +150,7 @@ async function run() {
 
     assert.ok(uiSource.includes("routeActionWithRetry('auditDriveImagesInCortes'"));
     assert.ok(uiSource.includes("const requestCursor = cursor ? JSON.parse(JSON.stringify(cursor)) : null"));
-    assert.ok(uiSource.includes("timeoutMs: 45000, maxAttempts: 3"));
+    assert.ok(uiSource.includes("timeoutMs: 45000, maxAttempts: cursor ? 3 : 1"));
     assert.ok(uiSource.includes("shouldContinue: isCurrentRequest"));
     assert.ok(uiSource.includes("respuesta de este lote expiró"));
     passed++;
