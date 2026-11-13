@@ -1499,3 +1499,7 @@ Se puede ejecutar un grupo por servicio con `--only=WRITE`, `--only=ADMIN`, `--o
 El runner coordina suites existentes sin duplicar fixtures: payload/VIN de WRITE, edición y recuperación de ADMIN, Inbox y aprobación de FEEDBACK, readiness/snapshots/estados de CATALOG, migración segura de UTILITIES, protección de AUTH, mutaciones de USERS y contratos transversales. Verifica además que las copias AUTH/USERS coincidan con sus fuentes salvo el ID dedicado de Spreadsheet de pruebas.
 
 Las pruebas locales usan fixtures, hojas simuladas e IndexedDB simulado. No invocan endpoints operativos, deployments, hojas productivas ni servicios externos. La integración real de Apps Script/Spreadsheet permanece en Beta. GitHub Actions ejecuta el mismo runner en cada push a `GPSpedia2.2.5_work`.
+
+### Adenda AUG-133 — ejecución CI verificada
+
+El workflow `GPSpedia service regression tests` ejecutó el runner con Node.js 22. La suite terminó correctamente: **16 suites, 238/238 pruebas PASS, 0 fallos**. La suite `CatalogSnapshotSync` espera explícitamente su ejecución asíncrona; su IndexedDB simulado confirma cada transacción mediante `oncomplete`, además de completar la solicitud individual.

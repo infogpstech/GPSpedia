@@ -289,7 +289,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Criterios: runner por servicio; fixtures y Spreadsheet aislada; cobertura WRITE/ADMIN/FEEDBACK/CATALOG/UTILITIES/AUTH/USERS; límites, RBAC, integridad, concurrencia y regresión 31–38; resultados reproducibles sin producción.
 - Implementación: `Services/Test/RunServiceTests.mjs` orquesta las suites existentes por servicio; `.github/workflows/service-tests.yml` ejecuta Node.js 22 en la rama de trabajo. Las copias AUTH/USERS se comparan con sus fuentes normalizando únicamente `SPREADSHEET_ID`.
 - Corrección del harness: `CutPayloadValidation.js` incorpora la función autoritativa `extractVinPrefix` al compilar el validador de payload; evita un falso fallo por dependencia omitida en la prueba.
-- Validación local: WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 24/24 más paridad de copia; USERS 14/14 más paridad de copia; integración 43/43. Total: 238/238 casos PASS.
+- Validación automatizada CI con Node.js 22: 16 suites, 238/238 casos PASS, 0 fallos. WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 24/24 + paridad; USERS 14/14 + paridad; integración 43/43. Se corrigió CatalogSnapshotSync para esperar el cierre asíncrono y simular transaction.oncomplete.
 - Beta pendiente: deployments AUTH/USERS/WRITE/ADMIN/FEEDBACK/UTILITIES aislados, Spreadsheet de pruebas, concurrencia entre proyectos y lectura real posterior a escritura. No se invocó producción.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 

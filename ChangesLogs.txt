@@ -657,3 +657,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/README.md documenta ejecución completa/parcial, fixtures aisladas y límites de Beta.
 - Resultado de suites locales: 238/238 PASS, incluyendo paridad de copias AUTH/USERS; no se accedió a endpoints ni datos productivos.
 ================================================================================
+
+================================================================================
+2026-11-12 — ADENDA AUG-133 — CIERRE DE CI Y FIXTURE CATALOG
+- Services/Test/CatalogSnapshotSync.js: el runner ahora espera runCatalogSnapshotSyncTests(); el IndexedDB simulado notifica transaction.oncomplete después de completar put/get, evitando salida prematura y promesas sin resolver.
+- GitHub Actions: ejecución 43363601506 completada con éxito sobre HEAD 092db7917391f48e80cd8670e6793aff61182636.
+- Resultado real en Node.js 22: 16 suites ejecutadas, 238/238 PASS, 0 fallos.
+================================================================================

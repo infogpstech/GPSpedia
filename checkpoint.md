@@ -635,3 +635,13 @@ Archivos: Services/Test/RunServiceTests.mjs, Services/Test/CutPayloadValidation.
 Siguiente tarea del backlog: AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores.
 El SHA final de publicación se verifica en el HEAD remoto al terminar la operación.
 ================================================================================
+
+================================================================================
+ADENDA FINAL DE VERIFICACIÓN — AUG-133 — 2026-11-12
+- HEAD de código probado: 092db7917391f48e80cd8670e6793aff61182636 (padre fb037a8cb2f958a8b6d87802535622ba46f72b8b).
+- GitHub Actions run 43363601506: COMPLETED / SUCCESS.
+- Ejecución real Node.js 22: 16 suites, 238/238 PASS, 0 fallos.
+- CATALOG: CatalogSnapshotSync.js espera la suite asíncrona en top-level y su fixture IndexedDB emite transaction.oncomplete después de put/get. Ambas pruebas asíncronas completadas: 2/2 PASS.
+- La rama base GPSpedia2.2.5 permanece intacta; comparación final: 1,725 commits adelante y 0 atrás.
+- Siguiente tarea: AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores.
+================================================================================

@@ -348,3 +348,8 @@ Se implementó el runner Services/Test/RunServiceTests.mjs para pruebas reproduc
 Validación local: WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 24/24; USERS 14/14; integración 43/43. Total 238/238 PASS. Paridad de copias AUTH/USERS PASS. No se ejecutaron Apps Script desplegados, Spreadsheet real, endpoints ni datos productivos.
 Beta pendiente: deployments y Spreadsheet aislados, concurrencia real interproyectos, fallos físicos de escritura/flush y lectura posterior entre servicios. Sin acceso a producción.
 ================================================================================
+
+================================================================================
+ADENDA DE VALIDACIÓN — AUG-133 — 2026-11-12
+La primera ejecución CI detectó que CatalogSnapshotSync no esperaba las pruebas asíncronas y que el fixture IndexedDB no notificaba transaction.oncomplete. Se corrigió el fixture y se convirtió el arranque de la suite a top-level await. Verificación final GitHub Actions run 43363601506: Node.js 22, 16 suites, 238/238 PASS, 0 fallos. HEAD probado: 092db7917391f48e80cd8670e6793aff61182636.
+================================================================================
