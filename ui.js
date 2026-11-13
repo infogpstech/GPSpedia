@@ -18,6 +18,7 @@ import { shouldAutoOpenVehicleDetail } from './search-utils.js';
 import { buildVehicleShareUrl, shareVehicleLink } from './share-utils.js';
 import { pushNavigationState, replaceNavigationState, navigateBackToState, pickNavigationState, navigationHistoryStateKey } from './navigationHistory.js';
 import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
+import { createInboxPageCache } from './inboxPageCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
@@ -3587,9 +3588,12 @@ function renderRelayInfoModal(relayInfo) {
 
 }
 
-let inboxCacheData = null;
 let inboxViewGeneration_ = 0;
 let inboxDetailGeneration_ = 0;
+let inboxPageCursorStack_ = [null];
+let inboxPageIndex_ = 0;
+const INBOX_PAGE_SIZE_ = 40;
+const inboxPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
 
 function normalizeUiRole_(role) {
     return String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -3646,6 +3650,60 @@ function getSessionPayload_() {
     if (!context) throw new Error('No hay una sesión activa válida.');
     return { userId: context.userId, sessionToken: context.sessionToken };
 }
+
+function invalidateInboxCache_(context = getUiSessionContext_()) {
+    return inboxPageCache_.invalidate(context);
+}
+
+let lastInboxCacheScope_ = inboxPageCache_.getScopeKey(getUiSessionContext_());
+subscribe(() => {
+    const nextScope = inboxPageCache_.getScopeKey(getUiSessionContext_());
+    if (nextScope !== lastInboxCacheScope_) {
+        inboxPageCache_.clear();
+        lastInboxCacheScope_ = nextScope;
+        inboxPageCursorStack_ = [null];
+        inboxPageIndex_ = 0;
+        inboxViewGeneration_ += 1;
+        inboxDetailGeneration_ += 1;
+    }
+});
+
+function renderInboxPagination_(page, context, generation) {
+    const listContainer = document.getElementById('inbox-list');
+    if (!listContainer || !page || generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context)) return;
+    const navigation = document.createElement('div');
+    navigation.className = 'inbox-pagination';
+    navigation.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 4px;';
+    const previous = document.createElement('button');
+    previous.type = 'button';
+    previous.id = 'inbox-page-previous';
+    previous.className = 'btn btn-secondary';
+    previous.textContent = 'Anterior';
+    previous.disabled = inboxPageIndex_ <= 0;
+    previous.addEventListener('click', () => {
+        if (generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context) || inboxPageIndex_ <= 0) return;
+        inboxPageIndex_ -= 1;
+        loadAndRenderInbox({ context, cursor: inboxPageCursorStack_[inboxPageIndex_] });
+    });
+    const label = document.createElement('span');
+    label.textContent = 'Página ' + String(inboxPageIndex_ + 1) + (Number.isFinite(page.total) ? ' · ' + String(page.total) + ' registros' : '');
+    label.setAttribute('aria-live', 'polite');
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.id = 'inbox-page-next';
+    next.className = 'btn btn-primary';
+    next.textContent = 'Siguiente';
+    next.disabled = page.hasMore !== true || !page.nextCursor;
+    next.addEventListener('click', () => {
+        if (generation !== inboxViewGeneration_ || !isCurrentUiSessionContext_(context) || !page.nextCursor) return;
+        inboxPageCursorStack_[inboxPageIndex_ + 1] = page.nextCursor;
+        inboxPageIndex_ += 1;
+        loadAndRenderInbox({ context, cursor: page.nextCursor });
+    });
+    navigation.append(previous, label, next);
+    listContainer.appendChild(navigation);
+}
+
 
 let lastShownAppContextKey = null;
 let lastShownAppContext = null;
@@ -3732,7 +3790,7 @@ function resetRoleScopedViews_() {
     if (inboxList) inboxList.innerHTML = '';
     if (inboxDetail) inboxDetail.innerHTML = '';
     if (activityLogs) activityLogs.innerHTML = '';
-    inboxCacheData = null;
+    invalidateInboxCache_();
 }
 
 function resetSessionUi_() {
@@ -3900,39 +3958,13 @@ export async function openDashboard() {
 }
 
 const openInboxModal_ = setupModal('inbox-modal', async () => {
-    const requestContext = getUiSessionContext_();
-    if (!requestContext) return;
-    const generation = ++inboxViewGeneration_;
-    inboxDetailGeneration_ += 1;
-    const isCurrentInboxRequest = () => generation === inboxViewGeneration_ && isCurrentUiSessionContext_(requestContext);
-
+    const context = getUiSessionContext_();
+    if (!context) return;
     const modal = document.getElementById('inbox-modal');
     modal.style.display = 'flex';
-    const listContainer = document.getElementById('inbox-list');
     const detailContainer = document.getElementById('inbox-detail');
-    listContainer.innerHTML = '<p>Cargando mensajes...</p>';
-    detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
-
-    try {
-        const result = await getFeedbackItems(getSessionPayload_());
-        if (!isCurrentInboxRequest()) return;
-
-        if (result.status === 'success') {
-            const data = result.data || result.messages || result.items || [];
-
-            if (Array.isArray(data)) {
-                renderInboxList(data);
-            } else {
-                listContainer.innerHTML = `<p style="color:red;">Error: El formato de los datos es incorrecto.</p>`;
-            }
-        } else {
-            listContainer.innerHTML = `<p style="color:red;">Error: ${result.message || 'No se pudieron cargar los mensajes.'}</p>`;
-        }
-    } catch (error) {
-        if (!isCurrentInboxRequest()) return;
-        console.error("Error fetching feedback items:", error);
-        listContainer.innerHTML = `<p style="color:red;">Error de conexión al cargar mensajes.</p>`;
-    }
+    if (detailContainer) detailContainer.replaceChildren();
+    await loadAndRenderInbox({ context, reset: true });
 });
 
 export async function openInbox() {
@@ -6656,14 +6688,14 @@ export function renderInboxDetail(item) {
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
                     await approveVideo(item.id, userName, userRole, getSessionPayload_());
                     if (!isCurrentInboxDetail()) return;
-                    inboxCacheData = null;
+                    invalidateInboxCache_(context);
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
                     await syncApprovedVehicleVideoDetail_(item.videoMeta, {
                         notifyRefreshFailure: message => {
                             if (isCurrentInboxDetail()) mostrarNotificacion(message, "warning");
                         }
                     });
-                    openInbox();
+                    loadAndRenderInbox({ context, reset: true });
                 } catch (err) {
                     if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al aprobar vídeo: ${err.message}`);
@@ -6684,9 +6716,9 @@ export function renderInboxDetail(item) {
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
                     await rejectVideo(item.id, userName, reason, userRole, getSessionPayload_());
                     if (!isCurrentInboxDetail()) return;
-                    inboxCacheData = null;
+                    invalidateInboxCache_(context);
                     mostrarNotificacion("Vídeo rechazado.", "info");
-                    openInbox();
+                    loadAndRenderInbox({ context, reset: true });
                 } catch (err) {
                     if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al rechazar vídeo: ${err.message}`);
@@ -6714,8 +6746,9 @@ export function renderInboxDetail(item) {
             try {
                 replyBtn.classList.add('btn-loading');
                 await replyToFeedback(item.id, item.type, replyText, userName, getSessionPayload_());
+                invalidateInboxCache_(context);
                 if (!isCurrentInboxDetail()) return;
-                openInbox();
+                loadAndRenderInbox({ context, reset: true });
             } catch (error) {
                 if (!isCurrentInboxDetail()) return;
                 showGlobalError(`Error al enviar respuesta: ${error.message}`);
@@ -6732,8 +6765,8 @@ export function renderInboxDetail(item) {
                 resolveBtn.classList.add('btn-loading');
                 await markAsResolved(item.id, getSessionPayload_());
                 if (!isCurrentInboxDetail()) return;
-                inboxCacheData = null;
-                openInbox();
+                invalidateInboxCache_(context);
+                loadAndRenderInbox({ context, reset: true });
             } catch (error) {
                 if (!isCurrentInboxDetail()) return;
                 showGlobalError(`Error al resolver: ${error.message}`);
@@ -6752,9 +6785,9 @@ export function renderInboxDetail(item) {
                     deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
                     await deleteFeedbackItem(item.id, item.type, getSessionPayload_());
                     if (!isCurrentInboxDetail()) return;
-                    inboxCacheData = null;
+                    invalidateInboxCache_(context);
                     mostrarNotificacion("Mensaje eliminado con éxito", "success");
-                    openInbox();
+                    loadAndRenderInbox({ context, reset: true });
                 } catch (error) {
                     if (!isCurrentInboxDetail()) return;
                     showGlobalError(`Error al eliminar mensaje: ${error.message}`);
@@ -11437,34 +11470,56 @@ export function exportVehiclePrintSheet(item) {
     }
 }
 
-export async function loadAndRenderInbox() {
-    const requestContext = await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor']);
-    if (!requestContext) return;
+export async function loadAndRenderInbox(options = {}) {
+    const suppliedContext = options && options.context;
+    const requestContext = suppliedContext || await ensureUiSessionRole_(['desarrollador', 'gefe', 'jefe', 'supervisor']);
+    if (!requestContext || !isCurrentUiSessionContext_(requestContext)) return;
+    if (options.reset === true) {
+        inboxPageCursorStack_ = [null];
+        inboxPageIndex_ = 0;
+    }
+    const cursor = options.cursor === undefined ? inboxPageCursorStack_[inboxPageIndex_] : options.cursor;
     const generation = ++inboxViewGeneration_;
     inboxDetailGeneration_ += 1;
     const isCurrentInboxRequest = () => generation === inboxViewGeneration_ && isCurrentUiSessionContext_(requestContext);
-
     const listContainer = document.getElementById('inbox-list');
     if (!listContainer) return;
 
-    if (inboxCacheData) {
-        renderInboxList(inboxCacheData);
+    const cached = inboxPageCache_.get(requestContext, cursor, { pageSize: INBOX_PAGE_SIZE_, allowStale: true });
+    if (cached) {
+        renderInboxList(cached.value.data);
+        renderInboxPagination_(cached.value, requestContext, generation);
+        if (!cached.stale) return;
     } else {
-        listContainer.innerHTML = '<p><i class="fa-solid fa-spinner fa-spin"></i> Cargando bandeja...</p>';
+        listContainer.replaceChildren();
+        const loading = document.createElement('p');
+        loading.textContent = 'Cargando bandeja...';
+        listContainer.appendChild(loading);
     }
 
     try {
-        const res = await getFeedbackItems(getDeveloperSessionPayload());
+        const result = await getFeedbackItems(getSessionPayload_(), { cursor, pageSize: INBOX_PAGE_SIZE_ });
         if (!isCurrentInboxRequest()) return;
-        if (res && res.data) {
-            inboxCacheData = res.data;
-            renderInboxList(inboxCacheData);
+        if (!result || result.status !== 'success' || !Array.isArray(result.data)) {
+            throw new Error(result && result.message ? result.message : 'El servidor devolvió una página de Inbox inválida.');
         }
-    } catch(err) {
+        inboxPageCache_.set(requestContext, cursor, result, INBOX_PAGE_SIZE_);
+        renderInboxList(result.data);
+        renderInboxPagination_(result, requestContext, generation);
+    } catch (error) {
         if (!isCurrentInboxRequest()) return;
-        console.error("Error cargando inbox:", err);
-        if (!inboxCacheData) {
-            listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
+        console.error('Error cargando Inbox:', error);
+        if (!cached) {
+            listContainer.replaceChildren();
+            const failure = document.createElement('p');
+            failure.className = 'text-danger';
+            failure.textContent = 'No se pudo cargar la bandeja. Comprueba la conexión e inténtalo nuevamente.';
+            listContainer.appendChild(failure);
+        } else {
+            const warning = document.createElement('p');
+            warning.className = 'text-warning';
+            warning.textContent = 'Sin conexión: se muestran datos guardados temporalmente de esta misma sesión.';
+            listContainer.appendChild(warning);
         }
     }
 }

@@ -236,8 +236,9 @@ export async function fetchCatalogData(options = {}) {
     return runCatalogRequestWithRetry(signal => routeAction('getCatalogData', {}, null, { signal }), options);
 }
 
-export async function getFeedbackItems(sessionPayload = {}) {
-    return await routeAction('getFeedbackItems', sessionPayload);
+export async function getFeedbackItems(sessionPayload = {}, pageOptions = {}) {
+    const pagination = pageOptions && typeof pageOptions === 'object' ? pageOptions : {};
+    return await routeAction('getFeedbackItems', { ...sessionPayload, cursor: pagination.cursor, pageSize: pagination.pageSize });
 }
 
 export async function replyToFeedback(itemId, itemType, replyText, responderName, sessionPayload = {}) {

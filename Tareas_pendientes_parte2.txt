@@ -144,10 +144,13 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-116 — Integrar la caché real de Inbox con identidad e invalidación
 - Origen: H-AUD-018-004. Prioridad: Media.
-- Evidencia: main.js:585 llama openInbox; ui.js:3235–3260 vuelve a consultar; loadAndRenderInbox en 10133–10155 no tiene caller.
-- Problema: la caché no participa en la ruta habitual y el backend devuelve todas las filas sin paginación.
-- Criterios: conectar cache helper; scope por userId/rol/sesión; invalidar tras reply/resolve/delete/approve/reject; limpiar al logout/cambio de cuenta; fallback seguro y paginación.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia inicial: la ruta habitual no utilizaba el caché y el backend devolvía todas las filas de Feedbacks y Contactanos en cada consulta.
+- Implementación: nuevo inboxPageCache.js en memoria con TTL, límite de entradas y scope por userId/rol/sessionToken; openInboxModal_ utiliza el loader paginado; fallback stale limitado a la misma sesión; limpieza al cerrar sesión/cambiar identidad; invalidación después de reply, resolve, delete, approve y reject.
+- Backend: handleGetFeedbackItems acepta cursor numérico y pageSize acotado (1–100, predeterminado 40), lee únicamente las filas de la página solicitada y conserva el orden previo Feedbacks seguido de Contactanos.
+- UI/API: navegación Anterior/Siguiente; cursor por página; cache key por identidad, token, rol, tamaño y cursor.
+- Validación local: caché 5/5, paginación 4/4, InboxRoleContract 7/7, InboxStoredXss 30/30; parsing de ui.js, api-config.js y Services/feedback.js PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Beta pendiente: navegador real, integración con FEEDBACK/Spreadsheet aislados, mutaciones y cambio de sesión entre cuentas de prueba. No se ejecutaron endpoints ni hojas productivas.
 
 ### AUG-117 — Proteger la última cuenta Desarrollador y limpiar sesiones al eliminar usuarios
 - Origen: H-AUD-018-005. Prioridad: Alta.

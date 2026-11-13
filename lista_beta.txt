@@ -1526,3 +1526,37 @@ Con cuentas de prueba autorizadas, abrir Inbox y revisar la vista de detalle de 
 5. Repetir llamadas directas a approveVideo/rejectVideo con sesión de rol no autorizado; backend debe rechazarlas independientemente del rol declarado por el cliente.
 No usar cuentas ni hojas productivas; no desplegar cambios para esta comprobación sin el procedimiento de Beta.
 ================================================================================
+
+
+================================================================================
+AUG-116 — CACHÉ Y PAGINACIÓN DEL INBOX — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN ENTORNO BETA AISLADO:
+1. Preparar Spreadsheet/FEEDBACK aislados con más de 40 filas de Feedbacks y varias de Contactanos; nunca usar datos productivos.
+2. Abrir Inbox y comprobar primera página, total, siguiente y anterior. Verificar que la segunda página cruza de Feedbacks a Contactanos sin duplicados ni omisiones y que la última página deshabilita Siguiente.
+3. Repetir apertura dentro de 60 segundos: debe usar la página en caché sin mezclar usuarios. Esperar expiración y comprobar revalidación en red.
+4. Simular pérdida de conexión con caché vencida: solo puede mostrarse la copia temporal perteneciente al mismo userId/rol/token y debe aparecer el aviso de datos temporales.
+5. Ejecutar reply, resolve, delete, approve y reject con registros/cuentas de prueba; confirmar que cada operación invalida las páginas y la vista vuelve a consultar desde el primer cursor.
+6. Cambiar de cuenta, rol o token, y cerrar sesión; confirmar que la caché y los cursores anteriores no reaparecen.
+7. Confirmar en logs del servicio que cada lectura solicita únicamente el rango de la página y que pageSize superior a 100 se limita a 100.
+
+No declarar PASS sin inspección del navegador y FEEDBACK/Spreadsheet aislados. No ejecutar endpoints operativos ni desplegar a producción.
+================================================================================

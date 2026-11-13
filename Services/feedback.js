@@ -1564,27 +1564,59 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
         status: "pendiente_revision"
     };
 }
+function mapInboxFeedbackRow_(row, reportMetadataColumn) {
+ const rawContent=row[COLS_FEEDBACKS.Problema-1],rowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
+ const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;let videoMeta=null;
+ if(typeof rawContent==="string"&&rawContent.trim().startsWith("{")){try{const parsed=JSON.parse(rawContent);if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))videoMeta=parsed;}catch(error){}}
+ if(videoMeta&&videoMeta.subType==="video_approval"){
+  const videoId=normalizeInboxStoredText_(videoMeta.videoId,11,""),videoUrl=normalizeInboxVideoUrl_(videoMeta.videoUrl,videoId);
+  const contentType=["corte","pys","tutorial"].includes(String(videoMeta.contentType||""))?String(videoMeta.contentType):"";
+  let metadata={};try{metadata=normalizeInboxVideoMetadata_(videoMeta.metadata,contentType);}catch(error){}
+  const title=normalizeInboxStoredText_(videoMeta.title,INBOX_VIDEO_TITLE_MAX_LENGTH,"Vídeo sin título"),description=normalizeInboxStoredText_(videoMeta.description,INBOX_VIDEO_DESCRIPTION_MAX_LENGTH,"");
+  const status=["pending","approved","rejected"].includes(String(videoMeta.status||""))?String(videoMeta.status):"pending";
+  return{type:"video_approval",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:"[Aprobación de Vídeo] "+title,content:description||"Sin descripción",videoUrl,videoId:videoUrl?videoId:"",contentType,metadata,user:rowUserName,vehicleId:rowVehicleId,approvalStatus:status,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved:row[COLS_FEEDBACKS["Se resolvio"]-1]===true,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+ }
+ const suggestionData=parseCutSuggestionRecord(rawContent,rowVehicleId,rowUserName),isResolved=row[COLS_FEEDBACKS["Se resolvio"]-1]===true;
+ if(suggestionData)suggestionData.status=isResolved?"resuelta":"pendiente_revision";
+ const reportContent=suggestionData?normalizeInboxStoredText_(suggestionData.details,5000,"Sugerencia de cambio de corte."):normalizeInboxStoredText_(rawContent,5000,"");
+ return{type:"problem_report",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:suggestionData?"Sugerencia de cambio — Corte #"+String(suggestionData.corteIndex):"Reporte en Vehículo #"+rowVehicleId,content:reportContent,user:rowUserName,vehicleId:rowVehicleId,reportMetadata,suggestionData,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+}
+function mapInboxContactRow_(row) {
+ return{type:"contact_form",id:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Contacto_ID-1],120,""),subject:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Asunto-1],200,"Mensaje de contacto"),content:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Mensaje-1],5000,""),user:"Formulario de Contacto",vehicleId:null,reply:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Respuesta_mensaje-1],5000,""),isResolved:null,responder:normalizeInboxStoredText_(row[COLS_CONTACTANOS.ID_usuario_responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+}
+function readInboxSheetPage_(sheet, offset, count) {
+ if(!sheet||count<=0)return[];
+ const lastColumn=Math.max(1,Number(sheet.getLastColumn())||1);
+ return sheet.getRange(offset+2,1,count,lastColumn).getValues();
+}
 function handleGetFeedbackItems(payload) {
- const feedbackSheet=getSafeSheet(SHEET_NAMES.FEEDBACKS),contactSheet=getSafeSheet(SHEET_NAMES.CONTACTANOS),reportMetadataColumn=feedbackSheet?getReportMetadataColumn(feedbackSheet):0;
- const feedbackData=(!feedbackSheet)?[]:feedbackSheet.getDataRange().getValues().slice(1).map(row=>{
-  const rawContent=row[COLS_FEEDBACKS.Problema-1],rowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
-  const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;let videoMeta=null;
-  if(typeof rawContent==="string"&&rawContent.trim().startsWith("{")){try{const parsed=JSON.parse(rawContent);if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))videoMeta=parsed;}catch(error){}}
-  if(videoMeta&&videoMeta.subType==="video_approval"){
-   const videoId=normalizeInboxStoredText_(videoMeta.videoId,11,""),videoUrl=normalizeInboxVideoUrl_(videoMeta.videoUrl,videoId);
-   const contentType=["corte","pys","tutorial"].includes(String(videoMeta.contentType||""))?String(videoMeta.contentType):"";
-   let metadata={};try{metadata=normalizeInboxVideoMetadata_(videoMeta.metadata,contentType);}catch(error){}
-   const title=normalizeInboxStoredText_(videoMeta.title,INBOX_VIDEO_TITLE_MAX_LENGTH,"Vídeo sin título"),description=normalizeInboxStoredText_(videoMeta.description,INBOX_VIDEO_DESCRIPTION_MAX_LENGTH,"");
-   const status=["pending","approved","rejected"].includes(String(videoMeta.status||""))?String(videoMeta.status):"pending";
-   return{type:"video_approval",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:"[Aprobación de Vídeo] "+title,content:description||"Sin descripción",videoUrl,videoId:videoUrl?videoId:"",contentType,metadata,user:rowUserName,vehicleId:rowVehicleId,approvalStatus:status,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved:row[COLS_FEEDBACKS["Se resolvio"]-1]===true,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
-  }
-  const suggestionData=parseCutSuggestionRecord(rawContent,rowVehicleId,rowUserName),isResolved=row[COLS_FEEDBACKS["Se resolvio"]-1]===true;
-  if(suggestionData)suggestionData.status=isResolved?"resuelta":"pendiente_revision";
-  const reportContent=suggestionData?normalizeInboxStoredText_(suggestionData.details,5000,"Sugerencia de cambio de corte."):normalizeInboxStoredText_(rawContent,5000,"");
-  return{type:"problem_report",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:suggestionData?"Sugerencia de cambio — Corte #"+String(suggestionData.corteIndex):"Reporte en Vehículo #"+rowVehicleId,content:reportContent,user:rowUserName,vehicleId:rowVehicleId,reportMetadata,suggestionData,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
- });
- const contactData=(!contactSheet)?[]:contactSheet.getDataRange().getValues().slice(1).map(row=>({type:"contact_form",id:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Contacto_ID-1],120,""),subject:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Asunto-1],200,"Mensaje de contacto"),content:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Mensaje-1],5000,""),user:"Formulario de Contacto",vehicleId:null,reply:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Respuesta_mensaje-1],5000,""),isResolved:null,responder:normalizeInboxStoredText_(row[COLS_CONTACTANOS.ID_usuario_responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")}));
- return{status:"success",data:[...feedbackData,...contactData]};
+ const source=payload&&typeof payload==="object"?payload:{};
+ const rawCursor=source.cursor===undefined||source.cursor===null||source.cursor===""?"0":String(source.cursor).trim();
+ if(!/^\d{1,9}$/.test(rawCursor))throw new Error("El cursor de Inbox no es válido.");
+ const offset=Number(rawCursor);
+ if(!Number.isSafeInteger(offset)||offset<0)throw new Error("El cursor de Inbox no es válido.");
+ const requestedSize=Number(source.pageSize);
+ const pageSize=Number.isFinite(requestedSize)?Math.max(1,Math.min(100,Math.floor(requestedSize))):40;
+ const feedbackSheet=getSafeSheet(SHEET_NAMES.FEEDBACKS),contactSheet=getSafeSheet(SHEET_NAMES.CONTACTANOS);
+ const feedbackCount=feedbackSheet?Math.max(0,feedbackSheet.getLastRow()-1):0;
+ const contactCount=contactSheet?Math.max(0,contactSheet.getLastRow()-1):0;
+ const total=feedbackCount+contactCount;
+ let remaining=pageSize,feedbackRows=[],contactRows=[];
+ if(offset<feedbackCount){
+  const take=Math.min(remaining,feedbackCount-offset);
+  feedbackRows=readInboxSheetPage_(feedbackSheet,offset,take);
+  remaining-=feedbackRows.length;
+ }
+ const contactOffset=Math.max(0,offset-feedbackCount);
+ if(remaining>0&&contactOffset<contactCount){
+  const take=Math.min(remaining,contactCount-contactOffset);
+  contactRows=readInboxSheetPage_(contactSheet,contactOffset,take);
+ }
+ const reportMetadataColumn=feedbackRows.length?getReportMetadataColumn(feedbackSheet):0;
+ const data=feedbackRows.map(row=>mapInboxFeedbackRow_(row,reportMetadataColumn))
+  .concat(contactRows.map(mapInboxContactRow_));
+ const nextOffset=offset+data.length,hasMore=nextOffset<total;
+ return{status:"success",data,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize,total};
 }
 function handleReplyToFeedback(payload) {
     const { itemId, itemType, replyText, responderName } = payload;

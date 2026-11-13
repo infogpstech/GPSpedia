@@ -1313,3 +1313,14 @@ node --experimental-default-type=module Services/Test/InboxRoleContract.js
 ```
 
 La suite valida que `getUiSessionContext_()` derive el rol exclusivamente de `currentUser.Privilegios`, que `renderInboxDetail()` utilice el rol normalizado del contexto, que la UI permita aprobación solo a Desarrollador/Gefe/Supervisor y que el backend conserve RBAC basado en `assertFeedbackSession()`, ignorando un rol falsificado en el payload. Pruebas aisladas: no acceden a Apps Script, Spreadsheet ni deployments. La inspección visual real de los botones queda para Beta.
+
+
+## AUG-116 — Caché e Inbox paginado
+
+Ejecutar desde la raíz del repositorio:
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/InboxCachePagination.js
+\`\`\`
+
+La suite prueba el caché en memoria por identidad completa de sesión (usuario, rol y token), TTL, fallback stale explícito, invalidación por sesión, límite de páginas y paginación del backend entre Feedbacks y Contactanos. Verifica cursor inválido y pageSize máximo. También ejecuta contratos estáticos de integración de UI/API. No accede a Apps Script, Spreadsheet ni deployments. La regresión XSS de lectura histórica permanece en Services/Test/InboxStoredXss.js y el contrato de roles en Services/Test/InboxRoleContract.js.

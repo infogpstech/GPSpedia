@@ -494,3 +494,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/README.md, Tareas_pendientes_parte2.txt y checkpoint.md: instrucciones, cierre y continuidad documentados.
 - Services/feedback.js y Services/Auth.js no requieren modificaciones: el backend ya deriva el rol de Users/ActiveSessions mediante assertFeedbackSession y entrega Privilegios desde AUTH.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-116 — CACHÉ IDENTIFICADA Y PAGINACIÓN DEL INBOX
+- inboxPageCache.js: nuevo caché efímero en memoria, aislado por userId/rol/sessionToken, TTL, fallback stale controlado e inventario máximo de páginas.
+- ui.js: openInboxModal_ se conecta a loadAndRenderInbox; navegación Anterior/Siguiente; caché de páginas; invalidación tras reply, resolve, delete, approve y reject; limpieza de caché y cursores ante logout/cambio de identidad.
+- api-config.js: getFeedbackItems transmite cursor y pageSize.
+- Services/feedback.js: el handler de Inbox lee solo las filas solicitadas de Feedbacks/Contactanos, con cursor numérico y pageSize limitado a 100; preserva la forma de los elementos y el orden histórico de fuentes.
+- Services/Test/InboxCachePagination.js: pruebas locales de identidad, TTL, fallback stale, invalidación, límite de memoria y paginación entre hojas. InboxStoredXss.js actualizado para verificar el nuevo helper de mapeo sin perder cobertura histórica.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones, estado y validaciones Beta.
+================================================================================

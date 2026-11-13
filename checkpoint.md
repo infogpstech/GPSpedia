@@ -230,3 +230,33 @@ Validación Beta pendiente: inspección visual del Inbox con cuentas de prueba D
 Archivos: ui.js, Services/Test/InboxRoleContract.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt y checkpoint.md.
 Siguiente tarea: AUG-116 — Integrar la caché real de Inbox con identidad e invalidación. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-116 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Se conectó el flujo habitual openInboxModal_ al loader loadAndRenderInbox; desapareció el caché global sin identidad.
+- inboxPageCache.js mantiene páginas únicamente en memoria y limita por TTL (60 s) y cantidad (80 entradas). Cada clave incluye userId, rol normalizado, token de sesión, cursor y pageSize. No usa IndexedDB, localStorage ni sessionStorage.
+- Las entradas vencidas no se reutilizan como frescas, pero pueden presentarse como fallback offline únicamente para la misma identidad completa; se intenta revalidación en red y se muestra advertencia si falla.
+- Un cambio de usuario/rol/token, incluido logout, limpia el caché, reinicia cursores y eleva generaciones para invalidar respuestas tardías.
+- Reply, resolve, delete, approve y reject invalidan todas las páginas de la sesión actual y reinician la lectura desde la primera página.
+- El backend limita pageSize a 1–100 (40 predeterminado), valida cursor numérico y lee solo las filas necesarias de Feedbacks y Contactanos. La paginación conserva el orden histórico: Feedbacks primero, Contactanos después. Devuelve nextCursor, hasMore y total.
+- La UI ofrece controles Anterior/Siguiente y mantiene cursores en memoria.
+
+Validación local:
+- InboxCachePagination: caché 5/5 y paginación backend 4/4.
+- InboxRoleContract: 7/7 PASS.
+- InboxStoredXss: 30/30 PASS tras actualizar la aserción de lectura histórica al helper mapInboxFeedbackRow_.
+- Parsing completo de ui.js, api-config.js y Services/feedback.js: PASS.
+- Contratos de integración UI/API: 6/6 PASS.
+- No se ejecutaron Apps Script, endpoints, deployments ni hojas productivas.
+
+Validación Beta pendiente: navegador real; más de 40 registros de prueba repartidos entre Feedbacks y Contactanos; navegación entre páginas; mutaciones reply/resolve/delete/approve/reject; verificar que la página se refresca después de cada mutación; fallback offline de la misma sesión; cambio de usuario/rol/token y logout sin reutilización de mensajes anteriores.
+
+Archivos: inboxPageCache.js, ui.js, api-config.js, Services/feedback.js, Services/Test/InboxCachePagination.js, Services/Test/InboxStoredXss.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-117 — Proteger la última cuenta Desarrollador y limpiar sesiones al eliminar usuarios. No iniciar dentro de esta tarea.
+================================================================================
