@@ -38,8 +38,9 @@ Este archivo contiene tareas derivadas de hallazgos de auditoría. No sustituye 
 - **Prioridad:** Crítica.
 - **Origen:** Historial reciente y árbol actual.
 - **Evidencia inicial:** 8a3646cc documenta hallazgos de coordinación; 44d127b3 añade Utilities; 336915b7 y ef2db2e5 renombran el archivo. La tarea de coordinación compartida permanece descrita como bloqueada en registros previos.
-- **Estado:** NUEVA ITERACIÓN DE AUDITORÍA; no se presume que el protocolo esté completo por la mera existencia del archivo.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13); configuración/despliegue real del coordinador y del proyecto UTILITIES, y concurrencia entre deployments, pendientes de Beta.
 - **Criterio de cierre:** Se identifica cada consumidor, escritor y recurso compartido; se demuestra el protocolo de lock/orden, su alcance entre proyectos Apps Script, los fallos y la liberación del lock; se documentan los límites reales.
+- **Resultado de cierre (2026-11-13):** `migrateTimestamps` es la única acción de UTILITIES y está mapeada en `api-config.js`; no se encontraron consumidores en la interfaz versionada. Lee Users/ActiveSessions, Cortes columna I y metadatos Drive; escribe Hoja 1 y staging/backup. Ahora obtiene lease `UTILITIES/migrateTimestamps` (lectura USERS/ACTIVE_SESSIONS/CORTES/DRIVE; escritura UTILITIES) antes del ScriptLock local. El coordinador v1.1.2 acepta el servicio y la política bloquea mutaciones conflictivas y mantenimiento integral. Pruebas: UtilitiesSecurity 17/17, SharedMutationCoordinator 33/33, ActionDispatchContract 12/12 PASS. Configuración real y concurrencia entre deployments quedan diferidas a Beta.
 
 ### AUG-004 — Matriz de cancelación, sustitución y continuidad de requisitos
 - **Prioridad:** Alta.
