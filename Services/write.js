@@ -25,6 +25,29 @@ const SHEET_NAMES = {
     ACTIVE_SESSIONS: "ActiveSessions"
 };
 
+// Contratos físicos compartidos con AUTH (índices 1-based de las hojas).
+// WRITE valida sesiones localmente; no depende de constantes de otro deployment Apps Script.
+const COLS_USERS = Object.freeze({
+    ID: 1,
+    Nombre_Usuario: 2,
+    Password: 3,
+    Privilegios: 4,
+    Telefono: 5,
+    Correo_Electronico: 6,
+    Nombre_Completo: 7,
+    SessionToken: 8,
+    TermsAcceptance: 9
+});
+const COLS_ACTIVE_SESSIONS = Object.freeze({
+    ID_Usuario: 1,
+    Usuario: 2,
+    ActiveSessions: 3,
+    date: 4,
+    Logs: 5,
+    LastActivityAt: 6
+});
+const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:";
+
 const COLS_CORTES = {
     id: 1, categoria: 2, marca: 3, modelo: 4, versionesAplicables: 5, anoDesde: 6, anoHasta: 7, tipoEncendido: 8,
     imagenVehiculo: 9, videoGuiaDesarmeUrl: 10, contadorBusqueda: 11, tipoCorte1: 12, ubicacionCorte1: 13,
