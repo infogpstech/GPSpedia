@@ -1417,7 +1417,7 @@ AUG-051 — ampliar criterios:
   7. Resolver addCutPending: conservar comprobación userId y evitar bloqueo indefinido por operaciones de otra cuenta con la misma vehicleId.
   8. Probar logout, cambio de cuenta, sesión invalidada, dos cuentas Desarrollador, operación pendiente/confirmada, reintento, recarga, dos pestañas, expiración y fallo de almacenamiento.
 - **Relación:** AUD-T-038; AUD-T-031; AUD-T-034/AUG-042; AUG-051.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Las iteraciones locales 1–17 y sus suites están registradas; IndexedDB/navegador real y pruebas físicas multi-pestaña quedan para Beta.
 
 ### AUG-054 — Autenticar checkOperation y minimizar su respuesta
 - **Hallazgo origen:** H-AUD-038-005. **Prioridad:** Alta.
@@ -1429,7 +1429,7 @@ AUG-051 — ampliar criterios:
   4. Revisar entropía del opId y mantener idempotencia sin usarlo como autorización.
   5. Probar petición anónima, token inválido, otro usuario, opId inexistente, pendiente/completada y respuesta minimizada.
 - **Relación:** AUD-T-031, AUD-T-035 y AUD-T-038.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. CheckOperationSecurity 12/12 PASS; autenticación de sesión, vínculo de hash y respuesta mínima implementados; endpoint/Apps Script real queda para Beta.
 ================================================================================
 
 ================================================================================
@@ -1540,6 +1540,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a 008 abiertos; validación funci
 - Límites: E1 estática; sin navegador, XSS, FileReader real, concurrencia, Apps Script, HTTP, Drive/Spreadsheet ni deployments. Sin cambios de código ni datos productivos.
 - Siguiente unidad: AUD-T-006 — Visualización técnica avanzada, lightbox con carrusel de cables y renderizado de transparencias.
 
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. VinVersionPresentation 11/11 PASS; preserva slots y prefijos normalizados; navegador real queda para Beta.
 ### AUG-061 — Validar disponibilidad y evitar sobrescrituras en ampliaciones suplementarias del modal (+)
 - **Origen:** H-AUD-005-002. **Prioridad:** Alta.
 - **Problema:** los formularios deciden el slot con un objeto frontend que puede estar desactualizado. WRITE/ADMIN escriben sin comprobar que el espacio siga vacío; payload sin campos reconocidos puede devolver éxito sin persistir.
@@ -1553,7 +1554,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a 008 abiertos; validación funci
   7. Mantener asociación texto/imagen; no asociar descripción nueva a imagen previa por omisión.
   8. Probar slots vacíos/ocupados, imagen sin texto, texto sin imagen, ficha obsoleta, payload vacío, dos usuarios por último slot y fallo de escritura.
 - **Relación:** AUD-T-005; AUG-034, AUG-039 y AUD-T-031.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; evidencia en Services/Test/AddSupplementaryInfoIntegrity.js y checkpoint.md.
 
 ### AUG-062 — Sincronizar el modal de detalle después de una ampliación confirmada
 - **Origen:** H-AUD-005-003. **Prioridad:** Media.
@@ -1566,7 +1567,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a 008 abiertos; validación funci
   5. Si refresh falla, informar que escritura fue confirmada y que la interfaz requiere sincronización.
   6. Probar corte, apertura, tres cables, vídeo aprobado y fallos de refresh.
 - **Relación:** AUD-T-005; AUD-T-037 y AUD-T-007.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; evidencia en Services/Test/VehicleExpansionDetailRefresh.js y checkpoint.md.
 
 ### AUG-063 — Obtener selectores del modal de corte desde las listas centralizadas de Google Sheets
 - **Origen:** H-AUD-005-004. **Prioridad:** Media.
@@ -1579,7 +1580,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a 008 abiertos; validación funci
   5. Mantener regla especial «No recomendado» sin exigir relay cuando corresponda.
   6. Probar valores exclusivos de slots 1/2/3, listas vacías, cambios en Sheets, respuesta inválida y fallo de red.
 - **Relación:** AUD-T-005; AUD-T-003/AUG-056 sin duplicar add_cortes.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; suite local `CutDropdownAuthority.js` aprobada.
 
 ### AUG-064 — Sanitizar y presentar de forma segura el contenido enriquecido de apertura y alimentación
 - **Origen:** H-AUD-005-001. **Prioridad:** Alta.
@@ -1592,7 +1593,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-005-001 a 008 abiertos; validación funci
   5. Mantener solo formato permitido por rich-text.js.
   6. Probar script, img onerror, svg/onload, iframe, javascript:, srcdoc, estilos peligrosos, HTML malformado y texto normal con listas/saltos.
 - **Relación:** AUD-T-005; H-AUD-032-001/AUG-039 y AUD-T-014.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### Adendas derivadas de AUD-T-005
 **AUG-043 — Contratos protegidos y ciclo de aprobación de YouTube**
@@ -1637,7 +1638,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validac
   4. Mantener proporción, limitar dimensiones sin ampliar artificialmente imágenes pequeñas y tratar errores de CDN/cache sin bloquear el detalle.
   5. Probar el mismo archivo solicitado en tres tamaños, orden de carga inverso, caché fría/caliente, online/offline, PNG transparente y JPEG; verificar dimensiones, bytes y calidad.
 - **Relación:** AUD-T-006; AUD-T-009/AUG-051 para ciclo general de caché, sin duplicarlo.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Implementación y suites locales aprobadas; IndexedDB/Canvas/navegador reales y comprobación visual de transparencia/calidad quedan para Beta.
 
 ### AUG-066 — Restringir el modo de fusión a imágenes que requieren corrección de transparencia
 - **Origen:** H-AUD-006-002. **Prioridad:** Media.
@@ -1648,7 +1649,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validac
   3. No cambiar el tratamiento de .img-vehiculo-modal ni otros elementos fuera del alcance.
   4. Probar imágenes con alfa, fondo opaco, bordes semitransparentes, colores oscuros y modo claro/oscuro.
 - **Relación:** AUD-T-006; conservar objetivo B33 de canal alfa sin degradar imágenes opacas.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-067 — Discriminar eje horizontal y vertical en gestos del carrusel de cables
 - **Origen:** H-AUD-006-003. **Prioridad:** Media.
@@ -1660,7 +1661,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validac
   4. Mantener el desplazamiento vertical normal de la página y la actualización de altura del acordeón.
   5. Probar gestos verticales, horizontales, diagonales, cancelados, multitáctiles, móvil y PWA standalone.
 - **Relación:** AUD-T-006; no duplicar el swipe interno del lightbox que ya compara ambos ejes.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### Adenda derivada de AUD-T-006 — AUG-064
 - Incluir ui.js updateSlide(): slideText.innerHTML recibe activeCable.content y debe aplicar el mismo sanitizador/allow-list que el resto de los campos de apertura y alimentación.
@@ -1692,7 +1693,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; pruebas de navega
   4. Mantener visible el padre al cerrar el submodal; no cerrar #modalDetalle ni restaurar catálogo mientras exista un overlay hijo.
   5. Probar todos los constructores, backdrop, X, submit, cancelación, overlays anidados, apertura desde ficha de vehículo y retroceso durante una carga YouTube activa en add_cortes.html.
 - **Relación:** AUD-T-007; amplía H-AUD-005-008 sin duplicarlo.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Se inventariaron los constructores dinámicos y se integraron overlays `.info-modal` mediante el observador compartido, el modal YouTube mediante registro explícito y `add_cortes.html` con su gestor independiente. `ui.js` ya no crea entradas paralelas para `.info-modal`; `renderRelayInfoModal` delega el cierre al gestor. `replaced-image-lightbox` ahora se registra como hijo del modal padre, reutiliza su entrada al reabrirse y se cierra por Atrás/X/Escape/backdrop mediante el gestor; al cerrar el padre, la pila reconcilia ambos en orden LIFO. Las suites previas cubren los constructores, cierres, cancelación/transferencia YouTube, nested overlays y navegación desde `add_cortes.html`. Validación de pila `OverlayHistoryStack`: 13/13 PASS en runtime V8 adaptado; suite específica `ReplacedImagesLightboxHistory`: 6/6 comprobaciones equivalentes PASS; suite `AddCortesYouTubeOverlayHistory`: 2/2 PASS; `YouTubeUploadCloseDuringTransfer`: 6/6 PASS; `YouTubeUploadOverlayLifecycle`: 8/8 PASS. Parsing de los bloques modificados de apertura/cierre: PASS. No se afirma ejecución Node CLI en Codespaces ni DOM/navegador real; esas comprobaciones quedan diferidas a Beta.
 
 ### AUG-069 — Sincronizar los botones internos «Volver» con el historial nativo
 - **Origen:** H-AUD-007-002. **Prioridad:** Alta.
@@ -1704,7 +1705,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; pruebas de navega
   4. Evitar pushState redundante al volver al mismo nivel o seleccionar repetidamente una sección.
   5. Probar botón interno, botón físico, gesto nativo, Forward, búsqueda, deep link y secuencias de ida/vuelta sin bucles.
 - **Relación:** AUD-T-007; no duplicar AUG-049 (clasificación de búsqueda) ni AUG-047 (acuerdo legal).
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. Se centralizó el retroceso de los niveles de catálogo y búsqueda; se corrigieron la normalización de dimensiones opcionales, la conservación del antecesor durante fallback y la sincronización del estado de sección entre memoria e History API. Suite `NavigationBackHistory`: 21/21 PASS en runtime V8 adaptado con el módulo real y verificaciones de contrato sobre `ui.js`, `main.js` y `navigation.js`; `mostrarSeccion()` ejecutada aisladamente con History simulado: PASS. Se verificó la revisión del diff y la publicación en la rama de trabajo. Pendiente para Beta: navegador real, botón físico, gestos nativos y Forward del navegador/dispositivo.
 
 ### AUG-070 — Cerrar secuencialmente el overlay superior en App Shell y perfil de usuarios
 - **Origen:** H-AUD-007-003. **Prioridad:** Media.
@@ -1716,7 +1717,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; pruebas de navega
   4. Detener reproductores/limpiar recursos solo cuando corresponda al overlay que se cierra; no destruir contenido de niveles subyacentes.
   5. Probar al menos tres capas anidadas, capas con z-index distinto, modal de perfil, lightbox sobre ficha y retrocesos consecutivos.
 - **Relación:** AUD-T-007; AUG-047 para el caso legal y AUG-068 para registro dinámico.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. `overlayHistory.js` ahora cierra una sola capa por `popstate` y expone un selector por `z-index` efectivo, orden de apertura y orden DOM. `main.js` usa el selector para sincronizar menú, lightbox, modal de detalle, info-modals y aviso legal; el acuerdo abierto desde el aviso queda por encima de este. `users.html` usa la pila compartida para los modales de perfil y administración, sin cerrar todos en un mismo evento. `OverlayHistoryStack`: 19/19 PASS; `ReplacedImagesLightboxHistory`: 6/6 PASS en runtime V8 adaptado. Parsing V8 de `main.js`, módulo de `users.html` y bloque legal de `ui.js`: PASS. Pendiente para Beta: interacción DOM/navegador real, botón físico y gestos nativos.
 
 ### AUG-071 — Reconciliar las entradas History API al abrir/cerrar menú y modales
 - **Origen:** H-AUD-007-004. **Prioridad:** Media.
@@ -1728,7 +1729,7 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; pruebas de navega
   4. Al abrir Inbox/Dashboard/Changelog desde el menú, cerrar el menú y su entrada sin dejar sideMenuOpen obsoleto debajo del modal.
   5. Cubrir openAuditDriveModal(), openReplacedImagesModal(), envío de contact-form y demás cierres directos; probar historial previo de búsqueda/sección.
 - **Relación:** AUD-T-007; AUG-017/AUG-042 para cambio de cuenta y cierre de overlays privilegiados, sin duplicar su limpieza de sesión.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; historial del menú y modales unificado, pruebas locales adaptadas aprobadas y validación DOM/navegador real reservada para Beta.
 
 ### Adenda derivada de AUD-T-007 — AUG-047
 - Incluir el caso #terms-modal + #terms-agreement-modal: el aviso inicial permanece como capa inferior y el acuerdo superior debe cerrarse primero mediante Atrás.
