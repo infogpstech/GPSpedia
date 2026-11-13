@@ -944,6 +944,8 @@ function handleBackupDrive(payload, logMessage) {
             const loaded = adminRestoreReadDriveBackupState_(backupFolder);
             manifestFile = loaded.file;
             state = loaded.state;
+            state.folderCopyIds = state.folderCopyIds || {};
+            state.folderCopyIds[state.sourceRootId] = backupFolder.getId();
             if (state.status === "complete") {
                 const completedManifest = adminRestoreDriveManifest_(backupFolder);
                 adminRestoreVerifyDriveBackupState_(state, backupFolder, completedManifest);
@@ -996,12 +998,13 @@ function handleBackupDrive(payload, logMessage) {
                 sourceFingerprint: sourceManifest.fingerprint,
                 sourceIdentityFingerprint: sourceManifest.identityFingerprint,
                 sourceFolderCount: sourceManifest.folderCount, sourceFileCount: sourceManifest.fileCount,
-                sourceTotalBytes: sourceManifest.totalBytes, folders, files,
+                sourceTotalBytes: sourceManifest.totalBytes, folders, files, folderCopyIds: {},
                 nextFolderIndex: 0, nextFileIndex: 0, batchSize: ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_
             };
             manifestFile = backupFolder.createFile(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_, JSON.stringify(state), "application/json");
             manifestFile.setDescription(ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_);
             state.manifestFileId = manifestFile.getId();
+            state.folderCopyIds[state.sourceRootId] = backupFolder.getId();
             adminRestoreWriteDriveBackupState_(manifestFile, state);
             adminRestoreSetDriveBackupFolderStatus_(backupFolder, state, "in_progress");
         }
@@ -1018,6 +1021,7 @@ function handleBackupDrive(payload, logMessage) {
             const entry = state.folders[state.nextFolderIndex];
             const copy = adminRestoreCopyDriveFolderEntry_(entry, state, backupFolder);
             entry.copyId = copy.getId();
+            state.folderCopyIds[entry.sourceId] = copy.getId();
             state.nextFolderIndex++;
             adminRestoreWriteDriveBackupState_(manifestFile, state);
             processedThisBatch++;
@@ -1485,7 +1489,7 @@ function adminRestoreCreateCompletedDriveManifest_(folder, manifest, runId, sour
         sourceFolderCount: manifest.folderCount, sourceFileCount: manifest.fileCount,
         sourceTotalBytes: manifest.totalBytes, nextFolderIndex: manifest.folderCount,
         nextFileIndex: manifest.fileCount, batchSize: ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_,
-        folderCopyIds: {}
+        folderCopyIds: {}, folders: [], files: []
     };
     state.folderCopyIds[sourceRootId] = folder.getId();
     manifest.entries.forEach(entry => {
