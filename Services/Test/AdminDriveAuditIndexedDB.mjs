@@ -283,4 +283,17 @@ await check('Una página ausente invalida la reanudación sin marcar el escaneo 
     assert.equal(second.pageCount, 2);
 });
 
+
+await check('Una página alterada se detecta por firma y bloquea la reanudación', async () => {
+    const h = createHarness(), owner = 'corrupt-page';
+    await h.saveDriveAuditState(state('AUDIT-CORRUPT', 0, 0, [{ fileId: A }]), owner);
+    const key = 'driveAudit:page:' + encodeURIComponent(owner) + ':AUDIT-CORRUPT:0';
+    const page = h.database.data.get(key);
+    page.files[0].fileId = B;
+    h.database.data.set(key, page);
+    const restored = await h.getDriveAuditState(owner);
+    assert.equal(restored.resumeUnavailable, true);
+    assert.equal(restored.cursor, null);
+    assert.deepEqual(restored.files, []);
+});
 console.log('AdminDriveAuditIndexedDB: ' + passed + '/' + passed + ' PASS');
