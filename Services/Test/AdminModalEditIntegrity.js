@@ -80,8 +80,8 @@ function runAdminModalEditIntegrityTests(adminSource) {
     run("Valida años enteros, límites y coherencia del rango",()=>{
         equal(helpers.validateAdminModalFieldValue_(cortesSheet,"anoDesde","2020",rowValues),2020);
         let rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoDesde","2026",rowValues);}catch(_){rejected=true;}assert(rejected);
-        rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",2101,rowValues);}catch(_){rejected=true;}assert(rejected);
-        rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",2019,rowValues);}catch(_){rejected=true;}assert(rejected);
+        rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",2028,rowValues);}catch(_){rejected=true;}assert(rejected);
+        rejected=false;try{helpers.validateAdminModalFieldValue_(cortesSheet,"anoHasta",1979,rowValues);}catch(_){rejected=true;}assert(rejected);
     });
     run("Sanitiza texto enriquecido y rechaza referencias de imagen inválidas",()=>{
         equal(helpers.validateAdminModalFieldValue_(cortesSheet,"notaImportante"," aviso ",rowValues),"SANITIZED:aviso");
