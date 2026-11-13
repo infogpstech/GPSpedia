@@ -820,7 +820,8 @@ check("El estado local conserva auditId, inventoryOperationId y los IDs confirma
     const saveBlock=offline.slice(start,end);
     assert.ok(saveBlock.includes("inventoryAuditId: String(state.inventoryAuditId || '')"));
     assert.ok(saveBlock.includes("inventoryOperationId: String(state.inventoryOperationId || '')"));
-    assert.ok(saveBlock.includes("inventoryConfirmedFileIds: Array.isArray(state.inventoryConfirmedFileIds)"));
+    assert.ok(saveBlock.includes("const confirmedIds = normalizeDriveAuditLocalIds(state.inventoryConfirmedFileIds)"));
+    assert.ok(saveBlock.includes("store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds"));
     assert.ok(saveBlock.includes("totalDiscovered: Math.max"));
     assert.ok(saveBlock.includes("lastScanAt: Math.max"));
     assert.ok(saveBlock.includes("serviceVersion: String"));
