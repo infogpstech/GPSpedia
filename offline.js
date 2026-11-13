@@ -238,6 +238,12 @@ export async function saveDriveAuditState(state, userId) {
         resumeUnavailable: state.resumeUnavailable === true,
         inventoryStatus: String(state.inventoryStatus || ''),
         inventoryMessage: String(state.inventoryMessage || ''),
+        inventoryAuditId: String(state.inventoryAuditId || ''),
+        inventoryOperationId: String(state.inventoryOperationId || ''),
+        inventoryConfirmedFileIds: Array.isArray(state.inventoryConfirmedFileIds)
+            ? Array.from(new Set(state.inventoryConfirmedFileIds.map(id => String(id || '').trim())
+                .filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id))))
+            : [],
         lastError: String(state.lastError || ''),
         updatedAt: Date.now()
     };
