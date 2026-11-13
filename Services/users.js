@@ -449,7 +449,7 @@ function handleCreateUser(payload) {
         const lastColumn = Math.max(userSheet.getLastColumn(), COLS_USERS.SessionToken);
         const newRowRange = userSheet.getRange(newRowNumber, 1, 1, COLS_USERS.SessionToken);
         const currentRow = newRowRange.getValues()[0];
-        if (currentRow.some(value => String(value === null || value === undefined ? '' : value).trim() !== '')) {
+        if (currentRow.slice(1).some(value => String(value === null || value === undefined ? '' : value).trim() !== '')) {
             throw new Error('La fila seleccionada para el nuevo usuario dejó de estar vacía. Intenta nuevamente.');
         }
         const newUserId = generateNextUserId_(userSheet);
