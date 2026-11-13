@@ -922,3 +922,56 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - La referencia histórica Tareas.txt 1511–1521 no está presente en la copia activa; el texto se tomó del criterio explícito del backlog AUG-091.
 - Sin despliegue ni cambios productivos.
 ================================================================================
+
+================================================================================
+RECONSTRUCCIÓN DOCUMENTAL RETROSPECTIVA — AUD-T-016 — 2026-11-12
+Hallazgos incorporados: H-AUD-016-001 a H-AUD-016-004.
+Origen histórico: sesión AUD-20261108-S034 / checkpoint AUD-CP-0034.
+HEAD E1 auditado: 2daf88c96d29999cbc734c968ef94355ee5324ca.
+Rama base de aquella auditoría: GPSpedia2.2.5 — d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Naturaleza: reconstrucción de registros omitidos en Auditoría.txt a partir de evidencia documental preexistente. No constituye una auditoría nueva ni modifica la evaluación histórica de E1.
+
+H-AUD-016-001 — MEDIA — RESUELTO EN FUENTES — 2026-11-12
+Origen: AUD-T-016, Tarea 16, sesión AUD-20261108-S034.
+Ubicación: main.js (alternancia de body.dark-mode); style.css (reglas del banner de validación).
+Evidencia histórica: main.js:517–532 alternaba body.dark-mode sin establecer data-theme; style.css:1260 dependía de [data-theme="dark"], selector que no correspondía al mecanismo de tema activo. style.css:1253/1322/1337 utilizaba --text-primary, token no declarado.
+Impacto: los estilos oscuros del banner no se activaban de forma consistente y el texto podía depender de un color no definido.
+Resolución vinculada: AUG-102 alineó el selector con body.dark-mode, eliminó las referencias al token inexistente y definió tokens semánticos para fondo, borde, texto, placeholder, entrada, botones y foco.
+Validación local registrada: Services/Test/ValidationBannerTheme.js, 12 escenarios de contrato y contraste PASS, según backlog y ChangesLogs de AUG-102.
+Validación diferida: inspección visual en navegador real, ambos temas y estados interactivos en Beta. No se certifica aquí el renderizado real.
+
+H-AUD-016-002 — MEDIA — RESUELTO EN FUENTES — 2026-11-12
+Origen: AUD-T-016, Tarea 16, sesión AUD-20261108-S034.
+Ubicación: style.css:38–69; users.html:12–30; add_cortes.html:12–26 y reglas/estilos locales de color.
+Evidencia histórica: las tres páginas mantenían sistemas de variables independientes y persistían colores fijos en reglas y estilos inline, lo que fragmentaba el contrato visual y dificultaba mantener contraste y consistencia entre temas.
+Impacto: colores, estados y contraste podían divergir entre catálogo, gestión de usuarios y formulario de cortes.
+Resolución vinculada: AUG-103 definió un contrato común de 21 tokens semánticos para tema claro y oscuro en index.html, users.html y add_cortes.html; conservó alias históricos vinculados al contrato y documentó excepciones para estados operativos, marcas, imágenes, sombras, overlays y gráficos. La adenda posterior de contraste medible quedó vinculada a la misma AUG-103, sin crear una tarea duplicada.
+Validación local registrada: Services/Test/ThemeTokenConsistency.js contrasta valores, alias, uso de tokens y requisitos de contraste WCAG AA, según el backlog de AUG-103.
+Validación diferida: revisión visual de las tres páginas, ambos temas y distintos viewports en Beta.
+
+H-AUD-016-003 — MEDIA — RESUELTO EN FUENTES — 2026-11-12
+Origen: AUD-T-016, Tarea 16, sesión AUD-20261108-S034.
+Ubicación: add_cortes.html, meta viewport y listeners que interceptaban gestos/atajos de zoom.
+Evidencia histórica: la configuración del viewport limitaba maximum-scale=1.0 y establecía user-scalable=no; además, listeners cancelaban acciones de zoom por rueda, teclado y multitáctil.
+Impacto: usuarios móviles y personas que necesitan ampliar contenido no podían utilizar libremente el zoom del navegador en el formulario.
+Resolución vinculada: AUG-104 retiró las restricciones de escala y los bloqueos de zoom; añadió reflujo a una columna y reorganización de acciones en viewports estrechos. lightbox.js conserva y restaura la configuración original del viewport al abrir/cerrar el visor, sin imponer una política distinta.
+Validación local registrada: Services/Test/BrowserZoomAccessibility.js cubre el viewport, ausencia de bloqueos, reflujo y ciclo del Lightbox con simulación DOM, según el backlog de AUG-104.
+Validación diferida: zoom real al 200 %/400 %, foco y ausencia de overflow en navegadores/dispositivos reales en Beta.
+
+H-AUD-016-004 — MEDIA — RESUELTO EN FUENTES — 2026-11-12
+Origen: AUD-T-016, Tarea 16, sesión AUD-20261108-S034.
+Ubicación: add_cortes.html (cuadrícula del formulario); users.html (tabla y modales).
+Evidencia histórica: add_cortes.html mantenía grid-template-columns:1fr 1fr sin breakpoint dedicado; users.html carecía de reglas @media específicas, utilizaba una tabla nowrap con scroll horizontal y un modal de width:80%.
+Impacto: en pantallas estrechas los formularios y modales podían quedar comprimidos, las acciones podían perder accesibilidad y la tabla dependía del desplazamiento horizontal.
+Resolución vinculada: AUG-105 añadió reflujo responsive hasta 760 px para cuadrículas, tarjetas, grupos de imágenes, mensajes y acciones; adaptó la tabla de usuarios con texto envolvente y acciones apiladas; limitó los modales al viewport con scroll interno y controles táctiles de 44 px.
+Validación local registrada: Services/Test/ResponsiveFormsUsers.js comprueba 15 contratos responsive, estructura CSS y sintaxis JavaScript, según el backlog de AUG-105.
+Validación diferida: inspección visual real entre 320–1440 px, orientación, foco y teclado virtual en Beta.
+
+Trazabilidad de tareas:
+- H-AUD-016-001 → AUG-102.
+- H-AUD-016-002 → AUG-103.
+- H-AUD-016-003 → AUG-104.
+- H-AUD-016-004 → AUG-105.
+
+Nota de alcance: H-AUD-016-005 corresponde a una ampliación posterior por contraste, preservada en la consolidación histórica y vinculada a AUG-103. No se incorpora como si hubiese formado parte del conjunto original de cuatro hallazgos reconstruidos aquí. Las entradas históricas de Plan_Auditoria, Consolidacion_Auditoria y los archivos Olds/Documentacion_Legacy permanecen intactas.
+================================================================================

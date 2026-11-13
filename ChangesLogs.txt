@@ -457,3 +457,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/SuggestionActorSchemaDocumentation.js: nueva prueba de contrato documental contra Services/feedback.js.
 - Services/Test/README.md: se añadió el comando y alcance de la prueba.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-112 — RECONCILIACIÓN DOCUMENTAL DE AUD-T-016
+- Auditoría.txt: se añadieron al final los cuatro hallazgos históricos H-AUD-016-001 a 004, reconstruidos desde la evidencia de AUD-20261108-S034/AUD-CP-0034, las descripciones AUG-102 a AUG-105 y la consolidación histórica.
+- Cada entrada conserva el contexto original, evidencia, impacto y trazabilidad de resolución; se identifican expresamente las validaciones reales pendientes de Beta.
+- Se preservaron sin modificación los archivos históricos Olds/Documentacion_Legacy y los índices de auditoría. H-AUD-016-005 se mantiene como ampliación posterior independiente, no se confunde con el conjunto original.
+================================================================================

@@ -110,7 +110,9 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: Auditoría.txt termina en AUD-T-015; Plan_Auditoria.md, Consolidacion_Auditoria.md, ChangesLogs.txt y checkpoint.md registran AUD-T-016.
 - Problema: los hallazgos de AUD-T-016 no aparecen en el registro principal obligatorio.
 - Criterios: reconstruir H-AUD-016-001 a 004 únicamente con los documentos existentes; preservar el historial; verificar referencias AUG-102 a AUG-105.
-- Estado: NUEVA; reconciliación documental pendiente.
+- Resolución: se incorporaron retrospectivamente H-AUD-016-001 a 004 al final de Auditoría.txt con su origen, evidencia, impacto, resolución vinculada y validación diferida. No se modificaron los registros históricos inmutables.
+- Referencias verificadas: H-AUD-016-001→AUG-102; 002→AUG-103; 003→AUG-104; 004→AUG-105. Las cuatro AUG figuran COMPLETADAS CON VALIDACIÓN DIFERIDA.
+- Estado: COMPLETADA.
 
 ## Hallazgos derivados de AUD-T-018 — 2026-11-08
 
