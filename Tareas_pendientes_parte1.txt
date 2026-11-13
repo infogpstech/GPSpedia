@@ -1143,3 +1143,27 @@ Archivos: Services/admin.js, Services/ADMIN_ACTIONS.md, Services/Test/AdminSheet
 Beta pendiente: ejecutar ambas acciones contra Spreadsheet aislada con sesión Desarrollador; comprobar rechazo para otros roles/sesiones inválidas, creación y encabezados, duplicado, alta de columna, hoja inexistente, errores parciales, lease/auditoría y ausencia de cambios en datos ajenos. Antes de cualquier retirada futura, inventariar consumidores externos. No usar recursos productivos.
 Siguiente tarea: AUG-024 — Robustecer el contrato de health check y la clasificación de estados de microservicios. Revisar primero la disponibilidad de fuentes y deployments; no inferir identidad de servicios a partir de respuestas 2xx.
 ================================================================================
+
+
+================================================================================
+AUG-028 — Cierre local — 2026-11-13
+Estado: COMPLETADA EN CÓDIGO; validación de integración diferida a Beta aislada.
+
+Evidencia de implementación:
+- ADMIN mantiene estado de auditoría por auditId y propietario autenticado; valida la huella del cursor, la posición esperada, la pila no vacía, los contadores y la pertenencia de carpetas al árbol Cortes.
+- El marcador de finalización se emite después de reunir y verificar todas las páginas. saveUnusedImagesInventory valida la lista exacta de IDs únicos contra el resumen del servidor y rechaza auditorías parciales, expiradas o alteradas.
+- Se separan auditId e inventoryOperationId. Las filas guardadas conservan ambos identificadores y el resultado por archivo; bloqueos/errores se registran en ActividadUsuario.
+- La validación por archivo permite continuar con los elementos válidos. Estados históricos no resueltos, requiere_revision, en_uso, papelera y eliminación pendiente quedan protegidos.
+- Las escrituras se verifican por lectura posterior, se reintentan y, si no pueden reconciliarse con identidad verificable, quedan requiere_revision. Los duplicados por Drive ID se bloquean antes de actualizar o mover.
+- El organizador exige coincidencia de auditId, inventoryOperationId y resultado confirmado.
+
+Validación:
+- AdminReplacedImagesIntegrity: 29/29 PASS.
+- GitHub Actions run 43497439972 — SUCCESS; commit probado 45e852a45f0084ba7b828adca581e5fe8c23f715.
+- Node.js 22; 71 suites; 1,023 pruebas aprobadas; 0 fallos. node --check aprobó los módulos modificados.
+- No se ejecutaron acciones sobre Drive/Spreadsheet productivos ni deployments.
+
+Validación Beta pendiente: comportamiento real de PropertiesService/CacheService/LockService, permisos, errores de escritura/flush y concurrencia sobre una copia aislada.
+
+Siguiente tarea: AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales.
+================================================================================

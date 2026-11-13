@@ -1348,3 +1348,25 @@ CI final de código/pruebas:
 - La aprobación CI no representa pruebas contra Google Drive/Spreadsheet reales. Esas verificaciones se ejecutarán únicamente en Beta aislada.
 - Sin deployment ni cambios en recursos productivos.
 ================================================================================
+
+
+================================================================================
+H-AUD-028-002 — CERRADO EN CÓDIGO — 2026-11-13
+- saveUnusedImagesInventory exige una auditoría completa emitida por ADMIN y la lista exacta de IDs únicos del escaneo. No se marcan filas ausentes a partir de una lista parcial o alterada.
+- auditId e inventoryOperationId se separan y correlacionan en filas de inventario y en ActividadUsuario.
+
+H-AUD-028-003 — CERRADO EN CÓDIGO — 2026-11-13
+- La auditoría y el inventario protegen los estados históricos no resueltos, incluidos requiere_revision, en_papelera y eliminacion_pendiente; en_uso conserva protección manual.
+- Estados desconocidos o identidades ambiguas bloquean la actualización automática y la marcación de filas ausentes.
+
+H-AUD-028-006 — CERRADO EN CÓDIGO — 2026-11-13
+- La validación se procesa por archivo y devuelve confirmado/bloqueado/error; los errores individuales no abortan los demás archivos verificables.
+- Las escrituras se verifican, reintentan y registran. Si no pueden reconciliarse y la identidad es verificable, el registro queda en requiere_revision.
+- Los duplicados por Drive ID se bloquean antes de actualizar o mover.
+
+H-AUD-029-001 — CERRADO EN CÓDIGO — 2026-11-13
+- La continuación exige estado de servidor, cursor emitido por ADMIN, pila no vacía, contadores coherentes y raíz/carpeta dentro del árbol autorizado.
+- Cursor inexistente, expirado, alterado o sin snapshot no autoriza guardar inventario.
+
+Límite de validación: no se usaron Spreadsheet/Drive productivos ni se desplegó el servicio. La integración real queda pendiente de Beta aislada.
+================================================================================

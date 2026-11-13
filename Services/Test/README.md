@@ -1758,3 +1758,8 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - Verifica que las acciones mutantes no seleccionen silenciosamente la primera coincidencia y que la descarga no inicialice ni migre el esquema durante una consulta.
 - Ejecutar: `node --experimental-default-type=module Services/Test/AdminReplacedImagesIntegrity.mjs`.
 - No accede a Drive ni a Spreadsheet productivos; los servicios externos se simulan.
+
+
+## AUG-028 — integridad de auditoría e inventario
+
+`AdminReplacedImagesIntegrity.mjs` cubre huellas y reanudación del cursor, estado de auditoría del servidor, expiración, páginas parciales, validación exacta de la lista de archivos, aislamiento por propietario, correlación auditId/inventoryOperationId, protección de estados y reintentos/compensación de escrituras parciales. Suite: 29/29 PASS. La regresión completa del 2026-11-13 ejecutó 71 suites y 1,023 pruebas, sin fallos.

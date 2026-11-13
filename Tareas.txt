@@ -1466,3 +1466,16 @@ Validación diferida a Beta (no bloquea el cierre local):
 - Validar los controles y la navegación en navegador real con sesión Desarrollador.
 No se desplegaron servicios, no se modificó la rama base y no se realizaron operaciones sobre datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-028 — Validación de auditoría completa e integridad del inventario
+Estado: COMPLETADA EN CÓDIGO; integración real diferida a Beta.
+- Estado de auditoría por auditId/propietario, cursor validado y marcador de finalización emitido por ADMIN.
+- Inventario vinculado a inventoryOperationId independiente; digest exacto de IDs únicos, resultados por archivo y registro durable.
+- Protección de estados históricos no resueltos; duplicados por Drive ID bloqueados; escrituras verificadas, reintentos y requiere_revision ante reconciliación fallida.
+- AdminReplacedImagesIntegrity 29/29 PASS.
+- GitHub Actions 43497439972 SUCCESS: 71 suites, 1,023/1,023 pruebas, 0 fallos.
+- Commit de código validado: 45e852a45f0084ba7b828adca581e5fe8c23f715.
+Siguiente tarea: AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales.
+================================================================================

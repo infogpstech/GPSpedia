@@ -1138,3 +1138,14 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Services/Test/AdminReplacedImagesIntegrity.mjs, Services/Test/AdminImageTrashLifecycle.mjs y Services/Test/RunServiceTests.mjs: pruebas de esquema, referencias multihoja e incrustadas, permisos, estados, errores, compensación e idempotencia.
 - Sin deployments, cambios en la rama base ni operaciones sobre datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-028 — INTEGRIDAD DE AUDITORÍA DRIVE E INVENTARIO
+- Services/admin.js: estado de auditoría server-side por auditId/propietario, cursor validado, caché de páginas y digest de IDs únicos para confirmar finalización.
+- Services/admin.js: saveUnusedImagesInventory exige auditoría completa y lista exacta; separa inventoryOperationId; registra resultados por archivo y protege estados históricos no resueltos.
+- Services/admin.js: detección de duplicados por Drive ID, verificación de escrituras, reintento y transición a requiere_revision cuando una escritura parcial no puede reconciliarse.
+- Services/admin.js: organización exige correlación de auditoría/operación y resultado confirmado.
+- Services/Test/AdminReplacedImagesIntegrity.mjs: 29/29 PASS, incluye cursor, expiración, integridad del marcador, lista exacta, escritura parcial y compensación.
+- GitHub Actions 43497439972 SUCCESS: Node.js 22; 71 suites; 1,023 pruebas; 0 fallos. Sin operaciones productivas ni deployment.
+================================================================================
