@@ -557,6 +557,13 @@ check("La deduplicación global del servidor conserva IDs únicos entre páginas
     assert.equal(h.cache.size,2);
     assert.throws(()=>h.loadDriveAuditSeenIds_(AUDIT_ID,3),/Falta una página/);
 });
+check("Una página de caché incompleta no sobrescribe los IDs del inventario",()=>{
+    const h=auditHarness(), key=h.getDriveAuditSeenPageCacheKey_(AUDIT_ID,0);
+    const raw=JSON.stringify({files:[FILE_A],folders:[FILE_B]});
+    h.cache.set(key,raw);
+    assert.throws(()=>h.storeDriveAuditSeenPage_(AUDIT_ID,0,[FILE_A],[FILE_B]),/estructura incompleta/);
+    assert.equal(h.cache.get(key),raw);
+});
 check("Los duplicados de Drive en Spreadsheet se separan y ofrecen enlace de reconciliación manual",()=>{
     const h=auditHarness();
     const rows=[["id"],["ROW-A","","","","",FILE_A,"",FILE_A],["ROW-B","","","","",FILE_A,"",FILE_A],["ROW-C","","","","",FILE_B,"",FILE_B]];
@@ -564,6 +571,16 @@ check("Los duplicados de Drive en Spreadsheet se separan y ofrecen enlace de rec
     const sheet={getRange:(r,c,n,w)=>({getA1Notation:()=>`A${r}:Z${r+n-1}`}),getLastColumn:()=>26,
         getParent:()=>({getUrl:()=>"https://docs.google.com/spreadsheets/d/test/edit"}),getSheetId:()=>123};
     assert.match(h.getReplacedImageReconciliationUrl_(sheet,[2,3]),/gid=123&range=A2%3AZ3/);
+});
+check("Las filas con IDs discordantes también se detectan y permiten reconciliación",()=>{
+    const h=auditHarness();
+    const mixedRows=[["id"],
+        ["ROW-A","","","","",FILE_A,"","https://drive.google.com/file/d/"+FILE_B+"/view"],
+        ["ROW-B","","","","",FILE_A,"","https://drive.google.com/file/d/"+FILE_A+"/view"]];
+    assert.deepEqual(h.getDuplicateDriveImageRows_(mixedRows),[{fileId:FILE_A,rowNumbers:[2,3]}]);
+    const readHandler=fnSource(admin,"handleGetReplacedImages");
+    assert.ok(readHandler.includes("rowsToReconcile.length ? rowsToReconcile : [r + 1]"));
+    assert.ok(readHandler.includes("getReplacedImageReconciliationUrl_(schema.sheet"));
 });
 check("La URL de miniatura se construye desde un ID válido y no cambia el identificador",()=>{
     const url=new Function(fnSource(admin,"buildVerifiedDriveVisualizationUrl_")+"\nreturn buildVerifiedDriveVisualizationUrl_;")();
@@ -590,6 +607,12 @@ check("El inventario y la organización usan la misma auditoría y operación ve
     assert.ok(audit.includes("foldersVisited = 1"));
     assert.ok(audit.includes("previousResponseCacheKey"));
     assert.ok(audit.includes("getScriptCache().remove(previousResponseCacheKey)"));
+    const saveIndex=audit.lastIndexOf("saveDriveAuditServerState_(state)");
+    const removeIndex=audit.indexOf("CacheService.getScriptCache().remove(previousResponseCacheKey)");
+    const tryIndex=audit.lastIndexOf("try {",removeIndex);
+    const catchIndex=audit.indexOf("catch (cleanupError)",removeIndex);
+    assert.ok(saveIndex>=0&&removeIndex>saveIndex&&tryIndex>saveIndex&&catchIndex>removeIndex);
+
     assert.ok(save.includes("validateCompletedDriveAudit_"));
     assert.ok(save.includes("ultima_operacion_inventario_id"));
     assert.ok(save.includes("resultado_inventario"));
