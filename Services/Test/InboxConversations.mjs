@@ -109,6 +109,22 @@ run("La creación idempotente devuelve el mismo hilo sin duplicar mensaje", () =
     assert.equal(replay.idempotentReplay,true);
     assert.equal(spreadsheet.getSheetByName("InboxMessages").getLastRow(),2);
 });
+run("Rechaza difusión y destinatarios múltiples", () => {
+    assert.throws(() => api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",recipientIds:["U2","U3"],
+        subject:"Difusión",category:"general",body:"No debe enviarse.",idempotencyKey:"create-broadcast-01"
+    }),/no se permite difusión/);
+});
+run("Rechaza tipos de mensaje y adjuntos no soportados", () => {
+    assert.throws(() => api.handleCreateInboxConversation({
+        ...actor("U1","token-a"),recipientId:"U2",subject:"Imagen",category:"general",body:"No es texto.",
+        messageType:"image",idempotencyKey:"create-image-0001"
+    }),/solo admite mensajes de texto/);
+    assert.throws(() => api.handleSendInboxMessage({
+        ...actor("U1","token-a"),conversationId:first.conversationId,body:"Adjunto",
+        attachments:[{name:"archivo.png"}],idempotencyKey:"send-attachment-01"
+    }),/adjuntos no soportados/);
+});
 run("Una clave de creación no se puede reutilizar con otro contenido", () => {
     assert.throws(() => api.handleCreateInboxConversation({
         ...actor("U1","token-a"),recipientId:"U2",subject:"Otro asunto",category:"general",
@@ -155,6 +171,7 @@ const reply = { ...actor("U2","token-b"),conversationId:first.conversationId,bod
 const sent = api.handleSendInboxMessage(reply);
 run("Permite respuesta bidireccional y actualiza no leídos del otro participante", () => {
     assert.equal(sent.status,"success");
+    assert.equal(sent.idempotentReplay,false);
     const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
     assert.equal(unread.data[0].unreadCount,1);
 });
@@ -182,6 +199,17 @@ run("Marca como leído hasta el mensaje indicado sin borrar mensajes posteriores
     const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
     assert.equal(unread.total,1);
     assert.equal(unread.data.some(item => item.conversationId === first.conversationId),false);
+});
+run("La auditoría distingue la lectura de cada participante", () => {
+    const followup = api.handleSendInboxMessage({
+        ...actor("U2","token-b"),conversationId:first.conversationId,
+        body:"Mensaje para comprobar lectura por participante.",idempotencyKey:"audit-reply-0001"
+    });
+    api.handleMarkInboxRead({ ...actor("U1","token-a"),conversationId:first.conversationId,throughMessageId:followup.messageId });
+    api.handleMarkInboxRead({ ...actor("U2","token-b"),conversationId:first.conversationId,throughMessageId:followup.messageId });
+    const audit = spreadsheet.getSheetByName("InboxConversationAudit").rows.slice(1)
+        .filter(row => row[4] === "read" && row[6] === followup.messageId);
+    assert.deepEqual(audit.map(row => row[2]).sort(),["U1","U2"]);
 });
 run("Archivo y restauración son estados privados por participante", () => {
     api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId,archived:true });

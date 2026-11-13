@@ -24,20 +24,70 @@ function inboxConversationSheet_(name, headers, createIfMissing) {
         sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
         SpreadsheetApp.flush();
     }
+    const actualWidth = Number(sheet.getLastColumn()) || 0;
     const actual = sheet.getRange(1, 1, 1, headers.length).getValues()[0]
         .map(value => String(value === null || value === undefined ? "" : value).trim());
-    if (headers.some((header, index) => actual[index] !== header)) {
+    if (actualWidth !== headers.length || headers.some((header, index) => actual[index] !== header)) {
         throw new Error("El esquema de " + name + " no coincide con el contrato; no se modificó la hoja.");
     }
     return sheet;
 }
 function ensureInboxConversationSheets_() {
-    return {
-        conversations: inboxConversationSheet_(INBOX_CONVERSATIONS_SHEET_, INBOX_CONVERSATION_HEADERS_, true),
-        messages: inboxConversationSheet_(INBOX_MESSAGES_SHEET_, INBOX_MESSAGE_HEADERS_, true),
-        states: inboxConversationSheet_(INBOX_CONVERSATION_STATE_SHEET_, INBOX_STATE_HEADERS_, true),
-        audit: inboxConversationSheet_(INBOX_CONVERSATION_AUDIT_SHEET_, INBOX_CONVERSATION_AUDIT_HEADERS_, true)
-    };
+    const ss = getSpreadsheet();
+    const specs = [
+        ["conversations", INBOX_CONVERSATIONS_SHEET_, INBOX_CONVERSATION_HEADERS_],
+        ["messages", INBOX_MESSAGES_SHEET_, INBOX_MESSAGE_HEADERS_],
+        ["states", INBOX_CONVERSATION_STATE_SHEET_, INBOX_STATE_HEADERS_],
+        ["audit", INBOX_CONVERSATION_AUDIT_SHEET_, INBOX_CONVERSATION_AUDIT_HEADERS_]
+    ];
+    // Preflight: valida todos los esquemas existentes antes de crear o inicializar alguno.
+    specs.forEach(([, name, headers]) => {
+        const sheet = ss.getSheetByName(name);
+        if (!sheet || sheet.getLastRow() === 0) return;
+        const width = Number(sheet.getLastColumn()) || 0;
+        const actual = width === headers.length
+            ? sheet.getRange(1, 1, 1, headers.length).getValues()[0]
+                .map(value => String(value === null || value === undefined ? "" : value).trim())
+            : [];
+        if (width !== headers.length || headers.some((header, index) => actual[index] !== header)) {
+            throw new Error("El esquema de " + name + " no coincide con el contrato; no se modificó ninguna hoja.");
+        }
+    });
+    const created = [], initialized = [], result = {};
+    try {
+        specs.forEach(([key, name, headers]) => {
+            let sheet = ss.getSheetByName(name);
+            if (!sheet) {
+                sheet = ss.insertSheet(name);
+                created.push(sheet);
+            }
+            if (sheet.getLastRow() === 0) {
+                sheet.getRange(1, 1, 1, headers.length).setValues([headers.slice()]);
+                initialized.push({ sheet, headers });
+            }
+            result[key] = sheet;
+        });
+        SpreadsheetApp.flush();
+        return result;
+    } catch (error) {
+        initialized.slice().reverse().forEach(({ sheet, headers }) => {
+            try {
+                const range = sheet.getRange(1, 1, 1, headers.length);
+                if (typeof range.clearContent === "function") range.clearContent();
+                else range.setValues([headers.map(() => "")]);
+            } catch (rollbackError) {
+                console.error("No se pudo revertir el encabezado parcial de " + sheet.getName() + ":", rollbackError);
+            }
+        });
+        created.slice().reverse().forEach(sheet => {
+            try {
+                if (typeof ss.deleteSheet === "function" && sheet.getLastRow() <= 1) ss.deleteSheet(sheet);
+            } catch (rollbackError) {
+                console.error("No se pudo retirar la hoja nueva " + sheet.getName() + ":", rollbackError);
+            }
+        });
+        throw error;
+    }
 }
 function inboxConversationRows_(sheet, width) {
     return !sheet || sheet.getLastRow() < 2 ? [] : sheet.getRange(2, 1, sheet.getLastRow() - 1, width).getValues();
@@ -139,7 +189,7 @@ function inboxFindMessageByKey_(rows, conversationId, authorId, key) {
 }
 function inboxAppendAudit_(sheet, actor, action, conversationId, messageId, details) {
     const rows = inboxConversationRows_(sheet, INBOX_CONVERSATION_AUDIT_HEADERS_.length);
-    if (messageId && rows.some(row => String(row[4]) === action && String(row[6]) === messageId)) return;
+    if (messageId && rows.some(row => String(row[2]) === actor.id && String(row[4]) === action && String(row[6]) === messageId)) return;
     const event = [Utilities.getUuid(),new Date().toISOString(),actor.id,actor.name,action,conversationId,messageId || "",String(details || "").slice(0,500)];
     const rowNumber = sheet.getLastRow() + 1;
     sheet.getRange(rowNumber,1,1,event.length).setValues([event]);
@@ -191,8 +241,27 @@ function inboxUpdateParticipantStates_(sheet, conversationId, participants, acto
         inboxWriteState_(sheet, found, row);
     });
 }
+function inboxAssertTextOnlyPayload_(payload) {
+    const messageType = payload.messageType === undefined ? "text" : String(payload.messageType).trim().toLowerCase();
+    if (messageType !== "text") throw new Error("Inbox solo admite mensajes de texto.");
+    if (payload.attachments !== undefined && (!Array.isArray(payload.attachments) || payload.attachments.length > 0)) {
+        throw new Error("Los adjuntos no están soportados en Inbox.");
+    }
+    if (payload.attachment !== undefined && payload.attachment !== null) {
+        throw new Error("Los adjuntos no están soportados en Inbox.");
+    }
+}
+function inboxAssertSingleRecipient_(payload) {
+    if (payload.broadcast === true ||
+        (Array.isArray(payload.recipientIds) && payload.recipientIds.length > 0) ||
+        (Array.isArray(payload.recipients) && payload.recipients.length > 0)) {
+        throw new Error("Inbox requiere exactamente un destinatario; no se permite difusión.");
+    }
+}
 function handleCreateInboxConversation(payload) {
     const actor = inboxConversationActor_(payload);
+    inboxAssertTextOnlyPayload_(payload);
+    inboxAssertSingleRecipient_(payload);
     const subject = inboxConversationText_(payload.subject,150,"El asunto",false);
     const body = inboxConversationText_(payload.body,5000,"El mensaje",true);
     const category = String(payload.category || "general").trim().toLowerCase();
@@ -240,7 +309,9 @@ function handleCreateInboxConversation(payload) {
     });
 }
 function handleSendInboxMessage(payload) {
-    const actor = inboxConversationActor_(payload), conversationId = String(payload.conversationId || "").trim();
+    const actor = inboxConversationActor_(payload);
+    inboxAssertTextOnlyPayload_(payload);
+    const conversationId = String(payload.conversationId || "").trim();
     if (!conversationId || conversationId.length > 100) throw new Error("La conversación no es válida.");
     const body = inboxConversationText_(payload.body,5000,"El mensaje",true), key = inboxConversationKey_(payload.idempotencyKey,"La clave idempotente");
     const hash = inboxConversationHash_({conversationId,authorId:actor.id,body});
@@ -257,7 +328,7 @@ function handleSendInboxMessage(payload) {
         inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
         inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,message.row[0],messages,now);
         inboxAppendAudit_(sheets.audit,actor,"message",conversationId,message.row[0],"Mensaje agregado a la conversación.");
-        return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(inboxFindMessageByKey_(messages,conversationId,actor.id,key))};
+        return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:!isNewMessage};
     });
 }
 function handleGetInboxConversations(payload) {
