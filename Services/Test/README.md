@@ -1399,3 +1399,11 @@ node --experimental-default-type=module Services/Test/AddSupplementaryInfoIntegr
 \`\`\`
 
 La suite valida la allowlist de roles y el helper de autenticación del servidor con hojas simuladas: token ausente, inválido/cruzado/duplicado, expirado, revocado, perfil eliminado, rol no autorizado, todos los roles permitidos e identidad derivada de Users en lugar del payload. También conserva las pruebas de planificación, sanitización, bloqueo, persistencia y rollback. No accede a Apps Script, Spreadsheet ni Drive reales.
+
+
+## Serialización y recuperación de migración UTILITIES (AUG-123)
+
+- Ejecutar `runUtilitiesSecurityTests()` cargando `Services/Utilities.js` y `Services/Test/UtilitiesSecurity.js` en el mismo runtime V8 aislado.
+- Comprueba sesión Desarrollador bajo ScriptLock, snapshots de Cortes y Hoja 1 previos a la conversión, verificación del respaldo antes de promover y rechazo de POST concurrente.
+- Incluye fallos de lectura, staging, validación del respaldo, promoción, rollback, recuperación de respaldo interrumpido y liberación del lock.
+- Usa dobles en memoria; no accede a Apps Script desplegado, Spreadsheet ni Drive reales.
