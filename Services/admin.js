@@ -7111,10 +7111,10 @@ function handlePermanentlyDeleteReplacedImage(payload,logMessage,developerContex
         const file=DriveApp.getFileById(driveId);
         if(!file.isTrashed())throw new Error("DriveApp no confirma que el archivo esté en papelera.");
         const root=getCortesRootFolder();getSingleParentFolderInsideCortes(file,root.getId());
-        if(status==="en_papelera")setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminacion_pendiente");
+        if(status!=="eliminacion_pendiente")setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"eliminacion_pendiente");
         const deletion=requestAdminDriveFile_(driveId,"delete");
         if(deletion.code!==404&&(deletion.code<200||deletion.code>=300)){
-            try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"en_papelera");}
+            try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,status);}
             catch(statusError){try{setReplacedImageHistoryStatusVerified_(sheet,existing.rowIndex,"requiere_revision");}catch(reviewError){}}
             throw new Error("Drive API no confirmó la eliminación definitiva (HTTP "+deletion.code+").");
         }
