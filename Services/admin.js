@@ -7472,7 +7472,7 @@ function clearExpiredDriveAuditCacheState_(state) {
     if (state.lastResponseCacheKey) keys.push(String(state.lastResponseCacheKey));
     for (let i = 0; i < 10; i++) keys.push("gp_audit_refs_" + state.auditId + "_" + i);
     keys.push("gp_audit_refs_" + state.auditId + "_manifest");
-    if (keys.length) cache.removeAll(keys);
+    for (let i = 0; i < keys.length; i += 100) cache.removeAll(keys.slice(i, i + 100));
     const owner = String(state.ownerId || "").trim();
     if (owner) {
         const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(owner).slice(0, 32);
