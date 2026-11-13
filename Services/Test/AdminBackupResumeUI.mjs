@@ -11,6 +11,11 @@ function check(name, condition) {
     results.push(name);
 }
 function syntax(path) {
+    if (path === 'Services/admin.js') {
+        // Apps Script .js uses script semantics; module parsing rejects legacy duplicate global function declarations.
+        new Function(readFileSync(path, 'utf8'));
+        return;
+    }
     const result = spawnSync(process.execPath,
         ['--experimental-default-type=module', '--check', path],
         { encoding: 'utf8', timeout: 30000 });
