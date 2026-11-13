@@ -277,6 +277,14 @@ check("La lista presenta todos los estados y separa duplicados y filas inválida
     assert.equal(result.review.length,5);
     assert.ok(result.review.every(item=>item.reason));
     assert.ok(result.review.find(item=>item.id_reemplazo==="DUP").reconciliationUrl.includes("gid=123"));
+    const duplicateDriveRow=rows.find(row=>row[0]==="HIST").slice();
+    duplicateDriveRow[0]="DUP-DRIVE";
+    rows.push(duplicateDriveRow);
+    const duplicateDriveResult=fn({},()=>{});
+    const duplicateDriveReviews=duplicateDriveResult.review.filter(item=>item.driveFileId===FILE_A &&
+        item.reason.includes("Drive ID duplicado") && item.reconciliationUrl);
+    assert.equal(duplicateDriveReviews.length,2);
+    assert.equal(duplicateDriveResult.data.some(item=>item.id_reemplazo==="HIST"),false);
 });
 
 function buildRecover({status="historica",duplicate=false,trashed=false,mime="image/jpeg",failStatus=false,failRollback=false,conflicts=[]}={}) {
@@ -505,7 +513,11 @@ check("El cursor de auditoría se firma por contenido y rechaza una pila vacía 
         totalAnalyzed:25,foldersVisited:2,referenceCacheId:AUDIT_ID,scanVersion:"2.6.1"};
     const fingerprint=h.getDriveAuditCursorFingerprint_(cursor);
     assert.match(fingerprint,/^[a-f0-9]{64}$/);
-    assert.equal(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,totalAnalyzed:26,foldersVisited:99}));
+    const repeatedPosition={...cursor,totalAnalyzed:26,foldersVisited:99};
+    assert.equal(fingerprint,h.getDriveAuditCursorFingerprint_(repeatedPosition));
+    const auditSource=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
+    assert.ok(auditSource.includes("state.lastRequestFingerprint === inputFingerprint"));
+    assert.ok(auditSource.includes("return JSON.parse(cachedResponse)"));
     assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,stack:[{folderId:"folder-id-0000000000000002",fileToken:"token-b",filesDone:false}]}));
     assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,scanVersion:"2.6.2"}));
     assert.throws(()=>h.getDriveAuditCursorFingerprint_({...cursor,stack:[]}),/Cursor de auditoría inválido/);
