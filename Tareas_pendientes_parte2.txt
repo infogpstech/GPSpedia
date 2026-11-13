@@ -262,7 +262,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: Services/users.js:342–425.
 - Implementación: createUser valida estructura, allowlist de propiedades, username, contraseña, rol, teléfono y correo antes de escribir; asigna ID y campos de cuenta mediante una sola escritura contigua ID:H. updateProfile acepta únicamente Nombre_Completo, valida su tipo/longitud y requiere sesión propia.
 - Integridad: ambas operaciones utilizan el mismo wrapper ScriptLock de USERS y permanecen dentro de la lease compartida del router. createUser/updateProfile se coordinan con las mutaciones AUTH deleteUser/resetUserSessions mediante el coordinador compartido existente. Se comprueba ID único bajo lock; las escrituras verifican persistencia y restauran valores/fórmulas anteriores ante fallo.
-- Pruebas: Services/Test/UsersAtomicMutations.js, 11/11 PASS; parsing V8 de USERS, AUTH y suite PASS.
+- Pruebas: Services/Test/UsersAtomicMutations.js, 13/13 PASS; parsing V8 de USERS, AUTH, Coordinator y suite PASS.
 - Beta pendiente: concurrencia real entre servicios/proyectos Apps Script, escritura/flush parcial, creación concurrente con eliminación/reset, duplicados en hoja real y verificación de recuperación de fórmulas.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 
