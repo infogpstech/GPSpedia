@@ -25,57 +25,55 @@ import { captureModalViewState, restoreModalViewState, shouldRecordModalTransiti
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
 import { renderActivityLogs } from './activityDashboard.js';
 
-function deleteIndexedDatabase_(windowRef, databaseName) {
-    if (!windowRef) {
-        return Promise.resolve({ status: "unavailable", message: "La API IndexedDB no está disponible." });
+async function clearServiceWorkerRuntimeCache_(windowRef, timeoutMs = 5000) {
+    if (!windowRef || !windowRef.navigator || !windowRef.navigator.serviceWorker) {
+        return { status: "unavailable", message: "No hay un Service Worker disponible para limpiar las respuestas temporales." };
     }
-
-    let indexedDBApi;
+    const serviceWorkerContainer = windowRef.navigator.serviceWorker;
+    let registration = null;
     try {
-        indexedDBApi = windowRef.indexedDB;
+        if (typeof serviceWorkerContainer.getRegistration === "function") {
+            registration = await serviceWorkerContainer.getRegistration();
+        }
     } catch (error) {
-        return Promise.resolve({
-            status: "error",
-            message: error && error.message ? error.message : "No se pudo acceder a IndexedDB."
-        });
+        return { status: "error", message: error && error.message ? error.message : "No se pudo consultar el Service Worker." };
     }
-    if (!indexedDBApi || typeof indexedDBApi.deleteDatabase !== "function") {
-        return Promise.resolve({ status: "unavailable", message: "La API IndexedDB no está disponible." });
+    const worker = serviceWorkerContainer.controller || registration && registration.active;
+    if (!worker || typeof worker.postMessage !== "function" || typeof windowRef.MessageChannel !== "function") {
+        return { status: "unavailable", message: "No hay un Service Worker activo que confirme la limpieza de Cache Storage." };
     }
 
+    const safeTimeoutMs = Math.min(15000, Math.max(1000, Number(timeoutMs) || 5000));
     return new Promise(resolve => {
-        let settled = false;
+        let settled = false, timeoutId = null, channel = null;
         const finish = result => {
             if (settled) return;
             settled = true;
+            if (timeoutId !== null) {
+                try { windowRef.clearTimeout(timeoutId); } catch (error) {}
+            }
+            try { if (channel && channel.port1) channel.port1.close(); } catch (error) {}
+            try { if (channel && channel.port2) channel.port2.close(); } catch (error) {}
             resolve(result);
         };
-
-        let request;
         try {
-            request = indexedDBApi.deleteDatabase(databaseName);
+            channel = new windowRef.MessageChannel();
+            channel.port1.onmessage = event => {
+                const result = event && event.data;
+                if (!result || result.status !== "success" || !Number.isInteger(Number(result.removedCount))) {
+                    finish({ status: "error", message: "El Service Worker devolvió una confirmación de limpieza inválida." });
+                    return;
+                }
+                finish({ status: "success", removedCount: Number(result.removedCount), preservedCount: Math.max(0, Number(result.preservedCount) || 0) });
+            };
+            channel.port1.onmessageerror = () => finish({ status: "error", message: "No se pudo leer la confirmación de Cache Storage." });
+            timeoutId = windowRef.setTimeout(() => finish({
+                status: "timeout", message: "El Service Worker no confirmó la limpieza de Cache Storage dentro del tiempo permitido."
+            }), safeTimeoutMs);
+            worker.postMessage({ type: "GPSEPEDIA_CLEAR_RUNTIME_CACHE" }, [channel.port2]);
         } catch (error) {
-            finish({
-                status: "error",
-                message: error && error.message ? error.message : "No se pudo iniciar la eliminación de IndexedDB."
-            });
-            return;
+            finish({ status: "error", message: error && error.message ? error.message : "No se pudo solicitar la limpieza de Cache Storage." });
         }
-
-        if (!request || typeof request !== "object") {
-            finish({ status: "error", message: "IndexedDB no devolvió una solicitud de eliminación válida." });
-            return;
-        }
-
-        request.onsuccess = () => finish({ status: "success", message: "Base de datos eliminada." });
-        request.onerror = () => finish({
-            status: "error",
-            message: request.error && request.error.message ? request.error.message : "IndexedDB rechazó la eliminación."
-        });
-        request.onblocked = () => finish({
-            status: "blocked",
-            message: "La eliminación está bloqueada por conexiones abiertas a IndexedDB."
-        });
     });
 }
 export { createRichTextToolbar, sanitizeHtmlContent };
@@ -6190,33 +6188,33 @@ ${elapsedSec}s
         }
     };
 
-    // Vaciar Caché Local de Cliente (IndexedDB/Storage)
+    // Limpiar únicamente cachés reconstruibles del cliente; conservar operaciones recuperables.
     const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
     if (clearCacheBtn) {
         clearCacheBtn.onclick = async () => {
-            if (!confirm("¿Deseas VACIAR la caché local de IndexedDB y localStorage del navegador?\n\nEsto forzará a la aplicación a descargar datos e imágenes frescas desde los microservicios.")) return;
+            if (!confirm("¿Deseas limpiar los datos locales reconstruibles?\\n\\nSe eliminarán catálogo, historial, vehículos vistos, miniaturas, validaciones, caché PyS y respuestas temporales de red. Se conservarán sesión, preferencias, borradores y operaciones pendientes o inciertas, copias de edición, auditorías administrativas y recursos esenciales para uso offline.")) return;
 
             clearCacheBtn.disabled = true;
             try {
-                log("[SISTEMA] Iniciando limpieza de IndexedDB y almacenamiento local...");
-
-                const indexedDbResult = await deleteIndexedDatabase_(window, 'GPSpedia_DB');
-                if (indexedDbResult.status === "success") {
-                    log("[EXITO] IndexedDB: GPSpedia_DB eliminada y confirmada.");
+                log("[SISTEMA] Limpiando datos reconstruibles; las operaciones recuperables se conservarán.");
+                const indexedDbResult = await offline.clearRebuildableClientCache();
+                const indexedDbSucceeded = indexedDbResult && indexedDbResult.status === "success";
+                if (indexedDbSucceeded) {
+                    log("[EXITO] IndexedDB: almacenes reconstruibles limpiados (" + indexedDbResult.stores.join(", ") + "). adminLocalState conservado.");
                 } else {
-                    const level = indexedDbResult.status === "error" ? "ERROR" : "ADVERTENCIA";
-                    log(`[${level}] IndexedDB: ${indexedDbResult.message}`, indexedDbResult.status !== "error", indexedDbResult.status === "error");
+                    log("[ERROR] IndexedDB: " + String(indexedDbResult && indexedDbResult.message || "No se confirmó la limpieza."), false, true);
                 }
 
                 const storageResults = [];
                 [
-                    'gpsepedia_catalog_cache',
-                    'gpsepedia_pending_operation'
+                    "gpsepedia_catalog_cache",
+                    "gpsepedia_pys_cache",
+                    "gpsepedia_pys_cache_updated_at"
                 ].forEach(key => {
                     try {
                         localStorage.removeItem(key);
                         storageResults.push({ key, success: true });
-                        log("[EXITO] localStorage: elemento " + key + " eliminado.");
+                        log("[EXITO] localStorage: caché " + key + " eliminada.");
                     } catch (error) {
                         const message = error && error.message ? error.message : String(error);
                         storageResults.push({ key, success: false, message });
@@ -6225,33 +6223,40 @@ ${elapsedSec}s
                 });
 
                 const storageSucceeded = storageResults.every(result => result.success);
-                if (indexedDbResult.status === "success" && storageSucceeded) {
-                    const message = "IndexedDB y localStorage se limpiaron correctamente. Recargando la aplicación...";
+                const cacheStorageResult = await clearServiceWorkerRuntimeCache_(window);
+                if (cacheStorageResult.status === "success") {
+                    log("[EXITO] Cache Storage: " + cacheStorageResult.removedCount + " respuestas temporales eliminadas; " +
+                        cacheStorageResult.preservedCount + " recursos esenciales conservados.");
+                } else {
+                    log("[ADVERTENCIA] Cache Storage: " + cacheStorageResult.message, true);
+                }
+
+                if (indexedDbSucceeded && storageSucceeded && cacheStorageResult.status === "success") {
+                    thumbnailObjectUrls.dispose();
+                    const message = "Cachés reconstruibles limpiadas. Sesión, preferencias y operaciones pendientes conservadas. Recargando...";
                     log("[EXITO] " + message);
-                    mostrarNotificacion("Caché local vaciada. Recargando...", "success");
+                    mostrarNotificacion(message, "success");
                     setTimeout(() => window.location.reload(), 1200);
                     return;
                 }
 
                 const storageSummary = storageResults.map(result =>
-                    result.success ? result.key + ": eliminado" : result.key + ": error (" + result.message + ")"
+                    result.success ? result.key + ": eliminada" : result.key + ": error (" + result.message + ")"
                 ).join("; ");
-                const message = "Limpieza incompleta. IndexedDB: " + indexedDbResult.status +
-                    " (" + indexedDbResult.message + "). localStorage: " + storageSummary +
-                    ". No se recargó la aplicación.";
-                const hasError = indexedDbResult.status === "error" || !storageSucceeded;
-                log((hasError ? "[ERROR] " : "[ADVERTENCIA] ") + message, !hasError, hasError);
-                mostrarNotificacion(message, hasError ? "error" : "warning");
+                const message = "Limpieza incompleta. IndexedDB: " + (indexedDbResult && indexedDbResult.status || "error") +
+                    "; localStorage: " + storageSummary + "; Cache Storage: " + cacheStorageResult.status +
+                    ". No se recargó la aplicación. Las operaciones pendientes se conservaron.";
+                log("[ADVERTENCIA] " + message, true);
+                mostrarNotificacion(message, "warning");
             } catch (error) {
                 const message = error && error.message ? error.message : String(error);
-                log("[ERROR] Fallo durante la limpieza de caché: " + message, false, true);
-                mostrarNotificacion("No se completó la limpieza de caché. " + message, "error");
+                log("[ERROR] Fallo durante la limpieza de cachés reconstruibles: " + message, false, true);
+                mostrarNotificacion("No se completó la limpieza. " + message, "error");
             } finally {
                 clearCacheBtn.disabled = false;
             }
         };
     }
-
     // Ejecutar únicamente las limpiezas seleccionadas, manteniendo separados sus servicios.
     const clearSelectedLogsBtn = document.getElementById('btn-admin-clear-selected-logs');
     if (clearSelectedLogsBtn) {
