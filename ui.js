@@ -6840,6 +6840,22 @@ export async function openReplacedImagesModal() {
             deleteButton.disabled = !canManage;
             actions.appendChild(deleteButton);
 
+            if (status === 'requiere_revision') {
+                const markInUseButton = createActionButton('fa-shield-halved', 'Marcar en uso', 'btn-secondary', async () => {
+                    if (!confirm('¿Marcar esta imagen como en uso? Quedará protegida frente a la organización automática y las acciones de eliminación.')) return;
+                    await runButtonAction(markInUseButton, 'Protegiendo...', async () => {
+                        const response = await routeAction('markReplacedImageInUse', {
+                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                        });
+                        if (!isCurrentRequest()) return;
+                        mostrarNotificacion(response.message || 'Imagen marcada en uso.', 'success');
+                        await loadData();
+                    });
+                });
+                markInUseButton.disabled = !schemaReady || referenceCheckStatus !== 'verified';
+                actions.appendChild(markInUseButton);
+            }
+
             card.appendChild(actions);
             listContainer.appendChild(card);
         });
