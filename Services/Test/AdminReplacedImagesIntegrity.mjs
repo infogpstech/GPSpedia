@@ -484,6 +484,36 @@ check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmu
         ()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},incompleteColumns);
     assert.throws(()=>invalidScan(false),/ocho columnas/);
 });
+check("La captura de Cortes limita memoria por bloques y conserva filas posteriores al primer bloque",()=>{
+    const columns={imagenVehiculo:9,imgCorte1:16,imgCorte2:23,imgCorte3:30,imgApertura:34,imgCableAlimen:36,imgCableAlimen2:40,imgCableAlimen3:42};
+    const calls=[], targetId=FILE_A;
+    const sheet={
+        getLastRow:()=>502,
+        getRange(row,col,numRows,numCols){
+            calls.push({row,col,numRows,numCols});
+            const make=(kind)=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>{
+                if(kind==="display"&&row+r===502&&col+c===9)return "https://drive.google.com/file/d/"+targetId+"/view";
+                return "";
+            }));
+            return {getDisplayValues:()=>make("display"),getValues:()=>make("raw"),
+                getFormulas:()=>make("formula"),getRichTextValues:()=>make("rich")};
+        }
+    };
+    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+        ()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
+    const result=scan(true);
+    assert.ok(result.references.has(targetId));
+    assert.equal(result.references.get(targetId)[0].row,502);
+    assert.equal(result.metrics.rows,501);
+    assert.equal(result.metrics.cells,4008);
+    assert.equal(result.metrics.rowChunkSize,500);
+    assert.equal(result.metrics.captureBudgetMs,12000);
+    assert.equal(result.metrics.chunks,10);
+    assert.equal(calls.length,10);
+    assert.ok(calls.every(item=>item.numRows<=500));
+    assert.equal(Math.max(...calls.map(item=>item.row+item.numRows-1)),502);
+});
 check("El escáner global delega Cortes a los ocho campos y mantiene imágenes superpuestas y otras hojas",()=>{
     const scanner=fnSource(admin,"collectActiveDriveReferences");
     assert.ok(scanner.includes("collectCortesImageReferences(includeLocations)"));
