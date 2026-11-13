@@ -285,7 +285,7 @@ function handleGetInboxConversations(payload) {
         const stateMap = new Map();
         stateRows.forEach(row => {
             if (String(row[1]) === actor.id) {
-                const key = String(row[0]) + "\u0000" + actor.id;
+                const key = String(row[0]) + "|" + actor.id;
                 if (stateMap.has(key)) throw new Error("El estado del participante está duplicado.");
                 stateMap.set(key,row);
             }
