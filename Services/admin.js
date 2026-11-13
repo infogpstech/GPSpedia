@@ -8492,7 +8492,10 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     if (CacheService.getScriptCache().get(responseCacheKey) !== responseJson) throw new Error("No se pudo conservar la respuesta reanudable del lote de auditoría.");
     state.pageCount = nextPageCount; state.totalDiscovered = totalDiscovered; state.totalAnalyzed = totalAnalyzed; state.foldersVisited = foldersVisited;
     state.errorCount = errorCount; state.duplicateFileCount = duplicateFileCount; state.duplicateFolderCount = duplicateFolderCount;
-    state.unverifiableReferenceCount = referenceSnapshot.unverifiableReferenceCount; state.lastRequestFingerprint = inputFingerprint; state.lastResponseCacheKey = responseCacheKey;
+    const previousResponseCacheKey = state.lastResponseCacheKey;
+    state.unverifiableReferenceCount = referenceSnapshot.unverifiableReferenceCount;
+    state.lastRequestFingerprint = inputFingerprint;
+    state.lastResponseCacheKey = responseCacheKey;
     if (complete) {
         const allUnusedIds = loadDriveAuditUnusedFileIds_(auditId, nextPageCount);
         state.status = "complete"; state.completedAt = Date.now(); state.expectedUnusedCount = allUnusedIds.length;
@@ -8501,7 +8504,6 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         properties.setProperty(latestKey, auditId);
         if (properties.getProperty(latestKey) !== auditId) throw new Error("No se pudo verificar la referencia a la última auditoría completa.");
     } else { state.status = "running"; state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor); }
-    const previousResponseCacheKey = state.lastResponseCacheKey;
     saveDriveAuditServerState_(state);
     if (previousResponseCacheKey && previousResponseCacheKey !== responseCacheKey) {
         CacheService.getScriptCache().remove(previousResponseCacheKey);
