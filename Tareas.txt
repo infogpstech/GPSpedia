@@ -1437,3 +1437,32 @@ AUG-027 — Validación GitHub Actions — 2026-11-13
 - Evento: push; Node.js 22.23.4; Ubuntu 26.04.
 - Resultado: SUCCESS. Verificación de rama/repositorio/árbol limpio aprobada; ejecución RunServiceTests.mjs aprobada: 70 suites, 975 pruebas, 0 fallos de suite. El job service-tests y todos sus pasos finalizaron en success.
 - Nota: este resultado acredita la suite automatizada de regresión existente y las comprobaciones de contrato incorporadas. No sustituye pruebas Beta de comportamiento real con Google Drive/Spreadsheet ni valida las acciones de papelera/restauración/eliminación que aún no están implementadas.
+
+
+================================================================================
+AUG-027 — Cierre local con validación diferida a Beta — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Implementación local completada:
+- collectActiveDriveReferences() protege referencias en todas las hojas funcionales del Spreadsheet. Inspecciona valores visibles, valores nativos, fórmulas, RichText, objetos CellImage y getImages() para imágenes sobre cuadrícula. Si una imagen incrustada no expone un ID verificable, se cuenta como referencia no interpretable y se bloquean operaciones destructivas.
+- El estado persistente en_uso protege imágenes elegidas por el Desarrollador y las excluye de organización automática y eliminación.
+- El esquema agrega estado_previo_papelera para recuperar el estado anterior al restaurar un archivo.
+- requiere_revision dispone de acciones manuales desde el gestor: marcar en uso, enviar a papelera, restaurar desde papelera y eliminar definitivamente cuando Drive confirma que el archivo está en papelera. Las filas sin identidad inequívoca siguen sin acciones.
+- Se separan restaurar un archivo desde Drive y restaurar una referencia histórica en Cortes; la primera operación no modifica celdas del Spreadsheet.
+- La eliminación definitiva utiliza Drive API v3 en dos fases: eliminacion_pendiente, DELETE y GET de verificación (404) antes de marcar eliminada. Los reintentos reconcilian operaciones cuyo resultado quedó pendiente.
+- Los controles de inventario/historial y auditoría/organización están accesibles desde la pestaña Imágenes y Drive del modal Desarrollador. El backend exige assertDeveloperSession, lease compartida ADMIN, ScriptLock y auditoría persistente para las mutaciones.
+
+Validación automatizada:
+- GitHub Actions run 43491364671 — SUCCESS: https://github.com/infogpstech/GPSpedia/actions/runs/43491364671
+- Commit probado: 0aa65f5f186880c6cd8bc95810d48884d7ec0d67.
+- Node.js 22.23.4 / Ubuntu; 71 suites; 1,015 pruebas aprobadas; 0 fallos de suite.
+- AdminReplacedImagesIntegrity: 21/21 PASS.
+- AdminImageTrashLifecycle: 40/40 PASS.
+- Incluye contratos y pruebas aisladas de referencias multihoja, CellImage/over-grid, estados, permisos del dispatcher, papelera, restauración, eliminación, errores parciales, compensación e idempotencia.
+
+Validación diferida a Beta (no bloquea el cierre local):
+- Confirmar scopes OAuth y permisos reales de Drive API v3 para GET/DELETE en el proyecto Apps Script.
+- Probar con Spreadsheet y Drive Beta aislados: referencias reales, objetos CellImage/OverGridImage, LockService, flush, movimiento a papelera, restauración, eliminación definitiva, fallos de red/permisos y concurrencia real.
+- Validar los controles y la navegación en navegador real con sesión Desarrollador.
+No se desplegaron servicios, no se modificó la rama base y no se realizaron operaciones sobre datos productivos.
+================================================================================
