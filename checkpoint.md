@@ -960,3 +960,49 @@ Commits secuenciales de documentación:
 - tareas_completadas_parte1.txt: a24726228aa459c8cfd687892240c4bda2d9a03a
 Siguiente tarea: reevaluar el backlog y sus dependencias conforme al plan maestro.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-003 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama: GPSpedia2.2.5_work.
+Rama base: GPSpedia2.2.5.
+HEAD inicial de esta tarea: 56acdd03b9f694abeec0c93ceb296fbff43e0b57.
+HEAD verificado de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Contrato verificado:
+- api-config.js mapea migrateTimestamps a UTILITIES; el router acepta solo esa acción y expone migrateTimestamps() como handler canónico.
+- No se encontraron consumidores en la interfaz versionada revisada.
+- Lecturas: Users/ActiveSessions para sesión y rol; Cortes columna I; metadatos Drive.
+- Escrituras: Hoja 1 columna A y hojas temporales de staging/backup.
+
+Implementación:
+- Utilities obtiene lease UTILITIES/migrateTimestamps antes del ScriptLock local.
+- Coordinator v1.1.2 admite UTILITIES con secreto independiente y política de lectura USERS/ACTIVE_SESSIONS/CORTES/DRIVE y escritura UTILITIES.
+- La lease entra en conflicto con escrituras de identidad, Cortes/Drive y mantenimiento integral ADMIN.
+- Fallo cerrado si falta configuración, la lease está ocupada o la respuesta del coordinador no es válida; liberación en finally.
+- Configuración y límites documentados en Services/COORDINATOR_SETUP.md.
+
+Validación local:
+- UtilitiesSecurity: 17/17 PASS.
+- SharedMutationCoordinator: 33/33 PASS.
+- ActionDispatchContract: 12/12 PASS.
+- Parsing V8 de fuentes y suites modificadas: PASS.
+- Node CLI / GitHub Actions: el workflow service-tests.yml se dispara con cada push a esta rama; resultado remoto pendiente de verificación.
+- No se desplegaron proyectos Apps Script, no se modificaron ScriptProperties productivas y no se accedió a Spreadsheet/Drive reales.
+
+Commits secuenciales de esta tarea:
+- 6cc2902c962ebb3c084b768ab5738973c06ca84b
+- d0f17ebed2c51667af35d06db2b509da302418f4
+- 24b0a5f28eaf5fa1b72bc05b7f5bc30a2820878c
+- 1bd8c8a56285791bf9a56e526f816d2081d3752f
+- c492486bc68197bdd74a2f195c4147eea0e7fcf4
+- 0a4b29405c2746ce6d02e2515056572382112d0a
+- a32bc400a68769bc5a8da6ab7b73eec33516de81
+- 19b670ee302c37f5e1b17966bbd426c3e61452ce
+- 30bcc02e667cbc50c3089d512aafc91075965240
+- 8c6ec5047b1b3537af8816ce09c1b4d001b46640
+- eca702759b8b97d6c648b8df1ae8fb070b4e108a
+- 8a5249996424cc26bb7f336041229950fa036dd8
+Siguiente tarea según el plan maestro: AUG-018 — Restauraciones recuperables y verificación integral de respaldos DB/Drive.
+================================================================================
