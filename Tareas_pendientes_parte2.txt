@@ -589,7 +589,6 @@ Resolución:
 Pruebas: AUTH 32/32 por cada proyecto (producción y copia aislada); prueba real de reconcileRoleRevocationUnderLock_ con fallo de segunda escritura, recuperación por reintento, fallo de flush, limpieza diferida de marcadores, revocación de token y rechazo de metadatos divergentes. GitHub Actions run 43437684317 SUCCESS: 52 suites, 739/739 PASS; Node.js --check de los tres archivos modificados PASS.
 Validación Beta pendiente: fallo físico de Spreadsheet/flush en proyectos AUTH aislados, concurrencia real entre AUTH/USERS, reintentos después de interrupción de ejecución y lectura desde una segunda ejecución. No se desplegaron endpoints ni se modificaron datos productivos.
 ================================================================================
-================================================================================
 
 
 ADENDA DE RANGO — 2026-11-09

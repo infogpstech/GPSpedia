@@ -1378,7 +1378,7 @@ test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorre
 test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
 git fetch origin "$EXPECTED_BRANCH"
 git pull --ff-only origin "$EXPECTED_BRANCH"
-printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
 git rev-parse HEAD
 git status --short --branch
 ```

@@ -1150,7 +1150,9 @@ Hallazgo H-AUD-066 resuelto: la actualización combinada de rol y Nombre_Complet
 Archivos funcionales y de prueba: Services/Auth.js, Services/Test/Auth.js, Services/Test/LastDeveloperProtection.js.
 Pruebas GitHub Actions run 43437684317: SUCCESS; 52 suites; 739/739 PASS; AUTH 32/32 en cada proyecto; Node.js --check de los tres archivos modificados PASS. Las pruebas incluyen ejecución del helper real de reconciliación, fallo de segunda escritura, fallo de flush, conservación de marcador, token revocado, reintento y rechazo de metadatos divergentes.
 
-Commits de implementación/pruebas hasta HEAD: bb f17dceb (implementación inicial), c392bfc (fixture), af07050–99a34cf (ampliación de recuperación y pruebas). La secuencia completa permanece en el historial de la rama; no se reescribió.
+La secuencia de commits de implementación y pruebas permanece íntegra en el historial de la rama; último commit de código y pruebas: 99a34cf64707ca8e6c8e9668a27b273111c9b338. No se reescribió el historial.
+
+Verificación del cierre documental: GitHub Actions run 43437923510 SUCCESS; 52 suites, 739/739 PASS; Node.js --check PASS.
 
 Beta pendiente: fallos físicos de Spreadsheet/flush, concurrencia real entre ejecuciones/proyectos Apps Script, reintentos tras interrupción y validación de datos aislados. No se ejecutaron deployments, endpoints operativos ni escrituras productivas.
 
