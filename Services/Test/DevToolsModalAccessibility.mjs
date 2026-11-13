@@ -86,13 +86,21 @@ test('las cinco opciones usan un único grupo nativo de radios con etiquetas aso
     const tabsStart = html.indexOf('<div class="dev-tools-tabs"');
     const tabsEnd = html.indexOf('<div class="dev-tools-panels">', tabsStart);
     const tabs = html.slice(tabsStart, tabsEnd);
-    assert.match(tabs, /role="group" aria-label="Secciones del panel de desarrollador"/);
+    assert.match(tabs, /<fieldset class="dev-tools-tab-options">[\\s\\S]*?<legend>Secciones del panel de desarrollador<\\/legend>/);
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
         assert.match(tabs, new RegExp('<input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-' + id + '" aria-controls="dev-panel-' + id + '"'));
         assert.match(tabs, new RegExp('<label class="dev-tab-link" for="dev-tab-' + id + '"'));
     }
     assert.equal((tabs.match(/type="radio" name="dev-tools-section"/g) || []).length, 5);
     assert.equal((tabs.match(/checked>/g) || []).length, 1);
+});
+test('el grupo nativo tiene leyenda y queda separado del contenido de los paneles', () => {
+    const start = html.indexOf('<fieldset class="dev-tools-tab-options">');
+    const end = html.indexOf('</fieldset>', start);
+    const group = html.slice(start, end);
+    assert.match(group, /<legend>Secciones del panel de desarrollador<\\/legend>/);
+    assert.doesNotMatch(group, /dev-tools-panels/);
+    assert.match(css, /#dev-tools-modal \.dev-tools-tab-options[\\s\\S]*?clip: rect\\(0, 0, 0, 0\\)/);
 });
 test('los paneles son regiones con encabezados propios y relaciones correctas', () => {
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
@@ -105,13 +113,13 @@ test('no mezcla roles tab/tablist/tabpanel con controles radio nativos', () => {
     const end = html.indexOf('<!-- =========', start);
     const tabs = html.slice(start, end);
     assert.doesNotMatch(tabs, /role="tablist"|role="tab"|role="tabpanel"/);
-    assert.match(tabs, /role="group"/);
+    assert.match(tabs, /<fieldset class="dev-tools-tab-options">/);
     assert.match(tabs, /type="radio" name="dev-tools-section"/);
 });
 test('los selectores CSS conservan visibilidad y foco para las cinco opciones', () => {
     for (const id of ['diagnostics', 'backups', 'database', 'images', 'system']) {
-        assert.match(css, new RegExp('#dev-tools-modal #dev-tab-' + id + ':checked'));
-        assert.match(css, new RegExp('#dev-tools-modal #dev-tab-' + id + ':focus-visible'));
+        assert.match(css, new RegExp('#dev-tools-modal \.dev-tools-tabs:has\(#dev-tab-' + id + ':checked\)'));
+        assert.match(css, new RegExp('#dev-tools-modal \.dev-tools-tabs:has\(#dev-tab-' + id + ':focus-visible\)'));
     }
 });
 
