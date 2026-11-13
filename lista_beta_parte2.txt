@@ -1601,3 +1601,14 @@ git -C GPSpedia status --short --branch
 
 No ejecutar contra deployments productivos, cuentas reales de usuarios finales ni recursos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-022 — Verificación real de eliminación de caché IndexedDB ADMIN
+1. En navegador y perfil de prueba aislados, crear/abrir GPSpedia_DB y comprobar una limpieza normal: onsuccess, eliminación individual de ambas claves localStorage, notificación de éxito y recarga.
+2. Mantener una conexión abierta a GPSpedia_DB desde otra pestaña; ejecutar la limpieza desde ADMIN y confirmar onblocked, mensaje de limpieza incompleta, reporte separado de localStorage y ausencia de recarga automática.
+3. Cerrar la conexión de la otra pestaña y observar si la solicitud pendiente emite onsuccess; confirmar que la ejecución que ya informó bloqueo no presenta después éxito ni dispara reload. Recargar manualmente y comprobar el estado de la base.
+4. Probar onerror real, API IndexedDB no disponible y errores de acceso a localStorage; confirmar que se reportan por separado y nunca se anuncia limpieza completa.
+5. Confirmar que el botón vuelve a habilitarse en todos los resultados.
+No usar datos productivos, perfiles reales ni deployments operativos.
+================================================================================

@@ -1056,3 +1056,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - AdminAuditTrail 15/15 PASS. GitHub Actions run 43458049648 SUCCESS: 65 suites, 913/913 pruebas PASS; node --check admin.js PASS.
 - Beta pendiente: ACL real del proyecto Apps Script, persistencia en deployment y fallos de cuota/timeout. Sin deployments ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-022 — Eliminación asíncrona de caché IndexedDB ADMIN
+- ui.js ahora espera y clasifica onsuccess, onerror y onblocked de indexedDB.deleteDatabase('GPSpedia_DB'); captura también API no disponible y excepciones síncronas.
+- El bloqueo no se interpreta como eliminación completa. Aunque el navegador complete la solicitud más tarde, no se anuncia éxito ni se recarga automáticamente desde el resultado bloqueado.
+- Las dos claves localStorage se eliminan y reportan individualmente, independientemente del resultado IndexedDB.
+- Solo se notifica éxito total y se recarga cuando IndexedDB confirma onsuccess y ambas claves localStorage se eliminan.
+- AdminClientCacheDeletion: 6/6 PASS. GitHub Actions run 43459877682 SUCCESS: 66 suites, 919/919 PASS; node --check ui.js en modo ES module PASS.
+- Beta pendiente: IndexedDB real, conexión concurrente desde otra pestaña, onblocked/finalización tardía, onerror y recarga. Sin deployments ni datos productivos.
+================================================================================

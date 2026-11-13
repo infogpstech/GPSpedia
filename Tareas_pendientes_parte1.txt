@@ -1087,3 +1087,26 @@ Beta pendiente: confirmar que solo mantenedores autorizados tengan acceso de edi
 
 Siguiente tarea del Plan Maestro: AUG-022 — Esperar y clasificar los eventos asíncronos de eliminación de IndexedDB, sin anunciar éxito antes de onsuccess.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-022 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+- ui.js incorpora deleteIndexedDatabase_(), que espera los eventos onsuccess/onerror/onblocked de deleteDatabase('GPSpedia_DB') y clasifica también API no disponible, error al acceder a IndexedDB y excepción síncrona al iniciar la solicitud.
+- onblocked devuelve un resultado bloqueado sin esperar indefinidamente. Si la solicitud se completa posteriormente, esa ejecución no cambia el resultado ya informado ni provoca una recarga automática.
+- localStorage elimina y reporta por separado gpsepedia_catalog_cache y gpsepedia_pending_operation, capturando errores individualmente.
+- Solo se informa limpieza completa y se programa reload cuando IndexedDB confirma onsuccess y ambas claves de localStorage se eliminan. Ante bloqueo, error, indisponibilidad o fallo parcial no se anuncia éxito total ni se recarga.
+- El botón queda deshabilitado durante el proceso y se restaura en finally.
+
+Pruebas:
+- AdminClientCacheDeletion.mjs: 6/6 PASS (espera real del evento terminal, onerror, onblocked, API ausente, excepciones síncronas y contrato de integración del handler).
+- GitHub Actions run 43459877682 SUCCESS: Node.js 22; 66 suites, 919 pruebas aprobadas, 0 fallos.
+- node --check ui.js PASS en modo ES module; las comprobaciones de sintaxis de módulos modificados PASS.
+- El primer run 43459752372 detectó una aserción incorrecta en el test de contrato; se corrigió y el run final quedó verde. No fue un fallo funcional de la implementación.
+
+Archivos: ui.js, Services/Test/AdminClientCacheDeletion.mjs, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta_parte2.txt y checkpoint.md.
+
+Beta pendiente: IndexedDB real en navegador aislado, otra pestaña manteniendo una conexión abierta, evento onblocked y finalización posterior al cerrar la conexión, onerror real, API no disponible y recarga únicamente tras confirmación completa. No usar datos productivos ni deployments.
+Siguiente tarea: AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn. No retirar handlers sin comprobar consumidores externos.
+================================================================================

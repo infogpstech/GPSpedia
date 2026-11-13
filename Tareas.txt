@@ -1300,3 +1300,16 @@ Beta pendiente: confirmar que solo mantenedores autorizados tengan acceso de edi
 
 Siguiente tarea del Plan Maestro: AUG-022 — Esperar y clasificar los eventos asíncronos de eliminación de IndexedDB, sin anunciar éxito antes de onsuccess.
 ================================================================================
+
+
+================================================================================
+AUG-022 — Verificar la eliminación asíncrona de IndexedDB
+Fecha de cierre: 2026-11-13. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- El cliente ADMIN espera onsuccess/onerror/onblocked de deleteDatabase('GPSpedia_DB'); los resultados bloqueado, error e indisponible no se interpretan como eliminación confirmada.
+- localStorage se limpia por separado y cada clave informa su propio resultado. Solo se anuncia éxito total y se recarga cuando IndexedDB confirma onsuccess y ambas claves locales se eliminan.
+- La solicitud bloqueada se informa sin mantener el handler esperando indefinidamente. Una finalización posterior no cambia el resultado reportado ni activa reload.
+- Pruebas: AdminClientCacheDeletion 6/6 PASS; GitHub Actions run 43459877682 SUCCESS, 66 suites y 919/919 pruebas PASS; node --check ui.js (ES module) PASS.
+- Commits: 7d7b14bec2ee17beedbd6a1048e8c0d58b614f70 (implementación/pruebas/documentación de suite) y a9f27cd93e7f1ff3fe2f1307eeffd6a68ff08b5d (corrección de aserción de contrato).
+- Beta: navegador/IndexedDB reales, bloqueo por conexión en otra pestaña, finalización posterior al cierre, errores reales y recarga condicionada. Sin deployments ni datos productivos.
+Siguiente: AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn.
+================================================================================

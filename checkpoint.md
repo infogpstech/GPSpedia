@@ -1397,3 +1397,48 @@ Commits:
 
 Siguiente tarea: AUG-022 — Esperar y clasificar los eventos asíncronos de eliminación de IndexedDB, sin anunciar éxito antes de onsuccess.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-022 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de trabajo verificado: a9f27cd93e7f1ff3fe2f1307eeffd6a68ff08b5d.
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+PR #128: abierto, Draft.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+Resultado:
+- ui.js extrae deleteIndexedDatabase_() para esperar y clasificar los eventos reales de la solicitud IndexedDB: onsuccess, onerror y onblocked. También maneja API no disponible, getter que lanza y excepción síncrona de deleteDatabase.
+- onblocked termina la espera del handler con estado bloqueado; la solicitud del navegador puede completar más tarde, pero no se presenta como éxito ni provoca recarga automática en esa ejecución.
+- La limpieza de gpsepedia_catalog_cache y gpsepedia_pending_operation continúa de manera independiente y cada resultado se informa por separado.
+- La interfaz solo anuncia éxito total y programa reload si IndexedDB confirma onsuccess y ambas eliminaciones localStorage se completan. En cualquier otro estado informa limpieza incompleta y no recarga.
+- El botón se deshabilita durante la operación y se restaura en finally.
+
+Archivos:
+- ui.js
+- Services/Test/AdminClientCacheDeletion.mjs
+- Services/Test/RunServiceTests.mjs
+- Services/Test/README.md
+- Tareas_pendientes_parte1.txt
+- Tareas.txt
+- tareas_completadas_parte1.txt
+- ChangesLogs.txt
+- lista_beta_parte2.txt
+- checkpoint.md
+
+Validación:
+- AdminClientCacheDeletion: 6/6 PASS.
+- GitHub Actions run 43459877682 SUCCESS: Node.js 22; 66 suites, 919/919 pruebas, 0 fallos.
+- node --check ui.js PASS en modo ES module; parsing de los módulos modificados PASS.
+- Run 43459752372 falló únicamente por una aserción estática incorrecta del test; se corrigió en a9f27cd y la ejecución final aprobó.
+- No se ejecutaron navegadores ni IndexedDB reales, Apps Script, deployments ni datos productivos.
+
+Commits:
+- 7d7b14bec2ee17beedbd6a1048e8c0d58b614f70 — implementación, suite e integración en runner.
+- a9f27cd93e7f1ff3fe2f1307eeffd6a68ff08b5d — corrección de aserción de contrato.
+
+Beta pendiente: probar en navegador aislado una conexión IndexedDB abierta desde otra pestaña, comprobar onblocked, cerrar la conexión y observar la finalización tardía sin reload automático; probar onsuccess sin bloqueo, onerror, API no disponible y fallos de localStorage. No usar datos productivos.
+
+Siguiente tarea: AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn. Confirmar primero si existen consumidores externos/manuales; no eliminar handlers ni modificar backend por inferencia.
+================================================================================
