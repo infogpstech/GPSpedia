@@ -1355,3 +1355,45 @@ Beta pendiente: Spreadsheet aislada con historial grande, fechas Date/ISO/locali
 
 Siguiente tarea: AUG-021 — Registro persistente de operaciones administrativas sensibles. Revalidar primero el mecanismo actual de auditoría ADMIN y completar solo lo que no esté resuelto.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-021 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (sin cambios).
+HEAD de trabajo verificado: 60a5c27c8cc7a08424bf0bdd642e528687bfb4fd
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+PR #128: abierto, Draft.
+
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+Las operaciones ADMIN sensibles (isSharedMutationAction_) ahora generan un evento persistente STARTED después de autenticar al actor y antes del switch. La escritura se verifica. Al terminar, el mismo evento se finaliza con actorId/actorRole, acción, recurso de origen/destino, timestamps, outcome, etapa categorizada, duración, código y resumen parcial de contadores/flags permitidos. Se excluyen payloads, mensajes, stack traces, tokens, contraseñas, Base64, URLs y nombres completos.
+
+El registro usa ScriptProperties, sin endpoint de lectura/modificación; el acceso queda limitado a editores del proyecto Apps Script. Retención: 180 días y máximo 300 eventos finalizados; no se purgan eventos STARTED. Al alcanzar 20 eventos pendientes se bloquean nuevas operaciones sensibles para revisión. Cada evento no supera 900 caracteres y las escrituras usan ScriptLock con timeout de 10 segundos.
+
+Si no se puede persistir el inicio, el handler no se ejecuta. Si falla el cierre después de ejecutar la operación, la respuesta no reporta éxito e incluye el eventId; el evento STARTED permanece para revisión cuando no se pudo verificar el cierre.
+
+Archivos:
+- Services/admin.js
+- Services/Test/AdminAuditTrail.mjs
+- Services/Test/RunServiceTests.mjs
+- Services/Test/README.md
+- Tareas_pendientes_parte1.txt
+- Tareas.txt
+- tareas_completadas_parte1.txt
+- ChangesLogs.txt
+- lista_beta_parte2.txt
+- checkpoint.md
+
+Pruebas: AdminAuditTrail 15/15 PASS. GitHub Actions run 43458049648 SUCCESS: Node.js 22, 65 suites, 913/913 pruebas aprobadas, 0 fallos. node --check admin.js PASS.
+
+Beta pendiente: confirmar ACL real de editores Apps Script; verificar persistencia en deployment aislado, actores y roles, operaciones de éxito/error/parcial, retención, ausencia de secretos, timeout/cuota y evento STARTED huérfano. No usar deployments ni datos productivos.
+
+Commits:
+- ca26cf9115fc178a061363daca5b4601db597e0a — implementación.
+- 5d8a90d6da9d9bc4c145ec741ddefc4d326a9262 — corrección de test de etapa.
+- 60a5c27c8cc7a08424bf0bdd642e528687bfb4fd — pruebas de lock y doble finalización.
+
+Siguiente tarea: AUG-022 — Esperar y clasificar los eventos asíncronos de eliminación de IndexedDB, sin anunciar éxito antes de onsuccess.
+================================================================================

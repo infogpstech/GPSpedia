@@ -1045,3 +1045,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - GitHub Actions run 43455656745 SUCCESS: 64 suites, 898/898 pruebas PASS; node --check feedback.js PASS.
 - Beta pendiente: Spreadsheet aislada, historial grande, fechas heredadas y concurrencia real. Sin deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-021 — Auditoría persistente de operaciones ADMIN
+- Se agregaron eventos STARTED/finalizados en ScriptProperties para las mutaciones ADMIN sensibles, con actor/rol del servidor, acción, origen/destino, tiempos, resultado, etapa categorizada y resumen parcial limitado.
+- La escritura inicial se verifica antes del handler; si falla, la operación no se ejecuta. El cierre también se verifica; si falla, no se reporta éxito y se conserva el eventId.
+- No se almacenan payloads, mensajes, stack traces, tokens, contraseñas, Base64, URLs ni nombres completos. No se expone endpoint de lectura/modificación.
+- Retención: 180 días y máximo 300 eventos finalizados; 20 eventos STARTED bloquean nuevas operaciones hasta revisión.
+- AdminAuditTrail 15/15 PASS. GitHub Actions run 43458049648 SUCCESS: 65 suites, 913/913 pruebas PASS; node --check admin.js PASS.
+- Beta pendiente: ACL real del proyecto Apps Script, persistencia en deployment y fallos de cuota/timeout. Sin deployments ni cambios productivos.
+================================================================================

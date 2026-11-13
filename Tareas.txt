@@ -1252,3 +1252,51 @@ Beta pendiente: validar en una Spreadsheet aislada con historial grande, fechas 
 
 Siguiente tarea según el orden del Plan Maestro: AUG-021 — Registro persistente de operaciones administrativas sensibles. Antes de implementarla, revalidar si existe algún mecanismo parcial de auditoría persistente en ADMIN y ejecutar únicamente los criterios pendientes.
 ================================================================================
+
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-021 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+Implementación:
+- Las operaciones ADMIN sensibles definidas por isSharedMutationAction_ generan un evento de auditoría persistente. La identidad y rol proceden de assertDeveloperSession/assertModalEditSession, que consultan el estado del servidor; no se confía en el rol enviado por el navegador.
+- Antes de entrar al switch de handlers se crea un evento STARTED en PropertiesService.getScriptProperties(), bajo un prefijo exclusivo. La escritura se verifica mediante lectura posterior. Si el lock o la persistencia inicial fallan, el handler no se ejecuta.
+- Al finalizar se actualiza el mismo evento con fecha/hora final, resultado success/partial/error, etapa categorizada, duración, código y resumen parcial de contadores/flags permitidos. El evento se vuelve a leer para confirmar el cierre.
+- Si falla el cierre después de ejecutar la operación, la respuesta no se presenta como éxito: devuelve ADMIN_AUDIT_FINALIZE_FAILED y el eventId; si el cierre falla tras un error de handler, el evento STARTED permanece para revisión.
+- Se guardan actorId y actorRole, action, resourceType, sourceResourceId, targetResourceId, startedAt, finishedAt, outcome, stage, durationMs, resultCode y partialResult. Los IDs se filtran por formato y comparación contra credenciales del payload.
+- No se guardan payloads, mensajes, stack traces, nombres completos, URLs, tokens, contraseñas, Base64 ni contenido de imágenes. Las etapas se reducen a categorías no identificativas y los resultados parciales solo admiten contadores numéricos y flags booleanos.
+- El registro no tiene endpoint de lectura ni modificación en ADMIN. ScriptProperties solo es accesible a editores del proyecto Apps Script; la lista real de editores no puede verificarse desde GitHub y se comprobará en Beta.
+
+Política de retención/protección definida:
+- Retención máxima de 180 días y máximo de 300 eventos finalizados (se aplica el límite que se alcance primero).
+- Los eventos STARTED no se purgan automáticamente. Se permiten hasta 19 pendientes; al alcanzar 20, las nuevas operaciones sensibles se bloquean con ADMIN_AUDIT_PENDING_REVIEW_REQUIRED hasta revisar el estado.
+- Tamaño máximo por evento: 900 caracteres; se usa un ScriptLock de 10 segundos para serializar persistencia y poda. Las escrituras se verifican por lectura posterior.
+- El alcance de lectura/modificación queda en el proyecto Apps Script y sus editores autorizados; no se modifica ACL de Drive/Spreadsheet ni se crea un endpoint para consultar el registro.
+
+Code Review / Safety & Side Effects:
+- La auditoría se aplica a las acciones de escritura/operación sensible ya enumeradas en isSharedMutationAction_; ping, consultas de estado y lecturas no mutables quedan fuera.
+- La auditoría inicial ocurre después de autenticar el actor y antes del switch. El cierre se ejecuta tanto en éxito como en error. El fallo de inicio bloquea la operación; el fallo de cierre nunca se convierte en respuesta exitosa.
+- La coordinación compartida del ADMIN ya libera su ScriptLock interno antes de ejecutar el handler; la auditoría usa su propio ScriptLock únicamente para cada lectura/escritura de propiedades, sin mantenerlo durante la operación de negocio.
+- El diff contra el HEAD previo e97998865032fbd224d5b0dcd81248b33335df69 contiene únicamente Services/admin.js, Services/Test/AdminAuditTrail.mjs, Services/Test/RunServiceTests.mjs y Services/Test/README.md.
+- No se añadieron hojas, endpoints, permisos externos ni dependencias; no se modificaron deployments ni datos productivos.
+
+Pruebas:
+- AdminAuditTrail: 15/15 PASS, incluyendo inicio/cierre verificado, privacidad, resultado parcial, retención, cap de 300, límite de 20 pendientes, fallo de escritura inicial, timeout del ScriptLock, fallo de finalización y doble finalización.
+- GitHub Actions run 43458049648 SUCCESS: Node.js 22; 65 suites, 913/913 pruebas aprobadas, 0 fallos.
+- node --check Services/admin.js PASS, ejecutado desde la suite.
+- No se ejecutaron Apps Script reales ni se inspeccionó la lista externa de editores; esas verificaciones quedan para Beta.
+
+Commits:
+- ca26cf9115fc178a061363daca5b4601db597e0a — implementación de auditoría persistente.
+- 5d8a90d6da9d9bc4c145ec741ddefc4d326a9262 — corrección de expectativa de etapa categorizada.
+- 60a5c27c8cc7a08424bf0bdd642e528687bfb4fd — pruebas adicionales de timeout de lock y doble finalización.
+
+HEAD de trabajo al cierre: 60a5c27c8cc7a08424bf0bdd642e528687bfb4fd.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+PR #128 permanece abierto y Draft.
+
+Beta pendiente: confirmar que solo mantenedores autorizados tengan acceso de edición al proyecto Apps Script; verificar persistencia entre ejecuciones reales, actor y rol autenticados, inicio/cierre y metadatos en acciones ADMIN representativas, ausencia de secretos, retención real y comportamiento ante timeout/cuota. Simular un timeout después de STARTED y confirmar que queda pendiente y que el límite bloquea nuevas operaciones. No desplegar ni operar sobre recursos productivos.
+
+Siguiente tarea del Plan Maestro: AUG-022 — Esperar y clasificar los eventos asíncronos de eliminación de IndexedDB, sin anunciar éxito antes de onsuccess.
+================================================================================

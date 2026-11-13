@@ -1575,3 +1575,29 @@ git -C GPSpedia status --short --branch
 
 No ejecutar contra Spreadsheet, endpoints, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-021 — Validación real de auditoría persistente ADMIN (solo deployment aislado)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia log -1 --oneline
+git -C GPSpedia status --short --branch
+```
+
+1. En el proyecto Apps Script aislado, verificar que solo mantenedores autorizados tengan acceso de editor. Los usuarios finales y editores no autorizados no deben poder abrir ni modificar ScriptProperties.
+2. Ejecutar una acción ADMIN sensible con sesión Desarrollador y otra permitida a Gefe; verificar que actorId/actorRole provienen de la sesión validada del servidor.
+3. Verificar que cada operación crea STARTED antes del handler y finaliza con tiempos, acción, recurso, etapa, resultado y resumen parcial; probar success, partial y error.
+4. Inspeccionar ScriptProperties directamente desde el proyecto Apps Script (no desde un endpoint) y confirmar que no contiene tokens, contraseñas, Base64, URLs, payloads, mensajes ni stack traces.
+5. Simular una ejecución interrumpida después de STARTED; confirmar que el evento permanece pendiente, no se purga y que 20 eventos pendientes bloquean nuevas operaciones hasta revisión.
+6. Verificar la retención de 180 días y el límite de 300 eventos finalizados con datos de prueba; confirmar que la poda no elimina eventos pendientes.
+7. Simular fallo de persistencia inicial y timeout de lock: el handler sensible no debe ejecutarse. Simular fallo de finalización después de una operación: la respuesta no debe anunciar éxito y debe incluir eventId.
+8. Confirmar que no existe endpoint ADMIN de lectura/modificación del registro y que la protección efectiva corresponde al ACL del proyecto Apps Script.
+
+No ejecutar contra deployments productivos, cuentas reales de usuarios finales ni recursos productivos.
+================================================================================

@@ -473,3 +473,13 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Pruebas:** ActivityLogRetention 10/10 PASS; ActivityLogsBoundedRead 7/7 PASS; GitHub Actions run 43455656745 SUCCESS, 64 suites, 898/898 PASS; node --check feedback.js PASS.
 - **Commit:** c035523c855d257ed51cec87f87cd1e41855be82.
 - **Beta:** Spreadsheet aislada, fechas heredadas, historial grande y concurrencia con escrituras de actividad. Sin datos productivos.
+
+
+### AUG-021 — Registro persistente de operaciones administrativas sensibles
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- **Implementación:** las acciones ADMIN sensibles persisten un evento STARTED antes del handler y lo finalizan con actor autenticado, acción, origen/destino, inicio/fin, resultado, etapa categorizada, duración y contadores parciales. Fallos de inicio bloquean la operación; fallos de cierre no reportan éxito.
+- **Protección:** ScriptProperties, sin endpoint de lectura/modificación; acceso limitado a editores del proyecto Apps Script. Retención 180 días y máximo 300 eventos finalizados; hasta 19 pendientes, 20 bloquean nuevas operaciones. Máximo 900 caracteres por evento.
+- **Privacidad:** sin payloads, mensajes, stack traces, tokens, contraseñas, Base64, URLs ni nombres completos.
+- **Pruebas:** AdminAuditTrail 15/15 PASS; GitHub Actions run 43458049648 SUCCESS, 65 suites, 913/913 PASS; node --check admin.js PASS.
+- **Commits:** ca26cf9115fc178a061363daca5b4601db597e0a, 5d8a90d6da9d9bc4c145ec741ddefc4d326a9262 y 60a5c27c8cc7a08424bf0bdd642e528687bfb4fd.
+- **Beta:** verificar ACL real de editores Apps Script, persistencia en deployment aislado, retención y fallos de cuota/timeout. Sin recursos productivos.
