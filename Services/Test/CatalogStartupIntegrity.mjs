@@ -5,8 +5,9 @@ import { isCompleteCatalogSnapshot } from '../../offline.js';
 const authSource = readFileSync(new URL('../../auth.js', import.meta.url), 'utf8');
 const uiSource = readFileSync(new URL('../../ui.js', import.meta.url), 'utf8');
 function extract(name) {
-    const start = authSource.indexOf('function ' + name + '(');
+    let start = authSource.indexOf('function ' + name + '(');
     if (start < 0) throw new Error('No se encontró ' + name);
+    if (authSource.slice(start - 6, start) === 'async ') start -= 6;
     const candidates = [
         authSource.indexOf('\nfunction ', start + 12),
         authSource.indexOf('\nexport function ', start + 12),
