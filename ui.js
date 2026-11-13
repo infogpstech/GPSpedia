@@ -6864,8 +6864,8 @@ export async function openReplacedImagesModal() {
                     const warning = status === 'eliminacion_pendiente'
                         ? '¿Verificar y finalizar la eliminación definitiva de este archivo?'
                         : 'Esta acción es irreversible. ¿Eliminar definitivamente el archivo de Google Drive?';
-                    if (!confirm(warning + ' El servidor volverá a comprobar que no existan referencias activas.'));
-                    else await runButtonAction(permanentDeleteButton, 'Eliminando...', async () => {
+                    if (!confirm(warning + ' El servidor volverá a comprobar que no existan referencias activas.')) return;
+                    await runButtonAction(permanentDeleteButton, 'Eliminando...', async () => {
                         const response = await routeAction('permanentlyDeleteReplacedImage', {
                             ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
                         });
