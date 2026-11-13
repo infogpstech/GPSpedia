@@ -411,7 +411,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-021-009. **Prioridad:** Baja.
 - **Problema:** Plan_Auditoria atribuye 6d7fbb9c a la ficha imprimible, pero el commit corresponde al panel de desarrollador y formulario PyS.
 - **Criterios:** conservar trazabilidad y corregir la lista de fuentes para incluir únicamente commits que afecten la ficha imprimible; revisar los mensajes/diffs antes de atribuir cambios.
-- **Estado:** NUEVA; corrección documental pendiente.
+- **Estado:** COMPLETADA. Referencias contrastadas contra los mensajes y diffs de los commits; corrección activa registrada en Plan_Maestro_Implementacion.md. El archivo histórico legacy permanece inmutable.
 
 - 2026-11-08 — AUD-T-021: AUG-140 a AUG-146 nuevas; AUG-096 ampliada. Inventario: 145 IDs únicos dentro de AUG-001 a AUG-146; AUG-015 continúa ausente y no se infiere ni renumera.
 
