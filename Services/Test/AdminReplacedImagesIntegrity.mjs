@@ -614,6 +614,7 @@ check("La organización revalida referencias e historial por archivo y protege u
     assert.ok(organize.includes("const references = collectActiveDriveReferences(false)"));
     assert.ok(organize.includes('organizationState === "movida_manual"'));
     assert.ok(organize.includes('organizationState === "organizada"'));
+    assert.ok(organize.includes("storedLocation && storedLocation !== sourcePath"));
     assert.ok(organize.includes("!isKnownReplacedImageStatus_(candidateType, candidateStatus)"));
     assert.ok(organize.includes("rollbackError"));
     assert.ok(save.includes('previousOrganizationState === "movida_manual" && previousManualLocation'));
