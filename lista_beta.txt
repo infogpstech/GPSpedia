@@ -1841,3 +1841,40 @@ EJECUCIÓN EN FEEDBACK/CATALOG Y SPREADSHEET AISLADOS:
 
 No declarar PASS sin revisar filas persistidas y lectura posterior desde CATALOG en la copia aislada. No usar Spreadsheet ni endpoints productivos; no desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-125 — VALIDACIÓN BETA DE RESTAURACIONES RECUPERABLES DB/DRIVE — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EXCLUSIVA EN PROYECTO ADMIN Y RECURSOS AISLADOS:
+1. Crear un proyecto ADMIN de prueba separado y una copia de Spreadsheet/Drive; adaptar únicamente los IDs del proyecto aislado. Confirmar que no se usan IDs ni endpoints productivos y que el código corresponde a Services/admin.js del commit probado.
+2. Crear un respaldo DB. Verificar que el archivo es Spreadsheet, su manifiesto coincide en cantidad de hojas, filas/celdas, fórmulas y huella, y que un respaldo incompleto no se registra como válido.
+3. Crear un respaldo Drive con estructura anidada, archivos repetidos por nombre, archivos de tamaño cero y tipos MIME distintos. Comparar rutas, carpetas, archivos, MIME, tamaños, bytes y manifiesto; comprobar limpieza de una copia parcial.
+4. Probar restauración DB válida, respaldo con hoja obligatoria ausente, encabezado incorrecto, manifiesto alterado y respaldo histórico sin manifiesto. En los rechazos previos al staging, confirmar que el Spreadsheet destino no cambia.
+5. Probar restauración DB con hojas extra en destino. Verificar que se preservan, que las hojas del respaldo se promueven completas y que el respaldo preventivo conserva el estado anterior.
+6. Inyectar fallos controlados en copia a staging, renombrado de hoja, verificación posterior y rollback. Confirmar que se restaura el nombre/hoja original o que se conservan los artefactos __GP_RESTORE_* y el ID de recuperación para intervención manual.
+7. Probar restauración Drive y fallos durante copia staging, traslado del contenido original, promoción de staging y rollback. Comparar inventarios antes/después y confirmar que no se pierden recursos; si rollback falla, conservar staging/rollback y sus IDs.
+8. Repetir tras recarga y nueva ejecución para comprobar persistencia, que no se duplican recursos y que los backups de recuperación siguen accesibles. No eliminar manualmente artefactos de un rollback fallido.
+9. Registrar IDs de recursos, manifiestos, conteos, tamaños, resultados y errores. No ejecutar con Spreadsheet/Drive productivos ni desplegar a producción.
+
+No declarar PASS sin comprobar recursos reales y recuperación en el proyecto aislado. No desplegar a producción.
+================================================================================
