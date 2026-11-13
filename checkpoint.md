@@ -607,3 +607,31 @@ Beta pendiente: navegador real, alta/edición en proyecto y Spreadsheet aislados
 Archivos: Services/write.js, Services/admin.js, Services/Test/VinAuthoritativeValidation.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: revisar AUG-133 en el backlog; no iniciar hasta la siguiente interacción.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-133 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD verificado antes de implementar: 62d92b835362344f67d4200c579d52264140f98c.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Runner reproducible por servicio en Services/Test/RunServiceTests.mjs, con selección por grupo/servicio 31–38.
+- Workflow GitHub Actions en .github/workflows/service-tests.yml para Node.js 22.
+- Se corrigió CutPayloadValidation.js: el validador de payload se compila junto con su dependencia real extractVinPrefix.
+- Paridad de Services/Test/Auth.js y Services/Test/users.js verificada, admitiendo únicamente la diferencia de SPREADSHEET_ID para la Spreadsheet aislada.
+
+Validación local:
+- WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 24/24; USERS 14/14; integración transversal 43/43.
+- Total: 238/238 casos PASS.
+- No se ejecutaron deployments, Apps Script real, Spreadsheet real, endpoints operativos ni datos productivos.
+
+Beta pendiente:
+- Configurar/verificar proyectos Apps Script separados y deployments aislados.
+- Ejecutar escrituras y validaciones con Spreadsheet de prueba, concurrencia real interproyectos, fallos físicos de flush/escritura y lecturas posteriores entre servicios.
+- Mantener las URLs de prueba separadas de api-config.js y no utilizar recursos productivos. Procedimiento añadido a lista_beta.txt.
+
+Archivos: Services/Test/RunServiceTests.mjs, Services/Test/CutPayloadValidation.js, Services/Test/README.md, .github/workflows/service-tests.yml, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea del backlog: AUG-134 — Sincronizar ACTION_TO_SERVICE_MAP con routers y consumidores.
+El SHA final de publicación se verifica en el HEAD remoto al terminar la operación.
+================================================================================

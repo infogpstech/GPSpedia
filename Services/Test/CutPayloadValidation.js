@@ -1,10 +1,13 @@
 function runCutPayloadValidationTests(writeSource) {
  const results=[];let passed=0,failed=0;
  function run(name,fn){try{fn();passed++;results.push({name,status:"PASS"});}catch(e){failed++;results.push({name,status:"FAIL",message:String(e.message||e)});}}
- const start=String(writeSource||"").indexOf("function isAddCutPlainObject_");
- const end=String(writeSource||"").indexOf("function getAddCutPayloadValidationOptions_",start);
- if(start<0||end<0)throw new Error("No se encontró el contrato de validación WRITE.");
- const source=String(writeSource).slice(start,end);
+ const text=String(writeSource||"");
+ const start=text.indexOf("function isAddCutPlainObject_");
+ const end=text.indexOf("function getAddCutPayloadValidationOptions_",start);
+ const vinStart=text.indexOf("function extractVinPrefix(");
+ const vinEnd=text.indexOf("\nfunction ",vinStart+10);
+ if(start<0||end<0||vinStart<0||vinEnd<0)throw new Error("No se encontró el contrato de validación WRITE o su validador VIN.");
+ const source=text.slice(start,end)+"\n"+text.slice(vinStart,vinEnd);
  const validate=new Function(source+";return validateAddOrUpdateCutPayload_;")();
  const options={categoria:["Motocicleta"],tipoEncendido:["Llave"],tipoDeCorte:["Bomba","No recomendado"],configRelay:["NC"]};
  const base={vehicleId:null,vehicleData:{categoria:"Motocicleta",marca:"Yamaha",modelo:"FZ",anoDesde:"2020-2024",tipoEncendido:"Llave",versionesAplicables:"",imagenVehiculo:""},cutData:{tipoCorte1:"Bomba",configRelay1:"NC",ubicacionCorte1:"Bajo asiento",colorCableCorte1:"",activaTestigo1:false,imgCorte1:"",vin:""}};
@@ -42,7 +45,7 @@ function runCutPayloadValidationTests(writeSource) {
  rejects("rechaza texto de corte demasiado largo",{...base,cutData:{...base.cutData,ubicacionCorte1:"x".repeat(10001)}});
  run("rechaza opId y hash no emparejados de forma explícita",()=>{let rejected=false;try{validate({...base,opId:"OP-123",operationHash:"z".repeat(64)},options);}catch(_){rejected=true;}if(!rejected)throw Error("Hash inválido aceptado.");});
  rejects("rechaza imagen superior a 10 MB",{...base,cutData:{...base.cutData,imgCorte1:"data:image/png;base64,"+"A".repeat(14*1024*1024+4)}});
- run("validación previa a toda mutación",()=>{const h=String(writeSource).slice(String(writeSource).indexOf("function handleAddOrUpdateCutLocked(payload)"),String(writeSource).indexOf("function handleAddOrUpdateCutLockedUnsafe_",String(writeSource).indexOf("function handleAddOrUpdateCutLocked(payload)")));const v=h.indexOf("validateAddOrUpdateCutPayload_"),m=h.indexOf("handleAddOrUpdateCutLockedUnsafe_");if(v<0||m<0||v>m)throw Error("El payload no se valida antes de entrar al handler mutador.");});
- run("compensación cubre fila, Idempotencia y contador",()=>{const h=String(writeSource).slice(String(writeSource).indexOf("function handleAddOrUpdateCutLocked(payload)"),String(writeSource).indexOf("function handleAddOrUpdateCutLockedUnsafe_"));["setValues([existingRowValues])","deleteRow(lastRowBefore + 1)","deleteRow(last)","deleteProperty(CORTES_ID_COUNTER_PROPERTY)"].forEach(token=>{if(!h.includes(token))throw Error("Falta compensación: "+token);});});
+ run("validación previa a toda mutación",()=>{const h=text.slice(text.indexOf("function handleAddOrUpdateCutLocked(payload)"),text.indexOf("function handleAddOrUpdateCutLockedUnsafe_",text.indexOf("function handleAddOrUpdateCutLocked(payload)")));const v=h.indexOf("validateAddOrUpdateCutPayload_"),m=h.indexOf("handleAddOrUpdateCutLockedUnsafe_");if(v<0||m<0||v>m)throw Error("El payload no se valida antes de entrar al handler mutador.");});
+ run("compensación cubre fila, Idempotencia y contador",()=>{const h=text.slice(text.indexOf("function handleAddOrUpdateCutLocked(payload)"),text.indexOf("function handleAddOrUpdateCutLockedUnsafe_"));["setValues([existingRowValues])","deleteRow(lastRowBefore + 1)","deleteRow(last)","deleteProperty(CORTES_ID_COUNTER_PROPERTY)"].forEach(token=>{if(!h.includes(token))throw Error("Falta compensación: "+token);});});
  return {passed,failed,results};
 }

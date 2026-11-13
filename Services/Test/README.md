@@ -1485,3 +1485,17 @@ La suite cubre allowlist de tipo de contenido, destino único por ID, coherencia
 ## AUG-132 — Validación estricta del VIN
 
 Ejecutar la suite `runVinAuthoritativeValidationTests({ write, admin, ui, addCuts })` cargando las fuentes vigentes de `Services/write.js`, `Services/admin.js`, `ui.js` y `add_cortes.html`. La suite verifica longitudes normalizadas de 5/6/18/19, rechazo de caracteres ajenos al formato, normalización exclusiva de espacios y guiones, rechazo antes de consultar/escribir datos, duplicados y contratos de altas/edición. Resultado local: 12/12 PASS. Parsing V8 de WRITE, ADMIN y la suite: PASS. No requiere Apps Script ni Spreadsheet real.
+
+## AUG-133 — Runner reproducible de regresión (pruebas 31–38)
+
+Desde la raíz del repositorio, con Node.js 22:
+
+```bash
+node --experimental-default-type=module Services/Test/RunServiceTests.mjs
+```
+
+Se puede ejecutar un grupo por servicio con `--only=WRITE`, `--only=ADMIN`, `--only=FEEDBACK`, `--only=CATALOG`, `--only=UTILITIES`, `--only=AUTH`, `--only=USERS` o `--only=INTEGRATION`. También se admiten los identificadores 31–38.
+
+El runner coordina suites existentes sin duplicar fixtures: payload/VIN de WRITE, edición y recuperación de ADMIN, Inbox y aprobación de FEEDBACK, readiness/snapshots/estados de CATALOG, migración segura de UTILITIES, protección de AUTH, mutaciones de USERS y contratos transversales. Verifica además que las copias AUTH/USERS coincidan con sus fuentes salvo el ID dedicado de Spreadsheet de pruebas.
+
+Las pruebas locales usan fixtures, hojas simuladas e IndexedDB simulado. No invocan endpoints operativos, deployments, hojas productivas ni servicios externos. La integración real de Apps Script/Spreadsheet permanece en Beta. GitHub Actions ejecuta el mismo runner en cada push a `GPSpedia2.2.5_work`.

@@ -341,3 +341,10 @@ Pruebas locales sintéticas: 52/52 PASS en harness V8 aislado; parsing de VinDif
 Validación Beta pendiente: medición sobre catálogo operativo y navegación visual real multi-versión/generación. No se modificaron endpoints, deployments ni datos productivos.
 Commit único de cierre: consultar historial de GPSpedia2.2.5_work.
 ================================================================================
+
+================================================================================
+AUG-133 — COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-12
+Se implementó el runner Services/Test/RunServiceTests.mjs para pruebas reproducibles 31–38 por servicio y el workflow .github/workflows/service-tests.yml (Node.js 22). Se corrigió CutPayloadValidation.js para incluir la dependencia real extractVinPrefix al compilar el validador de payload. Se documentaron comandos completos/parciales, fixtures, paridad de copias AUTH/USERS y procedimiento Beta.
+Validación local: WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 24/24; USERS 14/14; integración 43/43. Total 238/238 PASS. Paridad de copias AUTH/USERS PASS. No se ejecutaron Apps Script desplegados, Spreadsheet real, endpoints ni datos productivos.
+Beta pendiente: deployments y Spreadsheet aislados, concurrencia real interproyectos, fallos físicos de escritura/flush y lectura posterior entre servicios. Sin acceso a producción.
+================================================================================

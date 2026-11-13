@@ -648,3 +648,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Resultado de suite local: 12/12 PASS. Parsing V8 de WRITE, ADMIN y suite PASS.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md actualizados. Validación navegador/Apps Script/Spreadsheet aislados diferida a Beta.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-133 — RUNNER AUTOMATIZADO DE REGRESIÓN 31–38
+- Se añadió Services/Test/RunServiceTests.mjs para ejecutar suites por servicio: WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e integración transversal.
+- Se añadió .github/workflows/service-tests.yml con Node.js 22 y validación explícita de repositorio/rama.
+- Services/Test/CutPayloadValidation.js ahora incluye extractVinPrefix al compilar el validador; la suite pasó de 34/35 a 35/35.
+- Services/Test/README.md documenta ejecución completa/parcial, fixtures aisladas y límites de Beta.
+- Resultado de suites locales: 238/238 PASS, incluyendo paridad de copias AUTH/USERS; no se accedió a endpoints ni datos productivos.
+================================================================================

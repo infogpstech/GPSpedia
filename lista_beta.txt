@@ -2097,3 +2097,37 @@ En formulario y Spreadsheet aislada:
 5. Verificar duplicados, slots de versión, vehículos nuevos/existentes y lectura de registros VIN históricos sin migrar ni alterar datos.
 Usar proyecto Apps Script y Spreadsheet de prueba; nunca producción. La suite local 12/12 PASS no sustituye estas pruebas reales.
 ================================================================================
+
+================================================================================
+AUG-133 — Regresión integrada de servicios (Beta aislada)
+Preflight obligatorio antes de cualquier prueba:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/infogpstech/GPSpedia|https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "Repositorio remoto incorrecto"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Después del preflight:
+1. Preparar proyectos Apps Script separados para AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES cuando corresponda; usar únicamente deployments nuevos y hojas Spreadsheet de prueba. No reemplazar deployments operativos.
+2. AUTH/USERS: comprobar que Services/Test/Auth.js y Services/Test/users.js conservan el ID de Spreadsheet aislada; probar roles permitidos/no permitidos, sesiones revocadas, altas/ediciones/eliminaciones y coordinación concurrente.
+3. WRITE/ADMIN: probar payloads válidos e inválidos, VIN límites 5/6/18/19, duplicados, rollback, idempotencia y fallos reales de escritura/flush.
+4. FEEDBACK: probar aprobación/rechazo, ledger Inbox, destino cruzado/duplicado, reintentos y lectura posterior en CATALOG.
+5. UTILITIES: probar migración de timestamps en Spreadsheet aislada, staging, respaldo, rollback y lock concurrente.
+6. Ejecutar concurrencia real entre proyectos sobre recursos compartidos y verificar timeout, lease, liberación, reintento y ausencia de escrituras parciales.
+7. Guardar evidencia sanitizada, SHA exacto probado y resultados por servicio. No registrar tokens, contraseñas, URLs operativas ni datos personales.
+No usar deployments, hojas, carpetas Drive ni datos productivos. Las suites locales 238/238 PASS no sustituyen estas pruebas reales.
+================================================================================
