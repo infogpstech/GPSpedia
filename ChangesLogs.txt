@@ -723,3 +723,9 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/AntiDebuggingPolicy.mjs: nueva suite estática de no-regresión para vistas activas, README y validadores de AUTH/WRITE/ADMIN/FEEDBACK/USERS/UTILITIES; integrada en INTEGRATION.
 - No se modificaron endpoints, deployments, datos, permisos ni lógica de autorización backend. Las pruebas de navegador y servicios reales quedan para Beta aislada.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-139 — AJUSTE DE EXPECTATIVA DE REGRESIÓN
+- AntiDebuggingPolicy.mjs: alineada la expectativa de texto con la redacción final de README («nunca sustituyen la autorización del servidor»). El primer CI identificó exclusivamente esta discrepancia del test.
+================================================================================

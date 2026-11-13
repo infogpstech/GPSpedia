@@ -780,3 +780,8 @@ Validación:
 Archivos: main.js, users.html, add_cortes.html, README.md, Services/Test/AntiDebuggingPolicy.mjs, Services/Test/RunServiceTests.mjs, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea pendiente: AUG-140 — Alinear márgenes y contrato de paginación de la ficha imprimible. No iniciar en esta sesión.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN — AUG-139 — 2026-11-13
+- Primer CI run 43405153032 detectó un único fallo en la expectativa textual del test: README utiliza la frase «nunca sustituyen la autorización del servidor». No fue un fallo de la política ni de las vistas.
+- Corregida la expectativa de AntiDebuggingPolicy.mjs para coincidir exactamente con la redacción documental. Se vuelve a ejecutar CI en el commit correctivo.
