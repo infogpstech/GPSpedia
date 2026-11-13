@@ -408,16 +408,15 @@ function handleClearSensitiveLogs(payload) {
 // ROUTER PRINCIPAL
 // ============================================================================
 function doGet(e) {
-    if (e.parameter.debug === 'true') {
+    if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Auth',
-            version: '2.2.5', // Mantener sincronizado con la versión del componente
+            version: '2.2.5',
             status: 'available'
         };
-        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
+        return ContentService.createTextOutput(JSON.stringify(serviceState))
+            .setMimeType(ContentService.MimeType.JSON);
     }
-    // Comportamiento por defecto si no está en modo de depuración
     const defaultResponse = {
         status: 'success',
         message: 'GPSpedia Auth-SERVICE v2.0 is active.'
