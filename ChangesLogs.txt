@@ -535,3 +535,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/InboxAuditTrail.js: 11 escenarios para orden de escritura, actor, reply/resolve/delete, persistencia tras eliminación/lectura posterior, limpieza ordinaria, fallos y esquema.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: cobertura, estado y validación Beta documentados.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-120 — LECTURA ACOTADA DEL DASHBOARD DE ACTIVIDAD
+- Services/feedback.js: sustituye la lectura completa del historial por rangos de hasta 100 filas finales en ActividadUsuario e InboxAuditLog.
+- Combina las fuentes, ordena timestamp descendente con desempate estable y conserva la respuesta actual con máximo 100 registros.
+- Services/Test/ActivityLogsBoundedRead.js: 7 escenarios con historial sintético de 10,000 registros ordinarios y 500 eventos Inbox.
+- README de pruebas, backlog, lista Beta y checkpoint actualizados.
+================================================================================

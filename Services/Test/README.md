@@ -1366,3 +1366,14 @@ node --experimental-default-type=module Services/Test/InboxAuditTrail.js
 \`\`\`
 
 La suite valida el registro previo a la mutación para reply, resolve y delete en Feedbacks y Contactanos; identidad derivada de la sesión; esquema estricto; rechazo de mutaciones cuando falla la escritura del evento; persistencia después de eliminar la fila fuente y lectura posterior desde el dashboard. El ledger \`InboxAuditLog\` es append-only desde FEEDBACK y no se elimina al limpiar la actividad ordinaria. La prueba usa dobles aislados y no accede a Apps Script, Spreadsheet, endpoints ni deployments reales.
+
+
+## AUG-120 — Lectura acotada del dashboard de actividad
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/ActivityLogsBoundedRead.js
+node --experimental-default-type=module Services/Test/InboxAuditTrail.js
+node --experimental-default-type=module Services/Test/ActivityDashboardStoredXss.js
+\`\`\`
+
+ActivityLogsBoundedRead.js prueba con 10,000 registros de actividad y 500 eventos Inbox que cada fuente lee como máximo sus 100 filas finales, combina ambas fuentes en orden cronológico descendente estable, devuelve como máximo 100 elementos y no utiliza getDataRange. También cubre hojas vacías y el contrato de campos del dashboard. InboxAuditTrail y ActivityDashboardStoredXss cubren regresión del ledger y renderizado seguro. Pruebas aisladas sin Apps Script, Spreadsheet, endpoints ni deployments.

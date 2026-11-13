@@ -177,10 +177,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-120 — Optimizar la lectura del dashboard de actividad
 - Origen: H-AUD-018-008. Prioridad: Media.
-- Evidencia: Services/feedback.js:1268–1288 carga todo el rango y luego conserva 100 registros.
-- Problema: el coste crece con el historial completo; no existe cursor ni paginación.
-- Criterios: lectura acotada de últimas N filas o cursor; orden descendente estable; prueba con historial grande.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: lee como máximo las últimas 100 filas de ActividadUsuario y 100 de InboxAuditLog mediante rangos directos; no carga rangos completos.
+- Resultado: combina ambas fuentes, ordena por timestamp descendente con desempate estable y devuelve como máximo 100 elementos sin cambiar el contrato.
+- Validación local: ActivityLogsBoundedRead.js 7/7; InboxAuditTrail.js 11/11; parsing FEEDBACK aprobado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Beta pendiente: medir rendimiento con hojas aisladas de gran volumen y comprobar en dashboard real los 100 eventos más recientes, orden y recarga.
 
 ### AUG-121 — Rechazar itemType no soportados al responder Inbox
 - Origen: H-AUD-018-009. Prioridad: Baja.

@@ -340,3 +340,22 @@ Validación Beta pendiente: creación y esquema real de InboxAuditLog; operacion
 Archivos: Services/feedback.js, Services/Test/InboxAuditTrail.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-120 — Optimizar la lectura del dashboard de actividad. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-120 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work. Base: GPSpedia2.2.5.
+HEAD padre: e533702c6853f4089a79e5d79c7a638580b54563.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+- handleGetActivityLogs lee como máximo 100 filas finales por fuente mediante getRange; no utiliza getDataRange para ActividadUsuario ni InboxAuditLog.
+- Combina ambas fuentes, ordena timestamp descendente con desempate estable y conserva {status,data}, máximo 100 elementos.
+- ActivityLogsBoundedRead.js: 7/7 PASS, incluye 10,000 registros de actividad y 500 eventos Inbox.
+- InboxAuditTrail.js: 11/11 PASS con handler actualizado.
+- Parsing Services/feedback.js: PASS.
+- No se ejecutaron Apps Script, Spreadsheet, endpoints, deployments ni datos productivos.
+
+Beta pendiente: medir rendimiento en hojas aisladas de gran volumen y verificar dashboard real, orden, empates y recarga. No desplegar a producción.
+Archivos: Services/feedback.js, Services/Test/ActivityLogsBoundedRead.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt, checkpoint.md.
+Siguiente tarea: AUG-121 — Rechazar itemType no soportados al responder Inbox. No iniciar en esta tarea.
+================================================================================

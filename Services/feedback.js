@@ -1683,13 +1683,22 @@ function handleMarkAsResolved(payload) {
 
 
 function handleGetActivityLogs(payload) {
-    const sheet=getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
-    const data=sheet&&sheet.getLastRow()>1?sheet.getDataRange().getValues().slice(1):[];
-    const result=data.map(row=>({id:row[COLS_ACTIVIDAD_USUARIO.id-1],timestamp:row[COLS_ACTIVIDAD_USUARIO.timestamp-1],idUsuario:row[COLS_ACTIVIDAD_USUARIO.idUsuario-1],nombreUsuario:row[COLS_ACTIVIDAD_USUARIO.nombreUsuario-1],tipoActividad:row[COLS_ACTIVIDAD_USUARIO.tipoActividad-1],idElementoAsociado:row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado-1],detalle:row[COLS_ACTIVIDAD_USUARIO.detalle-1]}));
-    const audit=getSpreadsheet().getSheetByName(INBOX_AUDIT_SHEET_NAME),last=audit?audit.getLastRow():0;
-    if(last>1){const start=Math.max(2,last-99);audit.getRange(start,1,last-start+1,INBOX_AUDIT_HEADERS.length).getValues().forEach(row=>result.push({id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]}));}
-    result.sort((a,b)=>{const ta=new Date(a.timestamp).getTime(),tb=new Date(b.timestamp).getTime();return(Number.isFinite(tb)?tb:0)-(Number.isFinite(ta)?ta:0);});
-    return {status:"success",data:result.slice(0,100)};
+ const pageSize=100;
+ const readLatestRows=(sheet,columnCount)=>{if(!sheet)return[];const lastRow=sheet.getLastRow();if(lastRow<=1)return[];const startRow=Math.max(2,lastRow-pageSize+1),rowCount=lastRow-startRow+1;return sheet.getRange(startRow,1,rowCount,columnCount).getValues();};
+ const result=[];let sequence=0;
+ const addEntry=entry=>{const parsedTime=new Date(entry.timestamp).getTime();result.push({...entry,_sortTime:Number.isFinite(parsedTime)?parsedTime:0,_sequence:sequence++});};
+ const activitySheet=getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
+ readLatestRows(activitySheet,COLS_ACTIVIDAD_USUARIO.detalle).forEach(row=>addEntry({
+  id:row[COLS_ACTIVIDAD_USUARIO.id-1],timestamp:row[COLS_ACTIVIDAD_USUARIO.timestamp-1],idUsuario:row[COLS_ACTIVIDAD_USUARIO.idUsuario-1],
+  nombreUsuario:row[COLS_ACTIVIDAD_USUARIO.nombreUsuario-1],tipoActividad:row[COLS_ACTIVIDAD_USUARIO.tipoActividad-1],
+  idElementoAsociado:row[COLS_ACTIVIDAD_USUARIO.idElementoAsociado-1],detalle:row[COLS_ACTIVIDAD_USUARIO.detalle-1]
+ }));
+ const auditSheet=getSpreadsheet().getSheetByName(INBOX_AUDIT_SHEET_NAME);
+ readLatestRows(auditSheet,INBOX_AUDIT_HEADERS.length).forEach(row=>addEntry({
+  id:row[0],timestamp:row[1],idUsuario:row[2],nombreUsuario:row[3],tipoActividad:"inbox_"+String(row[4]||""),idElementoAsociado:row[6],detalle:row[7]
+ }));
+ result.sort((a,b)=>(b._sortTime-a._sortTime)||(a._sequence-b._sequence));
+ return{status:"success",data:result.slice(0,pageSize).map(({_sortTime,_sequence,...entry})=>entry)};
 }
 
 

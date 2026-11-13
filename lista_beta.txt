@@ -1669,3 +1669,36 @@ EJECUCIÓN EN FEEDBACK Y SPREADSHEET AISLADOS:
 
 No declarar PASS sin verificar el contenido persistido de InboxAuditLog y la UI después de recargar. No desplegar ni modificar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-120 — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: árbol local no limpio; conserva cambios."; exit 1; }
+case "$(git remote get-url origin)" in
+ https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+ *) echo "ERROR: origin inesperado."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si existe cualquier cambio local, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN ENTORNO AISLADO:
+1. Preparar ActividadUsuario con 10,000 filas y InboxAuditLog con 500 eventos, incluyendo timestamps repetidos e inválidos.
+2. Comprobar que cada fuente lee como máximo sus últimas 100 filas y el backend devuelve máximo 100 elementos combinados.
+3. Verificar orden descendente, desempate estable y prefijo inbox_.
+4. Comparar el resultado con los 100 eventos más recientes de ambas fuentes y recargar el dashboard.
+5. Medir latencia y documentar discrepancias entre timestamp y orden físico de filas.
+
+No desplegar ni modificar hojas productivas.
+================================================================================
