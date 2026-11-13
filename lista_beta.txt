@@ -2024,7 +2024,7 @@ git rev-parse HEAD
 Prueba reproducible local:
 
 ~~~bash
-node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("Services/users.js","utf8"); const auth=readFileSync("Services/Auth.js","utf8"); const tests=readFileSync("Services/Test/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource);"); const result=run(users,auth); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("Services/users.js","utf8"); const auth=readFileSync("Services/Auth.js","utf8"); const coordinator=readFileSync("Services/Coordinator.js","utf8"); const tests=readFileSync("Services/Test/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource","coordinatorSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource,coordinatorSource);"); const result=run(users,auth,coordinator); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
 ~~~
 
 En proyectos USERS y AUTH de Apps Script separados, conectados únicamente a la Spreadsheet aislada:
