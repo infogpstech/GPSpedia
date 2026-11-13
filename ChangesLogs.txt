@@ -585,3 +585,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/AdminRestoreRecovery.js: nueva suite de contratos y simulación aislada de intercambio DB, fallos de promoción/verificación y preservación de snapshots si el rollback falla.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: documentación de validaciones locales y pruebas Beta pendientes.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-126 — VALIDACIÓN PREVIA Y COMPENSACIÓN DE ESCRITURAS WRITE
+- Services/write.js: valida addOrUpdateCut antes de preparar columnas, reservar ID/fila, registrar opId o iniciar cargas Drive. Comprueba estructura/allowlist, requeridos, listas oficiales de categoría/encendido/tipo de corte/Relay, rango de años, longitudes, booleanos, VIN, opId/SHA-256 e imágenes Base64 con MIME permitido y máximo de 10 MB.
+- Ante fallos, el coordinador restaura la fila existente o elimina la fila nueva, restaura la entrada de Idempotencia y revierte el contador de IDs cuando corresponde. Los archivos no enlazados permanecen trazados en ImageUploadLedger para reconciliación segura; no se eliminan sin verificar su propiedad/estado.
+- Services/Test/CutPayloadValidation.js añade 34 escenarios de validación y contratos de compensación.
+================================================================================
