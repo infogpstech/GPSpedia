@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const admin=readFileSync(new URL("../admin.js",import.meta.url),"utf8");
 const ui=readFileSync(new URL("../../ui.js",import.meta.url),"utf8");
 const apiConfig=readFileSync(new URL("../../api-config.js",import.meta.url),"utf8");
+const coordinator=readFileSync(new URL("../Coordinator.js",import.meta.url),"utf8");
 let passed=0;
 function check(name,fn){fn();passed++;console.log("PASS "+name);}
 function fnSource(source,name){
@@ -178,6 +179,13 @@ check("La restauración rechaza un estado previo incompatible y un archivo que n
     const notTrashed=makeBase({status:"en_papelera",previous:"historica",trashed:false});
     assert.throws(()=>runRestore(notTrashed),/no está en papelera/);
 });
+check("Restaurar desde papelera repara un archivo referenciado sin reescribir celdas",()=>{
+    const references=new Map([[FILE_ID,[{sheet:"pys",row:4,column:7}]]]);
+    const b=makeBase({status:"en_papelera",previous:"historica",trashed:true,references});
+    assert.equal(runRestore(b).status,"success");
+    assert.equal(b.file.trashed,false);
+    assert.equal(b.sheet.cells[1][10],"historica");
+});
 check("La restauración compensa si no puede confirmar el estado histórico",()=>{
     const b=makeBase({status:"en_papelera",previous:"historica",trashed:true,failStatus:"historica"});
     assert.throws(()=>runRestore(b),/archivo fue devuelto a papelera/);
@@ -199,6 +207,18 @@ check("La eliminación definitiva requiere estado en papelera, imagen válida y 
     const active=makeBase({status:"en_papelera",previous:"historica",trashed:true,references:new Map([[FILE_ID,[{sheet:"Relay",row:4,column:10}]]])});
     assert.throws(()=>runPermanent(active,[ok(),noContent(),gone()]),/referencias activas/);
     assert.equal(active.sheet.cells[1][10],"en_papelera");
+});
+check("La eliminación definitiva bloquea referencias no interpretables y archivos que no sean imágenes",()=>{
+    const unknown=makeBase({status:"en_papelera",previous:"historica",trashed:true,unverifiable:1});
+    assert.throws(()=>runPermanent(unknown,[ok(),noContent(),gone()]),/no interpretables/);
+    const nonImage=makeBase({status:"en_papelera",previous:"historica",trashed:true});
+    assert.throws(()=>runPermanent(nonImage,[{code:200,body:{mimeType:"application/pdf",trashed:true}}]),/no es una imagen/);
+    assert.equal(nonImage.sheet.cells[1][10],"en_papelera");
+});
+check("La eliminación definitiva rechaza un archivo que Drive ya no marca en papelera",()=>{
+    const b=makeBase({status:"en_papelera",previous:"historica",trashed:false});
+    assert.throws(()=>runPermanent(b,[ok({trashed:false})]),/ya no está en papelera/);
+    assert.equal(b.sheet.cells[1][10],"en_papelera");
 });
 check("La eliminación definitiva ejecuta GET, DELETE y GET de verificación antes de cerrar historial",()=>{
     const b=makeBase({status:"en_papelera",previous:"historica",trashed:true});
@@ -249,6 +269,24 @@ check("La interfaz del desarrollador ofrece enviar a papelera, restaurar y elimi
     assert.match(ui,/Eliminar definitivamente/);
     assert.match(ui,/canTrash/);
     assert.match(ui,/canRestoreFromTrash/);
+});
+check("La lease de recursos declara Drive, inventario y actividad para las nuevas mutaciones",()=>{
+    assert.match(coordinator,/restoreReplacedImageFromTrash: \{ read: identityRead, write: \["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"\] \}/);
+    assert.match(coordinator,/permanentlyDeleteReplacedImage: \{ read: identityRead, write: \["DRIVE", "IMAGE_INVENTORY", "ACTIVITY"\] \}/);
+});
+check("El helper Drive API envía GET/DELETE con supportsAllDrives y token OAuth",()=>{
+    const source=fnSource(admin,"requestAdminDriveFile_");
+    let captured=null;
+    const helper=new Function("UrlFetchApp","ScriptApp",source+"\nreturn requestAdminDriveFile_;")(
+        {fetch(url,options){captured={url,options};return{getResponseCode:()=>200,getContentText:()=>JSON.stringify({id:FILE_ID,mimeType:"image/jpeg",trashed:true})};}},
+        {getOAuthToken:()=>"test-oauth-token"});
+    const response=helper(FILE_ID,"get");
+    assert.equal(response.code,200);
+    assert.match(captured.url,/fields=id,name,mimeType,trashed,parents/);
+    assert.equal(captured.options.headers.Authorization,"Bearer test-oauth-token");
+    assert.equal(helper(FILE_ID,"delete").code,200);
+    assert.match(captured.url,/supportsAllDrives=true$/);
+    assert.equal(captured.options.method,"delete");
 });
 check("La llamada a Drive API usa token OAuth y no expone credenciales en parámetros",()=>{
     const source=fnSource(admin,"requestAdminDriveFile_");
