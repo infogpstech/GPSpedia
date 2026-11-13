@@ -1,0 +1,44 @@
+function runCutPayloadValidationTests(writeSource) {
+ const results=[];let passed=0,failed=0;
+ function run(name,fn){try{fn();passed++;results.push({name,status:"PASS"});}catch(e){failed++;results.push({name,status:"FAIL",message:String(e.message||e)});}}
+ const start=String(writeSource||"").indexOf("function isAddCutPlainObject_");
+ const end=String(writeSource||"").indexOf("function getAddCutPayloadValidationOptions_",start);
+ if(start<0||end<0)throw new Error("No se encontró el contrato de validación WRITE.");
+ const source=String(writeSource).slice(start,end);
+ const validate=new Function(source+";return validateAddOrUpdateCutPayload_;")();
+ const options={categoria:["Motocicleta"],tipoEncendido:["Llave"],tipoDeCorte:["Bomba","No recomendado"],configRelay:["NC"]};
+ const base={vehicleId:null,vehicleData:{categoria:"Motocicleta",marca:"Yamaha",modelo:"FZ",anoDesde:"2020-2024",tipoEncendido:"Llave",versionesAplicables:"",imagenVehiculo:""},cutData:{tipoCorte1:"Bomba",configRelay1:"NC",ubicacionCorte1:"Bajo asiento",colorCableCorte1:"",activaTestigo1:false,imgCorte1:"",vin:""}};
+ const rejects=(name,payload,opts)=>run(name,()=>{let rejected=false;try{validate(payload,opts||options);}catch(_){rejected=true;}if(!rejected)throw Error("El payload inválido fue aceptado.");});
+ run("payload nuevo válido",()=>{if(validate(base,options).vehicleData.modelo!=="FZ")throw Error("Mapeo incorrecto.");});
+ run("payload existente válido",()=>{validate({...base,vehicleId:"12",vehicleData:null},options);});
+ rejects("rechaza vehículo nuevo sin datos",{...base,vehicleData:null});
+ rejects("rechaza cutData ausente",{...base,cutData:null});
+ rejects("rechaza tipo de corte no permitido",{...base,cutData:{...base.cutData,tipoCorte1:"Falso"}});
+ rejects("rechaza Relay no permitido",{...base,cutData:{...base.cutData,configRelay1:"Falso"}});
+ run("No recomendado permite Relay vacío",()=>{validate({...base,cutData:{...base.cutData,tipoCorte1:"No recomendado",configRelay1:""}},options);});
+ rejects("rechaza ubicación vacía",{...base,cutData:{...base.cutData,ubicacionCorte1:" "}});
+ rejects("rechaza testigo no booleano",{...base,cutData:{...base.cutData,activaTestigo1:"false"}});
+ rejects("rechaza rango de años invertido",{...base,vehicleData:{...base.vehicleData,anoDesde:"2024-2020"}});
+ rejects("rechaza año mal formado",{...base,vehicleData:{...base.vehicleData,anoDesde:"20xx"}});
+ rejects("rechaza marca no textual",{...base,vehicleData:{...base.vehicleData,marca:12}});
+ rejects("rechaza categoría fuera de enum",{...base,vehicleData:{...base.vehicleData,categoria:"Falso"}});
+ rejects("rechaza encendido fuera de enum",{...base,vehicleData:{...base.vehicleData,tipoEncendido:"Falso"}});
+ rejects("rechaza imagen mal formada",{...base,cutData:{...base.cutData,imgCorte1:"data:image/png;base64,??"}});
+ rejects("rechaza SVG",{...base,cutData:{...base.cutData,imgCorte1:"data:image/svg+xml;base64,PHN2Zz4="}});
+ run("acepta imagen PNG Base64",()=>{validate({...base,cutData:{...base.cutData,imgCorte1:"data:image/png;base64,aGVsbG8="}},options);});
+ rejects("rechaza ID cero",{...base,vehicleId:"0",vehicleData:null});
+ rejects("rechaza ID alfanumérico",{...base,vehicleId:"12x",vehicleData:null});
+ rejects("rechaza opId mal formado",{...base,opId:"x",operationHash:"a".repeat(64)});
+ rejects("exige hash con opId",{...base,opId:"OP-1"});
+ rejects("rechaza hash sin opId",{...base,operationHash:"a".repeat(64)});
+ rejects("rechaza silent no booleano",{...base,silent:"true"});
+ rejects("rechaza campo de vehículo inesperado",{...base,vehicleData:{...base.vehicleData,admin:true}});
+ rejects("rechaza lista de enums ausente",base,{...options,tipoDeCorte:[]});
+ run("acepta opId y SHA-256 válidos",()=>{validate({...base,opId:"OP-123",operationHash:"a".repeat(64)},options);});
+ run("acepta opId heredado en colaborador",()=>{validate({...base,colaborador:"Técnico [OP-legacy_1]",operationHash:"b".repeat(64)},options);});
+ run("acepta VIN de 17 caracteres",()=>{validate({...base,cutData:{...base.cutData,vin:"1HGCM82633A004352"}},options);});
+ rejects("rechaza VIN corto",{...base,cutData:{...base.cutData,vin:"12345"}});
+ rejects("rechaza texto de corte demasiado largo",{...base,cutData:{...base.cutData,ubicacionCorte1:"x".repeat(10001)}});
+ run("rechaza opId y hash no emparejados de forma explícita",()=>{let rejected=false;try{validate({...base,opId:"OP-123",operationHash:"z".repeat(64)},options);}catch(_){rejected=true;}if(!rejected)throw Error("Hash inválido aceptado.");});
+ return {passed,failed,results};
+}
