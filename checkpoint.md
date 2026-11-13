@@ -1113,3 +1113,25 @@ Resultado:
 Registros actualizados: Tareas_pendientes_parte1.txt, ChangesLogs.txt, Auditoría.txt, tareas_completadas_parte1.txt, Services/Test/README.md, lista_beta_parte2.txt y checkpoint.md.
 Siguiente tarea del backlog: AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube. Dependencias AUG-006/AUG-016/AUG-039/AUG-040/AUG-042 verificadas como cerradas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-043 — 2026-11-13
+Rama: GPSpedia2.2.5_work
+HEAD verificado: 2d52bce610cc7e9d05feddbfc75c9546a156edc4
+Tarea: Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+Estado: COMPLETADA CON VALIDACIÓN AUTOMATIZADA; validación de servicios reales diferida a Beta.
+
+Cambios consolidados:
+- handleSubmitVideoForApproval comparte withVideoApprovalMutationLock_ con aprobación y rechazo; los reintentos con el mismo opVideoId conservan una sola solicitud.
+- handleApproveVideoUnlocked_ prevalida el destino, persiste y verifica el estado approved en Feedbacks antes de publicar el enlace.
+- Si falla la publicación después de persistir la aprobación, el reintento completa el destino sin volver a cambiar el estado. Si falla Feedbacks, el enlace no se publica y la solicitud sigue pending.
+- FEEDBACK deriva rol y nombre desde la sesión validada; ui.js y api-config.js ya no envían userRole/identidad del revisor como autoridad.
+- Se añadieron contratos de cliente, sesiones, bloqueo, fallos parciales, recuperación y pruebas CLI de subida YouTube.
+
+Validación GitHub Actions: run 43434653123 — SUCCESS; Node.js 22.23.4; 52 suites; 731/731 PASS; cero fallos. Incluye pruebas de publicación/rechazo, idempotencia, sesión/roles, estados, inicialización, IndexedDB, recuperación resumable, cancelación, XSS y contratos suplementarios.
+
+Validación diferida a Beta: concurrencia física entre ejecuciones Apps Script, Spreadsheet aislada real, YouTube Data API/resumable real, expiración/revocación de sesión durante una transferencia y recuperación desde navegador real. No se ejecutaron deployments ni se modificaron datos productivos.
+
+Siguiente tarea prioritaria: AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH (prioridad crítica; implementación declarada parcial y pendiente de sintaxis/pruebas). Después, AUG-154 — Recuperación de escrituras parciales en USERS. AUG-047 permanece abierta con prioridad baja/media y no se confunde con estos riesgos de integridad de sesión.
+================================================================================

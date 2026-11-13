@@ -629,7 +629,10 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   7. Probar cada acción protegida con sesión válida, ausente, inválida, revocada, userId/token no coincidentes y rol no permitido; verificar los callsites desde UI.
   8. Probar subida completa, error de YouTube, respuesta sin ID, cancelación, pérdida de respuesta, reintento, doble envío, aprobación y rechazo para cada contentType; comprobar que no hay publicaciones ni solicitudes duplicadas.
 - **Relación:** AUD-T-035; AUG-006/AUG-016/AUG-042 (sesión/rol cliente); AUG-040 (seguridad y consistencia FEEDBACK); AUG-039 (acciones suplementarias WRITE/ADMIN).
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA (2026-11-13); GitHub Actions run 43434653123 SUCCESS, 52 suites y 731/731 PASS.
+- **Resolución:** envío idempotente protegido por ScriptLock compartido; autorización de sesión y rol derivada en FEEDBACK; aprobación persistida y verificada antes de publicar; reintento recupera publicación incompleta sin exponer enlaces de solicitudes pendientes.
+- **Pruebas:** bloqueo/reintento, fallos de escritura Feedbacks/destino, sesiones y roles, estados, inicialización resumable, persistencia IndexedDB, recuperación/cancelación, contratos de cliente, XSS y publicación por destino.
+- **Beta pendiente:** servicios Apps Script/Spreadsheet/YouTube reales, concurrencia física, sesión revocada durante transferencia y navegador/IndexedDB reales.
 
 ### AUG-044 — Reconciliar mapa central de acciones y dispatchers de servicios
 - **Origen:** H-AUD-035-005. **Prioridad:** Media.

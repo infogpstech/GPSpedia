@@ -1637,3 +1637,16 @@ Suites:
 El cierre previo H-AUD-042-001 a 011 se conserva como evidencia histórica en Auditoria_Archive/Auditoria_2026-11-10_parte_002.txt. La regresión H-AUD-042-012 (variable `userRole` no declarada en renderInboxDetail) se corrige declarando el rol desde `context.role`.
 
 Validación CI: run 43429506713 SUCCESS, 37 suites y 557 pruebas PASS; `node --check` de `ui.js` PASS. La suite usa contratos/dobles y no sustituye la validación Beta con DOM, IndexedDB, cuentas y sesiones reales.
+
+
+### AUG-043 — Contratos FEEDBACK y ciclo de aprobación YouTube
+
+El grupo FEEDBACK de `RunServiceTests.mjs` ejecuta las pruebas de publicación/rechazo, idempotencia y bloqueo de solicitudes, sesión/roles, estado de aprobación e inicialización resumable. También ejecuta contratos Node CLI para el cliente YouTube, persistencia IndexedDB, recuperación de bloques, cancelación, recuperación de transferencias completadas y borradores, ciclo de vida del overlay, historial de overlays, XSS y contratos suplementarios.
+
+Comando de validación completa:
+
+```bash
+node --experimental-default-type=module Services/Test/RunServiceTests.mjs
+```
+
+Resultado de referencia: GitHub Actions run `43434653123`, Node.js `22.23.4`, 52 suites, 731/731 PASS. Las pruebas usan dobles/fixtures Node y no equivalen a pruebas de concurrencia física de Apps Script, Spreadsheet o YouTube API; consultar `lista_beta_parte2.txt`.

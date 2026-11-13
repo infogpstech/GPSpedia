@@ -1349,3 +1349,15 @@ Matriz:
 
 Criterio de cierre: matriz repetida al menos dos veces por transición; capturas/logs de estado anterior/posterior; evidencia de revocación ActiveSessions; cero controles o datos privilegiados residuales. No ejecutar pruebas con cuentas reales de producción.
 ================================================================================
+
+
+================================================================================
+AUG-043 — VALIDACIÓN DE INTEGRACIÓN REAL PENDIENTE
+1. Apps Script/Spreadsheet aislados: ejecutar dos submitVideoForApproval concurrentes con el mismo opVideoId y comprobar una sola fila; repetir con opVideoId distintos y el mismo destino.
+2. LockService real: comprobar contención, timeout, liberación ante excepción y serialización entre submit/approve/reject en ejecuciones separadas.
+3. YouTube Data API real: sesión resumable, expiración, pérdida de respuesta, reanudación, ID real de 11 caracteres, vídeo no listado y ausencia de duplicados huérfanos.
+4. FEEDBACK/Users reales: revocar o cambiar cuenta durante la subida; confirmar que una sesión inválida no puede iniciar ni enviar la aprobación y que la identidad/rol se deriva del servidor.
+5. Spreadsheet aislada: inyectar fallo real después de persistir approved y antes de publicar; comprobar reintento, lectura de destino y recuperación para Cortes, PyS y Tutoriales. Repetir con miniatura de Tutorial.
+6. Navegador real: IndexedDB, recarga, cierre del modal, cancelación, dos pestañas y restauración de operación pendiente; comprobar que opVideoId y videoId real nunca se intercambian.
+No ejecutar contra hojas, credenciales, deployments ni vídeos productivos. La validación CI local no sustituye esta integración.
+================================================================================

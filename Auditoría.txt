@@ -1098,3 +1098,24 @@ Se recupera como evidencia vigente el cierre consolidado del ciclo anterior (H-A
 La revisión actual añadió y resolvió H-AUD-042-012. No se modificaron AUTH/FEEDBACK RBAC, api-config.js, state.js ni endpoints.
 Code Review: PASS. Safety & Side Effects: PASS; cambio funcional adicional limitado a la variable local de rol en renderInboxDetail. Validación Beta real sigue pendiente y está especificada en lista_beta_parte2.txt.
 ================================================================================
+
+
+================================================================================
+AUG-043 — HALLAZGOS Y CIERRE — 2026-11-13
+
+H-AUD-043-001 — CONCURRENCIA EN ENVÍO DE SOLICITUDES DE VÍDEO
+Severidad: ALTA — integridad/idempotencia.
+Ubicación: Services/feedback.js, handleSubmitVideoForApproval(payload).
+Evidencia: la comprobación de una solicitud existente por opVideoId y la escritura de la nueva fila no estaban dentro de un mismo bloqueo. Dos ejecuciones simultáneas podían observar ausencia y crear dos solicitudes para la misma operación.
+Corrección: la comprobación, lectura y escritura del envío se ejecutan bajo withVideoApprovalMutationLock_, el mismo ScriptLock usado por approve/reject. El lock se libera también ante errores; si no se adquiere, no se escribe.
+Validación: pruebas de reintento idéntico y fallo de adquisición de lock; YouTubeApproval 16/16 PASS; GitHub Actions run 43434653123 SUCCESS.
+
+H-AUD-043-002 — PUBLICACIÓN DEL ENLACE ANTES DE CONFIRMAR LA APROBACIÓN
+Severidad: ALTA — exposición de contenido pendiente/inconsistencia.
+Ubicación: Services/feedback.js, handleApproveVideoUnlocked_(payload) y publishApprovedVideo_(videoData).
+Evidencia: el destino recibía el videoUrl antes de que Feedbacks confirmara el estado approved. Un fallo de escritura posterior podía dejar un enlace visible mientras la solicitud continuaba pending.
+Corrección: se valida el destino sin mutarlo; después se persiste y relee el estado approved, comprobando ID, URL, tipo, referencia, aprobador, fecha y campos de resolución; solo entonces se publica. Si la escritura del destino falla, la solicitud permanece approved y un reintento completa la publicación. Si falla la persistencia de Feedbacks, no se publica.
+Validación: VideoApprovalPublishing 29/29 PASS, incluidos fallos de Feedbacks, destino y miniatura; reintentos de publicación; tres destinos Corte/PyS/Tutorial. GitHub Actions run 43434653123 SUCCESS, 52 suites, 731/731 PASS.
+
+CIERRE AUG-043: ambos hallazgos corregidos en GPSpedia2.2.5_work. No se modificó la rama base ni se ejecutaron deployments o escrituras en datos productivos. Las pruebas reales de Apps Script, Spreadsheet, YouTube y concurrencia física quedan en lista_beta_parte2.txt.
+================================================================================

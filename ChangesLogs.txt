@@ -933,3 +933,15 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - GitHub Actions run 43429506713 SUCCESS: 37 suites, 557 pruebas PASS, 0 fallos; Node --check de ui.js y módulos modificados PASS.
 - Beta diferida: navegador/DOM/IndexedDB reales, transiciones de rol, multi-cuenta, sesión remota y funciones globales. No se modificó RBAC backend ni se usaron endpoints productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-043 — Alineación de contratos FEEDBACK y ciclo de aprobación YouTube
+- Serialización de submitVideoForApproval con el mismo ScriptLock de aprobación/rechazo; reintento con opVideoId conserva la misma solicitud.
+- Aprobación persistida y verificada en Feedbacks antes de publicar la URL en Cortes, PyS o Tutoriales; reintento recupera publicación posterior a fallo sin mostrar URL mientras la solicitud siga pending.
+- FEEDBACK continúa siendo autoridad de sesión/rol; el cliente deja de transmitir userRole/nombre de revisor como fuente de autorización.
+- Se amplió RunServiceTests.mjs con suites de sesiones, estado, bloqueo, publicación, inicialización y contratos Node CLI de YouTube.
+- GitHub Actions run 43434653123: SUCCESS; Node.js 22.23.4; 52 suites; 731/731 PASS.
+- Commit de implementación y pruebas: 9a8b7ff4f47fab52ab2895233573b24e2267da05; correcciones de fixtures/contratos y adaptadores hasta HEAD 2d52bce610cc7e9d05feddbfc75c9546a156edc4.
+- Sin cambios en GPSpedia2.2.5 ni deployments/datos productivos. Validación de servicios reales queda para Beta.
+================================================================================
