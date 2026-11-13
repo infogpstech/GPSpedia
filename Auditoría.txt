@@ -1077,3 +1077,24 @@ Validación local/CI:
 Validación Beta pendiente: despliegues WRITE/ADMIN de prueba, Spreadsheet aislada con ActiveSessions/Users, sesiones inválidas/revocadas, cambio de rol entre validaciones, ausencia de escrituras/Drive ante rechazo, reserva de IDs y consulta mínima entre cuentas. No se invocaron endpoints ni datos productivos.
 Estado: CORREGIDO EN FUENTES — VALIDACIÓN LOCAL APROBADA.
 ================================================================================
+
+
+================================================================================
+H-AUD-042-012 — MEDIA — RESUELTO — ROL NO DEFINIDO EN ACCIONES DE APROBACIÓN/RECHAZO DEL INBOX
+Fecha: 2026-11-13.
+Ubicación: ui.js, renderInboxDetail(), llamadas approveVideo() y rejectVideo().
+Evidencia: el detalle obtenía currentUser y el contexto canónico, y canApproveInboxVideo_ usaba context.role, pero las llamadas de aprobación/rechazo pasaban userRole sin declaración local. La interacción podía lanzar ReferenceError aunque el botón estuviera visible para un rol autorizado.
+Corrección: declarar const userRole = context.role y usar el mismo valor para canApproveInboxVideo_(), approveVideo() y rejectVideo(). No se añadió confianza en el rol cliente; FEEDBACK sigue derivando/validando el actor y rol desde AUTH.
+Pruebas:
+- InboxRoleContract: 8/8 PASS; incluye que approve/reject reciben el mismo rol normalizado que controla visibilidad y que Jefe no puede aprobar/rechazar.
+- SessionUiRoleInvalidation: 13/13 PASS; cubre reset de sesión, cambios de cuenta/rol, guards directos y revalidación remota.
+- SessionProfileRefresh: 19/19 PASS.
+- GitHub Actions run 43429506713 SUCCESS: 37 suites, 557 pruebas PASS, 0 fallos; Node --check ui.js PASS.
+Estado: RESUELTO EN FUENTES Y VALIDADO EN CI.
+
+================================================================================
+ADENDA DE CONTINUIDAD — AUG-042 — 2026-11-13
+Se recupera como evidencia vigente el cierre consolidado del ciclo anterior (H-AUD-042-001 a 011, commit ef7bdc926ade691e22fa397a3b68267435d191cf, Auditoria_Archive/Auditoria_2026-11-10_parte_002.txt). Se conserva su alcance: logout token-aware, resetSessionUi_, revalidación remota, guards de apertura, revocación de sesiones al cambiar rol, auto-cambio de rol seguro, aislamiento por propietario y control de respuestas asíncronas.
+La revisión actual añadió y resolvió H-AUD-042-012. No se modificaron AUTH/FEEDBACK RBAC, api-config.js, state.js ni endpoints.
+Code Review: PASS. Safety & Side Effects: PASS; cambio funcional adicional limitado a la variable local de rol en renderInboxDetail. Validación Beta real sigue pendiente y está especificada en lista_beta_parte2.txt.
+================================================================================
