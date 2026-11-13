@@ -240,10 +240,10 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
   - Restauración Drive: solo acepta manifiestos completos; prepara y verifica staging antes de mover el contenido actual a rollback, conserva IDs de recursos originales y verifica la promoción/reversión. Los artefactos se conservan si la recuperación no puede verificarse.
   - UI: procesa lotes automáticamente con límite acotado y permite reanudar desde el mismo ID. runAction conserva respuestas in_progress y errores explícitamente reanudables. Se protege también el caso de archivos legítimos cuyo nombre coincide con el manifiesto.
   - Coordinación: backupDatabase, backupDrive, restoreDatabase y restoreDrive pasan por la lease compartida ADMIN de AUG-003.
-- **Validación local/CI:** GitHub Actions run 43423497570: Node.js 22.23.4, 26 suites y 342/342 PASS; AdminRestoreRecovery 18/18 y AdminBackupResumeUI 8/8. El ajuste posterior para evitar omitir archivos con nombre coincidente se está validando en el último CI antes del cierre.
+- **Validación local/CI:** GitHub Actions run 43424235639 SUCCESS sobre HEAD 10413822d6bf4b485aad04a0e7bc95b35a4a279c: Node.js 22.23.4, 26 suites y 342/342 PASS; AdminRestoreRecovery 18/18 y AdminBackupResumeUI 8/8. Node.js --check aprobó ui.js y las suites modificadas; Services/admin.js pasó parsing V8 con semántica de script Apps Script.
 - **Dependencia/relación:** AUG-003 resuelta en código; AUG-125 aporta la implementación base de staging/rollback y queda complementada por esta tarea. No se repitió la implementación ya cubierta por AUG-125.
 - **Validación Beta pendiente:** proyecto ADMIN y Spreadsheet/Drive aislados; backups DB/Drive reales, reanudación tras interrupción, cambio de origen entre lotes, rechazo de manifiestos incompletos/alterados, colisiones de nombres y fallos inyectados en cada fase. No ejecutar contra datos ni deployments productivos.
-- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA, sujeta a la verificación final del CI sobre el HEAD actualizado.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-019 — Restringir la terminal Drive al árbol Cortes
 - **Origen:** H-AUD-025-004. **Prioridad:** Media.
