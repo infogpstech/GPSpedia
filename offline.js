@@ -305,6 +305,7 @@ function getDriveAuditLocalPageSignature(files) {
 function buildDriveAuditMetaEntry(state, ownerId, auditId, key, pageCount, revision) {
     return {
         key, ownerId, auditId,
+        createdAt: Math.max(0, Number(state.createdAt) || Date.now()),
         serverAuditId: String(state.serverAuditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId || ''),
         revision, pageCount,
         cursor: state.cursor || null,
@@ -344,6 +345,7 @@ async function migrateLegacyDriveAuditState_(ownerId, legacy) {
     const legacyDuplicateCount = Math.max(0, legacy.files.length - files.length);
     for (let index = 0; index < files.length; index += DRIVE_AUDIT_PAGE_SIZE) pages.push(files.slice(index, index + DRIVE_AUDIT_PAGE_SIZE));
     const meta = Object.assign({}, legacy, { key: metaKey, ownerId, auditId,
+        createdAt: Math.max(0, Number(legacy.createdAt) || Number(legacy.lastScanAt) || Number(legacy.updatedAt) || Date.now()),
         serverAuditId: String((legacy.cursor && legacy.cursor.referenceCacheId) || legacy.inventoryAuditId || ''),
         revision: 1, pageCount: pages.length, updatedAt: Date.now() });
     meta.uiDuplicateFileCount = Math.max(0, Number(meta.uiDuplicateFileCount) || 0) + legacyDuplicateCount;
@@ -368,7 +370,7 @@ async function migrateLegacyDriveAuditState_(ownerId, legacy) {
                         pageIndex, files: page, signature: getDriveAuditLocalPageSignature(page), updatedAt: Date.now() });
                 });
                 store.put(meta);
-                store.put({ key: latestKey, ownerId, auditId, updatedAt: Date.now() });
+                store.put({ key: latestKey, ownerId, auditId, createdAt: meta.createdAt, updatedAt: Date.now() });
                 if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds,
                     signature: JSON.stringify(confirmedIds), updatedAt: Date.now() });
                 store.delete(legacyKey);
@@ -415,7 +417,18 @@ export async function saveDriveAuditState(state, userId) {
             const saveMeta = pageCount => {
                 const nextMeta = buildDriveAuditMetaEntry(state, ownerId, auditId, metaKey, pageCount, currentRevision + 1);
                 store.put(nextMeta);
-                if (!current) store.put({ key: latestKey, ownerId, auditId, revision: nextMeta.revision, updatedAt: Date.now() });
+                if (!current) {
+                    const latestRequest = store.get(latestKey);
+                    latestRequest.onsuccess = () => {
+                        const latest = latestRequest.result;
+                        const latestCreatedAt = Number(latest && latest.createdAt) || 0;
+                        if (!latest || nextMeta.createdAt > latestCreatedAt ||
+                            (nextMeta.createdAt === latestCreatedAt && String(latest.auditId || '') < auditId)) {
+                            store.put({ key: latestKey, ownerId, auditId, revision: nextMeta.revision,
+                                createdAt: nextMeta.createdAt, updatedAt: Date.now() });
+                        }
+                    };
+                }
                 const confirmedRequest = store.get(confirmedKey);
                 confirmedRequest.onsuccess = () => {
                     const existingConfirmed = confirmedRequest.result;
