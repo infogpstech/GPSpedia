@@ -857,3 +857,9 @@ Estado: EN PROGRESO hasta CI y revisión del resultado.
 ADENDA DE VALIDACIÓN — AUG-142 — 2026-11-13
 - Primer CI run 43416559372: fallo exclusivo en la expectativa documental del estado listo; 11/12 verificaciones de la suite nuevas PASS y node --check PASS. Se corrige la expectativa a dataset.printReady y se evita un rechazo no gestionado si falla la preparación.
 - Reejecutar regresión completa tras el commit correctivo.
+
+
+ADENDA DE CIERRE — AUG-142 — 2026-11-13
+- CI run 43416653823 SUCCESS; Node.js 22.23.4; 22 suites, 299/299 PASS; PrintSheetResourceReadiness 12/12 PASS.
+- La preparación espera carga/decodificación, gestiona errores/timeout, muestra fallback y habilita imprimir tras la paginación y la carga de recursos clonados. beforeprint no mide antes del estado listo.
+- AUG-142: COMPLETADA CON VALIDACIÓN DIFERIDA. La verificación visual de PDF/navegador, offline y dispositivos reales queda para Beta.

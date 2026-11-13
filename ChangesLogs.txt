@@ -789,3 +789,11 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Primer CI detectó una expectativa de test que buscaba un atributo HTML inexistente; la implementación usa correctamente dataset.printReady. Se alinea la aserción con el contrato real.
 - El manejo de error de preparación ahora deja el botón deshabilitado y presenta el mensaje de recuperación sin propagar un rechazo no gestionado.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-142 — VALIDACIÓN FINAL CI
+- Primer CI run 43416559372 falló únicamente por una expectativa de test que buscaba un atributo en vez de dataset.printReady. Corregida la aserción y evitado el rechazo no gestionado en error de preparación.
+- GitHub Actions run 43416653823: SUCCESS sobre b04341a28d14917cf86d42ecc494d751df7c86a7; Node.js 22.23.4.
+- Regresión completa: 22 suites, 299/299 PASS, 0 fallos. PrintSheetResourceReadiness: 12/12 PASS.
+================================================================================
