@@ -120,6 +120,8 @@ check("Las operaciones del gestor validan referencias globales y no solo Cortes"
     const scanner=fnSource(admin,"collectActiveDriveReferences");
     assert.match(scanner,/getSpreadsheet\(\)\.getSheets\(\)/);
     assert.match(scanner,/getDisplayValues\(\)/);
+    assert.match(scanner,/getValues\(\)/);
+    assert.match(scanner,/getImages\(\)/);
     assert.match(scanner,/getFormulas\(\)/);
     assert.match(scanner,/getRichTextValues\(\)/);
     assert.match(scanner,/SHEET_NAMES\.IMAGENES_REEMPLAZADAS/);
