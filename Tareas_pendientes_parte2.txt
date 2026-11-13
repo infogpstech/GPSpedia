@@ -212,9 +212,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 ### AUG-124 — Unificar esquema e identidad de Tutoriales entre FEEDBACK y CATALOG
 - Origen: H-AUD-019-003. Prioridad: Alta.
 - Evidencia: Services/catalog.js:61–69, 339–347; Services/feedback.js:23–30, 1498–1520 y 2000–2046.
-- Problema: addTutorial crea/usa «Tutoriales» con cinco columnas, pero CATALOG lee «Tutorial» con siete; la edición puede caer en «Tutorial» y sobrescribir ID/columnas.
-- Criterios: contrato único de hoja y encabezados; validar esquema antes de escribir; usar ID estable; migración compatible; probar hoja vacía, esquema actual, registros antiguos, duplicados de tema y lectura posterior por CATALOG.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Revisión: el hallazgo ya estaba resuelto funcionalmente por AUG-092 antes de esta entrada. FEEDBACK y CATALOG usan exclusivamente la hoja `Tutorial`; el contrato conserva A:G y extiende H como `Colaborador` sin reinterpretar datos históricos. Alta/edición usan ID estable, deduplicación de tema, ScriptLock y persistencia verificada; la identidad se deriva de la sesión y perfil Users. CATALOG mapea las ocho columnas.
+- Refuerzo de regresión AUG-124: `TutorialIntegrity.js` ejecuta la lectura real de `handleGetCatalogData` con filas A:H y A:G, verifica alta sobre esquema actual, migración de A:G y ausencia de la hoja plural `Tutoriales`.
+- Validación local: TutorialIntegrity 25/25 PASS; VideoApprovalPublishing 27/27 PASS; SharedMutationCoordinator 32/32 PASS; parsing de los cuatro servicios y tres suites PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-125 — Hacer recuperables las restauraciones de DB y Drive
 - Origen: H-AUD-019-004. Prioridad: Alta.
