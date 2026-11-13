@@ -863,3 +863,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - CI run 43418371583 SUCCESS, Node.js 22.23.4: 25 suites, 331/331 PASS, 0 fallos; PrintSheetLayoutModes 9/9 PASS.
 - Verificación visual en navegadores/PDF con combinaciones reales queda para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-146 — CORRECCIÓN DE TRAZABILIDAD DE AUD-T-021
+- Se verificaron los mensajes y diffs de los commits asociados a la ficha imprimible.
+- Se excluyó 6d7fbb9c962ffb5622a209fa160b79ca0020c494: corresponde al panel de desarrollador y al formulario PyS; no modifica el flujo de impresión.
+- Fuentes de impresión confirmadas: 199ee4bee2f958dda47952ca12a72f4ae825379d (layouts), cbbcb0cbd00fb78a4f6438baabaa13e0ab69ef18 (paginación/cuadrículas) y 04c86ce64f98b9e65d2dd0d82ed2d3ee3a2be51b (layout adaptativo/prioridad), todos con cambios de ui.js dentro de la ficha imprimible.
+- La corrección activa se incorporó como adenda a Plan_auditoría/Plan_Maestro_Implementacion.md. El archivo histórico en Olds/Documentacion_Legacy permanece intacto.
+- Sin cambios de código funcional, servicios, endpoints, configuración, permisos ni datos.
+================================================================================
