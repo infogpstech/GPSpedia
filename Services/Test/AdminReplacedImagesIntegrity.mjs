@@ -192,6 +192,17 @@ check("El buscador de historial rechaza IDs duplicados y devuelve el ancho compl
     assert.equal(result.values.length,23);
 });
 
+check("La marca manual en uso requiere revisión, identidad y verificación del archivo",()=>{
+    const source=fnSource(admin,"handleMarkReplacedImageInUse");
+    assert.match(source,/requiere_revision/);
+    assert.match(source,/getReplacedImageRecordIdentity_/);
+    assert.match(source,/file\.isTrashed\(\)/);
+    assert.match(source,/getSingleParentFolderInsideCortes/);
+    assert.match(source,/setReplacedImageHistoryStatusVerified_\(sheet, existing\.rowIndex, "en_uso"\)/);
+    assert.ok(admin.includes('case \'markReplacedImageInUse\':'));
+    assert.ok(ui.includes("markReplacedImageInUse"));
+});
+
 check("La matriz de estados reconoce todos los estados históricos e inventarios",()=>{
     const api=buildHelpers();
     for(const status of ["historica","restablecida","en_papelera","requiere_revision","cancelada"])
