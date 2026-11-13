@@ -1111,3 +1111,15 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - AdminReplacedImagesIntegrity 19/19 PASS; GitHub Actions run 43481271693 SUCCESS: 70 suites, 973/973 pruebas, 0 fallos.
 - Las pruebas externas reales quedan para Beta aislada; no se modificaron deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-027 — Gestión global de imágenes (implementación parcial)
+- Administración de imágenes: sustituir las comprobaciones Cortes-específicas por collectActiveDriveReferences() en consulta, restauración histórica, papelera, movimiento, descarga, inventario, organización y auditoría Drive.
+- Restauración histórica: distinguir referencias por hoja, fila y columna.
+- Añadir estado persistente en_uso y acción markReplacedImageInUse restringida al Desarrollador; preservar su protección en inventario y auditoría automática.
+- Actualizar texto del gestor para explicar que las referencias se contrastan en todas las hojas del Spreadsheet.
+- Añadir pruebas de contrato para llamadas al escáner global y protección manual.
+- Estado: parcial; faltan acciones manuales de papelera/restauración desde papelera y eliminación definitiva. CI no confirmado; no hubo operaciones productivas ni deployment.
+Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
+================================================================================
