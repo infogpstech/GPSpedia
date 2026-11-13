@@ -923,3 +923,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Evidencia histórica: 160/160 pruebas y parsing V8 17/17 PASS. La validación Beta de Apps Script/Spreadsheet/Drive, OAuth/YouTube, navegador/IndexedDB y concurrencia física sigue pendiente.
 - Nota de mantenimiento: FeedbackWriteSecurity.js es una suite histórica fuera del runner actual; fixtures de PyS/reportMetadata requieren actualización antes de usarla como evidencia CI. No se considera que la ejecución CI actual la haya ejecutado.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-042 — SINCRONIZACIÓN DE ROL Y LIMPIEZA DE ESTADO PRIVILEGIADO
+- Se recuperó el cierre de implementación existente en Auditoria_Archive/Auditoria_2026-11-10_parte_002.txt y commit ef7bdc926ade691e22fa397a3b68267435d191cf: logout token-aware; reset de modales/cachés; guards por rol/sesión; revocación de todas las sesiones ante cambio de Privilegios; auto-cambio de rol seguro; revalidación remota en focus/visibility/online e intervalo visible; aislamiento de DriveAuditState por ownerId; guardas de generaciones/contexto y respuestas asíncronas.
+- Corrección adicional 2026-11-13: ui.js define userRole = context.role en renderInboxDetail y lo usa en approveVideo/rejectVideo, eliminando ReferenceError y unificando el rol con el guard de visibilidad.
+- Services/Test/SessionUiRoleInvalidation.js (13), InboxRoleContract.js (8) y SessionProfileRefresh.js (19) integradas en RunServiceTests.mjs.
+- GitHub Actions run 43429506713 SUCCESS: 37 suites, 557 pruebas PASS, 0 fallos; Node --check de ui.js y módulos modificados PASS.
+- Beta diferida: navegador/DOM/IndexedDB reales, transiciones de rol, multi-cuenta, sesión remota y funciones globales. No se modificó RBAC backend ni se usaron endpoints productivos.
+================================================================================
