@@ -837,3 +837,9 @@ Nueva suite: Services/Test/PrintSheetWarningIndicator.mjs (9 contratos), integra
 Estado: EN PROGRESO hasta ejecutar CI y revisar su resultado.
 Siguiente en secuencia de impresión: AUG-142 (disponibilidad de recursos), seguida de AUG-143 (paginación por altura real).
 ================================================================================
+
+
+ADENDA DE CIERRE — AUG-141 — 2026-11-13
+- CI run 43416162004 SUCCESS; 21 suites, 287/287 PASS; PrintSheetWarningIndicator 9/9 PASS en Node.js 22.23.4.
+- SVG local Check Engine, proporción preservada, aviso después de imagen y estado exacto activaTestigoN===true. No se añadió campo no aprobado a la hoja ni dependencia Font Awesome.
+- AUG-141: COMPLETADA CON VALIDACIÓN DIFERIDA. Visualización en navegador/PDF pendiente de Beta.

@@ -381,7 +381,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-021-002. **Prioridad:** Media.
 - **Problema:** la ficha no incorpora una imagen específica de Check Engine; el aviso se inserta dentro de .tech-item-info antes de la imagen y el documento independiente no carga Font Awesome.
 - **Criterios:** definir el recurso/campo autorizado de Check Engine; preservar proporción; colocar el aviso debajo de la imagen; incluir iconografía/estilos locales cuando se requieran; probar activo/inactivo y cortes con/sin imagen.
-- **Estado:** EN PROGRESO; implementación incorporada y suite local preparada. Cierre sujeto a CI.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA. CI run 43416162004: SUCCESS; Node.js 22.23.4; 21 suites, 287/287 PASS; PrintSheetWarningIndicator 9/9 PASS. Inspección visual real y PDF quedan para Beta.
 
 ### AUG-142 — Asegurar la disponibilidad de todos los recursos antes de imprimir
 - **Origen:** H-AUD-021-003. **Prioridad:** Media.
