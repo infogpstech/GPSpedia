@@ -6684,6 +6684,9 @@ export async function openReplacedImagesModal() {
             const canManage = referenceSafe && (isUnused
                 ? status === 'sin_uso_detectado'
                 : ['historica', 'restablecida'].includes(status));
+            const canTrash = referenceSafe && (canManage || status === 'requiere_revision');
+            const canRestoreFromTrash = referenceSafe && status === 'en_papelera';
+            const canPermanentlyDelete = referenceSafe && ['en_papelera', 'eliminacion_pendiente'].includes(status);
             const card = document.createElement('article');
             card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
 
@@ -6837,8 +6840,43 @@ export async function openReplacedImagesModal() {
                     await loadData();
                 });
             });
-            deleteButton.disabled = !canManage;
+            deleteButton.disabled = !canTrash;
             actions.appendChild(deleteButton);
+
+            if (status === 'en_papelera') {
+                const restoreTrashButton = createActionButton('fa-trash-arrow-up', 'Restaurar de papelera', 'btn-primary', async () => {
+                    if (!confirm('¿Restaurar este archivo en Google Drive? Esta acción no volverá a asociarlo automáticamente a un campo del Spreadsheet.')) return;
+                    await runButtonAction(restoreTrashButton, 'Restaurando...', async () => {
+                        const response = await routeAction('restoreReplacedImageFromTrash', {
+                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                        });
+                        if (!isCurrentRequest()) return;
+                        mostrarNotificacion(response.message || 'Archivo restaurado desde papelera.', 'success');
+                        await loadData();
+                    });
+                });
+                restoreTrashButton.disabled = !canRestoreFromTrash;
+                actions.appendChild(restoreTrashButton);
+            }
+
+            if (status === 'en_papelera' || status === 'eliminacion_pendiente') {
+                const permanentDeleteButton = createActionButton('fa-trash-can', status === 'eliminacion_pendiente' ? 'Verificar eliminación' : 'Eliminar definitivamente', 'btn-danger', async () => {
+                    const warning = status === 'eliminacion_pendiente'
+                        ? '¿Verificar y finalizar la eliminación definitiva de este archivo?'
+                        : 'Esta acción es irreversible. ¿Eliminar definitivamente el archivo de Google Drive?';
+                    if (!confirm(warning + ' El servidor volverá a comprobar que no existan referencias activas.'));
+                    else await runButtonAction(permanentDeleteButton, 'Eliminando...', async () => {
+                        const response = await routeAction('permanentlyDeleteReplacedImage', {
+                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                        });
+                        if (!isCurrentRequest()) return;
+                        mostrarNotificacion(response.message || 'Eliminación definitiva verificada.', 'success');
+                        await loadData();
+                    });
+                });
+                permanentDeleteButton.disabled = !canPermanentlyDelete;
+                actions.appendChild(permanentDeleteButton);
+            }
 
             if (status === 'requiere_revision') {
                 const markInUseButton = createActionButton('fa-shield-halved', 'Marcar en uso', 'btn-secondary', async () => {
