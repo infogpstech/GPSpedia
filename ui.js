@@ -3920,7 +3920,8 @@ function deactivateLegalModalFocus_(modal, restoreFocus = true) {
 
 function activateLegalModalFocus_(modal, options = {}) {
     if (!modal || legalModalFocusCleanups_.has(modal)) return;
-    const previousFocus = document.activeElement;
+    const requestedReturnFocus = options.returnFocus;
+    const previousFocus = requestedReturnFocus && requestedReturnFocus.isConnected ? requestedReturnFocus : document.activeElement;
     const initialFocus = options.initialFocus || null;
     const allowEscape = options.allowEscape === true;
     const close = typeof options.close === 'function' ? options.close : () => { modal.style.display = 'none'; };
@@ -4093,8 +4094,20 @@ function initializeRichTextModeControl_() {
 }
 
 /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
-const openDevToolsModal_ = setupModal('dev-tools-modal', () => {
-    document.getElementById('dev-tools-modal').style.display = 'flex';
+const openDevToolsModal_ = setupModal('dev-tools-modal', (options = {}) => {
+    const modal = document.getElementById('dev-tools-modal');
+    modal.style.display = 'flex';
+    activateLegalModalFocus_(modal, {
+        initialFocus: modal.querySelector('#dev-tools-title'),
+        returnFocus: options.returnFocus,
+        allowEscape: true,
+        close: () => {
+            const overlayId = modal.dataset.gpOverlayHistoryId;
+            const historyManager = window.overlayHistory;
+            if (overlayId && historyManager && historyManager.has(overlayId)) historyManager.close(overlayId);
+            else modal.style.display = 'none';
+        }
+    });
     initializeRichTextModeControl_();
     initAdminPanelListeners();
     if (window.triggerAdminPanelPing) {

@@ -862,7 +862,8 @@ async function initializeApp() {
     if (devToolsBtn) {
         devToolsBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            ui.closeSideMenuAndRun(() => ui.openDevTools());
+            const focusReturnTarget = document.getElementById('hamburger-btn') || devToolsBtn;
+            ui.closeSideMenuAndRun(() => ui.openDevTools({ returnFocus: focusReturnTarget }));
         });
     }
 

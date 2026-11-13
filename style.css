@@ -3482,3 +3482,19 @@ ul[data-gp-marker="bullet"] > li::before { content: "•"; }
     outline: 2px solid var(--accent-color, #0d6efd);
     outline-offset: 3px;
 }
+
+
+/* Accesibilidad del panel de desarrollador */
+#dev-tools-modal .info-close-btn {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    line-height: 1;
+    font-family: inherit;
+}
+
+#dev-tools-modal .info-close-btn:focus-visible,
+#dev-tools-modal #dev-tools-title:focus-visible {
+    outline: 2px solid var(--accent-color, #0d6efd);
+    outline-offset: 3px;
+}

@@ -203,10 +203,10 @@
 </div>
 
 <!-- ========= MODAL DE DESARROLLADOR ========= -->
-<div id="dev-tools-modal" class="info-modal">
+<div id="dev-tools-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="dev-tools-title">
     <div class="info-modal-content dev-tools-modal-content">
-        <span class="info-close-btn">&times;</span>
-        <h2 class="dev-tools-title"><i class="fa-solid fa-screwdriver-wrench"></i> Opciones de desarrollador</h2>
+        <button type="button" class="info-close-btn" aria-label="Cerrar opciones de desarrollador">&times;</button>
+        <h2 id="dev-tools-title" class="dev-tools-title" tabindex="-1"><i class="fa-solid fa-screwdriver-wrench"></i> Opciones de desarrollador</h2>
 
         <div class="dev-tools-tabs">
             <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" checked>

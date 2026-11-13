@@ -125,9 +125,10 @@ test('ui.js registra el menú idempotentemente y serializa su cierre', () => {
 
 test('Inbox, Dashboard, Changelog y DevTools esperan el cierre del menú', () => {
     const source = readFileSync(new URL('../../main.js', import.meta.url), 'utf8');
-    for (const action of ['openInbox', 'openDashboard', 'openChangeLog', 'openDevTools']) {
+    for (const action of ['openInbox', 'openDashboard', 'openChangeLog']) {
         assert.ok(source.includes(`closeSideMenuAndRun(() => ui.${action}())`), 'Falta: ' + action);
     }
+    assert.match(source, /closeSideMenuAndRun\(\(\) => ui\.openDevTools\(\{ returnFocus: focusReturnTarget \}\)\)/);
 });
 
 test('las vistas administrativas invalidan operaciones y cierran el lightbox hijo', () => {
