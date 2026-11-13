@@ -1,6 +1,6 @@
 // ============================================================================
 // GPSpedia — Cliente servidor-a-servidor del coordinador compartido.
-// Incluir este archivo en cada proyecto AUTH, USERS, WRITE, ADMIN y FEEDBACK.
+// Incluir este archivo en cada proyecto AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES.
 // ============================================================================
 
 function createSharedMutationClient_(dependencies) {
