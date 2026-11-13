@@ -4400,6 +4400,15 @@ function initAdminPanelListeners() {
                     setProgress(100);
                     log(`[SISTEMA] Acción '${action}' finalizada con éxito.`);
                     return res;
+                } else if (action === 'backupDrive' &&
+                    (res.status === 'in_progress' || (res.status === 'error' && res.resumable === true))) {
+                    if (res.logs) await playLogs(res.logs);
+                    setProgress(0);
+                    log(res.status === 'in_progress'
+                        ? `[ESTADO] ${res.message || 'El respaldo de Drive continúa por lotes.'}`
+                        : `[ADVERTENCIA] ${res.message || 'El respaldo de Drive puede reanudarse con el mismo ID.'}`,
+                        false, res.status === 'error');
+                    return res;
                 } else {
                     setProgress(0);
                     log(`[ERROR] Acción fallida: ${res.message}`, false, true);
