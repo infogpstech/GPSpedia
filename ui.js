@@ -254,10 +254,13 @@ function clearInMemoryEditBackup_() {
     editedItemBuffer = null;
 }
 
-async function saveFieldSilently(vehicleId, fieldName, value) {
+async function saveFieldSilently(vehicleId, fieldName, value, expectedCurrentValue) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        const result = await routeAction("updateVehicleField", { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
+        const result = await routeAction("updateVehicleField", {
+            vehicleId, fieldName, value, enforceExpectedCurrentValue: true, expectedCurrentValue,
+            ...getDeveloperSessionPayload()
+        });
         if (!result || result.status !== "success") {
             throw new Error(result && result.message || "El servicio no confirmó la restauración del campo.");
         }
@@ -421,24 +424,19 @@ export async function exitModalEditMode(saveChanges, vehicleId, skipReopen = fal
             if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
 
             const backupSnapshot = JSON.parse(JSON.stringify(originalItemBackup));
-            let currentEditItem = editedItemBuffer && String(editedItemBuffer.id) === cleanVehicleId
-                ? editedItemBuffer
-                : null;
-            if (!currentEditItem) {
-                const currentResponse = await routeAction("getCatalogData");
-                if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
-                if (!currentResponse || !currentResponse.data || !Array.isArray(currentResponse.data.cortes)) {
-                    throw new Error("No se pudo leer el catálogo para identificar los campos pendientes de restauración.");
-                }
-                currentEditItem = currentResponse.data.cortes.find(item => String(item.id) === cleanVehicleId) || null;
-                if (!currentEditItem) throw new Error("El vehículo ya no aparece en el catálogo; no se inició la restauración.");
+            const currentResponse = await routeAction("getCatalogData");
+            if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
+            if (!currentResponse || !currentResponse.data || !Array.isArray(currentResponse.data.cortes)) {
+                throw new Error("No se pudo leer el catálogo para identificar los campos pendientes de restauración.");
             }
+            const currentEditItem = currentResponse.data.cortes.find(item => String(item.id) === cleanVehicleId) || null;
+            if (!currentEditItem) throw new Error("El vehículo ya no aparece en el catálogo; no se inició la restauración.");
             const fieldsToRestore = getEditBackupFieldsToRestore(
                 backupSnapshot, currentEditItem, ADMIN_MODAL_EDIT_FIELDS
             );
             for (const field of fieldsToRestore) {
                 if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
-                const restored = await saveFieldSilently(cleanVehicleId, field, backupSnapshot[field]);
+                const restored = await saveFieldSilently(cleanVehicleId, field, backupSnapshot[field], currentEditItem[field]);
                 if (!isCurrentUiSessionContext_(editSession)) throw new Error("EDIT_SESSION_CHANGED");
                 if (!restored) throw new Error("FIELD_RESTORE_FAILED");
             }
