@@ -7686,6 +7686,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 if (driveId) ambiguousDriveIds.add(driveId);
             }
             if (status === "en_uso") manuallyProtectedDriveIds.add(driveId);
+            if (["requiere_revision", "eliminacion_pendiente", "en_papelera"].includes(status) && driveId) historicalDriveIds.add(driveId);
             if (duplicateRecordIds.has(recordId) && driveId) duplicateDriveIds.add(driveId);
             const origin = String(row[column("origen_registro") - 1] || "");
             if (origin === "auditoria_drive") {
