@@ -1949,3 +1949,47 @@ En un proyecto FEEDBACK y Spreadsheet aislados:
 6. Confirmar que solo Desarrollador puede retirar relaciones y que el rol enviado por el cliente no sustituye la autorización de sesión.
 
 Registrar IDs sintéticos, orden/resultado de cada ejecución y valores antes/después. No usar endpoints ni datos productivos; no desplegar a producción.
+
+
+## AUG-129 — Validación de edición ADMIN y protección del ID
+
+Antes de ejecutar cualquier prueba, comprobar que el repositorio y la rama son los autorizados, que no hay cambios locales y sincronizar únicamente mediante fast-forward:
+
+```bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;;
+  *) echo "El remoto origin no corresponde a $EXPECTED_REPO"; exit 1 ;;
+esac
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Hay cambios locales sin guardar; se detiene la sincronización."
+  exit 1
+fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+```
+
+Prueba local reproducible:
+
+```bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const admin=readFileSync("Services/admin.js","utf8"); const tests=readFileSync("Services/Test/AdminModalEditIntegrity.js","utf8"); const run=new Function("adminSource",tests+"; return runAdminModalEditIntegrityTests(adminSource);"); const result=run(admin); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+```
+
+En un proyecto ADMIN y Spreadsheet completamente aislados, con filas sintéticas:
+1. Intentar editar `id`, `timestamp`, `contadorBusqueda`, `videoGuiaDesarmeUrl` y campos arbitrarios; verificar rechazo y ausencia de escrituras.
+2. Probar categorías, tipos de encendido, tipos de corte y configuraciones Relay válidos/no registrados; comprobar que los dominios inválidos no alteran la fila.
+3. Probar tipos incorrectos, longitudes máximas y excesivas, años no enteros/fuera de rango y combinaciones anoDesde/anoHasta incoherentes.
+4. Probar IDs inexistentes y duplicados tanto en edición ordinaria como en colección VIN; comprobar que no se modifica ninguna fila ambigua.
+5. Inyectar fallos de setValue/flush y verificar restauración del valor anterior, liberación del lock y respuesta de error.
+6. Confirmar que ID, fórmulas/campos calculados y filas vecinas permanecen intactos; verificar edición permitida para roles autorizados y rechazo de roles no autorizados.
+7. Probar imágenes válidas de Drive y referencias externas/múltiples inválidas; confirmar que las operaciones de carga/reemplazo existentes siguen funcionando.
+
+No utilizar datos productivos ni URLs operativas. No crear ni reemplazar deployments live durante esta validación.
