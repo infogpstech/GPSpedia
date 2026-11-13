@@ -150,6 +150,8 @@ runGroup('38','INTEGRATION',()=>{
  runCli('AUG-025 telemetría temporal, buckets y truncamiento','Services/Test/ServiceMetricsTelemetry.mjs');
  runCli('AUG-026 integridad, estados y recuperación del historial de imágenes','Services/Test/AdminReplacedImagesIntegrity.mjs');
  runCli('AUG-031 persistencia incremental, migración y aislamiento de auditorías IndexedDB','Services/Test/AdminDriveAuditIndexedDB.mjs');
+ runCli('AUG-033 captura optimizada de referencias, presupuesto y memoización de Drive','Services/Test/AdminReplacedImagesIntegrity.mjs');
+ runCli('AUG-033 timeout y reintentos idempotentes de lotes de auditoría','Services/Test/AdminDriveAuditClientRetry.mjs');
  runCli('AUG-027 ciclo de papelera, restauración, eliminación definitiva, permisos e idempotencia','Services/Test/AdminImageTrashLifecycle.mjs');
  runCli('AUG-023 contrato y validación de acciones ADMIN createSheet/addColumn','Services/Test/AdminSheetActionsContract.mjs');
  runCli('AUG-150 errores HTTP, red, JSON y aplicación en ADMIN','Services/Test/RouteActionErrors.mjs');
