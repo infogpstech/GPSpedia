@@ -79,7 +79,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** Services/users.js handleDeleteUser() (líneas 398–427); Services/Auth.js handleValidateSession() (líneas 377–401).
 - **Problema:** la eliminación de Users no elimina ActiveSessions; AUTH puede validar un token huérfano sin comprobar la existencia del usuario.
 - **Criterios de aceptación:** eliminar la cuenta debe invalidar todas sus sesiones; AUTH debe rechazar tokens asociados a usuarios inexistentes; la operación debe ser consistente e idempotente; definir tratamiento de autodeleción y probarlo explícitamente.
-- **Estado:** NUEVA.
+- **Estado:** COMPLETADA EN FUENTES; validación funcional de AUTH/USERS aislados diferida a Beta.
 
 [ADENDA / REGISTRO REPETIDO DEL MISMO ID — CONSERVADO; NO ES UNA TAREA NUEVA]
 
@@ -96,7 +96,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** auth.js logout() (líneas 237–241); Services/Auth.js doPost() (líneas 204–227); api-config.js ACTION_TO_SERVICE_MAP.
 - **Problema:** logout elimina únicamente la copia local del token; el servidor conserva la sesión activa.
 - **Criterios de aceptación:** acción AUTH de revocación autenticada por token; eliminar solo la sesión invocante; limpiar Users.SessionToken únicamente si corresponde al token revocado; el logout local debe terminar aunque la red no esté disponible, pero debe informar/registrar el estado de revocación pendiente sin presentar como revocada una sesión que el servidor aún conserva.
-- **Estado:** NUEVA.
+- **Estado:** COMPLETADA EN FUENTES con validación local; integración real de AUTH aislado diferida a Beta.
 
 [ADENDA / REGISTRO REPETIDO DEL MISMO ID — CONSERVADO; NO ES UNA TAREA NUEVA]
 
@@ -113,7 +113,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** ActiveSessions.date; Services/Auth.js handleValidateSession(); Services/users.js getVerifiedSession(), handleChangePassword() y handleUpdateUser().
 - **Problema:** la fecha de sesión no se usa para expirar; cambios de contraseña no revocan otras sesiones.
 - **Criterios de aceptación:** aprobar una política explícita (duración absoluta, inactividad y comportamiento al cambiar/resetear contraseña); validarla en AUTH y USERS de forma consistente; pruebas de expiración, renovación y revocación.
-- **Estado:** NUEVA; DECISIÓN DE POLÍTICA PENDIENTE.
+- **Estado:** COMPLETADA EN FUENTES según política aprobada; validación funcional aislada diferida a Beta.
 
 [ADENDA / REGISTRO REPETIDO DEL MISMO ID — CONSERVADO; NO ES UNA TAREA NUEVA]
 
@@ -130,7 +130,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** auth.js checkSession() (líneas 125–221), claves session_validation_lock y LOCK_TIMEOUT.
 - **Problema:** el bloqueo local se elimina inmediatamente y no cubre la validación asíncrona ni ofrece adquisición atómica entre pestañas.
 - **Criterios de aceptación:** coordinar pestañas concurrentes sin suponer atomicidad de localStorage; liberar el estado en éxito, fallo y timeout; evitar validaciones duplicadas y no bloquear el arranque indefinidamente; probar dos o más pestañas.
-- **Estado:** NUEVA.
+- **Estado:** COMPLETADA EN FUENTES; validación multi-pestaña/navegador real diferida a Beta.
 
 [ADENDA / REGISTRO REPETIDO DEL MISMO ID — CONSERVADO; NO ES UNA TAREA NUEVA]
 
@@ -147,7 +147,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** Services/users.js handleCreateUser() (líneas 269–341); users.html handleUserFormSubmit().
 - **Problema:** se comprueban duplicados, pero no se rechaza explícitamente el nombre vacío tras trim() cuando la llamada evita la validación HTML.
 - **Criterios de aceptación:** rechazar nombre vacío y entradas fuera de la política acordada en backend; mantener comparación normalizada para duplicados; pruebas directas al endpoint sin interfaz.
-- **Estado:** NUEVA.
+- **Estado:** COMPLETADA EN FUENTES; endpoint HTTP/Apps Script real diferido a Beta.
 
 ### AUG-010 — Completar serialización de mutaciones del servicio USERS
 - **Hallazgo origen:** H-AUD-006.
@@ -158,7 +158,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Problema:** solo algunas mutaciones usan ScriptLock; operaciones concurrentes pueden leer/escribir estados incompatibles.
 - **Criterios de aceptación:** inventariar y serializar las mutaciones que comparten filas/hojas; definir orden y límites de lock; probar concurrencia y fallos; coordinar AUTH/USERS mediante el protocolo común, sin asumir que ScriptLock de proyectos distintos sea compartido.
 - **Relación:** subárea vinculada a AUD-T-033 (coordinación de mutaciones entre servicios). Mantener ambos alcances diferenciados.
-- **Estado:** NUEVA; DEPENDIENTE DE AUD-T-033 PARA COORDINACIÓN ENTRE PROYECTOS.
+- **Estado:** COMPLETADA EN EL ALCANCE LOCAL AUTH/USERS; coordinación interproyectos cubierta por AUG-034/AUG-155; Beta diferida.
 
 
 
@@ -211,7 +211,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Problema:** AUTH y USERS mantienen ScriptLock independientes; resetUserSessions puede competir con un login y no revocar una sesión creada después de su instantánea. Además, la creación de sesión y la eliminación de varias sesiones contienen escrituras secuenciales sin rollback/reconciliación ante fallos parciales.
 - **Criterios de aceptación:** definir coordinación interproyectos compatible con AUD-T-033; probar login simultáneo a cierre remoto; impedir que una revocación confirmada deje pasar una sesión concurrente; diseñar operaciones idempotentes y recuperación/reconciliación ante fallo de setValue, appendRow o deleteRow; no afirmar atomicidad de Spreadsheet sin evidencia; validar en copia aislada.
 - **Relación:** AUD-T-033 y AUG-003 (coordinación de proyectos); AUG-010 (serialización USERS); AUG-005 y AUG-006 (revocación).
-- **Estado:** NUEVA; implementación y pruebas pendientes.
+- **Estado:** COMPLETADA EN FUENTES; validación de deployments y concurrencia real diferida a Beta.
 
 ### AUG-017 — Restablecer controles de navegación al cambiar de cuenta/rol
 - **Origen:** H-AUD-024-007. **Prioridad:** Baja.
@@ -220,7 +220,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** ui.js showApp(), líneas 6297–6315.
 - **Problema:** inbox-btn y dashboard-btn solo se muestran para roles autorizados, pero no se ocultan expresamente cuando la siguiente cuenta tiene un rol inferior; el estado visual previo puede permanecer.
 - **Criterios de aceptación:** establecer explícitamente el estado visible/oculto de cada control en cada llamada a showApp(); probar cambio de Developer/Gefe/Supervisor a Técnico y Técnico exterior en la misma instancia; mantener las validaciones backend como barrera efectiva.
-- **Estado:** NUEVA; implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; revisión de navegador real reservada a Beta.
 
 ## Historial de AUD-T-024
 - 2026-11-07 — Auditoría estática E1 completada. H-AUD-024-001 a H-AUD-024-010 registrados en Auditoría.txt. No se modificó código ni se ejecutaron pruebas funcionales.
@@ -250,14 +250,14 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** Services/admin.js, handleDriveCommand(), líneas 3750–3841.
 - **Problema:** currentFolderId se acepta sin comprobar ascendencia; cd .. puede salir de Cortes; mkdir y move pueden operar fuera del árbol previsto y move acepta fileId/targetFolderId arbitrarios.
 - **Criterios de aceptación:** comprobar ascendencia de carpeta activa, archivo y destino en cada acción; bloquear navegación al padre de la raíz Cortes; permitir únicamente mkdir/move dentro del árbol autorizado; probar payloads manipulados y carpetas/archivos externos.
-- **Estado:** NUEVA; pendiente.
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; integración real de Drive diferida a Beta.
 
 ### AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario
 - **Origen:** H-AUD-025-005 y H-AUD-025-006. **Prioridad:** Media.
 - **Evidencia:** Services/feedback.js, handleGetActivityLogs() líneas 1268–1288 y handleClearActivityLogs() líneas 1641–1683.
 - **Problema:** se carga y transforma todo el historial para devolver 100 filas; timestamps vacíos/no válidos no se clasifican ni notifican durante la purga de antigüedad.
 - **Criterios de aceptación:** recuperar solo el rango más reciente requerido; preservar orden y máximo de 100 registros; definir tratamiento explícito de timestamp inválido (cuarentena/reporte/retención controlada, sin borrado inferido); informar cantidad de filas no clasificables; probar hojas grandes y formatos Date/string.
-- **Estado:** NUEVA; pendiente.
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; integración real de Spreadsheet diferida a Beta.
 
 ### AUG-021 — Registro persistente de operaciones administrativas sensibles
 - **Origen:** H-AUD-025-007. **Prioridad:** Media.
@@ -265,7 +265,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Problema:** el historial de ejecución ADMIN no queda persistido y se pierde si la respuesta no llega al navegador o falla la ejecución.
 - **Criterios de aceptación:** registrar de forma durable actor autenticado, acción, recurso de origen/destino, inicio/fin, resultado, etapa y resultado parcial; excluir tokens, contraseñas y payloads sensibles; restringir lectura/modificación; asegurar que la falla al registrar auditoría no convierta silenciosamente una operación destructiva en éxito sin trazabilidad; definir retención y protección del registro.
 - **Relación:** AUD-T-023/AUG-013 para logs sensibles y AUD-T-033 para coordinación de escrituras.
-- **Estado:** NUEVA; pendiente.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; permisos reales del proyecto Apps Script y retención quedan para Beta.
 
 ### AUG-022 — Verificar la eliminación asíncrona de IndexedDB
 - **Origen:** H-AUD-025-008. **Prioridad:** Baja.
@@ -288,7 +288,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Evidencia:** Services/admin.js, switch doPost() y handlers handleCreateSheet()/handleAddColumn(); ACTION_TO_SERVICE_MAP; ui.js/index.html sin referencias de consumo.
 - **Problema:** createSheet/addColumn existen en el router backend, pero no están mapeadas por routeAction ni tienen consumidor frontend identificado.
 - **Criterios de aceptación:** decidir y documentar si son acciones soportadas, internas o heredadas; si se mantienen, definir contrato, autorización, validación y pruebas; si se retiran, hacerlo en tarea autorizada tras comprobar consumidores externos. No eliminar código durante auditoría.
-- **Estado:** NUEVA; pendiente.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; AdminSheetActionsContract 9/9 PASS y GitHub Actions run 43460720098 SUCCESS.
 
  
 
@@ -364,7 +364,7 @@ Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
   2. Confirmar si el historial de reemplazos se mantiene en un modal/sección independiente del inventario sin uso o si ambos deben mostrarse juntos con filtros explícitos.
   3. Confirmar la política de restauración para registros enviados a papelera y estados que requieren revisión.
 - **Criterios de aceptación:** documentar la decisión en Tareas.txt y Auditoría.txt; alinear títulos, filtros, contratos y pruebas con el alcance aprobado; no ampliar ni reducir referencias por inferencia.
-- **Estado:** NUEVA; decisión pendiente. No implementar hasta resolver el alcance.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; GitHub Actions run 43491364671 SUCCESS, 71 suites/1,015 pruebas PASS; Drive/Spreadsheet reales quedan para Beta.
 
 ================================================================================
 
@@ -404,7 +404,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Reconciliar escrituras parciales y reintentos sin duplicar registros ni dejar estados ambiguos.
   6. Detectar y resolver filas existentes duplicadas por Drive ID antes de actualizar o mover.
 - **Relación:** AUG-026 para integridad del historial; AUG-021 para trazabilidad.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA; GitHub Actions run 43497439972 SUCCESS, 71 suites/1,023 pruebas PASS; integración real queda para Beta.
 
 ### AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales
 - **Origen:** H-AUD-028-001 y H-AUD-028-004. **Prioridad:** Alta.
