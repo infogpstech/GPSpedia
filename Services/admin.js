@@ -1560,12 +1560,19 @@ function adminRestoreCreateDatabaseRollback_(targetSpreadsheet, runId) {
             sourceManifest.fingerprint !== copiedManifest.fingerprint || sourceManifest.sheetCount !== copiedManifest.sheetCount) {
             throw new Error("No se pudo verificar el respaldo preventivo del estado actual de la base de datos.");
         }
-        copiedFile.setDescription(JSON.stringify({
-            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
+        const completeManifest = {
+            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "complete",
+            createdAt: runId, sourceSpreadsheetId: SPREADSHEET_ID,
             sheetCount: copiedManifest.sheetCount, rowCount: copiedManifest.rowCount,
             cellCount: copiedManifest.cellCount, formulaCount: copiedManifest.formulaCount,
             fingerprint: copiedManifest.fingerprint
-        }));
+        };
+        copiedFile.setDescription(JSON.stringify(completeManifest));
+        const persisted = JSON.parse(String(copiedFile.getDescription() || ""));
+        if (persisted.status !== "complete" || persisted.version !== 2 ||
+            persisted.fingerprint !== copiedManifest.fingerprint) {
+            throw new Error("No se pudo verificar el manifiesto completo del rollback DB.");
+        }
         return { file: copiedFile, id: copiedFile.getId(), url: copiedFile.getUrl(), manifest: copiedManifest };
     } catch (error) {
         try { rollbackFile.setTrashed(true); } catch (cleanupError) {}
@@ -1711,18 +1718,16 @@ function handleRestoreDatabase(payload, logMessage) {
     if (backupSS.getId() !== backupId) throw new Error("No se pudo verificar la identidad de la Spreadsheet de respaldo.");
     const backupManifest = adminRestoreValidateDatabaseSchema_(backupSS);
     const rawManifest = String(backupFile.getDescription() || "").trim();
-    if (rawManifest) {
-        let storedManifest;
-        try { storedManifest = JSON.parse(rawManifest); }
-        catch (error) { throw new Error("El manifiesto del respaldo DB está dañado; no se inició la restauración."); }
-        if (storedManifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ || storedManifest.version !== 1 ||
-            storedManifest.sheetCount !== backupManifest.sheetCount || storedManifest.rowCount !== backupManifest.rowCount ||
-            storedManifest.cellCount !== backupManifest.cellCount || storedManifest.formulaCount !== backupManifest.formulaCount ||
-            storedManifest.fingerprint !== backupManifest.fingerprint) {
-            throw new Error("El manifiesto del respaldo DB no coincide con su contenido; no se inició la restauración.");
-        }
-    } else {
-        logMessage("Restauración DB", "Respaldo histórico sin manifiesto: se validará esquema y contenido estructural, pero no existe evidencia previa de integridad del archivo.", 0, 0, true);
+    if (!rawManifest) throw new Error("El respaldo DB no tiene manifiesto de estado completo; los respaldos históricos deben generarse nuevamente.");
+    let storedManifest;
+    try { storedManifest = JSON.parse(rawManifest); }
+    catch (error) { throw new Error("El manifiesto del respaldo DB está dañado; no se inició la restauración."); }
+    if (storedManifest.kind !== ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ || storedManifest.version !== 2 ||
+        storedManifest.status !== "complete" || storedManifest.sheetCount !== backupManifest.sheetCount ||
+        storedManifest.rowCount !== backupManifest.rowCount || storedManifest.cellCount !== backupManifest.cellCount ||
+        storedManifest.formulaCount !== backupManifest.formulaCount ||
+        storedManifest.fingerprint !== backupManifest.fingerprint) {
+        throw new Error("El respaldo DB no tiene estado completo o su manifiesto no coincide con el contenido; no se inició la restauración.");
     }
 
     const targetSS = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -1788,20 +1793,13 @@ function handleRestoreDrive(payload, logMessage) {
     }
     const targetFolder = getCortesRootFolder();
     if (backupFolder.getId() === targetFolder.getId()) throw new Error("La carpeta de respaldo debe ser distinta de la carpeta productiva.");
-    const backupManifest = adminRestoreDriveManifest_(backupFolder);
-    const rawManifest = String(backupFolder.getDescription() || "").trim();
-    if (rawManifest) {
-        let storedManifest;
-        try { storedManifest = JSON.parse(rawManifest); }
-        catch (error) { throw new Error("El manifiesto del respaldo Drive está dañado; no se inició la restauración."); }
-        if (storedManifest.kind !== ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ || storedManifest.version !== 1 ||
-            storedManifest.folderCount !== backupManifest.folderCount || storedManifest.fileCount !== backupManifest.fileCount ||
-            storedManifest.totalBytes !== backupManifest.totalBytes || storedManifest.fingerprint !== backupManifest.fingerprint) {
-            throw new Error("El manifiesto del respaldo Drive no coincide con sus recursos; no se inició la restauración.");
-        }
-    } else {
-        logMessage("Restauración Drive", "Respaldo histórico sin manifiesto: se verificará la copia por estructura, nombres, MIME y tamaños, pero no existe evidencia previa de integridad del archivo.", 0, 0, true);
+    const loadedBackupState = adminRestoreReadDriveBackupState_(backupFolder);
+    const storedManifest = loadedBackupState.state;
+    if (storedManifest.status !== "complete") {
+        throw new Error("El contenedor Drive no está marcado como completo; no se inició la restauración.");
     }
+    const backupManifest = adminRestoreDriveManifest_(backupFolder);
+    adminRestoreVerifyDriveBackupState_(storedManifest, backupFolder, backupManifest);
 
     const runId = adminRestoreRunId_(), rootFolder = DriveApp.getRootFolder();
     const originalManifest = adminRestoreDriveManifest_(targetFolder);
@@ -1809,7 +1807,7 @@ function handleRestoreDrive(payload, logMessage) {
     let rollbackFolder = null, originalMovedCompletely = false;
     try {
         logMessage("Restauración Drive", "Copiando el respaldo a una carpeta temporal y verificando todos sus recursos...");
-        adminRestoreCopyFolderRecursively_(backupFolder, stagingFolder);
+        adminRestoreCopyFolderRecursively_(backupFolder, stagingFolder, storedManifest);
         if (!adminRestoreManifestsEqual_(backupManifest, adminRestoreDriveManifest_(stagingFolder))) {
             throw new Error("El staging de Drive no coincide con el respaldo; la carpeta productiva permanece intacta.");
         }
@@ -1820,11 +1818,8 @@ function handleRestoreDrive(payload, logMessage) {
             throw new Error("El contenido original no pudo trasladarse íntegramente al área de recuperación.");
         }
         rollbackFolder.setName("GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_" + runId);
-        rollbackFolder.setDescription(JSON.stringify({
-            kind: ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
-            folderCount: originalManifest.folderCount, fileCount: originalManifest.fileCount,
-            totalBytes: originalManifest.totalBytes, fingerprint: originalManifest.fingerprint
-        }));
+        const verifiedRollbackManifest = adminRestoreDriveManifest_(rollbackFolder);
+        adminRestoreCreateCompletedDriveManifest_(rollbackFolder, verifiedRollbackManifest, runId, targetFolder.getId());
         originalMovedCompletely = true;
 
         logMessage("Restauración Drive", "Intercambiando el contenido validado con la carpeta productiva...");
