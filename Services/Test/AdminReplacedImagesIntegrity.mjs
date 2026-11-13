@@ -821,7 +821,7 @@ check("El estado local conserva auditId, inventoryOperationId y los IDs confirma
     assert.ok(saveBlock.includes("const confirmedIds = normalizeDriveAuditLocalIds(state.inventoryConfirmedFileIds)"));
     assert.ok(saveBlock.includes("store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds"));
     const metaStart=offline.indexOf("function buildDriveAuditMetaEntry(");
-    const metaEnd=offline.indexOf("\\nfunction ",metaStart+10);
+    const metaEnd=offline.indexOf("\nfunction ",metaStart+10);
     assert.ok(metaStart>=0&&metaEnd>metaStart);
     const metaBlock=offline.slice(metaStart,metaEnd);
     for(const field of ["inventoryAuditId: String(state.inventoryAuditId || '')","inventoryOperationId: String(state.inventoryOperationId || '')",
@@ -829,7 +829,7 @@ check("El estado local conserva auditId, inventoryOperationId y los IDs confirma
         assert.ok(metaBlock.includes(field));
     }
     const idsStart=offline.indexOf("function normalizeDriveAuditLocalIds(");
-    const idsEnd=offline.indexOf("\\nfunction ",idsStart+10);
+    const idsEnd=offline.indexOf("\nfunction ",idsStart+10);
     assert.ok(idsStart>=0&&idsEnd>idsStart&&offline.slice(idsStart,idsEnd).includes("Array.from(new Set("));
 });
 
