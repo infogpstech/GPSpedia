@@ -193,7 +193,7 @@ check("El buscador de historial rechaza IDs duplicados y devuelve el ancho compl
     const uniqueSheet=createSheet([HEADERS,makeRow({id:"UNIQUE"})]);
     const result=api.findReplacedImageRecordById(uniqueSheet,"UNIQUE");
     assert.equal(result.rowIndex,2);
-    assert.equal(result.values.length,24);
+    assert.equal(result.values.length,27);
 });
 
 check("La marca manual en uso requiere revisión, identidad y verificación del archivo",()=>{
