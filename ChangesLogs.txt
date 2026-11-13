@@ -982,3 +982,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - GitHub Actions run 43441395887 SUCCESS: 56 suites, 779/779 PASS; Node.js --check PASS.
 - Sin cambios a deep links AUG-048/AUG-049, deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-148 — Accesibilidad y gestión de foco del panel de desarrollador
+- #dev-tools-modal incorpora semántica de diálogo modal, título accesible y botón de cierre nombrado.
+- Foco inicial en encabezado, contención de Tab/Shift+Tab, restauración al disparador y Escape integrado con overlayHistory.
+- Se evita que diálogos inferiores intercepten teclado cuando existe una capa superior; se conserva el control de acceso Desarrollador.
+- Pruebas DevToolsModalAccessibility 8/8 PASS; GitHub Actions run 43442358110 SUCCESS: 58 suites, 800/800 PASS; Node.js --check PASS.
+- Validación con lector de pantalla y navegador real diferida a Beta. Sin cambios de permisos, endpoints ni datos.
+================================================================================

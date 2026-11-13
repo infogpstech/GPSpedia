@@ -1196,3 +1196,22 @@ No se modificó la lógica de deep links de AUG-048/AUG-049. Beta pendiente: API
 
 Siguiente prioridad: AUG-148/AUG-149 son dependencias directas de AUG-152; revisar su estado y bloqueos antes de intentar AUG-152. Tareas anteriores con dependencias de coordinación AUTH/USERS no se consideran cerradas por este cambio.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-148 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de código y pruebas: bd756ece0594c6c3881e9741938b5be9ddf7e2a8.
+Estado: IMPLEMENTACIÓN Y VALIDACIÓN LOCAL COMPLETADAS; validación de interfaz real diferida a Beta.
+
+#dev-tools-modal cuenta con role=dialog, aria-modal, nombre accesible y encabezado enfocable. El cierre es un botón semántico. El foco inicial se dirige al título, Tab/Shift+Tab se contienen, el cierre restaura foco y Escape se coordina con overlayHistory. isTopmostManagedModal_ limita la gestión de teclado a la capa superior cuando hay diálogos superpuestos. La autorización exclusiva de Desarrollador se conserva.
+
+Archivos de implementación: index.html, ui.js, main.js, style.css. Pruebas: Services/Test/DevToolsModalAccessibility.mjs, OverlayMenuModalHistory.js y RunServiceTests.mjs.
+GitHub Actions run 43442358110 SUCCESS: 58 suites, 800/800 PASS; DevToolsModalAccessibility 8/8 PASS; Node.js --check PASS.
+
+Beta: lector de pantalla, teclado/foco móvil, combinaciones de overlays y comportamiento real de History API. Sin despliegues, operaciones administrativas ni endpoints productivos.
+
+Siguiente tarea: AUG-149 — unificar semántica accesible de las cinco pestañas/paneles de desarrollador. AUG-152 permanece pendiente hasta completar sus dependencias AUG-149 y las demás dependencias listadas.
+================================================================================

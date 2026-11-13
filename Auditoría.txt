@@ -1166,3 +1166,15 @@ Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTEGRACIÓN DIFERIDA A BETA.
 
 No se cambió la lógica de deep links de AUG-048/AUG-049. No se ejecutaron deployments ni se consultaron/escribieron datos productivos. La validación de IndexedDB y API reales se conserva para Beta.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-022-002 / AUG-148 — 2026-11-13
+Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTERFAZ REAL DIFERIDA A BETA.
+
+- #dev-tools-modal declara role=dialog, aria-modal=true y aria-labelledby=dev-tools-title. El título es enfocable y recibe el foco inicial; el cierre es un button type=button con aria-label descriptivo.
+- La gestión compartida de foco captura el disparador de retorno, contiene Tab/Shift+Tab, restaura el foco al cerrar y permite Escape solo para el panel de desarrollador. Escape y el botón usan el mismo cierre coordinado con overlayHistory.
+- Cuando existen diálogos superpuestos, isTopmostManagedModal_ determina cuál recibe teclado; el modal inferior no intercepta Escape ni la navegación del superior. Se conserva la validación de rol Desarrollador y no se modifican las acciones administrativas.
+- Pruebas locales: DevToolsModalAccessibility 8/8 PASS; OverlayMenuModalHistory integrada. GitHub Actions run 43442358110 SUCCESS: 58 suites, 800/800 PASS; Node.js --check PASS en los tres archivos JS modificados.
+- Beta pendiente: lectores de pantalla, foco/teclado en navegador móvil y validación real de capas superpuestas/History API. No se ejecutaron operaciones administrativas ni endpoints productivos.
+================================================================================

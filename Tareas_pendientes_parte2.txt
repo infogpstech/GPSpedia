@@ -427,7 +427,10 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-022-002. **Prioridad:** Media.
 - **Problema:** #dev-tools-modal no declara dialog/aria-modal/aria-labelledby; el cierre es un span sin nombre ni teclado; no hay foco inicial, contención, restauración ni Escape.
 - **Criterios:** botón real con aria-label; role=dialog, aria-modal y nombre asociado; foco inicial al abrir; focus trap; restauración al disparador; Escape y botón de cierre coordinados con History API; pruebas con teclado y lector de pantalla.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13).
+- **Resolución:** #dev-tools-modal declara role=dialog, aria-modal y nombre mediante aria-labelledby. El encabezado recibe foco inicial; el cierre es un botón con nombre accesible. La gestión de foco contiene Tab/Shift+Tab, restaura el control de retorno y coordina Escape/cierre con overlayHistory. Solo el diálogo superior gestiona teclado cuando hay capas superpuestas. Se conserva la autorización exclusiva de Desarrollador.
+- **Pruebas locales:** DevToolsModalAccessibility 8/8 PASS; OverlayMenuModalHistory y pruebas de regresión integradas en GitHub Actions run 43442358110 SUCCESS: 58 suites, 800/800 PASS; Node.js --check PASS en los tres archivos JavaScript modificados.
+- **Validación Beta:** interacción con lector de pantalla, foco real en navegadores móviles, combinación de modal con overlays administrativos y History API del navegador. No se cambió el contenido ni el permiso del panel.
 
 ### AUG-149 — Unificar la semántica accesible de pestañas y paneles del desarrollador
 - **Origen:** H-AUD-022-003. **Prioridad:** Media.
