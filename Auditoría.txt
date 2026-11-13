@@ -1119,3 +1119,18 @@ Validación: VideoApprovalPublishing 29/29 PASS, incluidos fallos de Feedbacks, 
 
 CIERRE AUG-043: ambos hallazgos corregidos en GPSpedia2.2.5_work. No se modificó la rama base ni se ejecutaron deployments o escrituras en datos productivos. Las pruebas reales de Apps Script, Spreadsheet, YouTube y concurrencia física quedan en lista_beta_parte2.txt.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-066 / AUG-154 — 2026-11-13
+Referencia histórica inmutable: Auditoria_Archive/Auditoria_2026-11-10_parte_001.txt, H-AUD-066.
+Estado: RESUELTO EN FUENTES; COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+La actualización combinada de rol y nombre ya no escribe Nombre_Completo antes de iniciar la revocación. Cuando se solicita un cambio de rol junto con Nombre_Completo, AUTH guarda el nombre solicitado dentro del marcador compartido/local de revocación. La reconciliación revoca primero los tokens, aplica y verifica el rol, aplica y verifica el nombre y ejecuta SpreadsheetApp.flush() antes de eliminar el marcador. El marcador permanece ante error de escritura, lectura o flush, y el reintento del mismo payload recupera el nombre y termina la operación. Un payload distinto no puede sustituir la intención pendiente. Los marcadores anteriores sin newFullName siguen siendo compatibles.
+
+Las actualizaciones de solo nombre comprueban el valor persistido después de setValue, incluyendo el caso en que la llamada lanza una excepción después de aplicar el cambio.
+
+Pruebas locales: Services/Test/LastDeveloperProtection.js ejercita el helper real reconcileRoleRevocationUnderLock_ con fallo de la segunda escritura, token revocado, persistencia del marcador, reintento, fallo de flush y posterior finalización; verifica también divergencia/validación de metadatos. AUTH operativo y copia aislada: 32/32 cada uno. GitHub Actions run 43437684317 SUCCESS, 52 suites, 739/739 PASS; Node.js --check PASS en los tres archivos modificados.
+
+Límite: los dobles locales no certifican fallos físicos, consistencia eventual ni concurrencia entre ejecuciones/proyectos Apps Script. Se conserva validación Beta aislada; no se ejecutaron deployments, endpoints operativos ni escrituras productivas.
+================================================================================

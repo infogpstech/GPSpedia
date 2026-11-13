@@ -1135,3 +1135,24 @@ Validación diferida a Beta: concurrencia física entre ejecuciones Apps Script,
 
 Siguiente tarea prioritaria: AUG-153 — Centralizar las mutaciones de ActiveSessions en AUTH (prioridad crítica; implementación declarada parcial y pendiente de sintaxis/pruebas). Después, AUG-154 — Recuperación de escrituras parciales en USERS. AUG-047 permanece abierta con prioridad baja/media y no se confunde con estos riesgos de integridad de sesión.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-154 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de implementación y pruebas: 99a34cf64707ca8e6c8e9668a27b273111c9b338.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Hallazgo H-AUD-066 resuelto: la actualización combinada de rol y Nombre_Completo ya no aplica primero el nombre sin una recuperación persistente. El marcador compartido/local de revocación guarda newFullName; reconcileRoleRevocationUnderLock_ revoca sesiones, confirma rol y nombre, ejecuta flush y solo entonces elimina los marcadores. Ante fallo de escritura, lectura o flush se conserva la intención y el token sigue invalidado. El reintento idéntico recupera la operación; un payload con otro nombre se rechaza. Marcadores históricos sin newFullName mantienen compatibilidad. Los cambios de solo nombre verifican lectura posterior.
+
+Archivos funcionales y de prueba: Services/Auth.js, Services/Test/Auth.js, Services/Test/LastDeveloperProtection.js.
+Pruebas GitHub Actions run 43437684317: SUCCESS; 52 suites; 739/739 PASS; AUTH 32/32 en cada proyecto; Node.js --check de los tres archivos modificados PASS. Las pruebas incluyen ejecución del helper real de reconciliación, fallo de segunda escritura, fallo de flush, conservación de marcador, token revocado, reintento y rechazo de metadatos divergentes.
+
+Commits de implementación/pruebas hasta HEAD: bb f17dceb (implementación inicial), c392bfc (fixture), af07050–99a34cf (ampliación de recuperación y pruebas). La secuencia completa permanece en el historial de la rama; no se reescribió.
+
+Beta pendiente: fallos físicos de Spreadsheet/flush, concurrencia real entre ejecuciones/proyectos Apps Script, reintentos tras interrupción y validación de datos aislados. No se ejecutaron deployments, endpoints operativos ni escrituras productivas.
+
+Siguiente trabajo: reevaluar el backlog histórico de menor prioridad; AUG-047 continúa abierta y es candidata posterior, sujeto a revisar sus dependencias vigentes. No reabrir AUG-010 ni tareas ya cerradas.
+================================================================================

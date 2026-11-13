@@ -1361,3 +1361,37 @@ AUG-043 — VALIDACIÓN DE INTEGRACIÓN REAL PENDIENTE
 6. Navegador real: IndexedDB, recarga, cierre del modal, cancelación, dos pestañas y restauración de operación pendiente; comprobar que opVideoId y videoId real nunca se intercambian.
 No ejecutar contra hojas, credenciales, deployments ni vídeos productivos. La validación CI local no sustituye esta integración.
 ================================================================================
+
+
+================================================================================
+AUG-154 — VALIDACIÓN BETA DE RECUPERACIÓN DE PERFIL/ROL EN AUTH
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS (no usar endpoints ni hojas productivas):
+1. En una copia aislada de AUTH y su Spreadsheet de pruebas, crear dos cuentas activas: solicitante Desarrollador y destino Técnico con al menos dos sesiones.
+2. Enviar updateUser con Privilegios y Nombre_Completo nuevos. Inyectar fallo en la escritura de Nombre_Completo después de confirmar el rol. Verificar: respuesta pendiente/error, rol nuevo, nombre anterior, tokens de destino invalidados, marcador compartido en Users.SessionToken y marcador local en ScriptProperties.
+3. Reintentar exactamente el mismo payload. Verificar nombre nuevo, rol nuevo, sesiones revocadas/eliminadas y retirada de ambos marcadores solo después de confirmar escritura y flush.
+4. Repetir con fallo de flush posterior a la escritura del nombre. El marcador debe permanecer y el reintento debe terminar sin reactivar tokens ni aplicar una intención distinta.
+5. Simular setValue que aplica el valor y luego lanza excepción; comprobar que la lectura de verificación detecta el valor persistido y no duplica la operación.
+6. Alterar newFullName entre marcador compartido y local, o enviar un nombre distinto durante una operación pendiente. Debe rechazarse sin limpiar marcadores ni restaurar tokens.
+7. Verificar compatibilidad de un marcador histórico sin newFullName: completar la revocación pendiente y actualizar el nombre en una operación separada.
+8. Ejecutar intercalados con login/logout/updateUser en ejecuciones AUTH separadas y comprobar que no se autorizan tokens residuales ni se borran sesiones ajenas.
+
+Registrar IDs de prueba y resultados sin incluir contraseñas, tokens, nombres reales ni datos sensibles. No desplegar ni ejecutar contra proyectos, endpoints, credenciales o hojas productivas.
+================================================================================

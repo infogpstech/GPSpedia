@@ -945,3 +945,16 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Commit de implementación y pruebas: 9a8b7ff4f47fab52ab2895233573b24e2267da05; correcciones de fixtures/contratos y adaptadores hasta HEAD 2d52bce610cc7e9d05feddbfc75c9546a156edc4.
 - Sin cambios en GPSpedia2.2.5 ni deployments/datos productivos. Validación de servicios reales queda para Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-154 / H-AUD-066 — Recuperación de escrituras parciales en AUTH.updateUser
+- Se eliminó la escritura temprana de Nombre_Completo cuando se combina con cambio de rol.
+- El marcador de revocación ahora puede transportar newFullName; parser y comparación validan tipo, longitud y coincidencia entre marcador compartido y local.
+- reconcileRoleRevocationUnderLock_ aplica el nombre pendiente después del rol, comprueba persistencia y ejecuta flush antes de retirar los marcadores.
+- Errores de escritura/lectura/flush conservan la intención pendiente y tokens revocados; el reintento completa la misma operación y no permite sustituir el nombre asociado.
+- Actualización de nombre sin cambio de rol verifica el valor leído después de escribir.
+- Archivos: Services/Auth.js, Services/Test/Auth.js y Services/Test/LastDeveloperProtection.js.
+- CI run 43437684317 SUCCESS: 52 suites, 739/739 PASS; AUTH 32/32 en cada proyecto; Node.js --check PASS.
+- Sin cambios en GPSpedia2.2.5, deployments, endpoints operativos ni datos productivos.
+================================================================================

@@ -1650,3 +1650,10 @@ node --experimental-default-type=module Services/Test/RunServiceTests.mjs
 ```
 
 Resultado de referencia: GitHub Actions run `43434653123`, Node.js `22.23.4`, 52 suites, 731/731 PASS. Las pruebas usan dobles/fixtures Node y no equivalen a pruebas de concurrencia física de Apps Script, Spreadsheet o YouTube API; consultar `lista_beta_parte2.txt`.
+
+
+### AUG-154 — Recuperación de escrituras parciales de perfil y rol en AUTH
+
+La suite `Services/Test/LastDeveloperProtection.js`, ejecutada contra `Services/Auth.js` y `Services/Test/Auth.js`, cubre la recuperación del marcador de revocación cuando falla la escritura de `Nombre_Completo` después de aplicar el nuevo rol. También ejecuta el helper real `reconcileRoleRevocationUnderLock_` con fallos simulados de escritura y `SpreadsheetApp.flush()`, comprueba que los tokens quedan invalidados, que el marcador se conserva y que el reintento completa el perfil antes de limpiar el estado pendiente. Se verifica el rechazo de marcadores divergentes y de metadatos inválidos.
+
+Resultado de referencia: GitHub Actions run `43437684317`, Node.js `22.23.4`, 52 suites, 739/739 PASS; AUTH 32/32 por proyecto y `node --check` PASS para los archivos JavaScript modificados. Las pruebas locales no sustituyen la validación de Spreadsheet/Apps Script aislados descrita en `lista_beta_parte2.txt`.

@@ -578,7 +578,17 @@ La prueba de intercalados reales con LockService y Spreadsheet de Google Apps Sc
 
 ================================================================================
 AUG-154 — Recuperación de escrituras parciales en USERS
-Estado: NUEVA; pendiente. Hallazgo H-AUD-066 identificado durante las pruebas de fallo de AUG-010. La segunda escritura de updateUser puede fallar después de guardar Nombre_Completo, dejando un resultado parcial aunque la API responda error. Diseñar compensación/estado parcial seguro y probar reintentos; no asumir transacciones ni lock interproyectos. Mantener separado de AUG-010.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13).
+Hallazgo: H-AUD-066 (Auditoria_Archive/Auditoria_2026-11-10_parte_001.txt) reproducía que updateUser podía guardar Nombre_Completo y fallar al persistir Privilegios, dejando una actualización parcial.
+Resolución:
+- El cambio combinado de rol/perfil ahora registra newFullName dentro del marcador compartido y local de revocación antes de mutar el rol. El marcador incluye y valida el valor de perfil solicitado, y ambos marcadores deben coincidir.
+- reconcileRoleRevocationUnderLock_ revoca sesiones, confirma el rol y aplica Nombre_Completo; solo elimina los marcadores después de verificar ambos valores y completar SpreadsheetApp.flush().
+- Si falla la escritura del nombre, la lectura de verificación o flush, la operación queda pendiente, conserva el marcador y mantiene los tokens invalidados. El mismo payload permite reintentar y completar el cambio sin aceptar una intención de perfil diferente.
+- Las actualizaciones de solo nombre se verifican por lectura posterior; si setValue lanza una excepción pero el valor solicitado sí quedó persistido, la operación se reconoce como aplicada.
+- Los marcadores históricos sin newFullName conservan compatibilidad; no se mezclan con nuevas intenciones de perfil.
+Pruebas: AUTH 32/32 por cada proyecto (producción y copia aislada); prueba real de reconcileRoleRevocationUnderLock_ con fallo de segunda escritura, recuperación por reintento, fallo de flush, limpieza diferida de marcadores, revocación de token y rechazo de metadatos divergentes. GitHub Actions run 43437684317 SUCCESS: 52 suites, 739/739 PASS; Node.js --check de los tres archivos modificados PASS.
+Validación Beta pendiente: fallo físico de Spreadsheet/flush en proyectos AUTH aislados, concurrencia real entre AUTH/USERS, reintentos después de interrupción de ejecución y lectura desde una segunda ejecución. No se desplegaron endpoints ni se modificaron datos productivos.
+================================================================================
 ================================================================================
 
 
