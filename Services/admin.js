@@ -7664,6 +7664,9 @@ function clearAuditDriveReferenceSnapshot(auditId) {
 
 
 function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) {
+    if (payload && payload.mode === "organize") {
+        return handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext);
+    }
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     if (!ownerId) throw new Error("El inventario requiere una sesión Desarrollador verificada.");
     const submittedFiles = Array.isArray(payload && payload.files) ? payload.files : [];
