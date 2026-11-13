@@ -97,7 +97,7 @@ function runAdminModalEditIntegrityTests(adminSource) {
     });
     run("Los helpers y handlers modificados compilan como JavaScript V8",()=>{
         const handlerStart = source.indexOf("function handleUpdateVehicleField(");
-        const handlerEnd = source.indexOf("\n}\n\nconst ADMIN_IMAGE_UPLOAD_SHEET_NAME", handlerStart);
+        const handlerEnd = source.indexOf("\n}\nconst ADMIN_IMAGE_UPLOAD_SHEET_NAME", handlerStart);
         assert(handlerStart >= 0 && handlerEnd > handlerStart, "No se encontró el cierre de handleUpdateVehicleField.");
         new Function(source.slice(handlerStart, handlerEnd + 2));
         new Function(extract("handleUpdateVehicleVinCollection_"));
