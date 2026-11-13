@@ -70,7 +70,7 @@ await check("El handler espera IndexedDB, informa localStorage por separado y so
     assert.ok(handler.includes("storageResults.push({ key, success: true })"));
     assert.ok(handler.includes('indexedDbResult.status === "success" && storageSucceeded'));
     assert.ok(handler.indexOf("indexedDbResult.status === \"success\" && storageSucceeded") < handler.indexOf("window.location.reload()"));
-    assert.ok(handler.includes('indexedDbResult.status !== "success"'));
+    assert.ok(handler.includes('const message = "Limpieza incompleta. IndexedDB: " + indexedDbResult.status'));
     assert.ok(handler.includes("No se recargó la aplicación."));
     assert.ok(handler.includes("finally {\n                clearCacheBtn.disabled = false;"));
 });
