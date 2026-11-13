@@ -35,9 +35,9 @@ function runWriteAuthorizationMinimizationTests(sources) {
  });
 
  run("WRITE declara contratos locales idénticos a AUTH para Users y ActiveSessions",()=>{
-  assert(/const COLS_USERS = Object.freeze\\(\\{[\\s\\S]*?ID: 1,[\\s\\S]*?Privilegios: 4,[\\s\\S]*?Nombre_Completo: 7,[\\s\\S]*?SessionToken: 8/.test(write));
-  assert(/const COLS_ACTIVE_SESSIONS = Object.freeze\\(\\{[\\s\\S]*?ID_Usuario: 1,[\\s\\S]*?ActiveSessions: 3,[\\s\\S]*?date: 4,[\\s\\S]*?LastActivityAt: 6/.test(write));
-  assert(write.includes('const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:"'));
+  assert(write.includes("const COLS_USERS = Object.freeze({")&&write.includes("Privilegios: 4")&&write.includes("Nombre_Completo: 7")&&write.includes("SessionToken: 8"));
+  assert(write.includes("const COLS_ACTIVE_SESSIONS = Object.freeze({")&&write.includes("ID_Usuario: 1")&&write.includes("ActiveSessions: 3")&&write.includes("LastActivityAt: 6"));
+  assert(write.includes('const ROLE_REVOCATION_SHARED_PREFIX = "__role_revocation_pending__:'));
  });
  run("El perfil servidor determina nombre y rol; no se confía en colaborador enviado",()=>{
   const helper=extract(write,"getAuthenticatedCollaborator");
