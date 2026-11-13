@@ -195,9 +195,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-122 — Exigir sesión y rol en WRITE.addSupplementaryInfo
 - Origen: H-AUD-019-001. Prioridad: Alta.
-- Evidencia: Services/write.js:169–205, 783–864; ui.js:7823–7828, 7915–7917 y 8053–8058.
-- Criterios: validar sesión activa en backend; derivar actor del servidor; definir roles permitidos; probar sin token, token inválido/revocado y roles no autorizados.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: WRITE valida sesión activa y única contra ActiveSessions, vincula token con userId, comprueba expiración, cuenta activa, perfil único y revocación pendiente. El handler aplica una allowlist explícita de roles operativos: Desarrollador, Gefe/Jefe, Supervisor, Técnico y Técnico_exterior.
+- Actor: el nombre se obtiene del perfil Users validado por el servidor; no se confía en campos de identidad enviados por el cliente. La atribución se registra en el log del servicio.
+- Validación local: AddSupplementaryInfoIntegrity.js amplía la suite con sesión ausente, token inválido/cruzado/duplicado, sesión expirada/revocada, rol no permitido, cada rol permitido, identidad falsificada y cuenta eliminada.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Beta pendiente: comprobar sesión/roles con ActiveSessions y Users de prueba, escrituras válidas y rechazo sin cambios en Cortes/Drive; no ejecutar con datos productivos.
 
 ### AUG-123 — Proteger y serializar la migración UTILITIES
 - Origen: H-AUD-019-002. Prioridad: Alta.
