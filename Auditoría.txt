@@ -1039,7 +1039,7 @@ Ubicación: Services/admin.js, adminRestoreMoveFolderContents_().
 Evidencia: el helper de movimiento excluía por nombre todos los archivos llamados GPSpedia_DRIVE_MANIFEST.json cuando el origen era una carpeta de rollback. Drive permite nombres repetidos; un archivo legítimo del usuario con ese mismo nombre podía omitirse y perderse al retirar la carpeta de rollback.
 Impacto: posible pérdida de un recurso legítimo durante una restauración o reversión.
 Corrección: la exclusión del manifiesto utiliza únicamente su ID registrado en la descripción del contenedor o el marcador exacto del archivo. Se eliminó la exclusión genérica por nombre.
-Validación: se añadió regresión dinámica que incluye un archivo legítimo con el mismo nombre dentro de una carpeta de rollback; CI final pendiente sobre el HEAD actualizado.
+Validación: regresión dinámica de archivo legítimo con el mismo nombre dentro de rollback; GitHub Actions run 43424235639 SUCCESS, AdminRestoreRecovery 18/18 y suite global 342/342.
 
 Ambos hallazgos se corrigieron dentro de AUG-018; no requieren tareas independientes. No se ejecutaron DriveApp, SpreadsheetApp, Apps Script desplegado ni recursos productivos.
 ================================================================================
