@@ -219,7 +219,7 @@ check("La lista presenta todos los estados y separa duplicados y filas inválida
     const references=new Map([[FILE_A,[{row:2,column:9},{row:4,column:10}]]]);
     const getSchema=()=>schema;
     const collect=()=>({references,unverifiableReferenceCount:0});
-    const fn=new Function("getReplacedImagesReadSchema_","collectCortesImageReferences","getReplacedImageRecordType",
+    const fn=new Function("getReplacedImagesReadSchema_","collectActiveDriveReferences","getReplacedImageRecordType",
         "isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","extractDriveFileIds",
         fnSource(admin,"handleGetReplacedImages")+"\nreturn handleGetReplacedImages;")
         (getSchema,collect,new Function(helperSources.getReplacedImageRecordType+"\nreturn getReplacedImageRecordType;")(),
@@ -264,7 +264,7 @@ function buildRecover({status="historica",duplicate=false,trashed=false,mime="im
     const api=new Function(
         "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
         "getReplacedImageRecordType","getReplacedImageRecordIdentity_","DriveApp","COLS_CORTES","getCortesRootFolder",
-        "isFileInsideCortes","getSpreadsheet","SHEET_NAMES","collectCortesImageReferences","recordReplacedImage",
+        "isFileInsideCortes","getSpreadsheet","SHEET_NAMES","collectActiveDriveReferences","recordReplacedImage",
         "SpreadsheetApp","setReplacedImageHistoryStatusVerified_","restoreAdminImageActiveCell_",
         "updateAdminImageReplacementHistoryStatus_","extractDriveFileIds",
         fnSource(admin,"handleRecoverReplacedImage")+"\nreturn handleRecoverReplacedImage;"
@@ -322,7 +322,7 @@ function buildDelete({status="historica",failStatus=false,failDriveRollback=fals
     };
     const api=new Function(
         "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
-        "getReplacedImageRecordType","isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","collectCortesImageReferences",
+        "getReplacedImageRecordType","isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","collectActiveDriveReferences",
         "DriveApp","getCortesRootFolder","getSingleParentFolderInsideCortes","getFolderPathInsideCortes",
         "setReplacedImageHistoryStatusVerified_","recordImageAdministrationActivity","logMessage",
         fnSource(admin,"handleDeleteReplacedImage")+"\nreturn handleDeleteReplacedImage;"
