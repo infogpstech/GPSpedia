@@ -132,7 +132,7 @@ function getSessionExpirationStatus_(row,now=new Date()){
  if(now.getTime()>=add(activity,1).getTime())return{expired:true,reason:'inactivity_expiration'};
  return{expired:false};
 }
-function getAuthenticatedCollaborator(payload){
+function getAuthenticatedCollaborator(payload, allowedRoles){
   const id=String(payload&&payload.userId||'').trim(),token=String(payload&&payload.sessionToken||'');if(!id||!token.trim())throw new Error("Acceso no autorizado: se requiere una sesión válida.");
   const ss=getSpreadsheet(),sh=ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS),uh=ss.getSheetByName(SHEET_NAMES.USERS);if(!sh||!uh)throw new Error("Acceso no autorizado: sesión no autorizada.");
   const tokenMatches=sh.getDataRange().getValues().slice(1).filter(r=>r[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===token);
@@ -143,6 +143,7 @@ function getAuthenticatedCollaborator(payload){
   const username=String(u[COLS_USERS.Nombre_Usuario-1]||'').trim();
   const role=String(u[COLS_USERS.Privilegios-1]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   if(!username||username.startsWith('__deleted__:')||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(role))throw new Error("Acceso no autorizado: la cuenta no está activa o no tiene un rol válido.");
+  if(Array.isArray(allowedRoles)&&!allowedRoles.includes(role))throw new Error("Acceso no autorizado: tu rol no puede agregar información suplementaria.");
   const name=String(u[COLS_USERS.Nombre_Completo-1]||'').trim();if(!name)throw new Error("El perfil del usuario no tiene un nombre completo registrado.");return name;
 }
 // ============================================================================
@@ -903,13 +904,14 @@ function persistSupplementaryInfoValues_(sheet,row,original,updated){
  try{range.setValues([updated]);SpreadsheetApp.flush();const saved=range.getValues()[0];if(!updated.every((v,i)=>String(saved[i]==null?"":saved[i])===String(v==null?"":v)))throw Error("La lectura posterior no coincide.");return true;}
  catch(e){let rollback="";try{range.setValues([original]);SpreadsheetApp.flush();}catch(r){rollback=" La reversión automática también falló: "+String(r&&r.message||r);}throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo confirmar la escritura de la información suplementaria."+rollback);}
 }
+const SUPPLEMENTARY_INFO_ALLOWED_ROLES_ = Object.freeze(["desarrollador", "gefe", "jefe", "supervisor", "tecnico", "tecnico_exterior"]);
 function handleAddSupplementaryInfo(payload){
- getAuthenticatedCollaborator(payload);
+ getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
  const lock=LockService.getScriptLock();try{lock.waitLock(30000);}catch(e){throw createSupplementaryInfoError_("SUPPLEMENTARY_LOCK_FAILED","No se pudo bloquear el registro de información suplementaria. Intente nuevamente.");}
  try{return handleAddSupplementaryInfoLocked(payload);}finally{lock.releaseLock();}
 }
 function handleAddSupplementaryInfoLocked(payload){
- getAuthenticatedCollaborator(payload);
+ const actorName = getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_);
  if(!payload||typeof payload!=="object"||!String(payload.vehicleId||"").trim())throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_VEHICLE_ID","El ID del vehículo es requerido para agregar información suplementaria.");
  
  const sheet=getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
@@ -931,6 +933,7 @@ function handleAddSupplementaryInfoLocked(payload){
  }catch(e){if(e&&e.code)throw e;throw createSupplementaryInfoError_("SUPPLEMENTARY_PERSISTENCE_FAILED","No se pudo guardar la información suplementaria: "+String(e&&e.message||e));}
  images.forEach(field=>{try{markImageUploadLinked(updated[index(field)]);}catch(e){Logger.log("La imagen se guardó, pero no se confirmó su vínculo en el ledger: "+String(e&&e.message||e));}});
  
+ Logger.log("Información suplementaria guardada por "+actorName+" para el vehículo "+String(payload.vehicleId)+".");
  return {status:"success",message:"Información suplementaria agregada exitosamente.",vehicleId:String(payload.vehicleId),slotIndex:plan.slotIndex,apertureSaved:plan.apertureRequested};
 }
 function handleGetSuggestion(payload) {
