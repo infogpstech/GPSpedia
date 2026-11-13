@@ -99,11 +99,11 @@ Referencias: AUG-045–047, AUG-135 y AUG-139.
 
 
 ADENDA FINAL POST-REVISIÓN — AUG-005 / H-AUD-059
-Se incorporó Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
+Se incorporó JS/Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de JS/Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
 
 
 VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
-Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en Services/admin.js y Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en JS/Services/admin.js y JS/Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
 
 
 ### AUG-006 — Logout con revocación remota
@@ -130,7 +130,7 @@ Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, I
 - Migrar una hoja ActiveSessions histórica con cinco columnas: confirmar que AUTH agrega lastActivityAt en F solo si el encabezado/datos están libres; probar F ocupada por encabezado desconocido y F con datos sin encabezado; no sobrescribir.
 - Probar sesiones históricas sin lastActivityAt (fallback a date), timestamps inválidos, token duplicado, usuario inactivo y sesión revocada.
 - Probar touchSession y validateSession concurrentes con login/logout/resetUserSessions; comprobar que AUTH es el único escritor de ActiveSessions y que ADMIN/FEEDBACK/WRITE/USERS rechazan sesiones vencidas.
-- Probar llamadas autenticadas desde api-config.js, throttle de cinco minutos, errores de red, expiración y comportamiento offline/local.
+- Probar llamadas autenticadas desde JS/Frontend/api-config.js, throttle de cinco minutos, errores de red, expiración y comportamiento offline/local.
 - Cambiar contraseña propia y restablecer contraseña de otra cuenta con Desarrollador; verificar revocación de todas las sesiones, rechazo de otros roles, prohibición de auto-restablecimiento administrativo, limpieza parcial y reintento.
 - No utilizar endpoints operativos ni datos productivos.
 
@@ -140,8 +140,8 @@ AUG-008 — Validación funcional multi-pestaña (solo deployments y datos aisla
 - Abrir dos o más pestañas del mismo origen HTTPS con la misma sesión; iniciar validación simultánea y comprobar una sola llamada AUTH cuando Web Locks está disponible y la reutilización del marcador exitoso por las pestañas en espera.
 - Simular respuesta lenta, éxito, sesión inválida, error de red y timeout/AbortSignal; confirmar liberación del lock, ausencia de espera indefinida y transición visual de splash/login.
 - Cambiar de token A a token B mientras validateSession(A) está pendiente; resolver A como inválida y confirmar que B permanece en localStorage, no se revoca y no se elimina.
-- Cerrar sesión en una pestaña y comprobar que index.html, users.html y add_cortes.html en las demás pestañas reconcilian/abandonan el estado protegido.
-- Cambiar la contraseña propia desde users.html y comprobar que las otras pestañas abandonan la sesión compartida.
+- Cerrar sesión en una pestaña y comprobar que index.html, HTML/users.html y HTML/add_cortes.html en las demás pestañas reconcilian/abandonan el estado protegido.
+- Cambiar la contraseña propia desde HTML/users.html y comprobar que las otras pestañas abandonan la sesión compartida.
 - Actualizar el perfil manteniendo el mismo token y comprobar que las otras pestañas no expulsan al usuario.
 - Probar navegador sin navigator.locks: validación directa con timeout de petición cuando AbortController exista; puede haber solicitudes redundantes, pero ninguna respuesta obsoleta debe modificar otra sesión.
 - Revocar sesiones desde otro dispositivo/deployment: confirmar que las rutas backend rechazan la siguiente operación protegida; la sincronización local no sustituye esta validación.
@@ -156,13 +156,13 @@ AUG-009 — Validación directa de createUser en USERS aislado
 - Probar prefijo __deleted__: con distintas mayúsculas y espacios externos; confirmar rechazo.
 - Probar duplicados con espacios externos y diferencias de mayúsculas; confirmar rechazo por la misma normalización trim()+toLowerCase().
 - Probar un string válido con espacios externos; confirmar que se almacena recortado y que el login acepta el mismo identificador.
-- Confirmar que la prueba utiliza la Spreadsheet y deployment USERS aislados; nunca api-config.js live, endpoints operativos ni datos productivos.
+- Confirmar que la prueba utiliza la Spreadsheet y deployment USERS aislados; nunca JS/Frontend/api-config.js live, endpoints operativos ni datos productivos.
 ================================================================================
 
 
 ================================================================================
 AUG-010 — Concurrencia local USERS y contraseña AUTH en deployments aislados
-- Crear/verificar deployments separados AUTH y USERS que utilicen exclusivamente la Spreadsheet de prueba. No modificar api-config.js ni sustituir URLs live.
+- Crear/verificar deployments separados AUTH y USERS que utilicen exclusivamente la Spreadsheet de prueba. No modificar JS/Frontend/api-config.js ni sustituir URLs live.
 - En USERS, ejecutar en paralelo createUser, updateUser y updateProfile; comprobar que las operaciones de escritura de un mismo proyecto no se intercalan dentro de la sección crítica y que IDs/nombres/roles quedan consistentes.
 - Probar contención y timeout de ScriptLock; confirmar que no hay lectura/escritura cuando no se adquiere y que el lock se libera tras errores RBAC, validación y escritura.
 - Probar updateUser con Nombre_Completo válido y Privilegios no permitido; ambos campos deben permanecer intactos.
@@ -186,7 +186,7 @@ Ampliación AUG-010 AUTH: intercalar un cambio de rol antes de que login adquier
 
 ================================================================================
 AUG-012 — Concurrencia real del contador de intentos AUTH
-- Crear/verificar un deployment AUTH aislado que utilice exclusivamente la Spreadsheet de prueba; no modificar api-config.js ni sustituir URLs live.
+- Crear/verificar un deployment AUTH aislado que utilice exclusivamente la Spreadsheet de prueba; no modificar JS/Frontend/api-config.js ni sustituir URLs live.
 - Ejecutar solicitudes concurrentes para el mismo usuario: credenciales inválidas, una autenticación válida y errores de infraestructura controlados. Confirmar que cada solicitud finaliza solo su reserva y que un rollback no reduce fallos de otras solicitudes.
 - Ejecutar cinco fallos y verificar el bloqueo nominal de 15 minutos; comprobar expiración y recuperación. Probar también que una reserva de infraestructura revertida no deja un bloqueo falso.
 - Verificar que las solicitudes pendientes se limpian y que el estado de CacheService se comporta según sus límites; no interpretar esta caché como almacenamiento durable.
@@ -196,7 +196,7 @@ AUG-012 — Concurrencia real del contador de intentos AUTH
 
 ================================================================================
 AUG-013 — Validación real de purga de Logs coordinada con AUTH
-- Crear/verificar deployment AUTH aislado que use exclusivamente la Spreadsheet de prueba descrita en Services/Test/README.md. No modificar api-config.js para apuntar a endpoints de prueba ni invocar URLs operativas.
+- Crear/verificar deployment AUTH aislado que use exclusivamente la Spreadsheet de prueba descrita en JS/Tests/README.md. No modificar JS/Frontend/api-config.js para apuntar a endpoints de prueba ni invocar URLs operativas.
 - Usar una cuenta Desarrollador de prueba con sesión válida. Ejecutar clearSensitiveLogs directamente contra AUTH y confirmar que la identidad, token, expiración y rol se validan en backend.
 - Insertar registros AUTH simultáneamente con la purga. Confirmar que las inserciones esperan al ScriptLock de AUTH o se completan después; no debe borrarse ningún registro no sensible por desplazamiento de índices.
 - Preparar fixtures de claves password, sheetPassword, currentPassword, newPassword, fromSheet, fromClient; username en handleLogin started.; Password comparison; y varios registros no sensibles. Verificar que se eliminan todos los sensibles y se conservan todos los seguros.
@@ -213,7 +213,7 @@ Batería ampliada: 24/25 pruebas funcionales locales PASS. Se añadieron reinten
 ================================================================================
 AUG-016 — Validación aislada de mutaciones y ciclo de sesión (pendiente de desbloqueo)
 No ejecutar hasta que AUD-T-033/AUG-034 y la política de cambio de Privilegios estén resueltas y la implementación de AUG-016 haya superado su revisión local.
-- Crear/verificar deployments AUTH y USERS aislados que apunten exclusivamente a la Spreadsheet de prueba descrita en Services/Test/README.md. No modificar api-config.js para apuntar a pruebas ni llamar endpoints operativos.
+- Crear/verificar deployments AUTH y USERS aislados que apunten exclusivamente a la Spreadsheet de prueba descrita en JS/Tests/README.md. No modificar JS/Frontend/api-config.js para apuntar a pruebas ni llamar endpoints operativos.
 - Ejecutar login concurrente con resetUserSessions y logout; comprobar el orden serializado por AUTH y que una revocación confirmada no deje válida una sesión incluida en la operación de cierre.
 - Inyectar fallos antes/durante/después de setValue(Users.SessionToken), appendRow(ActiveSessions), clearContent de tokens y deleteRow. Registrar el estado físico de ambas hojas, respuesta devuelta, liberación del lock y resultado de un reintento.
 - Simular pérdida de respuesta después de crear sesión y reintento de la misma solicitud; comprobar idempotencia y ausencia de sesiones duplicadas.
@@ -239,7 +239,7 @@ AUG-016 — Casos Beta adicionales tras implementación local (pendientes de dep
 - Fallos en changePassword/resetUserPassword: contraseña no debe cambiar si no se confirma la revocación total; escritura de hash ambigua debe verificarse por lectura posterior; comprobar qué contraseña permite login.
 - Fallos de deleteRow después de token vacío: confirmar que el token no autoriza y que la limpieza física es reintentable.
 - Verificar que tokens vacíos y sesiones expiradas no se cuenten en SESSION_LIMITS; verificar que sesiones de otras cuentas no cambien.
-- Verificar que api-config.js enruta updateUser a AUTH y que el deployment USERS rechaza directamente esa acción.
+- Verificar que JS/Frontend/api-config.js enruta updateUser a AUTH y que el deployment USERS rechaza directamente esa acción.
 - Verificar que producción y prueba mantienen Spreadsheet IDs independientes; ejecutar todo exclusivamente con las hojas y deployments de prueba.
 ================================================================================
 
@@ -272,7 +272,7 @@ AUG-155 — VALIDACIÓN DIFERIDA A BETA — COORDINADOR INTERPROYECTOS
 
 ================================================================================
 AUG-041 — UTILITIES — VALIDACIÓN DIFERIDA A BETA
-- Obtener la fuente exacta del deployment UTILITIES y compararla con Services/Utilities.js 1.4.0 antes de actualizar el deployment.
+- Obtener la fuente exacta del deployment UTILITIES y compararla con JS/Services/Utilities.js 1.4.0 antes de actualizar el deployment.
 - En deployment y Spreadsheet aislados, probar sesión ausente/inválida/expirada, rol no Desarrollador, revocación pendiente y dos ejecuciones concurrentes.
 - Inyectar timeout/interrupción después de staging y durante promoción; verificar backup, hojas staging y reintento.
 - Probar origen vacío, destino incompatible/protegido, permisos copyTo/rename/delete y limpieza del backup.
@@ -302,12 +302,12 @@ Si `git switch` o `git pull --ff-only` falla, detenerse y revisar el estado; no 
 
 ```bash
 for name in NavigationBackHistory OverlayHistoryStack ReplacedImagesLightboxHistory; do
-  cp "Services/Test/${name}.js" "Services/Test/${name}.mjs" || exit 1
-  if node "Services/Test/${name}.mjs"; then
-    rm -f "Services/Test/${name}.mjs"
+  cp "JS/Tests/${name}.js" "JS/Tests/${name}.mjs" || exit 1
+  if node "JS/Tests/${name}.mjs"; then
+    rm -f "JS/Tests/${name}.mjs"
   else
     result=$?
-    rm -f "Services/Test/${name}.mjs"
+    rm -f "JS/Tests/${name}.mjs"
     echo "FALLO: ${name} (código ${result})"
     exit "${result}"
   fi
@@ -377,11 +377,11 @@ PRUEBA LOCAL EN NODE.JS:
 Ejecutar desde la raíz. El comando crea dobles locales para LockService y CacheService; no representa concurrencia ni servicios Apps Script reales.
 
 ```bash
-node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("Services/feedback.js","utf8")+"\n"+fs.readFileSync("Services/Test/FeedbackWriteSecurity.js","utf8")+"\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("JS/Services/feedback.js","utf8")+"\n"+fs.readFileSync("JS/Tests/FeedbackWriteSecurity.js","utf8")+"\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
 ```
 
 VALIDACIÓN DE INTEGRACIÓN EN ENTORNO AISLADO:
-1. Usar únicamente el deployment FEEDBACK de pruebas y una copia aislada de Spreadsheet/Drive; no apuntar api-config.js a endpoints productivos ni utilizar datos reales.
+1. Usar únicamente el deployment FEEDBACK de pruebas y una copia aislada de Spreadsheet/Drive; no apuntar JS/Frontend/api-config.js a endpoints productivos ni utilizar datos reales.
 2. Iniciar sesión con cuentas de prueba de cada rol activo permitido (Desarrollador, Gefe, Jefe, Supervisor, Técnico y Técnico Exterior). Enviar un reporte y una sugerencia; confirmar que ambos se registran con ID y nombre resueltos desde Users.
 3. Enviar una sesión ausente, token inválido, token de sesión revocada/expirada y combinación userId/token de usuarios distintos. Confirmar rechazo antes de crear registros en Feedbacks, archivos en Drive o entradas en ActividadUsuario.
 4. Alterar userName/userRole en el payload conservando la sesión válida. Confirmar que se registra la identidad real del usuario y nunca la identidad enviada por el navegador.
@@ -415,7 +415,7 @@ PRUEBA LOCAL EN NODE.JS:
 Ejecutar desde la raíz. Esta suite comprueba contratos de fuentes y sintaxis; no simula un DOM ni sustituye navegador real.
 
 ```bash
-node -e 'const fs=require("fs"),vm=require("vm");const ui=fs.readFileSync("ui.js","utf8");const test=fs.readFileSync("Services/Test/InboxStoredXss.js","utf8");const run=vm.runInThisContext(test+"\nrunInboxStoredXssTests;");const result=run({ui});console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+node -e 'const fs=require("fs"),vm=require("vm");const ui=fs.readFileSync("JS/Frontend/ui.js","utf8");const test=fs.readFileSync("JS/Tests/InboxStoredXss.js","utf8");const run=vm.runInThisContext(test+"\nrunInboxStoredXssTests;");const result=run({ui});console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
 ```
 
 VALIDACIÓN EN BETA AISLADA:
@@ -449,7 +449,7 @@ git rev-parse HEAD
 PRUEBA NODE:
 
 ```bash
-cp Services/Test/ReportImageAttachment.js Services/Test/ReportImageAttachment.mjs && node Services/Test/ReportImageAttachment.mjs; RESULT=$?; rm -f Services/Test/ReportImageAttachment.mjs; printf "Resultado Node: %s\\n" "$RESULT"; test "$RESULT" -eq 0
+cp JS/Tests/ReportImageAttachment.js JS/Tests/ReportImageAttachment.mjs && node JS/Tests/ReportImageAttachment.mjs; RESULT=$?; rm -f JS/Tests/ReportImageAttachment.mjs; printf "Resultado Node: %s\\n" "$RESULT"; test "$RESULT" -eq 0
 ```
 
 BETA AISLADA (nunca producción): 1) reportar sin imagen; 2) cargar JPEG/PNG/WebP y verificar metadata y archivo en `Cortes/Reportes individuales`; 3) abrir Inbox con cuenta revisora y confirmar permisos heredados sin ANYONE_WITH_LINK; 4) probar MIME/firma inválidos, archivo vacío, >3 MB, FileReader error/abort y error Drive; 5) reenviar mismo reportId/hash y verificar no duplicado; mismo reportId/hash distinto debe rechazarse; 6) confirmar compatibilidad histórica; 7) simular fallo de metadata y comprobar rollback/papelera. No declarar PASS hasta comprobar Drive y acceso reales.
@@ -508,8 +508,8 @@ PRUEBAS NODE CLI — ejecutar desde la raíz con Node.js:
 
 ```bash
 set -e
-TEST_TMP=Services/Test/SuggestionImageSecurity.mjs
-cp Services/Test/SuggestionImageSecurity.js "$TEST_TMP"
+TEST_TMP=JS/Tests/SuggestionImageSecurity.mjs
+cp JS/Tests/SuggestionImageSecurity.js "$TEST_TMP"
 trap 'rm -f "$TEST_TMP"' EXIT
 node "$TEST_TMP"
 ```
@@ -628,8 +628,8 @@ PRUEBAS EN NAVEGADOR/DOM AISLADO (NO PRODUCCIÓN):
 1. Ejecutar la suite local:
    ```bash
    set -e
-   TEST_TMP=Services/Test/PysStoredXss.mjs
-   cp Services/Test/PysStoredXss.js "$TEST_TMP"
+   TEST_TMP=JS/Tests/PysStoredXss.mjs
+   cp JS/Tests/PysStoredXss.js "$TEST_TMP"
    trap 'rm -f "$TEST_TMP"' EXIT
    node "$TEST_TMP"
    ```
@@ -669,8 +669,8 @@ EJECUCIÓN EN PROYECTO APPS SCRIPT, SPREADSHEET Y DRIVE AISLADOS (NUNCA PRODUCCI
 1. Ejecutar la suite local:
    ```bash
    set -e
-   TEST_TMP=Services/Test/PysImageStorageRecovery.mjs
-   cp Services/Test/PysImageStorageRecovery.js "$TEST_TMP"
+   TEST_TMP=JS/Tests/PysImageStorageRecovery.mjs
+   cp JS/Tests/PysImageStorageRecovery.js "$TEST_TMP"
    trap 'rm -f "$TEST_TMP"' EXIT
    node "$TEST_TMP"
    ```
@@ -708,7 +708,7 @@ git rev-parse HEAD
 
 Ejecutar exclusivamente en una copia aislada del proyecto Apps Script, una copia aislada de la hoja de cálculo y una carpeta Drive de prueba. No conectar datos de producción ni desplegar a producción.
 
-1. Ejecutar `Services/Test/PysCreationIntegrity.js` y `Services/Test/PysImageStorageRecovery.js` con los comandos de `Services/Test/README.md`. Ambos deben terminar sin fallos.
+1. Ejecutar `JS/Tests/PysCreationIntegrity.js` y `JS/Tests/PysImageStorageRecovery.js` con los comandos de `JS/Tests/README.md`. Ambos deben terminar sin fallos.
 2. Confirmar que la hoja `pys` conserva exactamente sus diez encabezados actuales, en el mismo orden. Una hoja con encabezados cambiados, columnas adicionales o filas con datos y un ID vacío/malformado debe detener el alta sin sobrescribir datos ni crear archivos.
 3. Probar IDs desordenados y con huecos (por ejemplo `isue-001`, `isue-005` y una fila vacía intermedia). El siguiente ID debe ser `isue-006`, calculado desde el mayor sufijo válido, no desde el número de filas.
 4. Introducir IDs duplicados (incluyendo diferencias de mayúsculas o relleno, por ejemplo `isue-001` y `ISUE-1`). La lectura y el alta deben detenerse sin crear nuevos recursos.
@@ -747,7 +747,7 @@ git rev-parse HEAD
 Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
 
 PRUEBAS EN BETA AISLADA — copia FEEDBACK, Spreadsheet y Drive de prueba; nunca producción:
-1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de Services/Test/README.md.
+1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de JS/Tests/README.md.
 2. Enviar altas con título de 15 y 16 caracteres; descripción de 200 y 201; solución/previsión de 700 y 701. Verificar aceptación/rechazo y que los inválidos no creen filas ni archivos.
 3. Enviar campos con null, número, array, objeto, HTML enriquecido vacío, espacios y entidades de espacio. Confirmar rechazo server-side antes de crear recursos y normalización consistente.
 4. Probar sinSolucion con true, false, null, string "true" y número. Solo booleanos deben admitirse.
@@ -782,7 +782,7 @@ git rev-parse HEAD
 Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
 
 PRUEBAS EN BETA AISLADA — FEEDBACK y Spreadsheet de prueba; nunca producción:
-1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de Services/Test/README.md.
+1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de JS/Tests/README.md.
 2. Abrir el mismo PyS desde dos cuentas/sesiones y enviar soluciones diferentes casi simultáneamente. Confirmar una única solución, columnas Se soluciono/Solucion coherentes y respuesta conflict explícita al segundo contenido.
 3. Repetir con prevención desde dos usuarios y comprobar que el segundo valor no sobrescribe el primero.
 4. Enviar dos veces el mismo contenido; confirmar que el segundo envío se resuelve como replay idempotente sin nueva escritura ni actividad duplicada.
@@ -817,7 +817,7 @@ git rev-parse HEAD
 Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
 
 PRUEBAS EN BETA AISLADA — nunca producción:
-1. Ejecutar PysDataCache.js, PysCreationIntegrity.js y PysImageStorageRecovery.js con los comandos de Services/Test/README.md.
+1. Ejecutar PysDataCache.js, PysCreationIntegrity.js y PysImageStorageRecovery.js con los comandos de JS/Tests/README.md.
 2. Cambiar repetidamente entre PyS, detalle de vehículo, búsqueda y modal de asociación. Verificar que datos frescos dentro de cinco minutos se reutilizan sin nueva consulta.
 3. Abrir simultáneamente sección PyS, acordeón de vehículo y búsqueda mientras getPysData está pendiente. Confirmar una única solicitud de red y render correcto para todos los consumidores.
 4. Probar caché local reciente, vencida, vacía, corrupta, sin timestamp y localStorage bloqueado. Verificar recuperación o error visible sin romper la vista.

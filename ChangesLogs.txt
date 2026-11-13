@@ -1223,3 +1223,15 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Services/Test/AdminClientCacheDeletion.mjs: suite actualizada con ocho escenarios de transacción, preservación de estado, comunicación y ejecución del Service Worker.
 - Validación adaptada V8: 8/8 PASS; parsing de cinco fuentes/prueba/runner aprobado. Node CLI literal y navegador real no ejecutados.
 ================================================================================
+
+================================================================================
+2026-11-13 — REORGANIZACIÓN ESTRUCTURAL DEL REPOSITORIO GPSpedia
+- Centralización de 33 módulos frontend en JS/Frontend, 10 fuentes Apps Script en JS/Services y 148 suites/utilidades de prueba en JS/Tests.
+- Reubicación de add_cortes.html y users.html en HTML/ y de los nueve PNG activos de la raíz en Images/. index.html permanece en la raíz.
+- Actualización de imports, navegación, recursos gráficos, manifest.json, precache del Service Worker, runner, workflow, documentación y rutas de las listas Beta.
+- service-worker.js permanece en la raíz para conservar el alcance PWA. La caché se incrementó de gpsepedia-cache-v20 a gpsepedia-cache-v21.
+- PrintSheetPageContract.mjs apunta al registro histórico archivado correcto; no se modificó el contenido de Olds/Documentacion_Legacy.
+- GitHub Actions: ejecución 43522033695 SUCCESS; Node.js 22, 74 suites y 1,124 pruebas PASS. Ejecución posterior 43522115876 SUCCESS; todos los pasos del workflow concluyeron correctamente.
+- Validaciones Beta pendientes: instalación/actualización PWA y navegación offline en navegador/dispositivo real; ciclo de vida del Service Worker en hosting; copia manual y validación de Apps Script, Spreadsheet, Drive y endpoints externos. Sin deployments ni operaciones productivas.
+- No se ejecutó Node CLI local desde esta sesión; la evidencia automatizada corresponde a GitHub Actions.
+================================================================================

@@ -1,6 +1,6 @@
 # Plan de reorganización estructural del repositorio GPSpedia
 
-**Estado:** COMPLETADO — estructura y rutas reorganizadas; regresión automatizada aprobada.  
+**Estado:** COMPLETADO — estructura, rutas operativas y documentación Beta alineadas; regresión automatizada aprobada.  
 **Repositorio:** `infogpstech/GPSpedia`  
 **Rama autorizada:** `GPSpedia2.2.5_work`  
 **Rama base protegida:** `GPSpedia2.2.5`  
@@ -19,9 +19,9 @@ El alcance contempla:
 - Actualizar rutas, imports, referencias, precarga y configuración que dependan de las ubicaciones anteriores.
 - Validar que la aplicación, sus páginas, pruebas y capacidades PWA continúen funcionando.
 
-Este documento registra el plan; **no autoriza a considerar ejecutados los movimientos ni las validaciones**.
+Este documento registra el plan y la evidencia de ejecución en la sección 12; solo se consideran realizadas las operaciones y validaciones allí comprobadas.
 
-## 2. Estructura objetivo propuesta
+## 2. Estructura objetivo aplicada
 
 La carpeta `JS/` será el contenedor común de los archivos JavaScript, incluidos los módulos `.mjs`, organizados por función para evitar colisiones y mezclas entre frontend, servicios y pruebas.
 
@@ -54,7 +54,7 @@ GPSpedia/
 └── documentación y configuración del proyecto
 ```
 
-La estructura es una propuesta de destino. Durante el inventario se determinará la ubicación exacta de cada archivo, sin mover documentación, datos, configuraciones o archivos históricos por el solo hecho de compartir una extensión.
+La estructura aplicada conserva la separación por función y evita mover documentación, datos, configuraciones o archivos históricos por el solo hecho de compartir una extensión.
 
 ### Excepciones técnicas que deben resolverse antes de mover archivos
 
@@ -198,8 +198,9 @@ La reorganización podrá marcarse como **COMPLETADA** o **COMPLETADA CON VALIDA
 - Se trasladaron los nueve PNG ubicados en la raíz a `Images/`. Los recursos dentro de `Olds/` permanecen intactos.
 - Se actualizaron referencias en HTML, módulos con rutas de recursos, manifiesto, Service Worker, runner, suites afectadas, workflow y documentación operativa.
 - Se incrementó la caché PWA de `gpsepedia-cache-v20` a `gpsepedia-cache-v21`.
-- El árbol reorganizado conserva 270 archivos; no se eliminaron contenidos. Los archivos Beta y `checkpoint.md` permanecen sin cambios.
+- El árbol reorganizado conserva 287 archivos en el estado verificado; no se eliminaron contenidos. Las listas Beta se conservaron y sus rutas operativas se alinearon en una adenda documental; `checkpoint.md` permanece sin cambios.
 - **Validación automatizada aprobada:** GitHub Actions, workflow `GPSpedia service regression tests`, ejecución `43522033695`, commit `8748d5a39ad87a3e63d6e4c3d334fe03f454420b`: comprobaciones de sintaxis Node.js aprobadas; 74 suites; 1,124 pruebas aprobadas; 0 fallos.
 - **Validación Beta pendiente:** instalación/actualización PWA y navegación offline en navegador/dispositivo real; comprobación de alcance y ciclo de vida del Service Worker en hosting; copia manual y validación de Apps Script, Spreadsheet, Drive y endpoints externos. No se ejecutaron acciones contra producción.
 
 - Commit de reorganización con regresión aprobada: `8748d5a39ad87a3e63d6e4c3d334fe03f454420b`.
+- Verificación posterior de documentación y workflow: HEAD `1e35ca9b94c03a548341096b09d085a5a2258c83`; ejecución `43522115876` SUCCESS, con verificación de rama, sintaxis y suite automatizada.

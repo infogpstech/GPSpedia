@@ -69,7 +69,7 @@ Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. 
     git rev-parse HEAD
 
 Pruebas visuales en navegador real:
-1. Revisar botones primarios, secundarios, destructivos, advertencia, icono y compactos en index.html, users.html y add_cortes.html.
+1. Revisar botones primarios, secundarios, destructivos, advertencia, icono y compactos en index.html, HTML/users.html y HTML/add_cortes.html.
 2. Repetir con tema claro y oscuro; verificar contraste, foco visible por teclado, hover, active, disabled y loading.
 3. Comprobar formularios, modales, Inbox y panel de Desarrollador, incluidos botones con iconos y textos largos.
 4. Revisar viewports móviles: targets táctiles, wrapping, desbordamiento y separación entre acciones.
@@ -143,10 +143,10 @@ Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositor
     git rev-parse HEAD
 
 Pruebas en navegador real:
-1. Abrir index.html, users.html y add_cortes.html en tema claro y oscuro.
+1. Abrir index.html, HTML/users.html y HTML/add_cortes.html en tema claro y oscuro.
 2. Revisar fondos, superficies, texto principal/secundario, bordes, enlaces, campos, foco visible y estados deshabilitados.
-3. En users.html, revisar tabla, encabezados, perfil, gestión de usuarios y modales.
-4. En add_cortes.html, revisar formularios por etapas, campos, acordeones, coincidencias, mensajes informativos y carga de imágenes.
+3. En HTML/users.html, revisar tabla, encabezados, perfil, gestión de usuarios y modales.
+4. En HTML/add_cortes.html, revisar formularios por etapas, campos, acordeones, coincidencias, mensajes informativos y carga de imágenes.
 5. En index.html, revisar catálogo, menú, tarjetas, modales, estados de conexión y banner de validación.
 6. Repetir en viewports de 320, 768, 1024 y 1440 px; confirmar legibilidad y ausencia de desbordamiento horizontal.
 7. Confirmar que los colores contextuales, iconos, logotipos, imágenes y gráficas mantienen sus significados.
@@ -169,14 +169,14 @@ Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositor
     git rev-parse HEAD
 
 Pruebas en navegador real:
-1. Abrir add_cortes.html en viewport de 320, 375, 768 y 1280 px; comprobar vertical y horizontal.
+1. Abrir HTML/add_cortes.html en viewport de 320, 375, 768 y 1280 px; comprobar vertical y horizontal.
 2. Probar zoom del navegador al 200 % y 400 % (incluyendo emulación de 320 CSS px).
 3. Recorrer las etapas del formulario: cuadrícula a una columna, campos, etiquetas, selectores, botones, acordeones y mensajes.
 4. Enfocar y editar cada control con teclado físico y virtual; verificar que el campo enfocado permanezca visible y no quede oculto por el teclado.
 5. Comprobar que no aparezca scroll horizontal en el documento; el contenido largo debe refluír y las acciones deben poder alcanzarse.
 6. Abrir/cerrar el Lightbox repetidamente y comprobar que el zoom de página siga disponible.
 7. Confirmar que imágenes, carrusel y navegación del Lightbox conservan su funcionamiento.
-8. Abrir users.html e index.html y comprobar que su política de zoom previa no cambió al cerrar el Lightbox.
+8. Abrir HTML/users.html e index.html y comprobar que su política de zoom previa no cambió al cerrar el Lightbox.
 No modificar datos productivos, ejecutar operaciones backend ni desplegar.
 ================================================================================
 
@@ -196,7 +196,7 @@ Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositor
     git rev-parse HEAD
 
 Pruebas visuales en navegador real:
-1. Abrir add_cortes.html y users.html en anchos de 320, 375, 420, 600, 760, 768, 1024 y 1440 px.
+1. Abrir HTML/add_cortes.html y HTML/users.html en anchos de 320, 375, 420, 600, 760, 768, 1024 y 1440 px.
 2. Probar orientación vertical y horizontal, incluida orientación horizontal de poca altura.
 3. En add_cortes, recorrer etapas, campos, sugerencias, tarjetas de coincidencias, carga/preview de imágenes, acordeones y acciones; confirmar reflujo sin contenido cortado.
 4. En users, revisar perfil, tabla con nombres/roles largos y acciones disponibles según permisos; comprobar que no exista scroll horizontal global.
@@ -728,7 +728,7 @@ git rev-parse HEAD
 Si existe cualquier cambio local, el remoto no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
 
 PRUEBAS EN COPIA AISLADA DE SPREADSHEET/UTILITIES:
-1. Comparar el código del deployment UTILITIES con Services/Utilities.js. No desplegar a producción.
+1. Comparar el código del deployment UTILITIES con JS/Services/Utilities.js. No desplegar a producción.
 2. Preparar una copia aislada con Cortes, Hoja 1, Users y ActiveSessions; confirmar que solo una sesión Desarrollador activa puede ejecutar migrateTimestamps.
 3. Lanzar dos POST simultáneos desde clientes separados. Confirmar que ScriptLock serializa ambas operaciones y que no procesan snapshots intercalados.
 4. Comparar snapshots de Cortes y Hoja 1, staging y respaldo; promover solo tras validar ambos.
@@ -802,7 +802,7 @@ git rev-parse HEAD
 Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
 
 EJECUCIÓN EXCLUSIVA EN PROYECTO ADMIN Y RECURSOS AISLADOS:
-1. Crear un proyecto ADMIN de prueba separado y una copia de Spreadsheet/Drive; adaptar únicamente los IDs del proyecto aislado. Confirmar que no se usan IDs ni endpoints productivos y que el código corresponde a Services/admin.js del commit probado.
+1. Crear un proyecto ADMIN de prueba separado y una copia de Spreadsheet/Drive; adaptar únicamente los IDs del proyecto aislado. Confirmar que no se usan IDs ni endpoints productivos y que el código corresponde a JS/Services/admin.js del commit probado.
 2. Crear un respaldo DB. Verificar que el archivo es Spreadsheet, su manifiesto coincide en cantidad de hojas, filas/celdas, fórmulas y huella, y que un respaldo incompleto no se registra como válido.
 3. Crear un respaldo Drive con más recursos que el tamaño de lote configurado, estructura anidada, nombres repetidos, archivos de tamaño cero y MIME distintos. Verificar que cada respuesta intermedia es `in_progress`, que el contenedor permanece incompleto y que solo se acepta restauración tras `complete`.
 4. Reanudar varias veces con el mismo `backupId`, incluyendo interrupción después de copiar un recurso. Confirmar que las copias etiquetadas se recuperan sin duplicar archivos/carpetas y que los cursores y las relaciones padre/copia persisten. Verificar el manifiesto final por rutas, IDs de origen/copia, padres, MIME, tamaños, bytes, conteos y huella.
@@ -917,7 +917,7 @@ git rev-parse HEAD
 Prueba local reproducible:
 
 ```bash
-node --input-type=module -e 'import {readFileSync} from "node:fs"; const admin=readFileSync("Services/admin.js","utf8"); const tests=readFileSync("Services/Test/AdminModalEditIntegrity.js","utf8"); const run=new Function("adminSource",tests+"; return runAdminModalEditIntegrityTests(adminSource);"); const result=run(admin); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const admin=readFileSync("JS/Services/admin.js","utf8"); const tests=readFileSync("JS/Tests/AdminModalEditIntegrity.js","utf8"); const run=new Function("adminSource",tests+"; return runAdminModalEditIntegrityTests(adminSource);"); const result=run(admin); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
 ```
 
 En un proyecto ADMIN y Spreadsheet completamente aislados, con filas sintéticas:
@@ -961,7 +961,7 @@ git rev-parse HEAD
 Prueba reproducible local:
 
 ~~~bash
-node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("Services/users.js","utf8"); const auth=readFileSync("Services/Auth.js","utf8"); const coordinator=readFileSync("Services/Coordinator.js","utf8"); const tests=readFileSync("Services/Test/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource","coordinatorSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource,coordinatorSource);"); const result=run(users,auth,coordinator); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("JS/Services/users.js","utf8"); const auth=readFileSync("JS/Services/Auth.js","utf8"); const coordinator=readFileSync("JS/Services/Coordinator.js","utf8"); const tests=readFileSync("JS/Tests/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource","coordinatorSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource,coordinatorSource);"); const result=run(users,auth,coordinator); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
 ~~~
 
 En proyectos USERS y AUTH de Apps Script separados, conectados únicamente a la Spreadsheet aislada:
@@ -1060,7 +1060,7 @@ git rev-parse HEAD
 
 Después del preflight:
 1. Preparar proyectos Apps Script separados para AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES cuando corresponda; usar únicamente deployments nuevos y hojas Spreadsheet de prueba. No reemplazar deployments operativos.
-2. AUTH/USERS: comprobar que Services/Test/Auth.js y Services/Test/users.js conservan el ID de Spreadsheet aislada; probar roles permitidos/no permitidos, sesiones revocadas, altas/ediciones/eliminaciones y coordinación concurrente.
+2. AUTH/USERS: comprobar que JS/Tests/Auth.js y JS/Tests/users.js conservan el ID de Spreadsheet aislada; probar roles permitidos/no permitidos, sesiones revocadas, altas/ediciones/eliminaciones y coordinación concurrente.
 3. WRITE/ADMIN: probar payloads válidos e inválidos, VIN límites 5/6/18/19, duplicados, rollback, idempotencia y fallos reales de escritura/flush.
 4. FEEDBACK: probar aprobación/rechazo, ledger Inbox, destino cruzado/duplicado, reintentos y lectura posterior en CATALOG.
 5. UTILITIES: probar migración de timestamps en Spreadsheet aislada, staging, respaldo, rollback y lock concurrente.
@@ -1073,7 +1073,7 @@ No usar deployments, hojas, carpetas Drive ni datos productivos. Las suites loca
 ### AUG-135 — Verificación externa de permisos y ciclo de sesión YouTube
 - Confirmar ACL de la Spreadsheet de prueba de GPSpedia: cuentas/roles con acceso, acceso externo y permisos heredados. No modificar permisos sin autorización del propietario.
 - Confirmar ACL de la carpeta Drive de prueba: propietarios, editores, lectores, herencia y enlaces compartidos. No cambiar permisos como parte de la comprobación.
-- Inventariar deployments Apps Script por servicio, versión desplegada, propietario y URL configurada; comparar con los endpoints autorizados en api-config.js sin invocar ni modificar producción.
+- Inventariar deployments Apps Script por servicio, versión desplegada, propietario y URL configurada; comparar con los endpoints autorizados en JS/Frontend/api-config.js sin invocar ni modificar producción.
 - Validar en entorno de prueba el OAuth de YouTube desde FEEDBACK y la sesión Resumable. Confirmar que el token OAuth nunca llega al navegador; la URL temporal solo se entrega tras validar sesión y destino.
 - Verificar IndexedDB: persistencia necesaria para reanudar, limpieza tras completar/descartar y política de expiración para sesiones abandonadas. Cerrar el modal debe seguir siendo una pausa recuperable; el descarte explícito debe eliminar el registro local. No confundir la eliminación local con la revocación inmediata de una sesión ya creada en YouTube.
 
@@ -1161,7 +1161,7 @@ git -C GPSpedia rev-parse HEAD
 ~~~
 
 En navegador real, perfil aislado y sin datos productivos:
-1. En index.html, users.html y add_cortes.html, comprobar menú contextual y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U nativos.
+1. En index.html, HTML/users.html y HTML/add_cortes.html, comprobar menú contextual y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U nativos.
 2. Comprobar zoom con Ctrl+/Ctrl-, rueda con Ctrl y gestos pinch en móvil; confirmar controles de ampliación de Lightbox.
 3. Ejecutar operaciones privilegiadas con sesión válida, expirada/revocada, token cruzado y rol no autorizado. Confirmar rechazo backend aunque el cliente se manipule o invoque directamente la API.
 4. Confirmar que datos no autorizados no se entregan en respuestas públicas y que las lecturas públicas previstas siguen funcionando.
@@ -1304,7 +1304,7 @@ test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
 git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
 ~~~
 
-Entorno: proyectos Apps Script WRITE y ADMIN separados, deployments de prueba nuevos y Spreadsheet aislada con Users, ActiveSessions, Cortes e Idempotencia. No cambiar api-config.js a endpoints de prueba ni invocar URLs operativas.
+Entorno: proyectos Apps Script WRITE y ADMIN separados, deployments de prueba nuevos y Spreadsheet aislada con Users, ActiveSessions, Cortes e Idempotencia. No cambiar JS/Frontend/api-config.js a endpoints de prueba ni invocar URLs operativas.
 
 Casos:
 1. addSupplementaryInfo con sesión válida para cada rol permitido; confirmar actor derivado de Users y escritura en Cortes/Drive.
@@ -1423,7 +1423,7 @@ PRUEBAS AISLADAS:
 3. Abrir el acuerdo desde el enlace del aviso. Confirmar foco inicial en el encabezado, ciclo de foco con Tab/Shift+Tab, cierre con Escape y con botón; ambos cierres deben devolver el foco al enlace y dejar visible el aviso obligatorio.
 4. Abrir el acuerdo desde login y footer; cerrar con Escape y botón. Confirmar que el foco retorna al enlace que inició la apertura.
 5. Repetir con viewport móvil estrecho, orientación vertical/horizontal, zoom del navegador y temas claro/oscuro. Verificar que el botón de cierre no se solape con el título y que el contenido conserve scroll.
-6. Actualizar desde el Service Worker anterior a v20. Tras activación, desconectar la red y abrir ambos modales. Confirmar carga local de Logo_TemaOscuro.png y tracklink_logo.png en claro/oscuro; inspeccionar Cache Storage y verificar que el cache activo sea gpsepedia-cache-v20.
+6. Actualizar desde el Service Worker anterior a v21. Tras activación, desconectar la red y abrir ambos modales. Confirmar carga local de Images/Logo_TemaOscuro.png y Images/tracklink_logo.png en claro/oscuro; inspeccionar Cache Storage y verificar que el cache activo sea gpsepedia-cache-v21.
 7. Con el aviso visible, abrir el acuerdo y cerrarlo usando Atrás, Escape y botón. Confirmar que el aviso permanece, que la pila __gpOverlayStack queda vacía al cerrar el acuerdo y que no aparecen entradas modalOpen residuales.
 8. Abrir y cerrar desde cada punto de entrada varias veces, recargar y repetir. Confirmar que no se acumulan listeners, el foco no queda en un elemento oculto y el aviso no puede descartarse antes de la aceptación confirmada.
 
@@ -1639,7 +1639,7 @@ git rev-parse HEAD
 ```
 
 1. En un entorno aislado, consultar AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN con `?debug=true`; comprobar HTTP, MIME JSON, identidad exacta, versión y estado. Comparar cada respuesta con `Services/SERVICE_HEALTH.md` y el código fuente desplegado.
-2. Verificar que cada ID configurado en api-config.js corresponde al proyecto/versión esperados y que no se ejecuta una versión anterior. No modificar ni redeplegar desde esta prueba.
+2. Verificar que cada ID configurado en JS/Frontend/api-config.js corresponde al proyecto/versión esperados y que no se ejecuta una versión anterior. No modificar ni redeplegar desde esta prueba.
 3. Comprobar que las respuestas públicas no contienen spreadsheetId, driveFolderId, cacheKey, nombres de hojas, estructura interna, stack traces, tokens, contraseñas ni secretos. No guardar cuerpos que contengan datos sensibles.
 4. Confirmar que LEGACY permanece unknown hasta obtener identidad y contrato verificables; no inferir identidad por HTTP 2xx ni por el nombre de la URL.
 5. Simular en entorno aislado HTTP 4xx/5xx, timeout, red desconectada, cuerpo vacío, HTML, JSON inválido, objeto/estado/identidad desconocidos y respuesta lenta; confirmar aislamiento entre servicios.

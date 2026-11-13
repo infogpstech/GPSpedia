@@ -10,21 +10,36 @@ El objetivo principal es optimizar los tiempos de instalación en campo, reducir
 ## 2. Estructura del Repositorio
 El repositorio actual contiene el **App Shell** y la lógica del cliente (Frontend) de la plataforma, organizada bajo una arquitectura modular de JavaScript moderno.
 
+### Organización actual
+
+```text
+GPSpedia/
+├── index.html
+├── HTML/              # páginas secundarias
+├── JS/
+│   ├── Frontend/      # módulos del navegador
+│   ├── Services/      # fuentes JavaScript de servicios
+│   └── Tests/         # suites y runner Node.js
+├── Images/            # logos e iconos
+├── Services/          # documentación y auxiliares no-JS
+└── service-worker.js  # raíz para conservar el alcance PWA
+```
+
 ### Archivos Principales y Vistas
 - **index.html:** Puerta de entrada principal. Contiene el contenedor maestro, el sistema de modales dinámicos y la estructura base del catálogo, tutoriales y sección de relay.
-- **add_cortes.html:** Interfaz para el registro colaborativo de nuevos vehículos y cortes, con asistente de registro guiado de instalación.
-- **users.html:** Panel de gestión de usuarios y perfiles, que permite la personalización de datos personales y visualización de la red de técnicos.
+- **HTML/add_cortes.html:** Interfaz para el registro colaborativo de nuevos vehículos y cortes, con asistente de registro guiado de instalación.
+- **HTML/users.html:** Panel de gestión de usuarios y perfiles, que permite la personalización de datos personales y visualización de la red de técnicos.
 
 ### Módulos de Lógica (JavaScript ES6)
-- **main.js:** Orquestador principal. Gestiona la inicialización de la app, listeners globales, validación de sesión y el sistema de navegación por historial de navegación del navegador (History API).
-- **ui.js:** Módulo de renderizado. Centraliza toda la manipulación del DOM, creación dinámica de tarjetas, gestión de carruseles y renderizado de detalles técnicos.
-- **auth.js:** Gestiona la autenticación del lado del cliente, persistencia de tokens de sesión y comunicación inicial con los servicios de acceso.
-- **share-utils.js:** Construye enlaces compartidos con identidad estable de vehículo, decodifica enlaces históricos y gestiona Web Share/Clipboard con fallback accesible.
-- **navigation.js:** Controla la lógica de filtrado del catálogo, gestión de la barra de búsqueda y transiciones entre niveles de navegación (Marca -> Modelo -> Versión).
-- **state.js:** Implementa un patrón centralizado de gestión de estado con sistema de suscripción (Pub/Sub) para sincronizar la UI con los datos.
-- **offline.js:** Núcleo de persistencia local. Gestiona la base de datos IndexedDB para el almacenamiento del catálogo, historial de usuario e imágenes optimizadas (thumbnails).
-- **lightbox.js:** Módulo especializado para la visualización y zoom de imágenes técnicas de alta resolución.
-- **api-config.js:** Archivo de configuración que rutea las peticiones del frontend hacia los microservicios operativos.
+- **JS/Frontend/main.js:** Orquestador principal. Gestiona la inicialización de la app, listeners globales, validación de sesión y el sistema de navegación por historial de navegación del navegador (History API).
+- **JS/Frontend/ui.js:** Módulo de renderizado. Centraliza toda la manipulación del DOM, creación dinámica de tarjetas, gestión de carruseles y renderizado de detalles técnicos.
+- **JS/Frontend/auth.js:** Gestiona la autenticación del lado del cliente, persistencia de tokens de sesión y comunicación inicial con los servicios de acceso.
+- **JS/Frontend/share-utils.js:** Construye enlaces compartidos con identidad estable de vehículo, decodifica enlaces históricos y gestiona Web Share/Clipboard con fallback accesible.
+- **JS/Frontend/navigation.js:** Controla la lógica de filtrado del catálogo, gestión de la barra de búsqueda y transiciones entre niveles de navegación (Marca -> Modelo -> Versión).
+- **JS/Frontend/state.js:** Implementa un patrón centralizado de gestión de estado con sistema de suscripción (Pub/Sub) para sincronizar la UI con los datos.
+- **JS/Frontend/offline.js:** Núcleo de persistencia local. Gestiona la base de datos IndexedDB para el almacenamiento del catálogo, historial de usuario e imágenes optimizadas (thumbnails).
+- **JS/Frontend/lightbox.js:** Módulo especializado para la visualización y zoom de imágenes técnicas de alta resolución.
+- **JS/Frontend/api-config.js:** Archivo de configuración que rutea las peticiones del frontend hacia los microservicios operativos.
 
 ---
 
