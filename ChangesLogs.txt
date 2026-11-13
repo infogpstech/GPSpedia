@@ -1201,3 +1201,15 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Validación adaptada V8: 44/44 PASS; parsing de admin.js, suite y runner: 3/3 PASS. Node CLI/GitHub Actions no ejecutado desde esta sesión.
 - Sin deployment ni operaciones productivas.
 ================================================================================
+
+================================================================================
+2026-11-13 — AUG-033 — CAPTURA ADAPTATIVA Y MÉTRICAS DE RENDIMIENTO DRIVE
+- Services/admin.js — collectCortesImageReferences: el tamaño de lectura por bloque ahora se adapta al tiempo medido, con rango de 50 a 500 filas y objetivo de 1,500 ms por bloque.
+- La captura conserva el límite global de 12,000 ms y rechaza la operación si se agota; no devuelve una colección parcial que pueda convertirse en snapshot.
+- Se agregan métricas de tiempo para valores visibles, valores nativos, fórmulas, RichText y análisis de referencias; también volumen de filas/celdas/rangos/bloques, tamaño adaptativo y duración máxima.
+- Se conserva la lectura de los ocho campos de imagen, incluidas fórmulas, vínculos RichText y objetos CellImage; no se amplía a columnas ajenas.
+- La validación de caché de ancestros, el presupuesto del recorrido Drive y el contrato de reintento/cursor del cliente se mantienen sin cambios y quedan cubiertos por pruebas.
+- Services/Test/AdminReplacedImagesIntegrity.mjs: pruebas de adaptación y límite temporal; 54/54 PASS en harness V8 adaptado.
+- Services/Test/AdminDriveAuditClientRetry.mjs: 7/7 PASS en harness V8 adaptado.
+- Node CLI y GitHub Actions no se ejecutaron desde este entorno; sin afirmación de CI SUCCESS.
+================================================================================
