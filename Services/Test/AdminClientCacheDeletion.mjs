@@ -170,7 +170,8 @@ await check("El mensaje del Service Worker elimina respuestas dinámicas y conse
     };
     const selfRef = { location: "https://example.test/app/service-worker.js", addEventListener(name, callback) { listeners[name] = callback; } };
     const TestURL = function(relative, base) {
-        const baseText = String(base), schemeEnd = baseText.indexOf("://"), originEnd = baseText.indexOf("/", schemeEnd + 3);\n        const origin = originEnd < 0 ? baseText : baseText.slice(0, originEnd);
+        const baseText = String(base), schemeEnd = baseText.indexOf("://"), originEnd = baseText.indexOf("/", schemeEnd + 3);
+        const origin = originEnd < 0 ? baseText : baseText.slice(0, originEnd);
         const path = String(base).slice(origin.length);
         const parts = path.split("/");
         if (!String(base).endsWith("/")) parts.pop();
