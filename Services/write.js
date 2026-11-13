@@ -497,7 +497,215 @@ function findNextAvailableCutSlot_(rowValues) {
     }
     return null;
 }
+
+function isAddCutPlainObject_(value) {
+    return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+function validateAddCutText_(value, field, required, maxLength) {
+    if (value === undefined || value === null) value = "";
+    if (typeof value !== "string") throw new Error("El campo " + field + " debe ser texto.");
+    const clean = value.trim();
+    if (required && !clean) throw new Error("El campo " + field + " es obligatorio.");
+    if (clean.length > maxLength) throw new Error("El campo " + field + " supera el máximo de " + maxLength + " caracteres.");
+    return clean;
+}
+function validateAddCutImage_(value, field) {
+    if (value === undefined || value === null || value === "") return "";
+    if (typeof value !== "string") throw new Error("La imagen " + field + " debe enviarse como texto Base64.");
+    const match = value.match(/^data:(image\/(?:jpeg|png|gif|webp|bmp|avif|heic|heif));base64,([A-Za-z0-9+/]+={0,2})$/i);
+    if (!match || !match[2] || match[2].length % 4 !== 0) throw new Error("La imagen " + field + " no tiene un formato Base64 de imagen permitido.");
+    const estimatedBytes = Math.floor(match[2].length * 3 / 4) - (match[2].endsWith("==") ? 2 : match[2].endsWith("=") ? 1 : 0);
+    if (estimatedBytes < 1) throw new Error("La imagen " + field + " está vacía.");
+    if (estimatedBytes > 10 * 1024 * 1024) throw new Error("La imagen " + field + " supera el límite de 10 MB.");
+    return value;
+}
+function validateAddCutYearRange_(value) {
+    const clean = validateAddCutText_(value, "anoDesde", true, 11);
+    const match = clean.match(/^(\d{4})(?:\s*-\s*(\d{4}))?$/);
+    if (!match) throw new Error("El año debe ser YYYY o un rango YYYY-YYYY.");
+    const start = Number(match[1]), end = match[2] ? Number(match[2]) : start;
+    const maxYear = new Date().getFullYear() + 2;
+    if (start < 1886 || end < 1886 || start > maxYear || end > maxYear) throw new Error("El rango de años está fuera del intervalo permitido.");
+    if (start > end) throw new Error("El año inicial no puede ser mayor que el año final.");
+    return clean;
+}
+function validateAddOrUpdateCutPayload_(payload, options) {
+    options = isAddCutPlainObject_(options) ? options : {};
+    if (!isAddCutPlainObject_(payload)) throw new Error("La solicitud de corte debe ser un objeto válido.");
+    const allowed = (list, value, field) => {
+        const values = Array.isArray(list) ? list.map(item => String(item == null ? "" : item).trim()).filter(Boolean) : [];
+        if (!values.length) throw new Error("No está disponible la lista oficial para validar " + field + ".");
+        if (!values.includes(value)) throw new Error("El valor de " + field + " no pertenece a la lista oficial vigente.");
+    };
+    const vehicleIdRaw = payload.vehicleId === undefined || payload.vehicleId === null || payload.vehicleId === "" ? "" : String(payload.vehicleId).trim();
+    let vehicleId = null;
+    if (vehicleIdRaw) {
+        if (!/^[1-9]\d{0,14}$/.test(vehicleIdRaw) || !Number.isSafeInteger(Number(vehicleIdRaw))) throw new Error("El ID del vehículo debe ser un entero positivo válido.");
+        vehicleId = vehicleIdRaw;
+    }
+    if (!isAddCutPlainObject_(payload.cutData)) throw new Error("Los datos del corte son requeridos y deben tener una estructura válida.");
+    const cut = payload.cutData;
+    const cutKeys = new Set(["tipoCorte1","configRelay1","ubicacionCorte1","colorCableCorte1","activaTestigo1","imgCorte1","vin"]);
+    Object.keys(cut).forEach(key => { if (!cutKeys.has(key)) throw new Error("El campo de corte " + key + " no está permitido."); });
+    const cutData = {
+        tipoCorte1: validateAddCutText_(cut.tipoCorte1, "tipoCorte1", true, 100),
+        configRelay1: validateAddCutText_(cut.configRelay1, "configRelay1", false, 200),
+        ubicacionCorte1: validateAddCutText_(cut.ubicacionCorte1, "ubicacionCorte1", true, 10000),
+        colorCableCorte1: validateAddCutText_(cut.colorCableCorte1, "colorCableCorte1", false, 200),
+        activaTestigo1: cut.activaTestigo1,
+        imgCorte1: validateAddCutImage_(cut.imgCorte1, "imgCorte1"),
+        vin: validateAddCutText_(cut.vin, "vin", false, 50)
+    };
+    if (typeof cutData.activaTestigo1 !== "boolean") throw new Error("El campo activaTestigo1 debe ser booleano.");
+    allowed(options.tipoDeCorte, cutData.tipoCorte1, "tipoCorte1");
+    const noRecommended = /^no recomendado$/i.test(cutData.tipoCorte1);
+    if (!noRecommended) {
+        if (!cutData.configRelay1) throw new Error("La configuración Relay es obligatoria para este tipo de corte.");
+        allowed(options.configRelay, cutData.configRelay1, "configRelay1");
+    } else if (cutData.configRelay1) {
+        allowed(options.configRelay, cutData.configRelay1, "configRelay1");
+    }
+    if (cutData.vin) {
+        const normalizedVin = cutData.vin.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (normalizedVin.length <= 5 || normalizedVin.length > 18) throw new Error("El VIN debe contener entre 6 y 18 caracteres alfanuméricos después de normalizarse.");
+    }
+    let vehicleData = null;
+    if (payload.vehicleData !== undefined && payload.vehicleData !== null) {
+        if (!isAddCutPlainObject_(payload.vehicleData)) throw new Error("Los datos del vehículo deben tener una estructura válida.");
+        const v = payload.vehicleData;
+        const vehicleKeys = new Set(["categoria","marca","modelo","versionesAplicables","anoDesde","anoHasta","tipoEncendido","imagenVehiculo"]);
+        Object.keys(v).forEach(key => { if (!vehicleKeys.has(key)) throw new Error("El campo de vehículo " + key + " no está permitido."); });
+        vehicleData = {
+            categoria: validateAddCutText_(v.categoria, "categoria", !vehicleId, 80),
+            marca: validateAddCutText_(v.marca, "marca", !vehicleId, 120),
+            modelo: validateAddCutText_(v.modelo, "modelo", !vehicleId, 120),
+            versionesAplicables: validateAddCutText_(v.versionesAplicables, "versionesAplicables", false, 500),
+            anoDesde: v.anoDesde === undefined || v.anoDesde === null || v.anoDesde === "" ? "" : validateAddCutYearRange_(v.anoDesde),
+            anoHasta: validateAddCutText_(v.anoHasta, "anoHasta", false, 4),
+            tipoEncendido: validateAddCutText_(v.tipoEncendido, "tipoEncendido", !vehicleId, 80),
+            imagenVehiculo: validateAddCutImage_(v.imagenVehiculo, "imagenVehiculo")
+        };
+        if (!vehicleId) {
+            if (!vehicleData.anoDesde) throw new Error("El campo anoDesde es obligatorio para un vehículo nuevo.");
+            allowed(options.categoria, vehicleData.categoria, "categoria");
+            allowed(options.tipoEncendido, vehicleData.tipoEncendido, "tipoEncendido");
+        } else {
+            if (vehicleData.categoria) allowed(options.categoria, vehicleData.categoria, "categoria");
+            if (vehicleData.tipoEncendido) allowed(options.tipoEncendido, vehicleData.tipoEncendido, "tipoEncendido");
+            if (vehicleData.anoDesde) validateAddCutYearRange_(vehicleData.anoDesde);
+        }
+        if (vehicleData.anoHasta && !/^\d{4}$/.test(vehicleData.anoHasta)) throw new Error("El campo anoHasta debe contener un año de cuatro dígitos.");
+    } else if (!vehicleId) {
+        throw new Error("Los datos del vehículo son obligatorios para crear un registro nuevo.");
+    }
+    if (payload.silent !== undefined && typeof payload.silent !== "boolean") throw new Error("El indicador silent debe ser booleano.");
+    const opId = payload.opId === undefined || payload.opId === null || payload.opId === "" ? "" : String(payload.opId).trim();
+    const operationHash = payload.operationHash === undefined || payload.operationHash === null || payload.operationHash === "" ? "" : String(payload.operationHash).trim().toLowerCase();
+    if (opId && !/^OP-[A-Za-z0-9_-]{1,120}$/.test(opId)) throw new Error("El identificador opId no tiene un formato válido.");
+    if (opId && !/^[a-f0-9]{64}$/.test(operationHash)) throw new Error("Una operación con opId requiere operationHash SHA-256 válido.");
+    if (!opId && operationHash) throw new Error("No se acepta operationHash sin opId.");
+    return {
+        vehicleId: vehicleId,
+        vehicleData: vehicleData,
+        cutData: cutData,
+        silent: payload.silent === true,
+        opId: opId || undefined,
+        operationHash: operationHash || undefined,
+        userId: payload.userId,
+        sessionToken: payload.sessionToken,
+        colaborador: payload.colaborador
+    };
+}
+function getAddCutPayloadValidationOptions_(sheet, relaySheet) {
+    if (!sheet || !relaySheet) throw new Error("No están disponibles las hojas necesarias para validar las listas oficiales de WRITE.");
+    const lastRow = sheet.getLastRow(), lastColumn = sheet.getLastColumn();
+    const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+    const unique = values => Array.from(new Set(values.map(value => String(value == null ? "" : value).trim()).filter(Boolean)));
+    let categories = [];
+    const rule = sheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
+    if (rule && typeof rule.getCriteriaValues === "function") {
+        const criteria = rule.getCriteriaValues()[0];
+        if (criteria && typeof criteria.getValues === "function") categories = unique(criteria.getValues().flat());
+        else if (Array.isArray(criteria)) categories = unique(criteria.flat());
+    }
+    if (!categories.length) categories = unique(rows.map(row => row[COLS_CORTES.categoria - 1]));
+    const tipoDeCorte = unique(rows.flatMap(row => [row[COLS_CORTES.tipoCorte1 - 1], row[COLS_CORTES.tipoCorte2 - 1], row[COLS_CORTES.tipoCorte3 - 1]]));
+    const tipoEncendido = unique(rows.map(row => row[COLS_CORTES.tipoEncendido - 1]));
+    const relayLastRow = relaySheet.getLastRow();
+    const relayRows = relayLastRow > 1 ? relaySheet.getRange(2, 1, relayLastRow - 1, Math.max(2, relaySheet.getLastColumn())).getValues() : [];
+    const configRelay = unique(relayRows.map(row => row[1]));
+    return { categoria: categories, tipoDeCorte: tipoDeCorte, tipoEncendido: tipoEncendido, configRelay: configRelay };
+}
 function handleAddOrUpdateCutLocked(payload) {
+    getAuthenticatedCollaborator(payload);
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
+    const relaySheet = ss.getSheetByName("Relay");
+    const options = getAddCutPayloadValidationOptions_(sheet, relaySheet);
+    const validatedPayload = validateAddOrUpdateCutPayload_(payload, options);
+    const vehicleId = validatedPayload.vehicleId;
+    const lastRowBefore = sheet.getLastRow();
+    let existingRowIndex = null, existingRowValues = null;
+    if (vehicleId) {
+        const ids = lastRowBefore > 1 ? sheet.getRange(2, COLS_CORTES.id, lastRowBefore - 1, 1).getValues().flat() : [];
+        const matches = [];
+        ids.forEach((id, index) => { if (String(id == null ? "" : id).trim() === vehicleId) matches.push(index + 2); });
+        if (matches.length !== 1) throw new Error(matches.length ? "El ID del vehículo aparece duplicado; no se realizó ninguna modificación." : "El ID del vehículo no fue encontrado.");
+        existingRowIndex = matches[0];
+        existingRowValues = sheet.getRange(existingRowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+    }
+    const properties = PropertiesService.getScriptProperties();
+    const counterBefore = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
+    const opId = validatedPayload.opId || "";
+    const idempotencySheetBefore = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+    let opRowIndex = null, opRowValues = null, opLastRowBefore = idempotencySheetBefore ? idempotencySheetBefore.getLastRow() : 0;
+    if (opId && idempotencySheetBefore && opLastRowBefore > 1) {
+        const opRows = idempotencySheetBefore.getRange(2, 1, opLastRowBefore - 1, 1).getValues().flat();
+        opRows.forEach((value, index) => { if (String(value || "").trim() === opId) { opRowIndex = index + 2; } });
+        if (opRowIndex) opRowValues = idempotencySheetBefore.getRange(opRowIndex, 1, 1, idempotencySheetBefore.getLastColumn()).getValues()[0];
+    }
+    try {
+        return handleAddOrUpdateCutLockedUnsafe_(validatedPayload);
+    } catch (error) {
+        const rollbackErrors = [];
+        try {
+            if (existingRowIndex && existingRowValues) {
+                sheet.getRange(existingRowIndex, 1, 1, existingRowValues.length).setValues([existingRowValues]);
+                SpreadsheetApp.flush();
+            } else if (sheet.getLastRow() === lastRowBefore + 1) {
+                sheet.deleteRow(lastRowBefore + 1);
+                SpreadsheetApp.flush();
+            }
+        } catch (rollbackError) { rollbackErrors.push("Cortes: " + String(rollbackError.message || rollbackError)); }
+        try {
+            const idempotencySheet = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+            if (idempotencySheet && opId) {
+                if (opRowIndex && opRowValues) {
+                    idempotencySheet.getRange(opRowIndex, 1, 1, opRowValues.length).setValues([opRowValues]);
+                } else {
+                    const last = idempotencySheet.getLastRow();
+                    if (last > opLastRowBefore && String(idempotencySheet.getRange(last, 1).getValue() || "").trim() === opId) idempotencySheet.deleteRow(last);
+                }
+                SpreadsheetApp.flush();
+            }
+        } catch (rollbackError) { rollbackErrors.push("Idempotencia: " + String(rollbackError.message || rollbackError)); }
+        try {
+            const currentCounter = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
+            if (currentCounter !== counterBefore) {
+                if (counterBefore === null) properties.deleteProperty(CORTES_ID_COUNTER_PROPERTY);
+                else properties.setProperty(CORTES_ID_COUNTER_PROPERTY, counterBefore);
+            }
+        } catch (rollbackError) { rollbackErrors.push("Contador de IDs: " + String(rollbackError.message || rollbackError)); }
+        if (rollbackErrors.length) {
+            throw new Error("La operación falló: " + String(error && error.message || error) +
+                ". La reversión no pudo confirmarse completamente (" + rollbackErrors.join("; ") +
+                "). No reintentes con otro opId; conserva el identificador original para recuperación.");
+        }
+        throw error;
+    }
+}
+
+function handleAddOrUpdateCutLockedUnsafe_(payload) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
     if (!cutData) {
