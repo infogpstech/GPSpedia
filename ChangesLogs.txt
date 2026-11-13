@@ -627,5 +627,5 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - createUser escribe ID y datos de cuenta en una sola operación contigua; updateProfile exige ID único y sesión propia.
 - Ambas mutaciones utilizan el mismo ScriptLock local, verifican persistencia y ejecutan rollback de valores/fórmulas ante fallos. Se conserva la lease compartida del router para coordinar USERS con las mutaciones AUTH.
 - Services/Test/users.js sincronizado con el servicio fuente, preservando el ID de Spreadsheet aislada.
-- Services/Test/UsersAtomicMutations.js: 11 escenarios locales PASS; parsing V8 de USERS, AUTH y suite PASS.
+- Services/Test/UsersAtomicMutations.js: 13 escenarios locales PASS; incluye política de conflictos USERS/AUTH del coordinador compartido. Parsing V8 de USERS, AUTH, Coordinator y suite PASS.
 ================================================================================
