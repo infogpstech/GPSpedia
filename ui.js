@@ -2070,7 +2070,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     const currentModalType=modalDetalle&&modalDetalle.dataset.modalType;
     const sameModalViewState=modalWasVisible&&currentModalType==='corte'?captureModalViewState(modalDetalle):null;
     registerModalNavigationTransition_('corte',currentModalType,modalWasVisible,navOptions);
-    if(modalDetalle){modalDetalle.dataset.modalType='corte';modalDetalle.dataset.vehicleId=String(activeItem.id); delete modalDetalle.dataset.validationBannerRequestedVehicleId;}
+    if (modalDetalle) { modalDetalle.dataset.modalType = 'corte'; modalDetalle.dataset.vehicleId = String(activeItem.id); delete modalDetalle.dataset.validationBannerRequestedVehicleId; }
 
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -8406,7 +8406,7 @@ export function openExpandMenuModal(item) {
             ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
             ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
             ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
-            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${!String(item.videoGuiaDesarmeUrl || item.Video || "").trim() ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar vídeo guía</button>` : ""}
             ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
             <button id="btn-exp-pys" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-triangle-exclamation"></i> Agregar problema relacionado</button>
         </div>

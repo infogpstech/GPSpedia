@@ -51,6 +51,12 @@ function runSupplementaryVideoContractTests(sources) {
                 assert_(rejected, "No se rechazó el alias de vídeo directo.");
             });
         });
+        run_(label + " rechaza vídeo directo aunque venga junto a una apertura válida", () => {
+            let rejected = false;
+            try { assertKeys({ vehicleId: "V-1", apertura: "Apertura válida", videoGuiaDesarmeUrl: "https://www.youtube.com/watch?v=abcdefghijk" }); }
+            catch (error) { rejected = error.code === "SUPPLEMENTARY_VIDEO_APPROVAL_REQUIRED"; }
+            assert_(rejected, "El payload mixto pudo ignorar el vídeo y devolver éxito.");
+        });
         run_(label + " rechaza campo selector no reconocido", () => {
             let rejected = false;
             try { assertKeys({ vehicleId: "V-1", fieldName: "videoGuiaDesarmeUrl", value: "https://www.youtube.com/watch?v=abcdefghijk" }); }

@@ -1098,8 +1098,17 @@ function sanitizeSupplementaryRichText_(value) {
 function createSupplementaryInfoError_(code,message){const e=new Error(message);e.code=code;return e;}
 function hasSupplementaryValue_(v){return typeof v==="string"&&v.trim()!=="";}
 function hasSupplementaryRichTextContent_(value){const visible=String(value||"").replace(/<br\s*\/?>/gi," ").replace(/<img\b[^>]*>/gi," imagen ").replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;|&#xA0;/gi," ").replace(/&#(?:x([0-9a-f]+)|(\d+));/gi,(_,hex,dec)=>String.fromCharCode(parseInt(hex||dec,hex?16:10))).trim();return visible!=="";}
+function assertSupplementaryInfoPayloadKeys_(payload){
+ const allowed=new Set(["vehicleId","userId","sessionToken","__sharedMutationToken","timestamp","opId","apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"]);
+ const videoFields=new Set(["video","videoUrl","Video","videoGuiaUrl","videoGuiaDesarmeUrl","field","fieldName"]);
+ const keys=Object.keys(payload||{}),videoField=keys.find(key=>videoFields.has(key));
+ if(videoField)throw createSupplementaryInfoError_("SUPPLEMENTARY_VIDEO_APPROVAL_REQUIRED","El vídeo no se puede guardar mediante addSupplementaryInfo ni con un enlace directo. Utiliza el flujo de aprobación de YouTube.");
+ const unexpected=keys.filter(key=>!allowed.has(key));
+ if(unexpected.length)throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","Campo(s) no permitido(s) en información suplementaria: "+unexpected.join(", ")+".");
+}
 function buildSupplementaryInfoPlan_(payload,current){
  payload=payload&&typeof payload==="object"?Object.assign({},payload):{};current=current&&typeof current==="object"?current:{};
+ assertSupplementaryInfoPayloadKeys_(payload);
  ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"].forEach(k=>{const v=payload[k];if(v!==undefined&&v!==null&&typeof v!=="string")throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" debe contener texto válido.");});
  ["apertura","cableAlimen","cableAlimen2","cableAlimen3","notaImportante"].forEach(k=>{if(payload[k]!==undefined&&payload[k]!==null){if(payload[k].length>5000)throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" no puede exceder 5000 caracteres.");payload[k]=sanitizeSupplementaryRichText_(payload[k]);if(payload[k]&&!hasSupplementaryRichTextContent_(payload[k]))throw createSupplementaryInfoError_("SUPPLEMENTARY_INVALID_PAYLOAD","El campo "+k+" debe incluir contenido visible.");}});
  const aperture=hasSupplementaryValue_(payload.apertura)||hasSupplementaryValue_(payload.imgApertura),note=hasSupplementaryValue_(payload.notaImportante);

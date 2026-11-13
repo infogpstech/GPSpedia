@@ -913,7 +913,7 @@
         }
         function canAddVideoGuide(match) {
             if (match && match.cutAvailabilityUnknown === true) return false;
-            return !(match && String(match.videoGuiaDesarmeUrl || '').trim());
+            return !(match && String(match.videoGuiaDesarmeUrl || match.Video || '').trim());
         }
         function upsertFallbackVehicleMatch(vehicleId, fallback) {
             const options = fallback && typeof fallback === 'object' ? fallback : {};
@@ -1361,6 +1361,37 @@
             showPhase(3);
         }
 
+        async function verifySupplementaryCatalogWrite_(writeResult, payload, fetchCatalog) {
+            const vehicleId = String(payload && payload.vehicleId != null ? payload.vehicleId : "").trim();
+            if (!vehicleId || !writeResult || writeResult.status !== "success" ||
+                String(writeResult.vehicleId == null ? "" : writeResult.vehicleId).trim() !== vehicleId) {
+                throw new Error("WRITE no confirmó el guardado para el vehículo solicitado.");
+            }
+            const fetchFreshCatalog = fetchCatalog || (() => routeAction("getCatalogData", { forceRefresh: true }));
+            const response = await fetchFreshCatalog();
+            if (!response || response.status !== "success" || !response.data || !Array.isArray(response.data.cortes)) {
+                throw new Error("El catálogo no devolvió una lectura completa después del guardado.");
+            }
+            const matches = response.data.cortes.filter(item => String(item && item.id) === vehicleId);
+            if (matches.length !== 1) throw new Error("El vehículo no aparece de forma única en la lectura actualizada del catálogo.");
+            const saved = matches[0], has = value => typeof value === "string" && value.trim() !== "";
+            ["apertura", "imgApertura", "notaImportante"].forEach(field => {
+                if (has(payload[field]) && !has(saved[field])) throw new Error("El catálogo no refleja el campo suplementario " + field + ".");
+            });
+            const textFields = ["cableAlimen", "cableAlimen2", "cableAlimen3"];
+            const imageFields = ["imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
+            const hasText = textFields.some(field => has(payload[field]));
+            const hasImage = imageFields.some(field => has(payload[field]));
+            if (hasText || hasImage) {
+                const slot = Number(writeResult.slotIndex);
+                if (![1, 2, 3].includes(slot)) throw new Error("WRITE no devolvió un slot válido para el cable de alimentación.");
+                const suffix = slot === 1 ? "" : String(slot);
+                if (hasText && !has(saved["cableAlimen" + suffix])) throw new Error("El catálogo no refleja el cable de alimentación asignado por WRITE.");
+                if (hasImage && !has(saved["imgCableAlimen" + suffix])) throw new Error("El catálogo no refleja la imagen del cable asignado por WRITE.");
+            }
+            return { vehicleId, item: saved, source: response.source || "unknown" };
+        }
+
         async function handleStage3Submit(e) {
             e.preventDefault();
             if (isSubmittingStage3) return;
@@ -1387,8 +1418,18 @@
                 else if (slot === 3) { payload.cableAlimen3 = cableAlimenVal; payload.imgCableAlimen3 = imgCableAlimenVal; }
                 const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
                 const serviceOverride = silentVal ? 'ADMIN' : null;
-                await routeAction('addSupplementaryInfo', payload, serviceOverride);
-                alert("Información guardada. Serás redirigido.");
+                const writeResult = await routeAction('addSupplementaryInfo', payload, serviceOverride);
+                if (!writeResult || writeResult.status !== 'success' ||
+                    String(writeResult.vehicleId == null ? '' : writeResult.vehicleId).trim() !== String(state.selectedVehicleId).trim()) {
+                    throw new Error(writeResult && writeResult.message || 'WRITE no confirmó el guardado para el vehículo seleccionado.');
+                }
+                try {
+                    await verifySupplementaryCatalogWrite_(writeResult, payload);
+                    alert("Información guardada y verificada en el catálogo. Serás redirigido.");
+                } catch (catalogError) {
+                    console.error("WRITE confirmó la información, pero el catálogo no pudo verificarla:", catalogError);
+                    alert("WRITE confirmó el guardado, pero no se pudo verificar la lectura actualizada del catálogo. No vuelvas a enviar el formulario para evitar duplicados; al volver se recargará la ficha.");
+                }
                 window.location.href = 'index.html';
             } catch(error) {
                 if (error && error.name === 'FileReadError') {

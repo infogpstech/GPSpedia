@@ -234,9 +234,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ### AUG-127 — Corregir el contrato de vídeo suplementario
 - Origen: H-AUD-019-006. Prioridad: Media.
-- Evidencia: ui.js:8053–8058; Services/write.js:791–863.
-- Criterios: alinear nombres de campos; allowlist de campo y URL; no devolver success sin escritura; comprobar catálogo tras recarga.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia: ui.js/openExpandMenuModal(), openAddVideoModal() y mostrarDetalleModal(); add_cortes.html/etapa 3; Services/write.js y Services/admin.js/addSupplementaryInfo; Services/feedback.js/aprobación; Services/catalog.js/handleGetCatalogData.
+- Contrato de campos: la columna física Cortes usa `videoGuiaDesarmeUrl`; CATALOG expone `Video` como URL embed normalizada; FEEDBACK usa `videoUrl` como URL watch canónica dentro de la solicitud. La UI reconoce los dos alias de lectura. No se permite escribir vídeo directamente mediante addSupplementaryInfo: únicamente se publica mediante aprobación YouTube.
+- Implementación: WRITE y ADMIN aplican allowlist estricta a addSupplementaryInfo y rechazan campos/alias de vídeo o selectores de campo, incluso si el payload también contiene otro campo válido; se evita confirmar éxito ignorando datos desconocidos. CATALOG acepta solo HTTPS, hosts/rutas YouTube permitidos e ID de 11 caracteres, sin credenciales, puertos, hosts similares ni parámetros v duplicados. FEEDBACK conserva allowlist de destino, canonicalización y lectura posterior de la solicitud/publicación. UI y add_cortes usan el alias de vídeo disponible y mantienen la subida con aprobación; etapa 3 valida status/vehicleId de WRITE y consulta CATALOG con forceRefresh para verificar los campos guardados. Si WRITE confirmó pero CATALOG no pudo verificar, informa la diferencia sin invitar a repetir la escritura. El modal de corte conserva dataset.vehicleId para sincronizar el detalle tras aprobar un vídeo.
+- Validación local: SupplementaryVideoContract 55/55; AddSupplementaryInfoIntegrity 53/53; YouTubeAddCortesContract 4/4; VehicleExpansionDetailRefresh 30/30; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalPublishing 27/27. Parsing V8 de WRITE, ADMIN, CATALOG, FEEDBACK, Coordinator y suites: PASS.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-128 — Validar referencias PyS–vehículos y serializar cambios
 - Origen: H-AUD-019-007. Prioridad: Media.

@@ -1902,3 +1902,26 @@ Después probar en un proyecto WRITE y Spreadsheet/Drive aislados:
 
 No ejecutar contra endpoints ni datos productivos.
 
+## AUG-127 — Contrato de vídeo suplementario
+
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local `GPSpedia`. Verifica el repositorio y la rama autorizada, se detiene ante cambios locales sin guardar, obtiene los cambios remotos, sincroniza solo mediante fast-forward y muestra el HEAD final:
+
+```bash
+git -C GPSpedia rev-parse --show-toplevel
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia rev-parse HEAD
+```
+
+En un proyecto Beta aislado:
+1. Enviar a addSupplementaryInfo payloads con `videoGuiaDesarmeUrl`, `videoGuiaUrl`, `videoUrl`, `Video`, `field`, `fieldName` y propiedades arbitrarias; repetir combinándolos con apertura/cables válidos. Confirmar rechazo explícito y ausencia de escritura, aunque el resto del payload sea válido.
+2. Probar URLs HTTPS válidas de youtube.com, youtu.be y youtube-nocookie con rutas watch/embed/shorts/live; rechazar HTTP, hosts similares, credenciales, puertos, rutas no permitidas, IDs incorrectos y parámetro v duplicado.
+3. Subir un vídeo de prueba por OAuth como no listado, confirmar que la solicitud FEEDBACK guarda videoId/videoUrl canónicos y que no se publica en Cortes mientras esté pendiente.
+4. Aprobar la solicitud y comprobar que se escribe y verifica únicamente la columna cuyo encabezado es videoGuiaDesarmeUrl; CATALOG debe exponer Video normalizado después de forceRefresh y de recargar la aplicación.
+5. Rechazar una solicitud y confirmar que no aparece vídeo en CATALOG. Verificar sincronización del modal de corte cuando la aprobación ocurre mientras está abierto.
+6. Probar etapa 3 de add_cortes con WRITE y ruta ADMIN: respuesta de error, vehicleId incorrecto, lectura CATALOG fallida, apertura, nota, imagen y cable asignado a cada slot. No repetir una escritura ya confirmada solo porque la lectura CATALOG no esté disponible.
+7. Registrar IDs de solicitud, videoId, referencia, estado de aprobación, URL canónica y resultados de lectura. No ejecutar contra endpoints productivos ni datos reales.
+
+No declarar PASS sin comprobar OAuth/YouTube, FEEDBACK, Spreadsheet y CATALOG en el proyecto aislado. No desplegar a producción.

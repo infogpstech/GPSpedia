@@ -480,3 +480,22 @@ Validación Beta pendiente: ejecución en WRITE/Spreadsheet/Drive aislados, inye
 Archivos: Services/write.js, Services/Test/CutPayloadValidation.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-127 — Corregir el contrato de vídeo suplementario. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-127 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Contrato de vídeo alineado: Cortes almacena videoGuiaDesarmeUrl; CATALOG publica Video normalizado; FEEDBACK transporta videoUrl canónica dentro de la solicitud. UI reconoce ambos nombres.
+- addSupplementaryInfo en WRITE/ADMIN ahora rechaza cualquier campo/alias de vídeo directo y campos inesperados, incluso mezclados con apertura/cables/notas. El vídeo continúa exclusivamente por el flujo de aprobación YouTube.
+- CATALOG valida HTTPS, host/ruta YouTube allowlisted, ausencia de credenciales/puertos y un único parámetro v con ID de 11 caracteres. FEEDBACK mantiene allowlist de destino, canonicalización y verificación de persistencia; la publicación aprobada verifica la lectura posterior de la columna de destino.
+- add_cortes valida la respuesta WRITE y el vehicleId; consulta CATALOG con forceRefresh y verifica los campos suplementarios antes de confirmar. Si el backend confirmó pero la lectura CATALOG falla, avisa que no debe repetirse el envío.
+- El modal de corte conserva dataset.vehicleId para que la aprobación de vídeo pueda refrescar el detalle abierto.
+
+Validación local: SupplementaryVideoContract 55/55; AddSupplementaryInfoIntegrity 53/53; YouTubeAddCortesContract 4/4; VehicleExpansionDetailRefresh 30/30; YouTubeApproval 15/15; YouTubeApprovalInit 8/8; VideoApprovalPublishing 27/27. Parsing V8 de servicios y suites: PASS.
+Validación Beta pendiente: OAuth/YouTube API reales, escritura/aprobación en FEEDBACK desplegado, Spreadsheet/CATALOG aislados, lectura tras recargar navegador y actualización del modal abierto. No se ejecutaron Apps Script desplegados, endpoints ni datos productivos.
+Archivos: Services/write.js, Services/admin.js, Services/catalog.js, ui.js, add_cortes.html, Services/Test/SupplementaryVideoContract.js, Services/Test/YouTubeApproval.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-128 — Validar referencias PyS–vehículos y serializar cambios. No iniciar hasta la siguiente interacción.
+================================================================================

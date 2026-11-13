@@ -593,3 +593,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Ante fallos, el coordinador restaura la fila existente o elimina la fila nueva, restaura la entrada de Idempotencia y revierte el contador de IDs cuando corresponde. Los archivos no enlazados permanecen trazados en ImageUploadLedger para reconciliación segura; no se eliminan sin verificar su propiedad/estado.
 - Services/Test/CutPayloadValidation.js añade 35 escenarios de validación y contratos de compensación.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-127 — CONTRATO DE VÍDEO SUPLEMENTARIO
+- WRITE y ADMIN: allowlist estricta de addSupplementaryInfo; rechazan campos de vídeo directos/alias y propiedades desconocidas, también cuando vienen junto a datos válidos.
+- CATALOG: normalización YouTube restringida a HTTPS, hosts/rutas permitidos e ID válido; mantiene alias público Video a partir de la columna videoGuiaDesarmeUrl.
+- ui.js y add_cortes.html: disponibilidad reconoce Video/videoGuiaDesarmeUrl; el guardado de etapa 3 exige respuesta WRITE confirmada y comprueba los campos con una lectura CATALOG forceRefresh. El modal de corte conserva su vehicleId para refrescarse tras aprobación.
+- Se conserva la aprobación YouTube en FEEDBACK como única vía de publicación. Se añadió SupplementaryVideoContract.js y se corrigió el fixture de YouTubeApproval.js que usaba una URL con el mismo ID esperado.
+================================================================================

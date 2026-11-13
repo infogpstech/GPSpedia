@@ -627,23 +627,37 @@ function levenshteinDistance(a, b) {
  * Soporta URLs cortas, de búsqueda, de canal y IDs directos.
  */
 function normalizeYouTubeUrl(url) {
-    if (!url) return null;
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-
-    // Si ya es un ID de 11 caracteres (ej. dQw4w9WgXcQ)
-    if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes(':')) {
-        return `https://www.youtube.com/embed/${trimmed}?enablejsapi=1`;
-    }
-
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = trimmed.match(regExp);
-
-    const id = (match && match[2].length === 11) ? match[2] : trimmed;
-
-    // Si al final no parece un ID válido, devolver null o intentar usarlo como ID
-    if (id.length !== 11) return null;
-
-    return `https://www.youtube.com/embed/${id}?enablejsapi=1`;
+    if (typeof url !== "string") return null;
+    const candidate = url.trim();
+    const idPattern = /^[A-Za-z0-9_-]{11}$/;
+    if (idPattern.test(candidate)) return "https://www.youtube.com/embed/" + candidate + "?enablejsapi=1";
+    const parts = candidate.match(/^https:\/\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?(?:#.*)?$/i);
+    if (!parts) return null;
+    const authority = parts[1].toLowerCase();
+    if (authority.includes("@") || authority.includes(":")) return null;
+    const host = authority, path = parts[2] || "/", query = parts[3] || "";
+    let videoId = "";
+    if (host === "youtu.be") {
+        const match = path.match(/^\/([A-Za-z0-9_-]{11})\/?$/);
+        videoId = match ? match[1] : "";
+    } else if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+        if (path === "/watch") {
+            const ids = [];
+            try {
+                query.split("&").filter(Boolean).forEach(part => {
+                    const pair = part.split("=");
+                    const key = decodeURIComponent(pair.shift().replace(/\+/g, " "));
+                    if (key === "v") ids.push(decodeURIComponent(pair.join("=").replace(/\+/g, " ")));
+                });
+            } catch (error) { return null; }
+            if (ids.length !== 1) return null;
+            videoId = ids[0];
+        } else {
+            const match = path.match(/^\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})\/?$/);
+            videoId = match ? match[1] : "";
+        }
+    } else return null;
+    if (!idPattern.test(videoId)) return null;
+    return "https://www.youtube.com/embed/" + videoId + "?enablejsapi=1";
 }
 

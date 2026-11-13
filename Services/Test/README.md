@@ -1440,3 +1440,10 @@ runCutPayloadValidationTests(writeSource)
 
 La suite ejecuta 35 escenarios de estructura/allowlist, requeridos, enums, años, tipos, longitudes, VIN, opId/SHA-256, imágenes y contratos de compensación. La validación se realiza antes de cualquier mutación; los fallos revierten fila, registro de Idempotencia y contador de IDs cuando corresponde. Las cargas no enlazadas se conservan trazadas en ImageUploadLedger para reconciliación.
 
+
+
+## AUG-127 — Contrato de vídeo suplementario
+- `SupplementaryVideoContract.js`: ejecutar `runSupplementaryVideoContractTests({ write, admin, catalog, feedback, ui, addCortes })`. Verifica allowlist, rechazo de URLs/campos directos, hosts/rutas/IDs YouTube, destino físico, confirmación de escritura, refresco de CATALOG y alias de presentación. Resultado local: 55/55 PASS.
+- Regresión: `runAddSupplementaryInfoIntegrityTests({ write, admin, coordinator, ui })` 53/53; `runYouTubeAddCortesContractTests(addCortes)` 4/4; `runVehicleExpansionDetailRefreshTests({ ui, catalog })` 30/30.
+- YouTube: `runYouTubeApprovalTests()` 15/15; `runYouTubeApprovalInitTests()` 8/8; `runVideoApprovalPublishingTests()` 27/27.
+- OAuth/API reales, aprobación en FEEDBACK desplegado, Spreadsheet real y lectura después de recargar navegador permanecen para Beta aislada.
