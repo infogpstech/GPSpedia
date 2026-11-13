@@ -71,7 +71,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
  run("allocateVehicleId permite solo perfil Desarrollador verificado en Users",()=>{
   const auth=extract(write,"assertDeveloperForIdMaintenance"),handler=extract(write,"handleAllocateVehicleId");
   const users={getDataRange:()=>({getValues:()=>[["id","user","password","role"],["U1","dev","","Desarrollador"]]})};
-  const deps={getAuthenticatedCollaborator:()=>true,getSpreadsheet:()=>({getSheetByName:()=>users}),SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:3}};
+  const deps={getAuthenticatedCollaborator:()=>true,getSpreadsheet:()=>({getSheetByName:()=>users}),SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:4}};
   const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
   let calls=0;const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",handler+";return handleAllocateVehicleId;")(
    check,{getScriptLock:()=>({waitLock(){},releaseLock(){}})},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
