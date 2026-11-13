@@ -7539,12 +7539,15 @@ function validateCompletedDriveAudit_(auditId, ownerId, files) {
 }
 
 
-function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId, auditId, operationId, expectedStatus, expectedResult) {
+function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId, auditId, operationId, expectedStatus, expectedResult, expectedOrganizationState, expectedLocation) {
     const operationColumn = headers.indexOf("ultima_operacion_inventario_id") + 1;
     const auditColumn = headers.indexOf("ultima_auditoria_id") + 1;
     const resultColumn = headers.indexOf("resultado_inventario") + 1;
     const detailColumn = headers.indexOf("detalle_resultado_inventario") + 1;
-    if ([operationColumn, auditColumn, resultColumn, detailColumn].some(column => column < 1)) {
+    const organizationColumn = headers.indexOf("estado_organizacion") + 1;
+    const locationColumn = headers.indexOf("ubicacion_actual") + 1;
+    const organizationErrorColumn = headers.indexOf("error_organizacion") + 1;
+    if ([operationColumn, auditColumn, resultColumn, detailColumn, organizationColumn, locationColumn].some(column => column < 1)) {
         throw new Error("Faltan columnas para verificar la operación de inventario.");
     }
     const readBack = () => sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
@@ -7553,7 +7556,9 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
         String(persisted[auditColumn - 1] || "") === auditId &&
         String(persisted[operationColumn - 1] || "") === operationId &&
         String(persisted[resultColumn - 1] || "") === expectedResult &&
-        String(persisted[10] || "") === expectedStatus;
+        String(persisted[10] || "") === expectedStatus &&
+        (expectedOrganizationState === undefined || String(persisted[organizationColumn - 1] || "") === String(expectedOrganizationState)) &&
+        (expectedLocation === undefined || String(persisted[locationColumn - 1] || "") === String(expectedLocation));
     const writeAndVerify = () => {
         sheet.getRange(rowNumber, 1, 1, headers.length).setValues([row]);
         SpreadsheetApp.flush();
@@ -7574,9 +7579,11 @@ function writeDriveInventoryRowVerified_(sheet, rowNumber, row, headers, fileId,
                 const current = readBack();
                 if (extractDriveFileId(current[5]) === fileId) {
                     current[10] = "requiere_revision";
+                    current[organizationColumn - 1] = "requiere_revision";
                     current[resultColumn - 1] = "error";
                     current[detailColumn - 1] = "La escritura parcial no pudo reconciliarse: " +
                         String(retryError.message || retryError).slice(0, 500);
+                    if (organizationErrorColumn > 0) current[organizationErrorColumn - 1] = "Escritura parcial no reconciliada; requiere revisión manual.";
                     sheet.getRange(rowNumber, 1, 1, headers.length).setValues([current]);
                     SpreadsheetApp.flush();
                     const reviewed = readBack();
@@ -7828,18 +7835,23 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 setField("estado", "sin_uso_detectado");
                 setField("origen_registro", "auditoria_drive");
                 setField("tipo_mime", mimeType);
+                const previousOrganizationState = String(row[column("estado_organizacion") - 1] || "");
+                const previousManualLocation = String(row[column("ubicacion_actual") - 1] || "");
                 setField("ubicacion_original", String(row[column("ubicacion_original") - 1] || folderPath || "Cortes"));
                 setField("fecha_creacion_drive", createdAt);
                 setField("fecha_deteccion", Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss"));
                 setField("url_visualizacion", "https://lh3.googleusercontent.com/d/" + fileId);
-                setField("ubicacion_actual", folderPath || "Cortes");
+                setField("ubicacion_actual", previousOrganizationState === "movida_manual" && previousManualLocation
+                    ? previousManualLocation : (folderPath || "Cortes"));
                 setField("ultima_auditoria_id", auditId);
-                const previousOrganizationState = String(row[column("estado_organizacion") - 1] || "");
                 setField("estado_organizacion", !previousOrganizationState || previousOrganizationState === "no_confirmada" ? "pendiente" : previousOrganizationState);
                 setField("error_organizacion", "");
                 setField("ultima_operacion_inventario_id", inventoryOperationId);
                 setField("resultado_inventario", "confirmado");
-                setField("detalle_resultado_inventario", "");
+                setField("detalle_resultado_inventario", previousOrganizationState === "movida_manual"
+                    ? "Ubicación manual conservada: " + (previousManualLocation || folderPath || "No disponible") +
+                        (previousManualLocation && previousManualLocation !== folderPath ? "; ubicación observada en Drive: " + folderPath : "")
+                    : "");
 
                 const targetRow = rowNumber || sheet.getLastRow() + 1;
                 const persisted = writeDriveInventoryRowVerified_(sheet, targetRow, row, headers, fileId,
@@ -7861,7 +7873,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 if (currentIds.has(fileId) || records.length !== 1 || duplicateDriveIds.has(fileId) || ambiguousDriveIds.has(fileId)) return;
                 const record = records[0];
                 const row = record.row;
-                if (String(row[10] || "") !== "sin_uso_detectado") return;
+                if (String(row[10] || "") !== "sin_uso_detectado" ||
+                    String(row[column("estado_organizacion") - 1] || "") === "movida_manual") return;
                 try {
                     const staleRow = row.slice(0, headers.length);
                     staleRow[column("estado") - 1] = "no_confirmada_en_ultima_auditoria";
@@ -7907,10 +7920,12 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
 }
 
 
+
 function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) {
     const auditId = String(payload && payload.auditId || "").trim();
     const submittedFiles = Array.isArray(payload && payload.files) ? payload.files : [];
     if (!/^[0-9a-f-]{36}$/i.test(auditId)) throw new Error("ID de auditoría inválido para organizar imágenes.");
+    if (!payload || payload.confirmed !== true) throw new Error("El movimiento requiere una confirmación explícita del Desarrollador.");
     const ownerId = String(developerContext && developerContext.userId || "").trim();
     const auditState = loadDriveAuditServerState_(auditId);
     if (!ownerId || auditState.ownerId !== ownerId || auditState.status !== "complete" ||
@@ -7918,6 +7933,9 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
         throw new Error("La organización requiere una auditoría completa y una operación de inventario confirmada por ADMIN.");
     }
     const inventoryOperationId = String(auditState.inventoryOperationId);
+    if (String(payload.inventoryOperationId || "") !== inventoryOperationId) {
+        throw new Error("La operación de inventario no coincide con la confirmación emitida por ADMIN.");
+    }
     if (!submittedFiles.length || submittedFiles.length > 20) throw new Error("El lote de organización debe contener entre 1 y 20 imágenes.");
 
     const fileIds = [];
@@ -7936,206 +7954,273 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
         const rootFolder = getCortesRootFolder();
         const sheet = getOrCreateReplacedImagesSheet();
         const headers = ensureReplacedImagesInventoryColumns(sheet);
-        const column = name => headers.indexOf(name) + 1;
-        const rows = sheet.getDataRange().getValues();
-        const inventoryRows = new Map(), duplicateIds = getDuplicateReplacedImageIds_(rows);
-        if (duplicateIds.size) throw new Error("Hay id_reemplazo duplicados; la organización se detuvo sin modificar imágenes.");
-        for (let r = 1; r < rows.length; r++) {
-            const row = rows[r];
-            if (String(row[column("origen_registro") - 1] || "") !== "auditoria_drive") continue;
-            if (!String(row[0] || "").trim()) throw new Error("Hay una fila de inventario sin id_reemplazo; requiere revisión.");
-            const driveId = getReplacedImageRecordIdentity_(row, headers, true);
-            if (inventoryRows.has(driveId)) throw new Error("El inventario contiene más de una fila para el mismo archivo Drive.");
-            inventoryRows.set(driveId, { rowIndex: r + 1, row: row });
-        }
+        const column = name => {
+            const index = headers.indexOf(name);
+            if (index < 0) throw new Error("Falta la columna requerida para organizar imágenes: " + name);
+            return index + 1;
+        };
+        let destination = null, destinationPath = "";
+        let movedCount = 0, alreadyOrganizedCount = 0, manualPreservedCount = 0;
+        let failedCount = 0, blockedCount = 0, loggingErrorCount = 0;
 
-        const referenceSnapshot = collectActiveDriveReferences(false);
-        let destination = null, destinationPath = "", destinationCreationError = "";
-        if (referenceSnapshot.unverifiableReferenceCount === 0) {
+        const logOutcome = (action, associatedId, details) => {
+            const logged = recordImageAdministrationActivity(developerContext, action, associatedId, details);
+            if (logged === false) loggingErrorCount++;
+            return logged !== false;
+        };
+        const actualCortesPath = file => {
             try {
-                const destinationResult = getOrCreateUnusedImagesFolder(rootFolder);
-                destination = destinationResult.folder;
-                destinationPath = getFolderPathInsideCortes(destination, rootFolder.getId());
-                if (destinationResult.created) {
-                    recordImageAdministrationActivity(developerContext, "admin_image_folder_create", destination.getId(),
-                        "Carpeta de administración creada automáticamente: " + destinationPath + "; resultado: correcto.");
+                const parents = file.getParents();
+                const paths = [];
+                while (parents.hasNext()) {
+                    const parent = parents.next();
+                    if (!parent.isTrashed() && isFolderInsideCortes(parent, rootFolder.getId())) {
+                        paths.push(getFolderPathInsideCortes(parent, rootFolder.getId()));
+                    }
                 }
-            } catch (folderError) { destinationCreationError = folderError.message || String(folderError); }
-        }
+                return paths.length ? paths.join(" | ") : "Ubicación no verificable dentro de Cortes";
+            } catch (error) { return "Ubicación no verificable dentro de Cortes"; }
+        };
 
-        let movedCount = 0, alreadyOrganizedCount = 0, failedCount = 0, blockedCount = 0;
         fileIds.forEach(fileId => {
-            const record = inventoryRows.get(fileId);
-            if (!record) {
-                failedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", "INV-" + fileId,
-                    "No se encontró el registro de inventario para la imagen " + fileId + "; resultado: fallido.");
-                return;
-            }
-
-            const rowIndex = record.rowIndex, row = record.row;
-            const recordId = String(row[0] || "");
-            const status = String(row[10] || "");
-            const type = getReplacedImageRecordType(row, headers);
-            const storedAuditId = String(row[column("ultima_auditoria_id") - 1] || "");
-            const storedOperationId = String(row[column("ultima_operacion_inventario_id") - 1] || "");
-            const inventoryResult = String(row[column("resultado_inventario") - 1] || "");
-            if (type !== "sin_uso_detectado" || status !== "sin_uso_detectado" || storedAuditId !== auditId ||
-                storedOperationId !== inventoryOperationId || inventoryResult !== "confirmado" ||
-                (extractDriveFileId(row[5]) || extractDriveFileId(row[7])) !== fileId) {
-                blockedCount++;
-                return;
-            }
-
-            const updateOrganization = values => {
-                if (values.location !== undefined) sheet.getRange(rowIndex, column("ubicacion_actual")).setValue(values.location);
-                if (values.state !== undefined) sheet.getRange(rowIndex, column("estado_organizacion")).setValue(values.state);
-                if (values.error !== undefined) sheet.getRange(rowIndex, column("error_organizacion")).setValue(values.error);
-                if (values.date !== undefined) sheet.getRange(rowIndex, column("fecha_organizacion")).setValue(values.date);
-                if (values.status !== undefined) sheet.getRange(rowIndex, column("estado")).setValue(values.status);
-                SpreadsheetApp.flush();
-            };
-
-            if (referenceSnapshot.unverifiableReferenceCount > 0 || referenceSnapshot.references.has(fileId)) {
-                const reason = referenceSnapshot.unverifiableReferenceCount > 0
-                    ? "No se pudo confirmar la ausencia de referencias porque existen enlaces de Drive no interpretables en la Spreadsheet."
-                    : "La imagen volvió a tener referencias activas en el Spreadsheet antes del movimiento.";
-                try { updateOrganization({ state: "bloqueada", error: reason, status: "no_confirmada_en_ultima_auditoria" }); } catch (writeError) {}
-                blockedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "Organización bloqueada para " + fileId + ": " + reason);
-                return;
-            }
-
-            if (destinationCreationError || !destination) {
-                const reason = destinationCreationError || "No se pudo obtener la carpeta destino.";
-                try { updateOrganization({ state: "error", error: reason }); } catch (writeError) {}
-                failedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "No se pudo crear o validar la carpeta destino para " + fileId + ": " + reason);
-                return;
-            }
-
-            let file, sourceFolder, sourcePath;
+            let record = null, file = null, sourceFolder = null, sourcePath = "";
+            let rowIndex = 0, recordId = "", row = [];
             try {
+                const currentRows = sheet.getDataRange().getValues();
+                const duplicateIds = getDuplicateReplacedImageIds_(currentRows);
+                const inventoryMatches = [];
+                let historyConflict = "", ambiguousIdentity = false;
+
+                for (let r = 1; r < currentRows.length; r++) {
+                    const candidateRow = currentRows[r];
+                    if (!candidateRow.some(value => String(value == null ? "" : value).trim() !== "")) continue;
+                    const rawIds = new Set([].concat(extractDriveFileIds(candidateRow[5]), extractDriveFileIds(candidateRow[7])));
+                    let identity = "";
+                    try { identity = getReplacedImageRecordIdentity_(candidateRow, headers, true); }
+                    catch (identityError) {
+                        if (rawIds.has(fileId)) ambiguousIdentity = true;
+                        continue;
+                    }
+                    if (identity !== fileId) {
+                        if (!identity && rawIds.has(fileId)) ambiguousIdentity = true;
+                        continue;
+                    }
+                    const candidateOrigin = String(candidateRow[column("origen_registro") - 1] || "");
+                    const candidateStatus = String(candidateRow[10] || "historica");
+                    const candidateType = getReplacedImageRecordType(candidateRow, headers);
+                    if (candidateOrigin === "auditoria_drive") {
+                        inventoryMatches.push({ rowNumber: r + 1, row: candidateRow });
+                    } else if (candidateStatus !== "eliminada" &&
+                        (candidateStatus === "en_uso" || candidateStatus === "requiere_revision" ||
+                         candidateStatus === "eliminacion_pendiente" || candidateStatus === "en_papelera" ||
+                         candidateType === "reemplazada")) {
+                        historyConflict = "Existe un registro histórico no resuelto para este archivo.";
+                    }
+                }
+
+                if (ambiguousIdentity) throw Object.assign(new Error("Existe una identidad ambigua que coincide con el ID de Drive; requiere revisión manual."), { blocked: true });
+                if (historyConflict) throw Object.assign(new Error(historyConflict), { blocked: true });
+                if (inventoryMatches.length !== 1) {
+                    throw Object.assign(new Error(inventoryMatches.length
+                        ? "Existen varias filas de inventario para el mismo ID de Drive."
+                        : "No existe una única fila de inventario verificable para esta imagen."), { blocked: true });
+                }
+                record = inventoryMatches[0];
+                rowIndex = record.rowNumber;
+                row = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+                recordId = String(row[0] || "").trim();
+                if (!recordId || duplicateIds.has(recordId)) throw Object.assign(new Error("El registro tiene un ID duplicado o vacío."), { blocked: true });
+                if (extractDriveFileId(row[5]) !== fileId) throw Object.assign(new Error("La identidad del archivo cambió antes de organizarlo."), { blocked: true });
+
+                const status = String(row[10] || "");
+                const type = getReplacedImageRecordType(row, headers);
+                const storedAuditId = String(row[column("ultima_auditoria_id") - 1] || "");
+                const storedOperationId = String(row[column("ultima_operacion_inventario_id") - 1] || "");
+                const inventoryResult = String(row[column("resultado_inventario") - 1] || "");
+                if (!isKnownReplacedImageStatus_(type, status) || type !== "sin_uso_detectado" ||
+                    status !== "sin_uso_detectado" || storedAuditId !== auditId ||
+                    storedOperationId !== inventoryOperationId || inventoryResult !== "confirmado") {
+                    throw Object.assign(new Error("El estado del inventario cambió o ya no está confirmado para esta operación."), { blocked: true });
+                }
+
                 file = DriveApp.getFileById(fileId);
-                if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
-                if (!String(file.getMimeType() || "").startsWith("image/")) throw new Error("El archivo ya no tiene un tipo MIME de imagen.");
+                if (file.isTrashed()) throw Object.assign(new Error("La imagen está en la papelera de Google Drive."), { blocked: true });
+                if (!String(file.getMimeType() || "").startsWith("image/")) throw Object.assign(new Error("El archivo ya no tiene un tipo MIME de imagen."), { blocked: true });
                 sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
                 sourcePath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
-            } catch (validationError) {
-                try {
-                    updateOrganization({ state: "bloqueada", error: validationError.message || String(validationError), status: "no_confirmada_en_ultima_auditoria" });
-                } catch (writeError) {}
-                blockedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "No se pudo validar la imagen " + fileId + ": " + (validationError.message || String(validationError)));
-                return;
-            }
 
-            const organizationDate = String(row[column("fecha_organizacion") - 1] || "") ||
-                Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
-            if (sourceFolder.getId() === destination.getId()) {
-                try {
-                    updateOrganization({ location: destinationPath, state: "organizada", error: "", date: organizationDate });
-                    alreadyOrganizedCount++;
-                } catch (writeError) {
-                    failedCount++;
-                    try { updateOrganization({ location: sourcePath, state: "error", error: writeError.message || String(writeError) }); } catch (syncError) {}
+                const organizationState = String(row[column("estado_organizacion") - 1] || "");
+                const storedLocation = String(row[column("ubicacion_actual") - 1] || "");
+                if (organizationState === "movida_manual") {
+                    manualPreservedCount++;
+                    logOutcome("admin_image_manual_location_preserved", recordId,
+                        "No se movió " + fileId + "; se conservó la ubicación manual " + (storedLocation || "no especificada") +
+                        (storedLocation && storedLocation !== sourcePath ? "; ubicación observada en Drive: " + sourcePath : ""));
+                    return;
                 }
-                return;
-            }
 
-            const previousMetadata = {
-                location: String(row[column("ubicacion_actual") - 1] || sourcePath),
-                state: String(row[column("estado_organizacion") - 1] || "pendiente"),
-                error: String(row[column("error_organizacion") - 1] || ""),
-                date: String(row[column("fecha_organizacion") - 1] || "")
-            };
-            let moveError = null;
-            try { file.moveTo(destination); } catch (error) { moveError = error; }
-            let movedParent = null;
-            try { movedParent = getSingleParentFolderInsideCortes(file, rootFolder.getId()); }
-            catch (parentError) { moveError = moveError || parentError; }
-
-            if (!movedParent || movedParent.getId() !== destination.getId()) {
-                let actualPath = "Ubicación no verificable dentro de Cortes";
-                try {
-                    const actualParents = file.getParents();
-                    const actualPaths = [];
-                    while (actualParents.hasNext()) {
-                        const actualParent = actualParents.next();
-                        if (!actualParent.isTrashed() && isFolderInsideCortes(actualParent, rootFolder.getId())) {
-                            actualPaths.push(getFolderPathInsideCortes(actualParent, rootFolder.getId()));
-                        }
+                if (!destination) {
+                    const destinationResult = getOrCreateUnusedImagesFolder(rootFolder);
+                    destination = destinationResult.folder;
+                    destinationPath = getFolderPathInsideCortes(destination, rootFolder.getId());
+                    if (destinationResult.created && !logOutcome("admin_image_folder_create", destination.getId(),
+                        "Carpeta creada por solicitud explícita del Desarrollador: " + destinationPath + ".")) {
+                        throw new Error("La carpeta destino se creó, pero no se pudo confirmar el registro durable; no se movieron imágenes.");
                     }
-                    if (actualPaths.length) actualPath = actualPaths.join(" | ");
-                } catch (pathError) {}
-                const reason = "Drive no confirmó el traslado a «Imagenes_Sin_Uso»." + (moveError ? " Detalle: " + moveError.message : "");
-                try { updateOrganization({ location: actualPath, state: "error", error: reason }); } catch (writeError) {}
-                failedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "Falló el movimiento de " + fileId + " desde " + sourcePath + "; ubicación detectada: " + actualPath + ": " + reason);
-                return;
+                }
+
+                if (organizationState === "organizada" && sourceFolder.getId() !== destination.getId()) {
+                    const detail = "La ubicación observada difiere del destino de organización anterior. Se conserva como ubicación manual: " + sourcePath;
+                    writeOrganization({ location: sourcePath, state: "movida_manual", error: "", date: String(row[column("fecha_organizacion") - 1] || ""),
+                        status: "sin_uso_detectado", inventoryResult: "confirmado", inventoryDetail: detail });
+                    manualPreservedCount++;
+                    logOutcome("admin_image_manual_location_preserved", recordId, detail);
+                    return;
+                }
+
+                if (sourceFolder.getId() === destination.getId()) {
+                    writeOrganization({ location: destinationPath, state: "organizada", error: "",
+                        date: String(row[column("fecha_organizacion") - 1] || Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss")),
+                        status: "sin_uso_detectado", inventoryResult: "confirmado", inventoryDetail: "" });
+                    alreadyOrganizedCount++;
+                    if (!logOutcome("admin_image_organize_explicit", recordId,
+                        "La imagen ya estaba en la carpeta destino; no se repitió el movimiento.")) loggingErrorCount++;
+                    return;
+                }
+
+                const references = collectActiveDriveReferences(false);
+                if (references.unverifiableReferenceCount > 0 || references.references.has(fileId)) {
+                    const reason = references.unverifiableReferenceCount > 0
+                        ? "Existen referencias de Drive no interpretables; el movimiento queda bloqueado."
+                        : "La imagen volvió a tener referencias activas antes del movimiento.";
+                    writeOrganization({ state: "bloqueada", error: reason, status: "no_confirmada_en_ultima_auditoria",
+                        inventoryResult: "bloqueado", inventoryDetail: reason });
+                    blockedCount++;
+                    logOutcome("admin_image_organize_blocked", recordId, "Movimiento bloqueado para " + fileId + ": " + reason);
+                    return;
+                }
+
+                const organizationDate = String(row[column("fecha_organizacion") - 1] || "") ||
+                    Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+                const previousMetadata = {
+                    location: String(row[column("ubicacion_actual") - 1] || sourcePath),
+                    state: String(row[column("estado_organizacion") - 1] || "pendiente"),
+                    error: String(row[column("error_organizacion") - 1] || ""),
+                    date: String(row[column("fecha_organizacion") - 1] || ""),
+                    status: String(row[10] || "sin_uso_detectado"),
+                    result: String(row[column("resultado_inventario") - 1] || "confirmado"),
+                    detail: String(row[column("detalle_resultado_inventario") - 1] || "")
+                };
+                let moveError = null;
+                try { file.moveTo(destination); } catch (error) { moveError = error; }
+                let movedParent = null;
+                try { movedParent = getSingleParentFolderInsideCortes(file, rootFolder.getId()); }
+                catch (parentError) { moveError = moveError || parentError; }
+
+                if (!movedParent || movedParent.getId() !== destination.getId()) {
+                    let rollbackError = null;
+                    try {
+                        let currentParent = null;
+                        try { currentParent = getSingleParentFolderInsideCortes(file, rootFolder.getId()); } catch (parentError) {}
+                        if (!currentParent || currentParent.getId() !== sourceFolder.getId()) file.moveTo(sourceFolder);
+                        const restoredParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                        if (restoredParent.getId() !== sourceFolder.getId()) throw new Error("Drive no confirmó la ubicación anterior.");
+                    } catch (error) { rollbackError = error; }
+                    const reason = "Drive no confirmó el traslado a «Imagenes_Sin_Uso»." +
+                        (moveError ? " Detalle: " + moveError.message : "");
+                    if (!rollbackError) {
+                        writeOrganization({ location: previousMetadata.location, state: "error",
+                            error: reason + " El movimiento fue revertido.", date: previousMetadata.date,
+                            status: "sin_uso_detectado", inventoryResult: "confirmado", inventoryDetail: "" });
+                    } else {
+                        writeOrganization({ location: actualCortesPath(file), state: "requiere_revision",
+                            error: reason + "; la reversión falló: " + rollbackError.message,
+                            status: "requiere_revision", inventoryResult: "error",
+                            inventoryDetail: "Movimiento y reversión requieren revisión manual." });
+                    }
+                    failedCount++;
+                    logOutcome("admin_image_organize_explicit", recordId, "Movimiento fallido de " + fileId + ": " +
+                        reason + (rollbackError ? "; reversión fallida: " + rollbackError.message : "; movimiento revertido."));
+                    return;
+                }
+
+                try {
+                    writeOrganization({ location: destinationPath, state: "organizada", error: "",
+                        date: organizationDate, status: "sin_uso_detectado", inventoryResult: "confirmado", inventoryDetail: "" });
+                    if (!logOutcome("admin_image_organize_explicit", recordId,
+                        "Imagen " + file.getName() + " movida explícitamente de " + sourcePath + " a " + destinationPath + "; resultado: correcto.")) {
+                        throw new Error("No se pudo confirmar el registro durable del movimiento.");
+                    }
+                    movedCount++;
+                } catch (historyError) {
+                    let rollbackError = null;
+                    try {
+                        let currentParent = null;
+                        try { currentParent = getSingleParentFolderInsideCortes(file, rootFolder.getId()); } catch (parentError) {}
+                        if (!currentParent || currentParent.getId() !== sourceFolder.getId()) file.moveTo(sourceFolder);
+                        const restoredParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                        if (restoredParent.getId() !== sourceFolder.getId()) throw new Error("Drive no confirmó la ubicación anterior.");
+                    } catch (error) { rollbackError = error; }
+
+                    if (!rollbackError) {
+                        writeOrganization({ location: previousMetadata.location, state: "error",
+                            error: "Falló el registro del movimiento; el archivo fue revertido: " + historyError.message,
+                            date: previousMetadata.date, status: "sin_uso_detectado",
+                            inventoryResult: "confirmado", inventoryDetail: "" });
+                    } else {
+                        writeOrganization({ location: actualCortesPath(file), state: "requiere_revision",
+                            error: "Falló el registro y la reversión: " + historyError.message + "; " + rollbackError.message,
+                            status: "requiere_revision", inventoryResult: "error",
+                            inventoryDetail: "No se pudo confirmar el movimiento ni su reversión." });
+                    }
+                    failedCount++;
+                    logOutcome("admin_image_organize_explicit", recordId, "La organización de " + fileId +
+                        " requirió reversión: " + historyError.message +
+                        (rollbackError ? "; reversión fallida: " + rollbackError.message : "; movimiento revertido."));
+                }
+            } catch (error) {
+                if (error && error.blocked) blockedCount++; else failedCount++;
+                logOutcome(error && error.blocked ? "admin_image_organize_blocked" : "admin_image_organize_explicit",
+                    recordId || "INV-" + fileId, "No se organizó " + fileId + ": " + (error.message || String(error)));
             }
 
-            try {
-                updateOrganization({ location: destinationPath, state: "organizada", error: "", date: organizationDate });
-                movedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId,
-                    "Imagen " + file.getName() + " movida automáticamente de " + sourcePath + " a " + destinationPath + "; resultado: correcto.");
-            } catch (historyError) {
-                let rollbackError = null;
-                try {
-                    file.moveTo(sourceFolder);
-                    const restoredParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
-                    if (restoredParent.getId() !== sourceFolder.getId()) throw new Error("Drive no confirmó la ubicación anterior.");
-                } catch (error) { rollbackError = error; }
-
-                if (!rollbackError) {
-                    try {
-                        updateOrganization({
-                            location: previousMetadata.location, state: "error",
-                            error: "Falló el registro de la nueva ubicación; el movimiento fue revertido: " + historyError.message,
-                            date: previousMetadata.date
-                        });
-                    } catch (restoreError) {}
-                } else {
-                    let actualPath = "Ubicación no verificable dentro de Cortes";
-                    try {
-                        const actualParents = file.getParents();
-                        const actualPaths = [];
-                        while (actualParents.hasNext()) {
-                            const actualParent = actualParents.next();
-                            if (!actualParent.isTrashed() && isFolderInsideCortes(actualParent, rootFolder.getId())) {
-                                actualPaths.push(getFolderPathInsideCortes(actualParent, rootFolder.getId()));
-                            }
-                        }
-                        if (actualPaths.length) actualPath = actualPaths.join(" | ");
-                    } catch (pathError) {}
-                    try {
-                        updateOrganization({
-                            location: actualPath, state: "error",
-                            error: "Falló la actualización del inventario y no se pudo revertir el movimiento: " +
-                                historyError.message + "; " + rollbackError.message
-                        });
-                    } catch (syncError) {}
+            function writeOrganization(values) {
+                const current = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+                if (String(current[0] || "") !== recordId || extractDriveFileId(current[5]) !== fileId ||
+                    String(current[column("ultima_auditoria_id") - 1] || "") !== auditId ||
+                    String(current[column("ultima_operacion_inventario_id") - 1] || "") !== inventoryOperationId ||
+                    String(current[column("resultado_inventario") - 1] || "") !== "confirmado") {
+                    throw Object.assign(new Error("La fila del inventario cambió durante la preparación del movimiento."), { blocked: true });
                 }
-                failedCount++;
-                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId,
-                    "La organización de " + fileId + " requirió reversión o sincronización: " + historyError.message +
-                    (rollbackError ? "; reversión fallida: " + rollbackError.message : "; movimiento revertido."));
+                const updated = current.slice(0, headers.length);
+                while (updated.length < headers.length) updated.push("");
+                const setField = (name, value) => { updated[column(name) - 1] = value; };
+                if (values.location !== undefined) setField("ubicacion_actual", values.location);
+                if (values.state !== undefined) setField("estado_organizacion", values.state);
+                if (values.error !== undefined) setField("error_organizacion", values.error);
+                if (values.date !== undefined) setField("fecha_organizacion", values.date);
+                if (values.status !== undefined) setField("estado", values.status);
+                if (values.inventoryResult !== undefined) setField("resultado_inventario", values.inventoryResult);
+                if (values.inventoryDetail !== undefined) setField("detalle_resultado_inventario", values.inventoryDetail);
+                return writeDriveInventoryRowVerified_(sheet, rowIndex, updated, headers, fileId, auditId,
+                    inventoryOperationId, String(updated[10] || ""), String(updated[column("resultado_inventario") - 1] || ""),
+                    String(updated[column("estado_organizacion") - 1] || ""), String(updated[column("ubicacion_actual") - 1] || ""));
             }
         });
 
-        logMessage && logMessage("Organización de imágenes sin uso", "Movidas: " + movedCount +
-            "; ya organizadas: " + alreadyOrganizedCount + "; fallidas: " + failedCount + "; bloqueadas: " + blockedCount + ".");
-        return { status: "success", auditId: auditId, folderPath: destinationPath, processedCount: fileIds.length,
-            movedCount: movedCount, alreadyOrganizedCount: alreadyOrganizedCount, failedCount: failedCount, blockedCount: blockedCount };
+        logMessage && logMessage("Organización explícita de imágenes sin uso", "Movidas: " + movedCount +
+            "; ya organizadas: " + alreadyOrganizedCount + "; ubicaciones manuales conservadas: " +
+            manualPreservedCount + "; fallidas: " + failedCount + "; bloqueadas: " + blockedCount +
+            "; errores de registro: " + loggingErrorCount + ".");
+        return { status: "success", auditId: auditId, inventoryOperationId: inventoryOperationId,
+            folderPath: destinationPath, processedCount: fileIds.length, movedCount: movedCount,
+            alreadyOrganizedCount: alreadyOrganizedCount, manualPreservedCount: manualPreservedCount,
+            failedCount: failedCount, blockedCount: blockedCount, loggingErrorCount: loggingErrorCount };
     } finally {
         lock.releaseLock();
     }
 }
 
-/**
- * Handler: Auditoría de imágenes en Google Drive limitada estrictamente a la carpeta "Cortes"
- */
 
 function handleAuditDriveImagesInCortes(payload, logMessage, developerContext) {
     const lock = LockService.getScriptLock();
