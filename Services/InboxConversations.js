@@ -5,7 +5,7 @@ const INBOX_CONVERSATION_STATE_SHEET_ = "InboxConversationState";
 const INBOX_CONVERSATION_AUDIT_SHEET_ = "InboxConversationAudit";
 const INBOX_CONVERSATION_HEADERS_ = Object.freeze(["conversationId","createdAt","updatedAt","subject","category","type","status","createdById","createdByName","createdByRole","participantsJson","createKey","createHash","lastMessageId","lastMessageAt","lastMessagePreview","messageCount"]);
 const INBOX_MESSAGE_HEADERS_ = Object.freeze(["messageId","conversationId","createdAt","authorId","authorName","authorRole","body","idempotencyKey","payloadHash"]);
-const INBOX_STATE_HEADERS_ = Object.freeze(["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt"]);
+const INBOX_STATE_HEADERS_ = Object.freeze(["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt","lastReceivedMessageId","lastSentMessageId"]);
 const INBOX_CONVERSATION_AUDIT_HEADERS_ = Object.freeze(["eventId","timestamp","actorId","actorName","action","conversationId","messageId","details"]);
 const INBOX_CATEGORIES_ = new Set(["general","soporte","acceso","contenido","instalacion","otro"]);
 const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","gefe","jefe","supervisor","tecnico","tecnico_exterior"]);
@@ -120,7 +120,7 @@ function inboxFindState_(sheet, conversationId, userId) {
 function inboxEnsureState_(sheet, conversationId, userId, now) {
     let found = inboxFindState_(sheet, conversationId, userId);
     if (found) return found;
-    const row = [conversationId,userId,"","",false,false,false,now], rowNumber = sheet.getLastRow() + 1;
+    const row = [conversationId,userId,"","",false,false,false,now,"",""], rowNumber = sheet.getLastRow() + 1;
     sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
     SpreadsheetApp.flush();
     return { row, rowNumber };
@@ -173,12 +173,20 @@ function inboxUpdateConversationForMessage_(sheet, found, message, now) {
         SpreadsheetApp.flush(); found.row = row;
     }
 }
-function inboxUpdateParticipantStates_(sheet, conversationId, participants, actor, now, isNewMessage) {
+function inboxUpdateParticipantStates_(sheet, conversationId, participants, actor, messageId, messageRows, now) {
+    const messageIndex = messageRows.findIndex(message => String(message[0]) === messageId);
+    if (messageIndex < 0) throw new Error("No se pudo localizar el mensaje para actualizar los participantes.");
     participants.forEach(participant => {
         const found = inboxEnsureState_(sheet, conversationId, participant.id, now), row = found.row.slice();
-        if (participant.id === actor.id) row[5] = true;
-        else row[6] = true;
-        if (isNewMessage) row[4] = false;
+        if (participant.id === actor.id) {
+            const lastSentIndex = row[9] ? messageRows.findIndex(message => String(message[0]) === String(row[9])) : -1;
+            row[5] = true;
+            if (messageIndex > lastSentIndex) { row[4] = false; row[9] = messageId; }
+        } else {
+            const lastReceivedIndex = row[8] ? messageRows.findIndex(message => String(message[0]) === String(row[8])) : -1;
+            row[6] = true;
+            if (messageIndex > lastReceivedIndex) { row[4] = false; row[8] = messageId; }
+        }
         row[7] = now;
         inboxWriteState_(sheet, found, row);
     });
@@ -223,10 +231,10 @@ function handleCreateInboxConversation(payload) {
         let message = inboxFindMessageByKey_(messageRows,conversationId,actor.id,messageKey);
         if (message && String(message.row[8]) !== messageHash) throw new Error("La clave inicial ya existe con otro contenido.");
         const isNewMessage = !message;
-        if (isNewMessage) message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,messageKey,messageHash,now);
+        if (isNewMessage) { message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,messageKey,messageHash,now); messageRows.push(message.row); }
         const found = {row:conversationRow,rowNumber};
         inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
-        inboxUpdateParticipantStates_(sheets.states,conversationId,inboxParticipants_(found.row),actor,now,isNewMessage);
+        inboxUpdateParticipantStates_(sheets.states,conversationId,inboxParticipants_(found.row),actor,message.row[0],messageRows,now);
         inboxAppendAudit_(sheets.audit,actor,"conversation_created",conversationId,message.row[0],"Conversación creada para un destinatario individual.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(existing.length)};
     });
@@ -245,9 +253,9 @@ function handleSendInboxMessage(payload) {
         if (message && String(message.row[8]) !== hash) throw new Error("La clave idempotente ya se utilizó con otro contenido.");
         const now = new Date().toISOString();
         const isNewMessage = !message;
-        if (isNewMessage) { inboxAssertRateLimit_(messages,actor.id,new Date(now)); message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,key,hash,now); }
+        if (isNewMessage) { inboxAssertRateLimit_(messages,actor.id,new Date(now)); message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,key,hash,now); messages.push(message.row); }
         inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
-        inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,now,isNewMessage);
+        inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,message.row[0],messages,now);
         inboxAppendAudit_(sheets.audit,actor,"message",conversationId,message.row[0],"Mensaje agregado a la conversación.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(inboxFindMessageByKey_(messages,conversationId,actor.id,key))};
     });
@@ -286,7 +294,7 @@ function handleGetInboxConversations(payload) {
             try { return inboxParticipants_(row).some(user => user.id === actor.id); } catch (_) { return false; }
         }).map(row => {
             const participants = inboxParticipants_(row), other = participants.filter(user => user.id !== actor.id);
-            const state = stateMap.get(String(row[0]) + "\\u0000" + actor.id) || [];
+            const state = stateMap.get(String(row[0]) + "|" + actor.id) || [];
             const conversationMessages = messagesByConversation.get(String(row[0])) || [];
             const lastReadMessageId = String(state[3] || "");
             const readIndex = lastReadMessageId ? conversationMessages.findIndex(message => String(message[0]) === lastReadMessageId) : -1;
