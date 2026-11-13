@@ -230,7 +230,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: Services/write.js:420–427, 633–676, 684–692 y 696–729.
 - Criterios: validar tipos, requeridos, rango de años, enums, longitudes e imágenes antes de escribir; compensación completa; no dejar filas/opIds/archivos huérfanos.
 - Implementación: `handleAddOrUpdateCutLocked` valida estructura y allowlist, requeridos, listas oficiales de categoría/encendido/tipo de corte/Relay, años, longitudes, booleanos, VIN, opId/hash e imágenes Base64/MIME/tamaño antes de entrar al handler mutador. Ante fallos, restaura la fila existente o elimina la fila nueva, restaura el registro de Idempotencia y revierte el contador central de IDs cuando corresponde. Las cargas Drive no enlazadas permanecen registradas en ImageUploadLedger para reconciliación segura.
-- Validación local: `CutPayloadValidation` 34/34 PASS en runtime V8 aislado; parsing V8 de Services/write.js y Services/Test/CutPayloadValidation.js PASS; contratos estáticos verifican el orden previo a mutación y las rutas de compensación.
+- Validación local: `CutPayloadValidation` 35/35 PASS en runtime V8 aislado; parsing V8 de Services/write.js y Services/Test/CutPayloadValidation.js PASS; contratos estáticos verifican el orden previo a mutación y las rutas de compensación.
 - Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 ### AUG-127 — Corregir el contrato de vídeo suplementario
 - Origen: H-AUD-019-006. Prioridad: Media.
