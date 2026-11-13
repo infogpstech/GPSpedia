@@ -1386,3 +1386,27 @@ H-AUD-029-003 / H-AUD-029-008 — AUG-031 — CERRADO EN CÓDIGO; CI PENDIENTE D
 - Sin deployment, Drive o Spreadsheet productivos.
 
 ================================================================================
+
+================================================================================
+H-AUD-029-004 — AUG-032 — CERRADO EN CÓDIGO; INTEGRACIÓN BETA PENDIENTE — 2026-11-13
+
+Ubicación: Services/admin.js — storeAuditDriveReferenceSnapshot, loadAuditDriveReferenceSnapshot, refreshAuditDriveReferenceSnapshot_, clearAuditDriveReferenceSnapshot y cleanupExpiredDriveAuditServerStates_.
+
+Resolución:
+- Capacidad temporal explícita: 750,000 caracteres y bytes UTF-8; 75,000 por bloque, hasta 10 bloques. El snapshot contiene referencias normalizadas y no se clasifica ningún archivo si excede el límite.
+- Manifiesto JSON UTF-8 versión 2 con MIME, codificación, longitudes, tamaño de bloque, TTL, fechas, hash SHA-256 del snapshot y hash por bloque.
+- Cada bloque se verifica por tamaño y lectura posterior. El manifiesto se escribe al final y también se verifica. Ante error se limpian los bloques; no se acepta una escritura parcial.
+- La lectura comprueba esquema, fecha de expiración, conteo, longitud exacta, bytes, firma de cada bloque, hash global y estructura de referencias antes de reconstruir el objeto.
+- En cada continuación válida se renueva el TTL de seis horas del snapshot y de las páginas previas de deduplicación. El TTL es deslizante; si la auditoría permanece pausada más de seis horas, debe iniciarse una nueva.
+- La limpieza de estados expirados retira páginas, respuesta reanudable, snapshot y puntero latest asociado. La limpieza explícita retira hasta diez bloques aunque el manifiesto falte o esté corrupto.
+
+Evidencia local:
+- AdminReplacedImagesIntegrity.mjs: 44/44 PASS en harness V8 adaptado, incluyendo exceso de capacidad, alteración de bloque/manifiesto, renovación cerca del TTL, expiración posterior al TTL y limpieza de cachés.
+- Parsing: Services/admin.js, suite y runner 3/3 PASS.
+- Node CLI y GitHub Actions real no se ejecutaron desde el entorno de esta sesión; no se declara CI SUCCESS.
+
+Pendiente Beta:
+- Verificar CacheService/Utilities.newBlob y la renovación/expiración real en Apps Script con un árbol Drive y Spreadsheet aislados.
+- No se usaron recursos productivos ni se desplegó el servicio.
+
+================================================================================
