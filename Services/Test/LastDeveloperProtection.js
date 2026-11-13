@@ -63,7 +63,7 @@ function runLastDeveloperProtectionTests(sources) {
     };
     run('Reconciliación real conserva el marcador y recupera nombre tras fallo de escritura',()=>{
         const helperNames=['parseRoleRevocationMarker_','parseSharedRoleRevocationMarker_','sameRoleRevocationMarker_','revokeAllUserSessionsUnderLock_','deleteRevokedSessionRowsUnderLock_','reconcileRoleRevocationUnderLock_'];
-        const helperCode=helperNames.map(name=>extract(auth,name)).join('\\n')+'\\nreturn reconcileRoleRevocationUnderLock_;';
+        const helperCode=helperNames.map(name=>extract(auth,name)).join('\n')+'\nreturn reconcileRoleRevocationUnderLock_;';
         const prefix='__role_revocation_pending__:';
         const markerData={userId:'T1',markedAt:123,oldRole:'Tecnico',newRole:'Supervisor',newFullName:'Nombre nuevo'};
         const markerValue=prefix+JSON.stringify(markerData);
@@ -117,7 +117,7 @@ function runLastDeveloperProtectionTests(sources) {
         assert(!properties.has('role:T1'),'El marcador local se elimina solo al confirmar el perfil.');
     });
     run('Marcadores compartido y local rechazan metadatos de perfil divergentes',()=>{
-        const parse=new Function('normalizeUserId','normalizeRoleName',extract(auth,'parseRoleRevocationMarker_')+'\\n'+extract(auth,'sameRoleRevocationMarker_')+'\\nreturn {parseRoleRevocationMarker_,sameRoleRevocationMarker_};')(
+        const parse=new Function('normalizeUserId','normalizeRoleName',extract(auth,'parseRoleRevocationMarker_')+'\n'+extract(auth,'sameRoleRevocationMarker_')+'\nreturn {parseRoleRevocationMarker_,sameRoleRevocationMarker_};')(
             value=>String(value||'').trim(),normalize
         );
         const base={userId:'T1',markedAt:123,oldRole:'Tecnico',newRole:'Supervisor',newFullName:'Nombre nuevo'};
