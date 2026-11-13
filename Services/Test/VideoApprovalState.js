@@ -20,6 +20,10 @@ function runVideoApprovalStateTests() {
         let parsed = data;
         if (typeof data === "string") { try { parsed = JSON.parse(data); } catch (error) {} }
         row[COLS_FEEDBACKS.ID_vehiculo - 1] = parsed && parsed.referenceId || "";
+        const status = parsed && parsed.status || "";
+        row[COLS_FEEDBACKS.Respuesta - 1] = status;
+        row[COLS_FEEDBACKS["Se resolvio"] - 1] = status === "approved" || status === "rejected";
+        row[COLS_FEEDBACKS.Responde - 1] = parsed && parsed.approvedBy || "";
         return row;
     }
     function sheet_(rows) { return { getDataRange: () => ({ getValues: () => rows }) }; }
