@@ -1427,7 +1427,7 @@ function runFeedbackWriteSecurityTests() {
                 SpreadsheetApp = { flush: function() {} };
                 expectThrow_(() => handleAddPrevention({
                     problemId: "isue-001", prevenir: "   \n  ", userId: "USR-TEST-01", userName: "Usuario verificado"
-                }), "requeridos");
+                }), "no puede estar vacío");
                 assert_(rows[1][5] === "", "La prevención vacía no debe modificar la fila.");
                 assert_(activityCount === 0, "La prevención vacía no debe generar actividad.");
                 const result = handleAddPrevention({
@@ -1459,7 +1459,7 @@ function runFeedbackWriteSecurityTests() {
                 SpreadsheetApp = { flush: function() {} };
                 expectThrow_(() => handleAddSolution({
                     problemId: "isue-001", solucion: "   \n  ", userId: "USR-TEST-01", userName: "Usuario verificado"
-                }), "requeridos");
+                }), "no puede estar vacío");
                 assert_(rows[1][3] === "" && rows[1][4] === "", "La entrada vacía no debe marcar el problema como solucionado.");
                 assert_(activityCount === 0, "La entrada vacía no debe generar actividad.");
                 const result = handleAddSolution({
@@ -1480,7 +1480,7 @@ function runFeedbackWriteSecurityTests() {
             const base = {
                 titulo: "Falla", descripcion: "Detalle", sinSolucion: false,
                 solucion: "Solución", imgBase64: "data:image/jpeg;base64,AA==",
-                userId: "USR-TEST-01", userName: "Usuario verificado"
+                userId: "USR-TEST-01", userName: "Usuario verificado", opId: "pys-operation-test-000000000001"
             };
             expectThrow_(() => handleAddProblem({ ...base, titulo: "   " }), "Título y descripción");
             expectThrow_(() => handleAddProblem({ ...base, descripcion: "  \n " }), "Título y descripción");
@@ -1516,7 +1516,7 @@ function runFeedbackWriteSecurityTests() {
                     titulo: "  Falla eléctrica  ", descripcion: "  Detalle del problema  ",
                     sinSolucion: false, solucion: "  Revisar conexión  ", prevenir: "  Aislar el cable  ",
                     imgBase64: "data:image/jpeg;base64,AA==", userId: "USR-TEST-01",
-                    userName: "Usuario verificado"
+                    userName: "Usuario verificado", opId: "pys-operation-test-000000000002"
                 });
                 assert_(result.status === "success");
                 assert_(sheet.rows.length === 2);
@@ -1538,7 +1538,7 @@ function runFeedbackWriteSecurityTests() {
         test_("addProblem rechaza una imagen ausente", function() {
             expectThrow_(() => handleAddProblem({
                 titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
-                userId: "USR-1", userName: "Usuario"
+                userId: "USR-1", userName: "Usuario", opId: "pys-operation-test-000000000003"
             }), "imagen del problema es obligatoria");
         });
         test_("Si falla la escritura PyS, el archivo creado se compensa", function() {
@@ -1565,7 +1565,7 @@ function runFeedbackWriteSecurityTests() {
             Utilities = { base64Decode: () => [1], newBlob: () => ({}) };
             expectThrow_(() => handleAddProblem({
                 titulo: "Falla", descripcion: "Detalle", sinSolucion: true,
-                imgBase64: "data:image/jpeg;base64,AA==", userId: "USR-1", userName: "Usuario"
+                imgBase64: "data:image/jpeg;base64,AA==", userId: "USR-1", userName: "Usuario", opId: "pys-operation-test-000000000004"
             }), "fallo controlado");
             assert_(trashed === true, "El archivo no vinculado debe enviarse a papelera.");
         });
@@ -1697,6 +1697,7 @@ function runFeedbackWriteSecurityTests() {
                 rows: rows,
                 getLastRow: function() { return this.rows.length; },
                 getLastColumn: function() { return this.rows.reduce((max, row) => Math.max(max, row.length), 0); },
+                getMaxColumns: function() { return this.getLastColumn(); },
                 getDataRange: function() {
                     const self = this;
                     return { getValues: function() { return self.rows.map(row => row.slice()); } };
