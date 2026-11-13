@@ -127,3 +127,24 @@ Usar estados claros: **PENDIENTE**, **EN PROGRESO**, **BLOQUEADA**, **COMPLETADA
 ---
 
 **Regla esencial:** analizar lo que puede verse afectado, validar lo que puede fallar, preservar lo que ya funciona y detenerse cuando no exista certeza suficiente.
+
+
+## 11. Cierre del ciclo de mejoras y verificación integral
+
+Las tareas de mejora e implementación ya identificadas en el backlog vigente tienen prioridad sobre la incorporación de nuevas solicitudes de desarrollo.
+
+- Completar primero las tareas actuales y sus dependencias. No agregar nuevas tareas de funcionalidades, mejoras o refactorizaciones mientras queden tareas vigentes sin resolver, salvo que exista una necesidad crítica de seguridad, integridad de datos, continuidad operativa o un defecto que impida completar el trabajo actual.
+- Los defectos nuevos descubiertos durante la implementación o las pruebas deben documentarse con evidencia. Si bloquean una tarea o representan un riesgo crítico, atenderlos antes de continuar; si no son críticos ni bloquean el alcance, registrarlos para priorización posterior sin interrumpir automáticamente el backlog vigente.
+- Al terminar el conjunto de tareas actuales de mejoras e implementaciones, realizar una fase de verificación técnica integral antes de proponer o incorporar nuevas mejoras. Esta fase no sustituye ni repite las auditorías funcionales ya realizadas que dieron origen al backlog; verifica la calidad de las implementaciones y la estabilidad del conjunto.
+- La verificación integral debe incluir, según la arquitectura y las herramientas disponibles:
+  1. ejecución de las pruebas automatizadas existentes y de las pruebas adicionales necesarias para cubrir requisitos y riesgos reales;
+  2. comprobaciones de sintaxis, parsing, referencias, dependencias y compatibilidad con los entornos de ejecución;
+  3. pruebas de integración entre servicios, contratos y funciones consumidoras para detectar contradicciones y regresiones;
+  4. análisis y pruebas de concurrencia, condiciones de carrera, escrituras simultáneas, bloqueos, idempotencia y consistencia de datos donde corresponda;
+  5. comparación de cambios contra sus versiones anteriores y revisión del diff completo para detectar eliminaciones, modificaciones o desplazamientos de líneas ajenos a cada tarea;
+  6. pruebas de regresión y anti-regresión sobre funcionalidades previamente auditadas y comportamientos que deban preservarse.
+- Usar Node.js, CLI, herramientas estáticas y entornos locales cuando sean compatibles con el proyecto. Cuando sea útil y esté autorizado, incorporar o ejecutar GitHub Actions para automatizar las verificaciones. No introducir dependencias, workflows o cambios de infraestructura sin comprobar que son compatibles con el proyecto y que aportan valor.
+- Separar claramente los resultados: pruebas realmente ejecutadas y aprobadas, análisis estáticos realizados, pruebas fallidas y validaciones que requieren Apps Script, Google Sheets, credenciales, servicios externos o entorno Beta. Nunca presentar una inspección de código como una prueba de ejecución.
+- Corregir los defectos reproducibles encontrados y volver a ejecutar las pruebas afectadas. Los hallazgos no críticos fuera del alcance deben quedar documentados y priorizados, sin convertir la fase de verificación en una vía para incorporar indefinidamente nuevas funcionalidades.
+- Una vez resueltas las tareas vigentes y aprobada la verificación integral, se podrá abrir una nueva etapa de planificación y aceptar nuevas tareas, sustentadas en necesidades o evidencia nuevas.
+
