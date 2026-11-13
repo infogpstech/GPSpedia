@@ -1527,3 +1527,39 @@ Beta pendiente:
 
 Siguiente tarea: AUG-025 — Corregir vigencia y precisión temporal de la telemetría local.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-025 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Commit de implementación: 54997b017de2b72acb86763fc1f9063b644a9ec3
+Commit de cierre AUG-024: 1ba679e99f8cd91be33daa1442b2ebad96dd28c5
+PR #128: abierto, Draft.
+
+Estado: COMPLETADA LOCALMENTE; validación visual en navegador diferida a Beta.
+
+Resultado:
+- serviceMetrics.js encapsula la captura de telemetría, retención, suscripciones y distribución en buckets.
+- routeAction registra timestamp de inicio y duración al finalizar. Las solicitudes concurrentes se insertan ordenadas por inicio aunque terminen fuera de orden.
+- La ventana es móvil y exacta de 15 minutos; se conservan eventos con timestamp >= cutoff y se excluyen cuando cutoff supera su timestamp.
+- Los 15 buckets cubren exactamente la ventana móvil, sin alineación a minuto calendario que excluya el borde del intervalo.
+- El máximo es 600 eventos vigentes. Cuando se descartan eventos aún dentro de ventana, snapshot.truncated informa muestra parcial y UI lo advierte; la marca caduca al salir de ventana el último evento descartado.
+- El panel refresca cada 15 segundos solo cuando el diagnóstico está visible; el listener también comprueba visibilidad y el temporizador se limpia en resetSessionUi_.
+
+Archivos: serviceMetrics.js, api-config.js, ui.js, Services/Test/ServiceMetricsTelemetry.mjs, Services/Test/RunServiceTests.mjs y Services/Test/README.md.
+
+Validación:
+- ServiceMetricsTelemetry 10/10 PASS.
+- GitHub Actions run 43476653609 SUCCESS: Node.js 22, 69 suites, 954/954 pruebas aprobadas, 0 fallos.
+- Los módulos modificados pasan node --check; ui.js pasa también en modo ES module.
+- No se ejecutaron navegadores reales ni se modificaron datos productivos.
+
+Beta pendiente:
+- Verificar caducidad tras 15 minutos de inactividad, límites exactos, 600+ eventos, solicitudes largas y concurrentes.
+- Confirmar que modal/diagnóstico ocultos no provocan actualizaciones DOM y que la vista se refresca al volver a mostrarse.
+- Confirmar limpieza del temporizador/suscripción al cerrar sesión y cambiar de usuario.
+
+Siguiente tarea: AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes reemplazadas.
+================================================================================

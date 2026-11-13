@@ -1648,3 +1648,26 @@ git rev-parse HEAD
 
 No usar cuentas de usuarios finales, hojas/archivos productivos ni deployments operativos para pruebas destructivas. No cambiar ACL ni publicar versiones durante esta validación.
 ================================================================================
+
+================================================================================
+AUG-025 — Validación Beta de telemetría local
+
+Antes de ejecutar cualquier prueba, sincronizar de forma segura la rama autorizada desde el directorio local del repositorio GPSpedia:
+
+```sh
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; conservarlos y detener la sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. Abrir el panel ADMIN en navegador de prueba y observar solicitudes API de duración corta y larga; comprobar que el gráfico las agrupa por hora de inicio y que la duración corresponde al tiempo total.
+2. Dejar el panel sin solicitudes por más de 15 minutos; confirmar que los eventos desaparecen de la ventana móvil y que el gráfico/detalle se actualizan sin requerir una nueva solicitud.
+3. Generar más de 600 eventos dentro de 15 minutos; confirmar advertencia de muestra truncada y que los conteos no se presentan como totales completos.
+4. Generar solicitudes concurrentes que finalicen fuera de orden; comprobar orden por inicio, límites de ventana y distribución en los 15 buckets.
+5. Ocultar el modal ADMIN y cambiar a otra sección; confirmar que la suscripción no reconstruye DOM oculto. Volver al diagnóstico y confirmar que la vista se actualiza.
+6. Cerrar sesión/cambiar de usuario y comprobar que el temporizador se limpia y no queda una suscripción asociada al contexto anterior.
+
+No utilizar cuentas de usuarios finales ni almacenar telemetría en recursos productivos.
+================================================================================

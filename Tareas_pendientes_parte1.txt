@@ -314,7 +314,7 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
   5. Evitar reconstrucciones de DOM cuando el modal o la sección Diagnóstico no estén visibles; mantener captura independiente y administrar correctamente la suscripción.
   6. Probar solicitudes largas que crucen minutos, inactividad superior a quince minutos, límite superior a 600 eventos, solicitudes concurrentes, cierre/reapertura del modal y recarga de la aplicación.
 - **Relación:** TAREA ADMIN 2, H-AUD-026-004 y H-AUD-026-005.
-- **Estado:** NUEVA; pendiente.
+- **Estado:** COMPLETADA LOCALMENTE; validación visual en navegador diferida a Beta.
 
 
 ================================================================================

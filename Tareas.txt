@@ -1339,3 +1339,16 @@ Estado: COMPLETADA LOCALMENTE; validación de deployments diferida a Beta.
 - ServiceHealthContract 16/16 PASS; GitHub Actions run 43475746110 SUCCESS: 68 suites, 944/944 pruebas aprobadas, 0 fallos; módulos modificados pasan node --check.
 Siguiente: AUG-025 — Corregir vigencia y precisión temporal de la telemetría local.
 ================================================================================
+
+================================================================================
+AUG-025 — Corregir vigencia y precisión temporal de la telemetría local
+Estado: COMPLETADA LOCALMENTE; validación visual en navegador diferida a Beta.
+- La telemetría registra timestamp de inicio de solicitud y duración final; la serie se define explícitamente por hora de inicio.
+- El almacén ordena por timestamp aunque las solicitudes concurrentes terminen fuera de orden, mantiene ventana móvil exacta de 15 minutos y expira eventos justo después del límite inferior.
+- Los 15 buckets cubren la ventana móvil exacta, incluyendo ambos límites; la muestra marca truncated cuando el límite de 600 eventos descarta solicitudes todavía vigentes.
+- El panel avisa que los conteos son parciales, actualiza caducidad cada 15 segundos solo si el diagnóstico está visible y limpia el temporizador al resetear la sesión.
+- ServiceMetricsTelemetry 10/10 PASS; GitHub Actions run 43476653609 SUCCESS: 69 suites, 954/954 pruebas, 0 fallos; módulos modificados pasan node --check.
+- Commit: 54997b017de2b72acb86763fc1f9063b644a9ec3.
+- Beta: navegador real, inactividad superior a 15 minutos, modal/diagnóstico oculto y visible, 600+ eventos y solicitudes largas/concurrentes. No usar datos productivos.
+Siguiente tarea: AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes reemplazadas.
+================================================================================

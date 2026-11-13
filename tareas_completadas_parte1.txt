@@ -510,3 +510,12 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Interfaz:** muestra HTTP, latencia, última respuesta válida, código de diagnóstico y explicación segura. Se aclara que el endpoint no demuestra disponibilidad interna de Sheets/Drive.
 - **Pruebas:** ServiceHealthContract 16/16 PASS; GitHub Actions run 43475746110 SUCCESS: 68 suites, 944/944 pruebas aprobadas, 0 fallos. Los módulos modificados pasan node --check.
 - **Beta:** comprobar identidad y versión de deployments reales, MIME/contrato público, redacción y comportamiento de red/timeout en entorno aislado. No se modificaron deployments.
+
+
+### AUG-025 — Corregir vigencia y precisión temporal de la telemetría local
+- **Estado:** COMPLETADA LOCALMENTE; validación visual diferida a Beta.
+- **Implementación:** nuevo serviceMetrics.js con almacén ordenado por timestamp de inicio, ventana móvil exacta de 15 minutos, 15 buckets y detección de truncamiento al superar 600 eventos vigentes.
+- **Interfaz:** gráfico y detalle etiquetan la hora de inicio; se advierte si los conteos son parciales. La actualización por caducidad se ejecuta cada 15 segundos solo cuando el diagnóstico está visible; el temporizador se limpia al resetear la sesión.
+- **Pruebas:** ServiceMetricsTelemetry 10/10 PASS; GitHub Actions run 43476653609 SUCCESS: 69 suites, 954/954 pruebas aprobadas, 0 fallos; módulos modificados pasan node --check.
+- **Commit:** 54997b017de2b72acb86763fc1f9063b644a9ec3.
+- **Beta:** probar inactividad >15 minutos, límites exactos, 600+ eventos, solicitudes largas/concurrentes y modal/diagnóstico oculto/visible. Sin datos productivos.
