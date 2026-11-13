@@ -1023,3 +1023,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Prueba nueva Services/Test/RouteActionErrors.mjs integrada en RunServiceTests; Services/Test/README.md actualizado.
 - GitHub Actions run 43452605704 SUCCESS: RouteActionErrors 12/12; 61 suites, 861/861 PASS; Node.js --check PASS. Beta real diferida; sin deployments ni endpoints productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-019 — Terminal Drive confinada al árbol Cortes
+- Services/admin.js valida la ascendencia completa de carpetas y archivos hasta la raíz Cortes; rechaza padres externos, múltiples/ambiguos, ciclos y errores de lectura de ascendencia.
+- currentFolderId se valida en cada comando; cd .. no permite salir de Cortes, cd / restablece la raíz, y cd rechaza nombres ambiguos.
+- dir/ls/tree omiten recursos con padres externos; mkdir y move validan el ámbito antes de escribir y comprueban la ubicación resultante.
+- driveCommand conserva la lease compartida ADMIN/DRIVE.
+- Suite DriveTerminalScope: 20/20 PASS. GitHub Actions run 43454957238 SUCCESS: 62 suites, 881/881 pruebas PASS; node --check admin.js PASS.
+- Beta pendiente: Drive real aislado, permisos efectivos y movimientos externos concurrentes. Sin despliegues ni cambios productivos.
+================================================================================

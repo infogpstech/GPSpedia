@@ -456,3 +456,11 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Pruebas:** SessionUiRoleInvalidation 13/13; InboxRoleContract 8/8; SessionProfileRefresh 19/19.
 - **CI:** run 43429506713 SUCCESS, 37 suites, 557 pruebas PASS, 0 fallos; Node --check ui.js PASS.
 - **Pendiente Beta:** DOM/IndexedDB real, transiciones de rol, sesiones remotas, multi-cuenta y llamadas globales directas.
+
+
+### AUG-019 — Restringir la terminal Drive al árbol Cortes
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; integración real de Drive diferida a Beta.
+- **Implementación:** Services/admin.js valida la ascendencia de carpetas y archivos; bloquea currentFolderId externo, cd .. fuera de Cortes, nombres ambiguos y movimientos con origen/destino externos. mkdir/move revalidan antes de escribir y comprueban el resultado. La coordinación compartida de ADMIN mantiene el recurso DRIVE.
+- **Pruebas:** DriveTerminalScope 20/20 PASS; GitHub Actions run 43454957238 SUCCESS; 62 suites, 881/881 pruebas PASS; node --check admin.js PASS.
+- **Commits:** d4323697b9fe063cf4f8e26221c33f9386cd028d, 36b025387adc55a6f9189e6c232232ad38bb513d, 2af745fd93422f8477fc7f77e88132a75665955c y 93fd2330976ffb5619ac1544fd51a53a3992413d.
+- **Beta:** validar permisos y movimientos en una copia aislada de Drive, incluyendo cambios externos de ubicación concurrentes. No usar recursos productivos.

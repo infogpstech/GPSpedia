@@ -1524,3 +1524,28 @@ git status --short --branch
 
 No ejecutar acciones administrativas ni usar datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-019 — Validación real de alcance de terminal Drive (solo entorno aislado)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+test "$(git -C GPSpedia rev-parse HEAD)" = "93fd2330976ffb5619ac1544fd51a53a3992413d" || { echo "STOP: HEAD distinto del checkpoint"; exit 1; }
+git -C GPSpedia status --short --branch
+```
+
+1. Crear una copia aislada de la carpeta Cortes y un deployment ADMIN de prueba separado; usar una cuenta Desarrollador dedicada y confirmar que la configuración no apunta a Drive/Spreadsheet productivos.
+2. Verificar que dir/ls/tree solo muestren Cortes y sus descendientes. Preparar una carpeta externa, una carpeta con ascendencia ambigua y un archivo con padre externo; confirmar que no se listan ni se navega a ellos.
+3. Probar currentFolderId externo, cd .. en la raíz, cd / desde un ID inválido, subcarpetas anidadas y nombres duplicados.
+4. Confirmar que mkdir dentro del árbol funciona; mkdir con currentFolderId externo o movido fuera entre validación y escritura debe rechazarse sin crear una carpeta fuera de Cortes.
+5. Confirmar que move funciona entre carpetas internas; debe rechazar origen externo, destino externo, archivo con padre externo adicional y destino con ancestro externo, sin mover recursos.
+6. Durante una operación controlada, cambiar desde otra sesión la ubicación del archivo o destino entre validación y escritura; revisar que no se reporte éxito si la ubicación final no puede verificarse.
+7. Comparar IDs, padres y ubicaciones antes/después; no debe modificarse ningún recurso fuera de la copia Cortes.
+
+No ejecutar contra el Drive operativo, la carpeta Cortes productiva, endpoints productivos ni datos reales de usuarios.
+================================================================================

@@ -1279,3 +1279,44 @@ Beta pendiente: navegador real, respuestas de Apps Script para 401/403/404/500, 
 
 Continuidad: AUG-152 y AUG-150 quedan cerradas en esta iteración. El checkpoint no designa otra tarea activa posterior a AUG-150; antes de abrir trabajo nuevo, seleccionar la siguiente prioridad vigente del backlog sin reactivar tareas históricas ya cerradas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-019 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de trabajo verificado: 93fd2330976ffb5619ac1544fd51a53a3992413d
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+PR #128: abierto, Draft.
+
+Estado: COMPLETADA CON VALIDACIÓN AUTOMATIZADA; validación real de Drive diferida a Beta.
+
+La terminal ADMIN queda limitada a Cortes. Se valida toda la cadena de padres de carpetas y archivos; los recursos con ascendencia externa, ambigua, cíclica o ilegible se rechazan. currentFolderId se valida para cada operación; cd .. en Cortes permanece en la raíz; cd / permite restablecerla aunque el ID anterior sea inválido; cd rechaza nombres duplicados. Los listados y tree no exponen recursos con padres externos. mkdir revalida antes de crear y verifica el padre directo; move comprueba origen y destino, revalida antes de ejecutar y verifica la ubicación final.
+
+driveCommand ya utiliza la lease compartida ADMIN/DRIVE. La lease coordina las operaciones de GPSpedia, pero no bloquea cambios manuales realizados directamente en Drive; la validación concurrente real se reserva para Beta.
+
+Archivos:
+- Services/admin.js
+- Services/Test/DriveTerminalScope.mjs
+- Services/Test/RunServiceTests.mjs
+- Services/Test/README.md
+- Tareas_pendientes_parte1.txt
+- Tareas.txt
+- tareas_completadas_parte1.txt
+- ChangesLogs.txt
+- lista_beta_parte2.txt
+- checkpoint.md
+
+Pruebas: DriveTerminalScope 20/20 PASS. GitHub Actions run 43454957238 SUCCESS; Node.js 22; 62 suites, 881/881 pruebas aprobadas, 0 fallos. node --check Services/admin.js PASS.
+
+Commits:
+- d4323697b9fe063cf4f8e26221c33f9386cd028d — implementación inicial.
+- 36b025387adc55a6f9189e6c232232ad38bb513d — corrección de fixture.
+- 2af745fd93422f8477fc7f77e88132a75665955c — revalidación preescritura y recuperación de raíz.
+- 93fd2330976ffb5619ac1544fd51a53a3992413d — corrección del fixture de concurrencia y CI final.
+
+Beta pendiente: probar en una copia aislada de Drive el árbol real, permisos, carpetas/archivos externos, múltiples padres, mkdir/move autorizados y una modificación externa concurrente entre validación y escritura. No ejecutar contra la carpeta Cortes productiva ni contra datos productivos.
+
+Siguiente tarea según el Plan Maestro: AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario. Revalidar el código actual y ejecutar únicamente los criterios aún no resueltos.
+================================================================================

@@ -965,3 +965,42 @@ Validación local: CutAvailability 20/20 PASS; AddCutOperationIntegrity 27/27 PA
 Validación diferida a Beta: navegador real, Apps Script desplegados, concurrencia multiusuario y Spreadsheet aislada. No se ejecutaron datos productivos.
 Siguiente tarea: AUG-057. No se inicia en este checkpoint.
 ================================================================================
+
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-019 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN AUTOMATIZADA; validación real de Drive diferida a Beta.
+
+La terminal administrativa queda confinada al árbol autorizado de la carpeta raíz Cortes:
+- Se valida la ascendencia completa de cada carpeta hasta el ID canónico de Cortes. Si falta la cadena, hay un ciclo, no se puede leer algún padre o existe cualquier padre externo, la carpeta se rechaza.
+- Los archivos solo se consideran internos cuando todos sus padres pertenecen al árbol Cortes. Los listados dir/ls y tree omiten recursos con padres externos o ambiguos.
+- currentFolderId se valida antes de operar. cd .. en la raíz permanece en Cortes; en subcarpetas solo retorna a un padre único y validado. cd / permite recuperar la raíz aun cuando el ID anterior sea inválido. Los nombres duplicados se rechazan por ambigüedad.
+- mkdir vuelve a validar la carpeta activa inmediatamente antes de crear y verifica después la ubicación y el padre directo del nuevo recurso.
+- move exige archivo de origen y carpeta destino dentro de Cortes, revalida ambos antes de mover y comprueba por lectura posterior la ubicación final. No se confirma éxito si el resultado no puede verificarse.
+- driveCommand ya está incluido en la política compartida de ADMIN con escritura del recurso DRIVE; la terminal conserva esa lease y la autenticación Desarrollador existente. La coordinación no controla movimientos manuales realizados fuera de GPSpedia; esa carrera externa queda expresamente diferida a Beta.
+
+Code Review / Safety & Side Effects:
+- Solo se modificó el handler driveCommand y se agregaron helpers locales de ascendencia/validación. No se tocaron handlers de backup/restore, inventario ni historial de imágenes.
+- No se añaden permisos, endpoints ni recursos nuevos. Las escrituras mkdir/move quedan limitadas al árbol Cortes; los fallos de verificación se informan sin afirmar éxito.
+- Se rechazaron carpetas/archivos externos, ancestros múltiples con ubicación externa, padres ambiguos, ciclos y recursos cuya ascendencia no puede comprobarse.
+- Revisión del diff contra el HEAD previo: cuatro archivos únicamente (Services/admin.js, Services/Test/DriveTerminalScope.mjs, Services/Test/RunServiceTests.mjs y Services/Test/README.md).
+
+Pruebas:
+- DriveTerminalScope: 20/20 PASS.
+- GitHub Actions run 43454957238 SUCCESS: Node.js 22; 62 suites, 881/881 pruebas PASS, 0 fallos.
+- node --check Services/admin.js PASS, ejecutado desde la suite.
+- No se ejecutaron Apps Script ni Drive reales; no se modificaron recursos productivos.
+
+Commits de la tarea:
+- d4323697b9fe063cf4f8e26221c33f9386cd028d — implementación inicial y suite.
+- 36b025387adc55a6f9189e6c232232ad38bb513d — corrección del fixture de carpetas duplicadas.
+- 2af745fd93422f8477fc7f77e88132a75665955c — revalidación antes de mkdir y recuperación cd / desde ID inválido.
+- 93fd2330976ffb5619ac1544fd51a53a3992413d — aislamiento del fixture de cambio externo; CI final aprobado.
+
+HEAD de trabajo al cierre: 93fd2330976ffb5619ac1544fd51a53a3992413d.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+PR #128 permanece abierto y Draft.
+
+Siguiente tarea del Plan Maestro: AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario. Antes de modificar código, comprobar si el manejo de timestamps inválidos y la purga ya fueron resueltos por cambios posteriores; ejecutar solo la parte aún pendiente.
+================================================================================
