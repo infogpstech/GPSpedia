@@ -36,7 +36,7 @@ function runSharedMutationCoordinatorTests() {
         };
         const secrets = {
             ADMIN: "A".repeat(40), WRITE: "W".repeat(40), FEEDBACK: "F".repeat(40),
-            AUTH: "H".repeat(40), USERS: "U".repeat(40)
+            AUTH: "H".repeat(40), USERS: "U".repeat(40), UTILITIES: "T".repeat(40)
         };
         Object.keys(secrets).forEach(service => properties.setProperty("GPSpedia_COORDINATOR_SECRET_" + service, secrets[service]));
         const coordinator = createSharedMutationCoordinator_({
@@ -483,6 +483,35 @@ function runSharedMutationCoordinatorTests() {
         const profile = acquire_(r, "USERS", "updateProfile");
         assert_(profile.status === "error" && profile.code === "busy", "La aceptación debe serializarse con cambios de Users.");
         release_(r, "AUTH", "acceptTerms", acceptance.token);
+    });
+
+
+    test_("UTILITIES migra timestamps con lease sobre identidad, Cortes y Drive", function() {
+        const policy = coordinatorPolicy_("UTILITIES", "migrateTimestamps");
+        ["USERS", "ACTIVE_SESSIONS", "CORTES", "DRIVE"].forEach(resource =>
+            assert_(policy.readResources.includes(resource), "UTILITIES debe reservar lectura de " + resource + "."));
+        assert_(policy.writeResources.length === 1 && policy.writeResources[0] === "UTILITIES",
+            "La migración solo debe escribir en su recurso lógico UTILITIES.");
+        const r = createRuntime_();
+        const utility = acquire_(r, "UTILITIES", "migrateTimestamps");
+        assert_(utility.status === "success", "UTILITIES debe autenticarse con su secreto independiente.");
+        [
+            ["AUTH", "logout"],
+            ["WRITE", "addOrUpdateCut"],
+            ["ADMIN", "backupDrive"],
+            ["ADMIN", "backupDatabase"]
+        ].forEach(([service, operation]) => {
+            const blocked = acquire_(r, service, operation);
+            assert_(blocked.status === "error" && blocked.code === "busy",
+                service + "/" + operation + " debe esperar mientras UTILITIES lee o migra recursos compartidos.");
+        });
+        release_(r, "UTILITIES", "migrateTimestamps", utility.token);
+        const maintenance = acquire_(r, "ADMIN", "backupDatabase");
+        assert_(maintenance.status === "success", "El mantenimiento debe poder iniciar tras liberar UTILITIES.");
+        const blockedUtility = acquire_(r, "UTILITIES", "migrateTimestamps");
+        assert_(blockedUtility.status === "error" && blockedUtility.code === "busy",
+            "La migración debe esperar durante el mantenimiento de la base completa.");
+        release_(r, "ADMIN", "backupDatabase", maintenance.token);
     });
 
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
