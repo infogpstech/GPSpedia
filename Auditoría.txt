@@ -1306,3 +1306,16 @@ Impacto: el flujo solicitado de administración y recuperación no está complet
 Criterio de corrección: añadir acción explícita de eliminación irreversible, solo Desarrollador, con archivo previamente en papelera, referencias globales verificadas, identidad/MIME/ubicación confirmados, registro de auditoría y verificación posterior. Probar fallos y estados ambiguos sin borrar datos.
 Estado: ABIERTO — AUG-027.
 ================================================================================
+
+
+================================================================================
+SEGUIMIENTO DE HALLAZGOS AUG-027 — 2026-11-13
+
+H-AUD-027-009: corrección parcial aplicada. Los ocho handlers principales de gestión de imágenes ahora llaman collectActiveDriveReferences(); se añadió una prueba de contrato que verifica el uso del escáner global y sus fuentes (valores, fórmulas y RichText). Pendiente ejecutar suite/CI y validar referencias reales en Beta. Mantener ABIERTO hasta esas verificaciones.
+
+H-AUD-027-010: corrección parcial aplicada. Se añadió estado en_uso y acción Desarrollador markReplacedImageInUse desde el gestor; la auditoría Drive y el guardado del inventario preservan los registros protegidos. Pendiente permitir decisiones manuales de papelera/restauración para requiere_revision y probar todos los caminos. Mantener ABIERTO.
+
+H-AUD-027-011: SIN CORRECCIÓN TODAVÍA. No se ha incorporado la acción de eliminación definitiva. Debe permanecer ABIERTO; no se debe confundir setTrashed(true) con eliminación irreversible.
+
+Validación: no se ejecutó Node CLI en un entorno local ni se obtuvo un resultado de CI asociado a los commits de esta fase. Los contratos añadidos son cambios de prueba, no evidencia de aprobación. No se tocaron datos productivos ni deployments.
+================================================================================
