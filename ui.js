@@ -3900,6 +3900,87 @@ function resetSessionUi_() {
     lastShownAppContextKey = null;
 }
 
+const legalModalFocusCleanups_ = new WeakMap();
+
+function getLegalModalFocusableElements_(modal) {
+    return Array.from(modal.querySelectorAll(
+        'a[href], area[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, object, embed, [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
+    )).filter(element => !element.hidden && element.getAttribute('aria-hidden') !== 'true' &&
+        typeof element.focus === 'function' && element.getClientRects().length > 0);
+}
+
+function deactivateLegalModalFocus_(modal, restoreFocus = true) {
+    if (!modal) return;
+    const cleanup = legalModalFocusCleanups_.get(modal);
+    if (cleanup) cleanup(restoreFocus);
+}
+
+function activateLegalModalFocus_(modal, options = {}) {
+    if (!modal || legalModalFocusCleanups_.has(modal)) return;
+    const previousFocus = document.activeElement;
+    const initialFocus = options.initialFocus || null;
+    const allowEscape = options.allowEscape === true;
+    const close = typeof options.close === 'function' ? options.close : () => { modal.style.display = 'none'; };
+    let observer = null, cleaned = false;
+
+    const cleanup = (restoreFocus = true) => {
+        if (cleaned) return;
+        cleaned = true;
+        document.removeEventListener('keydown', handleKeydown, true);
+        if (observer) observer.disconnect();
+        legalModalFocusCleanups_.delete(modal);
+        if (restoreFocus && previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') {
+            previousFocus.focus();
+        }
+    };
+
+    const handleKeydown = event => {
+        if (modal.style.display === 'none' || !modal.isConnected) {
+            cleanup(true);
+            return;
+        }
+        const agreement = document.getElementById('terms-agreement-modal');
+        if (agreement && agreement.style.display === 'flex' && modal !== agreement) return;
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            if (allowEscape) close();
+            return;
+        }
+        if (event.key !== 'Tab') return;
+
+        const focusable = getLegalModalFocusableElements_(modal);
+        if (!focusable.length) {
+            event.preventDefault();
+            if (initialFocus && typeof initialFocus.focus === 'function') initialFocus.focus();
+            return;
+        }
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        const initialIsFocusable = focusable.includes(initialFocus);
+        const initialHeading = active === initialFocus && !initialIsFocusable;
+        if (event.shiftKey && (active === first || initialHeading || !modal.contains(active))) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && (active === last || initialHeading || !modal.contains(active))) {
+            event.preventDefault();
+            first.focus();
+        }
+    };
+
+    document.addEventListener('keydown', handleKeydown, true);
+    if (typeof MutationObserver !== 'undefined') {
+        observer = new MutationObserver(() => {
+            if (modal.style.display === 'none' || !modal.isConnected) cleanup(true);
+        });
+        observer.observe(modal, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
+    legalModalFocusCleanups_.set(modal, cleanup);
+    const target = initialFocus || getLegalModalFocusableElements_(modal)[0];
+    if (target && typeof target.focus === 'function') target.focus();
+}
+
 function setupModal(modalId, openFn) {
     return async (...args) => {
         const modal = document.getElementById(modalId);
@@ -6421,6 +6502,16 @@ export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
     // El acuerdo abierto desde el aviso es una capa hija y debe quedar visualmente encima.
     modal.style.zIndex = termsNotice && termsNotice.style.display === 'flex' ? '3200' : '';
     modal.style.display = 'flex';
+    activateLegalModalFocus_(modal, {
+        initialFocus: modal.querySelector('#terms-agreement-title'),
+        allowEscape: true,
+        close: () => {
+            const overlayId = modal.dataset.gpOverlayHistoryId;
+            const historyManager = window.overlayHistory;
+            if (overlayId && historyManager && historyManager.has(overlayId)) historyManager.close(overlayId);
+            else modal.style.display = 'none';
+        }
+    });
 });
 
 export function renderInboxList(items) {
@@ -7441,7 +7532,13 @@ function renderTermsGate_(user) {
     const keepBlocked = message => {
         if (container) container.style.display = 'none';
         if (footer) footer.style.display = 'none';
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+            modal.style.display = 'flex';
+            activateLegalModalFocus_(modal, {
+                initialFocus: modal.querySelector('#terms-modal-title'),
+                allowEscape: false
+            });
+        }
         if (button) button.disabled = true;
         if (errorMessage) errorMessage.textContent = message;
         showGlobalError(message); return false;
@@ -7452,12 +7549,13 @@ function renderTermsGate_(user) {
     const accepted = Boolean(acceptance && acceptance.status === 'accepted' &&
         acceptance.version === TERMS_CURRENT_VERSION && Number.isFinite(acceptedAt));
     if (accepted) {
-        modal.style.display = 'none'; button.disabled = false;
+        modal.style.display = 'none'; deactivateLegalModalFocus_(modal); button.disabled = false;
         if (errorMessage) errorMessage.textContent = '';
         container.style.display = 'block'; footer.style.display = 'flex'; return true;
     }
     container.style.display = 'none'; footer.style.display = 'none'; modal.style.display = 'flex';
     button.disabled = false;
+    activateLegalModalFocus_(modal, { initialFocus: button, allowEscape: false });
     button.onclick = async () => {
         button.disabled = true; if (errorMessage) errorMessage.textContent = '';
         try {
@@ -7477,7 +7575,7 @@ function renderTermsGate_(user) {
             stored.TermsAcceptance = confirmed;
             localStorage.setItem('gpsepedia_session', JSON.stringify(stored));
             user.TermsAcceptance = confirmed; setState({ currentUser: user });
-            modal.style.display = 'none'; container.style.display = 'block'; footer.style.display = 'flex';
+            modal.style.display = 'none'; deactivateLegalModalFocus_(modal); container.style.display = 'block'; footer.style.display = 'flex';
         } catch (error) {
             const message = error && error.message ? error.message : 'No se pudo registrar la aceptación.';
             if (errorMessage) errorMessage.textContent = message;

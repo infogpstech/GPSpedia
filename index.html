@@ -166,7 +166,7 @@
 <!-- ========= MODAL DE INBOX ========= -->
 <div id="inbox-modal" class="info-modal">
     <div class="info-modal-content" id="inbox-modal-content">
-        <span class="info-close-btn">&times;</span>
+        <button type="button" class="info-close-btn" aria-label="Cerrar términos y condiciones">&times;</button>
         <h2 class="inbox-modal-title"><i class="fa-solid fa-inbox"></i> Bandeja de Entrada</h2>
         <div class="inbox-layout-wrapper">
             <div id="inbox-list">
@@ -550,14 +550,14 @@
 
 <!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->
 <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE -->
-<div id="terms-modal" class="terms-overlay" data-terms-version="2026-07" style="display: none;">
+<div id="terms-modal" class="terms-overlay" data-terms-version="2026-07" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title" aria-describedby="terms-modal-description" style="display: none;">
     <div class="terms-modal-content">
         <div class="terms-header">
             <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" class="terms-logo">
-            <h2>Aviso Importante</h2>
+            <h2 id="terms-modal-title" tabindex="-1">Aviso Importante</h2>
         </div>
         <div class="terms-body">
-            <p>La información de GPSpedia es únicamente de referencia y puede contener errores, omisiones o no aplicar a todos los vehículos. Antes de realizar cualquier intervención, verifique la información y siga los procedimientos y medidas de seguridad correspondientes.</p>
+            <p id="terms-modal-description">La información de GPSpedia es únicamente de referencia y puede contener errores, omisiones o no aplicar a todos los vehículos. Antes de realizar cualquier intervención, verifique la información y siga los procedimientos y medidas de seguridad correspondientes.</p>
             <p>El uso de este catálogo es bajo su propia responsabilidad. GPSpedia no se hace responsable por daños, fallas o pérdidas derivadas del uso de la información, ni por malas prácticas, procedimientos incorrectos o la falta de precauciones de seguridad durante el trabajo en el vehículo.</p>
             <p>Al continuar, usted acepta los <a href="#" id="terms-link-in-modal" style="color: var(--accent-color); text-decoration: underline; font-weight: bold;">Términos y Condiciones</a>.</p>
         </div>
@@ -569,13 +569,13 @@
 </div>
 
 <!-- ========= MODAL DEL ACUERDO DE USO, PRIVACIDAD Y DESLINDE DE RESPONSABILIDAD ========= -->
-<div id="terms-agreement-modal" class="info-modal">
+<div id="terms-agreement-modal" class="info-modal" role="dialog" aria-modal="true" aria-labelledby="terms-agreement-title" aria-describedby="terms-agreement-description">
   <div class="info-modal-content">
     <span class="info-close-btn">&times;</span>
     <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" class="terms-agreement-logo gpsepedia-logo">
-    <h2>Acuerdo de uso, términos y condiciones</h2>
+    <h2 id="terms-agreement-title" tabindex="-1">Acuerdo de uso, términos y condiciones</h2>
     <p style="text-align: center; font-weight: bold; margin-bottom: 20px;">Julio, 2026</p>
-    <p>Al acceder, registrarse o utilizar la plataforma GPSpedia, el usuario declara haber leído, comprendido y aceptado los presentes términos y condiciones de uso.</p>
+    <p id="terms-agreement-description">Al acceder, registrarse o utilizar la plataforma GPSpedia, el usuario declara haber leído, comprendido y aceptado los presentes términos y condiciones de uso.</p>
     <p>Este acuerdo establece las condiciones bajo las cuales los usuarios autorizados podrán acceder y utilizar la información, herramientas y recursos disponibles dentro de la plataforma.</p>
     <hr>
 

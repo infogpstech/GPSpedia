@@ -3464,3 +3464,21 @@ ul[data-gp-marker="bullet"] > li::before { content: "•"; }
     }
     .catalog-status-banner button { width: 100%; }
 }
+
+
+/* Controles accesibles del acuerdo legal */
+#terms-agreement-modal .info-close-btn {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    line-height: 1;
+    font-family: inherit;
+}
+
+#terms-agreement-modal .info-close-btn:focus-visible,
+#terms-agreement-modal h2:focus-visible,
+#terms-modal button:focus-visible,
+#terms-modal h2:focus-visible {
+    outline: 2px solid var(--accent-color, #0d6efd);
+    outline-offset: 3px;
+}
