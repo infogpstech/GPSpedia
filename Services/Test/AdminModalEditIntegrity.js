@@ -96,7 +96,7 @@ function runAdminModalEditIntegrityTests(adminSource) {
         rejected=false;try{helpers.findUniqueAdminVehicleRow_(duplicate,"V-1");}catch(_){rejected=true;}assert(rejected);
     });
     run("Los helpers y handlers modificados compilan como JavaScript V8",()=>{
-        new Function(extract("handleUpdateVehicleField"));
+        const handlerStart = source.indexOf("function handleUpdateVehicleField(");\n        const handlerEnd = source.indexOf("\\n}\\n\\nconst ADMIN_IMAGE_UPLOAD_SHEET_NAME", handlerStart);\n        assert(handlerStart >= 0 && handlerEnd > handlerStart, "No se encontró el cierre de handleUpdateVehicleField.");\n        new Function(source.slice(handlerStart, handlerEnd + 2));
         new Function(extract("handleUpdateVehicleVinCollection_"));
     });
     run("La escritura de campos toma lock, excluye la columna ID y verifica reversión",()=>{
