@@ -1703,3 +1703,12 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - `ActivityLogRetention.mjs` ejecuta el handler real de purga con una hoja simulada: fechas Date/ISO, límite exacto de siete días, valores vacíos/ilegibles/números, futuro, agrupación de borrados y vaciado total explícito.
 - Los timestamps vacíos o no clasificables se conservan y se informan mediante `unclassifiedCount`; la purga lee únicamente la columna de fecha y elimina bloques contiguos de abajo hacia arriba.
 - Ejecutar: `node --experimental-default-type=module Services/Test/ActivityLogRetention.mjs`.
+
+
+## AUG-021 — Auditoría persistente de operaciones ADMIN
+
+- `AdminAuditTrail.mjs` ejecuta los helpers reales de persistencia, clasificación, retención y finalización con dobles de PropertiesService/LockService.
+- Comprueba que el evento STARTED se persista y verifique antes de entrar al switch, que el cierre registre actor/acción/recurso/etapa/resultado/duración/resumen parcial, y que fallos de escritura impidan ejecutar o reportar éxito.
+- El registro usa ScriptProperties (solo accesible a editores del proyecto Apps Script; no existe endpoint de lectura/modificación). Retención: 180 días y máximo 300 eventos finalizados; máximo 20 eventos sin cierre, que bloquean nuevas operaciones sensibles hasta revisión.
+- El contenido es una lista blanca de metadatos; nunca almacena payload, mensajes, stack traces, tokens, contraseñas, Base64 ni URLs.
+- Ejecutar: `node --experimental-default-type=module Services/Test/AdminAuditTrail.mjs`.
