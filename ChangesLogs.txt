@@ -465,3 +465,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Cada entrada conserva el contexto original, evidencia, impacto y trazabilidad de resolución; se identifican expresamente las validaciones reales pendientes de Beta.
 - Se preservaron sin modificación los archivos históricos Olds/Documentacion_Legacy y los índices de auditoría. H-AUD-016-005 se mantiene como ampliación posterior independiente, no se confunde con el conjunto original.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-113 — CORRECCIÓN STORED XSS EN DASHBOARD DE ACTIVIDAD
+- ui.js: se elimina la interpolación de nombreUsuario, tipoActividad y detalle en innerHTML; el historial se delega al renderer DOM seguro.
+- activityDashboard.js: nuevo renderer que crea filas/celdas mediante createElement y asigna texto exclusivamente con textContent; trata todos los registros históricos como datos no confiables y gestiona valores ausentes o fechas inválidas.
+- Se confirmó que recordLike ya exige sesión y deriva ID/nombre/rol de ActiveSessions/Users; la política queda aclarada en la documentación. No se abrió una ruta anónima ni se debilitó autorización.
+- Services/Test/ActivityDashboardStoredXss.js: pruebas de payloads HTML/SVG, campos mixtos, limpieza, integración UI y contrato de autorización recordLike.
+- Services/Test/FeedbackWriteSecurity.js: el POST directo intenta falsificar userName mediante img/onerror y comprueba rechazo de sesión ausente.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, Auditoría.txt, checkpoint.md y lista_beta.txt: instrucciones, resultado y validaciones diferidas documentados.
+================================================================================

@@ -118,10 +118,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-113 — Corregir XSS almacenado en el dashboard de actividad
 - Origen: H-AUD-018-001. Sesión/checkpoint: AUD-20261108-S036/AUD-CP-0036. Prioridad: Alta.
-- Evidencia: Services/feedback.js:302–318, 884–920 y 928–962; ui.js:3221–3226.
-- Problema: recordLike no exige sesión, acepta userName del cliente y lo registra; el dashboard lo inserta con innerHTML.
-- Criterios: derivar actor o clasificar anónimo en backend; renderizar actividad con textContent/DOM seguro; validar historial previo; probar payloads XSS directos.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Evidencia original: el dashboard interpolaba nombreUsuario, tipoActividad y detalle de ActividadUsuario en innerHTML. La autorización vigente de recordLike ya exige sesión validada y reemplaza userId/userName/userRole con los valores derivados de Users.
+- Resolución: ui.js delega el historial a activityDashboard.js; el helper crea filas/celdas con createElement y asigna exclusivamente textContent a los cuatro valores. Los registros históricos se tratan como no confiables. recordLike conserva autenticación obligatoria y la prueba POST directo intenta falsificar userName con HTML activo y rechaza sesión ausente.
+- Pruebas: Services/Test/ActivityDashboardStoredXss.js cubre payloads HTML/SVG, valores mixtos/ausentes, limpieza, integración UI y contrato de identidad backend. Services/Test/FeedbackWriteSecurity.js conserva pruebas dinámicas de sesión/POST directo.
+- Validación Beta pendiente: abrir dashboard con historial malicioso sembrado en Spreadsheet aislada y comprobar ausencia de ejecución en navegador real; probar sesión ausente/inválida y nombre falsificado contra FEEDBACK aislado.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-114 — Corregir XSS y validación de URL en Inbox
 - Origen: H-AUD-018-002. Prioridad: Alta.

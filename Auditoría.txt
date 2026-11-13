@@ -975,3 +975,19 @@ Trazabilidad de tareas:
 
 Nota de alcance: H-AUD-016-005 corresponde a una ampliación posterior por contraste, preservada en la consolidación histórica y vinculada a AUG-103. No se incorpora como si hubiese formado parte del conjunto original de cuatro hallazgos reconstruidos aquí. Las entradas históricas de Plan_Auditoria, Consolidacion_Auditoria y los archivos Olds/Documentacion_Legacy permanecen intactas.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-018-001 / AUG-113 — 2026-11-13
+Origen: hallazgo histórico H-AUD-018-001, sesión AUD-20261108-S036/AUD-CP-0036.
+Alcance: dashboard de ActividadUsuario y origen de identidad de recordLike.
+Evidencia revisada:
+- ui.js interpolaba timestamp, nombreUsuario, tipoActividad y detalle de ActividadUsuario en una plantilla asignada a tr.innerHTML. Los tres últimos campos proceden de registros persistidos y deben considerarse no confiables, incluidos los históricos.
+- La ruta FEEDBACK vigente incluye recordLike en FEEDBACK_ACTION_PERMISSIONS y authorizeFeedbackAction_ ejecuta assertFeedbackSession; el objeto entregado al handler reemplaza userId, userName y userRole con el actor obtenido de la sesión/Users. La prueba FeedbackWriteSecurity ya cubría POST directo y sesión inválida; se reforzó con un userName HTML malicioso y un caso sin sesión.
+Corrección:
+- ui.js utiliza renderActivityLogs de activityDashboard.js. El helper crea nodos tr/td y asigna los valores exclusivamente mediante textContent; no interpreta HTML ni atributos de registros almacenados.
+- La autenticación de recordLike se conserva sin relajaciones ni aceptación anónima.
+Validación local: runtime V8 adaptado, 6/6 escenarios de renderer/contrato PASS; parsing sintáctico adaptado de activityDashboard.js, ui.js, Services/feedback.js y FeedbackWriteSecurity.js, 4/4 PASS. No se ejecutó Node CLI desde checkout local.
+Validación diferida a Beta: ejecución en navegador real con filas históricas sembradas y POST a FEEDBACK/Spreadsheet aislados; no se ejecutaron deployments ni datos productivos.
+Estado: CORREGIDO EN FUENTES — VALIDACIÓN LOCAL APROBADA.
+================================================================================

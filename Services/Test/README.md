@@ -1284,3 +1284,14 @@ Ejecutar desde la raíz del repositorio:
     node --experimental-default-type=module Services/Test/SuggestionActorSchemaDocumentation.js
 
 La prueba comprueba que el inventario de Feedbacks conserva las nueve columnas base y documenta suggestionActorKey con ubicación dinámica, formatos de actor, marca applied:, creación idempotente, compatibilidad histórica y reglas de respaldo/restauración. Contrasta estos puntos con la implementación real de Services/feedback.js; no accede a Spreadsheet ni modifica datos.
+
+
+## AUG-113 — Stored XSS en el dashboard de actividad
+
+Ejecutar desde la raíz del repositorio con Node.js:
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/ActivityDashboardStoredXss.js
+\`\`\`
+
+La suite comprueba renderizado DOM con \`textContent\` para nombre, tipo y detalle, payloads HTML/SVG almacenados, valores ausentes/mixtos, limpieza de resultados previos, integración del renderer en el dashboard y el contrato de sesión/identidad de \`recordLike\`. La regresión de POST directo con identidad falsificada se mantiene en \`Services/Test/FeedbackWriteSecurity.js\` y usa el harness FEEDBACK aislado. Las pruebas DOM usan un documento simulado; no sustituyen inspección en navegador real ni integración con Spreadsheet.

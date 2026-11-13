@@ -90,7 +90,7 @@ function runFeedbackWriteSecurityTests() {
                 const output = doPost({ postData: { contents: JSON.stringify({
                     action: "recordLike",
                     payload: { vehicleId: "VEH-POST", corteIndex: 1,
-                        userId: "ADMIN-FALSO", userName: "Nombre Falso",
+                        userId: "ADMIN-FALSO", userName: '<img src=x onerror=alert("forged")>',
                         userRole: "Desarrollador", sessionToken: "TEST_SESSION" }
                 }) } });
                 const response = JSON.parse(output.content);
@@ -110,6 +110,14 @@ function runFeedbackWriteSecurityTests() {
                 let approvalCalled = false;
                 handleRecordLike = function() { likeCalled = true; return { status: "success" }; };
                 handleApproveVideo = function() { approvalCalled = true; return { status: "success" }; };
+                const missingSession = doPost({ postData: { contents: JSON.stringify({
+                    action: "recordLike",
+                    payload: { vehicleId: "VEH-POST", corteIndex: 1, userId: "ADMIN-FALSO",
+                        userName: '<img src=x onerror=alert("missing")>' }
+                }) } });
+                const missingBody = JSON.parse(missingSession.content);
+                assert_(missingBody.status === "error" && !likeCalled,
+                    "Una petición sin sesión debe rechazarse antes de ejecutar recordLike.");
                 const invalidSession = doPost({ postData: { contents: JSON.stringify({
                     action: "recordLike",
                     payload: { vehicleId: "VEH-POST", corteIndex: 1, sessionToken: "BAD_SESSION" }

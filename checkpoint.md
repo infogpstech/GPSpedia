@@ -154,3 +154,30 @@ Validación local:
 Archivos actualizados: Auditoría.txt, Tareas_pendientes_parte2.txt, ChangesLogs.txt y checkpoint.md.
 Siguiente tarea: AUG-113 — Corregir XSS almacenado en el dashboard de actividad. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-113 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- El dashboard ya no interpola valores del historial en innerHTML. ui.js delega el renderizado a activityDashboard.js, que crea filas/celdas con createElement y utiliza textContent para fecha, nombre, tipo y detalle.
+- Los registros históricos se consideran no confiables; valores nulos/no escalares y fechas inválidas tienen fallback textual vacío.
+- La revisión de backend confirmó que recordLike ya exigía sesión mediante assertFeedbackSession y reemplazaba userId/userName/userRole con el actor derivado de Users. No se abrió una ruta anónima ni se debilitó la autorización.
+- La regresión de POST directo en FeedbackWriteSecurity.js ahora usa un nombre HTML malicioso falsificado y verifica rechazo adicional cuando falta la sesión.
+
+Validación local:
+- Runtime V8 adaptado: 6/6 escenarios PASS (payloads HTML/SVG literales, valores mixtos/ausentes, limpieza, integración del dashboard, contrato backend y payload de identidad falsificada).
+- Parsing sintáctico adaptado: activityDashboard.js, ui.js, Services/feedback.js, Services/Test/FeedbackWriteSecurity.js y Services/Test/ActivityDashboardStoredXss.js, 5/5 PASS.
+- No se ejecutó Node CLI desde un checkout local; las suites reproducibles quedan documentadas en Services/Test/README.md.
+
+Validación Beta pendiente:
+- DOM/navegador real con historial malicioso sembrado en Spreadsheet aislada.
+- POST contra FEEDBACK/Spreadsheet aislados con sesión válida falsificada, ausente, inválida, expirada, revocada y cruzada. Confirmar no ejecución, no escritura indebida y conservación de likes normales.
+- No se ejecutaron endpoints, deployments ni datos productivos.
+
+Archivos: ui.js, activityDashboard.js, Services/Test/ActivityDashboardStoredXss.js, Services/Test/FeedbackWriteSecurity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt, Auditoría.txt y checkpoint.md.
+Siguiente tarea: AUG-114 — Corregir XSS y validación de URL en Inbox. No iniciar dentro de esta tarea.
+================================================================================

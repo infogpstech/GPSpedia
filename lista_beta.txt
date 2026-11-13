@@ -1430,3 +1430,36 @@ En una copia aislada de Spreadsheet:
 
 No ejecutar contra Spreadsheet productiva ni desplegar servicios.
 ================================================================================
+
+
+================================================================================
+AUG-113 — VALIDACIÓN BETA DEL DASHBOARD DE ACTIVIDAD — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+VALIDACIÓN EN NAVEGADOR Y SERVICIOS AISLADOS:
+1. Usar un deployment FEEDBACK de pruebas y una Spreadsheet aislada. No utilizar datos ni endpoints productivos.
+2. Sembrar filas de ActividadUsuario cuyo nombre, tipo y detalle contengan \`<img onerror>\`, \`<svg onload>\`, \`<script>\`, etiquetas de cierre, comillas y atributos de evento.
+3. Abrir el dashboard con una cuenta de prueba autorizada. Confirmar que cada payload aparece literalmente como texto, no crea nodos/atributos activos, no ejecuta código y no modifica el DOM fuera de la tabla.
+4. Enviar recordLike con sesión válida, userId/userName/userRole falsificados y token de una cuenta de prueba. Verificar que el registro de actividad usa ID/nombre/rol de Users, nunca los campos falsificados.
+5. Repetir con token ausente, inválido, expirado, revocado y cruzado; confirmar rechazo sin incrementar el contador ni escribir actividad.
+6. Verificar likes normales, reintento idempotente, carga del historial previo y roles autorizados del dashboard. Registrar payload, fila antes/después, navegador y resultado.
+
+No declarar PASS sin inspección del DOM y confirmación de ausencia de ejecución en navegador real. No desplegar a producción ni modificar hojas productivas.
+================================================================================

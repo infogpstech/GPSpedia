@@ -21,6 +21,7 @@ import { thumbnailObjectUrls } from './imageObjectUrlCache.js';
 import { loadPysData, getCachedPysData, getPysDataFreshness, invalidatePysDataCache } from './pys-data.js';
 import { captureModalViewState, restoreModalViewState, shouldRecordModalTransition, pushModalNavigationContext, popModalNavigationContext } from './modalNavigation.js';
 import { createRichTextToolbar, sanitizeHtmlContent, refreshRichTextToolbars } from './rich-text.js';
+import { renderActivityLogs } from './activityDashboard.js';
 export { createRichTextToolbar, sanitizeHtmlContent };
 
 function mountRichTextToolbars(root) {
@@ -3880,17 +3881,7 @@ const openDashboardModal_ = setupModal('dashboard-modal', async () => {
         const result = await getActivityLogs(getSessionPayload_());
         if (!isCurrentUiSessionContext_(requestContext)) return;
         if (result.status === 'success') {
-            logContainer.innerHTML = '';
-            result.data.forEach(log => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${new Date(log.timestamp).toLocaleString()}</td>
-                    <td>${log.nombreUsuario}</td>
-                    <td>${log.tipoActividad}</td>
-                    <td>${log.detalle || ''}</td>
-                `;
-                logContainer.appendChild(tr);
-            });
+            renderActivityLogs(logContainer, result.data);
         }
     } catch (error) {
         if (!isCurrentUiSessionContext_(requestContext)) return;
