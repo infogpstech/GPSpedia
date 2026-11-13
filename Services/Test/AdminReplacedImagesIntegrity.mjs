@@ -441,6 +441,79 @@ check("La migración explícita queda protegida por lease y despachada por ADMIN
     assert.ok(uiSource.includes("Migrar esquema"));
 });
 
+
+check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmula, rich text e imágenes de celda",()=>{
+    const fields=["imagenVehiculo","imgCorte1","imgCorte2","imgCorte3","imgApertura","imgCableAlimen","imgCableAlimen2","imgCableAlimen3"];
+    const columns={imagenVehiculo:2,imgCorte1:3,imgCorte2:6,imgCorte3:7,imgApertura:10,imgCableAlimen:12,imgCableAlimen2:13,imgCableAlimen3:18};
+    const FILE_C="cdefghij123456789012",FILE_D="defghij1234567890123",FILE_E="efghij12345678901234";
+    const display={2:["https://drive.google.com/file/d/"+FILE_A+"/view",""],3:["",""],6:["",""],7:["",""],10:["",""],12:["https://drive.google.com/file/d/bad-id/view",""],13:["",""],18:["",""]};
+    const formulas={6:['=IMAGE("https://drive.google.com/uc?id='+FILE_B+'")',""]};
+    const rich={7:[{getLinkUrl:()=>"https://drive.google.com/file/d/"+FILE_C+"/view",getRuns:()=>[]},""],
+        10:[{getLinkUrl:()=>"",getRuns:()=>[{getLinkUrl:()=>"https://drive.google.com/file/d/"+FILE_D+"/view"}]},""]};
+    const raw={13:[{getContentUrl:()=>"https://drive.google.com/file/d/"+FILE_E+"/view"},""]};
+    const calls=[];
+    const sheet={
+        getLastRow:()=>3,
+        getLastColumn(){throw new Error("No debe materializar el ancho completo de Cortes.");},
+        getRange(row,col,numRows,numCols){
+            calls.push({row,col,numRows,numCols});
+            const at=(source,r,c)=>source[col+c]&&source[col+c][r]!==undefined?source[col+c][r]:"";
+            return {
+                getDisplayValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(display,r,c))),
+                getValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(raw,r,c))),
+                getFormulas:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(formulas,r,c))),
+                getRichTextValues:()=>Array.from({length:numRows},(_,r)=>Array.from({length:numCols},(_,c)=>at(rich,r,c)))
+            };
+        }
+    };
+    const source=fnSource(admin,"extractDriveFileIds")+"\\n"+fnSource(admin,"collectCortesImageReferences");
+    const scan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\\nreturn collectCortesImageReferences;")(
+        ()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},columns);
+    const result=scan(true);
+    for(const id of [FILE_A,FILE_B,FILE_C,FILE_D,FILE_E])assert.ok(result.references.has(id),"Falta referencia "+id);
+    assert.equal(result.unverifiableReferenceCount,1);
+    assert.equal(result.metrics.columns,8);
+    assert.equal(result.metrics.cells,16);
+    assert.equal(result.metrics.ranges,5);
+    assert.equal(calls.reduce((sum,item)=>sum+item.numCols,0),8);
+    assert.ok(calls.every(item=>item.row===2&&item.numRows===2&&item.col>0));
+    assert.equal(result.references.get(FILE_C)[0].row,2);
+    assert.equal(result.references.get(FILE_C)[0].column,10);
+});
+check("El escáner global delega Cortes a los ocho campos y mantiene imágenes superpuestas y otras hojas",()=>{
+    const scanner=fnSource(admin,"collectActiveDriveReferences");
+    assert.ok(scanner.includes("collectCortesImageReferences(includeLocations)"));
+    assert.ok(scanner.includes("sheet.getDataRange()"));
+    assert.ok(scanner.includes("sheet.getImages()"));
+    assert.ok(scanner.includes("rawValue.getContentUrl"));
+    assert.ok(scanner.includes("richText.getRuns"));
+});
+check("La pertenencia a Cortes memoiza ancestros por petición sin marcar como válidas ramas externas",()=>{
+    const makeFolder=(id,parents=[])=>{let calls=0;return{id,getId:()=>id,getParents(){calls++;let i=0;return{hasNext:()=>i<parents.length,next:()=>parents[i++]};},get calls(){return calls;}};};
+    const root=makeFolder("root-folder"),inside=makeFolder("inside-folder",[root]),leaf=makeFolder("leaf-folder",[inside]);
+    const outsideRoot=makeFolder("outside-root"),outside=makeFolder("outside-folder",[outsideRoot]);
+    const mixed=makeFolder("mixed-folder",[outside,inside]),cache=new Map();
+    const fn=new Function("Map",fnSource(admin,"isFolderInsideCortes")+"\\nreturn isFolderInsideCortes;")(Map);
+    assert.equal(fn(leaf,"root-folder",cache),true);
+    const before=inside.calls;
+    assert.equal(fn(inside,"root-folder",cache),true);
+    assert.equal(inside.calls,before);
+    assert.equal(fn(mixed,"root-folder",cache),true);
+    assert.notEqual(cache.get("outside-folder"),true);
+    assert.equal(fn(outside,"root-folder",cache),false);
+    assert.equal(cache.get("outside-folder"),false);
+});
+check("Cada petición de auditoría conserva un presupuesto temporal y expone métricas de etapa/tamaño",()=>{
+    const audit=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
+    assert.ok(audit.includes("const batchBudgetMs = 18000"));
+    assert.ok(audit.includes("Date.now() - batchStartedAt < batchBudgetMs"));
+    for(const metric of ["referenceCaptureMs","historyCaptureMs","snapshotLoadMs","snapshotPersistMs",
+        "cursorValidationMs","deduplicationLoadMs","driveTraversalMs","cachePersistenceMs",
+        "activeReferenceCount","snapshotBytes","responseBytes","folderMembershipCacheEntries"]) {
+        assert.ok(audit.includes(metric),"Falta métrica "+metric);
+    }
+});
+
 check("La interfaz muestra estados históricos y filas inválidas en una sección de revisión",()=>{
     assert.ok(ui.includes("cachedReview"));
     assert.ok(ui.includes("replaced-images-review"));
