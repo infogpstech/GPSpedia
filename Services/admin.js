@@ -362,24 +362,52 @@ function collectCortesImageReferences(includeLocations = true) {
         metrics: { rows: lastRow - 1, columns: imageColumns.length,
             cells: (lastRow - 1) * imageColumns.length, ranges: groups.length, elapsedMs: Date.now() - startedAt } };
 }
-function isFolderInsideCortes(folder, rootFolderId) {
-    const pending = [folder];
-    const visited = new Set();
-    let index = 0;
+function isFolderInsideCortes(folder, rootFolderId, membershipCache) {
+    if (!folder) return false;
+    const cache = membershipCache instanceof Map ? membershipCache : new Map();
+    const rootId = String(rootFolderId || ""), startId = String(folder.getId() || "");
+    if (!startId || !rootId) return false;
+    if (startId === rootId) { cache.set(startId, true); return true; }
+    if (cache.has(startId)) return cache.get(startId) === true;
 
+    const pending = [folder], visited = new Set(), previous = new Map();
+    let index = 0, matchedId = "";
     while (index < pending.length) {
         const current = pending[index++];
         if (!current) continue;
-
-        const currentId = current.getId();
-        if (currentId === rootFolderId) return true;
+        const currentId = String(current.getId() || "");
+        if (!currentId) continue;
+        if (currentId === rootId) { matchedId = currentId; break; }
+        if (cache.has(currentId)) {
+            if (cache.get(currentId) === true) { matchedId = currentId; break; }
+            continue;
+        }
         if (visited.has(currentId)) continue;
         visited.add(currentId);
-
         const parents = current.getParents();
-        while (parents.hasNext()) pending.push(parents.next());
+        while (parents.hasNext()) {
+            const parent = parents.next();
+            if (!parent) continue;
+            const parentId = String(parent.getId() || "");
+            if (!parentId || visited.has(parentId) || previous.has(parentId) || cache.has(parentId)) {
+                if (parentId && cache.get(parentId) === true) { matchedId = parentId; break; }
+                continue;
+            }
+            previous.set(parentId, currentId);
+            pending.push(parent);
+        }
+        if (matchedId) break;
     }
 
+    if (matchedId) {
+        let currentId = matchedId;
+        while (currentId) {
+            cache.set(currentId, true);
+            currentId = previous.get(currentId) || "";
+        }
+        return true;
+    }
+    visited.forEach(id => { if (!cache.has(id)) cache.set(id, false); });
     return false;
 }
 
@@ -8585,6 +8613,15 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     if (!ownerId) throw new Error("La auditoría requiere una sesión Desarrollador verificada.");
     const rootFolder = getCortesRootFolder();
     if (!rootFolder) throw new Error("No se pudo acceder a la carpeta principal 'Cortes'.");
+    const folderMembershipCache = new Map();
+    const folderObjectCache = new Map([[String(DRIVE_FOLDER_ID), rootFolder]]);
+    const getAuditFolderById = folderId => {
+        const id = String(folderId || "").trim();
+        if (!id) throw new Error("El cursor contiene una carpeta sin ID.");
+        if (!folderObjectCache.has(id)) folderObjectCache.set(id, DriveApp.getFolderById(id));
+        return folderObjectCache.get(id);
+    };
+    folderMembershipCache.set(String(DRIVE_FOLDER_ID), true);
     const cursor = payload && payload.cursor ? payload.cursor : null;
     let auditId, state, referenceSnapshot, stack, totalDiscovered, totalAnalyzed, foldersVisited;
     let errorCount, duplicateFileCount, duplicateFolderCount, pageIndex, inputFingerprint;
@@ -8607,7 +8644,12 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         if (!Array.isArray(cursor.stack) || cursor.stack.length === 0 || Number(cursor.totalAnalyzed) !== Number(state.totalAnalyzed) || Number(cursor.foldersVisited) !== Number(state.foldersVisited)) throw new Error("El cursor está incompleto o sus contadores no coinciden con el estado del servidor.");
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
         refreshAuditDriveReferenceSnapshot_(auditId, referenceSnapshot);
-        cursor.stack.forEach(item => { if (!item || !item.folderId || !isFolderInsideCortes(DriveApp.getFolderById(item.folderId), DRIVE_FOLDER_ID)) throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes»."); });
+        cursor.stack.forEach(item => {
+            if (!item || !item.folderId ||
+                !isFolderInsideCortes(getAuditFolderById(item.folderId), DRIVE_FOLDER_ID, folderMembershipCache)) {
+                throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes».");
+            }
+        });
         stack = cursor.stack;
         totalDiscovered = Number(state.totalDiscovered) || 0; totalAnalyzed = Number(state.totalAnalyzed) || 0;
         foldersVisited = Number(state.foldersVisited) || 1; errorCount = Number(state.errorCount) || 0;
@@ -8649,7 +8691,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     let batchFiles = 0, batchFolders = 0, batchFileEntries = 0, batchFolderEntries = 0;
     const auditResults = [], batchFilesLimit = 25, batchFoldersLimit = 20, batchFileEntriesLimit = 50, batchFolderEntriesLimit = 40;
     while (stack.length && batchFiles < batchFilesLimit && batchFolders < batchFoldersLimit && batchFileEntries < batchFileEntriesLimit && batchFolderEntries < batchFolderEntriesLimit) {
-        const current = stack[stack.length - 1], folder = DriveApp.getFolderById(current.folderId);
+        const current = stack[stack.length - 1], folder = getAuditFolderById(current.folderId);
         if (!current.filesDone) {
             const files = current.fileToken ? DriveApp.continueFileIterator(current.fileToken) : folder.getFiles();
             while (files.hasNext() && batchFiles < batchFilesLimit && batchFileEntries < batchFileEntriesLimit) {
@@ -8684,7 +8726,10 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
             if (!current.folderToken) current.foldersDone = true;
             if (!/^[a-zA-Z0-9_-]{20,}$/.test(childFolderId)) { errorCount++; continue; }
             if (seenFolderIds.has(childFolderId)) { duplicateFolderCount++; continue; }
-            if (!isFolderInsideCortes(childFolder, DRIVE_FOLDER_ID)) throw new Error("Se detectó una subcarpeta fuera del árbol «Cortes».");
+            if (!folderObjectCache.has(childFolderId)) folderObjectCache.set(childFolderId, childFolder);
+            if (!isFolderInsideCortes(childFolder, DRIVE_FOLDER_ID, folderMembershipCache)) {
+                throw new Error("Se detectó una subcarpeta fuera del árbol «Cortes».");
+            }
             seenFolderIds.add(childFolderId); pageFolderIds.push(childFolderId);
             stack.push({ folderId: childFolderId, path: `${current.path}/${childFolder.getName()}`, fileToken: null, folderToken: null, filesDone: false, foldersDone: false });
             batchFolders++; foldersVisited++; pushedChild = true; break;
