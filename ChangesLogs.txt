@@ -1034,3 +1034,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Suite DriveTerminalScope: 20/20 PASS. GitHub Actions run 43454957238 SUCCESS: 62 suites, 881/881 pruebas PASS; node --check admin.js PASS.
 - Beta pendiente: Drive real aislado, permisos efectivos y movimientos externos concurrentes. Sin despliegues ni cambios productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-020 — Escalabilidad y retención de ActividadUsuario
+- Se mantiene la lectura acotada de las últimas 100 filas por fuente y el límite final de 100 registros; ActivityLogsBoundedRead.js se integró al runner.
+- handleClearActivityLogs lee solo la columna timestamp, clasifica Date/cadenas de fecha, conserva y cuenta valores vacíos/no válidos y elimina bloques antiguos de abajo hacia arriba.
+- La respuesta informa unclassifiedCount; el vaciado total explícito conserva su alcance. InboxAuditLog permanece fuera de esta purga.
+- ActivityLogRetention 10/10 y ActivityLogsBoundedRead 7/7 PASS.
+- GitHub Actions run 43455656745 SUCCESS: 64 suites, 898/898 pruebas PASS; node --check feedback.js PASS.
+- Beta pendiente: Spreadsheet aislada, historial grande, fechas heredadas y concurrencia real. Sin deployments ni datos productivos.
+================================================================================

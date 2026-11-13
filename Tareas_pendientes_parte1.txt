@@ -1004,3 +1004,38 @@ PR #128 permanece abierto y Draft.
 
 Siguiente tarea del Plan Maestro: AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario. Antes de modificar código, comprobar si el manejo de timestamps inválidos y la purga ya fueron resueltos por cambios posteriores; ejecutar solo la parte aún pendiente.
 ================================================================================
+
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-020 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN AUTOMATIZADA; integración real con Spreadsheet diferida a Beta.
+
+Criterios y resolución:
+- Lectura del historial: handleGetActivityLogs ya recuperaba como máximo las últimas 100 filas físicas de ActividadUsuario y de InboxAuditLog, combinaba ambas fuentes por timestamp y limitaba la respuesta final a 100. Se conserva ese comportamiento y se incorpora ActivityLogsBoundedRead.js al runner FEEDBACK para que no dependa de ejecución manual.
+- Purga por antigüedad: handleClearActivityLogs lee únicamente la columna timestamp, no todas las columnas de cada fila.
+- Se clasifican fechas Date válidas y cadenas de fecha parseables no numéricas. Las fechas anteriores a siete días se eliminan; la fecha exactamente en el límite se conserva.
+- Timestamps vacíos, inválidos, numéricos no tipados como fecha o Date inválidos se conservan sin inferir antigüedad. La respuesta incluye unclassifiedCount/retainedUnclassifiedCount y el mensaje informa cuántas filas permanecen para revisión.
+- Las filas antiguas se agrupan en bloques contiguos y se eliminan de abajo hacia arriba, reduciendo llamadas y evitando desplazamientos de índices. Se conserva fallback con deleteRow si el objeto no expone deleteRows.
+- El vaciado total explícito mantiene su semántica y elimina todas las filas de ActividadUsuario, incluidas las que tengan fecha no clasificable. InboxAuditLog no se borra desde esta acción.
+- clearActivityLogs conserva la lease compartida del recurso ACTIVITY; las escrituras internas que reservan ese recurso no se ejecutan simultáneamente con la purga.
+
+Code Review / Safety & Side Effects:
+- Solo se modificó handleClearActivityLogs y se integró la suite preexistente de lectura acotada. No se modificaron permisos, endpoints, esquema de columnas ni la auditoría inmutable InboxAuditLog.
+- La purga de antigüedad no elimina una fila cuya fecha no pueda clasificarse. La interfaz ya presenta el mensaje devuelto por el servicio.
+- Se verificó el diff funcional: Services/feedback.js; pruebas: ActivityLogRetention.mjs, ActivityLogsBoundedRead.js y RunServiceTests.mjs; documentación de pruebas: Services/Test/README.md.
+
+Pruebas:
+- ActivityLogRetention: 10/10 PASS.
+- ActivityLogsBoundedRead: 7/7 PASS.
+- GitHub Actions run 43455656745 SUCCESS: Node.js 22; 64 suites, 898/898 pruebas aprobadas, 0 fallos.
+- node --check Services/feedback.js PASS, ejecutado desde ActivityLogRetention.mjs.
+- No se ejecutaron Apps Script ni Spreadsheet reales; no se modificaron datos productivos.
+
+Commit de implementación: c035523c855d257ed51cec87f87cd1e41855be82.
+Rama base GPSpedia2.2.5 permanece sin cambios.
+
+Beta pendiente: validar en una Spreadsheet aislada con historial grande, fechas Date/ISO/localizadas, celdas vacías, cadenas inválidas y valores numéricos; confirmar límites de siete días, conteos y conservación de filas no clasificables. Verificar además que InboxAuditLog permanezca intacto y que una escritura concurrente de actividad espere la lease. No usar datos productivos.
+
+Siguiente tarea según el orden del Plan Maestro: AUG-021 — Registro persistente de operaciones administrativas sensibles. Antes de implementarla, revalidar si existe algún mecanismo parcial de auditoría persistente en ADMIN y ejecutar únicamente los criterios pendientes.
+================================================================================

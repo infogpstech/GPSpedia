@@ -1320,3 +1320,38 @@ Beta pendiente: probar en una copia aislada de Drive el árbol real, permisos, c
 
 Siguiente tarea según el Plan Maestro: AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario. Revalidar el código actual y ejecutar únicamente los criterios aún no resueltos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-020 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (sin cambios).
+Commit de implementación: c035523c855d257ed51cec87f87cd1e41855be82.
+Estado: COMPLETADA CON VALIDACIÓN AUTOMATIZADA; integración real con Spreadsheet diferida a Beta.
+
+handleGetActivityLogs mantiene lectura acotada: últimas 100 filas de ActividadUsuario y últimas 100 de InboxAuditLog, fusión cronológica y máximo final de 100. La prueba ActivityLogsBoundedRead.js (7/7) quedó integrada en el runner FEEDBACK.
+
+handleClearActivityLogs lee solo la columna timestamp. Las fechas Date válidas y cadenas parseables se clasifican; las anteriores a siete días se eliminan en bloques contiguos descendentes. La fecha en el límite se conserva. Valores vacíos, cadenas inválidas, números sin tipo fecha y Date inválidos se conservan y se informan en unclassifiedCount; no se infiere antigüedad. El vaciado total explícito conserva su semántica. InboxAuditLog no se borra desde esta acción.
+
+La acción conserva la lease compartida del recurso ACTIVITY, que coordina las escrituras internas de GPSpedia con la purga.
+
+Archivos:
+- Services/feedback.js
+- Services/Test/ActivityLogRetention.mjs
+- Services/Test/ActivityLogsBoundedRead.js (integración de suite)
+- Services/Test/RunServiceTests.mjs
+- Services/Test/README.md
+- Tareas_pendientes_parte1.txt
+- Tareas.txt
+- tareas_completadas_parte1.txt
+- ChangesLogs.txt
+- lista_beta_parte2.txt
+- checkpoint.md
+
+Pruebas: ActivityLogRetention 10/10; ActivityLogsBoundedRead 7/7. GitHub Actions run 43455656745 SUCCESS: Node.js 22, 64 suites, 898/898 pruebas aprobadas, 0 fallos. node --check feedback.js PASS.
+
+Beta pendiente: Spreadsheet aislada con historial grande, fechas Date/ISO/localizadas, celdas vacías, strings inválidas y números; comprobar límite de siete días, conteos, conservación de filas no clasificables, InboxAuditLog intacto y coordinación con escrituras concurrentes. No usar recursos productivos.
+
+Siguiente tarea: AUG-021 — Registro persistente de operaciones administrativas sensibles. Revalidar primero el mecanismo actual de auditoría ADMIN y completar solo lo que no esté resuelto.
+================================================================================

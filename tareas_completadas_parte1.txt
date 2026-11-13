@@ -464,3 +464,12 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Pruebas:** DriveTerminalScope 20/20 PASS; GitHub Actions run 43454957238 SUCCESS; 62 suites, 881/881 pruebas PASS; node --check admin.js PASS.
 - **Commits:** d4323697b9fe063cf4f8e26221c33f9386cd028d, 36b025387adc55a6f9189e6c232232ad38bb513d, 2af745fd93422f8477fc7f77e88132a75665955c y 93fd2330976ffb5619ac1544fd51a53a3992413d.
 - **Beta:** validar permisos y movimientos en una copia aislada de Drive, incluyendo cambios externos de ubicación concurrentes. No usar recursos productivos.
+
+
+### AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario
+- **Estado:** COMPLETADA CON VALIDACIÓN AUTOMATIZADA; Spreadsheet real diferida a Beta.
+- **Lectura:** getActivityLogs lee como máximo 100 filas recientes de ActividadUsuario y de InboxAuditLog; la respuesta fusionada queda limitada a 100. ActivityLogsBoundedRead 7/7 PASS quedó integrada en el runner.
+- **Purga:** solo lee la columna timestamp; elimina fechas válidas con más de siete días en bloques descendentes. Los valores vacíos, inválidos, numéricos sin tipo fecha y Date inválidos se conservan y reportan mediante unclassifiedCount. El vaciado total explícito conserva su alcance y no modifica InboxAuditLog.
+- **Pruebas:** ActivityLogRetention 10/10 PASS; ActivityLogsBoundedRead 7/7 PASS; GitHub Actions run 43455656745 SUCCESS, 64 suites, 898/898 PASS; node --check feedback.js PASS.
+- **Commit:** c035523c855d257ed51cec87f87cd1e41855be82.
+- **Beta:** Spreadsheet aislada, fechas heredadas, historial grande y concurrencia con escrituras de actividad. Sin datos productivos.

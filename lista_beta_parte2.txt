@@ -1549,3 +1549,29 @@ git -C GPSpedia status --short --branch
 
 No ejecutar contra el Drive operativo, la carpeta Cortes productiva, endpoints productivos ni datos reales de usuarios.
 ================================================================================
+
+
+================================================================================
+AUG-020 — Validación real de lectura y purga de ActividadUsuario (solo Spreadsheet aislada)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia log -1 --oneline
+git -C GPSpedia status --short --branch
+```
+
+1. Preparar una Spreadsheet aislada con ActividadUsuario de tamaño representativo y encabezados reales; crear filas con Date, ISO, fecha heredada parseable, exactamente siete días, más de siete días, fecha futura, vacío, texto inválido, valor numérico y Date inválido.
+2. Ejecutar getActivityLogs y confirmar que cada fuente lee como máximo las últimas 100 filas, que el resultado combinado no supera 100 y que el orden cronológico es estable.
+3. Ejecutar la purga keepLastWeek=true; verificar que solo se eliminan fechas válidas con antigüedad estrictamente mayor a siete días.
+4. Confirmar que los registros no clasificables permanecen intactos y que la respuesta y la consola informan unclassifiedCount correcto.
+5. Confirmar que el borrado por bloques descendentes no altera IDs ni filas retenidas y que una ejecución repetida es segura.
+6. Verificar que InboxAuditLog no cambia al purgar ActividadUsuario.
+7. Ejecutar una escritura de actividad concurrente desde otra sesión del deployment aislado; confirmar que espera la lease ACTIVITY y que no se pierde ni se elimina la fila nueva.
+8. Ejecutar el vaciado total explícito en otra copia de prueba y confirmar que elimina todas las filas de ActividadUsuario, incluidas las no clasificables, sin tocar InboxAuditLog.
+
+No ejecutar contra Spreadsheet, endpoints, deployments ni datos productivos.
+================================================================================
