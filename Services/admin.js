@@ -1,7 +1,7 @@
 // ============================================================================
 // GPSPEDIA-ADMIN SERVICE (DESACOPLADO Y EXCLUSIVO PARA DESARROLLADOR/ADMIN)
 // ============================================================================
-// COMPONENT VERSION: 2.6.0
+// COMPONENT VERSION: 2.7.0
 
 // Variables globales para el diagnóstico y seguimiento de errores y estado
 var currentStage = "Inicialización";
@@ -878,6 +878,10 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
     const createdBackupFile = DriveApp.getFileById(ss.getId()).makeCopy(backupName, folder);
     const backupId = createdBackupFile.getId();
     try {
+        createdBackupFile.setDescription(JSON.stringify({
+            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete",
+            createdAt: runId, sourceSpreadsheetId: ss.getId()
+        }));
         const backupFile = DriveApp.getFileById(backupId);
         const backupUrl = backupFile.getUrl();
         if (backupFile.getId() !== backupId || backupId === ss.getId() || backupFile.isTrashed() ||
@@ -892,18 +896,33 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
             copiedManifest.fingerprint !== sourceManifest.fingerprint || copiedManifest.sheetCount !== sourceManifest.sheetCount) {
             throw new Error("La copia de Spreadsheet no coincide íntegramente con el origen; no se registró como respaldo válido.");
         }
-        backupFile.setDescription(JSON.stringify({
-            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 1, createdAt: runId,
-            sourceSpreadsheetId: ss.getId(), sheetCount: copiedManifest.sheetCount,
+        const completeManifest = {
+            kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "complete",
+            createdAt: runId, sourceSpreadsheetId: ss.getId(), sheetCount: copiedManifest.sheetCount,
             rowCount: copiedManifest.rowCount, cellCount: copiedManifest.cellCount,
             formulaCount: copiedManifest.formulaCount, fingerprint: copiedManifest.fingerprint
-        }));
+        };
+        backupFile.setDescription(JSON.stringify(completeManifest));
+        const persistedManifest = JSON.parse(String(backupFile.getDescription() || ""));
+        if (persistedManifest.kind !== completeManifest.kind || persistedManifest.version !== 2 ||
+            persistedManifest.status !== "complete" || persistedManifest.fingerprint !== copiedManifest.fingerprint ||
+            persistedManifest.sheetCount !== copiedManifest.sheetCount) {
+            throw new Error("No se pudo confirmar el estado completo del manifiesto DB.");
+        }
         if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo verificado con la sesión de desarrollador.");
         CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
         logMessage("Respaldo", `Recurso de respaldo de base de datos creado, comparado y verificado. ID: ${backupId}`);
-        return { status: 'success', backupId, backupUrl, timestamp: runId,
+        return { status: "success", backupId, backupUrl, timestamp: runId,
             message: "Respaldo de base de datos creado y verificado correctamente." };
     } catch (error) {
+        try {
+            createdBackupFile.setDescription(JSON.stringify({
+                kind: ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_, version: 2, status: "incomplete",
+                createdAt: runId, sourceSpreadsheetId: ss.getId(), error: String(error.message || error)
+            }));
+        } catch (stateError) {
+            logMessage("Respaldo", `No se pudo marcar como incompleta la copia ${backupId}: ${stateError.message}`, 0, 0, true);
+        }
         try { createdBackupFile.setTrashed(true); } catch (cleanupError) {
             logMessage("Respaldo", `No se pudo retirar la copia incompleta ${backupId}: ${cleanupError.message}`, 0, 0, true);
         }
@@ -911,9 +930,6 @@ function handleBackupDatabase(payload, logMessage, developerContext) {
     }
 }
 
-/**
- * 2. Respaldo de Drive (Estructura de carpetas y archivos de imágenes)
- */
 function handleBackupDrive(payload, logMessage) {
     logMessage("Respaldo Drive", "Iniciando respaldo completo de la estructura de carpetas de Drive...");
     const rootFolder = getCortesRootFolder();
@@ -1022,6 +1038,10 @@ const ADMIN_RESTORE_REQUIRED_SCHEMA_ = {
 };
 const ADMIN_RESTORE_DRIVE_MANIFEST_DESCRIPTION_ = "GPSpediaDriveBackup";
 const ADMIN_RESTORE_DB_MANIFEST_DESCRIPTION_ = "GPSpediaDatabaseBackup";
+const ADMIN_RESTORE_DRIVE_MANIFEST_FILE_NAME_ = "__GPSpedia_DRIVE_BACKUP_MANIFEST__.json";
+const ADMIN_RESTORE_DRIVE_MANIFEST_FILE_MARKER_ = "GPSpediaDriveBackupManifest";
+const ADMIN_RESTORE_DRIVE_COPY_TAG_KIND_ = "GPSpediaDriveBackupItem";
+const ADMIN_RESTORE_DRIVE_BACKUP_BATCH_SIZE_ = 40;
 
 function adminRestoreRunId_() {
     return Utilities.formatDate(new Date(), "GMT-6", "yyyyMMdd_HHmmss") + "_" +
