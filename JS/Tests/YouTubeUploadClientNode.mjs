@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-const source=readFileSync("youtubeUpload.js","utf8"),tests=readFileSync("JS/Services/Test/YouTubeUploadClient.js","utf8");
+const source=readFileSync("JS/Frontend/youtubeUpload.js","utf8"),tests=readFileSync("JS/Tests/YouTubeUploadClient.js","utf8");
 function extractFunction(name){
  const marker="function "+name+"(",start=source.indexOf(marker);
  if(start<0)throw new Error("No se encontró "+name);

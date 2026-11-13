@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-const source=readFileSync("JS/Services/Test/SupplementaryVideoContract.js","utf8");
+const source=readFileSync("JS/Tests/SupplementaryVideoContract.js","utf8");
 const run=new Function(source+"\nreturn runSupplementaryVideoContractTests;")();
 const result=await run({
  write:readFileSync("JS/Services/write.js","utf8"),admin:readFileSync("JS/Services/admin.js","utf8"),
