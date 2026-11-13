@@ -1213,3 +1213,13 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - Services/Test/AdminDriveAuditClientRetry.mjs: 7/7 PASS en harness V8 adaptado.
 - Node CLI y GitHub Actions no se ejecutaron desde este entorno; sin afirmación de CI SUCCESS.
 ================================================================================
+
+================================================================================
+2026-11-13 — AUG-022 — LIMPIEZA SELECTIVA DE CACHÉS DEL CLIENTE
+- offline.js: se añade clearRebuildableClientCache(), que limpia catalog, searchHistory, viewedItems, thumbnails y validationCache en una transacción y espera el evento oncomplete. adminLocalState se conserva.
+- ui.js: el botón de limpieza deja de borrar GPSpedia_DB completa y elimina solo las claves de caché reconstruible de catálogo/PyS. No borra sesión ni operaciones pendientes/backups. La UI informa resultados parciales y solo recarga tras confirmar IndexedDB, localStorage y Cache Storage.
+- service-worker.js: se añade el mensaje GPSEPEDIA_CLEAR_RUNTIME_CACHE para eliminar respuestas dinámicas de cachés GPSpedia y preservar CORE_ASSETS/OPTIONAL_ASSETS y cachés ajenas.
+- ui.js: las ObjectURL de miniaturas se revocan solo después del éxito completo.
+- Services/Test/AdminClientCacheDeletion.mjs: suite actualizada con ocho escenarios de transacción, preservación de estado, comunicación y ejecución del Service Worker.
+- Validación adaptada V8: 8/8 PASS; parsing de cinco fuentes/prueba/runner aprobado. Node CLI literal y navegador real no ejecutados.
+================================================================================
