@@ -4815,34 +4815,66 @@ ${elapsedSec}s
         return backupUrl === expectedPrefix || backupUrl.startsWith(expectedPrefix + '/') || backupUrl.startsWith(expectedPrefix + '?');
     }
 
-    async function createBackup(action, resourceType, button) {
+    async function createBackup(action, resourceType, button, resumeBackupId) {
+        const driveBackupButton = document.getElementById('btn-admin-backup-drive');
+        const resumeDriveBackupButton = document.getElementById('btn-admin-resume-drive-backup');
         const description = resourceType === 'spreadsheet'
             ? 'Creando y verificando el respaldo de la Spreadsheet...'
-            : 'Creando y verificando el respaldo de la carpeta de Drive...';
+            : (resumeBackupId ? 'Reanudando el respaldo de Drive...' : 'Creando el respaldo de Drive por lotes...');
+        let canResumeDriveBackup = false;
         setBackupResourceHint(description);
         setBackupButtonBusy(button, true);
+        if (resourceType === 'drive') {
+            if (driveBackupButton && driveBackupButton !== button) driveBackupButton.disabled = true;
+            if (resumeDriveBackupButton && resumeDriveBackupButton !== button) resumeDriveBackupButton.disabled = true;
+        }
         try {
-            const response = await runAction(action);
+            let response = await runAction(action, resumeBackupId ? { backupId: resumeBackupId } : undefined);
+            let batches = 0;
+            while (resourceType === 'drive' && response && response.status === 'in_progress' &&
+                response.backupId && batches < 10) {
+                if (!isAdminPanelCurrent_()) return;
+                if (backupResourceInput && response.backupUrl) backupResourceInput.value = response.backupUrl;
+                canResumeDriveBackup = true;
+                setBackupResourceHint(`Respaldo de Drive en progreso: ${response.processed || 0}/${response.total || 0} recursos. Continuando por lotes...`);
+                response = await runAction(action, { backupId: response.backupId });
+                batches++;
+            }
             if (!isAdminPanelCurrent_()) return;
-            if (!response) {
-                setBackupResourceHint('No se confirmó la creación del respaldo. Consulta la consola para revisar el resultado.', true);
+            if (resourceType === 'drive' && response && response.status === 'in_progress' && response.backupId) {
+                if (backupResourceInput && response.backupUrl) backupResourceInput.value = response.backupUrl;
+                canResumeDriveBackup = true;
+                setBackupResourceHint(`Lote completado: ${response.processed || 0}/${response.total || 0}. Usa "Continuar respaldo de Drive" para reanudar con el mismo contenedor.`);
                 return;
             }
-            if (!isVerifiedBackupResponse(response, resourceType)) {
-                log('[ERROR] ADMIN no devolvió un enlace completo verificable para el recurso de respaldo.', false, true);
-                setBackupResourceHint('El servidor no confirmó la identidad y el enlace completo del respaldo. No se mostrará como válido.', true);
+            if (resourceType === 'drive' && response && response.status === 'error' && response.resumable && response.backupId) {
+                if (backupResourceInput && response.backupUrl) backupResourceInput.value = response.backupUrl;
+                canResumeDriveBackup = true;
+                setBackupResourceHint((response.message || 'El respaldo quedó incompleto.') + ' Puedes reanudarlo con el mismo enlace.', true);
                 return;
             }
-            backupResourceInput.value = response.backupUrl;
+            if (!response || response.status !== 'success' || !isVerifiedBackupResponse(response, resourceType)) {
+                log('[ERROR] ADMIN no devolvió un respaldo completo y verificable.', false, true);
+                setBackupResourceHint(response && response.message
+                    ? response.message
+                    : 'El servidor no confirmó el estado completo, la identidad y el enlace del respaldo.', true);
+                return;
+            }
+            if (backupResourceInput) backupResourceInput.value = response.backupUrl;
+            canResumeDriveBackup = false;
             verifiedDatabaseBackupId = resourceType === 'spreadsheet' ? String(response.backupId) : null;
             vinMigrationPreview = null;
             vinMigrationPreviewBackupId = null;
             updateVinMigrationControls();
             setBackupResourceHint(resourceType === 'spreadsheet'
                 ? 'Respaldo de Spreadsheet verificado. El enlace completo quedó disponible en este campo.'
-                : 'Respaldo de Drive verificado. El enlace completo quedó disponible en este campo.');
+                : 'Respaldo de Drive completo y verificado. El enlace quedó disponible en este campo.');
         } finally {
             setBackupButtonBusy(button, false);
+            if (resourceType === 'drive') {
+                if (driveBackupButton) driveBackupButton.disabled = false;
+                if (resumeDriveBackupButton) resumeDriveBackupButton.disabled = !canResumeDriveBackup;
+            }
         }
     }
 
@@ -4853,6 +4885,24 @@ ${elapsedSec}s
     document.getElementById('btn-admin-backup-drive').onclick = async (event) => {
         await createBackup('backupDrive', 'drive', event.currentTarget);
     };
+
+    const resumeDriveBackupButton = document.getElementById('btn-admin-resume-drive-backup');
+    if (resumeDriveBackupButton) {
+        resumeDriveBackupButton.disabled = true;
+        resumeDriveBackupButton.onclick = async (event) => {
+            const backupId = normalizeDriveBackupId(backupResourceInput && backupResourceInput.value);
+            if (!backupId) {
+                setBackupResourceHint('Introduce el enlace o ID del contenedor de respaldo Drive que deseas continuar.', true);
+                return;
+            }
+            await createBackup('backupDrive', 'drive', event.currentTarget, backupId);
+        };
+    }
+    if (backupResourceInput && resumeDriveBackupButton) {
+        backupResourceInput.addEventListener('input', () => {
+            resumeDriveBackupButton.disabled = !normalizeDriveBackupId(backupResourceInput.value);
+        });
+    }
 
     function normalizeSpreadsheetBackupId(value) {
         const input = String(value || '').trim();
