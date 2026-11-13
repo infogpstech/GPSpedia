@@ -578,14 +578,23 @@ check("La limpieza elimina bloques huérfanos incluso si falta el manifiesto",()
     assert.equal([...h.cache.keys()].some(key=>key.startsWith(prefix)),false);
 });
 
-check("La limpieza de estados expirados no conserva cursores obsoletos",()=>{
+check("La limpieza de estados expirados elimina también páginas, respuestas y snapshots temporales",()=>{
     const h=auditHarness(), key=h.getDriveAuditServerStateKey_(AUDIT_ID);
-    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running"});
+    h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running",pageCount:1,lastResponseCacheKey:"audit-response"});
+    const pageKey=h.getDriveAuditPageResultCacheKey_(AUDIT_ID,0);
+    h.cache.set(pageKey,"page");h.cache.set("audit-response","response");
+    h.storeAuditDriveReferenceSnapshot(AUDIT_ID,makeReferenceSnapshot());
+    const latestKey="GPSpedia_DRIVE_AUDIT_LATEST_"+h.hashDriveAuditValue_(AUDIT_OWNER).slice(0,32);
+    h.properties.set(latestKey,AUDIT_ID);
     const expired=JSON.parse(h.properties.get(key));
     expired.updatedAt=Date.now()-21600001;
     h.properties.set(key,JSON.stringify(expired));
     h.cleanupExpiredDriveAuditServerStates_();
     assert.equal(h.properties.has(key),false);
+    assert.equal(h.properties.has(latestKey),false);
+    assert.equal(h.cache.has(pageKey),false);
+    assert.equal(h.cache.has("audit-response"),false);
+    assert.equal([...h.cache.keys()].some(item=>item.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
 });
 check("El cursor de auditoría se firma por contenido y rechaza una pila vacía o alterada",()=>{
     const h=auditHarness();
