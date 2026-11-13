@@ -746,7 +746,7 @@ Validación local ejecutada en runtime V8:
 - Logger: niveles/allowlist comprobados.
 - Parsing del módulo inline de add_cortes: PASS.
 - Flujo de recuperación: 5/5 PASS.
-- CI Node.js 22/GitHub Actions: se comprobará tras publicar; no se afirma como aprobado en este checkpoint.
+- CI Node.js 22/GitHub Actions: run 43376949865, success sobre c38178df93bca97f2756f3fd053951ff03252a69; Node.js 22.23.4; 18 suites, 257 PASS, 0 fallos. Suite AUG-138: 12/12 PASS.
 
 Validación Beta pendiente:
 - IndexedDB real y recuperación después de recargar/cerrar PWA, en perfil y datos aislados.
