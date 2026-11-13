@@ -517,6 +517,8 @@ check("El cursor de auditoría se firma por contenido y rechaza una pila vacía 
     assert.equal(fingerprint,h.getDriveAuditCursorFingerprint_(repeatedPosition));
     const auditSource=fnSource(admin,"handleAuditDriveImagesInCortesLocked_");
     assert.ok(auditSource.includes("state.lastRequestFingerprint === inputFingerprint"));
+    assert.ok(auditSource.includes("state.lastRequestTotalAnalyzed"));
+    assert.ok(auditSource.includes("contadores alterados"));
     assert.ok(auditSource.includes("return JSON.parse(cachedResponse)"));
     assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,stack:[{folderId:"folder-id-0000000000000002",fileToken:"token-b",filesDone:false}]}));
     assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,scanVersion:"2.6.2"}));

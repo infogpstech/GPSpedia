@@ -8385,6 +8385,10 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         if (state.scanVersion !== ADMIN_SERVICE_VERSION || String(cursor.scanVersion || "") !== ADMIN_SERVICE_VERSION) throw new Error("La auditoría fue creada con otra versión del servicio; inicia una auditoría nueva para aplicar la deduplicación global.");
         inputFingerprint = getDriveAuditCursorFingerprint_(cursor);
         if (state.lastRequestFingerprint === inputFingerprint && state.lastResponseCacheKey) {
+            if (Number(cursor.totalAnalyzed) !== Number(state.lastRequestTotalAnalyzed) ||
+                Number(cursor.foldersVisited) !== Number(state.lastRequestFoldersVisited)) {
+                throw new Error("La posición del cursor se repitió con contadores alterados; no se aceptó progreso ficticio.");
+            }
             const cachedResponse = CacheService.getScriptCache().get(state.lastResponseCacheKey);
             if (cachedResponse !== null) { try { return JSON.parse(cachedResponse); } catch (cacheError) { throw new Error("La respuesta reanudable de auditoría está corrupta. Inicia una auditoría nueva."); } }
             throw new Error("La respuesta de este lote expiró; inicia una auditoría nueva para evitar duplicar resultados.");
@@ -8495,6 +8499,8 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     const previousResponseCacheKey = state.lastResponseCacheKey;
     state.unverifiableReferenceCount = referenceSnapshot.unverifiableReferenceCount;
     state.lastRequestFingerprint = inputFingerprint;
+    state.lastRequestTotalAnalyzed = cursor ? Number(cursor.totalAnalyzed) : 0;
+    state.lastRequestFoldersVisited = cursor ? Number(cursor.foldersVisited) : 1;
     state.lastResponseCacheKey = responseCacheKey;
     if (complete) {
         const allUnusedIds = loadDriveAuditUnusedFileIds_(auditId, nextPageCount);
