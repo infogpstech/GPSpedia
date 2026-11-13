@@ -1764,3 +1764,67 @@ Pendiente exclusivamente para Beta aislada:
 
 Siguiente tarea: AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL.
 ================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-030 — 2026-11-13
+
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de código validado: 4fa3aaffdcea2656505b1f3bc936d23ef3611bae
+HEAD de la rama antes del checkpoint documental: 4fa3aaffdcea2656505b1f3bc936d23ef3611bae
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Comparación antes del checkpoint documental: 2051 commits ahead, 0 behind.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Implementación:
+- ADMIN_SERVICE_VERSION 2.6.1; cursor versionado.
+- Fingerprint: stack + auditId + versión; excluye contadores. Replay valida contadores originales y devuelve respuesta idempotente o rechaza alteraciones.
+- Deduplicación global de archivos/carpetas entre páginas; resultados e IDs comparten una clave de caché por página. Páginas incompletas/corruptas fallan de forma cerrada.
+- Respuesta de cursor anterior liberada best-effort después de confirmar el nuevo estado.
+- Frontend deduplica resultados y restauración local.
+- Métricas: archivos descubiertos/analizados, carpetas conocidas pendientes, errores y duplicados; rootFolderId y carpetas incluyen raíz.
+- Estado local incluye fecha/hora y versión del servicio.
+- Miniatura: URL generada desde ID validado y evento de carga/error en sesión autorizada.
+- Duplicados e identidades discordantes en Spreadsheet: bloqueo de acciones y enlace a filas para reconciliación manual.
+
+Validación automatizada:
+- AdminReplacedImagesIntegrity: 38/38 PASS.
+- GitHub Actions run 43504109237 — SUCCESS.
+- Node.js 22; 71 suites; 1,032 pruebas aprobadas; 0 fallos.
+- node --check ui.js, offline.js y Services/admin.js: PASS.
+- No deployment; no operaciones Drive/Spreadsheet productivas.
+- Rama base sin cambios.
+
+Pendiente exclusivamente para Beta aislada:
+- CacheService/PropertiesService reales y expiración de páginas.
+- Carga de miniaturas con cuenta autorizada y enlace de reconciliación en navegador.
+- Árbol Drive/Spreadsheet representativo con duplicados, pausa y reanudación.
+
+
+Pruebas Beta aisladas — ejecutar estos comandos antes de cualquier prueba:
+
+```bash
+cd /ruta/local/GPSpedia
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia|https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "Repositorio remoto incorrecto"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || exit 1
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detenerse."; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+Después de sincronizar:
+1. Usar una copia aislada de Drive/Cortes y una copia aislada de Spreadsheet.
+2. Probar IDs repetidos entre páginas, cursor repetido, pausa, recarga y reanudación; comparar IDs únicos y contadores.
+3. Confirmar que la raíz cuenta como carpeta y que descubiertos, analizados, pendientes y errores mantienen las definiciones documentadas.
+4. Comprobar miniaturas con la cuenta Desarrollador autorizada; no modificar permisos generales.
+5. Insertar filas duplicadas y con IDs discordantes; abrir el enlace de reconciliación y confirmar que las acciones quedan bloqueadas.
+6. Repetir cerca del TTL; una página temporal ausente debe detener la auditoría en lugar de aceptar resultados parciales.
+7. No usar Drive, Spreadsheet ni deployment productivos.
+
+Siguiente tarea: AUG-031 — Persistencia incremental e aislamiento de auditorías concurrentes en IndexedDB.
+================================================================================

@@ -422,7 +422,7 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Verificar que la URL de visualización corresponde al ID y puede cargarse en el contexto autorizado, sin cambiar permisos de forma amplia.
   6. Probar duplicados existentes en Spreadsheet y ofrecer reconciliación.
 - **Relación:** AUD-T-029 para capacidad, cache TTL, snapshot y persistencia incremental.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13. CI y pruebas lógicas aprobadas; comprobaciones de Drive/Spreadsheet y navegador reales reservadas para Beta aislada.
 
 ================================================================================
 
@@ -432,13 +432,13 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Nuevo origen:** H-AUD-029-001. **Prioridad:** Alta.
 - **Adenda:** ADMIN no debe aceptar una pila de continuación vacía enviada por el cliente como evidencia de que el árbol terminó. El estado de finalización debe estar respaldado por estado de servidor o un marcador firmado/validado; el endpoint de guardado del inventario debe exigir esa evidencia.
 - **Criterios adicionales:** probar cursor vacío, pila truncada, campos omitidos, contadores alterados, cursor de otra raíz y cursor/snapshot inexistente. Ningún caso parcial debe permitir marcar filas ausentes como no confirmadas.
-- **Estado:** EXISTENTE; ampliada; diseño, implementación y pruebas pendientes. No duplicar AUG-028.
+- **Estado:** COMPLETADA — 2026-11-13; ADMIN exige estado de servidor, propietario, cursor emitido y pila no vacía, y el inventario valida auditoría completa, snapshot y contadores. Evidencia: AUG-028, 1,027 pruebas PASS en su checkpoint.
 
 ### Adenda a AUG-030 — Detección de posición repetida y deduplicación entre lotes
 - **Nuevo origen:** H-AUD-029-002. **Prioridad:** Alta.
 - **Adenda:** la firma de progreso debe representar la posición real de los iteradores/stack y excluir contadores acumulados. La acumulación frontend debe impedir que un mismo fileId se añada varias veces, incluso después de restaurar IndexedDB o reanudar.
 - **Criterios adicionales:** simular token/stack repetido con totalAnalyzed creciente; repetir el mismo fileId en lotes distintos; reanudar después de persistir; verificar que no se produzcan resultados duplicados ni avance ficticio.
-- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-030.
+- **Estado:** COMPLETADA — 2026-11-13; fingerprint basado en posición real y versión, contadores originales validados en replay, deduplicación global de IDs por página y frontend, y restauración local deduplicada. Evidencia: AdminReplacedImagesIntegrity 38/38 PASS; GitHub Actions 43504109237 SUCCESS.
 
 ### AUG-031 — Persistencia incremental e aislamiento de auditorías concurrentes en IndexedDB
 - **Origen:** H-AUD-029-003 y H-AUD-029-008. **Prioridad:** Alta.

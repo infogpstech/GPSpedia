@@ -1497,3 +1497,23 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
 Validación Beta pendiente: permisos reales, LockService, cambios manuales concurrentes en Drive/Spreadsheet, fallos de flush/red y comportamiento visual del botón.
 Siguiente tarea: AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL.
 ================================================================================
+
+================================================================================
+AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- ADMIN_SERVICE_VERSION actualizado a 2.6.1; cursor versionado. La firma representa stack, auditId y versión, excluye contadores; el replay valida los contadores originales de la petición y rechaza posiciones repetidas con progreso ficticio.
+- Deduplicación global de archivos y carpetas entre páginas. Los IDs procesados y los resultados del inventario comparten una sola clave por página; la respuesta de cursor anterior se libera de forma best-effort después de confirmar el nuevo estado.
+- Las páginas de caché incompletas o corruptas no sobrescriben el inventario ni se aceptan como válidas.
+- Frontend deduplica por fileId durante la sesión y al restaurar IndexedDB; valida que cada lote concuerde con el total único.
+- La carpeta raíz cuenta en foldersVisited. El resumen define descubiertos, analizados, carpetas conocidas pendientes, errores y duplicados omitidos; la lista detalla explícitamente Histórica y Sin uso detectado.
+- Se muestra fecha/hora del último escaneo, rootFolderId y versión ADMIN; esos datos se guardan localmente.
+- La URL de miniatura se construye desde el ID validado; la vista previa informa si cargó en la sesión autorizada actual, sin ampliar permisos.
+- Los duplicados por Drive ID o id_reemplazo pasan a revisión, bloquean acciones y ofrecen enlace directo a filas para reconciliación manual no destructiva. Las filas con IDs discordantes también quedan accesibles para revisión.
+- AdminReplacedImagesIntegrity: 38/38 PASS.
+- GitHub Actions 43504109237 — SUCCESS: Node.js 22; 71 suites; 1,032 pruebas aprobadas; 0 fallos.
+- node --check ui.js, offline.js y Services/admin.js: PASS.
+- Commits de código: 8f69126b (integración principal), a923a6a5 (robustez de caché y reconciliación), 4fa3aaff (cobertura adicional).
+- No se desplegó Apps Script ni se realizaron operaciones sobre Drive/Spreadsheet productivos.
+Pendiente Beta: permisos reales de miniaturas, enlace de reconciliación, expiración de CacheService/PropertiesService y recorrido de árbol Drive representativo.
+Siguiente tarea: AUG-031 — Persistencia incremental e aislamiento de auditorías concurrentes en IndexedDB.
+================================================================================

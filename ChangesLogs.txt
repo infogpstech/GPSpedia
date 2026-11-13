@@ -1162,3 +1162,15 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - GitHub Actions 43501277945 SUCCESS: Node.js 22; 71 suites; 1,027 pruebas aprobadas; 0 fallos.
 - Sin deployments ni operaciones sobre Drive/Spreadsheet productivos.
 ================================================================================
+
+================================================================================
+2026-11-13 — AUG-030 — DEDUPLICACIÓN Y DIAGNÓSTICO COMPLETO DE AUDITORÍA DRIVE
+- Services/admin.js: versión 2.6.1; cursor versionado y fingerprint basado en posición real, sin contadores. Los replays comparan contadores originales y no permiten avance ficticio.
+- Services/admin.js: deduplicación global de archivos/carpetas entre páginas; IDs y resultados comparten una sola entrada por página; páginas incompletas no se sobrescriben; respuesta anterior se libera best-effort tras confirmar avance.
+- ui.js/offline.js: deduplicación por fileId, recuperación local deduplicada y persistencia de fecha/hora y versión del servicio.
+- index.html: métricas descubiertos/analizados/pendientes/errores/duplicados; alcance del listado explicado; miniaturas verificadas por evento de carga en sesión autorizada.
+- Historial: duplicados por Drive ID/id_reemplazo e identidades discordantes pasan a revisión con enlace a filas para reconciliación manual.
+- AdminReplacedImagesIntegrity: 38/38 PASS; GitHub Actions 43504109237 SUCCESS; Node.js 22; 71 suites; 1,032 pruebas; 0 fallos.
+- node --check ui.js, offline.js y Services/admin.js: PASS.
+- Sin deployment ni operaciones productivas.
+================================================================================
