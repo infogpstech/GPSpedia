@@ -110,7 +110,7 @@ function runScanner(sheets,includeLocations=true){
 }
 check("El escáner global incluye referencias URL de todas las hojas funcionales con imágenes",()=>{
     const names=["Cortes","pys","LogosMarca","Tutorial","Relay","Feedbacks"];
-    const sheets=names.map((name,index)=>scannerSheet(name,{display:[["https://drive.google.com/file/d/"+("fileid0000000000000"+index).slice(-20)+"/view"]]}));
+    const sheets=names.map((name,index)=>scannerSheet(name,{display:[["https://drive.google.com/file/d/"+FILE_ID.slice(0,19)+index+"/view"]]}));
     const result=runScanner(sheets);
     assert.equal(result.references.size,6);
     assert.ok(names.every(name=>[...result.references.values()].some(list=>list[0].sheet===name)));
