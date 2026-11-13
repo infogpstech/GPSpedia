@@ -273,3 +273,17 @@ AUG-007 queda COMPLETADA EN FUENTES con política aprobada de tres meses calenda
 ADENDA DE PROGRESO — SEGURIDAD Y SESIONES — AUG-008 — 2026-11-09
 AUG-008 queda COMPLETADA EN FUENTES. La validación entre pestañas usa Web Locks API, cancelación temporizada de la petición, marca SessionValidatedAt en la sesión local, válida diez segundos para el mismo userId/token y protección contra respuestas obsoletas. Los cambios de gpsepedia_session se propagan a las páginas index.html, users.html y add_cortes.html. H-AUD-062/H-AUD-063 resueltos en fuentes. La validación funcional real con dos o más pestañas y deployments aislados permanece en Beta. Siguiente secuencia: AUG-009–013 (validación de identidad y serialización USERS), respetando sus dependencias.
 ================================================================================
+
+
+## 15. Adenda de trazabilidad — AUD-T-021 / AUG-146 — 2026-11-13
+
+Se corrige la atribución histórica de commits de la ficha técnica imprimible sin reescribir los registros archivados. La fila original de AUD-T-021 permanece preservada en `Olds/Documentacion_Legacy/Plan_Auditoria_legacy_parte_001.md`, que es inmutable según la política de conservación documental.
+
+**Referencia excluida:** `6d7fbb9c962ffb5622a209fa160b79ca0020c494` — `fix: complete tasks 1.2 and 1.3 in developer panel and pys form`. Su diff afecta el registro de auditoría, ChangesLogs, Tareas y dos comentarios identificativos en `ui.js` para el panel de desarrollador y el formulario PyS. No modifica `exportVehiclePrintSheet()`, estilos, paginación ni distribución de impresión; por tanto, no es fuente de AUD-T-021.
+
+**Fuentes verificadas de la ficha imprimible:**
+- `199ee4bee2f958dda47952ca12a72f4ae825379d` — `feat: add configurable print image layouts`; modifica `ui.js` dentro de `exportVehiclePrintSheet()` e incorpora los modos de distribución y sus reglas de presentación.
+- `cbbcb0cbd00fb78a4f6438baabaa13e0ab69ef18` — `feat: paginate printable technical sheets in 2x2 image grids`; modifica `ui.js` para el tamaño de página, wrappers, cuadrículas y distribución de imágenes.
+- `04c86ce64f98b9e65d2dd0d82ed2d3ee3a2be51b` — `feat: adapt print sheet image layout and prioritize recommended cut`; modifica `ui.js` en la recopilación, prioridad y representación de los cortes de la ficha imprimible.
+
+Los tres diffs anteriores fueron inspeccionados y sus archivos modificados se limitan a `ui.js`, con cambios dentro del flujo de impresión. Esta adenda constituye la corrección activa de trazabilidad; no se altera ni se sustituye el archivo legacy original.
