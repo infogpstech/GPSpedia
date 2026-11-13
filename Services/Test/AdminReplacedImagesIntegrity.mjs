@@ -246,19 +246,28 @@ check("La lista presenta todos los estados y separa duplicados y filas inválida
         makeRow({id:"UNKNOWN",status:"procesando",fileId:"kl123456789012345678"}),
         makeRow({id:"",fileId:"lm123456789012345678"})
     ];
-    const fakeSheet={getDataRange(){return {getValues(){return rows;}};}};
+    const fakeSheet={
+        getDataRange(){return {getValues(){return rows;}};},
+        getRange(row,col,numRows,numCols){return {getA1Notation(){return `A${row}:Z${row+numRows-1}`;}};},
+        getLastColumn(){return 26;},
+        getParent(){return {getUrl(){return "https://docs.google.com/spreadsheets/d/test/edit";}};},
+        getSheetId(){return 123;}
+    };
     const schema={sheet:fakeSheet,headers:HEADERS,missingHeaders:[]};
     const references=new Map([[FILE_A,[{row:2,column:9},{row:4,column:10}]]]);
     const getSchema=()=>schema;
     const collect=()=>({references,unverifiableReferenceCount:0});
+    const extract=new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")();
+    const getDuplicateRows=new Function("extractDriveFileIds",fnSource(admin,"getDuplicateDriveImageRows_")+"\nreturn getDuplicateDriveImageRows_;")(extract);
+    const getReconciliationUrl=new Function(fnSource(admin,"getReplacedImageReconciliationUrl_")+"\nreturn getReplacedImageReconciliationUrl_;")();
     const fn=new Function("getReplacedImagesReadSchema_","collectActiveDriveReferences","getReplacedImageRecordType",
         "isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","extractDriveFileIds",
+        "getDuplicateDriveImageRows_","getReplacedImageReconciliationUrl_",
         fnSource(admin,"handleGetReplacedImages")+"\nreturn handleGetReplacedImages;")
         (getSchema,collect,new Function(helperSources.getReplacedImageRecordType+"\nreturn getReplacedImageRecordType;")(),
             new Function(helperSources.isKnownReplacedImageStatus_+"\nreturn isKnownReplacedImageStatus_;")(),
-            new Function("extractDriveFileIds",helperSources.getReplacedImageRecordIdentity_+"\nreturn getReplacedImageRecordIdentity_;")
-                (new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")()),
-            new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")());
+            new Function("extractDriveFileIds",helperSources.getReplacedImageRecordIdentity_+"\nreturn getReplacedImageRecordIdentity_;")(extract),
+            extract,getDuplicateRows,getReconciliationUrl);
     const result=fn({},()=>{});
     assert.equal(result.schemaStatus,"ready");
     assert.equal(result.referenceCheckStatus,"verified");
@@ -267,6 +276,7 @@ check("La lista presenta todos los estados y separa duplicados y filas inválida
     assert.equal(result.data.find(item=>item.id_reemplazo==="HIST").active_reference_count,2);
     assert.equal(result.review.length,5);
     assert.ok(result.review.every(item=>item.reason));
+    assert.ok(result.review.find(item=>item.id_reemplazo==="DUP").reconciliationUrl.includes("gid=123"));
 });
 
 function buildRecover({status="historica",duplicate=false,trashed=false,mime="image/jpeg",failStatus=false,failRollback=false,conflicts=[]}={}) {
@@ -529,6 +539,8 @@ check("La deduplicación global del servidor conserva IDs únicos entre páginas
     assert.deepEqual(h.loadDriveAuditSeenIds_(AUDIT_ID,2),{
         fileIds:[FILE_A,FILE_B].sort(),folderIds:[FILE_A,FILE_B].sort()
     });
+    assert.equal(h.getDriveAuditSeenPageCacheKey_(AUDIT_ID,0),h.getDriveAuditPageResultCacheKey_(AUDIT_ID,0));
+    assert.equal(h.cache.size,2);
     assert.throws(()=>h.loadDriveAuditSeenIds_(AUDIT_ID,3),/Falta una página/);
 });
 check("Los duplicados de Drive en Spreadsheet se separan y ofrecen enlace de reconciliación manual",()=>{
@@ -562,6 +574,8 @@ check("El inventario y la organización usan la misma auditoría y operación ve
     assert.ok(audit.includes("totalDiscovered"));
     assert.ok(audit.includes("duplicateFolderCount"));
     assert.ok(audit.includes("foldersVisited = 1"));
+    assert.ok(audit.includes("previousResponseCacheKey"));
+    assert.ok(audit.includes("getScriptCache().remove(previousResponseCacheKey)"));
     assert.ok(save.includes("validateCompletedDriveAudit_"));
     assert.ok(save.includes("ultima_operacion_inventario_id"));
     assert.ok(save.includes("resultado_inventario"));
