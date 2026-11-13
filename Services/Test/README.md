@@ -1377,3 +1377,14 @@ node --experimental-default-type=module Services/Test/ActivityDashboardStoredXss
 ```
 
 ActivityLogsBoundedRead.js prueba con 10,000 registros de actividad y 500 eventos Inbox que cada fuente lee como máximo sus 100 filas finales, combina ambas fuentes en orden cronológico descendente estable, devuelve como máximo 100 elementos y no utiliza getDataRange. También cubre hojas vacías y el contrato de campos del dashboard. InboxAuditTrail y ActivityDashboardStoredXss cubren regresión del ledger y renderizado seguro. Pruebas aisladas sin Apps Script, Spreadsheet, endpoints ni deployments.
+
+
+## AUG-121 — Allowlist de tipos al responder Inbox
+
+Ejecutar la regresión aislada:
+
+```bash
+node --experimental-default-type=module Services/Test/InboxAuditTrail.js
+```
+
+La suite verifica que problem_report y contact_form conservan la respuesta y el registro de auditoría; video_approval, tipos arbitrarios y variantes no exactas se rechazan con error explícito antes de cualquier escritura. También comprueba que el rechazo no modifica respuestas ni crea eventos y mantiene las pruebas del ledger de AUG-119. No accede a Apps Script, Spreadsheet, endpoints ni deployments reales.

@@ -359,3 +359,25 @@ Beta pendiente: medir rendimiento en hojas aisladas de gran volumen y verificar 
 Archivos: Services/feedback.js, Services/Test/ActivityLogsBoundedRead.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt, checkpoint.md.
 Siguiente tarea: AUG-121 — Rechazar itemType no soportados al responder Inbox. No iniciar en esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-121 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: 39dd37df00d57addcfffd81f678f1529e4752d70.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- handleReplyToFeedback admite exclusivamente los itemType exactos problem_report y contact_form.
+- video_approval y cualquier valor arbitrario/case-variant generan error explícito; no se consulta hoja, no se escribe InboxAuditLog ni se modifica respuesta.
+- El flujo video_approval de aprobación/rechazo permanece separado y sin cambios.
+Validación local:
+- Services/Test/InboxAuditTrail.js: 15/15 PASS; incluye regresión de ledger, ambos tipos admitidos, video_approval, tipo arbitrario, variante con mayúsculas y ausencia de mutaciones.
+- Parsing sintáctico de Services/feedback.js: PASS.
+- Regresiones adicionales: ActivityLogsBoundedRead.js 7/7 PASS; InboxStoredXss.js 30/30 PASS.
+- No se ejecutaron Apps Script, Spreadsheet, endpoints, deployments ni datos productivos.
+
+Beta pendiente: FEEDBACK/Spreadsheet aislados para probar respuestas válidas y rechazos manipulados; comprobar que video_approval solo usa aprobar/rechazar y que los rechazos no generan escrituras. No desplegar a producción.
+Archivos: Services/feedback.js, Services/Test/InboxAuditTrail.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: continuar con la siguiente entrada pendiente del backlog después de AUG-121; no iniciar otra tarea dentro de esta sesión.
+================================================================================

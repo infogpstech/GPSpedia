@@ -544,3 +544,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/ActivityLogsBoundedRead.js: 7 escenarios con historial sintético de 10,000 registros ordinarios y 500 eventos Inbox.
 - README de pruebas, backlog, lista Beta y checkpoint actualizados.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-121 — ALLOWLIST DE TIPOS AL RESPONDER INBOX
+- Services/feedback.js: handleReplyToFeedback acepta exclusivamente problem_report y contact_form; elimina la respuesta success ficticia para tipos desconocidos y devuelve error explícito antes de consultar hojas o registrar auditoría.
+- video_approval permanece en su flujo específico de aprobación/rechazo.
+- Services/Test/InboxAuditTrail.js: cuatro escenarios adicionales para video_approval, tipo arbitrario, variante no exacta y ausencia de mutaciones/auditoría ante rechazo.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md actualizados.
+================================================================================

@@ -185,10 +185,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-121 — Rechazar itemType no soportados al responder Inbox
 - Origen: H-AUD-018-009. Prioridad: Baja.
-- Evidencia: Services/feedback.js:1226–1248 procesa dos tipos y devuelve success fuera de las ramas.
-- Problema: un tipo inválido recibe éxito aunque no se haya actualizado ningún registro.
-- Criterios: allowlist estricta; error explícito; pruebas para problem_report, contact_form, video_approval y tipo arbitrario.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Implementación: handleReplyToFeedback aplica una allowlist exacta de problem_report y contact_form; los demás valores, incluido video_approval, producen un error explícito antes de consultar hojas o escribir auditoría.
+- Compatibilidad: video_approval conserva su flujo independiente de aprobación/rechazo; no se ofrece como respuesta textual en la interfaz.
+- Validación local: InboxAuditTrail.js 15/15 PASS; incluye ambos tipos admitidos, video_approval, tipo arbitrario, variante con mayúsculas, ausencia de mutación/auditoría ante rechazo y regresión del ledger.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Beta pendiente: probar respuestas y rechazos con FEEDBACK/Spreadsheet aislados; verificar que video_approval siga usando únicamente aprobar/rechazar y que tipos manipulados no escriban ni en la hoja operativa ni en InboxAuditLog.
 
 ## Hallazgos derivados de AUD-T-019 — 2026-11-08
 

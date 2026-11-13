@@ -1702,3 +1702,36 @@ PRUEBAS EN ENTORNO AISLADO:
 
 No desplegar ni modificar hojas productivas.
 ================================================================================
+
+
+================================================================================
+AUG-121 — VALIDACIÓN BETA DE TIPOS AL RESPONDER INBOX — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN FEEDBACK Y SPREADSHEET AISLADOS:
+1. Responder un registro problem_report y uno contact_form con sesiones autorizadas; comprobar que se actualizan respuesta y nombre del respondedor y se registra un único evento reply.
+2. Enviar itemType video_approval y un tipo arbitrario mediante solicitud directa con sesión de prueba válida. Ambos deben devolver status error y no modificar hojas ni agregar eventos a InboxAuditLog.
+3. Probar variantes de mayúsculas, espacios internos y valores vacíos; solo los dos identificadores exactos tras el recorte exterior permitido se aceptan.
+4. Abrir una solicitud video_approval y comprobar que sus controles siguen siendo aprobar/rechazar; no debe aparecer el flujo de respuesta textual.
+5. Verificar que errores no autorizados y tipos no admitidos no producen una respuesta exitosa ficticia ni actividad de auditoría.
+
+No usar hojas/endpoints productivos ni desplegar cambios durante esta validación.
+================================================================================

@@ -1656,10 +1656,11 @@ function handleReplyToFeedback(payload) {
     const itemId=String(source.itemId||"").trim(),itemType=String(source.itemType||"").trim();
     const replyText=source.replyText,responderName=String(source.responderName||"").trim();
     if(!itemId||!itemType||!replyText||!responderName)throw new Error("Datos insuficientes para enviar la respuesta.");
+    const supportedItemTypes = new Set(["problem_report", "contact_form"]);
+    if (!supportedItemTypes.has(itemType)) throw new Error("Tipo de mensaje no compatible para enviar una respuesta.");
     let sheet,idColumn,replyColumn,responderColumn;
     if(itemType==="problem_report"){sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);idColumn=COLS_FEEDBACKS.ID;replyColumn=COLS_FEEDBACKS.Respuesta;responderColumn=COLS_FEEDBACKS.Responde;}
-    else if(itemType==="contact_form"){sheet=getSafeSheet(SHEET_NAMES.CONTACTANOS);idColumn=COLS_CONTACTANOS.Contacto_ID;replyColumn=COLS_CONTACTANOS.Respuesta_mensaje;responderColumn=COLS_CONTACTANOS.ID_usuario_responde;}
-    else return {status:"success",message:"Respuesta enviada."};
+    else {sheet=getSafeSheet(SHEET_NAMES.CONTACTANOS);idColumn=COLS_CONTACTANOS.Contacto_ID;replyColumn=COLS_CONTACTANOS.Respuesta_mensaje;responderColumn=COLS_CONTACTANOS.ID_usuario_responde;}
     if(!sheet)throw new Error("No se encontró la hoja correspondiente al mensaje.");
     const lastRow=sheet.getLastRow(),ids=lastRow>1?sheet.getRange(2,idColumn,lastRow-1,1).getValues().flat():[],matches=[];
     ids.forEach((id,index)=>{if(String(id===null||id===undefined?"":id).trim()===itemId)matches.push(index+2);});
