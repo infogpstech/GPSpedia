@@ -6685,8 +6685,8 @@ export async function openReplacedImagesModal() {
                 ? status === 'sin_uso_detectado'
                 : ['historica', 'restablecida'].includes(status));
             const canTrash = referenceSafe && (canManage || status === 'requiere_revision');
-            const canRestoreFromTrash = schemaReady && referenceCheckStatus === 'verified' && status === 'en_papelera';
-            const canPermanentlyDelete = referenceSafe && ['en_papelera', 'eliminacion_pendiente'].includes(status);
+            const canRestoreFromTrash = schemaReady && ['en_papelera', 'requiere_revision'].includes(status);
+            const canPermanentlyDelete = referenceSafe && ['en_papelera', 'eliminacion_pendiente', 'requiere_revision'].includes(status);
             const card = document.createElement('article');
             card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
 
@@ -6843,7 +6843,7 @@ export async function openReplacedImagesModal() {
             deleteButton.disabled = !canTrash;
             actions.appendChild(deleteButton);
 
-            if (status === 'en_papelera') {
+            if (status === 'en_papelera' || status === 'requiere_revision') {
                 const restoreTrashButton = createActionButton('fa-trash-arrow-up', 'Restaurar de papelera', 'btn-primary', async () => {
                     if (!confirm('¿Restaurar este archivo en Google Drive? Esta acción no volverá a asociarlo automáticamente a un campo del Spreadsheet.')) return;
                     await runButtonAction(restoreTrashButton, 'Restaurando...', async () => {
@@ -6859,7 +6859,7 @@ export async function openReplacedImagesModal() {
                 actions.appendChild(restoreTrashButton);
             }
 
-            if (status === 'en_papelera' || status === 'eliminacion_pendiente') {
+            if (status === 'en_papelera' || status === 'eliminacion_pendiente' || status === 'requiere_revision') {
                 const permanentDeleteButton = createActionButton('fa-trash-can', status === 'eliminacion_pendiente' ? 'Verificar eliminación' : 'Eliminar definitivamente', 'btn-danger', async () => {
                     const warning = status === 'eliminacion_pendiente'
                         ? '¿Verificar y finalizar la eliminación definitiva de este archivo?'
