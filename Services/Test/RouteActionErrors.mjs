@@ -97,6 +97,7 @@ await check("Las rutas individual y por lotes usan status estructurado y no fuer
     assert.match(runSource,/Código HTTP:\n\$\{errorInfo\.httpCode\}/);
     assert.doesNotMatch(runSource,/Código HTTP:\n500/);
     assert.doesNotMatch(runSource,/error\.message\.includes\('500'\)\s*\?/);
+    assert.match(runSource,/errorInfo\.kind === "invalid_response"/);
     assert.match(runSource,/errorInfo\.kind === "application"/);
 });
 console.log("RouteActionErrors: "+passed+"/"+passed+" PASS");

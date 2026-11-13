@@ -5438,9 +5438,11 @@ ${elapsedSec}s
                     ? "No se recibió una respuesta HTTP. Verifica el estado del proceso antes de reintentar."
                     : errorInfo.kind === "http"
                         ? "El servidor respondió con un error HTTP. Verifica el estado del proceso antes de reintentar."
-                        : errorInfo.kind === "application"
-                            ? "El servidor rechazó la operación. Corrige la causa antes de reintentar."
-                            : "No se pudo clasificar el error; no hay un status HTTP verificado. Verifica el estado del proceso antes de reintentar.";
+                        : errorInfo.kind === "invalid_response"
+                            ? "El servidor respondió, pero el cuerpo no pudo validarse. Verifica el estado del proceso antes de reintentar."
+                            : errorInfo.kind === "application"
+                                ? "El servidor rechazó la operación. Corrige la causa antes de reintentar."
+                                : "No se pudo clasificar el error; no hay un status HTTP verificado. Verifica el estado del proceso antes de reintentar.";
                 log(`[INTERRUPCIÓN] ${recoveryMessage}`, true, false);
                 finished = true;
             }
