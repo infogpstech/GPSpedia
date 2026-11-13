@@ -1826,5 +1826,47 @@ Después de sincronizar:
 6. Repetir cerca del TTL; una página temporal ausente debe detener la auditoría en lugar de aceptar resultados parciales.
 7. No usar Drive, Spreadsheet ni deployment productivos.
 
-Siguiente tarea: AUG-031 — Persistencia incremental e aislamiento de auditorías concurrentes en IndexedDB.
+Siguiente tarea: AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración.
+================================================================================
+
+================================================================================
+## Checkpoint de continuidad — AUG-031 (2026-11-13)
+
+Repositorio: GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de código/pruebas: 1b3e326d0ab5deffe6cc2717368355a4aa3f0bfa
+Último commit documental previo a este checkpoint: 0be00a47b12dbf225176d5d17caa8463c196a54c
+
+Estado: AUG-031 implementada; validación CI/Node CLI pendiente de confirmación externa.
+
+Cambios principales:
+- offline.js separa metadatos/cursor, páginas de resultados, confirmaciones de inventario y puntero latest mediante claves por propietario y auditId.
+- Cada lote nuevo y sus metadatos se guardan en una transacción IndexedDB. La revisión CAS impide que dos pestañas partan de una misma revisión y sobrescriban progreso sin aviso.
+- La firma del contenido se verifica al guardar, reintentar y restaurar. Una página ausente o alterada invalida la reanudación.
+- La restauración reconstruye y deduplica los archivos desde páginas. La migración diferida del estado legado DB_VERSION 4 elimina el origen solo después de confirmar la transacción.
+- El puntero de auditoría considera createdAt, no el orden en que llegan respuestas; continuar una auditoría anterior no desplaza otra iniciada después.
+- La limpieza es por propietario, usa un token de exclusión y recupera marcadores de limpieza interrumpida al abrir el modal.
+- ui.js persiste auditId, createdAt, revisión, índice de página y lote; el guardado de inventario se liga al auditId exacto.
+
+Archivos:
+- offline.js
+- ui.js
+- Services/Test/AdminDriveAuditIndexedDB.mjs
+- Services/Test/RunServiceTests.mjs
+- Tareas_pendientes_parte1.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+- Auditoría.txt
+
+Validación:
+- Harness dirigido ejecutando la fuente actual de offline.js: aislamiento por auditId/createdAt, reintento idempotente, rollback atómico, página faltante y firma alterada: PASS.
+- Recuperación de marcador de limpieza interrumpida: PASS.
+- Sintaxis de offline.js, ui.js, AdminDriveAuditIndexedDB.mjs y RunServiceTests.mjs: 4/4 PASS.
+- 13 casos integrados en AdminDriveAuditIndexedDB.mjs y conectados al runner.
+- No se declara Node CLI/GitHub Actions SUCCESS: el conector no expuso un resultado asociado a los commits de esta fase.
+- No deployment ni operaciones sobre Drive/Spreadsheet productivos.
+
+Siguiente tarea: AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración.
 ================================================================================
