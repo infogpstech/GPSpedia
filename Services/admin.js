@@ -8059,6 +8059,15 @@ function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) 
                         (storedLocation && storedLocation !== sourcePath ? "; ubicación observada en Drive: " + sourcePath : ""));
                     return;
                 }
+                if (storedLocation && storedLocation !== sourcePath) {
+                    const detail = "La ubicación cambió desde el último inventario. Se conserva la ubicación observada en Drive como movimiento manual: " + sourcePath;
+                    writeOrganization({ location: sourcePath, state: "movida_manual", error: "",
+                        date: String(row[column("fecha_organizacion") - 1] || ""),
+                        status: "sin_uso_detectado", inventoryResult: "confirmado", inventoryDetail: detail });
+                    manualPreservedCount++;
+                    logOutcome("admin_image_manual_location_preserved", recordId, detail);
+                    return;
+                }
 
                 if (!destination) {
                     const destinationResult = getOrCreateUnusedImagesFolder(rootFolder);
