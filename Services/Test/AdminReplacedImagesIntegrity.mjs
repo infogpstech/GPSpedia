@@ -483,7 +483,7 @@ function auditHarness() {
         return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? [text] : [];
     };
     const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds",auditHelperSource+
-        "\nreturn {cleanupExpiredDriveAuditServerStates_,getDriveAuditServerStateKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
+        "\nreturn {cleanupExpiredDriveAuditServerStates_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
             PropertiesService,CacheService,Utilities,extractDriveFileIds);
     return { ...api, properties, cache };
 }

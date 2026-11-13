@@ -34,5 +34,10 @@ jobs:
           test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
           test -z "$(git status --porcelain)"
           git rev-parse HEAD
+      - name: Check syntax of modified JavaScript modules
+        run: |
+          node --check ui.js
+          node --check offline.js
+          node --check Services/admin.js
       - name: Run isolated service regression suites
         run: node --experimental-default-type=module Services/Test/RunServiceTests.mjs
