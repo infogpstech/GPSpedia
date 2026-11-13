@@ -11,45 +11,45 @@ function payloads(source,action){
 test("call-sites FEEDBACK de asociación/edición envían userId y SessionToken",()=>{
  for(const action of ["addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem"]){
   const calls=payloads(ui,action);assert.ok(calls.length>0,"No se encontró "+action);
-  for(const body of calls)assert.match(body,/getSessionPayload_\\(\\)/,action+" omite sesión");
+  for(const body of calls)assert.match(body,/getSessionPayload_\(\)/,action+" omite sesión");
  }
 });
 test("roles de aprobación y edición no se envían como autoridad del navegador",()=>{
  for(const action of ["removeVehicleFromProblem","updatePysItem"])
-  for(const body of payloads(ui,action))assert.doesNotMatch(body,/\\buserRole\\b/);
+  for(const body of payloads(ui,action))assert.doesNotMatch(body,/\buserRole\b/);
  const approve=api.slice(api.indexOf("export async function approveVideo"),api.indexOf("export async function rejectVideo"));
  const reject=api.slice(api.indexOf("export async function rejectVideo"),api.indexOf("export async function getRichTextMode"));
- assert.doesNotMatch(approve,/routeAction\\("approveVideo", \\{[^}]*userRole/);
- assert.doesNotMatch(reject,/routeAction\\("rejectVideo", \\{[^}]*userRole/);
+ assert.doesNotMatch(approve,/routeAction\("approveVideo", \{[^}]*userRole/);
+ assert.doesNotMatch(reject,/routeAction\("rejectVideo", \{[^}]*userRole/);
 });
 test("YouTube usa ID/SessionToken canónicos y valida sesión antes de subir",()=>{
- assert.match(upload,/userSnapshot\\s*&&\\s*userSnapshot\\.ID/);
- assert.match(upload,/userSnapshot\\s*&&\\s*userSnapshot\\.SessionToken/);
- assert.doesNotMatch(upload,/currentUser\\s*&&\\s*currentUser\\.id\\b/);
+ assert.match(upload,/userSnapshot\s*&&\s*userSnapshot\.ID/);
+ assert.match(upload,/userSnapshot\s*&&\s*userSnapshot\.SessionToken/);
+ assert.doesNotMatch(upload,/currentUser\s*&&\s*currentUser\.id\b/);
  const validate=upload.indexOf('routeAction("validateSession", { userId, sessionToken })');
  const init=upload.indexOf('routeAction("initYouTubeUpload"'), submit=upload.indexOf('routeAction("submitVideoForApproval"');
  assert.ok(validate>=0&&init>validate&&submit>init);
 });
 test("opVideoId y videoId real permanecen separados",()=>{
- assert.match(upload,/let opVideoId = operationContext\\.opVideoId/);
- assert.match(upload,/opVideoId,\\s*title: uploadRecord\\.title/);
+ assert.match(upload,/let opVideoId = operationContext\.opVideoId/);
+ assert.match(upload,/opVideoId,\s*title: uploadRecord\.title/);
  assert.match(upload,/videoId: finalVideoId, videoUrl/);
- assert.match(upload,/uploadRecord\\.videoId = finalVideoId/);
+ assert.match(upload,/uploadRecord\.videoId = finalVideoId/);
 });
 test("FEEDBACK autentica init, recuperación y envío con matriz servidor",()=>{
  const map=feedback.slice(feedback.indexOf("const FEEDBACK_ACTION_PERMISSIONS"),feedback.indexOf("const FEEDBACK_PUBLIC_ACTIONS"));
  for(const action of ["initYouTubeUpload","getVideoApprovalByOperation","submitVideoForApproval"])assert.match(map,new RegExp(action+": null"));
- assert.match(feedback,/const actor = assertFeedbackSession\\(source, FEEDBACK_ACTION_PERMISSIONS\\[action\\]\\)/);
- assert.match(feedback,/userRole: actor\\.role/);
+ assert.match(feedback,/const actor = assertFeedbackSession\(source, FEEDBACK_ACTION_PERMISSIONS\[action\]\)/);
+ assert.match(feedback,/userRole: actor\.role/);
 });
 test("submit comparte ScriptLock con approve/reject",()=>{
  const start=feedback.indexOf("function handleSubmitVideoForApproval(payload)");
- const end=feedback.indexOf("\\nfunction ",start+20);
+ const end=feedback.indexOf("\nfunction ",start+20);
  assert.match(feedback.slice(start,end),/withVideoApprovalMutationLock_/);
 });
 test("Feedbacks confirma aprobación antes de publicar el destino",()=>{
  const start=feedback.indexOf("function handleApproveVideoUnlocked_(payload)");
- const end=feedback.indexOf("\\n\\n/**\\n * Rechaza",start);
+ const end=feedback.indexOf("\n\n/**\n * Rechaza",start);
  const body=feedback.slice(start,end);
  const write=body.indexOf('JSON.stringify(videoData), "approved"');
  const publish=body.indexOf("publishApprovedVideo_(savedPayload)");
@@ -57,7 +57,7 @@ test("Feedbacks confirma aprobación antes de publicar el destino",()=>{
 });
 test("openAddVideoModal no ofrece enlace manual ni campos arbitrarios",()=>{
  const start=ui.indexOf("export function openAddVideoModal(item)");
- const end=ui.indexOf("\\n/* TAREA",start);
+ const end=ui.indexOf("\n/* TAREA",start);
  const body=ui.slice(start,end);
  assert.ok(body.includes("openYouTubeUploadModal"));
  assert.doesNotMatch(body,/fieldName|fieldValue|addSupplementaryInfo/);

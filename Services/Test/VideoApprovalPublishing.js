@@ -146,7 +146,7 @@ function runVideoApprovalPublishingTests() {
             handleApproveVideo(actor_("vid-1"));
             e.pys.data[1][7]="https://www.youtube.com/watch?v=zzzzzzzzzzz";
             const approvedRow=JSON.stringify(e.feedback.data[1]);
-            expect_(()=>handleApproveVideo(actor_("vid-1")),"destino no conserva");
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"otro vídeo");
             assert_(JSON.stringify(e.feedback.data[1])===approvedRow,"No debía alterar el estado aprobado inconsistente.");
         }));
         run_("rechazo retira el enlace pendiente exacto de Corte",()=>withEnv_("corte",{currentUrl:videoUrl},e=>{
