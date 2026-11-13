@@ -41,6 +41,16 @@ runGroup('31','WRITE',()=>{
  const write=read('Services/write.js'),admin=read('Services/admin.js');
  recordResult('WRITE payload/límites/integridad',loadFunction('Services/Test/CutPayloadValidation.js','runCutPayloadValidationTests')(write));
  recordResult('WRITE/ADMIN VIN',loadFunction('Services/Test/VinAuthoritativeValidation.js','runVinAuthoritativeValidationTests')({write,admin,ui:read('ui.js'),addCuts:read('add_cortes.html')}));
+ recordResult('WRITE autorización de información suplementaria/AUG-122',loadFunction('Services/Test/AddSupplementaryInfoIntegrity.js','runAddSupplementaryInfoIntegrityTests')({
+  write,admin,ui:read('ui.js'),coordinator:read('Services/Coordinator.js')
+ }));
+ recordResult('WRITE checkOperation autenticado/respuesta mínima/AUG-054',loadFunction('Services/Test/CheckOperationSecurity.js','runCheckOperationSecurityTests')({
+  write,frontend:read('add_cortes.html')
+ }));
+ recordResult('WRITE autorización de asignación de IDs y consumidores/AUG-039',loadFunction('Services/Test/WriteAuthorizationContracts.js','runWriteAuthorizationContracts')({
+  write,admin,ui:read('ui.js'),addCuts:read('add_cortes.html')
+ }));
+
 });
 runGroup('32','ADMIN',()=>{
  const a=read('Services/admin.js');
