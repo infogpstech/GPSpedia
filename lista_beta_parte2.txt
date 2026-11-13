@@ -1318,3 +1318,34 @@ Casos:
 
 Pruebas locales de referencia: AddSupplementaryInfoIntegrity 53/53; CheckOperationSecurity 12/12; WriteAuthorizationContracts 10/10; WriteAuthorizationMinimization 13/13. Las pruebas reales anteriores son exclusivamente Beta.
 ================================================================================
+
+
+================================================================================
+AUG-042 — INVALIDACIÓN DE SESIÓN, ROL Y ESTADO PRIVILEGIADO DEL CLIENTE
+Antes de cualquier prueba, confirmar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+
+Entorno: navegador de prueba, dos cuentas no productivas (Desarrollador y Técnico/Supervisor/Jefe), deployments AUTH/FEEDBACK/ADMIN de prueba, IndexedDB aislada. No utilizar datos ni endpoints productivos.
+
+Matriz:
+1. Logout con cada modal privilegiado abierto (DevTools, historial de imágenes, Inbox, Dashboard y auditoría Drive): confirmar cierre, borrado de detalles/listas/consola, listeners y caches; comprobar que window.state.currentUser queda null y window.ui no conserva token.
+2. Cuenta A cierra sesión y cuenta B inicia inmediatamente antes de que termine la respuesta logout de A; confirmar que then/catch obsoletos no muestran notificaciones ni mutan la sesión B.
+3. Developer→Técnico y Supervisor→Jefe en la misma instancia; comprobar revocación del servidor, limpieza total y que no reaparecen controles. Repetir ascenso de Técnico→Supervisor y confirmar que los privilegios aparecen solo tras reautenticación válida.
+4. Cambiar Privilegios de A desde otra sesión/dispositivo mientras su pestaña permanece abierta. Recuperar foco, cambiar visibilidad, reconectar y esperar el intervalo; confirmar logout token-aware y bloqueo de nuevas aperturas cuando la red no permite verificar.
+5. Iniciar sesión consecutivamente con dos cuentas en el mismo navegador; verificar aislamiento de Inbox, Dashboard, historial, DevTools, auditoría Drive, IndexedDB y respuestas asíncronas.
+6. Invocar directamente desde consola las funciones globales exportadas para abrir/renderizar vistas privilegiadas con rol Técnico o sesión revocada. Confirmar rechazo sin consultar ni mutar datos. Repetir con sesión vigente y roles autorizados.
+7. Inbox: Desarrollador/Gefe/Supervisor pueden aprobar/rechazar; Jefe puede consultar Inbox pero no aprobar/rechazar ni abrir Dashboard; Técnico no abre Inbox. Verificar autorización backend aunque se fuerce la UI.
+8. Simular demora/fallo de red durante validateActiveSession, updateUser y logout; comprobar estado pendiente, limpieza local fail-closed y que ninguna operación posterior usa credenciales de una cuenta nueva.
+9. IndexedDB: estado DriveAuditState de A no debe aparecer en B; misma cuenta conserva estado tras recarga normal; logout/cambio de rol limpia; fallos de persistencia no recuperan datos de otra cuenta.
+10. Revisar logs del navegador y AUTH/FEEDBACK: no exponer tokens, no dejar sesiones huérfanas ni duplicar listeners/intervalos tras múltiples login/logout.
+
+Criterio de cierre: matriz repetida al menos dos veces por transición; capturas/logs de estado anterior/posterior; evidencia de revocación ActiveSessions; cero controles o datos privilegiados residuales. No ejecutar pruebas con cuentas reales de producción.
+================================================================================
