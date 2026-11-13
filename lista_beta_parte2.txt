@@ -1429,3 +1429,38 @@ PRUEBAS AISLADAS:
 
 Registrar navegador, dispositivo, lector de pantalla y versión del Service Worker. No aprobar ni modificar contenido jurídico; AUG-046 conserva su proceso de aprobación corporativa. No usar cuentas reales ni desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-151 — VALIDACIÓN BETA DEL ARRANQUE, CACHÉ Y RECUPERACIÓN DEL CATÁLOGO
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS:
+1. Con API y Spreadsheet de pruebas, devolver un snapshot completo no vacío. Confirmar estado ready, categorías ordenadas, persistencia de caché solo después del procesamiento y carga compartida de PyS.
+2. Devolver un snapshot completo con las cuatro colecciones vacías. Debe quedar ready y no presentar error; repetir con red caída y caché vacía válida: debe quedar stale, no error terminal.
+3. Inyectar payload parcial (colección ausente), colecciones no-array, raíz array, null/primitive/array en cada colección y IDs de Cortes duplicados/vacíos. Ninguno debe guardarse ni declararse ready.
+4. Corromper IndexedDB (estructura parcial, elemento nulo, ID duplicado) y cortar la red. Debe descartarse la caché y mostrarse error terminal con estado de colecciones vacío y coherente.
+5. Simular error de normalización, error al actualizar estado y error en renderizado de sincronización silenciosa. Verificar que no se marque ready ni se guarde un snapshot que no terminó de procesarse; si existe caché válida, debe recuperarse como stale.
+6. Interrumpir la lectura de IndexedDB y hacer fallar la red; luego devolver un snapshot válido vacío y otro no vacío en el fallback. Confirmar recuperación stale.
+7. Iniciar una carga y cambiar de sesión/cancelarla antes de que responda la API. Resolver la respuesta después de la cancelación; comprobar que no modifica estado ni IndexedDB de la nueva sesión.
+8. Actualizar catálogo desde caché y red mientras hay una tarjeta/modal abierto; comprobar que un error de actualización silenciosa mantiene estado stale y no elimina la última instantánea válida.
+9. Repetir con navegador sin IndexedDB disponible, almacenamiento lleno, conexión intermitente y recarga durante la carga. Registrar estado, mensajes y contenido visible.
+
+No usar catálogos ni sesiones productivas. No ejecutar deployments. Registrar solo IDs de fixtures y resultados no sensibles.
+================================================================================

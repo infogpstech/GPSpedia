@@ -1177,3 +1177,22 @@ Beta pendiente: lectores de pantalla reales, teclado/navegadores móviles, temas
 
 Siguiente trabajo: revisar el backlog por prioridad y dependencias; no asumir que las tareas legales restantes están aprobadas por esta corrección técnica.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-151 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de implementación y pruebas: c31b12f5270a32b5fdc6c8f41342ab6af9026843.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+H-AUD-001-002 resuelto. offline.isCompleteCatalogSnapshot valida raíz, colecciones y elementos; admite snapshot completo vacío y falla de forma segura ante estructura corrupta. normalizeCatalogData/processCatalogData validan antes de procesar; processCatalogData devuelve éxito explícito o propaga excepción. loadInitialData solo marca catalogLoaded tras procesar estado, guarda caché después del procesamiento y utiliza fallback validado, incluso vacío. performSilentSync/updateFullState propagan fallos. El fallback comprueba la vigencia de la carga después de awaits; una respuesta tardía cancelada no puede modificar estado ni caché. El error terminal limpia todas las colecciones.
+
+Archivos funcionales: auth.js, offline.js, ui.js. Pruebas: Services/Test/CatalogSnapshotSync.js, CatalogRequestRetry.js, PWAStartupScenarios.js, CatalogStartupIntegrity.mjs y RunServiceTests.mjs.
+GitHub Actions run 43441395887 SUCCESS: 56 suites, 779/779 PASS; CatalogStartupIntegrity 10/10; CatalogSnapshotSync 19/19; CatalogRequestRetry 7/7; PWAStartupScenarios 10/10; Node.js --check PASS.
+
+No se modificó la lógica de deep links de AUG-048/AUG-049. Beta pendiente: API/IndexedDB reales, almacenamiento lleno, cambios de sesión durante carga, fallos DOM/flush y sincronización silenciosa en navegador real. Sin deployments ni datos productivos.
+
+Siguiente prioridad: AUG-148/AUG-149 son dependencias directas de AUG-152; revisar su estado y bloqueos antes de intentar AUG-152. Tareas anteriores con dependencias de coordinación AUTH/USERS no se consideran cerradas por este cambio.
+================================================================================

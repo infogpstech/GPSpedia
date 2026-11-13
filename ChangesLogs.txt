@@ -970,3 +970,15 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - GitHub Actions run 43439140720 SUCCESS: 53 suites, 748/748 PASS; Node.js --check PASS.
 - No se modificó el texto legal ni se desplegaron cambios.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-151 — Integridad del catálogo y recuperación de arranque
+- Validación estricta de raíz, colecciones y elementos en offline.isCompleteCatalogSnapshot; snapshots vacíos completos siguen siendo válidos.
+- normalizeCatalogData/processCatalogData rechazan entradas incompletas; processCatalogData devuelve resultado explícito y propaga errores.
+- catalogLoaded depende del procesamiento correcto; la red se valida y procesa antes de guardar caché; performSilentSync/updateFullState propagan fallos.
+- Fallback revalida caché, admite catálogo vacío, limpia estado terminal completo y evita aplicar respuestas tardías tras cancelación.
+- Se integraron al runner CatalogRequestRetry y PWAStartupScenarios; nueva suite CatalogStartupIntegrity.
+- GitHub Actions run 43441395887 SUCCESS: 56 suites, 779/779 PASS; Node.js --check PASS.
+- Sin cambios a deep links AUG-048/AUG-049, deployments ni datos productivos.
+================================================================================

@@ -1152,3 +1152,17 @@ Pruebas: Services/Test/TermsModalAccessibility.mjs 9/9 PASS; comprobación de se
 
 Límite: no se certifica con pruebas estáticas la interacción de lector de pantalla, el comportamiento de foco del navegador móvil ni la instalación offline real; esos escenarios quedan en lista_beta_parte2.txt. No se modificó el contenido jurídico ni se ejecutó despliegue.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — AUG-151 — H-AUD-001-002 — 2026-11-13
+Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTEGRACIÓN DIFERIDA A BETA.
+
+- offline.isCompleteCatalogSnapshot ahora valida que la raíz sea un objeto, que Cortes/Tutoriales/Relay/Logos sean arrays y que todos sus elementos sean registros no nulos (no primitivos ni arrays). Las excepciones de getters/proxies durante la validación se convierten en resultado inválido. Cortes conserva validación de IDs únicos y no vacíos.
+- normalizeCatalogData rechaza snapshots incompletos antes de mutar datos. processCatalogData ya no absorbe errores: valida, actualiza estado y devuelve true únicamente al terminar.
+- loadInitialData marca catalogLoaded después del procesamiento; valida el payload de red antes de normalizar, procesa antes de guardar caché, y requiere confirmación de performSilentSync para declarar ready. Los errores de performSilentSync/updateFullState se propagan al flujo de recuperación.
+- La caché válida vacía se acepta como fuente; el fallback valida de nuevo y comprueba que la carga siga vigente después del await. Una carga cancelada no puede aplicar ni guardar una respuesta tardía. Sin fuente válida se declara error terminal y se limpia Cortes, Tutoriales, Relay, Logos y categorías.
+- Pruebas automatizadas: CatalogStartupIntegrity 10/10; CatalogSnapshotSync 19/19; CatalogRequestRetry 7/7; PWAStartupScenarios 10/10. GitHub Actions run 43441395887 SUCCESS: 56 suites, 779/779 PASS; Node.js --check PASS.
+
+No se cambió la lógica de deep links de AUG-048/AUG-049. No se ejecutaron deployments ni se consultaron/escribieron datos productivos. La validación de IndexedDB y API reales se conserva para Beta.
+================================================================================

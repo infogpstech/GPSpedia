@@ -1664,3 +1664,10 @@ Resultado de referencia: GitHub Actions run `43437684317`, Node.js `22.23.4`, 52
 `Services/Test/TermsModalAccessibility.mjs` valida los atributos ARIA del aviso y del acuerdo, la ausencia de cierre en el aviso obligatorio, el botón semántico del acuerdo, la política de Escape, el foco inicial/contención/restauración, las rutas login/footer/aviso, el cierre de la capa superior en `overlayHistory` y la ausencia de estados residuales `modalOpen`. También comprueba que `Logo_TemaOscuro.png` y `tracklink_logo.png` existen y están en `CORE_ASSETS` del Service Worker v20.
 
 Resultado de referencia: GitHub Actions run `43439140720`, 53 suites, 748/748 PASS; la suite legal es 9/9 PASS. La validación con lector de pantalla, navegadores móviles y caché offline instalada se reserva para Beta.
+
+
+### AUG-151 — Integridad de catálogo durante el arranque
+
+`CatalogStartupIntegrity.mjs` ejecuta el flujo real extraído de `auth.js` con caché/red/estado controlados: respuesta válida y vacía, respuesta parcial, elementos nulos, caché corrupta, error de normalización, error al actualizar estado, recuperación desde caché vacía y cancelación con respuesta tardía. `CatalogSnapshotSync.js` valida estructura y elementos de todas las colecciones; `CatalogRequestRetry.js` y `PWAStartupScenarios.js` también se ejecutan desde el runner.
+
+Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PASS; CatalogStartupIntegrity 10/10, CatalogSnapshotSync 19/19, CatalogRequestRetry 7/7 y PWAStartupScenarios 10/10. Node.js `--check` PASS.

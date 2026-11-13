@@ -462,7 +462,10 @@ ADENDA AUD-T-001 — REVALIDACIÓN DE TAREAS EXISTENTES
   5. Si falla la red, intentar una caché que también haya pasado validación; si ninguna fuente es válida, mostrar error terminal y estado coherente.
   6. Probar respuesta válida, vacía, parcial, malformada, elementos nulos, error durante normalización/procesamiento, caché corrupta y recuperación posterior.
 - **Relación:** AUD-T-001, AUD-T-009/AUG-048 y AUD-T-037; coordinar con AUG-049 para deep links sin duplicar su lógica.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13).
+- **Resolución:** offline.isCompleteCatalogSnapshot valida la raíz y las cuatro colecciones, rechaza elementos nulos/primitivos/arrays y falla de forma segura ante propiedades que lanzan. normalizeCatalogData y processCatalogData validan antes de procesar; processCatalogData devuelve true o propaga el error.
+- **Arranque:** catalogLoaded solo se activa tras actualizar el estado; el payload de red se procesa antes de guardarse en caché; performSilentSync/updateFullState propagan fallos y confirman éxito explícito. El fallback revalida la caché, admite snapshots completos vacíos y comprueba cancelación/sesión antes de aplicar resultados tardíos. Si no hay fuente válida, el estado terminal limpia todas las colecciones.
+- **Pruebas:** CatalogStartupIntegrity 10/10; CatalogSnapshotSync 19/19; CatalogRequestRetry 7/7; PWAStartupScenarios 10/10. GitHub Actions run 43441395887 SUCCESS: 56 suites, 779/779 PASS; Node.js --check PASS.
 
 - 2026-11-08 — AUD-T-001: AUG-151 nueva; adendas a AUG-008/AUG-049; H-AUD-015-002 se mantiene en AUG-099. Inventario: 150 IDs únicos dentro de AUG-001 a AUG-151; AUG-015 continúa ausente y no se infiere ni renumera.
 
