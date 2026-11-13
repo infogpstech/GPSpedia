@@ -6894,7 +6894,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
 }
 function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {
     try {
-        if (!developerContext || !developerContext.userId) return;
+        if (!developerContext || !developerContext.userId) return false;
         const sheet = getSpreadsheet().getSheetByName("ActividadUsuario");
         if (!sheet) throw new Error("No se encontró la hoja ActividadUsuario.");
 
@@ -7763,7 +7763,8 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
                 setField("url_visualizacion", "https://lh3.googleusercontent.com/d/" + fileId);
                 setField("ubicacion_actual", folderPath || "Cortes");
                 setField("ultima_auditoria_id", auditId);
-                setField("estado_organizacion", String(row[column("estado_organizacion") - 1] || "pendiente"));
+                const previousOrganizationState = String(row[column("estado_organizacion") - 1] || "");
+                setField("estado_organizacion", !previousOrganizationState || previousOrganizationState === "no_confirmada" ? "pendiente" : previousOrganizationState);
                 setField("error_organizacion", "");
                 setField("ultima_operacion_inventario_id", inventoryOperationId);
                 setField("resultado_inventario", "confirmado");
@@ -7825,7 +7826,12 @@ function handleSaveUnusedImagesInventory(payload, logMessage, developerContext) 
         const summary = {
             savedCount: confirmedCount, insertedCount: insertedCount, updatedCount: updatedCount,
             noLongerConfirmedCount: staleCount, blockedCount: blockedCount, errorCount: errorCount,
-            loggingErrorCount: loggingErrorCount, partial: blockedCount > 0 || errorCount > 0 || loggingErrorCount > 0
+            loggingErrorCount: loggingErrorCount,
+            staleUpdateSkipped: historyIntegrityUncertain || auditState.unverifiableReferenceCount > 0 ||
+                !!referenceScanError || !!(references && references.unverifiableReferenceCount > 0),
+            partial: blockedCount > 0 || errorCount > 0 || loggingErrorCount > 0 ||
+                historyIntegrityUncertain || auditState.unverifiableReferenceCount > 0 ||
+                !!referenceScanError || !!(references && references.unverifiableReferenceCount > 0)
         };
         auditState.inventoryStatus = summary.partial ? "partial" : "complete";
         auditState.inventorySummary = summary;
@@ -8109,6 +8115,12 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
             throw new Error("El cursor está incompleto o sus contadores no coinciden con el estado del servidor.");
         }
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
+        cursor.stack.forEach(item => {
+            if (!item || !item.folderId ||
+                !isFolderInsideCortes(DriveApp.getFolderById(item.folderId), DRIVE_FOLDER_ID)) {
+                throw new Error("El cursor contiene una carpeta fuera del árbol autorizado «Cortes».");
+            }
+        });
         stack = cursor.stack;
         totalAnalyzed = Number(state.totalAnalyzed) || 0;
         foldersVisited = Number(state.foldersVisited) || 0;
@@ -8249,7 +8261,9 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         state.expectedUnusedDigest = hashDriveAuditFileIds_(allUnusedIds);
         state.expectedCursorFingerprint = "";
         const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(ownerId).slice(0, 32);
-        PropertiesService.getScriptProperties().setProperty(latestKey, auditId);
+        const properties = PropertiesService.getScriptProperties();
+        properties.setProperty(latestKey, auditId);
+        if (properties.getProperty(latestKey) !== auditId) throw new Error("No se pudo verificar la referencia a la última auditoría completa.");
     } else {
         state.status = "running";
         state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor);
