@@ -458,7 +458,9 @@ const auditHelperNames = [
     "getDriveAuditSeenPageCacheKey_", "storeDriveAuditSeenPage_", "loadDriveAuditSeenIds_",
     "getDuplicateDriveImageRows_", "getReplacedImageReconciliationUrl_", "buildVerifiedDriveVisualizationUrl_",
     "storeDriveAuditPageResults_", "loadDriveAuditUnusedFileIds_", "getLatestDriveAuditIdForUser_",
-    "validateCompletedDriveAudit_"
+    "validateCompletedDriveAudit_", "getDriveAuditReferenceSnapshotConfig_", "validateAuditDriveReferenceSnapshot_",
+    "removeAuditDriveReferenceSnapshotCache_", "storeAuditDriveReferenceSnapshot", "loadAuditDriveReferenceSnapshot",
+    "refreshAuditDriveReferenceSnapshot_", "clearAuditDriveReferenceSnapshot", "clearExpiredDriveAuditCacheState_"
 ];
 const auditHelperSource = auditHelperNames.map(name => fnSource(admin, name)).join("\n");
 function auditHarness() {
@@ -469,14 +471,17 @@ function auditHarness() {
         setProperty: (key, value) => { properties.set(key, String(value)); },
         deleteProperty: key => properties.delete(key)
     }) };
+    const cacheTtl = new Map();
     const CacheService = { getScriptCache: () => ({
         get: key => cache.has(key) ? cache.get(key) : null,
-        put: (key, value) => { cache.set(key, String(value)); },
-        remove: key => cache.delete(key)
+        put: (key, value, ttl) => { cache.set(key, String(value)); if (ttl !== undefined) cacheTtl.set(key, ttl); },
+        remove: key => cache.delete(key),
+        removeAll: keys => keys.forEach(key => cache.delete(key))
     }) };
     const Utilities = {
         DigestAlgorithm: { SHA_256: "SHA-256" }, Charset: { UTF_8: "utf8" },
-        computeDigest: (_algorithm, value) => Array.from(createHash("sha256").update(String(value), "utf8").digest())
+        computeDigest: (_algorithm, value) => Array.from(createHash("sha256").update(String(value), "utf8").digest()),
+        newBlob: value => ({ getBytes: () => Array.from(Buffer.from(String(value), "utf8")) })
     };
     const extractDriveFileIds = value => {
         const text = String(value || "").trim();
@@ -491,12 +496,87 @@ function auditHarness() {
         return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? [text] : [];
     };
     const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds",auditHelperSource+
-        "\nreturn {cleanupExpiredDriveAuditServerStates_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
+        "\nreturn {cleanupExpiredDriveAuditServerStates_,clearExpiredDriveAuditCacheState_,getDriveAuditServerStateKey_,getDriveAuditPageResultCacheKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_,getDriveAuditReferenceSnapshotConfig_,validateAuditDriveReferenceSnapshot_,removeAuditDriveReferenceSnapshotCache_,storeAuditDriveReferenceSnapshot,loadAuditDriveReferenceSnapshot,refreshAuditDriveReferenceSnapshot_,clearAuditDriveReferenceSnapshot};")(
             PropertiesService,CacheService,Utilities,extractDriveFileIds);
-    return { ...api, properties, cache };
+    return { ...api, properties, cache, cacheTtl };
 }
 const AUDIT_ID = "123e4567-e89b-42d3-a456-426614174000";
 const AUDIT_OWNER = "USR-DEVELOPER-1";
+
+
+function makeReferenceSnapshot(count = 2) {
+    const ids = Array.from({ length: count }, (_, i) => "drive-file-id-" + String(i).padStart(12, "0"));
+    return { activeDriveIds: ids, historicalDriveIds: [], protectedDriveIds: [],
+        unverifiableReferenceCount: 0 };
+}
+check("El snapshot de referencias usa manifiesto versionado, MIME JSON, límites por bloque y SHA-256",()=>{
+    const h=auditHarness(), config=h.getDriveAuditReferenceSnapshotConfig_(), snapshot=makeReferenceSnapshot(2500);
+    const manifest=h.storeAuditDriveReferenceSnapshot(AUDIT_ID,snapshot);
+    assert.equal(manifest.schemaVersion,2);
+    assert.equal(manifest.mimeType,"application/json; charset=utf-8");
+    assert.equal(manifest.encoding,"utf-8");
+    assert.equal(manifest.ttlSeconds,21600);
+    assert.ok(manifest.byteLength<=config.maxLength);
+    assert.ok(manifest.chunkCount<=10);
+    assert.equal(manifest.chunkHashes.length,manifest.chunkCount);
+    assert.match(manifest.sha256,/^[a-f0-9]{64}$/);
+    for(let i=0;i<manifest.chunkCount;i++){
+        const key="gp_audit_refs_"+AUDIT_ID+"_"+i;
+        assert.ok(Buffer.byteLength(h.cache.get(key),"utf8")<=config.chunkSize);
+        assert.equal(h.cacheTtl.get(key),config.ttlSeconds);
+    }
+    assert.deepEqual(h.loadAuditDriveReferenceSnapshot(AUDIT_ID),snapshot);
+});
+check("Un snapshot que excede la capacidad se rechaza sin conservar bloques parciales",()=>{
+    const h=auditHarness(), snapshot=makeReferenceSnapshot(40000);
+    assert.throws(()=>h.storeAuditDriveReferenceSnapshot(AUDIT_ID,snapshot),/750,000/);
+    assert.equal([...h.cache.keys()].some(key=>key.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
+});
+check("Una alteración de bloque o manifiesto bloquea la reanudación y limpia el snapshot",()=>{
+    const h=auditHarness();h.storeAuditDriveReferenceSnapshot(AUDIT_ID,makeReferenceSnapshot());
+    const key="gp_audit_refs_"+AUDIT_ID+"_0";
+    h.cache.set(key,h.cache.get(key)+"x");
+    assert.throws(()=>h.loadAuditDriveReferenceSnapshot(AUDIT_ID),/firma|longitud|tamaño/);
+    assert.equal([...h.cache.keys()].some(item=>item.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
+    h.storeAuditDriveReferenceSnapshot(AUDIT_ID,makeReferenceSnapshot());
+    const manifestKey="gp_audit_refs_"+AUDIT_ID+"_manifest", manifest=JSON.parse(h.cache.get(manifestKey));
+    manifest.sha256="0".repeat(64);h.cache.set(manifestKey,JSON.stringify(manifest));
+    assert.throws(()=>h.loadAuditDriveReferenceSnapshot(AUDIT_ID),/manifiesto|firma/);
+});
+check("La renovación cercana al TTL conserva la fecha original y extiende la retención",()=>{
+    const h=auditHarness(), originalNow=Date.now;let now=1800000000000;Date.now=()=>now;
+    try{
+        const snapshot=makeReferenceSnapshot(3), first=h.storeAuditDriveReferenceSnapshot(AUDIT_ID,snapshot);
+        const createdAt=first.createdAt;
+        now+=21599000;
+        assert.deepEqual(h.loadAuditDriveReferenceSnapshot(AUDIT_ID),snapshot);
+        const refreshed=h.refreshAuditDriveReferenceSnapshot_(AUDIT_ID,snapshot);
+        assert.equal(refreshed.createdAt,createdAt);
+        assert.equal(refreshed.updatedAt,now);
+        assert.ok(refreshed.updatedAt>first.updatedAt);
+        const pageKey=h.getDriveAuditSeenPageCacheKey_(AUDIT_ID,0);
+        h.storeDriveAuditPageResults_(AUDIT_ID,0,[FILE_A]);
+        h.storeDriveAuditSeenPage_(AUDIT_ID,0,[FILE_A],[FILE_A]);
+        now+=1000;
+        h.loadDriveAuditSeenIds_(AUDIT_ID,1);
+        assert.equal(h.cacheTtl.get(pageKey),21600);
+    }finally{Date.now=originalNow;}
+});
+check("Un snapshot pausado más de seis horas expira y no devuelve contenido parcial",()=>{
+    const h=auditHarness(), originalNow=Date.now;let now=1800000000000;Date.now=()=>now;
+    try{
+        h.storeAuditDriveReferenceSnapshot(AUDIT_ID,makeReferenceSnapshot());
+        now+=21600001;
+        assert.throws(()=>h.loadAuditDriveReferenceSnapshot(AUDIT_ID),/expiró/);
+        assert.equal([...h.cache.keys()].some(key=>key.startsWith("gp_audit_refs_"+AUDIT_ID)),false);
+    }finally{Date.now=originalNow;}
+});
+check("La limpieza elimina bloques huérfanos incluso si falta el manifiesto",()=>{
+    const h=auditHarness(),prefix="gp_audit_refs_"+AUDIT_ID;
+    h.cache.set(prefix+"_0","orphan");h.cache.set(prefix+"_manifest","{");
+    h.clearAuditDriveReferenceSnapshot(AUDIT_ID);
+    assert.equal([...h.cache.keys()].some(key=>key.startsWith(prefix)),false);
+});
 
 check("La limpieza de estados expirados no conserva cursores obsoletos",()=>{
     const h=auditHarness(), key=h.getDriveAuditServerStateKey_(AUDIT_ID);
@@ -606,6 +686,8 @@ check("El inventario y la organización usan la misma auditoría y operación ve
     assert.ok(audit.includes("duplicateFolderCount"));
     assert.ok(audit.includes("foldersVisited = 1"));
     assert.ok(audit.includes("previousResponseCacheKey"));
+    assert.ok(audit.includes("refreshAuditDriveReferenceSnapshot_(auditId, referenceSnapshot)"));
+    assert.ok(audit.includes("loadDriveAuditSeenIds_(auditId, pageIndex)"));
     assert.ok(audit.includes("getScriptCache().remove(previousResponseCacheKey)"));
     const saveIndex=audit.lastIndexOf("saveDriveAuditServerState_(state)");
     const removeIndex=audit.indexOf("CacheService.getScriptCache().remove(previousResponseCacheKey)");
