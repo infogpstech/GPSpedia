@@ -6685,7 +6685,7 @@ export async function openReplacedImagesModal() {
                 ? status === 'sin_uso_detectado'
                 : ['historica', 'restablecida'].includes(status));
             const canTrash = referenceSafe && (canManage || status === 'requiere_revision');
-            const canRestoreFromTrash = referenceSafe && status === 'en_papelera';
+            const canRestoreFromTrash = schemaReady && referenceCheckStatus === 'verified' && status === 'en_papelera';
             const canPermanentlyDelete = referenceSafe && ['en_papelera', 'eliminacion_pendiente'].includes(status);
             const card = document.createElement('article');
             card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
