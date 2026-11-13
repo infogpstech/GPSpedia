@@ -18,6 +18,7 @@ function extractFunction(name) {
 }
 
 const openDb = extractFunction("openYouTubeUploadDb_");
+const watchTransaction = extractFunction("watchYouTubeUploadTransaction_");
 const findPending = extractFunction("findPendingYouTubeUploadRecord_");
 
 function createIndexedDb(records) {
@@ -25,17 +26,21 @@ function createIndexedDb(records) {
         objectStoreNames: { contains: () => true },
         close() {},
         transaction() {
-            return {
+            const tx = {
                 objectStore() {
                     return {
                         getAll() {
                             const request = { result: records };
-                            queueMicrotask(() => request.onsuccess());
+                            queueMicrotask(() => {
+                                request.onsuccess();
+                                if (typeof tx.oncomplete === "function") tx.oncomplete();
+                            });
                             return request;
                         }
                     };
                 }
             };
+            return tx;
         }
     };
     return {
@@ -48,7 +53,7 @@ function createIndexedDb(records) {
 }
 
 const lookup = new Function("window", "YOUTUBE_UPLOAD_DB_NAME", "YOUTUBE_UPLOAD_STORE_NAME",
-    openDb + "\n" + findPending + "\nreturn findPendingYouTubeUploadRecord_;"
+    openDb + "\n" + watchTransaction + "\n" + findPending + "\nreturn findPendingYouTubeUploadRecord_;
 )( { indexedDB: createIndexedDb([
     { opVideoId: "draft-1", userId: "u1", contentType: "tutorial",
       referenceId: "null", status: "paused", bytesUploaded: 12 },
