@@ -1388,3 +1388,14 @@ node --experimental-default-type=module Services/Test/InboxAuditTrail.js
 ```
 
 La suite verifica que problem_report y contact_form conservan la respuesta y el registro de auditoría; video_approval, tipos arbitrarios y variantes no exactas se rechazan con error explícito antes de cualquier escritura. También comprueba que el rechazo no modifica respuestas ni crea eventos y mantiene las pruebas del ledger de AUG-119. No accede a Apps Script, Spreadsheet, endpoints ni deployments reales.
+
+
+## AUG-122 — Autorización de addSupplementaryInfo en WRITE
+
+Ejecutar la suite aislada:
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/AddSupplementaryInfoIntegrity.js
+\`\`\`
+
+La suite valida la allowlist de roles y el helper de autenticación del servidor con hojas simuladas: token ausente, inválido/cruzado/duplicado, expirado, revocado, perfil eliminado, rol no autorizado, todos los roles permitidos e identidad derivada de Users en lugar del payload. También conserva las pruebas de planificación, sanitización, bloqueo, persistencia y rollback. No accede a Apps Script, Spreadsheet ni Drive reales.
