@@ -518,3 +518,23 @@ Validación Beta pendiente: concurrencia real entre ejecuciones independientes, 
 Archivos actualizados: Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md. Código funcional sin cambios.
 Siguiente tarea: AUG-129 — Restringir campos editables por ADMIN y proteger ID. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-129 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD previo a la implementación: e6800ee72ee2fd631f3bda6927d597aade6830ac.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- ADMIN conserva una allowlist cerrada de campos editables. ID, timestamp, contadorBusqueda, vídeo y campos desconocidos no son editables por updateVehicleField.
+- Se incorporó validación backend de tipo, longitud y dominio para categoría, encendido, tipo de corte y Relay; años enteros y coherencia anoDesde/anoHasta; sanitización de contenido enriquecido y validación de referencias de Drive.
+- La edición ordinaria obtiene ScriptLock, resuelve una única fila por ID, valida antes de escribir, verifica persistencia y restaura el valor anterior si falla la escritura/verificación.
+- La colección VIN usa la misma resolución de ID único y rechaza filas ambiguas.
+- Se añadió Services/Test/AdminModalEditIntegrity.js. Resultado del harness V8 aislado: 9/9 PASS. Parsing de Services/admin.js y de los handlers modificados: PASS.
+- No se ejecutaron Apps Script desplegados, Spreadsheet/Drive reales, endpoints ni datos productivos.
+
+Validación Beta pendiente: roles y sesiones reales, Spreadsheet ADMIN aislada, IDs duplicados, dominios/valores inválidos, fallos físicos de escritura/flush, preservación de ID/campos calculados y regresión de carga de imágenes. Secuencia registrada en lista_beta.txt.
+Archivos: Services/admin.js, Services/Test/AdminModalEditIntegrity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-130 — Hacer atómicas las mutaciones de USERS. No iniciar hasta la siguiente interacción.
+================================================================================
