@@ -1735,3 +1735,36 @@ EJECUCIÓN EN FEEDBACK Y SPREADSHEET AISLADOS:
 
 No usar hojas/endpoints productivos ni desplegar cambios durante esta validación.
 ================================================================================
+
+
+================================================================================
+AUG-122 — VALIDACIÓN BETA DE AUTORIZACIÓN DE addSupplementaryInfo — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si existe cualquier cambio local, el remoto no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN HOJAS AISLADAS:
+1. Probar una operación válida por cada rol permitido: Desarrollador, Gefe/Jefe, Supervisor, Técnico y Técnico_exterior.
+2. Probar solicitud sin userId/sessionToken, token inexistente, cruzado, duplicado, expirado y revocado; todas deben fallar antes de cualquier modificación en Cortes o Drive.
+3. Probar rol no reconocido/no autorizado, perfil duplicado, usuario eliminado y nombre de perfil vacío.
+4. Enviar campos de identidad falsificados desde cliente y confirmar que el log atribuye el actor al nombre de Users.
+5. Confirmar que el ScriptLock se libera en éxito y error, y que una sesión revocada entre validación inicial y adquisición del lock no llega a escribir.
+
+No ejecutar con Spreadsheet, Drive ni endpoints productivos; no desplegar.
+================================================================================
