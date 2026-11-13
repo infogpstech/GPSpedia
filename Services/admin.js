@@ -319,53 +319,64 @@ function collectCortesImageReferences(includeLocations = true) {
         } else groups.push({ start: item.column, width: 1, items: [item] });
     });
 
+    const rowChunkSize = 500, captureBudgetMs = 12000;
+    let rangesRead = 0, chunksRead = 0, rowsRead = 0;
     groups.forEach(group => {
-        const range = sheet.getRange(2, group.start, lastRow - 1, group.width);
-        const values = range.getDisplayValues();
-        const rawValues = range.getValues();
-        const formulas = range.getFormulas();
-        const richTextValues = range.getRichTextValues();
-        group.items.forEach(item => {
-            const c = item.column - group.start;
-            for (let r = 0; r < values.length; r++) {
-                const candidates = [String(values[r][c] || ""), String((formulas[r] && formulas[r][c]) || "")];
-                const rawValue = rawValues[r] && rawValues[r][c];
-                let hasUnverifiableDriveLink = false;
-                if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
-                    try {
-                        const contentUrl = String(rawValue.getContentUrl() || "");
-                        if (contentUrl) candidates.push(contentUrl);
-                        else hasUnverifiableDriveLink = true;
-                    } catch (imageValueError) { hasUnverifiableDriveLink = true; }
-                }
-                const richText = richTextValues[r] && richTextValues[r][c];
-                if (richText) {
-                    const wholeCellLink = richText.getLinkUrl();
-                    if (wholeCellLink) candidates.push(wholeCellLink);
-                    const runs = richText.getRuns ? richText.getRuns() : [];
-                    runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
-                }
-                const cellIds = new Set();
-                candidates.forEach(candidate => {
-                    if (!candidate) return;
-                    const ids = extractDriveFileIds(candidate);
-                    ids.forEach(id => cellIds.add(id));
-                    if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
-                });
-                cellIds.forEach(id => {
-                    if (includeLocations) {
-                        if (!references.has(id)) references.set(id, []);
-                        references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + 2, column: item.column, field: item.field });
-                    } else references.set(id, true);
-                });
-                if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
+        for (let offset = 0; offset < lastRow - 1; offset += rowChunkSize) {
+            if (Date.now() - startedAt >= captureBudgetMs) {
+                throw new Error("La captura de referencias de «Cortes» superó el presupuesto temporal seguro; no se guardó un snapshot parcial. Reintenta la auditoría.");
             }
-        });
+            const chunkRows = Math.min(rowChunkSize, lastRow - 1 - offset);
+            const range = sheet.getRange(2 + offset, group.start, chunkRows, group.width);
+            const values = range.getDisplayValues();
+            const rawValues = range.getValues();
+            const formulas = range.getFormulas();
+            const richTextValues = range.getRichTextValues();
+            rangesRead++; chunksRead++;
+            group.items.forEach(item => {
+                const c = item.column - group.start;
+                for (let r = 0; r < values.length; r++) {
+                    const candidates = [String(values[r][c] || ""), String((formulas[r] && formulas[r][c]) || "")];
+                    const rawValue = rawValues[r] && rawValues[r][c];
+                    let hasUnverifiableDriveLink = false;
+                    if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+                        try {
+                            const contentUrl = String(rawValue.getContentUrl() || "");
+                            if (contentUrl) candidates.push(contentUrl);
+                            else hasUnverifiableDriveLink = true;
+                        } catch (imageValueError) { hasUnverifiableDriveLink = true; }
+                    }
+                    const richText = richTextValues[r] && richTextValues[r][c];
+                    if (richText) {
+                        const wholeCellLink = richText.getLinkUrl();
+                        if (wholeCellLink) candidates.push(wholeCellLink);
+                        const runs = richText.getRuns ? richText.getRuns() : [];
+                        runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
+                    }
+                    const cellIds = new Set();
+                    candidates.forEach(candidate => {
+                        if (!candidate) return;
+                        const ids = extractDriveFileIds(candidate);
+                        ids.forEach(id => cellIds.add(id));
+                        if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
+                    });
+                    cellIds.forEach(id => {
+                        if (includeLocations) {
+                            if (!references.has(id)) references.set(id, []);
+                            references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + offset + 2, column: item.column, field: item.field });
+                        } else references.set(id, true);
+                    });
+                    if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
+                }
+            });
+            rowsRead = Math.max(rowsRead, offset + chunkRows);
+        }
     });
 
     return { references, unverifiableReferenceCount,
-        metrics: { rows: lastRow - 1, columns: imageColumns.length,
-            cells: (lastRow - 1) * imageColumns.length, ranges: groups.length, elapsedMs: Date.now() - startedAt } };
+        metrics: { rows: rowsRead, columns: imageColumns.length,
+            cells: rowsRead * imageColumns.length, ranges: rangesRead, chunks: chunksRead,
+            rowChunkSize, captureBudgetMs, elapsedMs: Date.now() - startedAt } };
 }
 function isFolderInsideCortes(folder, rootFolderId, membershipCache) {
     if (!folder) return false;
