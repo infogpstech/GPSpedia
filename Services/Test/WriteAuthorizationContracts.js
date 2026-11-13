@@ -30,9 +30,9 @@ function runWriteAuthorizationContracts(sources) {
    return null;
   }};};
   const lockService={getScriptLock:()=>({waitLock(){lockAcquired++;},releaseLock(){lockReleased++;}})};
-  const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","COLS_USERS","LockService","getNextCortesVehicleIdLocked",
+  const fn=new Function("getAuthenticatedCollaborator","getSpreadsheet","SHEET_NAMES","COLS_USERS","LockService","getNextCortesVehicleIdLocked",
    auth+"\n"+allocate+"\nreturn handleAllocateVehicleId;")(
-   authFn,spreadsheet,{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;});
+   authFn,spreadsheet,{USERS:"Users",CORTES:"Cortes"},{ID:1,Privilegios:4},lockService,()=>{allocations++;return 77;});
   return{fn,stats:()=>({authCalls,roleReads,lockAcquired,lockReleased,allocations,spreadsheetReads})};
  }
  const payload={userId:"USR-1",sessionToken:"session-1"};
@@ -44,7 +44,7 @@ function runWriteAuthorizationContracts(sources) {
  run("ADMIN transmite identidad y token al asignador WRITE",()=>{const fn=extract(admin,"requestNextVehicleIdFromWriteService");assert(/userId:\s*payload\s*&&\s*payload\.userId/.test(fn)&&/sessionToken:\s*payload\s*&&\s*payload\.sessionToken/.test(fn)&&/sharedMutationToken/.test(fn));});
  run("los modales de apertura y alimentación adjuntan la sesión activa",()=>{const calls=ui.match(/routeAction\(["']addSupplementaryInfo["']/g)||[];assert(calls.length===2,"Se esperaban exactamente dos consumidores de addSupplementaryInfo en ui.js.");assert((ui.match(/getDeveloperSessionPayload\(\)/g)||[]).length>=2,"Falta adjuntar el contexto de sesión en los modales.");});
  run("handleStage3Submit transmite userId y sessionToken y conserva ruta ADMIN silenciosa",()=>{const start=html.indexOf("async function handleStage3Submit"),end=html.indexOf("\n        // --- UI & UTILITY HELPERS",start),fn=html.slice(start,end);assert(start>=0&&end>start);assert(/userId:\s*state\.userId/.test(fn)&&/sessionToken:\s*state\.sessionToken/.test(fn));assert(/silentVal\s*\?\s*'ADMIN'/.test(fn)&&/routeAction\('addSupplementaryInfo',\s*payload,\s*serviceOverride\)/.test(fn));});
- run("ADMIN exige assertDeveloperSession antes de despachar addSupplementaryInfo",()=>{const dispatch=admin.slice(admin.indexOf("function doPostInternal_"),admin.indexOf("function ",admin.indexOf("function doPostInternal_")+20));assert(/assertDeveloperSession\(payload\)/.test(dispatch));assert(/case 'addSupplementaryInfo'/.test(dispatch));});
+ run("ADMIN exige assertDeveloperSession antes de despachar addSupplementaryInfo",()=>{const dispatch=admin.slice(admin.indexOf("function doPostInternal_"));assert(dispatch.includes("assertDeveloperSession(payload)"));assert(dispatch.includes("case 'addSupplementaryInfo'"));});
  run("WRITE autentica addSupplementaryInfo antes y después del lock",()=>{const outer=extract(write,"handleAddSupplementaryInfo"),inner=extract(write,"handleAddSupplementaryInfoLocked");assert(outer.indexOf("getAuthenticatedCollaborator")>=0&&outer.indexOf("getAuthenticatedCollaborator")<outer.indexOf("waitLock"));assert(outer.includes("finally")&&outer.includes("releaseLock"));assert(inner.includes("getAuthenticatedCollaborator(payload, SUPPLEMENTARY_INFO_ALLOWED_ROLES_)"));});
  return{passed,failed,total:passed+failed,results};
 }
