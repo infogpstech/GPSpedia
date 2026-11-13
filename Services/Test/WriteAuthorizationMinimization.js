@@ -56,7 +56,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
    getAuthenticatedCollaborator:getAuth,getSpreadsheet:()=>({getSheetByName:()=>users}),
    SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:3}
   };
-  const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join("\\n")+auth+";return assertDeveloperForIdMaintenance;")(deps);
+  const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
   const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",
    handler+";return handleAllocateVehicleId;")(check,{getScriptLock:()=>({waitLock(){locked++;},releaseLock(){locked--;}})},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{count++;return 99;});
   let rejected=false;try{fn({userId:"U1",sessionToken:"valid",role:"desarrollador"});}catch(_){rejected=true;}
@@ -66,7 +66,7 @@ function runWriteAuthorizationMinimizationTests(sources) {
   const auth=extract(write,"assertDeveloperForIdMaintenance"),handler=extract(write,"handleAllocateVehicleId");
   const users={getDataRange:()=>({getValues:()=>[["id","user","role"],["U1","dev","Desarrollador"]]})};
   const deps={getAuthenticatedCollaborator:()=>true,getSpreadsheet:()=>({getSheetByName:()=>users}),SHEET_NAMES:{USERS:"Users"},COLS_USERS:{ID:1,Privilegios:3}};
-  const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join("\\n")+auth+";return assertDeveloperForIdMaintenance;")(deps);
+  const check=new Function("deps",Object.keys(deps).map(k=>"const "+k+"=deps."+k+";").join(String.fromCharCode(10))+auth+";return assertDeveloperForIdMaintenance;")(deps);
   let calls=0;const fn=new Function("assertDeveloperForIdMaintenance","LockService","getSpreadsheet","SHEET_NAMES","getNextCortesVehicleIdLocked",handler+";return handleAllocateVehicleId;")(
    check,{getScriptLock:()=>({waitLock(){},releaseLock(){}})},()=>({getSheetByName:()=>({})}),{CORTES:"Cortes"},()=>{calls++;return 42;});
   assert(fn({userId:"U1",sessionToken:"valid",role:"tecnico"}).vehicleId===42&&calls===1);
