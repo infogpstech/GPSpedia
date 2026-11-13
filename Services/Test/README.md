@@ -1458,3 +1458,14 @@ node --input-type=module -e 'import {readFileSync} from "node:fs"; const admin=r
 ```
 
 La suite comprueba la allowlist y exclusión de ID/campos calculados, tipos, longitudes, dominios de categoría/encendido/corte/Relay, coherencia del rango de años, sanitización de texto enriquecido, referencias de Drive, IDs inexistentes/duplicados, sintaxis V8 de los handlers y contratos de lock/reversión. Resultado local de esta tarea: 9/9 PASS en harness V8. Regresión adicional: runAdminModalEditSecurityTests() 13/13 PASS con LockService simulado y runAdminModalEditRestoreContractTests(uiSource, adminSource) 12/12 PASS. La suite utiliza fixtures y dobles; no llama Apps Script, Spreadsheet, Drive ni endpoints reales.
+
+
+## AUG-130 — Mutaciones atómicas de USERS
+
+Ejecutar desde la raíz del repositorio:
+
+~~~bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("Services/users.js","utf8"); const auth=readFileSync("Services/Auth.js","utf8"); const tests=readFileSync("Services/Test/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource);"); const result=run(users,auth); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+~~~
+
+La suite ejecuta 11 escenarios locales: validación de campos de creación, rechazo de propiedades/roles/tipos/formato inválidos, escritura agrupada ID:H, duplicidad de username, rollback con restauración de fórmulas, actualización de perfil, allowlist, IDs inexistentes/duplicados, rollback por fallo de flush, sesión ajena y contratos de lease compartida entre USERS/AUTH. Usa hojas, locks y flush simulados; no llama Apps Script ni datos reales. La copia Services/Test/users.js conserva el ID de la Spreadsheet aislada y se sincroniza con el servicio fuente.
