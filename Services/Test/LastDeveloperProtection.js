@@ -64,7 +64,7 @@ function runLastDeveloperProtectionTests(sources) {
     run('Reconciliación real conserva el marcador y recupera nombre tras fallo de escritura',()=>{
         const helperNames=['parseRoleRevocationMarker_','parseSharedRoleRevocationMarker_','sameRoleRevocationMarker_','revokeAllUserSessionsUnderLock_','deleteRevokedSessionRowsUnderLock_','reconcileRoleRevocationUnderLock_'];
         const helperCode=helperNames.map(name=>extract(auth,name)).join('\n')+'\nreturn reconcileRoleRevocationUnderLock_;';
-        const prefix='__role_revocation_pending__::';
+        const prefix='__role_revocation_pending__:';
         const markerData={userId:'T1',markedAt:123,oldRole:'Tecnico',newRole:'Supervisor',newFullName:'Nombre nuevo'};
         const markerValue=prefix+JSON.stringify(markerData);
         const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],['T1','tech','pw','Tecnico','','','Nombre anterior',markerValue,'']];
