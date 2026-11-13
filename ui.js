@@ -3765,12 +3765,16 @@ let lastShownAppContext = null;
 let pendingDriveAuditClear_ = Promise.resolve(true);
 const pendingDriveAuditClearOwners_ = new Set();
 
-function processPendingDriveAuditClears_() {
+function processPendingDriveAuditClears_(currentOwnerId = '') {
+    const ownerIdToRecover = String(currentOwnerId || '').trim();
+    if (ownerIdToRecover && offline.hasPendingDriveAuditClear(ownerIdToRecover)) {
+        pendingDriveAuditClearOwners_.add(ownerIdToRecover);
+    }
     if (pendingDriveAuditClearOwners_.size === 0) return Promise.resolve(true);
     pendingDriveAuditClear_ = pendingDriveAuditClear_.catch(() => false).then(async () => {
         while (pendingDriveAuditClearOwners_.size > 0) {
             const ownerId = pendingDriveAuditClearOwners_.values().next().value;
-            const result = await offline.clearDriveAuditState(ownerId);
+            const result = await offline.clearDriveAuditState(ownerId, true);
             if (result !== true) throw new Error('IndexedDB no confirmó la limpieza del estado de auditoría.');
             pendingDriveAuditClearOwners_.delete(ownerId);
         }
@@ -6997,7 +7001,7 @@ export async function openReplacedImagesModal() {
 export async function openAuditDriveModal() {
     const requestContext = await ensureUiSessionRole_(['desarrollador']);
     if (!requestContext) return;
-    const cleared = await processPendingDriveAuditClears_();
+    const cleared = await processPendingDriveAuditClears_(requestContext.userId);
     if (cleared !== true) {
         showGlobalError('No se pudo limpiar el estado de auditoría anterior. El historial no se abrirá para evitar mezclar cuentas.');
         return;
