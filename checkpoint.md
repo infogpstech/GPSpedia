@@ -1901,3 +1901,42 @@ Validación ejecutada:
 
 Siguiente tarea: AUG-033 — Rendimiento del recorrido Drive y captura de referencias.
 ================================================================================
+
+================================================================================
+## Checkpoint de continuidad — AUG-033 / AUG-022 — 2026-11-13
+
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD verificado antes de este checkpoint: 49461b9224d34cf40250dcaf966e90653c98e75d
+Rama base verificada: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: ambas tareas locales completadas; validación real diferida a Beta.
+
+### AUG-033 — Rendimiento de recorrido Drive
+- Services/admin.js adapta los lotes de collectCortesImageReferences entre 50 y 500 filas según duración por bloque; objetivo 1,500 ms y presupuesto global 12,000 ms.
+- La captura conserva los ocho campos, valores visibles/nativos, fórmulas, RichText y CellImage; no lee columnas ajenas.
+- Métricas por etapa: display/raw/formulas/RichText/análisis, volumen, tamaño adaptativo y bloque más lento. Exceder presupuesto aborta antes de devolver referencias parciales.
+- Reintento/cursor del cliente y cache compartida de pertenencia se conservaron y verificaron.
+- AdminReplacedImagesIntegrity: 54/54 PASS en harness V8 adaptado.
+- AdminDriveAuditClientRetry: 7/7 PASS en harness V8 adaptado.
+- Node CLI literal y GitHub Actions real no ejecutados para estos commits; no declarar CI SUCCESS.
+
+### AUG-022 — Limpieza selectiva de cachés locales
+- offline.js limpia en una transacción los almacenes reconstruibles catalog, searchHistory, viewedItems, thumbnails y validationCache; preserva adminLocalState.
+- ui.js elimina solo claves de caché catálogo/PyS; conserva sesión, preferencias, addCut pendiente, backups de edición, cargas de imagen, borradores y marcadores de recuperación.
+- service-worker.js elimina respuestas dinámicas de cachés GPSpedia y conserva CORE_ASSETS/OPTIONAL_ASSETS y cachés ajenas.
+- Las ObjectURL se revocan después de confirmar las tres fuentes; la UI solo recarga ante éxito total.
+- AdminClientCacheDeletion: 8/8 PASS en harness V8 adaptado.
+- Parsing de ui.js, offline.js, service-worker.js, suite y runner: PASS.
+- Node CLI literal, navegador real, IndexedDB bloqueada y pruebas físicas multi-pestaña no ejecutados; pendientes para Beta.
+
+### Reconciliación de continuidad
+- Se actualizaron estados obsoletos en Tareas_pendientes_parte1/2/4/5 usando cierres posteriores de Tareas.txt, Auditoría.txt y ChangesLogs.txt.
+- AUG-053 quedó explícitamente cerrada en fuentes; iteraciones locales 1–17 completas. IndexedDB/navegador real y dos pestañas físicas quedan para Beta.
+- AUG-054 quedó cerrada en fuentes; CheckOperationSecurity 12/12 PASS.
+- AUG-023, AUG-027, AUG-028, AUG-029–033 y las tareas de continuidad indicadas en los registros tienen cierres posteriores verificados; no repetir su implementación.
+- La revisión del backlog activo ya no muestra tareas de código NUEVA/PENDIENTE/EN PROGRESO/BLOQUEADA. AUG-004 es un entregable de planificación/auditoría, sin cambio de código requerido.
+- No hay siguiente tarea de implementación desbloqueada. La siguiente actividad requiere nueva priorización o acceso a Beta aislada para las validaciones diferidas de Apps Script/Spreadsheet/Drive, OAuth/Drive API, navegador/IndexedDB y concurrencia real.
+- Sin deployment ni operaciones sobre recursos productivos.
+
+================================================================================
