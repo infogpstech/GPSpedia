@@ -609,7 +609,12 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   5. Unificar el campo de rol usado por AUTH, UI y renderInboxDetail; probar botones approve/reject para Desarrollador, Gefe y Supervisor.
   6. Matriz de pruebas: logout con modal abierto; Developer→Técnico y Supervisor→Jefe en la misma instancia; ascenso de rol; sesión remota revocada; login consecutivo de dos cuentas; llamada directa a funciones globales; Jefe/Inbox según política aprobada.
 - **Relación:** AUG-006, AUG-016, AUG-017; AUD-T-024 y AUD-T-034.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Implementación recuperada:** la auditoría consolidada 2026-11-10 y el commit ef7bdc926ade691e22fa397a3b68267435d191cf ya resolvieron H-AUD-042-001 a H-AUD-042-011: logout token-aware; limpieza completa de estado/modales/cachés; invalidación por cuenta/rol; revocación de sesiones en AUTH; auto-cambio de rol seguro; revalidación remota al recuperar foco/visibilidad/conexión y cada cinco minutos; guards de sesión/rol en vistas privilegiadas; aislamiento DriveAuditState por ownerId; protección de respuestas asíncronas y logout obsoleto.
+- **Corrección de continuidad 2026-11-13:** revisión actual detectó H-AUD-042-012: renderInboxDetail evaluaba canApprove con context.role pero enviaba userRole sin declarar a approveVideo/rejectVideo. ui.js define ahora userRole = context.role y usa ese mismo valor para visibilidad y acciones; no se alteró RBAC backend.
+- **Contrato Inbox:** AUTH/UI/FEEDBACK usan Privilegios normalizado. Desarrollador/Gefe/Supervisor pueden aprobar/rechazar; Jefe puede abrir Inbox, pero no Dashboard ni aprobar/rechazar. La autorización backend FEEDBACK permanece como autoridad.
+- **Pruebas nuevas/integradas:** SessionUiRoleInvalidation 13/13; InboxRoleContract 8/8; SessionProfileRefresh 19/19. GitHub Actions run 43429506713 SUCCESS: 37 suites, 557 pruebas PASS, 0 fallos. Node --check ui.js y módulos modificados PASS.
+- **Validación Beta pendiente:** navegador/DOM real, logout con modal abierto, transiciones Developer→Técnico y Supervisor→Jefe, ascenso, login consecutivo de dos cuentas, IndexedDB real, sesión remota revocada y llamadas globales directas; comprobar que ninguna respuesta asíncrona cruza cuentas. No se ejecutaron endpoints, Apps Script ni datos productivos.
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
 ### AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube
 - **Origen:** H-AUD-035-001 a H-AUD-035-004. **Prioridad:** Alta.
