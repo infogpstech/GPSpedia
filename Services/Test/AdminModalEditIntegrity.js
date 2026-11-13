@@ -95,6 +95,9 @@ function runAdminModalEditIntegrityTests(adminSource) {
         const duplicate={getLastRow:()=>3,getRange:()=>({getValues:()=>[["V-1"],["V-1"]]})};
         rejected=false;try{helpers.findUniqueAdminVehicleRow_(duplicate,"V-1");}catch(_){rejected=true;}assert(rejected);
     });
+    run("Los helpers y handlers modificados compilan como JavaScript V8",()=>{
+        new Function(support + "\\n" + extract("handleUpdateVehicleField") + "\\n" + extract("handleUpdateVehicleVinCollection_"));
+    });
     run("La escritura de campos toma lock, excluye la columna ID y verifica reversión",()=>{
         const body=extract("handleUpdateVehicleField");
         assert(/LockService\.getScriptLock\(\)/.test(body));
