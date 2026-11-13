@@ -614,7 +614,7 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 
 ================================================================================
 2026-11-12 — AUG-129 — VALIDACIÓN DE CAMPOS EDITABLES ADMIN Y PROTECCIÓN DE ID
-- Services/admin.js: mantiene una allowlist explícita; valida tipo, longitud y dominio de campos de edición; restringe años y coherencia del rango; valida referencias de Drive y sanitiza texto enriquecido.
+- Services/admin.js: mantiene una allowlist explícita; valida tipo, longitud y dominio de campos de edición; restringe años enteros al dominio 1980–2027 (alineado con el editor) y valida la coherencia del rango; valida referencias de Drive y sanitiza texto enriquecido.
 - Las mutaciones ordinarias usan ScriptLock, requieren una única coincidencia de ID, verifican persistencia y restauran el valor anterior ante fallo. La edición de VIN también rechaza IDs ambiguos.
 - Services/Test/AdminModalEditIntegrity.js: suite aislada de 9 escenarios para allowlist, dominios, límites, sanitización, referencias, IDs inexistentes/duplicados y contratos de lock/reversión.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones, estado y validaciones Beta.
