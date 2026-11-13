@@ -165,7 +165,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: auth.js:181–208; Services/Auth.js:377–395; users.html:350–351 y 653–673.
 - Problema: checkSession valida token pero no reemplaza el perfil/rol local tras cambios hechos desde otra sesión.
 - Criterios: endpoint de perfil autenticado o respuesta de validación con datos mínimos; TTL/invalidation; scope por actor; pruebas de cambios remotos y cambio de cuenta.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 
 ### AUG-119 — Registrar reply, resolve y delete del Inbox en historial inmutable
 - Origen: H-AUD-018-007. Prioridad: Media.

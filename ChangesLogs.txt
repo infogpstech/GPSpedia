@@ -515,3 +515,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/LastDeveloperProtection.js: 12 escenarios con dobles aislados, ejecutados contra ambos archivos AUTH (24 ejecuciones) para conteo, bloqueo/permiso de cambios de rol, borrado, limpieza de sesiones, auditoría y recuperación tras fallo parcial.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones y continuidad.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-118 — REFRESCO DE PERFIL DESDE SESIÓN AUTENTICADA
+- Services/Auth.js y Services/Test/Auth.js: validateSession devuelve el perfil mínimo de la fila Users vinculada al token validado: ID, Nombre_Usuario, Nombre_Completo, Privilegios, Telefono y Correo_Electronico. No devuelve contraseña ni token.
+- auth.js: persistSessionValidation valida ID y sesión, copia una allowlist, conserva el token local y actualiza localStorage y currentUser en memoria. Descarta respuestas tardías o de otra cuenta.
+- Se conserva el TTL de validación de 10 segundos ligado al mismo usuario/token. Los cambios de rol con revocación pendiente siguen invalidando la sesión y requieren autenticación nueva.
+- Services/Test/SessionProfileRefresh.js: 19 escenarios con AUTH operativo, AUTH de pruebas y cliente.
+- Tareas_pendientes_parte2.txt, Services/Test/README.md, lista_beta.txt y checkpoint.md: cierre y continuidad.
+================================================================================

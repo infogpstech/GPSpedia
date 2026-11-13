@@ -1341,3 +1341,17 @@ La suite ejecuta los mismos 12 escenarios contra `Services/Auth.js` y `Services/
 - Eliminación de uno de dos Desarrolladores, protección del auto-borrado y reintento después de una limpieza parcial.
 - Contratos de confirmación UI, actor/objetivo únicos, ScriptLock y sintaxis de los handlers.
 No accede a Apps Script, Spreadsheet, endpoints ni deployments reales. El espejo `Services/Test/Auth.js` conserva el Spreadsheet ID reservado a pruebas. La validación de concurrencia y la integración con AUTH/Spreadsheet se reservan para Beta aislado.
+
+
+## AUG-118 — Refresco de perfil y rol desde sesión autenticada
+
+Ejecutar desde la raíz del repositorio:
+
+\`\`\`bash
+node --experimental-default-type=module Services/Test/SessionProfileRefresh.js
+\`\`\`
+
+La suite ejecuta 19 escenarios:
+- 5 contra Services/Auth.js y los mismos 5 contra Services/Test/Auth.js: perfil actual desde Users, ausencia de contraseña/token, rechazo de ID distinto, ID duplicado y revocación de rol pendiente.
+- 9 contratos del cliente: persistencia en localStorage y currentUser, coincidencia de ID/token, cambio de cuenta durante una respuesta tardía, allowlist de campos, rechazo de perfil sin ID, validación inválida, reautenticación ante cambio de rol y TTL ligado a la sesión.
+No accede a Apps Script, Spreadsheet, endpoints ni deployments. La integración real se reserva para Beta aislado.

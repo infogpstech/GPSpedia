@@ -1354,7 +1354,18 @@ function validateAndTouchSession_(token, expectedUserId = null) {
         const lastActivityAt = new Date().toISOString();
         sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(lastActivityAt);
         SpreadsheetApp.flush();
-        return { valid: true, userId, createdAt: expiration.createdAt.toISOString(), lastActivityAt, termsAcceptance };
+        return {
+            valid: true, userId, createdAt: expiration.createdAt.toISOString(), lastActivityAt, termsAcceptance,
+            // Perfil mínimo leído de Users y asociado al token validado; nunca incluye contraseña ni token.
+            profile: {
+                ID: userId,
+                Nombre_Usuario: userRows[0].row[COLS_USERS.Nombre_Usuario - 1],
+                Nombre_Completo: userRows[0].row[COLS_USERS.Nombre_Completo - 1],
+                Privilegios: userRows[0].row[COLS_USERS.Privilegios - 1],
+                Telefono: userRows[0].row[COLS_USERS.Telefono - 1],
+                Correo_Electronico: userRows[0].row[COLS_USERS.Correo_Electronico - 1]
+            }
+        };
     } finally { if (acquired) lock.releaseLock(); }
 }
 

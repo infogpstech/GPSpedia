@@ -287,3 +287,29 @@ Validación Beta pendiente: probar con cuentas sintéticas en Spreadsheet/AUTH a
 Archivos: Services/Auth.js, Services/Test/Auth.js, users.html, Services/Test/LastDeveloperProtection.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-118 — Refrescar perfil y rol cacheados desde sesión autenticada. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-118 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- AUTH operativo y AUTH de pruebas amplían validateSession. Solo después de verificar token único, coincidencia del userId, cuenta activa y ausencia de revocación de rol, devuelven el perfil mínimo de la fila Users enlazada a esa sesión.
+- Campos devueltos: ID, Nombre_Usuario, Nombre_Completo, Privilegios, Telefono y Correo_Electronico. No se devuelve contraseña ni SessionToken.
+- auth.js fusiona únicamente los campos permitidos tras verificar que el perfil corresponde al ID local y que la sesión/token siguen vigentes. Conserva el SessionToken local y actualiza localStorage y currentUser en memoria.
+- Las respuestas tardías o asociadas a otra cuenta/token se descartan. El TTL de validación permanece en 10 segundos y ligado a la misma identidad de sesión.
+- Los cambios de rol que generan revocación pendiente siguen rechazando validateSession; el cliente cierra sesión y exige reautenticación, evitando conservar privilegios anteriores.
+
+Validación local:
+- SessionProfileRefresh: 19/19 PASS (ambos servicios AUTH, perfil actual, campos no sensibles, identidad equivocada/duplicada, revocación, actualización persistida y en memoria, respuesta tardía/cambio de cuenta, allowlist de campos, comprobación de identidad del perfil y TTL).
+- LastDeveloperProtection: 24/24 PASS (12 escenarios contra AUTH operativo y 12 contra AUTH aislado). InboxRoleContract: 7/7 PASS.
+- Parsing de Services/Auth.js, Services/Test/Auth.js y auth.js como módulo: PASS.
+- No se ejecutaron Apps Script, deployments, endpoints ni hojas productivas.
+
+Validación Beta pendiente: verificar en proyecto AUTH y Spreadsheet aislados los cambios remotos de nombre, teléfono y correo; comprobar que el navegador actualiza localStorage y currentUser tras revalidación; probar cambio de rol con revocación y re-login; cambiar de cuenta mientras una validación está en vuelo y confirmar que la respuesta anterior no modifica la nueva sesión; revisar que la respuesta no expone contraseña ni token.
+
+Archivos: Services/Auth.js, Services/Test/Auth.js, auth.js, Services/Test/SessionProfileRefresh.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-119 — Registrar reply, resolve y delete del Inbox en historial inmutable. No iniciar dentro de esta tarea.
+================================================================================

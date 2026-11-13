@@ -43,18 +43,31 @@ function getRecentValidation(user){
  return sameSession(latest,user)&&Number.isFinite(validatedAt)&&
   Date.now()-validatedAt>=0&&Date.now()-validatedAt<VALIDATION_CACHE_TTL_MS;
 }
+function isSessionProfileForUser_(user,profile){
+ return Boolean(user&&profile&&typeof profile==='object'&&!Array.isArray(profile)&&
+  String(profile.ID||'')===String(user.ID||user.id||''));
+}
 function persistSessionValidation(user,result){
  if(!result||result.valid!==true||!isCurrentSession(user))return;
  try{
   const latest=readStoredSession();
   if(!sameSession(latest,user))return;
-  latest.SessionCreatedAt=result.createdAt||latest.SessionCreatedAt;
-  latest.SessionLastActivityAt=result.lastActivityAt||latest.SessionLastActivityAt;
-  latest.TermsAcceptance=result.termsAcceptance||null;
-  latest.SessionValidatedAt=Date.now();
-  localStorage.setItem(SESSION_KEY,JSON.stringify(latest));
-  return latest;
- }catch(e){console.warn('No se pudo actualizar la vigencia local:',e.message);}
+  const profile=result.profile;
+  if(profile&&!isSessionProfileForUser_(user,profile))return;
+  const updated={...latest};
+  if(profile)['ID','Nombre_Usuario','Nombre_Completo','Privilegios','Telefono','Correo_Electronico'].forEach(key=>{
+   if(Object.prototype.hasOwnProperty.call(profile,key))updated[key]=profile[key];
+  });
+  updated.SessionCreatedAt=result.createdAt||updated.SessionCreatedAt;
+  updated.SessionLastActivityAt=result.lastActivityAt||updated.SessionLastActivityAt;
+  updated.TermsAcceptance=result.termsAcceptance||null;
+  updated.SessionValidatedAt=Date.now();
+  if(!isCurrentSession(user))return;
+  localStorage.setItem(SESSION_KEY,JSON.stringify(updated));
+  const memoryUser=getState().currentUser;
+  if(sameSession(memoryUser,latest))setState({currentUser:updated});
+  return updated;
+ }catch(e){console.warn('No se pudo actualizar el perfil y la vigencia local:',e.message);}
 }
 async function validateSessionCoordinated(user, force = false){
  const validate=async()=>{
@@ -78,6 +91,9 @@ async function validateSessionCoordinated(user, force = false){
    throw error;
   }finally{if(timer)clearTimeout(timer);}
   if(!isCurrentSession(user))return{stale:true,result};
+  if(result&&result.valid===true&&Object.prototype.hasOwnProperty.call(result,'profile')&&!isSessionProfileForUser_(user,result.profile)){
+   return{valid:false,reason:'profile_identity_mismatch'};
+  }
   if(result&&result.valid===true)persistSessionValidation(user,result);
   return result;
  };

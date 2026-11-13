@@ -1596,3 +1596,39 @@ EJECUCIÓN EN AUTH Y SPREADSHEET AISLADOS:
 
 No declarar PASS sin comprobar el estado de Users, ActiveSessions y Logs en el entorno aislado. No desplegar a producción.
 ================================================================================
+
+
+================================================================================
+AUG-118 — REFRESCO DE PERFIL Y ROL DESDE SESIÓN AUTENTICADA — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN AUTH Y SPREADSHEET AISLADOS:
+1. Iniciar sesión con una cuenta sintética y conservar la pestaña abierta.
+2. Desde una segunda sesión de prueba, modificar Nombre_Completo, Telefono y Correo_Electronico del mismo usuario. Volver a enfocar la pestaña original; verificar que validateSession devuelve el perfil actualizado y que localStorage gpsepedia_session y currentUser reflejan los cambios sin modificar el token.
+3. Repetir el cambio remoto y dejar la pestaña activa; verificar actualización tras el siguiente ciclo de revalidación en segundo plano (máximo cinco minutos) o al recuperar foco.
+4. Cambiar el rol desde AUTH con el flujo administrativo. La revocación pendiente debe hacer que validateSession rechace la sesión anterior; comprobar cierre de sesión y volver a autenticar para recibir el rol nuevo. No deben permanecer controles privilegiados con el rol anterior.
+5. Mientras una validación de U1/token-1 está pendiente, cambiar el navegador a U2/token-2. Completar después la respuesta de U1 y verificar que no sobrescribe el perfil ni token de U2.
+6. Inspeccionar la respuesta validateSession: solo debe incluir ID, Nombre_Usuario, Nombre_Completo, Privilegios, Telefono y Correo_Electronico en profile; nunca Password ni SessionToken.
+7. Repetir con sesión revocada, token de otra cuenta e ID duplicado; no debe entregarse ningún perfil.
+8. Revisar localStorage y estado de UI después de cada caso. No usar cuentas, hojas ni endpoints productivos.
+
+No declarar PASS sin verificar perfil visible, localStorage, currentUser y token de sesión en el proyecto aislado. No desplegar a producción.
+================================================================================
