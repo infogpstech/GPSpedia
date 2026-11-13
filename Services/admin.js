@@ -2314,10 +2314,7 @@ function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage) {
         if (!vinColumnIndex) throw new Error("La hoja «Cortes» no contiene un encabezado VIN único.");
         const lastRow = sheet.getLastRow();
         if (lastRow < 2) throw new Error("No se encontraron vehículos registrados.");
-        const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
-        const rowIndex = ids.findIndex(id => String(id) === String(vehicleId));
-        if (rowIndex < 0) throw new Error("No se encontró el vehículo con ID '" + vehicleId + "'.");
-        const actualRow = rowIndex + 2;
+        const actualRow = findUniqueAdminVehicleRow_(sheet, String(vehicleId == null ? "" : vehicleId).trim());
         const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
         const serialized = prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue);
         const previousValue = sheet.getRange(actualRow, vinColumnIndex).getValue();
