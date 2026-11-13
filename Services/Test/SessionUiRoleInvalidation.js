@@ -46,7 +46,7 @@ function runSessionUiRoleInvalidationTests(sources) {
  run("window.state no conserva token tras logout y window.ui no almacena credenciales",()=>{
   const payload=slice(ui,"function getSessionPayload_()","function invalidateInboxCache_");
   assert(payload.includes("getUiSessionContext_()")&&payload.includes("throw new Error"));
-  const context=slice(ui,"function getUiSessionContext_()","function isCurrentUiSessionContext_");
+  const context=slice(ui,"function getUiSessionContext_(","function isCurrentUiSessionContext_");
   assert(context.includes("getState().currentUser")&&context.includes("user.SessionToken"));
   assert(main.includes("window.state = state")&&main.includes("window.ui = ui"));
   assert(!/window\.ui\s*=\s*\{[^}]*SessionToken\s*:/.test(main));
