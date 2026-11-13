@@ -6528,7 +6528,8 @@ export function renderInboxDetail(item) {
     }
 
     const isVideoItem = item.type === 'video_approval';
-    const canApprove = canApproveInboxVideo_(context.role);
+    const userRole = context.role;
+    const canApprove = canApproveInboxVideo_(userRole);
     const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
     const suggestionData = item.type === 'problem_report' && item.suggestionData ? item.suggestionData : null;
     const proposedValues = suggestionData && suggestionData.proposedValues ? suggestionData.proposedValues : {};
