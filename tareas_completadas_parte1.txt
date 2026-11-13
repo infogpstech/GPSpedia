@@ -491,3 +491,13 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - **Pruebas:** AdminClientCacheDeletion 6/6 PASS; GitHub Actions run 43459877682 SUCCESS, 66 suites, 919/919 PASS; node --check ui.js en modo ES module PASS.
 - **Commits:** 7d7b14bec2ee17beedbd6a1048e8c0d58b614f70 y a9f27cd93e7f1ff3fe2f1307eeffd6a68ff08b5d.
 - **Beta:** navegador/IndexedDB reales, otra pestaña con conexión abierta, onblocked y finalización tardía, onerror y recarga. Sin datos productivos.
+
+
+### AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn
+- **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- **Clasificación:** acciones internas/manuales ADMIN; ruta canónica existente y sin consumidor frontend versionado. Se conservan por compatibilidad ante la imposibilidad de inventariar consumidores externos desde el repositorio.
+- **Contrato:** documentado en Services/ADMIN_ACTIONS.md. Se validan nombres, encabezados y fórmula antes de crear; addColumn exige hoja existente y nombre válido.
+- **Seguridad:** sesión Desarrollador validada en servidor; lease compartida y auditoría persistente existentes y comprobadas.
+- **Pruebas:** AdminSheetActionsContract 9/9 PASS; GitHub Actions run 43460720098 SUCCESS, 67 suites, 928/928 PASS; node --check Services/admin.js PASS.
+- **Commit:** d1443c147788e9732d775f7bdc1c276b27ba515c.
+- **Beta:** Spreadsheet/Apps Script aislados, roles, lease, auditoría y errores de escritura. No se retiraron handlers ni rutas.

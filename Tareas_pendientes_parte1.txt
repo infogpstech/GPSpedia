@@ -1110,3 +1110,33 @@ Archivos: ui.js, Services/Test/AdminClientCacheDeletion.mjs, Services/Test/RunSe
 Beta pendiente: IndexedDB real en navegador aislado, otra pestaña manteniendo una conexión abierta, evento onblocked y finalización posterior al cerrar la conexión, onerror real, API no disponible y recarga únicamente tras confirmación completa. No usar datos productivos ni deployments.
 Siguiente tarea: AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn. No retirar handlers sin comprobar consumidores externos.
 ================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-023 — 2026-11-13
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+Clasificación:
+- createSheet y addColumn ya tenían ruta canónica en ACTION_TO_SERVICE_MAP hacia ADMIN y casos en el dispatcher. La afirmación histórica de ausencia de mapeo queda rectificada; no se agregó una ruta duplicada.
+- Se clasifican como acciones administrativas internas/manuales de Spreadsheet, no como funciones de interfaz pública. La revisión de ui.js, index.html, users.html y add_cortes.html no encontró consumidores frontend. No se identificó en el repositorio un consumidor externo versionado.
+- Se conservan las acciones por compatibilidad: no es posible enumerar desde este repositorio scripts externos no versionados y no existe evidencia suficiente para retirarlas.
+
+Contrato y protección:
+- Se documentó el contrato de solicitud/respuesta en Services/ADMIN_ACTIONS.md.
+- Ambas acciones exigen sesión activa Desarrollador antes del dispatcher; el actor y rol proceden de la sesión del servidor.
+- Ambas son mutaciones compartidas ADMIN: usan la lease del coordinador y la auditoría persistente AUG-021 antes de ejecutar.
+- createSheet valida nombre de hoja (1–100 caracteres, sin caracteres reservados/control), lista opcional de encabezados (texto, hasta 100 caracteres por elemento) y fórmula opcional iniciada con '=' de hasta 500 caracteres. Rechaza duplicados antes de insertar.
+- addColumn valida nombre de hoja y encabezado (1–100 caracteres, sin controles) y requiere que la hoja exista. Los payloads inválidos se rechazan antes de escribir.
+- No se añadió interfaz ni se eliminaron rutas/handlers.
+
+Pruebas:
+- AdminSheetActionsContract.mjs: 9/9 PASS, incluyendo handlers reales con Spreadsheet simulado, validación, rechazo sin escritura, rutas, RBAC, lease/auditoría y ausencia de consumidores frontend versionados.
+- GitHub Actions run 43460720098 SUCCESS: Node.js 22; 67 suites, 928 pruebas aprobadas, 0 fallos.
+- node --check Services/admin.js PASS; los módulos modificados pasan la revisión de sintaxis.
+- No se ejecutaron Apps Script/Spreadsheet reales, deployments ni consumidores externos no versionados.
+
+Archivos: Services/admin.js, Services/ADMIN_ACTIONS.md, Services/Test/AdminSheetActionsContract.mjs, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte1.txt, Tareas.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, Auditoría.txt, lista_beta_parte2.txt y checkpoint.md.
+
+Beta pendiente: ejecutar ambas acciones contra Spreadsheet aislada con sesión Desarrollador; comprobar rechazo para otros roles/sesiones inválidas, creación y encabezados, duplicado, alta de columna, hoja inexistente, errores parciales, lease/auditoría y ausencia de cambios en datos ajenos. Antes de cualquier retirada futura, inventariar consumidores externos. No usar recursos productivos.
+Siguiente tarea: AUG-024 — Robustecer el contrato de health check y la clasificación de estados de microservicios. Revisar primero la disponibilidad de fuentes y deployments; no inferir identidad de servicios a partir de respuestas 2xx.
+================================================================================

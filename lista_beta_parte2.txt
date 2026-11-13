@@ -1612,3 +1612,15 @@ AUG-022 — Verificación real de eliminación de caché IndexedDB ADMIN
 5. Confirmar que el botón vuelve a habilitarse en todos los resultados.
 No usar datos productivos, perfiles reales ni deployments operativos.
 ================================================================================
+
+
+================================================================================
+AUG-023 — Validación de acciones ADMIN internas createSheet/addColumn
+1. Usar un proyecto ADMIN y Spreadsheet de prueba aislados. Ejecutar createSheet con nombre y encabezados válidos y confirmar respuesta, estructura y fórmula opcional.
+2. Repetir createSheet con nombre duplicado, caracteres reservados, payload inválido, encabezados no textuales y fórmula inválida; confirmar rechazo sin crear hoja.
+3. Ejecutar addColumn en una hoja existente; comprobar que se agrega al final y la respuesta devuelve columnIndex correcto. Probar hoja inexistente y encabezados inválidos sin escrituras.
+4. Probar sesión Desarrollador válida, sesión expirada/inválida y roles Gefe, Supervisor y Técnico; solo Desarrollador debe modificar.
+5. Simular lease ocupada y fallos de escritura; confirmar rechazo, auditoría y ausencia de modificaciones parciales no reportadas.
+6. Antes de cualquier deprecación futura, revisar scripts externos no versionados que consuman las acciones. Esta tarea no las retira.
+No usar Spreadsheet, deployments ni cuentas productivas.
+================================================================================

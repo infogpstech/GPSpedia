@@ -1313,3 +1313,18 @@ Fecha de cierre: 2026-11-13. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
 - Beta: navegador/IndexedDB reales, bloqueo por conexión en otra pestaña, finalización posterior al cierre, errores reales y recarga condicionada. Sin deployments ni datos productivos.
 Siguiente: AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn.
 ================================================================================
+
+
+================================================================================
+AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn
+Fecha de cierre: 2026-11-13. Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+- Reconciliación: api-config.js ya mapeaba ambas acciones a ADMIN y Services/admin.js ya las despachaba. La adenda AUD-T-025 corrigió la afirmación histórica de ausencia de mapa. No se duplicaron rutas.
+- Clasificación: acciones internas/manuales de mantenimiento de Spreadsheet, sin consumidor frontend versionado encontrado. Se conservan por compatibilidad porque el repositorio no permite inventariar consumidores externos no versionados.
+- Contrato documentado en Services/ADMIN_ACTIONS.md: createSheet(sheetName, headers?, idFormula?) y addColumn(sheetName, columnName), con respuestas y límites de validación.
+- Seguridad: ambas requieren Desarrollador autenticado en servidor y utilizan lease compartida ADMIN y auditoría persistente; no se añadió bypass ni interfaz.
+- Validación: nombre de hoja/columna, encabezados y fórmula; duplicados e inexistencia de hoja se rechazan antes de las escrituras aplicables.
+- Pruebas: AdminSheetActionsContract 9/9 PASS; GitHub Actions run 43460720098 SUCCESS, 67 suites y 928/928 pruebas PASS; node --check Services/admin.js PASS.
+- Commit: d1443c147788e9732d775f7bdc1c276b27ba515c.
+- Beta: Spreadsheet aislada, roles/sesiones, lease, auditoría y comportamiento real de Apps Script; inventariar consumidores externos antes de cualquier retirada.
+Siguiente: AUG-024 — Robustecer health check y estados de servicios.
+================================================================================

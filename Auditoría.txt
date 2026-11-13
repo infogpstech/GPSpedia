@@ -1227,3 +1227,20 @@ Resolución:
 
 Validación: GitHub Actions run 43452605704 SUCCESS; RouteActionErrors 12/12; 61 suites; 861/861 pruebas; Node.js --check PASS. Beta pendiente para validación visual con respuestas reales de Apps Script y desconexiones. No se ejecutaron operaciones administrativas ni endpoints productivos.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — H-AUD-025-009 / AUG-023 — 2026-11-13
+Estado: RESUELTO EN FUENTES; VALIDACIÓN NODE/CI APROBADA; BETA DIFERIDA.
+
+La reconciliación con AUD-T-025 confirma que createSheet y addColumn sí estaban mapeadas a ADMIN en api-config.js y despachadas en Services/admin.js. La ausencia comprobada era de consumidor frontend versionado; no se confirmó ausencia de consumidores externos.
+
+Resolución:
+- Se conservan como acciones ADMIN internas/manuales; no se agregan rutas duplicadas ni controles de UI.
+- Services/ADMIN_ACTIONS.md documenta contratos, respuestas, clasificación, autorización y límites.
+- Services/admin.js valida tipos/longitudes/caracteres de nombres, encabezados y fórmula opcional antes de las escrituras.
+- Ambas acciones requieren sesión activa Desarrollador en el servidor, lease compartida y auditoría persistente.
+- AdminSheetActionsContract 9/9 PASS; GitHub Actions run 43460720098 SUCCESS: 67 suites, 928/928 PASS; node --check admin.js PASS.
+
+No se eliminan handlers ni se declara que no existan consumidores externos: esos consumidores no pueden enumerarse desde el repositorio. La retirada futura requiere inventario y autorización separados. La prueba con Spreadsheet/Apps Script aislados queda para Beta.
+================================================================================

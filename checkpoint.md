@@ -1442,3 +1442,49 @@ Beta pendiente: probar en navegador aislado una conexión IndexedDB abierta desd
 
 Siguiente tarea: AUG-023 — Resolver el contrato y el consumidor de createSheet/addColumn. Confirmar primero si existen consumidores externos/manuales; no eliminar handlers ni modificar backend por inferencia.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-023 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de trabajo verificado: d1443c147788e9732d775f7bdc1c276b27ba515c.
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+PR #128: abierto, Draft.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.
+
+Resultado:
+- Se revalidó la adenda AUD-T-025: createSheet y addColumn ya estaban en ACTION_TO_SERVICE_MAP y en el dispatcher ADMIN. No se creó un mapeo redundante.
+- Se clasifican como API administrativa interna/manual de mantenimiento de Spreadsheet, sin consumidor frontend versionado en ui.js, index.html, users.html o add_cortes.html.
+- No se retiraron rutas ni handlers porque el repositorio no puede identificar scripts/consumidores externos no versionados.
+- Services/ADMIN_ACTIONS.md documenta contratos, respuesta, límites de validación, autorización y clasificación de consumidor.
+- Services/admin.js valida nombre de hoja, encabezados y fórmula antes de insertar; addColumn valida nombre de hoja/columna antes de escribir.
+- La sesión activa Desarrollador se valida en servidor antes del dispatcher. Ambas acciones conservan lease compartida ADMIN y auditoría persistente AUG-021.
+
+Archivos:
+- Services/admin.js
+- Services/ADMIN_ACTIONS.md
+- Services/Test/AdminSheetActionsContract.mjs
+- Services/Test/RunServiceTests.mjs
+- Services/Test/README.md
+- Tareas_pendientes_parte1.txt
+- Tareas.txt
+- tareas_completadas_parte1.txt
+- ChangesLogs.txt
+- Auditoría.txt
+- lista_beta_parte2.txt
+- checkpoint.md
+
+Validación:
+- AdminSheetActionsContract: 9/9 PASS.
+- GitHub Actions run 43460720098 SUCCESS: Node.js 22; 67 suites, 928/928 pruebas, 0 fallos.
+- node --check Services/admin.js PASS y parsing de módulos modificados PASS.
+- No se ejecutaron Apps Script/Spreadsheet reales ni consumidores externos no versionados.
+
+Commit:
+- d1443c147788e9732d775f7bdc1c276b27ba515c — contrato, validación y pruebas de acciones internas ADMIN.
+
+Beta pendiente: probar creación y alta de columna en Spreadsheet aislada con sesión Desarrollador; rechazo de roles y sesiones no autorizadas; nombres/encabezados/fórmulas inválidos; duplicado; hoja inexistente; lease/auditoría y fallos de escritura. No ejecutar contra recursos productivos. Cualquier futura retirada requiere inventario externo de consumidores.
+
+Siguiente tarea: AUG-024 — Robustecer el contrato de health check y la clasificación de estados de microservicios. Revisar acceso a fuentes/deployments antes de definir cambios; no asumir que los endpoints externos versionados en api-config.js son verificables desde el repositorio.
+================================================================================

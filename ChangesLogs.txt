@@ -1067,3 +1067,14 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - AdminClientCacheDeletion: 6/6 PASS. GitHub Actions run 43459877682 SUCCESS: 66 suites, 919/919 PASS; node --check ui.js en modo ES module PASS.
 - Beta pendiente: IndexedDB real, conexión concurrente desde otra pestaña, onblocked/finalización tardía, onerror y recarga. Sin deployments ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-023 — Contrato y validación de createSheet/addColumn
+- Se clasifican ambas acciones como API ADMIN interna/manual. api-config.js ya contenía el mapa canónico y Services/admin.js el dispatcher; no se duplicaron rutas ni se añadieron controles de interfaz.
+- Se documentó solicitud, respuesta, autorización y consumidores en Services/ADMIN_ACTIONS.md.
+- Services/admin.js valida nombre de hoja, encabezados, fórmula opcional y nombre de columna antes de mutar Spreadsheet; rechaza hoja duplicada/inexistente.
+- Ambas acciones permanecen protegidas por sesión Desarrollador, lease compartida ADMIN y auditoría persistente.
+- AdminSheetActionsContract 9/9 PASS. GitHub Actions run 43460720098 SUCCESS: 67 suites, 928/928 pruebas PASS; node --check admin.js PASS.
+- No se retiraron handlers ni rutas por falta de evidencia de consumidores externos. Beta aislada pendiente.
+================================================================================
