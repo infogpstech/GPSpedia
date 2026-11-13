@@ -10,6 +10,7 @@ function runCutPayloadValidationTests(writeSource) {
  const base={vehicleId:null,vehicleData:{categoria:"Motocicleta",marca:"Yamaha",modelo:"FZ",anoDesde:"2020-2024",tipoEncendido:"Llave",versionesAplicables:"",imagenVehiculo:""},cutData:{tipoCorte1:"Bomba",configRelay1:"NC",ubicacionCorte1:"Bajo asiento",colorCableCorte1:"",activaTestigo1:false,imgCorte1:"",vin:""}};
  const rejects=(name,payload,opts)=>run(name,()=>{let rejected=false;try{validate(payload,opts||options);}catch(_){rejected=true;}if(!rejected)throw Error("El payload inválido fue aceptado.");});
  run("payload nuevo válido",()=>{if(validate(base,options).vehicleData.modelo!=="FZ")throw Error("Mapeo incorrecto.");});
+ run("preserva espacios del contenido para mantener operationHash",()=>{const p={...base,vehicleData:{...base.vehicleData,marca:" Yamaha ",anoDesde:" 2020-2024 "},cutData:{...base.cutData,ubicacionCorte1:" <b>Ubicación</b> "}};const v=validate(p,options);if(v.vehicleData.marca!==p.vehicleData.marca||v.vehicleData.anoDesde!==p.vehicleData.anoDesde||v.cutData.ubicacionCorte1!==p.cutData.ubicacionCorte1)throw Error("Se alteró el contenido firmado.");});
  run("payload existente válido",()=>{validate({...base,vehicleId:"12",vehicleData:null},options);});
  rejects("rechaza vehículo nuevo sin datos",{...base,vehicleData:null});
  rejects("rechaza cutData ausente",{...base,cutData:null});
