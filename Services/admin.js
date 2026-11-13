@@ -194,6 +194,7 @@ function collectActiveDriveReferences(includeLocations = true) {
         if (excludedSheets.has(sheet.getName())) return;
         const range = sheet.getDataRange();
         const values = range.getDisplayValues();
+        const rawValues = range.getValues();
         const formulas = range.getFormulas();
         const richTextValues = range.getRichTextValues();
 
@@ -203,6 +204,17 @@ function collectActiveDriveReferences(includeLocations = true) {
                     String(values[r][c] || ""),
                     String((formulas[r] && formulas[r][c]) || "")
                 ];
+                const rawValue = rawValues[r] && rawValues[r][c];
+                let cellHasUnverifiableDriveLink = false;
+                if (rawValue && typeof rawValue === "object" && typeof rawValue.getContentUrl === "function") {
+                    try {
+                        const contentUrl = String(rawValue.getContentUrl() || "");
+                        if (contentUrl) candidates.push(contentUrl);
+                        else cellHasUnverifiableDriveLink = true;
+                    } catch (imageValueError) {
+                        cellHasUnverifiableDriveLink = true;
+                    }
+                }
                 const richText = richTextValues[r] && richTextValues[r][c];
                 if (richText) {
                     const wholeCellLink = richText.getLinkUrl();
@@ -215,7 +227,6 @@ function collectActiveDriveReferences(includeLocations = true) {
                 }
 
                 const cellIds = new Set();
-                let cellHasUnverifiableDriveLink = false;
                 candidates.forEach(candidate => {
                     if (!candidate) return;
                     const ids = extractDriveFileIds(candidate);
@@ -236,11 +247,42 @@ function collectActiveDriveReferences(includeLocations = true) {
                 if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
             }
         }
+
+        if (typeof sheet.getImages === "function") {
+            const overGridImages = sheet.getImages();
+            overGridImages.forEach(image => {
+                let imageUrl = "";
+                try {
+                    if (image && typeof image.getUrl === "function") imageUrl = String(image.getUrl() || "");
+                    else if (image && typeof image.getSourceUrl === "function") imageUrl = String(image.getSourceUrl() || "");
+                } catch (imageUrlError) {
+                    imageUrl = "";
+                }
+                const ids = extractDriveFileIds(imageUrl);
+                if (ids.length) {
+                    let anchor = null;
+                    try { anchor = image && typeof image.getAnchorCell === "function" ? image.getAnchorCell() : null; }
+                    catch (anchorError) { anchor = null; }
+                    ids.forEach(id => {
+                        if (includeLocations) {
+                            if (!references.has(id)) references.set(id, []);
+                            references.get(id).push({
+                                sheet: sheet.getName(),
+                                row: anchor && typeof anchor.getRow === "function" ? anchor.getRow() : 0,
+                                column: anchor && typeof anchor.getColumn === "function" ? anchor.getColumn() : 0
+                            });
+                        } else references.set(id, true);
+                    });
+                } else {
+                    // Bloquea acciones destructivas si una imagen incrustada no se puede asociar a un ID de Drive.
+                    unverifiableReferenceCount++;
+                }
+            });
+        }
     });
 
     return { references, unverifiableReferenceCount };
 }
-
 function collectCortesImageReferences(includeLocations = true) {
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!sheet) throw new Error("No se encontró la hoja «Cortes» para verificar las referencias de imágenes.");
