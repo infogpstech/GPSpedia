@@ -35,6 +35,9 @@ function createDriveFixture() {
     const outsideNested = makeFolder("outside-nested", "Externo", [outside]);
     const shared = makeFolder("shared", "Compartida", [nested, outside]);
     const multiInside = makeFolder("multi-inside", "Multi interna", [root, nested]);
+    const raceFolder = makeFolder("race-folder", "Cambio concurrente", [root]);
+    let raceParentReads = 0;
+    raceFolder.getParents = () => iterator([++raceParentReads === 1 ? root : outside]);
     const fileIn = makeFile("file-in", "corte.jpg", [leaf]);
     const fileOut = makeFile("file-out", "privado.jpg", [outside]);
     const fileShared = makeFile("file-shared", "compartido.jpg", [leaf, outside]);
@@ -81,7 +84,7 @@ function createDriveFixture() {
     };
     const getCortesRootFolder=()=>root;
     const handler=new Function("DriveApp","getCortesRootFolder",helperSource+"\n"+handlerSource+"\nreturn handleDriveCommand;")(DriveApp,getCortesRootFolder);
-    return {handler,folders,files,root,nested,leaf,outside,outsideNested,shared,multiInside,fileIn,fileOut,fileShared,
+    return {handler,folders,files,root,nested,leaf,outside,outsideNested,shared,multiInside,raceFolder,fileIn,fileOut,fileShared,
         get moveCount(){return moveCount;},get createCount(){return createCount;}};
 }
 let passed=0;
@@ -112,6 +115,11 @@ check("cd .. en la raíz Cortes permanece en Cortes",()=>{
     assert.equal(result.currentFolder.id,"cortes-root");
     assert.equal(result.isRoot,true);
 });
+check("cd / permite regresar a Cortes aunque el ID anterior sea externo",()=>{
+    const result=f.handler({command:"cd",args:"/",currentFolderId:"outside"},null);
+    assert.equal(result.currentFolder.id,"cortes-root");
+});
+
 check("cd .. desde una subcarpeta vuelve al padre dentro de Cortes",()=>{
     const result=f.handler({command:"cd",args:"..",currentFolderId:"leaf"},null);
     assert.equal(result.currentFolder.id,"nested");
@@ -140,6 +148,11 @@ check("mkdir crea una carpeta dentro de la ubicación activa validada",()=>{
 check("mkdir no ejecuta si la ubicación activa está fuera de Cortes",()=>{
     const before=f.createCount;
     rejects(()=>f.handler({command:"mkdir",args:"No",currentFolderId:"outside"},null),"solo permite operar dentro del árbol Cortes");
+    assert.equal(f.createCount,before);
+});
+check("mkdir revalida la carpeta ante un cambio externo antes de escribir",()=>{
+    const before=f.createCount;
+    rejects(()=>f.handler({command:"mkdir",args:"No",currentFolderId:"race-folder"},null),"dejó de pertenecer al árbol Cortes");
     assert.equal(f.createCount,before);
 });
 check("move permite un archivo y destino dentro del árbol Cortes",()=>{

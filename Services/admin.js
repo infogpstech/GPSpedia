@@ -5887,8 +5887,12 @@ function handleDriveCommand(payload, logMessage) {
     const { command, currentFolderId, args } = input;
     const rootFolder = getCortesRootFolder();
     const rootFolderId = String(rootFolder.getId());
-    let activeFolder = getValidatedCortesTerminalFolder_(currentFolderId, rootFolder);
     const cmd = String(command || "").toLowerCase().trim();
+    const cdTarget = String(args || "").trim();
+    if (cmd === "cd" && (cdTarget === "\\" || cdTarget === "/")) {
+        return { status: "success", currentFolder: { id: rootFolderId, name: rootFolder.getName() }, isRoot: true };
+    }
+    const activeFolder = getValidatedCortesTerminalFolder_(currentFolderId, rootFolder);
 
     if (cmd === "dir" || cmd === "ls") {
         const folders = getCortesTerminalChildFolders_(activeFolder, rootFolderId).map(folder => ({
@@ -5908,10 +5912,7 @@ function handleDriveCommand(payload, logMessage) {
     }
 
     if (cmd === "cd") {
-        const target = String(args || "").trim();
-        if (target === "\\" || target === "/") {
-            return { status: "success", currentFolder: { id: rootFolderId, name: rootFolder.getName() }, isRoot: true };
-        }
+        const target = cdTarget;
         if (target === "..") {
             if (String(activeFolder.getId()) === rootFolderId) {
                 return { status: "success", currentFolder: { id: rootFolderId, name: rootFolder.getName() }, isRoot: true };
@@ -5950,6 +5951,9 @@ function handleDriveCommand(payload, logMessage) {
     if (cmd === "mkdir") {
         const folderName = String(args || "").trim();
         if (!folderName) throw new Error("Nombre de carpeta requerido para mkdir.");
+        if (!isDriveFolderWithinCortes_(activeFolder, rootFolderId)) {
+            throw new Error("La carpeta actual dejó de pertenecer al árbol Cortes; no se creó la carpeta solicitada.");
+        }
         const newSub = activeFolder.createFolder(folderName);
         if (!isDriveFolderWithinCortes_(newSub, rootFolderId) ||
             !hasDirectDriveParent_(newSub, activeFolder.getId())) {
