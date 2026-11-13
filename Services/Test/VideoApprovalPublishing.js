@@ -20,7 +20,7 @@ function runVideoApprovalPublishingTests() {
                 },
                 getDisplayValues(){return this.getValues().map(line=>line.map(v=>String(v)));},
                 getValue(){const v=(data[r-1]||[])[c-1];return v===undefined||v===null?"":v;},
-                setValue(v){if(options.failSetValueAtColumn===c)throw Error("simulated setValue failure");data[r-1]=data[r-1]||[];data[r-1][c-1]=v;},
+                setValue(v){if(options.failSetValueAtColumn===c){if(options.failSetValueOnce){options.failSetValueOnce=false;options.failSetValueAtColumn=null;throw Error("simulated setValue failure");}throw Error("simulated setValue failure");}data[r-1]=data[r-1]||[];data[r-1][c-1]=v;},
                 setValues(values){
                     if(options.failNextSetValues){options.failNextSetValues=false;throw Error("simulated write failure");}
                     values.forEach((line,i)=>{data[r-1+i]=data[r-1+i]||[];line.forEach((v,j)=>data[r-1+i][c-1+j]=v);});
@@ -40,11 +40,15 @@ function runVideoApprovalPublishingTests() {
         if(options.duplicateRequest)feedbackRows.push(requestRow.slice());
         const feedback=makeSheet_(feedbackRows,{failNextSetValues:!!options.failFeedbackWrite});
         const cutHeaders=new Array(45).fill("");cutHeaders[0]="id";cutHeaders[9]="videoGuiaDesarmeUrl";
-        const cuts=makeSheet_([cutHeaders,(()=>{const row=new Array(45).fill("");row[0]="veh-1";row[9]=options.currentUrl||"";return row;})()]);
+        const cuts=makeSheet_([cutHeaders,(()=>{const row=new Array(45).fill("");row[0]="veh-1";row[9]=options.currentUrl||"";return row;})()],
+            options.failTargetVideoWrite?{failSetValueAtColumn:10,failSetValueOnce:true}:{});
         const pysHeaders=["id_problem","Problema","Descripción","Se soluciono","Solucion","Prevenir","Imagen","Video","Colaborador","modelos_asociados"];
-        const pys=makeSheet_([pysHeaders,["isue-001","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]]);
+        const pys=makeSheet_([pysHeaders,["isue-001","Problema","Detalle","","","","",options.currentUrl||"","Owner",""]],
+            options.failTargetVideoWrite?{failSetValueAtColumn:8,failSetValueOnce:true}:{});
         const tutHeaders=VIDEO_TUTORIAL_HEADERS.slice();
-        const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],{failSetValueAtColumn:options.failTutorialImageWrite?3:null});
+        const tutorial=makeSheet_([tutHeaders,["tut-1","Tutorial demo",options.currentImage||"","","","",options.currentUrl||"","Owner"]],
+            options.failTutorialImageWrite?{failSetValueAtColumn:3,failSetValueOnce:true}:
+                options.failTargetVideoWrite?{failSetValueAtColumn:7,failSetValueOnce:true}:{});
         const map={ [SHEET_NAMES.FEEDBACKS]:feedback,[SHEET_NAMES.CORTES]:cuts,pys:pys,"Tutorial":tutorial };
         if(options.missingTarget)delete map[type==="corte"?SHEET_NAMES.CORTES:type==="pys"?"pys" :"Tutorial"];
         if(options.duplicateTarget){
@@ -87,9 +91,13 @@ function runVideoApprovalPublishingTests() {
             const saved=JSON.parse(e.feedback.data[1][COLS_FEEDBACKS.Problema-1]);
             assert_(r.targetType==="tutorial"&&e.tutorial.data[1][6]===videoUrl&&e.tutorial.data[1][2]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg"&&saved.status==="approved");
         }));
-        run_("si falla la miniatura, no publica la URL del Tutorial",()=>withEnv_("tutorial",{failTutorialImageWrite:true},e=>{
+        run_("si falla la miniatura, conserva aprobación y reintenta sin publicar antes",()=>withEnv_("tutorial",{failTutorialImageWrite:true},e=>{
             let error=null;try{handleApproveVideo(actor_("vid-1"));}catch(x){error=x;}
-            assert_(!!error&&e.tutorial.data[1][6]===""&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+            assert_(!!error&&e.tutorial.data[1][6]===""&&JSON.parse(e.feedback.data[1][3]).status==="approved");
+            assert_(e.feedback.data[1][4]==="approved","La decisión debe persistir antes de intentar publicar.");
+            const retry=handleApproveVideo(actor_("vid-1"));
+            assert_(retry.status==="success"&&retry.alreadyApproved===true&&e.tutorial.data[1][6]===videoUrl);
+            assert_(e.tutorial.data[1][2]==="https://img.youtube.com/vi/"+videoId+"/hqdefault.jpg");
         }));
         run_("preserva miniatura personalizada del Tutorial",()=>withEnv_("tutorial",{currentImage:"imagen-propia"},e=>{
             handleApproveVideo(actor_("vid-1"));
@@ -107,11 +115,19 @@ function runVideoApprovalPublishingTests() {
             expect_(()=>handleApproveVideo(actor_("vid-1")),"IDs duplicados");
             assert_(JSON.parse(e.feedback.data[1][3]).status==="pending");
         }));
-        run_("reintento completa estado tras fallo de escritura de Feedbacks",()=>withEnv_("corte",{failFeedbackWrite:true},e=>{
+        run_("fallo de Feedbacks no publica URL y permite reintentar la aprobación",()=>withEnv_("corte",{failFeedbackWrite:true},e=>{
             expect_(()=>handleApproveVideo(actor_("vid-1")),"simulated write failure");
-            assert_(e.cuts.data[1][9]===videoUrl&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+            assert_(e.cuts.data[1][9]===""&&JSON.parse(e.feedback.data[1][3]).status==="pending");
+            assert_(e.feedback.data[1][4]==="pending","La fila debe seguir pendiente si no se guardó la aprobación.");
             const retry=handleApproveVideo(actor_("vid-1"));
-            assert_(retry.status==="success"&&JSON.parse(e.feedback.data[1][3]).status==="approved");
+            assert_(retry.status==="success"&&JSON.parse(e.feedback.data[1][3]).status==="approved"&&e.cuts.data[1][9]===videoUrl);
+        }));
+        run_("fallo del destino después de aprobar no publica y se recupera en reintento",()=>withEnv_("corte",{failTargetVideoWrite:true},e=>{
+            expect_(()=>handleApproveVideo(actor_("vid-1")),"simulated setValue failure");
+            assert_(e.cuts.data[1][9]===""&&JSON.parse(e.feedback.data[1][3]).status==="approved");
+            assert_(e.feedback.data[1][4]==="approved","La aprobación confirmada debe preceder a la publicación.");
+            const retry=handleApproveVideo(actor_("vid-1"));
+            assert_(retry.status==="success"&&retry.alreadyApproved===true&&e.cuts.data[1][9]===videoUrl);
         }));
         run_("reintento tras respuesta perdida confirma aprobación existente sin reescribir los tres destinos",()=> {
             ["corte","pys","tutorial"].forEach(type=>withEnv_(type,{},e=>{

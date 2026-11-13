@@ -2790,6 +2790,7 @@ function handleGetVideoApprovalByOperation(payload) {
 }
 
 function handleSubmitVideoForApproval(payload) {
+    return withVideoApprovalMutationLock_(() => {
  const source=payload&&typeof payload==="object"?payload:{}, {title,description,contentType,referenceId,metadata,videoId,userName,userId,opVideoId}=source,videoUrl=source.videoUrl;
  const operationId=String(opVideoId||"").trim(),actualVideoId=String(videoId||"").trim(),canonicalUrl=normalizeInboxVideoUrl_(videoUrl,actualVideoId);
  const normalizedTitle=normalizeInboxText_(title,"El título del vídeo",INBOX_VIDEO_TITLE_MAX_LENGTH,false);
@@ -2818,6 +2819,7 @@ function handleSubmitVideoForApproval(payload) {
  const saved=findVideoApprovalByOperation_(sheet,operationId);
  if(!saved||String(saved.row[COLS_FEEDBACKS.ID-1]||"")!==newId)throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
  return{status:"success",id:newId,opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:"pending",message:"Vídeo enviado para aprobación interna."};
+    });
 }
 
 /**
@@ -3000,24 +3002,29 @@ function handleApproveVideoUnlocked_(payload) {
             responder !== String(videoData.approvedBy).trim()) {
             throw new Error("La solicitud figura aprobada, pero su registro de aprobación está incompleto; requiere revisión.");
         }
-        const target = getVideoApprovalTarget_(videoData);
-        const publishedUrl = String(target.record.row[target.videoColumn - 1] || "").trim();
-        if (publishedUrl !== String(videoData.videoUrl || "").trim()) {
-            throw new Error("La solicitud figura aprobada, pero el destino no conserva el mismo vídeo; requiere revisión.");
-        }
+        // Una respuesta perdida puede dejar la aprobación guardada antes de publicar.
+        // El reintento completa la publicación sin volver a cambiar el estado aprobado.
+        const targetResult = publishApprovedVideo_(videoData);
         return {
             status: "success",
             alreadyApproved: true,
-            message: "La solicitud ya estaba aprobada y el vídeo continúa publicado en el destino.",
+            message: "La solicitud ya estaba aprobada; se verificó o completó la publicación en el destino.",
             videoUrl: videoData.videoUrl,
-            targetType: target.type
+            targetType: targetResult.targetType
         };
     }
 
-    // Publicar primero en el destino y verificar; si el registro de aprobación falla,
-    // el reintento encuentra la misma URL y completa el estado sin duplicar ni sobrescribir.
-    const targetResult = publishApprovedVideo_(videoData);
-    const actorName = String(userName || "Supervisor");
+    // Se valida el destino sin escribirlo: una solicitud inválida nunca queda aprobada.
+    const destination = getVideoApprovalTarget_(videoData);
+    const currentDestinationVideo = String(destination.record.row[destination.videoColumn - 1] || "").trim();
+    if (currentDestinationVideo && currentDestinationVideo !== String(videoData.videoUrl || "").trim()) {
+        throw new Error("El destino ya contiene otro vídeo; no se sobrescribió.");
+    }
+
+    // La decisión se persiste y verifica antes de publicar la URL.
+    // Si falla la publicación, el estado aprobado permite reintentar sin exponer
+    // un enlace mientras la solicitud todavía figure como pendiente.
+    const actorName = String(userName || "Supervisor").trim() || "Supervisor";
     videoData.status = "approved";
     videoData.approvedBy = actorName;
     videoData.approvalDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
@@ -3029,18 +3036,30 @@ function handleApproveVideoUnlocked_(payload) {
     const saved = sheet.getRange(rowIndex, 1, 1, COLS_FEEDBACKS.Responde).getValues()[0];
     let savedPayload = null;
     try { savedPayload = JSON.parse(String(saved[COLS_FEEDBACKS.Problema - 1] || "")); } catch (error) {}
-    if (!savedPayload || savedPayload.status !== "approved" ||
+    if (!savedPayload || savedPayload.subType !== "video_approval" ||
+        savedPayload.status !== "approved" ||
+        String(savedPayload.videoId || "") !== String(videoData.videoId || "") ||
+        String(savedPayload.videoUrl || "") !== String(videoData.videoUrl || "") ||
+        String(savedPayload.contentType || "") !== String(videoData.contentType || "") ||
+        String(savedPayload.referenceId || "") !== String(videoData.referenceId || "") ||
+        String(savedPayload.approvedBy || "").trim() !== actorName ||
+        !String(savedPayload.approvalDate || "").trim() ||
+        String(saved[COLS_FEEDBACKS.ID - 1] || "") !== String(itemId || "") ||
         String(saved[COLS_FEEDBACKS.Respuesta - 1] || "") !== "approved" ||
-        saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true) {
-        throw new Error("El destino fue actualizado, pero no se pudo confirmar el estado de aprobación. Reintenta la misma solicitud.");
+        saved[COLS_FEEDBACKS["Se resolvio"] - 1] !== true ||
+        String(saved[COLS_FEEDBACKS.Responde - 1] || "").trim() !== actorName) {
+        throw new Error("No se pudo confirmar la aprobación; el vídeo no se publicó. Reintenta la misma solicitud.");
     }
+
+    const targetResult = publishApprovedVideo_(savedPayload);
     return {
         status: "success",
         message: "Vídeo aprobado y publicado en GPSpedia.",
-        videoUrl: videoData.videoUrl,
+        videoUrl: savedPayload.videoUrl,
         targetType: targetResult.targetType
     };
 }
+
 
 /**
  * Rechaza una solicitud de vídeo y elimina únicamente el enlace pendiente exacto si ya estuviera publicado.

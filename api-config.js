@@ -347,9 +347,11 @@ export async function checkAllServicesHealth() {
 }
 
 export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
-    return await routeAction("approveVideo", { itemId, approverName, userRole, ...sessionPayload });
+    // El rol y el nombre del aprobador se derivan en FEEDBACK desde la sesión validada.
+    return await routeAction("approveVideo", { itemId, ...sessionPayload });
 }
 
 export async function rejectVideo(itemId, rejecterName, reason, userRole, sessionPayload = {}) {
-    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole, ...sessionPayload });
+    // El rol y el nombre del revisor se derivan en FEEDBACK desde la sesión validada.
+    return await routeAction("rejectVideo", { itemId, reason, ...sessionPayload });
 }

@@ -35,6 +35,27 @@ function runVideoApprovalSessionTests() {
         run_("rechaza rol no permitido aunque la sesión sea válida",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},["Supervisor"]),"sesión no autorizada");});
         run_("rechaza token duplicado",()=>{setup_({duplicateToken:true});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"sesión inválida");});
         run_("rechaza perfil duplicado",()=>{setup_({duplicateUser:true});expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null),"perfil de usuario ausente o ambiguo");});
+        run_("todas las acciones protegidas de AUG-043 exigen sesión vigente",()=>{
+            const actions=["addVehicleToProblem","removeVehicleFromProblem","updatePysItem","updateTutorialItem","initYouTubeUpload","getVideoApprovalByOperation","submitVideoForApproval"];
+            actions.forEach(action=>{
+                assert_(Object.prototype.hasOwnProperty.call(FEEDBACK_ACTION_PERMISSIONS,action),"Falta política para "+action);
+                setup_();
+                expect_(()=>authorizeFeedbackAction_(action,{userId:"user-1"}),"sesión");
+            });
+        });
+        run_("FEEDBACK sustituye el rol y nombre falsificados por los valores de Users",()=>{
+            setup_();
+            const authorized=authorizeFeedbackAction_("approveVideo",{
+                userId:"user-1",sessionToken:"token-1",userRole:"Supervisor",userName:"Nombre falso"
+            });
+            assert_(authorized.userRole==="Desarrollador"&&authorized.userName==="Técnico"&&authorized.approverName==="Técnico");
+        });
+        run_("rol ordinario no puede editar PyS ni Tutorial aunque se declare Desarrollador en el payload",()=>{
+            setup_({role:"Tecnico"});
+            expect_(()=>authorizeFeedbackAction_("updatePysItem",{userId:"user-1",sessionToken:"token-1",userRole:"Desarrollador"}),"sesión no autorizada");
+            setup_({role:"Tecnico"});
+            expect_(()=>authorizeFeedbackAction_("updateTutorialItem",{userId:"user-1",sessionToken:"token-1",userRole:"Desarrollador"}),"sesión no autorizada");
+        });
     }finally{getSpreadsheet=oldGetSpreadsheet;}
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }

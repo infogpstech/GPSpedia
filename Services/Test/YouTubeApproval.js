@@ -7,6 +7,12 @@ function runYouTubeApprovalTests() {
     const originalUuid = Utilities.getUuid;
     const originalFlush = SpreadsheetApp.flush;
     const originalTimezone = Session.getScriptTimeZone;
+    const originalLockService = LockService;
+    let lockAcquired = 0, lockReleased = 0, lockFailure = false;
+    LockService = { getScriptLock: () => ({
+        waitLock() { if (lockFailure) throw new Error("lock unavailable"); lockAcquired++; },
+        releaseLock() { lockReleased++; }
+    }) };
     function assert_(condition, message) { if (!condition) throw new Error(message || "Aserción fallida."); }
     function expectThrow_(callback, text) {
         let error = null; try { callback(); } catch (caught) { error = caught; }
@@ -82,10 +88,19 @@ function runYouTubeApprovalTests() {
             assert_(stored.videoId === "abcdefghijk" && stored.opVideoId === opVideoId && stored.createdByUserId === "user-1");
             assert_(stored.videoUrl === payload.videoUrl && stored.status === "pending");
         });
-        run_("reintento idéntico devuelve la misma solicitud", () => {
+        run_("reintento idéntico devuelve la misma solicitud bajo bloqueo", () => {
+            const beforeAcquire = lockAcquired, beforeRelease = lockReleased;
             const first = handleSubmitVideoForApproval(payload);
             const second = handleSubmitVideoForApproval(payload);
             assert_(first.id === second.id && sheet.rows.length === 2);
+            assert_(lockAcquired === beforeAcquire + 2 && lockReleased === beforeRelease + 2,
+                "Cada envío debe adquirir y liberar el mismo ScriptLock.");
+        });
+        run_("no escribe si no puede adquirir el bloqueo de envío", () => {
+            lockFailure = true;
+            expectThrow_(() => handleSubmitVideoForApproval(payload), "lock unavailable");
+            lockFailure = false;
+            assert_(sheet.rows.length === 1, "No debe crear una solicitud sin obtener el bloqueo.");
         });
         run_("mismo opVideoId con otro vídeo se rechaza", () => {
             handleSubmitVideoForApproval(payload);
@@ -141,6 +156,7 @@ function runYouTubeApprovalTests() {
         Utilities.getUuid = originalUuid;
         SpreadsheetApp.flush = originalFlush;
         Session.getScriptTimeZone = originalTimezone;
+        LockService = originalLockService;
     }
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }

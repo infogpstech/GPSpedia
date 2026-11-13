@@ -3088,8 +3088,7 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
                     problemId: item.id_problem || item.id,
                     vehicleId: vehicleToUnlink.id,
                     ...getSessionPayload_(),
-                    userRole
-                });
+                                    });
                 if (res && res.status === 'success') {
                     cardWrapper.remove();
                     mostrarNotificacion("Problema desvinculado del vehículo.", "success");
@@ -10193,8 +10192,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
                         prevenir: newPrev,
                         videoUrl: newVideo,
                         ...getSessionPayload_(),
-                        userRole
-                    });
+                                            });
                     if (res && res.status === 'success') {
                         invalidatePysDataCache();
                         await loadPysData();
@@ -10369,8 +10367,7 @@ export function openPysDetailModal(item,navOptions={},inEditModePys=false){
                                 problemId: item.id_problem,
                                 vehicleId: v.id,
                                 ...getSessionPayload_(),
-                                userRole
-                            });
+                                                            });
                             if (res && res.status === 'success') {
                                 item.modelosAsociados = res.modelosAsociados || item.modelosAsociados.filter(id => String(id) !== String(v.id));
                                 cardWrapper.remove();

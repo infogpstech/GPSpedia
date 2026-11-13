@@ -73,15 +73,49 @@ runGroup('32','ADMIN',()=>{
  runCli('ADMIN reanudación de respaldo Drive y sintaxis Node.js','Services/Test/AdminBackupResumeUI.mjs');
 });
 runGroup('33','FEEDBACK',()=>{
- const feedback=read('Services/feedback.js'),videoTest=read('Services/Test/VideoApprovalPublishing.js');
+ const feedback=read('Services/feedback.js');
+ const lockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};
+ const spreadsheet={flush(){}};
+ const utilities={getUuid:()=>'test-uuid',formatDate:()=>'2026-11-12',base64Decode:()=>[1],newBlob:()=>({})};
+ const session={getScriptTimeZone:()=>'GMT-6'};
+ const videoTest=read('Services/Test/VideoApprovalPublishing.js');
  const video=new Function('LockService','SpreadsheetApp','Utilities','Session',feedback+'\n'+videoTest+'\nreturn runVideoApprovalPublishingTests();')(
-  {getScriptLock:()=>({waitLock(){},releaseLock(){}})},{flush(){}},{getUuid:()=>'test-uuid',formatDate:()=>'2026-11-12'},{getScriptTimeZone:()=>'GMT-6'});
- recordResult('FEEDBACK aprobación/rechazo/recuperación',video);
+  lockService,spreadsheet,utilities,session);
+ recordResult('FEEDBACK aprobación/rechazo/publicación recuperable',video);
+ const submissionTest=read('Services/Test/YouTubeApproval.js');
+ const submission=new Function('LockService','SpreadsheetApp','Utilities','Session',feedback+'\n'+submissionTest+'\nreturn runYouTubeApprovalTests();')(
+  lockService,spreadsheet,utilities,session);
+ recordResult('FEEDBACK idempotencia y bloqueo de solicitudes YouTube',submission);
+ const sessionTest=read('Services/Test/VideoApprovalSessions.js');
+ recordResult('FEEDBACK sesión, revocación y rol servidor/AUG-043',
+  new Function(feedback+'\n'+sessionTest+'\nreturn runVideoApprovalSessionTests();')());
+ const stateTest=read('Services/Test/VideoApprovalState.js');
+ recordResult('FEEDBACK estados y unicidad de aprobación',
+  new Function(feedback+'\n'+stateTest+'\nreturn runVideoApprovalStateTests();')());
+ const initTest=read('Services/Test/YouTubeApprovalInit.js');
+ const init=new Function('ScriptApp','UrlFetchApp','Logger',feedback+'\n'+initTest+'\nreturn runYouTubeApprovalInitTests();')(
+  {getOAuthToken:()=> 'oauth-token'},{fetch:()=>({getAllHeaders:()=>({}),getResponseCode:()=>500,getContentText:()=>''})},{log(){}});
+ recordResult('FEEDBACK precondiciones de subida resumable',init);
+ const creationTest=read('Services/Test/VideoApprovalContracts.js');
+ const creation=new Function('LockService','SpreadsheetApp','Utilities','DriveApp','logUserActivity',
+  feedback+'\n'+creationTest+'\nreturn runVideoApprovalCreationContractTests();')(
+  lockService,spreadsheet,utilities,null,()=>{});
+ recordResult('FEEDBACK alta PyS/Tutorial sin publicación directa',creation);
  recordResult('FEEDBACK ledger Inbox',loadFunction('Services/Test/InboxAuditTrail.js','runInboxAuditTrailTests','\n\nimport {')({feedback}));
  recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('Services/Test/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
   ui:read('ui.js'),feedback
  }));
-
+ runCli('AUG-043 contratos de sesión, IDs y publicación en cliente','Services/Test/VideoApprovalClientContract.mjs');
+ runCli('AUG-043 persistencia IndexedDB de operaciones','Services/Test/YouTubeUploadRecordPersistence.mjs');
+ runCli('AUG-043 recuperación de bloques resumables','Services/Test/YouTubeUploadCheckpointRecovery.js');
+ runCli('AUG-043 cancelación durante transferencia','Services/Test/YouTubeUploadCloseDuringTransfer.js');
+ runCli('AUG-043 recuperación de transferencia completada','Services/Test/YouTubeUploadCompletedRecordRecovery.js');
+ runCli('AUG-043 recuperación de borradores','Services/Test/YouTubeUploadDraftRecovery.js');
+ runCli('AUG-043 ciclo de vida del modal','Services/Test/YouTubeUploadOverlayLifecycle.js');
+ runCli('AUG-043 historial de overlays de Cortes','Services/Test/AddCortesYouTubeOverlayHistory.js');
+ runCli('AUG-043 integridad XSS del modal','Services/Test/YouTubeUploadXssIntegrityCli.mjs');
+ runCli('AUG-043 contratos suplementarios de vídeo','Services/Test/SupplementaryVideoContract.mjs');
+ runCli('AUG-043 cliente YouTube, sesión y transferencia','Services/Test/YouTubeUploadClientNode.mjs');
 });
 runGroup('34','CATALOG',()=>{
  runCli('CATALOG readiness','Services/Test/CatalogReadiness.js');
