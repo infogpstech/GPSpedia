@@ -1364,3 +1364,25 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 - No se ejecutaron recursos externos/productivos; validación real reservada a Beta.
 Siguiente tarea: AUG-027 — decisión pendiente sobre alcance de referencias (todas las hojas vs. columnas de imagen de Cortes), separación UI historial/inventario y política de restauración desde papelera/requiere_revision. No modificar hasta documentar la decisión.
 ================================================================================
+
+
+================================================================================
+AUG-027 — Alcance de referencias y gestión del inventario de imágenes — 2026-11-13
+Estado: EN PROGRESO — alcance funcional confirmado; análisis técnico pendiente.
+
+Decisiones expresas del usuario:
+1. La protección de referencias debe abarcar todas las hojas de Spreadsheet que contengan imágenes; no se limita a columnas de imagen de Cortes.
+2. En la misma pestaña del administrador se gestionarán las imágenes sin uso, la organización automática y el historial/gestión de imágenes reemplazadas.
+3. La restauración, el envío a papelera y la eliminación definitiva serán operaciones exclusivas del rol Desarrollador y se realizarán desde el modal del desarrollador.
+4. Los registros con estado requiere_revision quedan fuera de cualquier operación automática. El desarrollador podrá revisarlos y decidir restaurar, enviar a papelera, eliminar definitivamente o marcarlos como imágenes en uso para proteger sus referencias.
+
+Criterios de implementación:
+- Inventariar las referencias reales en cada hoja de Spreadsheet que contenga imágenes; no inferir que una hoja o columna está libre de referencias sin evidencia.
+- Mantener separadas las categorías/estados de inventario sin uso e historial de reemplazos, aunque se presenten y gestionen desde la misma pestaña.
+- Aplicar organización automática solo a elementos elegibles y con referencias verificadas; excluir requiere_revision hasta decisión manual del desarrollador.
+- Revalidar referencias, identidad del archivo y estado antes de cada mutación. Operaciones destructivas y restauración con autorización de servidor Desarrollador, coordinación, verificación posterior y recuperación/compensación.
+- La decisión manual «en uso» debe persistir y proteger el archivo frente a organización automática/papelera/eliminación; no debe borrar ni alterar el historial de reemplazo.
+- No modificar datos productivos ni ejecutar deployments. Validación real de Spreadsheet/Drive/ACL queda para Beta aislada.
+
+Siguiente acción: inspeccionar contratos y consumidores actuales de referencias, inventario sin uso, historial y modal de desarrollador; delimitar cambios mínimos y pruebas antes de editar.
+================================================================================
