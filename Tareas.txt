@@ -1517,3 +1517,19 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
 Pendiente Beta: permisos reales de miniaturas, enlace de reconciliación, expiración de CacheService/PropertiesService y recorrido de árbol Drive representativo.
 Siguiente tarea: AUG-031 — Persistencia incremental e aislamiento de auditorías concurrentes en IndexedDB.
 ================================================================================
+
+================================================================================
+AUG-031 — PERSISTENCIA INCREMENTAL E AISLAMIENTO DE AUDITORÍAS CONCURRENTES
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA — 2026-11-13.
+- offline.js: metadatos/cursor, páginas y confirmaciones separadas por propietario y auditId; solo se escribe el lote nuevo en cada avance.
+- Página y metadatos se confirman en una transacción IndexedDB; firma de contenido, revisión CAS, reintento idempotente y detección de páginas ausentes/corruptas.
+- La restauración reconstruye y deduplica resultados; la migración DB_VERSION 4 conserva el estado legado hasta confirmar la escritura de páginas y metadatos.
+- El puntero de última auditoría respeta createdAt; continuar una auditoría anterior no desplaza una más reciente.
+- La limpieza por usuario usa token de exclusión y recupera marcadores pendientes al abrir el modal.
+- ui.js envía auditId/createdAt/revisión/lote y vincula el registro de inventario al auditId original.
+- AdminDriveAuditIndexedDB.mjs: 13 casos agregados al runner CLI.
+- Validación dirigida de la fuente actual offline.js: 6 verificaciones PASS; recuperación de limpieza interrumpida PASS; sintaxis de offline.js, ui.js, test y runner: 4/4 PASS.
+- No se pudo confirmar la ejecución Node CLI/GitHub Actions de los commits de esta fase mediante el conector; no se declara CI SUCCESS.
+- Sin deployment ni operaciones sobre Drive/Spreadsheet productivos.
+Siguiente tarea: AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración.
+================================================================================
