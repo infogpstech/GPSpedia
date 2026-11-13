@@ -1495,3 +1495,34 @@ VALIDACIÓN EN NAVEGADOR Y SERVICIOS AISLADOS:
 
 No declarar PASS sin inspección del DOM y confirmación de ausencia de ejecución en navegador real. No desplegar a producción ni modificar hojas productivas.
 ================================================================================
+
+
+================================================================================
+AUG-115 — VALIDACIÓN VISUAL DE ROLES DEL INBOX — PENDIENTE EN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+Con cuentas de prueba autorizadas, abrir Inbox y revisar la vista de detalle de una solicitud de vídeo:
+1. Desarrollador: muestra aprobar/rechazar.
+2. Gefe: muestra aprobar/rechazar.
+3. Supervisor: muestra aprobar/rechazar.
+4. Jefe, Técnico y Técnico exterior: no muestran controles de aprobación.
+5. Repetir llamadas directas a approveVideo/rejectVideo con sesión de rol no autorizado; backend debe rechazarlas independientemente del rol declarado por el cliente.
+No usar cuentas ni hojas productivas; no desplegar cambios para esta comprobación sin el procedimiento de Beta.
+================================================================================

@@ -3595,6 +3595,10 @@ function normalizeUiRole_(role) {
     return String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 }
 
+function canApproveInboxVideo_(role) {
+    return ['desarrollador', 'gefe', 'supervisor'].includes(normalizeUiRole_(role));
+}
+
 function getUiSessionContext_(user = getState().currentUser) {
     if (!user) return null;
     const userId = String(user.ID || '').trim();
@@ -6436,8 +6440,7 @@ export function renderInboxDetail(item) {
     }
 
     const isVideoItem = item.type === 'video_approval';
-    const userRole = currentUser ? String(currentUser.Privilegios || '').trim() : '';
-    const canApprove = ['desarrollador', 'gefe', 'supervisor'].includes(normalizeUiRole_(userRole));
+    const canApprove = canApproveInboxVideo_(context.role);
     const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
     const suggestionData = item.type === 'problem_report' && item.suggestionData ? item.suggestionData : null;
     const proposedValues = suggestionData && suggestionData.proposedValues ? suggestionData.proposedValues : {};

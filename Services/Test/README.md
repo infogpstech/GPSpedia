@@ -1302,3 +1302,14 @@ La suite comprueba renderizado DOM con \`textContent\` para nombre, tipo y detal
 La suite Services/Test/InboxStoredXss.js se ejecuta con las fuentes vigentes de ui.js y Services/feedback.js, invocando runInboxStoredXssTests({ui, feedback}). Además de los contratos DOM existentes, verifica normalización de título/descripción/nombre, límites y tipos, allowlist de metadatos por tipo de contenido, lista de modelos PyS, canonicalización de URL YouTube y rechazo de esquemas/hosts ajenos.
 
 El backend normaliza los datos nuevos antes de persistirlos y, al leer registros históricos, limita los campos devueltos, descarta metadatos no permitidos y convierte URL inválidas en enlace vacío. El Inbox presenta el contenido del mensaje como texto; las respuestas enriquecidas mantienen su sanitizador dedicado. La suite usa fuentes y helpers aislados; no ejecuta navegador real ni Apps Script/Spreadsheet.
+
+
+## AUG-115 — Campo de rol canónico del Inbox
+
+Ejecutar desde la raíz del repositorio:
+
+```bash
+node --experimental-default-type=module Services/Test/InboxRoleContract.js
+```
+
+La suite valida que `getUiSessionContext_()` derive el rol exclusivamente de `currentUser.Privilegios`, que `renderInboxDetail()` utilice el rol normalizado del contexto, que la UI permita aprobación solo a Desarrollador/Gefe/Supervisor y que el backend conserve RBAC basado en `assertFeedbackSession()`, ignorando un rol falsificado en el payload. Pruebas aisladas: no acceden a Apps Script, Spreadsheet ni deployments. La inspección visual real de los botones queda para Beta.

@@ -206,3 +206,27 @@ Validación Beta pendiente: filas históricas maliciosas/URL manipuladas en Spre
 Archivos actualizados: Services/feedback.js, ui.js, Services/Test/InboxStoredXss.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, Auditoría.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-115 — Unificar el campo de rol utilizado por el Inbox. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-115 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- `Services/Auth.js` confirma que el login entrega `user.Privilegios` desde la columna canónica `Users.Privilegios`.
+- `getUiSessionContext_()` normaliza `currentUser.Privilegios` y produce `context.role`; `renderInboxDetail()` ahora utiliza ese rol normalizado para decidir la visibilidad de los controles de aprobación, sin volver a leer propiedades de rol del objeto `currentUser`.
+- Se centralizó la allowlist visual en `canApproveInboxVideo_()`: Desarrollador, Gefe y Supervisor. Jefe, Técnico, Técnico exterior, Anónimo y valores vacíos no reciben controles de aprobación.
+- No se modificó el backend: `authorizeFeedbackAction_()` ya valida la sesión con `assertFeedbackSession()`, deriva `userRole` del actor autenticado y conserva RBAC para aprobación/rechazo. El rol enviado por el navegador es sustituido.
+
+Validación local:
+- `Services/Test/InboxRoleContract.js`: 7/7 PASS en harness aislado con las fuentes vigentes.
+- Casos: `Privilegios` canónico frente a `Rol` no canónico; normalización; lista permitida/no permitida; uso de `context.role` en renderer; política RBAC y rol falsificado.
+- No se ejecutaron endpoints, deployments, Apps Script ni hojas productivas.
+
+Validación Beta pendiente: inspección visual del Inbox con cuentas de prueba Desarrollador, Gefe, Supervisor y Técnico; confirmar que botones aprobar/rechazar aparecen solo para los tres roles autorizados y que el backend rechaza llamadas directas de roles no autorizados.
+
+Archivos: ui.js, Services/Test/InboxRoleContract.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt y checkpoint.md.
+Siguiente tarea: AUG-116 — Integrar la caché real de Inbox con identidad e invalidación. No iniciar dentro de esta tarea.
+================================================================================

@@ -136,7 +136,11 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: ui.js:5578–5579 usa currentUser.Rol; Services/Auth.js:355–363 entrega Privilegios.
 - Problema: los botones de aprobación/rechazo no se muestran para los roles permitidos.
 - Criterios: usar propiedad canónica; mantener RBAC backend; probar Desarrollador, Gefe, Supervisor y roles no autorizados.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
+- Implementación: `renderInboxDetail()` consume `context.role`, derivado de `currentUser.Privilegios` por `getUiSessionContext_()`; se centralizó la regla visual en `canApproveInboxVideo_()`.
+- RBAC backend sin cambios: `authorizeFeedbackAction_()` deriva `userRole` desde `assertFeedbackSession()` y conserva Desarrollador/Gefe/Supervisor para aprobación y rechazo.
+- Validación local: `InboxRoleContract.js`, 7/7 PASS; cubre campo canónico, normalización, roles autorizados/no autorizados, renderer, política RBAC y rechazo de rol falsificado.
+- Validación visual en navegador real queda para Beta; no se ejecutaron endpoints, deployments ni hojas productivas.
 
 ### AUG-116 — Integrar la caché real de Inbox con identidad e invalidación
 - Origen: H-AUD-018-004. Prioridad: Media.

@@ -485,3 +485,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/InboxStoredXss.js: amplía contratos de renderer y añade pruebas de normalización backend, allowlist de metadatos y URL histórica.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, Auditoría.txt, lista_beta.txt y checkpoint.md: evidencia, estado y validaciones Beta documentados.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-115 — UNIFICACIÓN DEL ROL DEL INBOX
+- ui.js: renderInboxDetail utiliza context.role, derivado del campo canónico currentUser.Privilegios por getUiSessionContext_(); la regla de visibilidad de aprobación se centraliza en canApproveInboxVideo_.
+- Services/Test/InboxRoleContract.js: nueva suite aislada para campo canónico, normalización, roles autorizados/no autorizados, contrato del renderer y RBAC backend, incluida la sustitución de un rol falsificado por el actor autenticado.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt y checkpoint.md: instrucciones, cierre y continuidad documentados.
+- Services/feedback.js y Services/Auth.js no requieren modificaciones: el backend ya deriva el rol de Users/ActiveSessions mediante assertFeedbackSession y entrega Privilegios desde AUTH.
+================================================================================
