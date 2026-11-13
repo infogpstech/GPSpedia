@@ -453,7 +453,7 @@ Resultado:
 - Los backups históricos sin manifiesto se aceptan con advertencia después de validar el esquema/contenido disponible; los manifiestos presentes deben coincidir exactamente.
 
 Validación local:
-- Services/Test/AdminRestoreRecovery.js: 16/16 PASS.
+- Services/Test/AdminRestoreRecovery.js: 18/18 PASS.
 - Se probaron dinámicamente intercambio DB exitoso, preservación de hojas adicionales, fallo de promoción, fallo de verificación y fallo de reversión.
 - Parsing V8 de Services/admin.js y Services/Test/AdminRestoreRecovery.js: PASS.
 - No se ejecutaron Apps Script, Spreadsheet, Drive, endpoints, deployments ni datos productivos.
