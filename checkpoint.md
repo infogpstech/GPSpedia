@@ -417,3 +417,22 @@ Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
 Validación Beta pendiente: comparar el código del deployment UTILITIES y probar concurrencia real, persistencia de snapshots, promoción/rollback e interrupción/reintento en una copia aislada. No desplegar a producción.
 Siguiente tarea: AUG-124 — Unificar esquema e identidad de Tutoriales entre FEEDBACK y CATALOG. No iniciar en esta interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-124 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: e5a34f4e0308b637b383981b0da6a0af2d4962e4.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+- El contrato funcional ya existía por AUG-092: FEEDBACK y CATALOG usan la hoja Tutorial, conservan A:G y extienden H como Colaborador; la migración no reinterpreta datos históricos.
+- Alta/edición: ID estable, validación de esquema, deduplicación de tema, ScriptLock, escritura verificada y actor derivado de sesión/perfil Users.
+- TutorialIntegrity.js: 25/25 PASS, incluidos alta con hoja vacía y esquema A:H, migración compatible A:G, duplicados, reintento idempotente, edición por ID, identidad, y lectura real de handleGetCatalogData para A:H y A:G.
+- VideoApprovalPublishing.js: 27/27 PASS. SharedMutationCoordinator.js: 32/32 PASS.
+- Parsing sintáctico de feedback.js, catalog.js, Coordinator.js, SharedMutationClient.js y suites modificadas: PASS.
+- No se ejecutaron Apps Script, Spreadsheet, Drive, endpoints ni datos productivos.
+
+Validación Beta pendiente: comprobar en copias aisladas la persistencia, lectura tras recarga CATALOG, migración de A:G a H, identidad real de Users, permisos y referencias de aprobación de vídeo. No desplegar a producción.
+Siguiente tarea: AUG-125 — Hacer recuperables las restauraciones de DB y Drive. No iniciar en esta interacción.
+================================================================================
