@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const ui = read('../../ui.js');
@@ -15,6 +16,10 @@ const check = (name, fn) => {
   catch (error) { tests.push({ name, status: 'FAIL', message: error.message }); }
 };
 
+check('Sintaxis ES module de ui.js', () => {
+  const result = spawnSync(process.execPath, ['--experimental-default-type=module', '--check', new URL('../../ui.js', import.meta.url).pathname], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || (result.error && result.error.message) || 'node --check falló');
+});
 check('Carta vertical y margen físico de referencia de 10 mm', () => {
   assert.match(source, /@page\s*\{\s*size:\s*letter\s+portrait;\s*margin:\s*10mm;/);
 });

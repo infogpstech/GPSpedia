@@ -813,7 +813,7 @@ Decisión y resultado:
 - README, backlog y documentación de pruebas alineados. No se modificaron datos, endpoints, servicios ni deployments.
 
 Validación:
-- Añadida Services/Test/PrintSheetPageContract.mjs con 10 verificaciones de contrato y regresión; integrada en el grupo INTEGRATION.
+- Añadida Services/Test/PrintSheetPageContract.mjs con 11 verificaciones de contrato, sintaxis y regresión; integrada en el grupo INTEGRATION.
 - Pendiente ejecutar Node.js 22/GitHub Actions tras publicar.
 - Beta pendiente: vista previa real, PDF/impresión Carta, medición de márgenes y verificación de recortes según navegador e impresora. La zona no imprimible depende del dispositivo.
 

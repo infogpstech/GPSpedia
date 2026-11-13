@@ -746,5 +746,5 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js: la altura mínima de los wrappers se ajusta a 259.4 mm, equivalente al área vertical disponible tras reservar ambos márgenes. Se alinean las reglas de vista previa e impresión.
 - ui.js: se documenta el contrato vigente de una o varias páginas sin reducir márgenes para forzar compacidad. Se conserva el agrupamiento técnico actual, la repetición de encabezado/pie y los metadatos solo en la primera página.
 - README.md, Tareas_pendientes_parte2.txt y Services/Test/README.md: dimensiones, margen, contrato y límites de validación alineados.
-- Services/Test/PrintSheetPageContract.mjs: nueva suite de 10 verificaciones, integrada en INTEGRATION. La impresión física y medición con regla quedan para Beta.
+- Services/Test/PrintSheetPageContract.mjs: nueva suite de 11 verificaciones, integrada en INTEGRATION. La impresión física y medición con regla quedan para Beta.
 ================================================================================
