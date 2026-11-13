@@ -80,7 +80,7 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("updateResult.selfSessionRevoked"));
   assert(f.includes("localStorage.removeItem(SESSION_KEY)"));
   assert(f.includes("window.state.setState({ currentUser: null })"));
-  assert(f.includes("window.location.replace('index.html')"));
+  assert(f.includes("window.location.replace('../index.html')"));
  });
  run("sesión remota revocada fuerza logout al siguiente control AUTH",()=>{
   const f=slice(auth,"export async function validateActiveSession(","export async function checkSession");

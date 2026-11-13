@@ -54,7 +54,7 @@ check('El control de reanudación normaliza el ID y usa la acción backupDrive',
 check('El botón de reanudación está presente y deshabilitado inicialmente',
     /id="btn-admin-resume-drive-backup"[^>]*disabled/.test(html));
 
-for (const path of ['JS/Frontend/ui.js', 'JS/Services/admin.js', 'JS/Services/Test/AdminRestoreRecovery.js']) syntax(path);
+for (const path of ['JS/Frontend/ui.js', 'JS/Services/admin.js', 'JS/Tests/AdminRestoreRecovery.js']) syntax(path);
 check('Node.js --check aprueba los tres archivos JavaScript modificados', true);
 
 console.log('AdminBackupResumeUI: ' + passed + '/' + passed + ' PASS');

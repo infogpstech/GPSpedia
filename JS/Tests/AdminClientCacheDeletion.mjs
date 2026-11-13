@@ -146,11 +146,11 @@ await check("El Service Worker conserva el shell offline y elimina solo respuest
 await check("El mensaje del Service Worker elimina respuestas dinámicas y conserva el shell esencial", async () => {
     const listeners = {};
     const coreUrl = "https://example.test/app/index.html";
-    const mainUrl = "https://example.test/app/main.js";
+    const mainUrl = "https://example.test/app/JS/Frontend/main.js";
     const runtimeUrl = "https://example.test/app/api/catalog";
     const oldRuntimeUrl = "https://example.test/app/image?id=1";
     const entries = new Map([
-        ["gpsepedia-cache-v20", [coreUrl, mainUrl, runtimeUrl, oldRuntimeUrl].map(url => ({ url }))],
+        ["gpsepedia-cache-v21", [coreUrl, mainUrl, runtimeUrl, oldRuntimeUrl].map(url => ({ url }))],
         ["unrelated-cache", [{ url: "https://example.test/other" }]]
     ]);
     const cacheCalls = [];
@@ -191,7 +191,7 @@ await check("El mensaje del Service Worker elimina respuestas dinámicas y conse
     });
     await waitPromise;
     assert.deepEqual(response,{status:"success",removedCount:2,preservedCount:2});
-    assert.deepEqual(entries.get("gpsepedia-cache-v20").map(item=>item.url),[coreUrl,mainUrl]);
+    assert.deepEqual(entries.get("gpsepedia-cache-v21").map(item=>item.url),[coreUrl,mainUrl]);
     assert.equal(cacheCalls.includes("unrelated-cache"),false);
 });
 console.log("AdminClientCacheDeletion: " + passed + "/" + passed + " PASS");
