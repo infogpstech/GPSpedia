@@ -1712,3 +1712,12 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - El registro usa ScriptProperties (solo accesible a editores del proyecto Apps Script; no existe endpoint de lectura/modificación). Retención: 180 días y máximo 300 eventos finalizados; máximo 20 eventos sin cierre, que bloquean nuevas operaciones sensibles hasta revisión.
 - El contenido es una lista blanca de metadatos; nunca almacena payload, mensajes, stack traces, tokens, contraseñas, Base64 ni URLs.
 - Ejecutar: `node --experimental-default-type=module Services/Test/AdminAuditTrail.mjs`.
+
+
+## AUG-022 — Eliminación asíncrona de caché IndexedDB ADMIN
+
+- `AdminClientCacheDeletion.mjs` ejecuta el helper real de `ui.js` con solicitudes IndexedDB simuladas y valida `onsuccess`, `onerror`, `onblocked`, API no disponible y excepciones síncronas.
+- El contrato del handler confirma que `localStorage` se limpia y reporta por separado, que el botón se restaura y que solo se anuncia éxito total/recarga cuando IndexedDB confirma la eliminación y ambas claves de localStorage se eliminaron.
+- `onblocked` se reporta como resultado no exitoso; aunque la solicitud pueda completarse más tarde al cerrarse otras conexiones, esa ejecución no anuncia éxito ni recarga automáticamente.
+- Ejecutar: `node --experimental-default-type=module Services/Test/AdminClientCacheDeletion.mjs`.
+- La suite usa solicitudes simuladas; no sustituye la validación con IndexedDB real, conexiones en otras pestañas ni navegadores móviles, reservada para Beta.
