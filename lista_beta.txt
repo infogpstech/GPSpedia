@@ -1768,3 +1768,39 @@ PRUEBAS EN HOJAS AISLADAS:
 
 No ejecutar con Spreadsheet, Drive ni endpoints productivos; no desplegar.
 ================================================================================
+
+
+================================================================================
+AUG-123 — VALIDACIÓN BETA DE MIGRACIÓN UTILITIES — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si existe cualquier cambio local, el remoto no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN COPIA AISLADA DE SPREADSHEET/UTILITIES:
+1. Comparar el código del deployment UTILITIES con Services/Utilities.js. No desplegar a producción.
+2. Preparar una copia aislada con Cortes, Hoja 1, Users y ActiveSessions; confirmar que solo una sesión Desarrollador activa puede ejecutar migrateTimestamps.
+3. Lanzar dos POST simultáneos desde clientes separados. Confirmar que ScriptLock serializa ambas operaciones y que no procesan snapshots intercalados.
+4. Comparar snapshots de Cortes y Hoja 1, staging y respaldo; promover solo tras validar ambos.
+5. Inyectar fallos de lectura, Drive, staging, renombrado/promoción y rollback. Confirmar que Hoja 1 conserva los valores previos o que los artefactos de recuperación quedan preservados con error explícito.
+6. Interrumpir después de renombrar el destino a backup y antes de promover staging; reintentar y comprobar recuperación sin pérdida ni duplicación de hojas.
+7. Verificar que backup y destino simultáneos detienen la operación para reconciliación manual.
+8. Registrar valores antes/después, resultado HTTP y estado de lock. Nunca usar el Spreadsheet ID del código ni datos productivos.
+
+No declarar PASS sin verificar persistencia y recuperación en la copia aislada. No desplegar a producción.
+================================================================================
