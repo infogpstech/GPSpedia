@@ -4,6 +4,8 @@ import { createHash } from "node:crypto";
 
 const admin = readFileSync(new URL("../admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../../ui.js", import.meta.url), "utf8");
+const coordinator = readFileSync(new URL("../Coordinator.js", import.meta.url), "utf8");
+const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
 let passed = 0;
 function check(name, fn) { fn(); passed++; console.log("PASS " + name); }
 function fnSource(source, name) {
@@ -577,6 +579,44 @@ check("El esquema del inventario conserva las columnas nuevas de trazabilidad de
         assert.ok(ensure.includes(field));
         assert.ok(readSchema.includes(field));
     }
+});
+
+
+check("El escaneo y el guardado del inventario no mueven archivos automáticamente",()=>{
+    const saveStart=ui.indexOf("const saveUnusedInventory");
+    const organizeStart=ui.indexOf("const organizeUnusedImages",saveStart);
+    assert.ok(saveStart>=0&&organizeStart>saveStart);
+    const saveBlock=ui.slice(saveStart,organizeStart);
+    assert.equal(saveBlock.includes("mode: 'organize'"),false);
+    assert.equal(saveBlock.includes("handleOrganizeUnusedImagesBatch"),false);
+    const explicitBlock=ui.slice(organizeStart,ui.indexOf("const updateControls",organizeStart));
+    assert.ok(explicitBlock.includes("window.confirm("));
+    assert.ok(explicitBlock.includes("mode: 'organize'"));
+    assert.ok(explicitBlock.includes("confirmed: true"));
+    assert.ok(explicitBlock.includes("inventoryOperationId"));
+    assert.ok(html.includes('id="btn-audit-drive-organize"'));
+});
+check("ADMIN exige confirmación y correlación de operación antes de mover imágenes",()=>{
+    const save=fnSource(admin,"handleSaveUnusedImagesInventory");
+    const organize=fnSource(admin,"handleOrganizeUnusedImagesBatch");
+    assert.ok(save.includes('payload.mode === "organize"'));
+    assert.ok(organize.includes("payload.confirmed !== true"));
+    assert.ok(organize.includes("payload.inventoryOperationId"));
+    assert.ok(organize.includes("inventoryOperationId"));
+    assert.ok(organize.includes("file.moveTo(destination)"));
+    assert.ok(organize.includes("writeDriveInventoryRowVerified_"));
+});
+check("La organización revalida referencias e historial por archivo y protege ubicaciones manuales",()=>{
+    const organize=fnSource(admin,"handleOrganizeUnusedImagesBatch");
+    const save=fnSource(admin,"handleSaveUnusedImagesInventory");
+    assert.ok(organize.includes("const currentRows = sheet.getDataRange().getValues()"));
+    assert.ok(organize.includes("const references = collectActiveDriveReferences(false)"));
+    assert.ok(organize.includes('organizationState === "movida_manual"'));
+    assert.ok(organize.includes('organizationState === "organizada"'));
+    assert.ok(organize.includes("rollbackError"));
+    assert.ok(save.includes('previousOrganizationState === "movida_manual" && previousManualLocation'));
+    assert.ok(save.includes('String(row[column("estado_organizacion") - 1] || "") === "movida_manual"'));
+    assert.ok(coordinator.includes('saveUnusedImagesInventory: { read: [...identityRead, "CORTES"]'));
 });
 
 console.log("AdminReplacedImagesIntegrity: "+passed+"/"+passed+" PASS");
