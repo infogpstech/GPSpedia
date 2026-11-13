@@ -7094,6 +7094,10 @@ export async function openAuditDriveModal() {
     let inventoryAuditId = '';
     let inventoryOperationId = '';
     let inventoryConfirmedFileIds = [];
+    let auditId = '';
+    let localStateRevision = 0;
+    let pendingBatchIndex = null;
+    let pendingBatchFiles = [];
     let savedState = null;
     let isRunning = false;
 
@@ -7188,7 +7192,13 @@ export async function openAuditDriveModal() {
 
     const persistState = async (status, extra = {}) => {
         if (!isCurrentRequest()) throw new Error('La sesión cambió; se detuvo la persistencia de la auditoría.');
+        if (!auditId) return null;
         const state = {
+            auditId: auditId,
+            serverAuditId: auditId,
+            revision: localStateRevision,
+            batchIndex: pendingBatchIndex,
+            batchFiles: pendingBatchFiles,
             files: allFiles,
             cursor: cursor,
             complete: complete,
@@ -7223,6 +7233,12 @@ export async function openAuditDriveModal() {
             throw new Error('La sesión cambió; se eliminó el estado de auditoría de la cuenta anterior.');
         }
         if (!saved) throw new Error('IndexedDB no confirmó la persistencia del progreso de auditoría.');
+        localStateRevision = Math.max(0, Number(saved.revision) || localStateRevision);
+        if (pendingBatchIndex !== null) {
+            pendingBatchIndex = null;
+            pendingBatchFiles = [];
+        }
+        savedState = Object.assign({}, state, { revision: localStateRevision, auditId: auditId });
     };
 
 
@@ -7254,6 +7270,9 @@ export async function openAuditDriveModal() {
                 !inventoryResult.inventoryOperationId) {
                 throw new Error(inventoryResult && inventoryResult.message
                     ? inventoryResult.message : 'ADMIN no confirmó la operación de inventario.');
+            }
+            if (String(inventoryResult.auditId) !== auditId) {
+                throw new Error('ADMIN devolvió un inventario asociado a otra auditoría.');
             }
             inventoryAuditId = String(inventoryResult.auditId);
             inventoryOperationId = String(inventoryResult.inventoryOperationId);
@@ -7414,6 +7433,10 @@ export async function openAuditDriveModal() {
         inventoryMessage = state.inventoryMessage || '';
         inventoryAuditId = String(state.inventoryAuditId || '');
         inventoryOperationId = String(state.inventoryOperationId || '');
+        auditId = String(state.auditId || state.serverAuditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId || '');
+        localStateRevision = Math.max(0, Number(state.revision) || 0);
+        pendingBatchIndex = null;
+        pendingBatchFiles = [];
         inventoryConfirmedFileIds = Array.isArray(state.inventoryConfirmedFileIds)
             ? Array.from(new Set(state.inventoryConfirmedFileIds.map(id => String(id || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id))))
             : [];
@@ -7470,10 +7493,12 @@ export async function openAuditDriveModal() {
                 inventoryAuditId = '';
                 inventoryOperationId = '';
                 inventoryConfirmedFileIds = [];
+                auditId = '';
+                localStateRevision = 0;
+                pendingBatchIndex = null;
+                pendingBatchFiles = [];
                 savedState = null;
                 updateSummary('Preparando una auditoría nueva...');
-                await persistState('running');
-                if (!isCurrentRequest()) return;
             }
 
             const getCursorPositionSignature = value => JSON.stringify({
@@ -7494,6 +7519,13 @@ export async function openAuditDriveModal() {
                 if (!response || response.status !== 'success' || !Array.isArray(response.files)) {
                     throw new Error(response && response.message ? response.message : 'Respuesta inválida del servicio de auditoría.');
                 }
+                const responseAuditId = String(response.auditId || '').trim();
+                if (!/^[0-9a-f-]{36}$/i.test(responseAuditId) ||
+                    (auditId && auditId !== responseAuditId) ||
+                    (cursor && cursor.referenceCacheId && String(cursor.referenceCacheId) !== responseAuditId)) {
+                    throw new Error('ADMIN devolvió un auditId inválido o distinto al de la auditoría reanudada.');
+                }
+                auditId = responseAuditId;
 
                 const responseBatchIds = new Set();
                 const uniqueResponseFiles = [];
@@ -7529,6 +7561,8 @@ export async function openAuditDriveModal() {
                 uniqueResponseFiles.forEach(file => seenFileIds.add(String(file.fileId)));
                 allFiles.push(...uniqueResponseFiles);
                 batches++;
+                pendingBatchIndex = batches - 1;
+                pendingBatchFiles = uniqueResponseFiles.slice();
                 lastBatchAnalyzed = batchSize;
                 totalDiscovered = reportedDiscovered;
                 totalAnalyzed = reportedTotal;
