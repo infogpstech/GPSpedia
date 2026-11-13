@@ -38,11 +38,11 @@ check('Cada wrapper inicia una página y el último no fuerza página vacía', (
   assert.match(source, /break-after:\s*page;\s*page-break-after:\s*always;/);
   assert.match(source, /\.sheet-page-wrapper:last-child\s*\{[^}]*break-after:\s*auto;\s*page-break-after:\s*auto;/s);
 });
-check('Contrato de agrupación conserva máximo dos imágenes o tres verticales', () => {
-  const group = source.match(/const choosePageGroups = cards => \{([\s\S]*?)\n        \};/);
-  assert.ok(group, 'choosePageGroups debe estar presente');
-  assert.match(group[1], /Math\.min\(2,\s*remaining\)/);
-  assert.match(group[1], /remaining >= 3[\s\S]*a < 0\.82[\s\S]*b < 0\.82[\s\S]*c < 0\.82/);
+check('La paginación usa overflow medido y conserva tarjetas en secuencia', () => {
+  assert.match(source, /const pageOverflows = page =>/);
+  assert.match(source, /main\.scrollHeight > main\.clientHeight \+ 1/);
+  assert.match(source, /orderedTechnicalCards\.forEach\(card => \{/);
+  assert.doesNotMatch(source, /const choosePageGroups/);
 });
 check('Cada página repite encabezado y pie; metadatos solo en la primera', () => {
   assert.match(source, /if \(headerTemplate\) main\.appendChild\(headerTemplate\.cloneNode\(true\)\)/);

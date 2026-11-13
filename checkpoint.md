@@ -878,3 +878,8 @@ ADENDA DE VALIDACIÓN — AUG-143 — 2026-11-13
 - Primer CI run 43417011085: fallo exclusivo en el test de altura, que contaba `min-height` dentro de `height`. Sintaxis ui.js PASS; 11/12 verificaciones de la suite PASS.
 - Corregida la aserción para inspeccionar las dos reglas de página; alineada altura fija en pantalla/impresión y preservación de imagen cuando no hay espacio libre, para que el overflow pueda resolverse sin ocultar la imagen.
 - Reejecutar CI en el commit correctivo.
+
+
+ADENDA DE VALIDACIÓN — AUG-143 — REGRESIÓN CRUZADA
+- CI run 43417195650: PrintSheetPaginationIntegrity 12/12 PASS y node --check PASS; falló una expectativa obsoleta de PrintSheetPageContract (AUG-140) que exigía el algoritmo choosePageGroups retirado por AUG-143.
+- Se alinea la prueba de AUG-140 con el nuevo contrato de overflow medido y preservación secuencial; no se cambia la implementación por este fallo.
