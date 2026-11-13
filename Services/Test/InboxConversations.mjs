@@ -224,4 +224,13 @@ run("La lectura no crea ni modifica Feedbacks/Contactanos históricos", () => {
     assert.equal(spreadsheet.getSheetByName("Feedbacks"),null);
     assert.equal(spreadsheet.getSheetByName("Contactanos"),null);
 });
-console.log("InboxConversations: " + passed + "/22 PASS");
+run("La paginación de mensajes entrega primero los más recientes y permite cargar anteriores", () => {
+    const latest = api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor:"0" });
+    assert.equal(latest.data.length,1);
+    assert.equal(latest.hasMore,true);
+    const older = api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor:latest.nextCursor });
+    assert.equal(older.data.length,1);
+    assert.equal(older.hasMore,false);
+    assert.notEqual(latest.data[0].messageId,older.data[0].messageId);
+});
+console.log("InboxConversations: " + passed + "/" + passed + " PASS");

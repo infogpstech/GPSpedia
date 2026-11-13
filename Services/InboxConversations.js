@@ -343,11 +343,13 @@ function handleGetInboxMessages(payload) {
         inboxAssertParticipant_(found.row,actor.id);
         const messages = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length).filter(row => String(row[1]) === conversationId)
             .sort((a,b) => new Date(a[2]).getTime() - new Date(b[2]).getTime());
-        const data = messages.slice(offset,offset+pageSize).map(row => ({
+        const endIndex = Math.max(0, messages.length - offset);
+        const startIndex = Math.max(0, endIndex - pageSize);
+        const data = messages.slice(startIndex,endIndex).map(row => ({
             messageId:String(row[0]),conversationId:String(row[1]),createdAt:String(row[2]),authorId:String(row[3]),
             authorName:String(row[4]),authorRole:String(row[5]),body:String(row[6] || "")
         }));
-        const nextOffset = offset + data.length, hasMore = nextOffset < messages.length;
+        const nextOffset = offset + data.length, hasMore = startIndex > 0;
         return {status:"success",data,total:messages.length,nextCursor:hasMore?String(nextOffset):null,hasMore,pageSize};
     });
 }
