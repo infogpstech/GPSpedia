@@ -1749,3 +1749,12 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - `ServiceMetricsTelemetry.mjs` prueba el almacén real de eventos con reloj controlado: inicio de solicitud, expiración exacta, concurrencia fuera de orden, límite de 600, señal de truncamiento, ventana móvil y límites de buckets.
 - Comprueba que `routeAction` registra hora de inicio y duración final, y que el panel etiqueta la serie por inicio, advierte truncamiento y evita renderizar cuando el diagnóstico está oculto.
 - Ejecutar: `node --experimental-default-type=module Services/Test/ServiceMetricsTelemetry.mjs`.
+
+
+## AUG-026 — Integridad y recuperación del historial de imágenes reemplazadas
+
+- `AdminReplacedImagesIntegrity.mjs` valida la migración idempotente y coordinada de los 12 encabezados dinámicos, la lectura sin escrituras, los estados históricos visibles y las filas enviadas a revisión.
+- Comprueba unicidad de `id_reemplazo`, coincidencia entre `archivo_drive_id`, `url_anterior` y `url_visualizacion`, transiciones de restauración/papelera, verificación de escritura y compensaciones ante fallos.
+- Verifica que las acciones mutantes no seleccionen silenciosamente la primera coincidencia y que la descarga no inicialice ni migre el esquema durante una consulta.
+- Ejecutar: `node --experimental-default-type=module Services/Test/AdminReplacedImagesIntegrity.mjs`.
+- No accede a Drive ni a Spreadsheet productivos; los servicios externos se simulan.

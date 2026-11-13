@@ -1,0 +1,402 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const admin = readFileSync(new URL("../admin.js", import.meta.url), "utf8");
+const ui = readFileSync(new URL("../../ui.js", import.meta.url), "utf8");
+let passed = 0;
+function check(name, fn) { fn(); passed++; console.log("PASS " + name); }
+function fnSource(source, name) {
+    const start = source.indexOf("function " + name + "(");
+    assert.ok(start >= 0, "No se encontró function " + name);
+    const end = source.indexOf("\nfunction ", start + 10);
+    return source.slice(start, end > start ? end : source.length);
+}
+const names = [
+    "extractDriveFileIds", "getReplacedImageRecordType", "withReplacedImagesSchemaLock_",
+    "ensureReplacedImagesInventoryColumns", "getReplacedImagesReadSchema_",
+    "getReplacedImageRecordIdentity_", "isKnownReplacedImageStatus_",
+    "getDuplicateReplacedImageIds_", "findReplacedImageRecordById",
+    "setReplacedImageHistoryStatusVerified_", "restoreAdminImageActiveCell_"
+];
+const helperSources = Object.fromEntries(names.map(name => [name, fnSource(admin, name)]));
+function createSheet(initialRows, options = {}) {
+    const cells = initialRows.map(row => row.slice());
+    let writes = 0;
+    function ensureCell(row, col) {
+        while (cells.length < row) cells.push([]);
+        while (cells[row - 1].length < col) cells[row - 1].push("");
+    }
+    function range(row, col, numRows = 1, numCols = 1) {
+        return {
+            getValues() {
+                return Array.from({ length: numRows }, (_, r) =>
+                    Array.from({ length: numCols }, (_, c) => cells[row - 1 + r]?.[col - 1 + c] ?? ""));
+            },
+            getDisplayValues() {
+                return this.getValues().map(values => values.map(value => String(value ?? "")));
+            },
+            getValue() { return cells[row - 1]?.[col - 1] ?? ""; },
+            setValue(value) {
+                writes++;
+                if (options.failWriteAt === writes) throw new Error("simulated setValue failure");
+                ensureCell(row, col); cells[row - 1][col - 1] = value; return this;
+            },
+            setValues(values) {
+                writes++;
+                if (options.failWriteAt === writes) throw new Error("simulated setValues failure");
+                values.forEach((valuesRow, r) => valuesRow.forEach((value, c) => {
+                    ensureCell(row + r, col + c); cells[row - 1 + r][col - 1 + c] = value;
+                }));
+                return this;
+            },
+            setFontWeight() { return this; },
+            setBackground() { return this; }
+        };
+    }
+    return {
+        cells,
+        getRange: range,
+        getLastRow() {
+            for (let i = cells.length - 1; i >= 0; i--) {
+                if (cells[i].some(value => String(value ?? "") !== "")) return i + 1;
+            }
+            return 0;
+        },
+        getLastColumn() {
+            return cells.reduce((max, row) => {
+                let last = 0;
+                row.forEach((value, i) => { if (String(value ?? "") !== "") last = i + 1; });
+                return Math.max(max, last);
+            }, 0);
+        },
+        getDataRange() { return range(1, 1, Math.max(1, this.getLastRow()), Math.max(1, this.getLastColumn())); },
+        get writeCount() { return writes; }
+    };
+}
+const BASE_HEADERS = ["id_reemplazo","fecha_reemplazo","tipo_contenido","registro_id","campo",
+    "archivo_drive_id","nombre_archivo","url_anterior","sustituida_por_url","referencia_texto","estado"];
+const EXT_HEADERS = ["origen_registro","tipo_mime","ubicacion_original","fecha_creacion_drive","fecha_deteccion",
+    "url_visualizacion","ubicacion_actual","ultima_auditoria_id","tipo_registro","estado_organizacion",
+    "error_organizacion","fecha_organizacion"];
+const HEADERS = [...BASE_HEADERS, ...EXT_HEADERS];
+const FILE_A = "abcdefghij1234567890";
+const FILE_B = "bcdefghij12345678901";
+function makeRow({id="REP-1", status="historica", type="reemplazada", fileId=FILE_A,
+    originalId=fileId, visualId=fileId, origin=type === "reemplazada" ? "reemplazo" : "auditoria_drive",
+    contentType=type === "reemplazada" ? "vehiculo" : "inventario_sin_uso", name="imagen.jpg"} = {}) {
+    const row = Array(23).fill("");
+    row[0]=id; row[1]=new Date("2026-01-01T00:00:00Z"); row[2]=contentType;
+    row[3]="VEH-1"; row[4]="imagenVehiculo"; row[5]=fileId; row[6]=name;
+    row[7]="https://drive.google.com/file/d/"+originalId+"/view"; row[8]="https://drive.google.com/file/d/REPLACED00000000000000/view";
+    row[9]="Vehículo de prueba"; row[10]=status; row[11]=origin; row[12]="image/jpeg";
+    row[16]="https://lh3.googleusercontent.com/d/"+visualId; row[19]=type;
+    return row;
+}
+function lockHarness() {
+    const state={locked:false,waits:0,releases:0};
+    const LockService={getScriptLock(){return {
+        hasLock(){return state.locked;},
+        waitLock(){state.waits++;state.locked=true;},
+        releaseLock(){state.releases++;state.locked=false;}
+    };}};
+    return {LockService,state};
+}
+function buildHelpers({sheet=null, spreadsheet=null, lock=lockHarness(), flush=()=>{}}={}) {
+    const SpreadsheetApp={flush};
+    const getSpreadsheet=()=>spreadsheet || ({getSheetByName:()=>sheet});
+    const source=names.map(name=>helperSources[name]).join("\n");
+    const api=new Function("LockService","SpreadsheetApp","getSpreadsheet","SHEET_NAMES",source+
+        "\nreturn {extractDriveFileIds,getReplacedImageRecordType,withReplacedImagesSchemaLock_,ensureReplacedImagesInventoryColumns,getReplacedImagesReadSchema_,getReplacedImageRecordIdentity_,isKnownReplacedImageStatus_,getDuplicateReplacedImageIds_,findReplacedImageRecordById,setReplacedImageHistoryStatusVerified_,restoreAdminImageActiveCell_};")
+        (lock.LockService,SpreadsheetApp,getSpreadsheet,{IMAGENES_REEMPLAZADAS:"Imagenes_Reemplazadas"});
+    return {...api,SpreadsheetApp,lock};
+}
+
+check("Los 12 encabezados dinámicos se migran de forma idempotente y se verifican",()=>{
+    const row=["REP-LEGACY",new Date(),"vehiculo","VEH-1","imagenVehiculo",FILE_A,"old.jpg",
+        "https://drive.google.com/file/d/"+FILE_A+"/view","new-url","VEH-1","historica"];
+    const sheet=createSheet([BASE_HEADERS,row]);
+    const lock=lockHarness(),api=buildHelpers({sheet,lock});
+    const headers=api.ensureReplacedImagesInventoryColumns(sheet);
+    assert.equal(headers.length,23);
+    assert.deepEqual(headers.slice(11),EXT_HEADERS);
+    assert.equal(sheet.cells[1][19],"reemplazada");
+    assert.equal(sheet.cells[1][16],"https://lh3.googleusercontent.com/d/"+FILE_A);
+    const columns=sheet.getLastColumn(),writes=sheet.writeCount;
+    api.ensureReplacedImagesInventoryColumns(sheet);
+    assert.equal(sheet.getLastColumn(),columns);
+    assert.equal(sheet.writeCount,writes);
+    assert.equal(lock.state.waits,2);
+    assert.equal(lock.state.releases,2);
+});
+
+check("La migración se detiene ante encabezados duplicados sin modificar el esquema",()=>{
+    const headers=[...BASE_HEADERS,"tipo_mime","tipo_mime"];
+    const sheet=createSheet([headers]);
+    const api=buildHelpers({sheet});
+    const before=sheet.getLastColumn();
+    assert.throws(()=>api.ensureReplacedImagesInventoryColumns(sheet),/duplicados/);
+    assert.equal(sheet.getLastColumn(),before);
+    assert.equal(sheet.writeCount,0);
+});
+
+check("El wrapper de migración respeta un ScriptLock ya adquirido",()=>{
+    const lock=lockHarness(),api=buildHelpers({lock});
+    lock.state.locked=true;
+    assert.equal(api.withReplacedImagesSchemaLock_(()=>42),42);
+    assert.equal(lock.state.waits,0);
+    assert.equal(lock.state.releases,0);
+});
+
+check("La consulta del esquema no crea ni modifica la hoja cuando no existe",()=>{
+    let insertCalls=0;
+    const spreadsheet={getSheetByName(){return null;},insertSheet(){insertCalls++;throw new Error("must not create");}};
+    const api=buildHelpers({spreadsheet});
+    const schema=api.getReplacedImagesReadSchema_();
+    assert.equal(schema.sheet,null);
+    assert.equal(schema.missingHeaders.length,12);
+    assert.equal(insertCalls,0);
+});
+
+check("La identidad requiere coincidencia entre archivo_drive_id, url_anterior y url_visualizacion",()=>{
+    const api=buildHelpers();
+    const row=makeRow();
+    assert.equal(api.getReplacedImageRecordIdentity_(row,HEADERS,true),FILE_A);
+    assert.throws(()=>api.getReplacedImageRecordIdentity_(makeRow({originalId:FILE_B}),HEADERS,true),/no coinciden/);
+    assert.throws(()=>api.getReplacedImageRecordIdentity_(makeRow({visualId:FILE_B}),HEADERS,true),/no coincide/);
+    const noVisual=makeRow();noVisual[16]="";
+    assert.throws(()=>api.getReplacedImageRecordIdentity_(noVisual,HEADERS,true),/URL de visualización/);
+    assert.equal(api.getReplacedImageRecordIdentity_(noVisual,HEADERS,false),FILE_A);
+});
+
+check("El buscador de historial rechaza IDs duplicados y devuelve el ancho completo",()=>{
+    const duplicateSheet=createSheet([HEADERS,makeRow({id:"DUP"}),makeRow({id:"DUP",fileId:FILE_B})]);
+    const api=buildHelpers();
+    assert.throws(()=>api.findReplacedImageRecordById(duplicateSheet,"DUP"),/duplicado/);
+    const uniqueSheet=createSheet([HEADERS,makeRow({id:"UNIQUE"})]);
+    const result=api.findReplacedImageRecordById(uniqueSheet,"UNIQUE");
+    assert.equal(result.rowIndex,2);
+    assert.equal(result.values.length,23);
+});
+
+check("La matriz de estados reconoce todos los estados históricos e inventarios",()=>{
+    const api=buildHelpers();
+    for(const status of ["historica","restablecida","en_papelera","requiere_revision","cancelada"])
+        assert.equal(api.isKnownReplacedImageStatus_("reemplazada",status),true);
+    for(const status of ["sin_uso_detectado","en_papelera","no_confirmada_en_ultima_auditoria","requiere_revision","cancelada","eliminada"])
+        assert.equal(api.isKnownReplacedImageStatus_("sin_uso_detectado",status),true);
+    assert.equal(api.isKnownReplacedImageStatus_("reemplazada","unknown"),false);
+    assert.equal(api.isKnownReplacedImageStatus_("sin_uso_detectado","historica"),false);
+});
+
+check("El cierre de estado comprueba lectura posterior y no acepta una escritura no confirmada",()=>{
+    const sheet=createSheet([BASE_HEADERS,makeRow()]);
+    const api=buildHelpers({sheet});
+    api.setReplacedImageHistoryStatusVerified_(sheet,2,"restablecida");
+    assert.equal(sheet.cells[1][10],"restablecida");
+    const broken={
+        getRange(){return {setValue(){},getValue(){return "historica";}};}
+    };
+    assert.throws(()=>api.setReplacedImageHistoryStatusVerified_(broken,2,"en_papelera"),/lectura posterior/);
+});
+
+check("La lista presenta todos los estados y separa duplicados y filas inválidas para revisión",()=>{
+    const rows=[
+        HEADERS,
+        makeRow({id:"HIST",status:"historica",fileId:FILE_A}),
+        makeRow({id:"REST",status:"restablecida",fileId:FILE_B}),
+        makeRow({id:"TRASH",status:"en_papelera",fileId:"cdefghij123456789012"}),
+        makeRow({id:"REVIEW",status:"requiere_revision",fileId:"defghij1234567890123"}),
+        makeRow({id:"CANCEL",status:"cancelada",fileId:"efghij12345678901234"}),
+        makeRow({id:"UNUSED",type:"sin_uso_detectado",status:"sin_uso_detectado",fileId:"fghij123456789012345"}),
+        makeRow({id:"DUP",fileId:"ghij1234567890123456"}),
+        makeRow({id:"DUP",fileId:"hij12345678901234567"}),
+        makeRow({id:"MISMATCH",fileId:"ij123456789012345678",originalId:"jk123456789012345678"}),
+        makeRow({id:"UNKNOWN",status:"procesando",fileId:"kl123456789012345678"}),
+        makeRow({id:"",fileId:"lm123456789012345678"})
+    ];
+    const fakeSheet={getDataRange(){return {getValues(){return rows;}};}};
+    const schema={sheet:fakeSheet,headers:HEADERS,missingHeaders:[]};
+    const references=new Map([[FILE_A,[{row:2,column:9},{row:4,column:10}]]]);
+    const getSchema=()=>schema;
+    const collect=()=>({references,unverifiableReferenceCount:0});
+    const fn=new Function("getReplacedImagesReadSchema_","collectCortesImageReferences","getReplacedImageRecordType",
+        "isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","extractDriveFileIds",
+        fnSource(admin,"handleGetReplacedImages")+"\nreturn handleGetReplacedImages;")
+        (getSchema,collect,new Function(helperSources.getReplacedImageRecordType+"\nreturn getReplacedImageRecordType;")(),
+            new Function(helperSources.isKnownReplacedImageStatus_+"\nreturn isKnownReplacedImageStatus_;")(),
+            new Function("extractDriveFileIds",helperSources.getReplacedImageRecordIdentity_+"\nreturn getReplacedImageRecordIdentity_;")
+                (new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")()),
+            new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")());
+    const result=fn({},()=>{});
+    assert.equal(result.schemaStatus,"ready");
+    assert.equal(result.referenceCheckStatus,"verified");
+    assert.deepEqual(result.data.map(item=>item.estado).sort(),
+        ["cancelada","en_papelera","historica","restablecida","sin_uso_detectado"].sort());
+    assert.equal(result.data.find(item=>item.id_reemplazo==="HIST").active_reference_count,2);
+    assert.equal(result.review.length,5);
+    assert.ok(result.review.every(item=>item.reason));
+});
+
+function buildRecover({status="historica",duplicate=false,trashed=false,mime="image/jpeg",failStatus=false,failRollback=false,conflicts=[]}={}) {
+    const historySheet=createSheet([HEADERS,makeRow({id:"REP-RECOVER",status})]);
+    const lock=lockHarness();
+    let driveCalls=0;
+    const file={getMimeType:()=>mime,isTrashed:()=>trashed};
+    const active={value:"",writes:0,getValue(){return this.value;},setValue(value){this.writes++;this.value=value;}};
+    const cuts={getLastRow:()=>2,getRange(row,col,nr,nc){
+        if(row===2&&col===1)return {getValues:()=>[["VEH-1"]]};
+        if(row===2&&col===9)return active;
+        throw new Error("unexpected Cortes range "+row+","+col);
+    }};
+    const spreadsheet={getSheetByName:()=>cuts};
+    const extract=new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")();
+    const getType=new Function(helperSources.getReplacedImageRecordType+"\nreturn getReplacedImageRecordType;")();
+    const getIdentity=new Function("extractDriveFileIds",helperSources.getReplacedImageRecordIdentity_+"\nreturn getReplacedImageRecordIdentity_;")(extract);
+    const find=new Function(helperSources.findReplacedImageRecordById+"\nreturn findReplacedImageRecordById;")();
+    const setStatus=new Function("SpreadsheetApp",helperSources.setReplacedImageHistoryStatusVerified_+"\nreturn setReplacedImageHistoryStatusVerified_;")({flush(){}});
+    let failedStatus=false;
+    const wrappedStatus=(sheet,row,statusValue)=>{
+        if(failStatus&&!failedStatus&&statusValue==="restablecida"){failedStatus=true;throw new Error("simulated history flush failure");}
+        return setStatus(sheet,row,statusValue);
+    };
+    const restore=new Function("SpreadsheetApp",helperSources.restoreAdminImageActiveCell_+"\nreturn restoreAdminImageActiveCell_;")({flush(){}});
+    const restoreCell=(cell,url)=>{if(failRollback)throw new Error("simulated cell rollback failure");return restore(cell,url);};
+    const api=new Function(
+        "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
+        "getReplacedImageRecordType","getReplacedImageRecordIdentity_","DriveApp","COLS_CORTES","getCortesRootFolder",
+        "isFileInsideCortes","getSpreadsheet","SHEET_NAMES","collectCortesImageReferences","recordReplacedImage",
+        "SpreadsheetApp","setReplacedImageHistoryStatusVerified_","restoreAdminImageActiveCell_",
+        "updateAdminImageReplacementHistoryStatus_","extractDriveFileIds",
+        fnSource(admin,"handleRecoverReplacedImage")+"\nreturn handleRecoverReplacedImage;"
+    )(lock.LockService,()=>historySheet,()=>HEADERS,find,getType,getIdentity,
+        {getFileById(id){driveCalls++;return file;}},{imagenVehiculo:9},()=>({getId:()=>"ROOT"}),
+        ()=>true,()=>spreadsheet,{CORTES:"Cortes"},()=>({unverifiableReferenceCount:0,references:new Map(conflicts)}),
+        ()=>{throw new Error("unexpected swap record");},{flush(){}},wrappedStatus,restoreCell,()=>{},extract);
+    return {run:()=>api({id_reemplazo:"REP-RECOVER"},()=>{}),historySheet,active,file,lock,driveCalls:()=>driveCalls};
+}
+
+check("La restauración rechaza en_papelera, requiere_revision y cancelada antes de tocar Drive",()=>{
+    for(const status of ["en_papelera","requiere_revision","cancelada"]){
+        const h=buildRecover({status});
+        assert.throws(()=>h.run(),/no permite restaurar automáticamente/);
+        assert.equal(h.driveCalls(),0);
+        assert.equal(h.active.writes,0);
+    }
+});
+
+check("La restauración rechaza un archivo en papelera o un MIME que no sea imagen",()=>{
+    const trashed=buildRecover({trashed:true});
+    assert.throws(()=>trashed.run(),/está en papelera/);
+    assert.equal(trashed.active.writes,0);
+    const nonImage=buildRecover({mime:"application/pdf"});
+    assert.throws(()=>nonImage.run(),/no es una imagen/);
+    assert.equal(nonImage.active.writes,0);
+});
+
+check("La restauración revierte la celda y conserva el estado anterior si falla el cierre histórico",()=>{
+    const h=buildRecover({failStatus:true});
+    assert.throws(()=>h.run(),/simulated history flush failure/);
+    assert.equal(h.active.value,"");
+    assert.equal(h.historySheet.cells[1][10],"historica");
+});
+
+check("Si falla la compensación de la celda, el historial queda marcado requiere_revision",()=>{
+    const h=buildRecover({failStatus:true,failRollback:true});
+    assert.throws(()=>h.run(),/compensación no pudo confirmarse/);
+    assert.equal(h.historySheet.cells[1][10],"requiere_revision");
+});
+
+function buildDelete({status="historica",failStatus=false,failDriveRollback=false}={}) {
+    const historySheet=createSheet([HEADERS,makeRow({id:"REP-DELETE",status})]);
+    const lock=lockHarness();let driveCalls=0,failed=false;
+    const file={trashed:false,getMimeType:()=>"image/jpeg",isTrashed(){return this.trashed;},
+        setTrashed(value){if(!value&&failDriveRollback)throw new Error("drive rollback failed");this.trashed=value;},getName:()=>"image.jpg"};
+    const extract=new Function(helperSources.extractDriveFileIds+"\nreturn extractDriveFileIds;")();
+    const getType=new Function(helperSources.getReplacedImageRecordType+"\nreturn getReplacedImageRecordType;")();
+    const getIdentity=new Function("extractDriveFileIds",helperSources.getReplacedImageRecordIdentity_+"\nreturn getReplacedImageRecordIdentity_;")(extract);
+    const find=new Function(helperSources.findReplacedImageRecordById+"\nreturn findReplacedImageRecordById;")();
+    const setStatus=new Function("SpreadsheetApp",helperSources.setReplacedImageHistoryStatusVerified_+"\nreturn setReplacedImageHistoryStatusVerified_;")({flush(){}});
+    const wrappedStatus=(sheet,row,statusValue)=>{
+        if(failStatus&&!failed&&statusValue==="en_papelera"){failed=true;throw new Error("simulated status write failure");}
+        return setStatus(sheet,row,statusValue);
+    };
+    const api=new Function(
+        "LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns","findReplacedImageRecordById",
+        "getReplacedImageRecordType","isKnownReplacedImageStatus_","getReplacedImageRecordIdentity_","collectCortesImageReferences",
+        "DriveApp","getCortesRootFolder","getSingleParentFolderInsideCortes","getFolderPathInsideCortes",
+        "setReplacedImageHistoryStatusVerified_","recordImageAdministrationActivity","logMessage",
+        fnSource(admin,"handleDeleteReplacedImage")+"\nreturn handleDeleteReplacedImage;"
+    )(lock.LockService,()=>historySheet,()=>HEADERS,find,getType,
+        new Function(helperSources.isKnownReplacedImageStatus_+"\nreturn isKnownReplacedImageStatus_;")(),
+        getIdentity,()=>({references:new Map(),unverifiableReferenceCount:0}),
+        {getFileById(){driveCalls++;return file;}},()=>({getId:()=>"ROOT"}),()=>({}),()=>"Cortes/Original",
+        wrappedStatus,()=>{},()=>{});
+    return {run:()=>api({id_reemplazo:"REP-DELETE"},()=>{}),historySheet,file,driveCalls:()=>driveCalls};
+}
+
+check("La eliminación revierte Drive si el cambio de estado no se confirma",()=>{
+    const h=buildDelete({failStatus:true});
+    assert.throws(()=>h.run(),/operación fue revertida/);
+    assert.equal(h.file.trashed,false);
+    assert.equal(h.historySheet.cells[1][10],"historica");
+});
+
+check("Si Drive no puede compensar una eliminación, el registro queda requiere_revision",()=>{
+    const h=buildDelete({failStatus:true,failDriveRollback:true});
+    assert.throws(()=>h.run(),/no se confirmó la compensación/);
+    assert.equal(h.file.trashed,true);
+    assert.equal(h.historySheet.cells[1][10],"requiere_revision");
+});
+
+check("Las acciones mutantes usan búsqueda única e identidad; la descarga no migra al leer",()=>{
+    const move=fnSource(admin,"handleMoveReplacedImage");
+    const del=fnSource(admin,"handleDeleteReplacedImage");
+    const download=fnSource(admin,"handleGetReplacedImageDownloadUrl");
+    const record=fnSource(admin,"recordReplacedImage");
+    assert.ok(move.includes("findReplacedImageRecordById")&&move.includes("getReplacedImageRecordIdentity_"));
+    assert.ok(del.includes("findReplacedImageRecordById")&&del.includes("getReplacedImageRecordIdentity_"));
+    assert.ok(download.includes("findReplacedImageRecordById")&&download.includes("getReplacedImageRecordIdentity_"));
+    assert.ok(!download.includes("getOrCreateReplacedImagesSheet")&&!download.includes("ensureReplacedImagesInventoryColumns"));
+    assert.ok(record.includes("findReplacedImageRecordById")&&record.includes("getReplacedImageRecordIdentity_"));
+    assert.ok(fnSource(admin,"handleSaveUnusedImagesInventory").includes("getDuplicateReplacedImageIds_"));
+    assert.ok(fnSource(admin,"handleOrganizeUnusedImagesBatch").includes("getDuplicateReplacedImageIds_"));
+});
+
+check("La acción de migración coordina el lock, ejecuta el esquema y devuelve un resultado verificable",()=>{
+    const source=fnSource(admin,"handleMigrateReplacedImagesSchema");
+    let locked=false,waits=0,releases=0,creates=0,migrations=0;
+    const lock={waitLock(){waits++;locked=true;},releaseLock(){releases++;locked=false;}};
+    const handler=new Function("LockService","getOrCreateReplacedImagesSheet","ensureReplacedImagesInventoryColumns",source+"\nreturn handleMigrateReplacedImagesSchema;")(
+        {getScriptLock:()=>lock},()=>{creates++;return {getLastRow:()=>4};},()=>{migrations++;return HEADERS;});
+    const result=handler({},()=>{});
+    assert.equal(result.status,"success");
+    assert.equal(result.migrated,true);
+    assert.equal(result.rowCount,3);
+    assert.equal(result.columnCount,23);
+    assert.equal(creates,1);
+    assert.equal(migrations,1);
+    assert.equal(waits,1);
+    assert.equal(releases,1);
+    assert.equal(locked,false);
+});
+
+check("La migración explícita queda protegida por lease y despachada por ADMIN",()=>{
+    const source=readFileSync(new URL("../admin.js",import.meta.url),"utf8");
+    assert.ok(source.includes('"migrateReplacedImagesSchema"].includes(action)'));
+    assert.ok(source.includes("case 'migrateReplacedImagesSchema':"));
+    assert.ok(source.includes("function handleMigrateReplacedImagesSchema"));
+    const uiSource=ui;
+    assert.ok(uiSource.includes('routeAction("migrateReplacedImagesSchema"'));
+    assert.ok(uiSource.includes("Migrar esquema"));
+});
+
+check("La interfaz muestra estados históricos y filas inválidas en una sección de revisión",()=>{
+    assert.ok(ui.includes("cachedReview"));
+    assert.ok(ui.includes("replaced-images-review"));
+    assert.ok(ui.includes("Registros que requieren revisión"));
+    assert.ok(ui.includes("['historica', 'restablecida'].includes(status)"));
+    assert.ok(ui.includes("referenceSafe"));
+    assert.ok(ui.includes("schemaWarnings"));
+});
+
+console.log("AdminReplacedImagesIntegrity: "+passed+"/"+passed+" PASS");

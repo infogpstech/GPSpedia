@@ -6473,6 +6473,11 @@ export async function openReplacedImagesModal() {
     const modal = document.getElementById('replaced-images-modal');
     if (!modal || !isCurrentRequest()) return;
     let cachedReplaced = [];
+    let cachedReview = [];
+    let schemaReady = false;
+    let schemaStatus = "not_initialized";
+    let referenceCheckStatus = "unavailable";
+    let schemaWarnings = [];
     let folders = [];
     const replacedOverlayId = 'ui-modal:replaced-images-modal';
     modal.dataset.gpOverlayHistoryId = replacedOverlayId;
@@ -6480,6 +6485,11 @@ export async function openReplacedImagesModal() {
         replacedImagesModalGeneration_ += 1;
         closeReplacedImagesLightbox_(true);
         cachedReplaced = [];
+        cachedReview = [];
+        schemaReady = false;
+        schemaStatus = "not_initialized";
+        referenceCheckStatus = "unavailable";
+        schemaWarnings = [];
         folders = [];
         const list = document.getElementById('replaced-images-list-container');
         if (list) list.replaceChildren();
@@ -6568,15 +6578,12 @@ export async function openReplacedImagesModal() {
         try {
             const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
             if (!isCurrentRequest()) return;
-            cachedReplaced = response && Array.isArray(response.data)
-                ? response.data.filter((item) => {
-                    const type = item.tipo_registro || (item.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
-                    const status = String(item.estado || (type === 'sin_uso_detectado' ? 'sin_uso_detectado' : 'historica'));
-                    return type === 'sin_uso_detectado'
-                        ? status === 'sin_uso_detectado'
-                        : type === 'reemplazada' && ['historica', 'restablecida'].includes(status);
-                })
-                : [];
+            cachedReplaced = response && Array.isArray(response.data) ? response.data : [];
+            cachedReview = response && Array.isArray(response.review) ? response.review : [];
+            schemaStatus = String(response && response.schemaStatus || "not_initialized");
+            schemaReady = schemaStatus === "ready";
+            referenceCheckStatus = String(response && response.referenceCheckStatus || "unavailable");
+            schemaWarnings = response && Array.isArray(response.warnings) ? response.warnings : [];
             renderList(filterInput ? filterInput.value : '');
         } catch (error) {
             if (!isCurrentRequest()) return;
@@ -6616,19 +6623,53 @@ export async function openReplacedImagesModal() {
         if (!isCurrentRequest() || !listContainer) return;
         listContainer.innerHTML = '';
         listContainer.className = 'replaced-images-list view-' + currentView;
+        if (!schemaReady || referenceCheckStatus !== "verified") {
+            const warning = document.createElement("div");
+            warning.className = "replaced-images-empty";
+            warning.textContent = schemaWarnings.length ? schemaWarnings.join(" ") :
+                "No se pudo verificar el esquema o las referencias. Las acciones permanecen deshabilitadas.";
+            listContainer.appendChild(warning);
+            if (schemaStatus === "migration_required" || schemaStatus === "not_initialized") {
+                const migrateButton = document.createElement("button");
+                migrateButton.type = "button";
+                migrateButton.className = "btn btn-primary";
+                migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
+                migrateButton.onclick = async () => {
+                    if (!isCurrentRequest()) return;
+                    migrateButton.disabled = true;
+                    migrateButton.textContent = "Verificando esquema...";
+                    try {
+                        await routeAction("migrateReplacedImagesSchema", getDeveloperSessionPayload());
+                        if (!isCurrentRequest()) return;
+                        mostrarNotificacion("El esquema del historial fue verificado.", "success");
+                        await loadData();
+                    } catch (error) {
+                        if (isCurrentRequest()) alert(error.message || String(error));
+                    } finally {
+                        if (migrateButton.isConnected && isCurrentRequest()) {
+                            migrateButton.disabled = false;
+                            migrateButton.textContent = schemaStatus === "not_initialized" ? "Inicializar historial" : "Migrar esquema";
+                        }
+                    }
+                };
+                listContainer.appendChild(migrateButton);
+            }
+        }
         const query = String(filterText || '').toLowerCase().trim();
         const filtered = cachedReplaced.filter((item) => {
             if (!query) return true;
             return [
                 item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id,
                 item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro,
-                item.estado_organizacion, item.error_organizacion
+                item.estado, item.estado_organizacion, item.error_organizacion
             ].some((value) => String(value || '').toLowerCase().includes(query));
         });
 
         if (!filtered.length) {
-            listContainer.innerHTML = '<div class="replaced-images-empty">No hay imágenes sin uso confirmadas en el inventario.</div>';
-            return;
+            const empty = document.createElement("div");
+            empty.className = "replaced-images-empty";
+            empty.textContent = "No hay registros válidos que coincidan con el filtro.";
+            listContainer.appendChild(empty);
         }
 
         filtered.forEach((rep) => {
@@ -6638,9 +6679,11 @@ export async function openReplacedImagesModal() {
             const statusLabel = isUnused
                 ? (status === 'sin_uso_detectado' ? 'Sin uso detectado' : status.replace(/_/g, ' '))
                 : (status === 'historica' ? 'Reemplazada' : status.replace(/_/g, ' '));
-            const canManage = isUnused
+            const referenceSafe = schemaReady && referenceCheckStatus === "verified" &&
+                Number(rep.active_reference_count || 0) === 0;
+            const canManage = referenceSafe && (isUnused
                 ? status === 'sin_uso_detectado'
-                : ['historica', 'restablecida'].includes(status);
+                : ['historica', 'restablecida'].includes(status));
             const card = document.createElement('article');
             card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
 
@@ -6739,7 +6782,7 @@ export async function openReplacedImagesModal() {
                     mostrarNotificacion('Se abrió la descarga de ' + (response.fileName || rep.nombre_archivo || 'la imagen') + '.', 'success');
                 });
             });
-            downloadButton.disabled = !(isUnused ? status === 'sin_uso_detectado' : ['historica', 'restablecida'].includes(status));
+            downloadButton.disabled = !canManage;
             actions.appendChild(downloadButton);
 
             const moveButton = createActionButton('fa-folder-open', 'Mover', 'btn-secondary', async () => {
@@ -6764,7 +6807,7 @@ export async function openReplacedImagesModal() {
             moveButton.disabled = !canManage;
             actions.appendChild(moveButton);
 
-            if (!isUnused && status !== 'cancelada') {
+            if (!isUnused && ['historica', 'restablecida'].includes(status)) {
                 const recoverButton = createActionButton('fa-clock-rotate-left', 'Restaurar', 'btn-primary', async () => {
                     if (!confirm('¿Restaurar esta imagen al campo ' + (rep.campo || 'registrado') + '? La imagen actualmente activa pasará al historial.')) return;
                     await runButtonAction(recoverButton, 'Restaurando...', async () => {
@@ -6776,6 +6819,7 @@ export async function openReplacedImagesModal() {
                         await loadData();
                     });
                 });
+                recoverButton.disabled = !canManage;
                 actions.appendChild(recoverButton);
             }
 
@@ -6799,6 +6843,33 @@ export async function openReplacedImagesModal() {
             card.appendChild(actions);
             listContainer.appendChild(card);
         });
+
+        if (cachedReview.length) {
+            const reviewSection = document.createElement("section");
+            reviewSection.className = "replaced-images-review";
+            const heading = document.createElement("h4");
+            heading.textContent = "Registros que requieren revisión (" + cachedReview.length + ")";
+            reviewSection.appendChild(heading);
+            cachedReview.forEach(item => {
+                const row = document.createElement("article");
+                row.className = "replaced-image-card replaced-image-review-card";
+                const info = document.createElement("div");
+                info.className = "replaced-image-info";
+                const title = document.createElement("strong");
+                title.textContent = item.nombre_archivo || ("Fila " + item.rowNumber);
+                const identifier = document.createElement("span");
+                identifier.className = "replaced-image-details";
+                identifier.textContent = "Fila " + item.rowNumber + " · ID: " + (item.id_reemplazo || "Sin ID") +
+                    " · Estado: " + (item.estado || "Sin estado");
+                const reason = document.createElement("span");
+                reason.className = "replaced-image-status";
+                reason.textContent = "Motivo: " + (item.reason || "Registro no verificable.");
+                info.append(title, identifier, reason);
+                row.appendChild(info);
+                reviewSection.appendChild(row);
+            });
+            listContainer.appendChild(reviewSection);
+        }
     };
 
     const setView = async (view) => {
@@ -6817,6 +6888,11 @@ export async function openReplacedImagesModal() {
             replacedImagesModalGeneration_ += 1;
             closeReplacedImagesLightbox_(true);
             cachedReplaced = [];
+            cachedReview = [];
+            schemaReady = false;
+            schemaStatus = "not_initialized";
+            referenceCheckStatus = "unavailable";
+            schemaWarnings = [];
             folders = [];
             if (listContainer) listContainer.replaceChildren();
             modal.style.display = 'none';

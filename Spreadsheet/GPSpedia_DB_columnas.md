@@ -464,3 +464,35 @@ AUTH crea el encabezado únicamente si I1 está vacío y no existen datos en I2:
 | 8 | `updatedAt` | Fecha/hora ISO de la última transición confirmada. |
 
 El backend valida encabezados y orden exactos, columnas adicionales, formato y unicidad de `opId`/ `problemId`, hash y estado antes de usar el ledger. Los registros en `LINKED` no se recrean; los estados ambiguos o `RECOVERY_REQUIRED` bloquean el reintento automático.
+
+
+## Hoja técnica adicional — Imagenes_Reemplazadas (AUG-026)
+
+La hoja conserva sus 11 columnas base históricas y añade 12 encabezados dinámicos. En una hoja sin extensiones previas, las columnas adicionales ocupan L:W; el backend identifica los campos por nombre, no por letra fija.
+
+| Campo | Encabezado exacto | Uso |
+|---:|---|---|
+| 12 | `origen_registro` | `reemplazo` o `auditoria_drive`; identifica el flujo que creó la fila. |
+| 13 | `tipo_mime` | MIME verificado del archivo Drive. |
+| 14 | `ubicacion_original` | Ruta relativa dentro de la carpeta autorizada Cortes al registrar el archivo. |
+| 15 | `fecha_creacion_drive` | Fecha de creación informada por Drive. |
+| 16 | `fecha_deteccion` | Fecha de detección durante auditoría de imágenes. |
+| 17 | `url_visualizacion` | URL de visualización; su ID debe coincidir con `archivo_drive_id` y `url_anterior`. |
+| 18 | `ubicacion_actual` | Ruta relativa actual dentro de Cortes. |
+| 19 | `ultima_auditoria_id` | Identificador de la auditoría Drive que detectó el archivo. |
+| 20 | `tipo_registro` | `reemplazada` o `sin_uso_detectado`. |
+| 21 | `estado_organizacion` | Estado del proceso de organización Drive; independiente del estado histórico. |
+| 22 | `error_organizacion` | Resumen del error de organización, sin credenciales. |
+| 23 | `fecha_organizacion` | Fecha de la última transición de organización. |
+
+### Estados históricos
+
+- Registros `reemplazada`: `historica`, `restablecida`, `en_papelera`, `requiere_revision`, `cancelada`.
+- Registros `sin_uso_detectado`: `sin_uso_detectado`, `en_papelera`, `no_confirmada_en_ultima_auditoria`, `requiere_revision`, `cancelada`, `eliminada`.
+- La restauración automática solo admite `historica` y `restablecida`. Un registro `en_papelera`, `requiere_revision` o `cancelada` no se restaura por el flujo habitual.
+- Un archivo en papelera con un estado histórico distinto de `en_papelera` se considera inconsistente y requiere revisión manual.
+- Las filas inválidas, duplicadas, con estado desconocido o IDs inconsistentes se muestran en la sección de revisión; no se ocultan ni reciben acciones mutantes.
+
+### Migración y lectura
+
+La consulta `getReplacedImages` es de solo lectura: no crea la hoja, no agrega encabezados ni reescribe filas. La inicialización/migración se ejecuta mediante la acción ADMIN explícita `migrateReplacedImagesSchema`, protegida por ScriptLock y lease compartido, con verificación de encabezados. La migración es idempotente y puede reanudarse si se interrumpe. Solo completa `tipo_registro` y `url_visualizacion` cuando los metadatos existentes permiten una clasificación y coincidencia inequívocas; las filas dudosas se conservan para revisión.
