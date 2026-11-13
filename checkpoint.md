@@ -381,3 +381,21 @@ Beta pendiente: FEEDBACK/Spreadsheet aislados para probar respuestas válidas y 
 Archivos: Services/feedback.js, Services/Test/InboxAuditTrail.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: continuar con la siguiente entrada pendiente del backlog después de AUG-121; no iniciar otra tarea dentro de esta sesión.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-122 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama: GPSpedia2.2.5_work. Base: GPSpedia2.2.5.
+HEAD padre verificado: dc2e13112b8da6a436ae0edefa9585ffc4b41e1b.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+- WRITE.addSupplementaryInfo comprueba sesión activa/única, vínculo token-userId, expiración, perfil Users único/activo y revocación de rol.
+- Política explícita de roles: Desarrollador, Gefe/Jefe, Supervisor, Técnico y Técnico_exterior. La allowlist es exclusiva de esta operación; no cambia permisos de otros handlers.
+- Actor tomado del nombre completo de Users en servidor y registrado en Logger; no se confía en identidad cliente.
+- La autenticación se comprueba antes de adquirir ScriptLock y vuelve a validarse dentro del lock, antes de cualquier lectura/escritura operativa.
+- Pruebas locales: AddSupplementaryInfoIntegrity.js ampliada con nueve casos nuevos; parsing de WRITE y suite PASS. No se ejecutaron Apps Script, Spreadsheet ni Drive reales.
+
+Beta pendiente: probar roles y sesiones con hojas aisladas; comprobar respuestas válidas y rechazos sin cambios en Cortes/Drive. No desplegar a producción.
+Archivos: Services/write.js, Services/Test/AddSupplementaryInfoIntegrity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, checkpoint.md y lista_beta.txt.
+Siguiente tarea: AUG-123 — Proteger y serializar la migración UTILITIES. No iniciar dentro de esta tarea.
+================================================================================
