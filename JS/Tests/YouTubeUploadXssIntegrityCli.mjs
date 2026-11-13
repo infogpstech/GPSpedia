@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { runYouTubeUploadXssIntegrityTests } from "./YouTubeUploadXssIntegrity.js";
 const result=runYouTubeUploadXssIntegrityTests({
- upload:readFileSync("youtubeUpload.js","utf8"),ui:readFileSync("JS/Frontend/ui.js","utf8"),
+ upload:readFileSync("JS/Frontend/youtubeUpload.js","utf8"),ui:readFileSync("JS/Frontend/ui.js","utf8"),
  cortes:readFileSync("HTML/add_cortes.html","utf8")
 });
 const total=result.passed+result.failed;

@@ -76,9 +76,9 @@ export function runYouTubeUploadXssIntegrityTests({ upload, ui, cortes }) {
 
 if (import.meta.url === "file://" + process.argv[1]) {
     const result = runYouTubeUploadXssIntegrityTests({
-        upload: fs.readFileSync("youtubeUpload.js", "utf8"),
-        ui: fs.readFileSync("ui.js", "utf8"),
-        cortes: fs.readFileSync("add_cortes.html", "utf8")
+        upload: fs.readFileSync("JS/Frontend/youtubeUpload.js", "utf8"),
+        ui: fs.readFileSync("JS/Frontend/ui.js", "utf8"),
+        cortes: fs.readFileSync("HTML/add_cortes.html", "utf8")
     });
     console.log(JSON.stringify(result, null, 2));
     if (result.status !== "PASS") process.exitCode = 1;
