@@ -6,7 +6,7 @@ import { createPrintableQrDataUrl } from './printQr.js';
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode } from './api-config.js';
+import { getFeedbackItems, getInboxRecipients, getInboxConversations, getInboxMessages, createInboxConversation, sendInboxMessage, markInboxRead, archiveInboxConversation, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, bucketServiceMetrics, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo, getRichTextMode, setRichTextMode, routeActionWithRetry } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { createEditBackupStore, getEditBackupFieldsToRestore } from './editBackupStore.js';
@@ -7529,9 +7529,11 @@ export async function openAuditDriveModal() {
             while (!complete && isCurrentRequest()) {
                 const previousTotal = totalAnalyzed;
                 const previousFolders = foldersVisited;
-                const response = await routeAction('auditDriveImagesInCortes', {
-                    ...getDeveloperSessionPayload(),
-                    cursor: cursor
+                const requestCursor = cursor ? JSON.parse(JSON.stringify(cursor)) : null;
+                const requestPayload = { ...getDeveloperSessionPayload(), cursor: requestCursor };
+                const response = await routeActionWithRetry('auditDriveImagesInCortes', requestPayload, {
+                    timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 500,
+                    shouldContinue: isCurrentRequest
                 });
                 if (!isCurrentRequest()) return;
 
@@ -7631,7 +7633,7 @@ export async function openAuditDriveModal() {
             if (!isCurrentRequest()) return;
             const errorMessage = error && error.message ? error.message : String(error);
             const cursorExpired = !complete &&
-                /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|otra versión del servicio|inicia una auditoría nueva/i.test(errorMessage);
+                /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|otra versión del servicio|inicia una auditoría nueva|respuesta de este lote expiró/i.test(errorMessage);
             resumeUnavailable = cursorExpired;
             let statusMessage = complete
                 ? 'AUDITORÍA COMPLETA: se conservaron ' + allFiles.length +
