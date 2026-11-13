@@ -107,7 +107,7 @@ function runLastDeveloperProtectionTests(sources) {
         );
         const first=reconcile(usersSheet,sessionsSheet,'T1');
         assert(first.pending,'El fallo de la segunda escritura debe dejar recuperación pendiente.');
-        equal(users[1][3],'Supervisor');equal(users[1][6],'Nombre anterior');
+        equal(users[1][3],'Supervisor','El rol no se aplicó; reconcile devolvió: '+JSON.stringify(first));equal(users[1][6],'Nombre anterior');
         assert(String(users[1][7]).startsWith(prefix),'El marcador compartido debe permanecer.');
         equal(sessions[1][2],'','El token debe seguir invalidado aunque falle el perfil.');
         const second=reconcile(usersSheet,sessionsSheet,'T1');
