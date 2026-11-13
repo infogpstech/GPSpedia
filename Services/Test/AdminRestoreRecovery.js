@@ -188,6 +188,33 @@ function runAdminRestoreRecoveryTests(adminSource) {
         assert(parents.get("file-1").has("source")&&!parents.get("file-1").has("rollback"),"No recuperó el archivo original.");
         assert(parents.get("folder-1").has("source")&&!parents.get("folder-1").has("rollback"),"No recuperó la subcarpeta original.");
     });
+    run("El traslado conserva archivos del usuario que comparten el nombre del manifiesto", () => {
+        const parentHelper = functionSource("adminRestoreHasParent_");
+        const moveHelper = functionSource("adminRestoreMoveFolderContents_");
+        const isManifest = (file, folder) => file.getId() === "internal-manifest";
+        const factory = new Function("adminRestoreHasParent_", "adminRestoreIsDriveManifestFile_",
+            parentHelper + "\\n" + moveHelper + "\\nreturn adminRestoreMoveFolderContents_;");
+        const move = factory(new Function("return (" + parentHelper + ")")(), isManifest);
+        const parents = new Set(["source"]);
+        const iterator = values => { let i=0; return {hasNext:()=>i<values.length,next:()=>values[i++]}; };
+        const file = {
+            getId:()=> "user-file", getName:()=> "GPSpedia_DRIVE_MANIFEST.json",
+            getParents:()=>iterator(Array.from(parents,id=>({getId:()=>id})))
+        };
+        const source = {
+            getId:()=> "source", getName:()=> "GPSpedia_Drive_BACKUP_RESTORE_ROLLBACK_run",
+            getFiles:()=>iterator(parents.has("source")?[file]:[]), getFolders:()=>iterator([]),
+            addFile:()=>parents.add("source"), removeFile:()=>parents.delete("source")
+        };
+        const destination = {
+            getId:()=> "destination", getName:()=> "Cortes",
+            getFiles:()=>iterator(parents.has("destination")?[file]:[]), getFolders:()=>iterator([]),
+            addFile:()=>parents.add("destination"), removeFile:()=>parents.delete("destination")
+        };
+        move(source,destination);
+        assert(parents.has("destination")&&!parents.has("source"),
+            "Se omitió un archivo legítimo por compartir el nombre del manifiesto.");
+    });
     run("El traslado Drive recupera una operación parcial que falla al retirar el padre original", () => {
         const parentHelper = functionSource("adminRestoreHasParent_");
         const moveHelper = functionSource("adminRestoreMoveFolderContents_");
