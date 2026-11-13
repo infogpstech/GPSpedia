@@ -16,7 +16,7 @@ function extract(name) {
     const end = candidates.length ? Math.min(...candidates) : authSource.length;
     return authSource.slice(start, end);
 }
-function snapshot(cortes = [{ id: 'C-1', marca: 'toyota', modelo: 'hilux', categoria: 'pickup' }]) {
+function snapshot(cortes = [{ id: 'C-1', marca: 'toyota', modelo: 'hilux', categoria: 'pickup' }, { id: 'C-2', marca: 'Toyota', modelo: 'Hilux', categoria: 'pickup' }]) {
     return { cortes, tutoriales: [], relay: [], logos: [] };
 }
 function createHarness(options = {}) {
