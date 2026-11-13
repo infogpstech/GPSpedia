@@ -837,3 +837,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - ui.js conserva el QR condicional, no muestra la URL y presenta un aviso neutro si el enlace no es válido. El recurso QR participa en la compuerta de disponibilidad de impresión.
 - Services/Test/PrintQrPrivacy.mjs cubre canonicalización, hosts/protocolos inválidos, generación local, ausencia de URL en markup y sintaxis de los módulos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-144 — CIERRE Y VALIDACIÓN
+- Generación QR local con qrcode-generator.mjs bajo licencia MIT; se eliminó la transmisión de enlaces unlisted a api.qrserver.com.
+- printQr.js valida HTTPS, host e ID YouTube; canonicaliza el enlace sin parámetros adicionales y produce data URL local. La URL no se muestra en la ficha.
+- CI run 43417855309 SUCCESS, Node.js 22.23.4: 24 suites, 322/322 pruebas PASS, 0 fallos; PrintQrPrivacy 11/11 PASS.
+- Escaneo real en PDF/papel, contraste, resolución y prueba offline con lector real quedan para Beta; no se simulan.
+================================================================================

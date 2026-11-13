@@ -898,3 +898,15 @@ Implementación: reemplazada solicitud GET a api.qrserver.com por generación lo
 Suite: Services/Test/PrintQrPrivacy.mjs con 11 contratos, generación QR real y node --check; integrada en INTEGRATION.
 Estado: EN PROGRESO hasta CI y revisión.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-144 — 2026-11-13
+HEAD validado por CI: 7b6216fe3169b8ea3c48f86d9f4c440d05c37d68.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- QR generado localmente; el enlace unlisted no se envía a terceros. Validación HTTPS/host/ID de YouTube, URL canónica y data URL GIF.
+- Licencia MIT del generador incluida. QR condicional; URL no visible; enlace inválido genera aviso y no QR.
+- GitHub Actions 43417855309 SUCCESS, Node.js 22.23.4, 24 suites, 322/322 PASS, PrintQrPrivacy 11/11 PASS.
+- Beta: escaneo real en PDF/papel, contraste, tamaño/resolución y offline con dispositivo real.
+Siguiente tarea: AUG-145 — Corregir los modos duplicados del selector de distribución.
+================================================================================
