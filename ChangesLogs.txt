@@ -578,3 +578,10 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/TutorialIntegrity.js amplía la cobertura con alta sobre esquema A:H vigente, ejecución de handleGetCatalogData sobre fixtures A:H y A:G, comprobación de identidad/orden y ausencia de una hoja plural alternativa.
 - Services/Test/README.md documenta la regresión específica de AUG-124.
 ================================================================================
+
+================================================================================
+2026-11-12 — AUG-125 — RESTAURACIONES RECUPERABLES DE DB Y DRIVE
+- Services/admin.js: respaldos DB/Drive verifican manifiestos completos antes de registrarse; las copias parciales se retiran. DB valida esquema y contenido, crea respaldo preventivo, prepara staging y cambia hojas completas solo tras verificarlo; las hojas adicionales se conservan. Drive prepara y compara staging antes de mover el contenido actual a recuperación; la restauración conserva el contenido anterior y revierte ante fallos.
+- Services/Test/AdminRestoreRecovery.js: nueva suite de contratos y simulación aislada de intercambio DB, fallos de promoción/verificación y preservación de snapshots si el rollback falla.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: documentación de validaciones locales y pruebas Beta pendientes.
+================================================================================
