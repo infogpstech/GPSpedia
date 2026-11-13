@@ -1269,3 +1269,16 @@ Estado: RESUELTO EN CÓDIGO; PRUEBAS AISLADAS Y CI APROBADAS; INTEGRACIÓN EXTER
 
 Pendiente Beta: validar ACL y roles reales, migración y lecturas en Spreadsheet aislada, Drive/MIME/papelera, errores reales de setValue/flush, rollback y permisos. No se usaron recursos productivos.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE DECISIÓN FUNCIONAL — AUG-027 — 2026-11-13
+
+Alcance confirmado por el usuario:
+- La protección de referencias incluye todas las hojas de Spreadsheet que contengan imágenes, no únicamente Cortes.
+- La pestaña existente de gestión del administrador reunirá inventario de imágenes sin uso, organización automática e historial/gestión de imágenes reemplazadas.
+- Restaurar, enviar a papelera y eliminar definitivamente son acciones reservadas al Desarrollador desde el modal de desarrollador.
+- El estado requiere_revision bloquea el procesamiento automático. El Desarrollador decide manualmente si restaura, envía a papelera, elimina definitivamente o marca el archivo como en uso.
+
+Implicación de seguridad/integridad: no considerar una imagen eliminable por ausencia de referencias en una única hoja; la elegibilidad requiere comprobar todas las hojas pertinentes y volver a validar justo antes de mutar. La marca «en uso» debe actuar como protección persistente. Esta entrada documenta el alcance aprobado; no afirma que el código ya lo implemente ni que se hayan ejecutado pruebas.
+================================================================================
