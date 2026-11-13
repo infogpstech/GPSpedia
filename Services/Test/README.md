@@ -1429,3 +1429,12 @@ runAdminRestoreRecoveryTests(adminSource)
 La suite `Services/Test/AdminRestoreRecovery.js` valida los contratos de respaldo DB/Drive, manifiestos, esquema, staging, intercambio de hojas completas, preservación de hojas adicionales y rutas de rollback. Incluye simulación dinámica de intercambio DB exitoso, fallo de promoción, fallo de verificación y fallo al recuperar nombres originales.
 
 La suite usa dobles locales; no ejecuta `DriveApp`, `SpreadsheetApp`, Apps Script ni endpoints. La creación y restauración reales deben probarse en un proyecto ADMIN y recursos aislados, según `lista_beta.txt`.
+
+
+## AUG-126 — Validación previa de payload en WRITE
+
+```js
+runCutPayloadValidationTests(writeSource)
+```
+
+La suite valida estructura y allowlist, requeridos, enums, rangos de años, longitudes, tipos, VIN, opId/SHA-256 e imágenes Base64/MIME/tamaño; incluye la compatibilidad del opId heredado. Se comprueba que la validación ocurra antes de la mutación y que la compensación restaure la fila, el ledger de idempotencia y el contador cuando corresponde. Las cargas no enlazadas permanecen trazadas en ImageUploadLedger para reconciliación.
