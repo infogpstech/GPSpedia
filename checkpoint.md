@@ -827,3 +827,13 @@ ADENDA DE VALIDACIÓN CI — AUG-140 — 2026-11-13
 - PrintSheetPageContract: 11/11 PASS; incluye `node --check` del módulo ES `ui.js`.
 - El commit ddc9f4b implementó el contrato y el commit 8ab14b añadió la comprobación sintáctica y validó la suite ampliada. No se modificó la rama base.
 - AUG-140 queda COMPLETADA CON VALIDACIÓN DIFERIDA. Vista previa real y medición física de márgenes quedan reservadas a Beta.
+
+
+================================================================================
+CHECKPOINT DE PROGRESO — AUG-141 — 2026-11-13
+HEAD de inicio: bfd4c9e0c1d0c4df5cb75ccfcc653eb7cf56d147
+Implementación incorporada en ui.js: SVG vectorial local Check Engine (64×48), aviso separado y colocado después de la imagen, estado explícito activaTestigoN === true. Se conserva el aviso cuando no hay fotografía. No se inventa un campo de imagen ni se añade una dependencia Font Awesome al documento imprimible.
+Nueva suite: Services/Test/PrintSheetWarningIndicator.mjs (9 contratos), integrada en INTEGRATION.
+Estado: EN PROGRESO hasta ejecutar CI y revisar su resultado.
+Siguiente en secuencia de impresión: AUG-142 (disponibilidad de recursos), seguida de AUG-143 (paginación por altura real).
+================================================================================

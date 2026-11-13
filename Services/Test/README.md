@@ -1550,3 +1550,12 @@ node --experimental-default-type=module Services/Test/PrintSheetPageContract.mjs
 ```
 
 La suite está integrada en `--only=INTEGRATION` y comprueba tamaño/márgenes, altura útil, reglas de salto, agrupación conservada, repetición de encabezado/pie y coherencia documental. La medición física con impresora real, la vista previa del navegador y el PDF final quedan para Beta; el margen efectivo puede variar por el área no imprimible del equipo.
+
+
+## AUG-141 — Indicador Check Engine en la ficha imprimible
+
+El documento de impresión utiliza un SVG vectorial local (viewBox 64 × 48) para representar el testigo de motor. No depende de Font Awesome ni introduce un campo de imagen nuevo en la hoja de datos. El aviso se muestra únicamente cuando el campo normalizado `activaTestigoN` es exactamente `true`; aparece después de la imagen técnica, si existe, y se conserva aunque el corte no tenga fotografía. El SVG usa `object-fit: contain` y una relación de aspecto 4:3.
+
+Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetWarningIndicator.mjs`.
+
+La suite valida el origen del estado, independencia del recurso, proporción, posición, ausencia de dependencias externas y casos activos/inactivos/no especificados. La inspección visual en navegador y PDF queda para Beta.

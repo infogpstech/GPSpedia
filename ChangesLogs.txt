@@ -756,3 +756,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Regresión completa: 20 suites, 278/278 PASS, 0 fallos.
 - PrintSheetPageContract: 11/11 PASS; incluye comprobación de sintaxis ES module de ui.js mediante node --check.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-141 — INDICADOR CHECK ENGINE EN FICHA IMPRIMIBLE
+- ui.js: el aviso de testigo se separa de .tech-item-info y se coloca después de la imagen técnica; permanece visible aunque el corte no tenga fotografía.
+- Se incorpora un SVG vectorial local con proporción 4:3 y texto accesible. El documento independiente ya no depende de Font Awesome para este indicador.
+- El estado se deriva exclusivamente de activaTestigoN normalizado como boolean true; false y no especificado no generan aviso.
+- Services/Test/PrintSheetWarningIndicator.mjs: nueva suite de 9 contratos, integrada en INTEGRATION.
+================================================================================

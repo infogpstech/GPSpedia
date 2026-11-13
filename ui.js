@@ -10632,9 +10632,14 @@ export function exportVehiclePrintSheet(item) {
                        <div><strong>Relay:</strong> ${sanitizeHtmlContent(c.relay || 'Sin Relay')}</div>`,
             img: c.img,
             alt: `Corte #${c.num}`,
-            extraHtml: c.activaTestigo ? `
-                <div class="testigo-aviso">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+            testigoHtml: c.activaTestigo === true ? `
+                <div class="testigo-indicator">
+                    <svg class="testigo-engine-icon" viewBox="0 0 64 48" role="img" aria-label="Indicador Check Engine" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 18h8l5-7h15l6 7h6v6h5v13H10V24h2z" fill="none" stroke="#b78103" stroke-width="3" stroke-linejoin="round"/>
+                        <path d="M25 11V6h12v5M18 24v13M29 24v13M40 24v13M52 29h5" fill="none" stroke="#b78103" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M14 18v-5h6" fill="none" stroke="#b78103" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                    <div class="testigo-aviso">Este corte activa el testigo de motor (Check Engine)</div>
                 </div>` : '',
             isRecommended: c === recommendedCut
         });
@@ -10646,7 +10651,7 @@ export function exportVehiclePrintSheet(item) {
             infoHtml: `<div>${sanitizeHtmlContent(f.desc || 'Conexión estándar')}</div>`,
             img: f.img,
             alt: f.title,
-            extraHtml: '',
+            testigoHtml: '',
             isRecommended: false
         });
     });
@@ -10657,7 +10662,7 @@ export function exportVehiclePrintSheet(item) {
             infoHtml: `<div>${sanitizeHtmlContent(aperturaItem.desc)}</div>`,
             img: aperturaItem.img,
             alt: aperturaItem.title,
-            extraHtml: '',
+            testigoHtml: '',
             isRecommended: false
         });
     }
@@ -10675,11 +10680,12 @@ export function exportVehiclePrintSheet(item) {
                 ${entry.title}
             </div>
             <div class="tech-item-body">
-                <div class="tech-item-info">${entry.infoHtml}${entry.extraHtml || ''} </div>
+                <div class="tech-item-info">${entry.infoHtml}</div>
                 ${safeImg ? `
                 <div class="tech-item-img-wrapper">
                     <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" />
                 </div>` : ''}
+                ${entry.testigoHtml || ''}
             </div>
         </div>
         `;
@@ -11147,14 +11153,35 @@ export function exportVehiclePrintSheet(item) {
                 .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
                 .qr-video-box { min-width: 0; align-self: start; }
                 .qr-code-img { width: 80px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: contain; }
-                /* Aviso de testigo al pie del corte (Requisito 4.1) */
+                /* Indicador Check Engine vectorial, autónomo y sin dependencia de Font Awesome. */
+                .testigo-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    width: 100%;
+                    max-width: 100%;
+                    margin-top: 4px;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                }
+                .testigo-engine-icon {
+                    display: block;
+                    flex: 0 0 42px;
+                    width: 42px;
+                    height: auto;
+                    aspect-ratio: 4 / 3;
+                    object-fit: contain;
+                }
+                /* El aviso se renderiza después de la imagen técnica y conserva el mismo orden en pantalla/PDF. */
                 .testigo-aviso {
-                    margin-top: 6px;
+                    margin: 0;
+                    min-width: 0;
                     font-size: 11px;
                     font-weight: bold;
-                    color: #b78103;
+                    line-height: 1.25;
+                    color: #8a6200;
                     background: #fff8e1;
-                    padding: 6px 12px;
+                    padding: 6px 10px;
                     border-radius: 4px;
                     border: 1px solid #ffe082;
                     display: inline-block;
