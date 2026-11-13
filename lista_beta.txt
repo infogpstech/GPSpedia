@@ -2169,3 +2169,35 @@ En navegador y cuentas/recursos Beta aislados:
 5. Revisar consola del navegador por errores de elementos inexistentes asociados a debug-console/debug-log.
 No utilizar endpoints productivos, datos reales ni ejecutar cambios de permisos/despliegues. Registrar navegador/versión, cuenta/rol de prueba y resultados; no incluir tokens ni datos personales.
 ================================================================================
+
+
+================================================================================
+AUG-138 — Verificación de diagnósticos y recuperación en Beta aislada
+Antes de ejecutar cualquiera de estas pruebas, sincronizar únicamente la rama autorizada. Ejecutar desde el directorio que contiene la carpeta local GPSpedia:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git -C GPSpedia rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git -C GPSpedia branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git -C GPSpedia remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git -C GPSpedia status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git -C GPSpedia fetch origin "$EXPECTED_BRANCH"
+git -C GPSpedia pull --ff-only origin "$EXPECTED_BRANCH"
+git -C GPSpedia status --short
+git -C GPSpedia rev-parse HEAD
+~~~
+
+Pruebas en navegador, perfil, cuenta y servicios Beta aislados:
+1. Abrir add_cortes sin `gpDebug=1`: confirmar que no aparecen logs debug/info y que warn/error solo contienen evento, etapa, opId validado, estado y código de error permitido.
+2. Abrir add_cortes con `?gpDebug=1`: confirmar que se habilitan niveles debug/info sin exponer VIN, imágenes, Base64, SessionToken, payloads, respuestas ni objetos de error completos.
+3. Desconectar la red, recargar la PWA y comprobar que el snapshot pendiente permanece en IndexedDB; no debe consultar servicios mientras `navigator.onLine` sea falso. Reconectar y verificar que retoma la reconciliación.
+4. Simular interrupción de red antes del commit: comprobar que se conserva el mismo opId/huella y que el reintento no crea una segunda operación lógica.
+5. Simular pérdida de respuesta después del commit: comprobar que checkOperation reconcilia por opId/huella y no repite addOrUpdateCut.
+6. Verificar manejo de cuota solo con fixture de almacenamiento aislado o fault injection aprobado; no llenar almacenamiento de perfiles reales. El error debe impedir el envío si no se confirmó el snapshot durable y no debe imprimir contenido de imágenes.
+7. Inspeccionar consola y registros para confirmar que no existen etiquetas PING-PONG ni respuestas completas de servicios.
+No usar endpoints productivos, datos personales, tokens reales ni modificar deployments/ACL. Registrar versión de navegador, perfil de prueba y resultados sin incluir datos sensibles.
+================================================================================

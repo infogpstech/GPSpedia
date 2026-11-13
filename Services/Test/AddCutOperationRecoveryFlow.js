@@ -23,10 +23,11 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
     const module = frontend.match(/<script type="module">([\s\S]*?)<\/script>/);
     assert_(!!module, 'No se encontró módulo frontend');
     const submitCode = extract_(module[1], 'handleStage2Submit');
+    const workerCode = extract_(module[1], 'performPendingOperationRecovery');
     const recoveryCode = extract_(module[1], 'checkAndRecoverPendingOperation');
     const hash = 'a'.repeat(64);
-    function makeContext(mode, initialSnapshot, removeFailures) {
-        const calls = [], alerts = [], stages = [];
+    function makeContext(mode, initialSnapshot, removeFailures, options = {}) {
+        const calls = [], alerts = [], stages = [], logs = [];
         const state = {
             userId: 'OWNER-1', sessionToken: 'session', opId: null, selectedVehicleId: null,
             vehicleInfo: { marca: 'Toyota', modelo: 'Hilux', categoria: 'Camioneta', versionesAplicables: '2.8', anoDesde: '2024', tipoEncendido: 'Llave' },
@@ -36,15 +37,16 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
             silentRegister: { checked: false }, testigoMotor: { checked: false },
             tipoCorte1: { value: 'Ignición' }, configRelay1: { value: 'Normal' },
             ubicacionCorte1: { value: 'Arnés principal' }, ubicacionCorte2: { value: '' }, ubicacionCorte3: { value: '' },
-            colorCableCorte1: { value: 'Azul' }, imagenVehiculo: { files: [] }, imgCorte1: { files: [] },
+            colorCableCorte1: { value: 'Azul' }, imagenVehiculo: { files: options.imageData ? [{}] : [] }, imgCorte1: { files: options.imageData ? [{}] : [] },
             'form-stage-2': {}
         };
         const document = { getElementById(id) { return Object.prototype.hasOwnProperty.call(elements, id) ? elements[id] : null; } };
         const button = { classList: { add() {}, remove() {} } };
         const event = { preventDefault() {}, target: { querySelector() { return button; } } };
         let snapshot = initialSnapshot ? JSON.parse(JSON.stringify(initialSnapshot)) : null;
-        let server = null, addCount = 0, pendingWrites = 0;
+        let server = null, addCount = 0, checkCount = 0, pendingWrites = 0;
         async function save(operation) {
+            if (options.quotaFailure) { const quotaError = new Error('simulated storage quota'); quotaError.name = 'QuotaExceededError'; throw quotaError; }
             pendingWrites++;
             if (snapshot && (snapshot.id !== operation.id || snapshot.operationHash !== operation.operationHash ||
                 (snapshot.status === 'completed' && operation.status !== 'completed'))) {
@@ -62,6 +64,7 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
         }
         async function routeAction(action, payload) {
             if (action === 'checkOperation') {
+                checkCount++;
                 if (server) return { status: 'success', exists: true, pending: false, vehicleId: server.vehicleId, timestamp: 'server-time', operationHash: server.operationHash };
                 return { status: 'success', exists: false, pending: false };
             }
@@ -75,10 +78,10 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
             throw new Error('Unexpected action: ' + action);
         }
         const dependencies = {
-            state, document, window: { location: { replace() {} } }, navigator: { onLine: true },
-            console: { log() {}, warn() {}, error() {} }, alert(message) { alerts.push(message); },
+            state, document, window: { location: { replace() {} } }, navigator: { onLine: options.online !== false },
+            console: { log() {}, warn() {}, error() {} }, diagnostics: Object.fromEntries(['debug','info','warn','error'].map(level => [level, (event, context) => logs.push({level,event,context})])), alert(message) { alerts.push(message); },
             toggleLoading() {}, toggleNoRecomendado() {}, showPhase() {}, proceedToStage3(id) { stages.push(id); },
-            isSubmittingStage2: false, getCurrentSessionForOwner(owner) { return { userId: owner, sessionToken: 'session' }; },
+            isSubmittingStage1:false, isSubmittingStage2:false, isSubmittingStage3:false, pendingOperationRecoveryPromise:null, pendingOperationRecoveryRequested:false, resumePendingOperationRecovery:async()=>false, refreshSelectedVehicleMatch:async()=>{}, getCurrentSessionForOwner(owner) { return { userId: owner, sessionToken: 'session' }; },
             getOrGenerateOpId: async () => {
                 const current = await read();
                 if (!current.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
@@ -92,13 +95,13 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
             saveAddCutOperationPendingOperation: save,
             getAddCutOperationPendingOperation: read,
             removeAddCutOperationPendingOperation: remove,
-            routeAction, fileToBase64: async () => null, isNoRecomendadoValue: () => false,
+            routeAction, fileToBase64: async () => options.imageData || null, isNoRecomendadoValue: () => false,
             isValidCutVehicleId: value => /^VEH-[A-Z0-9-]+$/.test(String(value || ''))
         };
         const names = Object.keys(dependencies);
         const submit = new Function(...names, submitCode + ';return handleStage2Submit;')(...names.map(name => dependencies[name]));
-        const recovery = new Function(...names, recoveryCode + ';return checkAndRecoverPendingOperation;')(...names.map(name => dependencies[name]));
-        return { submit: () => submit(event), recover: recovery, state, calls, alerts, stages, read, getAddCount: () => addCount, getServer: () => server };
+        const recovery = new Function(...names, workerCode + ';' + recoveryCode + ';return checkAndRecoverPendingOperation;')(...names.map(name => dependencies[name]));
+        return { submit: () => submit(event), recover: recovery, state, calls, alerts, stages, logs, read, getAddCount: () => addCount, getCheckCount: () => checkCount, getServer: () => server };
     }
     const results = [];
     async function run(name, fn) { try { await fn(); results.push({ name, status: 'PASS' }); } catch (error) { results.push({ name, status: 'FAIL', message: String(error.message || error) }); } }
@@ -140,5 +143,21 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
         assert_((await ctx.read()).operation === null && ctx.stages.length === 1, 'No reconcilió y limpió el snapshot terminal.');
     });
 
+    await run('recuperación offline conserva snapshot y no consulta el servicio', async () => {
+        const snapshot={id:'OP-100',ownerId:'OWNER-1',operationHash:hash,status:'failed',vehicleId:null,vehicleInfo:{marca:'Toyota'},formData:{tipoCorte1:'Ignición'},requestData:{silent:false,vehicleData:{},cutData:{tipoCorte1:'Ignición'}}};
+        const ctx=makeContext('success',snapshot,0,{online:false}); await ctx.recover();
+        assert_(ctx.getCheckCount()===0,'Se consultó backend estando offline.');
+        assert_((await ctx.read()).operation.status==='failed','Se alteró snapshot offline.');
+        assert_(ctx.logs.some(log=>log.event==='pending-recovery.offline'),'No se registró estado offline resumido.');
+    });
+    await run('error de cuota no envía operación ni registra Base64', async () => {
+        const imageData='data:image/png;base64,SENSITIVE_IMAGE_PAYLOAD';
+        const ctx=makeContext('success',null,0,{quotaFailure:true,imageData}); await ctx.submit();
+        assert_(ctx.getAddCount()===0&&ctx.getCheckCount()===0,'Se llamó al servicio sin snapshot durable verificado.');
+        assert_((await ctx.read()).operation===null,'Se persistió snapshot no verificado.');
+        const entry=ctx.logs.find(log=>log.event==='cut-operation.submit-failed');
+        assert_(entry&&entry.context.errorCode==='QuotaExceededError','No se identificó el error de cuota de forma segura.');
+        assert_(!JSON.stringify(ctx.logs).includes('SENSITIVE_IMAGE_PAYLOAD'),'Se filtró Base64 en logs.');
+    });
     return { status: results.some(result => result.status === 'FAIL') ? 'FAIL' : 'PASS', passed: results.filter(result => result.status === 'PASS').length, failed: results.filter(result => result.status === 'FAIL').length, results };
 }

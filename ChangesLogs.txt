@@ -704,3 +704,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Se confirmó que clearModalNavStack continúa consumida por main.js y que loadAndRenderInbox tiene llamadas internas activas; los exports UI también se exponen mediante window.ui y se preservan.
 - Se incorporará una suite INTEGRATION para comprobar la ausencia del markup obsoleto y preservar contratos/panel activo.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-138 — SANITIZACIÓN DE DIAGNÓSTICOS EN ADD_CORTES
+- Añadido diagnosticLogger.js: niveles debug/info/warn/error; producción solo warn/error; activación explícita por query parameter gpDebug=1; lista permitida de etapa, opId validado, estado resumido, conectividad y códigos de error conocidos.
+- add_cortes.html: sustituidas todas las llamadas directas a console por el logger seguro; eliminado el marcador PING-PONG y el registro de objetos Error completos. No se imprimen snapshots, imágenes, Base64, tokens, payloads ni respuestas.
+- Services/Test/AddCutOperationRecoveryFlow.js: el harness ejecuta el worker de recuperación real y añade pruebas de modo offline y QuotaExceededError; conserva escenarios de reintento y respuesta perdida antes/después del commit.
+- Añadido Services/Test/AddCortesDiagnostics.mjs al grupo INTEGRATION y documentado su comando.
+- No se modificaron el contrato de idempotencia, la persistencia durable, endpoints, deployments ni datos.
+================================================================================

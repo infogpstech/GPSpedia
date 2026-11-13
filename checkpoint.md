@@ -726,3 +726,33 @@ Validación y límites:
 Archivos: index.html, ui.js, Services/Test/UiOrphanCleanup.js, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea pendiente: AUG-138 — Sanitizar logs de recuperación y operaciones en add_cortes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-138 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo autorizada: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD inicial verificado: e3c646e53ab0c23ec4a4f34a0e0ab4e619b83af9.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; ejecución CI Node.js 22 posterior a publicación y verificación Beta aún por confirmar.
+
+Resultado:
+- Añadido diagnosticLogger.js. Producción emite solo warn/error; ?gpDebug=1 habilita explícitamente debug/info. Solo se serializan campos permitidos y códigos de error reconocidos.
+- add_cortes.html no contiene llamadas directas a console. Se retiraron PING-PONG y el registro del objeto catalogError; las trazas usan etapa, opId validado, estado resumido y errorCode conocido.
+- No se encontró impresión directa de pendingOp en la versión inicial de esta rama; el test anti-regresión verifica que no se introduzca serialización de snapshots o respuestas.
+- AddCutOperationRecoveryFlow.js ejecuta ahora performPendingOperationRecovery además del wrapper y cubre offline, error de cuota, reintento y pérdida de respuesta antes/después del commit.
+- AddCortesDiagnostics.mjs integrado en INTEGRATION para validar lista permitida, niveles y ausencia de logs inseguros.
+
+Validación local ejecutada en runtime V8:
+- Logger: niveles/allowlist comprobados.
+- Parsing del módulo inline de add_cortes: PASS.
+- Flujo de recuperación: 5/5 PASS.
+- CI Node.js 22/GitHub Actions: se comprobará tras publicar; no se afirma como aprobado en este checkpoint.
+
+Validación Beta pendiente:
+- IndexedDB real y recuperación después de recargar/cerrar PWA, en perfil y datos aislados.
+- Reintentos y respuesta perdida con servicios Beta controlados antes/después del commit.
+- Verificar logs en producción sin gpDebug y con activación explícita; no usar datos reales ni provocar agotamiento de cuota en recursos productivos.
+
+Archivos: add_cortes.html, diagnosticLogger.js, Services/Test/AddCutOperationRecoveryFlow.js, Services/Test/AddCortesDiagnostics.mjs, Services/Test/RunServiceTests.mjs, Services/Test/README.md, Tareas_pendientes_parte2.txt, tareas_completadas_parte1.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea pendiente: AUG-139 — Definir política efectiva de anti-debugging.
+================================================================================

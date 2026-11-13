@@ -386,3 +386,13 @@ Se añadió Services/Test/UiOrphanCleanup.js al grupo INTEGRATION para prevenir 
 Validación V8: UiOrphanCleanup.js 6/6 PASS; parsing de ui.js, main.js y la suite PASS. El runner completo Node.js 22/GitHub Actions no se ejecutó porque la conexión no expone dispatch y no se generó un run asociado al SHA. No se afirma que CI haya aprobado.
 Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. La interacción de navegador real (navegación, Inbox, consola administrativa y Drive) queda para Beta.
 ================================================================================
+
+
+================================================================================
+
+AUG-138 — SANITIZACIÓN DE DIAGNÓSTICOS EN ADD_CORTES — 2026-11-13
+Se incorporó diagnosticLogger.js con niveles debug/info/warn/error, activación explícita mediante ?gpDebug=1 y lista permitida estricta. En producción solo se emiten warn/error con evento, etapa, opId validado, estado resumido y códigos de error conocidos. Se retiraron todas las llamadas directas a console de add_cortes.html, incluido el marcador PING-PONG y el registro del objeto de error completo de la verificación de catálogo. La inspección confirmó que pendingOp no se imprimía directamente en la versión inicial de esta rama; se añadió una regresión para impedir exposición de snapshots, Base64, imágenes, tokens, payloads y respuestas.
+Se añadieron Services/Test/AddCortesDiagnostics.mjs y pruebas de recuperación offline y QuotaExceededError a AddCutOperationRecoveryFlow.js. El harness ahora incluye performPendingOperationRecovery junto con su wrapper, para ejecutar el worker real en las simulaciones. Los escenarios existentes de reintento y respuesta perdida antes/después del commit se conservaron.
+Validación local en runtime V8: logger/lista permitida aprobados, parsing del módulo inline aprobado y flujo de recuperación 5/5 PASS. La ejecución del runner Node.js 22/GitHub Actions se verificará después de publicar; no se declara CI aprobado en este registro.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA. Pendiente Beta: inspección en navegador/IndexedDB aislado y pruebas con servicios externos, incluida la interrupción controlada de respuesta. No se modificaron datos, endpoints ni deployments.
+================================================================================

@@ -78,6 +78,7 @@ runGroup('37','USERS',()=>{
 });
 runGroup('38','INTEGRATION',()=>{
  recordResult('Coordinador compartido/concurrencia/leases',new Function(read('Services/Coordinator.js')+'\n'+read('Services/SharedMutationClient.js')+'\n'+read('Services/Test/SharedMutationCoordinator.js')+'\nreturn runSharedMutationCoordinatorTests();')());
+ runCli('AUG-138 logger seguro y recuperación offline/reintentos/cuota/respuesta perdida','Services/Test/AddCortesDiagnostics.mjs');
  recordResult('Limpieza UI y contratos públicos',loadFunction('Services/Test/UiOrphanCleanup.js','runUiOrphanCleanupTests')({
   index:read('index.html'),ui:read('ui.js'),main:read('main.js')
  }));

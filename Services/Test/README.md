@@ -1532,3 +1532,8 @@ GitHub Actions run 43366270381, sobre commit a9ecfd6c6180b5037261b1d26f224527f7b
 ## Contratos UI y retirada de markup obsoleto
 
 La suite `UiOrphanCleanup.js` se ejecuta dentro del grupo INTEGRATION del runner. Comprueba que el markup y las referencias de la antigua `debug-console` no reaparezcan, que `dev-console-log` siga activo y que los contratos públicos de `clearModalNavStack` y `loadAndRenderInbox` permanezcan conectados.
+
+
+## AUG-138 — Diagnóstico seguro de add_cortes
+
+`Services/Test/AddCortesDiagnostics.mjs` valida el logger por lista permitida, niveles de producción y activación explícita con `?gpDebug=1`; además ejecuta el flujo de recuperación para respuesta perdida antes/después del commit, reintentos, operación offline y fallo `QuotaExceededError`. Ejecutar con el runner general o directamente mediante `node --experimental-default-type=module Services/Test/AddCortesDiagnostics.mjs`.

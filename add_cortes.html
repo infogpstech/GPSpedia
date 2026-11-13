@@ -342,6 +342,7 @@
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from './api-config.js';
         import { getAddCutOperationPendingOperation, saveAddCutOperationPendingOperation, removeAddCutOperationPendingOperation } from './offline.js';
+        import { createDiagnosticLogger } from './diagnosticLogger.js';
         import './lightbox.js';
         import { openYouTubeUploadModal } from './youtubeUpload.js';
         import { createOverlayHistoryManager, overlayHistoryStateKey } from './overlayHistory.js';
@@ -353,6 +354,7 @@
         window.overlayHistory = overlayHistory;
 
         const SESSION_KEY = 'gpsepedia_session';
+        const diagnostics = createDiagnosticLogger({ debugEnabled: new URLSearchParams(window.location.search).get('gpDebug') === '1' });
         const state = {
             vehicleInfo: {},
             matches: [],
@@ -454,11 +456,11 @@
                 if (!pendingResult.available) throw new Error('PENDING_OPERATION_STORAGE_UNAVAILABLE');
                 pendingOp = pendingResult.operation;
             } catch (error) {
-                console.warn("No se pudo leer la operación durable pendiente; recuperación omitida.", error && error.name || 'StorageError');
+                diagnostics.warn('pending-recovery.storage-read-failed', { stage: 'recovery', errorCode: error && error.name || 'StorageError' });
                 return;
             }
             if (!pendingOp || pendingOp.ownerId !== state.userId || !['processing', 'failed', 'completed'].includes(pendingOp.status)) return;
-            if (!navigator.onLine) { console.log("Dispositivo sin conexión; recuperación pendiente."); return; }
+            if (!navigator.onLine) { diagnostics.info('pending-recovery.offline', { stage: 'recovery', opId: pendingOp.id, status: pendingOp.status, online: false }); return; }
             toggleLoading(true);
             try {
                 const session = getCurrentSessionForOwner(pendingOp.ownerId);
@@ -505,7 +507,7 @@
                 }
             } catch (error) {
                 if (error && error.message === 'COMPLETED_SNAPSHOT_UNRESOLVED') alert("Existe una operación marcada como completada localmente, pero el servidor no confirma su resultado. Se conserva para revisión y no se reutilizará su identificador.");
-                console.warn("Falló la comprobación de recuperación pendiente.", error && error.name || 'RecoveryError');
+                diagnostics.warn('pending-recovery.failed', { stage: 'recovery', opId: pendingOp && pendingOp.id, status: pendingOp && pendingOp.status, errorCode: error && error.name || 'RecoveryError' });
             } finally { toggleLoading(false); }
         }
         function checkAndRecoverPendingOperation() {
@@ -536,7 +538,7 @@
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                console.log("PWA returned to foreground. Checking for pending operations...");
+                diagnostics.debug('page.foreground', { stage: 'recovery', status: 'visible' });
                 checkAndRecoverPendingOperation();
             }
         });
@@ -759,7 +761,7 @@
                             warningEl.style.display = 'none';
                         }
                     } catch (err) {
-                        console.warn('No se pudo validar el VIN.', err && err.name || 'ValidationError');
+                        diagnostics.warn('vin.validation-failed', { stage: 'vin-validation', errorCode: err && err.name || 'ValidationError' });
                     }
                 });
             }
@@ -862,7 +864,7 @@
                 if (suggestion) {
                     container.innerHTML = `Quizás quisiste decir: <a onclick="applySuggestion('${field}', '${suggestion}')" style="cursor:pointer; color:#007bff; text-decoration:underline;">${suggestion}</a>`;
                 }
-            } catch (e) { console.warn('No se pudo obtener la sugerencia.', e && e.name || 'SuggestionError'); }
+            } catch (e) { diagnostics.warn('catalog.suggestion-failed', { stage: 'catalog-refresh', errorCode: e && e.name || 'SuggestionError' }); }
         }
 
         function applySuggestion(field, suggestion) {
@@ -942,7 +944,7 @@
                         }
                     }
                 }
-            } catch (error) { console.warn('No se pudo actualizar la disponibilidad del vehículo.', error && error.name || 'CatalogRefreshError'); }
+            } catch (error) { diagnostics.warn('catalog.availability-refresh-failed', { stage: 'catalog-refresh', errorCode: error && error.name || 'CatalogRefreshError' }); }
             return upsertFallbackVehicleMatch(vehicleId, fallback);
         }
         function displayMatches(matches) {
@@ -1098,7 +1100,7 @@
                             return;
                         }
                     } catch (err) {
-                        console.warn('No se pudo verificar el VIN antes del guardado.', err && err.name || 'ValidationError');
+                        diagnostics.warn('vin.pre-submit-validation-failed', { stage: 'vin-validation', errorCode: err && err.name || 'ValidationError' });
                         throw new Error(err && err.message || "No se pudo validar el VIN. El registro no se enviará.");
                     }
                 }
@@ -1199,11 +1201,11 @@
                 });
                 alert("Corte guardado exitosamente."); proceedToStage3(result.vehicleId);
             } catch (error) {
-                console.error("[PING-PONG][ERROR] Falló el guardado de la operación.", error && error.name || 'OperationError');
+                diagnostics.error('cut-operation.submit-failed', { stage: 'submit', opId: pendingOp && pendingOp.id, status: pendingOp && pendingOp.status, errorCode: error && error.name || 'OperationError' });
                 if (pendingOp && snapshotSaved) {
                     pendingOp.status = serverConfirmed ? 'completed' : 'failed';
                     const retained = await saveAddCutOperationPendingOperation(pendingOp);
-                    if (!retained || retained.saved !== true) console.warn("No se pudo actualizar el estado del snapshot; se conserva el registro durable previo.");
+                    if (!retained || retained.saved !== true) diagnostics.warn('cut-operation.snapshot-status-update-failed', { stage: 'submit', opId: pendingOp.id, status: pendingOp.status });
                 }
                 const networkError = !navigator.onLine || (error && error.message && /fetch|network|timeout/i.test(error.message));
                 if (networkError) alert("Se interrumpió la comunicación. La operación y sus archivos permanecen guardados de forma durable para reintentar la misma solicitud sin duplicarla.");
@@ -1427,7 +1429,7 @@
                     await verifySupplementaryCatalogWrite_(writeResult, payload);
                     alert("Información guardada y verificada en el catálogo. Serás redirigido.");
                 } catch (catalogError) {
-                    console.error("WRITE confirmó la información, pero el catálogo no pudo verificarla:", catalogError);
+                    diagnostics.error('supplementary.catalog-verification-failed', { stage: 'supplementary', opId: state.opId, status: 'write-confirmed', errorCode: catalogError && catalogError.name || 'CatalogVerificationError' });
                     alert("WRITE confirmó el guardado, pero no se pudo verificar la lectura actualizada del catálogo. No vuelvas a enviar el formulario para evitar duplicados; al volver se recargará la ficha.");
                 }
                 window.location.href = 'index.html';
@@ -1476,7 +1478,7 @@
                 if (!file) { preview.src = ''; return; }
                 preview.src = '';
                 if (file.size === 0) {
-                    console.warn('No se pudo generar la vista previa de una imagen.', 'EmptyFile');
+                    diagnostics.warn('image.preview-empty-file', { stage: 'image-preview', errorCode: 'EmptyFile' });
                     return;
                 }
                 try {
@@ -1484,11 +1486,11 @@
                     reader.onload = () => {
                         if (typeof reader.result === 'string' && reader.result.startsWith('data:')) preview.src = reader.result;
                     };
-                    reader.onerror = () => console.warn('No se pudo generar la vista previa de una imagen.', reader.error && reader.error.name || 'FileReadError');
-                    reader.onabort = () => console.warn('Se canceló la lectura de una imagen para vista previa.', 'FileReadAborted');
+                    reader.onerror = () => diagnostics.warn('image.preview-read-failed', { stage: 'image-preview', errorCode: reader.error && reader.error.name || 'FileReadError' });
+                    reader.onabort = () => diagnostics.info('image.preview-read-aborted', { stage: 'image-preview', errorCode: 'FileReadAborted' });
                     reader.readAsDataURL(file);
                 } catch (error) {
-                    console.warn('No se pudo iniciar la vista previa de una imagen.', error && error.name || 'FileReadError');
+                    diagnostics.warn('image.preview-start-failed', { stage: 'image-preview', errorCode: error && error.name || 'FileReadError' });
                 }
             });
         }
