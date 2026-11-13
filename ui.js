@@ -7095,6 +7095,7 @@ export async function openAuditDriveModal() {
     let inventoryOperationId = '';
     let inventoryConfirmedFileIds = [];
     let auditId = '';
+    let auditStartedAt = 0;
     let localStateRevision = 0;
     let localPageCount = 0;
     let pendingBatchIndex = null;
@@ -7197,6 +7198,7 @@ export async function openAuditDriveModal() {
         const state = {
             auditId: auditId,
             serverAuditId: auditId,
+            createdAt: auditStartedAt,
             revision: localStateRevision,
             batchIndex: pendingBatchIndex,
             batchFiles: pendingBatchFiles,
@@ -7443,6 +7445,7 @@ export async function openAuditDriveModal() {
         inventoryAuditId = String(state.inventoryAuditId || '');
         inventoryOperationId = String(state.inventoryOperationId || '');
         auditId = String(state.serverAuditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId || '');
+        auditStartedAt = Math.max(0, Number(state.createdAt) || Number(state.lastScanAt) || Date.now());
         localStateRevision = Math.max(0, Number(state.revision) || 0);
         localPageCount = Math.max(0, Number(state.pageCount) || 0);
         pendingBatchIndex = null;
@@ -7504,6 +7507,7 @@ export async function openAuditDriveModal() {
                 inventoryOperationId = '';
                 inventoryConfirmedFileIds = [];
                 auditId = '';
+                auditStartedAt = Date.now();
                 localStateRevision = 0;
                 localPageCount = 0;
                 pendingBatchIndex = null;
