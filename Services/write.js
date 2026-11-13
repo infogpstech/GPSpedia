@@ -501,13 +501,13 @@ function findNextAvailableCutSlot_(rowValues) {
 function isAddCutPlainObject_(value) {
     return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
-function validateAddCutText_(value, field, required, maxLength) {
+function validateAddCutText_(value, field, required, maxLength, preserveWhitespace) {
     if (value === undefined || value === null) value = "";
     if (typeof value !== "string") throw new Error("El campo " + field + " debe ser texto.");
     const clean = value.trim();
     if (required && !clean) throw new Error("El campo " + field + " es obligatorio.");
     if (clean.length > maxLength) throw new Error("El campo " + field + " supera el máximo de " + maxLength + " caracteres.");
-    return clean;
+    return preserveWhitespace ? value : clean;
 }
 function validateAddCutImage_(value, field) {
     if (value === undefined || value === null || value === "") return "";
@@ -520,14 +520,15 @@ function validateAddCutImage_(value, field) {
     return value;
 }
 function validateAddCutYearRange_(value) {
-    const clean = validateAddCutText_(value, "anoDesde", true, 11);
+    const raw = validateAddCutText_(value, "anoDesde", true, 11, true);
+    const clean = raw.trim();
     const match = clean.match(/^(\d{4})(?:\s*-\s*(\d{4}))?$/);
     if (!match) throw new Error("El año debe ser YYYY o un rango YYYY-YYYY.");
     const start = Number(match[1]), end = match[2] ? Number(match[2]) : start;
     const maxYear = new Date().getFullYear() + 2;
     if (start < 1886 || end < 1886 || start > maxYear || end > maxYear) throw new Error("El rango de años está fuera del intervalo permitido.");
     if (start > end) throw new Error("El año inicial no puede ser mayor que el año final.");
-    return clean;
+    return raw;
 }
 function validateAddOrUpdateCutPayload_(payload, options) {
     options = isAddCutPlainObject_(options) ? options : {};
@@ -535,7 +536,8 @@ function validateAddOrUpdateCutPayload_(payload, options) {
     const allowed = (list, value, field) => {
         const values = Array.isArray(list) ? list.map(item => String(item == null ? "" : item).trim()).filter(Boolean) : [];
         if (!values.length) throw new Error("No está disponible la lista oficial para validar " + field + ".");
-        if (!values.includes(value)) throw new Error("El valor de " + field + " no pertenece a la lista oficial vigente.");
+        const candidate = typeof value === "string" ? value.trim() : String(value == null ? "" : value);
+        if (!values.includes(candidate)) throw new Error("El valor de " + field + " no pertenece a la lista oficial vigente.");
     };
     const vehicleIdRaw = payload.vehicleId === undefined || payload.vehicleId === null || payload.vehicleId === "" ? "" : String(payload.vehicleId).trim();
     let vehicleId = null;
@@ -550,19 +552,19 @@ function validateAddOrUpdateCutPayload_(payload, options) {
     const cutData = {
         tipoCorte1: validateAddCutText_(cut.tipoCorte1, "tipoCorte1", true, 100),
         configRelay1: validateAddCutText_(cut.configRelay1, "configRelay1", false, 200),
-        ubicacionCorte1: validateAddCutText_(cut.ubicacionCorte1, "ubicacionCorte1", true, 10000),
-        colorCableCorte1: validateAddCutText_(cut.colorCableCorte1, "colorCableCorte1", false, 200),
+        ubicacionCorte1: validateAddCutText_(cut.ubicacionCorte1, "ubicacionCorte1", true, 10000, true),
+        colorCableCorte1: validateAddCutText_(cut.colorCableCorte1, "colorCableCorte1", false, 200, true),
         activaTestigo1: cut.activaTestigo1,
         imgCorte1: validateAddCutImage_(cut.imgCorte1, "imgCorte1"),
-        vin: validateAddCutText_(cut.vin, "vin", false, 50)
+        vin: validateAddCutText_(cut.vin, "vin", false, 50, true)
     };
     if (typeof cutData.activaTestigo1 !== "boolean") throw new Error("El campo activaTestigo1 debe ser booleano.");
     allowed(options.tipoDeCorte, cutData.tipoCorte1, "tipoCorte1");
-    const noRecommended = /^no recomendado$/i.test(cutData.tipoCorte1);
+    const noRecommended = /^no recomendado$/i.test(cutData.tipoCorte1.trim());
     if (!noRecommended) {
-        if (!cutData.configRelay1) throw new Error("La configuración Relay es obligatoria para este tipo de corte.");
+        if (!cutData.configRelay1.trim()) throw new Error("La configuración Relay es obligatoria para este tipo de corte.");
         allowed(options.configRelay, cutData.configRelay1, "configRelay1");
-    } else if (cutData.configRelay1) {
+    } else if (cutData.configRelay1.trim()) {
         allowed(options.configRelay, cutData.configRelay1, "configRelay1");
     }
     if (cutData.vin) {
@@ -577,11 +579,11 @@ function validateAddOrUpdateCutPayload_(payload, options) {
         Object.keys(v).forEach(key => { if (!vehicleKeys.has(key)) throw new Error("El campo de vehículo " + key + " no está permitido."); });
         vehicleData = {
             categoria: validateAddCutText_(v.categoria, "categoria", !vehicleId, 80),
-            marca: validateAddCutText_(v.marca, "marca", !vehicleId, 120),
-            modelo: validateAddCutText_(v.modelo, "modelo", !vehicleId, 120),
-            versionesAplicables: validateAddCutText_(v.versionesAplicables, "versionesAplicables", false, 500),
+            marca: validateAddCutText_(v.marca, "marca", !vehicleId, 120, true),
+            modelo: validateAddCutText_(v.modelo, "modelo", !vehicleId, 120, true),
+            versionesAplicables: validateAddCutText_(v.versionesAplicables, "versionesAplicables", false, 500, true),
             anoDesde: v.anoDesde === undefined || v.anoDesde === null || v.anoDesde === "" ? "" : validateAddCutYearRange_(v.anoDesde),
-            anoHasta: validateAddCutText_(v.anoHasta, "anoHasta", false, 4),
+            anoHasta: validateAddCutText_(v.anoHasta, "anoHasta", false, 4, true),
             tipoEncendido: validateAddCutText_(v.tipoEncendido, "tipoEncendido", !vehicleId, 80),
             imagenVehiculo: validateAddCutImage_(v.imagenVehiculo, "imagenVehiculo")
         };
