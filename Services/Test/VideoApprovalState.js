@@ -17,7 +17,9 @@ function runVideoApprovalStateTests() {
         const row = [];
         row[COLS_FEEDBACKS.ID - 1] = id;
         row[COLS_FEEDBACKS.Problema - 1] = data;
-        row[COLS_FEEDBACKS.ID_vehiculo - 1] = data.referenceId || "";
+        let parsed = data;
+        if (typeof data === "string") { try { parsed = JSON.parse(data); } catch (error) {} }
+        row[COLS_FEEDBACKS.ID_vehiculo - 1] = parsed && parsed.referenceId || "";
         return row;
     }
     function sheet_(rows) { return { getDataRange: () => ({ getValues: () => rows }) }; }
