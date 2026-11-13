@@ -1690,3 +1690,40 @@ Resultado técnico:
 Pendiente exclusivamente para Beta aislada: scopes/ACL OAuth reales, Spreadsheet/Drive, CellImage/OverGridImage reales, LockService/flush, fallos y concurrencia externos, y navegación de navegador real. No usar datos productivos.
 No hubo deployment ni modificaciones de GPSpedia2.2.5.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-028 — 2026-11-13
+
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de código validado: 45e852a45f0084ba7b828adca581e5fe8c23f715
+Commit de documentación: f64022349f90af184101bbe5ba0ca01a0de0558f
+HEAD de la rama antes de este checkpoint: f64022349f90af184101bbe5ba0ca01a0de0558f
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Comparación antes del checkpoint: 2028 commits ahead, 0 behind.
+Estado: COMPLETADA EN CÓDIGO; integración real diferida a Beta aislada.
+
+Resultado:
+- ADMIN valida auditorías completas con estado de servidor por auditId/propietario, cursor emitido, posición esperada, pila no vacía, contadores y carpetas autorizadas.
+- El inventario exige la lista exacta de IDs únicos del escaneo completo; una auditoría parcial, alterada, vencida o sin snapshot no puede marcar filas ausentes.
+- auditId e inventoryOperationId son independientes y quedan correlacionados en Spreadsheet y ActividadUsuario.
+- Resultados por archivo: confirmado, bloqueado o error. Los estados históricos no resueltos y las identidades ambiguas quedan protegidos.
+- Se detectan duplicados por Drive ID; las escrituras se verifican, reintentan y pasan a requiere_revision cuando no pueden reconciliarse.
+- El organizador exige coincidencia de auditId, inventoryOperationId y resultado confirmado.
+
+Validación automatizada:
+- AdminReplacedImagesIntegrity: 29/29 PASS.
+- GitHub Actions run 43497439972 — SUCCESS.
+- Node.js 22; 71 suites; 1,023 pruebas aprobadas; 0 fallos de suite.
+- node --check aprobó los módulos JavaScript modificados.
+- No se desplegó el servicio ni se realizaron operaciones sobre Spreadsheet/Drive productivos.
+
+Pendiente exclusivamente para Beta aislada:
+- Comportamiento real de PropertiesService, CacheService y LockService.
+- Permisos de Drive/Spreadsheet, fallos de red/escritura/flush y concurrencia real.
+- No usar datos productivos para estas pruebas.
+
+Siguiente tarea: AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales.
+================================================================================
