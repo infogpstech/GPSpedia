@@ -1158,3 +1158,22 @@ Beta pendiente: fallos físicos de Spreadsheet/flush, concurrencia real entre ej
 
 Siguiente trabajo: reevaluar el backlog histórico de menor prioridad; AUG-047 continúa abierta y es candidata posterior, sujeto a revisar sus dependencias vigentes. No reabrir AUG-010 ni tareas ya cerradas.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-047 — 2026-11-13
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 (HEAD verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios).
+HEAD de implementación y pruebas: 1ea8bc0e6b32c5d5fd980f2a0088857555cd5a53.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Se completó H-AUD-036-004/005: #terms-modal y #terms-agreement-modal tienen semántica ARIA completa; el aviso obligatorio no se puede cerrar y mantiene el bloqueo; el acuerdo incorpora botón semántico, foco inicial, trampa de teclado, Escape y restauración de foco. El aviso padre se oculta temporalmente del árbol de accesibilidad cuando el acuerdo está encima. Service Worker v20 precarga Logo_TemaOscuro.png y tracklink_logo.png. La prueba de History API simula el cierre del acuerdo y confirma que el aviso padre permanece y no quedan entradas __gpOverlayStack/modalOpen residuales.
+
+Archivos: index.html, ui.js, service-worker.js, style.css, Services/Test/RunServiceTests.mjs, Services/Test/TermsModalAccessibility.mjs.
+Validación CI run 43439140720 SUCCESS: 53 suites, 748/748 PASS; TermsModalAccessibility 9/9 PASS; Node.js --check PASS.
+
+Beta pendiente: lectores de pantalla reales, teclado/navegadores móviles, temas claro/oscuro, actualización e instalación offline de Service Worker v20, y History API real desde login/footer/aviso. AUG-046 (aprobación corporativa del contenido legal) permanece fuera de este alcance; no se modificó el texto jurídico. Sin despliegues ni pruebas con datos productivos.
+
+Siguiente trabajo: revisar el backlog por prioridad y dependencias; no asumir que las tareas legales restantes están aprobadas por esta corrección técnica.
+================================================================================

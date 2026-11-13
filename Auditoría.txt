@@ -1134,3 +1134,21 @@ Pruebas locales: Services/Test/LastDeveloperProtection.js ejercita el helper rea
 
 Límite: los dobles locales no certifican fallos físicos, consistencia eventual ni concurrencia entre ejecuciones/proyectos Apps Script. Se conserva validación Beta aislada; no se ejecutaron deployments, endpoints operativos ni escrituras productivas.
 ================================================================================
+
+
+================================================================================
+ADENDA DE RESOLUCIÓN — AUG-047 — H-AUD-036-004/005 — 2026-11-13
+Estado: RESUELTO EN FUENTES; VALIDACIÓN DE INTERFAZ REAL DIFERIDA A BETA.
+
+Cambios:
+- #terms-modal y #terms-agreement-modal exponen role=dialog, aria-modal, aria-labelledby y aria-describedby. El aviso obligatorio no incorpora un control de cierre.
+- El acuerdo usa un botón de cierre semántico y accesible. Su foco inicial se dirige al encabezado; Tab/Shift+Tab quedan contenidos; Escape y el botón cierran solo el acuerdo; el foco retorna al elemento que abrió el diálogo.
+- Cuando el acuerdo se abre sobre el aviso, el aviso padre queda temporalmente aria-hidden para evitar dos diálogos activos en el árbol de accesibilidad. Al cerrar el acuerdo se restaura el atributo y el foco.
+- El aviso obligatorio mantiene allowEscape=false y el catálogo continúa bloqueado hasta la aceptación confirmada por AUTH.
+- Service Worker v20 incorpora Logo_TemaOscuro.png y tracklink_logo.png a CORE_ASSETS para disponibilidad offline. La precarga es esencial: un fallo conserva el worker anterior en vez de activar una versión sin recursos legales.
+- La pila overlayHistory gestiona el acuerdo como capa superior; al cerrarlo sobre el aviso, el aviso permanece visible y el estado no conserva modalOpen ni la entrada del acuerdo.
+
+Pruebas: Services/Test/TermsModalAccessibility.mjs 9/9 PASS; comprobación de semántica HTML, foco/teclado, apertura desde login/footer/aviso, simulación History API y existencia/precache de logos. GitHub Actions run 43439140720 SUCCESS; 53 suites, 748/748 PASS; Node.js --check PASS.
+
+Límite: no se certifica con pruebas estáticas la interacción de lector de pantalla, el comportamiento de foco del navegador móvil ni la instalación offline real; esos escenarios quedan en lista_beta_parte2.txt. No se modificó el contenido jurídico ni se ejecutó despliegue.
+================================================================================

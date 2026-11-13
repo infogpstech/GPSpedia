@@ -1395,3 +1395,37 @@ PRUEBAS AISLADAS (no usar endpoints ni hojas productivas):
 
 Registrar IDs de prueba y resultados sin incluir contraseñas, tokens, nombres reales ni datos sensibles. No desplegar ni ejecutar contra proyectos, endpoints, credenciales o hojas productivas.
 ================================================================================
+
+
+================================================================================
+AUG-047 — VALIDACIÓN BETA DE ACCESIBILIDAD, HISTORY API Y OFFLINE LEGAL
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS:
+1. Crear una cuenta de prueba sin aceptación vigente. Abrir el aviso obligatorio con teclado: foco inicial en Aceptar Términos, Tab/Shift+Tab no deben salir del diálogo y Escape no debe cerrarlo ni mostrar el catálogo.
+2. Activar TalkBack en Android y NVDA o VoiceOver en escritorio. Confirmar que el aviso y el acuerdo anuncian rol, título y descripción; que el fondo no se presenta como contenido activo mientras el acuerdo está abierto.
+3. Abrir el acuerdo desde el enlace del aviso. Confirmar foco inicial en el encabezado, ciclo de foco con Tab/Shift+Tab, cierre con Escape y con botón; ambos cierres deben devolver el foco al enlace y dejar visible el aviso obligatorio.
+4. Abrir el acuerdo desde login y footer; cerrar con Escape y botón. Confirmar que el foco retorna al enlace que inició la apertura.
+5. Repetir con viewport móvil estrecho, orientación vertical/horizontal, zoom del navegador y temas claro/oscuro. Verificar que el botón de cierre no se solape con el título y que el contenido conserve scroll.
+6. Actualizar desde el Service Worker anterior a v20. Tras activación, desconectar la red y abrir ambos modales. Confirmar carga local de Logo_TemaOscuro.png y tracklink_logo.png en claro/oscuro; inspeccionar Cache Storage y verificar que el cache activo sea gpsepedia-cache-v20.
+7. Con el aviso visible, abrir el acuerdo y cerrarlo usando Atrás, Escape y botón. Confirmar que el aviso permanece, que la pila __gpOverlayStack queda vacía al cerrar el acuerdo y que no aparecen entradas modalOpen residuales.
+8. Abrir y cerrar desde cada punto de entrada varias veces, recargar y repetir. Confirmar que no se acumulan listeners, el foco no queda en un elemento oculto y el aviso no puede descartarse antes de la aceptación confirmada.
+
+Registrar navegador, dispositivo, lector de pantalla y versión del Service Worker. No aprobar ni modificar contenido jurídico; AUG-046 conserva su proceso de aprobación corporativa. No usar cuentas reales ni desplegar a producción.
+================================================================================

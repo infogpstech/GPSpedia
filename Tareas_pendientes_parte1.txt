@@ -689,7 +689,12 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   4. Verificar History API al cerrar el acuerdo sobre el aviso, sin entradas modalOpen residuales.
   5. Probar teclado, lector, móvil, tema claro/oscuro, offline y apertura desde login/footer/aviso.
 - Relación: AUD-T-036/AUD-T-037/AUG-045.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-13).
+- Resolución: aviso obligatorio y acuerdo exponen diálogos accesibles con nombre/descripción; el aviso no admite Escape ni cierre; el acuerdo usa botón semántico, foco inicial, trampa de Tab, restauración de foco y Escape limitado al acuerdo. Al abrir el acuerdo sobre el aviso, este queda temporalmente oculto a tecnología asistiva y se restaura al cerrar.
+- Offline: Service Worker v20 precarga Logo_TemaOscuro.png y tracklink_logo.png como recursos esenciales.
+- Historia: cierre del acuerdo usa la pila overlayHistory; prueba de navegación confirma que el aviso padre permanece y no quedan __gpOverlayStack/modalOpen residuales.
+- Pruebas: TermsModalAccessibility 9/9 PASS; GitHub Actions run 43439140720 SUCCESS; 53 suites, 748/748 PASS; Node.js --check PASS.
+- Beta pendiente: pruebas reales de teclado/lector de pantalla, móvil, temas, instalación/actualización offline y cierre con History API desde login/footer/aviso. No se realizaron pruebas con usuarios ni despliegues.
 
 ### AUG-048 — Corregir snapshot autoritativo y sincronización silenciosa del catálogo
 - Origen: H-AUD-037-001/002. Prioridad alta.

@@ -958,3 +958,15 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - CI run 43437684317 SUCCESS: 52 suites, 739/739 PASS; AUTH 32/32 en cada proyecto; Node.js --check PASS.
 - Sin cambios en GPSpedia2.2.5, deployments, endpoints operativos ni datos productivos.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-047 — Accesibilidad, navegación y offline de modales legales
+- Se añadieron atributos de diálogo accesible al aviso obligatorio y al acuerdo de términos.
+- El aviso no se puede descartar con Escape; mantiene el bloqueo del catálogo. El acuerdo tiene botón semántico, foco inicial, contención/restauración de foco y cierre por Escape limitado a esa capa.
+- El aviso padre queda aria-hidden mientras el acuerdo está abierto y recupera su estado al cerrarse.
+- Service Worker incrementado a gpsepedia-cache-v20; Logo_TemaOscuro.png y tracklink_logo.png pasan a CORE_ASSETS.
+- Se añadió TermsModalAccessibility.mjs y su ejecución en RunServiceTests.mjs: 9/9 PASS.
+- GitHub Actions run 43439140720 SUCCESS: 53 suites, 748/748 PASS; Node.js --check PASS.
+- No se modificó el texto legal ni se desplegaron cambios.
+================================================================================

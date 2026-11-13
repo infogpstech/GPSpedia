@@ -1657,3 +1657,10 @@ Resultado de referencia: GitHub Actions run `43434653123`, Node.js `22.23.4`, 52
 La suite `Services/Test/LastDeveloperProtection.js`, ejecutada contra `Services/Auth.js` y `Services/Test/Auth.js`, cubre la recuperación del marcador de revocación cuando falla la escritura de `Nombre_Completo` después de aplicar el nuevo rol. También ejecuta el helper real `reconcileRoleRevocationUnderLock_` con fallos simulados de escritura y `SpreadsheetApp.flush()`, comprueba que los tokens quedan invalidados, que el marcador se conserva y que el reintento completa el perfil antes de limpiar el estado pendiente. Se verifica el rechazo de marcadores divergentes y de metadatos inválidos.
 
 Resultado de referencia: GitHub Actions run `43437684317`, Node.js `22.23.4`, 52 suites, 739/739 PASS; AUTH 32/32 por proyecto y `node --check` PASS para los archivos JavaScript modificados. Las pruebas locales no sustituyen la validación de Spreadsheet/Apps Script aislados descrita en `lista_beta_parte2.txt`.
+
+
+### AUG-047 — Accesibilidad, History API y recursos offline de modales legales
+
+`Services/Test/TermsModalAccessibility.mjs` valida los atributos ARIA del aviso y del acuerdo, la ausencia de cierre en el aviso obligatorio, el botón semántico del acuerdo, la política de Escape, el foco inicial/contención/restauración, las rutas login/footer/aviso, el cierre de la capa superior en `overlayHistory` y la ausencia de estados residuales `modalOpen`. También comprueba que `Logo_TemaOscuro.png` y `tracklink_logo.png` existen y están en `CORE_ASSETS` del Service Worker v20.
+
+Resultado de referencia: GitHub Actions run `43439140720`, 53 suites, 748/748 PASS; la suite legal es 9/9 PASS. La validación con lector de pantalla, navegadores móviles y caché offline instalada se reserva para Beta.
