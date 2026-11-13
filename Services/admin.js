@@ -188,12 +188,13 @@ function collectActiveDriveReferences(includeLocations = true) {
         SHEET_NAMES.ADMIN_STATE, SHEET_NAMES.IDEMPOTENCIA, SHEET_NAMES.IDEMPOTENCIA_FALLBACK
     ]);
     const references = new Map();
-    let unverifiableReferenceCount = 0;
+    let unverifiableReferenceCount = 0, cortesScanMetrics = null;
 
     getSpreadsheet().getSheets().forEach(sheet => {
         if (excludedSheets.has(sheet.getName())) return;
         if (sheet.getName() === SHEET_NAMES.CORTES) {
             const cortesReferences = collectCortesImageReferences(includeLocations);
+            cortesScanMetrics = cortesReferences.metrics || null;
             cortesReferences.references.forEach((locations, id) => {
                 if (includeLocations) {
                     if (!references.has(id)) references.set(id, []);
@@ -289,7 +290,7 @@ function collectActiveDriveReferences(includeLocations = true) {
         }
     });
 
-    return { references, unverifiableReferenceCount };
+    return { references, unverifiableReferenceCount, metrics: { cortes: cortesScanMetrics } };
 }
 function collectCortesImageReferences(includeLocations = true) {
     const startedAt = Date.now();
@@ -8633,7 +8634,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     let auditId, state, referenceSnapshot, stack, totalDiscovered, totalAnalyzed, foldersVisited;
     let errorCount, duplicateFileCount, duplicateFolderCount, pageIndex, inputFingerprint;
     let referenceCaptureMs = 0, historyCaptureMs = 0, snapshotLoadMs = 0, snapshotPersistMs = 0;
-    let cursorValidationMs = 0, snapshotManifest = null;
+    let cursorValidationMs = 0, snapshotManifest = null, cortesScanMetrics = null;
     if (cursor) {
         auditId = String(cursor.referenceCacheId || "").trim();
         state = loadDriveAuditServerState_(auditId);
@@ -8676,6 +8677,12 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         const referenceCaptureStartedAt = Date.now();
         const references = collectActiveDriveReferences(false);
         referenceCaptureMs = Date.now() - referenceCaptureStartedAt;
+        cortesScanMetrics = references.metrics && references.metrics.cortes || null;
+        state.cortesRowsRead = Number(cortesScanMetrics && cortesScanMetrics.rows) || 0;
+        state.cortesColumnsRead = Number(cortesScanMetrics && cortesScanMetrics.columns) || 0;
+        state.cortesCellsRead = Number(cortesScanMetrics && cortesScanMetrics.cells) || 0;
+        state.cortesReadRanges = Number(cortesScanMetrics && cortesScanMetrics.ranges) || 0;
+        state.cortesReadMs = Number(cortesScanMetrics && cortesScanMetrics.elapsedMs) || 0;
         const historyCaptureStartedAt = Date.now();
         const historicalDriveIds = new Set(), protectedDriveIds = new Set();
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
@@ -8788,6 +8795,9 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         batchFiles, batchFolders, batchFileEntries, batchFolderEntries, stackDepth: stack.length,
         folderMembershipCacheEntries: folderMembershipCache.size, folderObjectCacheEntries: folderObjectCache.size,
         activeReferenceCount: Number(state.activeReferenceCount) || referenceSnapshot.activeDriveIds.length,
+        cortesRowsRead: Number(state.cortesRowsRead) || 0, cortesColumnsRead: Number(state.cortesColumnsRead) || 0,
+        cortesCellsRead: Number(state.cortesCellsRead) || 0, cortesReadRanges: Number(state.cortesReadRanges) || 0,
+        cortesReadMs: Number(state.cortesReadMs) || 0,
         historicalReferenceCount: Number(state.historicalReferenceCount) || referenceSnapshot.historicalDriveIds.length,
         protectedReferenceCount: Number(state.protectedReferenceCount) || (referenceSnapshot.protectedDriveIds || []).length,
         snapshotCharacters: Number(state.snapshotCharacters) || 0, snapshotBytes: Number(state.snapshotBytes) || 0,
