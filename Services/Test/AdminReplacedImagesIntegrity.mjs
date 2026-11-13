@@ -462,7 +462,13 @@ function auditHarness() {
     };
     const extractDriveFileIds = value => {
         const text = String(value || "").trim();
-        const matches = Array.from(text.matchAll(/(?:\\/d\\/|[?&]id=)([a-zA-Z0-9_-]{20,})/g)).map(match => match[1]);
+        const matches = [];
+        if (text.includes("/d/")) {
+            const candidate = text.split("/d/")[1].split(/[/?#&]/)[0];
+            if (/^[a-zA-Z0-9_-]{20,}$/.test(candidate)) matches.push(candidate);
+        }
+        const idMatch = text.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
+        if (idMatch) matches.push(idMatch[1]);
         if (matches.length) return Array.from(new Set(matches));
         return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? [text] : [];
     };
@@ -534,7 +540,7 @@ check("Los duplicados de Drive en Spreadsheet se separan y ofrecen enlace de rec
     assert.match(h.getReplacedImageReconciliationUrl_(sheet,[2,3]),/gid=123&range=A2%3AZ3/);
 });
 check("La URL de miniatura se construye desde un ID válido y no cambia el identificador",()=>{
-    const url=new Function(fnSource(admin,"buildVerifiedDriveVisualizationUrl_")+"\\nreturn buildVerifiedDriveVisualizationUrl_;")();
+    const url=new Function(fnSource(admin,"buildVerifiedDriveVisualizationUrl_")+"\nreturn buildVerifiedDriveVisualizationUrl_;")();
     assert.equal(url(FILE_A),"https://lh3.googleusercontent.com/d/"+FILE_A);
     assert.throws(()=>url("bad-id"),/ID de Drive inválido/);
 });

@@ -7515,16 +7515,21 @@ function getDriveAuditResponseCacheKey_(auditId, fingerprint) {
     return "gp_audit_response_" + String(auditId) + "_" + String(fingerprint);
 }
 function getDriveAuditSeenPageCacheKey_(auditId, pageIndex) {
-    const id = String(auditId || "").trim();
-    if (!/^[0-9a-f-]{36}$/i.test(id) || !Number.isInteger(pageIndex) || pageIndex < 0) throw new Error("Clave de página de deduplicación inválida.");
-    return "gp_audit_seen_" + id + "_" + pageIndex;
+    return getDriveAuditPageResultCacheKey_(auditId, pageIndex);
 }
 function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds) {
-    const payload = { files: normalizeDriveAuditFileIds_(fileIds), folders: normalizeDriveAuditFileIds_(folderIds) };
-    const serialized = JSON.stringify(payload), cache = CacheService.getScriptCache();
-    const key = getDriveAuditSeenPageCacheKey_(auditId, pageIndex);
+    const cache = CacheService.getScriptCache(), key = getDriveAuditSeenPageCacheKey_(auditId, pageIndex);
+    const raw = cache.get(key);
+    let previous = [];
+    if (raw !== null) {
+        try { previous = JSON.parse(raw); } catch (error) { throw new Error("La página de resultados no se pudo combinar con sus IDs procesados."); }
+    }
+    const unused = Array.isArray(previous) ? previous : previous && Array.isArray(previous.unused) ? previous.unused : [];
+    const payload = { unused: normalizeDriveAuditFileIds_(unused),
+        files: normalizeDriveAuditFileIds_(fileIds), folders: normalizeDriveAuditFileIds_(folderIds) };
+    const serialized = JSON.stringify(payload);
     cache.put(key, serialized, 21600);
-    if (cache.get(key) !== serialized) throw new Error("No se pudo verificar la página de IDs procesados de la auditoría.");
+    if (cache.get(key) !== serialized) throw new Error("No se pudo verificar la página combinada de resultados e IDs procesados.");
 }
 function loadDriveAuditSeenIds_(auditId, pageCount) {
     if (!Number.isInteger(pageCount) || pageCount < 0) throw new Error("Cantidad de páginas de deduplicación inválida.");
@@ -7584,8 +7589,9 @@ function loadDriveAuditUnusedFileIds_(auditId, pageCount) {
         if (raw === null) throw new Error("Falta una página de resultados de auditoría; no se puede confirmar el inventario.");
         let values;
         try { values = JSON.parse(raw); } catch (error) { throw new Error("Una página de resultados de auditoría está corrupta."); }
-        if (!Array.isArray(values)) throw new Error("Una página de resultados de auditoría no tiene una estructura válida.");
-        normalizeDriveAuditFileIds_(values).forEach(id => ids.add(id));
+        const unusedIds = Array.isArray(values) ? values : values && Array.isArray(values.unused) ? values.unused : null;
+        if (!unusedIds) throw new Error("Una página de resultados de auditoría no tiene una estructura válida.");
+        normalizeDriveAuditFileIds_(unusedIds).forEach(id => ids.add(id));
     }
     return Array.from(ids).sort();
 }
@@ -8495,7 +8501,11 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
         properties.setProperty(latestKey, auditId);
         if (properties.getProperty(latestKey) !== auditId) throw new Error("No se pudo verificar la referencia a la última auditoría completa.");
     } else { state.status = "running"; state.expectedCursorFingerprint = getDriveAuditCursorFingerprint_(nextCursor); }
+    const previousResponseCacheKey = state.lastResponseCacheKey;
     saveDriveAuditServerState_(state);
+    if (previousResponseCacheKey && previousResponseCacheKey !== responseCacheKey) {
+        CacheService.getScriptCache().remove(previousResponseCacheKey);
+    }
     if (complete) clearAuditDriveReferenceSnapshot(auditId);
     logMessage && logMessage("Auditoría Drive", `Lote analizado: ${batchFiles} archivos únicos. Total acumulado: ${totalAnalyzed}. Duplicados omitidos: ${duplicateFileCount + duplicateFolderCount}. Estado: ${complete ? "completo" : "parcial"}.`);
     return response;

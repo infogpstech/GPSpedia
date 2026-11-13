@@ -7178,10 +7178,6 @@ export async function openAuditDriveModal() {
         setText('audit-service-version', serviceVersion || 'No disponible');
         if (auditRootNameEl) auditRootNameEl.textContent = rootFolderName;
         if (auditRootIdEl) auditRootIdEl.textContent = rootFolderId;
-        const setText = (id, value) => {
-            const element = document.getElementById(id);
-            if (element) element.textContent = String(value);
-        };
         setText('audit-in-use-count', counts.inUse);
         setText('audit-historical-count', counts.historical);
         setText('audit-unused-count', counts.unused);
