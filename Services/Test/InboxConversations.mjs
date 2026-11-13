@@ -224,4 +224,4 @@ run("La lectura no crea ni modifica Feedbacks/Contactanos históricos", () => {
     assert.equal(spreadsheet.getSheetByName("Feedbacks"),null);
     assert.equal(spreadsheet.getSheetByName("Contactanos"),null);
 });
-console.log("InboxConversations: " + passed + "/20 PASS");
+console.log("InboxConversations: " + passed + "/22 PASS");
