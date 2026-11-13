@@ -1072,3 +1072,24 @@ Resultado:
 Registros actualizados: Tareas_pendientes_parte1.txt, ChangesLogs.txt, Auditoría.txt, Services/Test/README.md, lista_beta_parte2.txt y checkpoint.md.
 Siguiente acción: reevaluar backlog desde AUG-040; no reabrir AUG-039 salvo evidencia nueva de Beta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-040 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD al cerrar registros: dcce69a9868b8d9791a96f563f193ede5b4e422e.
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA; cierre de implementación recuperado de Auditoría.txt (2026-11-10), sin repetir cambios de código.
+
+Resultado:
+- Política FEEDBACK explícita; getPysData/sendContactForm son las acciones públicas declaradas; acciones desconocidas se rechazan; assignCollaborator retirado.
+- recordLike autentica y deriva actor servidor; idempotencia por actor/vehículo/corte.
+- suggestYear no confía en IDs de localStorage ni cuenta actores anónimos para el umbral; votos anónimos quedan para revisión manual.
+- approveVideo coordina y recupera Feedbacks/Cortes, verifica destino y confirma videoGuiaDesarmeUrl.
+- Evidencia histórica: H-AUD-040-001 a 018; 160/160 pruebas y parsing V8 17/17 PASS.
+- CI actual previo: 34 suites/517 PASS, incluyendo aprobación de vídeo y coordinación compartida; FeedbackWriteSecurity.js no está integrado en el runner actual. Su cobertura histórica permanece documentada; fixtures de PyS/reportMetadata requieren actualización antes de usarla como evidencia CI.
+- Beta pendiente: Apps Script desplegado, Spreadsheet/Drive reales, OAuth/YouTube, navegador/IndexedDB, errores HTTP y concurrencia física. Los casos ya están en lista_beta.txt/lista_beta_parte2.txt.
+
+Siguiente tarea pendiente según backlog: AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente. AUG-041 figura completada con validación diferida; no se repite.
+================================================================================
