@@ -538,3 +538,26 @@ Validación Beta pendiente: roles y sesiones reales, Spreadsheet ADMIN aislada, 
 Archivos: Services/admin.js, Services/Test/AdminModalEditIntegrity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
 Siguiente tarea: AUG-130 — Hacer atómicas las mutaciones de USERS. No iniciar hasta la siguiente interacción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-130 — 2026-11-12
+Repositorio: infogpstech/GPSpedia. Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD al iniciar: 54a6e948108ce667542fbeaa450c90f8d2da5c56.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Services/users.js: createUser valida el objeto completo, propiedades permitidas, username, contraseña, rol, teléfono y correo antes de cualquier escritura. Rechaza campos desconocidos.
+- createUser comprueba duplicidad de username y calcula el ID bajo el mismo lock. Escribe ID:H con una única operación setValues, confirma persistencia y, ante fallo, restaura valores y fórmulas previos.
+- updateProfile admite únicamente Nombre_Completo, valida texto y longitud, exige sesión del mismo usuario y resuelve exactamente una fila por ID bajo lock. Confirma escritura y ejecuta rollback ante fallo.
+- Se unificó el uso del helper withUsersMutationLock_ en createUser y updateProfile. Se conserva la lease compartida de USERS y los wrappers AUTH existentes para deleteUser/resetUserSessions; no se alteró Services/Auth.js.
+- Services/Test/users.js se sincronizó con Services/users.js conservando el SPREADSHEET_ID de pruebas.
+- Services/Test/UsersAtomicMutations.js: 11/11 PASS en harness local con hojas, lock y flush simulados.
+- Parsing V8: Services/users.js PASS, Services/Auth.js PASS y suite PASS.
+- No se ejecutaron Apps Script desplegados, Spreadsheet real, endpoints ni datos productivos.
+
+Beta pendiente: concurrencia real entre proyectos USERS/AUTH, operaciones simultáneas create/delete/reset/update, fallos reales de escritura/flush, filas con IDs duplicados o fórmulas y comprobación de recuperación. Procedimiento registrado en lista_beta.txt.
+
+Archivos: Services/users.js, Services/Test/users.js, Services/Test/UsersAtomicMutations.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-131 — Validar destino y transición de estado al aprobar vídeos. No iniciar hasta la siguiente interacción.
+================================================================================
