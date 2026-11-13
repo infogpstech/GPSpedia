@@ -6573,7 +6573,7 @@ export function renderInboxDetail(item) {
     const messagePanel = makeElement('div', 'inbox-message-content');
     messagePanel.style.cssText = 'background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;';
     const messageBody = makeElement('div');
-    messageBody.innerHTML = sanitizeHtmlContent(String(item.content || ''));
+    messageBody.textContent = String(item.content || '');
     messagePanel.appendChild(messageBody);
     detailContainer.appendChild(messagePanel);
 

@@ -873,7 +873,7 @@ La suite contiene 50 escenarios de seguridad FEEDBACK. Incluye autorización de 
 
 ## Seguridad contra stored XSS en Inbox y formularios de corte (AUG-076)
 
-- `Services/Test/InboxStoredXss.js` — cargar junto con el contenido vigente de `ui.js` e invocar `runInboxStoredXssTests({ui})`. Comprueba sintaxis de los cinco renderizadores afectados, ausencia de interpolación de datos externos en plantillas HTML, uso de `textContent`/nodos/valores DOM, frontera del sanitizador para contenido enriquecido, opciones del catálogo y validación de URLs.
+- `Services/Test/InboxStoredXss.js` — cargar junto con el contenido vigente de `ui.js` e invocar `runInboxStoredXssTests({ui, feedback})`. Comprueba sintaxis de los cinco renderizadores afectados, ausencia de interpolación de datos externos en plantillas HTML, uso de `textContent`/nodos/valores DOM, frontera del sanitizador para contenido enriquecido, opciones del catálogo y validación de URLs.
 - La matriz incluye payloads HTML, SVG, `onerror`, `onload`, atributos de evento, comillas, `iframe/srcdoc` y enlaces `javascript:`. La suite es un contrato estático de fuentes; no ejecuta un navegador ni sustituye la prueba DOM real.
 - Comando Node CLI documentado en `lista_beta.txt`; en Beta se debe abrir Inbox, detalle, confirmación de reporte y ambos formularios con registros sembrados en un entorno aislado. Verificar que ningún payload se ejecute y que el texto legítimo, enlaces permitidos y contenido enriquecido sigan funcionando.
 
@@ -1295,3 +1295,10 @@ node --experimental-default-type=module Services/Test/ActivityDashboardStoredXss
 \`\`\`
 
 La suite comprueba renderizado DOM con \`textContent\` para nombre, tipo y detalle, payloads HTML/SVG almacenados, valores ausentes/mixtos, limpieza de resultados previos, integración del renderer en el dashboard y el contrato de sesión/identidad de \`recordLike\`. La regresión de POST directo con identidad falsificada se mantiene en \`Services/Test/FeedbackWriteSecurity.js\` y usa el harness FEEDBACK aislado. Las pruebas DOM usan un documento simulado; no sustituyen inspección en navegador real ni integración con Spreadsheet.
+
+
+## AUG-114 — Seguridad de datos y URL en Inbox
+
+La suite Services/Test/InboxStoredXss.js se ejecuta con las fuentes vigentes de ui.js y Services/feedback.js, invocando runInboxStoredXssTests({ui, feedback}). Además de los contratos DOM existentes, verifica normalización de título/descripción/nombre, límites y tipos, allowlist de metadatos por tipo de contenido, lista de modelos PyS, canonicalización de URL YouTube y rechazo de esquemas/hosts ajenos.
+
+El backend normaliza los datos nuevos antes de persistirlos y, al leer registros históricos, limita los campos devueltos, descarta metadatos no permitidos y convierte URL inválidas en enlace vacío. El Inbox presenta el contenido del mensaje como texto; las respuestas enriquecidas mantienen su sanitizador dedicado. La suite usa fuentes y helpers aislados; no ejecuta navegador real ni Apps Script/Spreadsheet.

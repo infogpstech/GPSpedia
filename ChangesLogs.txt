@@ -476,3 +476,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/FeedbackWriteSecurity.js: el POST directo intenta falsificar userName mediante img/onerror y comprueba rechazo de sesión ausente.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, Auditoría.txt, checkpoint.md y lista_beta.txt: instrucciones, resultado y validaciones diferidas documentados.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-114 — SEGURIDAD DE DATOS Y URL EN INBOX
+- Services/feedback.js: normaliza título, descripción y nombre antes de guardar solicitudes de vídeo; restringe metadatos por tipo de contenido y valida/canonicaliza URL de YouTube. La lectura del Inbox limita campos históricos y omite URL no permitidas.
+- ui.js: el contenido de mensajes del Inbox se representa mediante textContent; se conserva el sanitizador dedicado para respuestas enriquecidas.
+- Services/Test/InboxStoredXss.js: amplía contratos de renderer y añade pruebas de normalización backend, allowlist de metadatos y URL histórica.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, Auditoría.txt, lista_beta.txt y checkpoint.md: evidencia, estado y validaciones Beta documentados.
+================================================================================

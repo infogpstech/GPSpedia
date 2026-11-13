@@ -991,3 +991,18 @@ Validación local: runtime V8 adaptado, 6/6 escenarios de renderer/contrato PASS
 Validación diferida a Beta: ejecución en navegador real con filas históricas sembradas y POST a FEEDBACK/Spreadsheet aislados; no se ejecutaron deployments ni datos productivos.
 Estado: CORREGIDO EN FUENTES — VALIDACIÓN LOCAL APROBADA.
 ================================================================================
+
+
+================================================================================
+H-AUD-018-002 — ALTA — CORREGIDO EN FUENTES — 2026-11-12
+Origen: AUD-T-018, H-AUD-018-002; continuidad AUG-114.
+Ubicación: Services/feedback.js, handleSubmitVideoForApproval() y handleGetFeedbackItems(); ui.js, renderInboxDetail().
+Evidencia: las solicitudes de vídeo persistían título, descripción, nombre y metadatos sin límites/normalización de esquema; los registros históricos se devolvían al cliente sin sanear sus campos. El URL histórico se podía transportar como valor arbitrario. La UI ya utilizaba nodos/textContent para la mayoría de los metadatos y comprobaba el host al construir el enlace, pero el backend no imponía una normalización equivalente en lectura.
+Impacto: datos persistidos o históricos manipulados podían alcanzar la vista del Inbox, ampliar la superficie de stored XSS o presentar enlaces externos no autorizados.
+Severidad: Alta.
+Corrección: AUG-114 incorpora límites/tipos de texto, normalización de nombre/título/descripción, allowlist de metadatos según corte/PyS/tutorial, canonicalización YouTube por ID coincidente y saneamiento de registros históricos al leer. La UI presenta el contenido del mensaje como texto; las respuestas enriquecidas conservan su sanitizador específico.
+Regresión: Services/Test/InboxStoredXss.js cubre payloads HTML/SVG, comillas/atributos, normalización, límites, metadatos desconocidos, URL válida, ID discordante, javascript:, HTTP y host impostor.
+Validación local: suite de contratos ejecutada con fuentes vigentes 30/30 PASS; parsing completo de Services/feedback.js y parsing de renderizadores afectados PASS. No se ejecutaron navegador real, Apps Script desplegado ni Spreadsheet.
+Validación diferida a Beta: filas históricas maliciosas y URL manipuladas en Spreadsheet aislada; inspección DOM y ausencia de ejecución en navegador real; solicitudes de vídeo con metadatos válidos/inválidos mediante deployment FEEDBACK aislado. No usar datos ni endpoints productivos.
+Estado: CORREGIDO EN FUENTES — VALIDACIÓN LOCAL APROBADA.
+================================================================================

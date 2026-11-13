@@ -1463,3 +1463,35 @@ VALIDACIÓN EN NAVEGADOR Y SERVICIOS AISLADOS:
 
 No declarar PASS sin inspección del DOM y confirmación de ausencia de ejecución en navegador real. No desplegar a producción ni modificar hojas productivas.
 ================================================================================
+
+
+================================================================================
+AUG-114 — VALIDACIÓN BETA DE SEGURIDAD DEL INBOX — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+VALIDACIÓN EN NAVEGADOR Y SERVICIOS AISLADOS:
+1. En Spreadsheet/FEEDBACK aislados, sembrar solicitudes históricas con título, nombre, descripción y metadatos que contengan <img onerror>, <svg onload>, comillas, atributos de evento y etiquetas de cierre.
+2. Abrir Inbox y detalle con una cuenta de prueba autorizada. Confirmar que los valores se muestran como texto, no crean atributos/nodos activos y no ejecutan código. Verificar que las respuestas enriquecidas permitidas siguen presentándose con formato seguro.
+3. Probar URL válidas de YouTube y registros históricos con javascript:, HTTP, host impostor, userinfo, ID distinto y URL malformada. Solo el URL HTTPS canonicalizado del ID coincidente debe producir enlace.
+4. Enviar solicitudes nuevas con título/descripción/nombre válidos, límites excedidos, tipos incorrectos y metadatos con claves/estructuras no admitidas. Confirmar rechazo sin insertar filas inválidas.
+5. Probar metadatos de corte, PyS y tutorial con sus campos válidos y verificar que el flujo de aprobación/publicación conserva referencia, tipo e ID de vídeo.
+
+No declarar PASS sin inspección del DOM y confirmación de ausencia de ejecución en navegador real. No desplegar a producción ni modificar hojas productivas.
+================================================================================

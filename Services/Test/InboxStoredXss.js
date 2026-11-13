@@ -1,5 +1,6 @@
 function runInboxStoredXssTests(sources) {
     const ui = String(sources.ui || "");
+    const feedback = String(sources.feedback || "");
     const results = [];
     let passed = 0;
     let failed = 0;
@@ -21,7 +22,7 @@ function runInboxStoredXssTests(sources) {
         detail: extract("renderInboxDetail"),
         report: extract("openReportCutModal"),
         suggest: extract("openSuggestCutModal"),
-        success: (() => { const start = ui.indexOf("function showReportSuccessModal("); const end = ui.indexOf("\nexport function openSuggestCutModal", start); assert(start >= 0 && end > start); return ui.slice(start, end).trim(); })()
+        success: (() => { const start = ui.indexOf("function showReportSuccessModal("); const end = ui.indexOf("\nfunction createSuggestionOperationId_(", start); assert(start >= 0 && end > start); return ui.slice(start, end).trim(); })()
     };
     const parseFunction = source => new Function("return (" + source.replace(/^export\s+/, "") + ");")();
 
@@ -39,7 +40,7 @@ function runInboxStoredXssTests(sources) {
         assert(/title\.textContent/.test(functions.list));
     });
     run("Inbox detalle usa sanitizador solo para contenido enriquecido", () => {
-        assert(/messageBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(item\.content/.test(functions.detail));
+        assert(/messageBody\.textContent\s*=\s*String\(item\.content/.test(functions.detail));
         assert(/replyBody\.innerHTML\s*=\s*sanitizeHtmlContent\(String\(item\.reply/.test(functions.detail));
     });
     run("Inbox detalle no interpola campos externos en HTML", () => {
@@ -130,8 +131,20 @@ function runInboxStoredXssTests(sources) {
         assert(/option\.textContent/.test(functions.suggest));
     });
     run("el texto enriquecido conserva la frontera del sanitizador", () => {
-        assert(functions.detail.split("innerHTML = sanitizeHtmlContent").length - 1 === 2);
+        assert(functions.detail.split("innerHTML = sanitizeHtmlContent").length - 1 === 1);
     });
 
+    const extractBackend=name=>{const start=feedback.indexOf("function "+name+"(");assert(start>=0,"No se encontró backend "+name);const c=["\nfunction ","\nconst "].map(m=>feedback.indexOf(m,start+10)).filter(x=>x>=0);return feedback.slice(start,c.length?Math.min(...c):feedback.length).trim();};
+    const backendHelpers=(()=>{const source=[extractBackend("getPysYouTubeVideoId_"),extractBackend("normalizeInboxText_"),extractBackend("normalizeInboxVideoMetadata_"),extractBackend("normalizeInboxVideoUrl_"),"return {normalizeInboxText_,normalizeInboxVideoMetadata_,normalizeInboxVideoUrl_};"].join("\n");return new Function("getPysYouTubeVideoId_",source)(value=>{const m=String(value||"").match(/^https:\/\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?(?:#.*)?$/i);if(!m)return "";const host=m[1].toLowerCase(),path=m[2]||"/",query=m[3]||"",valid=/^[A-Za-z0-9_-]{11}$/;if(host==="youtu.be"){const x=path.match(/^\/([A-Za-z0-9_-]{11})\/?$/);return x&&valid.test(x[1])?x[1]:"";}if(!["youtube.com","www.youtube.com","m.youtube.com","youtube-nocookie.com","www.youtube-nocookie.com"].includes(host))return "";if(path==="/watch"){const ids=query.split("&").filter(Boolean).filter(p=>p.split("=")[0]==="v").map(p=>p.slice(2));return ids.length===1&&valid.test(ids[0])?ids[0]:"";}const x=path.match(/^\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})\/?$/);return x&&valid.test(x[1])?x[1]:"";});})();
+    run("backend normaliza texto conservando payload como texto",()=>{const p="<img src=x onerror=alert(1)>";assert(backendHelpers.normalizeInboxText_(" "+p+" ","Título",160,false)===p);});
+    run("backend rechaza tipos y longitudes inválidas",()=>{let a=false,b=false;try{backendHelpers.normalizeInboxText_(42,"Título",160,false);}catch(_){a=true;}try{backendHelpers.normalizeInboxText_("x".repeat(161),"Título",160,false);}catch(_){b=true;}assert(a&&b);});
+    run("metadatos aplican allowlist por tipo de contenido",()=>{const p="<svg onload=alert(1)>",d=backendHelpers.normalizeInboxVideoMetadata_({tutorialId:" TUT-1 ",tema:p,onerror:"alert(2)"},"tutorial");assert(d.tutorialId==="TUT-1"&&d.tema===p&&!Object.prototype.hasOwnProperty.call(d,"onerror"));});
+    run("metadatos PyS normalizan modelos asociados",()=>{const d=backendHelpers.normalizeInboxVideoMetadata_({alcance:"especifico",modelosAsociados:[" VEH-1 ",22]},"pys");assert(d.modelosAsociados.length===2&&d.modelosAsociados[0]==="VEH-1"&&d.modelosAsociados[1]==="22");});
+    run("metadatos rechazan estructuras inesperadas",()=>{let rejected=false;try{backendHelpers.normalizeInboxVideoMetadata_("<svg>","tutorial");}catch(_){rejected=true;}assert(rejected);});
+    run("URL YouTube canonicaliza y exige ID coincidente",()=>{assert(backendHelpers.normalizeInboxVideoUrl_("https://www.youtube.com/watch?v=abcdefghijk","abcdefghijk")==="https://www.youtube.com/watch?v=abcdefghijk");assert(backendHelpers.normalizeInboxVideoUrl_("https://www.youtube.com/watch?v=abcdefghijk","lmnopqrstuv")==="");});
+    run("URL histórica rechaza HTTP y host impostor",()=>{assert(backendHelpers.normalizeInboxVideoUrl_("javascript:alert(1)","")==="");assert(backendHelpers.normalizeInboxVideoUrl_("https://youtube.com.evil.test/watch?v=abcdefghijk","")==="");assert(backendHelpers.normalizeInboxVideoUrl_("http://youtube.com/watch?v=abcdefghijk","")==="");});
+    run("alta backend normaliza antes de persistir",()=>{const a=feedback.indexOf("function handleSubmitVideoForApproval("),b=feedback.indexOf("\n}\n\n/**",a),h=feedback.slice(a,b+2);assert(h.includes("normalizeInboxText_(title")&&h.includes("normalizeInboxText_(description")&&h.includes("normalizeInboxVideoMetadata_(metadata")&&h.includes("normalizeInboxVideoUrl_(videoUrl,actualVideoId)")&&h.includes("title:normalizedTitle")&&h.includes("metadata:normalizedMetadata"));});
+    run("lectura histórica sanea URL y metadatos",()=>{const a=feedback.indexOf("function handleGetFeedbackItems("),b=feedback.indexOf("\nfunction handleReplyToFeedback",a),h=feedback.slice(a,b);assert(h.includes("normalizeInboxVideoUrl_(videoMeta.videoUrl,videoId)")&&h.includes("normalizeInboxVideoMetadata_(videoMeta.metadata,contentType)")&&!h.includes("videoUrl:videoMeta.videoUrl"));});
+    run("mensaje usa texto y respuesta enriquecida conserva sanitizador",()=>{assert(/messageBody\.textContent\s*=/.test(functions.detail)&&/replyBody\.innerHTML\s*=\s*sanitizeHtmlContent/.test(functions.detail));});
     return { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
 }

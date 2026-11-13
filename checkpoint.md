@@ -181,3 +181,28 @@ Validación Beta pendiente:
 Archivos: ui.js, activityDashboard.js, Services/Test/ActivityDashboardStoredXss.js, Services/Test/FeedbackWriteSecurity.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, lista_beta.txt, Auditoría.txt y checkpoint.md.
 Siguiente tarea: AUG-114 — Corregir XSS y validación de URL en Inbox. No iniciar dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-114 — 2026-11-12
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD padre verificado antes de publicar: 6876dae471e3d3e3169ba8e3fd3ac96d2e6b3c61.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+
+Resultado:
+- Services/feedback.js normaliza título, descripción y nombre del colaborador antes de persistir solicitudes de vídeo. Los metadatos se filtran mediante esquemas permitidos por tipo de contenido; se conservan solo campos esperados y se limita cada valor/lista.
+- Las URL nuevas se canonicalizan a HTTPS YouTube después de validar host/ruta/ID y coincidencia con videoId. Los registros históricos del Inbox se normalizan en lectura; una URL no permitida se devuelve vacía y no genera enlace.
+- La lectura del Inbox limita campos de texto y metadatos históricos. ui.js representa el cuerpo del mensaje mediante textContent; las respuestas enriquecidas conservan el sanitizador específico.
+- Se amplió Services/Test/InboxStoredXss.js con pruebas de helper, esquema, URL y contratos de lectura/escritura, preservando la cobertura AUG-076.
+
+Validación local:
+- runInboxStoredXssTests({ui, feedback}): 30/30 PASS.
+- Parsing completo de Services/feedback.js: PASS; parsing de renderizadores Inbox afectados: PASS.
+- No se ejecutaron endpoints, deployments ni datos productivos.
+
+Validación Beta pendiente: filas históricas maliciosas/URL manipuladas en Spreadsheet aislada; inspección DOM en navegador real; envíos nuevos mediante FEEDBACK aislado y regresión del flujo de aprobación para corte, PyS y tutorial.
+
+Archivos actualizados: Services/feedback.js, ui.js, Services/Test/InboxStoredXss.js, Services/Test/README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt, Auditoría.txt, lista_beta.txt y checkpoint.md.
+Siguiente tarea: AUG-115 — Unificar el campo de rol utilizado por el Inbox. No iniciar dentro de esta tarea.
+================================================================================

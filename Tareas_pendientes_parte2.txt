@@ -129,7 +129,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: Services/feedback.js:1044–1070, 1161–1217 y 1799–1821; ui.js:5534–5542 y 5612–5626.
 - Problema: campos de formulario y metadatos se guardan sin normalización y se interpolan como HTML; videoUrl se usa directamente en href.
 - Criterios: renderizar campos como texto; validar URL en backend con allowlist; sanear registros históricos; probar nombre, título, URL, comillas y atributos HTML.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (2026-11-12).
 
 ### AUG-115 — Unificar el campo de rol utilizado por el Inbox
 - Origen: H-AUD-018-003. Prioridad: Media.
@@ -547,4 +547,17 @@ AUG-100 — CIERRE — 2026-11-12 — COMPLETADA CON VALIDACIÓN DIFERIDA
 - Validación automatizada local por contrato estático; no se ejecutó navegador real ni Node CLI en esta sesión. La revisión visual en temas/viewports queda para Beta.
 - Sin cambios de endpoints, permisos, datos ni deployments.
 Siguiente: revisar el primer requisito canónico pendiente posterior a AUG-100.
+================================================================================
+
+
+================================================================================
+ADENDA DE CIERRE — AUG-114 — 2026-11-12
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- Services/feedback.js normaliza título, descripción y nombre del colaborador antes de guardar solicitudes de vídeo; limita metadatos a esquemas por tipo de contenido y canonicaliza URL únicamente con el ID real de YouTube coincidente.
+- handleGetFeedbackItems sanea los registros históricos devueltos, limita longitudes, descarta metadatos no permitidos y omite enlaces YouTube que no superan la allowlist.
+- ui.js representa el contenido del Inbox mediante textContent. Las respuestas con formato mantienen el sanitizador existente; los campos de título, nombre, metadatos y URL no se interpolan en HTML.
+- Services/Test/InboxStoredXss.js amplía las pruebas con contratos backend de normalización, metadatos y URL, además de los casos DOM estáticos existentes.
+Validación local: runInboxStoredXssTests({ui, feedback}) 30/30 PASS; parsing completo de Services/feedback.js PASS; parsing de renderizadores Inbox PASS.
+Beta pendiente: DOM/navegador real con registros históricos maliciosos y URL alteradas; envío de solicitudes mediante FEEDBACK/Spreadsheet aislados; comprobar títulos, nombres, descripciones, metadatos y enlaces. No se ejecutaron deployments ni se modificaron datos productivos.
+Siguiente tarea: AUG-115 — Unificar el campo de rol utilizado por el Inbox. No iniciar dentro de esta tarea.
 ================================================================================

@@ -1427,6 +1427,31 @@ function normalizeFeedbackText_(value, label, maxLength) {
     return normalized;
 }
 
+const INBOX_VIDEO_TITLE_MAX_LENGTH=160,INBOX_VIDEO_DESCRIPTION_MAX_LENGTH=5000,INBOX_VIDEO_USER_MAX_LENGTH=100,INBOX_VIDEO_REFERENCE_MAX_LENGTH=120;
+function normalizeInboxText_(value,label,maxLength,allowEmpty){
+ if(typeof value!=="string")throw new Error(label+" debe enviarse como texto.");
+ const normalized=value.replace(/\u0000/g,"").replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,"").replace(/\r\n?/g,"\n").replace(/[ \t]+/g," ").trim();
+ if(!allowEmpty&&!normalized)throw new Error(label+" no puede estar vacío.");
+ if(normalized.length>maxLength)throw new Error(label+" supera el límite de "+maxLength+" caracteres.");return normalized;
+}
+function normalizeInboxStoredText_(value,maxLength,fallback){
+ if(typeof value!=="string"&&typeof value!=="number")return fallback||"";
+ return String(value).replace(/\u0000/g,"").replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,"").replace(/\r\n?/g,"\n").slice(0,maxLength).trim();
+}
+function normalizeInboxVideoMetadata_(metadata,contentType){
+ if(metadata===undefined||metadata===null)return {};
+ if(typeof metadata!=="object"||Array.isArray(metadata))throw new Error("Los metadatos del vídeo deben enviarse como un objeto.");
+ const schemas={corte:{marca:100,modelo:120,versionesAplicables:500,anoDesde:4,anoHasta:4,tipoEncendido:100},pys:{alcance:20,problemId:80},tutorial:{tutorialId:120,tema:160}};
+ const schema=schemas[String(contentType||"")];if(!schema)throw new Error("No existe un esquema de metadatos para el contenido indicado.");
+ const normalized={};
+ Object.keys(schema).forEach(key=>{if(!Object.prototype.hasOwnProperty.call(metadata,key)||metadata[key]===null||metadata[key]===undefined)return;const value=metadata[key];if(typeof value!=="string"&&typeof value!=="number")throw new Error("El metadato "+key+" debe ser texto o número.");normalized[key]=normalizeInboxText_(String(value),"El metadato "+key,schema[key],true);});
+ if(String(contentType)==="pys"&&Object.prototype.hasOwnProperty.call(metadata,"modelosAsociados")){
+  if(!Array.isArray(metadata.modelosAsociados)||metadata.modelosAsociados.length>100)throw new Error("La lista de modelos asociados no es válida.");
+  normalized.modelosAsociados=metadata.modelosAsociados.map(value=>{if(typeof value!=="string"&&typeof value!=="number")throw new Error("Cada modelo asociado debe tener un identificador textual.");return normalizeInboxText_(String(value),"El identificador de modelo",80,false);});
+ }return normalized;
+}
+function normalizeInboxVideoUrl_(value,expectedVideoId){const videoId=getPysYouTubeVideoId_(value);if(!videoId||(expectedVideoId&&String(expectedVideoId).trim()!==videoId))return "";return "https://www.youtube.com/watch?v="+videoId;}
+
 function normalizeSuggestionTextField_(value, field, maxLength) {
     if (typeof value !== "string") throw new Error("El campo propuesto " + field + " debe ser texto.");
     const normalized = value.replace(/\s+/g, " ").trim();
@@ -1540,64 +1565,27 @@ function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
     };
 }
 function handleGetFeedbackItems(payload) {
-    const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
-    const reportMetadataColumn = feedbackSheet ? getReportMetadataColumn(feedbackSheet) : 0;
-
-    const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => {
-        const rawContent = row[COLS_FEEDBACKS.Problema - 1];
-        const rowVehicleId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
-        const rowUserName = row[COLS_FEEDBACKS.Usuario - 1];
-        const reportMetadata = reportMetadataColumn
-            ? parseReportMetadata(row[reportMetadataColumn - 1], rowVehicleId)
-            : null;
-        let videoMeta = null;
-        if (typeof rawContent === 'string' && rawContent.trim().startsWith('{')) {
-            try { videoMeta = JSON.parse(rawContent); } catch (e) {}
-        }
-        const isVideoApproval = videoMeta && videoMeta.subType === 'video_approval';
-        if (isVideoApproval) {
-            return {
-                type: 'video_approval', id: row[COLS_FEEDBACKS.ID - 1],
-                subject: `[Aprobación de Vídeo] ${videoMeta.title}`,
-                content: videoMeta.description || 'Sin descripción',
-                videoUrl: videoMeta.videoUrl, videoId: videoMeta.videoId, contentType: videoMeta.contentType,
-                user: rowUserName, vehicleId: rowVehicleId,
-                approvalStatus: videoMeta.status || 'pending', videoMeta,
-                reply: row[COLS_FEEDBACKS.Respuesta - 1],
-                isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
-                responder: row[COLS_FEEDBACKS.Responde - 1]
-            };
-        }
-        const suggestionData = parseCutSuggestionRecord(rawContent, rowVehicleId, rowUserName);
-        const isResolved = row[COLS_FEEDBACKS['Se resolvio'] - 1] === true;
-        if (suggestionData) suggestionData.status = isResolved ? "resuelta" : "pendiente_revision";
-        return {
-            type: 'problem_report', id: row[COLS_FEEDBACKS.ID - 1],
-            subject: suggestionData ? `Sugerencia de cambio — Corte #${suggestionData.corteIndex}` : `Reporte en Vehículo #${rowVehicleId}`,
-            content: suggestionData ? (suggestionData.details || 'Sugerencia de cambio de corte.') : rawContent,
-            user: rowUserName, vehicleId: rowVehicleId, reportMetadata, suggestionData,
-            reply: row[COLS_FEEDBACKS.Respuesta - 1], isResolved,
-            responder: row[COLS_FEEDBACKS.Responde - 1]
-        };
-    });
-
-    const contactData = (!contactSheet) ? [] : contactSheet.getDataRange().getValues().slice(1).map(row => ({
-        type: 'contact_form',
-        id: row[COLS_CONTACTANOS.Contacto_ID - 1],
-        subject: row[COLS_CONTACTANOS.Asunto - 1],
-        content: row[COLS_CONTACTANOS.Mensaje - 1],
-        user: 'Formulario de Contacto',
-        vehicleId: null,
-        reply: row[COLS_CONTACTANOS.Respuesta_mensaje - 1],
-        isResolved: null,
-        responder: row[COLS_CONTACTANOS.ID_usuario_responde - 1]
-    }));
-
-    const unifiedData = [...feedbackData, ...contactData];
-    return { status: 'success', data: unifiedData };
+ const feedbackSheet=getSafeSheet(SHEET_NAMES.FEEDBACKS),contactSheet=getSafeSheet(SHEET_NAMES.CONTACTANOS),reportMetadataColumn=feedbackSheet?getReportMetadataColumn(feedbackSheet):0;
+ const feedbackData=(!feedbackSheet)?[]:feedbackSheet.getDataRange().getValues().slice(1).map(row=>{
+  const rawContent=row[COLS_FEEDBACKS.Problema-1],rowVehicleId=normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID_vehiculo-1],120,""),rowUserName=normalizeInboxStoredText_(row[COLS_FEEDBACKS.Usuario-1],INBOX_VIDEO_USER_MAX_LENGTH,"Usuario");
+  const reportMetadata=reportMetadataColumn?parseReportMetadata(row[reportMetadataColumn-1],rowVehicleId):null;let videoMeta=null;
+  if(typeof rawContent==="string"&&rawContent.trim().startsWith("{")){try{const parsed=JSON.parse(rawContent);if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))videoMeta=parsed;}catch(error){}}
+  if(videoMeta&&videoMeta.subType==="video_approval"){
+   const videoId=normalizeInboxStoredText_(videoMeta.videoId,11,""),videoUrl=normalizeInboxVideoUrl_(videoMeta.videoUrl,videoId);
+   const contentType=["corte","pys","tutorial"].includes(String(videoMeta.contentType||""))?String(videoMeta.contentType):"";
+   let metadata={};try{metadata=normalizeInboxVideoMetadata_(videoMeta.metadata,contentType);}catch(error){}
+   const title=normalizeInboxStoredText_(videoMeta.title,INBOX_VIDEO_TITLE_MAX_LENGTH,"Vídeo sin título"),description=normalizeInboxStoredText_(videoMeta.description,INBOX_VIDEO_DESCRIPTION_MAX_LENGTH,"");
+   const status=["pending","approved","rejected"].includes(String(videoMeta.status||""))?String(videoMeta.status):"pending";
+   return{type:"video_approval",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:"[Aprobación de Vídeo] "+title,content:description||"Sin descripción",videoUrl,videoId:videoUrl?videoId:"",contentType,metadata,user:rowUserName,vehicleId:rowVehicleId,approvalStatus:status,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved:row[COLS_FEEDBACKS["Se resolvio"]-1]===true,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+  }
+  const suggestionData=parseCutSuggestionRecord(rawContent,rowVehicleId,rowUserName),isResolved=row[COLS_FEEDBACKS["Se resolvio"]-1]===true;
+  if(suggestionData)suggestionData.status=isResolved?"resuelta":"pendiente_revision";
+  const reportContent=suggestionData?normalizeInboxStoredText_(suggestionData.details,5000,"Sugerencia de cambio de corte."):normalizeInboxStoredText_(rawContent,5000,"");
+  return{type:"problem_report",id:normalizeInboxStoredText_(row[COLS_FEEDBACKS.ID-1],120,""),subject:suggestionData?"Sugerencia de cambio — Corte #"+String(suggestionData.corteIndex):"Reporte en Vehículo #"+rowVehicleId,content:reportContent,user:rowUserName,vehicleId:rowVehicleId,reportMetadata,suggestionData,reply:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Respuesta-1],5000,""),isResolved,responder:normalizeInboxStoredText_(row[COLS_FEEDBACKS.Responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")};
+ });
+ const contactData=(!contactSheet)?[]:contactSheet.getDataRange().getValues().slice(1).map(row=>({type:"contact_form",id:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Contacto_ID-1],120,""),subject:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Asunto-1],200,"Mensaje de contacto"),content:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Mensaje-1],5000,""),user:"Formulario de Contacto",vehicleId:null,reply:normalizeInboxStoredText_(row[COLS_CONTACTANOS.Respuesta_mensaje-1],5000,""),isResolved:null,responder:normalizeInboxStoredText_(row[COLS_CONTACTANOS.ID_usuario_responde-1],INBOX_VIDEO_USER_MAX_LENGTH,"Admin")}));
+ return{status:"success",data:[...feedbackData,...contactData]};
 }
-
 function handleReplyToFeedback(payload) {
     const { itemId, itemType, replyText, responderName } = payload;
     if (!itemId || !itemType || !replyText || !responderName) {
@@ -2776,82 +2764,34 @@ function handleGetVideoApprovalByOperation(payload) {
 }
 
 function handleSubmitVideoForApproval(payload) {
-    const { title, description, contentType, referenceId, metadata, videoId, videoUrl, userName, userId, opVideoId } = payload || {};
-    const operationId = String(opVideoId || "").trim();
-    const actualVideoId = String(videoId || "").trim();
-    const validatedVideoId = getPysYouTubeVideoId_(videoUrl);
-    const canonicalUrl = /^[A-Za-z0-9_-]{11}$/.test(actualVideoId) && validatedVideoId === actualVideoId
-        ? "https://www.youtube.com/watch?v=" + actualVideoId : "";
-    if (!title || !String(title).trim()) throw new Error("El título del vídeo es obligatorio.");
-    if (!/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) throw new Error("Identificador de operación de vídeo inválido.");
-    if (!["corte", "pys", "tutorial"].includes(String(contentType || ""))) throw new Error("Tipo de contenido no válido para aprobación.");
-    if (!String(referenceId || "").trim()) throw new Error("La solicitud no tiene un destino guardado para asociar el vídeo.");
-    if (!canonicalUrl || String(videoUrl || "").trim() !== canonicalUrl) throw new Error("YouTube no confirmó un ID real o la URL no coincide con el vídeo.");
-    if (!String(userId || "").trim()) throw new Error("La sesión no proporcionó una identidad válida.");
-
-    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
-    const existing = findVideoApprovalByOperation_(sheet, operationId);
-    if (existing) {
-        const data = existing.data;
-        const sameOperation = String(data.createdByUserId || "") === String(userId) &&
-            String(data.contentType || "") === String(contentType) &&
-            String(data.referenceId || "") === String(referenceId || "") &&
-            String(data.videoId || "") === actualVideoId &&
-            String(data.videoUrl || "") === canonicalUrl &&
-            String(data.title || "") === String(title).trim() &&
-            String(data.description || "") === String(description || "");
-        if (!sameOperation) throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra solicitud.");
-        return {
-            status: "success", id: String(existing.row[COLS_FEEDBACKS.ID - 1] || ""),
-            opVideoId: operationId, videoUrl: canonicalUrl,
-            approvalStatus: String(data.status || "pending"),
-            message: "La solicitud de aprobación ya existía; se devolvió el registro original."
-        };
-    }
-
-    const pendingForTarget = findPendingVideoApprovalForTarget_(sheet, contentType, referenceId);
-    if (pendingForTarget) {
-        throw new Error("Ya existe una solicitud de vídeo pendiente para este contenido. Revisa la bandeja de aprobación antes de enviar otra.");
-    }
-    const destination = getVideoApprovalTarget_({ contentType, referenceId });
-    if (!destination.record) throw new Error("El registro de destino ya no existe; no se creó la solicitud.");
-    const currentDestinationVideo = String(destination.sheet.getRange(destination.record.rowIndex, destination.videoColumn).getValue() || "").trim();
-    if (currentDestinationVideo) throw new Error("El destino ya tiene un vídeo asociado; no se creó una solicitud duplicada.");
-
-    const newId = "vid-" + Utilities.getUuid().slice(0, 8);
-    const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
-    const videoApprovalPayload = {
-        subType: "video_approval",
-        opVideoId: operationId,
-        createdByUserId: String(userId),
-        title: String(title).trim(),
-        description: String(description || ""),
-        videoUrl: canonicalUrl,
-        videoId: actualVideoId,
-        contentType: String(contentType),
-        referenceId: referenceId === undefined || referenceId === null || referenceId === "" ? null : String(referenceId),
-        metadata: metadata && typeof metadata === "object" ? metadata : {},
-        status: "pending",
-        date: dateStr
-    };
-    const newRowNumber = sheet.getLastRow() + 1;
-    const newRow = [
-        newId, String(userName || "Colaborador"), referenceId || "",
-        JSON.stringify(videoApprovalPayload), "pending", false, "", "", ""
-    ];
-    sheet.getRange(newRowNumber, 1, 1, COLS_FEEDBACKS.anoSugerido).setValues([newRow]);
-    SpreadsheetApp.flush();
-
-    const saved = findVideoApprovalByOperation_(sheet, operationId);
-    if (!saved || String(saved.row[COLS_FEEDBACKS.ID - 1] || "") !== newId) {
-        throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
-    }
-    return {
-        status: "success", id: newId, opVideoId: operationId,
-        videoUrl: canonicalUrl, approvalStatus: "pending",
-        message: "Vídeo enviado para aprobación interna."
-    };
+ const source=payload&&typeof payload==="object"?payload:{}, {title,description,contentType,referenceId,metadata,videoId,userName,userId,opVideoId}=source,videoUrl=source.videoUrl;
+ const operationId=String(opVideoId||"").trim(),actualVideoId=String(videoId||"").trim(),canonicalUrl=normalizeInboxVideoUrl_(videoUrl,actualVideoId);
+ const normalizedTitle=normalizeInboxText_(title,"El título del vídeo",INBOX_VIDEO_TITLE_MAX_LENGTH,false);
+ const normalizedDescription=description===undefined||description===null?"":normalizeInboxText_(description,"La descripción del vídeo",INBOX_VIDEO_DESCRIPTION_MAX_LENGTH,true);
+ const normalizedContentType=String(contentType||""),normalizedReferenceId=normalizeInboxText_(String(referenceId===undefined||referenceId===null?"":referenceId),"La referencia del contenido",INBOX_VIDEO_REFERENCE_MAX_LENGTH,false);
+ const normalizedUserName=normalizeInboxText_(String(userName||"Colaborador"),"El nombre del colaborador",INBOX_VIDEO_USER_MAX_LENGTH,false),normalizedMetadata=normalizeInboxVideoMetadata_(metadata,normalizedContentType);
+ if(!/^[A-Za-z0-9_-]{20,80}$/.test(operationId))throw new Error("Identificador de operación de vídeo inválido.");
+ if(!["corte","pys","tutorial"].includes(normalizedContentType))throw new Error("Tipo de contenido no válido para aprobación.");
+ if(!/^[A-Za-z0-9_-]{11}$/.test(actualVideoId)||!canonicalUrl)throw new Error("YouTube no confirmó un ID real o la URL no coincide con el vídeo.");
+ if(!String(userId||"").trim())throw new Error("La sesión no proporcionó una identidad válida.");
+ const sheet=getSafeSheet(SHEET_NAMES.FEEDBACKS);if(!sheet)throw new Error("Hoja Feedbacks no encontrada.");
+ const existing=findVideoApprovalByOperation_(sheet,operationId);
+ if(existing){const data=existing.data,sameOperation=String(data.createdByUserId||"")===String(userId)&&String(data.contentType||"")===normalizedContentType&&String(data.referenceId||"")===normalizedReferenceId&&String(data.videoId||"")===actualVideoId&&String(data.videoUrl||"")===canonicalUrl&&String(data.title||"")===normalizedTitle&&String(data.description||"")===normalizedDescription;
+  if(!sameOperation)throw new Error("El identificador de operación ya pertenece a una solicitud distinta; no se creó otra solicitud.");
+  return{status:"success",id:String(existing.row[COLS_FEEDBACKS.ID-1]||""),opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:String(data.status||"pending"),message:"La solicitud de aprobación ya existía; se devolvió el registro original."};}
+ const pendingForTarget=findPendingVideoApprovalForTarget_(sheet,normalizedContentType,normalizedReferenceId);
+ if(pendingForTarget)throw new Error("Ya existe una solicitud de vídeo pendiente para este contenido. Revisa la bandeja de aprobación antes de enviar otra.");
+ const destination=getVideoApprovalTarget_({contentType:normalizedContentType,referenceId:normalizedReferenceId});
+ if(!destination.record)throw new Error("El registro de destino ya no existe; no se creó la solicitud.");
+ const currentDestinationVideo=String(destination.sheet.getRange(destination.record.rowIndex,destination.videoColumn).getValue()||"").trim();
+ if(currentDestinationVideo)throw new Error("El destino ya tiene un vídeo asociado; no se creó una solicitud duplicada.");
+ const newId="vid-"+Utilities.getUuid().slice(0,8),dateStr=Utilities.formatDate(new Date(),Session.getScriptTimeZone()||"GMT-5","yyyy-MM-dd HH:mm:ss");
+ const videoApprovalPayload={subType:"video_approval",opVideoId:operationId,createdByUserId:String(userId),title:normalizedTitle,description:normalizedDescription,videoUrl:canonicalUrl,videoId:actualVideoId,contentType:normalizedContentType,referenceId:normalizedReferenceId,metadata:normalizedMetadata,status:"pending",date:dateStr};
+ const newRowNumber=sheet.getLastRow()+1,newRow=[newId,normalizedUserName,normalizedReferenceId,JSON.stringify(videoApprovalPayload),"pending",false,"","",""];
+ sheet.getRange(newRowNumber,1,1,COLS_FEEDBACKS.anoSugerido).setValues([newRow]);SpreadsheetApp.flush();
+ const saved=findVideoApprovalByOperation_(sheet,operationId);
+ if(!saved||String(saved.row[COLS_FEEDBACKS.ID-1]||"")!==newId)throw new Error("No se pudo verificar la persistencia de la solicitud de aprobación. Reintenta con el mismo identificador de operación.");
+ return{status:"success",id:newId,opVideoId:operationId,videoUrl:canonicalUrl,approvalStatus:"pending",message:"Vídeo enviado para aprobación interna."};
 }
 
 /**
