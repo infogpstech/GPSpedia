@@ -98,7 +98,7 @@ check("Finaliza con resultado, etapa, duración y resumen parcial permitido",()=
     const record=JSON.parse(h.properties.getProperty(started.key));
     assert.equal(record.outcome,"partial");
     assert.equal(record.resultCode,"PARTIAL_RESULT");
-    assert.equal(record.stage,"Reorganización de imágenes");
+    assert.equal(record.stage,"Organizacion");
     assert.equal(record.durationMs,1250);
     assert.deepEqual(record.partialResult,{processed:8,total:10,itemErrors:2,successCount:6});
     assert.ok(record.finishedAt);
