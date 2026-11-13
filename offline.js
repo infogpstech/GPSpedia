@@ -341,10 +341,12 @@ async function migrateLegacyDriveAuditState_(ownerId, legacy) {
     const legacyKey = getDriveAuditStateKey(ownerId), latestKey = getDriveAuditLatestKey(ownerId);
     const metaKey = getDriveAuditMetaKey(ownerId, auditId), confirmedKey = getDriveAuditConfirmedKey(ownerId, auditId);
     const files = normalizeDriveAuditLocalFiles(legacy.files), pages = [];
+    const legacyDuplicateCount = Math.max(0, legacy.files.length - files.length);
     for (let index = 0; index < files.length; index += DRIVE_AUDIT_PAGE_SIZE) pages.push(files.slice(index, index + DRIVE_AUDIT_PAGE_SIZE));
     const meta = Object.assign({}, legacy, { key: metaKey, ownerId, auditId,
         serverAuditId: String((legacy.cursor && legacy.cursor.referenceCacheId) || legacy.inventoryAuditId || ''),
         revision: 1, pageCount: pages.length, updatedAt: Date.now() });
+    meta.uiDuplicateFileCount = Math.max(0, Number(meta.uiDuplicateFileCount) || 0) + legacyDuplicateCount;
     delete meta.files;
     delete meta.inventoryConfirmedFileIds;
     const confirmedIds = normalizeDriveAuditLocalIds(legacy.inventoryConfirmedFileIds);
@@ -356,7 +358,8 @@ async function migrateLegacyDriveAuditState_(ownerId, legacy) {
             legacyRequest.onsuccess = () => {
                 const current = legacyRequest.result;
                 if (!current || current.ownerId !== ownerId || !Array.isArray(current.files) ||
-                    Number(current.updatedAt) !== Number(legacy.updatedAt) || current.files.length !== legacy.files.length) {
+                    Number(current.updatedAt) !== Number(legacy.updatedAt) ||
+                    JSON.stringify(current.files) !== JSON.stringify(legacy.files)) {
                     control.abort(new Error('El estado legado cambió durante la migración; no se eliminó.'));
                     return;
                 }
@@ -411,7 +414,7 @@ export async function saveDriveAuditState(state, userId) {
             const saveMeta = pageCount => {
                 const nextMeta = buildDriveAuditMetaEntry(state, ownerId, auditId, metaKey, pageCount, currentRevision + 1);
                 store.put(nextMeta);
-                store.put({ key: latestKey, ownerId, auditId, revision: nextMeta.revision, updatedAt: Date.now() });
+                if (!current) store.put({ key: latestKey, ownerId, auditId, revision: nextMeta.revision, updatedAt: Date.now() });
                 if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds, updatedAt: Date.now() });
                 else store.delete(confirmedKey);
                 store.delete(legacyKey);
@@ -458,24 +461,26 @@ export async function getDriveAuditState(userId, requestedAuditId = '') {
     if (generation === null) return null;
     const entries = await performAdminStateOp('readonly', store => store.getAll());
     if (!Array.isArray(entries)) return null;
+    const entriesByKey = new Map(entries.filter(entry => entry && typeof entry.key === 'string').map(entry => [entry.key, entry]));
     const latestKey = getDriveAuditLatestKey(ownerId);
-    const pointer = entries.find(entry => entry && entry.key === latestKey && entry.ownerId === ownerId);
-    let auditId = String(requestedAuditId || (pointer && pointer.auditId) || '').trim();
+    const pointer = entriesByKey.get(latestKey);
+    let auditId = String(requestedAuditId || (pointer && pointer.ownerId === ownerId ? pointer.auditId : '') || '').trim();
     if (!auditId) {
-        const legacy = entries.find(entry => entry && entry.key === getDriveAuditStateKey(ownerId));
+        const legacy = entriesByKey.get(getDriveAuditStateKey(ownerId));
         if (!legacy) return null;
         if (!(await migrateLegacyDriveAuditState_(ownerId, legacy))) return null;
         return getDriveAuditState(ownerId);
     }
     const metaKey = getDriveAuditMetaKey(ownerId, auditId);
-    const meta = entries.find(entry => entry && entry.key === metaKey && entry.ownerId === ownerId && entry.auditId === auditId);
-    if (!meta || !Number.isSafeInteger(Number(meta.pageCount)) || Number(meta.pageCount) < 0 ||
+    const meta = entriesByKey.get(metaKey);
+    if (!meta || meta.ownerId !== ownerId || meta.auditId !== auditId ||
+        !Number.isSafeInteger(Number(meta.pageCount)) || Number(meta.pageCount) < 0 ||
         !Number.isSafeInteger(Number(meta.revision)) || Number(meta.revision) < 1) return null;
     const files = [], seen = new Set();
     let duplicateCount = 0, missingPage = false;
     for (let pageIndex = 0; pageIndex < Number(meta.pageCount); pageIndex++) {
         const pageKey = getDriveAuditPageKey(ownerId, auditId, pageIndex);
-        const page = entries.find(entry => entry && entry.key === pageKey && entry.ownerId === ownerId && entry.auditId === auditId);
+        const page = entriesByKey.get(pageKey);
         if (!page || !Array.isArray(page.files)) { missingPage = true; continue; }
         page.files.forEach(file => {
             const fileId = String(file && file.fileId || '').trim();
@@ -484,8 +489,7 @@ export async function getDriveAuditState(userId, requestedAuditId = '') {
             seen.add(fileId); files.push(file);
         });
     }
-    const confirmedEntry = entries.find(entry => entry && entry.key === getDriveAuditConfirmedKey(ownerId, auditId) &&
-        entry.ownerId === ownerId && entry.auditId === auditId);
+    const confirmedEntry = entriesByKey.get(getDriveAuditConfirmedKey(ownerId, auditId));
     const state = Object.assign({}, meta, {
         files,
         inventoryConfirmedFileIds: confirmedEntry && Array.isArray(confirmedEntry.ids) ? normalizeDriveAuditLocalIds(confirmedEntry.ids) : [],
