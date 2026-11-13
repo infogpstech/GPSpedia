@@ -7096,6 +7096,7 @@ export async function openAuditDriveModal() {
     let inventoryConfirmedFileIds = [];
     let auditId = '';
     let localStateRevision = 0;
+    let localPageCount = 0;
     let pendingBatchIndex = null;
     let pendingBatchFiles = [];
     let savedState = null;
@@ -7234,6 +7235,7 @@ export async function openAuditDriveModal() {
         }
         if (!saved) throw new Error('IndexedDB no confirmó la persistencia del progreso de auditoría.');
         localStateRevision = Math.max(0, Number(saved.revision) || localStateRevision);
+        localPageCount = Math.max(0, Number(saved.pageCount) || localPageCount);
         if (pendingBatchIndex !== null) {
             pendingBatchIndex = null;
             pendingBatchFiles = [];
@@ -7259,6 +7261,13 @@ export async function openAuditDriveModal() {
             localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
         }
 
+        if (!auditId) {
+            inventoryStatus = 'error';
+            inventoryMessage = 'No existe un auditId de ADMIN verificable para registrar el inventario heredado. Inicia una auditoría nueva.';
+            updateSummary(inventoryMessage);
+            if (ownsRun) { isRunning = false; isDriveAuditRunning = false; updateControls(); }
+            return;
+        }
         const unusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado')
             .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
         try {
@@ -7433,8 +7442,9 @@ export async function openAuditDriveModal() {
         inventoryMessage = state.inventoryMessage || '';
         inventoryAuditId = String(state.inventoryAuditId || '');
         inventoryOperationId = String(state.inventoryOperationId || '');
-        auditId = String(state.auditId || state.serverAuditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId || '');
+        auditId = String(state.serverAuditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId || '');
         localStateRevision = Math.max(0, Number(state.revision) || 0);
+        localPageCount = Math.max(0, Number(state.pageCount) || 0);
         pendingBatchIndex = null;
         pendingBatchFiles = [];
         inventoryConfirmedFileIds = Array.isArray(state.inventoryConfirmedFileIds)
@@ -7495,6 +7505,7 @@ export async function openAuditDriveModal() {
                 inventoryConfirmedFileIds = [];
                 auditId = '';
                 localStateRevision = 0;
+                localPageCount = 0;
                 pendingBatchIndex = null;
                 pendingBatchFiles = [];
                 savedState = null;
@@ -7561,7 +7572,7 @@ export async function openAuditDriveModal() {
                 uniqueResponseFiles.forEach(file => seenFileIds.add(String(file.fileId)));
                 allFiles.push(...uniqueResponseFiles);
                 batches++;
-                pendingBatchIndex = batches - 1;
+                pendingBatchIndex = localPageCount;
                 pendingBatchFiles = uniqueResponseFiles.slice();
                 lastBatchAnalyzed = batchSize;
                 totalDiscovered = reportedDiscovered;
