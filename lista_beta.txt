@@ -1878,3 +1878,27 @@ EJECUCIÓN EXCLUSIVA EN PROYECTO ADMIN Y RECURSOS AISLADOS:
 
 No declarar PASS sin comprobar recursos reales y recuperación en el proyecto aislado. No desplegar a producción.
 ================================================================================
+
+## AUG-126 — WRITE: payload y compensación de altas de cortes
+
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local `GPSpedia`. La secuencia verifica el repositorio y la rama autorizada, se detiene si hay cambios locales sin guardar, obtiene los cambios remotos, sincroniza únicamente mediante fast-forward y muestra el HEAD final:
+
+```bash
+git -C GPSpedia rev-parse --show-toplevel
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia rev-parse HEAD
+```
+
+Después probar en un proyecto WRITE y Spreadsheet/Drive aislados:
+- POSTs con tipo/categoría/Relay fuera de enum; años inválidos o invertidos; booleanos y longitudes incorrectas; VIN inválido; opId/hash alterados.
+- Imágenes Base64 malformadas, MIME no permitido y archivos mayores de 10 MB.
+- Confirmar que los rechazos no crean filas, reservan IDs, escriben Idempotencia ni crean carpetas/archivos.
+- Inyectar fallos después de reservar fila/ID, después de registrar opId, durante subida de imagen, durante escritura de celdas y durante verificación.
+- Comprobar restauración de fila existente, eliminación de fila nueva, reversión de opId/contador y conciliación de ImageUploadLedger.
+- Verificar que el resultado de la reconciliación no deja archivos no registrados ni recursos huérfanos.
+
+No ejecutar contra endpoints ni datos productivos.
+
