@@ -1522,3 +1522,8 @@ node Services/Test/RunServiceTests.mjs --only=INTEGRATION
 ~~~
 
 La validación es estática y reproducible con las fuentes del repositorio; no llama endpoints, deployments ni datos reales. La matriz de acciones vigente no necesitó cambios funcionales: las 81 acciones del mapa ya coincidían con sus routers; el cambio añade detección automática de handlers ausentes y consumidores desincronizados.
+
+
+### Resultado AUG-134 (2026-11-13)
+
+GitHub Actions run 43366270381, sobre commit a9ecfd6c6180b5037261b1d26f224527f7b9e7e5, Node.js 22.23.4: 16 suites, 239/239 pruebas aprobadas, 0 fallos. La suite ActionDispatchContract aporta 12 verificaciones nuevas y se ejecuta dentro de INTEGRATION.

@@ -360,3 +360,10 @@ AUG-134 — PARIDAD DE ACTION_TO_SERVICE_MAP, ROUTERS Y CONSUMIDORES — 2026-11
 Se reforzó Services/Test/ActionDispatchContract.js para validar el handler real de cada acción mapeada, la cobertura inversa de todos los handlers públicos, las rutas de compatibilidad y las acciones literales de los consumidores UI. Se incorporó el registro explícito de servicios/consumidores/origen de acciones externas. El runner INTEGRATION ahora carga las fuentes de consumidores versionados.
 La inspección confirmó 81 acciones canónicas alineadas; no fue necesario alterar rutas, handlers, endpoints ni consumidores funcionales. La validación de ejecución Node.js 22/CI se registra al cierre tras su comprobación.
 ================================================================================
+
+
+================================================================================
+AUG-134 — COMPLETADA Y VALIDADA — 2026-11-13
+Se sincronizó de forma verificable ACTION_TO_SERVICE_MAP con API_ENDPOINTS, los routers AUTH/USERS/CATALOG/WRITE/FEEDBACK/ADMIN/UTILITIES y los consumidores literales de interfaz. La matriz funcional de 81 acciones ya estaba alineada; no fue necesario alterar rutas ni endpoints. La prueba automática detecta handlers inexistentes, divergencias mapa/router, consumidores UI sin mapa, compatibilidades inválidas y metadata incompleta de acciones externas.
+Validación GitHub Actions 43366270381 sobre commit a9ecfd6c6180b5037261b1d26f224527f7b9e7e5: Node.js 22.23.4; 16 suites; 239/239 PASS; 0 fallos. La suite nueva de contrato obtuvo 12/12 PASS.
+================================================================================

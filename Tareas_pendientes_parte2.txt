@@ -94,7 +94,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: ui.js:2991–2995 inicia elegibilidad desde img.onload; la ruta lazy no instala ese callback.
 - Problema: sin imagen, con error de carga o en ruta lazy puede no aparecer el banner.
 - Criterios: iniciar validación desde ciclo del modal; evitar duplicados; probar imágenes ausentes/rotas/lazy y varios cortes.
-- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+- Estado: COMPLETADA; implementación, integración y validación CI aprobadas.
 
 ### AUG-111 — Documentar suggestionActorKey en el esquema de Feedbacks
 - Origen: H-AUD-017-006. Prioridad: Media.
@@ -298,7 +298,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - Evidencia: api-config.js; routers AUTH/USERS/CATALOG/WRITE/FEEDBACK/ADMIN/UTILITIES; consumidores add_cortes.html, auth.js, main.js, pys-data.js, ui.js, users.html y youtubeUpload.js.
 - Criterios cumplidos: contrato único; cada acción mapeada enlaza con un handler existente; cada handler público está mapeado o documentado como compatibilidad; consumidores literales verificados; acciones externas documentadas; prueba automática de paridad integrada en la suite INTEGRATION.
 - Resultado: las 81 acciones del mapa ya coincidían con sus routers. No se alteraron rutas ni endpoints funcionales; se reforzó el contrato para detectar futuras divergencias.
-- Validación: pendiente de ejecución Node.js 22/CI antes del cierre.
+- Validación final: GitHub Actions run 43366270381, Node.js 22.23.4, 16 suites, 239/239 pruebas PASS, 0 fallos. Incluye la nueva paridad de acciones 12/12.
 
 ### AUG-135 — Reconciliar política de publicación de microservicios y README
 - Origen: H-AUD-019-014. Prioridad: Media.
