@@ -61,6 +61,70 @@ function runLastDeveloperProtectionTests(sources) {
         const remove=new Function(...Object.keys(context),extract(auth,'handleDeleteUser')+'\nreturn handleDeleteUser;')(...Object.values(context));
         return {update,remove,users,sessions,logs};
     };
+    run('Reconciliación real conserva el marcador y recupera nombre tras fallo de escritura',()=>{
+        const helperNames=['parseRoleRevocationMarker_','parseSharedRoleRevocationMarker_','sameRoleRevocationMarker_','revokeAllUserSessionsUnderLock_','deleteRevokedSessionRowsUnderLock_','reconcileRoleRevocationUnderLock_'];
+        const helperCode=helperNames.map(name=>extract(auth,name)).join('\\n')+'\\nreturn reconcileRoleRevocationUnderLock_;';
+        const prefix='__role_revocation_pending__:';
+        const markerData={userId:'T1',markedAt:123,oldRole:'Tecnico',newRole:'Supervisor',newFullName:'Nombre nuevo'};
+        const markerValue=prefix+JSON.stringify(markerData);
+        const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],['T1','tech','pw','Tecnico','','','Nombre anterior',markerValue,'']];
+        const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],['T1','tech','token-target',new Date(),'','']];
+        const properties=new Map([['role:T1',JSON.stringify(markerData)]]);
+        let failName=true;
+        const usersSheet={
+            getDataRange:()=>({getValues:()=>users.map(row=>row.slice())}),
+            getRange:(row,col)=>({
+                getValue:()=>users[row-1][col-1],
+                setValue:value=>{if(col===7&&failName){failName=false;throw new Error('fallo nombre simulado');}users[row-1][col-1]=value;},
+                clearContent:()=>{users[row-1][col-1]='';}
+            })
+        };
+        const sessionsSheet={
+            getLastRow:()=>sessions.length,getLastColumn:()=>6,
+            getRange:(row,col,numRows=1,numCols=1)=>({
+                getValues:()=>Array.from({length:numRows},(_,ri)=>Array.from({length:numCols},(_,ci)=>sessions[row+ri-1][col+ci-1])),
+                setValues:values=>values.forEach((line,ri)=>line.forEach((value,ci)=>{sessions[row+ri-1][col+ci-1]=value;})),
+                getValue:()=>sessions[row-1][col-1]
+            }),
+            deleteRow:row=>sessions.splice(row-1,1)
+        };
+        const normalizeRole=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase();
+        const code=helperCode;
+        const reconcile=new Function(
+            'COLS_USERS','COLS_ACTIVE_SESSIONS','ROLE_REVOCATION_SHARED_PREFIX','PropertiesService',
+            'normalizeUserId','normalizeRoleName','isActiveAuthUserRecord','roleRevocationPropertyKey_',
+            'revokePendingLoginRequestsForUserUnderLock_','SpreadsheetApp',code
+        )(
+            userCols,sessionCols,prefix,
+            {getScriptProperties:()=>({
+                getProperty:key=>properties.has(key)?properties.get(key):null,
+                setProperty:(key,value)=>properties.set(key,value),
+                deleteProperty:key=>properties.delete(key)
+            })},
+            value=>String(value||'').trim(),normalizeRole,
+            row=>active(row),id=>'role:'+id,
+            ()=>({pending:false}),{flush:()=>{}}
+        );
+        const first=reconcile(usersSheet,sessionsSheet,'T1');
+        assert(first.pending,'El fallo de la segunda escritura debe dejar recuperación pendiente.');
+        equal(users[1][3],'Supervisor');equal(users[1][6],'Nombre anterior');
+        assert(String(users[1][7]).startsWith(prefix),'El marcador compartido debe permanecer.');
+        equal(sessions[1][2],'','El token debe seguir invalidado aunque falle el perfil.');
+        const second=reconcile(usersSheet,sessionsSheet,'T1');
+        assert(!second.pending,'El reintento debe completar la operación.');
+        equal(users[1][6],'Nombre nuevo');equal(users[1][7],'');
+        equal(sessions.length,1,'La fila de sesión revocada debe eliminarse tras recuperar.');
+        assert(!properties.has('role:T1'),'El marcador local se elimina solo al confirmar el perfil.');
+    });
+    run('Marcadores compartido y local rechazan metadatos de perfil divergentes',()=>{
+        const parse=new Function('normalizeUserId','normalizeRoleName',extract(auth,'parseRoleRevocationMarker_')+'\\n'+extract(auth,'sameRoleRevocationMarker_')+'\\nreturn {parseRoleRevocationMarker_,sameRoleRevocationMarker_};')(
+            value=>String(value||'').trim(),normalize
+        );
+        const base={userId:'T1',markedAt:123,oldRole:'Tecnico',newRole:'Supervisor',newFullName:'Nombre nuevo'};
+        const local=Object.assign({},base,{newFullName:'Otro nombre'});
+        assert(!parse.sameRoleRevocationMarker_(base,local),'No debe reconciliar dos intenciones de perfil distintas.');
+        assert(parse.parseRoleRevocationMarker_(JSON.stringify(Object.assign({},base,{newFullName:123}))).invalid,'Debe rechazar metadatos de perfil inválidos.');
+    });
     run('Cuenta solo Desarrolladores activos',()=>{
         equal(count([['D1','dev1','','Desarrollador'],['D2','dev2','','desarrollador'],['D3','__deleted__:x','','Desarrollador'],['T1','tech','','Tecnico']]),2);
     });
