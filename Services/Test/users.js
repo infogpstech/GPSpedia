@@ -91,6 +91,15 @@ function verifyStoredPassword(storedPassword, providedPassword) {
 // ============================================================================
 
 function doGet(e) {
+    if (e && e.parameter && e.parameter.debug === 'true') {
+        const serviceState = {
+            service: 'GPSpedia-Users',
+            version: '2.4.2',
+            status: 'available'
+        };
+        return ContentService.createTextOutput(JSON.stringify(serviceState))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
     const defaultResponse = { status: 'success', message: 'GPSpedia Users-SERVICE v2.0 is active.' };
     return ContentService.createTextOutput(JSON.stringify(defaultResponse))
         .setMimeType(ContentService.MimeType.TEXT);
