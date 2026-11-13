@@ -828,3 +828,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Regresión completa: 23 suites, 311/311 PASS, 0 fallos. PrintSheetPageContract 11/11, PrintSheetWarningIndicator 9/9, PrintSheetResourceReadiness 12/12 y PrintSheetPaginationIntegrity 12/12 PASS.
 - Se corrigió la expectativa obsoleta de AUG-140 que todavía exigía choosePageGroups; ahora valida paginación por overflow medido.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-144 — QR LOCAL Y PROTECCIÓN DE VÍDEOS NO LISTADOS
+- Se elimina la dependencia de api.qrserver.com que transmitía la URL completa a un tercero.
+- Se añade qrcode-generator.mjs (MIT, Kazuhiko Arase) y su licencia; printQr.js valida HTTPS/hosts oficiales/ID de vídeo y genera un GIF QR local como data URL.
+- ui.js conserva el QR condicional, no muestra la URL y presenta un aviso neutro si el enlace no es válido. El recurso QR participa en la compuerta de disponibilidad de impresión.
+- Services/Test/PrintQrPrivacy.mjs cubre canonicalización, hosts/protocolos inválidos, generación local, ausencia de URL en markup y sintaxis de los módulos.
+================================================================================

@@ -1573,3 +1573,10 @@ Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetResou
 Las tarjetas técnicas se procesan en orden original, con el corte prioritario al inicio cuando corresponde. Se agregan secuencialmente a la página activa y se mide el overflow real del área de contenido; la tarjeta que excede una página con contenido previo se traslada completa a la siguiente. Las tarjetas sin imagen ya no se agrupan artificialmente al final. Las imágenes se ajustan al espacio vertical medido sin imponer el mínimo anterior de 80 px. Si una tarjeta individual excede por sí sola el espacio, la página queda identificada mediante `data-content-overflow` sin ocultar contenido.
 
 Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetPaginationIntegrity.mjs`.
+
+
+## AUG-144 — QR local y privacidad de vídeos no listados
+
+El QR se genera dentro del navegador con el módulo local `qrcode-generator.mjs` (MIT, Kazuhiko Arase), sin enviar el enlace a servicios externos. `printQr.js` valida HTTPS y hosts oficiales de YouTube, extrae un ID de 11 caracteres y genera un `data:image/gif` local con URL canónica. No se incluyen parámetros de seguimiento/listas ni se muestra la URL en la ficha. Los enlaces inválidos omiten el QR y muestran un aviso neutro. La licencia completa está en `ThirdPartyLicenses/qrcode-generator-MIT.txt`.
+
+Ejecutar: `node --experimental-default-type=module Services/Test/PrintQrPrivacy.mjs`.

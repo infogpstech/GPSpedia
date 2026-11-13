@@ -1,4 +1,5 @@
 import { vinDifferentialEngine, vinSignatureStore, getClassificationKey, ensureVinSignatures } from './VinDifferentialEngine.js';
+import { createPrintableQrDataUrl } from './printQr.js';
 // GPSpedia UI Module | Version: 2.1.6
 // Responsibilities:
 // - Render UI components based on state.
@@ -10700,19 +10701,23 @@ export function exportVehiclePrintSheet(item) {
         </tr>
     ` : '';
 
-    // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
-    // Prohibido mostrar la URL como texto visible, solo el QR.
+    // 8. QR local para el vídeo guía: no se transmite el enlace a servicios de terceros.
     const rawVideoUrl = item.Video || item.videoGuiaDesarmeUrl;
     let qrHtml = '';
     if (rawVideoUrl && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
-        const directVideoUrl = rawVideoUrl.trim();
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(directVideoUrl)}`;
-        qrHtml = `
-            <div class="qr-video-box">
-                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" data-print-resource="optional" /><span class="print-image-fallback" hidden></span>
-                <span class="qr-label">Vídeo Guía de Desarme</span>
-            </div>
-        `;
+        const qrDataUrl = createPrintableQrDataUrl(rawVideoUrl);
+        qrHtml = qrDataUrl
+            ? `
+                <div class="qr-video-box">
+                    <img src="${qrDataUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" data-print-resource="optional" /><span class="print-image-fallback" hidden></span>
+                    <span class="qr-label">Vídeo Guía de Desarme</span>
+                </div>
+            `
+            : `
+                <div class="qr-video-box">
+                    <span class="qr-unavailable">QR no disponible: enlace de YouTube no válido</span>
+                </div>
+            `;
     }
 
     printWindow.document.write(`
@@ -10860,6 +10865,7 @@ export function exportVehiclePrintSheet(item) {
                     height: 80px;
                     object-fit: contain;
                 }
+                .qr-unavailable { max-width: 90px; padding: 8px; color: #7a4b00; font-size: 9px; font-weight: bold; text-align: center; border: 1px dashed #c99a35; border-radius: 3px; }
                 .qr-label {
                     font-size: 9px;
                     font-weight: bold;

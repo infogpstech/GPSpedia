@@ -160,3 +160,7 @@ La evaluación de `getCatalogData`, `getNavigationData`, `getDropdownData`, cach
 ## Resolución y caché de imágenes — AUG-065
 
 Drive conserva la URL fuente original (`https://lh3.googleusercontent.com/d/{fileId}`) para todos los tamaños y evita sufijos CDN `=w`/`=s`, que pueden alterar la transparencia PNG. Canvas genera variantes locales PNG de 300, 800 y 1600 px de ancho máximo, manteniendo proporción y sin ampliar imágenes pequeñas. ObjectURL e IndexedDB comparten una clave por ID normalizado/ancho; los registros heredados o incompatibles no se reutilizan. El Lightbox conserva acceso a la fuente original de alta resolución.
+
+
+### QR de vídeos en fichas imprimibles
+Los códigos QR de los vídeos guía se generan localmente en el navegador con el módulo `qrcode-generator.mjs`; el enlace no se envía a servicios de terceros. Solo se admiten URLs HTTPS de hosts oficiales de YouTube con ID de vídeo válido. El QR no expone la URL como texto en la ficha.

@@ -889,3 +889,12 @@ ADENDA DE CIERRE — AUG-143 — 2026-11-13
 - CI run 43417267856 SUCCESS; Node.js 22.23.4; 23 suites, 311/311 PASS; PrintSheetPaginationIntegrity 12/12 PASS.
 - Paginación por altura real; tarjetas completas y ordenadas, prioridad conservada, tarjetas sin imagen intercaladas en su secuencia; no se fuerza mínimo de 80 px. Las tarjetas individuales que exceden el área se marcan sin ocultar contenido.
 - AUG-143: COMPLETADA CON VALIDACIÓN DIFERIDA. La inspección de PDFs reales y tarjetas individuales muy extensas se reserva a Beta.
+
+
+================================================================================
+CHECKPOINT DE PROGRESO — AUG-144 — 2026-11-13
+HEAD de inicio: a8ae926fd8be6c2cb19bd5996bcecbc1a6f39247
+Implementación: reemplazada solicitud GET a api.qrserver.com por generación local con qrcode-generator.mjs (MIT); printQr.js valida URLs HTTPS de YouTube y extrae únicamente el ID canónico; se genera data:image/gif local sin enviar el enlace a terceros ni mostrarlo como texto. La vista previa sigue esperando el recurso QR local antes de habilitar impresión.
+Suite: Services/Test/PrintQrPrivacy.mjs con 11 contratos, generación QR real y node --check; integrada en INTEGRATION.
+Estado: EN PROGRESO hasta CI y revisión.
+================================================================================
