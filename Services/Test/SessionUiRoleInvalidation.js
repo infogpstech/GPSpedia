@@ -87,5 +87,22 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("result.valid === false"));
   assert(f.includes("logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user)"));
  });
+ run("AUTH revalida sesiones remotas al recuperar foco, conexión y cada cinco minutos",()=>{
+  const resume=slice(main,"function revalidateSessionOnResume_()","function installSessionRevalidation_()");
+  const install=slice(main,"function installSessionRevalidation_()","function installCatalogStatusBanner_()");
+  assert(resume.includes("auth.validateActiveSession(true)"));
+  assert(install.includes("window.addEventListener('focus'"));
+  assert(install.includes("document.addEventListener('visibilitychange'"));
+  assert(install.includes("window.addEventListener('online'"));
+  assert(install.includes("5 * 60 * 1000"));
+ });
+ run("las funciones privilegiadas directas quedan protegidas por sesión vigente",()=>{
+  assert(!ui.includes("export function openDevToolsModal_")&&!ui.includes("export function openInboxModal_")&&!ui.includes("export function openDashboardModal_"));
+  const detail=slice(ui,"export function renderInboxDetail(","\\nexport function ");
+  assert(detail.includes("isCurrentUiSessionContext_(context)"));
+  assert(detail.includes("['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role)"));
+  const guard=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
+  assert(guard.includes("validateActiveSession(true)")&&guard.includes("allowedRoles.includes(current.role)"));
+ });
  return {status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
