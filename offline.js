@@ -150,7 +150,12 @@ async function performOp(storeName, mode, callback) {
 
 const ADMIN_LOCAL_STATE_STORE = 'adminLocalState';
 const DRIVE_AUDIT_STATE_LEGACY_KEY = 'driveAudit:last';
-const DRIVE_AUDIT_STATE_KEY_PREFIX = 'driveAudit:user:'
+const DRIVE_AUDIT_STATE_KEY_PREFIX = 'driveAudit:user:';
+const DRIVE_AUDIT_META_KEY_PREFIX = 'driveAudit:meta:';
+const DRIVE_AUDIT_PAGE_KEY_PREFIX = 'driveAudit:page:';
+const DRIVE_AUDIT_CONFIRMED_KEY_PREFIX = 'driveAudit:confirmed:';
+const DRIVE_AUDIT_LATEST_KEY_PREFIX = 'driveAudit:latest:';
+const DRIVE_AUDIT_PAGE_SIZE = 100;
 const REPLACED_IMAGES_VIEW_KEY = 'replacedImages:view';
 
 async function performAdminStateOp(mode, callback) {
@@ -185,17 +190,44 @@ function getDriveAuditStateKey(userId) {
     const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
     return ownerId ? DRIVE_AUDIT_STATE_KEY_PREFIX + encodeURIComponent(ownerId) : '';
 }
-
+function getDriveAuditMetaKey(userId, auditId) {
+    const ownerId = String(userId || '').trim(), id = String(auditId || '').trim();
+    return ownerId && id ? DRIVE_AUDIT_META_KEY_PREFIX + encodeURIComponent(ownerId) + ':' + encodeURIComponent(id) : '';
+}
+function getDriveAuditPageKey(userId, auditId, pageIndex) {
+    const ownerId = String(userId || '').trim(), id = String(auditId || '').trim();
+    return ownerId && id && Number.isInteger(pageIndex) && pageIndex >= 0
+        ? DRIVE_AUDIT_PAGE_KEY_PREFIX + encodeURIComponent(ownerId) + ':' + encodeURIComponent(id) + ':' + pageIndex
+        : '';
+}
+function getDriveAuditConfirmedKey(userId, auditId) {
+    const ownerId = String(userId || '').trim(), id = String(auditId || '').trim();
+    return ownerId && id ? DRIVE_AUDIT_CONFIRMED_KEY_PREFIX + encodeURIComponent(ownerId) + ':' + encodeURIComponent(id) : '';
+}
+function getDriveAuditLatestKey(userId) {
+    const ownerId = String(userId || '').trim();
+    return ownerId ? DRIVE_AUDIT_LATEST_KEY_PREFIX + encodeURIComponent(ownerId) : '';
+}
+function getDriveAuditMetaPrefix(userId) {
+    const ownerId = String(userId || '').trim();
+    return ownerId ? DRIVE_AUDIT_META_KEY_PREFIX + encodeURIComponent(ownerId) + ':' : '';
+}
+function getDriveAuditPagePrefix(userId) {
+    const ownerId = String(userId || '').trim();
+    return ownerId ? DRIVE_AUDIT_PAGE_KEY_PREFIX + encodeURIComponent(ownerId) + ':' : '';
+}
+function getDriveAuditConfirmedPrefix(userId) {
+    const ownerId = String(userId || '').trim();
+    return ownerId ? DRIVE_AUDIT_CONFIRMED_KEY_PREFIX + encodeURIComponent(ownerId) + ':' : '';
+}
 function getDriveAuditClearPendingKey(userId) {
     const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
     return ownerId ? 'driveAudit:pending-clear:' + encodeURIComponent(ownerId) : '';
 }
-
 function getDriveAuditClearGenerationKey(userId) {
     const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
     return ownerId ? 'driveAudit:clear-generation:' + encodeURIComponent(ownerId) : '';
 }
-
 function getDriveAuditClearGeneration(userId) {
     const generationKey = getDriveAuditClearGenerationKey(userId);
     if (!generationKey) return null;
@@ -208,7 +240,6 @@ function getDriveAuditClearGeneration(userId) {
         return null;
     }
 }
-
 export function hasPendingDriveAuditClear(userId) {
     const pendingKey = getDriveAuditClearPendingKey(userId);
     if (!pendingKey) return true;
@@ -218,16 +249,67 @@ export function hasPendingDriveAuditClear(userId) {
         return true;
     }
 }
-export async function saveDriveAuditState(state, userId) {
-    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
-    const key = getDriveAuditStateKey(ownerId);
-    if (!key || !state || typeof state !== 'object' || !Array.isArray(state.files)) return null;
-    if (hasPendingDriveAuditClear(ownerId) && !(await clearDriveAuditState(ownerId))) return null;
-    const generation = getDriveAuditClearGeneration(ownerId);
-    if (generation === null) return null;
-    const entry = {
-        key, ownerId, files: state.files, cursor: state.cursor || null,
-        complete: state.complete === true, status: String(state.status || 'partial'),
+async function performAdminAuditTransaction(callback) {
+    const database = await initDB();
+    if (!database) throw new Error('IndexedDB no pudo inicializarse.');
+    return await new Promise((resolve, reject) => {
+        let transaction, result, failure = null, settled = false;
+        const rejectOnce = error => {
+            if (settled) return;
+            settled = true;
+            reject(error instanceof Error ? error : new Error('La transacción de auditoría local falló.'));
+        };
+        try {
+            transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
+            transaction.oncomplete = () => {
+                if (failure) rejectOnce(failure);
+                else if (!settled) { settled = true; resolve(result); }
+            };
+            transaction.onerror = () => {
+                if (!failure) failure = transaction.error || new Error('La transacción de auditoría local falló.');
+            };
+            transaction.onabort = () => rejectOnce(failure || transaction.error || new Error('La transacción de auditoría local fue cancelada.'));
+            const control = {
+                setResult(value) { result = value; },
+                abort(error) {
+                    failure = error instanceof Error ? error : new Error(String(error || 'La transacción fue cancelada.'));
+                    try { transaction.abort(); } catch (abortError) { rejectOnce(failure); }
+                }
+            };
+            callback(transaction.objectStore(ADMIN_LOCAL_STATE_STORE), control);
+        } catch (error) {
+            failure = error;
+            try { if (transaction) transaction.abort(); else rejectOnce(error); }
+            catch (abortError) { rejectOnce(error); }
+        }
+    });
+}
+function normalizeDriveAuditLocalFiles(files) {
+    if (!Array.isArray(files)) throw new Error('La página de auditoría local no contiene una lista de archivos.');
+    const unique = new Map();
+    files.forEach(file => {
+        if (!file || typeof file !== 'object') throw new Error('La página de auditoría local contiene un resultado inválido.');
+        const fileId = String(file.fileId || '').trim();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) throw new Error('La página de auditoría local contiene un ID de Drive inválido.');
+        if (!unique.has(fileId)) unique.set(fileId, file);
+    });
+    return Array.from(unique.values());
+}
+function normalizeDriveAuditLocalIds(ids) {
+    if (!Array.isArray(ids)) return [];
+    return Array.from(new Set(ids.map(id => String(id || '').trim()).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id)))).sort();
+}
+function getDriveAuditLocalPageSignature(files) {
+    return JSON.stringify(files);
+}
+function buildDriveAuditMetaEntry(state, ownerId, auditId, key, pageCount, revision) {
+    return {
+        key, ownerId, auditId,
+        serverAuditId: String(state.serverAuditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId || ''),
+        revision, pageCount,
+        cursor: state.cursor || null,
+        complete: state.complete === true,
+        status: String(state.status || 'partial'),
         totalDiscovered: Math.max(0, Number(state.totalDiscovered) || 0),
         totalAnalyzed: Math.max(0, Number(state.totalAnalyzed) || 0),
         foldersVisited: Math.max(1, Number(state.foldersVisited) || 1),
@@ -248,66 +330,211 @@ export async function saveDriveAuditState(state, userId) {
         inventoryMessage: String(state.inventoryMessage || ''),
         inventoryAuditId: String(state.inventoryAuditId || ''),
         inventoryOperationId: String(state.inventoryOperationId || ''),
-        inventoryConfirmedFileIds: Array.isArray(state.inventoryConfirmedFileIds)
-            ? Array.from(new Set(state.inventoryConfirmedFileIds.map(id => String(id || '').trim())
-                .filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id))))
-            : [],
         lastError: String(state.lastError || ''),
         updatedAt: Date.now()
     };
-    const result = await performAdminStateOp('readwrite', store => {
-        store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
-        return store.put(entry);
-    });
-    if (result === null) return null;
-    const latestGeneration = getDriveAuditClearGeneration(ownerId);
-    if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) {
-        await clearDriveAuditState(ownerId);
-        return null;
-    }
-    return key;
 }
-export async function getDriveAuditState(userId) {
-    const key = getDriveAuditStateKey(userId);
-    if (!key) return null;
-    const ownerId = String(userId).trim();
-    if (hasPendingDriveAuditClear(ownerId)) {
-        const cleared = await clearDriveAuditState(ownerId);
-        if (!cleared) return null;
-        return null;
-    }
+async function migrateLegacyDriveAuditState_(ownerId, legacy) {
+    if (!legacy || legacy.ownerId !== ownerId || !Array.isArray(legacy.files)) return false;
+    const auditId = String(legacy.auditId || (legacy.cursor && legacy.cursor.referenceCacheId) ||
+        legacy.inventoryAuditId || ('legacy-' + String(legacy.updatedAt || Date.now()) + '-' + Math.random().toString(36).slice(2, 10)));
+    const legacyKey = getDriveAuditStateKey(ownerId), latestKey = getDriveAuditLatestKey(ownerId);
+    const metaKey = getDriveAuditMetaKey(ownerId, auditId), confirmedKey = getDriveAuditConfirmedKey(ownerId, auditId);
+    const files = normalizeDriveAuditLocalFiles(legacy.files), pages = [];
+    for (let index = 0; index < files.length; index += DRIVE_AUDIT_PAGE_SIZE) pages.push(files.slice(index, index + DRIVE_AUDIT_PAGE_SIZE));
+    const meta = Object.assign({}, legacy, { key: metaKey, ownerId, auditId,
+        serverAuditId: String((legacy.cursor && legacy.cursor.referenceCacheId) || legacy.inventoryAuditId || ''),
+        revision: 1, pageCount: pages.length, updatedAt: Date.now() });
+    delete meta.files;
+    delete meta.inventoryConfirmedFileIds;
+    const confirmedIds = normalizeDriveAuditLocalIds(legacy.inventoryConfirmedFileIds);
+    const result = await performAdminAuditTransaction((store, control) => {
+        const latestRequest = store.get(latestKey);
+        latestRequest.onsuccess = () => {
+            if (latestRequest.result) { control.setResult({ status: 'exists' }); return; }
+            const legacyRequest = store.get(legacyKey);
+            legacyRequest.onsuccess = () => {
+                const current = legacyRequest.result;
+                if (!current || current.ownerId !== ownerId || !Array.isArray(current.files) ||
+                    Number(current.updatedAt) !== Number(legacy.updatedAt) || current.files.length !== legacy.files.length) {
+                    control.abort(new Error('El estado legado cambió durante la migración; no se eliminó.'));
+                    return;
+                }
+                pages.forEach((page, pageIndex) => {
+                    store.put({ key: getDriveAuditPageKey(ownerId, auditId, pageIndex), ownerId, auditId,
+                        pageIndex, files: page, signature: getDriveAuditLocalPageSignature(page), updatedAt: Date.now() });
+                });
+                store.put(meta);
+                store.put({ key: latestKey, ownerId, auditId, updatedAt: Date.now() });
+                if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds, updatedAt: Date.now() });
+                store.delete(legacyKey);
+                store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
+                control.setResult({ status: 'migrated', auditId });
+            };
+        };
+    });
+    return !!result && (result.status === 'migrated' || result.status === 'exists');
+}
+export async function saveDriveAuditState(state, userId) {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    const auditId = String(state && (state.auditId || (state.cursor && state.cursor.referenceCacheId) || state.inventoryAuditId) || '').trim();
+    if (!ownerId || !auditId || !state || typeof state !== 'object') return null;
+    if (hasPendingDriveAuditClear(ownerId)) return null;
     const generation = getDriveAuditClearGeneration(ownerId);
     if (generation === null) return null;
-    const entry = await performAdminStateOp('readwrite', store => {
-        store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
-        return store.get(key);
+    const batchIndex = state.batchIndex === null || state.batchIndex === undefined ? null : Number(state.batchIndex);
+    if (batchIndex !== null && (!Number.isSafeInteger(batchIndex) || batchIndex < 0)) return null;
+    const batchFiles = batchIndex === null ? [] : normalizeDriveAuditLocalFiles(state.batchFiles);
+    const expectedRevision = Number.isSafeInteger(Number(state.revision)) && state.revision !== undefined ? Number(state.revision) : 0;
+    const metaKey = getDriveAuditMetaKey(ownerId, auditId), latestKey = getDriveAuditLatestKey(ownerId);
+    const legacyKey = getDriveAuditStateKey(ownerId), confirmedKey = getDriveAuditConfirmedKey(ownerId, auditId);
+    const confirmedIds = normalizeDriveAuditLocalIds(state.inventoryConfirmedFileIds);
+    const result = await performAdminAuditTransaction((store, control) => {
+        const metaRequest = store.get(metaKey);
+        metaRequest.onsuccess = () => {
+            const current = metaRequest.result;
+            if (current && (current.ownerId !== ownerId || current.auditId !== auditId)) {
+                control.abort(new Error('La auditoría local no coincide con su propietario o identificador.'));
+                return;
+            }
+            const currentRevision = current ? Number(current.revision) : 0;
+            const currentPageCount = current ? Number(current.pageCount) : 0;
+            if (!Number.isSafeInteger(currentRevision) || currentRevision < 0 ||
+                !Number.isSafeInteger(currentPageCount) || currentPageCount < 0) {
+                control.abort(new Error('Los metadatos de la auditoría local están dañados.'));
+                return;
+            }
+            if (currentRevision !== expectedRevision) {
+                control.abort(new Error('La auditoría local cambió en otra pestaña. Cierra y vuelve a abrir el modal para recuperar el progreso más reciente.'));
+                return;
+            }
+            const saveMeta = pageCount => {
+                const nextMeta = buildDriveAuditMetaEntry(state, ownerId, auditId, metaKey, pageCount, currentRevision + 1);
+                store.put(nextMeta);
+                store.put({ key: latestKey, ownerId, auditId, revision: nextMeta.revision, updatedAt: Date.now() });
+                if (confirmedIds.length) store.put({ key: confirmedKey, ownerId, auditId, ids: confirmedIds, updatedAt: Date.now() });
+                else store.delete(confirmedKey);
+                store.delete(legacyKey);
+                store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
+                control.setResult({ key: metaKey, auditId, revision: nextMeta.revision, pageCount });
+            };
+            if (batchIndex === null) { saveMeta(currentPageCount); return; }
+            if (batchIndex > currentPageCount) {
+                control.abort(new Error('La persistencia local recibió un lote fuera de secuencia.'));
+                return;
+            }
+            const pageKey = getDriveAuditPageKey(ownerId, auditId, batchIndex);
+            const pageRequest = store.get(pageKey);
+            pageRequest.onsuccess = () => {
+                const existing = pageRequest.result;
+                const signature = getDriveAuditLocalPageSignature(batchFiles);
+                if (batchIndex < currentPageCount) {
+                    if (!existing || existing.signature !== signature) {
+                        control.abort(new Error('El lote ya existe con otro contenido; no se sobrescribió el progreso de otra pestaña.'));
+                        return;
+                    }
+                    saveMeta(currentPageCount);
+                    return;
+                }
+                if (existing && existing.signature !== signature) {
+                    control.abort(new Error('La página local pendiente ya contiene otros resultados; no se sobrescribió.'));
+                    return;
+                }
+                if (!existing) store.put({ key: pageKey, ownerId, auditId, pageIndex: batchIndex,
+                    files: batchFiles, signature, updatedAt: Date.now() });
+                saveMeta(currentPageCount + 1);
+            };
+        };
     });
+    if (!result) return null;
     const latestGeneration = getDriveAuditClearGeneration(ownerId);
-    if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) {
-        await clearDriveAuditState(ownerId);
-        return null;
+    if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) return null;
+    return result;
+}
+export async function getDriveAuditState(userId, requestedAuditId = '') {
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    if (!ownerId || hasPendingDriveAuditClear(ownerId)) return null;
+    const generation = getDriveAuditClearGeneration(ownerId);
+    if (generation === null) return null;
+    const entries = await performAdminStateOp('readonly', store => store.getAll());
+    if (!Array.isArray(entries)) return null;
+    const latestKey = getDriveAuditLatestKey(ownerId);
+    const pointer = entries.find(entry => entry && entry.key === latestKey && entry.ownerId === ownerId);
+    let auditId = String(requestedAuditId || (pointer && pointer.auditId) || '').trim();
+    if (!auditId) {
+        const legacy = entries.find(entry => entry && entry.key === getDriveAuditStateKey(ownerId));
+        if (!legacy) return null;
+        if (!(await migrateLegacyDriveAuditState_(ownerId, legacy))) return null;
+        return getDriveAuditState(ownerId);
     }
-    if (!entry || entry.key !== key || entry.ownerId !== ownerId || !Array.isArray(entry.files)) return null;
-    return entry;
+    const metaKey = getDriveAuditMetaKey(ownerId, auditId);
+    const meta = entries.find(entry => entry && entry.key === metaKey && entry.ownerId === ownerId && entry.auditId === auditId);
+    if (!meta || !Number.isSafeInteger(Number(meta.pageCount)) || Number(meta.pageCount) < 0 ||
+        !Number.isSafeInteger(Number(meta.revision)) || Number(meta.revision) < 1) return null;
+    const files = [], seen = new Set();
+    let duplicateCount = 0, missingPage = false;
+    for (let pageIndex = 0; pageIndex < Number(meta.pageCount); pageIndex++) {
+        const pageKey = getDriveAuditPageKey(ownerId, auditId, pageIndex);
+        const page = entries.find(entry => entry && entry.key === pageKey && entry.ownerId === ownerId && entry.auditId === auditId);
+        if (!page || !Array.isArray(page.files)) { missingPage = true; continue; }
+        page.files.forEach(file => {
+            const fileId = String(file && file.fileId || '').trim();
+            if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) { missingPage = true; return; }
+            if (seen.has(fileId)) { duplicateCount++; return; }
+            seen.add(fileId); files.push(file);
+        });
+    }
+    const confirmedEntry = entries.find(entry => entry && entry.key === getDriveAuditConfirmedKey(ownerId, auditId) &&
+        entry.ownerId === ownerId && entry.auditId === auditId);
+    const state = Object.assign({}, meta, {
+        files,
+        inventoryConfirmedFileIds: confirmedEntry && Array.isArray(confirmedEntry.ids) ? normalizeDriveAuditLocalIds(confirmedEntry.ids) : [],
+        uiDuplicateFileCount: Math.max(0, Number(meta.uiDuplicateFileCount) || 0) + duplicateCount
+    });
+    if (missingPage) {
+        state.resumeUnavailable = true;
+        state.cursor = null;
+        state.complete = false;
+        state.status = 'partial';
+        state.lastError = 'Falta una página local o contiene resultados inválidos; inicia una auditoría nueva para evitar continuar con progreso incompleto.';
+    }
+    const latestGeneration = getDriveAuditClearGeneration(ownerId);
+    if (latestGeneration === null || latestGeneration !== generation || hasPendingDriveAuditClear(ownerId)) return null;
+    return state;
 }
 export async function clearDriveAuditState(userId) {
-    const key = getDriveAuditStateKey(userId);
-    const pendingKey = getDriveAuditClearPendingKey(userId);
-    if (!key || !pendingKey) return false;
-    const generationKey = getDriveAuditClearGenerationKey(userId);
+    const ownerId = String(userId === null || userId === undefined ? '' : userId).trim();
+    const pendingKey = getDriveAuditClearPendingKey(ownerId);
+    if (!ownerId || !pendingKey) return false;
+    const generationKey = getDriveAuditClearGenerationKey(ownerId);
     try {
-        const currentGeneration = getDriveAuditClearGeneration(userId);
+        const currentGeneration = getDriveAuditClearGeneration(ownerId);
         if (!generationKey || currentGeneration === null || currentGeneration >= Number.MAX_SAFE_INTEGER) return false;
         localStorage.setItem(pendingKey, '1');
         localStorage.setItem(generationKey, String(currentGeneration + 1));
     } catch (error) {
         return false;
     }
-    const result = await performAdminStateOp('readwrite', store => {
-        store.delete(DRIVE_AUDIT_STATE_LEGACY_KEY);
-        return store.delete(key);
-    });
-    if (result === null) return false;
+    let result;
+    try {
+        result = await performAdminAuditTransaction((store, control) => {
+            const allRequest = store.getAll();
+            allRequest.onsuccess = () => {
+                allRequest.result.forEach(entry => {
+                    const key = String(entry && entry.key || '');
+                    if (key === getDriveAuditStateKey(ownerId) || key === getDriveAuditLatestKey(ownerId) ||
+                        key === DRIVE_AUDIT_STATE_LEGACY_KEY || key.startsWith(getDriveAuditMetaPrefix(ownerId)) ||
+                        key.startsWith(getDriveAuditPagePrefix(ownerId)) || key.startsWith(getDriveAuditConfirmedPrefix(ownerId))) {
+                        store.delete(key);
+                    }
+                });
+                control.setResult(true);
+            };
+        });
+    } catch (error) {
+        return false;
+    }
+    if (result !== true) return false;
     try {
         localStorage.removeItem(pendingKey);
     } catch (error) {
@@ -315,7 +542,6 @@ export async function clearDriveAuditState(userId) {
     }
     return true;
 }
-
 export async function saveReplacedImagesView(view) {
     if (view !== 'grid' && view !== 'list') return null;
     const entry = { key: REPLACED_IMAGES_VIEW_KEY, value: view, updatedAt: Date.now() };
