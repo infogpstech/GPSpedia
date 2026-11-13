@@ -146,6 +146,60 @@ async function performOp(storeName, mode, callback) {
     }
 }
 
+
+const REBUILDABLE_CLIENT_CACHE_STORES = Object.freeze([
+    'catalog', 'searchHistory', 'viewedItems', 'thumbnails', 'validationCache'
+]);
+
+/**
+ * Vacía únicamente datos reconstruibles del cliente. Conserva adminLocalState,
+ * donde pueden existir auditorías y operaciones administrativas recuperables.
+ */
+export async function clearRebuildableClientCache() {
+    let database;
+    try {
+        database = await initDB();
+        if (!database) throw new Error('No se pudo abrir GPSpedia_DB.');
+    } catch (error) {
+        return { status: 'error', stores: [], message: error && error.message ? error.message : 'No se pudo abrir GPSpedia_DB.' };
+    }
+
+    const stores = REBUILDABLE_CLIENT_CACHE_STORES.filter(name =>
+        database.objectStoreNames && typeof database.objectStoreNames.contains === 'function' &&
+        database.objectStoreNames.contains(name)
+    );
+    if (!stores.length) return { status: 'success', stores: [] };
+
+    return new Promise(resolve => {
+        let transaction;
+        let settled = false;
+        const finish = result => {
+            if (settled) return;
+            settled = true;
+            resolve(result);
+        };
+        try {
+            transaction = database.transaction(stores, 'readwrite');
+            transaction.oncomplete = () => finish({ status: 'success', stores: stores.slice() });
+            transaction.onerror = () => finish({
+                status: 'error', stores: [],
+                message: transaction.error && transaction.error.message ? transaction.error.message : 'Falló la transacción de limpieza IndexedDB.'
+            });
+            transaction.onabort = () => finish({
+                status: 'error', stores: [],
+                message: transaction.error && transaction.error.message ? transaction.error.message : 'La transacción de limpieza IndexedDB fue cancelada.'
+            });
+            stores.forEach(name => transaction.objectStore(name).clear());
+        } catch (error) {
+            try { if (transaction) transaction.abort(); } catch (abortError) {}
+            finish({
+                status: 'error', stores: [],
+                message: error && error.message ? error.message : 'No se pudieron limpiar los almacenes IndexedDB.'
+            });
+        }
+    });
+}
+
 // --- ADMINISTRATIVE LOCAL STATE ---
 
 const ADMIN_LOCAL_STATE_STORE = 'adminLocalState';
