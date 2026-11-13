@@ -108,6 +108,11 @@ async function runCatalogSnapshotSyncTests() {
         rootArray.cortes = []; rootArray.tutoriales = []; rootArray.relay = []; rootArray.logos = [];
         assert.equal(isCompleteCatalogSnapshot(rootArray), false);
     });
+    test('rechaza snapshots cuyas propiedades lanzan durante la validación', () => {
+        const malformed = snapshot();
+        Object.defineProperty(malformed, 'tutoriales', { get() { throw new Error('propiedad dañada'); } });
+        assert.equal(isCompleteCatalogSnapshot(malformed), false);
+    });
     test('rechaza cortes sin ID y evita colisiones por IDs duplicados', () => {
         assert.equal(isCompleteCatalogSnapshot(snapshot({ cortes: [{ marca: 'Toyota' }] })), false);
         assert.equal(isCompleteCatalogSnapshot(snapshot({ cortes: [{ id: 'C-1' }, { id: 'C-1' }] })), false);
@@ -184,8 +189,8 @@ async function runCatalogSnapshotSyncTests() {
         assert.deepEqual(await getCatalog(), before);
     });
 
-    console.log(`CatalogSnapshotSync: ${passed}/18 PASS`);
-    return { passed, total: 18 };
+    console.log(`CatalogSnapshotSync: ${passed}/19 PASS`);
+    return { passed, total: 19 };
 }
 
 try {

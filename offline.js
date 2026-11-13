@@ -615,11 +615,11 @@ export function indexCatalogItemsById(items) {
 
 /** Una respuesta válida de getCatalogData contiene las cuatro colecciones completas. */
 export function isCompleteCatalogSnapshot(data) {
-    if (!data || typeof data !== 'object' || Array.isArray(data) ||
-        !CATALOG_SNAPSHOT_COLLECTIONS.every(key => Array.isArray(data[key]))) return false;
-    if (!CATALOG_SNAPSHOT_COLLECTIONS.every(key =>
-        data[key].every(item => item !== null && typeof item === 'object' && !Array.isArray(item)))) return false;
     try {
+        if (!data || typeof data !== 'object' || Array.isArray(data) ||
+            !CATALOG_SNAPSHOT_COLLECTIONS.every(key => Array.isArray(data[key]))) return false;
+        if (!CATALOG_SNAPSHOT_COLLECTIONS.every(key =>
+            data[key].every(item => item !== null && typeof item === 'object' && !Array.isArray(item)))) return false;
         indexCatalogItemsById(data.cortes);
         return true;
     } catch (error) {

@@ -237,22 +237,25 @@ async function loadInitialData() {
                 console.warn("No se pudo recuperar una instantánea válida de la caché:", e && e.message ? e.message : e);
             }
 
-            // Si llegamos aquí, no hay datos locales ni de red.
-            setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
-            showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
+            if (!catalogLoaded) {
+                // No hay datos locales ni de red válidos.
+                setState({ catalogLoadStatus: 'error', catalogLoadError: error && error.message ? error.message : 'No se pudo cargar el catálogo.' });
+                showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
 
-            // Aseguramos que el estado refleje un catálogo vacío para limpiar skeletons si los hubiera
-            setState({
-                catalogData: {
-                    cortes: [],
-                    tutoriales: [],
-                    relay: [],
-                    logos: [],
-                    sortedCategories: []
-                }
-            });
-        } else {
-            setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
+                // Asegurar un estado vacío coherente para limpiar skeletons y datos parciales.
+                setState({
+                    catalogData: {
+                        cortes: [],
+                        tutoriales: [],
+                        relay: [],
+                        logos: [],
+                        sortedCategories: []
+                    }
+                });
+            } else {
+                // La caché se procesó, aunque fallara la confirmación del estado stale.
+                setState({ catalogLoadStatus: 'stale', catalogLoadError: error && error.message ? error.message : 'No se pudo actualizar el catálogo desde la red.' });
+            }
         }
     } finally {
         if (catalogLoadController_ === loadController) catalogLoadController_ = null;
