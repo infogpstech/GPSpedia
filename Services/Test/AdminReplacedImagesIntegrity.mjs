@@ -479,6 +479,10 @@ check("La captura de Cortes lee solo los ocho campos de imagen y conserva fórmu
     assert.ok(calls.every(item=>item.row===2&&item.numRows===2&&item.col>0));
     assert.equal(result.references.get(FILE_C)[0].row,2);
     assert.equal(result.references.get(FILE_C)[0].column,7);
+    const incompleteColumns=Object.assign({},columns);delete incompleteColumns.imgCableAlimen3;
+    const invalidScan=new Function("getSpreadsheet","SHEET_NAMES","COLS_CORTES",source+"\nreturn collectCortesImageReferences;")(
+        ()=>({getSheetByName:()=>sheet}),{CORTES:"Cortes"},incompleteColumns);
+    assert.throws(()=>invalidScan(false),/ocho columnas/);
 });
 check("El escáner global delega Cortes a los ocho campos y mantiene imágenes superpuestas y otras hojas",()=>{
     const scanner=fnSource(admin,"collectActiveDriveReferences");
