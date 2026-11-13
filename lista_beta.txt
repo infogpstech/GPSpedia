@@ -1,6 +1,8 @@
 GPSpedia — Índice de la lista de validación Beta
 Normativa única: NORMAS_DESAROLLO.md.
 
+Rotación 2026-11-13: el documento original tenía 180,424 caracteres Unicode y se dividió en el separador anterior a AUG-098. La reconstrucción exacta se verificó antes de actualizar los casos Beta. Los tamaños y la trazabilidad se registran en Tareas_pendientes_MANIFIESTO.md.
+
 La lista se dividió para conservar los registros sin superar el límite de tamaño:
 1. [lista_beta_parte1.txt](lista_beta_parte1.txt) — introducción, BETA-01 a BETA-10 y pruebas hasta AUG-097.
 2. [lista_beta_parte2.txt](lista_beta_parte2.txt) — continuación desde AUG-098 y pruebas posteriores.
