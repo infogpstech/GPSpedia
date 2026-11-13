@@ -12,7 +12,7 @@ function runLastDeveloperProtectionTests(sources) {
     const sessionCols={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6};
     const helper=extract(auth,'countActiveDevelopers_');
     const count=new Function('COLS_USERS','isActiveAuthUserRecord','normalizeRoleName',helper+'\nreturn countActiveDevelopers_;')(userCols,active,normalize);
-    const makeHarness=(userRows,sessionRows,failOnce=false)=>{
+    const makeHarness=(userRows,sessionRows,failOnce=false,failNameWriteOnce=false)=>{\n        let failNameWrite=Boolean(failNameWriteOnce);
         const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],...userRows.map(r=>r.slice())];
         const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],...sessionRows.map(r=>r.slice())];let fail=failOnce;
         const makeSheet=(rows,isSessions)=>({
@@ -36,12 +36,19 @@ function runLastDeveloperProtectionTests(sources) {
             normalizeRoleName:normalize,isActiveAuthUserRecord:active,countActiveDevelopers_:count,
             getSessionExpirationStatus_:()=>({expired:false}),assertRequesterRoleRevocationClear_:()=>{},
             hasPendingRoleRevocation_:()=>false,revokePendingLoginRequestsForUserUnderLock_:()=>({pending:false}),
-            roleRevocationPropertyKey_:id=>'role:'+id,parseSharedRoleRevocationMarker_:()=>null,
-            parseRoleRevocationMarker_:()=>null,sameRoleRevocationMarker_:()=>true,
+            roleRevocationPropertyKey_:id=>'role:'+id,
+            parseSharedRoleRevocationMarker_:value=>{const raw=String(value||'');if(!raw.startsWith('__role_revocation_pending__:'))return null;try{return JSON.parse(raw.slice('__role_revocation_pending__:'.length));}catch(_){return{invalid:true};}},
+            parseRoleRevocationMarker_:raw=>{try{return JSON.parse(raw);}catch(_){return{invalid:true};}},
+            sameRoleRevocationMarker_:(a,b)=>a.userId===b.userId&&a.oldRole===b.oldRole&&a.newRole===b.newRole&&a.markedAt===b.markedAt&&a.newFullName===b.newFullName,
             reconcileRoleRevocationUnderLock_:(us,ss,id)=>{
                 const row=us._rows.find(r=>String(r[0])===String(id));
                 const marker=String(row[7]||''),data=JSON.parse(marker.slice(marker.indexOf('{')));
-                row[3]=data.newRole;row[7]='';
+                row[3]=data.newRole;
+                if(Object.prototype.hasOwnProperty.call(data,'newFullName')){
+                    if(failNameWrite){failNameWrite=false;return{revokedSessions:0,pending:true,cleanupPending:true,error:'Fallo simulado al escribir Nombre_Completo'};}
+                    row[6]=data.newFullName;
+                }
+                row[7]='';
                 return {revokedSessions:0,pending:false,cleanupPending:false};
             },
             LockService:{getScriptLock:()=>({waitLock:()=>{},releaseLock:()=>{}})},
@@ -66,6 +73,35 @@ function runLastDeveloperProtectionTests(sources) {
         const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['D2','dev2','pw','Desarrollador']],[['D1','dev','tok1',new Date(),'','']]);
         const result=h.update({userId:'D2',updates:{Privilegios:'Gefe'},sessionToken:'tok1'});
         equal(result.status,'success');equal(h.users[2][3],'Gefe');equal(count(h.users.slice(1)),1);
+    });
+    run('Recupera nombre y rol tras fallo de la segunda escritura y reintento idempotente',()=>{
+        const h=makeHarness(
+            [['D1','dev','pw','Desarrollador','','','','tok1'],['T1','tech','pw','Tecnico','','','Nombre anterior','', '']],
+            [['D1','dev','tok1',new Date(),'',''],['T1','tech','tok2',new Date(),'','']],
+            false,true
+        );
+        let firstError=null;
+        try{h.update({userId:'T1',updates:{Privilegios:'Supervisor',Nombre_Completo:'Nombre nuevo'},sessionToken:'tok1'});}
+        catch(error){firstError=error;}
+        assert(firstError&&/pendiente/.test(firstError.message),'El primer intento debe reportar la recuperación pendiente.');
+        equal(h.users[2][3],'Supervisor','El rol debe quedar confirmado antes de aplicar el perfil.');
+        equal(h.users[2][6],'Nombre anterior','El nombre anterior debe conservarse si falla la segunda escritura.');
+        assert(String(h.users[2][7]).startsWith('__role_revocation_pending__:'),'El marcador debe conservar la intención para reintentar.');
+        const retry=h.update({userId:'T1',updates:{Privilegios:'Supervisor',Nombre_Completo:'Nombre nuevo'},sessionToken:'tok1'});
+        equal(retry.status,'success');equal(h.users[2][3],'Supervisor');equal(h.users[2][6],'Nombre nuevo');
+        equal(h.users[2][7],'','El marcador solo se limpia después de verificar ambas escrituras.');
+    });
+    run('Un marcador pendiente no acepta sobrescribir el perfil solicitado originalmente',()=>{
+        const h=makeHarness(
+            [['D1','dev','pw','Desarrollador','','','','tok1'],['T1','tech','pw','Tecnico','','','Nombre anterior','', '']],
+            [['D1','dev','tok1',new Date(),'',''],['T1','tech','tok2',new Date(),'','']],
+            false,true
+        );
+        try{h.update({userId:'T1',updates:{Privilegios:'Supervisor',Nombre_Completo:'Nombre nuevo'},sessionToken:'tok1'});}catch(_){}
+        let rejected=false;
+        try{h.update({userId:'T1',updates:{Privilegios:'Supervisor',Nombre_Completo:'Otro nombre'},sessionToken:'tok1'});}catch(error){rejected=/no coincide/.test(error.message);}
+        assert(rejected,'No debe cambiarse el nombre asociado a una operación pendiente.');
+        equal(h.users[2][6],'Nombre anterior');
     });
     run('Eliminar usuario limpia todas sus sesiones y registra auditoría',()=>{
         const h=makeHarness([['D1','dev','pw','Desarrollador','','','','tok1'],['T1','tech','pw','Tecnico','','','','tok2']],[['D1','dev','tok1',new Date(),'',''],['T1','tech','tok2',new Date(),'',''],['T1','tech','tok3',new Date(),'','']]);

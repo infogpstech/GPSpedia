@@ -978,10 +978,11 @@ function isRoleRevocationPendingValue_(value) { return String(value || '').start
 function parseRoleRevocationMarker_(raw) {
  if(typeof raw!=='string'||!raw)return null;let marker;try{marker=JSON.parse(raw);}catch(error){return{invalid:true};}
  if(!marker||typeof marker!=='object'||Array.isArray(marker)||!normalizeUserId(marker.userId)||typeof marker.oldRole!=='string'||!marker.oldRole.trim()||typeof marker.newRole!=='string'||!marker.newRole.trim()||!Number.isFinite(Number(marker.markedAt))||!['desarrollador','gefe','jefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.oldRole))||!['desarrollador','gefe','supervisor','tecnico','tecnico_exterior'].includes(normalizeRoleName(marker.newRole)))return{invalid:true};
+ if(Object.prototype.hasOwnProperty.call(marker,'newFullName')&&(typeof marker.newFullName!=='string'||marker.newFullName.length>120))return{invalid:true};
  return marker;
 }
 function parseSharedRoleRevocationMarker_(value) {const raw=String(value||'');if(!raw.startsWith(ROLE_REVOCATION_SHARED_PREFIX))return null;return parseRoleRevocationMarker_(raw.slice(ROLE_REVOCATION_SHARED_PREFIX.length));}
-function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.invalid&&normalizeUserId(a.userId)===normalizeUserId(b.userId)&&String(a.oldRole)===String(b.oldRole)&&String(a.newRole)===String(b.newRole)&&Number(a.markedAt)===Number(b.markedAt));}
+function sameRoleRevocationMarker_(a,b) {return Boolean(a&&b&&!a.invalid&&!b.invalid&&normalizeUserId(a.userId)===normalizeUserId(b.userId)&&String(a.oldRole)===String(b.oldRole)&&String(a.newRole)===String(b.newRole)&&Number(a.markedAt)===Number(b.markedAt)&&(Object.prototype.hasOwnProperty.call(a,'newFullName')===Object.prototype.hasOwnProperty.call(b,'newFullName'))&&(!Object.prototype.hasOwnProperty.call(a,'newFullName')||a.newFullName===b.newFullName));}
 function migrateLegacyRoleRevocationMarkersToSharedState_() {
     return withSharedMutationLease_("AUTH", "migrateLegacyRoleRevocationMarkersToSharedState", function() {
         return migrateLegacyRoleRevocationMarkersToSharedStateUnderLock_();
@@ -1153,6 +1154,13 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId) {
  if(role!==marker.newRole&&role!==marker.oldRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El rol cambió fuera de la operación pendiente; se requiere revisión.'};
  if(role!==marker.newRole){let writeError=null;try{usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).setValue(marker.newRole);}catch(error){writeError=error;}
   if(String(usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).getValue()||'').trim()!==marker.newRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:writeError?writeError.message:'No se confirmó la escritura del nuevo rol.'};}
+ if(Object.prototype.hasOwnProperty.call(marker,'newFullName')){
+  const nameRange=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Nombre_Completo);let nameWriteError=null;
+  try{nameRange.setValue(marker.newFullName);}catch(error){nameWriteError=error;}
+  let persistedName='';try{persistedName=String(nameRange.getValue()===null||nameRange.getValue()===undefined?'':nameRange.getValue());}
+  catch(error){return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'No se pudo verificar el nombre completo pendiente: '+error.message};}
+  if(persistedName!==marker.newFullName)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:nameWriteError?nameWriteError.message:'No se confirmó el nombre completo pendiente.'};
+ }
  const latest=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),latestMarker=parseSharedRoleRevocationMarker_(String(latest.getValue()||''));
  if(!latestMarker||latestMarker.invalid||!sameRoleRevocationMarker_(latestMarker,marker))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El marcador compartido cambió antes de completar la revocación.'};
  const deletion=deleteRevokedSessionRowsUnderLock_(sessionsSheet,revocation.rows);
@@ -1248,11 +1256,13 @@ function handleUpdateUser(payload) {
             throw new Error('No se puede degradar la última cuenta activa con rol Desarrollador. Asigna primero ese rol a otra cuenta.');
         }
 
-        // Nombre_Completo se valida/escribe antes del rol; el cambio de rol y su revocación quedan bajo este mismo lock.
-        if (updates.Nombre_Completo) {
-            usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.Nombre_Completo).setValue(updates.Nombre_Completo);
+        const hasFullNameUpdate = Boolean(updates.Nombre_Completo);
+        if (hasFullNameUpdate && (typeof updates.Nombre_Completo !== 'string' || updates.Nombre_Completo.length > 120)) {
+            throw new Error('El nombre completo debe ser texto y no superar 120 caracteres.');
         }
-
+        const requestedFullName = hasFullNameUpdate
+            ? updates.Nombre_Completo
+            : String(targetRows[0].row[COLS_USERS.Nombre_Completo - 1] || '');
 
         const markerKey = roleRevocationPropertyKey_(userId);
         const properties = PropertiesService.getScriptProperties();
@@ -1264,8 +1274,15 @@ function handleUpdateUser(payload) {
         if (sharedMarker && propertyMarker && !propertyMarker.invalid && !sameRoleRevocationMarker_(sharedMarker, propertyMarker)) throw new Error('Los marcadores de cambio de rol no coinciden; se requiere revisión.');
         const pendingMarker = sharedMarker || propertyMarker, hasPending = Boolean(pendingRaw) || Boolean(sharedMarker);
         if (hasPending && pendingMarker && pendingMarker.newRole && nextRole !== currentTargetRole && nextRole !== pendingMarker.newRole) throw new Error('Existe un cambio de rol anterior pendiente. Completa primero esa revocación antes de solicitar otro rol.');
+        if (hasPending && hasFullNameUpdate && (!pendingMarker || !Object.prototype.hasOwnProperty.call(pendingMarker,'newFullName'))) {
+            throw new Error('Existe una revocación anterior sin datos de perfil recuperables. Completa primero la revocación y actualiza el nombre por separado.');
+        }
+        if (hasPending && hasFullNameUpdate && pendingMarker.newFullName !== requestedFullName) {
+            throw new Error('El nombre solicitado no coincide con la actualización pendiente. Completa primero esa operación.');
+        }
         if (nextRole !== currentTargetRole && !hasPending) {
             const marker = { userId, markedAt: Date.now(), oldRole: currentTargetRole, newRole: nextRole };
+            if (hasFullNameUpdate) marker.newFullName = requestedFullName;
             const sharedValue = ROLE_REVOCATION_SHARED_PREFIX + JSON.stringify(marker);
             const pointer = usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.SessionToken);
             let sharedWriteError = null; try { pointer.setValue(sharedValue); } catch (error) { sharedWriteError = error; }
@@ -1279,7 +1296,15 @@ function handleUpdateUser(payload) {
             targetUsername = String(targetRows[0].row[COLS_USERS.Nombre_Usuario - 1] || '');
             const persistedRole = String(usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.Privilegios).getValue() || '').trim();
             roleChanged = persistedRole !== currentTargetRole;
-            if (reconciliation.pending) throw new Error('La actualización del rol quedó pendiente hasta confirmar la revocación de todas las sesiones. Reintenta la operación. ' + (reconciliation.error || ''));
+            if (reconciliation.pending) throw new Error('La actualización del rol quedó pendiente hasta confirmar la revocación de todas las sesiones y el perfil. Reintenta la operación. ' + (reconciliation.error || ''));
+        } else if (hasFullNameUpdate) {
+            const nameRange = usersSheet.getRange(targetRows[0].rowIndex, COLS_USERS.Nombre_Completo);
+            let writeError = null;
+            try { nameRange.setValue(requestedFullName); } catch (error) { writeError = error; }
+            let persistedName = '';
+            try { persistedName = String(nameRange.getValue() === null || nameRange.getValue() === undefined ? '' : nameRange.getValue()); }
+            catch (error) { throw new Error('No se pudo verificar el nombre completo. Reintenta la actualización. ' + (writeError ? writeError.message : error.message)); }
+            if (persistedName !== requestedFullName) throw new Error('No se confirmó el nombre completo. Reintenta la actualización. ' + (writeError ? writeError.message : ''));
         }
         SpreadsheetApp.flush();
     } finally {
