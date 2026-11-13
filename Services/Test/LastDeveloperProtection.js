@@ -12,7 +12,8 @@ function runLastDeveloperProtectionTests(sources) {
     const sessionCols={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6};
     const helper=extract(auth,'countActiveDevelopers_');
     const count=new Function('COLS_USERS','isActiveAuthUserRecord','normalizeRoleName',helper+'\nreturn countActiveDevelopers_;')(userCols,active,normalize);
-    const makeHarness=(userRows,sessionRows,failOnce=false,failNameWriteOnce=false)=>{\n        let failNameWrite=Boolean(failNameWriteOnce);
+    const makeHarness=(userRows,sessionRows,failOnce=false,failNameWriteOnce=false)=>{
+        let failNameWrite=Boolean(failNameWriteOnce);
         const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],...userRows.map(r=>r.slice())];
         const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],...sessionRows.map(r=>r.slice())];let fail=failOnce;
         const makeSheet=(rows,isSessions)=>({
@@ -137,7 +138,7 @@ function runLastDeveloperProtectionTests(sources) {
     });
     run('La protección de degradación ocurre antes de cualquier escritura de perfil',()=>{
         const u=extract(auth,'handleUpdateUser','\n\nconst SESSION_ABSOLUTE_MONTHS'),d=extract(auth,'handleDeleteUser');
-        assert(u.indexOf('No se puede degradar la última cuenta')<u.indexOf('if (updates.Nombre_Completo)'));
+        assert(u.indexOf('No se puede degradar la última cuenta')<u.indexOf('const hasFullNameUpdate'),'La validación del último Desarrollador debe preceder a toda escritura de perfil.');
         assert(d.includes("targetRole === 'desarrollador'")&&d.includes('countActiveDevelopers_(usersData.slice(1)) <= 1'));
     });
     run('AUTH verifica ausencia de sesiones residuales después de eliminar',()=>{
