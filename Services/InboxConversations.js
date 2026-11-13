@@ -5,7 +5,7 @@ const INBOX_CONVERSATION_STATE_SHEET_ = "InboxConversationState";
 const INBOX_CONVERSATION_AUDIT_SHEET_ = "InboxConversationAudit";
 const INBOX_CONVERSATION_HEADERS_ = Object.freeze(["conversationId","createdAt","updatedAt","subject","category","type","status","createdById","createdByName","createdByRole","participantsJson","createKey","createHash","lastMessageId","lastMessageAt","lastMessagePreview","messageCount"]);
 const INBOX_MESSAGE_HEADERS_ = Object.freeze(["messageId","conversationId","createdAt","authorId","authorName","authorRole","body","idempotencyKey","payloadHash"]);
-const INBOX_STATE_HEADERS_ = Object.freeze(["conversationId","userId","lastReadAt","unreadCount","archived","hasSent","hasReceived","updatedAt","lastNotifiedMessageId"]);
+const INBOX_STATE_HEADERS_ = Object.freeze(["conversationId","userId","lastReadAt","lastReadMessageId","archived","hasSent","hasReceived","updatedAt"]);
 const INBOX_CONVERSATION_AUDIT_HEADERS_ = Object.freeze(["eventId","timestamp","actorId","actorName","action","conversationId","messageId","details"]);
 const INBOX_CATEGORIES_ = new Set(["general","soporte","acceso","contenido","instalacion","otro"]);
 const INBOX_ACTIVE_ROLES_ = new Set(["desarrollador","gefe","jefe","supervisor","tecnico","tecnico_exterior"]);
@@ -120,7 +120,7 @@ function inboxFindState_(sheet, conversationId, userId) {
 function inboxEnsureState_(sheet, conversationId, userId, now) {
     let found = inboxFindState_(sheet, conversationId, userId);
     if (found) return found;
-    const row = [conversationId,userId,"",0,false,false,false,now,""], rowNumber = sheet.getLastRow() + 1;
+    const row = [conversationId,userId,"","",false,false,false,now], rowNumber = sheet.getLastRow() + 1;
     sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
     SpreadsheetApp.flush();
     return { row, rowNumber };
@@ -173,14 +173,12 @@ function inboxUpdateConversationForMessage_(sheet, found, message, now) {
         SpreadsheetApp.flush(); found.row = row;
     }
 }
-function inboxUpdateParticipantStates_(sheet, conversationId, participants, actor, messageId, now) {
+function inboxUpdateParticipantStates_(sheet, conversationId, participants, actor, now, isNewMessage) {
     participants.forEach(participant => {
         const found = inboxEnsureState_(sheet, conversationId, participant.id, now), row = found.row.slice();
-        if (participant.id === actor.id) {
-            row[2] = now; row[3] = 0; row[4] = false; row[5] = true;
-        } else if (String(row[8] || "") !== messageId) {
-            row[3] = Math.max(0,Number(row[3]) || 0) + 1; row[4] = false; row[6] = true; row[8] = messageId;
-        }
+        if (participant.id === actor.id) row[5] = true;
+        else row[6] = true;
+        if (isNewMessage) row[4] = false;
         row[7] = now;
         inboxWriteState_(sheet, found, row);
     });
@@ -224,10 +222,11 @@ function handleCreateInboxConversation(payload) {
         const messageHash = inboxConversationHash_({conversationId,authorId:actor.id,body,messageKey});
         let message = inboxFindMessageByKey_(messageRows,conversationId,actor.id,messageKey);
         if (message && String(message.row[8]) !== messageHash) throw new Error("La clave inicial ya existe con otro contenido.");
-        if (!message) message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,messageKey,messageHash,now);
+        const isNewMessage = !message;
+        if (isNewMessage) message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,messageKey,messageHash,now);
         const found = {row:conversationRow,rowNumber};
         inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
-        inboxUpdateParticipantStates_(sheets.states,conversationId,inboxParticipants_(found.row),actor,message.row[0],now);
+        inboxUpdateParticipantStates_(sheets.states,conversationId,inboxParticipants_(found.row),actor,now,isNewMessage);
         inboxAppendAudit_(sheets.audit,actor,"conversation_created",conversationId,message.row[0],"Conversación creada para un destinatario individual.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(existing.length)};
     });
@@ -245,9 +244,10 @@ function handleSendInboxMessage(payload) {
         let message = inboxFindMessageByKey_(messages,conversationId,actor.id,key);
         if (message && String(message.row[8]) !== hash) throw new Error("La clave idempotente ya se utilizó con otro contenido.");
         const now = new Date().toISOString();
-        if (!message) { inboxAssertRateLimit_(messages,actor.id,new Date(now)); message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,key,hash,now); }
+        const isNewMessage = !message;
+        if (isNewMessage) { inboxAssertRateLimit_(messages,actor.id,new Date(now)); message = inboxAppendMessage_(sheets.messages,conversationId,actor,body,key,hash,now); }
         inboxUpdateConversationForMessage_(sheets.conversations,found,message.row,now);
-        inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,message.row[0],now);
+        inboxUpdateParticipantStates_(sheets.states,conversationId,participants,actor,now,isNewMessage);
         inboxAppendAudit_(sheets.audit,actor,"message",conversationId,message.row[0],"Mensaje agregado a la conversación.");
         return {status:"success",conversationId,messageId:message.row[0],idempotentReplay:Boolean(inboxFindMessageByKey_(messages,conversationId,actor.id,key))};
     });
@@ -266,6 +266,14 @@ function handleGetInboxConversations(payload) {
         if (!convSheet || !stateSheet) return {status:"success",data:[],counts:{received:0,unread:0,sent:0,archived:0},total:0,nextCursor:null,hasMore:false,pageSize};
         const conversations = inboxConversationRows_(convSheet,INBOX_CONVERSATION_HEADERS_.length);
         const stateRows = inboxConversationRows_(stateSheet,INBOX_STATE_HEADERS_.length);
+        const messageSheet = inboxConversationSheet_(INBOX_MESSAGES_SHEET_,INBOX_MESSAGE_HEADERS_,false);
+        const messageRows = inboxConversationRows_(messageSheet,INBOX_MESSAGE_HEADERS_.length);
+        const messagesByConversation = new Map();
+        messageRows.forEach(message => {
+            const id = String(message[1] || "");
+            if (!messagesByConversation.has(id)) messagesByConversation.set(id, []);
+            messagesByConversation.get(id).push(message);
+        });
         const stateMap = new Map();
         stateRows.forEach(row => {
             if (String(row[1]) === actor.id) {
@@ -278,14 +286,19 @@ function handleGetInboxConversations(payload) {
             try { return inboxParticipants_(row).some(user => user.id === actor.id); } catch (_) { return false; }
         }).map(row => {
             const participants = inboxParticipants_(row), other = participants.filter(user => user.id !== actor.id);
-            const state = stateMap.get(String(row[0]) + "\u0000" + actor.id) || [];
+            const state = stateMap.get(String(row[0]) + "\\u0000" + actor.id) || [];
+            const conversationMessages = messagesByConversation.get(String(row[0])) || [];
+            const lastReadMessageId = String(state[3] || "");
+            const readIndex = lastReadMessageId ? conversationMessages.findIndex(message => String(message[0]) === lastReadMessageId) : -1;
+            if (lastReadMessageId && readIndex < 0) throw new Error("El marcador de lectura no pertenece al historial de la conversación.");
+            const unreadCount = conversationMessages.slice(readIndex + 1).filter(message => String(message[3]) !== actor.id).length;
             return {
                 conversationId:String(row[0]),subject:String(row[3] || ""),category:String(row[4] || "general"),
                 type:String(row[5] || "direct"),status:String(row[6] || "open"),createdAt:String(row[1] || ""),
                 updatedAt:String(row[2] || ""),createdById:String(row[7] || ""),lastMessageAt:String(row[14] || ""),
                 lastMessagePreview:String(row[15] || ""),messageCount:Math.max(0,Number(row[16]) || 0),
                 otherParticipants:other.map(user => ({id:user.id,name:String(user.name || ""),role:String(user.role || "")})),
-                unreadCount:Math.max(0,Number(state[3]) || 0),archived:state[4] === true,hasSent:state[5] === true,hasReceived:state[6] === true
+                unreadCount,archived:state[4] === true,hasSent:state[5] === true,hasReceived:state[6] === true
             };
         });
         const counts = summaries.reduce((result,item) => {
@@ -338,19 +351,17 @@ function handleMarkInboxRead(payload) {
         const found = inboxFindConversation_(inboxConversationRows_(sheets.conversations,INBOX_CONVERSATION_HEADERS_.length),conversationId);
         inboxAssertParticipant_(found.row,actor.id);
         const state = inboxEnsureState_(sheets.states,conversationId,actor.id,new Date().toISOString()), row = state.row.slice();
-        const previousUnread = Math.max(0, Number(row[3]) || 0);
         const messages = inboxConversationRows_(sheets.messages,INBOX_MESSAGE_HEADERS_.length).filter(item => String(item[1]) === conversationId);
         const throughId = String(payload.throughMessageId || "");
-        const throughIndex = throughId ? messages.findIndex(item => String(item[0]) === throughId) : -1;
+        const throughIndex = throughId ? messages.findIndex(item => String(item[0]) === throughId) : messages.length - 1;
         if (throughId && throughIndex < 0) throw new Error("El mensaje de lectura no pertenece a la conversación.");
-        const unread = throughIndex >= 0
-            ? messages.slice(throughIndex + 1).filter(item => String(item[3]) !== actor.id).length
-            : messages.filter(item => String(item[3]) !== actor.id).length;
-        row[2] = throughIndex >= 0 ? messages[throughIndex][2] : new Date().toISOString();
-        row[3] = unread;
+        const previousMarker = String(row[3] || "");
+        row[2] = throughIndex >= 0 ? messages[throughIndex][2] : "";
+        row[3] = throughIndex >= 0 ? String(messages[throughIndex][0]) : "";
         row[7] = new Date().toISOString();
         inboxWriteState_(sheets.states,state,row);
-        if (previousUnread > unread) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,throughId,"Lectura confirmada hasta el mensaje indicado.");
+        const unread = messages.slice(throughIndex + 1).filter(item => String(item[3]) !== actor.id).length;
+        if (previousMarker !== row[3]) inboxAppendAudit_(sheets.audit,actor,"read",conversationId,row[3],"Lectura confirmada hasta el mensaje indicado.");
         return {status:"success",conversationId,unreadCount:unread};
     });
 }
