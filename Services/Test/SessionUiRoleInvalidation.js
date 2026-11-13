@@ -98,7 +98,7 @@ function runSessionUiRoleInvalidationTests(sources) {
  });
  run("las funciones privilegiadas directas quedan protegidas por sesión vigente",()=>{
   assert(!ui.includes("export function openDevToolsModal_")&&!ui.includes("export function openInboxModal_")&&!ui.includes("export function openDashboardModal_"));
-  const detail=slice(ui,"export function renderInboxDetail(","\\nexport function ");
+  const detail=slice(ui,"export function renderInboxDetail(","\nexport function ");
   assert(detail.includes("isCurrentUiSessionContext_(context)"));
   assert(detail.includes("['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role)"));
   const guard=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
