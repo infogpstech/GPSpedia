@@ -266,14 +266,22 @@ run("La lectura no crea ni modifica Feedbacks/Contactanos históricos", () => {
     assert.equal(spreadsheet.getSheetByName("Feedbacks"),null);
     assert.equal(spreadsheet.getSheetByName("Contactanos"),null);
 });
-run("La paginación de mensajes entrega primero los más recientes y permite cargar anteriores", () => {
+run("La paginación de mensajes entrega primero los más recientes y permite recorrer todo el historial", () => {
     const latest = api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor:"0" });
     assert.equal(latest.data.length,1);
     assert.equal(latest.hasMore,true);
-    const older = api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor:latest.nextCursor });
-    assert.equal(older.data.length,1);
-    assert.equal(older.hasMore,false);
-    assert.notEqual(latest.data[0].messageId,older.data[0].messageId);
+    const ids = [latest.data[0].messageId];
+    let cursor = latest.nextCursor, pages = 0;
+    while (cursor !== null && pages < 20) {
+        const older = api.handleGetInboxMessages({ ...actor("U1","token-a"),conversationId:first.conversationId,pageSize:1,cursor });
+        assert.equal(older.data.length,1);
+        ids.push(older.data[0].messageId);
+        cursor = older.nextCursor;
+        pages++;
+    }
+    assert.equal(cursor,null,"La paginación debe terminar.");
+    assert.equal(new Set(ids).size,ids.length,"No debe repetir mensajes entre páginas.");
+    assert.equal(ids.length,latest.total,"Debe recorrer todos los mensajes del historial.");
 });
 run("Las mutaciones Inbox se coordinan con cambios de identidad y otras escrituras FEEDBACK", () => {
     const match = feedbackSource.match(/function isSharedMutationAction_\(action\)\s*\{[\s\S]*?\n\}/);
