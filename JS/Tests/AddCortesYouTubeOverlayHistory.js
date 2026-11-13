@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createOverlayHistoryManager, overlayHistoryStateKey } from "../Frontend/overlayHistory.js";
 const source = readFileSync("HTML/add_cortes.html", "utf8");
-assert.match(source, /import \{ createOverlayHistoryManager, overlayHistoryStateKey \} from ['"]\.\/overlayHistory\.js['"]/);
+assert.match(source, /import \{ createOverlayHistoryManager, overlayHistoryStateKey \} from ['"]\.\.\/JS\/Frontend\/overlayHistory\.js['"]/);
 assert.match(source, /const overlayHistory = createOverlayHistoryManager\(window\.history\);\s*window\.overlayHistory = overlayHistory;/);
 function extractPopstateHandler() {
     const marker = "window.addEventListener('popstate', (event) => {";

@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const admin=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
 const ui=readFileSync(new URL("../Frontend/ui.js",import.meta.url),"utf8");
 const apiConfig=readFileSync(new URL("../Frontend/api-config.js",import.meta.url),"utf8");
-const coordinator=readFileSync(new URL(../Services/Coordinator.js",import.meta.url),"utf8");
+const coordinator=readFileSync(new URL("../Services/Coordinator.js",import.meta.url),"utf8");
 const indexHtml=readFileSync(new URL("../../index.html",import.meta.url),"utf8");
 let passed=0;
 function check(name,fn){fn();passed++;console.log("PASS "+name);}

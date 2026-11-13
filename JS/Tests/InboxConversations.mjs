@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 const source = readFileSync(new URL("../Services/InboxConversations.js"", import.meta.url), "utf8");
 const feedbackSource = readFileSync(new URL("../Services/feedback.js", import.meta.url), "utf8");
-const coordinatorSource = readFileSync(new URL(../Services/Coordinator.js", import.meta.url), "utf8");
+const coordinatorSource = readFileSync(new URL("../Services/Coordinator.js", import.meta.url), "utf8");
 
 class FakeSheet {
     constructor(name) { this.name = name; this.rows = []; }
