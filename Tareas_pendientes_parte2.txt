@@ -375,6 +375,8 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Beta pendiente:** imprimir/guardar PDF real en tamaño Carta, medir márgenes con regla, revisar contenido de una y varias páginas y comprobar ausencia de recortes según impresora/navegador.
 - **Estado:** COMPLETADA CON VALIDACIÓN DIFERIDA.
 
+- **Adenda CI:** run 43415353714 SUCCESS; Node.js 22.23.4; 20 suites, 278/278 PASS; PrintSheetPageContract 11/11 PASS e incluye sintaxis ui.js. La validación física sigue en Beta.
+
 ### AUG-141 — Completar la representación de Check Engine y el aviso de testigo
 - **Origen:** H-AUD-021-002. **Prioridad:** Media.
 - **Problema:** la ficha no incorpora una imagen específica de Check Engine; el aviso se inserta dentro de .tech-item-info antes de la imagen y el documento independiente no carga Font Awesome.

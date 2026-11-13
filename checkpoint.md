@@ -819,3 +819,11 @@ Validación:
 
 Siguiente tarea pendiente del backlog: AUG-141 — completar la representación de Check Engine y el aviso de testigo. No se inicia en este checkpoint.
 ================================================================================
+
+
+ADENDA DE VALIDACIÓN CI — AUG-140 — 2026-11-13
+- GitHub Actions run 43415353714: COMPLETED / SUCCESS sobre 8ab14b427c1a435dfdc5946e60b725450e590175.
+- Node.js 22.23.4; regresión completa: 20 suites, 278/278 pruebas PASS, 0 fallos.
+- PrintSheetPageContract: 11/11 PASS; incluye `node --check` del módulo ES `ui.js`.
+- El commit ddc9f4b implementó el contrato y el commit 8ab14b añadió la comprobación sintáctica y validó la suite ampliada. No se modificó la rama base.
+- AUG-140 queda COMPLETADA CON VALIDACIÓN DIFERIDA. Vista previa real y medición física de márgenes quedan reservadas a Beta.
