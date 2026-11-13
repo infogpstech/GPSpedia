@@ -6,6 +6,7 @@ const admin = readFileSync(new URL("../admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../../ui.js", import.meta.url), "utf8");
 const coordinator = readFileSync(new URL("../Coordinator.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+const offline = readFileSync(new URL("../../offline.js", import.meta.url), "utf8");
 let passed = 0;
 function check(name, fn) { fn(); passed++; console.log("PASS " + name); }
 function fnSource(source, name) {
@@ -617,6 +618,18 @@ check("La organización revalida referencias e historial por archivo y protege u
     assert.ok(save.includes('previousOrganizationState === "movida_manual" && previousManualLocation'));
     assert.ok(save.includes('String(row[column("estado_organizacion") - 1] || "") === "movida_manual"'));
     assert.ok(coordinator.includes('saveUnusedImagesInventory: { read: [...identityRead, "CORTES"]'));
+});
+
+
+check("El estado local conserva auditId, inventoryOperationId y los IDs confirmados al reabrir el modal",()=>{
+    const start=offline.indexOf("export async function saveDriveAuditState");
+    const end=offline.indexOf("\nexport async function getDriveAuditState",start);
+    assert.ok(start>=0&&end>start);
+    const saveBlock=offline.slice(start,end);
+    assert.ok(saveBlock.includes("inventoryAuditId: String(state.inventoryAuditId || '')"));
+    assert.ok(saveBlock.includes("inventoryOperationId: String(state.inventoryOperationId || '')"));
+    assert.ok(saveBlock.includes("inventoryConfirmedFileIds: Array.isArray(state.inventoryConfirmedFileIds)"));
+    assert.ok(saveBlock.includes("Array.from(new Set("));
 });
 
 console.log("AdminReplacedImagesIntegrity: "+passed+"/"+passed+" PASS");
