@@ -5,6 +5,9 @@ const VIDEO_TUTORIAL_HEADERS = ["ID", "Tema", "Imagen", "comoIdentificarlo", "do
 function runVideoApprovalPublishingTests() {
     const results=[];let passed=0,failed=0;
     const oldGetSafe=getSafeSheet,oldGetSpreadsheet=getSpreadsheet,oldUuid=Utilities.getUuid,oldFormat=Utilities.formatDate,oldTimezone=Session.getScriptTimeZone,oldFlush=SpreadsheetApp.flush;
+    const oldLockService=LockService;
+    let lockAcquired=0,lockReleased=0;
+    LockService={getScriptLock:()=>({waitLock:()=>{lockAcquired++;},releaseLock:()=>{lockReleased++;}})};
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
@@ -201,6 +204,13 @@ function runVideoApprovalPublishingTests() {
             expect_(()=>handleApproveVideo(actor_("vid-1")),"más de una vez");
             assert_(e.cuts.data[1][9]==="");
         }));
+        run_("serializa aprobación y rechazo con el mismo ScriptLock y libera ante éxito",()=> {
+            const beforeAcquire=lockAcquired,beforeRelease=lockReleased;
+            withEnv_("corte",{},e=>{handleApproveVideo(actor_("vid-1"));});
+            assert_(lockAcquired===beforeAcquire+1&&lockReleased===beforeRelease+1,"La aprobación debe adquirir/liberar un lock.");
+            withEnv_("pys",{},e=>{handleRejectVideo(actor_("vid-1"));});
+            assert_(lockAcquired===beforeAcquire+2&&lockReleased===beforeRelease+2,"El rechazo debe compartir y liberar el lock.");
+        });
     }finally{
         getSafeSheet=oldGetSafe;
         getSpreadsheet=oldGetSpreadsheet;
@@ -208,6 +218,7 @@ function runVideoApprovalPublishingTests() {
         Utilities.formatDate=oldFormat;
         Session.getScriptTimeZone=oldTimezone;
         SpreadsheetApp.flush=oldFlush;
+        LockService=oldLockService;
     }
     return{status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
