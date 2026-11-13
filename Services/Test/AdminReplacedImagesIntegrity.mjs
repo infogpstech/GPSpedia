@@ -231,7 +231,7 @@ check("La lista presenta todos los estados y separa duplicados y filas inválida
     assert.equal(result.schemaStatus,"ready");
     assert.equal(result.referenceCheckStatus,"verified");
     assert.deepEqual(result.data.map(item=>item.estado).sort(),
-        ["cancelada","en_papelera","historica","restablecida","sin_uso_detectado"].sort());
+        ["cancelada","en_papelera","historica","requiere_revision","restablecida","sin_uso_detectado"].sort());
     assert.equal(result.data.find(item=>item.id_reemplazo==="HIST").active_reference_count,2);
     assert.equal(result.review.length,5);
     assert.ok(result.review.every(item=>item.reason));
