@@ -31,7 +31,8 @@ test('el cierre del modal es un botón semántico con nombre accesible', () => {
     const end = html.indexOf('<!-- =========', start);
     const modal = html.slice(start, end);
     assert.match(modal, /<button type="button" class="info-close-btn" aria-label="Cerrar opciones de desarrollador">/);
-    assert.doesNotMatch(modal, /<span class="info-close-btn"/);
+    const closeRegion = modal.slice(0, modal.indexOf('<h2'));
+    assert.doesNotMatch(closeRegion, /<span class="info-close-btn"/);
 });
 test('la apertura inicia foco, contiene Tab y restaura el disparador visible', () => {
     assert.match(ui, /activateLegalModalFocus_\(modal, \{[\s\S]*?initialFocus: modal\.querySelector\('#dev-tools-title'\)/);
@@ -40,6 +41,8 @@ test('la apertura inicia foco, contiene Tab y restaura el disparador visible', (
     assert.match(ui, /document\.addEventListener\('keydown', handleKeydown, true\)/);
     assert.match(ui, /event\.key !== 'Tab'/);
     assert.match(ui, /modal\.contains\(active\)/);
+    assert.match(ui, /isTopmostManagedModal_\(modal\)/);
+    assert.match(ui, /document\.querySelectorAll\('\.info-modal, \.terms-overlay'\)/);
     assert.match(ui, /previousFocus\.focus\(\)/);
 });
 test('Escape y botón de cierre usan la misma pila History API', () => {

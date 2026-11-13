@@ -3918,6 +3918,26 @@ function deactivateLegalModalFocus_(modal, restoreFocus = true) {
     if (cleanup) cleanup(restoreFocus);
 }
 
+function isTopmostManagedModal_(modal) {
+    const visibleModals = Array.from(document.querySelectorAll('.info-modal, .terms-overlay')).filter(element => {
+        const style = typeof window.getComputedStyle === 'function' ? window.getComputedStyle(element) : null;
+        return (style ? style.display !== 'none' : element.style.display !== 'none') &&
+            element.getClientRects().length > 0;
+    });
+    if (!visibleModals.includes(modal)) return false;
+    const zIndex = element => {
+        const style = typeof window.getComputedStyle === 'function' ? window.getComputedStyle(element) : null;
+        const value = style ? style.zIndex : element.style.zIndex;
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+    let topmost = visibleModals[0];
+    visibleModals.slice(1).forEach(element => {
+        if (zIndex(element) >= zIndex(topmost)) topmost = element;
+    });
+    return topmost === modal;
+}
+
 function activateLegalModalFocus_(modal, options = {}) {
     if (!modal || legalModalFocusCleanups_.has(modal)) return;
     const requestedReturnFocus = options.returnFocus;
@@ -3950,8 +3970,7 @@ function activateLegalModalFocus_(modal, options = {}) {
             cleanup(true);
             return;
         }
-        const agreement = document.getElementById('terms-agreement-modal');
-        if (agreement && agreement.style.display === 'flex' && modal !== agreement) return;
+        if (!isTopmostManagedModal_(modal)) return;
 
         if (event.key === 'Escape') {
             event.preventDefault();
