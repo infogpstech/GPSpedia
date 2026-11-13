@@ -797,3 +797,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - GitHub Actions run 43416653823: SUCCESS sobre b04341a28d14917cf86d42ecc494d751df7c86a7; Node.js 22.23.4.
 - Regresión completa: 22 suites, 299/299 PASS, 0 fallos. PrintSheetResourceReadiness: 12/12 PASS.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-143 — PAGINACIÓN POR ALTURA REAL Y ORDEN TÉCNICO
+- ui.js: se sustituye la agrupación por cantidad/aspecto de imágenes por una distribución incremental que mide overflow del contenido real de cada página.
+- Las tarjetas con y sin imagen se mantienen en secuencia; la tarjeta que excede una página con contenido previo se traslada completa a la siguiente. La prioridad del corte recomendado se conserva.
+- Las imágenes se ajustan al espacio real disponible sin imponer el mínimo anterior de 80 px. Las tarjetas individuales que superan el espacio se identifican sin ocultar contenido.
+- Los wrappers se fijan al área útil Carta de 259.4 mm. Se añade PrintSheetPaginationIntegrity.mjs con 12 contratos, node --check e integración CI.
+================================================================================

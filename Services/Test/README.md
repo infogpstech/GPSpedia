@@ -1566,3 +1566,10 @@ La suite valida el origen del estado, independencia del recurso, proporción, po
 La vista previa marca foto principal, QR, logotipos e imágenes técnicas como recursos opcionales cuando existen en el registro. La preparación espera los eventos load/error con timeout de 8 segundos y la decodificación con límite de 2 segundos. Los recursos fallidos se ocultan y muestran un marcador textual; no se presentan como imágenes cargadas ni se usan para calcular proporciones. El botón de impresión permanece deshabilitado hasta completar la preparación y la paginación de recursos clonados. El evento `beforeprint` no vuelve a calcular dimensiones mientras la preparación no haya terminado.
 
 Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetResourceReadiness.mjs`.
+
+
+## AUG-143 — Paginación por altura real y orden técnico
+
+Las tarjetas técnicas se procesan en orden original, con el corte prioritario al inicio cuando corresponde. Se agregan secuencialmente a la página activa y se mide el overflow real del área de contenido; la tarjeta que excede una página con contenido previo se traslada completa a la siguiente. Las tarjetas sin imagen ya no se agrupan artificialmente al final. Las imágenes se ajustan al espacio vertical medido sin imponer el mínimo anterior de 80 px. Si una tarjeta individual excede por sí sola el espacio, la página queda identificada mediante `data-content-overflow` sin ocultar contenido.
+
+Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetPaginationIntegrity.mjs`.

@@ -10744,7 +10744,7 @@ export function exportVehiclePrintSheet(item) {
                 ul[data-gp-marker="check"] > li::before { content: "✓"; }
                 ul[data-gp-marker="bullet"] > li::before { content: "•"; }
                 .sheet-page-wrapper {
-                    height: auto;
+                    height: 259.4mm;
                     min-height: 259.4mm;
                     max-height: none;
                     display: flex;
@@ -11336,7 +11336,7 @@ export function exportVehiclePrintSheet(item) {
     `);
     printWindow.document.close();
 
-    // Distribución y paginación explícita: hasta cuatro imágenes técnicas (2 columnas × 2 filas) por hoja.
+    // Distribución técnica por medición de altura real; cada tarjeta se mantiene completa y en orden.
     const printDocument = printWindow.document;
     const printPages = printDocument.getElementById('print-pages');
     const firstPageTemplate = printPages && printPages.querySelector('.sheet-page-wrapper');
@@ -11370,27 +11370,7 @@ export function exportVehiclePrintSheet(item) {
             return dimensions.width > 0 && dimensions.height > 0 ? dimensions.aspect : 1;
         };
 
-        // Contrato de impresión Carta: @page reserva 10 mm por lado (área útil 195.9 × 259.4 mm).
-        // Se mantiene una sola hoja cuando el grupo técnico cabe con legibilidad; si la cantidad/orientación
-        // de imágenes requiere más grupos, se crean hojas adicionales sin reducir los márgenes.
-        // La redistribución por altura real y el reordenamiento por overflow se desarrollan en AUG-143.
-        const choosePageGroups = cards => {
-            const groups = [];
-            let cursor = 0;
-            while (cursor < cards.length) {
-                const remaining = cards.length - cursor;
-                const a = getAspect(cards[cursor]);
-                const b = remaining > 1 ? getAspect(cards[cursor + 1]) : 0;
-                const c = remaining > 2 ? getAspect(cards[cursor + 2]) : 0;
-                // Dos imágenes por página como regla segura; tres solo si las tres son verticales.
-                let count = Math.min(2, remaining);
-                if (remaining >= 3 && a < 0.82 && b < 0.82 && c < 0.82) count = 3;
-                groups.push(cards.slice(cursor, cursor + count));
-                cursor += count;
-            }
-            return groups.length ? groups : [[]];
-        };
-
+        // Paginación por altura real: las tarjetas permanecen completas y en secuencia técnica.
         const applyPageTemplate = (grid, pageCards) => {
             grid.classList.remove('layout-single', 'layout-pair-portrait', 'layout-pair-landscape', 'layout-triple-portrait', 'layout-mosaic');
             const aspects = pageCards.map(getAspect);
@@ -11400,99 +11380,131 @@ export function exportVehiclePrintSheet(item) {
             else if (pageCards.length === 3 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-triple-portrait');
             else grid.classList.add('layout-mosaic');
             pageCards.forEach((card, index) => {
-                card.style.gridColumn = ''; card.style.gridRow = ''; card.style.width = ''; card.style.maxWidth = '';
-                card.style.marginLeft = ''; card.style.marginRight = '';
+                card.style.gridColumn = '';
+                card.style.gridRow = '';
+                card.style.width = '';
+                card.style.maxWidth = '';
+                card.style.marginLeft = '';
+                card.style.marginRight = '';
                 if (grid.classList.contains('layout-mosaic') && pageCards.length === 3 && index === 2) {
                     card.style.gridColumn = '1 / -1';
-                    if (aspects[index] > 1.25) { card.style.width = '80%'; card.style.maxWidth = '80%'; card.style.marginLeft = 'auto'; card.style.marginRight = 'auto'; }
+                    if (aspects[index] > 1.25) {
+                        card.style.width = '80%';
+                        card.style.maxWidth = '80%';
+                        card.style.marginLeft = 'auto';
+                        card.style.marginRight = 'auto';
+                    }
                 }
             });
+        };
+
+        const fitImagesToAvailablePageSpace = page => {
+            const main = page.querySelector('.sheet-content-main');
+            if (!main) return;
+            const cards = Array.from(page.querySelectorAll('.tech-item-card'));
+            const images = cards.map(getImage).filter(Boolean);
+            if (!images.length) return;
+
+            images.forEach(img => { img.style.maxHeight = '0px'; });
+            const mainChildren = Array.from(main.children);
+            const mainStyle = printDocument.defaultView
+                ? printDocument.defaultView.getComputedStyle(main)
+                : null;
+            const mainGap = mainStyle
+                ? (parseFloat(mainStyle.rowGap || mainStyle.gap || '0') || 0)
+                : 6;
+            const contentHeight = mainChildren.reduce(
+                (total, child) => total + child.getBoundingClientRect().height,
+                0
+            ) + Math.max(0, mainChildren.length - 1) * mainGap;
+            const availableHeight = Math.max(0, main.clientHeight - contentHeight);
+
+            const rowTops = [];
+            cards.forEach(card => {
+                const top = card.getBoundingClientRect().top;
+                if (!rowTops.some(rowTop => Math.abs(rowTop - top) <= 2)) rowTops.push(top);
+            });
+            const rowCount = Math.max(1, rowTops.length);
+            const modeMaxHeight = printDocument.body.dataset.printLayout === 'image-focus' ? 620 : 520;
+            const rowMaxHeight = Math.min(modeMaxHeight, Math.max(0, (availableHeight / rowCount) - 4));
+            images.forEach(img => { img.style.maxHeight = rowMaxHeight + 'px'; });
+        };
+
+        const pageOverflows = page => {
+            const main = page.querySelector('.sheet-content-main');
+            if (!main) return false;
+            return main.scrollHeight > main.clientHeight + 1 || main.scrollWidth > main.clientWidth + 1;
+        };
+
+        const createPage = pageIndex => {
+            const page = printDocument.createElement('div');
+            page.className = 'sheet-page-wrapper';
+            page.dataset.pageIndex = String(pageIndex);
+            page.dataset.imageCount = '0';
+            const main = printDocument.createElement('div');
+            main.className = 'sheet-content-main';
+            if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
+            if (pageIndex === 0 && metadataTemplate) main.appendChild(metadataTemplate.cloneNode(true));
+            if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
+            const grid = printDocument.createElement('div');
+            grid.className = 'tech-grid adaptive-tech-grid layout-single';
+            main.appendChild(grid);
+            page.appendChild(main);
+            if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
+            printPages.appendChild(page);
+            return { page, grid, cards: [] };
         };
 
         const arrangeTechnicalCards = () => {
             const orderedCards = [...allTechnicalCards].sort((a, b) => originalOrder(a) - originalOrder(b));
             const priorityCard = orderedCards.find(card => card.dataset.priorityCut === 'true') || null;
-            const orderedTechnicalCards = priorityCard ? [priorityCard, ...orderedCards.filter(card => card !== priorityCard)] : orderedCards;
-            const imageCards = orderedTechnicalCards.filter(card => getImage(card));
-            const textCards = orderedTechnicalCards.filter(card => !getImage(card));
-            const pageGroups = choosePageGroups(imageCards);
+            const orderedTechnicalCards = priorityCard && orderedCards[0] !== priorityCard
+                ? [priorityCard, ...orderedCards.filter(card => card !== priorityCard)]
+                : orderedCards;
 
-            const createPage = (pageIndex, pageCards, pageCount) => {
-                const page = printDocument.createElement('div');
-                page.className = 'sheet-page-wrapper';
-                page.dataset.imageCount = String(pageCards.length);
-                const main = printDocument.createElement('div');
-                main.className = 'sheet-content-main';
-                if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
-                if (pageIndex === 0 && metadataTemplate) {
-                    main.appendChild(metadataTemplate.cloneNode(true));
-                }
-                if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
-                const grid = printDocument.createElement('div');
-                grid.className = 'tech-grid adaptive-tech-grid';
-                applyPageTemplate(grid, pageCards);
-                pageCards.forEach(card => grid.appendChild(card));
-                if (pageIndex === pageCount - 1) textCards.forEach(card => {
-                    card.style.gridColumn = '1 / -1'; card.style.width = '100%'; card.style.maxWidth = '100%'; grid.appendChild(card);
-                });
-                main.appendChild(grid);
+            printPages.replaceChildren();
+            const pages = [];
+            let current = createPage(0);
+            pages.push(current);
 
-                page.appendChild(main);
-                if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
-                return page;
+            const appendCard = (pageState, card) => {
+                pageState.cards.push(card);
+                pageState.grid.appendChild(card);
+                applyPageTemplate(pageState.grid, pageState.cards);
+                pageState.page.dataset.imageCount = String(pageState.cards.filter(item => Boolean(getImage(item))).length);
+                fitImagesToAvailablePageSpace(pageState.page);
             };
-            const pages = pageGroups.map((pageCards, pageIndex) => createPage(pageIndex, pageCards, pageGroups.length));
-            printPages.replaceChildren(...pages);
-
-            // Dimensionar imágenes con el espacio vertical que queda en cada página.
-            // Se colapsan temporalmente para medir encabezado, metadatos, textos, tarjetas y pie;
-            // después se reparte el espacio libre entre las filas de imágenes de esa página.
-            const fitImagesToAvailablePageSpace = pageElements => {
-                pageElements.forEach(page => {
-                    const pageCards = Array.from(page.querySelectorAll('.tech-item-card.has-image'));
-                    const images = pageCards.map(getImage).filter(Boolean);
-                    if (!images.length) return;
-
-                    images.forEach(img => { img.style.maxHeight = '0px'; });
-
-                    const pageHeight = page.getBoundingClientRect().height || page.clientHeight;
-                    const main = page.querySelector('.sheet-content-main');
-                    const footer = page.querySelector('.footer-bar');
-                    const mainChildren = main ? Array.from(main.children) : [];
-                    const mainStyle = main && printDocument.defaultView
-                        ? printDocument.defaultView.getComputedStyle(main)
-                        : null;
-                    const mainGap = mainStyle
-                        ? (parseFloat(mainStyle.rowGap || mainStyle.gap || '0') || 0)
-                        : 6;
-                    const mainContentHeight = mainChildren.reduce(
-                        (total, child) => total + child.getBoundingClientRect().height,
-                        0
-                    ) + Math.max(0, mainChildren.length - 1) * mainGap;
-                    const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
-                    const availableHeight = Math.max(0, pageHeight - footerHeight - mainContentHeight);
-
-                    const rowTops = [];
-                    pageCards.forEach(card => {
-                        const top = card.getBoundingClientRect().top;
-                        if (!rowTops.some(rowTop => Math.abs(rowTop - top) <= 2)) rowTops.push(top);
-                    });
-
-                    const rowCount = Math.max(1, rowTops.length);
-                    const modeMaxHeight = printDocument.body.dataset.printLayout === 'image-focus' ? 620 : 520;
-                    const rowMaxHeight = Math.max(80, Math.min(modeMaxHeight, (availableHeight / rowCount) - 4));
-                    images.forEach(img => { img.style.maxHeight = `${rowMaxHeight}px`; });
-                });
-            };
-
-            fitImagesToAvailablePageSpace(pages);
 
             orderedTechnicalCards.forEach(card => {
-                const dimensions = getDimensions(card);
-                card.dataset.naturalWidth = String(dimensions.width);
-                card.dataset.naturalHeight = String(dimensions.height);
-                card.dataset.imageAspectRatio = String(dimensions.aspect);
-                card.dataset.imageResolution = String(dimensions.resolution);
+                appendCard(current, card);
+                if (pageOverflows(current.page) && current.cards.length > 1) {
+                    current.grid.removeChild(card);
+                    current.cards.pop();
+                    applyPageTemplate(current.grid, current.cards);
+                    current.page.dataset.imageCount = String(current.cards.filter(item => Boolean(getImage(item))).length);
+                    fitImagesToAvailablePageSpace(current.page);
+
+                    current = createPage(pages.length);
+                    pages.push(current);
+                    appendCard(current, card);
+                }
+                if (current.cards.length === 1 && pageOverflows(current.page)) {
+                    current.page.dataset.contentOverflow = 'true';
+                }
+            });
+
+            pages.forEach(pageState => {
+                fitImagesToAvailablePageSpace(pageState.page);
+                if (pageOverflows(pageState.page) && pageState.cards.length === 1) {
+                    pageState.page.dataset.contentOverflow = 'true';
+                }
+                pageState.cards.forEach(card => {
+                    const dimensions = getDimensions(card);
+                    card.dataset.naturalWidth = String(dimensions.width);
+                    card.dataset.naturalHeight = String(dimensions.height);
+                    card.dataset.imageAspectRatio = String(dimensions.aspect);
+                    card.dataset.imageResolution = String(dimensions.resolution);
+                });
             });
         };
 

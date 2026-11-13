@@ -863,3 +863,12 @@ ADENDA DE CIERRE — AUG-142 — 2026-11-13
 - CI run 43416653823 SUCCESS; Node.js 22.23.4; 22 suites, 299/299 PASS; PrintSheetResourceReadiness 12/12 PASS.
 - La preparación espera carga/decodificación, gestiona errores/timeout, muestra fallback y habilita imprimir tras la paginación y la carga de recursos clonados. beforeprint no mide antes del estado listo.
 - AUG-142: COMPLETADA CON VALIDACIÓN DIFERIDA. La verificación visual de PDF/navegador, offline y dispositivos reales queda para Beta.
+
+
+================================================================================
+CHECKPOINT DE PROGRESO — AUG-143 — 2026-11-13
+HEAD de inicio: 55dd9d98e42a02a31a66dd9559b5e7724aeb2b18
+Implementación: reemplazada agrupación por número/orientación por paginación incremental según scrollHeight/clientHeight y scrollWidth/clientWidth; se conserva orden original y prioridad; tarjetas sin imagen ya no se desplazan al final; tarjeta que provoca overflow se mueve completa a nueva página; se elimina mínimo de 80 px; wrappers se alinean a 259.4 mm.
+Nueva suite: Services/Test/PrintSheetPaginationIntegrity.mjs (12 contratos y node --check), integrada en INTEGRATION.
+Estado: EN PROGRESO hasta CI y revisión.
+================================================================================

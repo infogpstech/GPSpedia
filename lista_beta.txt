@@ -2290,3 +2290,27 @@ git rev-parse HEAD
 
 Probar fichas con foto principal, QR, logotipos e imágenes técnicas; repetir con URL inválida, error HTTP, offline, carga lenta y recursos que superen el timeout. Confirmar que el botón permanece deshabilitado hasta finalizar la preparación, se muestran fallbacks y la vista previa/PDF no calcula tamaños desconocidos. Registrar navegador/versión y no usar enlaces privados ni datos productivos.
 ================================================================================
+
+
+================================================================================
+AUG-143 — Validación de paginación por altura real (Beta aislada)
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar"; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Probar tarjetas con textos cortos/largos, imágenes verticales/horizontales, cortes recomendados/no recomendados, tarjetas sin imagen intercaladas y varias páginas. Verificar que ninguna tarjeta se pierde, duplica o cambia de asociación; que el orden se conserva y que cada página no recorta el contenido. Registrar los casos de tarjetas individuales que excedan el área útil. No usar datos productivos.
+================================================================================

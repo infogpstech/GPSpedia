@@ -393,7 +393,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-021-004 y H-AUD-021-005. **Prioridad:** Media.
 - **Problema:** los grupos se deciden por aspecto y cantidad de imágenes, no por altura total de texto/metadatos/avisos/pie; rowMaxHeight fuerza 80 px mínimos; las tarjetas sin imagen se trasladan a la última página y pueden perder orden/prioridad.
 - **Criterios:** medir el contenido real de cada página; detectar overflow; reagrupar tarjetas completas sin cortar asociaciones texto/imagen; no forzar altura mínima que rebase el espacio; conservar prioridad y secuencia técnica con tarjetas con/sin imagen; corregir el comentario obsoleto de cuatro imágenes; probar páginas iniciales/intermedias/finales y textos extensos.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO; medición de overflow y redistribución secuencial implementadas; CI pendiente.
 
 ### AUG-144 — Proteger enlaces de vídeos no listados al generar QR
 - **Origen:** H-AUD-021-006. **Prioridad:** Media.
