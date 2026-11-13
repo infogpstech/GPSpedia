@@ -14,14 +14,18 @@ function runVideoApprovalStateTests() {
         catch (error) { failed++; results.push({ name, status: "FAIL", message: String(error.message || error) }); }
     }
     function row_(id, data) {
-        const row = []; row[COLS_FEEDBACKS.ID - 1] = id; row[COLS_FEEDBACKS.Problema - 1] = data;
+        const row = [];
+        row[COLS_FEEDBACKS.ID - 1] = id;
+        row[COLS_FEEDBACKS.Problema - 1] = data;
+        row[COLS_FEEDBACKS.ID_vehiculo - 1] = data.referenceId || "";
         return row;
     }
     function sheet_(rows) { return { getDataRange: () => ({ getValues: () => rows }) }; }
     const base = {
         subType: "video_approval", status: "pending", contentType: "corte",
         videoId: "abcdefghijk", videoUrl: "https://www.youtube.com/watch?v=abcdefghijk",
-        referenceId: "destination-1", opVideoId: "a".repeat(32)
+        referenceId: "destination-1", opVideoId: "a".repeat(32),
+        title: "Manual técnico", createdByUserId: "user-1"
     };
     run_("acepta una solicitud Corte pendiente válida", () => {
         const result = findPendingVideoApproval_(sheet_([[], row_("vid-1", JSON.stringify(base))]), "vid-1");
