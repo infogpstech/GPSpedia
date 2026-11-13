@@ -6919,6 +6919,14 @@ export async function openReplacedImagesModal() {
                 reason.className = "replaced-image-status";
                 reason.textContent = "Motivo: " + (item.reason || "Registro no verificable.");
                 info.append(title, identifier, reason);
+                if (item.reconciliationUrl) {
+                    const reconcileButton = document.createElement("button");
+                    reconcileButton.type = "button";
+                    reconcileButton.className = "btn btn-secondary";
+                    reconcileButton.textContent = "Abrir filas para reconciliación manual";
+                    reconcileButton.onclick = () => window.open(item.reconciliationUrl, "_blank", "noopener");
+                    info.appendChild(reconcileButton);
+                }
                 row.appendChild(info);
                 reviewSection.appendChild(row);
             });
@@ -7034,10 +7042,16 @@ export async function openAuditDriveModal() {
     summaryEl.innerHTML = `
         <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
             <span>📁 <strong>Carpeta raíz:</strong> <span id="audit-root-name">Cortes</span> (<code id="audit-root-id"></code>)</span>
-            <span>📊 <strong>Total analizados:</strong> <span id="audit-total-count">0</span></span>
-            <span>📂 <strong>Carpetas recorridas:</strong> <span id="audit-folder-count">0</span></span>
+            <span>🔎 <strong>Archivos descubiertos:</strong> <span id="audit-discovered-count">0</span></span>
+            <span>📊 <strong>Archivos analizados:</strong> <span id="audit-total-count">0</span></span>
+            <span>📂 <strong>Carpetas descubiertas (incluye raíz):</strong> <span id="audit-folder-count">1</span></span>
             <span>🔁 <strong>Lotes recibidos:</strong> <span id="audit-batch-count">0</span></span>
-            <span>⏳ <strong>Carpetas en pila de continuación:</strong> <span id="audit-pending-folder-count">0</span></span>
+            <span>⏳ <strong>Carpetas en pila pendiente:</strong> <span id="audit-pending-folder-count">0</span></span>
+            <span>⚠️ <strong>Errores:</strong> <span id="audit-error-count">0</span></span>
+            <span>♻️ <strong>Archivos duplicados omitidos:</strong> <span id="audit-duplicate-file-count">0</span></span>
+            <span>📁 <strong>Carpetas duplicadas omitidas:</strong> <span id="audit-duplicate-folder-count">0</span></span>
+            <span><strong>Último escaneo:</strong> <span id="audit-last-scan-at">No disponible</span></span>
+            <span><strong>Versión ADMIN:</strong> <span id="audit-service-version">No disponible</span></span>
             <span style="color:#28a745;">✅ <strong>En uso:</strong> <span id="audit-in-use-count">0</span></span>
             <span style="color:#007bff;">🕒 <strong>Históricas:</strong> <span id="audit-historical-count">0</span></span>
             <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> <span id="audit-unused-count">0</span></span>
@@ -7055,10 +7069,20 @@ export async function openAuditDriveModal() {
     const auditBatchCountEl = document.getElementById('audit-batch-count');
     const auditPendingFolderCountEl = document.getElementById('audit-pending-folder-count');
     const allFiles = [];
+    const seenFileIds = new Set();
+    const renderedFileIds = new Set();
     let cursor = null;
     let complete = false;
+    let totalDiscovered = 0;
     let totalAnalyzed = 0;
-    let foldersVisited = 0;
+    let foldersVisited = 1;
+    let pendingFolderCount = 1;
+    let errorCount = 0;
+    let duplicateFileCount = 0;
+    let duplicateFolderCount = 0;
+    let uiDuplicateFileCount = 0;
+    let lastScanAt = 0;
+    let serviceVersion = '';
     let batches = 0;
     let lastBatchAnalyzed = 0;
     let unverifiableReferences = 0;
@@ -7075,10 +7099,32 @@ export async function openAuditDriveModal() {
 
     const appendFiles = (files) => {
         if (!isCurrentRequest()) return;
-        files.filter(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')
-            .forEach(file => {
+        files.forEach(file => {
+            const fileId = String(file && file.fileId || '').trim();
+            if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || renderedFileIds.has(fileId)) return;
+            renderedFileIds.add(fileId);
+            if (file.classification !== 'Histórica' && file.classification !== 'Sin uso detectado') return;
             const row = document.createElement('div');
             row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
+            if (String(file.mimeType || '').startsWith('image/')) {
+                const preview = document.createElement('img');
+                preview.style.cssText = "width:58px; height:58px; flex:0 0 58px; object-fit:contain; border-radius:4px; background:var(--surface-bg);";
+                preview.loading = 'lazy';
+                preview.alt = 'Vista previa de ' + (file.fileName || 'imagen');
+                preview.dataset.drivePreviewVerification = 'pending';
+                preview.onload = () => {
+                    preview.dataset.drivePreviewVerification = 'loaded';
+                    preview.title = 'Miniatura cargada en la sesión autorizada actual';
+                };
+                preview.onerror = () => {
+                    preview.dataset.drivePreviewVerification = 'unavailable';
+                    preview.onerror = null;
+                    preview.src = 'https://placehold.co/120x120/cccccc/333333?text=Sin+vista';
+                    preview.title = 'No se pudo cargar la miniatura con la sesión actual';
+                };
+                preview.src = getImageUrl(file.fileId, 120);
+                row.appendChild(preview);
+            }
             const info = document.createElement('div');
             info.style.cssText = "min-width:0; flex:1;";
             const name = document.createElement('div');
@@ -7119,9 +7165,17 @@ export async function openAuditDriveModal() {
         if (auditTotalEl) auditTotalEl.textContent = String(totalAnalyzed);
         if (auditFolderCountEl) auditFolderCountEl.textContent = String(foldersVisited);
         if (auditBatchCountEl) auditBatchCountEl.textContent = String(batches);
-        if (auditPendingFolderCountEl) {
-            auditPendingFolderCountEl.textContent = String(cursor && Array.isArray(cursor.stack) ? cursor.stack.length : 0);
-        }
+        if (auditPendingFolderCountEl) auditPendingFolderCountEl.textContent = String(pendingFolderCount);
+        const setText = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = String(value);
+        };
+        setText('audit-discovered-count', totalDiscovered);
+        setText('audit-error-count', errorCount);
+        setText('audit-duplicate-file-count', duplicateFileCount + uiDuplicateFileCount);
+        setText('audit-duplicate-folder-count', duplicateFolderCount);
+        setText('audit-last-scan-at', lastScanAt ? new Date(lastScanAt).toLocaleString() : 'No disponible');
+        setText('audit-service-version', serviceVersion || 'No disponible');
         if (auditRootNameEl) auditRootNameEl.textContent = rootFolderName;
         if (auditRootIdEl) auditRootIdEl.textContent = rootFolderId;
         const setText = (id, value) => {
@@ -7143,8 +7197,16 @@ export async function openAuditDriveModal() {
             cursor: cursor,
             complete: complete,
             status: status,
+            totalDiscovered: totalDiscovered,
             totalAnalyzed: totalAnalyzed,
             foldersVisited: foldersVisited,
+            pendingFolderCount: pendingFolderCount,
+            errorCount: errorCount,
+            duplicateFileCount: duplicateFileCount,
+            duplicateFolderCount: duplicateFolderCount,
+            uiDuplicateFileCount: uiDuplicateFileCount,
+            lastScanAt: lastScanAt,
+            serviceVersion: serviceVersion,
             batches: batches,
             lastBatchAnalyzed: lastBatchAnalyzed,
             unverifiableReferences: unverifiableReferences,
@@ -7323,11 +7385,29 @@ export async function openAuditDriveModal() {
     const restoreState = (state) => {
         if (!isCurrentRequest()) return;
         allFiles.length = 0;
-        if (Array.isArray(state.files)) allFiles.push(...state.files);
+        seenFileIds.clear();
+        renderedFileIds.clear();
+        uiDuplicateFileCount = 0;
+        if (Array.isArray(state.files)) state.files.forEach(file => {
+            const fileId = String(file && file.fileId || '').trim();
+            if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || seenFileIds.has(fileId)) {
+                if (fileId) uiDuplicateFileCount++;
+                return;
+            }
+            seenFileIds.add(fileId);
+            allFiles.push(file);
+        });
         cursor = state.cursor || null;
         complete = state.complete === true;
+        totalDiscovered = Math.max(0, Number(state.totalDiscovered) || allFiles.length);
         totalAnalyzed = Math.max(0, Number(state.totalAnalyzed) || allFiles.length);
-        foldersVisited = Math.max(0, Number(state.foldersVisited) || 0);
+        foldersVisited = Math.max(1, Number(state.foldersVisited) || 1);
+        pendingFolderCount = Math.max(0, Number(state.pendingFolderCount) || (cursor && Array.isArray(cursor.stack) ? cursor.stack.length : 0));
+        errorCount = Math.max(0, Number(state.errorCount) || 0);
+        duplicateFileCount = Math.max(0, Number(state.duplicateFileCount) || 0);
+        duplicateFolderCount = Math.max(0, Number(state.duplicateFolderCount) || 0);
+        lastScanAt = Math.max(0, Number(state.lastScanAt) || 0);
+        serviceVersion = String(state.serviceVersion || '');
         batches = Math.max(0, Number(state.batches) || 0);
         lastBatchAnalyzed = Math.max(0, Number(state.lastBatchAnalyzed) || 0);
         unverifiableReferences = Math.max(0, Number(state.unverifiableReferences) || 0);
@@ -7368,11 +7448,21 @@ export async function openAuditDriveModal() {
                 complete = false;
             } else {
                 allFiles.length = 0;
+                seenFileIds.clear();
+                renderedFileIds.clear();
                 container.innerHTML = '';
                 cursor = null;
                 complete = false;
+                totalDiscovered = 0;
                 totalAnalyzed = 0;
-                foldersVisited = 0;
+                foldersVisited = 1;
+                pendingFolderCount = 1;
+                errorCount = 0;
+                duplicateFileCount = 0;
+                duplicateFolderCount = 0;
+                uiDuplicateFileCount = 0;
+                lastScanAt = 0;
+                serviceVersion = '';
                 batches = 0;
                 lastBatchAnalyzed = 0;
                 unverifiableReferences = 0;
@@ -7390,8 +7480,11 @@ export async function openAuditDriveModal() {
                 if (!isCurrentRequest()) return;
             }
 
+            const getCursorPositionSignature = value => JSON.stringify({
+                stack: value.stack, referenceCacheId: value.referenceCacheId, scanVersion: value.scanVersion
+            });
             const seenCursorSignatures = new Set();
-            if (cursor) seenCursorSignatures.add(JSON.stringify(cursor));
+            if (cursor) seenCursorSignatures.add(getCursorPositionSignature(cursor));
 
             while (!complete && isCurrentRequest()) {
                 const previousTotal = totalAnalyzed;
@@ -7406,26 +7499,51 @@ export async function openAuditDriveModal() {
                     throw new Error(response && response.message ? response.message : 'Respuesta inválida del servicio de auditoría.');
                 }
 
-                const batchSize = response.files.length;
+                const responseBatchIds = new Set();
+                const uniqueResponseFiles = [];
+                let duplicateFilesInResponse = 0;
+                response.files.forEach(file => {
+                    const fileId = String(file && file.fileId || '').trim();
+                    if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) throw new Error('ADMIN devolvió un archivo sin un ID de Drive verificable.');
+                    if (seenFileIds.has(fileId) || responseBatchIds.has(fileId)) { duplicateFilesInResponse++; return; }
+                    responseBatchIds.add(fileId);
+                    uniqueResponseFiles.push(file);
+                });
+                const batchSize = uniqueResponseFiles.length;
                 const expectedTotal = allFiles.length + batchSize;
                 const reportedBatch = Number(response.batchAnalyzed);
                 const reportedTotal = Number(response.totalAnalyzed);
-                if (!Number.isInteger(reportedBatch) || reportedBatch !== batchSize) {
-                    throw new Error('El contador batchAnalyzed no coincide con la cantidad de archivos recibidos o no es válido.');
+                const reportedDiscovered = Number(response.totalDiscovered);
+                if (!Number.isInteger(reportedBatch) || reportedBatch !== batchSize) throw new Error('El contador batchAnalyzed no coincide con los archivos únicos recibidos.');
+                if (!Number.isInteger(reportedTotal) || reportedTotal !== expectedTotal ||
+                    !Number.isInteger(reportedDiscovered) || reportedDiscovered !== expectedTotal) {
+                    throw new Error('Los totales acumulados de ADMIN no coinciden con los IDs únicos recibidos (' + expectedTotal + ').');
                 }
-                if (!Number.isInteger(reportedTotal) || reportedTotal !== expectedTotal) {
-                    throw new Error('El total acumulado informado por ADMIN (' + response.totalAnalyzed +
-                        ') no coincide con los resultados recibidos (' + expectedTotal + ').');
+                if (response.serverCompletionVerified !== response.complete ||
+                    String(response.serviceVersion || '') !== '2.6.1' ||
+                    !Number.isFinite(Number(response.serverTimestamp)) ||
+                    !Number.isInteger(Number(response.pendingFolderCount)) ||
+                    Number(response.pendingFolderCount) !== (response.cursor && Array.isArray(response.cursor.stack) ? response.cursor.stack.length : 0)) {
+                    throw new Error('ADMIN devolvió metadatos de finalización, versión o progreso incompletos.');
                 }
                 if (typeof response.complete !== 'boolean') {
                     throw new Error('ADMIN no devolvió un indicador booleano válido de finalización de la auditoría.');
                 }
 
-                allFiles.push(...response.files);
+                uniqueResponseFiles.forEach(file => seenFileIds.add(String(file.fileId)));
+                allFiles.push(...uniqueResponseFiles);
                 batches++;
                 lastBatchAnalyzed = batchSize;
+                totalDiscovered = reportedDiscovered;
                 totalAnalyzed = reportedTotal;
-                foldersVisited = Math.max(0, Number(response.foldersVisited) || 0);
+                foldersVisited = Math.max(1, Number(response.foldersVisited) || 1);
+                pendingFolderCount = Number(response.pendingFolderCount);
+                errorCount = Math.max(0, Number(response.errorCount) || 0);
+                duplicateFileCount = Math.max(0, Number(response.duplicateFileCount) || 0);
+                duplicateFolderCount = Math.max(0, Number(response.duplicateFolderCount) || 0);
+                uiDuplicateFileCount += duplicateFilesInResponse;
+                lastScanAt = Number(response.serverTimestamp);
+                serviceVersion = String(response.serviceVersion);
                 unverifiableReferences = Math.max(unverifiableReferences, Number(response.unverifiableReferenceCount) || 0);
                 if (response.rootFolderName) rootFolderName = response.rootFolderName;
                 if (response.rootFolderId) rootFolderId = response.rootFolderId;
@@ -7439,7 +7557,7 @@ export async function openAuditDriveModal() {
                     throw new Error('El servicio devolvió un resultado parcial sin cursor de continuación.');
                 }
                 if (!complete) {
-                    const signature = JSON.stringify(cursor);
+                    const signature = getCursorPositionSignature(cursor);
                     if (seenCursorSignatures.has(signature) &&
                         totalAnalyzed === previousTotal && foldersVisited <= previousFolders) {
                         throw new Error('El cursor de Drive se repitió sin aumentar los archivos analizados ni las carpetas recorridas.');
@@ -7447,7 +7565,7 @@ export async function openAuditDriveModal() {
                     seenCursorSignatures.add(signature);
                 }
 
-                appendFiles(response.files);
+                appendFiles(uniqueResponseFiles);
                 updateSummary(complete
                     ? 'Recorrido del árbol finalizado. Verificando el inventario...'
                     : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.');
@@ -7464,7 +7582,7 @@ export async function openAuditDriveModal() {
             if (!isCurrentRequest()) return;
             const errorMessage = error && error.message ? error.message : String(error);
             const cursorExpired = !complete &&
-                /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|inicia una auditoría nueva/i.test(errorMessage);
+                /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|otra versión del servicio|inicia una auditoría nueva/i.test(errorMessage);
             resumeUnavailable = cursorExpired;
             let statusMessage = complete
                 ? 'AUDITORÍA COMPLETA: se conservaron ' + allFiles.length +

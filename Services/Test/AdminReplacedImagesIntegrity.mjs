@@ -437,6 +437,8 @@ const auditHelperNames = [
     "cleanupExpiredDriveAuditServerStates_", "getDriveAuditServerStateKey_", "hashDriveAuditValue_", "getDriveAuditCursorFingerprint_",
     "normalizeDriveAuditFileIds_", "hashDriveAuditFileIds_", "saveDriveAuditServerState_",
     "loadDriveAuditServerState_", "getDriveAuditPageResultCacheKey_", "getDriveAuditResponseCacheKey_",
+    "getDriveAuditSeenPageCacheKey_", "storeDriveAuditSeenPage_", "loadDriveAuditSeenIds_",
+    "getDuplicateDriveImageRows_", "getReplacedImageReconciliationUrl_", "buildVerifiedDriveVisualizationUrl_",
     "storeDriveAuditPageResults_", "loadDriveAuditUnusedFileIds_", "getLatestDriveAuditIdForUser_",
     "validateCompletedDriveAudit_"
 ];
@@ -458,9 +460,15 @@ function auditHarness() {
         DigestAlgorithm: { SHA_256: "SHA-256" }, Charset: { UTF_8: "utf8" },
         computeDigest: (_algorithm, value) => Array.from(createHash("sha256").update(String(value), "utf8").digest())
     };
-    const api = new Function("PropertiesService","CacheService","Utilities",auditHelperSource+
-        "\nreturn {cleanupExpiredDriveAuditServerStates_,getDriveAuditServerStateKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
-            PropertiesService,CacheService,Utilities);
+    const extractDriveFileIds = value => {
+        const text = String(value || "").trim();
+        const matches = Array.from(text.matchAll(/(?:\\/d\\/|[?&]id=)([a-zA-Z0-9_-]{20,})/g)).map(match => match[1]);
+        if (matches.length) return Array.from(new Set(matches));
+        return /^[a-zA-Z0-9_-]{20,}$/.test(text) ? [text] : [];
+    };
+    const api = new Function("PropertiesService","CacheService","Utilities","extractDriveFileIds",auditHelperSource+
+        "\nreturn {cleanupExpiredDriveAuditServerStates_,getDriveAuditServerStateKey_,hashDriveAuditValue_,getDriveAuditCursorFingerprint_,normalizeDriveAuditFileIds_,hashDriveAuditFileIds_,saveDriveAuditServerState_,loadDriveAuditServerState_,getDriveAuditSeenPageCacheKey_,storeDriveAuditSeenPage_,loadDriveAuditSeenIds_,getDuplicateDriveImageRows_,getReplacedImageReconciliationUrl_,buildVerifiedDriveVisualizationUrl_,storeDriveAuditPageResults_,loadDriveAuditUnusedFileIds_,getLatestDriveAuditIdForUser_,validateCompletedDriveAudit_};")(
+            PropertiesService,CacheService,Utilities,extractDriveFileIds);
     return { ...api, properties, cache };
 }
 const AUDIT_ID = "123e4567-e89b-42d3-a456-426614174000";
@@ -478,10 +486,12 @@ check("La limpieza de estados expirados no conserva cursores obsoletos",()=>{
 check("El cursor de auditoría se firma por contenido y rechaza una pila vacía o alterada",()=>{
     const h=auditHarness();
     const cursor={stack:[{folderId:"folder-id-0000000000000001",fileToken:"token-a",filesDone:false}],
-        totalAnalyzed:25,foldersVisited:2,referenceCacheId:AUDIT_ID};
+        totalAnalyzed:25,foldersVisited:2,referenceCacheId:AUDIT_ID,scanVersion:"2.6.1"};
     const fingerprint=h.getDriveAuditCursorFingerprint_(cursor);
     assert.match(fingerprint,/^[a-f0-9]{64}$/);
-    assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,totalAnalyzed:26}));
+    assert.equal(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,totalAnalyzed:26,foldersVisited:99}));
+    assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,stack:[{folderId:"folder-id-0000000000000002",fileToken:"token-b",filesDone:false}]}));
+    assert.notEqual(fingerprint,h.getDriveAuditCursorFingerprint_({...cursor,scanVersion:"2.6.2"}));
     assert.throws(()=>h.getDriveAuditCursorFingerprint_({...cursor,stack:[]}),/Cursor de auditoría inválido/);
 });
 check("El estado de auditoría se conserva en servidor y queda vinculado a su propietario",()=>{
@@ -506,6 +516,28 @@ check("El marcador completo exige todas las páginas y coincide con la lista exa
     assert.throws(()=>h.validateCompletedDriveAudit_(AUDIT_ID,"USR-OTHER",[FILE_A,FILE_B]),/otra sesión/);
     assert.throws(()=>h.validateCompletedDriveAudit_(AUDIT_ID,AUDIT_OWNER,[FILE_A]),/no coincide/);
 });
+check("La deduplicación global del servidor conserva IDs únicos entre páginas y falla si falta una página",()=>{
+    const h=auditHarness();
+    h.storeDriveAuditSeenPage_(AUDIT_ID,0,[FILE_A,FILE_A],[FILE_A]);
+    h.storeDriveAuditSeenPage_(AUDIT_ID,1,[FILE_B,FILE_A],[FILE_B,FILE_A]);
+    assert.deepEqual(h.loadDriveAuditSeenIds_(AUDIT_ID,2),{
+        fileIds:[FILE_A,FILE_B].sort(),folderIds:[FILE_A,FILE_B].sort()
+    });
+    assert.throws(()=>h.loadDriveAuditSeenIds_(AUDIT_ID,3),/Falta una página/);
+});
+check("Los duplicados de Drive en Spreadsheet se separan y ofrecen enlace de reconciliación manual",()=>{
+    const h=auditHarness();
+    const rows=[["id"],["ROW-A","","","","",FILE_A,"",FILE_A],["ROW-B","","","","",FILE_A,"",FILE_A],["ROW-C","","","","",FILE_B,"",FILE_B]];
+    assert.deepEqual(h.getDuplicateDriveImageRows_(rows),[{fileId:FILE_A,rowNumbers:[2,3]}]);
+    const sheet={getRange:(r,c,n,w)=>({getA1Notation:()=>`A${r}:Z${r+n-1}`}),getLastColumn:()=>26,
+        getParent:()=>({getUrl:()=>"https://docs.google.com/spreadsheets/d/test/edit"}),getSheetId:()=>123};
+    assert.match(h.getReplacedImageReconciliationUrl_(sheet,[2,3]),/gid=123&range=A2%3AZ3/);
+});
+check("La URL de miniatura se construye desde un ID válido y no cambia el identificador",()=>{
+    const url=new Function(fnSource(admin,"buildVerifiedDriveVisualizationUrl_")+"\\nreturn buildVerifiedDriveVisualizationUrl_;")();
+    assert.equal(url(FILE_A),"https://lh3.googleusercontent.com/d/"+FILE_A);
+    assert.throws(()=>url("bad-id"),/ID de Drive inválido/);
+});
 check("Una auditoría parcial o una página perdida no puede autorizar el inventario",()=>{
     const h=auditHarness();
     h.saveDriveAuditServerState_({auditId:AUDIT_ID,ownerId:AUDIT_OWNER,status:"running",completedAt:Date.now()});
@@ -519,6 +551,11 @@ check("El inventario y la organización usan la misma auditoría y operación ve
     assert.ok(audit.includes("expectedCursorFingerprint"));
     assert.ok(audit.includes("lastRequestFingerprint"));
     assert.ok(audit.includes("serverCompletionVerified"));
+    assert.ok(audit.includes("storeDriveAuditSeenPage_"));
+    assert.ok(audit.includes("loadDriveAuditSeenIds_"));
+    assert.ok(audit.includes("totalDiscovered"));
+    assert.ok(audit.includes("duplicateFolderCount"));
+    assert.ok(audit.includes("foldersVisited = 1"));
     assert.ok(save.includes("validateCompletedDriveAudit_"));
     assert.ok(save.includes("ultima_operacion_inventario_id"));
     assert.ok(save.includes("resultado_inventario"));
@@ -599,6 +636,13 @@ check("El escaneo y el guardado del inventario no mueven archivos automáticamen
     assert.ok(explicitBlock.includes("confirmed: true"));
     assert.ok(explicitBlock.includes("inventoryOperationId"));
     assert.ok(html.includes('id="btn-audit-drive-organize"'));
+    assert.ok(ui.includes("seenFileIds.has(fileId)"));
+    assert.ok(ui.includes("renderedFileIds.has(fileId)"));
+    assert.ok(ui.includes("getCursorPositionSignature"));
+    assert.ok(ui.includes("audit-service-version"));
+    assert.ok(ui.includes("Miniatura cargada en la sesión autorizada actual"));
+    assert.ok(html.includes("La lista detallada muestra únicamente imágenes"));
+    assert.ok(ui.includes("reconciliationUrl"));
 });
 check("ADMIN exige confirmación y correlación de operación antes de mover imágenes",()=>{
     const save=fnSource(admin,"handleSaveUnusedImagesInventory");
@@ -638,6 +682,10 @@ check("El estado local conserva auditId, inventoryOperationId y los IDs confirma
     assert.ok(saveBlock.includes("inventoryAuditId: String(state.inventoryAuditId || '')"));
     assert.ok(saveBlock.includes("inventoryOperationId: String(state.inventoryOperationId || '')"));
     assert.ok(saveBlock.includes("inventoryConfirmedFileIds: Array.isArray(state.inventoryConfirmedFileIds)"));
+    assert.ok(saveBlock.includes("totalDiscovered: Math.max"));
+    assert.ok(saveBlock.includes("lastScanAt: Math.max"));
+    assert.ok(saveBlock.includes("serviceVersion: String"));
+    assert.ok(saveBlock.includes("duplicateFolderCount: Math.max"));
     assert.ok(saveBlock.includes("Array.from(new Set("));
 });
 

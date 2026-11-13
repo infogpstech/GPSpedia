@@ -578,6 +578,9 @@
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
             Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes». El progreso y los resultados parciales se conservan localmente. La auditoría y el registro no mueven archivos; cualquier traslado requiere una acción explícita y confirmación del Desarrollador.
         </p>
+        <p id="audit-drive-results-scope" style="font-size:0.8em; color:var(--text-disabled); margin-bottom:10px;">
+            El resumen contabiliza todas las categorías del árbol. La lista detallada muestra únicamente imágenes «Histórica» y «Sin uso detectado»; las miniaturas se comprueban al cargarse con la sesión autorizada actual. Los duplicados se omiten y se contabilizan por separado.
+        </p>
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
             <button type="button" id="btn-audit-drive-start" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Iniciar nueva auditoría</button>
             <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-play"></i> Continuar auditoría</button>
