@@ -1161,6 +1161,13 @@ function reconcileRoleRevocationUnderLock_(usersSheet,sessionsSheet,userId) {
   catch(error){return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'No se pudo verificar el nombre completo pendiente: '+error.message};}
   if(persistedName!==marker.newFullName)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:nameWriteError?nameWriteError.message:'No se confirmó el nombre completo pendiente.'};
  }
+ try{SpreadsheetApp.flush();}catch(error){return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'No se pudo confirmar la escritura del rol y el perfil: '+error.message};}
+ const confirmedRole=String(usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Privilegios).getValue()||'').trim();
+ if(confirmedRole!==marker.newRole)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El rol no quedó confirmado después de flush.'};
+ if(Object.prototype.hasOwnProperty.call(marker,'newFullName')){
+  const confirmedName=String(usersSheet.getRange(rows[0].rowIndex,COLS_USERS.Nombre_Completo).getValue()||'');
+  if(confirmedName!==marker.newFullName)return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El nombre completo no quedó confirmado después de flush.'};
+ }
  const latest=usersSheet.getRange(rows[0].rowIndex,COLS_USERS.SessionToken),latestMarker=parseSharedRoleRevocationMarker_(String(latest.getValue()||''));
  if(!latestMarker||latestMarker.invalid||!sameRoleRevocationMarker_(latestMarker,marker))return{pending:true,cleanupPending:true,revokedSessions:revocation.revokedSessions,error:'El marcador compartido cambió antes de completar la revocación.'};
  const deletion=deleteRevokedSessionRowsUnderLock_(sessionsSheet,revocation.rows);

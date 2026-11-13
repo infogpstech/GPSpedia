@@ -70,7 +70,7 @@ function runLastDeveloperProtectionTests(sources) {
         const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','SessionToken','Terms'],['T1','tech','pw','Tecnico','','','Nombre anterior',markerValue,'']];
         const sessions=[['ID','Usuario','Token','Date','Logs','LastActivity'],['T1','tech','token-target',new Date(),'','']];
         const properties=new Map([['role:T1',JSON.stringify(markerData)]]);
-        let failName=true;
+        let failName=true,failCommitFlush=false;
         const usersSheet={
             getDataRange:()=>({getValues:()=>users.map(row=>row.slice())}),
             getRange:(row,col)=>({
@@ -110,11 +110,15 @@ function runLastDeveloperProtectionTests(sources) {
         equal(users[1][3],'Supervisor','El rol no se aplicó; reconcile devolvió: '+JSON.stringify(first));equal(users[1][6],'Nombre anterior');
         assert(String(users[1][7]).startsWith(prefix),'El marcador compartido debe permanecer.');
         equal(sessions[1][2],'','El token debe seguir invalidado aunque falle el perfil.');
+        failCommitFlush=true;
         const second=reconcile(usersSheet,sessionsSheet,'T1');
-        assert(!second.pending,'El reintento debe completar la operación.');
+        assert(second.pending,'Un fallo de flush debe conservar el marcador incluso si el valor parece escrito.');
+        equal(users[1][6],'Nombre nuevo');assert(String(users[1][7]).startsWith(prefix));
+        const third=reconcile(usersSheet,sessionsSheet,'T1');
+        assert(!third.pending,'El segundo reintento debe completar la operación.');
         equal(users[1][6],'Nombre nuevo');equal(users[1][7],'');
         equal(sessions.length,1,'La fila de sesión revocada debe eliminarse tras recuperar.');
-        assert(!properties.has('role:T1'),'El marcador local se elimina solo al confirmar el perfil.');
+        assert(!properties.has('role:T1'),'El marcador local se elimina solo al confirmar el perfil y flush.');
     });
     run('Marcadores compartido y local rechazan metadatos de perfil divergentes',()=>{
         const parse=new Function('normalizeUserId','normalizeRoleName',extract(auth,'parseRoleRevocationMarker_')+'\n'+extract(auth,'sameRoleRevocationMarker_')+'\nreturn {parseRoleRevocationMarker_,sameRoleRevocationMarker_};')(
