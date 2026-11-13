@@ -171,7 +171,7 @@ check("La consulta del esquema no crea ni modifica la hoja cuando no existe",()=
     const api=buildHelpers({spreadsheet});
     const schema=api.getReplacedImagesReadSchema_();
     assert.equal(schema.sheet,null);
-    assert.equal(schema.missingHeaders.length,13);
+    assert.equal(schema.missingHeaders.length,16);
     assert.equal(insertCalls,0);
 });
 
