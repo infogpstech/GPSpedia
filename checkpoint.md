@@ -1656,3 +1656,10 @@ Estado AUG-027: EN PROGRESO. Falta papelera manual para requiere_revision, resta
 
 No se ejecutaron operaciones en Spreadsheet/Drive productivos ni deployments. CI no confirmado; no afirmar PASS hasta obtener un run asociado a esta rama/commit.
 ================================================================================
+
+
+AUG-027 — Resultado CI 2026-11-13
+- Workflow run 43488754071: SUCCESS, commit probado ac504feab1472731720c2a4b14529a0113492a56 (HEAD exacto al ejecutar).
+- Node.js 22.23.4, Ubuntu 26.04; 70 suites, 975 pruebas, 0 fallos de suite.
+- Enlace: https://github.com/infogpstech/GPSpedia/actions/runs/43488754071
+- El resultado no cierra AUG-027: faltan acciones de revisión manual para papelera/restauración/eliminación definitiva y validación Beta de Drive/Spreadsheet. H-AUD-027-011 abierto.
