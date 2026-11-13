@@ -542,7 +542,7 @@ check("La captura reduce automáticamente el lote tras un bloque lento sin omiti
     const result=scan(false);
     assert.equal(result.metrics.rows,501);
     assert.equal(result.metrics.chunks,2);
-    assert.equal(result.metrics.adaptiveChunkChanges,1);
+    assert.equal(result.metrics.adaptiveChunkChanges,2);
     assert.equal(result.metrics.maxChunkElapsedMs,2000);
     assert.equal(result.metrics.smallestAdaptiveRowChunkSize,375);
     assert.equal(result.metrics.finalRowChunkSize,500);
