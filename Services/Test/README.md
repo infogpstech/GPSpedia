@@ -1559,3 +1559,10 @@ El documento de impresión utiliza un SVG vectorial local (viewBox 64 × 48) par
 Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetWarningIndicator.mjs`.
 
 La suite valida el origen del estado, independencia del recurso, proporción, posición, ausencia de dependencias externas y casos activos/inactivos/no especificados. La inspección visual en navegador y PDF queda para Beta.
+
+
+## AUG-142 — Disponibilidad de recursos antes de imprimir
+
+La vista previa marca foto principal, QR, logotipos e imágenes técnicas como recursos opcionales cuando existen en el registro. La preparación espera los eventos load/error con timeout de 8 segundos y la decodificación con límite de 2 segundos. Los recursos fallidos se ocultan y muestran un marcador textual; no se presentan como imágenes cargadas ni se usan para calcular proporciones. El botón de impresión permanece deshabilitado hasta completar la preparación y la paginación de recursos clonados. El evento `beforeprint` no vuelve a calcular dimensiones mientras la preparación no haya terminado.
+
+Ejecutar: `node --experimental-default-type=module Services/Test/PrintSheetResourceReadiness.mjs`.

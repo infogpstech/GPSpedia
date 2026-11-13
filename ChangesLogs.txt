@@ -773,3 +773,12 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Regresión completa: 21 suites, 287/287 PASS, 0 fallos. PrintSheetWarningIndicator: 9/9 PASS.
 - Inspección visual en navegador y PDF reservada a Beta.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-142 — PREPARACIÓN DE RECURSOS DE IMPRESIÓN
+- ui.js: se espera carga y decodificación de foto principal, QR, logos e imágenes técnicas; timeout de carga 8 s y decodificación 2 s.
+- Recursos fallidos/timeout muestran fallback textual y no se usan para medir dimensiones.
+- El botón de impresión se habilita tras preparar recursos y clonar encabezado/pie. beforeprint evita medir mientras no esté listo.
+- Services/Test/PrintSheetResourceReadiness.mjs: nueva suite de 12 verificaciones, integrada en INTEGRATION.
+================================================================================

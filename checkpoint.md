@@ -843,3 +843,12 @@ ADENDA DE CIERRE — AUG-141 — 2026-11-13
 - CI run 43416162004 SUCCESS; 21 suites, 287/287 PASS; PrintSheetWarningIndicator 9/9 PASS en Node.js 22.23.4.
 - SVG local Check Engine, proporción preservada, aviso después de imagen y estado exacto activaTestigoN===true. No se añadió campo no aprobado a la hoja ni dependencia Font Awesome.
 - AUG-141: COMPLETADA CON VALIDACIÓN DIFERIDA. Visualización en navegador/PDF pendiente de Beta.
+
+
+================================================================================
+CHECKPOINT DE PROGRESO — AUG-142 — 2026-11-13
+HEAD de inicio: 7e505fb7518153365448ba3a43b35c575fdbdad3
+Implementación en ui.js: espera acotada de carga/decodificación para foto principal, QR, logotipos e imágenes técnicas; fallback visible para errores; filtro de imágenes válidas para medición; botón de impresión deshabilitado hasta estado listo; beforeprint protegido y espera de recursos clonados tras paginación.
+Nueva suite: Services/Test/PrintSheetResourceReadiness.mjs (12 contratos y node --check), integrada en INTEGRATION.
+Estado: EN PROGRESO hasta CI y revisión del resultado.
+================================================================================

@@ -387,7 +387,7 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 - **Origen:** H-AUD-021-003. **Prioridad:** Media.
 - **Problema:** la espera cubre únicamente imágenes de tarjetas técnicas; foto principal, QR y logos quedan fuera; imagen completa con naturalWidth=0 se trata como resuelta y no hay fallback explícito.
 - **Criterios:** esperar carga/decodificación de todos los recursos obligatorios; distinguir error de ausencia opcional; proporcionar fallback visible; evitar que beforeprint calcule con dimensiones desconocidas; espera acotada y estado listo; probar lentitud, error, URL inválida y offline.
-- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+- **Estado:** EN PROGRESO; espera acotada, fallback y compuerta de impresión implementados; CI pendiente.
 
 ### AUG-143 — Hacer la paginación consciente de altura real y preservar orden/prioridad
 - **Origen:** H-AUD-021-004 y H-AUD-021-005. **Prioridad:** Media.

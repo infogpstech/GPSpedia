@@ -77,6 +77,7 @@ runGroup('37','USERS',()=>{
  recordResult('USERS fixture/paridad',{passed:1,failed:0,total:1});
 });
 runGroup('38','INTEGRATION',()=>{
+  runCli('AUG-142 disponibilidad y decodificación de recursos de impresión','Services/Test/PrintSheetResourceReadiness.mjs');
   runCli('AUG-141 indicador Check Engine y aviso de testigo','Services/Test/PrintSheetWarningIndicator.mjs');
   runCli('AUG-140 contrato de márgenes y paginación Carta','Services/Test/PrintSheetPageContract.mjs');
   runCli('AUG-139 política anti-debugging, zoom y autorización backend','Services/Test/AntiDebuggingPolicy.mjs');

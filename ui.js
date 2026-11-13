@@ -10609,7 +10609,7 @@ export function exportVehiclePrintSheet(item) {
 
     // 5. HTML de imagen principal del vehículo
     const vehiculoImgHtml = item.imagenVehiculo ? `
-        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" data-print-resource="optional" /><span class="print-image-fallback" hidden></span></div>
     ` : '';
 
     // 6. Apertura de puertas
@@ -10683,7 +10683,7 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">${entry.infoHtml}</div>
                 ${safeImg ? `
                 <div class="tech-item-img-wrapper">
-                    <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" />
+                    <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" data-print-resource="optional" /><span class="print-image-fallback" hidden></span>
                 </div>` : ''}
                 ${entry.testigoHtml || ''}
             </div>
@@ -10709,7 +10709,7 @@ export function exportVehiclePrintSheet(item) {
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(directVideoUrl)}`;
         qrHtml = `
             <div class="qr-video-box">
-                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" />
+                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" data-print-resource="optional" /><span class="print-image-fallback" hidden></span>
                 <span class="qr-label">Vídeo Guía de Desarme</span>
             </div>
         `;
@@ -10867,6 +10867,17 @@ export function exportVehiclePrintSheet(item) {
                     margin-top: 4px;
                     text-align: center;
                 }
+                .print-image-fallback:not([hidden]) {
+                    display: block;
+                    padding: 6px 8px;
+                    border: 1px dashed #b0b0b0;
+                    border-radius: 3px;
+                    color: #666;
+                    background: #f7f7f7;
+                    font-size: 10px;
+                    text-align: center;
+                }
+                #print-resource-status { font-size: 10px; color: #fff; margin: 0 8px; }
                 /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
                     font-size: 11.5px;
@@ -11260,7 +11271,8 @@ export function exportVehiclePrintSheet(item) {
                     <option value="vertical">Imagen debajo del texto</option>
                     <option value="image-focus">Imagen ampliada</option>
                 </select>
-                <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                <span id="print-resource-status" role="status" aria-live="polite">Preparando recursos para impresión…</span>
+                <button id="print-action" type="button" disabled style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
                     Imprimir / Guardar PDF
                 </button>
             </div>
@@ -11271,7 +11283,7 @@ export function exportVehiclePrintSheet(item) {
                     <div class="header-container">
                         <div class="header-brand-wrap">
                             <span class="header-logo-title">GPSpedia</span>
-                            <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
+                            <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" data-print-resource="optional" />
                             <span class="header-doc-type">| Ficha técnica</span>
                         </div>
                         <div class="vehicle-title">${title}</div>
@@ -11314,7 +11326,7 @@ export function exportVehiclePrintSheet(item) {
 
                 <div class="footer-bar">
                     <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
-                    <img src="tracklink_logo.png" alt="Logo de TRACKLINK" class="print-tracklink-logo" />
+                    <img src="tracklink_logo.png" alt="Logo de TRACKLINK" class="print-tracklink-logo" data-print-resource="optional" />
                     <span>Ficha técnica de consulta técnica especializada</span>
                 </div>
             </div>
@@ -11336,7 +11348,10 @@ export function exportVehiclePrintSheet(item) {
         const sectionHeaderTemplate = firstPageTemplate.querySelector('.section-header');
         const footerTemplate = firstPageTemplate.querySelector('.footer-bar');
 
-        const getImage = card => card.querySelector('.tech-detail-img');
+        const getImage = card => {
+            const image = card.querySelector('.tech-detail-img');
+            return image && image.dataset.printResourceStatus === 'loaded' ? image : null;
+        };
         const getDimensions = card => {
             const img = getImage(card);
             const width = img && img.naturalWidth > 0 ? img.naturalWidth : 0;
@@ -11484,18 +11499,98 @@ export function exportVehiclePrintSheet(item) {
         const layoutSelector = printDocument.getElementById('print-layout-mode');
         if (layoutSelector) layoutSelector.addEventListener('change', () => {
             printDocument.body.dataset.printLayout = layoutSelector.value;
-            arrangeTechnicalCards();
+            if (printResourcesReady) arrangeTechnicalCards();
         });
 
-        const printImages = allTechnicalCards.map(getImage).filter(Boolean);
-        Promise.all(printImages.map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise(resolve => {
-                img.addEventListener('load', resolve, { once: true });
-                img.addEventListener('error', resolve, { once: true });
+        const resourceStatus = printDocument.getElementById('print-resource-status');
+        const printButton = printDocument.getElementById('print-action');
+        let printResourcesReady = false;
+        let printResourcesPromise = null;
+
+        const showResourceFallback = img => {
+            img.hidden = true;
+            if (img.classList.contains('header-project-logo')) return;
+            const parent = img.parentElement;
+            if (!parent) return;
+            let fallback = parent.querySelector(':scope > .print-image-fallback');
+            if (!fallback) {
+                fallback = printDocument.createElement('span');
+                fallback.className = 'print-image-fallback';
+                parent.appendChild(fallback);
+            }
+            fallback.textContent = img.alt ? img.alt + ' no disponible' : 'Imagen no disponible';
+            fallback.hidden = false;
+        };
+
+        const waitForImage = img => new Promise(resolve => {
+            let settled = false;
+            let loadTimer = null;
+            const finish = async status => {
+                if (settled) return;
+                settled = true;
+                if (loadTimer !== null) clearTimeout(loadTimer);
+                img.removeEventListener('load', onLoad);
+                img.removeEventListener('error', onError);
+                if (status === 'loaded' && typeof img.decode === 'function') {
+                    const decoded = await Promise.race([
+                        img.decode().then(() => true, () => false),
+                        new Promise(done => setTimeout(() => done(false), 2000))
+                    ]);
+                    if (!decoded && img.naturalWidth <= 0) status = 'error';
+                    else if (!decoded) status = 'decode-timeout';
+                }
+                img.dataset.printResourceStatus = status;
+                if (status !== 'loaded') showResourceFallback(img);
+                resolve(status);
+            };
+            const onLoad = () => finish('loaded');
+            const onError = () => finish('error');
+            if (img.complete) {
+                finish(img.naturalWidth > 0 ? 'loaded' : 'error');
+                return;
+            }
+            img.addEventListener('load', onLoad, { once: true });
+            img.addEventListener('error', onError, { once: true });
+            loadTimer = setTimeout(() => finish('timeout'), 8000);
+        });
+
+        const preparePrintResources = () => {
+            if (printResourcesPromise) return printResourcesPromise;
+            printResourcesPromise = (async () => {
+                resourceStatus.textContent = 'Cargando y decodificando imágenes…';
+                const initialImages = Array.from(printDocument.querySelectorAll('img[data-print-resource]'));
+                const initialResults = await Promise.all(initialImages.map(waitForImage));
+                arrangeTechnicalCards();
+                // La paginación clona encabezado y pie; esperar también esos nodos nuevos antes de habilitar imprimir.
+                const allImagesAfterPagination = Array.from(printDocument.querySelectorAll('img[data-print-resource]'));
+                const cloneResults = await Promise.all(allImagesAfterPagination.map(waitForImage));
+                const results = [...initialResults, ...cloneResults];
+                const unavailable = results.filter(status => status !== 'loaded').length;
+                printResourcesReady = true;
+                printDocument.body.dataset.printReady = 'true';
+                resourceStatus.textContent = unavailable
+                    ? unavailable + ' recurso(s) no disponible(s); se muestran marcadores de respaldo.'
+                    : 'Recursos listos para imprimir.';
+                printButton.disabled = false;
+            })().catch(error => {
+                resourceStatus.textContent = 'No se pudo preparar la ficha para imprimir. Recarga la vista previa.';
+                printDocument.body.dataset.printReady = 'false';
+                throw error;
             });
-        })).then(arrangeTechnicalCards);
-        printWindow.addEventListener('beforeprint', arrangeTechnicalCards);
+            return printResourcesPromise;
+        };
+
+        printButton.addEventListener('click', () => {
+            if (printResourcesReady) printWindow.print();
+        });
+        printWindow.addEventListener('beforeprint', () => {
+            if (!printResourcesReady) {
+                resourceStatus.textContent = 'La ficha aún prepara imágenes; espera a que indique que está lista.';
+                return;
+            }
+            arrangeTechnicalCards();
+        });
+        preparePrintResources();
     }
 }
 
