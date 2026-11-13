@@ -2735,7 +2735,7 @@ function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue) {
     }
     return serializeVinCollection(collection);
 }
-function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage) {
+function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage, expectedCurrentValue, enforceExpectedCurrentValue) {
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo obtener el bloqueo para editar la colección VIN. Intenta nuevamente."); }
     try {
@@ -2748,6 +2748,7 @@ function handleUpdateVehicleVinCollection_(vehicleId, rawValue, logMessage) {
         const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
         const serialized = prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue);
         const previousValue = sheet.getRange(actualRow, vinColumnIndex).getValue();
+        if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue, "vin");
         let attempted = false;
         try {
             attempted = true;
@@ -2865,7 +2866,7 @@ function handleUpdateVehicleField(payload, logMessage) {
     if (!isAdminModalEditField_(fieldName) || fieldName === "id" || fieldName === "timestamp" || fieldName === "contadorBusqueda") {
         throw new Error("El campo '" + fieldName + "' no forma parte de la edición permitida del modal de detalle.");
     }
-    if (fieldName === "vin") return handleUpdateVehicleVinCollection_(cleanVehicleId, value, logMessage);
+    if (fieldName === "vin") return handleUpdateVehicleVinCollection_(cleanVehicleId, value, logMessage, expectedCurrentValue, enforceExpectedCurrentValue === true);
     if (!Object.prototype.hasOwnProperty.call(COLS_CORTES, fieldName) || COLS_CORTES[fieldName] <= COLS_CORTES.id) {
         throw new Error("El campo '" + fieldName + "' no corresponde a una columna editable del catálogo.");
     }
@@ -2881,7 +2882,7 @@ function handleUpdateVehicleField(payload, logMessage) {
         const valueToStore = validateAdminModalFieldValue_(sheet, fieldName, value, rowValues);
         const target = sheet.getRange(actualRow, colIndex);
         const previousValue = target.getValue();
-        if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue);
+        if (enforceExpectedCurrentValue === true) assertAdminModalExpectedValue_(previousValue, expectedCurrentValue, fieldName);
         try {
             target.setValue(valueToStore);
             SpreadsheetApp.flush();
@@ -3033,9 +3034,9 @@ function findReplacedImageRecordById(sheet, replacementId) {
     return { rowIndex: rowIndex, values: sheet.getRange(rowIndex, 1, 1, 11).getValues()[0] };
 }
 
-function assertAdminModalExpectedValue_(actualValue, expectedValue) {
-    const actual = String(actualValue == null ? "" : actualValue);
-    const expected = String(expectedValue == null ? "" : expectedValue);
+function assertAdminModalExpectedValue_(actualValue, expectedValue, fieldName) {
+    const actual = fieldName === "vin" ? JSON.stringify(parseVinCollectionForAdmin(actualValue)) : String(actualValue == null ? "" : actualValue);
+    const expected = fieldName === "vin" ? JSON.stringify(parseVinCollectionForAdmin(expectedValue)) : String(expectedValue == null ? "" : expectedValue);
     if (actual !== expected) {
         throw new Error("El campo cambió desde la última lectura del catálogo; no se sobrescribió una modificación concurrente.");
     }
@@ -3066,8 +3067,37 @@ function updateAdminImageReplacementHistoryStatus_(historySheet, rowIndex, statu
     return true;
 }
 
+function markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl, reason, logMessage, file, contentHash) {
+    let detail = String(reason || "La operación requiere revisión manual.");
+    if (operationSheet && operationRecord) {
+        try {
+            operationRecord.values[9] = "requires_review";
+            operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+            saveAdminImageUploadOperation(operationSheet, operationRecord);
+        } catch (ledgerError) {
+            detail += " No se pudo confirmar requires_review en el ledger: " + ledgerError.message + ".";
+        }
+    }
+    if (originalUrl) {
+        try {
+            const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+            const existingHistory = historySheet && findReplacedImageRecordById(historySheet, "REP-" + operationId);
+            if (existingHistory) updateAdminImageReplacementHistoryStatus_(historySheet, existingHistory.rowIndex, "requiere_revision");
+        } catch (historyError) {
+            detail += " No se pudo confirmar requires_review en el historial: " + historyError.message + ".";
+        }
+    }
+    if (file && contentHash) {
+        try { updateAdminImageUploadFileState_(file, operationId, contentHash, "requires_review", false); }
+        catch (fileError) { detail += " No se pudo marcar el archivo Drive para revisión: " + fileError.message + "."; }
+    }
+    if (typeof logMessage === "function") logMessage("Edición In-Modal", detail, 0, 0, true, true);
+    return { status: "error", operationStatus: "requires_review", imageUrl: "", currentImageUrl: "",
+        message: detail };
+}
+
 function updateAdminImageUploadFileState_(file, operationId, contentHash, state, trashAfter) {
-    if (!file || !["cancelled", "requires_review"].includes(state)) {
+    if (!file || !["linked", "cancelled", "requires_review"].includes(state) || (trashAfter === true && state !== "cancelled")) {
         throw new Error("No se pudo identificar el archivo Drive de la compensación.");
     }
     const expectedDescription = buildAdminImageUploadDescription(operationId, contentHash, state);
@@ -3271,44 +3301,59 @@ function handleUploadAdminImage(payload, logMessage) {
             if (!["pending", "linked", "cancelled", "requires_review"].includes(status)) {
                 throw new Error("El estado guardado del intento no es compatible; requiere revisión.");
             }
+            if (status === "cancelled" || status === "requires_review") {
+                return {
+                    status: "error", operationStatus: status, imageUrl: newImageUrl, currentImageUrl: currentUrl,
+                    message: status === "cancelled"
+                        ? "El intento ya fue cancelado y es terminal. Inicia un reemplazo nuevo si deseas volver a cargar la imagen."
+                        : "El intento requiere revisión manual; no se reactivó ni se modificó su archivo."
+                };
+            }
             if (status === "linked") {
                 if (!newImageUrl) throw new Error("La operación figura vinculada, pero no contiene una URL nueva verificable.");
                 const latestLinkedUrl = String(activeCell.getValue() || "").trim();
                 if (latestLinkedUrl === newImageUrl) {
                     const linkedFileId = String(values[5] || extractDriveFileId(newImageUrl) || "");
                     if (!linkedFileId) throw new Error("La operación figura vinculada, pero no contiene un ID de archivo verificable.");
-                    newFile = DriveApp.getFileById(linkedFileId);
+                    try { newFile = DriveApp.getFileById(linkedFileId); }
+                    catch (fileLookupError) {
+                        return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
+                            "El archivo de una operación vinculada ya no está disponible en Drive. No se modificó la referencia activa.",
+                            logMessage, null, contentHash);
+                    }
                     if (newFile.isTrashed()) {
-                        const reviewReason = "El archivo de una operación ya vinculada fue enviado a papelera posteriormente. No se reactivó automáticamente para respetar la eliminación y conservar la evidencia.";
-                        operationRecord.values[9] = "requires_review";
-                        operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
-                        try { saveAdminImageUploadOperation(operationSheet, operationRecord); }
-                        catch (ledgerError) { logMessage("Edición In-Modal", "No se pudo persistir requires_review para " + operationId + ": " + ledgerError.message, 0, 0, true, true); }
-                        if (originalUrl) {
-                            try {
-                                const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-                                const existingHistory = historySheet && findReplacedImageRecordById(historySheet, "REP-" + operationId);
-                                if (existingHistory) updateAdminImageReplacementHistoryStatus_(historySheet, existingHistory.rowIndex, "requiere_revision");
-                            } catch (historyError) {
-                                logMessage("Edición In-Modal", "No se pudo marcar el historial para revisión: " + historyError.message, 0, 0, true, true);
-                            }
-                        }
-                        logMessage("Edición In-Modal", reviewReason, 0, 0, true, true);
-                        return { status: "error", operationStatus: "requires_review", imageUrl: newImageUrl,
-                            currentImageUrl: latestLinkedUrl, message: reviewReason };
+                        return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
+                            "El archivo de una operación ya vinculada fue enviado a papelera posteriormente. No se reactivó automáticamente ni se modificó la referencia activa.",
+                            logMessage, newFile, contentHash);
                     }
-                    verifyAdminImageUploadFile(newFile, actualMimeType, contentHash);
+                    try { verifyAdminImageUploadFile(newFile, actualMimeType, contentHash); }
+                    catch (integrityError) {
+                        return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
+                            "El archivo de una operación vinculada no superó la verificación de integridad. No se modificó la referencia activa: " + integrityError.message,
+                            logMessage, newFile, contentHash);
+                    }
                     if (originalUrl) {
-                        historyRecord = recordReplacedImage({
-                            tipoContenido: "vehiculo", registroId: vehicleId, campo: fieldName,
-                            imagenAnteriorUrl: originalUrl, sustituidaPorUrl: newImageUrl,
-                            nombreVehiculo: String(rowValues[COLS_CORTES.marca - 1] || "") + " " +
-                                String(rowValues[COLS_CORTES.modelo - 1] || "") + " (" +
-                                String(rowValues[COLS_CORTES.anoDesde - 1] || "") + ")",
-                            operationId: operationId
-                        });
+                        try {
+                            historyRecord = recordReplacedImage({
+                                tipoContenido: "vehiculo", registroId: vehicleId, campo: fieldName,
+                                imagenAnteriorUrl: originalUrl, sustituidaPorUrl: newImageUrl,
+                                nombreVehiculo: String(rowValues[COLS_CORTES.marca - 1] || "") + " " +
+                                    String(rowValues[COLS_CORTES.modelo - 1] || "") + " (" +
+                                    String(rowValues[COLS_CORTES.anoDesde - 1] || "") + ")",
+                                operationId: operationId
+                            });
+                        } catch (historyError) {
+                            return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
+                                "No se pudo recuperar el registro histórico de una operación ya vinculada. No se modificó la referencia activa: " + historyError.message,
+                                logMessage, newFile, contentHash);
+                        }
                     }
-                    newFile.setDescription(buildAdminImageUploadDescription(operationId, contentHash, "linked"));
+                    try { updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false); }
+                    catch (descriptionError) {
+                        return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
+                            "No se pudo verificar el estado del archivo de una operación ya vinculada: " + descriptionError.message,
+                            logMessage, newFile, contentHash);
+                    }
                     return {
                         status: "success", imageUrl: newImageUrl, currentImageUrl: latestLinkedUrl,
                         message: "El reemplazo ya estaba completado; se recuperó la confirmación."
@@ -3357,11 +3402,9 @@ function handleUploadAdminImage(payload, logMessage) {
         }
 
         if (newFile.isTrashed()) {
-            if (["pending", "cancelled", "requires_review"].includes(operationStatus) || currentUrl === newImageUrl) {
-                newFile.setTrashed(false);
-            } else {
-                throw new Error("El archivo de esta operación está en la papelera y no se puede reactivar automáticamente.");
-            }
+            return markAdminImageUploadRequiresReview_(operationSheet, operationRecord, operationId, originalUrl,
+                "El archivo asociado al intento está en papelera. No se reactivó automáticamente; requiere revisión manual.",
+                logMessage, newFile, contentHash);
         }
         verifyAdminImageUploadFile(newFile, actualMimeType, contentHash);
 
@@ -3410,7 +3453,7 @@ function handleUploadAdminImage(payload, logMessage) {
         }
 
         if (newFile.getName() !== newFilename) newFile.setName(newFilename);
-        newFile.setDescription(buildAdminImageUploadDescription(operationId, contentHash, "linked"));
+        updateAdminImageUploadFileState_(newFile, operationId, contentHash, "linked", false);
 
         operationRecord.values[9] = "linked";
         operationRecord.values[11] = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
