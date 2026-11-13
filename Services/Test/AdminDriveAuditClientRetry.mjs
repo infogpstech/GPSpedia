@@ -11,13 +11,13 @@ function functionSource(source, declaration, nextMarker) {
     if (start < 0) throw new Error("No se encontró " + declaration);
     const end = source.indexOf(nextMarker, start + declaration.length);
     if (end < 0) throw new Error("No se encontró el límite de " + declaration);
-    return source.slice(start, end).replace(/^export\\s+/, "");
+    return source.slice(start, end).replace(/^export\s+/, "");
 }
 
 const helperSource = functionSource(
     apiConfig,
     "export async function routeActionWithRetry(",
-    "\\n\\n// 3. FUNCIONES DE CONVENIENCIA"
+    "\n\n// 3. FUNCIONES DE CONVENIENCIA"
 );
 const controllers = [];
 class FakeAbortController {
@@ -29,7 +29,7 @@ class FakeAbortController {
 }
 function createRunner(routeAction, options = {}) {
     return new Function("routeAction", "AbortController", "setTimeout", "clearTimeout",
-        helperSource + "\\nreturn routeActionWithRetry;")(
+        helperSource + "\nreturn routeActionWithRetry;")(
         routeAction, FakeAbortController,
         options.setTimeout || ((callback, delay) => ({ callback, delay })),
         options.clearTimeout || (() => {})
