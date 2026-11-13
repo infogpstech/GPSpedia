@@ -638,3 +638,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Services/Test/VideoApprovalPublishing.js: se añadió regresión para confirmar adquisición/liberación del mismo lock en aprobación y rechazo; batería 28/28 PASS.
 - Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md: instrucciones, estado y validaciones Beta documentados.
 ================================================================================
+
+
+================================================================================
+2026-11-12 — AUG-132 — VALIDACIÓN ESTRICTA DEL VIN
+- Services/write.js: extractVinPrefix ahora rechaza caracteres fuera de letras ASCII, números, espacios y guiones antes de normalizar; el payload addOrUpdateCut reutiliza el validador en vez de eliminar caracteres inválidos silenciosamente.
+- Services/admin.js: extractVinPrefixForAdmin aplica el mismo contrato de entrada, longitud normalizada 6–18 y extracción del prefijo excluyendo los últimos cinco caracteres seriales.
+- Services/Test/VinAuthoritativeValidation.js: casos negativos para símbolos, guion bajo y caracteres acentuados; normalización permitida y dependencia de resolución de fila ADMIN en el harness.
+- Resultado de suite local: 12/12 PASS. Parsing V8 de WRITE, ADMIN y suite PASS.
+- Services/Test/README.md, Tareas_pendientes_parte2.txt, lista_beta.txt y checkpoint.md actualizados. Validación navegador/Apps Script/Spreadsheet aislados diferida a Beta.
+================================================================================
