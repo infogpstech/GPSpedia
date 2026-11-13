@@ -302,9 +302,13 @@ Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ej
 
 ### AUG-135 — Reconciliar política de publicación de microservicios y README
 - Origen: H-AUD-019-014. Prioridad: Media.
-- Evidencia: README.md:102–105; árbol de GPSpedia2.2.5_work contiene Services/Auth.js, catalog.js, feedback.js, write.js, admin.js, users.js y Utilities.js.
-- Criterios: decidir visibilidad de fuentes; retirar fuentes y revisar historial si deben ser privadas, o documentar su publicación y separar configuración; verificar ACL de Spreadsheet/Drive y deployments.
-- Estado: NUEVA; decisión, implementación y revisión de exposición pendientes.
+- Evidencia: README.md y árbol del repositorio; API de GitHub confirma `private:false` para `infogpstech/GPSpedia`.
+- Decisión operativa: el repositorio permanece público durante este ciclo y las fuentes de `Services/` versionadas son públicamente accesibles. No se cambió la visibilidad del repositorio, no se retiraron fuentes ni se reescribió el historial.
+- Decisión sobre recursos de prueba: por instrucción del usuario, los IDs de Spreadsheet y carpeta de Drive permanecen en sus ubicaciones actuales. Corresponden a recursos de prueba de GPSpedia; no se movieron ni sustituyeron.
+- YouTube: no se encontró una API key permanente en `youtubeUpload.js`. FEEDBACK obtiene OAuth en Apps Script mediante `ScriptApp.getOAuthToken()` e inicia una URL Resumable de YouTube. El frontend conserva esa URL temporal en IndexedDB para reanudación y elimina el registro al completar o descartar; cerrar el modal pausa y conserva la operación. No se expone el token OAuth en el frontend.
+- README actualizado para describir la visibilidad real del repositorio, separar fuentes de deployments y documentar el flujo OAuth/URL Resumable. No se añadieron interpretaciones legales.
+- Límite de verificación: no hay conector disponible en esta sesión para inspeccionar ACL reales de Google Drive/Spreadsheet ni deployments de Apps Script. No se afirma que hayan sido verificados; quedan en Beta.
+- Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (documentación y revisión estática).
 
 ## Hallazgos derivados de AUD-T-020 — 2026-11-08
 

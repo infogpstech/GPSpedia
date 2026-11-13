@@ -676,3 +676,28 @@ Cierre AUG-134:
 - No se modificó la rama base ni se contactaron servicios productivos.
 - Siguiente tarea en backlog: AUG-135.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT DE CIERRE — AUG-135 — 2026-11-13
+Repositorio: infogpstech/GPSpedia.
+Rama de trabajo: GPSpedia2.2.5_work. Rama base: GPSpedia2.2.5.
+HEAD de inicio verificado: ad421e1273a47ad60c559bd78df90ea53c9bf38a.
+Estado: COMPLETADA CON VALIDACIÓN DIFERIDA (documentación y revisión estática).
+
+Hallazgos y decisiones:
+- GitHub API confirma que el repositorio tiene visibilidad pública; las fuentes Services versionadas son accesibles desde GitHub. No se modificó la visibilidad del repositorio ni se retiraron fuentes/revisó historial mediante reescritura.
+- Por instrucción del usuario, los IDs de Spreadsheet y carpeta Drive de prueba permanecen en sus ubicaciones actuales. No se reemplazaron ni movieron.
+- YouTube no utiliza una API key permanente en youtubeUpload.js. FEEDBACK genera la sesión con ScriptApp.getOAuthToken() en Apps Script y entrega al cliente la URL Resumable; la transferencia va directamente a YouTube.
+- La URL temporal queda en IndexedDB para reanudación. La finalización y el descarte explícito limpian el registro; cerrar el modal pausa y conserva el estado.
+- README actualizado para reflejar visibilidad pública, separación entre fuentes y deployments, IDs de prueba conservados y arquitectura de subida YouTube. No se realizaron ajustes legales.
+
+Validación y límites:
+- Inspección estática de README.md, youtubeUpload.js y Services/feedback.js; el flujo confirma OAuth server-side y URL Resumable client-side.
+- No se modificaron código funcional, IDs, endpoints, deployments ni datos.
+- ACL reales de Spreadsheet/Drive y estado de deployments Apps Script no pudieron verificarse desde las herramientas disponibles; quedan para Beta aislada. Tampoco se afirma una auditoría exhaustiva del historial Git para secretos.
+- No se ejecutó regresión funcional porque el cambio fue documental.
+
+Archivos: README.md, Tareas_pendientes_parte2.txt, ChangesLogs.txt y checkpoint.md.
+Siguiente tarea: AUG-136 — Unificar utilidades compartidas de Drive, nomenclatura e imágenes.
+================================================================================

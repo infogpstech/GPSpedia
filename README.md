@@ -100,13 +100,21 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ---
 
-## 5. Seguridad y Exclusión de Microservicios
+## 5. Visibilidad de fuentes y separación de servicios
 
-Durante la fase de implementación y corrección, las ramas de trabajo pueden contener temporalmente fuentes de los servicios backend dentro de `Services/`. Estos archivos forman parte del entorno de desarrollo y revisión; su presencia no significa que sus deployments o endpoints hayan sido creados, modificados o publicados desde este repositorio.
+El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. Por lo tanto, todos los archivos versionados en la rama publicada, incluidas las fuentes que se encuentren dentro de `Services/`, son accesibles para quienes puedan consultar el repositorio. Las fuentes backend se mantienen aquí para desarrollo, revisión y pruebas; su presencia no demuestra que un deployment o endpoint haya sido creado, actualizado o publicado desde GitHub.
 
-Al finalizar las implementaciones y correcciones, las fuentes temporales de `Services/` deberán eliminarse del repositorio como parte del saneamiento previo al cierre y a la entrega. La versión final del repositorio no debe conservar esos archivos de implementación.
+La visibilidad del repositorio y la ejecución de los microservicios son aspectos distintos. Los deployments, endpoints, permisos de Google y datos de Spreadsheet/Drive se administran en sus plataformas respectivas. No se debe inferir su estado ni sus permisos a partir del código versionado.
 
-Los deployments y endpoints operativos son recursos independientes: se administran y verifican en sus respectivas plataformas y su estado no se deduce de la presencia o ausencia de archivos fuente en GitHub. La configuración de integración del frontend debe apuntar únicamente a los endpoints autorizados.
+Los identificadores de la Spreadsheet y de la carpeta de Drive de pruebas se conservan en sus ubicaciones actuales dentro de los servicios, según la decisión del proyecto. Son referencias a recursos de prueba de GPSpedia; no se trasladan ni se sustituyen en esta tarea. Su acceso efectivo depende de los permisos configurados en Google, que deben verificarse en el entorno correspondiente. No se incluyen en el frontend como mecanismo de autorización.
+
+### Integración de subida de vídeos a YouTube
+
+El frontend no necesita ni contiene una API key permanente de YouTube para iniciar la carga. El servicio FEEDBACK obtiene en el servidor el token OAuth de ejecución mediante `ScriptApp.getOAuthToken()`, solicita a YouTube una sesión Resumable y devuelve al navegador la URL de esa sesión. La transferencia binaria se realiza directamente entre el navegador y YouTube; el token OAuth permanece en Apps Script.
+
+La URL Resumable funciona como una capacidad temporal de transferencia y debe tratarse como un dato sensible mientras exista. El cliente la conserva en IndexedDB junto con el registro local de la operación para permitir reanudar una carga interrumpida. Al completar la solicitud de aprobación o descartar explícitamente la operación, el cliente elimina el registro local y su URL. Cerrar el modal durante una carga equivale actualmente a **pausar y conservar** el progreso; no equivale a descartar la sesión. Esta distinción debe mantenerse clara en la interfaz. La limpieza de sesiones locales abandonadas y un vencimiento local explícito deben verificarse antes de Beta.
+
+No se deben trasladar el token OAuth ni la URL Resumable a archivos estáticos, configuración pública, logs o respuestas distintas de la inicialización autorizada. Tampoco se debe crear una API key de frontend como sustituto del flujo OAuth ya implementado.
 
 ---
 ## 6. Novedades y Actualizaciones (v2.2.5)

@@ -685,3 +685,13 @@ Archivos: Services/feedback.js; ui.js; Services/Test/ReportSuggestionSchemaValid
 - Desglose: WRITE 47/47; ADMIN 27/27; FEEDBACK 43/43; CATALOG 23/23; UTILITIES 15/15; AUTH 25/25; USERS 15/15; integración transversal 32/32 más contrato AUG-134 12/12.
 - No se accedió a deployments, endpoints ni datos productivos. La validación Beta real permanece separada y no bloquea el cierre de esta prueba estática automatizada.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — AUG-135 — POLÍTICA DE PUBLICACIÓN Y CONFIGURACIÓN DE SERVICIOS
+- README.md: documenta que el repositorio GitHub es público y que las fuentes Services versionadas son accesibles; distingue fuentes, deployments, endpoints y permisos externos.
+- README.md: registra la decisión de conservar en su ubicación actual los IDs de Spreadsheet y Drive de prueba de GPSpedia.
+- README.md: documenta el flujo YouTube existente: OAuth mediante ScriptApp.getOAuthToken() en FEEDBACK, sesión Resumable temporal y transferencia directa desde el navegador; aclara persistencia IndexedDB para reanudación y limpieza al completar/descartar.
+- No se modificaron IDs, API_ENDPOINTS, endpoints, deployments, ACL ni datos. No se retiraron fuentes ni se reescribió historial.
+- La inspección estática no encontró API key permanente en youtubeUpload.js; el token OAuth se obtiene en Apps Script. La revisión de ACL Google y deployments reales queda pendiente de Beta por falta de acceso a esas plataformas.
+================================================================================

@@ -2131,3 +2131,11 @@ Después del preflight:
 7. Guardar evidencia sanitizada, SHA exacto probado y resultados por servicio. No registrar tokens, contraseñas, URLs operativas ni datos personales.
 No usar deployments, hojas, carpetas Drive ni datos productivos. Las suites locales 238/238 PASS no sustituyen estas pruebas reales.
 ================================================================================
+
+
+### AUG-135 — Verificación externa de permisos y ciclo de sesión YouTube
+- Confirmar ACL de la Spreadsheet de prueba de GPSpedia: cuentas/roles con acceso, acceso externo y permisos heredados. No modificar permisos sin autorización del propietario.
+- Confirmar ACL de la carpeta Drive de prueba: propietarios, editores, lectores, herencia y enlaces compartidos. No cambiar permisos como parte de la comprobación.
+- Inventariar deployments Apps Script por servicio, versión desplegada, propietario y URL configurada; comparar con los endpoints autorizados en api-config.js sin invocar ni modificar producción.
+- Validar en entorno de prueba el OAuth de YouTube desde FEEDBACK y la sesión Resumable. Confirmar que el token OAuth nunca llega al navegador; la URL temporal solo se entrega tras validar sesión y destino.
+- Verificar IndexedDB: persistencia necesaria para reanudar, limpieza tras completar/descartar y política de expiración para sesiones abandonadas. Cerrar el modal debe seguir siendo una pausa recuperable; el descarte explícito debe eliminar el registro local. No confundir la eliminación local con la revocación inmediata de una sesión ya creada en YouTube.
