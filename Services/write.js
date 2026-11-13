@@ -174,16 +174,14 @@ function getAuthenticatedCollaborator(payload, allowedRoles){
 // ============================================================================
 
 function doGet(e) {
-    if (e.parameter.debug === 'true') {
+    if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Write',
             version: '2.3.1',
-            spreadsheetId: SPREADSHEET_ID,
-            driveFolderId: DRIVE_FOLDER_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES]
+            status: 'available'
         };
-        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
+        return ContentService.createTextOutput(JSON.stringify(serviceState))
+            .setMimeType(ContentService.MimeType.JSON);
     }
     const defaultResponse = { status: 'success', message: 'GPSpedia Write-SERVICE v2.0 is active.' };
     return ContentService.createTextOutput(JSON.stringify(defaultResponse))

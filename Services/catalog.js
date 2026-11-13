@@ -87,23 +87,14 @@ const COLS_RELAY = {
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 function doGet(e) {
-    if (e.parameter.debug === 'true') {
-        const cache = CacheService.getScriptCache();
-        const cacheKey = 'catalog_data_v2';
-        const cachedData = cache.get(cacheKey);
-
+    if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Catalog',
             version: '2.4.0',
-            spreadsheetId: SPREADSHEET_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.TUTORIALES, SHEET_NAMES.RELAY, SHEET_NAMES.LOGOS_MARCA],
-            cacheStatus: {
-                isCached: cachedData !== null,
-                cacheKey: cacheKey
-            }
+            status: 'available'
         };
-        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
+        return ContentService.createTextOutput(JSON.stringify(serviceState))
+            .setMimeType(ContentService.MimeType.JSON);
     }
     const defaultResponse = {
         status: 'success',

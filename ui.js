@@ -4866,6 +4866,17 @@ function initAdminPanelListeners() {
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? "No disponible" : date.toLocaleTimeString();
     }
+    function getServiceHealthStatusLabel_(status) {
+        const labels = {
+            online: "En línea",
+            slow: "Lento",
+            unavailable: "No disponible",
+            error: "Con error",
+            unknown: "Desconocido",
+            stale: "Desactualizado"
+        };
+        return labels[status] || "Desconocido";
+    }
     function createServiceMetric(label, value) {
         const item = document.createElement("div");
         item.className = "dev-service-metric";
@@ -4903,7 +4914,7 @@ function initAdminPanelListeners() {
             name.textContent = item.metadata?.service || key;
             const status = document.createElement("span");
             status.className = `dev-service-status is-${item.status}`;
-            status.textContent = item.status === "online" ? "En línea" : item.status === "error" ? "Con error" : "Sin respuesta";
+            status.textContent = getServiceHealthStatusLabel_(item.status);
             top.append(name, status);
             const bottom = document.createElement("span");
             bottom.className = "dev-service-card-bottom";
@@ -4941,14 +4952,16 @@ function initAdminPanelListeners() {
         title.textContent = metadata.service || selectedServiceKey;
         const state = document.createElement("span");
         state.className = `dev-service-status is-${item.status}`;
-        state.textContent = item.status === "online" ? "En línea" : item.status === "error" ? "Con error" : "Sin respuesta";
+        state.textContent = getServiceHealthStatusLabel_(item.status);
         heading.append(title, state);
         detail.appendChild(heading);
         const metrics = document.createElement("div");
         metrics.className = "dev-service-metrics";
         metrics.append(
             createServiceMetric("Versión reportada", metadata.version || "No disponible"),
+            createServiceMetric("Código HTTP", item.httpStatus === null || item.httpStatus === undefined ? "No disponible" : String(item.httpStatus)),
             createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
+            createServiceMetric("Última respuesta válida", formatServiceCheckTime(item.lastSuccessfulAt)),
             createServiceMetric("Latencia del diagnóstico", Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "No disponible"),
             createServiceMetric("Solicitudes API observadas (15 min)", String(events.length)),
             createServiceMetric("Solicitudes correctas", String(successful)),
@@ -4958,18 +4971,19 @@ function initAdminPanelListeners() {
         detail.appendChild(metrics);
         const note = document.createElement("p");
         note.className = "dev-service-note";
-        note.textContent = "Las solicitudes, acciones y tiempos se miden desde esta sesión del navegador. El servicio no expone un contador global verificable de ejecuciones internas de Apps Script.";
+        note.textContent = "El estado confirma la respuesta del endpoint y su contrato de identidad; no demuestra por sí solo que las dependencias internas de Google Sheets o Drive estén disponibles. Las métricas API corresponden únicamente a esta sesión del navegador.";
         detail.appendChild(note);
         const dependencies = document.createElement("div");
         dependencies.className = "dev-service-dependencies";
         const depTitle = document.createElement("strong");
-        depTitle.textContent = "Información reportada por el backend";
+        depTitle.textContent = "Resultado de la comprobación";
         dependencies.appendChild(depTitle);
-        const depItems = [];
-        if (Array.isArray(metadata.sheetsAccessed) && metadata.sheetsAccessed.length) depItems.push(`Hojas declaradas: ${metadata.sheetsAccessed.join(", ")}`);
-        if (metadata.cacheStatus && typeof metadata.cacheStatus.isCached === "boolean") depItems.push(`Caché: ${metadata.cacheStatus.isCached ? "con datos" : "sin datos"}`);
-        if (metadata.reportedStatus) depItems.push(`Estado reportado: ${metadata.reportedStatus}`);
-        if (!depItems.length) depItems.push("El endpoint no expone parámetros adicionales de diagnóstico.");
+        const depItems = [
+            "Estado del contrato: " + (metadata.reportedStatus || "No verificado"),
+            "Código de diagnóstico: " + (item.errorCode || "Ninguno"),
+            "Detalle: " + (item.error || "La identidad y el estado del servicio fueron verificados.")
+        ];
+        if (item.lastKnownStatus) depItems.push("Último estado válido: " + getServiceHealthStatusLabel_(item.lastKnownStatus));
         depItems.forEach(value => { const p = document.createElement("p"); p.textContent = value; dependencies.appendChild(p); });
         detail.appendChild(dependencies);
         const actionsTitle = document.createElement("strong");
@@ -5120,25 +5134,37 @@ function initAdminPanelListeners() {
         if (!isAdminPanelCurrent_()) return;
         consoleLog.innerHTML = ''; // Limpiar consola al abrir
         log("Sistema administrativo iniciado correctamente.");
-        log("Comprobando disponibilidad del microservicio...");
+        log("Comprobando disponibilidad del microservicio ADMIN y del resto de servicios...");
 
-        const pingStartTime = Date.now();
-        try {
-            const res = await routeAction('ping');
-            if (!isAdminPanelCurrent_()) return;
-            const latency = Date.now() - pingStartTime;
-            if (res && res.status === 'success') {
-                log("Microservicio activo.");
-                log("Comunicación establecida.");
-                log(`Tiempo de respuesta: ${latency} ms.`);
-            } else {
-                log("No fue posible establecer comunicación con el microservicio.", false, true);
+        const scanPromise = runServicesHealthScan();
+        const pingPromise = (async () => {
+            const pingStartTime = Date.now();
+            let timeoutId = null;
+            try {
+                if (typeof AbortController !== "function") throw new Error("AbortController no está disponible.");
+                const controller = new AbortController();
+                timeoutId = setTimeout(() => controller.abort(), 5000);
+                const res = await routeAction('ping', {}, null, { signal: controller.signal });
+                if (!isAdminPanelCurrent_()) return;
+                const latency = Date.now() - pingStartTime;
+                if (res && res.status === 'success') {
+                    log("Microservicio ADMIN activo.");
+                    log("Comunicación establecida.");
+                    log(`Tiempo de respuesta: ${latency} ms.`);
+                } else {
+                    log("El ping ADMIN no devolvió una confirmación válida.", false, true);
+                }
+            } catch (error) {
+                if (isAdminPanelCurrent_()) {
+                    log("El ping ADMIN falló o agotó su tiempo de espera; el escaneo de servicios continúa de forma independiente.", false, true);
+                }
+            } finally {
+                if (timeoutId !== null) clearTimeout(timeoutId);
             }
-        } catch (error) {
-            log("No fue posible establecer comunicación con el microservicio.", false, true);
-        }
-        runServicesHealthScan();
+        })();
+
         log("Esperando operaciones...");
+        await Promise.allSettled([scanPromise, pingPromise]);
     };
 
     // Helper para progreso

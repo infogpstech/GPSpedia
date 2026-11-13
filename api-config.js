@@ -397,48 +397,262 @@ export async function addTutorial(data) {
     return await routeAction("addTutorial", data);
 }
 
-export async function checkAllServicesHealth() {
-    const services = Object.keys(API_ENDPOINTS), results = {}, timeoutMs = 8000;
-    await Promise.all(services.map(async srvKey => {
-        const url = API_ENDPOINTS[srvKey], start = Date.now();
-        let controller = null, timeoutId = null;
+export const SERVICE_HEALTH_CONTRACTS = Object.freeze({
+    AUTH: "GPSpedia-Auth",
+    CATALOG: "GPSpedia-Catalog",
+    WRITE: "GPSpedia-Write",
+    USERS: "GPSpedia-Users",
+    FEEDBACK: "GPSpedia-Feedback",
+    UTILITIES: "GPSpedia-Utilities",
+    ADMIN: "GPSpedia-Admin",
+    LEGACY: null
+});
+export const SERVICE_HEALTH_TIMEOUT_MS = 8000;
+export const SERVICE_HEALTH_SLOW_THRESHOLD_MS = 2000;
+export const SERVICE_HEALTH_STALE_AFTER_MS = 5 * 60 * 1000;
+const serviceHealthLastKnown = new Map();
+
+export async function checkAllServicesHealth(options = {}) {
+    const settings = options && typeof options === "object" ? options : {};
+    const timeoutMs = Number.isFinite(settings.timeoutMs) && settings.timeoutMs > 0
+        ? Math.min(30000, Math.round(settings.timeoutMs)) : SERVICE_HEALTH_TIMEOUT_MS;
+    const slowThresholdMs = Number.isFinite(settings.slowThresholdMs) && settings.slowThresholdMs >= 0
+        ? settings.slowThresholdMs : SERVICE_HEALTH_SLOW_THRESHOLD_MS;
+    const staleAfterMs = Number.isFinite(settings.staleAfterMs) && settings.staleAfterMs >= 0
+        ? settings.staleAfterMs : SERVICE_HEALTH_STALE_AFTER_MS;
+    const fetchImpl = typeof settings.fetchImpl === "function" ? settings.fetchImpl : (typeof fetch === "function" ? fetch : null);
+    const now = typeof settings.now === "function" ? settings.now : Date.now;
+    const lastKnown = settings.lastKnown instanceof Map ? settings.lastKnown : serviceHealthLastKnown;
+    const results = {};
+
+    function makeResult(status, startTime, checkedAtMs, details = {}) {
+        return Object.assign({
+            status,
+            latency: Math.max(0, checkedAtMs - startTime),
+            code: null,
+            errorCode: null,
+            checkedAt: new Date(checkedAtMs).toISOString(),
+            lastSuccessfulAt: null,
+            lastKnownStatus: null,
+            metadata: null,
+            error: null
+        }, details);
+    }
+
+    function applyStaleFallback(serviceKey, result, checkedAtMs) {
+        if (!["error", "unavailable", "unknown"].includes(result.status)) return result;
+        const previous = lastKnown.get(serviceKey);
+        if (!previous || checkedAtMs - previous.checkedAtMs < staleAfterMs) return result;
+        result.status = "stale";
+        result.metadata = previous.metadata;
+        result.lastSuccessfulAt = previous.checkedAt;
+        result.lastKnownStatus = previous.status;
+        return result;
+    }
+
+    await Promise.all(Object.keys(API_ENDPOINTS).map(async serviceKey => {
+        const startTime = now();
+        const expectedIdentity = Object.prototype.hasOwnProperty.call(SERVICE_HEALTH_CONTRACTS, serviceKey)
+            ? SERVICE_HEALTH_CONTRACTS[serviceKey] : undefined;
+        let controller = null;
+        let timeoutId = null;
+        let result;
+
         try {
-            if (typeof AbortController !== "function") throw new Error("El navegador no admite AbortController para limitar el tiempo de espera.");
-            controller = new AbortController();
-            timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-            const res = await fetch(`${url}?debug=true`, { method: "GET", redirect: "follow", signal: controller.signal });
-            let debugData = null;
-            try { debugData = JSON.parse(await res.text()); } catch (parseError) { debugData = null; }
-            const reportedStatus = debugData && typeof debugData.status === "string" ? debugData.status : null;
-            const reportedFailure = ["error", "offline", "unavailable", "failed"].includes(String(reportedStatus || "").toLowerCase());
-            const metadata = debugData && typeof debugData === "object" ? {
-                service: typeof debugData.service === "string" ? debugData.service : null,
-                version: typeof debugData.version === "string" ? debugData.version : null,
-                reportedStatus,
-                sheetsAccessed: Array.isArray(debugData.sheetsAccessed) ? debugData.sheetsAccessed.filter(v => typeof v === "string") : [],
-                cacheStatus: debugData.cacheStatus && typeof debugData.cacheStatus.isCached === "boolean"
-                    ? { isCached: debugData.cacheStatus.isCached } : null
-            } : null;
-            results[srvKey] = {
-                status: res.ok && !reportedFailure ? "online" : "error",
-                latency: Date.now() - start, code: res.status, checkedAt: new Date().toISOString(),
-                metadata,
-                metadataAvailable: Boolean(metadata && (metadata.service || metadata.version || metadata.reportedStatus || metadata.sheetsAccessed.length || metadata.cacheStatus)),
-                error: !res.ok ? `HTTP ${res.status}` : null
-            };
-        } catch (err) {
-            results[srvKey] = {
-                status: "offline", latency: Date.now() - start, checkedAt: new Date().toISOString(),
-                metadata: null, metadataAvailable: false,
-                error: controller && controller.signal.aborted ? `Tiempo de espera agotado (${timeoutMs} ms).` : err.message
-            };
+            if (typeof fetchImpl !== "function") {
+                const checkedAtMs = now();
+                result = makeResult("error", startTime, checkedAtMs, {
+                    errorCode: "FETCH_UNAVAILABLE",
+                    error: "La API de red no está disponible en este navegador."
+                });
+            } else if (typeof AbortController !== "function") {
+                const checkedAtMs = now();
+                result = makeResult("error", startTime, checkedAtMs, {
+                    errorCode: "ABORT_CONTROLLER_UNAVAILABLE",
+                    error: "No se puede limitar el tiempo de espera de esta comprobación."
+                });
+            } else {
+                controller = new AbortController();
+                timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                const response = await fetchImpl(API_ENDPOINTS[serviceKey] + "?debug=true", {
+                    method: "GET",
+                    redirect: "follow",
+                    signal: controller.signal
+                });
+                const httpStatus = response && Number.isInteger(response.status) ? response.status : null;
+                let checkedAtMs = now();
+                let latency = Math.max(0, checkedAtMs - startTime);
+
+                if (!response || typeof response.text !== "function") {
+                    result = makeResult("unknown", startTime, checkedAtMs, {
+                        latency,
+                        httpStatus,
+                        errorCode: "INVALID_HTTP_RESPONSE",
+                        error: "El endpoint no devolvió una respuesta HTTP reconocible."
+                    });
+                } else if (response.ok !== true) {
+                    const unavailable = httpStatus !== null && httpStatus >= 500;
+                    result = makeResult(unavailable ? "unavailable" : "error", startTime, checkedAtMs, {
+                        latency,
+                        httpStatus,
+                        errorCode: httpStatus === null ? "HTTP_ERROR" : "HTTP_" + httpStatus,
+                        error: httpStatus === null ? "La respuesta HTTP no contiene un código verificable." : "El endpoint respondió HTTP " + httpStatus + "."
+                    });
+                } else {
+                    let body;
+                    try {
+                        body = await response.text();
+                        checkedAtMs = now();
+                        latency = Math.max(0, checkedAtMs - startTime);
+                    } catch (readError) {
+                        checkedAtMs = now();
+                        latency = Math.max(0, checkedAtMs - startTime);
+                        const timedOut = Boolean(controller && controller.signal.aborted);
+                        result = makeResult(timedOut ? "unavailable" : "error", startTime, checkedAtMs, {
+                            latency,
+                            httpStatus,
+                            errorCode: timedOut ? "TIMEOUT" : "RESPONSE_READ_ERROR",
+                            error: timedOut ? "Tiempo de espera agotado (" + timeoutMs + " ms)." : "No se pudo leer el cuerpo de la respuesta HTTP."
+                        });
+                    }
+
+                    if (!result) {
+                        let data;
+                        try {
+                            data = JSON.parse(body);
+                        } catch (parseError) {
+                            data = null;
+                        }
+
+                        if (!data || typeof data !== "object" || Array.isArray(data)) {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "INVALID_HEALTH_JSON",
+                                error: "La respuesta está vacía, no es JSON válido o no contiene un objeto de estado."
+                            });
+                        } else if (expectedIdentity === undefined) {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "HEALTH_CONTRACT_UNDEFINED",
+                                error: "No existe un contrato de identidad configurado para este servicio."
+                            });
+                        } else if (expectedIdentity === null) {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "HEALTH_IDENTITY_UNVERIFIED",
+                                error: "El deployment LEGACY es externo y no tiene una identidad verificable desde este repositorio."
+                            });
+                        } else if (data.service !== expectedIdentity) {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "SERVICE_IDENTITY_MISMATCH",
+                                error: "La identidad reportada no coincide con el servicio esperado."
+                            });
+                        } else if (typeof data.status !== "string") {
+                            result = makeResult("unknown", startTime, checkedAtMs, {
+                                latency,
+                                httpStatus,
+                                errorCode: "HEALTH_STATUS_MISSING",
+                                error: "El contrato no contiene un estado reconocible."
+                            });
+                        } else {
+                            const reportedStatus = data.status.trim().toLowerCase();
+                            let version = null;
+                            if (data.version !== undefined && data.version !== null) {
+                                if (typeof data.version !== "string" || !/^[A-Za-z0-9._+-]{1,40}$/.test(data.version.trim())) {
+                                    result = makeResult("unknown", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        errorCode: "HEALTH_VERSION_INVALID",
+                                        error: "La versión reportada no cumple el contrato."
+                                    });
+                                } else {
+                                    version = data.version.trim();
+                                }
+                            }
+
+                            if (!result) {
+                                const metadata = {
+                                    service: expectedIdentity,
+                                    version,
+                                    reportedStatus
+                                };
+                                if (reportedStatus === "available" || reportedStatus === "online") {
+                                    const status = latency >= slowThresholdMs ? "slow" : "online";
+                                    result = makeResult(status, startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata
+                                    });
+                                    lastKnown.set(serviceKey, {
+                                        status,
+                                        metadata,
+                                        checkedAtMs,
+                                        checkedAt: result.checkedAt
+                                    });
+                                    result.lastSuccessfulAt = result.checkedAt;
+                                } else if (reportedStatus === "unavailable" || reportedStatus === "offline") {
+                                    result = makeResult("unavailable", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "BACKEND_UNAVAILABLE",
+                                        error: "El servicio reportó que no está disponible."
+                                    });
+                                } else if (reportedStatus === "error" || reportedStatus === "failed" || reportedStatus === "degraded") {
+                                    result = makeResult("error", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "BACKEND_ERROR",
+                                        error: "El servicio reportó un estado de error."
+                                    });
+                                } else if (reportedStatus === "stale") {
+                                    result = makeResult("stale", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "BACKEND_STALE",
+                                        error: "El servicio reportó información desactualizada."
+                                    });
+                                } else {
+                                    result = makeResult("unknown", startTime, checkedAtMs, {
+                                        latency,
+                                        httpStatus,
+                                        metadata,
+                                        errorCode: "HEALTH_STATUS_UNKNOWN",
+                                        error: "El servicio reportó un estado no reconocido."
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            const checkedAtMs = now();
+            const timedOut = Boolean(controller && controller.signal.aborted);
+            const networkFailure = timedOut || (error && (error.name === "TypeError" || error.name === "AbortError"));
+            result = makeResult(networkFailure ? "unavailable" : "error", startTime, checkedAtMs, {
+                errorCode: timedOut ? "TIMEOUT" : networkFailure ? "NETWORK_ERROR" : "HEALTH_CHECK_ERROR",
+                error: timedOut ? "Tiempo de espera agotado (" + timeoutMs + " ms)." :
+                    networkFailure ? "No se recibió una respuesta de red del servicio." :
+                        "No se pudo completar la comprobación de salud."
+            });
         } finally {
             if (timeoutId !== null) clearTimeout(timeoutId);
         }
+
+        const checkedAtMs = Date.parse(result.checkedAt);
+        results[serviceKey] = applyStaleFallback(serviceKey, result, Number.isFinite(checkedAtMs) ? checkedAtMs : now());
     }));
+
     return results;
 }
-
 export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
     // El rol y el nombre del aprobador se derivan en FEEDBACK desde la sesión validada.
     return await routeAction("approveVideo", { itemId, ...sessionPayload });

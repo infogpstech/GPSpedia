@@ -3321,8 +3321,12 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
 #dev-tools-modal .dev-service-card-bottom { color:var(--text-disabled); font-size:.78rem; font-variant-numeric:tabular-nums; }
 #dev-tools-modal .dev-service-status { flex:0 0 auto; padding:3px 7px; border-radius:999px; background:rgba(128,128,128,.12); font-size:.72rem; font-weight:700; }
 #dev-tools-modal .dev-service-status.is-online { color:#198754; background:rgba(25,135,84,.12); }
+#dev-tools-modal .dev-service-status.is-slow,
+#dev-tools-modal .dev-service-status.is-stale { color:#9a6700; background:rgba(210,153,34,.16); }
 #dev-tools-modal .dev-service-status.is-error,
-#dev-tools-modal .dev-service-status.is-offline { color:#dc3545; background:rgba(220,53,69,.12); }
+#dev-tools-modal .dev-service-status.is-offline,
+#dev-tools-modal .dev-service-status.is-unavailable { color:#dc3545; background:rgba(220,53,69,.12); }
+#dev-tools-modal .dev-service-status.is-unknown { color:var(--text-disabled); background:rgba(128,128,128,.14); }
 #dev-tools-modal .dev-service-detail,
 #dev-tools-modal .dev-service-traffic-panel { margin-top:12px; padding:12px; border:1px solid var(--border-color,rgba(128,128,128,.2)); border-radius:9px; background:var(--card-background,rgba(128,128,128,.035)); }
 #dev-tools-modal .dev-service-detail-heading h4,

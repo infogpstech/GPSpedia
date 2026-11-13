@@ -5,7 +5,7 @@
 const SPREADSHEET_ID="1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
 const SHEET_NAMES={SOURCE:"Cortes",TARGET:"Hoja 1",STAGING:"__utilities_timestamps_staging__",BACKUP:"__utilities_timestamps_backup__"};
 const SOURCE_COLS={imagenVehiculo:9},ROLE_REVOCATION_SHARED_PREFIX="__role_revocation_pending__:";
-function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"success",service:"UTILITIES",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
+function doGet(){return ContentService.createTextOutput(JSON.stringify({status:"available",service:"GPSpedia-Utilities",version:"1.5.0"})).setMimeType(ContentService.MimeType.JSON);}
 function doPost(e){
  let response;
  try{

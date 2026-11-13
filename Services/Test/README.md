@@ -1729,3 +1729,12 @@ Resultado de referencia: GitHub Actions run `43441395887`, 56 suites, 779/779 PA
 - Comprueba el mapa canónico `ACTION_TO_SERVICE_MAP`, los casos del dispatcher, la autenticación Desarrollador previa al switch, la clasificación como mutación compartida/auditada y la ausencia de consumidores frontend versionados.
 - `createSheet` y `addColumn` se conservan como acciones ADMIN internas/manuales. No se agrega interfaz ni se retiran rutas: los consumidores externos no pueden enumerarse desde este repositorio.
 - Ejecutar: `node --experimental-default-type=module Services/Test/AdminSheetActionsContract.mjs`.
+
+
+## AUG-024 — Contrato de salud e identidad de microservicios
+
+- `ServiceHealthContract.mjs` prueba el clasificador real de `checkAllServicesHealth` con fetch simulado: contrato válido, umbral slow, HTTP 4xx/5xx, red, timeout, JSON vacío/HTML/inválido/primitivo, identidad/estado/versión inválidos, error de aplicación HTTP 200, LEGACY sin identidad verificable, stale y aislamiento entre servicios.
+- Verifica que el resultado/UI no exponga IDs de Spreadsheet/Drive, nombres de hojas ni cache keys, y que el ping ADMIN tenga timeout y no bloquee el escaneo independiente.
+- Los contratos de depuración versionados de AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN se revisan por identidad, versión y estado. LEGACY es externo/no versionado y debe permanecer unknown hasta que se aporte identidad verificable.
+- Ejecutar: `node --experimental-default-type=module Services/Test/ServiceHealthContract.mjs`.
+- Las pruebas no consultan endpoints desplegados. La identidad/versiones y el contrato real de cada deployment, especialmente LEGACY, requieren validación Beta aislada.
