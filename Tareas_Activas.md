@@ -673,7 +673,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 
 
 ## GP-CAT-01 — Catálogo cache-first con actualización incremental y animada en vivo
-**Prioridad: alta. Estado: AUDITORÍA DE ESCRITURAS COMPLETADA; contrato/feed y cliente pendientes.**
+**Prioridad: alta. Estado: EN PROGRESO. GP-CAT-01A COMPLETADA; GP-CAT-01B PARCIAL: journal monotónico autenticado en Coordinador, endpoint FEEDBACK paginado y cliente servidor-a-servidor publicados. Falta conectar los escritores a la publicación de eventos y completar pruebas de retención/cursor en Beta; GP-CAT-01C..01F pendientes.**
 
 ### Objetivo de experiencia
 - Al abrir la plataforma, mostrar primero y sin demora la última instantánea válida del catálogo guardada localmente (IndexedDB), tanto con conexión como sin ella. La interfaz no debe esperar a descargar todo el catálogo para empezar a ser utilizable.
@@ -700,6 +700,16 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - JS/Frontend/auth.js ya intenta leer offline.getCatalog() antes de la red y renderiza un snapshot completo válido; sin embargo, salvo una ventana local de 60 segundos (gpsepedia_catalog_last_sync), realiza fetchCatalogData() y valida una instantánea completa al abrir. Si ya hay caché, ejecuta performSilentSync(catalogData), pero la respuesta de red sigue siendo el catálogo completo.
 - JS/Frontend/offline.js implementa saveCatalog() como reemplazo del snapshot completo; el comentario del contrato indica que getCatalogData entrega una instantánea completa, no un delta. También existe compareCatalogSnapshots() que detecta altas, modificaciones y bajas de Cortes, y cambios en tutoriales/relay/logos, pero no constituye por sí solo un feed incremental desde backend.
 - Por tanto, ya existe una base de cache-first y reconciliación visual silenciosa, pero falta resolver la descarga completa repetida y la detección de novedades de otros usuarios mientras la app permanece abierta. El requisito no debe registrarse como una función inexistente ni darse por completado por el solo hecho de leer IndexedDB primero.
+
+### GP-CAT-01B — Feed incremental backend (primer hito, 2026-11-14)
+
+- `Services/Coordinator.js`: journal interno versionado con revisiones monotónicas, eventos por propiedad, retención de 100 eventos, cursor, paginación (1–50), autenticación por secreto de servicio, detección de cursor vencido/futuro, huecos/corrupción y eventos reset. Snapshots superiores al límite seguro se convierten en reset.
+- `Services/SharedMutationClient.js`: métodos internos para publicar eventos y consultar el feed.
+- `Services/feedback.js`: endpoint `getCatalogChanges` autenticado contra ActiveSessions/Users; sin nueva interfaz.
+- `JS/Frontend/api-config.js`: acción enrutable a FEEDBACK; aún no se integra al arranque ni al sondeo del cliente.
+- `JS/Tests/CatalogChangeFeed.mjs`: 12/12 PASS; CI `43638952342`: 97 suites, 1,426 pruebas, 0 fallos.
+- **Limitación de este hito:** todavía no se conectaron las rutas WRITE/FEEDBACK/ADMIN para publicar cada escritura real; el feed no debe considerarse funcional para usuarios hasta integrar esos productores y luego el cliente IndexedDB.
+- No se añadió botón, panel, indicador ni sección visible.
 
 ### Criterios de aceptación
 - En una apertura con caché válida, el catálogo se ve inmediatamente desde IndexedDB, sin esperar la red.

@@ -177,3 +177,11 @@
 - JS/Tests/SessionStartupNavigation.mjs: elimina expectativas obsoletas de recarga manual/pull-to-refresh interceptado y comprueba la sincronización cache-first sin controles manuales.
 - JS/Tests/PWAStartupScenarios.js: corrige el resumen de 13 a 14 escenarios.
 - CI final en HEAD 3fd6e776c43ec9a564db88b564a43efdea4bbc17: 96 suites / 1,414 pruebas / 0 fallos; Pages SUCCESS. No se modificó lógica de producción en esta recuperación.
+
+
+[2026-11-14] GP-CAT-01B — Primer hito de feed incremental backend
+- Coordinator: journal monotónico de cambios con autenticación por secreto de servicio, cursor, paginación, retención de 100 eventos y recuperación por reset ante cursor vencido/futuro, huecos o corrupción.
+- SharedMutationClient: métodos internos para publicar y consultar el feed.
+- FEEDBACK: endpoint getCatalogChanges autenticado por sesión; api-config enruta la acción.
+- CatalogChangeFeed.mjs: 12/12 PASS. GitHub Actions: 97 suites, 1,426 pruebas aprobadas, 0 fallos.
+- Productores WRITE/FEEDBACK/ADMIN y cliente IndexedDB aún no integrados; no hay sincronización visible ni controles nuevos.

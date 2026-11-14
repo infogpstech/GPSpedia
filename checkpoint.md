@@ -1406,3 +1406,13 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - Commits de esta recuperación: `9c06910579007fe44fb98a4fa2bd29712c394f56`, `af9a7fd49d678b54dda10490a1a1ace2a671050e`, `6cf77a94e6f1c6a4552f802a0d5d3945501714a9`, `1c11ee702555bcdaf9a9ae1a5c7c0e76265d2814`, `94ef75f3b666162d7d6e08e51ee2908fed565219`, `3fd6e776c43ec9a564db88b564a43efdea4bbc17`.
 - Restricción de interfaz vigente: no añadir botones, paneles, pestañas, secciones ni indicadores visibles nuevos. GP-CAT-01 debe ser silenciosa; GP-INBOX-04B..04C no deben introducir controles nuevos sin autorización.
 - Siguiente trabajo funcional: GP-CAT-01B — concretar e implementar el feed autenticado de cambios con cursor monotónico, retención, paginación y reset seguro; después integrar cliente transaccional y sondeo adaptativo. No crear ni modificar deployments, ScriptProperties o datos productivos.
+
+
+## Continuidad — GP-CAT-01B primer hito backend (2026-11-14)
+
+- Commit funcional: `53b18ab6a66c2e76b4e55001cbcbf64398c55d6d`.
+- El Coordinador mantiene un journal de eventos de catálogo en ScriptProperties, independiente del Spreadsheet: revisión monotónica, eventos autenticados por servicio, retención acotada, paginación por cursor y detección de cursor vencido/futuro, huecos y corrupción.
+- El cliente compartido ya expone publicación/consulta servidor-a-servidor. FEEDBACK expone `getCatalogChanges` con validación de sesión; api-config enruta la acción.
+- `CatalogChangeFeed.mjs`: 12/12 PASS. CI `43638952342`: 97 suites / 1,426 pruebas / 0 fallos. GitHub Pages `43638951478`: SUCCESS para el mismo commit.
+- Aún no se conectaron las rutas de escritura reales ni el cliente IndexedDB/polling; no afirmar que el catálogo ya se sincroniza automáticamente. Siguiente: conectar los escritores con snapshots/patches idempotentes y reset por colección, luego integrar el cliente transaccional.
+- No hay controles nuevos visibles; todo el flujo es interno.
