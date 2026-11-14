@@ -9419,6 +9419,10 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     );
     summary.querySelector('strong').textContent = String(currentCutData && currentCutData.tipo || 'Sin tipo definido');
 
+    attachContextualHelp_(content, "tut-tema", "Usa un título breve que identifique el procedimiento o componente tratado.");
+    attachContextualHelp_(content, "tut-como-identificarlo", "Describe señales visibles o características que permitan reconocer el componente antes de intervenir.");
+    attachContextualHelp_(content, "tut-donde-encontrarlo", "Indica la ubicación dentro del vehículo y referencias de acceso que ayuden a encontrarlo.");
+    attachContextualHelp_(content, "tut-desc", "Resume el procedimiento, las precauciones y los puntos que requieren atención.");
     mountRichTextToolbars(content);
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -9554,6 +9558,43 @@ function createSuggestionOperationId_() {
     throw new Error("El navegador no dispone de un generador seguro para identificar la sugerencia.");
 }
 
+function attachContextualHelp_(root, fieldId, message) {
+    if (!root || !fieldId) return;
+    const label = root.querySelector('label[for="' + fieldId + '"]');
+    const field = root.querySelector('#' + fieldId);
+    if (!label || !field || label.parentElement.classList.contains('gp-help-label-row')) return;
+    const row = document.createElement('div'); row.className = 'gp-help-label-row';
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'gp-context-help-trigger';
+    button.setAttribute('aria-label', 'Ayuda sobre ' + label.textContent.trim()); button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-controls', 'context-help-' + fieldId); button.title = 'Ayuda';
+    button.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i>';
+    const panel = document.createElement('span'); panel.className = 'gp-context-help-panel'; panel.id = 'context-help-' + fieldId;
+    panel.setAttribute('role', 'tooltip'); panel.hidden = true; panel.textContent = message;
+    label.parentNode.insertBefore(row, label); row.append(label, button); label.parentNode.insertBefore(panel, field);
+    if (root.dataset.gpContextHelpReady === 'true') return;
+    root.dataset.gpContextHelpReady = 'true';
+    root.addEventListener('click', event => {
+        const trigger = event.target instanceof Element ? event.target.closest('.gp-context-help-trigger') : null;
+        if (trigger) {
+            const target = root.querySelector('#' + trigger.getAttribute('aria-controls'));
+            const shouldOpen = target && target.hidden;
+            root.querySelectorAll('.gp-context-help-panel').forEach(item => { item.hidden = true; });
+            root.querySelectorAll('.gp-context-help-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+            if (shouldOpen) { target.hidden = false; trigger.setAttribute('aria-expanded', 'true'); }
+        } else if (!(event.target instanceof Element) || !event.target.closest('.gp-context-help-panel')) {
+            root.querySelectorAll('.gp-context-help-panel').forEach(item => { item.hidden = true; });
+            root.querySelectorAll('.gp-context-help-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+        }
+    });
+    root.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        const active = root.querySelector('.gp-context-help-trigger[aria-expanded="true"]');
+        if (!active) return;
+        root.querySelectorAll('.gp-context-help-panel').forEach(item => { item.hidden = true; });
+        root.querySelectorAll('.gp-context-help-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+        active.focus();
+    });
+}
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "", reportActivaTestigo = undefined) {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
@@ -9627,6 +9668,13 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
         </form>
     `;
+
+    attachContextualHelp_(content, "sug-tipo", "Selecciona el circuito o método de corte documentado. Confirma el punto y su función en el diagrama eléctrico del vehículo.");
+    attachContextualHelp_(content, "sug-relay", "Elige el esquema de conexión realmente utilizado. Verifica que coincida con el tipo de señal y el circuito; no lo determines solo por el color de los cables.");
+    attachContextualHelp_(content, "sug-ubicacion", "Describe el punto físico donde se realizó la conexión, usando referencias que permitan localizarlo durante una revisión.");
+    attachContextualHelp_(content, "sug-color", "Indica los colores observados y, si ayuda a distinguirlos, el grosor o la franja del conductor.");
+    attachContextualHelp_(content, "sug-check-engine", "Indica si la interrupción del circuito provoca que se encienda el testigo Check Engine.");
+    attachContextualHelp_(content, "sug-detalles", "Explica qué dato debe cambiar, por qué es incorrecto el actual y qué evidencia respalda la corrección.");
 
     const heading = content.querySelector("#suggest-cut-heading");
     heading.appendChild(document.createTextNode(` Sugerir Cambio - Corte #${String(validCorteNum)}`));

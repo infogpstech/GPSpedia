@@ -21,3 +21,10 @@ testCase("La ayuda se controla por pulsación, se cierra fuera y permite Escape"
  assert.ok(html.includes("document.addEventListener(\'click\', event =>"));assert.ok(html.includes("event.key === \'Escape\'"));assert.ok(html.includes("closeContextHelp(true)"));
 });
 console.log("ContextualHelpForms: "+passed+"/"+passed+" PASS");
+testCase("Los formularios dinámicos de sugerencias PYS incluyen ayudas asociadas y accesibles",()=>{
+ const ui=fs.readFileSync(resolve(root,"JS/Frontend/ui.js"),"utf8");
+ assert.match(ui,/function attachContextualHelp_\(root, fieldId, message\)/);
+ for(const id of ["sug-tipo","sug-relay","sug-ubicacion","sug-color","sug-check-engine","sug-detalles","tut-tema","tut-como-identificarlo","tut-donde-encontrarlo","tut-desc"]){ assert.ok(ui.includes('attachContextualHelp_(content, "'+id+'"'),id); }
+ assert.match(ui,/role', 'tooltip'/);assert.match(ui,/event\.key !== 'Escape'/);assert.match(ui,/active\.focus\(\)/);
+ assert.match(fs.readFileSync(resolve(root,"style.css"),"utf8"),/\.gp-context-help-trigger:focus-visible/);
+});
