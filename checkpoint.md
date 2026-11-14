@@ -614,3 +614,10 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Se adelantó el estado `rowPrepared` antes de copiar la plantilla para que un fallo parcial de `copyTo` también active la limpieza de la nueva fila.
 - Se añadió un escenario de fallo durante la copia que verifica que la fila parcial quede vacía y el archivo sin vínculo vaya a papelera.
 - GitHub Actions `service-tests` sobre HEAD `7330388a6772c7e04ebd10e1d22b72053aab4ef2`: **PASS**, 84 suites, 1,261 pruebas aprobadas, 0 fallos; `LogoIdIntegrity: 11/11 PASS`.
+
+## Sincronización P4/P2 de tareas activas (2026-11-14)
+
+- Se actualizó el estado P4 a EN PROGRESO para reflejar la política de ficha técnica, descarga administrativa y fricción selectiva de medios ya implementadas.
+- Se consolidó la revisión estática de URLs como completada; quedan pendientes los ACL reales de Drive y la matriz global de capacidades en Beta.
+- Se corrigieron secuencias literales `\\n` en la lista P2 para recuperar saltos de línea reales y legibilidad del backlog.
+- No hubo cambios de código ni de datos productivos.
