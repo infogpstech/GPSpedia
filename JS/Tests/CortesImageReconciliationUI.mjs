@@ -24,7 +24,7 @@ testCase("el frontend consume el endpoint y presenta estados diferenciados",()=>
 testCase("consolida duplicados canónicos entre lotes antes de mostrar coincidencias",()=>{
  assert.match(ui,/const canonicalGroups = new Map/);
  assert.match(ui,/Hay varios archivos con el mismo nombre canónico en el árbol Drive/);
- assert.match(ui,/aggregate\\.counts\\.invalid = aggregate\\.invalidFiles\\.length/);
+ assert.match(ui,/aggregate\.counts\.invalid = aggregate\.invalidFiles\.length/);
  assert.match(ui,/historical: 0/);
 });
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{

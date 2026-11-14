@@ -7782,7 +7782,7 @@ export async function openAuditDriveModal() {
             // Un nombre canónico duplicado puede caer en lotes distintos; nunca se elige uno automáticamente.
             const canonicalGroups = new Map();
             aggregate.results.forEach(item => {
-                const key = String(item.fileName || "").replace(/\\.[^.]+$/, "").trim().toLowerCase();
+                const key = String(item.fileName || "").replace(/\.[^.]+$/, "").trim().toLowerCase();
                 if (!key) return;
                 if (!canonicalGroups.has(key)) canonicalGroups.set(key, []);
                 canonicalGroups.get(key).push(item);
