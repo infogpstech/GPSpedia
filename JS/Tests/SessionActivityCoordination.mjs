@@ -45,7 +45,10 @@ testCase("AUTH actualiza actividad en la misma petición protegida y el frontend
  assert.equal(api.includes("touchSessionBeforeAction"),false);
 });
 testCase("Coordinator reserva ActiveSessions y permite solo las dos operaciones ADMIN→WRITE declaradas",()=>{
- assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ write: \["ACTIVE_SESSIONS"\] \}/);
+ assert.match(coordinator,/ADMIN:\s*\{\s*sessionActivity:\s*\{ sharedWrite: \["ACTIVE_SESSIONS"\] \}/);
+ assert.match(coordinator,/migrateReplacedImagesSchema:\s*\{ read: identityRead, write: \["IMAGE_INVENTORY"\] \}/);
+ assert.match(coordinator,/const sharedWriteResources = \(policy\.sharedWrite \|\| \[\]\)\.slice\(\)/);
+ assert.match(coordinator,/sharedWriteResources\.push\("ACTIVE_SESSIONS"\)/);
  assert.match(coordinator,/nestedActions:\s*\{ WRITE: \["allocateVehicleId"\] \}/);
  assert.match(coordinator,/nestedActions:\s*\{ WRITE: \["freezeCortesIds"\] \}/);
  assert.match(coordinator,/migrateIdentifiers:\s*\{ maintenance: true \}/);

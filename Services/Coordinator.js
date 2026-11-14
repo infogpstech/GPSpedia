@@ -3,7 +3,7 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.2";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.3";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
@@ -49,7 +49,8 @@ function coordinatorPolicy_(service, operation) {
             freezeCortesIds: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] }
         },
         ADMIN: {
-            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
+            sessionActivity: { sharedWrite: ["ACTIVE_SESSIONS"] },
+            migrateReplacedImagesSchema: { read: identityRead, write: ["IMAGE_INVENTORY"] },
             backupDatabase: { maintenance: true },
             backupDrive: { read: identityRead, write: ["DRIVE"] },
             restoreDatabase: { maintenance: true },
@@ -120,12 +121,18 @@ function coordinatorPolicy_(service, operation) {
     if (!policy) throw new Error("La acción no está habilitada en la política del coordinador.");
 
     const writeResources = (policy.write || []).slice();
-    if (["ADMIN", "AUTH"].includes(service) && !writeResources.includes("ACTIVE_SESSIONS")) {
+    const sharedWriteResources = (policy.sharedWrite || []).slice();
+    if (service === "ADMIN" && !writeResources.includes("ACTIVE_SESSIONS") &&
+        !sharedWriteResources.includes("ACTIVE_SESSIONS")) {
+        sharedWriteResources.push("ACTIVE_SESSIONS");
+    }
+    if (service === "AUTH" && !writeResources.includes("ACTIVE_SESSIONS")) {
         writeResources.push("ACTIVE_SESSIONS");
     }
     return {
         readResources: (policy.read || []).slice(),
         writeResources,
+        sharedWriteResources,
         maintenance: policy.maintenance === true,
         nestedActions: policy.nestedActions || {}
     };
@@ -186,13 +193,15 @@ function createSharedMutationCoordinator_(dependencies) {
             if (!lease || typeof lease.token !== "string" ||
                 typeof lease.service !== "string" || typeof lease.operation !== "string" ||
                 typeof lease.requestId !== "string" || !Array.isArray(lease.readResources) ||
-                !Array.isArray(lease.writeResources) || typeof lease.maintenance !== "boolean" ||
+                !Array.isArray(lease.writeResources) ||
+                (lease.sharedWriteResources !== undefined && !Array.isArray(lease.sharedWriteResources)) ||
+                typeof lease.maintenance !== "boolean" ||
                 typeof lease.expiresAt !== "number" || !lease.nestedActions ||
                 typeof lease.nestedActions !== "object" ||
                 (lease.phase !== undefined && lease.phase !== "active" && lease.phase !== "draining")) {
                 throw new Error("El estado del coordinador contiene una lease inválida; las operaciones permanecen bloqueadas.");
             }
-            if (![...lease.readResources, ...lease.writeResources].every(item => typeof item === "string")) {
+            if (![...lease.readResources, ...lease.writeResources, ...(lease.sharedWriteResources || [])].every(item => typeof item === "string")) {
                 throw new Error("El estado del coordinador contiene recursos inválidos; las operaciones permanecen bloqueadas.");
             }
         });
@@ -223,8 +232,13 @@ function createSharedMutationCoordinator_(dependencies) {
 
     function hasConflict_(requested, active) {
         if (requested.maintenance || active.maintenance) return true;
-        if (intersects_(requested.writeResources, [...active.readResources, ...active.writeResources])) return true;
-        if (intersects_(requested.readResources, active.writeResources)) return true;
+        const requestedSharedWrite = requested.sharedWriteResources || [];
+        const activeSharedWrite = active.sharedWriteResources || [];
+        const requestedExclusiveReads = (requested.readResources || []).filter(resource => !requestedSharedWrite.includes(resource));
+        const activeExclusiveReads = (active.readResources || []).filter(resource => !activeSharedWrite.includes(resource));
+        if (intersects_(requested.writeResources, [...active.readResources, ...active.writeResources, ...activeSharedWrite])) return true;
+        if (intersects_(requestedExclusiveReads, [...active.writeResources, ...activeSharedWrite])) return true;
+        if (intersects_(requestedSharedWrite, [...activeExclusiveReads, ...active.writeResources])) return true;
         return false;
     }
 
@@ -345,6 +359,7 @@ function createSharedMutationCoordinator_(dependencies) {
                         requestId: requestId,
                         readResources: policy.readResources,
                         writeResources: policy.writeResources,
+                        sharedWriteResources: policy.sharedWriteResources,
                         maintenance: true,
                         nestedActions: policy.nestedActions,
                         phase: "draining",
@@ -376,6 +391,7 @@ function createSharedMutationCoordinator_(dependencies) {
                     requestId: requestId,
                     readResources: policy.readResources,
                     writeResources: policy.writeResources,
+                    sharedWriteResources: policy.sharedWriteResources,
                     maintenance: policy.maintenance,
                     nestedActions: policy.nestedActions,
                     phase: "active",

@@ -322,7 +322,7 @@ function runSharedMutationCoordinatorTests() {
         ["migrateIdentifiers", "rollbackIdentifiers"].forEach(action => {
             const policy = coordinatorPolicy_("ADMIN", action);
             assert_(policy.maintenance === true, action + " debe drenar operaciones activas.");
-            assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), action + " debe coordinar la actividad de sesión.");
+            assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), action + " debe coordinar la actividad de sesión como escritura cooperativa.");
             const r = createRuntime_();
             const lease = acquire_(r, "ADMIN", action);
             assert_(lease.status === "success", action + " debe adquirir la ventana exclusiva.");
@@ -578,6 +578,43 @@ function runSharedMutationCoordinatorTests() {
         assert_(blockedUtility.status === "error" && blockedUtility.code === "busy",
             "La migración debe esperar durante el mantenimiento de la base completa.");
         release_(r, "ADMIN", "backupDatabase", maintenance.token);
+    });
+
+
+    test_("ADMIN permite consultas concurrentes con actualización cooperativa de actividad", function() {
+        const r = createRuntime_();
+        const policy = coordinatorPolicy_("ADMIN", "sessionActivity");
+        assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"), "ADMIN debe declarar LastActivityAt como escritura cooperativa.");
+        assert_(!policy.writeResources.includes("ACTIVE_SESSIONS"), "La actividad cooperativa no debe declararse como escritura exclusiva.");
+        const first = acquire_(r, "ADMIN", "sessionActivity");
+        const second = acquire_(r, "ADMIN", "sessionActivity");
+        assert_(first.status === "success" && second.status === "success",
+            "Dos consultas ADMIN protegidas deben poder coexistir mientras solo actualizan LastActivityAt.");
+        const logout = acquire_(r, "AUTH", "logout");
+        assert_(logout.status === "error" && logout.code === "busy",
+            "La escritura cooperativa ADMIN debe seguir bloqueando logout y revocaciones AUTH.");
+        release_(r, "ADMIN", "sessionActivity", first.token);
+        release_(r, "ADMIN", "sessionActivity", second.token);
+        const retry = acquire_(r, "AUTH", "logout");
+        assert_(retry.status === "success", "AUTH debe continuar al terminar las operaciones ADMIN.");
+        release_(r, "AUTH", "logout", retry.token);
+    });
+
+    test_("Inicializar historial tiene política mínima y conflicto por IMAGE_INVENTORY", function() {
+        const policy = coordinatorPolicy_("ADMIN", "migrateReplacedImagesSchema");
+        assert_(policy.writeResources.length === 1 && policy.writeResources[0] === "IMAGE_INVENTORY",
+            "La migración solo debe escribir el recurso lógico IMAGE_INVENTORY.");
+        assert_(policy.sharedWriteResources.includes("ACTIVE_SESSIONS"),
+            "La migración debe conservar la actualización protegida de actividad.");
+        assert_(policy.maintenance === false, "La inicialización no debe reservar mantenimiento global.");
+        const r = createRuntime_();
+        const migration = acquire_(r, "ADMIN", "migrateReplacedImagesSchema");
+        assert_(migration.status === "success", "La acción de inicialización debe estar habilitada.");
+        const competing = acquire_(r, "ADMIN", "deleteReplacedImage");
+        assert_(competing.status === "error" && competing.code === "busy",
+            "La migración debe serializarse con cambios del mismo inventario.");
+        release_(r, "ADMIN", "migrateReplacedImagesSchema", migration.token);
+        expectThrow_(() => acquire_(r, "ADMIN", "unknownImageAction"), "política");
     });
 
     const summary = { status: failed === 0 ? "PASS" : "FAIL", passed, failed, results };
