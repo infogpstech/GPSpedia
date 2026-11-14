@@ -57,6 +57,15 @@ testCase("persiste y reanuda el preview por cuenta, auditoría, digest y lote co
  assert.ok(off.includes("export async function clearCortesImageReconciliationState"));
  assert.ok(off.includes("Number(current.revision) !== expectedRevision"));
 });
+testCase("la firma se calcula dentro del try y cualquier fallo libera los bloqueos",()=>{
+ const start=ui.indexOf("const runCortesReconciliation = async () => {");
+ const end=ui.indexOf("\n    if (saveInventoryButton)",start);
+ const fn=ui.slice(start,end);
+ assert.ok(fn.indexOf("try {") < fn.indexOf("globalThis.crypto.subtle.digest"));
+ assert.ok(fn.includes("if (!globalThis.crypto || !globalThis.crypto.subtle)"));
+ assert.ok(fn.includes("if (fileSignature) {\\n                try { await saveProgress(\"partial\");"));
+ assert.ok(fn.includes("} finally {\\n            isReconciling = false;\\n            isRunning = false;\\n            isDriveAuditRunning = false;"));
+});
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
  assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; referencias: " \+ referenceCheckStatus/);

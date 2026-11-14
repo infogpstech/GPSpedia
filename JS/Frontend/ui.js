@@ -7779,12 +7779,7 @@ export async function openAuditDriveModal() {
                 referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: 0
             }
         };
-        const fileSignaturePayload = JSON.stringify(imageFiles.map(file => String(file.fileId || "")));
-        const fileSignature = await (async () => {
-            const bytes = new TextEncoder().encode(fileSignaturePayload);
-            const digest = await crypto.subtle.digest("SHA-256", bytes);
-            return Array.from(new Uint8Array(digest)).map(value => value.toString(16).padStart(2, "0")).join("");
-        })();
+        let fileSignature = "";
         let sourceDigest = "", referenceCheckStatus = "", nextBatchIndex = 0, revision = 0;
         const batchSize = 25;
         const totalBatches = Math.ceil(imageFiles.length / batchSize);
@@ -7800,6 +7795,15 @@ export async function openAuditDriveModal() {
             revision = Number(saved.revision);
         };
         try {
+            if (!globalThis.crypto || !globalThis.crypto.subtle) {
+                throw new Error("Este navegador no permite calcular la firma segura del inventario. Abre GPSpedia mediante HTTPS o un entorno seguro.");
+            }
+            const fileSignaturePayload = JSON.stringify(imageFiles.map(file => String(file.fileId || "")));
+            const bytes = new TextEncoder().encode(fileSignaturePayload);
+            const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+            fileSignature = Array.from(new Uint8Array(digest))
+                .map(value => value.toString(16).padStart(2, "0")).join("");
+            if (!isCurrentRequest()) return;
             const previous = await offline.getCortesImageReconciliationState(requestContext.userId, auditId);
             if (!isCurrentRequest()) return;
             if (previous && previous.fileSignature === fileSignature &&
@@ -7894,15 +7898,20 @@ export async function openAuditDriveModal() {
                 "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; referencias: " + referenceCheckStatus + ". Progreso guardado localmente. No se modificó Spreadsheet, Drive ni permisos.";
         } catch (error) {
             if (!isCurrentRequest()) return;
-            try { await saveProgress("partial"); }
-            catch (persistenceError) {
-                if (reconciliationStatus) reconciliationStatus.textContent =
-                    "La simulación se detuvo. No se confirmó el último progreso local: " + String(persistenceError && persistenceError.message || persistenceError);
+            let persistenceFailed = false;
+            if (fileSignature) {
+                try { await saveProgress("partial"); }
+                catch (persistenceError) {
+                    persistenceFailed = true;
+                    if (reconciliationStatus) reconciliationStatus.textContent =
+                        "La simulación se detuvo. No se confirmó el último progreso local: " + String(persistenceError && persistenceError.message || persistenceError);
+                }
             }
-            if (reconciliationStatus && !reconciliationStatus.textContent.includes("No se confirmó")) {
-                reconciliationStatus.textContent =
-                    "Simulación parcial guardada. Al reintentar se continuará desde el último lote confirmado. " +
-                    String(error && error.message || error);
+            if (reconciliationStatus && !persistenceFailed) {
+                reconciliationStatus.textContent = fileSignature
+                    ? "Simulación parcial guardada. Al reintentar se continuará desde el último lote confirmado. "
+                    : "No se inició la simulación ni se guardó progreso local. ";
+                reconciliationStatus.textContent += String(error && error.message || error);
             }
         } finally {
             isReconciling = false;

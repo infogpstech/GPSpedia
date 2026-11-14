@@ -783,3 +783,10 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 
 - CI run 43613854019 detectó un fallo exclusivo de la aserción estática: el test esperaba `current.revision !== expectedRevision`, mientras el código convierte la revisión almacenada con `Number(current.revision)` antes de compararla.
 - La condición CAS de IndexedDB no se modificó; se corrigió el test para verificar la expresión implementada. Repetir CI completo antes de cerrar.
+
+
+## GP-IMG-DATA-01 — Fallo seguro al calcular firma de archivos (2026-11-14)
+
+- El cálculo SHA-256 del conjunto de imágenes se movió dentro del `try/finally` de la simulación. Si Web Crypto no está disponible, la UI informa que se requiere un contexto seguro/HTTPS y libera los indicadores globales.
+- No se intenta persistir un progreso parcial si la firma del conjunto no pudo calcularse; se evita enviar un estado inválido a IndexedDB y se conserva el error original.
+- Añadida regresión estática para verificar el alcance del cálculo dentro del bloque protegido y la liberación en `finally`. CI pendiente.

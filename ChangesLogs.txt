@@ -1748,3 +1748,11 @@ Rama: GPSpedia2.2.5_work
 - Ajustada la aserción UI para reflejar la conversión numérica aplicada a la revisión almacenada en IndexedDB.
 - No se alteró el comportamiento de persistencia ni la condición de concurrencia.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 FIRMA CRIPTOGRÁFICA EN BLOQUE PROTEGIDO
+- El cálculo SHA-256 ahora se ejecuta dentro del try/finally de conciliación.
+- La ausencia de Web Crypto se comunica sin bloquear la auditoría; no se persiste un progreso inválido y se liberan los bloqueos globales.
+- Prueba estática anti-regresión añadida.
+================================================================================
