@@ -438,3 +438,56 @@ No confundir sincronización de datos con actualización de los recursos PWA/Ser
 - Writers identificados en WRITE/FEEDBACK/ADMIN; la lista detallada, incluida la clasificación de operaciones de mantenimiento, queda registrada en Tareas_Activas.md.
 - Riesgo de integridad: restoreDatabase intercambia hojas completas; una hoja de feed dentro del Spreadsheet debe preservarse durante la restauración para no retroceder el cursor. Se requiere evento reset posterior.
 - No se modificó código funcional ni se creó la hoja CatalogChanges en este hito; el diseño/feed permanece pendiente de implementación y pruebas.
+
+
+================================================================================
+2026-11-14 — CIERRE DE HALLAZGOS LOCALES Y VALIDACIONES DIFERIDAS
+
+AUD-2026-11-14-10 — GP-INBOX-04A
+Estado: CORREGIDO EN RAMA; VALIDACIÓN VISUAL BETA PENDIENTE.
+- Services/InboxConversations.js y JS/Frontend/ui.js implementan la matriz de destinatarios por rango y retiran el canal ordinario «Consultar al desarrollador».
+- Pruebas CI: InboxConversations 30/30, InboxRoleContract 17/17 e InboxUi 19/19 PASS.
+- No se afirma validación en navegador/dispositivo real.
+
+AUD-2026-11-14-11 — OPERACIONES MASIVAS INBOX
+Estado: DIFERIDO POR RESTRICCIÓN EXPRESA DEL USUARIO.
+- La selección múltiple y nuevas acciones requerirían controles visibles adicionales. El usuario indicó que no autoriza más botones ni paneles; no implementar hasta nueva instrucción.
+- Se mantienen las acciones y contratos existentes.
+
+AUD-2026-11-14-12 — CATÁLOGO ONLINE SIN FEED INCREMENTAL
+Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA MULTIUSUARIO PENDIENTE.
+- GP-CAT-01B: productores WRITE/FEEDBACK/ADMIN publican upsert/reset después de confirmar persistencia.
+- GP-CAT-01C: snapshot+cursor IndexedDB, delta Cortes y reset seguro en una transacción.
+- GP-CAT-01D: polling autenticado 45 s visible/online, backoff hasta 5 min, timeout de 8 s, coordinación multi-pestaña mediante lease/BroadcastChannel.
+- GP-CAT-01E: reconciliación silenciosa de tarjetas, modal activo y vistas de Tutoriales/Relay/Logos; PyS se refresca ante reset.
+- Sin cambios: no se llama fetchCatalogData ni se descarga snapshot completo. Cambios multi-entidad/colecciones auxiliares todavía usan reset y pueden activar snapshot completo.
+- CI Node.js 22: 98 suites / 1,458 pruebas / 0 fallos; Pages SUCCESS (HEAD de código 1bcaecb37d1560cb76a255de38f208df944b8b31).
+
+AUD-2026-11-14-13 — ORDEN DE PUBLICACIÓN EN ESCRITURAS ANIDADAS
+Severidad: Alta (consistencia del snapshot durante mantenimiento).
+Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
+- Se detectó que una acción WRITE anidada bajo mantenimiento ADMIN podía publicar reset antes de que terminara la reorganización, permitiendo que un consumidor leyera un snapshot intermedio.
+- WRITE omite publicación cuando recibe token de mutación compartida; ADMIN publica el reset al cerrar la operación y su evento de auditoría.
+- CatalogChangeFeed verifica el diferimiento de la publicación anidada.
+
+AUD-2026-11-14-14 — CONSISTENCIA SNAPSHOT/CURSOR
+Severidad: Alta (pérdida o salto de cambios).
+Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
+- Snapshot y cursor se leen desde la misma transacción IndexedDB y se persisten en una sola transacción readwrite.
+- El cursor no se adelanta si falla el guardado del snapshot; errores de delta/reset mantienen snapshot anterior y activan recuperación completa.
+- CatalogSnapshotSync 24/24 y CatalogStartupIntegrity 16/16 PASS.
+
+GP-PWA-02 — ACTUALIZACIÓN EN SEGUNDO PLANO
+Estado: CORRECCIÓN LOCAL COMPLETADA; BETA PENDIENTE.
+- main.js registra Service Worker con updateViaCache='none' y comprueba actualizaciones al iniciar, recuperar foco/conexión, volver a primer plano y cada 5 minutos.
+- service-worker.js usa gpsepedia-cache-v28, conserva skipWaiting/clients.claim. No se fuerza reload ni se añaden controles visibles.
+- PWAStartupScenarios 15/15 y SessionStartupNavigation 16/16 PASS.
+- La recarga manual/pull-to-refresh y el ciclo PWA instalado requieren validación real en Beta.
+
+GP-DEV-01 / GP-ADMIN-01 / GP-ADMIN-02
+Estado: CORRECCIONES LOCALES PREPARADAS; BETA PENDIENTE.
+- La visibilidad del panel Developer usa contexto autenticado coherente; operaciones de inventario/escáner y mantenimiento de historial tienen coordinación/leases específicas y pruebas de contrato.
+- La reproducción con sesiones nuevas/restauradas, escáner concurrente e inicialización idempotente debe ejecutarse únicamente en una copia Beta aislada; no tocar producción.
+
+No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos.
+================================================================================
