@@ -288,3 +288,26 @@ No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama bas
 - No se ejecutó un navegador real ni se verificó la sesión concreta del reporte. Falta comprobar visualmente con una cuenta Desarrollador y una sesión heredada en Beta.
 
 No se amplió la matriz de permisos, no se alteró el backend de tutoriales y no se modificó la rama base.
+
+## AUD-2026-11-14-12 — Diagnóstico seguro de configuración FEEDBACK/Coordinator para Inbox Técnico
+
+**Severidad:** Alta funcional si se confirma en Beta; la autenticación de servicio falla antes de evaluar el rol.  
+**Estado:** MEJORA DE DIAGNÓSTICO IMPLEMENTADA; CAUSA EXTERNA DE CONFIGURACIÓN PENDIENTE DE CONFIRMACIÓN.
+
+### Evidencia
+- `Services/Coordinator.js`, `authenticate_()`, rechaza FEEDBACK con «Servicio no autorizado para el coordinador compartido» si el servicio no está permitido o el secreto esperado falta/no coincide.
+- `Services/feedback.js` declara acciones de conversaciones directas y sus operaciones autenticadas; `Services/InboxConversations.js` incluye `tecnico` y `tecnico_exterior` en `INBOX_ACTIVE_ROLES_`.
+- `JS/Frontend/ui.js`, `openInbox()`, permite los roles `desarrollador`, `jefe`, `supervisor`, `tecnico` y `tecnico_exterior`. A técnicos les muestra la opción de consultar al Desarrollador y oculta la pestaña de solicitudes privilegiadas. La API de destinatarios limita su consulta a usuarios Desarrollador.
+- Las lecturas de Inbox obtienen lease `FEEDBACK/sessionActivity`; las escrituras directas usan políticas coordinadas `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation`.
+
+### Corrección de diagnóstico
+- `Services/feedback.js`: `GET ?debug=true` informa `coordinatorConfigured` como booleano calculado con URL de Apps Script válida, secreto local de al menos 32 caracteres y disponibilidad del cliente de coordinación.
+- El endpoint no devuelve URL, secreto, token ni valores de ScriptProperties. `true` solo indica configuración local con formato/longitud válidos; no comprueba que el secreto coincida con el coordinador remoto.
+- `JS/Frontend/api-config.js` conserva el indicador para FEEDBACK; el panel Developer muestra el estado local y advierte si falta configuración. `Services/COORDINATOR_SETUP.md` documenta la diferencia entre presencia local y coincidencia remota.
+- `JS/Tests/InboxRoleContract.js`: pruebas del booleano, URL inválida, configuración ausente, ausencia de exposición de secretos y acceso de Técnico/Técnico exterior al flujo de consulta.
+
+### Validación
+- GitHub Actions run `43631181979`: SUCCESS; 95 suites / 1,407 pruebas / 0 fallos.
+- Contrato Inbox/AUG-115: 16/16 PASS.
+- No se consultaron ScriptProperties ni deployments Apps Script. La coincidencia del secreto FEEDBACK y el endpoint del coordinador siguen pendientes de verificación en Beta.
+- No se amplió RBAC, no se expusieron credenciales y no se modificaron deployments ni datos productivos.
