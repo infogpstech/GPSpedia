@@ -1596,3 +1596,10 @@ Rama: GPSpedia2.2.5_work
 - CI: 84 suites; 1,256 pruebas aprobadas; 0 fallos.
 - No hubo escrituras en Spreadsheet ni migración de IDs; validación con datos reales pendiente de Beta.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 LOGOSMARCA: COMPENSACIÓN Y RECUPERACIÓN
+- Altas fallidas retiran archivos sin vínculo y limpian filas parciales.
+- Respuesta incierta con fila única verificada se recupera como éxito; estado ambiguo se marca RECOVERY_REQUIRED y conserva el archivo.
+- LogoIdIntegrity 10/10 PASS. CI PASS: 84 suites; 1,260 pruebas; 0 fallos.
+================================================================================
