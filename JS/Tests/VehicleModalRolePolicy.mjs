@@ -23,7 +23,7 @@ check("Imprimir y editar detalles se limitan a Supervisor, Jefe y Desarrollador"
 check("El backend autoriza la edición según el rol vigente, sin confiar en el cliente",()=>{
  assert.match(admin,/function assertModalEditSession\(payload\)\{return getAdminSessionContext_\(payload,\["desarrollador","jefe","supervisor"\]\);\}/);
  assert.match(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\(\["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"\]\)/);
- assert.match(admin,/role==="supervisor"\?"Supervisor"/);
+ assert.match(admin,/displayRole=role==="desarrollador"\?"Desarrollador":role==="jefe"\?"Jefe":"Supervisor"/);
 });
 check("Las demás acciones administrativas continúan exclusivas de Desarrollador",()=>{
  assert.match(admin,/function assertDeveloperSession\(payload\)\{return getAdminSessionContext_\(payload,\["desarrollador"\]\);\}/);
