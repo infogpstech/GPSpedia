@@ -50,7 +50,7 @@ users.getRange(1, 1, 9, 9).setValues([
     ["U5","tecnico2","","Técnico","","","Diego Técnico","",""],
     ["U6","supervisor","","Supervisor","","","Elena Supervisora","",""],
     ["U7","jefe","","Jefe","","","Fabio Jefe","",""],
-    ["U8","tecnico_ext","","Técnico exterior","","","Gabriela Técnica exterior","",""]
+    ["U8","tecnico_ext","","Tecnico_exterior","","","Gabriela Técnica exterior","",""]
 ]);
 const tokens = new Map([["token-a","U1"],["token-b","U2"],["token-c","U3"],["token-d","U6"],["token-e","U7"],["token-f","U8"]]);
 function normalizeRole(value) {
