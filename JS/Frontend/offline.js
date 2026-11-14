@@ -1031,6 +1031,111 @@ export async function getCatalog() {
     return performOp('catalog', 'readonly', (store) => store.get('current'));
 }
 
+const CATALOG_SYNC_CURSOR_KEY = 'syncCursor';
+
+function performCatalogSyncTransaction(mode, callback) {
+    return initDB().then(database => new Promise((resolve, reject) => {
+        let transaction;
+        let result;
+        let failure = null;
+        try {
+            transaction = database.transaction(['catalog'], mode);
+            const store = transaction.objectStore('catalog');
+            transaction.oncomplete = () => resolve(result);
+            transaction.onerror = () => reject(transaction.error || failure || new Error('La transacción del catálogo falló.'));
+            transaction.onabort = () => reject(transaction.error || failure || new Error('La transacción del catálogo fue cancelada.'));
+            result = callback(store, transaction);
+        } catch (error) {
+            failure = error;
+            try { if (transaction) transaction.abort(); } catch (abortError) {}
+            reject(error);
+        }
+    }));
+}
+
+/** Lee snapshot y cursor desde la misma transacción para evitar pares incoherentes. */
+export async function getCatalogSyncState() {
+    return performCatalogSyncTransaction('readonly', store => {
+        let snapshot, cursor, completed = 0;
+        const result = { snapshot: null, cursor: null };
+        const finish = () => {
+            completed++;
+            if (completed === 2) {
+                result.snapshot = snapshot === undefined ? null : snapshot;
+                result.cursor = Number.isSafeInteger(cursor) && cursor >= 0 ? cursor : null;
+            }
+        };
+        const snapshotRequest = store.get('current');
+        const cursorRequest = store.get(CATALOG_SYNC_CURSOR_KEY);
+        snapshotRequest.onsuccess = () => { snapshot = snapshotRequest.result; finish(); };
+        cursorRequest.onsuccess = () => { cursor = cursorRequest.result; finish(); };
+        snapshotRequest.onerror = () => { throw snapshotRequest.error || new Error('No se pudo leer el snapshot local.'); };
+        cursorRequest.onerror = () => { throw cursorRequest.error || new Error('No se pudo leer el cursor local.'); };
+        return result;
+    }).then(result => result || { snapshot: null, cursor: null });
+}
+
+/** Persiste snapshot y cursor en una única transacción; el cursor nunca adelanta al snapshot. */
+export async function saveCatalogWithCursor(newData, cursor) {
+    if (!isCompleteCatalogSnapshot(newData)) {
+        throw new Error('No se guardó el catálogo: la respuesta no es una instantánea completa.');
+    }
+    if (!Number.isSafeInteger(cursor) || cursor < 0) throw new TypeError('El cursor del catálogo no es válido.');
+    const result = await performCatalogSyncTransaction('readwrite', store => {
+        store.put(newData, 'current');
+        store.put(cursor, CATALOG_SYNC_CURSOR_KEY);
+        return { saved: true, cursor };
+    });
+    newData.cortes.slice(-15).forEach(item => cacheItemImages(item).catch(() => {}));
+    return result;
+}
+
+/** Actualiza solo el cursor cuando una página vacía confirma que no hay cambios. */
+export async function saveCatalogCursor(cursor) {
+    if (!Number.isSafeInteger(cursor) || cursor < 0) throw new TypeError('El cursor del catálogo no es válido.');
+    return performCatalogSyncTransaction('readwrite', store => {
+        store.put(cursor, CATALOG_SYNC_CURSOR_KEY);
+        return { saved: true, cursor };
+    });
+}
+
+/**
+ * Aplica únicamente deltas de Cortes con IDs estables. Cualquier reset o
+ * colección no soportada obliga a reconciliar con un snapshot completo.
+ */
+export function applyCatalogChangesToSnapshot(previous, changes) {
+    if (!isCompleteCatalogSnapshot(previous) || !Array.isArray(changes)) {
+        throw new Error('No se puede aplicar un delta sobre una instantánea inválida.');
+    }
+    const cortes = indexCatalogItemsById(previous.cortes);
+    for (const change of changes) {
+        if (!change || !Number.isSafeInteger(change.revision) || change.revision < 1) {
+            throw new Error('El feed contiene una revisión inválida.');
+        }
+        if (change.operation === 'reset' || change.resetRequired === true) return { resetRequired: true, snapshot: null };
+        if (change.collection !== 'cortes') return { resetRequired: true, snapshot: null };
+        const recordId = String(change.recordId || '').trim();
+        if (!recordId) throw new Error('El feed contiene un ID de Corte vacío.');
+        if (change.operation === 'delete') {
+            cortes.delete(recordId);
+            continue;
+        }
+        if (change.operation !== 'upsert' || !change.snapshot || typeof change.snapshot !== 'object' ||
+            Array.isArray(change.snapshot) || String(change.snapshot.id || '').trim() !== recordId) {
+            throw new Error('El feed contiene un upsert de Corte inválido.');
+        }
+        cortes.set(recordId, change.snapshot);
+    }
+    const snapshot = {
+        cortes: Array.from(cortes.values()),
+        tutoriales: previous.tutoriales,
+        relay: previous.relay,
+        logos: previous.logos
+    };
+    if (!isCompleteCatalogSnapshot(snapshot)) throw new Error('El delta produjo un catálogo inválido.');
+    return { resetRequired: false, snapshot };
+}
+
 // --- ACCOUNT-SCOPED LOCAL ACTIVITY ---
 function normalizeLocalOwnerId(ownerId) {
     const value = String(ownerId === null || ownerId === undefined ? '' : ownerId).trim();
