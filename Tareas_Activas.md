@@ -279,3 +279,13 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 
 
 - [x] Liberar el bloqueo global al cerrar la vista durante auditoría u organización; conservar persistencia/UI solo cuando la sesión siga vigente.
+
+
+## Continuidad y verificación integral — 2026-11-14
+
+- La etapa GP-DEV-UX-01, GP-IMG-UX-01, GP-IMG-DATA-01 y GP-UX-INFO-01 ya cuenta con implementación local y pruebas dirigidas. La referencia anterior que señalaba GP-IMG-UX-01 como siguiente tarea quedó superada.
+- Conforme a la sección 11 de `NORMAS_DESAROLLO.md`, la siguiente actividad local es la verificación técnica integral del conjunto; no se incorporan nuevas funcionalidades mientras esta verificación no concluya.
+- HEAD confirmado antes de esta actualización: `d4b481e856fe3ec539d499f66639e09420b8b0c5` en `GPSpedia2.2.5_work`. La rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+- El workflow `.github/workflows/service-tests.yml` ejecuta Node.js 22, comprobación de sintaxis de módulos principales y `JS/Tests/RunServiceTests.mjs` (servicios WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e integración).
+- Esta actualización documental se utiliza para activar la verificación automatizada en la rama autorizada. El resultado de CI se registrará solo después de consultarlo en GitHub Actions.
+- Las validaciones con navegador/dispositivo real, Apps Script, OAuth, Drive y Spreadsheet continúan siendo validaciones Beta y no bloquean el cierre local.
