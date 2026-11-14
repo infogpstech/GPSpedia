@@ -311,3 +311,44 @@ No se amplió la matriz de permisos, no se alteró el backend de tutoriales y no
 - Contrato Inbox/AUG-115: 16/16 PASS.
 - No se consultaron ScriptProperties ni deployments Apps Script. La coincidencia del secreto FEEDBACK y el endpoint del coordinador siguen pendientes de verificación en Beta.
 - No se amplió RBAC, no se expusieron credenciales y no se modificaron deployments ni datos productivos.
+
+
+## Adenda de rectificación e implementación — panel Developer e inventario de imágenes (2026-11-14)
+
+### Rectificación de AUD-2026-11-14-01
+En la revisión del estado actual de GPSpedia2.2.5_work, migrateReplacedImagesSchema sí está declarada en coordinatorPolicy_. La evidencia anterior describe un estado previo del archivo. La política vigente, sin embargo, no declaraba ACTIVE_SESSIONS como escritura cooperativa, aunque getAdminSessionContext_() actualiza LastActivityAt. Se corrigió la regla para reservar USERS en lectura, ACTIVE_SESSIONS en escritura cooperativa e IMAGE_INVENTORY en escritura exclusiva. La política sigue siendo específica y no usa mantenimiento global.
+
+### AUD-2026-11-14-04 — Consultas ADMIN y escáner comparten la lease genérica de actividad
+**Severidad:** Alta — puede provocar contención entre carga de inventario, consulta de Drive y escaneo.
+
+**Evidencia**
+- getReplacedImages, getDriveStorage y getCortesImageFolders no estaban clasificados como operaciones coordinadas específicas; doPost las envolvía en ADMIN/sessionActivity.
+- auditDriveImagesInCortes tampoco estaba clasificada como operación específica, pese a mantener estado de auditoría reanudable y adquirir ScriptLock.
+- La lease genérica se mantenía durante las lecturas prolongadas y mezclaba la actualización de sesión con la lectura de Spreadsheet/Drive.
+
+**Corrección local**
+- Se creó isSharedReadAction_() para las tres consultas. El router conserva la lease coordinada, pero usa el nombre de operación propio.
+- auditDriveImagesInCortes ahora obtiene una lease específica con lecturas de CORTES, DRIVE e inventario, escritura cooperativa de ACTIVE_SESSIONS y escritura exclusiva del estado lógico IMAGE_AUDIT_STATE.
+- Se conservan assertDeveloperSession, getAdminSessionContext_(), la actualización de actividad y el ScriptLock del escáner.
+- Las consultas de solo lectura no se clasifican como mutaciones ni generan eventos de auditoría de escritura.
+
+**Validación local aislada**
+- SharedMutationCoordinator: 42/42 PASS; consultas simultáneas, convivencia con ADMIN/sessionActivity, exclusión de dos escáneres y bloqueo correcto de escrituras sobre inventario/Drive.
+- AdminImageScanCoordinatorContract: PASS; router, roles y recursos de lease alineados.
+- Node CLI completo, GitHub Actions y runtime Apps Script no se ejecutaron desde este entorno.
+
+### AUD-2026-11-14-05 — Inconsistencia potencial entre visibilidad y apertura del panel Developer
+**Severidad:** Media — el botón podía mostrarse por el texto del rol aunque faltara el contexto completo que exige la apertura.
+
+**Evidencia y alcance**
+- showApp() calculaba la visibilidad a partir de Privilegios.
+- openDevTools() exigía un contexto con identificador, SessionToken y rol Desarrollador.
+- Esta diferencia permite un estado visual en el que el botón aparece pero la apertura se rechaza si el objeto de sesión está incompleto. La inspección no demuestra que sea la única causa del síntoma reportado; falta reproducción en navegador.
+
+**Corrección local**
+- showApp() utiliza el mismo contexto autenticado (ID/id, token y rol) para mostrar el acceso.
+- Si se intenta abrir el panel sin contexto válido, la UI muestra un mensaje que distingue sesión incompleta de rol no autorizado. No se concede acceso ni se omite la autorización.
+
+**Validación**
+- SessionUiRoleInvalidation: 15/15 PASS en ejecución aislada.
+- La prueba en navegador con login y sesión restaurada queda pendiente de Beta.
