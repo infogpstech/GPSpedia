@@ -7025,6 +7025,7 @@ export async function openAuditDriveModal() {
     const startButton = document.getElementById('btn-audit-drive-start');
     const resumeButton = document.getElementById('btn-audit-drive-resume');
     const organizeButton = document.getElementById('btn-audit-drive-organize');
+    const saveInventoryButton = document.getElementById('btn-audit-drive-save-inventory');
     const reconcileButton = document.getElementById('btn-audit-drive-reconcile');
     const reconciliationPanel = document.getElementById('audit-drive-reconciliation-panel');
     const reconciliationStatus = document.getElementById('audit-drive-reconciliation-status');
@@ -7245,90 +7246,108 @@ export async function openAuditDriveModal() {
     };
 
 
-    const saveUnusedInventory = async (alreadyRunning = false) => {
+    const saveUnusedInventory = async () => {
         if (!isCurrentRequest() || inventoryStatus === 'saved' || inventoryStatus === 'organized') return;
-        if (isDriveAuditRunning && !alreadyRunning) return;
-        const ownsRun = !alreadyRunning;
-        if (ownsRun) { isRunning = true; isDriveAuditRunning = true; updateControls(); }
-
-        inventoryStatus = 'pending';
-        inventoryMessage = 'Auditoría completa. Registrando las imágenes sin uso; este paso no mueve archivos.';
-        let localPersistenceWarning = '';
-        try {
-            await persistState('complete');
-            if (!isCurrentRequest()) return;
-        } catch (storageError) {
-            if (!isCurrentRequest()) return;
-            localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
-        }
-
-        if (!auditId) {
-            inventoryStatus = 'error';
-            inventoryMessage = 'No existe un auditId de ADMIN verificable para registrar el inventario heredado. Inicia una auditoría nueva.';
-            updateSummary(inventoryMessage);
-            if (ownsRun) { isRunning = false; isDriveAuditRunning = false; updateControls(); }
-            return;
-        }
+        if (isRunning || isDriveAuditRunning) return;
         const unusedFiles = allFiles.filter(file => file.classification === 'Sin uso detectado')
             .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
-        try {
-            const inventoryResult = await routeAction('saveUnusedImagesInventory', {
-                ...getDeveloperSessionPayload(), auditId: auditId, files: unusedFiles
-            });
-            if (!isCurrentRequest()) return;
-            if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId ||
-                !inventoryResult.inventoryOperationId) {
-                throw new Error(inventoryResult && inventoryResult.message
-                    ? inventoryResult.message : 'ADMIN no confirmó la operación de inventario.');
-            }
-            if (String(inventoryResult.auditId) !== auditId) {
-                throw new Error('ADMIN devolvió un inventario asociado a otra auditoría.');
-            }
-            inventoryAuditId = String(inventoryResult.auditId);
-            inventoryOperationId = String(inventoryResult.inventoryOperationId);
-            if (!Array.isArray(inventoryResult.results)) {
-                throw new Error('ADMIN no devolvió resultados individuales verificables; no se habilitará la organización.');
-            }
-            const submittedIds = new Set(unusedFiles.map(item => String(item.fileId || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id)));
-            const resultsBySubmittedId = new Map();
-            inventoryResult.results.forEach(item => {
-                if (!item || !submittedIds.has(String(item.fileId || ''))) return;
-                const fileId = String(item.fileId);
-                if (resultsBySubmittedId.has(fileId)) {
-                    throw new Error('ADMIN devolvió resultados duplicados para una imagen; revisa el inventario antes de organizar.');
-                }
-                if (!['confirmado', 'bloqueado', 'error'].includes(String(item.status || ''))) {
-                    throw new Error('ADMIN devolvió un estado de inventario no reconocido para una imagen.');
-                }
-                resultsBySubmittedId.set(fileId, String(item.status));
-            });
-            if (resultsBySubmittedId.size !== submittedIds.size) {
-                throw new Error('ADMIN no devolvió un resultado individual para cada imagen enviada; no se habilitará la organización.');
-            }
-            inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId => resultsBySubmittedId.get(fileId) === 'confirmado');
+        if (!unusedFiles.length) {
             inventoryStatus = 'saved';
-            const blockedCount = Math.max(0, Number(inventoryResult.blockedCount) || 0);
-            const errorCount = Math.max(0, Number(inventoryResult.errorCount) || 0);
-            inventoryMessage = 'Auditoría COMPLETA. ' + (Number(inventoryResult.savedCount) || 0) +
-                ' imágenes registradas y ' + inventoryConfirmedFileIds.length +
-                ' confirmadas para organización explícita. ' + blockedCount + ' bloqueadas y ' +
-                errorCount + ' con error. No se movió ningún archivo.';
-        } catch (inventoryError) {
-            if (!isCurrentRequest()) return;
-            inventoryStatus = 'error';
-            inventoryMessage = 'Auditoría COMPLETA, pero el inventario no pudo confirmarse: ' +
-                inventoryError.message + '. No se movió ningún archivo; inicia una auditoría nueva para reintentar.';
+            inventoryConfirmedFileIds = [];
+            inventoryMessage = 'Auditoría completa. No hay imágenes sin uso para registrar; no se escribió en Spreadsheet.';
+            try { await persistState('complete'); }
+            catch (error) { inventoryMessage += ' No se pudo guardar el estado local: ' + String(error && error.message || error); }
+            updateSummary(inventoryMessage);
+            updateControls();
+            return;
         }
+        if (typeof window.confirm !== 'function' || !window.confirm(
+            '¿Registrar ' + unusedFiles.length + ' imágenes sin uso en la hoja «Imagenes_Reemplazadas» de Spreadsheet? Esta acción escribe un inventario, pero no mueve archivos ni cambia URLs o permisos.'
+        )) return;
+
+        isRunning = true;
+        isDriveAuditRunning = true;
+        updateControls();
+        inventoryStatus = 'pending';
+        inventoryMessage = 'Registrando el inventario en Spreadsheet. No se moverán archivos.';
+        let localPersistenceWarning = '';
         try {
-            await persistState('complete');
-            if (!isCurrentRequest()) return;
-        } catch (storageError) {
-            localPersistenceWarning += ' No se pudo confirmar el guardado local del resultado de inventario: ' +
-                storageError.message;
-        }
-        updateSummary(inventoryMessage + localPersistenceWarning);
-        if (ownsRun && isCurrentRequest()) {
-            isRunning = false; isDriveAuditRunning = false; updateControls();
+            try {
+                await persistState('complete');
+                if (!isCurrentRequest()) return;
+            } catch (storageError) {
+                if (!isCurrentRequest()) return;
+                localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
+            }
+
+            if (!auditId) {
+                inventoryStatus = 'error';
+                inventoryMessage = 'No existe un auditId de ADMIN verificable para registrar el inventario. No se escribió en Spreadsheet.';
+                updateSummary(inventoryMessage);
+                return;
+            }
+
+            try {
+                const inventoryResult = await routeAction('saveUnusedImagesInventory', {
+                    ...getDeveloperSessionPayload(), auditId: auditId, files: unusedFiles
+                });
+                if (!isCurrentRequest()) return;
+                if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId ||
+                    !inventoryResult.inventoryOperationId) {
+                    throw new Error(inventoryResult && inventoryResult.message
+                        ? inventoryResult.message : 'ADMIN no confirmó la operación de inventario.');
+                }
+                if (String(inventoryResult.auditId) !== auditId) {
+                    throw new Error('ADMIN devolvió un inventario asociado a otra auditoría.');
+                }
+                inventoryAuditId = String(inventoryResult.auditId);
+                inventoryOperationId = String(inventoryResult.inventoryOperationId);
+                if (!Array.isArray(inventoryResult.results)) {
+                    throw new Error('ADMIN no devolvió resultados individuales verificables; no se habilitará la organización.');
+                }
+                const submittedIds = new Set(unusedFiles.map(item => String(item.fileId || '')).filter(id => /^[a-zA-Z0-9_-]{20,}$/.test(id)));
+                const resultsBySubmittedId = new Map();
+                inventoryResult.results.forEach(item => {
+                    if (!item || !submittedIds.has(String(item.fileId || ''))) return;
+                    const fileId = String(item.fileId);
+                    if (resultsBySubmittedId.has(fileId)) {
+                        throw new Error('ADMIN devolvió resultados duplicados para una imagen; revisa el inventario antes de organizar.');
+                    }
+                    if (!['confirmado', 'bloqueado', 'error'].includes(String(item.status || ''))) {
+                        throw new Error('ADMIN devolvió un estado de inventario no reconocido para una imagen.');
+                    }
+                    resultsBySubmittedId.set(fileId, String(item.status));
+                });
+                if (resultsBySubmittedId.size !== submittedIds.size) {
+                    throw new Error('ADMIN no devolvió un resultado individual para cada imagen enviada; no se habilitará la organización.');
+                }
+                inventoryConfirmedFileIds = Array.from(submittedIds).filter(fileId => resultsBySubmittedId.get(fileId) === 'confirmado');
+                inventoryStatus = 'saved';
+                const blockedCount = Math.max(0, Number(inventoryResult.blockedCount) || 0);
+                const errorCount = Math.max(0, Number(inventoryResult.errorCount) || 0);
+                inventoryMessage = 'Inventario registrado. ' + (Number(inventoryResult.savedCount) || 0) +
+                    ' imágenes guardadas y ' + inventoryConfirmedFileIds.length +
+                    ' confirmadas para organización explícita. ' + blockedCount + ' bloqueadas y ' +
+                    errorCount + ' con error. No se movió ningún archivo.';
+            } catch (inventoryError) {
+                if (!isCurrentRequest()) return;
+                inventoryStatus = 'error';
+                inventoryMessage = 'El inventario no pudo confirmarse: ' + inventoryError.message +
+                    '. No se movió ningún archivo; puedes revisar el resultado y reintentar explícitamente.';
+            }
+
+            try {
+                await persistState('complete');
+                if (!isCurrentRequest()) return;
+            } catch (storageError) {
+                localPersistenceWarning += ' No se pudo confirmar el guardado local del resultado de inventario: ' +
+                    storageError.message;
+            }
+            updateSummary(inventoryMessage + localPersistenceWarning);
+        } finally {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
         }
     };
 
@@ -7399,6 +7418,12 @@ export async function openAuditDriveModal() {
             resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
         }
         if (auditButton) auditButton.disabled = isRunning || isDriveAuditRunning;
+        const canSaveInventory = complete && inventoryStatus !== 'saved' && inventoryStatus !== 'organized' &&
+            allFiles.some(file => file.classification === 'Sin uso detectado');
+        if (saveInventoryButton) {
+            saveInventoryButton.hidden = !canSaveInventory;
+            saveInventoryButton.disabled = isRunning || isDriveAuditRunning || !canSaveInventory;
+        }
         const canOrganize = complete && inventoryStatus === 'saved' &&
             !!inventoryAuditId && !!inventoryOperationId && inventoryConfirmedFileIds.length > 0;
         if (organizeButton) {
@@ -7627,7 +7652,14 @@ export async function openAuditDriveModal() {
             if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
                 container.textContent = 'No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».';
             }
-            await saveUnusedInventory(true);
+            const hasUnusedImages = allFiles.some(file => file.classification === 'Sin uso detectado');
+            inventoryStatus = hasUnusedImages ? 'not_saved' : 'saved';
+            inventoryMessage = hasUnusedImages
+                ? 'Auditoría completa. El inventario no se ha escrito en Spreadsheet. Usa «Registrar inventario» solo si deseas guardar estas imágenes.'
+                : 'Auditoría completa. No se encontraron imágenes sin uso; no se escribió inventario en Spreadsheet.';
+            await persistState('complete');
+            if (!isCurrentRequest()) return;
+            updateSummary(inventoryMessage);
         } catch (error) {
             if (!isCurrentRequest()) return;
             const errorMessage = error && error.message ? error.message : String(error);
@@ -7824,6 +7856,7 @@ export async function openAuditDriveModal() {
         }
     };
 
+    if (saveInventoryButton) saveInventoryButton.onclick = () => saveUnusedInventory();
     if (organizeButton) organizeButton.onclick = () => organizeUnusedImages();
     if (reconcileButton) reconcileButton.onclick = () => runCortesReconciliation();
 
@@ -7840,9 +7873,11 @@ export async function openAuditDriveModal() {
         updateControls();
         if (isDriveAuditRunning) {
             updateSummary('La auditoría continúa ejecutándose en esta sesión; no inicies otra solicitud.');
-        } else if (complete && inventoryStatus !== 'saved') {
-            await saveUnusedInventory(false);
-            if (!isCurrentRequest()) return;
+        } else if (complete && inventoryStatus !== 'saved' && inventoryStatus !== 'organized') {
+            const pendingCount = allFiles.filter(file => file.classification === 'Sin uso detectado').length;
+            updateSummary(pendingCount
+                ? 'Auditoría completa recuperada. ' + pendingCount + ' imágenes están pendientes de registro explícito; no se ha escrito en Spreadsheet.'
+                : 'Auditoría completa recuperada. No hay imágenes sin uso para registrar.');
         }
     } else {
         if (!isCurrentRequest()) return;

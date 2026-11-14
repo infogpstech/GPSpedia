@@ -743,3 +743,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - El bloque `finally` libera siempre el indicador global de auditoría/conciliación, incluso si se cierra el modal o cambia la sesión durante una petición; solo actualiza controles si la vista sigue vigente.
 - Pruebas CI del HEAD previo `92184d7ac75e9c55465c7da46ad1e8365582b401`: 91 suites, 1,333 pruebas aprobadas, 0 fallos (run 43612960257). CortesImageReconciliation 15/15 y UI 6/6.
 - La validación CI del cambio actual queda pendiente. Pages build/deployment del HEAD previo estaba pendiente al registrar esta actualización.
+
+
+## GP-IMG-DATA-01 — Separación de dry-run y escritura del inventario (2026-11-14)
+
+- El escaneo recursivo de Drive ya no registra automáticamente las imágenes sin uso en `Imagenes_Reemplazadas` al completar o recuperar una auditoría.
+- El registro del inventario ahora requiere botón explícito y confirmación que informa que escribe en Spreadsheet; no mueve archivos ni modifica URLs/permisos. La organización/movimiento permanece en una acción distinta con confirmación.
+- La simulación de conciliación continúa siendo de solo lectura. No se invocó ninguna acción de escritura contra servicios productivos.
+- Pruebas CI para este cambio pendientes.

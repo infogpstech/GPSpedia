@@ -33,6 +33,14 @@ testCase("consolida duplicados canónicos entre lotes antes de mostrar coinciden
  assert.match(ui,/aggregate\.counts\.invalid = aggregate\.invalidFiles\.length/);
  assert.match(ui,/historical: 0/);
 });
+testCase("el escaneo y dry-run no escriben inventario automáticamente",()=>{
+ assert.ok(!ui.includes("await saveUnusedInventory(true)"));
+ assert.ok(!ui.includes("await saveUnusedInventory(false)"));
+ assert.ok(ui.includes("saveInventoryButton.onclick = () => saveUnusedInventory()"));
+ assert.ok(ui.includes("window.confirm("));
+ assert.ok(html.includes('id="btn-audit-drive-save-inventory"'));
+ assert.ok(ui.includes("No se ha escrito en Spreadsheet"));
+});
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
  assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; referencias: " \+ referenceCheckStatus/);

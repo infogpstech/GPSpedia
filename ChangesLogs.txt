@@ -1705,3 +1705,12 @@ Rama: GPSpedia2.2.5_work
 - Añadida regresión estática de timeout, cancelación y liberación del bloqueo.
 - No se realizaron escrituras en Spreadsheet/Drive ni cambios de permisos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 SEPARAR AUDITORÍA DE ESCRITURAS
+- El escaneo recursivo dejó de registrar automáticamente el inventario de imágenes sin uso en Spreadsheet.
+- Se añadió acción explícita «Registrar inventario sin uso» con confirmación previa y estado de resultado; no mueve archivos.
+- La simulación Drive ↔ Cortes permanece de solo lectura. La organización de archivos sigue separada y confirmada.
+- Sin escrituras productivas ejecutadas durante el desarrollo.
+================================================================================
