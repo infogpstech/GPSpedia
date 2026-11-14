@@ -924,3 +924,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Tras la revisión del código `e8bd98343197be6ff1fd63e87a57a74b6ccf169c`, se publicaron tres commits documentales, sin cambios funcionales: checkpoint `7d039d0274ad051c133609bd1bd0e0bbfd93d514`, ChangesLogs `347818c8030ff778e2b2707cb910e5bf914be15d` y Tareas_Activas `592572e5f410afeb350c4a96225934c421736989`.
 - HEAD remoto verificado antes de esta sincronización final del checkpoint: `592572e5f410afeb350c4a96225934c421736989`. El código funcional no cambió después de `e8bd983`.
 - Las tres actualizaciones documentales se realizaron únicamente en `GPSpedia2.2.5_work`; la rama base sigue en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+
+## Verificación técnica integral iniciada — 2026-11-14
+
+- HEAD previo confirmado: `d4b481e856fe3ec539d499f66639e09420b8b0c5`. La actualización del backlog para corregir la continuidad y activar CI generó el commit `cc301f093ed1b38d94aec7cc99233ab1ce72f3fe` en la rama autorizada.
+- La etapa GP-IMG-UX-01 no está pendiente: sus criterios locales figuran completados en `Tareas_Activas.md`. Se inicia la verificación integral exigida por la sección 11 de las normas.
+- Workflow previsto: `.github/workflows/service-tests.yml`, ejecuta Node.js 22, `node --check` de módulos principales y runner `JS/Tests/RunServiceTests.mjs`.
+- Resultado CI todavía no confirmado al redactar esta nota. No se declarará aprobado hasta verificar el run asociado al HEAD publicado.
+- No se han desplegado Apps Script ni modificado datos de Drive/Spreadsheet. Las pruebas externas permanecen diferidas a Beta.
