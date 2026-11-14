@@ -227,3 +227,11 @@
 - Pruebas PWAStartupScenarios 15/15 y SessionStartupNavigation 16/16 PASS. Validación de recarga manual, pull-to-refresh y actualización instalada queda pendiente en dispositivos Beta.
 - No se desplegó Apps Script ni se modificaron Spreadsheet, Drive, ScriptProperties o ACL productivos.
 ================================================================================
+
+
+2026-11-14 — GP-CAT: HARDENING DE CURSOR Y ACCESIBILIDAD DE ANIMACIONES
+- JS/Frontend/offline.js: saveCatalog ahora invalida el cursor anterior al guardar un snapshot sin revisión; snapshot y cursor nulo se escriben en la misma transacción. Evita reutilizar un cursor que no corresponde al snapshot de recuperación.
+- JS/Tests/CatalogSnapshotSync.js: caso de regresión para invalidación de cursor al guardar snapshot sin revisión.
+- JS/Tests/CatalogStartupIntegrity.mjs: caso de regresión para feed fallido + snapshot completo y comprobación de que el cursor queda nulo.
+- JS/Frontend/ui.js: insertNewVehicleFluently respeta prefers-reduced-motion; las tarjetas nuevas mantienen entrada sin transición cuando el usuario solicita movimiento reducido.
+- CI focalizado pendiente para el HEAD posterior a estos ajustes; los resultados previos no se atribuyen a este commit.
