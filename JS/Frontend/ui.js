@@ -11259,6 +11259,14 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     `;
 
     mountRichTextToolbars(content);
+    attachContextualHelp_(content, "pys-alcance", "Indica si el problema aplica a todos los vehículos o solo a modelos seleccionados.");
+    attachContextualHelp_(content, "pys-search-vehicle", "Busca y selecciona los modelos en los que se reproduce el problema.");
+    attachContextualHelp_(content, "pys-titulo", "Usa un título corto que permita reconocer la falla.");
+    attachContextualHelp_(content, "pys-img-file", "Adjunta una imagen clara que muestre el componente o la falla.");
+    attachContextualHelp_(content, "pys-detalle", "Describe el síntoma, las condiciones en que aparece y el componente afectado.");
+    attachContextualHelp_(content, "pys-sin-solucion", "Activa esta opción si todavía no existe una solución confirmada.");
+    attachContextualHelp_(content, "pys-solucion", "Explica los pasos correctivos que ya fueron comprobados.");
+    attachContextualHelp_(content, "pys-prevenir", "Añade recomendaciones para evitar que la falla vuelva a presentarse.");
     [
         ["pys-alcance", "Indica si el problema aplica a todos los vehículos o solo a modelos seleccionados."],
         ["pys-search-vehicle", "Busca y selecciona los modelos en los que se reproduce el problema."],

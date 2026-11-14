@@ -4040,3 +4040,29 @@ img.gp-image-loaded {
     .audit-reconciliation-row { grid-template-columns: 1fr; }
     .audit-reconciliation-status-label { grid-column: 1; }
 }
+
+
+/* Developer: acciones de respaldo, migración y limpieza con proporciones uniformes. */
+#dev-tools-modal .dev-action-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    align-items: stretch;
+    gap: 8px;
+}
+#dev-tools-modal .dev-action-row button,
+#dev-tools-modal .dev-action-full {
+    min-width: 0;
+    min-height: 38px;
+    padding: 8px 11px;
+    font-size: .84rem;
+    line-height: 1.25;
+    white-space: normal;
+    justify-content: flex-start;
+}
+#dev-tools-modal .dev-action-row button { flex: initial; width: 100%; }
+#dev-tools-modal .dev-maintenance-retention .dev-input { min-height: 36px; }
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-action-row { grid-template-columns: minmax(0, 1fr); }
+    #dev-tools-modal .dev-action-row button,
+    #dev-tools-modal .dev-action-full { width: 100%; }
+}

@@ -78,6 +78,7 @@ runGroup('32','ADMIN',()=>{
  runCli('P2 auditoría de identificadores sin escritura','JS/Tests/IdentifierAudit.mjs');
  runCli('P2 motor de migración de IDs, lotes, huellas y rollback','JS/Tests/IdentifierMigration.mjs');
  runCli('UX ayudas contextuales del formulario de cortes','JS/Tests/ContextualHelpForms.mjs');
+  runCli('UX proporciones del panel Developer','JS/Tests/DeveloperPanelUX.mjs');
  runCli('P1 coordinación de actividad y sesiones protegidas por servicio','JS/Tests/SessionActivityCoordination.mjs');
  runCli('GP-IMG-UX-01 biblioteca de imágenes: selección, menús y vistas','JS/Tests/ReplacedImagesLibraryUX.mjs');
  runCli('GP-IMG-DATA-01 planner exacto de conciliación Drive ↔ Cortes','JS/Tests/CortesImageReconciliation.mjs');
