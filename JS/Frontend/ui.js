@@ -8205,11 +8205,20 @@ export function renderInboxList(items) {
         itemContent.append(title, type);
         itemDiv.append(icon, itemContent);
 
+        itemDiv.tabIndex = 0;
+        itemDiv.setAttribute('role', 'button');
+        itemDiv.setAttribute('aria-label', 'Abrir ' + String(item.subject || 'mensaje'));
         itemDiv.addEventListener('click', () => {
             if (!isCurrentInboxView()) return;
             document.querySelectorAll('.inbox-item.active').forEach(el => el.classList.remove('active'));
             itemDiv.classList.add('active');
+            document.getElementById('inbox-modal-content')?.classList.add('is-request-detail-open');
             renderInboxDetail(item);
+        });
+        itemDiv.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            itemDiv.click();
         });
         listContainer.appendChild(itemDiv);
     });
@@ -8283,10 +8292,21 @@ export function renderInboxDetail(item) {
 
     detailContainer.replaceChildren();
 
+    const mobileBack = makeElement('button', 'inbox-mobile-back', 'Volver a solicitudes');
+    mobileBack.type = 'button';
+    mobileBack.addEventListener('click', () => {
+        document.getElementById('inbox-modal-content')?.classList.remove('is-request-detail-open');
+        document.querySelector('#inbox-list .inbox-item.active')?.focus();
+    });
+    detailContainer.appendChild(mobileBack);
+
     const heading = makeElement('h3', 'inbox-detail-title', item.subject || '');
     const sender = makeElement('p', 'inbox-detail-meta');
     sender.append(makeElement('strong', '', 'De: '), document.createTextNode(String(item.user || '')));
-    detailContainer.append(heading, sender);
+    const actionToolbar = makeElement('div', 'inbox-action-toolbar');
+    actionToolbar.setAttribute('role', 'toolbar');
+    actionToolbar.setAttribute('aria-label', 'Acciones de la solicitud');
+    detailContainer.append(heading, sender, actionToolbar);
 
     if (item.vehicleId) {
         const vehicle = makeElement('p', 'inbox-detail-meta');
@@ -8404,8 +8424,6 @@ export function renderInboxDetail(item) {
     }
 
     if (isVideoItem) {
-        const actions = makeElement('div', 'inbox-actions');
-        actions.style.marginTop = '12px';
         if (item.approvalStatus === 'pending' && canApprove) {
             const approvalRow = makeElement('div');
             approvalRow.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;';
@@ -8418,17 +8436,9 @@ export function renderInboxDetail(item) {
             rejectButton.style.cssText = 'flex:1; background-color:#dc3545; border-color:#dc3545;';
             rejectButton.append(makeIcon('fa-solid fa-xmark'), document.createTextNode(' Rechazar Vídeo'));
             approvalRow.append(approveButton, rejectButton);
-            actions.appendChild(approvalRow);
+            actionToolbar.appendChild(approvalRow);
         }
-        const deleteRow = makeElement('div');
-        deleteRow.style.cssText = 'display:flex; justify-content:flex-end;';
-        const deleteButton = makeElement('button', 'btn btn-danger');
-        deleteButton.id = 'inbox-delete-btn';
-        deleteButton.style.cssText = 'background-color:#dc3545; color:white;';
-        deleteButton.append(makeIcon('fa-solid fa-trash'), document.createTextNode(' Borrar Mensaje'));
-        deleteRow.appendChild(deleteButton);
-        actions.appendChild(deleteRow);
-        detailContainer.appendChild(actions);
+        actionToolbar.hidden = actionToolbar.childElementCount === 0;
     } else {
         const actions = makeElement('div', 'inbox-actions');
         const toolbar = makeElement('div');
@@ -8436,25 +8446,24 @@ export function renderInboxDetail(item) {
         const replyTextarea = makeElement('textarea');
         replyTextarea.id = 'inbox-reply-textarea';
         replyTextarea.placeholder = 'Escribe tu respuesta aquí...';
-        const buttonRow = makeElement('div');
-        buttonRow.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;';
         const replyButton = makeElement('button', 'btn btn-primary');
         replyButton.id = 'inbox-reply-btn';
-        replyButton.style.flex = '1';
-        replyButton.textContent = 'Enviar Respuesta';
-        buttonRow.appendChild(replyButton);
+        replyButton.type = 'button';
+        replyButton.append(makeIcon('fa-solid fa-reply'), document.createTextNode(' Enviar respuesta'));
+        actionToolbar.appendChild(replyButton);
         if (item.type === 'problem_report' && !item.isResolved) {
             const resolveButton = makeElement('button', 'resolve-btn btn btn-secondary');
             resolveButton.id = 'inbox-resolve-btn';
-            resolveButton.textContent = 'Marcar como Resuelto';
-            buttonRow.appendChild(resolveButton);
+            resolveButton.type = 'button';
+            resolveButton.append(makeIcon('fa-solid fa-check'), document.createTextNode(' Marcar como resuelto'));
+            actionToolbar.appendChild(resolveButton);
         }
         const deleteButton = makeElement('button', 'btn btn-danger');
         deleteButton.id = 'inbox-delete-btn';
-        deleteButton.style.cssText = 'background-color:#dc3545; color:white;';
-        deleteButton.append(makeIcon('fa-solid fa-trash'), document.createTextNode(' Borrar Mensaje'));
-        buttonRow.appendChild(deleteButton);
-        actions.append(toolbar, replyTextarea, buttonRow);
+        deleteButton.type = 'button';
+        deleteButton.append(makeIcon('fa-solid fa-trash'), document.createTextNode(' Borrar mensaje'));
+        actionToolbar.appendChild(deleteButton);
+        actions.append(toolbar, replyTextarea);
         detailContainer.appendChild(actions);
     }
 
