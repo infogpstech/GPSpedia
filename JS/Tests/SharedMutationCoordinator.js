@@ -156,6 +156,24 @@ function runSharedMutationCoordinatorTests() {
         release_(r, "AUTH", "touchSession", touch.token);
     });
 
+    test_("AUTH acceptTerms puede convivir con ADMIN sessionActivity sin liberar la protección de login", function() {
+        const r = createRuntime_();
+        const adminActivity = acquire_(r, "ADMIN", "sessionActivity");
+        assert_(adminActivity.status === "success", "ADMIN/sessionActivity debía obtener su lease compartida.");
+        const terms = coordinatorPolicy_("AUTH", "acceptTerms");
+        assert_(terms.readResources.includes("ACTIVE_SESSIONS"), "acceptTerms debe validar la sesión existente.");
+        assert_(terms.writeResources.includes("USERS"), "acceptTerms debe persistir el registro por usuario.");
+        assert_(!terms.writeResources.includes("ACTIVE_SESSIONS"), "acceptTerms no debe modificar ActiveSessions.");
+        assert_(terms.sharedWriteResources.includes("ACTIVE_SESSIONS"), "La lectura de sesión debe poder convivir con el toque de actividad.");
+
+        const acceptance = acquire_(r, "AUTH", "acceptTerms");
+        assert_(acceptance.status === "success", "Aceptar términos no debe quedar bloqueado por ADMIN/sessionActivity.");
+        const login = acquire_(r, "AUTH", "login");
+        assert_(login.status === "error" && login.code === "busy", "El login sí debe esperar porque modifica ActiveSessions.");
+        release_(r, "AUTH", "acceptTerms", acceptance.token);
+        release_(r, "ADMIN", "sessionActivity", adminActivity.token);
+    });
+
     test_("Cambio de rol/sesión AUTH bloquea mutaciones protegidas activas", function() {
         const r = createRuntime_();
         const feedback = acquire_(r, "FEEDBACK", "approveVideo");
