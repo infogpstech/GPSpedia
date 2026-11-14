@@ -150,27 +150,16 @@ test('el éxito de contact-form cierra mediante el gestor compartido', () => {
     assert.match(source, /historyManager\.close\(contactOverlayId\)/);
 });
 
-test('Inbox y Developer reutilizan la validación reciente y comparten solicitudes concurrentes', () => {
+test('abrir Inbox y Developer reutiliza el rol de sesión sin llamar nuevamente a AUTH', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
-    assert.match(source, /let uiRoleValidationInFlight_ = null/);
-    assert.match(source, /authApi\.validateActiveSession\(false\)/);
-    assert.doesNotMatch(source, /await pending\.promise/);
-    assert.match(source, /promise\.then\(/);
-    assert.doesNotMatch(source, /authApi\.validateActiveSession\(true\)/);
-    assert.match(source, /return current && isCurrentUiSessionContext_\(expected\)/);
-});
-test('Inbox y Developer pueden abrir su interfaz si AUTH está temporalmente indisponible', () => {
-    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
-    assert.match(source, /if \(!authApi \|\| typeof authApi\.validateActiveSession !== 'function'\)[\s\S]*?return expected/);
-    assert.match(source, /if \(valid === null\) logDeveloperDiagnostic_/);
-    assert.match(source, /las operaciones protegidas seguirán validándose en el servidor/i);
-});
-test('un rechazo de red durante la validación tampoco deja bloqueados los modales', () => {
-    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
-    const guard = source.slice(source.indexOf('async function ensureUiSessionRole_'), source.indexOf('\nfunction getSessionPayload_'));
-    assert.match(guard, /promise\.then\([\s\S]*?error =>/);
-    assert.match(guard, /La validación de AUTH se pospuso por una incidencia de conexión/);
-    assert.doesNotMatch(guard, /showGlobalError\('Conexión temporalmente no disponible/);
+    const start = source.indexOf('function ensureUiSessionRole_(');
+    const end = source.indexOf('\nfunction getSessionPayload_', start);
+    const guard = source.slice(start, end);
+    assert.ok(start >= 0 && end > start);
+    assert.match(guard, /getUiSessionContext_\(\)/);
+    assert.match(guard, /allowedRoles\.includes\(context\.role\)/);
+    assert.doesNotMatch(guard, /validateActiveSession|routeAction\(/);
+    assert.doesNotMatch(guard, /uiRoleValidationInFlight_/);
 });
 test('los errores extensos se registran para Developer y se acortan en los avisos', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');

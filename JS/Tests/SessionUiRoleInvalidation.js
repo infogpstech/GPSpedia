@@ -90,7 +90,7 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(startup.includes("validateSessionCoordinated(user, false)"));
   const guard=slice(ui,"function ensureUiSessionRole_(","function getSessionPayload_");
   assert(!guard.includes("validateActiveSession"));
-  assert.match(authService,/validateAndTouchSession_/);
+  assert(authService.includes("validateAndTouchSession_"),"El backend conserva la autorización integrada en la operación protegida.");
  });
  return {status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
