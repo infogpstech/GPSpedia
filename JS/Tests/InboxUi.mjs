@@ -52,6 +52,13 @@ check("La bandeja tiene carpetas, búsqueda y paginación", () => {
     assert.match(ui, /getInboxConversations\(context,[\s\S]*folder: inboxConversationFolder_/);
     assert.match(ui, /inboxConversationNextCursor_/);
 });
+check("El filtro visual de categorías actualiza la consulta y reinicia la paginación", () => {
+    assert.match(html, /id="inbox-category-filter"/);
+    assert.match(ui, /categoryFilter\.addEventListener\("change"/);
+    assert.match(ui, /inboxConversationCategory_ = \["all", "general", "soporte", "acceso", "contenido", "instalacion", "otro"\]/);
+    assert.match(ui, /category: inboxConversationCategory_/);
+    assert.match(ui, /inboxConversationPageStack_ = \[0\]/);
+});
 check("El estado de lectura y archivo usa las acciones del backend", () => {
     assert.match(ui, /markInboxRead\(conversationId, latest\.messageId, context\)/);
     assert.match(ui, /archiveInboxConversation\(item\.conversationId, !item\.archived, context\)/);
