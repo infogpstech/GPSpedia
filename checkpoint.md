@@ -586,3 +586,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Relay queda bloqueado hasta confirmar su esquema y localizar el escritor de filas. No se inventó un formato.
 - Se actualizó `Tareas_Activas.md`: el diseño de snapshot/manifiesto/rollback está completado; falta implementar el motor y probarlo en copia Beta.
 - No se realizó ninguna migración ni escritura en hojas/Drive. El plan no autoriza ejecución productiva.
+
+## P2 — Auditoría de referencias de IDs de Tutorial (2026-11-14)
+
+**Estado: COMPLETADO CON VALIDACIÓN DIFERIDA A BETA.**
+
+- Se amplió `auditIdentifiers` con `tutorialReferences`, un inventario de solo lectura que contrasta IDs de `Tutorial` con solicitudes `video_approval` de tipo `tutorial` en `Feedbacks`.
+- Detecta referencias válidas, IDs huérfanos, destinos ambiguos por IDs duplicados, referencias ausentes, discrepancias entre `Feedbacks.ID_vehiculo` y `referenceId`, discrepancias de `metadata.tutorialId` y JSON de aprobación truncado/malformado.
+- El reporte limita los detalles a 100 entradas y no escribe en Spreadsheet.
+- Se añadió `TutorialIdReferenceAudit.mjs`: 6/6 PASS. Se actualizó `IdentifierAudit.mjs` para incluir el helper en su harness: 7/7 PASS.
+- GitHub Actions `service-tests` sobre HEAD `26f0b2450249f18f5c82f4ea087130ca0ae9b856`: **PASS**, 84 suites, 1,256 pruebas aprobadas, 0 fallos.
+- No se ejecutó contra Spreadsheet real; el reporte real queda para Beta después de sincronizar la rama. La auditoría cubre referencias de vídeo de Tutorial, no constituye todavía un inventario completo de referencias de Users/Cortes/PyS/LogosMarca.
+- Siguiente subfase P2: ampliar el inventario de referencias consumidoras de las demás entidades antes de proponer cualquier ID sustituto. No iniciar escrituras hasta disponer de reporte Beta, snapshot y manifiesto aprobados.
