@@ -614,7 +614,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ### GP-PWA-02 — Restaurar actualización nativa del navegador/PWA
 **Prioridad: alta.**
-**Estado actual: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Se retiraron el interceptor táctil, el enlace visible de recarga y su listener; el documento volvió al scroll raíz nativo. `SessionStartupNavigation`: 14/14 PASS; `PWAStartupScenarios`: 14/14 PASS. GitHub Actions `43638448740`: 96 suites, 1,414 pruebas aprobadas, 0 fallos; compilación/Pages `43638448434`: SUCCESS. Pendiente únicamente reproducir el gesto y el ciclo de actualización en navegadores/PWA reales durante Beta.
+**Estado actual: IMPLEMENTACIÓN LOCAL COMPLETADA; VALIDACIÓN DE CAMPO BETA PENDIENTE.** Se retiró la intercepción del gesto y el control manual de recarga; `main.js` registra el Service Worker con `updateViaCache: 'none'` y comprueba actualizaciones al iniciar, recuperar foco/conexión, volver a primer plano y cada cinco minutos. No fuerza `window.location.reload()`. `service-worker.js` avanzó a `gpsepedia-cache-v28`; mantiene `skipWaiting` y `clients.claim`. `PWAStartupScenarios`: 15/15 PASS; `SessionStartupNavigation`: 16/16 PASS. CI del HEAD de código `1bcaecb37d1560cb76a255de38f208df944b8b31`: 98 suites / 1,458 pruebas / 0 fallos. Beta pendiente: pull-to-refresh, instalación PWA, recarga nativa, offline/reconexión y actualización interrumpida en dispositivos reales.
 - No debe existir un botón, enlace ni acción de menú «Recargar aplicación» o equivalente. Retirar el control añadido para ese propósito y su listener asociado.
 - La plataforma debe poder actualizarse mediante el mecanismo nativo del navegador, incluido el gesto pull-to-refresh cuando el navegador lo ofrece. No interceptar ni sustituir el gesto por una sincronización parcial del catálogo.
 - Investigar y corregir la causa raíz en el scroll principal, eventos táctiles, CSS de overscroll/touch-action, navegación y ciclo de vida del Service Worker. La solución debe permitir que la navegación vuelva a solicitar el documento y que el Service Worker detecte/active versiones nuevas sin depender de un botón propio.
@@ -673,7 +673,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 
 
 ## GP-CAT-01 — Catálogo cache-first con actualización incremental y animada en vivo
-**Prioridad: alta. Estado: EN PROGRESO. GP-CAT-01A COMPLETADA; GP-CAT-01B COMPLETADA EN RAMA DE TRABAJO: journal monotónico autenticado, endpoint FEEDBACK paginado y productores WRITE/FEEDBACK/ADMIN conectados. `recordLike` publica un upsert de Cortes; las mutaciones que pueden afectar varias entidades publican reset seguro tras confirmar la escritura (y, en ADMIN, después de cerrar la auditoría). Los cambios WRITE anidados en mantenimiento ADMIN difieren su publicación al cierre del proceso padre. GP-CAT-01C..01F siguen pendientes: cliente transaccional IndexedDB, sondeo adaptativo/coordinación entre pestañas, reconciliación de vistas/animaciones y pruebas Beta.**
+**Prioridad: alta. Estado: EN PROGRESO; GP-CAT-01A..01E IMPLEMENTADAS LOCALMENTE; GP-CAT-01F CI COMPLETADA Y BETA PENDIENTE.** El backend publica cambios desde WRITE/FEEDBACK/ADMIN; `recordLike` usa upsert de Cortes y las mutaciones multi-entidad publican reset seguro. El cliente lee snapshot y cursor de IndexedDB, consulta el feed autenticado, aplica deltas de Cortes y persiste snapshot+cursor en una sola transacción. Si el cursor falta, vence, hay reset, delta no soportado o inconsistencia, usa snapshot completo como recuperación. El sondeo se ejecuta cada 45 s mientras la página está visible y online, con backoff hasta 5 min; se suspende al ocultarse/desconectarse. Las pestañas comparten un lease por usuario y `BroadcastChannel`/storage event para propagar el snapshot. `performSilentSync` actualiza tarjetas, modal activo, altas/bajas, Tutoriales, Relay y Logos; los resets refrescan PyS. CI: 98 suites / 1,458 pruebas / 0 fallos; Beta multiusuario/dispositivo pendiente.
 
 ### Objetivo de experiencia
 - Al abrir la plataforma, mostrar primero y sin demora la última instantánea válida del catálogo guardada localmente (IndexedDB), tanto con conexión como sin ella. La interfaz no debe esperar a descargar todo el catálogo para empezar a ser utilizable.
@@ -697,9 +697,11 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 12. **Pruebas:** arranque con caché y red lenta; caché sin cambios; alta/modificación/baja de cada entidad desde otra sesión; dos o más pestañas; reconexión; cursor expirado; delta paginado; respuesta duplicada/fuera de orden; escritura fallida; edición abierta; operación offline pendiente; permisos; animación reducida; rendimiento móvil. Probar que un registro creado por usuario A aparece en usuario B sin recargar, cerrar ni reabrir.
 
 ### Evidencia técnica actual
-- JS/Frontend/auth.js ya intenta leer offline.getCatalog() antes de la red y renderiza un snapshot completo válido; sin embargo, salvo una ventana local de 60 segundos (gpsepedia_catalog_last_sync), realiza fetchCatalogData() y valida una instantánea completa al abrir. Si ya hay caché, ejecuta performSilentSync(catalogData), pero la respuesta de red sigue siendo el catálogo completo.
-- JS/Frontend/offline.js implementa saveCatalog() como reemplazo del snapshot completo; el comentario del contrato indica que getCatalogData entrega una instantánea completa, no un delta. También existe compareCatalogSnapshots() que detecta altas, modificaciones y bajas de Cortes, y cambios en tutoriales/relay/logos, pero no constituye por sí solo un feed incremental desde backend.
-- Por tanto, ya existe una base de cache-first y reconciliación visual silenciosa, pero falta resolver la descarga completa repetida y la detección de novedades de otros usuarios mientras la app permanece abierta. El requisito no debe registrarse como una función inexistente ni darse por completado por el solo hecho de leer IndexedDB primero.
+- `auth.js` lee snapshot+cursor local antes de red. Si el cursor está vigente, consulta únicamente el feed autenticado; sin novedades no llama `fetchCatalogData()` ni descarga colecciones completas. `getCatalogFeedChanges` pagina hasta 5 páginas de 50 eventos; solicitudes limitadas a 8 s.
+- `offline.js` lee snapshot+cursor en una transacción y guarda ambos atómicamente. Aplica upsert/delete por ID estable para `cortes`; reset, colecciones no soportadas, cursor vencido, huecos o respuestas inconsistentes activan snapshot completo seguro. Los productores multi-entidad usan reset como fallback, por lo que no todos los cambios son todavía deltas por registro.
+- `auth.js` realiza sondeo adaptativo solo con la app visible y online; se pausa al ocultarse/desconectarse y reanuda al recuperar visibilidad/conexión. Las pestañas coordinan polling con lease por usuario y comparten actualizaciones por BroadcastChannel o evento storage.
+- `ui.js` usa `performSilentSync`: actualiza tarjetas modificadas, modal activo, altas/bajas y vistas de Tutoriales/Relay/Logos. Los resets refrescan el cache separado de PyS. No se añaden controles ni paneles visibles.
+- CI cubre arranque cache-first, delta vacío sin snapshot completo, upsert, reset, huecos de revisión, cursor transaccional, sincronización silenciosa y coordinación entre pestañas. La validación de red/latencia/dispositivos y concurrencia multiusuario real sigue pendiente en Beta.
 
 ### GP-CAT-01B — Feed incremental backend (primer hito, 2026-11-14)
 
@@ -707,9 +709,9 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `Services/SharedMutationClient.js`: métodos internos para publicar eventos y consultar el feed.
 - `Services/feedback.js`: endpoint `getCatalogChanges` autenticado contra ActiveSessions/Users; sin nueva interfaz.
 - `JS/Frontend/api-config.js`: acción enrutable a FEEDBACK; aún no se integra al arranque ni al sondeo del cliente.
-- `JS/Tests/CatalogChangeFeed.mjs`: 13/13 PASS; CI `43640695193`: 97 suites, 1,427 pruebas, 0 fallos.
-- Primer productor conectado: `FEEDBACK/recordLike` publica el snapshot completo de Cortes después de confirmar el contador y liberar el lock. El fallo del feed queda aislado y no invalida la reacción persistida.
-- **Limitación de este hito:** los productores WRITE/FEEDBACK/ADMIN ya están conectados, pero todavía falta el consumidor incremental IndexedDB. Hasta integrar GP-CAT-01C/01D, el feed no reduce las descargas de arranque ni actualiza sesiones abiertas; los eventos `reset` requieren bootstrap/reconciliación completa como fallback seguro.
+- `JS/Tests/CatalogChangeFeed.mjs`: 14/14 PASS; `CatalogSnapshotSync`: 24/24 PASS; `CatalogStartupIntegrity`: 16/16 PASS; `SessionStartupNavigation`: 16/16 PASS.
+- CI Node.js 22 del commit `1bcaecb37d1560cb76a255de38f208df944b8b31`: sintaxis PASS; 98 suites / 1,458 pruebas / 0 fallos. GitHub Pages del mismo HEAD aún debe confirmarse.
+- **Limitación vigente:** los upserts por registro están habilitados actualmente para `cortes`; las operaciones que pueden afectar varias filas/colecciones publican `reset`, por lo que todavía pueden requerir snapshot completo. El sondeo en vivo ya está implementado, pero la comprobación Beta multiusuario y la medición de rendimiento en dispositivos reales siguen pendientes.
 - No se añadió botón, panel, indicador ni sección visible.
 
 ### Criterios de aceptación
@@ -721,11 +723,11 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - La animación es discreta, fluida, accesible y no afecta el rendimiento móvil.
 
 ### Dependencias y orden
-- GP-CAT-01A: auditar contratos de escritura y definir revisión/feed común para todas las entidades.
-- GP-CAT-01B: endpoint incremental autenticado y paginado; snapshot completo solo para bootstrap/reparación.
-- GP-CAT-01C: cliente cache-first con cursor y aplicación transaccional del delta.
-- GP-CAT-01D: detección adaptativa en sesiones activas y coordinación entre pestañas.
-- GP-CAT-01E: reconciliación de vistas y animaciones accesibles.
-- GP-CAT-01F: pruebas automatizadas, rendimiento y Beta multiusuario/dispositivo.
+- GP-CAT-01A: COMPLETADA.
+- GP-CAT-01B: COMPLETADA en rama; productores WRITE/FEEDBACK/ADMIN conectados.
+- GP-CAT-01C: COMPLETADA en rama; cursor y snapshot IndexedDB atómicos; deltas Cortes y reset seguro.
+- GP-CAT-01D: COMPLETADA en rama; polling visible/online, backoff y coordinación multi-pestaña.
+- GP-CAT-01E: IMPLEMENTADA; reconciliación silenciosa de tarjetas, modal y vistas, con pruebas de contrato.
+- GP-CAT-01F: CI COMPLETADA; Beta de varios usuarios/dispositivos, latencia, offline y recuperación aún pendiente.
 
 Este requerimiento complementa GP-PWA-02: sincronizar el catálogo en vivo no debe interceptar el gesto nativo ni recargar el documento. Son dos mecanismos distintos: la PWA actualiza sus recursos de aplicación mediante el ciclo normal del Service Worker/navegador; los datos del catálogo se sincronizan incrementalmente dentro de la sesión.
