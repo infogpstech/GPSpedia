@@ -838,3 +838,13 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 
 - CI run 43614576309 encontró que la regresión de firma seguía inspeccionando el cuerpo de `runCortesReconciliation`, aunque el cálculo SHA-256 se extrajo correctamente a `createCortesImageFileSignature_` para reutilizarlo al restaurar el reporte.
 - La prueba ahora verifica la disponibilidad de Web Crypto en el helper y que su llamada ocurra dentro del `try/finally` de la simulación; se mantienen las comprobaciones de guardado parcial y liberación de bloqueos.
+
+
+## GP-IMG-DATA-01 — Restauración del reporte local validada (2026-11-14)
+
+- La reapertura del panel recupera el reporte local correspondiente a la cuenta, auditoría y firma completa de archivos (ID, nombre y MIME). El mensaje distingue una copia completa no revalidada del progreso parcial reanudable.
+- Los lotes quedan en estado `running` hasta consolidar y normalizar todos los resultados; solo entonces se marca `complete`. Al actualizar un reporte completo se ejecuta una simulación nueva.
+- Planner: `CortesImageReconciliation.mjs` 15/15 PASS. UI: `CortesImageReconciliationUI.mjs` 12/12 PASS.
+- GitHub Actions run 43614652559: 91 suites, 1,339 pruebas aprobadas, 0 fallos. GitHub Pages run 43614652263: build y deployment PASS.
+- No se ejecutaron escrituras en Drive/Spreadsheet ni cambios de permisos. Las pruebas de navegador real/IndexedDB entre pestañas y las llamadas a Apps Script/Drive/Sheets quedan para Beta.
+- Siguiente tarea local de GP-IMG-DATA-01: diseñar y probar el manifiesto de aplicación con aprobación por fila, precondiciones, conteos antes/después, auditoría por asignación, read-back y rollback condicionado a huellas. La aplicación real sigue sin ejecutarse y requiere autorización expresa.
