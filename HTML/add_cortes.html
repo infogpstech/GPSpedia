@@ -195,7 +195,7 @@
                 return;
             }
             if (detail.length > 110) {
-                console.warn('[GPSpedia] ' + detail);
+                // No exponer detalles de operación en la consola de la página independiente.
                 alert('No se pudo completar la operación.');
             } else alert(detail);
         }
