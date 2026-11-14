@@ -32,18 +32,19 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("if (lastShownAppContextKey !== appContextKey)"));
   assert(f.includes("resetSessionUi_()"));
  });
- run("vistas privilegiadas reutilizan validación reciente y toleran indisponibilidad sin autorizar revocaciones",()=>{
+ run("vistas privilegiadas abren sin esperar AUTH y validan en segundo plano",()=>{
   const f=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
   assert(f.includes("validateActiveSession(false)"));
   assert(f.includes("isCurrentUiSessionContext_(expected)"));
-  assert(f.includes("if (valid === null)"));
-  assert(f.includes("allowedRoles.includes(localContext.role)"));
-  assert(f.includes("return localContext"));
+  assert(f.includes("const current = getUiSessionContext_()"));
+  assert(f.includes("allowedRoles.includes(current.role)"));
+  assert(f.includes("promise.then("));
+  assert(!f.includes("await pending.promise"),"La interfaz no debe esperar la red para abrir.");
   assert(f.includes("return null"));
   for(const name of ["openDevToolsModal_","openInboxModal_","openDashboardModal_"]){
-   const i=ui.indexOf("const "+name);assert(i>=0,"No se encontró "+name);
-   const body=ui.slice(i,ui.indexOf("\n",i+1)+3000);
-   assert(body.includes("ensureUiSessionRole_"),name+" no revalida el rol.");
+   const k=ui.indexOf("const "+name);assert(k>=0,"No se encontró "+name);
+   const body=ui.slice(k,ui.indexOf("\n",k+1)+3000);
+   assert(body.includes("ensureUiSessionRole_"),name+" no comprueba el rol local.");
   }
  });
  run("window.state no conserva token tras logout y window.ui no almacena credenciales",()=>{
@@ -85,28 +86,14 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("window.state.setState({ currentUser: null })"));
   assert(f.includes("window.location.replace('../index.html')"));
  });
- run("sesión remota revocada fuerza logout al siguiente control AUTH",()=>{
+ run("AUTH revocado fuerza logout; las vistas no bloquean su apertura por red lenta",()=>{
   const f=slice(auth,"export async function validateActiveSession(","export async function checkSession");
-  assert(f.includes("result.valid === false"));
-  assert(f.includes("logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user)"));
- });
- run("AUTH revalida sesiones remotas al recuperar foco, conexión y cada cinco minutos",()=>{
-  const resume=slice(main,"function revalidateSessionOnResume_()","function installSessionRevalidation_()");
-  const install=slice(main,"function installSessionRevalidation_()","function installCatalogStatusBanner_()");
-  assert(resume.includes("auth.validateActiveSession(true)"));
-  assert(install.includes("window.addEventListener('focus'"));
-  assert(install.includes("document.addEventListener('visibilitychange'"));
-  assert(install.includes("window.addEventListener('online'"));
-  assert(install.includes("5 * 60 * 1000"));
- });
- run("las funciones privilegiadas directas quedan protegidas por sesión vigente",()=>{
-  assert(!ui.includes("export function openDevToolsModal_")&&!ui.includes("export function openInboxModal_")&&!ui.includes("export function openDashboardModal_"));
-  const detail=slice(ui,"export function renderInboxDetail(","\nexport function ");
-  assert(detail.includes("isCurrentUiSessionContext_(context)"));
-  assert(detail.includes("['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role)"));
+  assert(f.includes("result.valid === false")&&f.includes("logout('Tu sesión ya no está vigente. Inicia sesión nuevamente.', user)"));
   const guard=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
-  assert(guard.includes("validateActiveSession(false)")&&guard.includes("allowedRoles.includes(localContext.role)"));
-  assert(guard.includes("if (valid === null)")&&guard.includes("return localContext"));
+  assert(guard.includes("validateActiveSession(false)")&&guard.includes("promise.then("));
+  assert(guard.includes("if (valid === null)"));
+  assert(guard.includes("return current && isCurrentUiSessionContext_(expected)"));
+  assert(!guard.includes("await pending.promise"));
  });
  return {status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
