@@ -23,7 +23,7 @@ testCase("el frontend consume el endpoint y presenta estados diferenciados",()=>
 });
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
- assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; no se modificó Spreadsheet, Drive ni permisos/);
+ assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; referencias: " \+ referenceCheckStatus/);
  assert.match(admin,/function handlePreviewCortesImageReconciliation_/);
  assert.match(admin,/plan\.writePerformed = false/);
  assert.match(api,/'previewCortesImageReconciliation': 'ADMIN'/);
