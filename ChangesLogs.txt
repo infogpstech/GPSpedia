@@ -153,3 +153,10 @@
 - JS/Frontend/ui.js e index.html: se reutiliza «Nuevo mensaje» para todos los rangos autorizados y se elimina «Consultar al desarrollador» como canal de conversación directa.
 - JS/Tests/InboxConversations.mjs y InboxRoleContract.js: fixture ampliado y escenarios para jerarquía, destinatarios permitidos y prevención de escalamiento.
 - MATRIZ_CAPACIDADES_ROLES.md: política de Inbox actualizada.
+
+
+[2026-11-14] GP-INBOX-04A — Validación aislada de jerarquía
+- InboxConversations.mjs: 30/30 PASS en harness aislado; 45 locks adquiridos y liberados.
+- InboxRoleContract.js: 17/17 PASS.
+- La política bloquea mensajes ordinarios fuera de jerarquía y evita el contacto directo al Desarrollador desde roles inferiores.
+- Se reutiliza el control existente «Nuevo mensaje»; no se añaden controles nuevos.

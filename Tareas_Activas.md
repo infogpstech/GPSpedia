@@ -599,7 +599,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ### GP-INBOX-04 — Bandeja de entrada con barra de herramientas y jerarquía de comunicación
 **Prioridad: alta.**
-**Estado actual: EN PROGRESO.** La política de destinatarios se está aplicando en backend tanto al consultar la lista como al crear conversaciones. Se reutiliza el control existente «Nuevo mensaje» para los rangos autorizados y se retira la acción separada de consulta directa al Desarrollador. Pendiente ejecutar pruebas aisladas y completar las operaciones restantes de la bandeja. Rediseñar la bandeja como una bandeja de mensajes recibidos, no como un conjunto de botones dispersos. La primera vista será la lista de mensajes recibidos; el detalle se abrirá al seleccionar un mensaje/conversación.
+**Estado actual: EN PROGRESO.** **GP-INBOX-04A: COMPLETADA CON VALIDACIÓN DIFERIDA.** La matriz se aplica en backend al listar destinatarios y crear conversaciones; la UI reutiliza «Nuevo mensaje» y retira «Consultar al desarrollador». Pruebas aisladas ejecutadas: InboxConversations 30/30 y contrato de roles 17/17 PASS. No se ha confirmado todavía la ejecución del runner Node/CI ni la validación en navegador Beta. GP-INBOX-04B..04D permanecen pendientes. Rediseñar la bandeja como una bandeja de mensajes recibidos, no como un conjunto de botones dispersos. La primera vista será la lista de mensajes recibidos; el detalle se abrirá al seleccionar un mensaje/conversación.
 
 **Barra superior de herramientas:**
 - Seleccionar mensajes (selección individual y seleccionar todos los visibles).
@@ -641,6 +641,8 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 4. GP-INBOX-04C: completar creación de mensajes, canal de ticket al Desarrollador y vistas de bandeja.
 5. GP-INBOX-04D: pruebas de permisos por rol, operaciones masivas, móvil, accesibilidad y regresión.
 
+**Restricción posterior de interfaz (2026-11-14):** No añadir botones, paneles, secciones, pestañas ni acciones manuales visibles sin autorización expresa. Las acciones masivas de GP-INBOX-04B que requieran controles nuevos quedan diferidas; continuar solo con correcciones internas y capacidades que puedan integrarse en controles ya existentes.
+
 No marcar como completadas estas tareas hasta ejecutar las pruebas locales pertinentes y registrar por separado las verificaciones Beta. No se autoriza modificar deployments ni datos productivos.
 
 
@@ -652,7 +654,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - En segundo plano, comprobar si hay novedades y obtener únicamente registros nuevos o modificados desde la última versión/cursor conocido. No volver a descargar ni reconstruir todas las colecciones en cada apertura cuando no haya cambios.
 - Los cambios publicados por cualquier usuario deben aparecer automáticamente en las sesiones abiertas de los demás usuarios, sin recargar el documento, cerrar la PWA ni salir y volver a entrar.
 - Integrar los cambios de forma silenciosa y fluida: los nuevos Cortes, problemas, tutoriales y modelos deben incorporarse al catálogo y a las vistas pertinentes con una animación elegante, breve y no intrusiva. Los cambios de registros existentes deben actualizarse en contexto; las bajas deben retirarse de forma coherente.
-- Mostrar una señal visual discreta de sincronización/actualización solo cuando aporte información. No usar un botón de recarga ni una animación que bloquee la navegación.
+- La sincronización debe ser silenciosa y automática. No añadir botones, paneles, secciones de novedades ni indicadores visibles de actualización; no exigir pulsaciones, recargas ni acciones manuales. La animación de entrada de nuevos registros puede ser breve y no intrusiva, sin crear controles nuevos.
 
 ### Requisitos funcionales y técnicos
 1. **Arranque cache-first:** inicializar IndexedDB, leer el snapshot completo local y renderizarlo inmediatamente. La lectura local no debe esperar a red ni bloquear el hilo principal. Si no hay caché válida, mostrar el estado de carga inicial y solicitar la instantánea completa.

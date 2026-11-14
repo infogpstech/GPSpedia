@@ -422,3 +422,10 @@ No confundir sincronización de datos con actualización de los recursos PWA/Ser
 - Corrección en preparación: matriz backend compartida para filtrar destinatarios y validar la creación; Técnico/Técnico exterior → Supervisor; Supervisor → Jefe; Jefe → Supervisor/Técnico/Técnico exterior; Desarrollador → cualquier cuenta activa distinta del actor.
 - UI: se retira la acción «Consultar al desarrollador» y se reutiliza el control existente «Nuevo mensaje». Los reportes/tickets de problema quedan como canal separado para contactar al Desarrollador.
 - Pruebas ampliadas; ejecución pendiente. No se afirma aún que la tarea esté validada o publicada.
+
+
+[2026-11-14] GP-INBOX-04A — Resultado de validación aislada
+- InboxConversations.mjs ejecutado en harness aislado con datos simulados: 30/30 PASS; 45 adquisiciones de lock y 45 liberaciones.
+- InboxRoleContract.js ejecutado sobre las fuentes actuales: 17/17 PASS.
+- Escenarios cubiertos: destinatarios por rango, Técnico/Técnico exterior → Supervisor, Supervisor → Jefe, Jefe → rangos inferiores, bloqueo de acceso directo a Desarrollador, rechazo de pares/escalamiento, cuentas inactivas, idempotencia, lectura, archivo, auditoría, paginación y coordinación de mutaciones.
+- Limitación: no se ejecutó el proceso Node CLI completo ni se verificó UI en navegador Beta; no se declara CI PASS.

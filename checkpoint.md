@@ -1371,3 +1371,14 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - La interfaz reutiliza el botón existente «Nuevo mensaje» para todos los roles autorizados y elimina «Consultar al desarrollador»; se conserva la lectura de borradores heredados `new:consult` al migrar a `new:direct`.
 - Se amplió el fixture de Inbox para incluir Jefe, Supervisor y Técnico exterior, y se agregaron escenarios de permisos y escalamiento. Pendiente ejecutar pruebas y revisar contratos/efectos colaterales antes de publicar.
 - Restricción vigente: no incorporar controles, botones, paneles o secciones visibles nuevos sin autorización expresa. Las capacidades automáticas deben permanecer internas.
+
+
+## Adenda — GP-INBOX-04A validación aislada y restricción de interfaz (2026-11-14)
+
+- Commit funcional de matriz/UI: `359eba7b024019162a44b290c20a5f52f04b4aeb`; commits de ajuste de fixtures/expectativas de prueba: `44de01ccdee241f9dbf8d0a0340cf1056896b0bb`, `9c7aa3344fe4a7c175a80388a3ff235b5365cc1b`, `d5a23becdb6edd421246cf2801482db1f3dc3257`, `b3c70faf96bf2b0adfd98d766357f9e6d3c79f6b`, `c7c2363c5bdfb72a652527676345b26c6b13abb6`.
+- Validación aislada ejecutada sobre el backend y fixtures del repositorio: `InboxConversations.mjs` 30/30 PASS, con 45 locks adquiridos y 45 liberados; `InboxRoleContract.js` 17/17 PASS. La simulación adicional de matriz y rechazos por escalamiento también pasó.
+- Se corrigieron fixtures para usar el nombre canónico almacenado `Tecnico_exterior` y expectativas que antes dependían de la antigua conversación directa Técnico→Desarrollador.
+- GP-INBOX-04A se considera COMPLETADA CON VALIDACIÓN DIFERIDA. La ejecución del runner Node completo/CI y la comprobación de UI en navegador Beta no están confirmadas.
+- Restricción de interfaz posterior: no crear botones, paneles, secciones, pestañas ni acciones manuales nuevas sin autorización expresa. GP-INBOX-04B queda pendiente en lo que requiera nuevos controles visibles; no construirlos por iniciativa propia.
+- GP-CAT-01 se mantiene como sincronización totalmente silenciosa: sin botón, panel, sección de novedades ni indicador visible de actualización.
+- HEAD de trabajo al registrar esta adenda: pendiente de confirmar después de publicar los registros; rama base protegida.
