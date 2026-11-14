@@ -3707,7 +3707,14 @@ async function ensureUiSessionRole_(allowedRoles) {
         return null;
     }
     if (valid !== true) {
-        if (valid === null) showGlobalError('No se pudo verificar la sesión con el servidor. La vista protegida permanecerá cerrada.');
+        if (valid === null) {
+            const localContext = getUiSessionContext_();
+            if (localContext && isCurrentUiSessionContext_(expected) && allowedRoles.includes(localContext.role)) {
+                console.warn('AUTH no respondió; se abre la vista con el rol local. Las operaciones siguen sujetas a validación del servidor.');
+                logDeveloperDiagnostic_('AUTH no disponible al abrir una vista protegida; se conserva el acceso de interfaz y se mantienen las validaciones del servidor.', 'warning');
+                return localContext;
+            }
+        }
         return null;
     }
     const current = getUiSessionContext_();
@@ -4875,6 +4882,13 @@ function initAdminPanelListeners() {
         consoleLog.appendChild(p);
         consoleLog.scrollTop = consoleLog.scrollHeight;
     }
+
+    window.gpsepediaDeveloperLog = (message, level = 'info') => {
+        log(message, level === 'warning', level === 'error');
+    };
+    developerDiagnosticQueue_.splice(0).forEach(entry => {
+        window.gpsepediaDeveloperLog(entry.message, entry.level);
+    });
 
     let verifiedDatabaseBackupId = null;
     let vinMigrationPreview = null;
@@ -8919,16 +8933,34 @@ subscribe((state) => {
     }
 });
 
+const developerDiagnosticQueue_ = [];
+
+function logDeveloperDiagnostic_(message, level = 'warning') {
+    const entry = { message: String(message || ''), level: ['error', 'warning'].includes(level) ? level : 'info' };
+    if (typeof window !== 'undefined' && typeof window.gpsepediaDeveloperLog === 'function') {
+        window.gpsepediaDeveloperLog(entry.message, entry.level);
+        return;
+    }
+    developerDiagnosticQueue_.push(entry);
+    if (developerDiagnosticQueue_.length > 80) developerDiagnosticQueue_.shift();
+}
+
 export function showGlobalError(message) {
+    const original = String(message || 'No se pudo completar la operación.');
+    const concise = original.length > 110 ? 'No se pudo completar la operación.' : original;
+    if (original.length > 110) {
+        console.warn('[GPSpedia] ' + original);
+        logDeveloperDiagnostic_(original, 'warning');
+    }
     const toast = document.getElementById('error-toast');
     if (!toast) return;
 
-    toast.textContent = message;
+    toast.textContent = concise;
     toast.style.display = 'block';
 
     setTimeout(() => {
         toast.style.display = 'none';
-    }, 7000);
+    }, 5000);
 }
 
 /* TAREA 1: Alias y función unificada de notificación para Inbox y operaciones del sistema */
@@ -8939,7 +8971,12 @@ export function mostrarNotificacion(message, type = 'info') {
 export function showGlobalNotification(message, type = 'info') {
     const toast = document.getElementById('notification-toast');
     if (!toast) {
-        alert(message);
+        const original = String(message || 'No se pudo completar la operación.');
+        if (original.length > 110) {
+            console.warn('[GPSpedia] ' + original);
+            logDeveloperDiagnostic_(original, type === 'error' ? 'error' : 'warning');
+            alert('No se pudo completar la operación.');
+        } else alert(original);
         return;
     }
     toast.textContent = message;
