@@ -1017,7 +1017,12 @@ export async function saveCatalog(newData) {
         throw new Error('No se guardó el catálogo: la respuesta no es una instantánea completa o contiene IDs de Corte inválidos.');
     }
     try {
-        const result = await performOp('catalog', 'readwrite', store => store.put(newData, 'current'));
+        const result = await performCatalogSyncTransaction('readwrite', store => {
+            store.put(newData, 'current');
+            // Un snapshot sin revisión del feed invalida cualquier cursor anterior.
+            store.put(null, CATALOG_SYNC_CURSOR_KEY);
+            return newData;
+        });
         if (result === null || result === undefined) throw new Error('IndexedDB no confirmó la escritura del catálogo.');
         newData.cortes.slice(-15).forEach(item => cacheItemImages(item).catch(() => {}));
         return result;
