@@ -1000,7 +1000,7 @@ function countActiveDevelopers_(records) {
 }
 function normalizeRoleName(value) {
     const normalized = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    return normalized === 'gefe' ? 'jefe' : normalized; // Compatibilidad temporal con registros heredados.
+    return normalized;
 }
 function normalizeUserId(value) {
     return String(value === null || value === undefined ? '' : value).trim();

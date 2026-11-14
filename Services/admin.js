@@ -91,7 +91,7 @@ function getAdminSessionContext_(payload, allowedRoles){
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
  const u=userMatches[0];if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
  const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
- const rawRole=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(),role=rawRole==="gefe"?"jefe":rawRole;
+ const rawRole=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(),role=rawRole;
  if(!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
  const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":"Jefe";
  return{userId:id,role:displayRole,fullName,userName:fullName||username};
@@ -1009,7 +1009,7 @@ function beginAdminAuditEvent_(action, payload, actor, startedAt) {
         const actorSource = actor && typeof actor === "object" ? actor : {};
         const actorId = safeAdminAuditId_(actorSource.userId, null);
         const rawRole = String(actorSource.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-        const role = rawRole === "gefe" ? "jefe" : rawRole;
+        const role = rawRole;
         if (!actorId || !["desarrollador", "jefe"].includes(role)) {
             throw createAdminAuditError_("No se pudo acreditar el actor autenticado para el registro ADMIN.", "ADMIN_AUDIT_ACTOR_INVALID");
         }

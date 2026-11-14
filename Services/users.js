@@ -186,7 +186,7 @@ function getVerifiedSession(sessionToken) {
     if (userRows.length !== 1 || !isActiveUserRecord(userRows[0])) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
     if (hasPendingRoleRevocationForUser_(userRows[0])) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
     const rawRole = String(userRows[0][3] || '').trim();
-    const role = rawRole.toLowerCase() === 'gefe' ? 'Jefe' : rawRole;
+    const role = rawRole;
     return { userId, role };
 }
 
@@ -197,7 +197,7 @@ function isActiveUserRecord(row) {
     if (!row) return false;
     const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
     const rawRole = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    const role = rawRole === 'gefe' ? 'jefe' : rawRole;
+    const role = rawRole;
     return Boolean(username) && !username.startsWith('__deleted__:') &&
         ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
 }

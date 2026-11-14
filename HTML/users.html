@@ -204,7 +204,7 @@
         function normalizeUserRoleName(value) {
             const role = String(value || '').trim();
             const normalized = role.toLowerCase();
-            return normalized === 'gefe' || normalized === 'jefe' ? 'Jefe' : role;
+            return normalized === 'jefe' ? 'Jefe' : role;
         }
 
         function showConciseAlert_(message) {

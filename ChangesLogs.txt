@@ -1417,3 +1417,14 @@ Rama: GPSpedia2.2.5_work
 - No existe en el repositorio código que administre la validación de datos de Users.Privilegios. La lista desplegable y los valores ya almacenados requieren actualización en la Spreadsheet real. La conexión de Google Drive/Sheets no está disponible en esta sesión; no se modificó la hoja ni se desplegó Apps Script.
 - Tareas_Activas.md refleja el código completado y deja pendiente la migración externa de Users.Privilegios y su lista desplegable. P4 continúa abierto por el resto de la matriz de permisos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — CIERRE DE COMPATIBILIDAD HEREDADA DEL ROL JEFE
+- El usuario confirmó que actualizó la Spreadsheet: Users.Privilegios y su lista desplegable ya utilizan Jefe.
+- Se retiraron las conversiones Gefe → Jefe de AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox/frontend y vistas de gestión; Gefe deja de ser un rol operativo aceptado.
+- Se actualizaron las pruebas de contrato y seguridad para rechazar Gefe y conservar Jefe como único valor canónico.
+- No se modificó la Spreadsheet desde esta sesión ni se desplegaron proyectos Apps Script. La confirmación de la actualización externa procede del usuario.
+- Validación automatizada pendiente de ejecutar tras publicar este commit.
+- Estado: sub tarea de normalización de rol COMPLETADA EN CÓDIGO; P4 continúa pendiente por la matriz completa de capacidades.
+================================================================================

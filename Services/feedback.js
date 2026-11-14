@@ -40,7 +40,7 @@ function normalizeFeedbackRole(role) {
     const normalized = Array.from(String(role || "").normalize("NFD"))
         .filter(character => { const code = character.charCodeAt(0); return code < 768 || code > 879; }).join("");
     const roleName = normalized.trim().toLowerCase();
-    return roleName === 'gefe' ? 'jefe' : roleName;
+    return roleName;
 }
 
 function getSessionExpirationStatus_(row,now=new Date()){

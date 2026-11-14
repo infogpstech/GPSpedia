@@ -24,7 +24,7 @@ function runAdminModalEditSecurityTests() {
         run_("Desarrollador y Jefe validan sesión vigente para el modal",()=>{
             session_("Desarrollador");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Desarrollador");
             session_("Jefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
-            session_("Gefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");
+            session_("Gefe");expect_(()=>assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}),"sesión no autorizada");
         });
         run_("Jefe está permitido y los demás roles quedan excluidos",()=>{
             session_("Jefe");assert_(assertModalEditSession({userId:"USR-T",sessionToken:"TOKEN-T"}).role==="Jefe");

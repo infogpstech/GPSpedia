@@ -3681,7 +3681,7 @@ const inboxPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
 
 function normalizeUiRole_(role) {
     const normalized = String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    return normalized === 'gefe' ? 'jefe' : normalized;
+    return normalized;
 }
 
 function canApproveInboxVideo_(role) {

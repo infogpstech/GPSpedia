@@ -352,3 +352,12 @@ SIGUIENTE TRABAJO
 - Continuidad general: P1 autenticación simplificada, luego P2 migración de contraseñas/identificadores según dependencias del backlog.
 - La rama base GPSpedia2.2.5 no se modificó.
 ================================================================================
+
+
+## Adenda — Spreadsheet Jefe confirmada y compatibilidad retirada (2026-11-14)
+
+- El usuario confirmó que actualizó `Users.Privilegios` en la Spreadsheet y sustituyó `Gefe` por `Jefe` en la lista desplegable.
+- Se retiraron los conversores de compatibilidad `Gefe` → `Jefe` de backend y frontend. El único rol válido en código para ese nivel es ahora `jefe`/`Jefe`.
+- Las pruebas de contrato se actualizaron para rechazar `Gefe` y aceptar `Jefe`.
+- No se accedió ni modificó la Spreadsheet desde esta sesión; la actualización se registra como confirmación del usuario. No se desplegaron servicios Apps Script.
+- P4 sigue pendiente por completar y aplicar la matriz de capacidades del modal/imágenes. La siguiente tarea de ejecución general es P1 — autenticación simplificada.

@@ -65,7 +65,7 @@ function persistSessionValidation(user,result){
   });
   if(profile&&Object.prototype.hasOwnProperty.call(profile,'Privilegios')){
    const role=String(profile.Privilegios||'').trim().toLowerCase();
-   if(role==='gefe'||role==='jefe')updated.Privilegios='Jefe';
+   if(role==='jefe')updated.Privilegios='Jefe';
   }
   updated.SessionCreatedAt=result.createdAt||updated.SessionCreatedAt;
   updated.SessionLastActivityAt=result.lastActivityAt||updated.SessionLastActivityAt;
