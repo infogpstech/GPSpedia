@@ -17,7 +17,7 @@ function runSessionProfileRefreshTests(sources) {
    SPREADSHEET_ID:'ISOLATED_TEST_ONLY',SHEET_NAMES:{USERS:'Users',ACTIVE_SESSIONS:'ActiveSessions'},COLS_USERS:uc,COLS_ACTIVE_SESSIONS:sc,
    normalizeUserId:v=>String(v??'').trim(),isActiveAuthUserRecord:active,hasPendingRoleRevocation_:()=>o.pending===true,reconcileRoleRevocationUnderLock_:()=>({pending:false}),
    getSessionExpirationStatus_:r=>({expired:false,createdAt:new Date(r[3])}),ensureActiveSessionsActivityColumn_:()=>{},ensureSessionTermsAcceptanceColumn_:()=>{},ensureTermsAcceptanceColumn_:()=>{},
-   parseTermsAcceptance_:v=>JSON.parse(String(v)),revokeLoginRequestForTokenUnderLock_:()=>({pending:false})
+   parseTermsAcceptance_:v=>!v?{version:'',acceptedAt:'',status:'pending'}:JSON.parse(String(v)),revokeLoginRequestForTokenUnderLock_:()=>({pending:false})
   };
   const fn=new Function(...Object.keys(deps),extract(source,'validateAndTouchSession_')+'\nreturn validateAndTouchSession_;')(...Object.values(deps));
   return (token,id)=>fn(token,id);
