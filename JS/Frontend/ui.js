@@ -3936,6 +3936,8 @@ function resetRoleScopedViews_() {
 }
 
 function resetSessionUi_() {
+    developerDiagnosticQueue_.length = 0;
+    window.gpsepediaDeveloperLog = null;
     inEditMode = false;
     window.inEditMode = false;
     clearInMemoryEditBackup_();
