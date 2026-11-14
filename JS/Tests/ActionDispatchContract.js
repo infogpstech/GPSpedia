@@ -170,8 +170,8 @@ function runActionDispatchContractTests(sources) {
             "La lista de acciones de Jefe debe limitarse a las tres operaciones del modal.");
         assert_(adminSource.includes("ADMIN_MODAL_EDIT_ACTIONS.has(action) ? assertModalEditSession(payload) : assertDeveloperSession(payload)"),
             "ADMIN debe exigir sesión Desarrollador para acciones ajenas al modal.");
-        assert_(adminSource.includes('function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe"]);}'),
-            "La sesión modal debe validar roles desde el servidor.");
+        assert_(adminSource.includes('function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe","supervisor"]);}'),
+            "La sesión modal debe validar Supervisor, Jefe y Desarrollador desde el servidor.");
         assert_(adminSource.includes('function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}'),
             "La sesión administrativa general debe seguir siendo exclusiva de Desarrollador.");
     });
