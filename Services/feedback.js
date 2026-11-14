@@ -526,8 +526,7 @@ function doPostInternal_(e) {
                         ? response.referenceId
                         : response.updated && response.updated.tutorialId;
                     if (!tutorialId) throw new Error("La operación no devolvió un ID de tutorial verificable.");
-                    const change = buildTutorialCatalogChange_(tutorialId);
-                    publishSharedCatalogChange_("FEEDBACK", action, change);
+                    publishTutorialCatalogChange_(action, tutorialId);
                 } else {
                     publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
                 }
@@ -2540,6 +2539,23 @@ function buildTutorialCatalogChange_(reference) {
         Colaborador: row[7] === "" || row[7] === undefined ? null : row[7]
     };
     return { collection: "tutoriales", recordId: id, operation: "upsert", snapshot: snapshot };
+}
+
+function publishTutorialCatalogChange_(action, reference) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        try {
+            const change = buildTutorialCatalogChange_(reference);
+            publishSharedCatalogChange_("FEEDBACK", action, change);
+        } catch (catalogPublishError) {
+            // Mantiene serializados lectura y publicación: un evento tardío no puede
+            // sobrescribir el snapshot de una edición concurrente más reciente.
+            publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+        }
+    } finally {
+        lock.releaseLock();
+    }
 }
 
 function findTutorialRow_(sheet, reference, preferId) {
