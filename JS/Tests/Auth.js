@@ -32,7 +32,8 @@ const COLS_ACTIVE_SESSIONS = {
     ActiveSessions: 3,
     date: 4,
     Logs: 5,
-    LastActivityAt: 6
+    LastActivityAt: 6,
+    SessionTermsAcceptance: 7
 };
 
 const SESSION_LIMITS = {
@@ -428,7 +429,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","validateSession","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].includes(action);
+    return ["login","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].includes(action);
 }
 
 function doPost(e) {
@@ -658,6 +659,7 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
         newSessionRow[COLS_ACTIVE_SESSIONS.date - 1] = createdAt;
         newSessionRow[COLS_ACTIVE_SESSIONS.Logs - 1] = '';
         newSessionRow[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] = createdAt;
+        newSessionRow[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1] = '';
         try {
             sessionsSheet.appendRow(newSessionRow);
         } catch (appendError) {
@@ -738,8 +740,11 @@ function createOrRecoverLoginSessionUnderLock_(userSheet, sessionsSheet, userRow
 
     record = { ...record, userId: normalizeUserId(userId), token, createdAt, createdAtMs: record && record.createdAtMs ? record.createdAtMs : now, status: 'committed', pointerSet: true, committedAt: Date.now() };
     properties.setProperty(key, JSON.stringify(record));
+    const confirmedRows = findSessionRowsByTokenUnderLock_(sessionsSheet, token);
+    if (confirmedRows.length !== 1) throw new Error('No se pudo confirmar la sesión después de aplicar el límite de sesiones.');
+    const termsAcceptance = parseTermsAcceptance_(confirmedRows[0].row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1]);
     SpreadsheetApp.flush();
-    return { token, createdAt, sessionCount, oldestSession, cleanupPending };
+    return { token, createdAt, sessionCount, oldestSession, cleanupPending, termsAcceptance };
 }
 
 function handleLogin(payload) {
@@ -750,7 +755,6 @@ function handleLogin(payload) {
     try {
         const { username, password, requestId: rawRequestId } = payload || {};
         const loginRequestId = normalizeLoginRequestId_(rawRequestId);
-        logToSheet('INFO', 'handleLogin started.');
 
         normalizedUsername = String(username || '').trim();
         const normalizedPassword = normalizePassword(password);
@@ -759,7 +763,8 @@ function handleLogin(payload) {
         attemptId = beginLoginAttempt(normalizedUsername);
         attemptReserved = true;
 
-        const userSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const userSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
         const data = userSheet.getDataRange().getValues();
         data.shift();
 
@@ -823,9 +828,10 @@ function handleLogin(payload) {
                 userSheet.getRange(currentUserRows[0].rowIndex, COLS_USERS.Password)
                     .setValue(createPasswordHash(normalizedPassword, false));
             }
-            const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+            const activeSessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
             if (!activeSessionsSheet) throw new Error('Hoja ActiveSessions no encontrada.');
             ensureActiveSessionsActivityColumn_(activeSessionsSheet);
+            ensureSessionTermsAcceptanceColumn_(activeSessionsSheet);
             const roleRevocation = reconcileRoleRevocationUnderLock_(userSheet, activeSessionsSheet, userId);
             if (roleRevocation.pending) throw new Error('La revocación de sesiones anterior sigue pendiente. Intenta iniciar sesión nuevamente más tarde.');
 
@@ -858,7 +864,6 @@ function handleLogin(payload) {
             logToSheet('ERROR', 'Failed to create or recover active session.', { error: sessionOperationError.message, requestId: loginRequestId });
             throw sessionOperationError;
         }
-        logToSheet('DEBUG', `Found ${sessionCount} active sessions for user ${userId}. Limit is ${sessionLimit}.`);
         if (oldestSession) logToSheet('INFO', 'Session limit reached. Previous session token invalidated.', { oldestSession });
         if (sessionCleanupPending) logToSheet('ERROR', 'Login succeeded but an inactive session row could not be deleted.', { userId, requestId: loginRequestId });
 
@@ -872,7 +877,7 @@ function handleLogin(payload) {
             SessionToken: sessionToken,
             SessionCreatedAt: sessionCreatedAt,
             SessionLastActivityAt: sessionCreatedAt,
-            TermsAcceptance: parseTermsAcceptance_(foundUserRow[COLS_USERS.TermsAcceptance - 1])
+            TermsAcceptance: sessionResult.termsAcceptance || { version: '', acceptedAt: '', status: 'pending' }
         };
 
         return { status: 'success', user: user, sessionCleanupPending };
@@ -895,19 +900,77 @@ function handleLogin(payload) {
     }
 }
 
+function validateSessionReadOnly_(sessionToken, expectedUserId) {
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        if (!lock.tryLock(2500)) return { valid: null, unavailable: true, reason: 'session_busy' };
+        acquired = true;
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
+        if (!sessionsSheet || !usersSheet) return { valid: null, unavailable: true, reason: 'missing_sheet' };
+        const sessions = sessionsSheet.getDataRange().getValues();
+        const matches = [];
+        for (let index = 1; index < sessions.length; index++) {
+            if (String(sessions[index][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || '') === sessionToken) {
+                matches.push({ row: sessions[index], rowIndex: index + 1 });
+            }
+        }
+        if (matches.length !== 1) return { valid: false, reason: matches.length > 1 ? 'duplicate_token' : 'missing_session' };
+        const session = matches[0];
+        const userId = normalizeUserId(session.row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]);
+        if (!userId || userId !== normalizeUserId(expectedUserId)) return { valid: false, reason: 'identity_mismatch' };
+        const expiration = getSessionExpirationStatus_(session.row, new Date());
+        if (expiration.expired) return { valid: false, reason: expiration.reason };
+        if (hasPendingRoleRevocation_(userId)) return { valid: null, unavailable: true, reason: 'role_revocation_pending' };
+        const users = usersSheet.getDataRange().getValues().slice(1)
+            .map((row, index) => ({ row, rowIndex: index + 2 }))
+            .filter(item => normalizeUserId(item.row[COLS_USERS.ID - 1]) === userId);
+        if (users.length !== 1 || !isActiveAuthUserRecord(users[0].row)) {
+            return { valid: false, reason: 'inactive_or_ambiguous_user' };
+        }
+        const sessionTermsHeader = String(sessionsSheet.getRange(1, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance).getValue() || '').trim();
+        const termsAcceptance = sessionTermsHeader === 'SessionTermsAcceptance'
+            ? parseTermsAcceptance_(session.row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1])
+            : { version: '', acceptedAt: '', status: 'pending' };
+        return {
+            valid: true, userId, createdAt: expiration.createdAt.toISOString(),
+            lastActivityAt: session.row[COLS_ACTIVE_SESSIONS.LastActivityAt - 1] || session.row[COLS_ACTIVE_SESSIONS.date - 1],
+            termsAcceptance,
+            profile: {
+                ID: userId,
+                Nombre_Usuario: users[0].row[COLS_USERS.Nombre_Usuario - 1],
+                Nombre_Completo: users[0].row[COLS_USERS.Nombre_Completo - 1],
+                Privilegios: users[0].row[COLS_USERS.Privilegios - 1],
+                Telefono: users[0].row[COLS_USERS.Telefono - 1],
+                Correo_Electronico: users[0].row[COLS_USERS.Correo_Electronico - 1]
+            }
+        };
+    } catch (error) {
+        console.error('validateSessionReadOnly_:', error && error.message ? error.message : error);
+        return { valid: null, unavailable: true, reason: 'validation_unavailable' };
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
+}
+
 function handleValidateSession(payload) {
     try {
         const { userId, sessionToken } = payload || {};
         if (!userId || !sessionToken) return { valid: false };
-        return validateAndTouchSession_(sessionToken, userId);
+        return validateSessionReadOnly_(sessionToken, userId);
     } catch (error) {
-        logToSheet('ERROR', `Error in handleValidateSession: ${error.message}`, { stack: error.stack });
-        return { valid: false, error: error.message };
+        console.error('handleValidateSession:', error && error.message ? error.message : error);
+        return { valid: null, unavailable: true, reason: 'validation_unavailable' };
     }
 }
 function handleTouchSession(payload) {
     try { const token=payload&&payload.sessionToken; if(typeof token!=='string'||!token)return{valid:false}; return validateAndTouchSession_(token); }
-    catch(error){logToSheet('ERROR',`Error in handleTouchSession: ${error.message}`,{stack:error.stack});return{valid:false,error:error.message};}
+    catch(error){
+        logToSheet('ERROR',`Error in handleTouchSession: ${error.message}`,{stack:error.stack});
+        return{valid:null,unavailable:true,reason:'validation_unavailable'};
+    }
 }
 
 // Todas las mutaciones de ActiveSessions y las eliminaciones de cuenta se coordinan en AUTH.
@@ -969,6 +1032,26 @@ function ensureTermsAcceptanceColumn_(sheet) {
     return column;
 }
 
+
+function ensureSessionTermsAcceptanceColumn_(sheet) {
+    if (!sheet) throw new Error('No se encontró la hoja ActiveSessions.');
+    const column = COLS_ACTIVE_SESSIONS.SessionTermsAcceptance;
+    const header = String(sheet.getRange(1, column).getValue() || '').trim();
+    if (header === 'SessionTermsAcceptance') return column;
+    if (header) throw new Error('La columna G de ActiveSessions ya contiene otro encabezado; no se modificó el esquema.');
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+        const occupied = sheet.getRange(2, column, lastRow - 1, 1).getValues()
+            .some(row => row[0] !== null && row[0] !== undefined && String(row[0]).trim() !== '');
+        if (occupied) throw new Error('La columna G de ActiveSessions contiene datos sin encabezado; no se modificó el esquema.');
+    }
+    sheet.getRange(1, column).setValue('SessionTermsAcceptance');
+    SpreadsheetApp.flush();
+    if (String(sheet.getRange(1, column).getValue() || '').trim() !== 'SessionTermsAcceptance') {
+        throw new Error('No se pudo confirmar el encabezado SessionTermsAcceptance.');
+    }
+    return column;
+}
 
 function roleRevocationPropertyKey_(userId) {
     return ROLE_REVOCATION_PROPERTY_PREFIX + encodeURIComponent(normalizeUserId(userId));
@@ -1349,8 +1432,9 @@ function validateAndTouchSession_(token, expectedUserId = null) {
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sessionsSheet = spreadsheet.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
         const usersSheet = spreadsheet.getSheetByName(SHEET_NAMES.USERS);
-        if (!sessionsSheet || !usersSheet) return { valid: false, reason: 'missing_sheet' };
+        if (!sessionsSheet || !usersSheet) return { valid: null, unavailable: true, reason: 'missing_sheet' };
         ensureActiveSessionsActivityColumn_(sessionsSheet);
+        ensureSessionTermsAcceptanceColumn_(sessionsSheet);
         const data = sessionsSheet.getDataRange().getValues(), matches = [];
         for (let i = 1; i < data.length; i++) if (data[i][COLS_ACTIVE_SESSIONS.ActiveSessions - 1] === token) matches.push({ rowIndex: i + 1, row: data[i] });
         if (matches.length !== 1) return { valid: false, reason: matches.length > 1 ? 'duplicate_token' : 'missing_session' };
@@ -1365,7 +1449,7 @@ function validateAndTouchSession_(token, expectedUserId = null) {
                 reconcileRoleRevocationUnderLock_(usersSheet, sessionsSheet, userId);
                 return { valid: false, reason: 'role_changed_reauthentication_required' };
             }
-        } catch (error) { return { valid: false, reason: 'role_revocation_pending' }; }
+        } catch (error) { return { valid: null, unavailable: true, reason: 'role_revocation_pending' }; }
         const expiration = getSessionExpirationStatus_(session.row, new Date());
         if (expiration.expired) {
             const requestRevocation = revokeLoginRequestForTokenUnderLock_(token, userId);
@@ -1381,8 +1465,7 @@ function validateAndTouchSession_(token, expectedUserId = null) {
             }
             SpreadsheetApp.flush(); return { valid: false, reason: expiration.reason };
         }
-        ensureTermsAcceptanceColumn_(usersSheet);
-        const termsAcceptance = parseTermsAcceptance_(usersSheet.getRange(userRows[0].rowIndex, COLS_USERS.TermsAcceptance).getValue());
+        const termsAcceptance = parseTermsAcceptance_(session.row[COLS_ACTIVE_SESSIONS.SessionTermsAcceptance - 1]);
         const lastActivityAt = new Date().toISOString();
         sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(lastActivityAt);
         SpreadsheetApp.flush();
@@ -1916,16 +1999,20 @@ function handleAcceptTerms(payload) {
         }
         assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, userId);
         ensureTermsAcceptanceColumn_(usersSheet);
-        const cell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);
-        const current = parseTermsAcceptance_(cell.getValue());
-        if (current.status === 'accepted' && current.version === TERMS_CURRENT_VERSION) {
-            return { status: 'success', accepted: true, alreadyAccepted: true, termsAcceptance: current };
+        ensureSessionTermsAcceptanceColumn_(sessionsSheet);
+        const sessionCell = sessionsSheet.getRange(session.rowIndex, COLS_ACTIVE_SESSIONS.SessionTermsAcceptance);
+        const sessionCurrent = parseTermsAcceptance_(sessionCell.getValue());
+        if (sessionCurrent.status === 'accepted' && sessionCurrent.version === TERMS_CURRENT_VERSION) {
+            return { status: 'success', accepted: true, alreadyAccepted: true, termsAcceptance: sessionCurrent };
         }
         const acceptance = { version: TERMS_CURRENT_VERSION, acceptedAt: new Date().toISOString(), status: 'accepted' };
         const serialized = JSON.stringify(acceptance);
-        cell.setValue(serialized); SpreadsheetApp.flush();
-        if (String(cell.getValue() || '') !== serialized) throw new Error('No se pudo confirmar el registro de aceptación. El catálogo permanece bloqueado.');
-        return { status: 'success', accepted: true, alreadyAccepted: false, termsAcceptance: parseTermsAcceptance_(cell.getValue()) };
+        sessionCell.setValue(serialized);
+        const userCell = usersSheet.getRange(userMatches[0].rowIndex, COLS_USERS.TermsAcceptance);
+        userCell.setValue(serialized);
+        SpreadsheetApp.flush();
+        if (String(sessionCell.getValue() || '') !== serialized) throw new Error('No se pudo confirmar el registro de aceptación. El catálogo permanece bloqueado.');
+        return { status: 'success', accepted: true, alreadyAccepted: false, termsAcceptance: parseTermsAcceptance_(sessionCell.getValue()) };
     } finally { if (acquired) lock.releaseLock(); }
 }
 
