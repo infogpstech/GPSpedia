@@ -234,4 +234,4 @@
 - JS/Tests/CatalogSnapshotSync.js: caso de regresión para invalidación de cursor al guardar snapshot sin revisión.
 - JS/Tests/CatalogStartupIntegrity.mjs: caso de regresión para feed fallido + snapshot completo y comprobación de que el cursor queda nulo.
 - JS/Frontend/ui.js: insertNewVehicleFluently respeta prefers-reduced-motion; las tarjetas nuevas mantienen entrada sin transición cuando el usuario solicita movimiento reducido.
-- CI Node.js 22 del HEAD documental `a6fdeec6d16752fcf352a11642056588976b5a45`: run `43645734358` SUCCESS; 98 suites / 1,463 pruebas / 0 fallos. Pages run `43645733920` estaba en ejecución y debe confirmarse en el siguiente checkpoint.
+- CI Node.js 22 del HEAD `6af6d78e2c68d0175566626177ca41fe2496d2d5`: run `43645790740` SUCCESS; 98 suites / 1,463 pruebas / 0 fallos. GitHub Pages run `43645790429` SUCCESS.
