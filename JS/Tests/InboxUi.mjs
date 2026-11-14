@@ -35,7 +35,7 @@ check("Las solicitudes históricas usan navegación móvil de una sola vista y r
     assert.match(ui, /mobileBack = makeElement\('button', 'inbox-mobile-back', 'Volver a solicitudes'\)/);
     assert.match(ui, /itemDiv\.setAttribute\('role', 'button'\)/);
     assert.match(ui, /itemDiv\.addEventListener\('keydown'/);
-    assert.match(css, /#inbox-modal-content\.is-request-detail-open[\\s\\S]*#inbox-detail/);
+    assert.ok(css.includes("#inbox-modal-content.is-request-detail-open .inbox-requests-view #inbox-detail"));
 });
 check("Las solicitudes exponen una barra contextual con responder, resolver y borrar", () => {
     assert.match(ui, /actionToolbar\.setAttribute\('role', 'toolbar'\)/);
