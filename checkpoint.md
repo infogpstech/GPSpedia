@@ -479,3 +479,16 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions `service-tests` sobre HEAD `136fb78068d2f64a982189f6f0e614aef93b0643`: **PASS**, 78 suites, 1,200 pruebas aprobadas, 0 fallos. `InboxConversations: 29/29 PASS`; `InboxUi: 16/16 PASS`.
 - No se declara completada la validación visual/manual: faltan pruebas reales de tema claro/oscuro, lector de pantalla, teclado, navegación Atrás y tamaños/dispositivos. Las conversaciones nuevas son solo texto; no se habilitaron adjuntos no soportados por el backend.
 - Siguiente paquete: P4 — matriz de capacidades por rol y coherencia frontend/backend para compartir, imprimir, editar y descargar imágenes.
+
+## P4 — RBAC de ficha técnica: compartir, imprimir y editar (2026-11-14)
+
+**Estado: PRIMERA FASE IMPLEMENTADA Y VALIDADA; MATRIZ GLOBAL Y POLÍTICA DE IMÁGENES PENDIENTES.**
+
+- El botón Compartir permanece disponible en el modal para todos los roles con acceso a la aplicación.
+- Imprimir y editar detalles ahora se muestran únicamente a `Supervisor`, `Jefe` y `Desarrollador`; Técnico y Técnico_exterior no reciben esos controles.
+- La función de respaldo de edición local acepta esos tres roles; el frontend normaliza el rol antes de decidir la visibilidad.
+- ADMIN valida la sesión/rol desde Users y ActiveSessions. `assertModalEditSession` permite solo Desarrollador/Jefe/Supervisor; el contexto devuelto conserva el nombre canónico del rol. Las acciones administrativas ajenas al modal siguen usando `assertDeveloperSession` exclusivamente.
+- Se actualizaron las pruebas del contrato de dispatch y se añadió `VehicleModalRolePolicy.mjs`, que valida visibilidad y ejecuta la autorización backend con sesiones simuladas para los roles permitidos/no permitidos.
+- GitHub Actions `service-tests` sobre HEAD `9524f2f1789df4551c4d6a9c37f7a13822d43e66`: **PASS**, 79 suites, 1,205 pruebas aprobadas, 0 fallos; `VehicleModalRolePolicy: 5/5 PASS`.
+- No se desplegó ADMIN ni se modificaron datos productivos. La comprobación corresponde a código/CI; la validación visual por rol en Beta sigue pendiente.
+- Siguiente subfase P4: revisar y restringir descarga de imágenes, exposición de URL y acciones de contexto/copia/arrastre sin afectar controles editables ni accesibilidad.
