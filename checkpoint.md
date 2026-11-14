@@ -827,3 +827,8 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 
 - CI run 43614444869 falló en una aserción estática que nombraba `saved.status` donde la implementación consulta `previous.status`. El flujo de recuperación no llegó a fallar en ejecución; planner 15/15 PASS.
 - Se corrigió la referencia del test para verificar la condición real de reanudación parcial. CI completo pendiente.
+
+
+## GP-IMG-DATA-01 — Ajuste de texto en prueba de restauración (2026-11-14)
+
+- CI run 43614515817 falló por diferencia de capitalización en el literal del test: la UI presenta «pulsa Conciliar» en minúscula después de un punto y coma. Se alineó la aserción con el texto real; no se modificó la UI.

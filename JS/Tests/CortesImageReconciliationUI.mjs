@@ -61,7 +61,7 @@ testCase("restaura el reporte guardado al reabrir y solo reanuda estados parcial
  assert.ok(ui.includes("restoreCortesReconciliationState_()"));
  assert.ok(ui.includes("saved.status === \"complete\""));
  assert.ok(ui.includes("previous.status !== \"complete\" && previous.fileSignature === fileSignature"));
- assert.ok(ui.includes("Pulsa Conciliar para actualizarla con datos actuales"));
+ assert.ok(ui.includes("pulsa Conciliar para actualizarla con datos actuales"));
  assert.ok(ui.includes("String(file.fileName || \"\"), String(file.mimeType || \"\").toLowerCase()"));
  assert.ok(ui.includes("await saveProgress(\"running\")"));
  assert.ok(!ui.includes("saveProgress(nextBatchIndex === totalBatches ? \"complete\" : \"running\")"));
