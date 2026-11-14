@@ -86,12 +86,13 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [ ] Implementar checkpoints y estrategia de reversión para la migración de IDs antes de cualquier escritura.
 
 ### P3 — Rediseño Inbox
-**Estado: PENDIENTE**
-- [ ] Diseñar estructura de bandeja: navegación/categorías, búsqueda, filtros, lista con remitente/asunto/fecha/estado y panel de lectura.
-- [ ] Mejorar jerarquía visual, densidad, estados no leído/leído, acciones y vacíos/carga/error.
-- [ ] Adaptar móvil con navegación lista-detalle y controles táctiles.
-- [ ] Preservar mensajes, respuestas, adjuntos si existen, paginación, caché, archivado, lectura y permisos.
-- [ ] Probar tema claro/oscuro, teclado, accesibilidad y navegación Atrás.
+**Estado: IMPLEMENTADO EN RAMA DE TRABAJO; VALIDACIÓN MANUAL EN NAVEGADORES Y DISPOSITIVOS REALES PENDIENTE.**
+- [x] Estructura de bandeja con conversaciones, carpetas, categorías, búsqueda, lista con remitente/asunto/fecha/estado y panel de lectura.
+- [x] Jerarquía visual, densidad, estados no leído/leído, acciones y estados vacíos/carga/error.
+- [x] Adaptación móvil con navegación lista-detalle, controles táctiles y botón de retorno al listado.
+- [x] Preservar solicitudes históricas y sus contratos; conversaciones directas con respuestas, paginación, caché aislada por sesión, archivado, lectura, auditoría y permisos backend. Las conversaciones directas admiten texto; no se habilitaron adjuntos que el backend no soporta.
+- [x] Añadir filtro de categorías conectado de extremo a extremo: selector UI, estado, reinicio de paginación, wrapper API, filtro backend y validación de categorías permitidas.
+- [ ] Validación manual en tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y tamaños móviles/escritorio reales; CI verifica contratos, accesibilidad estructural, focus-visible y movimiento reducido, pero no sustituye la prueba de navegador/dispositivo.
 
 ### P4 — Política de imágenes y permisos
 **Estado: PENDIENTE**
