@@ -399,7 +399,7 @@ async function postToAction(action, payload = {}) {
         return result;
     } catch (error) {
         console.error(`Error in action '${action}':`, error);
-        alert(`Error: ${error.message}`);
+        showConciseAlert_(`Error: ${error.message}`);
         throw error;
     }
 }
@@ -653,7 +653,7 @@ async function handleUserFormSubmit(e) {
                         window.state.setState({ currentUser: null });
                     }
                 }
-                alert(updateResult.message || 'Tu rol cambió y todas tus sesiones fueron cerradas. Inicia sesión nuevamente.');
+                showConciseAlert_(updateResult.message || 'Tu rol cambió y todas tus sesiones fueron cerradas. Inicia sesión nuevamente.');
                 window.location.replace('../index.html');
                 return;
             }
@@ -746,7 +746,7 @@ async function handleUserFormSubmit(e) {
                 return;
             }
         }
-        alert(error && error.message ? error.message : 'No se pudo completar la operación del usuario.');
+        showConciseAlert_(error && error.message ? error.message : 'No se pudo completar la operación del usuario.');
     } finally {
         submitBtn.classList.remove('btn-loading');
         submitBtn.disabled = false;
