@@ -943,3 +943,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - El runner integral `JS/Tests/RunServiceTests.mjs` está presente y cubre WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e INTEGRATION. El workflow `.github/workflows/service-tests.yml` está configurado para push en esta rama y usa Node.js 22.
 - El conector GitHub disponible no expone una consulta de runs de push/check-runs; `fetch_commit_workflow_runs` filtra a ejecuciones de pull request y el endpoint de status consultado devolvió una lista vacía. Por ello, la ejecución de Actions sobre el HEAD actual no puede confirmarse desde esta interfaz. No se declara CI PASS ni se atribuye el resultado de un HEAD anterior.
 - No hay clon local/Node CLI en este entorno. La ejecución integral real del runner queda pendiente de un entorno con Node.js 22 o de consultar el run de Actions directamente en GitHub. Las validaciones externas de Beta siguen separadas.
+
+
+### Preparación de validaciones Beta y sincronización documental — 2026-11-14
+
+- Se consolidó en `Tareas_Activas.md` un protocolo Beta para P1, P2, P3, P4, GP-IMG-DATA-01 y P6. La lista comienza con comandos copiables para verificar repositorio/rama, detenerse ante cambios locales, hacer fetch + pull --ff-only y mostrar el HEAD final, según la sección 5 de las normas.
+- Se registró el cambio documental en `ChangesLogs.txt`; no hubo cambios funcionales ni operaciones externas.
+- Commits de esta continuación: backlog/continuidad `cc301f093ed1b38d94aec7cc99233ab1ce72f3fe`; checkpoint de inicio `f6d43077572fe3099391ebcf02c8cf0f1d72c581`; checkpoint de parsing `7d0d844bc14bb8cf74b5546cb2d6e70c1f9635b6`; protocolo Beta `5766a98886bb86b7d07f9bd27eeeeb8130cdccd5`; changelog `17bab7a7d5c342557a3b7d41e3018d3c8cb81261`.
+- Pendiente de verificación integral local: ejecutar `node --check` y `node --experimental-default-type=module JS/Tests/RunServiceTests.mjs` con Node.js 22, o consultar la ejecución GitHub Actions del HEAD vigente. El conector actual no permite consultar runs de push ni check-runs; no se declara aprobación CI.
+- Pendiente Beta: las 14 casillas abiertas en el backlog corresponden a pruebas con navegador/dispositivo, runtime Apps Script, hojas/Drive reales, despliegues, copias de datos o autorización expresa. No se consideran bloqueos de implementación local.
