@@ -528,7 +528,7 @@ function doPost(e) {
 }
 
 function touchProtectedAuthRequestSession_(action, payload) {
-    if (!isSharedMutationAction_(action) || action === "login" || action === "touchSession") return;
+    if (!isSharedMutationAction_(action) || action === "login" || action === "touchSession" || action === "migrateLegacyPasswords") return;
     const token = payload && payload.sessionToken;
     if (typeof token !== "string" || !token) {
         throw new Error("Acceso denegado: se requiere una sesión válida para esta operación.");
