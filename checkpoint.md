@@ -432,3 +432,24 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Actions `service-tests` sobre `537839f6c74198d241a2b074cf38f1a4426dc1ae`: **PASS**, 76 suites, 1,185 pruebas aprobadas, 0 fallos.
 - No se ejecutó `migrateLegacyPasswords` contra la Spreadsheet productiva ni se desplegó AUTH. El benchmark debe ejecutarse en un deployment de prueba antes de fijar el coste final.
 - Siguiente subfase P2: inventario de generadores, fórmulas y referencias de IDs de Users, Vehicles/Cortes, Tutoriales, Problemas y Relay; después diseñar la reconciliación sin romper relaciones.
+
+## P2 — Auditoría de identificadores y asignación backend (2026-11-14)
+
+**Estado: CÓDIGO DE AUDITORÍA IMPLEMENTADO; MIGRACIÓN REAL DE DATOS PENDIENTE DE EJECUCIÓN BETA.**
+
+### Inventario confirmado en el código
+- Users: `generateNextUserId_` asigna `USR-0001` secuencial tras escanear la hoja; detecta duplicados y filas con datos sin ID. Los IDs históricos con otro formato se deben identificar con auditoría antes de normalizar.
+- Cortes/Vehicles: WRITE es la autoridad de IDs numéricos; combina el máximo de la hoja con `CORTES_ID_COUNTER`, bajo ScriptLock, y rechaza IDs malformados/duplicados.
+- Tutorial: FEEDBACK asigna `tut-<operationId>`, estable e idempotente; conserva compatibilidad con registros históricos sin ID mediante resolución por tema único.
+- Problemas PyS: FEEDBACK asigna `isue-###` a partir de la hoja y `PysOperations`; rechaza IDs vacíos, malformados y duplicados.
+- Relay: CATALOG solo lee la hoja; no existe en el repositorio un endpoint de alta/asignación y el formato del ID no está definido en código.
+- LogosMarca: se eliminó el uso de `=ROW()-1` para nuevos registros. ADMIN asigna un entero positivo desde el backend con contador `LOGOS_MARCA_ID_COUNTER`, ScriptLock, detección de duplicados/malformados y verificación de que la celda final no conserve fórmula.
+- ADMIN conserva `createSheet.idFormula` para hojas genéricas; no se usa como asignador de IDs de las entidades canónicas.
+
+### Herramienta de auditoría
+- Se añadió acción ADMIN `auditIdentifiers`, de solo lectura y restringida a Desarrollador.
+- Inspecciona Users, Cortes, Tutorial, Relay, pys y LogosMarca; devuelve conteos y filas de IDs ausentes, malformados, duplicados, fórmulas y fórmulas sin valor. Para Relay devuelve hasta 20 muestras para confirmar el formato real.
+- No modifica hojas, fórmulas, valores ni contadores. Se añadió prueba explícita de ausencia de escrituras.
+- GitHub Actions `service-tests` sobre `955e09b428204c9e24ccd12f92a1e208135f4189`: **PASS**, 78 suites, 1,198 pruebas aprobadas, 0 fallos.
+- No se pudo ejecutar `auditIdentifiers` contra la Spreadsheet real desde esta sesión: el acceso al contenido de Google Sheets/Drive no está disponible en las herramientas conectadas. No se inventaron datos ni se ejecutó migración.
+- Próximo paso P2 de datos: ejecutar el reporte en Beta, revisar el formato de Relay y las referencias cruzadas; después construir/aplicar una migración con dry-run, respaldo, mapa de IDs, checkpoints y reversión. No escribir IDs reales hasta revisar ese reporte.
