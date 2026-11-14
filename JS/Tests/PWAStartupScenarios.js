@@ -268,4 +268,4 @@ await run('snapshots representativos de 0 a 10,000 Cortes conservan el contrato 
     assert.equal(isCompleteCatalogSnapshot(duplicate), false);
 });
 
-console.log('PWAStartupScenarios: ' + passed + '/13 PASS');
+console.log('PWAStartupScenarios: ' + passed + '/14 PASS');
