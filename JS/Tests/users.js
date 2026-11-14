@@ -6,7 +6,7 @@
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
-const SPREADSHEET_ID = "1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k";
+const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 let spreadsheet = null;
 
 function getSpreadsheet() {
@@ -119,7 +119,19 @@ function doPost(e) {
     }
     if (!request || typeof request !== "object") return doPostInternal_(e);
     const action = String(request.action || "");
-    if (!isSharedMutationAction_(action)) return doPostInternal_(e);
+    if (!isSharedMutationAction_(action)) {
+        if (action !== "getUsers") return doPostInternal_(e);
+        try {
+            return withSharedMutationLease_("USERS", "sessionActivity", function() {
+                return doPostInternal_(e);
+            });
+        } catch (error) {
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "error",
+                message: error && error.message ? error.message : "La operación fue rechazada por el coordinador compartido."
+            })).setMimeType(ContentService.MimeType.TEXT);
+        }
+    }
 
     const payload = request.payload && typeof request.payload === "object" ? request.payload : {};
     const nestedToken = String(payload.__sharedMutationToken || "").trim();
@@ -173,20 +185,23 @@ function getSessionExpirationStatus_(row,now=new Date()){const created=parseSess
 function getVerifiedSession(sessionToken) {
     if (!sessionToken) throw new Error("Acceso no autorizado: Se requiere token de sesión.");
     const ss = getSpreadsheet(), sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-    if (!sessionsSheet) throw new Error("Hoja de sesiones no encontrada.");
-    const sessionRows = sessionsSheet.getDataRange().getValues().slice(1).filter(row => row[2] === sessionToken);
-    if (sessionRows.length !== 1) throw new Error("Acceso no autorizado: Sesión inválida, duplicada o expirada.");
-    const expiration=getSessionExpirationStatus_(sessionRows[0],new Date());
+    if (!sessionsSheet) throw new Error("Acceso no autorizado: Sesión no autorizada.");
+    const sessionRows = sessionsSheet.getDataRange().getValues();
+    const matches = sessionRows.slice(1).map((row,index)=>({row,rowIndex:index+2}))
+        .filter(item=>item.row[COLS_ACTIVE_SESSIONS.ActiveSessions-1]===sessionToken);
+    if (matches.length !== 1) throw new Error("Acceso no autorizado: Sesión inválida, duplicada o expirada.");
+    const sessionMatch=matches[0],expiration=getSessionExpirationStatus_(sessionMatch.row,new Date());
     if(expiration.expired)throw new Error('Acceso no autorizado: Sesión expirada por '+expiration.reason+'.');
-    const userId = String(sessionRows[0][0] ?? '').trim();
+    const userId = String(sessionMatch.row[COLS_ACTIVE_SESSIONS.ID_Usuario-1] ?? '').trim();
     if (!userId) throw new Error("Acceso no autorizado: Identidad de sesión inválida.");
     const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
     if (!usersSheet) throw new Error("Hoja de usuarios no encontrada.");
-    const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => String(row[0] ?? '').trim() === userId);
+    const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => String(row[COLS_USERS.ID-1] ?? '').trim() === userId);
     if (userRows.length !== 1 || !isActiveUserRecord(userRows[0])) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
     if (hasPendingRoleRevocationForUser_(userRows[0])) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
-    const rawRole = String(userRows[0][3] || '').trim();
+    const rawRole = String(userRows[0][COLS_USERS.Privilegios-1] || '').trim();
     const role = rawRole;
+    sessionsSheet.getRange(sessionMatch.rowIndex,COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
     return { userId, role };
 }
 
