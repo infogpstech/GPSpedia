@@ -40,7 +40,7 @@ export function setRichTextMode(mode, actorRole) {
 
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycbyvkzxZNTGUjZZIQizCV-_dA5iz8GNASp0L3Kxu1Q06BONgrKvR-MpxOsYbVytUtk0n/exec",
+    AUTH:     "https://script.google.com/macros/s/AKfycbw9Xr8_Pzi_rSt8YYXu8SuaYqMdj_VxzsgtUnztDcjT_aQdxFeHVYYSW9HXDjAmXl4D/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxRwBKI_HyY4KWf1vny5kxhT5kmspDPj6BmNe-bAAcB27osXY5L0Ylx94RWrn9lJ9kW/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbxMj8WFCMZVLXuk3N6_WCeEwNwhGAb589PJY4gc5ZjA8mrYsBN7-femz_FCH4eFj5vBDQ/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbzM9RtdvqN5adqWlVqpD3bvHwnYQeojGUh8Fwxftgp63ynpe4J4Et_Mix4wX7M2IPPKOA/exec",
