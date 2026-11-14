@@ -211,3 +211,40 @@ No se ejecutó GitHub Actions completo ni deployment/navegador Beta. La rama bas
 - Las pruebas aisladas confirman que la aceptación puede coexistir con `ADMIN/sessionActivity`; `TermsAcceptance` 19/19 PASS y CI run `43629775820` 94 suites / 1,388 pruebas / 0 fallos.
 - El mensaje reportado de recurso ocupado no se reprodujo localmente. La discrepancia apunta a revisar versiones desplegadas de Coordinator/AUTH y configuración del coordinador; no es evidencia suficiente para afirmar una causa externa concreta.
 - No se modificaron deployments, ScriptProperties ni datos productivos. La prueba de aceptación concurrente queda pendiente en Beta.
+
+
+## AUD-2026-11-14-09 — Inbox histórico apilaba lista y detalle en móvil
+
+**Severidad:** Media — navegación y usabilidad móvil.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación visual en dispositivos pendiente.
+
+### Evidencia y causa
+- La vista histórica `inbox-requests-view` mantenía lista y detalle en el mismo contenedor flex; el CSS móvil los apilaba verticalmente y reducía el espacio disponible para ambos.
+- Las acciones del detalle estaban agrupadas como controles de texto al final del contenido.
+- Se detectó además que el detalle de aprobaciones de vídeo mostraba un botón de borrado genérico, aunque `handleDeleteFeedbackItem()` solo admite `problem_report` y `contact_form`; intentar borrar `video_approval` siempre era rechazado por backend.
+
+### Corrección y validación
+- En móvil, la vista histórica ahora muestra lista o detalle, con botón de regreso y soporte de teclado en cada elemento.
+- Las acciones de respuesta, resolución y borrado se presentan en una barra contextual accesible, respetando el RBAC existente.
+- Se retiró el borrado genérico de aprobaciones de vídeo; permanecen las acciones Aprobar/Rechazar cuando el estado lo permite.
+- `InboxUi`: 19/19 PASS.
+- GitHub Actions run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
+- Commits principales: UI `723845b2f0b1241a8048c42addedfd5e11c1ade1`; navegación `6333ec78483571fb4c4842737f9e5533937d0f58`; CSS `397fbdb2af90f37ba7f2d999d8d61373ef45391a`; pruebas `753b7784ab113cc694fcf334896062515494c850`.
+
+## AUD-2026-11-14-10 — Falta de acción explícita para recargar la PWA
+
+**Severidad:** Media — recuperación de interfaz y actualización de cliente.  
+**Estado:** CORREGIDO EN RAMA DE TRABAJO; validación Android/iOS pendiente.
+
+### Evidencia y causa
+- No se encontró un listener que bloqueara F5/Ctrl+R ni una intercepción global de `beforeunload`.
+- El gesto pull-to-refresh de `main.js` actualizaba el catálogo con `loadInitialData(true)`; no recargaba el documento ni comprobaba explícitamente si había una versión nueva del Service Worker.
+- En una PWA instalada, el usuario puede no disponer de controles de recarga visibles del navegador.
+
+### Corrección y validación
+- Se agregó el enlace «Recargar aplicación» al menú lateral. Su acción consulta `ServiceWorkerRegistration.update()` con espera máxima de 3 segundos y después ejecuta `window.location.reload()`.
+- El gesto pull-to-refresh sigue sincronizando solo el catálogo para evitar recargas involuntarias.
+- El caché de Service Worker se incrementó a `gpsepedia-cache-v27`; los 33 recursos esenciales se verificaron contra el árbol Git y no hay rutas faltantes.
+- `SessionStartupNavigation`: 13/13 PASS; `PWAStartupScenarios`: 13/13 PASS.
+- GitHub Actions run `43630382765`: 94 suites / 1,392 pruebas / 0 fallos.
+- No se afirma que el navegador/PWA bloquee capturas nativas. La prevención efectiva requiere un contenedor nativo con controles del sistema operativo.
