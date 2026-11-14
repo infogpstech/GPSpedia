@@ -6,7 +6,7 @@ function runVideoApprovalSessionTests() {
     function assert_(v,m){if(!v)throw new Error(m||"Aserción fallida.");}
     function expect_(fn,t){let e=null;try{fn();}catch(x){e=x;}assert_(!!e,"Se esperaba rechazo.");if(t)assert_(String(e.message||e).includes(t),"Error inesperado: "+String(e.message||e));}
     function run_(n,fn){try{fn();passed++;results.push({name:n,status:"PASS"});}catch(e){failed++;results.push({name:n,status:"FAIL",message:String(e.message||e)});}}
-    function sheet_(rows){return{getDataRange:()=>({getValues:()=>rows})};}
+    function sheet_(rows){return{getDataRange:()=>({getValues:()=>rows}),getRange:(row,column)=>({setValue:value=>{rows[row-1][column-1]=value;}})};}
     function setup_(options){
         options=options||{};
         const now=new Date();
@@ -26,6 +26,8 @@ function runVideoApprovalSessionTests() {
             setup_();const actor=assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null);
             assert_(actor.userId==="user-1"&&actor.role==="Desarrollador");
         });
+        run_("actualiza LastActivityAt solo después de validar la sesión",()=>{setup_();const before=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},null);const after=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];assert_(after!==before&&Number.isFinite(new Date(after).getTime()),"La actividad debe quedar actualizada en el servidor.");});
+        run_("no actualiza actividad si el rol solicitado no está permitido",()=>{setup_();const before=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"token-1"},["Supervisor"]),"sesión no autorizada");const after=getSpreadsheet().getSheetByName("ActiveSessions").getDataRange().getValues()[1][5];assert_(after===before,"Una solicitud no autorizada no debe renovar la sesión.");});
         run_("rechaza sesión ausente",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-1"},null),"sesión no autorizada");});
         run_("rechaza token inválido",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-1",sessionToken:"wrong"},null),"sesión inválida");});
         run_("rechaza userId/token cruzados",()=>{setup_();expect_(()=>assertFeedbackSession({userId:"user-2",sessionToken:"token-1"},null),"sesión inválida");});
