@@ -63,8 +63,8 @@ testCase("la firma se calcula dentro del try y cualquier fallo libera los bloque
  const fn=ui.slice(start,end);
  assert.ok(fn.indexOf("try {") < fn.indexOf("globalThis.crypto.subtle.digest"));
  assert.ok(fn.includes("if (!globalThis.crypto || !globalThis.crypto.subtle)"));
- assert.match(fn,/if \\(fileSignature\\) \\{\\s+try \\{ await saveProgress\\("partial"\\);/);
- assert.ok(fn.includes("} finally {\\n            isReconciling = false;\\n            isRunning = false;\\n            isDriveAuditRunning = false;"));
+ assert.match(fn,/if \(fileSignature\) \{\s+try \{ await saveProgress\("partial"\);/);
+ assert.match(fn,/\} finally \{\s+isReconciling = false;\s+isRunning = false;\s+isDriveAuditRunning = false;/);
 });
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);

@@ -796,3 +796,8 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 
 - CI run 43614081536 falló en la nueva prueba estática por una expectativa de salto de línea demasiado literal, no por ejecución de lógica; las pruebas anteriores del archivo pasaron.
 - Se reemplazó la comparación textual sensible a espacios por una expresión regular que verifica el bloque de persistencia parcial sin depender del formato.
+
+
+## GP-IMG-DATA-01 — Ajuste final de patrón de regresión (2026-11-14)
+
+- CI run 43614168781 volvió a fallar únicamente por el patrón regex de la prueba, que contenía escapes duplicados y buscaba barras invertidas literales. Se corrigió el regex y se hizo tolerante a espacios/saltos de línea también en la comprobación de `finally`.

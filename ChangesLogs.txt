@@ -1762,3 +1762,9 @@ Rama: GPSpedia2.2.5_work
 2026-11-14 — GP-IMG-DATA-01 ESTABILIZAR REGRESIÓN DE ERROR
 - La prueba de guardado parcial ahora verifica la estructura del bloque con tolerancia a espacios/saltos de línea, evitando depender del formato exacto.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 CORREGIR PATRONES REGEX DE TEST
+- Corregidos escapes duplicados en expresiones regulares de la prueba de manejo de error; verificación estructural tolerante a espacios.
+================================================================================
