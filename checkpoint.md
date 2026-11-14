@@ -952,3 +952,21 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Commits de esta continuación: backlog/continuidad `cc301f093ed1b38d94aec7cc99233ab1ce72f3fe`; checkpoint de inicio `f6d43077572fe3099391ebcf02c8cf0f1d72c581`; checkpoint de parsing `7d0d844bc14bb8cf74b5546cb2d6e70c1f9635b6`; protocolo Beta `5766a98886bb86b7d07f9bd27eeeeb8130cdccd5`; changelog `17bab7a7d5c342557a3b7d41e3018d3c8cb81261`.
 - Pendiente de verificación integral local: ejecutar `node --check` y `node --experimental-default-type=module JS/Tests/RunServiceTests.mjs` con Node.js 22, o consultar la ejecución GitHub Actions del HEAD vigente. El conector actual no permite consultar runs de push ni check-runs; no se declara aprobación CI.
 - Pendiente Beta: las 14 casillas abiertas en el backlog corresponden a pruebas con navegador/dispositivo, runtime Apps Script, hojas/Drive reales, despliegues, copias de datos o autorización expresa. No se consideran bloqueos de implementación local.
+
+
+### Adenda correctiva — verificación integral CI confirmada (2026-11-14)
+
+Esta adenda corrige las notas anteriores que indicaban que no era posible consultar GitHub Actions o que la ejecución Node CLI seguía pendiente. Se localizó el endpoint general de ejecuciones del repositorio, que sí devuelve los runs de tipo `push`.
+
+- HEAD de código/documentación validado: `4ce76205be184fa5f8b66e1ebaec0b5b2574e3ac` en `GPSpedia2.2.5_work`; el run de pruebas se ejecutó sobre ese SHA exacto.
+- GitHub Actions run `43619377905`, workflow `GPSpedia service regression tests`: **success**. Job `service-tests`: todos los pasos completados, incluidos checkout de la rama autorizada, verificación de repositorio/rama/árbol limpio, configuración de Node.js, sintaxis y runner integral.
+- Runtime comprobado en los logs: Node.js `v22.23.4`.
+- `node --check` ejecutado y aprobado para `JS/Frontend/main.js`, `auth.js`, `ui.js`, `offline.js`, `clientInteractionPolicy.js`, `service-worker.js` y `Services/admin.js`.
+- Ejecución real de `node --experimental-default-type=module JS/Tests/RunServiceTests.mjs`: **93 suites, 1,363 pruebas aprobadas, 0 fallos de suite**. El runner cubre WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e INTEGRATION. Se verificó el resumen directamente en los logs de Actions.
+- GitHub Pages run `43619377948`, también sobre `4ce76205...`: build, reporte de estado y deployment completados con **success**.
+- El endpoint de estado combinado sigue devolviendo `statuses: []`; esto no invalida los resultados, porque se inspeccionaron directamente los runs y sus jobs/logs.
+- Advertencias no bloqueantes observadas: módulo `punycode` deprecado y aviso de que `actions/checkout@v4` / `actions/setup-node@v4` usan Node 20, actualmente forzado a Node 24 por el runner. No hubo fallos por estas advertencias.
+- La verificación cubre pruebas automatizadas aisladas y sintaxis en los siete módulos listados; no representa ejecución real de Apps Script, Google Sheets, Drive, OAuth, navegador/dispositivo ni validación de campo. Esas pruebas siguen diferidas a Beta. No se realizaron escrituras productivas ni cambios de ACL.
+- Rama base verificada en la comparación: `GPSpedia2.2.5`, sin avance detrás ni cambios incorporados por esta tarea; la rama de trabajo permanece 2,648 commits ahead y 0 behind, con merge base `d9acc68d889985c2e2f42fe3a02e502efc86ead1`.
+
+La anotación previa que declaraba inaccesibles los runs de push queda superada por esta evidencia; se conserva como historial y esta adenda es el estado vigente.
