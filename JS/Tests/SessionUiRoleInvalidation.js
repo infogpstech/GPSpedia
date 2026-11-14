@@ -32,11 +32,14 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(f.includes("if (lastShownAppContextKey !== appContextKey)"));
   assert(f.includes("resetSessionUi_()"));
  });
- run("vistas privilegiadas revalidan sesión y rol en servidor antes de abrir",()=>{
+ run("vistas privilegiadas reutilizan validación reciente y toleran indisponibilidad sin autorizar revocaciones",()=>{
   const f=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
-  assert(f.includes("validateActiveSession(true)"));
+  assert(f.includes("validateActiveSession(false)"));
   assert(f.includes("isCurrentUiSessionContext_(expected)"));
-  assert(f.includes("allowedRoles.includes(current.role)"));
+  assert(f.includes("if (valid === null)"));
+  assert(f.includes("allowedRoles.includes(localContext.role)"));
+  assert(f.includes("return localContext"));
+  assert(f.includes("return null"));
   for(const name of ["openDevToolsModal_","openInboxModal_","openDashboardModal_"]){
    const i=ui.indexOf("const "+name);assert(i>=0,"No se encontró "+name);
    const body=ui.slice(i,ui.indexOf("\n",i+1)+3000);
@@ -102,7 +105,8 @@ function runSessionUiRoleInvalidationTests(sources) {
   assert(detail.includes("isCurrentUiSessionContext_(context)"));
   assert(detail.includes("['desarrollador', 'gefe', 'jefe', 'supervisor'].includes(context.role)"));
   const guard=slice(ui,"async function ensureUiSessionRole_(","function getSessionPayload_");
-  assert(guard.includes("validateActiveSession(true)")&&guard.includes("allowedRoles.includes(current.role)"));
+  assert(guard.includes("validateActiveSession(false)")&&guard.includes("allowedRoles.includes(localContext.role)"));
+  assert(guard.includes("if (valid === null)")&&guard.includes("return localContext"));
  });
  return {status:failed===0?"PASS":"FAIL",passed,failed,results};
 }
