@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
-const admin = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
+const admin = readFileSync(new URL("../../../Services/admin.js", import.meta.url), "utf8");
 const ui = readFileSync(new URL("../Frontend/ui.js", import.meta.url), "utf8");
 const coordinator = readFileSync(new URL("../../Services/Coordinator.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
@@ -432,7 +432,7 @@ check("La acción de migración coordina el lock, ejecuta el esquema y devuelve 
 });
 
 check("La migración explícita queda protegida por lease y despachada por ADMIN",()=>{
-    const source=readFileSync(new URL("../Services/admin.js",import.meta.url),"utf8");
+    const source=readFileSync(new URL("../../Services/admin.js",import.meta.url),"utf8");
     assert.ok(source.includes('"migrateReplacedImagesSchema"].includes(action)'));
     assert.ok(source.includes("case 'migrateReplacedImagesSchema':"));
     assert.ok(source.includes("function handleMigrateReplacedImagesSchema"));

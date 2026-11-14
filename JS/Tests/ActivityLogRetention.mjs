@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const source = readFileSync(new URL("../../Services/feedback.js", import.meta.url), "utf8");
+const source = readFileSync(new URL("../../../Services/feedback.js", import.meta.url), "utf8");
 const start = source.indexOf("function handleClearActivityLogs(payload) {");
 const end = source.indexOf("\n}", start);
 assert.ok(start >= 0 && end > start, "No se encontró handleClearActivityLogs.");
 const handlerSource = source.slice(start, end + 2);
-const syntax = spawnSync(process.execPath, ["--check", new URL("../Services/feedback.js", import.meta.url).pathname], { encoding:"utf8" });
+const syntax = spawnSync(process.execPath, ["--check", new URL("../../Services/feedback.js", import.meta.url).pathname], { encoding:"utf8" });
 assert.equal(syntax.status, 0, "feedback.js no supera node --check: " + syntax.stderr);
 
 const NOW = Date.UTC(2026, 10, 13, 12, 0, 0);
