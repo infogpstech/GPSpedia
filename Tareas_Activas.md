@@ -60,6 +60,8 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 ### P1 — Autenticación simplificada
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
+**Validación local (2026-11-14):** GitHub Actions run `43620155376` PASS con Node.js 22.23.4; `InboxConversations` 29/29 PASS, `InboxUi` 16/16 PASS y regresión integral 93 suites / 1,364 pruebas / 0 fallos. Las comprobaciones de sintaxis configuradas también aprobaron. La validación manual de navegadores/dispositivos queda diferida a Beta.
+
 **Diseño derivado de P0:** cada servicio protegido actualiza `LastActivityAt` dentro de su propia operación, tras validar token, identidad, cuenta activa, expiración y rol vigente. La coordinación compartida evita carreras con logout, revocación o eliminación de filas. Se conserva la validación de restauración al iniciar la app; los fallos de red/AUTH no se convierten en logout y el estado local no autoriza operaciones.
 - [x] Eliminar la revalidación redundante al recuperar conexión; conservar la validación de restauración al iniciar la aplicación.
 - [x] Una sola autenticación interactiva por sesión: login idempotente por `requestId`, con reintento estable tras fallo transitorio y limpieza condicionada al request completado. Validación de campo diferida a Beta.
@@ -134,12 +136,14 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 
 ### P3 — Rediseño Inbox
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
+
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 - [x] Estructura de bandeja con conversaciones, carpetas, categorías, búsqueda, lista con remitente/asunto/fecha/estado y panel de lectura.
 - [x] Jerarquía visual, densidad, estados no leído/leído, acciones y estados vacíos/carga/error.
 - [x] Adaptación móvil con navegación lista-detalle, controles táctiles y botón de retorno al listado.
 - [x] Preservar solicitudes históricas y sus contratos; conversaciones directas con respuestas, paginación, caché aislada por sesión, archivado, lectura, auditoría y permisos backend. Las conversaciones directas admiten texto; no se habilitaron adjuntos que el backend no soporta.
 - [x] Añadir filtro de categorías conectado de extremo a extremo: selector UI, estado, reinicio de paginación, wrapper API, filtro backend y validación de categorías permitidas.
-- [ ] Validación manual en tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y tamaños móviles/escritorio reales; CI verifica contratos, accesibilidad estructural, focus-visible y movimiento reducido, pero no sustituye la prueba de navegador/dispositivo.
+- [ ] Validación Beta manual en tema claro/oscuro, teclado, lector de pantalla, navegación Atrás y tamaños móviles/escritorio reales; CI verifica contratos, accesibilidad estructural, focus-visible y movimiento reducido, pero no sustituye la prueba de navegador/dispositivo.
 
 ### P4 — Política de imágenes y permisos
 **Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
