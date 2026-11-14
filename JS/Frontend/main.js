@@ -759,6 +759,35 @@ async function initializeApp() {
         ui.closeSideMenuAndRun(() => auth.logout());
     });
 
+    const refreshAppLink = document.getElementById('side-menu-refresh-link');
+    if (refreshAppLink) {
+        refreshAppLink.addEventListener('click', event => {
+            event.preventDefault();
+            ui.closeSideMenuAndRun(async () => {
+                try {
+                    if ('serviceWorker' in navigator) {
+                        const registration = await navigator.serviceWorker.getRegistration();
+                        if (registration && typeof registration.update === 'function') {
+                            let timeoutId = null;
+                            try {
+                                await Promise.race([
+                                    registration.update(),
+                                    new Promise(resolve => { timeoutId = window.setTimeout(resolve, 3000); })
+                                ]);
+                            } finally {
+                                if (timeoutId !== null) window.clearTimeout(timeoutId);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('No se pudo comprobar si hay una versión nueva de GPSpedia antes de recargar:', error);
+                }
+                // La sesión y los borradores del Inbox están persistidos fuera del documento.
+                window.location.reload();
+            });
+        });
+    }
+
     const changelogLink = document.getElementById('side-menu-changelog-link');
     if (changelogLink) {
         changelogLink.addEventListener('click', (e) => {
