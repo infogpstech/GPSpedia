@@ -292,7 +292,7 @@ export function showSavingIndicator(status, message = "") {
 function getCurrentEditOwnerContext_() {
     const context = getUiSessionContext_();
     const role = String(context && context.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    return context && ["desarrollador", "jefe"].includes(role) ? context : null;
+    return context && ["desarrollador", "jefe", "supervisor"].includes(role) ? context : null;
 }
 
 function getEditBackupStore_(ownerId) {
@@ -2232,17 +2232,20 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     };
     headerDiv.appendChild(shareBtn);
 
-    // Botón Imprimir Ficha Técnica
-    const printBtn = document.createElement("button");
-    printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
-    printBtn.className = "share-modal-btn";
-    printBtn.title = "Imprimir / Exportar Ficha Técnica";
-    printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
-    headerDiv.appendChild(printBtn);
+    const userRole = normalizeUiRole_(getUiSessionContext_()?.role || "");
+    const canPrintOrEditVehicle = ["desarrollador", "jefe", "supervisor"].includes(userRole);
 
-    const userRole = getUiSessionContext_()?.role || null;
+    // Imprimir ficha técnica: Supervisor, Jefe y Desarrollador.
+    if (canPrintOrEditVehicle) {
+        const printBtn = document.createElement("button");
+        printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
+        printBtn.className = "share-modal-btn";
+        printBtn.title = "Imprimir / Exportar Ficha Técnica";
+        printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
+        headerDiv.appendChild(printBtn);
+    }
 
-    if (userRole === 'desarrollador') {
+    if (canPrintOrEditVehicle) {
         if (inEditMode) {
             // Botón Restablecer (↩️)
             const resetBtn = document.createElement("button");
