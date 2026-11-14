@@ -91,6 +91,10 @@ async function validateSessionCoordinated(user, force = false){
    throw error;
   }finally{if(timer)clearTimeout(timer);}
   if(!isCurrentSession(user))return{stale:true,result};
+  // Un fallo interno de AUTH o de sus dependencias no demuestra que el token esté revocado.
+  if(result&&result.valid===false&&(result.error||result.unavailable===true||['missing_sheet','role_revocation_pending'].includes(String(result.reason||'')))){
+   return{valid:null,unavailable:true,reason:String(result.reason||'validation_unavailable')};
+  }
   if(result&&result.valid===true&&Object.prototype.hasOwnProperty.call(result,'profile')&&!isSessionProfileForUser_(user,result.profile)){
    return{valid:false,reason:'profile_identity_mismatch'};
   }
@@ -332,6 +336,17 @@ export async function validateActiveSession(force = false) {
     }
 }
 
+function restoreSessionAfterValidationUnavailable_(user, error = null) {
+    if (!user || !isCurrentSession(user)) return false;
+    if (error) console.warn('La sesión se conserva mientras AUTH recupera disponibilidad:', error && error.message ? error.message : error);
+    // La sesión local no se borra. showApp vuelve a aplicar el bloqueo de términos
+    // usando la aceptación ya registrada; las operaciones protegidas siguen validándose en servidor.
+    handleLoginSuccess(user, false);
+    loadInitialData();
+    showGlobalError('No se pudo confirmar la sesión con AUTH en este momento. Se conservó la sesión local; algunas operaciones protegidas esperarán a que el servicio vuelva a estar disponible.');
+    return true;
+}
+
 export async function checkSession() {
     setState({ currentUser: null, searchHistory: [], viewedItems: [] });
     try {
@@ -365,30 +380,26 @@ export async function checkSession() {
     }
     if (!isCurrentSession(user)) return;
     if (window.navigator && window.navigator.onLine === false) {
-        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
-        showLoginScreen('Conéctate a Internet para verificar tu sesión y la aceptación vigente de los términos.');
+        restoreSessionAfterValidationUnavailable_(user);
         return;
     }
     try {
-        const result = await validateSessionCoordinated(user, true);
+        // Permite reutilizar una confirmación AUTH muy reciente tras una actualización rápida.
+        const result = await validateSessionCoordinated(user, false);
         if (result && result.stale) return;
         if (result && result.valid === true) {
             const validatedUser = persistSessionValidation(user, result);
             if (!validatedUser || !sameSession(readStoredSession(), user)) return;
             handleLoginSuccess(validatedUser, false); loadInitialData(); return;
         }
-        if (result && result.valid === false) { logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.", user); return; }
-        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
-        showLoginScreen('No se pudo verificar la sesión ni la aceptación de términos. Intenta nuevamente.');
+        if (result && result.valid === false) {
+            logout("Tu sesión ha expirado o fue revocada. Inicia sesión nuevamente.", user);
+            return;
+        }
+        restoreSessionAfterValidationUnavailable_(user);
     } catch (error) {
         if (!isCurrentSession(user)) return;
-        console.warn("Fallo validación de sesión:", error && error.message ? error.message : error);
-        const message = String(error && error.message || '').toLowerCase();
-        if (message.includes('expirada') || message.includes('inválida') || message.includes('expired')) {
-            showGlobalError('Error de sesión: ' + error.message); logout(null, user); return;
-        }
-        setState({ currentUser: null, searchHistory: [], viewedItems: [] });
-        showLoginScreen('No se pudo verificar la sesión ni la aceptación de términos. Intenta nuevamente.');
+        restoreSessionAfterValidationUnavailable_(user, error);
     }
 }
 
