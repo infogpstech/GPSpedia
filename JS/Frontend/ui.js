@@ -3680,7 +3680,8 @@ const INBOX_PAGE_SIZE_ = 40;
 const inboxPageCache_ = createInboxPageCache({ ttlMs: 60000, maxEntries: 80 });
 
 function normalizeUiRole_(role) {
-    return String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const normalized = String(role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return normalized === 'gefe' ? 'jefe' : normalized;
 }
 
 function canApproveInboxVideo_(role) {
