@@ -102,7 +102,7 @@ runGroup('33','FEEDBACK',()=>{
  recordResult('FEEDBACK lectura acotada de ActividadUsuario/AUG-120',loadFunction('JS/Tests/ActivityLogsBoundedRead.js','runActivityLogsBoundedReadTests','\n\nimport {')({feedback}));
  runCli('AUG-020 purga segura y clasificación de timestamps de ActividadUsuario','JS/Tests/ActivityLogRetention.mjs');
  recordResult('FEEDBACK contrato canónico de rol Inbox/AUG-115',loadFunction('JS/Tests/InboxRoleContract.js','runInboxRoleContractTests','\n\nimport {')({
-  ui:read('JS/Frontend/ui.js'),feedback
+  ui:read('JS/Frontend/ui.js'),feedback,inbox:read('Services/InboxConversations.js'),usersHtml:read('HTML/users.html'),authClient:read('JS/Frontend/auth.js')
  }));
  runCli('AUG-043 contratos de sesión, IDs y publicación en cliente','JS/Tests/VideoApprovalClientContract.mjs');
  runCli('AUG-043 persistencia IndexedDB de operaciones','JS/Tests/YouTubeUploadRecordPersistence.js');
