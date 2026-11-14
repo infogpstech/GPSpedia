@@ -105,7 +105,7 @@ test('AUTH y su espejo guardan aceptación por dispositivo y validan la sesión 
 });
 test('USERS mantiene la columna privada fuera de la escritura de perfil', () => {
     assert.match(usersSource, /TermsAcceptance: 9/); assert.match(usersTestSource, /TermsAcceptance: 9/);
-    assert.match(usersSource, /Solo permitir cambios en Nombre_Completo/);
+    assert.match(usersSource, /if \(key !== 'Nombre_Completo'\)/);
 });
 test('API dirige acceptTerms a AUTH sin ejecutar un touchSession redundante', () => {
     assert.match(apiConfigSource, /'acceptTerms': 'AUTH'/);
