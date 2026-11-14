@@ -91,6 +91,7 @@ function addLogoHarness(options={}){
    const source=rows.slice(row-1,row-1+nr).map(item=>item.slice());
    while(rows.length<destination.row+destination.nr-1)rows.push(["","","",""]);
    for(let r=0;r<nr;r++)for(let c=0;c<nc;c++)rows[destination.row-1+r][destination.col-1+c]=source[r][c];
+   if(options.failCopy){rows[destination.row-1][0]=source[0][0];throw new Error("copy failure simulated");}
   };
   return range;
  };
@@ -118,6 +119,10 @@ function addLogoHarness(options={}){
 }
 test("Retira la imagen si no se puede adquirir el bloqueo",()=>{
  const h=addLogoHarness({lockFail:true});assert.throws(()=>h.run(),/bloquear la asignación/);assert.equal(h.trashed,true);
+});
+test("Limpia una fila si falla la copia parcial de plantilla",()=>{
+ const h=addLogoHarness({failCopy:true});assert.throws(()=>h.run(),/copy failure/);
+ assert.equal(h.trashed,true);assert.ok(h.rows[2].every(value=>value===""));
 });
 test("Retira la imagen y limpia la fila parcial si falla la escritura de URL",()=>{
  const h=addLogoHarness({failUrlWrite:true});assert.throws(()=>h.run(),/URL write failure/);
