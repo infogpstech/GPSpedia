@@ -1361,3 +1361,15 @@ GitHub Actions: 75 suites, 1,149 pruebas aprobadas, 0 fallos. Comprobaciones de 
 - Compartir mediante el botón integrado del modal permanece disponible para todos los roles, incluidos Técnico y Técnico Exterior.
 - Imprimir y editar detalles se reservan a Supervisor, Jefe (incluido alias histórico Gefe) y Desarrollador.
 - Se corrigió la redacción del plan para distinguir compartir de las acciones administrativas.
+
+
+================================================================================
+2026-11-14 — REGISTRO DE REQUISITOS — DEVELOPER, BIBLIOTECA DE IMÁGENES Y AYUDAS CONTEXTUALES
+- Tareas_Activas.md: se incorporan los bloques GP-DEV-UX-01, GP-IMG-UX-01, GP-IMG-DATA-01 y GP-UX-INFO-01 con requisitos, criterios de aceptación y dependencias.
+- Developer: se registra agrupar Respaldo y Base de datos en una pestaña y normalizar tamaño/alineación de Migrar esquema y selector de limpieza de logs/actividad.
+- Imágenes reemplazadas: se registra rediseño tipo carpeta Drive, vistas cuadrícula/lista, miniaturas adaptativas, selección múltiple y menú contextual de tres puntos.
+- Se deja explícito el conflicto entre Descargar en la biblioteca de administración y la política previa de no descarga general; permisos/alcance deben decidirse antes de implementar.
+- Drive/Spreadsheet: se registra conciliación de imágenes y URLs faltantes con dry-run, detección de ambigüedades, idempotencia y autorización antes de escrituras productivas.
+- Ayudas contextuales: se registran textos concisos e icono ⓘ en Developer, campos indicados de add_cortes y formularios PYS; se excluye el modal de detalles.
+- No se modificó código funcional ni se realizaron operaciones sobre Drive o Spreadsheet. Cambio exclusivamente documental.
+================================================================================

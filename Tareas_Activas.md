@@ -4,7 +4,7 @@ Fecha de registro: 2026-11-14
 Repositorio: `infogpstech/GPSpedia`  
 Rama de trabajo: `GPSpedia2.2.5_work`  
 Rama base protegida: `GPSpedia2.2.5`  
-HEAD al registrar: `c5453d6ff4b21b0dd8fede3f1b128e892e56c268`
+HEAD al registrar la última actualización previa: `3601098443bac3ed5ec95d9aa866c468ed50bcce`
 
 Este documento registra los requisitos nuevos y el orden de ejecución. La fuente normativa sigue siendo `NORMAS_DESAROLLO.md`; los registros archivados en `Olds/Documentacion_Legacy/` y `Olds/GPSpedia 2.2/` no se modifican.
 
@@ -136,3 +136,53 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - Roles privilegiados expresamente contemplados: Supervisor, Jefe (incluido alias histórico `Gefe`) y Desarrollador.
 - `Tecnico` y `tecnico_exterior` no pueden imprimir ni editar detalles desde el modal.
 - La matriz debe aplicarse tanto en la interfaz como en el backend cuando una acción tenga endpoint; ocultar botones no es control de seguridad.
+
+
+## Nueva solicitud registrada — panel Developer, biblioteca de imágenes y ayudas contextuales (2026-11-14)
+
+**Estado: PENDIENTE DE PRIORIZACIÓN E IMPLEMENTACIÓN.** Esta ampliación queda registrada para ejecutarse después de resolver las tareas vigentes y sus dependencias, conforme a la sección 11 de `NORMAS_DESAROLLO.md`. No altera el orden actual P0–P6.
+
+### GP-DEV-UX-01 — Organización del panel de desarrollador
+- [ ] Reorganizar el panel para que **Respaldo** y **Base de datos** estén dentro de una misma pestaña, con jerarquía y navegación coherentes.
+- [ ] Redimensionar y armonizar el botón **Migrar esquema** y el selector para eliminar logs/actividad de usuarios; deben conservar proporciones, alturas y alineación consistentes con los demás controles.
+- [ ] Revisar el resto de funciones del panel Developer para eliminar controles desproporcionados, agrupaciones confusas y texto explicativo excesivo.
+- [ ] Mantener confirmaciones claras para operaciones destructivas y estados de progreso/resultado; simplificar la interfaz sin ocultar riesgos.
+
+### GP-IMG-UX-01 — Biblioteca de imágenes reemplazadas
+- [ ] Sustituir la interfaz desproporcionada actual por un modal tipo explorador de archivos/Drive, con espacio de trabajo limpio y fondo despejado.
+- [ ] Implementar vistas de cuadrícula y lista conmutables mediante iconos compactos situados en una esquina del contenedor, sin botones con textos que repitan la función.
+- [ ] En cuadrícula, usar miniaturas de tamaño medio y una altura visual coherente con la imagen del modelo de vehículo cuando la cuadrícula está seleccionada.
+- [ ] En lista, usar miniaturas más pequeñas, como en una carpeta de Drive, con metadatos alineados y densidad visual adecuada.
+- [ ] Permitir selección individual y múltiple, con selección visible y acciones aplicables al conjunto seleccionado.
+- [ ] Incorporar menú contextual de tres puntos por elemento (y acciones de selección múltiple cuando corresponda): borrar, mover, restaurar y descargar.
+- [ ] Diseñar estados vacíos, carga, error, selección, confirmación y resultados de operaciones; adaptar el modal a móvil y escritorio.
+- [ ] **Resolver antes de implementar la contradicción de política:** el requisito anterior GP-SEC-02 prohíbe la descarga de imágenes para usuarios en general y permite el compartir integrado; esta solicitud pide una acción Descargar dentro del administrador de imágenes reemplazadas. Determinar si será una excepción exclusiva del panel Developer y qué roles podrán usarla. No habilitar descarga general por inferencia.
+- [ ] Validar que borrar/mover/restaurar opere sobre los elementos correctos, con confirmación, permisos backend, protección contra acciones masivas accidentales y registro de auditoría.
+
+### GP-IMG-DATA-01 — Conciliación Drive de cortes ↔ Spreadsheet
+- [ ] Incorporar una función que recorra la carpeta Drive de cortes y compare cada imagen con los registros de la Spreadsheet.
+- [ ] Identificar y mostrar en una lista diferenciada las imágenes de Drive que no tienen correspondencia/URL registrada en la Spreadsheet.
+- [ ] Para coincidencias inequívocas, preparar la migración de la URL pública de la imagen al campo y fila correspondientes de la hoja; después, utilizar ese mismo campo para visualizar la imagen en el catálogo/formulario.
+- [ ] Antes de escribir, implementar modo de simulación (dry-run), reporte de coincidencias, duplicados, imágenes huérfanas y filas ambiguas. No asignar una imagen por similitud débil ni sobrescribir una URL existente sin una regla explícita.
+- [ ] Hacer el proceso reanudable e idempotente, con conteos antes/después, trazabilidad y estrategia de recuperación.
+- [ ] La escritura real en Drive/Spreadsheet productivos y la ejecución de migraciones requieren autorización expresa; no forman parte del registro documental actual.
+
+### GP-UX-INFO-01 — Textos concisos y ayuda contextual
+- [ ] Revisar textos de Developer y formularios para retirar explicaciones redundantes o demasiado extensas; conservar etiquetas breves, claras y orientadas a la acción.
+- [ ] Cuando una explicación sea útil pero no deba permanecer visible, utilizar un icono ⓘ discreto que abra una burbuja contextual al pulsarlo.
+- [ ] Evitar que los botones expliquen su propia función con frases largas; usar iconografía reconocible y ayudas contextuales cuando sea necesario.
+- [ ] Aplicar el patrón en las funciones del panel Developer y en los campos pertinentes de `HTML/add_cortes.html`: versión/Trim Level, tipo de corte, configuración del relay y rango de años.
+- [ ] Incorporar ayudas ⓘ en los formularios de tutoriales PYS para explicar el cambio o dato solicitado.
+- [ ] **Excluir expresamente el modal de detalles de vehículos:** no colocar allí el icono ⓘ ni burbujas de ayuda.
+- [ ] Mantener accesibilidad: controles con nombre accesible, foco visible, apertura/cierre por teclado y texto contextual legible en móvil.
+
+### Criterios de aceptación
+- Developer presenta Respaldo y Base de datos en la misma pestaña; controles de migración y limpieza tienen tamaños proporcionados y consistentes.
+- La biblioteca de imágenes ofrece cuadrícula/lista, miniaturas dimensionadas según la vista, selección múltiple y menú contextual de tres puntos con acciones coherentes y autorizadas.
+- La conciliación Drive–Spreadsheet distingue coincidencias exactas, faltantes, duplicados y ambiguos; no escribe datos productivos sin autorización.
+- Las URLs migradas se guardan en el campo correcto y son la fuente de visualización de la imagen, una vez aprobada y ejecutada la migración.
+- Los textos de interfaz son breves; las explicaciones secundarias se consultan mediante ⓘ donde se solicitó.
+- No aparece ⓘ en el modal de detalles; sí aparece en campos pertinentes de add_cortes y formularios PYS.
+- La descarga en el administrador de imágenes queda pendiente de decisión de permisos y alcance frente a GP-SEC-02.
+- Pruebas locales cubren diseño responsive, selección simple/múltiple, acciones contextuales, permisos, conciliación idempotente y ayudas contextuales. Las pruebas con Drive/Spreadsheet reales se documentan como validación Beta.
+

@@ -247,3 +247,15 @@ Completar P0 inspeccionando contratos de login, `touchSession`, middleware/handl
 - El botón integrado de compartir del modal está disponible para todos los usuarios, incluidos Técnico y Técnico Exterior.
 - Las acciones restantes solicitadas (imprimir y editar detalles) requieren un rol superior a Técnico/Técnico Exterior: Supervisor, Jefe (alias histórico `Gefe`) o Desarrollador.
 - No restringir compartir general al grupo administrativo. Aplicar la distinción en UI y backend donde corresponda.
+
+
+## Nueva solicitud incorporada al plan — Developer, imágenes y ayudas contextuales (2026-11-14)
+
+**Estado: REGISTRADA; PENDIENTE.** Se añadió el bloque GP-DEV-UX-01, GP-IMG-UX-01, GP-IMG-DATA-01 y GP-UX-INFO-01 a `Tareas_Activas.md`. Se conserva el orden P0–P6; esta ampliación se atenderá después de las tareas vigentes, según `NORMAS_DESAROLLO.md`.
+
+- Developer: agrupar Respaldo y Base de datos en una pestaña; corregir proporciones de Migrar esquema y del selector de limpieza de logs/actividad.
+- Biblioteca de imágenes reemplazadas: modal tipo carpeta Drive, espacio despejado, cuadrícula/lista mediante iconos, miniaturas de tamaño adecuado por vista, selección simple/múltiple y menú de tres puntos con borrar/mover/restaurar/descargar.
+- Conflicto que debe resolverse antes de implementar: la descarga solicitada en esta biblioteca contradice la política previa de no permitir descargas generales de imágenes. El plan exige decidir si existe una excepción limitada al panel Developer y fijar sus roles; no se habilita por inferencia.
+- Drive–Spreadsheet: recorrer carpeta de cortes, comparar imágenes con registros, identificar faltantes y preparar la migración de URL pública al campo correspondiente. Requiere dry-run, detección de duplicados/ambiguos, idempotencia y autorización expresa antes de escribir datos productivos.
+- Ayudas: reducir textos extensos y utilizar icono ⓘ con burbuja contextual en Developer, campos versión/Trim Level, tipo de corte, configuración Relay y rango de años de `HTML/add_cortes.html`, además de formularios de tutoriales PYS. No colocar ⓘ en el modal de detalles.
+- No se implementó código ni se modificaron Drive/Spreadsheet; este cambio es únicamente de planificación y continuidad.
