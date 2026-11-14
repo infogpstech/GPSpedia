@@ -91,13 +91,13 @@ function getAdminSessionContext_(payload, allowedRoles){
  const userMatches=uh.getDataRange().getValues().slice(1).filter(r=>String(r[0]||"").trim()===id);if(userMatches.length!==1)throw new Error("Acceso denegado: perfil de usuario ausente o ambiguo.");
  const u=userMatches[0];if(String(u[7]||"").startsWith(ROLE_REVOCATION_SHARED_PREFIX))throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
  const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
- const role=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+ const rawRole=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(),role=rawRole==="gefe"?"jefe":rawRole;
  if(!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
  const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":"Gefe";
  return{userId:id,role:displayRole,fullName,userName:fullName||username};
 }
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
-function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","gefe"]);}
+function assertModalEditSession(payload){return getAdminSessionContext_(payload,["desarrollador","jefe"]);}
 const ADMIN_MODAL_EDIT_ACTIONS = new Set(["updateVehicleField","uploadAdminImage","getAdminImageUploadStatus"]);
 const ADMIN_MODAL_EDIT_FIELDS = new Set([
  "categoria","modelo","versionesAplicables","tipoEncendido","anoDesde","anoHasta","vin","notaImportante",
