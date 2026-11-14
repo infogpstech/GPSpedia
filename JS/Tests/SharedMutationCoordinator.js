@@ -525,6 +525,14 @@ function runSharedMutationCoordinatorTests() {
     });
 
 
+    test_("AUTH serializa actividad de sesiones en todas las mutaciones autenticadas", function() {
+        ["acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].forEach(action => {
+            const policy = coordinatorPolicy_("AUTH", action);
+            assert_(policy.writeResources.includes("ACTIVE_SESSIONS"),
+                "AUTH/" + action + " debe reservar ActiveSessions mientras renueva o invalida la sesión.");
+        });
+    });
+
     test_("UTILITIES migra timestamps con lease sobre identidad, Cortes y Drive", function() {
         const policy = coordinatorPolicy_("UTILITIES", "migrateTimestamps");
         ["USERS", "ACTIVE_SESSIONS", "CORTES", "DRIVE"].forEach(resource =>
