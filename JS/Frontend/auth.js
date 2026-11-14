@@ -404,9 +404,11 @@ export async function loadInitialData(forceRefresh = false, options = {}) {
     const silent = settings.silent === true;
     cancelCatalogLoad_();
     if (typeof AbortController !== 'function') {
-        setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' });
-        showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.');
-        return;
+        if (!silent) {
+            setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' });
+            showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.');
+        }
+        return false;
     }
     const loadController = new AbortController();
     catalogLoadController_ = loadController;
