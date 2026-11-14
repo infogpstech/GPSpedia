@@ -15,7 +15,7 @@ function coordinatorPolicy_(service, operation) {
     const identityRead = ["USERS", "ACTIVE_SESSIONS"];
     const identityWrite = ["USERS", "ACTIVE_SESSIONS", "LOGS"];
     const feedbackRead = identityRead;
-    const feedbackWrite = ["FEEDBACK", "ACTIVITY"];
+    const feedbackWrite = ["ACTIVE_SESSIONS", "FEEDBACK", "ACTIVITY"];
 
     const policies = {
         AUTH: {
@@ -81,6 +81,7 @@ function coordinatorPolicy_(service, operation) {
             getReplacedImageDownloadUrl: { read: [...identityRead, "DRIVE"], write: ["ACTIVITY"] }
         },
         FEEDBACK: {
+            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
             recordLike: { read: feedbackRead, write: ["CORTES", "FEEDBACK", "ACTIVITY"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
@@ -101,10 +102,10 @@ function coordinatorPolicy_(service, operation) {
             submitVideoForApproval: { read: [...feedbackRead, "TUTORIAL"], write: feedbackWrite },
             approveVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["CORTES", "TUTORIAL", ...feedbackWrite] },
             rejectVideo: { read: [...feedbackRead, "TUTORIAL"], write: ["TUTORIAL", ...feedbackWrite] },
-            createInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] },
-            sendInboxMessage: { read: feedbackRead, write: ["FEEDBACK"] },
-            markInboxRead: { read: feedbackRead, write: ["FEEDBACK"] },
-            archiveInboxConversation: { read: feedbackRead, write: ["FEEDBACK"] }
+            createInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
+            sendInboxMessage: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
+            markInboxRead: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] },
+            archiveInboxConversation: { read: feedbackRead, write: ["ACTIVE_SESSIONS", "FEEDBACK"] }
         }
     };
 
