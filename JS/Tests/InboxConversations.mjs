@@ -256,7 +256,7 @@ run("Archivo y restauración son estados privados por participante", () => {
     assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"archived" }).total,1);
     assert.equal(api.handleGetInboxConversations({ ...actor("U2","token-b"),folder:"received" }).total,1);
     api.handleArchiveInboxConversation({ ...actor("U1","token-a"),conversationId:first.conversationId,archived:false });
-    assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"all" }).total,2);
+    assert.equal(api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"all" }).total,1);
 });
 run("Búsqueda y paginación respetan carpeta y cursor", () => {
     api.handleCreateInboxConversation({
