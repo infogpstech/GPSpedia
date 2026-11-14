@@ -2441,7 +2441,10 @@ function findTutorialRow_(sheet, reference, preferId) {
         if (String(row[column] || "").trim() === value) matches.push({ rowIndex: index + 2, row });
         return matches;
     }, []);
-    const byId = find(0, key);
+    const byId = data.slice(1).reduce((matches, row, index) => {
+        if (String(row[0] || "").trim().toLowerCase() === key.toLowerCase()) matches.push({ rowIndex: index + 2, row });
+        return matches;
+    }, []);
     if (byId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; no se modificó.");
     if (byId.length === 1) return byId[0];
     if (preferId && /^tut-[A-Za-z0-9_-]{20,80}$/.test(key)) {
@@ -2463,8 +2466,8 @@ function handleAddTutorial(payload) {
     const detalles = normalizeTutorialField_(source.detalles !== undefined ? source.detalles : source.descripcion,
         "Los detalles", 700, false);
     const collaborator = normalizeTutorialField_(source.userName, "El colaborador verificado", 120, true);
-    const operationId = String(source.operationId || "").trim();
-    if (!/^[A-Za-z0-9_-]{20,80}$/.test(operationId)) {
+    const operationId = String(source.operationId || "").trim().toLowerCase();
+    if (!/^[a-z0-9_-]{20,80}$/.test(operationId)) {
         throw new Error("Identificador de operación de tutorial inválido.");
     }
     if (String(source.videoUrl || "").trim()) {
@@ -2478,7 +2481,7 @@ function handleAddTutorial(payload) {
         const sheet = getTutorialSheet_(true);
         const existingId = sheet.getDataRange().getValues().slice(1)
             .map((row, index) => ({ rowIndex: index + 2, row }))
-            .filter(item => String(item.row[0] || "").trim() === tutorialId);
+            .filter(item => String(item.row[0] || "").trim().toLowerCase() === tutorialId);
         if (existingId.length > 1) throw new Error("El ID del tutorial aparece más de una vez; requiere revisión.");
         if (existingId.length === 1) {
             const row = existingId[0].row;
@@ -2488,7 +2491,7 @@ function handleAddTutorial(payload) {
                 String(row[5] || "").trim() === detalles &&
                 String(row[7] || "").trim() === collaborator;
             if (!same) throw new Error("El identificador de operación ya pertenece a otro tutorial.");
-            return { status: "success", referenceId: tutorialId, alreadyCreated: true,
+            return { status: "success", referenceId: String(row[0] || tutorialId).trim(), alreadyCreated: true,
                 message: "El tutorial ya existía; se devolvió el registro original." };
         }
 
