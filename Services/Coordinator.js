@@ -20,7 +20,7 @@ function coordinatorPolicy_(service, operation) {
     const policies = {
         AUTH: {
             login: { write: identityWrite },
-            acceptTerms: { write: identityWrite },
+            acceptTerms: { read: ["ACTIVE_SESSIONS"], write: ["USERS"], sharedWrite: ["ACTIVE_SESSIONS"] },
             touchSession: { write: identityWrite },
             changePassword: { write: identityWrite },
             resetUserPassword: { write: identityWrite },
@@ -126,7 +126,7 @@ function coordinatorPolicy_(service, operation) {
         !sharedWriteResources.includes("ACTIVE_SESSIONS")) {
         sharedWriteResources.push("ACTIVE_SESSIONS");
     }
-    if (service === "AUTH" && !writeResources.includes("ACTIVE_SESSIONS")) {
+    if (service === "AUTH" && operation !== "acceptTerms" && !writeResources.includes("ACTIVE_SESSIONS")) {
         writeResources.push("ACTIVE_SESSIONS");
     }
     return {
