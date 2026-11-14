@@ -31,7 +31,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 3. **IDs:** usuarios nuevos usan IDs secuenciales `USR-####`; vehículos ya tienen asignador backend central y acciones `allocateVehicleId` / `freezeCortesIds`; tutoriales usan `tut-` + operationId; Problemas usa `isue-` + secuencia. La cobertura de registros antiguos, fórmulas y relays requiere auditoría adicional.
 4. **Interacción con imágenes:** `clientInteractionPolicy.js` ya previene contextmenu, copy, cut, selectstart y dragstart en contenido no editable. Es una barrera contra acciones casuales, no impide inspección de red, extracción de URL ni captura del sistema.
 5. **Inbox:** ya existen lista/detalle, paginación, caché, toolbar y acciones. El rediseño debe preservar contratos y capacidades.
-6. **Roles:** el valor canónico único es `Jefe`. `Gefe` queda únicamente como valor heredado que se normaliza temporalmente a `Jefe` para no bloquear cuentas existentes; debe migrarse en la hoja `Users` y retirarse de la validación de datos de la columna `Privilegios`.
+6. **Roles:** el valor canónico único es `Jefe`. La hoja `Users.Privilegios` y su lista de validación ya fueron actualizadas por el usuario; los conversores temporales `Gefe` → `Jefe` se retiraron del backend y frontend. El código ya no acepta `Gefe`.
 
 ## Paquetes de ejecución
 
@@ -40,7 +40,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 - [x] Mapear el flujo de login, restauración, validación, touch, revocación, expiración y logout.
 - [x] Inventariar los endpoints y contratos de sesión/rol en AUTH, FEEDBACK, WRITE, USERS y ADMIN; identificar las lecturas públicas de CATALOG.
-- [x] Confirmar la semántica de roles. El usuario confirmó que **Jefe** es la escritura correcta y el único valor oficial; `Gefe` es un dato heredado que se convierte temporalmente a `Jefe`.
+- [x] Confirmar la semántica de roles. El usuario confirmó que **Jefe** es la escritura correcta y el único valor oficial; la Spreadsheet ya fue actualizada y `Gefe` se retiró de los valores operativos.
 - [x] Revisar share, print, download y edición del modal, sus llamadores y la autorización backend.
 - [x] Inventariar en código los esquemas, generadores, fórmulas y consumidores de IDs de usuarios, vehículos, tutoriales, problemas PyS y Relay.
 - [x] Revisar el hash actual, la conversión oportunista de contraseñas y los servicios que crean/verifican credenciales.
@@ -99,7 +99,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [ ] Completar una matriz única de capacidades por rol en todos los módulos y endpoints (la política de ficha técnica ya está aplicada; quedan las capacidades de imágenes y acciones administrativas).
 - [x] Compartir integrado del modal permitido a todos.
 - [x] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador, con validación de rol en backend.
-- [x] Unificar Jefe como valor canónico en AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox y frontend; mantener conversión transitoria de registros heredados Gefe.
+- [x] Unificar Jefe como valor canónico en AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox y frontend; retirar los conversores temporales `Gefe` → `Jefe` tras la actualización de la Spreadsheet.
 - [x] En la Spreadsheet, migrar Users.Privilegios de Gefe a Jefe y actualizar la validación/lista desplegable (confirmado por el usuario el 2026-11-14).
 - [x] Retirar los conversores temporales Gefe → Jefe del backend y frontend; el código solo admite Jefe como valor canónico.
 - [x] Ocultar el control de descarga de imágenes reemplazadas a roles distintos de Desarrollador y conservar autorización exclusiva de Desarrollador en el endpoint.
@@ -137,7 +137,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 ## Continuidad inmediata
 
-P0 y la implementación P1 están completadas. P2 continúa con calibración PBKDF2 y migración de IDs pendiente de auditoría/ejecución Beta; como P3 es independiente, continuar el rediseño de Inbox mientras se mantiene bloqueada cualquier escritura de migración hasta disponer del reporte real.
+P0 está completada. P1 está implementada y requiere validación Beta. P2 tiene implementadas las migraciones batch de contraseñas, auditoría de IDs y asignación backend de LogosMarca; siguen pendientes la calibración PBKDF2 y los dry-run/reconciliación de datos en Beta. P3 está implementada y requiere pruebas manuales reales. P4 tiene aplicada la primera matriz de roles de ficha y la protección selectiva de medios; falta auditar permisos de URLs/Drive. P5 tiene completada la evaluación técnica. P6 tiene CI aprobado y mantiene pendientes las validaciones externas. Continuar con las tareas estáticas seguras sin desplegar ni escribir datos productivos.
 
 
 ## Evidencia adicional de P0 — revisión de permisos y contratos (2026-11-14)
