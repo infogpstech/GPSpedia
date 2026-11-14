@@ -23,6 +23,7 @@ function createHarness(options = {}) {
     const state = {
         catalogLoadStatus: 'idle',
         catalogLoadError: null,
+        currentUser: { ID: 'USER-1', SessionToken: 'session-token' },
         catalogData: { cortes: [], tutoriales: [], relay: [], logos: [], sortedCategories: [] }
     };
     const errors = [], warnings = [], patches = [];
@@ -36,8 +37,15 @@ function createHarness(options = {}) {
             if (value instanceof Error) throw value;
             return value === undefined ? null : value;
         },
-        async saveCatalog(value) { saveCalls++; return value; }
+        async getCatalogSyncState() { return { snapshot: await this.getCatalog(), cursor: null }; },
+        async saveCatalog(value) { saveCalls++; return value; },
+        async saveCatalogWithCursor(value, cursor) { saveCalls++; return { saved: true, cursor }; },
+        async saveCatalogCursor(cursor) { return { saved: true, cursor }; },
+        applyCatalogChangesToSnapshot(previous) { return { resetRequired: false, snapshot: previous }; }
     };
+    const getCatalogChanges = options.getCatalogChanges || (async cursor => ({
+        status: 'success', currentRevision: 0, nextCursor: cursor, hasMore: false, resetRequired: false, changes: []
+    }));
     const setState = patch => {
         patches.push(patch);
         if (Object.prototype.hasOwnProperty.call(patch, 'catalogData') && failCatalogWrites > 0) {
@@ -53,17 +61,21 @@ function createHarness(options = {}) {
     const factorySource = `
         let catalogLoadController_ = null;
         ${extract('cancelCatalogLoad_')}
+        ${extract('getCatalogFeedHead_')}
+        ${extract('fetchCatalogDelta_')}
         ${extract('normalizeCatalogData')}
         ${extract('processCatalogData')}
         ${extract('loadInitialData')}
         return { loadInitialData, cancelCatalogLoad_ };
     `;
     const app = new Function(
-        'offline', 'fetchCatalogData', 'setState', 'showGlobalError', 'loadPysData',
+        'offline', 'fetchCatalogData', 'getCatalogChanges', 'getState', 'setState', 'showGlobalError', 'loadPysData',
         'console', 'AbortController', 'setTimeout', factorySource
     )(
         offline,
         fetchCatalogData,
+        getCatalogChanges,
+        () => state,
         setState,
         message => errors.push(message),
         async () => { pysCalls++; },
@@ -163,8 +175,7 @@ await test('una carga cancelada no aplica una respuesta tardía ni guarda el cat
         fetchCatalogData: () => { started = true; return pending; }
     });
     const load = h.load();
-    await Promise.resolve();
-    await Promise.resolve();
+    for (let i = 0; i < 12 && !started; i++) await Promise.resolve();
     assert.equal(started, true);
     h.cancel();
     resolveNetwork({ data: snapshot([{ id: 'LATE-1', marca: 'Mazda' }]) });
