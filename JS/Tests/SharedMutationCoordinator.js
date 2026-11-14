@@ -525,6 +525,12 @@ function runSharedMutationCoordinatorTests() {
     });
 
 
+    test_("Migración batch de contraseñas reserva Users y ActiveSessions", function() {
+        const policy = coordinatorPolicy_("AUTH", "migrateLegacyPasswords");
+        assert_(policy.writeResources.includes("USERS"), "La migración debe reservar Users.");
+        assert_(policy.writeResources.includes("ACTIVE_SESSIONS"), "La migración debe serializar actividad con logout y revocaciones.");
+    });
+
     test_("AUTH serializa actividad de sesiones en todas las mutaciones autenticadas", function() {
         ["acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].forEach(action => {
             const policy = coordinatorPolicy_("AUTH", action);
