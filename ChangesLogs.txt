@@ -1855,3 +1855,11 @@ Rama: GPSpedia2.2.5_work
 - Se registró la evidencia y el alcance en `checkpoint.md`. Las validaciones reales de Apps Script, Drive, Spreadsheet, OAuth, navegador/dispositivo y campo siguen pendientes de Beta; no se ejecutaron escrituras productivas ni cambios de ACL.
 - Se observaron avisos de deprecación de `punycode` y de runtime de las actions v4; no afectaron el resultado PASS.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P1 AUTENTICACIÓN: COBERTURA DE LOGIN IDEMPOTENTE
+- Se amplió `JS/Tests/SessionStartupNavigation.mjs` con una prueba aislada del ciclo `requestId`: reutilización tras fallo transitorio, normalización de usuario, limpieza tras éxito y protección frente a respuestas antiguas.
+- La primera ejecución CI detectó un error de escape en el harness nuevo; se corrigió y se repitió la ejecución completa. Resultado final: GitHub Actions run `43620074644`, Node.js 22.23.4, 93 suites / 1,364 pruebas / 0 fallos; `SessionStartupNavigation` 13/13 PASS.
+- P1 se registra como COMPLETADA CON VALIDACIÓN DIFERIDA A BETA. Quedan pendientes únicamente las comprobaciones externas de múltiples pestañas, offline/reconexión y dispositivos reales.
+================================================================================
