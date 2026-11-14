@@ -735,3 +735,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Se incorpora cobertura de regresión UI para la consolidación de duplicados y el conteo de registros históricos.
 - La auditoría recursiva y el preview no escriben Spreadsheet, Drive ni permisos. El proceso de escritura de URLs, persistencia/reanudación del preview y pruebas Beta siguen pendientes.
 - HEAD de partida: `a4fdd48ec60ce56ed6ea333c355b23cf9a5f5c2c`. Validación CI de este cambio pendiente.
+
+
+## GP-IMG-DATA-01 — Concurrencia y recuperación de la simulación (2026-11-14)
+
+- La llamada al preview ahora utiliza `routeActionWithRetry` con timeout de 45 s, hasta tres intentos y cancelación de reintentos cuando la vista/sesión deja de ser vigente.
+- El bloque `finally` libera siempre el indicador global de auditoría/conciliación, incluso si se cierra el modal o cambia la sesión durante una petición; solo actualiza controles si la vista sigue vigente.
+- Pruebas CI del HEAD previo `92184d7ac75e9c55465c7da46ad1e8365582b401`: 91 suites, 1,333 pruebas aprobadas, 0 fallos (run 43612960257). CortesImageReconciliation 15/15 y UI 6/6.
+- La validación CI del cambio actual queda pendiente. Pages build/deployment del HEAD previo estaba pendiente al registrar esta actualización.

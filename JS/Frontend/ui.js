@@ -7752,8 +7752,11 @@ export async function openAuditDriveModal() {
                 const batch = imageFiles.slice(offset, offset + batchSize).map(file => ({
                     fileId: String(file.fileId || ""), fileName: String(file.fileName || "")
                 }));
-                const response = await routeAction("previewCortesImageReconciliation", {
+                const response = await routeActionWithRetry("previewCortesImageReconciliation", {
                     ...getDeveloperSessionPayload(), files: batch
+                }, {
+                    timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 500,
+                    shouldContinue: isCurrentRequest
                 });
                 if (!isCurrentRequest()) return;
                 if (!response || response.writePerformed !== false ||
@@ -7812,12 +7815,12 @@ export async function openAuditDriveModal() {
             if (reconciliationStatus) reconciliationStatus.textContent =
                 "La simulación se detuvo sin realizar escrituras: " + String(error && error.message || error);
         } finally {
-            if (isCurrentRequest()) {
-                isReconciling = false;
-                isRunning = false;
-                isDriveAuditRunning = false;
-                updateControls();
-            }
+            // La sesión o el modal pueden cambiar mientras la petición está pendiente.
+            // El flag global debe liberarse aunque la vista ya no sea la actual.
+            isReconciling = false;
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
         }
     };
 

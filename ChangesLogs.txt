@@ -1696,3 +1696,12 @@ Rama: GPSpedia2.2.5_work
 - Añadida regresión UI para duplicados entre lotes y conteo histórico.
 - No se realizaron escrituras en Spreadsheet/Drive ni cambios de permisos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 TIMEOUT Y LIBERACIÓN DE BLOQUEO
+- El preview de conciliación usa reintentos acotados y deja de reintentar cuando cambia la sesión o se cierra la vista.
+- Se garantiza la liberación del indicador global de auditoría/conciliación en finally aunque la vista ya no sea actual.
+- Añadida regresión estática de timeout, cancelación y liberación del bloqueo.
+- No se realizaron escrituras en Spreadsheet/Drive ni cambios de permisos.
+================================================================================
