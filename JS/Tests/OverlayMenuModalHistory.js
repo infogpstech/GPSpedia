@@ -160,6 +160,12 @@ test('Inbox y Developer pueden abrir su interfaz si AUTH está temporalmente ind
     assert.match(source, /if \(valid === null\)[\s\S]*?isCurrentUiSessionContext_\(expected\)[\s\S]*?return localContext/);
     assert.match(source, /Las operaciones siguen sujetas a validación del servidor/);
 });
+test('un rechazo de red durante la validación tampoco deja bloqueados los modales', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    const guard = source.slice(source.indexOf('async function ensureUiSessionRole_'), source.indexOf('\nfunction getSessionPayload_'));
+    assert.match(guard, /catch \(error\)[\s\S]*?getUiSessionContext_\(\)[\s\S]*?return localContext/);
+    assert.match(guard, /Error temporal al validar AUTH/);
+});
 test('los errores extensos se registran para Developer y se acortan en los avisos', () => {
     const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
     assert.match(source, /developerDiagnosticQueue_/);
@@ -181,4 +187,4 @@ test('Developer conserva los nombres de las secciones en navegación móvil', ()
     assert.match(source, /#dev-tools-modal \.dev-tools-sidebar\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
 });
 
-console.log('OverlayMenuModalHistory:', passed + '/18 PASS');
+console.log('OverlayMenuModalHistory:', passed + '/19 PASS');
