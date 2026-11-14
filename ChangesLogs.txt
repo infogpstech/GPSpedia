@@ -1845,3 +1845,13 @@ Rama: GPSpedia2.2.5_work
 - Se agregó un protocolo consolidado de validación Beta en Tareas_Activas.md. Comienza con comprobaciones de repositorio/rama/árbol limpio y sincronización fast-forward, y separa pruebas de sesión, migraciones, Inbox, ACL, conciliación de imágenes y PWA.
 - No se modificó código funcional, no se desplegaron servicios ni se ejecutaron operaciones en Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — VERIFICACIÓN TÉCNICA INTEGRAL CONFIRMADA EN GITHUB ACTIONS
+- Se corrigió la conclusión anterior sobre la imposibilidad de consultar ejecuciones push: el endpoint general de Actions permitió recuperar el run exacto del HEAD `4ce76205be184fa5f8b66e1ebaec0b5b2574e3ac`.
+- Workflow `GPSpedia service regression tests`, run `43619377905`: Node.js 22.23.4; comprobación `node --check` de siete módulos; runner completo aprobado: 93 suites, 1,363 pruebas, 0 fallos.
+- GitHub Pages run `43619377948`: build y deployment PASS.
+- Se registró la evidencia y el alcance en `checkpoint.md`. Las validaciones reales de Apps Script, Drive, Spreadsheet, OAuth, navegador/dispositivo y campo siguen pendientes de Beta; no se ejecutaron escrituras productivas ni cambios de ACL.
+- Se observaron avisos de deprecación de `punycode` y de runtime de las actions v4; no afectaron el resultado PASS.
+================================================================================
