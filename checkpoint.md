@@ -726,3 +726,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - `JS/Frontend/ui.js`: helper reutilizable aplicado a los campos de sugerencia de cambio y alta de tutorial; cierra ayudas al pulsar fuera o Escape y restaura foco. No se añadió ayuda al modal de detalles de vehículos.
 - `ContextualHelpForms.mjs`: 4/4 PASS. CI run 43611979071: 90 suites, 1,322 pruebas aprobadas, 0 fallos. Pages build/deployment en la rama work.
 - Pendiente: ayudas de otros formularios PYS, panel Developer, revisión de textos redundantes y validación visual/teclado en navegador real.
+
+
+## GP-IMG-DATA-01 — Consolidación global de simulación (2026-11-14)
+
+- La UI ejecuta el preview en lotes de 25, valida el digest del snapshot de Cortes/referencias y conserva la clasificación del historial de imágenes.
+- Corrección adicional: los nombres canónicos duplicados se consolidan entre todos los lotes; cada archivo del grupo pasa a ambiguo, se elimina su URL propuesta y se recalculan los conteos globales.
+- Se incorpora cobertura de regresión UI para la consolidación de duplicados y el conteo de registros históricos.
+- La auditoría recursiva y el preview no escriben Spreadsheet, Drive ni permisos. El proceso de escritura de URLs, persistencia/reanudación del preview y pruebas Beta siguen pendientes.
+- HEAD de partida: `a4fdd48ec60ce56ed6ea333c355b23cf9a5f5c2c`. Validación CI de este cambio pendiente.

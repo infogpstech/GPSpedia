@@ -21,6 +21,12 @@ testCase("el frontend consume el endpoint y presenta estados diferenciados",()=>
  assert.ok(html.includes('id="audit-drive-reconciliation-panel"'));
  assert.ok(html.includes('id="btn-audit-drive-reconcile"'));
 });
+testCase("consolida duplicados canónicos entre lotes antes de mostrar coincidencias",()=>{
+ assert.match(ui,/const canonicalGroups = new Map/);
+ assert.match(ui,/Hay varios archivos con el mismo nombre canónico en el árbol Drive/);
+ assert.match(ui,/aggregate\\.counts\\.invalid = aggregate\\.invalidFiles\\.length/);
+ assert.match(ui,/historical: 0/);
+});
 testCase("el reporte usa texto seguro y no modifica datos productivos",()=>{
  assert.match(ui,/title\.textContent = String\(item\.fileName/);
  assert.match(ui,/aggregate\.counts\.matched \+ " coincidencias exactas propuestas; referencias: " \+ referenceCheckStatus/);

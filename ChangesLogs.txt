@@ -1687,3 +1687,12 @@ Rama: GPSpedia2.2.5_work
 - CI run 43611979071: 90 suites, 1,322 pruebas aprobadas, 0 fallos.
 - Pendientes: recorrido Drive reanudable, UI de conciliación, otros formularios PYS/Developer y revisión visual. Sin acceso/escritura real en Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 CONSOLIDACIÓN DE RESULTADOS ENTRE LOTES
+- La simulación ahora agrupa los nombres canónicos de todos los lotes; los duplicados se reclasifican como ambiguos, sin destino ni URL propuesta.
+- Los conteos se recalculan después de la consolidación y se incluye el estado histórico en el total.
+- Añadida regresión UI para duplicados entre lotes y conteo histórico.
+- No se realizaron escrituras en Spreadsheet/Drive ni cambios de permisos.
+================================================================================

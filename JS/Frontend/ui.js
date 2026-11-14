@@ -7740,7 +7740,7 @@ export async function openAuditDriveModal() {
         const aggregate = {
             results: [], invalidFiles: [], rowIssues: [], counts: {
                 matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0,
-                referenced_elsewhere: 0, access_restricted: 0, unverifiable: 0, invalid: 0
+                referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: 0
             }
         };
         let sourceDigest = "", referenceCheckStatus = "";
@@ -7779,6 +7779,29 @@ export async function openAuditDriveModal() {
                     "Simulando lote " + (batchIndex + 1) + " de " + totalBatches + " · " +
                     Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Sin escrituras.";
             }
+            // Un nombre canónico duplicado puede caer en lotes distintos; nunca se elige uno automáticamente.
+            const canonicalGroups = new Map();
+            aggregate.results.forEach(item => {
+                const key = String(item.fileName || "").replace(/\\.[^.]+$/, "").trim().toLowerCase();
+                if (!key) return;
+                if (!canonicalGroups.has(key)) canonicalGroups.set(key, []);
+                canonicalGroups.get(key).push(item);
+            });
+            canonicalGroups.forEach(group => {
+                if (group.length < 2) return;
+                group.forEach(item => {
+                    item.status = "ambiguous";
+                    item.target = null;
+                    delete item.proposedUrl;
+                    item.reason = "Hay varios archivos con el mismo nombre canónico en el árbol Drive; no se seleccionó ninguno automáticamente.";
+                });
+            });
+            Object.keys(aggregate.counts).forEach(key => { aggregate.counts[key] = 0; });
+            aggregate.results.forEach(item => {
+                const status = String(item.status || "");
+                if (Object.prototype.hasOwnProperty.call(aggregate.counts, status)) aggregate.counts[status]++;
+            });
+            aggregate.counts.invalid = aggregate.invalidFiles.length;
             aggregate.manifestDigest = sourceDigest;
             aggregate.referenceCheckStatus = referenceCheckStatus;
             renderCortesReconciliationReport_(aggregate);

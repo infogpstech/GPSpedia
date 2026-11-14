@@ -240,10 +240,10 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 ### GP-IMG-DATA-01 — Conciliación Drive de cortes ↔ Spreadsheet
 - [x] Implementar planner puro de conciliación por nombre canónico exacto, con destinos derivados de IDs de vehículo únicos y las ocho columnas de imagen de Cortes. La planificación no escribe datos.
 - [x] Cubrir coincidencias, ya vinculadas, archivos huérfanos, referencias externas, nombres duplicados, destinos ambiguos/ocupados, MIME/IDs inválidos y deduplicación (CortesImageReconciliation: 10/10 PASS).
-- [ ] Incorporar endpoint/flujo reanudable que recorra Drive y alimente el planner; mostrar resultados en una lista diferenciada.
-- [ ] Identificar y mostrar en una lista diferenciada las imágenes de Drive que no tienen correspondencia/URL registrada en la Spreadsheet.
+- [x] Incorporar endpoint/flujo de preview conectado a la auditoría recursiva reanudable de Drive; mostrar resultados en una lista diferenciada.
+- [x] Identificar y mostrar las imágenes sin correspondencia con destinos canónicos de Cortes, separadas de las referencias externas y del historial.
 - [ ] Para coincidencias inequívocas, preparar la migración de la URL pública de la imagen al campo y fila correspondientes de la hoja; después, utilizar ese mismo campo para visualizar la imagen en el catálogo/formulario.
-- [ ] Antes de escribir, implementar modo de simulación (dry-run), reporte de coincidencias, duplicados, imágenes huérfanas y filas ambiguas. No asignar una imagen por similitud débil ni sobrescribir una URL existente sin una regla explícita.
+- [x] Implementar modo dry-run y reporte diferenciado de coincidencias, duplicados, imágenes sin correspondencia y filas ambiguas; nunca asignar por similitud débil ni sobrescribir una URL existente.
 - [ ] Hacer el proceso reanudable e idempotente, con conteos antes/después, trazabilidad y estrategia de recuperación.
 - [ ] La escritura real en Drive/Spreadsheet productivos y la ejecución de migraciones requieren autorización expresa; no forman parte del registro documental actual.
 
