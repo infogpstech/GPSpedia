@@ -1193,3 +1193,33 @@ Se añadieron a `Tareas_Activas.md` y al final de `LOGS.TXT` los siguientes repo
 
 ### Siguiente acción
 Continuar con GP-UX-03: revisar el diseño móvil de Inbox y sus contratos de servidor, proponer una barra de acciones contextual con solo operaciones existentes y probar permisos/estados. En paralelo, preparar la validación Beta de AUTH/Coordinator y FEEDBACK. No desplegar Apps Script, modificar ScriptProperties ni tocar datos productivos desde esta sesión.
+
+
+## Continuidad — Inbox móvil y recarga PWA (2026-11-14)
+
+**HEAD confirmado antes de esta actualización:** `955c19c903bc611936feb75e96e264f6673d1877` en `GPSpedia2.2.5_work`.  
+**Rama base:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+
+### Implementación adicional
+1. **Inbox histórico móvil:** la vista de solicitudes ahora muestra lista o detalle en una sola pantalla, con botón de regreso. Los elementos admiten teclado y foco. Se agregó una barra contextual accesible para responder, resolver y borrar.
+2. **Acciones no soportadas:** se eliminó el botón genérico de borrado en aprobaciones de vídeo, ya que el backend solo permite borrar `problem_report` y `contact_form`. En conversaciones directas se mantiene archivar/restaurar; no se ofrece borrar porque no existe esa operación en el contrato.
+3. **Recarga explícita PWA:** se agregó «Recargar aplicación» al menú lateral. Consulta `ServiceWorkerRegistration.update()` con límite de 3 segundos y después recarga el documento. El pull-to-refresh sigue sincronizando solo el catálogo.
+4. **Service Worker:** caché actualizado a `gpsepedia-cache-v27`. Se verificaron los 33 recursos esenciales contra el árbol Git; no hay rutas faltantes.
+5. **Pruebas:** `InboxUi` 19/19, `SessionStartupNavigation` 13/13 y `PWAStartupScenarios` 13/13.
+
+### Validación CI
+- GitHub Actions service-tests run `43630382765`: **SUCCESS**, 94 suites / 1,392 pruebas / 0 fallos.
+- No se han realizado pruebas visuales con dispositivos reales.
+- El último Pages build observado al registrar esta continuidad corresponde al commit `6dc78e318b90b5a778cc812cd73bd424d03492e7` y seguía en ejecución; comprobar el run más reciente asociado al HEAD documental antes de considerar publicada la versión web.
+
+### Pendientes y límites
+- **AUTH/Coordinator:** verificar en Beta los deployments Coordinator/AUTH y probar aceptación por usuario/dispositivo, concurrencia con `ADMIN/sessionActivity`, logout/login en el mismo perfil y un dispositivo nuevo. No se modificaron ScriptProperties ni deployments.
+- **FEEDBACK/Inbox Técnico:** verificar `GPSpedia_COORDINATOR_URL` y secreto de FEEDBACK en el mismo entorno; el contrato backend admite Técnico y Técnico_exterior, pero la autenticación de servicio no se puede validar desde GitHub.
+- **Tutorial:** la tarjeta «Agregar Tutorial» está reservada a Desarrollador. Reproducir su ausencia con una sesión Desarrollador válida antes de modificar visibilidad/RBAC.
+- **Tarjeta PyS relacionada:** dimensiones declaradas de alta y tarjeta real no bastan para explicar la diferencia visual; falta medir en navegador.
+- **Inbox móvil:** falta revisión visual Android/iOS de lista/detalle, scroll, barra de acciones y foco. Las conversaciones directas no tienen eliminación de backend.
+- **Capturas:** una PWA web no puede bloquear capturas nativas de forma fiable. Android `FLAG_SECURE` requiere aplicación nativa/controlada. No se afirma protección absoluta; cualquier marca de agua requiere evaluar legibilidad y aprobación.
+- **Recarga PWA:** falta validar actualización v26→v27, offline, reconexión y conservación de sesión/borradores en Android/iOS instalados.
+
+### Siguiente tarea
+Continuar con GP-UX-02: reproducir la ausencia de «Agregar Tutorial» con una sesión Desarrollador y medir la tarjeta «Agregar Problema» frente a las tarjetas reales en el modal. Después validar visualmente Inbox y recarga PWA en dispositivos. Mantener en paralelo los pendientes externos AUTH/Coordinator y FEEDBACK; no desplegar ni alterar datos productivos.
