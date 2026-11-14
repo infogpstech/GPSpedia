@@ -96,15 +96,15 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 ### P4 — Política de imágenes y permisos
 **Estado: PENDIENTE**
-- [ ] Definir una matriz de capacidades por rol en backend y frontend.
-- [ ] Compartir integrado del modal permitido a todos.
-- [ ] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador.
+- [ ] Completar una matriz única de capacidades por rol en todos los módulos y endpoints (la política de ficha técnica ya está aplicada; quedan las capacidades de imágenes y acciones administrativas).
+- [x] Compartir integrado del modal permitido a todos.
+- [x] Compartir integrado disponible para todos; imprimir y editar detalles solo Supervisor, Jefe y Desarrollador, con validación de rol en backend.
 - [x] Unificar Jefe como valor canónico en AUTH, USERS, ADMIN, FEEDBACK, WRITE, Inbox y frontend; mantener conversión transitoria de registros heredados Gefe.
 - [x] En la Spreadsheet, migrar Users.Privilegios de Gefe a Jefe y actualizar la validación/lista desplegable (confirmado por el usuario el 2026-11-14).
 - [x] Retirar los conversores temporales Gefe → Jefe del backend y frontend; el código solo admite Jefe como valor canónico.
 - [ ] Restringir botones, enlaces directos, descarga, menú contextual, copiar/arrastrar en imágenes, sin romper campos editables ni accesibilidad.
 - [ ] Revisar exposición de URL originales y recursos estáticos; no confundir ocultar controles con autorización real.
-- [ ] Pruebas negativas: Técnico no ejecuta acciones privilegiadas manipulando DOM o llamando endpoints directamente.
+- [x] Pruebas de rol para impedir edición/impresión a Técnico y roles no autorizados; autorización backend validada con sesión real simulada. [ ] Ampliar pruebas negativas a todas las acciones de imágenes y endpoints privilegiados.
 
 ### P5 — Mitigación de capturas
 **Estado: PENDIENTE**
