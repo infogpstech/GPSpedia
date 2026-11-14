@@ -238,6 +238,12 @@ async function initializeApp() {
      * Esto es crítico para dispositivos móviles donde el teclado virtual
      * reduce el área visible de la pantalla.
      */
+    // Comprueba si el lightbox principal está visible antes de reajustar el viewport.
+    const isLightboxVisible = () => {
+        const lightbox = document.getElementById('lightbox');
+        return Boolean(lightbox && lightbox.classList.contains('visible'));
+    };
+
     let viewportTicking = false;
     const handleViewportChange = () => {
         if (!window.visualViewport || viewportTicking) return;
