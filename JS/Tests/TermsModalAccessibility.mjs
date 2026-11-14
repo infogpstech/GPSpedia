@@ -108,7 +108,7 @@ test('cerrar el acuerdo sobre el aviso limpia History API y conserva el aviso pa
     assert.equal(Object.prototype.hasOwnProperty.call(history.state, 'modalOpen'), false);
 });
 test('los logos usados por el contenido legal se precargan en el Service Worker', () => {
-    assert.match(sw, /gpsepedia-cache-v24/);
+    assert.match(sw, /gpsepedia-cache-v25/);
     for (const file of ['Images/Logo_TemaOscuro.png', 'Images/tracklink_logo.png']) {
         assert.ok(sw.includes("'./" + file + "'"), file + ' no está en CORE_ASSETS');
         assert.ok(existsSync(new URL('../../' + file, import.meta.url)), file + ' no existe en el repositorio');
