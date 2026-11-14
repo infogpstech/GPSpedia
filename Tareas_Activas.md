@@ -121,7 +121,8 @@ Registrar duración por iteración, fecha, deployment/versión y runtime. Repeti
 - [x] Reemplazar la fórmula de fila de LogosMarca por asignación backend numérica, con contador persistente, exclusión mutua, detección de IDs duplicados/malformados y pruebas automatizadas.
 - [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas, después de revisar el reporte real de auditoría.
 - [x] Implementar reporte de duplicados/ambigüedades por hoja sin modificar datos.\n- [ ] Resolver los conflictos encontrados en el reporte Beta y detener solo los registros afectados.
-- [ ] Implementar checkpoints y estrategia de reversión para la migración de IDs antes de cualquier escritura.
+- [x] Definir plan por entidad con snapshot, manifiesto inmutable, dry-run, lotes reanudables, verificación de referencias y reversión condicionada a huellas.
+- [ ] Implementar el motor de migración y probar rollback en copia Beta antes de cualquier escritura real.
 
 ### P3 — Rediseño Inbox
 **Estado: IMPLEMENTADO EN RAMA DE TRABAJO; VALIDACIÓN MANUAL EN NAVEGADORES Y DISPOSITIVOS REALES PENDIENTE.**
