@@ -73,14 +73,16 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación final de implementación (2026-11-14):** GitHub Actions PASS — 75 suites, 1,170 pruebas aprobadas, 0 fallos; comprobaciones de sintaxis Node.js PASS. No se desplegaron Apps Script ni se modificaron datos productivos.
 
 ### P2 — Migración de contraseñas e identificadores
-**Estado: PENDIENTE**
-- [ ] Diseñar hash versionado con salt único y coste adecuado a Apps Script; medir latencia y compatibilidad.
-- [ ] Implementar migración por lotes reanudable e idempotente de credenciales legacy; no registrar ni exportar contraseñas.
-- [ ] Mantener autenticación compatible durante transición y verificar conteos antes/después.
+**Estado: EN PROGRESO — SUBTAREA DE CONTRASEÑAS IMPLEMENTADA; CALIBRACIÓN Y MIGRACIÓN DE IDs PENDIENTES.**
+- [x] Diseñar hash versionado PBKDF2-HMAC-SHA256 con salt aleatorio único, verificación en tiempo constante y compatibilidad con SHA-256/plaintext legacy; incluir benchmark para calibrar Apps Script.
+- [x] Implementar migración por lotes reanudable e idempotente de contraseñas plaintext legacy, con dry-run predeterminado, confirmación explícita y lotes de hasta 50; no registrar ni exportar contraseñas.
+- [x] Mantener autenticación compatible: el login verifica PBKDF2, SHA-256 histórico y plaintext; SHA-256 histórico se rehashea al login porque no puede convertirse por lote sin conocer la contraseña.
+- [ ] Medir `benchmarkPasswordKdf_()` en el runtime real de Apps Script y fijar el coste definitivo; 12,000 iteraciones es provisional hasta esa medición.
+- [ ] Ejecutar dry-run de migración en entorno Beta y verificar conteos; no ejecutar escritura productiva sin autorización y respaldo.
 - [ ] Auditar/normalizar IDs existentes y fórmulas; backend como única fuente para nuevos IDs.
 - [ ] Migrar usuarios, vehículos, tutoriales y relays sin romper enlaces, aprobaciones, logs ni referencias cruzadas.
 - [ ] Detectar duplicados/ambigüedades y detener solo los registros afectados; producir reporte de reconciliación.
-- [ ] Implementar modo dry-run, checkpoints y estrategia de reversión.
+- [ ] Implementar checkpoints y estrategia de reversión para la migración de IDs.
 
 ### P3 — Rediseño Inbox
 **Estado: PENDIENTE**
