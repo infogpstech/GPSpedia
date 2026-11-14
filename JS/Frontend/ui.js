@@ -7753,6 +7753,53 @@ export async function openAuditDriveModal() {
         }
     };
 
+    const createCortesImageFileSignature_ = async imageFiles => {
+        if (!globalThis.crypto || !globalThis.crypto.subtle) {
+            throw new Error("Este navegador no permite calcular la firma segura del inventario. Abre GPSpedia mediante HTTPS o un entorno seguro.");
+        }
+        const payload = JSON.stringify(imageFiles.map(file => [
+            String(file.fileId || ""), String(file.fileName || ""), String(file.mimeType || "").toLowerCase()
+        ]).sort((left, right) => left[0].localeCompare(right[0])));
+        const bytes = new TextEncoder().encode(payload);
+        const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest))
+            .map(value => value.toString(16).padStart(2, "0")).join("");
+    };
+
+    const restoreCortesReconciliationState_ = async () => {
+        if (!isCurrentRequest() || !complete || !auditId) return;
+        const imageFiles = allFiles.filter(file => String(file.mimeType || "").toLowerCase().startsWith("image/"));
+        if (!imageFiles.length) return;
+        try {
+            const fileSignature = await createCortesImageFileSignature_(imageFiles);
+            if (!isCurrentRequest()) return;
+            const saved = await offline.getCortesImageReconciliationState(requestContext.userId, auditId);
+            if (!isCurrentRequest() || !saved) return;
+            const totalBatches = Math.ceil(imageFiles.length / 25);
+            if (saved.fileSignature !== fileSignature || saved.nextBatchIndex > totalBatches ||
+                saved.results.length > imageFiles.length * 2) {
+                if (reconciliationStatus) reconciliationStatus.textContent =
+                    "Existe un progreso anterior que ya no coincide con el inventario actual. Al iniciar la conciliación se generará una simulación nueva.";
+                return;
+            }
+            const report = {
+                results: saved.results, invalidFiles: saved.invalidFiles, rowIssues: saved.rowIssues,
+                counts: saved.counts, manifestDigest: saved.sourceDigest,
+                referenceCheckStatus: saved.referenceCheckStatus
+            };
+            renderCortesReconciliationReport_(report);
+            if (reconciliationStatus) {
+                reconciliationStatus.textContent = saved.status === "complete"
+                    ? "Último reporte completo recuperado del almacenamiento local (" + saved.nextBatchIndex + " de " + totalBatches + " lotes). Es una copia guardada; pulsa Conciliar para actualizarla con datos actuales."
+                    : "Progreso parcial recuperado (" + saved.nextBatchIndex + " de " + totalBatches + " lotes confirmados). Pulsa Conciliar para continuar sin repetir los lotes guardados.";
+            }
+        } catch (error) {
+            if (!isCurrentRequest()) return;
+            if (reconciliationStatus) reconciliationStatus.textContent =
+                "No se pudo recuperar el reporte local de conciliación: " + String(error && error.message || error);
+        }
+    };
+
     const runCortesReconciliation = async () => {
         if (!isCurrentRequest() || !complete || isReconciling || isRunning || isDriveAuditRunning) return;
         const imageFiles = allFiles.filter(file => String(file.mimeType || "").toLowerCase().startsWith("image/"));
@@ -7795,18 +7842,11 @@ export async function openAuditDriveModal() {
             revision = Number(saved.revision);
         };
         try {
-            if (!globalThis.crypto || !globalThis.crypto.subtle) {
-                throw new Error("Este navegador no permite calcular la firma segura del inventario. Abre GPSpedia mediante HTTPS o un entorno seguro.");
-            }
-            const fileSignaturePayload = JSON.stringify(imageFiles.map(file => String(file.fileId || "")));
-            const bytes = new TextEncoder().encode(fileSignaturePayload);
-            const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
-            fileSignature = Array.from(new Uint8Array(digest))
-                .map(value => value.toString(16).padStart(2, "0")).join("");
+            fileSignature = await createCortesImageFileSignature_(imageFiles);
             if (!isCurrentRequest()) return;
             const previous = await offline.getCortesImageReconciliationState(requestContext.userId, auditId);
             if (!isCurrentRequest()) return;
-            if (previous && previous.fileSignature === fileSignature &&
+            if (previous && previous.status !== "complete" && previous.fileSignature === fileSignature &&
                 previous.nextBatchIndex <= totalBatches && previous.results.length <= imageFiles.length * 2) {
                 aggregate.results = previous.results;
                 aggregate.invalidFiles = previous.invalidFiles;
@@ -7859,7 +7899,7 @@ export async function openAuditDriveModal() {
                     aggregate.counts[key] += Number(response.counts && response.counts[key]) || 0;
                 });
                 nextBatchIndex = batchIndex + 1;
-                await saveProgress(nextBatchIndex === totalBatches ? "complete" : "running");
+                await saveProgress("running");
                 if (!isCurrentRequest()) return;
                 if (reconciliationStatus) reconciliationStatus.textContent =
                     "Simulando lote " + nextBatchIndex + " de " + totalBatches + " · " +
@@ -7936,6 +7976,8 @@ export async function openAuditDriveModal() {
     if (savedState) {
         restoreState(savedState);
         updateControls();
+        if (complete) await restoreCortesReconciliationState_();
+        if (!isCurrentRequest()) return;
         if (isDriveAuditRunning) {
             updateSummary('La auditoría continúa ejecutándose en esta sesión; no inicies otra solicitud.');
         } else if (complete && inventoryStatus !== 'saved' && inventoryStatus !== 'organized') {

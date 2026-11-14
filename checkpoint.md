@@ -813,3 +813,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Los fallos previos (runs 43613854019, 43614081536 y 43614168781) fueron de aserciones estáticas de test; se corrigieron y la ejecución posterior aprobó. No hubo fallos de lógica reproducibles en la suite final.
 - No se ejecutaron operaciones contra Drive/Spreadsheet ni se modificaron permisos. Quedan diferidas a Beta las comprobaciones de navegador real/IndexedDB entre pestañas y el flujo externo con Apps Script/Drive/Sheets.
 - Siguiente dependencia de GP-IMG-DATA-01: diseñar manifiesto de escritura con aprobación explícita por fila, precondiciones y verificación read-back; no ejecutar escrituras reales sin autorización expresa.
+
+
+## GP-IMG-DATA-01 — Recuperación visible del reporte y firma completa del inventario (2026-11-14)
+
+- Al reabrir el panel con una auditoría completa, la UI calcula la firma del inventario y recupera automáticamente el reporte/progreso IndexedDB si pertenece a la misma cuenta, auditoría y conjunto de archivos. La UI distingue reporte completo guardado (copia no revalidada) de progreso parcial reanudable.
+- La firma ahora incluye ID, nombre y MIME de cada imagen, ordenados por ID; cambios de nombre o tipo invalidan el estado anterior en lugar de reutilizar resultados incompatibles.
+- Un estado marcado `complete` ya no se reutiliza como si fuera vigente al pulsar Conciliar: se inicia una simulación nueva. Los lotes intermedios permanecen `running`; solo el reporte agregado y normalizado se marca `complete` al final. Así, una interrupción después del último lote no confunde un lote recibido con un reporte final consolidado.
+- Añadida regresión UI para restauración automática, invalidación de firma y distinción entre reporte completo y reanudación parcial. CI pendiente.

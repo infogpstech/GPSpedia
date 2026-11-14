@@ -1768,3 +1768,11 @@ Rama: GPSpedia2.2.5_work
 2026-11-14 — GP-IMG-DATA-01 CORREGIR PATRONES REGEX DE TEST
 - Corregidos escapes duplicados en expresiones regulares de la prueba de manejo de error; verificación estructural tolerante a espacios.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 RESTAURAR REPORTE Y VALIDAR FIRMA COMPLETA
+- La reapertura del panel recupera automáticamente el reporte local para la auditoría actual, indicando si es copia completa o progreso parcial.
+- La firma de inventario incluye ID, nombre y MIME; evita reusar progreso si cambia el nombre/tipo de un archivo.
+- El estado solo se marca completo después de consolidar el reporte final. Al actualizar un reporte completo se ejecuta un preview nuevo; los estados parciales sí reanudan lotes confirmados.
+================================================================================
