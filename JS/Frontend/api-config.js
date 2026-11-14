@@ -39,13 +39,13 @@ export function setRichTextMode(mode, actorRole) {
 
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycby1-ncfuo3PV38ZqvTkdHv2uoD2mNkgS3WNo_2_ycBvcxocA0H5QsNiZoqSadR19P7SiQ/exec",
-    CATALOG:  "https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbxmXfeMt9lG-vlm-6-XGEhA5TWDZwFsXGVL23K20qZUCnqAhUKE_woieSbxKxb3ksvu3Q/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbxVBSXNh6xG4_jyIfsc19a4dmlSBwwBUTBlFoDjHiDqlYx_dIQ5NZxUduui4DO8AyXSRg/exec",
-    UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbz06ln7lvl1MQocYUL0LkwvvPBrXzfoQ8QRsA68CILVls5gIBpTJD6sIG_Gn0gL9CG7-g/exec"
+    AUTH:     "https://script.google.com/macros/s/AKfycbyvkzxZNTGUjZZIQizCV-_dA5iz8GNASp0L3Kxu1Q06BONgrKvR-MpxOsYbVytUtk0n/exec",
+    CATALOG:  "https://script.google.com/macros/s/AKfycbxRwBKI_HyY4KWf1vny5kxhT5kmspDPj6BmNe-bAAcB27osXY5L0Ylx94RWrn9lJ9kW/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbxMj8WFCMZVLXuk3N6_WCeEwNwhGAb589PJY4gc5ZjA8mrYsBN7-femz_FCH4eFj5vBDQ/exec",
+    USERS:    "https://script.google.com/macros/s/AKfycbzM9RtdvqN5adqWlVqpD3bvHwnYQeojGUh8Fwxftgp63ynpe4J4Et_Mix4wX7M2IPPKOA/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbyBpaLsZhZYNfmdX8UVzn_2v8pms6R8uVIEQa0-0m51N_jEU_wsTikNEa595Eaa9q1JGA/exec",
+    UTILITIES: "https://script.google.com/macros/s/AKfycbyTqKGhS_raVPwFjNRFW5TQwQrw-JWVt1lhTNU_zsgMy7VZ6RzksuF0_LOb_UsDI2Ns/exec",
+    ADMIN: "https://script.google.com/macros/s/AKfycbxbgUCec2Uec5PzPwxnO7x_nTXnW5a323fQn7kYQ_AAWex6oIqYTJfB4Ep759ykOD5d/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
