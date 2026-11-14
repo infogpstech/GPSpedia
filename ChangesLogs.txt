@@ -1403,3 +1403,17 @@ Rama: GPSpedia2.2.5_work
 - **Pendiente externo:** actualizar la validación/lista desplegable de la columna `Privilegios` de la hoja `Users` para sustituir `Gefe` por `Jefe`, y migrar los registros existentes cuyo valor sea `Gefe` a `Jefe`. No se modificó la Spreadsheet porque no hay acceso de lectura/escritura autorizado a esa hoja desde esta sesión.
 - No se desplegaron proyectos Apps Script. No se ejecutaron pruebas Node/CLI ni pruebas contra Spreadsheet; la validación realizada fue estática sobre los archivos de la rama.
 ================================================================================
+
+
+================================================================================
+AMPLIACIÓN DE NORMALIZACIÓN JEFE Y VALIDACIÓN — 2026-11-14
+Rama: GPSpedia2.2.5_work
+
+- Se completó la normalización también en HTML/users.html, JS/Frontend/auth.js y Services/InboxConversations.js. El perfil, la pantalla de usuarios, el selector de roles y la autorización de Inbox muestran/usan Jefe.
+- Se corrigió la normalización del actor en auditoría ADMIN para que los registros heredados Gefe se persistan como rol canónico jefe.
+- Se actualizaron las pruebas de Inbox, ADMIN, AUTH, USERS, perfil y seguridad; las copias JS/Tests/Auth.js y JS/Tests/users.js quedaron sincronizadas con sus servicios, conservando únicamente el ID aislado de pruebas.
+- GitHub Actions: workflow service-tests.yml, run 43594248150, commit bc028a83577f0ba966f0f81f496eb25567bcd6b7 — SUCCESS. Comprobación de sintaxis JavaScript: PASS. Regresión: 75 suites, 1,152 pruebas aprobadas, 0 fallos.
+- La revisión del árbol activo confirmó que Gefe/gefe solo permanece en conversores de compatibilidad y fixtures que verifican esa transición; no aparece en opciones de asignación ni matrices operativas.
+- No existe en el repositorio código que administre la validación de datos de Users.Privilegios. La lista desplegable y los valores ya almacenados requieren actualización en la Spreadsheet real. La conexión de Google Drive/Sheets no está disponible en esta sesión; no se modificó la hoja ni se desplegó Apps Script.
+- Tareas_Activas.md refleja el código completado y deja pendiente la migración externa de Users.Privilegios y su lista desplegable. P4 continúa abierto por el resto de la matriz de permisos.
+================================================================================
