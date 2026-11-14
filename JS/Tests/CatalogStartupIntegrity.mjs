@@ -285,4 +285,23 @@ await test('la sincronización silenciosa no cambia el estado de carga ni descar
     assert.equal(h.patches.some(patch => Object.prototype.hasOwnProperty.call(patch, 'catalogLoadStatus')), false);
 });
 
+await test('la reconciliación silenciosa actualiza tarjetas, modales y vistas activas sin reconstruir todo el catálogo', async () => {
+    const start = uiSource.indexOf('export async function performSilentSync(');
+    const end = uiSource.indexOf('function updateFullState(', start);
+    assert.ok(start >= 0 && end > start);
+    const sync = uiSource.slice(start, end);
+    assert.match(sync, /offline\.compareCatalogSnapshots\(oldCatalogData, newCatalogData\)/);
+    assert.match(sync, /updateCardInPlace\(change\.newItem\)/);
+    assert.match(sync, /updateOpenModalIfActive\(change\.newItem\)/);
+    assert.match(sync, /insertNewVehicleFluently\(change\.item\)/);
+    assert.match(sync, /removeVehicleSilently\(change\.id\)/);
+    const fullStart = uiSource.indexOf('function updateFullState(');
+    const fullEnd = uiSource.indexOf('async function updateCardInPlace(', fullStart);
+    const full = uiSource.slice(fullStart, fullEnd);
+    assert.match(full, /mostrarTutorialesGrid\(\)/);
+    assert.match(full, /mostrarRelayGrid\(\)/);
+    assert.match(full, /options\.logosChanged === true/);
+    assert.match(authSource, /performSilentSync\(snapshotToApply\)/);
+    assert.match(authSource, /broadcastCatalogSync_\(currentUser, requiresFullSnapshot\)/);
+});
 console.log('CatalogStartupIntegrity: ' + passed + '/' + passed + ' PASS');
