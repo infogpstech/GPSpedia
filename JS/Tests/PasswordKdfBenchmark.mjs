@@ -43,7 +43,8 @@ test("Rechaza payload incompleto sin consultar sesión",()=>{
  assert.equal(validationCalls,before);
 });
 test("Router AUTH y mapa de acciones exponen el endpoint sin clasificarlo como mutación",()=>{
- assert.match(auth,/case 'benchmarkPasswordKdf':\\s*response = handleBenchmarkPasswordKdf_\\(request\\.payload\\);/);
+ assert.ok(auth.includes("case 'benchmarkPasswordKdf':"));
+ assert.ok(auth.includes("response = handleBenchmarkPasswordKdf_(request.payload);"));
  assert.match(api,/'benchmarkPasswordKdf': 'AUTH'/);
  const shared=auth.slice(auth.indexOf("function isSharedMutationAction_"),auth.indexOf("\nfunction doPost("));
  assert.doesNotMatch(shared,/benchmarkPasswordKdf/);
