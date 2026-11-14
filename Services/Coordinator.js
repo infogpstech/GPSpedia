@@ -29,6 +29,7 @@ function coordinatorPolicy_(service, operation) {
             deleteUser: { write: identityWrite },
             updateUser: { write: identityWrite },
             logout: { write: identityWrite },
+            migrateLegacyPasswords: { write: identityWrite },
             migrateLegacyRoleRevocationMarkersToSharedState: { write: ["USERS", "LOGS"] }
         },
         USERS: {
