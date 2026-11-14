@@ -16,16 +16,16 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 
 | ID | Problema solicitado | Estado |
 |---|---|---|
-| GP-SEC-01 | Evitar validaciones periódicas/separadas; iniciar sesión una vez y conservar sesión y privilegios mientras siga vigente | PENDIENTE P0/P1 |
-| GP-UX-01 | Inbox organizado, elegante y similar en experiencia a Outlook/Gmail, con identidad GPSpedia | PENDIENTE P0/P3 |
-| GP-SEC-02 | Bloquear descargas casuales, clic derecho, menú contextual, copia y arrastre de imágenes | PENDIENTE P0/P4 |
-| GP-RBAC-01 | Compartir integrado para todos; compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador | PENDIENTE P0/P4 |
-| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto; el usuario reporta que no existe estrategia aplicada en dispositivos móviles | PENDIENTE P0/P5 |
-| GP-DATA-01 | Disponer de migración explícita y verificable de contraseñas heredadas a hash seguro | PENDIENTE P0/P2 |
-| GP-DATA-02 | Sustituir IDs calculados por fórmulas por IDs backend para usuarios, vehículos, tutoriales y relays | PENDIENTE P0/P2 |
-| GP-UX-02 | Corregir saludo, registro de reacciones 👍🏿, tarjeta de alta de tutorial y altura de la tarjeta para agregar problema | PENDIENTE |
-| GP-UX-03 | Reorganizar Inbox móvil y sustituir acciones dispersas/textuales por una barra de herramientas y menú de acciones habituales | PENDIENTE |
-| GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos; actualmente reciben «servicio no autorizado para el coordinador compartido» | PENDIENTE |
+| GP-SEC-01 | Evitar validaciones periódicas/separadas; iniciar sesión una vez y conservar sesión y privilegios mientras siga vigente | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
+| GP-UX-01 | Inbox organizado, elegante y similar en experiencia a Outlook/Gmail, con identidad GPSpedia | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
+| GP-SEC-02 | Bloquear descargas casuales, clic derecho, menú contextual, copia y arrastre de imágenes | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
+| GP-RBAC-01 | Compartir integrado para todos; compartir, imprimir y editar detalles solo Supervisor, Jefe y Desarrollador | COMPLETADA CON VALIDACIÓN DIFERIDA A BETA |
+| GP-SEC-03 | Evaluar mitigación de capturas de pantalla en web/PWA sin prometer bloqueo absoluto; el usuario reporta que no existe estrategia aplicada en dispositivos móviles | EVALUACIÓN TÉCNICA COMPLETADA; SIN BLOQUEO FIABLE EN WEB/PWA |
+| GP-DATA-01 | Disponer de migración explícita y verificable de contraseñas heredadas a hash seguro | IMPLEMENTACIÓN COMPLETADA; BENCHMARK BETA PENDIENTE |
+| GP-DATA-02 | Sustituir IDs calculados por fórmulas por IDs backend para usuarios, vehículos, tutoriales y relays | IMPLEMENTACIÓN COMPLETADA; MIGRACIÓN REAL BETA PENDIENTE |
+| GP-UX-02 | Corregir saludo, registro de reacciones 👍🏿, tarjeta de alta de tutorial y altura de la tarjeta para agregar problema | CORRECCIONES LOCALES COMPLETADAS; VALIDACIÓN VISUAL BETA PENDIENTE |
+| GP-UX-03 | Reorganizar Inbox móvil y sustituir acciones dispersas/textuales por una barra de herramientas y menú de acciones habituales | CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN VISUAL BETA PENDIENTE |
+| GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos; actualmente reciben «servicio no autorizado para el coordinador compartido» | DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN FEEDBACK BETA PENDIENTE |
 | GP-PWA-01 | Actualización y recarga manual de la plataforma | SUPERADA: no implementar controles manuales; continuar con GP-PWA-02 y GP-CAT-01 |
 
 ## Hallazgos preliminares confirmados en código
@@ -673,7 +673,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 
 
 ## GP-CAT-01 — Catálogo cache-first con actualización incremental y animada en vivo
-**Prioridad: alta. Estado: EN PROGRESO. GP-CAT-01A COMPLETADA; GP-CAT-01B PARCIAL: journal monotónico autenticado en Coordinador, endpoint FEEDBACK paginado y cliente servidor-a-servidor publicados; primer productor real conectado (`FEEDBACK/recordLike` → snapshot actualizado de Cortes). Restan las demás rutas de escritura, el cliente incremental y pruebas Beta; GP-CAT-01C..01F pendientes.**
+**Prioridad: alta. Estado: EN PROGRESO. GP-CAT-01A COMPLETADA; GP-CAT-01B COMPLETADA EN RAMA DE TRABAJO: journal monotónico autenticado, endpoint FEEDBACK paginado y productores WRITE/FEEDBACK/ADMIN conectados. `recordLike` publica un upsert de Cortes; las mutaciones que pueden afectar varias entidades publican reset seguro tras confirmar la escritura (y, en ADMIN, después de cerrar la auditoría). Los cambios WRITE anidados en mantenimiento ADMIN difieren su publicación al cierre del proceso padre. GP-CAT-01C..01F siguen pendientes: cliente transaccional IndexedDB, sondeo adaptativo/coordinación entre pestañas, reconciliación de vistas/animaciones y pruebas Beta.**
 
 ### Objetivo de experiencia
 - Al abrir la plataforma, mostrar primero y sin demora la última instantánea válida del catálogo guardada localmente (IndexedDB), tanto con conexión como sin ella. La interfaz no debe esperar a descargar todo el catálogo para empezar a ser utilizable.
