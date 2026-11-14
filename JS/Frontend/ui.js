@@ -3756,7 +3756,12 @@ async function ensureUiSessionRole_(allowedRoles) {
         valid = await pending.promise;
     } catch (error) {
         console.warn('No se pudo revalidar la sesión antes de abrir una vista privilegiada:', error);
-        showGlobalError('No se pudo verificar la sesión con el servidor. La vista protegida permanecerá cerrada.');
+        const localContext = getUiSessionContext_();
+        if (localContext && isCurrentUiSessionContext_(expected) && allowedRoles.includes(localContext.role)) {
+            logDeveloperDiagnostic_('Error temporal al validar AUTH antes de abrir una vista; se conserva la interfaz local y el servidor seguirá validando las operaciones.', 'warning');
+            return localContext;
+        }
+        showGlobalError('Conexión temporalmente no disponible.');
         return null;
     }
     if (valid !== true) {
