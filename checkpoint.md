@@ -259,3 +259,40 @@ Completar P0 inspeccionando contratos de login, `touchSession`, middleware/handl
 - Drive–Spreadsheet: recorrer carpeta de cortes, comparar imágenes con registros, identificar faltantes y preparar la migración de URL pública al campo correspondiente. Requiere dry-run, detección de duplicados/ambiguos, idempotencia y autorización expresa antes de escribir datos productivos.
 - Ayudas: reducir textos extensos y utilizar icono ⓘ con burbuja contextual en Developer, campos versión/Trim Level, tipo de corte, configuración Relay y rango de años de `HTML/add_cortes.html`, además de formularios de tutoriales PYS. No colocar ⓘ en el modal de detalles.
 - No se implementó código ni se modificaron Drive/Spreadsheet; este cambio es únicamente de planificación y continuidad.
+
+
+================================================================================
+CONTINUIDAD — 2026-11-14 — CIERRE DE AUDITORÍA P0
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD verificado antes de este checkpoint: 894815976e74187b9fcd25987751798e30b2acad
+Rama base protegida: GPSpedia2.2.5 (sin modificaciones)
+
+ESTADO
+- P0 — Auditoría y diseño técnico: COMPLETADA CON VALIDACIÓN DIFERIDA.
+- P1 — Autenticación simplificada: SIGUIENTE TAREA; aún no implementada.
+- P2 — Migración de contraseñas e identificadores: pendiente de P1/diseño de migración.
+- P4 — Matriz de permisos UI/backend: pendiente; discrepancias confirmadas.
+- GP-DEV-UX-01, GP-IMG-UX-01, GP-IMG-DATA-01 y GP-UX-INFO-01: permanecen pendientes y fuera del orden P0–P6.
+
+RESULTADO DE LA REVISIÓN P0
+1. Se trazó login idempotente, validación de sesión, touch, revocación, expiración, logout y persistencia local.
+2. Se verificaron contratos de autorización en AUTH, FEEDBACK, WRITE, USERS y ADMIN; CATALOG conserva endpoints de lectura pública.
+3. Se confirmó que routeAction añade una llamada independiente touchSession antes de operaciones protegidas. No debe retirarse hasta que cada servicio actualice LastActivityAt dentro de la misma operación protegida y con coordinación segura entre proyectos.
+4. Se confirmó que imprimir aparece para todos y que la edición está restringida de forma inconsistente: UI solo Desarrollador; ADMIN Desarrollador/Gefe. La matriz requerida es Supervisor, Jefe/Gefe y Desarrollador para imprimir/editar, manteniendo compartir público.
+5. Jefe/Gefe se deben tratar como equivalentes funcionales según la decisión del usuario, preservando valores históricos. El código actual no los normaliza uniformemente.
+6. IDs revisados: USR-####; vehículos numéricos con contador central; tutoriales tut- + operationId; PyS isue-### con PysOperations; Relay solo se encontró como catálogo de configuración, sin escritor versionado.
+7. AUTH migra contraseña heredada a sha256$<salt>$<digest> después de login correcto; USERS genera el mismo formato. No existe batch de migración ni factor de trabajo configurable.
+8. Las acciones ADMIN generales, incluida la generación del enlace de descarga de imágenes reemplazadas, requieren Desarrollador. La excepción de descarga se limita a Developer; no se habilita descarga general.
+
+SIGUIENTE EJECUCIÓN — P1
+- Diseñar y probar actualización de LastActivityAt en la misma operación backend protegida, evitando carrera con logout/revocación/eliminación de filas mediante la coordinación compartida.
+- Retirar el preflight touchSession del cliente únicamente cuando todos los servicios protegidos estén cubiertos.
+- Mantener validación de restauración, expiración absoluta/inactividad, invalidación por cambio de rol y conservación de sesión local ante indisponibilidad temporal de AUTH.
+- Añadir regresiones de AUTH/FEEDBACK/WRITE/USERS/ADMIN, multi-pestaña, red lenta, token revocado y fallo de persistencia antes de publicar.
+
+VALIDACIÓN Y LÍMITES
+- Cambios de esta iteración: únicamente Tareas_Activas.md, ChangesLogs.txt y checkpoint.md; no se alteró código funcional.
+- No se ejecutaron pruebas Node/CLI para cambios documentales. El workflow service-tests.yml está configurado para push a GPSpedia2.2.5_work, pero la consulta de runs disponible solo devuelve ejecuciones asociadas a pull requests; no se afirma un run de Actions para estos commits.
+- La inspección de fórmulas y valores reales de Spreadsheet/Drive requiere dry-run de solo lectura en Beta; no se efectuaron operaciones productivas.
+- Últimos commits de documentación: cierre P0 en Tareas_Activas.md y registro en ChangesLogs.txt. Este checkpoint deja constancia del estado previo a su propio commit.
+================================================================================
