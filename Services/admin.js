@@ -15,6 +15,7 @@ let spreadsheet = null;
 
 
 const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbxMj8WFCMZVLXuk3N6_WCeEwNwhGAb589PJY4gc5ZjA8mrYsBN7-femz_FCH4eFj5vBDQ/exec";
+const LOGOS_MARCA_ID_COUNTER_PROPERTY = "LOGOS_MARCA_ID_COUNTER";
 
 /** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
 function callWriteServiceAction(action, payload, sharedMutationToken) {
@@ -3244,57 +3245,90 @@ function handleAuditIdentifiers() {
     };
 }
 
+function getNextLogoIdLocked_(sheet) {
+    if (!sheet) throw new Error("No se encontró la hoja LogosMarca.");
+    if (String(sheet.getRange(1, 1).getValue() || "").trim().toLowerCase() !== "id") {
+        throw new Error("El encabezado de la primera columna de LogosMarca no es ID.");
+    }
+    let maxId = 0;
+    const seen = new Set();
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+        const lastColumn = Math.max(sheet.getLastColumn(), 4);
+        const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+        const formulas = sheet.getRange(2, 1, lastRow - 1, 1).getFormulas();
+        rows.forEach((row, index) => {
+            const rawId = row[0];
+            const idText = String(rawId === null || rawId === undefined ? "" : rawId).trim();
+            const hasData = row.slice(1).some(value => value !== "" && value !== null && value !== undefined);
+            const hasFormula = Boolean(formulas[index] && formulas[index][0]);
+            if (!hasData && !idText) return;
+            if (!idText) throw new Error("La fila " + (index + 2) + " de LogosMarca contiene datos pero no tiene ID.");
+            const id = Number(idText);
+            if (!Number.isSafeInteger(id) || id < 1) throw new Error("El ID de LogosMarca en la fila " + (index + 2) + " no es un entero positivo.");
+            if (seen.has(id)) throw new Error("Se detectó un ID duplicado en LogosMarca; no se asignó otro identificador.");
+            seen.add(id);
+            maxId = Math.max(maxId, id);
+            // Las fórmulas históricas se leen como valores y no se copian al registro nuevo.
+            void hasFormula;
+        });
+    }
+    const properties = PropertiesService.getScriptProperties();
+    const storedValue = properties.getProperty(LOGOS_MARCA_ID_COUNTER_PROPERTY);
+    const storedId = storedValue === null ? 0 : Number(storedValue);
+    if (!Number.isSafeInteger(storedId) || storedId < 0) throw new Error("El contador central de IDs de LogosMarca contiene un valor inválido.");
+    const nextId = Math.max(maxId, storedId) + 1;
+    if (!Number.isSafeInteger(nextId) || nextId < 1) throw new Error("Se alcanzó el límite seguro de IDs de LogosMarca.");
+    properties.setProperty(LOGOS_MARCA_ID_COUNTER_PROPERTY, String(nextId));
+    return nextId;
+}
+
+/**
+ * Registro de logotipos con ID numérico asignado por el backend, sin fórmulas de fila.
+ */
 function handleAddLogo(payload, logMessage) {
     const { nombreMarca, fileData, filename, mimeType } = payload;
-    if (!nombreMarca || !fileData || !filename || !mimeType) {
-        throw new Error("Datos de logotipo incompletos.");
-    }
+    if (!nombreMarca || !fileData || !filename || !mimeType) throw new Error("Datos de logotipo incompletos.");
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGOS_MARCA);
+    if (!sheet) throw new Error("No se encontró la hoja LogosMarca.");
 
     logMessage("Registro Logo", `Iniciando registro de logotipo para la marca: ${nombreMarca}`);
-
-    // Obtener la carpeta de logos (usualmente dentro de la carpeta raíz o una subcarpeta Logos)
     const rootFolder = getCortesRootFolder();
     const logosFolder = getOrCreateSubFolder(rootFolder, "Logos");
-
-    // Subir el archivo de logotipo manteniendo su extensión y transparencia originales
     logMessage("Registro Logo", `Subiendo logotipo '${filename}' de tipo '${mimeType}'...`);
     const decodedData = Utilities.base64Decode(fileData);
     const blob = Utilities.newBlob(decodedData, mimeType, filename);
     const file = logosFolder.createFile(blob);
-
     const logoUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
-    logMessage("Registro Logo", `Logotipo subido exitosamente. URL: ${logoUrl}`);
 
-    // Registrar en la hoja LogosMarca
-    logMessage("Registro Logo", "Registrando información en la hoja de cálculo...");
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGOS_MARCA);
-    const lastRow = sheet.getLastRow();
-    const newRow = lastRow + 1;
-
-    // Copiar fila anterior para heredar validaciones y ID autoincremental si aplica
-    if (lastRow > 1) {
-        sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(sheet.getRange(newRow, 1, 1, sheet.getLastColumn()));
-        sheet.getRange(newRow, 2, 1, sheet.getLastColumn() - 1).clearContent();
-    } else {
-        // Fallback si la hoja está vacía
-        sheet.getRange(newRow, 1).setFormula(`=ROW()-1`);
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (error) { throw new Error("No se pudo bloquear la asignación de IDs de LogosMarca. Intente nuevamente."); }
+    try {
+        const lastRow = sheet.getLastRow(), newRow = lastRow + 1;
+        const newId = getNextLogoIdLocked_(sheet);
+        if (lastRow > 1) {
+            sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(sheet.getRange(newRow, 1, 1, sheet.getLastColumn()));
+            sheet.getRange(newRow, 2, 1, sheet.getLastColumn() - 1).clearContent();
+        }
+        sheet.getRange(newRow, 1).setValue(newId);
+        sheet.getRange(newRow, 2).setValue(nombreMarca);
+        sheet.getRange(newRow, 3).setValue(logoUrl);
+        sheet.getRange(newRow, 4).setValue(nombreMarca);
+        SpreadsheetApp.flush();
+        const generatedId = sheet.getRange(newRow, 1).getValue();
+        const generatedFormula = sheet.getRange(newRow, 1).getFormula();
+        if (Number(generatedId) !== newId || generatedFormula) {
+            throw new Error("No se pudo confirmar el ID numérico permanente del logotipo.");
+        }
+        logMessage("Registro Logo", `Registro completado. ID de logotipo asignado: ${generatedId}`);
+        return {
+            status: "success", logoId: generatedId, logoUrl,
+            message: "Logotipo registrado exitosamente en la base de datos conservando su formato y transparencia."
+        };
+    } finally {
+        lock.releaseLock();
     }
-
-    sheet.getRange(newRow, 2).setValue(nombreMarca);
-    sheet.getRange(newRow, 3).setValue(logoUrl);
-    sheet.getRange(newRow, 4).setValue(nombreMarca);
-
-    SpreadsheetApp.flush();
-    Utilities.sleep(1000);
-    const generatedId = sheet.getRange(newRow, 1).getValue();
-
-    logMessage("Registro Logo", `Registro completado. ID de logotipo asignado: ${generatedId}`);
-    return {
-        status: 'success',
-        logoId: generatedId,
-        logoUrl: logoUrl,
-        message: "Logotipo registrado exitosamente en la base de datos conservando su formato y transparencia."
-    };
 }
 
 function prepareAdminVinCollectionEdit_(sheet, rowValues, vehicleId, rawValue) {
