@@ -608,3 +608,9 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - `LogoIdIntegrity.mjs` cubre bloqueo fallido, escritura URL fallida, fila parcial, flush incierto y recuperación de estado.
 - GitHub Actions `service-tests` sobre HEAD `6405f282c29416143e8d9eec41d4ccb75c0a6942`: **PASS**, 84 suites, 1,260 pruebas aprobadas, 0 fallos. `LogoIdIntegrity: 10/10 PASS`.
 - No se modificaron hojas/Drive productivos ni se desplegó ADMIN.
+
+## P2 — LogosMarca: compensación de copia parcial de plantilla (2026-11-14)
+
+- Se adelantó el estado `rowPrepared` antes de copiar la plantilla para que un fallo parcial de `copyTo` también active la limpieza de la nueva fila.
+- Se añadió un escenario de fallo durante la copia que verifica que la fila parcial quede vacía y el archivo sin vínculo vaya a papelera.
+- GitHub Actions `service-tests` sobre HEAD `7330388a6772c7e04ebd10e1d22b72053aab4ef2`: **PASS**, 84 suites, 1,261 pruebas aprobadas, 0 fallos; `LogoIdIntegrity: 11/11 PASS`.
