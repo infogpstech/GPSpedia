@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const ui=readFileSync("JS/Frontend/ui.js","utf8"), upload=readFileSync("JS/Frontend/youtubeUpload.js","utf8");
-const api=readFileSync("JS/Frontend/api-config.js","utf8"), feedback=readFileSync("JS/Services/feedback.js","utf8");
+const api=readFileSync("JS/Frontend/api-config.js","utf8"), feedback=readFileSync("Services/feedback.js","utf8");
 let passed=0;
 function test(name,fn){fn();passed++;console.log("PASS",name);}
 function payloads(source,action){

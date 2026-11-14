@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const source = readFileSync(new URL("../Services/admin.js", import.meta.url), "utf8");
+const source = readFileSync(new URL("../../Services/admin.js", import.meta.url), "utf8");
 const helperNames = [
     "getDriveParentFolders_", "isDriveFolderWithinCortes_", "isDriveFileWithinCortes_",
     "getValidatedCortesTerminalFolder_", "getCortesTerminalChildFolders_",
@@ -17,7 +17,7 @@ function extractFunction(name) {
 }
 const helperSource = helperNames.map(extractFunction).join("\n");
 const handlerSource = extractFunction("handleDriveCommand");
-const syntax = spawnSync(process.execPath, ["--check", new URL("../Services/admin.js", import.meta.url).pathname], { encoding:"utf8" });
+const syntax = spawnSync(process.execPath, ["--check", new URL("../../Services/admin.js", import.meta.url).pathname], { encoding:"utf8" });
 assert.equal(syntax.status, 0, "admin.js no supera node --check: " + syntax.stderr);
 
 function iterator(items) {
