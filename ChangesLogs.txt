@@ -1283,3 +1283,10 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - No se modificó service-worker.js: no se encontró que el Service Worker borre gpsepedia_session; la causa identificada está en la recuperación de sesión al iniciar la aplicación.
 - Estado: CORRECCIÓN IMPLEMENTADA EN RAMA DE TRABAJO; DESPLIEGUE AUTH Y PRUEBA BETA PENDIENTES.
 ================================================================================
+
+
+================================================================================
+2026-11-13 — CONFIGURACIÓN — ACTUALIZACIÓN DEL ENDPOINT AUTH
+- JS/Frontend/api-config.js: se sustituye únicamente API_ENDPOINTS.AUTH por el nuevo deployment de Google Apps Script proporcionado. Se conservan las rutas de los demás servicios y el mapa de acciones.
+- Cambio realizado en GPSpedia2.2.5_work; no se modifica la rama base ni se realiza deployment desde GitHub.
+================================================================================
