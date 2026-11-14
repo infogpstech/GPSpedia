@@ -1505,3 +1505,13 @@ Rama: GPSpedia2.2.5_work
 - CI PASS: 78 suites; 1,200 pruebas aprobadas; 0 fallos. InboxConversations 29/29; InboxUi 16/16.
 - Pendiente validación manual en navegadores/dispositivos reales, lectores de pantalla, temas y navegación Atrás.
 ================================================================================
+
+================================================================================
+2026-11-14 — P4 RBAC: POLÍTICA DE FICHA TÉCNICA
+- Compartir permanece disponible para todos los roles de la aplicación.
+- Imprimir y editar detalles solo se muestran a Supervisor, Jefe y Desarrollador.
+- ADMIN aplica la misma allowlist desde la sesión verificada en backend; el resto de acciones administrativas sigue reservado a Desarrollador.
+- Pruebas UI/backend de roles: VehicleModalRolePolicy 5/5 PASS.
+- CI PASS: 79 suites; 1,205 pruebas aprobadas; 0 fallos.
+- Pendiente: matriz completa de permisos, protección de imágenes y validación visual en Beta.
+================================================================================
