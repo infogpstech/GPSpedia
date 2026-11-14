@@ -355,6 +355,7 @@ const FEEDBACK_ACTION_PERMISSIONS = Object.freeze({
     replyToFeedback: ["Desarrollador", "Jefe", "Supervisor"],
     markAsResolved: ["Desarrollador", "Jefe", "Supervisor"],
     deleteFeedbackItem: ["Desarrollador", "Jefe", "Supervisor"],
+    getCatalogChanges: null,
     getInboxRecipients: null, getInboxConversations: null, getInboxMessages: null,
     createInboxConversation: null, sendInboxMessage: null, markInboxRead: null, archiveInboxConversation: null,
     getActivityLogs: ["Desarrollador", "Jefe", "Supervisor"], clearActivityLogs: ["Desarrollador"],
@@ -395,6 +396,9 @@ function doPostInternal_(e) {
                 break;
             case 'getPysData':
                 response = handleGetPysData();
+                break;
+            case 'getCatalogChanges':
+                response = handleGetCatalogChanges(payload);
                 break;
             case 'addProblem':
                 response = handleAddProblem(payload);
@@ -2266,6 +2270,14 @@ function buildPysPayloadHash_(p,image,models){return getPysSha256_(JSON.stringif
 function buildPysExpectedRow_(id,p,url,models){return[id,p.titulo,p.descripcion,p.sinSolucion?"":"x",p.sinSolucion?"":p.solucion,p.prevenir,url,"",p.userName,models.length?JSON.stringify(models):""];}
 function pysRowMatchesPayload_(row,expected){return expected.every((v,i)=>String(row[i]==null?"":row[i])===String(v));}
 function verifyPendingPysImageFile_(r,image,folder){const file=DriveApp.getFileById(r.imageFileId);if(!file||(typeof file.isTrashed==="function"&&file.isTrashed()===true)||String(file.getMimeType())!==image.mimeType||Number(file.getSize())!==image.sizeBytes||r.imageUrl!=="https://drive.google.com/file/d/"+r.imageFileId+"/view")throw new Error("La imagen pendiente de la operación PyS no coincide con el contenido recibido; requiere revisión.");const d=String(file.getDescription()||"");if(!d.includes("problemId="+r.problemId)||!d.includes("fileId="+r.imageFileId))throw new Error("Los metadatos de la imagen pendiente PyS no permiten confirmar su asociación.");const parents=file.getParents();let direct=false;while(parents.hasNext())if(String(parents.next().getId())===String(folder.getId()))direct=true;if(!direct)throw new Error("La imagen pendiente no pertenece a la carpeta PyS autorizada.");assertPysImageFolderPermissions_(file,folder);return file;}
+function handleGetCatalogChanges(payload) {
+    assertFeedbackSession(payload, null);
+    const result = getSharedCatalogChanges_(payload && payload.cursor, payload && payload.limit);
+    return result && result.status === "success"
+        ? result
+        : { status: "error", message: "No se pudo consultar el feed incremental del catálogo." };
+}
+
 function handleGetPysData(){const sheet=getPysSheet_(false);if(!sheet||sheet.getLastRow()<2)return{status:"success",data:[]};const rows=sheet.getRange(2,1,sheet.getLastRow()-1,10).getValues();return{status:"success",data:rows.filter(r=>r.some(v=>v!==""&&v!==null&&v!==undefined)).map(r=>({id_problem:r[0],Problema:r[1],Descripcion:r[2],Se_soluciono:r[3],Solucion:r[4],Prevenir:r[5],Imagen:normalizePysImageReference_(r[6]),Video:r[7],Colaborador:r[8]||"",modelosAsociados:parseModelosAsociados(r[9]||"")}))};}
 
 const PYS_TITLE_MAX_LENGTH=15;

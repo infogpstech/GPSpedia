@@ -89,7 +89,15 @@ function createSharedMutationClient_(dependencies) {
         }
     }
 
-    return { withLease: withLease };
+    function publishCatalogChange(service, operation, change) {
+        return send_("publishCatalogChange", service, operation, { change: change });
+    }
+
+    function getCatalogChanges(cursor, limit) {
+        return send_("getCatalogChanges", "FEEDBACK", "getCatalogChanges", { cursor: cursor, limit: limit });
+    }
+
+    return { withLease: withLease, publishCatalogChange: publishCatalogChange, getCatalogChanges: getCatalogChanges };
 }
 
 function withSharedMutationLease_(service, operation, callback, options) {
@@ -100,4 +108,25 @@ function withSharedMutationLease_(service, operation, callback, options) {
         logger: function(message) { Logger.log(message); }
     });
     return client.withLease(service, operation, callback, options);
+}
+
+
+function publishSharedCatalogChange_(service, operation, change) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.publishCatalogChange(service, operation, change);
+}
+
+function getSharedCatalogChanges_(cursor, limit) {
+    const client = createSharedMutationClient_({
+        properties: PropertiesService.getScriptProperties(),
+        fetch: function(url, options) { return UrlFetchApp.fetch(url, options); },
+        uuid: function() { return Utilities.getUuid(); },
+        logger: function(message) { Logger.log(message); }
+    });
+    return client.getCatalogChanges(cursor, limit);
 }

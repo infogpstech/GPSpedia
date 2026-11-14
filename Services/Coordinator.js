@@ -3,13 +3,23 @@
 // No accede a Spreadsheet ni Drive. El estado de leases vive en ScriptProperties.
 // ============================================================================
 
-const SHARED_MUTATION_COORDINATOR_VERSION = "1.1.3";
+const SHARED_MUTATION_COORDINATOR_VERSION = "1.2.0";
 const SHARED_MUTATION_LEASES_PROPERTY = "GPSpedia_SHARED_MUTATION_LEASES";
 const SHARED_MUTATION_LEASE_TTL_MS = 45 * 60 * 1000;
 const SHARED_MUTATION_DRAIN_RESERVATION_TTL_MS = 60 * 1000;
 const SHARED_MUTATION_MAX_WAIT_MS = 15000;
 const SHARED_MUTATION_MAX_ACTIVE_LEASES = 20;
 const SHARED_MUTATION_MAX_STATE_LENGTH = 8000;
+const CATALOG_CHANGE_REVISION_PROPERTY_ = "GPSpedia_CATALOG_CHANGE_REVISION";
+const CATALOG_CHANGE_EVENT_PREFIX_ = "GPSpedia_CATALOG_CHANGE_EVENT_";
+const CATALOG_CHANGE_MAX_EVENTS_ = 100;
+const CATALOG_CHANGE_MAX_EVENT_LENGTH_ = 4000;
+const CATALOG_CHANGE_COLLECTIONS_ = new Set(["cortes", "pys", "tutoriales", "logos", "relay"]);
+const CATALOG_CHANGE_ALLOWED_WRITERS_ = Object.freeze({
+    WRITE: new Set(["addOrUpdateCut","addSupplementaryInfo","addVinToVehicle","freezeCortesIds"]),
+    FEEDBACK: new Set(["recordLike","suggestYear","addProblem","addSolution","addPrevention","addVehicleToProblem","removeVehicleFromProblem","updatePysItem","addTutorial","updateTutorialItem","approveVideo","rejectVideo"]),
+    ADMIN: new Set(["addLogo","updateVehicleField","uploadAdminImage","normalizeImages","organizePrimaryVehicleImages","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","moveReplacedImage","applyCortesImageReconciliation","restoreDatabase","reorganizeDatabase","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads"])
+});
 
 function coordinatorPolicy_(service, operation) {
     const identityRead = ["USERS", "ACTIVE_SESSIONS"];
@@ -494,6 +504,94 @@ function createSharedMutationCoordinator_(dependencies) {
         });
     }
 
+
+    function catalogChangeRevisions_() {
+        const all = properties.getProperties();
+        return Object.keys(all || {}).filter(key => key.indexOf(CATALOG_CHANGE_EVENT_PREFIX_) === 0)
+            .map(key => Number(key.slice(CATALOG_CHANGE_EVENT_PREFIX_.length)))
+            .filter(value => Number.isSafeInteger(value) && value > 0)
+            .sort((a, b) => a - b);
+    }
+
+    function publishCatalogChange_(service, operation, payload) {
+        const allowed = CATALOG_CHANGE_ALLOWED_WRITERS_[service];
+        if (!allowed || !allowed.has(operation)) throw new Error("La operación no puede publicar cambios del catálogo.");
+        const source = payload.change && typeof payload.change === "object" ? payload.change : {};
+        let collection = String(source.collection || "").trim().toLowerCase();
+        let recordId = String(source.recordId || "").trim();
+        let changeOperation = String(source.operation || "").trim().toLowerCase();
+        let snapshot = source.snapshot === undefined ? null : source.snapshot;
+        if (changeOperation === "reset") {
+            collection = "*"; recordId = "*"; snapshot = null;
+        } else {
+            if (!CATALOG_CHANGE_COLLECTIONS_.has(collection)) throw new Error("La colección del cambio de catálogo no es válida.");
+            if (!recordId || recordId.length > 160) throw new Error("El ID del registro de catálogo no es válido.");
+            if (changeOperation === "upsert") {
+                if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) throw new Error("El cambio upsert requiere un snapshot de registro.");
+            } else if (changeOperation === "delete") {
+                snapshot = null;
+            } else {
+                throw new Error("La operación del cambio de catálogo no es válida.");
+            }
+        }
+        const event = { collection, recordId, operation: changeOperation, snapshot, createdAt: new Date(now()).toISOString(), sourceService: service, sourceOperation: operation };
+        let serialized = JSON.stringify(event);
+        let resetRequired = false;
+        if (serialized.length > CATALOG_CHANGE_MAX_EVENT_LENGTH_) {
+            event.collection = "*"; event.recordId = "*"; event.operation = "reset"; event.snapshot = null;
+            serialized = JSON.stringify(event); resetRequired = true;
+        }
+        return withCoordinatorLock_(() => {
+            const revisions = catalogChangeRevisions_();
+            const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
+            const currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0, revisions.length ? revisions[revisions.length - 1] : 0);
+            const revision = currentRevision + 1;
+            properties.setProperty(CATALOG_CHANGE_EVENT_PREFIX_ + revision, JSON.stringify({ revision, ...event, resetRequired }));
+            properties.setProperty(CATALOG_CHANGE_REVISION_PROPERTY_, String(revision));
+            const after = catalogChangeRevisions_();
+            while (after.length > CATALOG_CHANGE_MAX_EVENTS_) {
+                const oldest = after.shift();
+                properties.deleteProperty(CATALOG_CHANGE_EVENT_PREFIX_ + oldest);
+            }
+            return { status: "success", revision, resetRequired };
+        });
+    }
+
+    function getCatalogChanges_(service, operation, payload) {
+        if (service !== "FEEDBACK" || operation !== "getCatalogChanges") {
+            throw new Error("La consulta incremental solo está habilitada para FEEDBACK.");
+        }
+        const cursor = payload.cursor === undefined || payload.cursor === null || payload.cursor === "" ? 0 : Number(payload.cursor);
+        const requestedLimit = payload.limit === undefined ? 50 : Number(payload.limit);
+        if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("El cursor del catálogo no es válido.");
+        if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50) throw new Error("El límite de cambios debe estar entre 1 y 50.");
+        return withCoordinatorLock_(() => {
+            const revisions = catalogChangeRevisions_();
+            const storedRevision = Number(properties.getProperty(CATALOG_CHANGE_REVISION_PROPERTY_) || 0);
+            const currentRevision = Math.max(Number.isSafeInteger(storedRevision) ? storedRevision : 0, revisions.length ? revisions[revisions.length - 1] : 0);
+            const minRevision = revisions.length ? revisions[0] : currentRevision + 1;
+            if (cursor > currentRevision || (revisions.length && cursor < minRevision - 1)) {
+                return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
+            }
+            const changes = [];
+            const endRevision = Math.min(currentRevision, cursor + requestedLimit);
+            for (let revision = cursor + 1; revision <= endRevision; revision++) {
+                const raw = properties.getProperty(CATALOG_CHANGE_EVENT_PREFIX_ + revision);
+                if (!raw) return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
+                let event;
+                try { event = JSON.parse(raw); } catch (error) {
+                    return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
+                }
+                if (!event || event.revision !== revision) {
+                    return { status: "success", resetRequired: true, changes: [], currentRevision, minRevision, nextCursor: currentRevision, hasMore: false };
+                }
+                changes.push(event);
+            }
+            const nextCursor = changes.length ? changes[changes.length - 1].revision : cursor;
+            return { status: "success", resetRequired: changes.some(change => change.operation === "reset" || change.resetRequired === true), changes, currentRevision, minRevision, nextCursor, hasMore: nextCursor < currentRevision };
+        });
+    }
+
     function handleRequest(request) {
         if (!request || typeof request !== "object") throw new Error("Solicitud inválida.");
         const action = String(request.action || "").trim();
@@ -504,6 +602,8 @@ function createSharedMutationCoordinator_(dependencies) {
         if (action === "acquire") return acquire_(service, operation, payload);
         if (action === "release") return release_(service, operation, payload);
         if (action === "validate") return validate_(service, operation, payload);
+        if (action === "publishCatalogChange") return publishCatalogChange_(service, operation, payload);
+        if (action === "getCatalogChanges") return getCatalogChanges_(service, operation, payload);
         throw new Error("Acción interna desconocida para el coordinador.");
     }
 

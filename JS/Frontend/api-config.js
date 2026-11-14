@@ -54,6 +54,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE', 'allocateVehicleId': 'WRITE', 'freezeCortesIds': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'AUTH', 'deleteUser': 'AUTH', 'updateProfile': 'USERS', 'resetUserSessions': 'AUTH',
+    'getCatalogChanges': 'FEEDBACK',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK', 'clearSensitiveLogs': 'AUTH',
     'getInboxRecipients': 'FEEDBACK', 'getInboxConversations': 'FEEDBACK', 'getInboxMessages': 'FEEDBACK', 'createInboxConversation': 'FEEDBACK', 'sendInboxMessage': 'FEEDBACK', 'markInboxRead': 'FEEDBACK', 'archiveInboxConversation': 'FEEDBACK',
@@ -649,4 +650,9 @@ export async function approveVideo(itemId, approverName, userRole, sessionPayloa
 export async function rejectVideo(itemId, rejecterName, reason, userRole, sessionPayload = {}) {
     // El rol y el nombre del revisor se derivan en FEEDBACK desde la sesión validada.
     return await routeAction("rejectVideo", { itemId, reason, ...sessionPayload });
+}
+
+
+export async function getCatalogChanges(cursor = 0, limit = 50, sessionPayload = {}) {
+    return await routeAction("getCatalogChanges", { ...sessionPayload, cursor, limit });
 }
