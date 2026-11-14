@@ -39,11 +39,12 @@ function coordinatorPolicy_(service, operation) {
             migrateTimestamps: { read: [...identityRead, "CORTES", "DRIVE"], write: ["UTILITIES"] }
         },
         WRITE: {
-            addOrUpdateCut: { read: identityRead, write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
-            addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
-            addVinToVehicle: { read: identityRead, write: ["CORTES"] },
-            allocateVehicleId: { read: identityRead, write: ["CORTES"] },
-            freezeCortesIds: { read: identityRead, write: ["CORTES"] }
+            sessionActivity: { write: ["ACTIVE_SESSIONS"] },
+            addOrUpdateCut: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"] },
+            addSupplementaryInfo: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
+            addVinToVehicle: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] },
+            allocateVehicleId: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] },
+            freezeCortesIds: { read: identityRead, write: ["ACTIVE_SESSIONS", "CORTES"] }
         },
         ADMIN: {
             backupDatabase: { maintenance: true },
@@ -64,7 +65,7 @@ function coordinatorPolicy_(service, operation) {
             reconcilePendingImageUploads: { maintenance: true },
             addOrUpdateCut: {
                 read: identityRead,
-                write: ["CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
+                write: ["ACTIVE_SESSIONS", "CORTES", "DRIVE", "IDEMPOTENCIA", "IMAGE_UPLOAD_LEDGER"],
                 nestedActions: { WRITE: ["allocateVehicleId"] }
             },
             addSupplementaryInfo: { read: identityRead, write: ["CORTES", "DRIVE", "IMAGE_UPLOAD_LEDGER"] },
