@@ -1,0 +1,2116 @@
+Estado: CAMBIOS INICIALES IMPLEMENTADOS EN ui.js. Verificación estática de selector, CSS y lógica de agrupamiento realizada. Pendiente validación con herramienta de sintaxis del proyecto, navegador real y PDF; revisar espacio útil, QR, contenido extenso y saltos de página.
+================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — CORRECCIÓN DE NOTA Y DIMENSIONADO ADAPTATIVO
+- [x] Colocar la nota técnica inmediatamente debajo de los metadatos en primera página.
+- [x] Evitar que la nota se duplique al final del documento.
+- [x] Reducir paddings y gaps de las tarjetas y wrappers.
+- [x] Evitar que la media query móvil anule los modos de distribución.
+- [x] Dar comportamiento geométrico explícito al modo Imagen a la derecha.
+- [x] Conservar proporción de imágenes y altura natural de los textos.
+- [ ] Validar en navegador real y PDF con imágenes verticales, cuadradas, horizontales, panorámicas y descripciones largas.
+- [ ] Verificar desbordamientos, metadatos, QR, notas y pie de página en todas las páginas.
+Estado: correcciones de código aplicadas; validación visual real pendiente.
+================================================================================
+
+
+================================================================================
+TAREA COMPLEMENTARIA 2026-11-04 — CONTENCIÓN DE DESBORDAMIENTO EN FICHA IMPRIMIBLE
+- [x] Reducir grupos de imágenes a dos por página como regla general.
+- [x] Conservar la excepción de tres imágenes cuando las tres sean verticales.
+- [x] Restringir cuadrículas, tarjetas y wrappers al ancho disponible.
+- [x] Aplicar límites de altura de imagen según la cantidad de imágenes por página y mantener la proporción natural.
+- [x] Mantener operativo el selector de distribución existente.
+- [ ] Validar en navegador y PDF reales con distintas relaciones de aspecto, descripciones extensas y primera página con metadatos/notas.
+Estado: CAMBIO ESTÁTICO IMPLEMENTADO; validación visual real pendiente.
+================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — ANCHO DISPONIBLE PARA IMÁGENES Y NOTA EN METADATOS
+- [x] Hacer que tarjetas y wrappers utilicen el ancho de la columna disponible, no el ancho intrínseco del texto.
+- [x] Hacer que la imagen aproveche el ancho del wrapper manteniendo proporción y límites de altura.
+- [x] Integrar la nota técnica importante como fila de la tabla de metadatos con colspan=4.
+- [x] Evitar que la nota se agregue de nuevo como bloque separado en la sección técnica.
+- [ ] Validar en navegador y PDF reales con imágenes verticales, horizontales y mixtas; confirmar que la nota queda bajo los metadatos y que el ancho de imagen se ve adecuado en cada modo.
+Estado: CAMBIO ESTÁTICO IMPLEMENTADO; validación visual real pendiente.
+================================================================================
+
+================================================================================
+TAREA COMPLEMENTARIA 2026-11-04 — TEXTO INCOMPLETO EN TARJETAS IMPRIMIBLES
+- [x] Identificar la regla que ocultaba contenido cuando la página excedía 269 mm.
+- [x] Permitir que el contenedor de página crezca según el contenido en lugar de recortar el excedente.
+- [x] Conservar la altura mínima de página y el selector de distribución existente.
+- [x] Mantener intactos los metadatos, la nota técnica, el orden y la prioridad del corte recomendado.
+- [ ] Validar con descripciones largas, múltiples tarjetas sin imagen y primera página con metadatos/notas en navegador y PDF real.
+- [ ] Revisar saltos de página y ubicación del pie cuando una página crece por contenido extenso.
+Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; validación visual y de impresión pendiente.
+================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — ACTUALIZAR VERSIÓN VISIBLE EN index.html
+- [x] Sustituir todas las apariciones de 2.1.6 por 2.2.5.
+- [x] Actualizar título, encabezado, pie de página y sección/modal de versión.
+- [x] Comprobar que no quedan apariciones de la versión anterior en index.html.
+- [ ] Validar visualmente en navegador el modal de inicio de sesión y el pie de página.
+Estado: CAMBIO ESTÁTICO COMPLETADO; validación visual pendiente.
+================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES EN FICHAS IMPRIMIBLES
+- [x] Mantener la estructura de páginas, el orden técnico, la prioridad del corte recomendado y los cuatro modos de distribución.
+- [x] Retirar los límites de altura rígidos basados únicamente en la cantidad de imágenes.
+- [x] Calcular el espacio vertical disponible por página después del contenido principal y el pie, y repartirlo entre las filas de imágenes.
+- [x] Conservar proporciones, evitar recorte y no forzar el ancho completo en imágenes de menor tamaño natural.
+- [x] Mantener la reconstrucción al cambiar el selector, tras la carga/error de imágenes y antes de imprimir.
+- [ ] Validar en navegador y PDF reales: una imagen vertical, una horizontal, dos verticales, dos horizontales, orientación mixta, tres imágenes verticales, cuatro o más imágenes, metadatos/notas extensos, imágenes de baja resolución o fallidas y modo Imagen ampliada.
+- [ ] Confirmar número de páginas, tamaño visible de las imágenes, ausencia de recortes y ubicación del pie.
+Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN VISUAL Y DE IMPRESIÓN PENDIENTE.
+================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha de registro: 2026-11-04
+Referencia: Auditoría.txt, entrada «AUDITORÍA TÉCNICA: VERIFICACIÓN REAL DE GESTIÓN DE IMÁGENES REEMPLAZADAS».
+Rama auditada: fix/pys-carousel-card-sizing-print-images
+Estado: PENDIENTE DE REVISIÓN Y RESOLUCIÓN.
+Restricción: no modificar ni eliminar registros históricos de documentación. Esta tarea no autoriza cambios en código hasta iniciar el procedimiento obligatorio de auditoría y respaldo indicado en Proceso de desarollo.md.
+
+OBJETIVO
+Resolver las discrepancias encontradas entre los requisitos documentados para la gestión de imágenes reemplazadas y el comportamiento visible en el código. La funcionalidad base existe, pero no se considera completamente verificada hasta resolver los hallazgos y ejecutar pruebas funcionales.
+
+HALLAZGOS A RESOLVER
+
+1. AUD-IMG-01 — Autorización del lado servidor para acciones administrativas.
+   - Revisar el punto de entrada de Services/admin.js y las acciones getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes.
+   - Validar identidad, sesión y rol autorizado en el backend antes de ejecutar acciones sensibles; no depender únicamente de controles de interfaz.
+   - Verificar la configuración de acceso del despliegue real del microservicio ADMIN.
+   - Pruebas: llamada sin sesión, sesión inválida, rol no autorizado y rol autorizado.
+
+2. AUD-IMG-02 — Consistencia al guardar el historial durante el reemplazo.
+   - Evitar que una sustitución se confirme como exitosa si falla el registro de la imagen anterior en Imagenes_Reemplazadas, o implementar una estrategia de recuperación explícita que garantice la trazabilidad.
+   - Mantener la referencia anterior disponible hasta confirmar que la operación quedó consistente.
+   - Pruebas: fallo al crear/acceder a la hoja histórica, error al registrar la fila y error al actualizar el campo activo.
+
+3. AUD-IMG-03 — Validación global antes de eliminar una imagen histórica.
+   - Ampliar la comprobación para identificar referencias activas en todas las hojas/campos pertinentes de la Spreadsheet, no únicamente en Cortes.
+   - Normalizar la extracción de IDs de Drive para los formatos de URL admitidos.
+   - Bloquear la eliminación cuando exista una referencia activa en cualquier módulo cubierto.
+   - Pruebas: imagen referenciada en Cortes, en otra hoja, en historial y sin referencias activas.
+
+4. AUD-IMG-04 — Correspondencia entre eliminación anunciada y operación real.
+   - La interfaz anuncia eliminación permanente, mientras el backend utiliza file.setTrashed(true).
+   - Definir y documentar el comportamiento correcto. Si se mantiene el envío a papelera, ajustar mensajes y estados para no presentarlo como eliminación irreversible. Si se requiere eliminación definitiva, implementarla únicamente con autorización, validación de uso y confirmación adecuadas.
+   - Pruebas: estado de Drive, estado histórico y mensajes mostrados al usuario.
+
+5. AUD-IMG-05 — Auditoría completa o indicación de resultados parciales.
+   - Resolver el límite fijo de 250 archivos en la exploración recursiva o informar de forma inequívoca cuando se alcance.
+   - Implementar lotes/paginación o un mecanismo seguro para continuar la auditoría hasta cubrir el árbol de Cortes sin exceder límites de ejecución.
+   - Pruebas: menos de 250 archivos, exactamente 250 y más de 250 archivos distribuidos en varias subcarpetas.
+
+6. AUD-IMG-06 — Clasificación fiable de imágenes no verificables.
+   - Diferenciar «sin uso detectado» de los casos en que no fue posible verificar una referencia o interpretar su URL.
+   - Revisar los formatos de URL admitidos para extraer IDs y evitar clasificar como sin uso los archivos cuyo uso no pudo determinarse.
+   - Informar las limitaciones o errores parciales de la auditoría.
+   - Pruebas: formatos de URL admitidos, formato desconocido, referencias históricas, activas y datos incompletos.
+
+7. AUD-IMG-07 — Alcance y validación de restauración.
+   - Confirmar si la restauración está limitada deliberadamente a imágenes de vehículos/campos de Cortes.
+   - Validar tipo de contenido, registro y campo antes de restaurar.
+   - Si el requisito incluye imágenes de otros módulos, definir e implementar una ruta de restauración por tipo de contenido; si no, documentar explícitamente el alcance admitido.
+   - Pruebas: registro válido, campo inválido, registro inexistente, archivo en papelera, archivo inaccesible y registro de otro tipo de contenido.
+
+CRITERIOS DE ACEPTACIÓN
+- Las acciones administrativas sensibles quedan protegidas en el servidor, independientemente de la interfaz.
+- Un reemplazo no pierde la trazabilidad de la imagen anterior cuando falla el registro histórico.
+- La validación de uso previo a eliminación cubre todas las referencias activas contempladas por el sistema.
+- La interfaz describe con exactitud si el archivo se envía a papelera o se elimina definitivamente.
+- La auditoría informa si el resultado está completo o parcial y no presenta incertidumbre como ausencia confirmada de uso.
+- La restauración valida el tipo de contenido y el destino de la referencia activa.
+- Se prueban los casos positivos, negativos, límites, errores de red/permisos y efectos colaterales.
+- Se registran los cambios posteriores en ChangesLogs.txt conforme al procedimiento, sin eliminar ni sobrescribir entradas anteriores.
+- Se comparan los archivos modificados con sus respaldos y se verifica que los cambios correspondan exclusivamente a esta tarea.
+
+ARCHIVOS IDENTIFICADOS PARA AUDITORÍA POSTERIOR
+- Services/admin.js
+- ui.js
+- api-config.js
+- index.html
+- Auditoría.txt
+- Tareas.txt
+Cualquier archivo adicional deberá justificarse según las dependencias que se confirmen durante la auditoría inicial.
+
+================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha de registro: 2026-11-04
+Rama base de referencia: fix/pys-carousel-card-sizing-print-images
+Estado: PENDIENTE DE AUDITORÍA Y DIAGNÓSTICO.
+Restricción: esta tarea inicia con diagnóstico solamente. No modificar código hasta completar la auditoría inicial, registrar los hallazgos y seguir el procedimiento obligatorio de Proceso de desarollo.md.
+
+PROBLEMA REPORTADO
+Desde la plataforma, el usuario no puede ver la opción para consultar o gestionar las imágenes reemplazadas que deberían almacenarse en el historial. La existencia de los modales y handlers en el código fuente no explica por sí sola por qué la opción no aparece o no funciona en la interfaz disponible.
+
+OBJETIVO
+Determinar la causa concreta por la que el usuario no puede acceder a la gestión de imágenes reemplazadas desde la plataforma, diferenciando problemas de visibilidad, permisos, conexión entre interfaz y eventos, errores de comunicación con el backend, ausencia de registros y diferencias entre la rama inspeccionada y el despliegue accesible.
+
+PLAN DE DIAGNÓSTICO
+1. Revisar en index.html dónde se define la entrada a las herramientas de desarrollador y qué condiciones controlan su visibilidad.
+2. Revisar en ui.js la inicialización de la interfaz, los eventos de apertura de #replaced-images-modal, las dependencias del DOM y posibles errores que interrumpan el registro de eventos.
+3. Revisar la lógica de autenticación, roles y permisos que permite o impide mostrar las herramientas administrativas. Confirmar qué rol necesita el usuario para verlas.
+4. Seguir el flujo desde el botón hasta la apertura del modal, la carga de registros y las llamadas a getReplacedImages.
+5. Revisar api-config.js y Services/admin.js para comprobar el contrato de petición/respuesta y los errores que puedan impedir que se muestren los registros.
+6. Identificar si la causa es una opción oculta por permisos, un botón ausente, un evento no enlazado, un modal que no abre, una petición fallida, una respuesta vacía o una diferencia entre el código de la rama y la versión desplegada.
+7. Registrar evidencia concreta, archivos, funciones y líneas aproximadas en una nueva entrada de Auditoría.txt, sin borrar entradas anteriores.
+8. Al terminar el diagnóstico, actualizar esta tarea con la causa confirmada o las hipótesis que permanezcan sin verificar y definir el alcance de la corrección.
+
+RESTRICCIONES DE IMPLEMENTACIÓN
+- No modificar código durante el diagnóstico.
+- No modificar ni eliminar registros históricos de documentación.
+- No asumir que el despliegue de GitHub Pages refleja automáticamente el estado de la rama.
+- No afirmar que la causa está confirmada sin evidencia.
+- Si se requiere modificar código, crear primero una rama de trabajo nueva basada en fix/pys-carousel-card-sizing-print-images; no editar código directamente en la rama base.
+- Tras completar la implementación y las pruebas, preparar un Pull Request hacia fix/pys-carousel-card-sizing-print-images. No hacer merge hasta revisar el resultado desplegado con el usuario.
+
+CRITERIOS DE ACEPTACIÓN
+- La causa de que la opción no aparezca o no sea accesible está documentada con evidencia verificable.
+- Se identifica el rol o condición de acceso requerido, si aplica.
+- Se confirma el recorrido entre interfaz, modal, petición al backend y respuesta, o se documentan los puntos que no pudieron verificarse.
+- Se distingue entre código presente, registros históricos existentes y comportamiento real del despliegue.
+- Si procede una corrección, se implementa en una rama nueva después de completar la auditoría y el procedimiento obligatorio.
+
+================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — VERIFICAR ROL Y ACCESO AL PANEL DE HISTORIAL DE IMÁGENES
+Fecha: 2026-11-04
+Referencia: Auditoría.txt, hallazgo AUD-IMG-08.
+Rama de referencia: fix/pys-carousel-card-sizing-print-images
+Estado: PENDIENTE DE VERIFICACIÓN CON LA SESIÓN REAL Y EL DESPLIEGUE.
+
+Objetivo: confirmar por qué la cuenta que reporta el problema no ve la opción del historial y comprobar el acceso de extremo a extremo con una cuenta autorizada.
+
+Comprobaciones:
+1. Confirmar el valor de user.Privilegios recibido durante el login, sin compartir credenciales ni valores de sesión.
+2. Verificar si el valor es exactamente «Desarrollador» y si la propiedad existe en el objeto de sesión.
+3. Si el rol es distinto, confirmar si la restricción actual es la esperada o si el requisito funcional debe permitir otros roles.
+4. Comparar el commit publicado en GitHub Pages con la rama fix/pys-carousel-card-sizing-print-images.
+5. Con una cuenta autorizada, comprobar la visibilidad del enlace, la apertura del panel y la respuesta real de getReplacedImages.
+6. Separar errores del servicio, ausencia de registros y diferencias de despliegue.
+
+Restricciones: diagnóstico sin cambios de código; no compartir credenciales ni valores de sesión; no ampliar permisos sin autorización. Si se requiere implementar cambios, crear una rama nueva basada en fix/pys-carousel-card-sizing-print-images y preparar un Pull Request hacia esa rama.
+================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — ELIMINAR EL REGISTRO DE CONTRASEÑAS EN EL SERVICIO AUTH
+Fecha de registro: 2026-11-04
+Referencia: Auditoría.txt, hallazgo AUD-SEC-01.
+Rama de referencia: fix/pys-carousel-card-sizing-print-images
+Prioridad: CRÍTICA.
+Estado: PENDIENTE DE CORRECCIÓN Y REVISIÓN DE EXPOSICIÓN HISTÓRICA.
+
+OBJETIVO
+Evitar que las contraseñas enviadas o almacenadas se copien a la hoja Logs o a cualquier otro registro de diagnóstico.
+
+ALCANCE MÍNIMO
+1. Revisar Services/Auth.js, especialmente doPost, handleLogin y logToSheet.
+2. No registrar request.payload completo en acciones de autenticación.
+3. Eliminar el registro de fromSheet y fromClient de la comparación de contraseñas.
+4. Revisar todos los demás mensajes de depuración para descartar exposición de contraseñas, tokens de sesión u otros secretos.
+5. Mantener trazabilidad mediante datos no sensibles (acción, resultado, marca temporal e identificador no secreto cuando corresponda).
+6. Evaluar con autorización el tratamiento de los registros históricos que ya pudieron contener credenciales; no eliminar ni modificar Logs sin un procedimiento aprobado.
+7. Probar login correcto/incorrecto y confirmar que Logs no almacena contraseñas ni secretos.
+
+RESTRICCIONES
+No ejecutar cambios durante esta auditoría. Para implementar, crear una rama nueva basada en fix/pys-carousel-card-sizing-print-images, cumplir íntegramente Proceso de desarollo.md, generar respaldo previo, verificar el cambio y preparar Pull Request hacia la rama base. No incluir contraseñas ni tokens en capturas, informes o pruebas.
+================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — VALIDAR LA IDENTIDAD DEL COLABORADOR EN EL BACKEND WRITE
+Fecha: 2026-11-04
+Referencia: Auditoría.txt, hallazgo AUD-SEC-02.
+Rama de referencia: fix/pys-carousel-card-sizing-print-images
+Prioridad: ALTA.
+Estado: PENDIENTE DE CORRECCIÓN Y PRUEBAS.
+
+Objetivo: asegurar que el colaborador registrado en cada corte corresponda al usuario autenticado y no a un nombre arbitrario enviado por el navegador.
+
+Requisitos:
+1. Revisar Services/write.js, doPost y handleAddOrUpdateCut, incluidos los flujos de alta nueva, alta en vehículo existente y recuperación idempotente.
+2. Exigir y validar el token de sesión mediante la fuente de autenticación existente.
+3. Obtener en servidor el nombre personal del perfil asociado a la sesión validada.
+4. Ignorar o rechazar cualquier nombre de colaborador que el cliente intente imponer.
+5. Mantener consistencia de la atribución en colaboradorCorte1, colaboradorCorte2 y colaboradorCorte3.
+6. Probar sesión ausente, inválida, expirada y válida; intentar enviar el nombre de otra persona y confirmar que no se almacena.
+7. Verificar compatibilidad con operaciones idempotentes y con el flujo actual de registro.
+
+Restricciones: no modificar código durante la auditoría. La implementación debe realizarse en una rama nueva basada en fix/pys-carousel-card-sizing-print-images, con el procedimiento obligatorio, respaldo, pruebas y Pull Request hacia la rama base.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-04
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Referencia de revisión: Pull Request #128 (borrador; no fusionado).
+Tareas relacionadas:
+- CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS.
+- INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS.
+- VERIFICAR ROL Y ACCESO AL PANEL DE HISTORIAL DE IMÁGENES.
+
+ESTADO
+IMPLEMENTACIÓN DE CÓDIGO REALIZADA EN LA RAMA DE TRABAJO. VALIDACIÓN EN EL ENTORNO REAL Y DESPLIEGUE PENDIENTES.
+
+CAMBIOS IMPLEMENTADOS EN LA RAMA
+1. Acceso al modal de desarrollador con normalización del privilegio Desarrollador.
+2. Validación de sesión activa y privilegio real en el backend para consulta, restauración, envío a papelera, auditoría y reemplazo de imágenes.
+3. Registro histórico obligatorio antes de confirmar el cambio de la imagen activa; manejo de reversión y estado requiere_revision ante fallos.
+4. Validación de referencias de Drive en hojas de datos, fórmulas e hipervínculos enriquecidos.
+5. Bloqueo de envío a papelera si existe referencia activa o alguna referencia de Drive no puede verificarse.
+6. Mensajes y estados de interfaz alineados con la operación real de envío a papelera; se conserva la posibilidad de restaurar registros enviados a papelera.
+7. Restauración validada para contenido vehiculo en Cortes, con lista permitida de campos de imagen y validación del archivo.
+8. Auditoría recursiva por lotes con cursor de continuación, sin límite total fijo de 250 archivos y con control de pertenencia al árbol Cortes.
+9. Distinción entre En uso, Histórica, Sin uso detectado y No verificable.
+10. Renderizado de metadatos del historial mediante textContent para no interpretar nombres o valores como HTML.
+
+ALCANCE DE RESTAURACIÓN
+La implementación soporta explícitamente imágenes de vehículos y campos de imagen de la hoja Cortes. No se implementaron rutas de restauración para otros módulos porque el flujo de reemplazo identificado en esta rama corresponde a Cortes. Este alcance queda documentado y validado en el backend.
+
+VALIDACIÓN PENDIENTE PARA CERRAR LA TAREA
+1. Publicar la versión modificada de Services/admin.js en el proyecto/despliegue real del microservicio ADMIN.
+2. Confirmar que el endpoint ADMIN desplegado utiliza esa versión y que sus permisos de ejecución permiten leer Users, ActiveSessions, Spreadsheet y Drive.
+3. Ingresar a la plataforma con una cuenta cuyo privilegio real sea Desarrollador y comprobar la visibilidad del enlace y apertura del modal.
+4. Comprobar de extremo a extremo consulta, previsualización, reemplazo, restauración y envío a papelera con imágenes de prueba.
+5. Ejecutar la auditoría real con menos de 250 archivos, exactamente 250 y más de 250, incluyendo subcarpetas; confirmar cobertura completa y resultados parciales ante fallos.
+6. Verificar referencias activas en Cortes y otras hojas, fórmulas HYPERLINK, enlaces enriquecidos, URLs no interpretables y registros históricos.
+7. Revisar el estado real de archivos en Google Drive y la consistencia de Imagenes_Reemplazadas después de operaciones correctas y fallidas.
+8. Revisar el resultado desplegado con el usuario antes de fusionar el Pull Request.
+
+RESTRICCIONES
+- No modificar ni eliminar entradas históricas de documentación.
+- No fusionar el Pull Request #128 sin revisión del usuario.
+- No declarar la tarea completada en producción hasta superar las validaciones reales anteriores.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ENDPOINT DEL SERVICIO ADMIN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Estado: CAMBIO DE CONFIGURACIÓN IMPLEMENTADO; VERIFICACIÓN DE CONECTIVIDAD PENDIENTE.
+
+- Se actualizó API_ENDPOINTS.ADMIN en api-config.js con la URL nueva proporcionada por el usuario.
+- El cambio afecta a las acciones que ACTION_TO_SERVICE_MAP enruta al servicio ADMIN.
+- No se modificaron otros endpoints ni el enrutamiento de acciones.
+- La disponibilidad del endpoint debe comprobarse desde el entorno de la aplicación; no se realizó una llamada real durante esta tarea.
+- La publicación de código de Apps Script no forma parte de este cambio de configuración.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ACCESO AL MODAL DE DESARROLLADOR NO VISIBLE
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Referencia: PR #128.
+Estado: CORRECCIÓN IMPLEMENTADA Y REVISADA EN CÓDIGO; VALIDACIÓN VISUAL PENDIENTE.
+
+Hallazgo: showApp(user) solo consultaba Privilegios para mostrar el enlace dev-tools-btn, mientras que los controles de edición inspeccionados aceptan Privilegios o Rol.
+
+Corrección: showApp(user) utiliza ahora Rol como alternativa cuando Privilegios no contiene un valor. Se mantiene la condición de acceso exclusivo para el rol Desarrollador y la normalización existente.
+
+Verificación realizada: comparación contra respaldo y pruebas simuladas de los casos Desarrollador por ambas propiedades, rol alternativo vacío, Supervisor, Usuario y ausencia de rol.
+
+Pendiente: publicar la versión web que contiene ui.js y comprobar con la cuenta afectada que el enlace aparece, abre el modal y continúa oculto para perfiles no desarrolladores. No se modificó el servicio Apps Script para esta corrección.
+================================================================================
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ACCESO AL PANEL DE DESARROLLADOR NO VISIBLE
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Referencia: PR #128 (borrador; sin merge).
+Estado: CORRECCIÓN DE CÓDIGO IMPLEMENTADA Y REVISADA; VALIDACIÓN VISUAL EN LIVE PENDIENTE.
+
+Causa identificada:
+La expresión regular de ui.js, showApp(user), estaba doblemente escapada. Al normalizar el valor 'Desarrollador' recibido en user.Privilegios, alteraba el texto y provocaba que la comparación con 'desarrollador' fallara. Los controles de edición seguían apareciendo porque comparan directamente el valor Privilegios de la sesión.
+
+Corrección:
+1. La validación del enlace dev-tools-btn utiliza exclusivamente user.Privilegios, que Services/Auth.js obtiene de la columna Privilegios de la hoja Users.
+2. Se corrigió la expresión regular para eliminar únicamente las marcas diacríticas Unicode.
+3. Se mantuvieron trim(), toLowerCase() y el acceso exclusivo para el rol Desarrollador.
+4. No se modificó el servicio Apps Script ni la estructura de la spreadsheet.
+
+Verificación realizada:
+- Comparación exacta de ui.js contra el respaldo: únicamente cambió el bloque previsto.
+- Pruebas de normalización con Desarrollador, variaciones de mayúsculas/espacios, una variante acentuada, Supervisor, Usuario, vacío y null.
+- Revisión de los flujos de login y rehidratación que invocan showApp(user).
+
+Pendiente:
+Comprobar en el entorno live, con la cuenta del usuario, que el enlace Desarrollador aparece en el menú y abre el panel. Confirmar también que el enlace permanece oculto para cuentas con otros roles. No fusionar el PR #128 hasta recibir la confirmación del usuario.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ORGANIZACIÓN DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work | Referencia: PR #128 (abierto; sin merge).
+Estado: IMPLEMENTADO Y REVISADO ESTÁTICAMENTE; VALIDACIÓN LIVE PENDIENTE.
+
+- El panel se dividió en Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- Se incorporó menú lateral en escritorio y navegación horizontal en pantallas pequeñas.
+- Se conservaron los IDs de los controles y no se modificó ui.js ni la lógica administrativa.
+- Pendiente: comprobar navegación y operación de controles en el entorno live, escritorio y móvil/PWA.
+- No fusionar el PR #128 hasta recibir confirmación del usuario.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — REDISEÑO RESPONSIVE DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTADO Y REVISADO ESTÁTICAMENTE; VALIDACIÓN VISUAL EN LIVE PENDIENTE.
+
+- En móvil, las cinco secciones del panel se presentan mediante iconos en una cuadrícula compacta, sin scroll horizontal.
+- Se conservaron los nombres de las secciones para accesibilidad y se añadieron etiquetas aria-label y títulos descriptivos.
+- Se refinó la apariencia del modal con transparencias, bordes suaves, tarjetas y controles con sombras grises/neutras, manteniendo la paleta de GPSpedia.
+- La terminal utiliza fondo negro, texto blanco/claro y fuente Roboto con alternativas sans-serif.
+- Archivos modificados: index.html y style.css. ui.js y la lógica administrativa permanecen sin cambios.
+- Comparación con respaldos: index.html contiene únicamente los cinco atributos de accesibilidad previstos; style.css contiene el bloque de estilos agregado al final.
+- Verificación estática: cinco selectores, cinco enlaces, cinco paneles, sin IDs duplicados y CSS con llaves balanceadas.
+- Pendiente: validar visualmente en el entorno live, en escritorio, móvil y PWA; revisar navegación, tooltips, accesibilidad e interacción de todos los controles.
+- No fusionar ni modificar la rama base GPSpedia2.2.5.
+================================================================================
+
+================================================================================
+NUEVO BLOQUE — ESTUDIO DE FACTIBILIDAD Y PLAN DE IMPLEMENTACIÓN DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Estado: INVESTIGACIÓN DOCUMENTAL Y PLANIFICACIÓN. NO IMPLEMENTAR.
+Alcance: Las diez áreas administrativas recomendadas para GPSpedia y una vista de resumen general.
+
+OBJETIVO
+Evaluar la viabilidad técnica de incorporar las funciones al panel de desarrollador, identificar las capacidades ya existentes, definir requisitos, dependencias, riesgos, plan por etapas y criterios de aceptación. Este bloque registra trabajo futuro; no autoriza modificar código, servicios, hojas de cálculo, permisos ni despliegues.
+
+RESULTADO GENERAL DEL ESTUDIO PRELIMINAR
+- La integración es técnicamente viable con la arquitectura actual basada en frontend web, servicios independientes de Google Apps Script, Google Sheets y Google Drive.
+- No todas las funciones requieren desarrollo desde cero. Existen acciones administrativas en Services/admin.js, acciones de usuarios en el servicio USERS, comprobación de servicios en api-config.js, registro de eventos en el servicio AUTH y herramientas de actividad en FEEDBACK.
+- La prioridad inicial debe ser seguridad y observabilidad. No se deben exponer nuevas operaciones administrativas antes de revisar la autorización del backend.
+- La viabilidad se considera preliminar: antes de cada implementación se deberán auditar los servicios completos, sus despliegues reales, los encabezados de las hojas, permisos de Apps Script, cuotas vigentes y flujos de la interfaz.
+
+HALLAZGOS TÉCNICOS DEL REPOSITORIO
+1. api-config.js ya enruta getUsers, createUser, updateUser, deleteUser, changePassword y updateProfile al servicio USERS.
+2. api-config.js ya enruta getActivityLogs y clearActivityLogs al servicio FEEDBACK, y contiene checkAllServicesHealth(), que consulta los endpoints mediante GET ?debug=true y mide disponibilidad/latencia desde el navegador.
+3. Services/Auth.js utiliza las hojas Users, ActiveSessions y Logs. logToSheet() escribe eventos en Logs. En handleLogin(), aproximadamente línea 138, existe un registro DEBUG que incluye fromSheet: sheetPassword y fromClient: password. Este registro expone credenciales en claro y constituye un hallazgo de seguridad que debe resolverse antes de ampliar auditoría, administración de usuarios o registros de errores.
+4. Services/admin.js contiene acciones para ping, backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages, createSheet, addColumn, driveCommand y gestión/auditoría del historial de imágenes reemplazadas. También utiliza AdminState, Idempotencia, procesamiento por lotes y LockService en operaciones específicas.
+5. Services/admin.js contiene assertDeveloperSession(), que valida la sesión activa y el privilegio Desarrollador desde Users y ActiveSessions. Sin embargo, en doPost(), aproximadamente líneas 307-312, la lista protectedActions solo incluye uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes. Las demás acciones administrativas del mismo router no pasan por esa validación común. Antes de ampliar el panel se debe auditar y cerrar esta brecha, aplicando autorización en servidor a cada acción sensible.
+6. La interfaz y los servicios están desacoplados por endpoints independientes. El estado de una URL o respuesta de diagnóstico no demuestra por sí solo que todas las operaciones internas de Sheets o Drive funcionen correctamente.
+7. La gestión de usuarios y permisos se considera zona segura según Proceso de desarollo.md. Cualquier intervención futura en users.html, services/users/users.js o su backend deberá respetar esa protección y contar con autorización específica.
+
+REQUISITOS TRANSVERSALES OBLIGATORIOS
+- La autorización debe comprobarse en el servidor para cada acción sensible. Ocultar controles en el frontend no constituye seguridad.
+- La sesión debe validarse con userId y SessionToken vigentes; el rol debe recuperarse de la fuente de datos del servidor, no confiarse al valor enviado por el navegador.
+- Registrar el actor, fecha, acción, recurso afectado, resultado e identificador de correlación. No registrar contraseñas, tokens, claves, contenido privado ni datos sensibles innecesarios.
+- Aplicar mínimo privilegio, validación de parámetros, listas permitidas de recursos y confirmación reforzada para operaciones destructivas.
+- Las consultas grandes deberán utilizar lotes, cursores/paginación y límites de ejecución compatibles con Apps Script. Evitar cargar hojas o árboles completos de Drive en una sola petición.
+- Las operaciones de escritura deberán evaluar LockService, idempotencia, reversión y consistencia ante fallos parciales.
+- Las funciones de diagnóstico deberán diferenciar claramente entre estado comprobado, estado desconocido y error; nunca mostrar métricas que la plataforma no puede medir.
+- Las operaciones que puedan modificar o eliminar información deberán ofrecer vista previa/dry-run, resumen del impacto, confirmación y registro de auditoría. Para restauraciones y cambios masivos se exigirá respaldo previo verificable.
+- La interfaz debe ser responsive, accesible por teclado, coherente con el diseño actual y mostrar estados de carga, vacío, error, resultado parcial y éxito.
+- No duplicar servicios o acciones existentes: primero evaluar si se puede reutilizar el servicio correspondiente de manera segura.
+- La implementación futura deberá probarse en un entorno controlado antes de producción y no deberá fusionarse a la rama base sin autorización del usuario.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 0 — ENDURECIMIENTO DE SEGURIDAD Y CONTRATOS DE SERVICIO (BLOQUEANTE)
+Factibilidad: ALTA para la validación de sesión y privilegios; requiere auditoría de todos los servicios y puede implicar cambios coordinados en backend.
+Prioridad: P0 — requisito previo para habilitar nuevas funciones administrativas.
+
+ESTADO ACTUAL
+- Services/admin.js ya dispone de assertDeveloperSession(), pero el router no aplica la validación a todas las acciones administrativas.
+- Services/Auth.js registra actualmente valores de contraseña en el log de depuración de handleLogin().
+- Las acciones de usuarios se enrutan a un servicio separado; se debe inspeccionar su autorización real antes de reutilizarlas.
+
+REQUISITOS
+1. Auditar cada acción expuesta por ADMIN y clasificarla como lectura, escritura, destructiva o de mantenimiento.
+2. Exigir sesión válida y privilegio Desarrollador en servidor para todas las acciones administrativas sensibles.
+3. Verificar autorización también en servicios USERS, FEEDBACK y cualquier servicio que permita operaciones privilegiadas.
+4. Eliminar el registro de contraseñas en claro y revisar los registros históricos para determinar exposición y política de retención. No copiar ni mostrar valores sensibles durante la migración.
+5. Revisar el mecanismo de almacenamiento y comparación de contraseñas; definir una migración segura si el sistema actual almacena credenciales en texto claro. No cambiar el esquema sin plan de compatibilidad.
+6. Validar parámetros, limitar recursos permitidos, evitar ejecución de acciones por suplantación de rol y proteger contra repetición de operaciones.
+7. Definir respuestas de autorización uniformes sin filtrar información interna.
+
+PLAN
+- Inventariar acciones, endpoints, roles y puntos de entrada.
+- Documentar matriz acción/rol/permisos.
+- Corregir y probar la autorización backend antes de conectar nuevas opciones de interfaz.
+- Ejecutar pruebas negativas con sesión ausente, token inválido, usuario inexistente y rol no autorizado.
+- Revisar los registros y la migración de credenciales de forma controlada.
+
+ACEPTACIÓN
+- Ninguna acción administrativa sensible puede ejecutarse sin sesión válida y privilegio autorizado.
+- Los valores de contraseña y tokens no aparecen en logs ni respuestas.
+- Las operaciones existentes continúan funcionando con el rol permitido.
+- Se dispone de pruebas documentadas de autorización positiva y negativa.
+
+ESTADO DE IMPLEMENTACIÓN — 2026-11-04
+- Autorizada la ejecución del plan ADMIN 0–11 por solicitud expresa del usuario.
+- ADMIN 0: auditoría inicial realizada; primera implementación de controles backend y transmisión de sesión en curso.
+- Pendiente para cerrar ADMIN 0: revisar la hoja Logs del entorno desplegado, definir/validar la migración de contraseñas en texto claro y ejecutar pruebas con sesiones y roles reales.
+- No iniciar las tareas ADMIN 1–11 hasta cerrar los bloqueantes de seguridad de ADMIN 0.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 1 — ADMINISTRACIÓN DE USUARIOS Y PERMISOS
+Factibilidad: ALTA CONDICIONADA.
+Prioridad: P1, después de TAREA ADMIN 0.
+
+CAPACIDADES EXISTENTES
+api-config.js ya enruta getUsers, createUser, updateUser, deleteUser, changePassword y updateProfile al servicio USERS. Existe users.html como interfaz de administración. No se considera verificada en este estudio la implementación interna completa ni su matriz real de permisos.
+
+REQUISITOS
+1. Reutilizar el servicio USERS y sus contratos existentes; no crear una segunda fuente de usuarios.
+2. Consultar, crear, editar, desactivar/reactivar y eliminar usuarios, definiendo primero qué operaciones están realmente soportadas y cuál es la política de baja.
+3. Mostrar nombre de usuario, nombre completo, privilegio, estado, fecha de creación/último acceso si existe una fuente fiable y sesiones activas cuando se puedan consultar.
+4. Gestionar roles y permisos mediante una matriz explícita. No permitir que un desarrollador modifique su propio privilegio de forma que pierda o eleve permisos sin un flujo controlado.
+5. Permitir restablecimiento de contraseña sin mostrar ni recuperar la contraseña anterior.
+6. Invalidar sesiones al desactivar una cuenta, cambiar credenciales o modificar privilegios cuando corresponda.
+7. Proteger la cuenta del último administrador/desarrollador autorizado frente a eliminación o degradación accidental.
+8. Mantener intactas las restricciones de edición de perfil propio y cambio de username establecidas en la zona segura.
+9. Registrar cada cambio en auditoría con el actor y el resultado, sin incluir credenciales.
+
+PLAN
+- Auditar users.html, servicio USERS y estructura real de Users/ActiveSessions.
+- Documentar operaciones disponibles y permisos actuales.
+- Diseñar matriz RBAC y reglas de protección de cuentas.
+- Reutilizar los endpoints existentes o extenderlos solo cuando falte una operación aprobada.
+- Integrar una sección del panel con tabla, búsqueda, filtros y confirmaciones.
+- Probar todos los roles y estados de sesión antes de habilitarla.
+
+ACEPTACIÓN
+- Solo un desarrollador autorizado puede administrar cuentas desde el panel.
+- Los permisos se aplican en backend, no solo en la interfaz.
+- Las acciones actualizan la fuente de datos existente sin duplicar usuarios.
+- Las sesiones y registros de auditoría quedan consistentes.
+- Se superan pruebas de acceso permitido, denegado y protección de la última cuenta privilegiada.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 2 — MONITOR DEL SISTEMA Y ESTADO DE SERVICIOS
+Factibilidad: ALTA para disponibilidad y latencia de endpoints; LIMITADA para métricas internas de infraestructura.
+Prioridad: P1.
+
+CAPACIDADES EXISTENTES
+api-config.js contiene checkAllServicesHealth(), que consulta los endpoints configurados con GET ?debug=true y mide tiempo de respuesta. Services/admin.js dispone de la acción ping. Algunos servicios exponen información de depuración, pero se debe comprobar la uniformidad de respuestas.
+
+REQUISITOS
+1. Mostrar estado de cada servicio configurado: AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES, ADMIN y LEGACY.
+2. Mostrar latencia medida desde el navegador, hora de última comprobación y resultado de la última solicitud.
+3. Diferenciar disponible, lento, no disponible y estado desconocido.
+4. Añadir comprobaciones funcionales mínimas de acceso a Sheets y Drive únicamente cuando el servicio pueda probarlas sin modificar datos.
+5. Mostrar última sincronización o ejecución solo si el backend proporciona un dato real y verificable.
+6. No mostrar CPU, RAM, uso de disco ni cantidad exacta de usuarios conectados si Apps Script no ofrece una fuente fiable para medirlos.
+7. Evitar comprobaciones concurrentes excesivas y permitir actualización manual; cualquier actualización periódica deberá tener intervalo configurable y límites.
+8. No exponer IDs sensibles, estructura interna ni mensajes de excepción completos a usuarios sin autorización.
+
+PLAN
+- Inventariar endpoints y formatos GET/debug actuales.
+- Definir contrato de salud uniforme por servicio.
+- Reutilizar checkAllServicesHealth() donde sea compatible.
+- Incorporar comprobaciones específicas y de solo lectura para dependencias.
+- Construir tarjetas de estado e historial corto de comprobaciones.
+- Probar servicios online, respuesta lenta, error HTTP, JSON inválido y timeout.
+
+ACEPTACIÓN
+- Cada indicador corresponde a una comprobación real y tiene hora de actualización.
+- Se distingue un endpoint disponible de una dependencia interna no verificada.
+- No se generan escrituras ni operaciones destructivas durante el monitoreo.
+- El panel funciona si uno o varios servicios no responden.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 3 — REGISTRO DE ACTIVIDAD Y AUDITORÍA
+Factibilidad: MEDIA-ALTA.
+Prioridad: P1.
+
+CAPACIDADES EXISTENTES
+Services/Auth.js escribe eventos en la hoja Logs mediante logToSheet(). api-config.js enruta getActivityLogs y clearActivityLogs al servicio FEEDBACK. El servicio ADMIN también devuelve logs de ejecución en la respuesta de cada operación, pero ese arreglo de logs no equivale a un historial persistente unificado.
+
+REQUISITOS
+1. Auditar los esquemas reales de Logs, registros de actividad de FEEDBACK y logs devueltos por ADMIN.
+2. Definir un esquema común: fecha/hora, actor, acción, módulo, recurso o ID afectado, resultado, severidad e identificador de correlación.
+3. Obtener actor y privilegio desde la sesión validada en backend; no confiar en nombres enviados por el navegador.
+4. Registrar operaciones de creación, edición, eliminación, restauración, cambios de permisos, respaldos y mantenimiento.
+5. Añadir filtros por fecha, usuario, módulo, acción, resultado y severidad; incluir paginación y exportación controlada.
+6. Definir retención, archivado y límites de consulta para no superar cuotas ni hacer crecer indefinidamente las hojas.
+7. Impedir que la interfaz permita alterar o borrar auditorías protegidas. La limpieza, si se autoriza, deberá aplicar una política explícita de retención.
+8. Excluir contraseñas, SessionToken, claves, datos privados y contenido sensible.
+
+PLAN
+- Mapear las fuentes actuales y sus encabezados.
+- Definir contrato de evento y política de retención.
+- Centralizar la escritura mediante backend y correlacionar operaciones de varios servicios.
+- Crear consultas paginadas y filtros.
+- Integrar la vista de auditoría en el panel.
+- Probar eventos correctos, fallidos, parciales y concurrentes.
+
+ACEPTACIÓN
+- Cada operación sensible deja un evento persistente y atribuible.
+- Los filtros y la paginación no duplican ni omiten eventos.
+- No se almacenan credenciales ni tokens.
+- La auditoría no puede modificarse desde la interfaz ordinaria.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 4 — ADMINISTRACIÓN E INTEGRIDAD DE BASE DE DATOS
+Factibilidad: ALTA para inspección de solo lectura; MEDIA para correcciones automáticas.
+Prioridad: P2.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya accede a la Spreadsheet principal, conoce hojas y columnas de Cortes, y contiene acciones de reorganización, normalización, creación de hojas y columnas. También dispone de AdminState y procesamiento por lotes en operaciones extensas.
+
+REQUISITOS
+1. Inventariar hojas, encabezados, cantidad de filas y última actualización disponible.
+2. Detectar duplicados según claves reales y reglas específicas de cada hoja; no asumir que el nombre visible identifica de forma única un registro.
+3. Detectar campos obligatorios vacíos, IDs duplicados, referencias huérfanas y valores fuera de catálogo.
+4. Validar relaciones entre Cortes y otras hojas usando los identificadores reales.
+5. Revisar enlaces e imágenes referenciadas sin modificar las celdas ni archivos durante el diagnóstico.
+6. Mostrar resultados con hoja, fila, columna, ID y tipo de inconsistencia; permitir exportar el informe.
+7. Separar diagnóstico de reparación. Toda corrección deberá tener vista previa, respaldo, confirmación, bitácora y estrategia de reversión.
+8. Procesar por lotes y con cursores cuando el volumen pueda exceder el tiempo máximo de ejecución.
+9. No modificar encabezados, orden, fórmulas ni estructura existente sin una tarea y autorización específicas.
+
+PLAN
+- Documentar esquema y claves de cada hoja.
+- Crear reglas de validación por entidad.
+- Implementar primero escaneo de solo lectura y reporte.
+- Validar resultados con copias de datos conocidas.
+- Diseñar acciones de reparación independientes y opcionales.
+- Probar con registros válidos, duplicados, incompletos y referencias rotas.
+
+ACEPTACIÓN
+- El diagnóstico no modifica datos.
+- Los hallazgos identifican con precisión hoja/fila/campo.
+- Los lotes pueden reanudarse sin duplicar resultados.
+- Las reparaciones no se habilitan hasta disponer de respaldo y reversión probados.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 5 — RESPALDOS Y RESTAURACIÓN
+Factibilidad: ALTA para integración de acciones existentes; MEDIA-ALTA para verificación y recuperación segura.
+Prioridad: P1/P2.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya implementa backupDatabase, backupDrive, restoreDatabase y restoreDrive. También utiliza estado administrativo para procesos extensos. La presencia de estas acciones no demuestra por sí sola que cada respaldo sea íntegro ni que la restauración se haya probado en el entorno real.
+
+REQUISITOS
+1. Auditar el flujo actual de creación y restauración, permisos, carpetas destino, nombres, límites, errores parciales y consistencia.
+2. Mostrar historial con fecha, tipo, archivo/carpeta, tamaño y resultado, siempre que esos metadatos estén disponibles.
+3. Verificar que el archivo de respaldo exista, sea accesible y pueda abrirse antes de marcarlo como válido.
+4. Definir alcance: Spreadsheet, archivos de Drive o ambos; no presentar una copia parcial como respaldo completo.
+5. Exigir respaldo previo antes de restaurar o sobrescribir datos.
+6. Mostrar vista previa del alcance de restauración y advertir sobre datos que serán reemplazados.
+7. Proteger la restauración con autorización de servidor, confirmación reforzada, bloqueo de concurrencia y registro de auditoría.
+8. Probar primero en una copia aislada; documentar qué elementos no se restauran (permisos, historial de versiones, enlaces u otros metadatos, si aplica).
+9. Definir retención y limpieza sin eliminar el último respaldo válido.
+
+PLAN
+- Auditar las cuatro acciones existentes y sus formatos de respuesta.
+- Crear una verificación de integridad posterior al respaldo.
+- Diseñar listado y detalle de respaldos.
+- Incorporar flujo de restauración con previsualización y confirmación.
+- Ejecutar simulacros de recuperación sobre copias de prueba.
+- Documentar alcance y limitaciones de cada tipo de respaldo.
+
+ACEPTACIÓN
+- Los respaldos se pueden identificar y verificar antes de restaurar.
+- La restauración exige autorización, respaldo previo y confirmación.
+- Los escenarios de éxito y fallo parcial quedan registrados.
+- Se demuestra recuperación en una copia de prueba sin afectar producción.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 6 — ADMINISTRADOR DE ERRORES
+Factibilidad: MEDIA-ALTA.
+Prioridad: P1.
+
+CAPACIDADES EXISTENTES
+Services/Auth.js dispone de logToSheet() para escribir en Logs. Services/admin.js genera logs de ejecución y devuelve detalles de error en la respuesta. No se ha verificado un repositorio persistente, unificado y consultable de errores de todos los servicios.
+
+REQUISITOS
+1. Inventariar cómo cada servicio registra errores y qué información devuelve.
+2. Definir niveles y categorías: crítico, error, advertencia e información.
+3. Registrar fecha, servicio, acción, etapa, código, mensaje sanitizado, correlación y resultado.
+4. Evitar almacenar stack traces o payloads que contengan contraseñas, tokens, datos personales o contenido privado.
+5. Agrupar errores repetidos para evitar saturación y permitir identificar frecuencia.
+6. Permitir filtros, detalle técnico limitado al desarrollador y exportación.
+7. Distinguir errores activos, revisados y resueltos sin afirmar que un error fue corregido solo por marcarlo.
+8. Definir retención, límites y tratamiento de errores cuando la propia hoja Logs no esté disponible.
+
+PLAN
+- Auditar el manejo de errores en cada servicio.
+- Definir formato de error común y sanitización.
+- Centralizar persistencia y correlación sin bloquear la respuesta principal si falla el registro.
+- Crear vista de consulta y agrupación.
+- Probar errores de red, validación, permisos, Sheets, Drive y fallos parciales.
+
+ACEPTACIÓN
+- Los errores se consultan desde una fuente persistente y coherente.
+- Los registros no contienen secretos.
+- Se pueden filtrar y agrupar sin perder trazabilidad.
+- La indisponibilidad del sistema de logs no oculta el error original.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 7 — ADMINISTRADOR DE CONFIGURACIÓN
+Factibilidad: MEDIA; requiere diseñar una fuente de configuración que actualmente no está identificada como sistema general.
+Prioridad: P3, después de definir seguridad y esquema.
+
+CAPACIDADES EXISTENTES
+api-config.js mantiene endpoints y mapeo de acciones en código. Services/admin.js contiene constantes de IDs, nombres de hojas y carpetas. No se identificó una interfaz general ni un registro dinámico validado para configuración de toda la plataforma.
+
+REQUISITOS
+1. Clasificar parámetros editables y parámetros técnicos que deben permanecer en código.
+2. Definir una fuente de configuración con esquema, valores predeterminados, versión y validación.
+3. Mantener secretos, tokens, credenciales e IDs privados fuera de la interfaz y de respuestas públicas.
+4. Utilizar listas permitidas, tipos y rangos para cada parámetro.
+5. Registrar quién modificó cada valor, el valor anterior de forma segura, el nuevo valor permitido y la fecha.
+6. Incorporar vista previa, confirmación, reversión y validación antes de aplicar cambios.
+7. Definir caché e invalidación para que todos los servicios utilicen valores consistentes.
+8. Evitar permitir cambios de endpoints o parámetros que puedan redirigir operaciones a servicios no autorizados.
+
+PLAN
+- Inventariar constantes y parámetros actuales.
+- Clasificar cuáles pueden ser dinámicos sin comprometer seguridad.
+- Diseñar esquema, almacenamiento y validación.
+- Implementar primero consulta de solo lectura.
+- Incorporar edición únicamente para parámetros aprobados.
+- Probar valores inválidos, reversión y propagación entre servicios.
+
+ACEPTACIÓN
+- Solo parámetros autorizados pueden modificarse.
+- Los valores inválidos se rechazan en backend.
+- Los cambios quedan auditados y pueden revertirse.
+- Ningún secreto aparece en la interfaz ni en logs.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 8 — ADMINISTRADOR DE ARCHIVOS Y RECURSOS DE DRIVE
+Factibilidad: ALTA para recursos del árbol autorizado; MEDIA para administración general de Drive.
+Prioridad: P2.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya utiliza DriveApp, DRIVE_FOLDER_ID, driveCommand(), auditoría recursiva de imágenes de Cortes e historial de imágenes reemplazadas. La implementación actual delimita parte de las operaciones al árbol Cortes; no debe asumirse que existe un administrador universal de todo Drive.
+
+REQUISITOS
+1. Definir claramente el alcance inicial: carpeta Cortes y recursos utilizados por GPSpedia. No permitir navegación arbitraria por todo Drive.
+2. Mostrar nombre, tipo, tamaño, fecha, ubicación e ID solo cuando sea necesario para el desarrollador.
+3. Detectar archivos sin referencias, referencias rotas, duplicados y enlaces no verificables.
+4. Distinguir archivo activo, histórico, sin uso detectado y no verificable.
+5. Consultar permisos de acceso y detectar recursos que no puedan abrirse desde el contexto de la aplicación.
+6. Permitir operaciones autorizadas de mover, renombrar o enviar a papelera solo después de verificar referencias.
+7. Usar papelera y recuperación como comportamiento preferido; evitar eliminación permanente desde el panel.
+8. Implementar paginación/cursor para carpetas grandes y evitar cargar todo el árbol de una vez.
+9. Registrar cada cambio y validar pertenencia del recurso al árbol permitido en backend.
+
+PLAN
+- Auditar driveCommand() y los flujos de imágenes existentes.
+- Definir modelo de recurso y alcance permitido.
+- Integrar primero un explorador de solo lectura y búsqueda.
+- Incorporar diagnóstico de referencias.
+- Añadir operaciones controladas solo después de probar reversión y permisos.
+
+ACEPTACIÓN
+- No se puede acceder ni modificar fuera del alcance autorizado.
+- Los recursos se muestran con metadatos verificables.
+- Los archivos en uso o con referencias no verificables no se envían a papelera.
+- Las operaciones son paginadas, auditadas y recuperables cuando corresponda.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 9 — HERRAMIENTAS DE MANTENIMIENTO
+Factibilidad: ALTA para integrar acciones existentes con controles; MEDIA para nuevas rutinas automáticas.
+Prioridad: P2/P3.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya contiene reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages, createSheet y addColumn. Algunas operaciones utilizan lotes, estado de proceso y pausas; deben auditarse individualmente antes de exponerlas.
+
+REQUISITOS
+1. Crear un catálogo de tareas de mantenimiento con descripción, alcance, impacto y permisos.
+2. Separar diagnósticos de operaciones que modifican información.
+3. Mostrar dry-run o resumen previo cuando sea técnicamente posible.
+4. Exigir respaldo previo para operaciones masivas o potencialmente destructivas.
+5. Permitir progreso, cancelación segura y reanudación cuando el proceso use lotes.
+6. Registrar inicio, actor, parámetros no sensibles, progreso, resultado y fallos.
+7. Evitar ejecuciones simultáneas incompatibles mediante LockService o mecanismo equivalente.
+8. Definir idempotencia y recuperación ante interrupciones.
+9. No crear activadores automáticos ni programaciones recurrentes sin una tarea separada que defina frecuencia, propietario, cuotas y mecanismo de desactivación.
+
+PLAN
+- Inventariar acciones actuales y sus efectos sobre Sheets/Drive.
+- Clasificar por riesgo y reversibilidad.
+- Incorporar primero diagnósticos y operaciones de bajo riesgo.
+- Integrar las acciones existentes con confirmaciones, progreso y bitácora.
+- Probar interrupción, reanudación, concurrencia y fallos parciales.
+
+ACEPTACIÓN
+- Cada herramienta informa su alcance antes de ejecutarse.
+- Las operaciones masivas tienen protección, progreso y registro.
+- No se ejecutan dos procesos incompatibles simultáneamente.
+- La reanudación no duplica cambios ni corrompe datos.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 10 — INFORMACIÓN TÉCNICA, VERSIONES Y DESPLIEGUES
+Factibilidad: ALTA para mostrar versiones declaradas; MEDIA para verificar la versión realmente desplegada.
+Prioridad: P2.
+
+CAPACIDADES EXISTENTES
+El frontend declara la versión GPSpedia 2.2.5. Services/Auth.js devuelve versión 2.2.5 en su respuesta debug. Services/admin.js declara versión de componente 2.6.0. Los servicios se despliegan por separado y api-config.js contiene sus endpoints.
+
+REQUISITOS
+1. Definir un formato uniforme de metadatos: nombre del servicio, versión declarada, fecha/build, entorno y estado del endpoint.
+2. Mostrar por separado versión declarada en código y versión confirmada por el endpoint desplegado.
+3. No afirmar que una versión está desplegada basándose únicamente en el número que aparece en el repositorio.
+4. Añadir metadatos debug consistentes a cada servicio cuando sea seguro.
+5. Mostrar historial de cambios utilizando ChangesLogs.txt o una fuente estructurada, sin confundir commits de la rama de trabajo con despliegues productivos.
+6. Identificar servicios con versión desconocida o metadatos desactualizados.
+7. No exponer URLs con credenciales, tokens ni datos privados.
+8. Diferenciar rama, commit, versión de aplicación y versión de despliegue.
+
+PLAN
+- Inventariar versión declarada y respuesta debug de cada servicio.
+- Definir contrato de metadatos.
+- Integrar consulta desde el panel.
+- Contrastar el resultado con el despliegue real de cada Apps Script.
+- Mostrar advertencias cuando no se pueda confirmar el despliegue.
+
+ACEPTACIÓN
+- Se identifica cada servicio y su versión declarada.
+- La versión desplegada solo se marca como confirmada cuando el endpoint real la informa.
+- Se distingue claramente código de rama, versión de aplicación y despliegue.
+- Los servicios sin metadatos aparecen como desconocidos, no como actualizados.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 11 — RESUMEN GENERAL DEL CENTRO DE ADMINISTRACIÓN
+Factibilidad: ALTA después de disponer de fuentes verificables de las tareas ADMIN 1 a 10.
+Prioridad: P2, integrar progresivamente.
+
+OBJETIVO
+Crear la página inicial del panel con un resumen compacto de estado, alertas y actividad, sin duplicar las herramientas de cada sección.
+
+REQUISITOS
+1. Mostrar disponibilidad de servicios y hora de última comprobación.
+2. Mostrar alertas críticas y advertencias recientes.
+3. Mostrar últimas operaciones administrativas y sus resultados.
+4. Mostrar estado de respaldos y último respaldo verificado cuando exista esa información.
+5. Mostrar incidencias de integridad pendientes y procesos de mantenimiento en curso.
+6. Mostrar versión declarada y estado de despliegue por servicio.
+7. Cada tarjeta debe enlazar a la sección que contiene el detalle.
+8. No calcular indicadores a partir de datos incompletos ni mostrar métricas no verificables.
+
+PLAN
+- Definir fuentes y contratos de datos de cada indicador.
+- Diseñar un resumen sin duplicar consultas costosas.
+- Implementar carga parcial para que un servicio caído no bloquee todo el dashboard.
+- Validar estados vacíos, errores y datos parciales.
+
+ACEPTACIÓN
+- Los indicadores tienen fuente y fecha de actualización.
+- El fallo de una sección no impide consultar las demás.
+- Los accesos llevan a la herramienta correspondiente.
+- No aparecen métricas ficticias ni datos obsoletos presentados como actuales.
+
+--------------------------------------------------------------------------------
+PLAN GENERAL DE IMPLEMENTACIÓN PROPUESTO
+
+FASE 0 — SEGURIDAD Y AUDITORÍA
+- Ejecutar TAREA ADMIN 0.
+- Auditar los servicios USERS, FEEDBACK, AUTH y ADMIN.
+- Resolver la exposición de credenciales en logs y comprobar la autorización backend de cada acción sensible.
+- No habilitar nuevas operaciones administrativas hasta cerrar los riesgos críticos.
+
+FASE 1 — OBSERVABILIDAD
+- TAREA ADMIN 2: monitor del sistema.
+- TAREA ADMIN 3: registro de actividad y auditoría.
+- TAREA ADMIN 6: administrador de errores.
+- TAREA ADMIN 10: información técnica y versiones.
+- TAREA ADMIN 11: resumen general inicial, limitado a datos ya verificables.
+
+FASE 2 — PROTECCIÓN Y ADMINISTRACIÓN DE DATOS
+- TAREA ADMIN 5: respaldos y restauración.
+- TAREA ADMIN 4: diagnóstico de integridad de base de datos en modo solo lectura.
+- TAREA ADMIN 8: administrador de archivos en modo solo lectura y alcance limitado.
+
+FASE 3 — CONTROL ADMINISTRATIVO
+- TAREA ADMIN 1: administración de usuarios y permisos, respetando la zona segura.
+- TAREA ADMIN 7: configuración general.
+- TAREA ADMIN 9: mantenimiento con dry-run, autorización y recuperación.
+
+FASE 4 — VALIDACIÓN Y LIBERACIÓN
+- Pruebas unitarias/simuladas y de integración para cada servicio.
+- Pruebas con copias de Spreadsheet y carpetas de Drive.
+- Pruebas de roles, sesiones inválidas, permisos y operaciones concurrentes.
+- Validación responsive en escritorio, móvil y PWA.
+- Verificación de cuotas y tiempos reales de ejecución de Apps Script.
+- Revisión de Code Review y Safety & Side Effects.
+- Despliegue controlado de cada servicio y validación en live.
+- No realizar merge a GPSpedia2.2.5 sin autorización expresa.
+
+CRITERIOS PARA PRIORIZAR
+- Seguridad y protección de datos: bloqueante.
+- Reutilización de capacidades existentes: preferente frente a duplicación.
+- Diagnóstico de solo lectura: preferente antes de permitir modificaciones.
+- Reversibilidad y respaldo: obligatorios para operaciones destructivas.
+- Métricas reales y trazables: obligatorias para indicadores del dashboard.
+
+DEPENDENCIAS Y DOCUMENTACIÓN TÉCNICA DE REFERENCIA
+La implementación deberá confirmar las cuotas y límites vigentes antes de diseñar lotes, concurrencia y automatizaciones. Referencias oficiales:
+- Apps Script — Cuotas y límites: https://developers.google.com/apps-script/guides/services/quotas
+- Apps Script — Buenas prácticas: https://developers.google.com/apps-script/guides/support/best-practices
+- Spreadsheet Service: https://developers.google.com/apps-script/reference/spreadsheet
+- Drive Service: https://developers.google.com/apps-script/reference/drive
+- Lock Service: https://developers.google.com/apps-script/reference/lock
+- Properties Service: https://developers.google.com/apps-script/reference/properties
+- Triggers instalables: https://developers.google.com/apps-script/guides/triggers/installable
+
+RESTRICCIONES DE ESTA ETAPA
+- No implementar ninguna de las funciones descritas.
+- No modificar index.html, style.css, ui.js, api-config.js ni servicios Apps Script.
+- No crear hojas, columnas, propiedades, activadores ni carpetas en Google.
+- No cambiar permisos, credenciales, endpoints ni despliegues.
+- Este bloque es únicamente estudio, requisitos y planificación. Cada tarea requerirá auditoría y autorización independiente antes de su implementación.
+================================================================================
+
+
+================================================================================
+AUTORIZACIÓN DE IMPLEMENTACIÓN — PLAN ADMIN 0–11
+Fecha: 2026-11-04
+La restricción del estudio que prohibía implementar las funciones ADMIN queda levantada por solicitud expresa del usuario. La autorización se limita al plan de doce tareas ADMIN 0–11 y no sustituye el procedimiento obligatorio: cada tarea requiere auditoría, respaldo, implementación, verificación, Code Review, documentación y un único commit por tarea.
+================================================================================
+
+
+ACTUALIZACIÓN CODE REVIEW — ADMIN 0
+- Se corrigió el contrato de error de ADMIN para conservar message sin exponer stack traces.
+- Se ajustó la autorización de consulta de actividad para mantener compatibilidad con Dashboard (Desarrollador, Gefe y Supervisor); la purga permanece exclusiva de Desarrollador.
+- ADMIN 0 continúa pendiente de revisión de registros históricos, diseño de migración de contraseñas y pruebas reales de sesión/roles.
+
+
+ACTUALIZACIÓN DE CONFIGURACIÓN — ENDPOINTS
+Fecha: 2026-11-04
+- Se actualizaron las URLs centrales de los servicios ADMIN y FEEDBACK en api-config.js según las direcciones proporcionadas.
+- La actualización del código no implica publicación ni verificación de los despliegues Apps Script.
+
+================================================================================
+ACTUALIZACIÓN DOCUMENTAL — CHECKPOINT OBLIGATORIO
+Fecha: 2026-11-04
+- Se creó checkpoint.md con el estado de continuidad del proyecto y el siguiente punto de trabajo.
+- Se modificó Proceso de desarollo.md para exigir un checkpoint al inicio de cada tarea y su actualización final como último paso de documentación antes del único commit.
+- La tarea documental queda registrada en Auditoría.txt y ChangesLogs.txt.
+- ADMIN 0 continúa parcial y pendiente de las validaciones descritas en checkpoint.md.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ADMIN 0: REGISTROS DE CREDENCIALES EN AUTH
+Fecha: 2026-11-04
+- Auditoría del estado real de Services/Auth.js y Services/users.js realizada sobre GPSpedia2.2.5_work.
+- Se confirmó que AUTH registraba el payload completo de login y las contraseñas almacenada/recibida; también exponía Spreadsheet ID y nombres de hojas en debug.
+- Se preparó la corrección de esos registros y metadatos en AUTH. La autenticación, comparación, tokens y sesiones no se modifican.
+- Se confirmó que USERS y AUTH todavía guardan/comparan contraseñas en texto claro. La migración permanece pendiente de diseño y pruebas; no se altera la columna Password.
+- La revisión de la hoja Logs desplegada, las pruebas reales de sesión/roles y la validación de despliegues siguen pendientes por falta de acceso a esos recursos desde esta sesión.
+- ADMIN 0 permanece ABIERTA; no iniciar ADMIN 1–11.
+================================================================================
+
+
+================================================================================
+TAREA — CORREGIR AUTORIZACIÓN Y ALCANCE DE PURGA DE LOGS
+Fecha: 2026-11-04
+Estado: IMPLEMENTADA EN CÓDIGO; VALIDACIÓN DE DESPLIEGUE PENDIENTE.
+
+REQUISITOS IMPLEMENTADOS
+1. Enviar userId y sessionToken junto con keepLastWeek al ejecutar clearActivityLogs.
+2. Reutilizar getDeveloperSessionPayload() para obtener la identidad y el token de la sesión autenticada.
+3. Crear la acción clearSensitiveLogs en FEEDBACK, restringida al rol Desarrollador.
+4. Identificar en Logs los registros históricos que contienen claves de contraseña, los valores de comparación de contraseña y el username registrado al iniciar sesión.
+5. Eliminar únicamente las filas confidenciales identificadas, sin borrar la fila de encabezados ni los demás registros de Logs.
+6. Mantener separada la purga temporal de ActividadUsuario: keepLastWeek solo afecta esa hoja.
+7. Actualizar API_ENDPOINTS.AUTH con la URL nueva proporcionada.
+
+ARCHIVOS
+- api-config.js
+- ui.js
+- Services/feedback.js
+- checkpoint.md
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+
+PENDIENTES DE VALIDACIÓN
+- Publicar Services/feedback.js en el despliegue FEEDBACK configurado.
+- Probar autorización con sesión válida de Desarrollador y rechazo con sesión inválida o rol distinto.
+- Ejecutar primero sobre una copia de la Spreadsheet y verificar el número y contenido de las filas seleccionadas.
+- Confirmar que Logs conserva encabezados y registros no confidenciales y que ActividadUsuario respeta keepLastWeek.
+- Verificar el nuevo endpoint AUTH en el entorno live.
+- No realizar merge a GPSpedia2.2.5 ni despliegues sin autorización expresa.
+================================================================================
+
+
+================================================================================
+TAREA — ACTUALIZAR ENDPOINT FEEDBACK
+Fecha: 2026-11-04
+Estado: CONFIGURACIÓN ACTUALIZADA EN CÓDIGO; VALIDACIÓN DEL DEPLOYMENT PENDIENTE.
+
+- Se sustituyó únicamente API_ENDPOINTS.FEEDBACK en api-config.js por la nueva URL proporcionada.
+- Se conservó el enrutamiento central de las acciones FEEDBACK.
+- Pendiente: comprobar el endpoint y confirmar que el deployment contiene clearSensitiveLogs.
+- No se desplegó Apps Script ni se realizó merge.
+================================================================================
+
+
+================================================================================
+ADMIN 0 — CORRECCIÓN DE PURGA, ORDEN DE LOGS Y CIERRE REMOTO DE SESIONES
+Fecha: 2026-11-04
+Estado: IMPLEMENTACIÓN EN CÓDIGO; PENDIENTE DESPLIEGUE Y VALIDACIÓN REAL.
+
+IMPLEMENTADO
+1. Separación de la purga de ActividadUsuario y la purga selectiva de registros confidenciales en Logs. Cada botón ejecuta únicamente su operación.
+2. Inserción de nuevos registros AUTH en la fila 2 de Logs, preservando encabezados y serializando inserciones mediante LockService.
+3. Acción resetUserSessions en USERS, exclusiva de Desarrollador, que elimina todas las sesiones ActiveSessions del usuario seleccionado y limpia Users.SessionToken.
+4. Control «Cerrar sesiones» en users.html, visible únicamente para Desarrollador y no disponible para la cuenta propia.
+
+PRUEBAS COMUNICADAS POR EL USUARIO
+- FEEDBACK desplegado y actualizado.
+- Inicio de sesión con usuario válido: correcto.
+- Inicio de sesión con usuario no válido: devuelve «Credenciales inválidas».
+- Endpoint AUTH actualizado y registrado previamente en un commit.
+
+VERIFICACIONES ESTÁTICAS
+- Sintaxis de Services/Auth.js, Services/users.js, ui.js y módulo de users.html comprobada.
+- Aserciones de separación de purga, mapeo de USERS y controles de autorización superadas.
+- Simulaciones de inserción en fila 2 y eliminación de varias sesiones por usuario superadas.
+
+PENDIENTES
+- Actualizar/desplegar Services/Auth.js en el proyecto AUTH para activar el nuevo orden de escritura.
+- Actualizar/desplegar Services/users.js en el proyecto USERS para habilitar resetUserSessions.
+- Probar la purga selectiva de Logs sobre una copia de Spreadsheet y confirmar que ActividadUsuario no cambia al ejecutar esa operación.
+- Probar cierre remoto con varias sesiones, token inválido y roles distintos de Desarrollador; verificar que la sesión del administrador permanece activa.
+- Verificar en Apps Script la inserción en fila 2 y conservación de encabezados.
+- ADMIN 0 sigue abierta por la migración pendiente de contraseñas en texto claro y la revisión de registros históricos reales.
+- No realizar merge ni despliegues desde esta tarea sin autorización expresa.
+================================================================================
+
+
+================================================================================
+TAREA — ACTUALIZAR ENDPOINTS AUTH Y USERS
+Fecha: 2026-11-04
+Estado: CONFIGURACIÓN ACTUALIZADA EN CÓDIGO; VALIDACIÓN DE DEPLOYMENTS PENDIENTE.
+
+- Se actualizaron exclusivamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS en api-config.js con las nuevas URLs proporcionadas.
+- Se conservaron el mapa de acciones, el router y los demás endpoints.
+- Se documentaron la auditoría, los respaldos, las verificaciones y el estado en checkpoint.md.
+- Validación estática: cada URL nueva aparece una sola vez; las anteriores fueron sustituidas; las acciones login/validateSession continúan en AUTH y las acciones de usuarios, incluido resetUserSessions, continúan en USERS.
+- Pendiente: comprobar los endpoints funcionalmente y confirmar que los deployments AUTH y USERS contienen las versiones de código requeridas.
+- No se modificó la rama base, no se realizó merge ni despliegue.
+- Todo el cambio de esta tarea se agrupa en un único commit.
+================================================================================
+
+
+================================================================================
+TAREA — CORREGIR CARGA DE INBOX Y DASHBOARD DE ACTIVIDADES
+Fecha: 2026-11-04
+Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
+
+- Se identificó que las solicitudes protegidas de Inbox y Dashboard omitían userId/sessionToken.
+- ui.js ahora obtiene el contexto de sesión autenticada mediante getDeveloperSessionPayload() para las cargas, recargas y acciones del Inbox, así como para la consulta del Dashboard.
+- api-config.js ahora propaga el payload de sesión en los siete wrappers FEEDBACK correspondientes.
+- Se conservan sin cambios los controles de sesión y permisos de Services/feedback.js.
+- Verificaciones estáticas de las llamadas y wrappers completadas en el cambio: 1 consulta Dashboard, 2 rutas de carga Inbox y 5 acciones de Inbox.
+- Pendiente: validar en live con sesión válida y roles permitidos; comprobar errores HTTP/Apps Script si persisten. No se inspeccionó Network/Console del navegador desde esta sesión.
+- No se desplegó Apps Script, no se modificó GPSpedia2.2.5 y no se realizó merge.
+================================================================================
+
+
+================================================================================
+ADMIN 0 — AUDITORÍA Y DISEÑO DE MIGRACIÓN DE CONTRASEÑAS
+Fecha: 2026-11-05
+Estado: AUDITORÍA COMPLETADA; MIGRACIÓN NO IMPLEMENTADA.
+
+- Confirmado: AUTH compara Users.Password en texto claro.
+- Confirmado: USERS almacena contraseñas en texto claro al crear usuarios, actualizar administrativamente la contraseña y cambiar la contraseña propia.
+- Confirmado: login aplica trim() a ambos valores; changePassword compara sin trim(). Debe definirse una política compatible.
+- Diseño propuesto: formato versionado en la columna Password, KDF resistente con salt, verificación dual temporal en AUTH, actualización de todos los escritores en USERS y migración por lotes de cuentas restantes después de validar una copia.
+- No usar SHA-256 simple ni migrar la hoja productiva sin prueba, respaldo y autorización.
+- Bloqueos: seleccionar y probar KDF compatible con Apps Script V8; medir rendimiento; obtener copia de prueba; confirmar normalización de espacios; verificar Logs históricos reales.
+- No se modificó código, hoja de cálculo ni despliegues.
+
+TAREA INDEPENDIENTE REGISTRADA — REVISAR LÍMITE DE SESIONES DEL ROL GEFE
+- SESSION_LIMITS usa la clave 'jefe', pero handleLogin normaliza el rol 'Gefe' a 'gefe'. Actualmente ese rol utiliza el valor predeterminado de una sesión. Confirmar el límite esperado antes de corregirlo; fuera del alcance de la auditoría de contraseñas.
+================================================================================
+
+
+================================================================================
+INCIDENCIA PENDIENTE — backupDatabase RECHAZA LA SESIÓN
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+Estado: CAUSA ESTÁTICA IDENTIFICADA; CORRECCIÓN PENDIENTE.
+
+REPORTE DEL USUARIO
+- Operación: backupDatabase.
+- Etapa: Ejecución de acción individual.
+- Función: routeAction.
+- Código HTTP reportado: 500.
+- Mensaje: «Acceso denegado: sesión no autorizada».
+- Referencias del reporte: api-config.js:64, ui.js:3166 y ui.js:3545.
+
+HALLAZGO DE AUDITORÍA
+- ui.js, listener de btn-admin-backup-db: ejecuta runAction('backupDatabase') sin proporcionar payload de sesión.
+- runAction(action, payload = {}) transmite el payload recibido a routeAction(); en esta llamada permanece vacío.
+- api-config.js, ACTION_TO_SERVICE_MAP: backupDatabase se enruta al servicio ADMIN.
+- Services/admin.js, doPost(): exige assertDeveloperSession(payload) para todas las acciones excepto ping.
+- assertDeveloperSession() rechaza la solicitud cuando faltan userId o sessionToken.
+
+ACCIÓN PENDIENTE
+- Corregir la transmisión de getDeveloperSessionPayload() a la ejecución de backupDatabase, conservando la validación backend.
+- Auditar también el resto de acciones del panel ADMIN que utilizan runAction() para detectar llamadas protegidas que omitan el contexto de sesión; limitar cualquier corrección a las llamadas afectadas.
+- Probar con sesión válida de Desarrollador y comprobar rechazo con sesión ausente, inválida y rol no autorizado.
+- No debilitar ni retirar assertDeveloperSession() como solución.
+
+RESTRICCIONES
+- No se modificó código ni se ejecutó la operación de respaldo.
+- No se verificó el deployment ADMIN activo ni se realizó una nueva solicitud HTTP desde esta sesión.
+- No se desplegó Apps Script ni se realizó merge.
+================================================================================
+
+
+================================================================================
+TAREA — CORREGIR SESIÓN EN ACCIONES ADMIN
+Fecha: 2026-11-05
+Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
+
+- runAction() agrega getDeveloperSessionPayload() a las solicitudes individuales y a cada solicitud por lotes.
+- executeTerminalCommand() agrega getDeveloperSessionPayload() a driveCommand.
+- saveFieldSilently() agrega getDeveloperSessionPayload() a updateVehicleField.
+- Se cubren las acciones ADMIN ejecutadas mediante runAction(): backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages y addLogo.
+- Se conserva sin cambios assertDeveloperSession() y la validación de rol Desarrollador en Services/admin.js.
+- Pendiente de prueba live: respaldo DB con sesión válida; rechazo de sesión ausente/inválida y rol no autorizado; validación de respaldo Drive, comandos terminal, actualización silenciosa y procesamiento por lotes.
+- No se ejecutó Apps Script, no se generó respaldo, no se modificaron datos de Drive/Sheets, no se desplegó ni se hizo merge.
+================================================================================
+
+
+================================================================================
+ADMIN 0 — IMPLEMENTAR HASH SHA-256 CON SALT Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Estado: IMPLEMENTADA EN CÓDIGO; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+ALCANCE APROBADO
+1. Almacenar contraseñas nuevas con SHA-256 y salt individual en formato sha256$<salt>$<digest>.
+2. Mantener compatibilidad temporal con contraseñas legacy y migrarlas al hash al iniciar sesión correctamente.
+3. Actualizar las tres rutas de escritura de USERS: creación, actualización administrativa y cambio de contraseña propia.
+4. Aplicar trim() al inicio y al final; conservar espacios internos y comparación sensible a mayúsculas/minúsculas.
+5. Exigir mínimo de ocho caracteres normalizados para contraseñas nuevas.
+6. Permitir cinco intentos consecutivos de inicio de sesión por nombre de usuario y bloquear durante 15 minutos. Reiniciar el contador al autenticar correctamente.
+7. No ejecutar migración masiva ni desplegar servicios sin autorización expresa.
+
+IMPLEMENTACIÓN EN CÓDIGO
+- Services/Auth.js: verificación dual legacy/hash, migración progresiva, contador de intentos y bloqueo temporal en CacheService.
+- Services/users.js: hash en creación, actualización administrativa y cambio propio; verificación legacy/hash para contraseña actual.
+- Se mantiene la estructura de la hoja Users y la columna Password existente.
+
+LIMITACIONES Y VALIDACIONES PENDIENTES
+- CacheService puede desalojar entradas antes de los 15 minutos; el bloqueo es temporal y de mejor esfuerzo.
+- SHA-256 con salt es una solución rápida y no equivale a una KDF especializada.
+- Sintaxis JavaScript comprobada estáticamente; pendiente ejecutar pruebas reales en AUTH y USERS, probar login legacy/hash, alta, actualización, cambio de contraseña, cinco fallos, bloqueo, expiración y restablecimiento por login correcto.
+- Despliegue coordinado requerido: AUTH primero; USERS después. No desplegar, modificar datos productivos ni hacer merge.
+================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — ACTUALIZAR URL DE LOS SERVICIOS AUTH Y USERS
+Fecha: 2026-11-05
+Estado: CAMBIOS ESTÁTICOS IMPLEMENTADOS; VALIDACIÓN DE DEPLOYMENTS PENDIENTE.
+
+- api-config.js: reemplazado el URL de API_ENDPOINTS.AUTH por el endpoint proporcionado.
+- api-config.js: reemplazado el URL de API_ENDPOINTS.USERS por el endpoint proporcionado.
+- Se conservaron todos los demás endpoints, el mapa de acciones y las funciones existentes.
+- Pendiente: comprobar disponibilidad y funcionamiento de AUTH y USERS mediante pruebas funcionales en los deployments correspondientes.
+- No se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
+================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — ACEPTAR ENLACE COMPLETO DE GOOGLE SHEETS EN restoreDatabase
+Fecha: 2026-11-05 | Estado: IMPLEMENTACIÓN Y VALIDACIÓN LIVE CONFIRMADAS POR EL USUARIO.
+
+- Causa: ui.js enviaba la URL completa como backupId y handleRestoreDatabase() la pasaba sin normalizar a DriveApp.getFileById().
+- Se implementó normalización en frontend y backend. La restauración acepta ID limpio o enlace completo de Google Sheets.
+- El destino continúa siendo el configurado mediante SPREADSHEET_ID en Services/admin.js.
+- El usuario confirmó que la restauración funciona al proporcionar el enlace completo en la plataforma live.
+- La validación live se registra como confirmación del usuario; no se reprodujo independientemente desde este entorno.
+- No se ejecutó otra restauración durante esta actualización documental ni se modificaron datos.
+================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — ACTUALIZAR URL DEL SERVICIO ADMIN
+Fecha: 2026-11-05
+Estado: CONFIGURACIÓN ESTÁTICA ACTUALIZADA; VALIDACIÓN DEL DEPLOYMENT PENDIENTE.
+
+- api-config.js: reemplazado exclusivamente el valor de API_ENDPOINTS.ADMIN por el URL proporcionado.
+- Se conservaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y las funciones existentes.
+- Pendiente: comprobar disponibilidad del endpoint y validar las acciones ADMIN en la plataforma live; confirmar por separado que el deployment contiene la versión actual de Services/admin.js.
+- No se desplegó Apps Script, no se ejecutaron acciones de respaldo/restauración, no se modificaron datos productivos y no se realizó merge.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — ADMIN 0: AUDITORÍA DE HASH Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+- Se revisaron Services/Auth.js, Services/users.js, api-config.js y users.html.
+- Se confirmó que AUTH y USERS comparten el mismo formato sha256$<salt>$<digest> y la misma fórmula SHA-256.
+- Se verificaron las tres rutas de escritura de USERS: creación, actualización administrativa y cambio de contraseña propia.
+- AUTH verifica contraseñas legacy y hash; las cuentas legacy se migran al hash después de un login correcto.
+- Se confirmó el mínimo de ocho caracteres normalizados para nuevas contraseñas y el contador de cinco intentos con bloqueo nominal de quince minutos.
+- Límites documentados: SHA-256 con salt no es una KDF especializada y CacheService puede desalojar el contador antes del TTL.
+- El usuario confirmó que existe una copia independiente de Spreadsheet. Antes de pruebas de escritura debe verificarse que los deployments de prueba apunten a esa copia; el ID de la copia no está identificado en el código auditado.
+- No se modificó código, no se desplegaron servicios, no se ejecutó migración ni se alteraron datos.
+- ADMIN 0 permanece abierta hasta completar pruebas funcionales de AUTH y USERS en la copia independiente.
+================================================================================
+
+
+================================================================================
+ADMIN 0 — PREPARAR AUTH Y USERS PARA PRUEBAS EN SPREADSHEET INDEPENDIENTE
+Fecha: 2026-11-05
+Estado: FUENTES AISLADAS PREPARADAS; DEPLOYMENTS Y VALIDACIÓN FUNCIONAL PENDIENTES.
+
+- El usuario proporcionó el ID de la copia independiente: 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k.
+- Se crearon Services/Test/Auth.js y Services/Test/users.js. Cada archivo conserva el código del servicio original y cambia únicamente la constante SPREADSHEET_ID para apuntar a la copia de pruebas.
+- Se añadió Services/Test/README.md con instrucciones para crear dos proyectos Apps Script separados y deployments nuevos.
+- Services/Auth.js, Services/users.js, Services/admin.js y api-config.js permanecen sin cambios.
+- Los endpoints live no se sustituyeron ni se añadieron endpoints de prueba a la plataforma.
+- Pendiente: crear los proyectos/deployments aislados AUTH-TEST y USERS-TEST, verificar que ambos utilizan el ID de pruebas y proporcionar sus URLs para ejecutar la matriz funcional de ADMIN 0.
+- No se ejecutó Apps Script, no se modificaron datos de ninguna Spreadsheet, no se desplegó ningún servicio y no se realizó merge.
+================================================================================
+
+
+================================================================================
+TAREA — INTEGRAR RECHAZO DE NOMBRES DE USUARIO DUPLICADOS EN USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN PREPARADA; PENDIENTE DE COMMIT ÚNICO Y VERIFICACIÓN FINAL.
+- Integrar en Services/users.js el comportamiento de handleCreateUser() validado en Services/Test/users.js.
+- Rechazar nombres existentes ignorando mayúsculas/minúsculas y espacios externos, antes de generar hash o escribir una fila.
+- Conservar el nombre ingresado tras trim() cuando esté disponible.
+- Eliminar generateUniqueUsername() por quedar sin referencias.
+- Mantener el ID original de Spreadsheet, LockService, sesión, permisos, hash, estructura de fila y demás handlers.
+- No modificar AUTH, users.html, api-config.js, otros servicios, endpoints ni deployments.
+- No se ha desplegado Apps Script ni se han ejecutado escrituras en Sheets.
+================================================================================
+
+
+================================================================================
+TAREA — ACTUALIZAR ENDPOINT DEL SERVICIO USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: CAMBIO ESTÁTICO PREPARADO; PENDIENTE DE COMMIT ÚNICO.
+- Sustituir en api-config.js, línea 12, únicamente el valor de API_ENDPOINTS.USERS por la nueva URL proporcionada por el usuario.
+- Mantener intactos AUTH, los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction(), los consumidores y los servicios Apps Script.
+- La comparación estática conserva 170 líneas y muestra una única línea modificada.
+- Pendiente: publicar un único commit en GPSpedia2.2.5_work y verificar el nuevo HEAD.
+- Pendiente después del commit: comprobar HTTP y realizar pruebas funcionales del deployment USERS.
+- No desplegar Apps Script, modificar hojas, ejecutar escrituras ni hacer merge.
+================================================================================
+
+
+================================================================================
+TAREA — ESTABLECER EL PROCEDIMIENTO ÚNICO AUTORIZADO PARA COMMITS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: DOCUMENTACIÓN PREPARADA; PENDIENTE DE COMMIT ÚNICO Y VERIFICACIÓN.
+
+- Añadir al final de Proceso de desarollo.md el único método autorizado para generar y publicar commits: create_blob por cada archivo, un único create_tree, un único create_commit con parent_sha igual al HEAD confirmado y update_ref de la rama autorizada con force:false y expected_sha igual al HEAD previo.
+- Crear contexto_personal.md como documento nuevo, ya que no existe en las ramas revisadas ni en la biblioteca consultada; incluir la misma secuencia, prohibiciones y condiciones de detención.
+- Prohibir métodos alternativos de commit, commits por archivo, commits intermedios, GitHub Contents API que cree commits automáticamente, Git local y actualizaciones forzadas.
+- Mantener todas las reglas previas. No borrar ni reemplazar contenido existente.
+- Actualizar Auditoría.txt, ChangesLogs.txt y checkpoint.md como parte de la misma tarea.
+- No modificar código funcional, servicios, deployments, datos ni la rama protegida.
+- Publicar todos los archivos mediante un único commit en GPSpedia2.2.5_work y verificar padre, archivos, HEAD y rama protegida.
+================================================================================
+
+
+================================================================================
+RESULTADO DE DIAGNÓSTICO — ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-05
+Rama auditada: GPSpedia2.2.5_work
+Estado: DIAGNÓSTICO ESTÁTICO COMPLETADO; PENDIENTE CONFIRMACIÓN CON LA SESIÓN Y EL DESPLIEGUE REALES.
+
+- La interfaz está implementada y conectada estáticamente. Ruta: Menú lateral > Desarrollador > Imágenes y Drive > Consultar Repositorio Histórico.
+- El enlace Desarrollador solo se muestra si user.Privilegios corresponde al rol Desarrollador. La pestaña inicial del panel es Diagnóstico; se debe seleccionar Imágenes y Drive para localizar el botón.
+- AUTH devuelve la propiedad Privilegios en el código auditado. Una sesión local antigua o un objeto sin esa propiedad puede mantener oculto el enlace.
+- En GPSpedia2.2.5_work, el frontend envía userId y sessionToken a getReplacedImages y el backend valida sesión activa y rol Desarrollador.
+- Los identificadores de los controles están presentes una sola vez y no se detectaron referencias DOM faltantes en la inicialización del panel.
+- GPSpedia2.2.5 y GPSpedia2.2.5_work tienen diferencias en los archivos de interfaz, configuración API y servicios ADMIN/AUTH. No se confirmó cuál versión está publicada.
+- No se pudo determinar si la cuenta del usuario tiene el rol esperado ni si el deployment ADMIN activo corresponde al frontend.
+- Siguiente comprobación: confirmar si aparece el enlace Desarrollador; verificar el rol de la sesión sin compartir identificadores ni tokens; si el modal abre pero falla la carga, obtener el mensaje de error y contrastar commit web/deployment ADMIN.
+- No modificar código ni ampliar permisos hasta confirmar la causa y recibir autorización.
+================================================================================
+
+
+================================================================================
+TAREA — CORREGIR EL TIEMPO DE ESPERA EN LA AUDITORÍA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: OPTIMIZACIÓN ESTÁTICA PREPARADA; VALIDACIÓN FUNCIONAL EN EL DEPLOYMENT ADMIN PENDIENTE.
+
+- Se identificó que la primera respuesta espera a que el backend termine de recopilar referencias de todas las hojas, leer el historial y recorrer el lote de Drive; por eso los contadores permanecen en cero hasta recibir la primera respuesta válida.
+- Services/admin.js conserva ahora el snapshot de IDs activos e históricos en CacheService y lo reutiliza entre peticiones, evitando volver a escanear todas las hojas en cada lote.
+- Se redujo el lote máximo a 25 archivos y 20 carpetas, y se eliminaron comprobaciones repetidas de ancestros por archivo. Se conserva la validación de carpetas del cursor y de cada subcarpeta descubierta.
+- Se mantiene el comportamiento detallado de collectActiveDriveReferences() para handleDeleteReplacedImage(), junto con las reglas de clasificación y el contrato de respuesta.
+- Validaciones estáticas: sintaxis JavaScript correcta; reconstrucción inversa del archivo igual al respaldo original fuera de los cambios previstos; handleDeleteReplacedImage() idéntica; búsqueda en archivos de servicio sin otros consumidores de isFileInsideCortes().
+- Pendiente: actualizar manualmente el deployment ADMIN con la versión de trabajo y ejecutar la auditoría completa. Verificar que los contadores avancen, que el cursor continúe hasta complete:true y que las clasificaciones coincidan con referencias activas/históricas.
+- Si la primera petición vuelve a agotar el tiempo, medir y dividir en etapas la recopilación inicial de referencias por hoja/fila; no asumir que el problema quedó resuelto.
+- No se desplegó Apps Script desde esta tarea, no se realizaron escrituras en Sheets ni modificaciones en Drive y no se alteró la rama protegida.
+================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — COMPLETAR EL INVENTARIO Y LA GESTIÓN INTEGRAL DE IMÁGENES SIN USO EN GOOGLE DRIVE
+Fecha de registro: 2026-11-05
+Rama de referencia: GPSpedia2.2.5_work
+Estado: PENDIENTE DE AUDITORÍA TÉCNICA, DISEÑO, IMPLEMENTACIÓN Y VALIDACIÓN FUNCIONAL.
+Referencia relacionada:
+- REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas (Historial, Papelera y Auditoría de Google Drive).
+- TAREA PENDIENTE — CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS.
+- TAREA PENDIENTE — INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS.
+- TAREA — CORREGIR EL TIEMPO DE ESPERA EN LA AUDITORÍA DEL INVENTARIO DE IMÁGENES.
+
+OBJETIVO GENERAL
+Completar la herramienta de auditoría para que funcione como un inventario integral y una interfaz de administración de imágenes del árbol de Google Drive cuya raíz es «Cortes». El sistema debe descubrir todas las imágenes existentes dentro de la carpeta raíz y sus subcarpetas, determinar su estado de uso, mostrar el inventario de forma visual y permitir administrar de forma segura las imágenes clasificadas como sin uso, incluidas las que no tienen un registro de reemplazo o una fecha histórica disponible.
+
+PROBLEMA REPORTADO Y RESULTADO ESPERADO
+- Después de actualizar el servicio ADMIN, el usuario informó que la auditoría únicamente examina los mismos 14 archivos.
+- El inventario final no debe quedar limitado a esos 14 archivos ni a un número fijo de elementos. Debe recorrer la carpeta raíz Cortes y todas sus subcarpetas, hasta completar la cobertura del árbol.
+- La cifra 14 se registra como resultado observado por el usuario; todavía no se atribuye su causa a una función, filtro, límite, cursor o deployment específico. La futura auditoría deberá identificar por qué se repite ese conjunto y demostrar que el recorrido incluye el universo completo de archivos.
+- No se considerará terminada la auditoría si existen carpetas pendientes, lotes omitidos, iteradores interrumpidos o resultados parciales presentados como completos.
+
+REQUISITOS FUNCIONALES
+
+1. DESCUBRIMIENTO COMPLETO DEL ÁRBOL «CORTES»
+   1.1. Recorrer la carpeta raíz Cortes y todas sus subcarpetas de forma recursiva, incluyendo los archivos ubicados directamente en la raíz.
+   1.2. Detectar todas las imágenes admitidas por Google Drive, utilizando metadatos de archivo y tipo MIME, sin depender únicamente de los 14 resultados observados ni de una lista fija de IDs.
+   1.3. Mantener continuidad entre lotes y páginas hasta procesar todos los archivos y subcarpetas. Los límites de ejecución deberán controlar el tamaño de cada petición, no limitar el total del inventario.
+   1.4. Conservar cursores/iteradores de forma verificable. Si una continuación falla, expira o pierde su estado, informar el resultado parcial y permitir reanudar o reiniciar sin presentar los elementos pendientes como examinados.
+   1.5. Evitar duplicados cuando una auditoría se reanude, cuando se vuelva a ejecutar o cuando existan imágenes ya trasladadas a la carpeta de administración.
+   1.6. Incluir la carpeta de administración dentro del ámbito del inventario sin volver a importar o duplicar sus propios registros. La implementación deberá definir una regla explícita para reconocerla y evitar ciclos de movimiento o doble conteo.
+   1.7. Diferenciar el total descubierto, total analizado, pendientes, errores y resultados parciales. El estado «completo» solo podrá mostrarse cuando se hayan recorrido todas las carpetas y todos los iteradores hayan finalizado correctamente.
+
+2. CLASIFICACIÓN Y ETIQUETAS DE ESTADO
+   2.1. Cada imagen deberá mostrar una etiqueta visible con su estado, como mínimo:
+       - En uso.
+       - Sin uso.
+   2.2. Conservar y mostrar también los estados especiales que ya contempla la auditoría cuando corresponda:
+       - Histórica/reemplazada.
+       - No verificable.
+   2.3. «Sin uso» solo podrá asignarse cuando la comprobación de referencias haya finalizado correctamente y no existan referencias activas identificadas. Un error de lectura, URL no interpretable, hoja inaccesible o resultado incompleto no equivale a ausencia de uso.
+   2.4. La interfaz deberá permitir distinguir visualmente cada estado sin depender únicamente del nombre del archivo.
+   2.5. Las operaciones de mover o borrar deberán estar disponibles únicamente cuando la clasificación y las validaciones de seguridad permitan ejecutarlas. Las imágenes En uso o No verificables no podrán tratarse automáticamente como imágenes sin uso.
+
+3. VISTAS CONFIGURABLES DEL INVENTARIO
+   3.1. Incorporar un selector de presentación con dos modos:
+       - Imágenes en cuadrícula.
+       - Imágenes en lista.
+   3.2. Vista de cuadrícula:
+       - Mostrar miniaturas de las imágenes.
+       - Mantener una composición ordenada y adaptable al ancho disponible.
+       - Mostrar el nombre del archivo y la etiqueta de estado en la tarjeta.
+       - Mostrar las acciones disponibles en el pie de cada imagen.
+   3.3. Vista de lista:
+       - Mostrar únicamente los nombres de los archivos como contenido principal de cada fila, junto con la etiqueta de estado requerida.
+       - No mostrar miniaturas ni descripciones o metadatos adicionales que conviertan la lista en una segunda cuadrícula.
+       - Mantener accesibles las acciones de administración mediante controles asociados a cada fila, sin alterar la presentación compacta solicitada.
+   3.4. Cambiar entre cuadrícula y lista no deberá iniciar una auditoría nueva ni perder los resultados ya cargados.
+   3.5. La selección de vista deberá conservarse al cerrar y volver a abrir el modal y al reiniciar la aplicación.
+
+4. PERSISTENCIA DE LA AUDITORÍA Y DEL ESTADO DE INTERFAZ
+   4.1. El inventario podrá conservar su estado cuando el usuario cierre el modal, navegue a otra sección o cierre completamente la aplicación.
+   4.2. Al regresar, recuperar los resultados ya obtenidos y el estado de la auditoría, evitando obligar al usuario a comenzar de cero cuando exista información válida.
+   4.3. Persistir como mínimo la última auditoría, los archivos ya examinados, su clasificación, el estado de finalización/parcialidad, el modo de vista seleccionado y el contexto necesario para continuar o consultar el inventario.
+   4.4. La persistencia de interfaz no deberá depender exclusivamente de una caché temporal de Apps Script que pueda expirar. La implementación deberá auditar los mecanismos de persistencia existentes y seleccionar un almacenamiento compatible con la arquitectura de GPSpedia.
+   4.5. No almacenar credenciales, tokens de sesión ni información sensible dentro del estado persistente del inventario.
+   4.6. Antes de ejecutar una acción sobre una imagen recuperada desde un estado persistido, verificar que el archivo siga existiendo, conserve su identidad y mantenga un estado compatible con la operación.
+   4.7. Si un cursor de servidor expiró, conservar los resultados previamente obtenidos, indicar que la continuación ya no está disponible y permitir iniciar una nueva auditoría sin duplicar registros.
+
+5. REGISTRO DE IMÁGENES SIN USO EN «Imagenes_Reemplazadas»
+   5.1. Registrar las imágenes clasificadas como Sin uso en la misma hoja de Google Sheets denominada «Imagenes_Reemplazadas», que actualmente almacena el historial de imágenes reemplazadas.
+   5.2. Cada archivo sin uso deberá tener un registro identificable y vinculado de forma inequívoca al archivo de Drive. El registro deberá conservar el ID de Drive y el URL público de visualización.
+   5.3. Distinguir explícitamente los registros creados por detección de imágenes sin uso de los registros de imágenes que realmente fueron reemplazadas desde el modal de detalle. No presentar una imagen detectada como sin uso como si hubiera sido reemplazada.
+   5.4. Antes de diseñar las columnas o escribir registros, auditar la estructura real de Imagenes_Reemplazadas y todos sus consumidores. Reutilizar los campos compatibles y definir una ampliación compatible únicamente si resulta necesaria; no sobrescribir, reinterpretar ni eliminar filas históricas existentes.
+   5.5. Evitar duplicados por ID de Drive. Una nueva ejecución deberá actualizar o reconciliar el registro correspondiente de forma idempotente, sin crear una fila repetida por cada auditoría.
+   5.6. Registrar, cuando estén disponibles, nombre, ID de Drive, URL público, tipo MIME, ubicación original, fecha de creación/subida informada por Drive, fecha de detección y estado de administración. Los datos no disponibles deberán permanecer como no disponibles; no inventar fechas ni datos históricos.
+   5.7. Si una imagen no tiene registro de reemplazo ni fecha de reemplazo, deberá seguir siendo administrable. La ausencia de esos datos no podrá impedir su descarga, traslado o eliminación cuando las validaciones de seguridad lo permitan.
+   5.8. Si Drive no proporciona una fecha de creación/subida verificable, mostrar el dato como no disponible, sin impedir las acciones permitidas.
+   5.9. El registro deberá reflejar los cambios de ubicación y estado después de mover, restaurar o eliminar un archivo, conservando la trazabilidad de su ID y URL.
+
+6. URL PÚBLICO Y COMPATIBILIDAD CON LAS TARJETAS DE GPSpedia
+   6.1. Obtener y registrar el URL público de visualización de cada imagen sin uso conforme al mecanismo de acceso definido para los archivos administrados.
+   6.2. Comprobar que el enlace corresponde al archivo correcto y que la imagen puede visualizarse desde el contexto de la plataforma.
+   6.3. Reutilizar la función existente en GPSpedia que transforma/adapta los enlaces de imágenes almacenadas en Google Drive para que puedan visualizarse correctamente en las tarjetas del catálogo.
+   6.4. No crear una segunda función de transformación ni duplicar formatos de URL si ya existe un mecanismo compartido. La auditoría de implementación deberá localizar la función real y comprobar sus formatos admitidos.
+   6.5. Conservar el ID original de Drive y el URL fuente, además del URL transformado utilizado para visualización, cuando la arquitectura actual permita separar ambos valores.
+   6.6. La habilitación de visualización pública deberá limitarse a cada archivo que corresponda y respetar el modelo de permisos existente. No cambiar permisos de la carpeta raíz ni ampliar acceso a archivos En uso, No verificables u otros documentos por efecto secundario.
+   6.7. Verificar la accesibilidad del URL y el renderizado real de la imagen en las tarjetas, incluyendo enlaces inválidos, archivos eliminados, permisos insuficientes y errores de carga.
+
+7. ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO
+   7.1. Detectar las imágenes clasificadas de forma concluyente como Sin uso y trasladarlas a una subcarpeta dedicada dentro de la carpeta raíz Cortes.
+   7.2. Utilizar una única carpeta de destino administrada por la herramienta, identificándola de manera estable y reutilizándola en auditorías posteriores. Nombre funcional propuesto: «Imagenes_Sin_Uso».
+   7.3. Crear la carpeta si no existe; si ya existe, verificar que pertenece realmente al árbol Cortes y que corresponde al destino autorizado antes de mover archivos.
+   7.4. No mover imágenes En uso, Históricas que deban conservarse para restauración, ni imágenes No verificables. No mover archivos cuya identidad, pertenencia a Cortes o clasificación no pueda validarse.
+   7.5. Conservar la ubicación original en el registro antes del traslado y actualizar la ubicación actual después de confirmar que el movimiento terminó correctamente.
+   7.6. La operación deberá ser idempotente: una imagen ya ubicada en la carpeta de administración no deberá moverse repetidamente ni generar registros duplicados.
+   7.7. Si el movimiento falla, conservar el registro del error y la ubicación real; no marcar el archivo como trasladado cuando Drive no confirme la operación.
+   7.8. La carpeta de destino no deberá provocar que la siguiente auditoría vuelva a clasificar los mismos archivos como nuevos ni genere movimientos recursivos.
+
+8. VISUALIZACIÓN AMPLIADA — LIGHTBOX
+   8.1. Al hacer clic en una miniatura de la cuadrícula, abrir una visualización ampliada tipo lightbox, siguiendo el patrón visual y de interacción utilizado por los modales de detalle de corte de GPSpedia.
+   8.2. Mostrar la imagen en tamaño ampliado, centrada y conservando su relación de aspecto, sin deformación ni recorte innecesario.
+   8.3. Permitir acercar la imagen (zoom in) para inspeccionar detalles.
+   8.4. Permitir volver al tamaño ajustado automáticamente (zoom out) al volver a hacer clic sobre la imagen o al salir del estado ampliado, conforme al comportamiento de interacción definido durante la implementación.
+   8.5. Al cerrar el lightbox o hacer clic fuera de la imagen, restablecer el estado de zoom y devolver al usuario al inventario en la misma posición y vista.
+   8.6. Evitar que el lightbox abra varias instancias, que el clic sobre los controles de gestión se propague y que el cierre accidental provoque acciones sobre el archivo.
+   8.7. Mantener controles de cierre y comportamiento usable en escritorio y dispositivos móviles.
+
+9. ACCIONES DISPONIBLES EN CADA IMAGEN
+   9.1. En la vista de cuadrícula, mostrar en el pie de cada tarjeta las acciones permitidas para el archivo:
+       - Descargar.
+       - Borrar.
+       - Mover.
+       - Restaurar, únicamente cuando exista una relación válida con una imagen reemplazada desde el modal de detalle.
+   9.2. En la vista de lista, conservar esas acciones mediante controles asociados a la fila, sin añadir miniaturas ni metadatos que contradigan el modo de lista.
+   9.3. Descargar:
+       - Permitir descargar el archivo desde la interfaz con su contenido original.
+       - Conservar el nombre y extensión del archivo cuando estén disponibles.
+       - La ausencia de registro de reemplazo o de fecha de subida no deberá bloquear la descarga.
+   9.4. Borrar:
+       - Permitir borrar una imagen sin uso únicamente después de volver a verificar que no tenga referencias activas y que no sea necesaria para una restauración histórica.
+       - Solicitar confirmación antes de ejecutar la acción.
+       - Mantener coherencia entre el texto de interfaz y la operación real de Drive (papelera o eliminación definitiva), resolviendo primero el hallazgo AUD-IMG-04.
+       - Registrar el resultado y no presentar como borrado un archivo cuya operación haya fallado.
+   9.5. Mover:
+       - Permitir mover la imagen sin uso a la carpeta de administración y, cuando corresponda, a otra ubicación autorizada dentro de Cortes.
+       - Validar la carpeta de destino, la pertenencia al árbol Cortes y la identidad del archivo.
+       - Actualizar la ubicación y el registro en Imagenes_Reemplazadas solo después de confirmar el movimiento.
+   9.6. Restaurar:
+       - Mostrar esta acción únicamente para imágenes cuyo registro demuestre que fueron reemplazadas por una imagen nueva desde el modal de detalle.
+       - Reutilizar el flujo de restauración existente, validando el registro, el campo de destino, el archivo histórico y la imagen actualmente activa.
+       - Restaurar la imagen anterior al campo correspondiente y conservar la imagen que estaba activa mediante el intercambio/historial previsto por GPSpedia.
+       - No ofrecer «Restaurar» a imágenes que solo fueron detectadas como Sin uso y que nunca tuvieron una relación de reemplazo.
+   9.7. Los errores de permisos, archivo inexistente, registro inconsistente, URL inválido o cambio concurrente deberán comunicarse de forma clara y no dejar el inventario en un estado falso.
+
+10. SEGURIDAD, INTEGRIDAD Y TRAZABILIDAD
+   10.1. Todas las acciones sensibles deberán validarse en el backend con sesión y privilegio Desarrollador; ocultar controles en la interfaz no sustituye la autorización del servidor.
+   10.2. Antes de mover o borrar, volver a comprobar el estado de uso para evitar actuar sobre una imagen que haya sido referenciada después de la auditoría.
+   10.3. No borrar ni mover imágenes activas o no verificables. Ante incertidumbre, bloquear la acción y explicar el motivo.
+   10.4. No eliminar ni alterar registros históricos de reemplazos existentes. Cada nuevo registro de inventario deberá conservar su tipo y trazabilidad.
+   10.5. Evitar que fallos parciales de Drive y Sheets produzcan registros contradictorios. Definir un orden de operaciones y una estrategia de recuperación cuando una acción en Drive se complete pero falle la actualización de la hoja, o viceversa.
+   10.6. Registrar quién ejecutó la acción, cuándo, qué archivo fue afectado, su ubicación anterior y posterior y el resultado, utilizando los mecanismos de auditoría existentes.
+   10.7. No exponer tokens, credenciales ni enlaces administrativos en la interfaz o en registros de diagnóstico.
+   10.8. Mantener la restricción de alcance: la herramienta administra imágenes del árbol Cortes y no debe operar sobre archivos ajenos a esa raíz.
+
+11. PRUEBAS Y CRITERIOS DE ACEPTACIÓN
+   A. Cobertura del inventario:
+      - Archivos en la raíz Cortes.
+      - Imágenes en uno y varios niveles de subcarpetas.
+      - Más de 14 imágenes.
+      - Más de 250 archivos y varios lotes.
+      - Carpetas vacías, carpeta de administración y archivos ya trasladados.
+      - Interrupción, reanudación, expiración de cursor y nueva auditoría.
+      - Confirmar que cada imagen se contabiliza una sola vez y que el estado completo solo aparece al finalizar el árbol.
+   B. Clasificación:
+      - Imagen En uso.
+      - Imagen Sin uso.
+      - Imagen Histórica/reemplazada.
+      - Imagen No verificable.
+      - URL en formatos admitidos, URL inválido, referencia en otra hoja y error de lectura.
+      - Confirmar que los casos no verificables nunca se etiquetan como Sin uso.
+   C. Persistencia:
+      - Cerrar y volver a abrir el modal.
+      - Navegar a otra sección y regresar.
+      - Cerrar y reiniciar la aplicación.
+      - Recuperar la última auditoría y la vista seleccionada.
+      - Reanudar cuando el cursor siga vigente y conservar resultados parciales cuando haya expirado.
+   D. Presentación:
+      - Cambiar repetidamente entre cuadrícula y lista.
+      - Ver miniaturas, nombres y etiquetas.
+      - Abrir/cerrar lightbox, aplicar zoom in y zoom out.
+      - Comprobar que las acciones no abren accidentalmente el lightbox.
+      - Validar escritorio y móvil.
+   E. Registro y URL:
+      - Imagen con historial de reemplazo.
+      - Imagen sin registro de reemplazo.
+      - Imagen sin fecha de subida disponible.
+      - URL público accesible y URL no accesible.
+      - Confirmar que la transformación existente permite visualizar la imagen en una tarjeta GPSpedia.
+      - Repetir auditoría y comprobar que no se duplican filas.
+   F. Administración:
+      - Descargar imagen con y sin historial/fecha.
+      - Mover imagen a la carpeta dedicada.
+      - Borrar con confirmación y validar el estado real en Drive.
+      - Restaurar imagen previamente reemplazada desde el modal de detalle.
+      - Rechazar mover/borrar imágenes En uso o No verificables.
+      - Simular fallos de permisos, Drive, Sheets y operaciones concurrentes.
+   G. Integridad:
+      - Confirmar que no se alteran los registros históricos anteriores.
+      - Confirmar que no se modifican imágenes activas ni archivos fuera de Cortes.
+      - Confirmar consistencia entre Drive, Imagenes_Reemplazadas y el inventario persistido.
+      - Ejecutar pruebas de regresión de reemplazo, historial, recuperación y eliminación existentes.
+
+12. DEPENDENCIAS Y ORDEN DE IMPLEMENTACIÓN
+   - Resolver o integrar los hallazgos AUD-IMG-01 a AUD-IMG-07 relacionados con permisos, consistencia del historial, validación global, semántica de borrado, auditoría completa, clasificación y restauración.
+   - Auditar primero el esquema real de Imagenes_Reemplazadas y sus consumidores.
+   - Localizar y reutilizar la función real de transformación de URL de imágenes de Google ya utilizada por las tarjetas de GPSpedia.
+   - Auditar el estado actual del recorrido de Drive y explicar por qué el usuario recibe repetidamente los mismos 14 archivos antes de modificarlo.
+   - Auditar los mecanismos de persistencia existentes y seleccionar uno compatible con el ciclo de vida de la aplicación.
+   - Cualquier archivo adicional deberá justificarse por dependencias comprobadas durante la auditoría inicial.
+
+RESTRICCIONES
+- Esta entrada es una especificación pendiente; no autoriza por sí sola a modificar código, datos, hojas, imágenes, permisos ni deployments.
+- No asumir que los 14 archivos observados son el total real de imágenes.
+- No inventar fechas de reemplazo o subida ni presentar registros de imágenes sin uso como reemplazos reales.
+- No modificar ni eliminar registros históricos existentes de Imagenes_Reemplazadas.
+- No hacer públicas carpetas completas ni archivos fuera del alcance autorizado.
+- No mover, borrar o restaurar imágenes sin validar referencias, identidad, permisos y estado actual.
+- Antes de implementar, seguir íntegramente Proceso de desarollo.md: checkpoint inicial, auditoría archivo por archivo/línea por línea/función por función, respaldos exactos, revisión de efectos colaterales, pruebas, Code Review, registros y un único commit mediante el procedimiento Git Database API autorizado.
+- No desplegar servicios ni realizar operaciones productivas de Drive/Sheets sin autorización expresa.
+
+RESULTADO FINAL ESPERADO
+Una herramienta única de inventario y administración que descubre todas las imágenes del árbol Cortes, clasifica de forma confiable su estado, conserva los resultados al cerrar la aplicación, registra las imágenes sin uso en Imagenes_Reemplazadas, organiza esas imágenes en una subcarpeta dedicada, permite visualizarlas en cuadrícula o lista, abrirlas en lightbox y ejecutar las acciones Descargar, Borrar, Mover y Restaurar cuando corresponda. La herramienta no deberá limitarse a los 14 archivos observados ni confundir ausencia de datos históricos con imposibilidad de administrar una imagen.
+================================================================================
+
+
+================================================================================
+AMPLIACIÓN DE REQUISITOS — REDISEÑO FUNCIONAL DEL MODAL «OPCIONES DE DESARROLLADOR»
+Fecha: 2026-11-05
+Rama de trabajo: GPSpedia2.2.5_work
+Estado: REQUISITOS DOCUMENTADOS; AUDITORÍA TÉCNICA E IMPLEMENTACIÓN PENDIENTES.
+Referencias relacionadas:
+- ACTUALIZACIÓN DE TAREA — ORGANIZACIÓN DEL PANEL DE DESARROLLADOR.
+- ACTUALIZACIÓN DE TAREA — REDISEÑO RESPONSIVE DEL MODAL DE DESARROLLADOR.
+- TAREAS ADMIN 2, 3, 4, 5, 8, 9 y 10.
+- BLOQUE 5: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN.
+
+OBJETIVO
+Ampliar el rediseño existente del modal de desarrollador con una presentación más compacta y profesional, consola compartida entre secciones, diagnóstico detallado de servicios, controles de respaldo y base de datos agrupados, acciones de limpieza y firmas simplificadas, corrección de la lógica de reordenamiento de imágenes y revisión del mecanismo de generación de IDs.
+
+1. IDENTIDAD DEL MODAL Y CONSOLA GLOBAL
+1.1. El título principal del modal debe ser exactamente «Opciones de desarrollador». No utilizar «Panel administrativo y diagnóstico» ni títulos alternativos.
+1.2. La consola debe permanecer visible y accesible desde todas las secciones del modal, no únicamente desde Diagnóstico. Debe existir una única consola compartida; no duplicar instancias ni identificadores.
+1.3. En Diagnóstico, el título de la consola debe ser exactamente «>_Consola». Eliminar la denominación «Consola en tiempo real».
+1.4. Mantener la salida, los eventos y las operaciones de la consola existentes. La reorganización visual no debe romper listeners, comandos, historial ni el comportamiento de desplazamiento.
+
+2. DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+2.1. Presentar cada servicio como una tarjeta miniatura independiente, con información resumida y jerarquía visual consistente. La tarjeta debe mostrar únicamente métricas disponibles y verificables, como nombre del servicio, estado, última comprobación y velocidad/latencia de respuesta.
+2.2. Al seleccionar una tarjeta, mostrar una vista de detalle con todos los parámetros que el servicio realmente pueda proporcionar o que el cliente pueda medir. Incluir, cuando exista una fuente verificable:
+- tráfico y volumen de solicitudes en tiempo real o durante el intervalo medido;
+- velocidad/tiempo de respuesta;
+- número de ejecuciones;
+- lista de funciones ejecutadas, con fecha/hora y resultado cuando esos datos estén disponibles;
+- estado de dependencias y última actualización.
+2.3. Diferenciar claramente métricas medidas desde el navegador de métricas generadas por el backend. No presentar como métricas internas de Apps Script valores que el servicio no puede medir.
+2.4. Añadir un gráfico de líneas que permita observar el tráfico de cada servicio a lo largo del tiempo. La serie, unidad, ventana temporal, frecuencia de actualización y origen de datos deben quedar definidos mediante auditoría; no representar datos simulados ni interpolar valores inexistentes como si fueran mediciones reales.
+2.5. El monitoreo debe tolerar que un servicio no responda sin bloquear el resto del panel. Indicar datos desconocidos, desactualizados, parciales o fallidos; no convertir ausencia de información en cero.
+2.6. Auditar qué servicios registran ejecuciones y funciones ejecutadas, qué métricas pueden medirse desde el navegador y qué instrumentación adicional sería necesaria. Evitar aumentar innecesariamente las llamadas, superar cuotas o exponer información sensible.
+
+3. RESPALDOS Y RESTAURACIÓN — CAMPO ÚNICO COMPARTIDO
+3.1. Utilizar un único campo de texto compartido por todas las opciones de respaldo y restauración. No crear un campo independiente para cada operación.
+3.2. El campo debe aceptar el enlace completo de la carpeta de Drive o el enlace completo de la Spreadsheet, según la operación seleccionada. La interfaz debe indicar de forma contextual qué tipo de enlace espera la acción elegida.
+3.3. Al finalizar un respaldo de Spreadsheet, colocar en ese mismo campo el enlace completo de la Spreadsheet respaldada. Al finalizar un respaldo de Drive, colocar en el mismo campo el enlace completo de la carpeta respaldada.
+3.4. El enlace devuelto debe ser el enlace completo y utilizable, no únicamente el ID. Antes de mostrarlo como resultado correcto, verificar que el recurso creado exista y que el enlace corresponda al archivo/carpeta realmente generado.
+3.5. Mantener el mismo campo como entrada para las operaciones de restauración que necesiten la ubicación del respaldo. Validar el tipo de recurso, su identidad, permisos y alcance antes de ejecutar.
+3.6. Reorganizar los botones de respaldo/restauración con iconografía coherente, nombres explícitos, agrupación por tipo de operación, jerarquía visual y estados de carga/resultado. Ubicar estas opciones dentro de la pestaña «Base de datos», como solicita el usuario, sin duplicar controles ni eliminar acciones existentes.
+3.7. Auditar si la pestaña «Respaldos» debe integrarse visualmente o conservarse como navegación secundaria. No retirar una sección ni cambiar IDs/listeners hasta conocer todas sus dependencias.
+3.8. Conservar autorización backend, confirmaciones, integridad del respaldo, controles de restauración, registro de auditoría y compatibilidad con las acciones existentes backupDatabase, backupDrive, restoreDatabase y restoreDrive.
+
+4. LIMPIEZA DE REGISTROS — SELECTORES Y ACCIÓN ÚNICA
+4.1. Sustituir la presentación de botones independientes de borrado por casillas de selección para:
+- «Actividad de usuarios»;
+- «Registro de Logs».
+4.2. Presentar un solo botón de ejecución/borrado para las dos opciones. El botón debe actuar exclusivamente sobre las casillas seleccionadas; una casilla no seleccionada nunca debe implicar borrado.
+4.3. Antes de ejecutar, mostrar una confirmación que identifique exactamente qué fuentes se limpiarán y el alcance de cada operación.
+4.4. Mantener las operaciones backend y sus políticas separadas cuando sus fuentes, permisos o reglas de retención sean diferentes. La unificación solicitada es de interfaz y punto de ejecución, no una autorización para mezclar hojas, borrar encabezados o ampliar el alcance de las purgas.
+4.5. Conservar la protección de sesión y privilegio Desarrollador, el registro de auditoría y las reglas ya implementadas para ActividadUsuario y Logs. Verificar la compatibilidad con clearActivityLogs y clearSensitiveLogs antes de definir el contrato final.
+
+**Registro de implementación — 2026-11-06**
+- Estado: interfaz implementada y verificada estáticamente; pruebas reales de navegador, Apps Script y Spreadsheet pendientes de la fase funcional consolidada.
+- index.html: las tarjetas y botones independientes se sustituyeron por casillas de selección, selector de retención de ActividadUsuario y un único botón.
+- ui.js: un único handler ejecuta solo las casillas marcadas, confirma el alcance de cada fuente, procesa las operaciones secuencialmente e informa resultados independientes. Los payloads de sesión existentes se conservan.
+- style.css: estilos acotados para las opciones y su presentación responsive.
+- api-config.js y Services/feedback.js: auditados y sin cambios; ambas acciones y políticas backend permanecen separadas.
+- No se ejecutaron limpiezas reales ni se desplegó ningún servicio.
+
+5. ACCIONES DE FIRMAS VIN
+5.1. Aplicar la misma reorganización visual a las acciones «Recalcular firmas» y «Diagnóstico de firmas»: presentarlas como opciones seleccionables mediante casillas y utilizar un único botón para ejecutar las acciones seleccionadas.
+5.2. Si se selecciona una sola opción, ejecutar únicamente esa acción. Si se seleccionan ambas, ejecutar cada proceso de forma identificable y conservar sus resultados, errores y estados por separado.
+5.3. No fusionar los algoritmos ni alterar la lógica del motor VinDifferentialEngine.js. Auditar primero los botones, funciones, contratos y efectos actuales de cada operación.
+5.4. Mostrar progreso, resultado y errores de cada acción. Evitar ejecuciones duplicadas o concurrentes incompatibles.
+
+6. GESTOR DE IMÁGENES SIN USO Y CONTROL DE ESPACIO EN DRIVE
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA. Pendiente validación funcional real de Drive/Spreadsheet, navegador/PWA y monitor de cuota en el entorno Apps Script.
+6.1. Las imágenes referenciadas por las columnas de imagen de la hoja «Cortes» se consideran protegidas/en uso. El gestor de limpieza no debe mostrarlas.
+6.2. Al reemplazar una imagen desde el editor in-modal del desarrollador, registrar en «Imagenes_Reemplazadas» el enlace completo anterior (URL completa, no solo el ID). No mover, renombrar ni eliminar físicamente el archivo reemplazado. El archivo permanece en su carpeta actual hasta una acción posterior y explícita del usuario.
+6.3. Escanear recursivamente la carpeta raíz «Cortes» y todas sus subcarpetas. Comparar los IDs de archivos encontrados con las referencias vigentes de las columnas de imagen de la hoja «Cortes», no con coincidencias de nombre. Registrar en «Imagenes_Reemplazadas» únicamente las imágenes que no estén referenciadas, guardando su URL completa de Drive.
+6.4. El escaneo no mueve, renombra ni elimina archivos. Debe ser idempotente, evitar filas duplicadas y actualizar la última auditoría/estado de registros ya existentes. Si un archivo vuelve a estar referenciado en «Cortes», debe quedar protegido y desaparecer del inventario visible de imágenes sin uso.
+6.5. El gestor debe mostrar exclusivamente imágenes sin uso confirmado. Mantener vistas de lista y cuadrícula, miniaturas, lightbox y las acciones explícitas de descargar, mover a carpeta y enviar a papelera/eliminar. Antes de mover o eliminar, volver a validar en servidor que el archivo sigue sin referencias activas en «Cortes». Las acciones de Drive requieren confirmación y resultado verificable.
+6.6. Mantener creación de carpetas desde el modal del desarrollador. Limitar los destinos al árbol autorizado «Cortes». Preservar la URL completa almacenada; el ID se utiliza únicamente para operaciones internas de Drive.
+6.7. MONITOR GLOBAL DE ALMACENAMIENTO: incorporar al modal del desarrollador un monitor del espacio total de Google Drive de la cuenta/usuario que ejecuta el servicio, no del tamaño de la carpeta «Cortes». Mostrar uso global y, cuando la API lo proporcione, cuota total, espacio restante y porcentaje. Distinguir cuota ilimitada o no disponible de errores de consulta. No sumar archivos de una carpeta para simular el total ni mostrar cifras estimadas como datos reales.
+6.8. No reorganizar físicamente las imágenes de modelo por versión/rango ni alterar la ubicación de imágenes protegidas. Mantener intactos los flujos de guardado/subida/renombramiento de add_cortes.html y del editor in-modal, salvo la integración mínima necesaria para registrar la URL anterior.
+6.9. Pruebas: referencias en distintas filas/campos, imágenes compartidas, enlaces completos en formatos Drive admitidos, subcarpetas profundas, referencias no interpretables, duplicados, imagen que vuelve a estar en uso, errores parciales de auditoría, permisos, movimiento/descarga/papelera, y monitor global con cuota disponible/ilimitada/no disponible.
+
+### REQUISITO OBLIGATORIO — MONITOR GLOBAL DE ALMACENAMIENTO DE DRIVE
+El modal del desarrollador debe contabilizar el almacenamiento total de Google Drive de la cuenta/usuario del servicio. No es válido mostrar el tamaño de «Cortes» como si fuera el total del Drive. Mostrar cuota, restante y porcentaje solo cuando la fuente oficial los proporcione; manejar cuota ilimitada/no disponible y errores sin inventar valores.
+
+7. GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+7.1. Investigar el mecanismo actual: al crear una fila, el sistema copia la fórmula de la fila anterior y esa fórmula genera automáticamente el ID.
+7.2. Buscar una alternativa para retirar esa fórmula heredada de las filas nuevas sin cambiar el ID ya asignado a la fila registrada.
+7.3. Preservar todos los IDs existentes, sus valores numéricos, prefijo, ceros a la izquierda y representación actual «V-001». No renumerar registros ni cambiar referencias históricas.
+7.4. Evaluar si el ID generado por fórmula puede convertirse en un valor estático conservando exactamente el resultado visible y el formato de celda, y definir un mecanismo seguro para generar los IDs futuros sin depender de copiar la fórmula de la fila anterior.
+7.5. Verificar si es viable ampliar en un dígito la capacidad del identificador, por ejemplo evaluando el formato de mayor longitud que corresponda, sin asumir que la modificación es compatible. Auditar límites, fórmulas, validaciones, ordenamientos, búsquedas, enlaces, consumidores frontend/backend, referencias en otras hojas y posibles colisiones.
+7.6. No cambiar el formato actual ni introducir IDs de longitud mixta hasta documentar la compatibilidad y el plan de transición. Cualquier cambio de formato debe preservar la identidad de los registros y contar con estrategia de compatibilidad y reversión.
+7.7. Probar en una copia de Spreadsheet: IDs existentes, alta de filas consecutivas, concurrencia, filas vacías/intermedias, fórmula ausente, valores duplicados, máximo actual y capacidad ampliada. No ejecutar migraciones sobre la hoja productiva durante la auditoría.
+
+
+ESTADO DE IMPLEMENTACIÓN — TAREA 7: GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA POR DEPENDENCIAS DE SPREADSHEET Y CONCURRENCIA.
+
+- WRITE y ADMIN copian la fila anterior y mantienen/reaplican fórmulas para generar el ID de una fila nueva.
+- ADMIN ordena la hoja Cortes por Marca; si las fórmulas de ID dependen de ROW(), el resultado puede cambiar al reordenar.
+- WRITE y ADMIN son endpoints distintos. Sus ScriptLock no constituyen un bloqueo compartido; un generador max(ID)+1 duplicado en ambos servicios no garantiza unicidad concurrente.
+- CATALOG expone el ID subyacente sin transformarlo. ui.js utiliza una resta numérica para ordenar los últimos registros; el ID debe conservar tipo numérico.
+- El formato visible «V-001» no está definido en los archivos de código. No se conoce el máximo real ni el formato de celda porque no se inspeccionó una copia de Spreadsheet.
+- No se modificó código, fórmulas, valores, formatos ni datos de ninguna hoja.
+- No se desplegó ni ejecutó Apps Script.
+
+ACTUALIZACIÓN DEL USUARIO — 2026-11-06
+El usuario confirmó que la estructura de la Spreadsheet no ha cambiado y coincide con la estructura inventariada. Esta confirmación no acredita el máximo numérico, formato real de celda, duplicados, filas intermedias ni efectos del ordenamiento; la Tarea 7 permanece bloqueada hasta verificar esos datos en una copia accesible.
+
+DEPENDENCIAS PARA CONTINUAR
+1. Disponer de una copia aislada de la Spreadsheet para inspeccionar fórmulas, formato, máximo, duplicados, filas intermedias y ordenamiento.
+2. Definir un único mecanismo coordinado de asignación de IDs para WRITE y ADMIN, evitando generadores independientes.
+3. Probar la conversión de fórmulas existentes a valores en la copia, conservando exactamente el resultado numérico y el formato de cada celda.
+4. Resolver la ampliación de capacidad solo después de verificar el máximo actual y un plan de transición que no cambie la representación histórica ni introduzca longitudes mixtas.
+
+No ejecutar cambios sobre la Spreadsheet productiva ni modificar el formato actual hasta completar estas dependencias.
+
+8. DISEÑO, RESPONSIVE Y COMPATIBILIDAD
+8.1. Mantener el modal profesional, compacto y ordenado en escritorio, móvil y PWA, aprovechando el espacio sin ocultar controles necesarios.
+8.2. Utilizar iconografía consistente y etiquetas claras en los botones; no depender exclusivamente del color o del icono para comunicar la acción.
+8.3. Conservar accesibilidad por teclado, etiquetas accesibles, estados de foco, tooltips cuando correspondan y tamaños táctiles adecuados.
+8.4. Conservar los IDs, acciones, contratos y listeners existentes salvo que una auditoría justifique un cambio imprescindible y este quede documentado.
+8.5. La consola global debe seguir siendo una sola instancia y no provocar duplicación de listeners al cambiar de pestaña o reabrir el modal.
+
+9. AUDITORÍA, PRUEBAS Y CRITERIOS DE ACEPTACIÓN
+- Auditar index.html, style.css, ui.js, api-config.js, Services/admin.js, servicios de logs/actividad y las funciones de firmas que realmente intervengan. Para imágenes, auditar el proceso de reorganización y sus dependencias; para IDs, auditar los escritores, fórmulas, esquema y todos los consumidores.
+- Crear respaldos exactos antes de cualquier modificación de código y respetar el procedimiento obligatorio.
+- Comprobar el título exacto del modal y el título exacto «>_Consola».
+- Comprobar que la misma consola se mantiene visible en las cinco secciones existentes sin duplicarse.
+- Comprobar tarjetas de servicios, apertura de detalle, métricas, lista de funciones y gráfico de líneas con datos reales; probar servicios caídos, lentos, desconocidos y respuestas parciales.
+- Comprobar el único campo compartido para enlaces de Spreadsheet/carpeta, entrada de restauración y salida de enlaces completos tras respaldos.
+- Comprobar que el borrado ejecuta únicamente las casillas seleccionadas y que las fuentes no seleccionadas permanecen intactas.
+- Comprobar las acciones de firmas por separado y en conjunto, sin duplicación ni alteración de VinDifferentialEngine.js.
+- Probar reordenamiento de imágenes exclusivas y compartidas, múltiples versiones/rangos, destino existente y fallos parciales; verificar que add_corte.html y la edición in-modal mantienen intactos sus flujos de guardado y renombramiento.
+- Probar IDs actuales y futuros, preservación exacta de V-001, eliminación segura de fórmula y posible ampliación de capacidad, primero en una copia aislada.
+- Validar escritorio, móvil y PWA; revisar consola, navegación, accesibilidad y ausencia de regresiones.
+
+DEPENDENCIAS Y LÍMITES
+- La monitorización ampliada depende de fuentes reales de telemetría y de definir qué puede medir cada servicio; no se deben inventar métricas.
+- La vista unificada de limpieza depende de auditar las dos acciones backend existentes y sus políticas, manteniendo sus límites.
+- El campo compartido de respaldo depende de confirmar los formatos de enlace que aceptan las cuatro acciones actuales y los resultados que devuelven.
+- La reorganización de imágenes depende de reconstruir las relaciones de carpetas y registros reales en Cortes.
+- La ampliación de IDs depende de auditar la hoja y todos sus consumidores; no se autoriza cambiar IDs productivos en esta etapa.
+- Esta ampliación no modifica ni reemplaza las tareas ADMIN existentes; las complementa y deberá coordinarse con ellas para evitar duplicar controles o acciones.
+
+RESTRICCIONES GENERALES
+- No modificar la rama protegida ni realizar merge sin autorización expresa.
+- No modificar la lógica de guardado ni renombramiento de imágenes en add_corte.html ni en el modo de edición in-modal del desarrollador.
+- No mover, renombrar, borrar ni sobrescribir imágenes reales durante la auditoría.
+- No modificar IDs ni fórmulas en la Spreadsheet productiva durante la auditoría.
+- No mostrar métricas ficticias ni enlaces incompletos.
+- No debilitar autorización backend, confirmaciones, auditoría ni mecanismos de respaldo.
+================================================================================
+
+
+================================================================================
+INFORME DE AUDITORÍA ESTÁTICA — REPETICIÓN DEL INVENTARIO DE 14 ARCHIVOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; CAUSA RAÍZ NO DETERMINADA; VALIDACIÓN FUNCIONAL DEL DEPLOYMENT PENDIENTE.
+
+- Se auditaron Services/admin.js, api-config.js, ui.js e index.html, incluyendo el recorrido recursivo, los iteradores de archivos/carpetas, los cursores, el snapshot de referencias, el enrutamiento ADMIN y la presentación del resultado.
+- No se encontró un límite total de 14 archivos. El backend procesa hasta 25 archivos y 20 subcarpetas por petición, y devuelve un cursor mientras la pila de carpetas conserve trabajo.
+- El frontend inicia con cursor null y continúa enviando el cursor recibido hasta que el backend devuelve complete:true. No contiene un límite de 14.
+- El snapshot de CacheService almacena IDs de referencias activas e históricas; no almacena ni limita el inventario de archivos de Drive.
+- Se detectó que el código no valida que DRIVE_FOLDER_ID resuelva a una carpeta llamada «Cortes» y que el endpoint debug informa la etiqueta 2.6.0, pero no un identificador de commit/build. No es posible confirmar desde GitHub qué código está ejecutando el deployment.
+- El frontend no compara su acumulado con totalAnalyzed, no muestra batchAnalyzed/foldersVisited y no detecta cursores repetidos o lotes sin avance. Se registra como riesgo de diagnóstico, no como causa demostrada de los 14 archivos.
+- La causa raíz permanece sin determinar porque no se ejecutó el deployment ni se consultó el árbol real de Drive. No se modificó código ni se alteraron datos.
+- Siguiente paso: prueba funcional de solo lectura que registre por lote batchAnalyzed, totalAnalyzed, foldersVisited, complete, presencia/cambio del cursor, rootFolderName y folderPath de los resultados. Verificar también que el deployment corresponda al código auditado.
+- No aumentar límites ni modificar iteradores antes de obtener la evidencia anterior.
+================================================================================
+
+
+================================================================================
+TAREA — CORREGIR LA REANUDACIÓN DEL INVENTARIO DE IMÁGENES EN DRIVE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ESTADO: CORRECCIÓN DE CÓDIGO Y REVISIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN FUNCIONAL EN DEPLOYMENT PENDIENTE.
+
+- Causa localizada: loadAuditDriveReferenceSnapshot() reconstruía el Blob comprimido sin contentType y lo entregaba a Utilities.ungzip(), coincidiendo con el error runtime reportado sobre tipo de contenido nulo.
+- Corrección aplicada en Services/admin.js: se asignó application/x-gzip al Blob reconstruido.
+- Alcance preservado: no se cambiaron el snapshot, CacheService, fragmentos, manifiesto, expiración, cursor, tokens, límites de 25 archivos/20 subcarpetas ni algoritmo de recorrido.
+- Respaldo exacto de Services/admin.js: blob 18ab493f5528df20d3e1f901468c5777429d3e07.
+- Comparación: archivo de 3,059 líneas antes y después; una única línea modificada, en loadAuditDriveReferenceSnapshot().
+- Verificaciones estáticas: compilación sintáctica V8 correcta; se confirmó que la escritura gzip, Base64, tamaño de fragmentos, límite codificado, TTL de CacheService, cursor y límites por lote permanecen sin cambios.
+- Pendiente: actualizar manualmente el deployment ADMIN a una versión nueva y ejecutar la auditoría real desde la interfaz. Debe comprobarse la continuidad entre varias peticiones y la respuesta final complete:true, con cobertura del árbol esperado. Hasta entonces no se declara resuelta la incidencia funcional.
+- No se desplegó Apps Script, no se modificaron datos/archivos de Drive o Sheets y no se tocó la rama protegida.
+================================================================================
+
+
+================================================================================
+SUBTAREA — PERSISTIR Y CONSULTAR IMÁGENES SIN USO DESDE SPREADSHEET
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN EN DEPLOYMENT PENDIENTE.
+
+OBJETIVO
+Guardar en la hoja existente Imagenes_Reemplazadas todas las imágenes que una auditoría completa clasifique como «Sin uso detectado», para poder consultarlas y gestionarlas desde el panel administrativo sin ejecutar una auditoría nueva cada vez.
+
+ALCANCE IMPLEMENTADO
+- Persistencia en Spreadsheet, no en almacenamiento local del navegador.
+- Registro idempotente por ID de Drive y distinción explícita del origen auditoria_drive.
+- Conservación de las once columnas históricas y adición de metadatos en columnas nuevas, sin desplazar las existentes.
+- Exclusión de los registros de inventario del cálculo de imágenes históricas.
+- Consulta desde «Consultar Inventario e Historial», que lee la hoja al abrirse.
+- Protección para no restaurar como reemplazo una imagen sin uso y para no enviar a papelera un registro que ya no esté confirmado.
+- Revalidación backend de referencias, tipo MIME, estado de papelera y pertenencia al árbol Cortes.
+
+CRITERIO DE CLASIFICACIÓN
+- Se guardan únicamente archivos con clasificación «Sin uso detectado».
+- «Histórica» sigue representando imágenes de reemplazo y no se mezcla con el inventario de imágenes sin uso.
+- «No verificable» nunca se registra como sin uso.
+- Si un registro de inventario no vuelve a confirmarse en una auditoría completa posterior, su estado cambia a no_confirmada_en_ultima_auditoria y la acción de papelera queda bloqueada hasta que vuelva a confirmarse.
+
+VALIDACIÓN PENDIENTE
+- Actualizar el deployment ADMIN y publicar la versión frontend que incluya la nueva acción saveUnusedImagesInventory.
+- Ejecutar una auditoría completa, comprobar la creación/actualización idempotente de filas y consultar el inventario desde el panel sin ejecutar otra auditoría.
+- Probar que una imagen activa, histórica, fuera del árbol o con referencias no interpretables no se registre como sin uso.
+- La especificación integral de gestión de imágenes sin uso continúa abierta para las funciones adicionales que no forman parte de esta subtarea.
+================================================================================
+
+
+
+================================================================================
+CIERRE DE SUBTAREA — ADMINISTRACIÓN DE INVENTARIO E HISTORIAL DESDE EL MODAL
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; PUBLICACIÓN Y VALIDACIÓN LIVE PENDIENTES.
+
+ALCANCE IMPLEMENTADO
+- Columna explícita tipo_registro con los valores sin_uso_detectado y reemplazada; clasificación de filas existentes y escritura explícita en los nuevos registros.
+- Vista de lista con iconos y nombres; el icono abre la imagen ampliada.
+- Vista de cuadrícula con miniaturas clicables y lightbox con zoom y cierre.
+- Descarga de imágenes de ambos tipos mediante enlace Drive validado en backend.
+- Movimiento de imágenes sin uso confirmadas e imágenes reemplazadas históricas/restablecidas a carpetas existentes dentro de Cortes.
+- Creación de carpetas/subcarpetas dentro de Cortes desde el modal y selección de destino para mover.
+- Envío a papelera de ambos tipos, sujeto a referencias y estado; no se realiza eliminación irreversible.
+- Restauración histórica conservada exclusivamente para imágenes clasificadas como reemplazadas.
+- Registro de acciones exitosas en ActividadUsuario con actor autenticado, fecha, registro asociado, ubicación anterior/posterior y resultado.
+- Preservación de ubicacion_original en auditorías posteriores y actualización de ubicacion_actual después de mover.
+
+SEGURIDAD
+- Todas las nuevas acciones requieren sesión autenticada de desarrollador.
+- Validación en servidor de clasificación, referencias activas/no verificables, MIME image/*, estado de papelera, carpeta principal y pertenencia del archivo/destino al árbol Cortes.
+- No se cambian permisos de Drive ni se hacen públicos los archivos.
+- ActividadUsuario se trata como bitácora y no como fuente de referencias activas para evitar que el registro de una operación mantenga un archivo artificialmente en uso.
+
+PRUEBAS
+- Parseo V8 de los archivos JavaScript modificados: correcto.
+- IDs HTML del modal únicos; controles requeridos presentes; CSS balanceado.
+- Pruebas aisladas con servicios simulados de migración de clasificación, alta de registros, movimiento, descarga, creación/listado de carpetas, papelera, bloqueo de referencias activas, bloqueo de destinos externos, preservación de ubicación original, registro de actividad y reversión ante fallo de escritura.
+- No se ejecutó Apps Script ni se consultaron/modificaron datos reales de Spreadsheet o Drive.
+
+PENDIENTE
+- Publicar frontend y actualizar el deployment ADMIN únicamente después de revisar esta implementación.
+- Ejecutar pruebas funcionales en entorno real: consultar imágenes, previsualizar, descargar, mover, crear carpetas, enviar a papelera y restaurar un reemplazo. Confirmar los registros de ActividadUsuario.
+- La especificación integral de gestión de imágenes sin uso conserva cualquier requisito adicional no incluido en este alcance.
+================================================================================
+
+
+================================================================================
+ACLARACIÓN DE RAMAS VIGENTES — CORRECCIÓN DE REFERENCIAS HISTÓRICAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+- La rama de trabajo vigente confirmada por el usuario es GPSpedia2.2.5_work.
+- La rama base protegida para este flujo es GPSpedia2.2.5.
+- La referencia fix/pys-carousel-card-sizing-print-images que aparece en registros históricos y en documentos de contexto anteriores está desactualizada y no debe utilizarse para esta ejecución.
+- No crear una rama nueva para las tareas de esta sesión; continuar sobre GPSpedia2.2.5_work.
+- Esta aclaración no reescribe ni elimina registros históricos anteriores.
+
+================================================================================
+TAREA FUERA DEL ALCANCE — CORREGIR CONTRATO DEL MODAL DE AGREGADO DE CORTES
+Fecha de registro: 2026-11-06
+Referencia: Auditoría.txt, auditoría de atribución del colaborador en WRITE/ADMIN.
+Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN INDEPENDIENTE.
+- Auditar openAddCutModal() en ui.js y su contrato con addOrUpdateCut.
+- Actualmente el consumidor envía cutData.tipo, configRelay, ubicacion, colorCable, activaTestigo e imgBase64, mientras los handlers addOrUpdateCut de WRITE/ADMIN consumen tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1 e imgCorte1.
+- Determinar el mapeo funcional correcto y verificar cómo deben persistirse activaTestigo e imgBase64 antes de cambiar el contrato.
+- No corregir dentro de la tarea de validación de identidad del colaborador.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — IMPLEMENTACIÓN DE VALIDACIÓN DE IDENTIDAD EN WRITE/ADMIN
+Fecha: 2026-11-06 | Rama de trabajo: GPSpedia2.2.5_work | Base protegida: GPSpedia2.2.5
+Estado: IMPLEMENTACIÓN ESTÁTICA PREPARADA; PRUEBAS FUNCIONALES TRAS DESPLIEGUE PENDIENTES.
+
+- Services/write.js valida userId/sessionToken contra ActiveSessions y obtiene Nombre_Completo desde Users antes de cualquier escritura de addOrUpdateCut.
+- Services/admin.js utiliza el fullName del contexto autenticado por assertDeveloperSession() en el registro silencioso.
+- add_cortes.html y ui.js transmiten el contexto de sesión y dejan de enviar el nombre del colaborador como fuente de identidad.
+- Se conservan los tres slots de colaborador y el marcador opId heredado como compatibilidad de idempotencia, sin utilizar el nombre del cliente.
+- No se modificó el esquema de Spreadsheet, api-config.js ni los endpoints.
+- Verificaciones estáticas y simulaciones documentadas en Auditoría.txt.
+- Pendiente: desplegar WRITE y ADMIN y publicar frontend; ejecutar pruebas funcionales de sesiones ausentes/invalidas/expiradas, suplantación de nombre, alta nueva, vehículo existente, slots 1–3, recuperación idempotente y registro silencioso.
+- No se marca [X] hasta superar las pruebas funcionales. No se desplegó Apps Script ni se modificaron datos reales.
+- La discrepancia de contrato cutData en ui.js openAddCutModal() queda registrada como tarea independiente.
+
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUDITORÍA DE RAMA Y ÚLTIMO COMMIT
+Fecha: 2026-11-06
+Rama de trabajo confirmada: GPSpedia2.2.5_work
+Rama base del flujo: GPSpedia2.2.5
+
+- Se confirmó que GPSpedia2.2.5_work apunta a 36196020f618270693e3beeed0d03392b21d0c9e.
+- La última tarea de código fue validar la identidad del colaborador en WRITE y ADMIN (commit 3619602). La implementación estática está preparada; las pruebas funcionales siguen pendientes de despliegue.
+- La tarea anterior fue la gestión del inventario e historial de imágenes desde el modal (commit a1c9100). La implementación estática y las pruebas aisladas constan en el historial; publicación y validación live siguen pendientes.
+- Se confirmó que ui.js openAddCutModal() conserva una discrepancia entre las claves de cutData enviadas y las consumidas por los handlers. Mantenerla como tarea independiente hasta auditar el mapeo.
+- En Services/admin.js del HEAD actual, las llamadas Utilities.newBlob() tienen tipo MIME explícito; loadAuditDriveReferenceSnapshot() usa application/x-gzip. El error previo de tipo de contenido nulo no coincide con el código fuente actual; verificar versión desplegada antes de atribuir causa.
+- GitHub API devuelve protected:false para GPSpedia2.2.5. La protección está documentada por procedimiento interno, pero falta activar branch protection/ruleset en GitHub. Tarea administrativa pendiente; no modificar la rama base.
+- La referencia fix/pys-carousel-card-sizing-print-images queda obsoleta para este flujo. Los documentos de contexto se alinean con GPSpedia2.2.5_work y GPSpedia2.2.5.
+- No se ejecutaron pruebas reales, despliegues, solicitudes HTTP ni operaciones en Google Sheets/Drive durante esta revisión.
+================================================================================
+TAREA PENDIENTE — CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE
+Fecha de registro: 2026-11-06
+Rama: GPSpedia2.2.5
+Estado: PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA.
+- GitHub API devolvió protected:false para GPSpedia2.2.5 durante la auditoría.
+- Configurar branch protection o ruleset que impida actualizaciones directas no autorizadas y exija el flujo de revisión acordado.
+- No intentar modificar la configuración desde esta tarea documental ni modificar la rama base.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — ETAPA 1: CONSOLIDACIÓN DE AUTH Y USERS
+Fecha: 2026-11-06 | Rama de trabajo: GPSpedia2.2.5_work
+Rama de referencia de pruebas: GPSpedia2.2.5_auth-users-test
+Estado: CÓDIGO PRODUCTIVO YA INTEGRADO; FUENTE DE PRUEBA SINCRONIZADA; DESPLIEGUES Y MATRIZ FUNCIONAL CONSOLIDADA PENDIENTES.
+
+- Se respetó la instrucción de no repetir la auditoría ya realizada en la rama hija.
+- AUTH: Services/Auth.js ya contiene hash sha256$<salt>$<digest>, compatibilidad legacy/hash, migración progresiva tras login correcto, mínimo de ocho caracteres, límite de cinco intentos y bloqueo nominal de quince minutos.
+- USERS: Services/users.js ya contiene hash en creación, actualización administrativa y cambio de contraseña propia; conserva resetUserSessions y rechazo de nombres duplicados sin distinguir mayúsculas/minúsculas ni espacios externos.
+- La rama hija registra confirmación del usuario de que el alta, el hash, el inicio de sesión y el rechazo de duplicados funcionan en el entorno de prueba.
+- Se sincronizó Services/Test/users.js de GPSpedia2.2.5_work con la versión validada de la rama hija. La copia conserva el ID de Spreadsheet de pruebas y deja de generar sufijos para nombres repetidos.
+- No se modificaron los servicios productivos AUTH/USERS ni sus endpoints porque el código correspondiente ya está integrado en GPSpedia2.2.5_work.
+- No se desplegaron AUTH ni USERS. Se mantiene el objetivo de un único despliegue por servicio y una única matriz funcional consolidada después de ambos despliegues.
+- Pendiente antes de cerrar toda la configuración de sesiones: confirmar el límite esperado para el rol «Gefe». El código normaliza ese rol como «gefe», pero SESSION_LIMITS contiene «jefe» y actualmente aplica el valor predeterminado de una sesión. No corregir por inferencia.
+- Pendiente: ejecutar la matriz funcional consolidada en el entorno acordado después de desplegar AUTH una sola vez y USERS una sola vez.
+- No se realizó migración masiva, no se modificó la Spreadsheet productiva, no se cambió api-config.js, no se fusionó la rama hija y no se modificó la rama base.
+================================================================================
+
+
+================================================================================
+TAREA DOCUMENTAL — VALIDAR Y PRECISAR EL FLUJO DE COMMITS GIT DATABASE API
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN DOCUMENTAL PREPARADA; VALIDACIÓN FINAL SUJETA A LA ACTUALIZACIÓN CONDICIONADA DE LA RAMA.
+- Precisar la estructura de tree_elements: path, mode, type y sha.
+- Exigir una sola llamada create_tree después de generar todos los blobs de la tarea.
+- Crear un único commit con el HEAD anterior como único padre.
+- Actualizar exclusivamente GPSpedia2.2.5_work mediante force:false y expected_sha igual al HEAD inicial.
+- Verificar el commit, el árbol, el padre, los archivos incluidos y que GPSpedia2.2.5 no cambie.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — LÍMITES DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+- Matriz aplicada en ambos AUTH: Desarrollador sin límite (Infinity), Gefe 10, Jefe 3 como alias, Supervisor 3, Técnico 2 y Técnico exterior 1.
+- Al alcanzar un límite finito, se elimina únicamente la sesión con menor rowIndex.
+- Si falla deleteRow, el login se interrumpe antes de crear otra sesión.
+- Se conservan los IDs de Spreadsheet productivo y de prueba.
+- Se cierra la tarea pendiente de confirmar el límite de Gefe, ya definido por instrucción expresa.
+- Pendiente: probar cada límite, cierre único y fallo de deleteRow en la copia de prueba; despliegue AUTH único y matriz consolidada cuando se autoricen.
+- No se desplegó Apps Script ni se modificaron hojas reales.
+
+TAREA SEPARADA — SERIALIZAR EL CONTROL DE SESIONES CONCURRENTES
+Estado: PENDIENTE DE AUDITORÍA.
+- Evaluar cómo serializar lectura, selección, eliminación y anexado de sesiones en handleLogin.
+- Revisar LockService y posibles bloqueos reentrantes por logToSheet().
+- Evaluar si la antigüedad debe basarse en date o en el orden físico de filas.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — SERIALIZACIÓN DEL CONTROL DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; PRUEBAS FUNCIONALES POST-DESPLIEGUE PENDIENTES.
+- Services/Auth.js y Services/Test/Auth.js: LockService.getScriptLock() protege la lectura de ActiveSessions, conteo por usuario, eliminación de la sesión más antigua, actualización de Users.SessionToken y appendRow() de la nueva sesión.
+- El bloqueo se libera en finally ante éxito o error.
+- Las llamadas a logToSheet() se ejecutan después de liberar el bloqueo para evitar espera reentrante sobre el mismo ScriptLock.
+- Si falla deleteRow(), el flujo registra el error después de liberar el bloqueo y no crea la nueva sesión.
+- Se conservan los límites por rol, el criterio de antigüedad por menor rowIndex, IDs de Spreadsheet y esquema.
+- No se desplegó Apps Script ni se ejecutaron pruebas funcionales externas.
+- Pendiente: comprobar concurrencia real, límites por rol, fallo de eliminación y ausencia de sesiones excedentes en el entorno de prueba después del despliegue único de AUTH.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — COLUMNAS Y CONTRATO DEL INDICADOR DE TESTIGO
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; PRUEBAS FUNCIONALES PENDIENTES DEL DESPLIEGUE CONJUNTO.
+
+- Se incorporó la comprobación idempotente de los encabezados activaTestigo1, activaTestigo2 y activaTestigo3 en WRITE y ADMIN. Cada servicio agrega al final únicamente los encabezados que falten.
+- WRITE protege la comprobación/inserción con ScriptLock. ADMIN reutiliza el bloqueo que ya mantiene handleAddOrUpdateCut().
+- Se alineó el payload de openAddCutForModelModal() con el contrato consumido por los handlers: tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1, imgCorte1 y activaTestigo1.
+- Se conectó el checkbox testigoMotor del formulario add_cortes.html con activaTestigo1.
+- WRITE y ADMIN almacenan el indicador en el slot de corte que corresponda, incluyendo recuperación de operaciones idempotentes.
+- CATALOG localiza las columnas por encabezado y conserva el indicador al reordenar cortes por votos.
+- El detalle y la ficha de impresión leen el campo nuevo, conservando compatibilidad con los marcadores históricos.
+- No se modificaron utilCorte1/2/3 ni se alteraron columnas existentes.
+- Pendiente: verificar en Spreadsheet de prueba la creación de columnas faltantes y la no duplicación; probar altas de vehículo existente/nuevo por WRITE y ADMIN, recuperación por opId, ordenamiento de cortes y visualización/impresión.
+- No se ejecutó Apps Script, no se hicieron escrituras reales y no se desplegó ningún servicio.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — DIAGNÓSTICO DE ACCESO AL INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06 | Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: d98011fac3201b3d46ed35f9b7c60ef01d3f6103
+Estado: DIAGNÓSTICO ESTÁTICO COMPLETADO; CAUSA REAL DE LA CUENTA Y DEL DESPLIEGUE PENDIENTE DE VERIFICACIÓN.
+
+- Se confirmó que el enlace #dev-tools-btn permanece oculto salvo que user.Privilegios, normalizado, sea "desarrollador".
+- Services/Auth.js devuelve Privilegios en el objeto user de un login nuevo. auth.js también rehidrata la sesión guardada en localStorage y no sustituye el objeto por datos nuevos cuando validateSession responde válido; una sesión antigua sin Privilegios puede conservar el acceso oculto.
+- El panel de desarrollador abre inicialmente en Diagnóstico. El botón #btn-admin-view-replaced-images está dentro de la pestaña «Imágenes y Drive».
+- Se confirmó la conexión estática del enlace, apertura del panel, listener del botón y modal. Los IDs principales revisados existen una sola vez en index.html y #dev-console-log existe, por lo que no se observó una interrupción estática por el guard de inicialización.
+- openReplacedImagesModal() abre el modal antes de consultar. Errores de sesión/red/servicio se presentan dentro del modal; una hoja sin filas produce una lista vacía. Estos casos no explican por sí mismos la ausencia del botón.
+- getReplacedImages se enruta a ADMIN, envía userId/sessionToken y el backend valida sesión activa y rol Desarrollador.
+- Los archivos relevantes de GPSpedia2.2.5_work difieren de GPSpedia2.2.5. La rama base usa una condición de rol más estricta, otro endpoint ADMIN y un contrato frontend/backend anterior. No se confirmó qué rama o revisión está desplegada.
+- No se modificó código ni se realizaron peticiones a Apps Script, pruebas en navegador, consultas a Spreadsheet o cambios en Drive.
+
+SIGUIENTE ACCIÓN PENDIENTE
+Verificar con la cuenta afectada, sin compartir credenciales ni tokens: el valor/propiedad Privilegios en la sesión vigente; que se seleccione «Imágenes y Drive» después de abrir el panel; la rama/commit realmente publicado; y el resultado de la petición getReplacedImages. Con esos datos se podrá distinguir entre sesión local antigua, rol no autorizado, panel/pestaña no localizada, endpoint/despliegue desactualizado, error de petición o inventario vacío. No ampliar permisos ni modificar la autenticación/backend por inferencia.
+================================================================================
+
+
+================================================================================
+CIERRE DE SUBTAREA — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL CONSOLIDADA POSTERIOR AL DESPLIEGUE PENDIENTE.
+
+ALCANCE IMPLEMENTADO
+- IndexedDB se amplió de DB_VERSION 3 a 4 mediante la creación aditiva del object store adminLocalState. No se eliminan ni recrean los stores existentes.
+- Se añadieron métodos de lectura/escritura para conservar el último inventario de Drive, resultados por archivo, clasificación, cursor, contadores, estado completo/parcial, información de la raíz y resultado del registro en Spreadsheet.
+- La interfaz guarda el estado después de cada lote y permite recuperar resultados parciales al volver a abrir el modal.
+- Se añadieron controles para iniciar una auditoría nueva o continuar desde el cursor almacenado.
+- Se valida que batchAnalyzed coincida con el lote recibido y que totalAnalyzed coincida con el acumulado del frontend.
+- Se detecta un cursor repetido cuando no aumentan los archivos analizados ni las carpetas recorridas.
+- Si ADMIN informa que el snapshot temporal expiró o dejó de estar disponible, se conservan los resultados locales, se deshabilita la continuación y se permite iniciar una auditoría nueva.
+- Si la auditoría quedó completa pero el registro en Spreadsheet no se confirmó, el estado local conserva esa condición y el modal vuelve a intentar el registro idempotente al recuperar el resultado.
+- La preferencia de vista lista/cuadrícula del modal de inventario e historial se conserva en IndexedDB.
+
+SEGURIDAD Y LÍMITES
+- El estado local no almacena userId, SessionToken ni credenciales.
+- Los resultados locales son informativos; no autorizan movimientos, descargas ni operaciones de papelera. ADMIN mantiene las validaciones de sesión, referencias y pertenencia al árbol Cortes.
+- No se modificaron Services/admin.js, algoritmos de iteradores, límites de lote, endpoints, permisos, datos de Spreadsheet ni archivos de Drive.
+- La causa real del resultado repetido de 14 archivos continúa sin determinar; esta tarea mejora persistencia y diagnóstico, no afirma haber resuelto ese resultado.
+
+VERIFICACIONES AISLADAS
+- Parseo estático de ui.js y offline.js: correcto.
+- Migración simulada de IndexedDB: se creó adminLocalState y se conservaron los cinco stores anteriores y sus datos.
+- Prueba simulada de guardado/recuperación de resultados, cursor y clasificación; se verificó que SessionToken no se persiste.
+- Prueba de persistencia de vista lista/cuadrícula y rechazo de valores no admitidos.
+- Pruebas de interfaz simulada: recorrido nuevo de dos lotes, restauración sin volver a auditar, continuación desde cursor guardado, cursor expirado con conservación de resultados, reintento del registro pendiente en Spreadsheet y ausencia de reintento cuando ya se confirmó el guardado.
+- No se ejecutó navegador real ni Apps Script; no se consultaron ni modificaron Spreadsheet/Drive y no se desplegó ningún servicio.
+
+SIGUIENTE ETAPA
+Continuar con las demás implementaciones pendientes. La matriz de pruebas funcionales reales se ejecutará después de terminar todas las implementaciones y realizar el despliegue conjunto acordado.
+================================================================================
+
+
+================================================================================
+SUBTAREA — VISTA DE LISTA COMPACTA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBA AISLADA COMPLETADAS; VALIDACIÓN VISUAL FUNCIONAL PENDIENTE.
+
+- Se corrigió renderList() para que en vista lista el bloque informativo contenga únicamente el nombre del archivo y su etiqueta de estado.
+- Se conservó el icono de archivo que permite abrir el lightbox y se mantuvieron las acciones habilitadas/deshabilitadas según la clasificación.
+- Se mantuvo la vista cuadrícula sin cambios: miniatura, nombre, tipo, metadatos, ubicación, fechas y estado.
+- Se ajustó .replaced-image-info en vista lista para distribuir nombre y estado en una fila compacta, con adaptación flexible para pantallas estrechas.
+- La preferencia de vista continúa siendo recuperada/guardada mediante la persistencia IndexedDB implementada en la subtarea anterior.
+
+VERIFICACIONES AISLADAS
+- Parseo estático de ui.js correcto y balance de llaves CSS correcto.
+- Reconstrucción inversa confirma que ui.js y style.css contienen únicamente los cambios previstos.
+- Simulación DOM en vista lista: el bloque informativo contiene exactamente nombre y estado; no se genera miniatura; se conserva el icono y el contenedor de acciones.
+- Simulación DOM en cuadrícula: se conserva la miniatura y los seis elementos informativos originales.
+- No se ejecutó navegador real ni se desplegó frontend. La validación visual en móvil y escritorio queda para la etapa funcional consolidada.
+================================================================================
+
+
+================================================================================
+SUBTAREA — TÍTULO Y CONSOLA GLOBAL DEL MODAL «OPCIONES DE DESARROLLADOR»
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y REVISIÓN DE INTEGRIDAD COMPLETADAS; VALIDACIÓN VISUAL FUNCIONAL PENDIENTE.
+
+- Se actualizó el título principal a «Opciones de desarrollador».
+- Se trasladó la única consola fuera de los paneles individuales y se mantuvo visible desde las cinco secciones.
+- El encabezado de consola quedó como «>_Consola».
+- Se conservaron salida, botón de copia, terminal, progreso, IDs y consumidores JavaScript.
+- Se ajustó el layout responsive para que los paneles y la consola tengan áreas de desplazamiento independientes.
+- Se mantuvo intacta la protección de listeners duplicados y el comportamiento actual de inicialización/ping.
+- ui.js y main.js no se modificaron.
+- La ampliación general del modal continúa pendiente: diagnóstico ampliado, campo compartido de respaldos/restauración, limpieza unificada, acciones de firmas VIN, reordenamiento de imágenes y revisión de IDs permanecen como subalcances independientes.
+
+VERIFICACIONES AISLADAS
+- IDs de consola únicos; cinco paneles únicos; sin IDs duplicados en index.html.
+- Consola fuera de los paneles y visible estructuralmente al cambiar de pestaña.
+- Título y encabezado exactos; denominaciones anteriores ausentes.
+- Estructura del modal balanceada; CSS con llaves balanceadas y media queries responsive.
+- Comparación inversa de index.html exacta; CSS original conservado íntegramente con un bloque de reglas añadido.
+- Sin cambios en ui.js, main.js, endpoints, permisos, servicios Apps Script ni datos.
+- No se ejecutó navegador real, no se publicó frontend y no se desplegó Apps Script.
+- La validación visual en escritorio, móvil y PWA queda para la matriz funcional consolidada después de completar las implementaciones restantes.
+================================================================================
+
+
+================================================================================
+SUBTAREA — ROBUSTECER EL SNAPSHOT TEMPORAL Y EL CONTRATO DE LA AUDITORÍA DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL EN EL DEPLOYMENT ADMIN PENDIENTE.
+
+- Services/admin.js: se fijó explícitamente el tipo MIME de los blobs JSON, gzip y JSON recuperado; se asignaron nombres a los blobs; se añadieron etapas de diagnóstico para localizar fallos de serialización, compresión, codificación, almacenamiento, lectura y descompresión.
+- Services/admin.js: la recuperación del snapshot ahora convierte la ausencia de manifiesto/bloques y el contenido inválido en un estado temporal no disponible con instrucción para iniciar una auditoría nueva.
+- Services/admin.js: se conserva el TTL de 21,600 segundos, el tamaño de bloque de 75,000 caracteres, el límite codificado de 750,000 caracteres, el contrato de snapshot y las reglas de clasificación.
+- ui.js: batchAnalyzed y totalAnalyzed ahora deben ser enteros válidos y coincidir con los resultados recibidos; ADMIN debe devolver complete como booleano.
+- La persistencia local, reanudación, reintento de registro del inventario y preferencia grid/list ya existían en la rama y no se duplicaron ni modificaron.
+- Pruebas aisladas: parseo completo de admin.js y ui.js; simulación de ida y vuelta del snapshot en dos bloques; verificación del TTL; detección de bloque ausente; identificación de la etapa de error MIME; limpieza de claves temporales tras fallo; rechazo de contadores ausentes/incorrectos y de complete no booleano.
+- Pendiente: despliegue consolidado de Apps Script y pruebas funcionales reales de Drive, CacheService, Spreadsheet, navegador e IndexedDB. No se declara resuelto el error MIME hasta confirmar el comportamiento en el deployment ADMIN.
+- No se desplegó Apps Script ni se ejecutaron escrituras en Drive o Spreadsheet.
+================================================================================
+
+
+================================================================================
+SUBTAREA — DIAGNÓSTICO Y MONITOREO DE SERVICIOS EN «OPCIONES DE DESARROLLADOR»
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+- Se sustituyó la lista simple de estado/latencia por tarjetas seleccionables para los servicios configurados.
+- Cada detalle muestra estado, versión cuando el endpoint la reporta, última comprobación, latencia del diagnóstico, solicitudes POST observadas, solicitudes correctas/con error, tiempo medio y acciones API recientes.
+- Se analizan los metadatos seguros que algunos endpoints devuelven: estado, versión, hojas declaradas y estado booleano de caché. Los IDs de Spreadsheet/Drive y cacheKey no se exponen.
+- checkAllServicesHealth() aplica timeout individual de 8 segundos; un servicio que no responde no impide obtener los resultados de los demás.
+- routeAction() registra en memoria las solicitudes POST de esta instancia: servicio, acción, hora, duración, resultado y código HTTP. Ventana: 15 minutos; límite: 600 eventos; no se guardan payloads ni credenciales.
+- El gráfico SVG presenta solicitudes POST observadas por minuto y servicio. Se actualiza al finalizar cada solicitud.
+- La lista de acciones se denomina «Acciones API observadas» porque los endpoints no exponen los nombres de todas sus funciones internas.
+- El panel declara que no existe un contador backend uniforme de ejecuciones internas. No se simulan métricas ni se presenta el tráfico de este navegador como tráfico global.
+- Los GET ?debug=true del escaneo de salud no se incluyen en la gráfica de solicitudes POST.
+- No se modificaron los archivos Services/*.js ni se añadieron escrituras de telemetría en Sheets. La telemetría del navegador vive solo durante la sesión.
+- Pruebas aisladas: parseo de api-config.js/ui.js, rutas simuladas de routeAction (éxito/HTTP/API/red/JSON inválido), suscripción, timeout individual, estados HTTP/backend, sanitización de metadatos, IDs HTML únicos y balance CSS.
+- Pendiente: verificación en navegador real y conectividad real durante la fase consolidada de pruebas funcionales. No desplegar Apps Script hasta terminar todas las implementaciones.
+
+================================================================================
+
+
+================================================================================
+SUBTAREA — CAMPO ÚNICO COMPARTIDO PARA RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+ALCANCE IMPLEMENTADO
+- Se ubicaron backupDatabase, backupDrive, restoreDatabase y restoreDrive dentro de «Base de datos».
+- Se sustituyeron los campos separados de ID de Spreadsheet, ID de carpeta y entrada de restauración por un único campo compartido para entrada/salida de enlaces.
+- El campo muestra el enlace completo devuelto por ADMIN después de verificar el ID, tipo, ubicación e identidad del recurso creado y la correspondencia de su URL.
+- La interfaz presenta indicaciones contextuales para restaurar Spreadsheet o carpeta de Drive, mantiene las confirmaciones existentes y ofrece acciones únicas para copiar y abrir el enlace.
+- La pestaña «Respaldos» se conserva como navegación secundaria hacia «Base de datos» sin duplicar campos ni operaciones.
+- El frontend normaliza por separado enlaces de Spreadsheet y de carpeta. ADMIN valida nuevamente el recurso antes de iniciar una restauración.
+- Se conserva la autorización de sesión Desarrollador en el router ADMIN y el mapeo actual de las cuatro acciones.
+
+ARCHIVOS DE CÓDIGO MODIFICADOS
+- index.html: reorganización de la pestaña Respaldos y nuevo panel dentro de Base de datos.
+- ui.js: listeners de respaldo/restauración, normalización de enlaces, estados de operación y acciones de copiar/abrir.
+- Services/admin.js: validación de recursos creados y de los respaldos recibidos antes de restaurar; helper específico para enlaces de carpeta.
+- style.css: reglas del campo compartido.
+- api-config.js: sin cambios.
+
+VERIFICACIONES
+- Parseo sintáctico de ui.js y Services/admin.js correcto.
+- IDs HTML únicos; un solo campo compartido; controles antiguos ausentes.
+- Mapeo ADMIN, payload de sesión y autorización backend conservados.
+- Comparación inversa: index.html, ui.js y Services/admin.js reconstruyen exactamente sus versiones originales al revertir únicamente los bloques intervenidos; style.css conserva íntegro su contenido original como prefijo.
+- Simulaciones con mocks de los cuatro handlers, validación de URL, tipo MIME, nombre, ubicación, identidad y bloqueos previos a operaciones destructivas satisfactorias.
+- No se ejecutó navegador real, Apps Script, HTTP, Drive ni Spreadsheet.
+
+LIMITACIONES Y PENDIENTES
+- No se ha desplegado frontend ni ADMIN; la prueba funcional real queda para la fase consolidada.
+- No se ha probado la integridad de todos los archivos de un respaldo Drive ni el comportamiento ante fallo parcial real.
+- restoreDrive mantiene su secuencia previa de limpiar destino y luego copiar; no se incorporó rollback en esta subtarea.
+- No se cambiaron permisos de compartición ni se comprobó el acceso de usuarios finales a los enlaces.
+- No se generaron ni restauraron respaldos reales.
+
+SIGUIENTE TAREA
+Continuar con «Limpieza de registros — selectores y acción única» (sección 4 de la ampliación del modal). Mantener la regla de no desplegar hasta completar todas las implementaciones pendientes.
+================================================================================
+
+
+**Adenda de auditoría — 2026-11-06**
+- Se detectó que los handlers VIN llaman appendLog(), pero initAdminPanelListeners() declara el helper local log(). No existe una declaración appendLog en ui.js. El handler unificado utilizará log() para registrar estados y resultados.
+
+
+================================================================================
+SUBTAREA — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+- index.html: se sustituyeron los botones independientes por casillas «Recalcular firmas» y «Diagnóstico de firmas», un botón de ejecución, estado general y estados separados.
+- ui.js: un único handler ejecuta solo las opciones marcadas. Si se marcan ambas, recalcula y persiste primero; después diagnostica el Map en memoria. Los resultados y errores se muestran por operación.
+- Se bloquean el botón y las casillas durante la ejecución y se liberan en finally. La selección vacía no ejecuta acciones.
+- Se comprueba el resultado booleano de saveSignatures(); la persistencia no confirmada se informa como advertencia.
+- Se corrigió el uso de appendLog() no declarado en los handlers anteriores y se utiliza el helper local log().
+- style.css no cambió; se reutilizaron clases existentes.
+- VinDifferentialEngine.js, api-config.js y Services/admin.js no cambiaron.
+- Pruebas aisladas con mocks: selección vacía, cada acción individual, ambas, persistencia fallida, excepción de recálculo, catálogo ausente y doble invocación.
+- Validación real en navegador, PWA y catálogo/localStorage productivos pendiente de la fase funcional consolidada. No se desplegó frontend ni Apps Script.
+
+SIGUIENTE TAREA
+Continuar con «Reorganización de imágenes de modelo en Drive» (sección 6). Mantener intactos los flujos de guardado/renombramiento de add_corte.html y edición in-modal, según las restricciones de esa tarea.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — CONTRATO DE AGREGADO DE CORTES Y ALINEACIÓN CON PRODUCCIÓN
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work | HEAD de partida: 91f75de3ca1e8d7b64801f00fa0c98adea2809e9
+Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+- Se rectifica la descripción anterior del supuesto contrato incompatible: el consumidor actual openAddCutForModelModal() de ui.js y handleStage2Submit() de add_cortes.html envían los mismos campos que reciben los handlers WRITE/ADMIN. No se modificó ese contrato.
+- VIN se resuelve por encabezado real; se retiró la suposición de que ocupa siempre la columna 43.
+- Se preservan idOperacion1, idOperacion2 e idOperacion3 en las posiciones 43–45; no se escriben ni se limpian.
+- findRowByOpId() ya no excluye la columna 43 por posición.
+- WRITE y ADMIN registran opId de vehículo nuevo en Idempotencia después de obtener newId.
+- El esquema comunicado ubica idOperacion1..3 en las tres últimas columnas de Cortes; el requerimiento actualizado exige trasladar sus valores a la hoja de idempotencia antes de reutilizar la columna 43 como vin.
+- La hoja Idempotencia existente debe auditarse antes de decidir si se reutiliza o si se crea una hoja dedicada adicional.
+- Pendiente: implementar y probar la migración sin pérdida de datos, verificar la asociación de cada opId con su registro, habilitar la colección JSON de VIN en una sola columna y mantener las columnas 44 y 45 libres.
+- Pendiente: pruebas controladas de alta nueva, vehículo existente, reintento, recuperación y modo silencioso.
+- Sin despliegues, publicación frontend, cambios en hojas productivas ni merge.
+================================================================================
+
+================================================================================
+TAREA DOCUMENTAL — INVENTARIO DE ESTRUCTURA DE GPSpedia_DB_v2.0
+Fecha: 2026-11-06
+Estado: COMPLETADA — DOCUMENTACIÓN GENERADA Y PREPARADA PARA PUBLICACIÓN.
+
+OBJETIVO
+Incorporar al repositorio un inventario de los nombres exactos de las hojas y encabezados de columnas de la copia de Spreadsheet proporcionada, sin incluir datos almacenados.
+
+RESULTADO
+- Añadido Spreadsheet/GPSpedia_DB_columnas.md con el inventario de 13 hojas.
+- Cada encabezado incluye su posición numérica y letra de columna.

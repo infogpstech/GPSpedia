@@ -6,7 +6,7 @@
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
-const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
+const SPREADSHEET_ID = "1_BDp256L6fxmZdyCek9m4A-a_-TjeKJOt3fteXYt3Os";
 const LOG_INVALID_IDS = false; // Cambiar a true para registrar IDs de imagen inválidos en la consola.
 let spreadsheet = null;
 let invalidImageIdsFound = []; // Almacena IDs inválidos para el modo diagnóstico.
@@ -35,9 +35,22 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
-    vin: 43
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
+
+function getCortesColumnMap(sheet) {
+    const columnMap = { ...COLS_CORTES };
+    const lastColumn = sheet.getLastColumn();
+    if (lastColumn < 1) return columnMap;
+    const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+    const vinIndex = headers.findIndex(value => String(value || "").trim().toLowerCase() === "vin");
+    if (vinIndex >= 0) columnMap.vin = vinIndex + 1;
+    ['activaTestigo1', 'activaTestigo2', 'activaTestigo3'].forEach(headerName => {
+        const headerIndex = headers.findIndex(value => String(value || '').trim() === headerName);
+        if (headerIndex !== -1) columnMap[headerName] = headerIndex + 1;
+    });
+    return columnMap;
+}
 
 const COLS_LOGOS_MARCA = {
     id: 1,
@@ -52,7 +65,8 @@ const COLS_TUTORIALES = {
     comoIdentificarlo: 4,
     dondeEncontrarlo: 5,
     Detalles: 6,
-    Video: 7
+    Video: 7,
+    Colaborador: 8
 };
 
 const COLS_RELAY = {
@@ -73,23 +87,14 @@ const COLS_RELAY = {
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 function doGet(e) {
-    if (e.parameter.debug === 'true') {
-        const cache = CacheService.getScriptCache();
-        const cacheKey = 'catalog_data_v2';
-        const cachedData = cache.get(cacheKey);
-
+    if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Catalog',
             version: '2.4.0',
-            spreadsheetId: SPREADSHEET_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.TUTORIALES, SHEET_NAMES.RELAY, SHEET_NAMES.LOGOS_MARCA],
-            cacheStatus: {
-                isCached: cachedData !== null,
-                cacheKey: cacheKey
-            }
+            status: 'available'
         };
-        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
+        return ContentService.createTextOutput(JSON.stringify(serviceState))
+            .setMimeType(ContentService.MimeType.JSON);
     }
     const defaultResponse = {
         status: 'success',
@@ -112,11 +117,12 @@ function doPost(e) {
 
     switch (action) {
       case 'getCatalogData':
-        result = handleGetCatalogData();
+        result = handleGetCatalogData(payload);
         break;
       case 'getDropdownData':
         result = handleGetDropdownData();
         break;
+      // Compatibilidad para llamadas directas históricas; routeAction usa WRITE.
       case 'getSuggestion':
         result = handleGetSuggestion(payload);
         break;
@@ -217,16 +223,19 @@ function mapRowToObject(row, colMap, imageFields = new Set()) {
   return obj;
 }
 
-function handleGetCatalogData() {
+function handleGetCatalogData(payload = {}) {
     const cache = CacheService.getScriptCache();
     const cacheKey = 'catalog_data_v2';
+    const forceRefresh = Boolean(payload && payload.forceRefresh === true);
     let cachedData = null;
 
-    // 1. Intento de lectura de caché con manejo de errores
-    try {
-        cachedData = cache.get(cacheKey);
-    } catch (e) {
-        cachedData = null; // Asegurarse de que cachedData es null si falla
+    // La sincronización posterior a una escritura confirmada omite cualquier caché heredada.
+    if (!forceRefresh) {
+        try {
+            cachedData = cache.get(cacheKey);
+        } catch (e) {
+            cachedData = null;
+        }
     }
 
     if (cachedData) {
@@ -248,12 +257,13 @@ function handleGetCatalogData() {
     const categoryCounts = {};
 
     if (cortesSheet) {
+        const cortesColumnMap = getCortesColumnMap(cortesSheet);
         const data = cortesSheet.getDataRange().getValues();
         data.shift();
         cortesData = data
           .filter(row => row && row[0])
           .map(row => {
-            const vehicle = mapRowToObject(row, COLS_CORTES, IMAGE_FIELDS_CORTES);
+            const vehicle = mapRowToObject(row, cortesColumnMap, IMAGE_FIELDS_CORTES);
             if (!vehicle) return null;
 
             // Contar vehículos por categoría
@@ -284,6 +294,7 @@ function handleGetCatalogData() {
                     config: vehicle[`configRelay${i}`],
                     img: vehicle[`imgCorte${i}`],
                     util: vehicle[`utilCorte${i}`],
+                    activaTestigo: vehicle[`activaTestigo${i}`],
                     colaborador: vehicle[`colaboradorCorte${i}`]
                 };
             }
@@ -297,6 +308,7 @@ function handleGetCatalogData() {
                 orderedVehicle[`configRelay${newIndex}`] = tempCortes[oldIndex].config;
                 orderedVehicle[`imgCorte${newIndex}`] = tempCortes[oldIndex].img;
                 orderedVehicle[`utilCorte${newIndex}`] = tempCortes[oldIndex].util;
+                orderedVehicle[`activaTestigo${newIndex}`] = tempCortes[oldIndex].activaTestigo;
                 orderedVehicle[`colaboradorCorte${newIndex}`] = tempCortes[oldIndex].colaborador;
             });
 
@@ -354,62 +366,37 @@ function handleGetCatalogData() {
 
 function handleGetDropdownData() {
     try {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-        if (!sheet) {
-            throw new Error(`Sheet "${SHEET_NAMES.CORTES}" not found.`);
-        }
-
-        // Obtener la regla de validación de la columna "Categoría"
-        const categoriaRule = sheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
+        const spreadsheet = getSpreadsheet();
+        const cortesSheet = spreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+        const relaySheet = spreadsheet.getSheetByName(SHEET_NAMES.RELAY);
+        if (!cortesSheet) throw new Error(`Sheet "${SHEET_NAMES.CORTES}" not found.`);
+        if (!relaySheet) throw new Error(`Sheet "${SHEET_NAMES.RELAY}" not found.`);
+        const categoryRule = cortesSheet.getRange(2, COLS_CORTES.categoria).getDataValidation();
         let categorias = [];
-        if (categoriaRule) {
-            const criteriaValues = categoriaRule.getCriteriaValues()[0];
-            // Comprobar si criteriaValues es un objeto Range (tiene getValues) o un array.
-            if (criteriaValues && typeof criteriaValues.getValues === 'function') {
-                // Es un Range, obtener los valores.
-                categorias = criteriaValues.getValues().flat().filter(String).sort();
-            } else if (criteriaValues && Array.isArray(criteriaValues)) {
-                // Es un array, usarlo directamente.
-                categorias = criteriaValues.flat().filter(String).sort();
-            }
+        if (categoryRule) {
+            const criteriaValues = categoryRule.getCriteriaValues()[0];
+            if (criteriaValues && typeof criteriaValues.getValues === "function") categorias = criteriaValues.getValues().flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
+            else if (Array.isArray(criteriaValues)) categorias = criteriaValues.flat().map(v=>String(v==null?"":v).trim()).filter(Boolean);
         }
-
-        const data = sheet.getDataRange().getValues();
-        data.shift(); // Remove headers
-
-        // Helper function to get unique, sorted values from a column index
-        const getUniqueSortedValues = (colIndex) => {
+        const cortesData = cortesSheet.getDataRange().getValues(), relayData = relaySheet.getDataRange().getValues();
+        const rows = Array.isArray(cortesData) ? cortesData.slice(1) : [], relayRows = Array.isArray(relayData) ? relayData.slice(1) : [];
+        const uniqueSorted = (sourceRows, indexes) => {
             const values = new Set();
-            data.forEach(row => {
-                if (row[colIndex] && row[colIndex].toString().trim()) {
-                    values.add(row[colIndex].toString().trim());
-                }
-            });
-            return Array.from(values).sort((a, b) => a.localeCompare(b));
+            sourceRows.forEach(row => indexes.forEach(index => {
+                const value = String(row && row[index] != null ? row[index] : "").trim();
+                if (value) values.add(value);
+            }));
+            return Array.from(values).sort((a,b)=>a.localeCompare(b));
         };
-
-        const marcas = getUniqueSortedValues(COLS_CORTES.marca - 1);
-        const tiposCorte = getUniqueSortedValues(COLS_CORTES.tipoCorte1 -1);
-        const tiposEncendido = getUniqueSortedValues(COLS_CORTES.tipoEncendido - 1);
-        const configRelay = getUniqueSortedValues(COLS_CORTES.configRelay1 -1);
-
-
-        const dropdownData = {
-            categoria: categorias,
-            marca: marcas,
-            tipoDeCorte: tiposCorte,
-            tipoDeEncendido: tiposEncendido,
-            configRelay: configRelay
-        };
-
-        return { status: 'success', dropdowns: dropdownData };
-
+        return {status:"success",dropdowns:{
+            categoria:categorias,
+            marca:uniqueSorted(rows,[COLS_CORTES.marca-1]),
+            tipoDeCorte:uniqueSorted(rows,[COLS_CORTES.tipoCorte1-1,COLS_CORTES.tipoCorte2-1,COLS_CORTES.tipoCorte3-1]),
+            tipoDeEncendido:uniqueSorted(rows,[COLS_CORTES.tipoEncendido-1]),
+            configRelay:uniqueSorted(relayRows,[COLS_RELAY.configuracion-1])
+        }};
     } catch (error) {
-        return {
-            status: 'error',
-            message: 'Failed to get dropdown data.',
-            details: { errorMessage: error.message }
-        };
+        return {status:"error",message:"Failed to get dropdown data.",details:{errorMessage:error&&error.message?error.message:String(error)}};
     }
 }
 
@@ -631,23 +618,37 @@ function levenshteinDistance(a, b) {
  * Soporta URLs cortas, de búsqueda, de canal y IDs directos.
  */
 function normalizeYouTubeUrl(url) {
-    if (!url) return null;
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-
-    // Si ya es un ID de 11 caracteres (ej. dQw4w9WgXcQ)
-    if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes(':')) {
-        return `https://www.youtube.com/embed/${trimmed}?enablejsapi=1`;
-    }
-
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = trimmed.match(regExp);
-
-    const id = (match && match[2].length === 11) ? match[2] : trimmed;
-
-    // Si al final no parece un ID válido, devolver null o intentar usarlo como ID
-    if (id.length !== 11) return null;
-
-    return `https://www.youtube.com/embed/${id}?enablejsapi=1`;
+    if (typeof url !== "string") return null;
+    const candidate = url.trim();
+    const idPattern = /^[A-Za-z0-9_-]{11}$/;
+    if (idPattern.test(candidate)) return "https://www.youtube.com/embed/" + candidate + "?enablejsapi=1";
+    const parts = candidate.match(/^https:\/\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?(?:#.*)?$/i);
+    if (!parts) return null;
+    const authority = parts[1].toLowerCase();
+    if (authority.includes("@") || authority.includes(":")) return null;
+    const host = authority, path = parts[2] || "/", query = parts[3] || "";
+    let videoId = "";
+    if (host === "youtu.be") {
+        const match = path.match(/^\/([A-Za-z0-9_-]{11})\/?$/);
+        videoId = match ? match[1] : "";
+    } else if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+        if (path === "/watch") {
+            const ids = [];
+            try {
+                query.split("&").filter(Boolean).forEach(part => {
+                    const pair = part.split("=");
+                    const key = decodeURIComponent(pair.shift().replace(/\+/g, " "));
+                    if (key === "v") ids.push(decodeURIComponent(pair.join("=").replace(/\+/g, " ")));
+                });
+            } catch (error) { return null; }
+            if (ids.length !== 1) return null;
+            videoId = ids[0];
+        } else {
+            const match = path.match(/^\/(?:embed|shorts|live)\/([A-Za-z0-9_-]{11})\/?$/);
+            videoId = match ? match[1] : "";
+        }
+    } else return null;
+    if (!idPattern.test(videoId)) return null;
+    return "https://www.youtube.com/embed/" + videoId + "?enablejsapi=1";
 }
 

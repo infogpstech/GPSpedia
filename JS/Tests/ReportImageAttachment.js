@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+import { createHash } from "node:crypto";
+const extract=(s,a,b)=>{const i=s.indexOf(a),j=s.indexOf(b,i+a.length);if(i<0||j<0)throw Error("No se encontró "+a);return s.slice(i,j);};
+export function runReportImageAttachmentTests({ui,api,feedback}) {
+ const results=[];let passed=0,failed=0;
+ const test=(name,fn)=>{try{fn();passed++;results.push({name,status:"PASS"});}catch(e){failed++;results.push({name,status:"FAIL",message:String(e.message||e)});}};
+ const sandbox={Utilities:{DigestAlgorithm:{SHA_256:"sha256"},base64Decode:v=>Array.from(Buffer.from(v,"base64")),base64Encode:v=>Buffer.from(v).toString("base64"),computeDigest:(a,v)=>Array.from(createHash(a).update(Buffer.from(v)).digest()).map(x=>x>127?x-256:x),newBlob:(bytes,mimeType,name)=>({bytes,mimeType,name})},console};
+ vm.runInNewContext(extract(feedback,"function normalizeReportImageMetadata_","function isPositiveYearSuggestionRow")+"\n"+extract(feedback,"const REPORT_IMAGE_MAX_BYTES","function handleReportProblem")+"\nthis.validate=validateReportImageAttachment_;this.parse=parseReportMetadata;this.save=saveReportImageAttachment_;this.trash=trashReportImageUpload_;",sandbox);
+ const signatures={"image/png":Buffer.from([137,80,78,71,13,10,26,10,1,2]),"image/jpeg":Buffer.from([255,216,255,224,1,2]),"image/webp":Buffer.from([82,73,70,70,4,0,0,0,87,69,66,80,1])};
+ const attachment=(mime="image/png",bytes=signatures[mime],name="evidencia.png")=>({dataUrl:"data:"+mime+";base64,"+bytes.toString("base64"),name,mimeType:mime,size:bytes.length});
+ const png=attachment();let valid;
+ test("valida PNG, firma binaria y SHA-256",()=>{valid=sandbox.validate(png);assert.equal(valid.sha256,createHash("sha256").update(signatures["image/png"]).digest("hex"));});
+ test("acepta JPEG y WebP",()=>{assert.equal(sandbox.validate(attachment("image/jpeg")).mimeType,"image/jpeg");assert.equal(sandbox.validate(attachment("image/webp")).mimeType,"image/webp");});
+ test("rechaza MIME prohibido o discordante",()=>{assert.throws(()=>sandbox.validate({...png,mimeType:"image/gif"}),/MIME/);assert.throws(()=>sandbox.validate({...png,dataUrl:png.dataUrl.replace("image/png","image/jpeg")}),/MIME/);});
+ test("rechaza contenido que no coincide con firma",()=>{assert.throws(()=>sandbox.validate(attachment("image/png",Buffer.from("no es imagen"))),/contenido real/);});
+ test("rechaza Data URL vacío y Base64 inválido",()=>{assert.throws(()=>sandbox.validate({...png,dataUrl:"data:image/png;base64,"}),/MIME/);assert.throws(()=>sandbox.validate({...png,dataUrl:"data:image/png;base64,%%%" }),/MIME/);});
+ test("rechaza tamaño declarado incorrecto",()=>{assert.throws(()=>sandbox.validate({...png,size:png.size+1}),/tamaño declarado/);});
+ test("rechaza archivos mayores de 3 MB",()=>{const bytes=Buffer.alloc(3*1024*1024+1);bytes.set(signatures["image/png"].subarray(0,8));assert.throws(()=>sandbox.validate(attachment("image/png",bytes,"big.png")),/3 MB/);});
+ test("normaliza rutas del nombre",()=>{assert.equal(sandbox.validate(attachment("image/png",signatures["image/png"],"C:\\fakepath\\foto.png")).name,"foto.png");});
+ test("conserva metadata histórica sin imagen",()=>{const r=sandbox.parse(JSON.stringify({reportId:"REP-1",vehicleId:"V1",corteIndex:1,activaTestigoMotor:false}),"V1");assert.equal(r.reportId,"REP-1");assert.equal(r.imageUrl,undefined);});
+ test("acepta metadata con URL Drive canónica",()=>{const id="abcdefghijklmnopqrst",m={reportId:"REP-1",vehicleId:"V1",corteIndex:1,activaTestigoMotor:false,imageFileId:id,imageUrl:"https://drive.google.com/file/d/"+id+"/view",imageName:"a.png",imageMimeType:"image/png",imageSize:png.size,imageSha256:"a".repeat(64)};assert.equal(sandbox.parse(JSON.stringify(m),"V1").imageUrl,m.imageUrl);});
+ test("rechaza URL no canónica",()=>{const m={reportId:"REP-1",vehicleId:"V1",corteIndex:1,activaTestigoMotor:false,imageFileId:"abcdefghijklmnopqrst",imageUrl:"javascript:alert(1)",imageName:"a.png",imageMimeType:"image/png",imageSize:png.size,imageSha256:"a".repeat(64)};assert.equal(sandbox.parse(JSON.stringify(m),"V1").imageUrl,undefined);});
+ test("guarda en carpeta Reportes individuales sin abrir permisos",()=>{let publicShare=false;const file={getId:()=>"abcdefghijklmnopqrst",setTrashed(){},setSharing(){publicShare=true;}};sandbox.getCortesRootFolder=()=>({});sandbox.findOrCreateSubFolder=(root,name)=>{assert.equal(name,"Reportes individuales");return{createFile:blob=>{assert.equal(blob.mimeType,"image/png");return file;}};};const saved=sandbox.save(valid,"REP-1");assert.equal(saved.metadata.imageUrl,"https://drive.google.com/file/d/abcdefghijklmnopqrst/view");assert.equal(publicShare,false);});
+ test("retira archivo huérfano",()=>{let trashed=false;sandbox.trash({file:{setTrashed(){trashed=true;}}});assert.equal(trashed,true);});
+ const form=extract(ui,"export function openReportCutModal","function showReportSuccessModal"),apiFn=extract(api,"export async function reportProblem","export async function suggestYear"),inbox=extract(ui,"function renderInboxDetail","function getYouTubeEmbedUrl"),handler=extract(feedback,"function handleReportProblem(payload)","function enforceFeedbackRateLimit_");
+ test("formulario limita MIME/tamaño y maneja error/abort",()=>{assert.match(form,/image\/jpeg,image\/png,image\/webp/);assert.match(form,/3 \* 1024 \* 1024/);assert.match(form,/readAsDataURL/);assert.match(form,/reader\.onerror/);assert.match(form,/reader\.onabort/);});
+ test("transmite adjunto aparte y exige confirmación",()=>{assert.match(form,/getSessionPayload_\(\), imageAttachment/);assert.doesNotMatch(form,/fullProblemText\s*\+=.*file\.name/);assert.match(form,/res\.imageAttached !== true/);});
+ test("API preserva cuatro argumentos y añade quinto opcional",()=>{assert.match(apiFn,/sessionPayload = \{\}, imageAttachment = null/);assert.match(apiFn,/imageAttachment: imageAttachment \|\| null/);});
+ test("FEEDBACK incluye validación, idempotencia y rollback",()=>{assert.match(handler,/validateReportImageAttachment_\(payload\.imageAttachment\)/);assert.match(handler,/imageSha256/);assert.match(handler,/pendingExistingMetadata/);assert.match(handler,/trashReportImageUpload_/);});
+ test("Inbox enlaza solo URL canónica con noopener",()=>{assert.match(inbox,/https:\/\/drive\.google\.com\/file\/d\//);assert.match(inbox,/noopener noreferrer/);assert.match(inbox,/makeElement\('a'/);});
+ return {status:failed?"FAIL":"PASS",passed,failed,results};
+}
+const result=runReportImageAttachmentTests({ui:fs.readFileSync("ui.js","utf8"),api:fs.readFileSync("api-config.js","utf8"),feedback:fs.readFileSync("Services/feedback.js","utf8")});
+console.log(JSON.stringify(result,null,2));if(result.status!=="PASS")process.exitCode=1;

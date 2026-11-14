@@ -1,0 +1,897 @@
+<!-- GPSpedia Frontend Component | Version: 2.1.6 -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - GPSpedia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+    /* Contrato semántico compartido por index, users y add_cortes. */
+    --gp-color-page:#f4f4f4; --gp-color-surface:#ffffff; --gp-color-elevated:#ffffff;
+    --gp-color-text:#333333; --gp-color-text-secondary:#495057; --gp-color-text-muted:#666666;
+    --gp-color-text-disabled:#6c757d; --gp-color-border:#e0e0e0; --gp-color-border-strong:#6c757d;
+    --gp-color-accent:#007bff; --gp-color-accent-contrast:#ffffff; --gp-color-button-bg:#f0f0f0;
+    --gp-color-success:#198754; --gp-color-warning:#ffc107; --gp-color-danger:#dc3545;
+    --gp-color-info-bg:#e9f7ff; --gp-color-info-text:#004085; --gp-color-disabled-bg:#e9ecef;
+    --gp-color-focus:#005fcc; --gp-color-overlay:rgba(0,0,0,0.5); --gp-transition-speed:0.3s;
+            --primary-color:var(--gp-color-accent); --secondary-color:var(--gp-color-text);
+            --background-color:var(--gp-color-page); --card-background:var(--gp-color-surface); --text-color:var(--gp-color-text);
+            --light-text:#ffffff; --error-color:var(--gp-color-danger); --modal-bg:var(--gp-color-elevated);
+            --transition-speed:var(--gp-transition-speed);
+        }
+        body.dark-mode {
+    /* Mismo contrato semántico, con valores del tema oscuro. */
+    --gp-color-page:#121212; --gp-color-surface:#1e1e1e; --gp-color-elevated:#242424;
+    --gp-color-text:#f0f0f0; --gp-color-text-secondary:#bdbdbd; --gp-color-text-muted:#b0b0b0;
+    --gp-color-text-disabled:#9e9e9e; --gp-color-border:#3a3a3a; --gp-color-border-strong:#64748b;
+    --gp-color-accent:#58a6ff; --gp-color-accent-contrast:#102033; --gp-color-button-bg:#2c2c2c;
+    --gp-color-success:#5bd18a; --gp-color-warning:#ffd166; --gp-color-danger:#ff7b86;
+    --gp-color-info-bg:#17283a; --gp-color-info-text:#e5edf7; --gp-color-disabled-bg:#2c2c2c;
+    --gp-color-focus:#8abfff; --gp-color-overlay:rgba(0,0,0,0.7); --gp-transition-speed:0.3s;
+            --primary-color:var(--gp-color-accent); --secondary-color:var(--gp-color-text);
+            --background-color:var(--gp-color-page); --card-background:var(--gp-color-surface); --text-color:var(--gp-color-text);
+            --error-color:var(--gp-color-danger); --modal-bg:var(--gp-color-elevated);
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            /* Prevención de selección de texto y asistente de Google */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        /* Excepciones para permitir entrada de texto */
+        input, textarea, select {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .profile-section, .user-management-section {
+            background: var(--card-background);
+            padding: 15px; /* Reducido de 25px para mayor compactación */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px; /* Reducido de 30px */
+            transition: background-color var(--transition-speed);
+            border: 1px solid transparent;
+        }
+        .dark-mode .profile-section, .dark-mode .user-management-section {
+            border-color: rgba(255,255,255,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1, h2 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        /* Contenedor para scroll horizontal invisible */
+        .table-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            -ms-overflow-style: none;  /* IE y Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .table-scroll-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari y Opera */
+        }
+        .user-table {
+            width: max-content; /* Permite que la tabla tome su ancho natural */
+            min-width: 100%;   /* Pero al menos el 100% del contenedor */
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .user-table th, .user-table td {
+            padding: 8px 10px; /* Reducido para hacer la tabla más compacta */
+            border-bottom: 1px solid var(--gp-color-border);
+            text-align: left;
+            font-size: 0.9rem; /* Tamaño optimizado para densidad de datos */
+            white-space: nowrap; /* Evita saltos de línea indeseados */
+        }
+        .user-table th {
+            background-color: var(--gp-color-page);
+        }
+        .dark-mode .user-table th {
+            background-color: var(--gp-color-surface);
+        }
+        .actions-cell .btn-sm {
+            margin-right: 5px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: var(--modal-bg);
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid var(--gp-color-border-strong);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            color: var(--text-color);
+        }
+        .dark-mode .modal-content {
+            border-color: rgba(255,255,255,0.1);
+        }
+        .close-btn {
+            color: var(--gp-color-text-muted);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+
+/* AUG-105: reflujo responsive de gestión de usuarios. */
+.container, .profile-section, .user-management-section, .modal-content { min-width: 0; }
+.profile-section p, .user-table td { overflow-wrap: anywhere; }
+.modal { box-sizing: border-box; padding: 12px; }
+.modal-content { width: min(80%, 500px); max-width: 100%; min-width: 0; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); margin: 12px auto; overflow-y: auto; overscroll-behavior: contain; }
+.form-group input, .form-group select { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; }
+@media (max-width: 760px) {
+ .container { width: 100%; padding: 12px; margin: 8px auto; }
+ .profile-section, .user-management-section { padding: 12px; }
+ #profile-section > div { flex-wrap: wrap; gap: 8px; }
+ .table-scroll-container { overflow-x: visible; overflow-y: visible; }
+ .user-table { width: 100%; min-width: 0; table-layout: fixed; }
+ .user-table th, .user-table td { padding: 8px 5px; font-size: .8rem; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
+ .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 23%; }
+ .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 31%; }
+ .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 17%; }
+ .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 29%; }
+ .actions-cell { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+ .actions-cell .btn-sm { width: 100%; min-width: 0; min-height: 40px; margin: 0; padding: 7px 5px; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+ .modal { padding: 12px; overflow-y: auto; }
+ .modal-content { width: 100%; margin: 0 auto; padding: 16px; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); }
+ .modal-content form .btn { width: 100%; min-height: 44px; white-space: normal; }
+}
+@media (max-width: 420px) {
+ .user-table th, .user-table td { padding: 7px 3px; font-size: .76rem; }
+ .user-table th:nth-child(1), .user-table td:nth-child(1) { width: 22%; }
+ .user-table th:nth-child(2), .user-table td:nth-child(2) { width: 30%; }
+ .user-table th:nth-child(3), .user-table td:nth-child(3) { width: 16%; }
+ .user-table th:nth-child(4), .user-table td:nth-child(4) { width: 32%; }
+ .modal-content { padding: 12px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+ .modal { padding: 8px; }
+ .modal-content { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); margin: 0 auto; padding: 12px; }
+}
+    </style>
+    <link rel="stylesheet" href="../button-system.css">
+    <script>
+        function normalizeUserRoleName(value) {
+            const role = String(value || '').trim();
+            const normalized = role.toLowerCase();
+            return normalized === 'jefe' ? 'Jefe' : role;
+        }
+
+        function showConciseAlert_(message) {
+            const detail = String(message || 'No se pudo completar la operación.');
+            let hostUi = null;
+            try {
+                hostUi = window.parent && window.parent !== window ? window.parent.ui : null;
+            } catch (error) {}
+            if (!hostUi && window.ui) hostUi = window.ui;
+            if (hostUi && typeof hostUi.showGlobalError === 'function') {
+                hostUi.showGlobalError(detail);
+                return;
+            }
+            if (detail.length > 110) {
+                console.warn('[GPSpedia] ' + detail);
+                alert('No se pudo completar la operación.');
+            } else alert(detail);
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <a href="../index.html" style="text-decoration: none; color: var(--primary-color); margin-bottom: 20px; display: inline-block;">&larr; Volver al Catálogo</a>
+        <div id="profile-section" class="profile-section">
+            <h1>Mi Perfil</h1>
+            <p><strong>Nombre de Usuario:</strong> <span id="profile-username"></span></p>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <p style="margin: 0;"><strong>Nombre Completo:</strong> <span id="profile-fullname"></span></p>
+                <button id="edit-name-btn" class="btn btn-warning btn-sm">Editar</button>
+            </div>
+            <p><strong>Rol:</strong> <span id="profile-role"></span></p>
+            <button id="change-password-btn" class="btn btn-primary">Cambiar Contraseña</button>
+        </div>
+
+        <div id="user-management-section" class="user-management-section" style="display: none;">
+            <h2>Gestión de Usuarios</h2>
+            <button id="create-user-btn" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Crear Nuevo Usuario
+            </button>
+            <div class="table-scroll-container">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre de Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list-tbody">
+                        <!-- User rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal (for Create/Edit) -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="user-modal-title"></h2>
+            <form id="user-form">
+                <input type="hidden" id="user-id">
+                <div class="form-group">
+                    <label for="fullname">Nombre Completo</label>
+                    <input type="text" id="fullname" required>
+                </div>
+                <div class="form-group">
+                    <label for="username-modal">Nombre de Usuario</label>
+                    <input type="text" id="username-modal" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Rol</label>
+                    <select id="role" required></select>
+                </div>
+                <div class="form-group" id="user-password-group">
+                    <label for="user-password">Contraseña</label>
+                    <input type="password" id="user-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Name Modal -->
+    <div id="name-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Editar Nombre</h2>
+            <form id="name-form">
+                <div class="form-group">
+                    <label for="new-fullname">Nombre Completo</label>
+                    <input type="text" id="new-fullname" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Cambiar Contraseña</h2>
+            <form id="password-form">
+                <div class="form-group">
+                    <label for="current-password">Contraseña Actual</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nueva Contraseña</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+            </form>
+        </div>
+    </div>
+<script type="module">
+import { routeAction } from '../JS/Frontend/api-config.js';
+import * as offline from '../JS/Frontend/offline.js';
+import { createOverlayHistoryManager } from '../JS/Frontend/overlayHistory.js';
+// COMPONENT VERSION: 3.9.1
+// --- LÓGICA DE DEPURACIÓN REMOTA ---
+function remoteLog(level, message, data = {}) {
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logFrontend', payload: { level, message, data } }),
+        keepalive: true
+    }).catch(console.error);
+}
+window.onerror = function(message, source, lineno, colno, error) {
+    remoteLog('ERROR', 'Unhandled exception on users.html', {
+        message: message, source: source, lineno: lineno, colno: colno, stack: error ? error.stack : 'N/A'
+    });
+    return false;
+};
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec";
+const SESSION_KEY = 'gpsepedia_session';
+let currentUser = null;
+let allUsers = [];
+
+/* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */
+document.addEventListener('DOMContentLoaded', () => {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (!sessionData) {
+        window.location.href = '../index.html';
+        return;
+    }
+    currentUser = JSON.parse(sessionData);
+    window.addEventListener('storage', event => {
+        if (event.key !== SESSION_KEY) return;
+        let latest = null;
+        try { latest = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (error) {}
+        const sameToken = latest && currentUser &&
+            String(latest.ID || latest.id || '') === String(currentUser.ID || currentUser.id || '') &&
+            latest.SessionToken === currentUser.SessionToken;
+        if (!sameToken) {
+            currentUser = null;
+            window.location.replace('../index.html');
+            return;
+        }
+        currentUser = latest;
+        displayProfile();
+    });
+
+    // Aplicar modo oscuro si está activo
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
+
+    displayProfile();
+    setupEventListeners();
+
+    const userRole = normalizeUserRoleName(currentUser.Privilegios);
+    if (['Desarrollador', 'Jefe', 'Supervisor'].includes(userRole)) {
+        document.getElementById('user-management-section').style.display = 'block';
+        fetchUsers();
+    }
+});
+
+function displayProfile() {
+    document.getElementById('profile-username').textContent = currentUser.Nombre_Usuario;
+    document.getElementById('profile-fullname').textContent = currentUser.Nombre_Completo; // Corregido
+    document.getElementById('profile-role').textContent = normalizeUserRoleName(currentUser.Privilegios);
+}
+
+async function postToAction(action, payload = {}) {
+    try {
+        // Usamos el nuevo enrutador del api-manager.js
+        const result = await routeAction(action, payload);
+        return result;
+    } catch (error) {
+        console.error(`Error in action '${action}':`, error);
+        showConciseAlert_(`Error: ${error.message}`);
+        throw error;
+    }
+}
+
+async function fetchUsers() {
+    try {
+        // FIX: Send sessionToken for secure, backend-driven authorization
+        const result = await postToAction('getUsers', {
+            sessionToken: currentUser.SessionToken
+        });
+        allUsers = result.users;
+        renderUserTable();
+    } catch (error) {
+        // Error is handled in postToAction
+    }
+}
+
+function renderUserTable() {
+    const tbody = document.getElementById('user-list-tbody');
+    tbody.innerHTML = '';
+    allUsers.forEach(user => {
+        const row = document.createElement('tr');
+
+        const userCell = document.createElement('td');
+        userCell.textContent = user.Nombre_Usuario;
+        row.appendChild(userCell);
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = user.Nombre_Completo;
+        row.appendChild(nameCell);
+
+        const roleCell = document.createElement('td');
+        roleCell.textContent = user.Privilegios;
+        row.appendChild(roleCell);
+
+        const actionsCell = document.createElement('td');
+        actionsCell.className = 'actions-cell';
+
+        const editButton = document.createElement('button');
+        editButton.className = 'btn btn-warning btn-sm';
+        editButton.textContent = 'Editar';
+        editButton.addEventListener('click', () => openUserModal(user));
+        actionsCell.appendChild(editButton);
+
+        if (String(user.ID) !== String(currentUser.ID)) {
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'btn btn-danger btn-sm';
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.addEventListener('click', (e) => deleteUser(user.ID, user.Nombre_Usuario, e.currentTarget));
+            actionsCell.appendChild(deleteButton);
+        }
+
+        const isDeveloper = String(currentUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
+        if (isDeveloper && String(user.ID) !== String(currentUser.ID)) {
+            const resetSessionsButton = document.createElement('button');
+            resetSessionsButton.className = 'btn btn-danger btn-sm';
+            resetSessionsButton.textContent = 'Cerrar sesiones';
+            resetSessionsButton.addEventListener('click', (e) => resetUserSessions(user.ID, user.Nombre_Usuario, e.currentTarget));
+            actionsCell.appendChild(resetSessionsButton);
+        }
+
+        row.appendChild(actionsCell);
+        tbody.appendChild(row);
+    });
+}
+
+function setupEventListeners() {
+    const userModal = document.getElementById('user-modal');
+    const passwordModal = document.getElementById('password-modal');
+    const closeBtns = document.querySelectorAll('.close-btn');
+    const modalHistory = createOverlayHistoryManager(window.history);
+    window.userOverlayHistory = modalHistory;
+    window.registerUserModalOverlay = modal => {
+        if (!modal) return false;
+        const id = 'users:' + modal.id;
+        if (modalHistory.getStack().includes(id)) return false;
+        modalHistory.register(id, () => { modal.style.display = 'none'; });
+        return true;
+    };
+    window.closeUserModalOverlay = modalId => {
+        const id = 'users:' + modalId;
+        if (modalHistory.getStack().includes(id)) return modalHistory.close(id);
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'none';
+        return false;
+    };
+
+    document.getElementById('create-user-btn').addEventListener('click', () => openUserModal());
+    document.getElementById('change-password-btn').addEventListener('click', () => {
+        passwordModal.style.display = 'block';
+        window.registerUserModalOverlay(passwordModal);
+    });
+    document.getElementById('edit-name-btn').addEventListener('click', () => {
+        document.getElementById('new-fullname').value = currentUser.Nombre_Completo;
+        const nameModal = document.getElementById('name-modal');
+        nameModal.style.display = 'block';
+        window.registerUserModalOverlay(nameModal);
+    });
+
+    closeBtns.forEach(btn => {
+        const modal = btn.parentElement.parentElement;
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                 closeModal(modal);
+            }
+        }
+        btn.onclick = () => {
+            closeModal(modal);
+        }
+    });
+
+    function closeModal(modal, isFromPopState = false) {
+        if (!modal) return;
+        if (!isFromPopState && window.closeUserModalOverlay) {
+            window.closeUserModalOverlay(modal.id);
+            return;
+        }
+        modal.style.display = 'none';
+    }
+
+    // Cada popstate retira solo la capa superior registrada; las inferiores siguen visibles.
+    window.addEventListener('popstate', event => modalHistory.handlePopState(event.state || {}));
+
+    document.getElementById('user-form').addEventListener('submit', handleUserFormSubmit);
+    document.getElementById('password-form').addEventListener('submit', handleChangePasswordSubmit);
+    document.getElementById('name-form').addEventListener('submit', handleEditNameSubmit);
+}
+
+function openUserModal(user = null) {
+    const modal = document.getElementById('user-modal');
+    const title = document.getElementById('user-modal-title');
+        const form = document.getElementById('user-form');
+        form.reset();
+
+        if (user) {
+            title.textContent = 'Editar Usuario';
+            document.getElementById('user-id').value = user.ID;
+            document.getElementById('fullname').value = user.Nombre_Completo;
+            document.getElementById('username-modal').value = user.Nombre_Usuario;
+            document.getElementById('username-modal').disabled = true; // PROHIBIDO cambiar username
+        } else {
+            title.textContent = 'Crear Nuevo Usuario';
+            document.getElementById('user-id').value = '';
+            document.getElementById('username-modal').disabled = false;
+        }
+
+    const roleSelect = document.getElementById('role');
+    roleSelect.innerHTML = '';
+    let availableRoles = [];
+    if (normalizeUserRoleName(currentUser.Privilegios) === 'Desarrollador') availableRoles = ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'];
+    else if (normalizeUserRoleName(currentUser.Privilegios) === 'Jefe') availableRoles = ['Supervisor', 'Tecnico'];
+    else if (currentUser.Privilegios === 'Supervisor') availableRoles = ['Tecnico'];
+
+    availableRoles.forEach(role => {
+        const option = document.createElement('option');
+        option.value = role;
+        option.textContent = role;
+        roleSelect.appendChild(option);
+    });
+    if(user) roleSelect.value = normalizeUserRoleName(user.Privilegios);
+    const passwordGroup=document.getElementById('user-password-group');
+    const isDeveloper=String(currentUser.Privilegios||'').trim().toLowerCase()==='desarrollador';
+    if(passwordGroup)passwordGroup.style.display=user&&(!isDeveloper||String(user.ID)===String(currentUser.ID))?'none':'block';
+
+    modal.style.display = 'block';
+    if (window.registerUserModalOverlay) window.registerUserModalOverlay(modal);
+}
+
+async function handleUserFormSubmit(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.classList.contains('btn-loading')) return;
+
+    const userId = document.getElementById('user-id').value;
+    const userData = {
+        Nombre_Completo: document.getElementById('fullname').value,
+        Nombre_Usuario: document.getElementById('username-modal').value,
+        Privilegios: document.getElementById('role').value,
+        Password: document.getElementById('user-password').value,
+    };
+    const submittingSession = currentUser ? {
+        userId: String(currentUser.ID || currentUser.id || ''),
+        sessionToken: String(currentUser.SessionToken || '')
+    } : null;
+    const isSubmittingSessionCurrent = () => {
+        if (!submittingSession || !currentUser ||
+            String(currentUser.ID || currentUser.id || '') !== submittingSession.userId ||
+            String(currentUser.SessionToken || '') !== submittingSession.sessionToken) return false;
+        try {
+            const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+            return Boolean(stored &&
+                String(stored.ID || stored.id || '') === submittingSession.userId &&
+                String(stored.SessionToken || '') === submittingSession.sessionToken);
+        } catch (storageError) {
+            return false;
+        }
+    };
+    if (!isSubmittingSessionCurrent()) {
+        alert('La sesión activa cambió o dejó de estar disponible. Inicia sesión nuevamente antes de continuar.');
+        window.location.replace('../index.html');
+        return;
+    }
+    if (userId) {
+        const originalUser = allUsers.find(user => String(user.ID) === String(userId));
+        const wasDeveloper = String(originalUser && originalUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
+        const willLoseDeveloperRole = String(userData.Privilegios || '').trim().toLowerCase() !== 'desarrollador';
+        if (wasDeveloper && willLoseDeveloperRole) {
+            const actorName = String(currentUser.Nombre_Usuario || submittingSession.userId);
+            const targetName = String(originalUser && originalUser.Nombre_Usuario || userId);
+            if (!confirm('Confirmar cambio de privilegios. Actor: ' + actorName + '. Cuenta objetivo: ' + targetName + '. Se cambiará Desarrollador por ' + userData.Privilegios + '. Si es la última cuenta Desarrollador, el servidor rechazará la operación. ¿Continuar?')) return;
+        }
+    }
+
+    try {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        if (userId) {
+            const administrativePassword=userData.Password;
+            delete userData.Password;
+            const updateResult = await postToAction('updateUser', {
+                userId,
+                updates: userData,
+                sessionToken: submittingSession.sessionToken
+            });
+            if (!isSubmittingSessionCurrent()) return;
+            if (updateResult.selfSessionRevoked) {
+                let storedSession = null;
+                try { storedSession = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (storageError) {}
+                const sameSubmittingSession = submittingSession && currentUser && storedSession &&
+                    String(currentUser.ID || currentUser.id || '') === submittingSession.userId &&
+                    String(currentUser.SessionToken || '') === submittingSession.sessionToken &&
+                    String(storedSession.ID || storedSession.id || '') === submittingSession.userId &&
+                    String(storedSession.SessionToken || '') === submittingSession.sessionToken;
+                if (!sameSubmittingSession) {
+                    alert('La sesión que inició la operación ya no es la sesión activa. No se modificó la sesión actual.');
+                    return;
+                }
+                try {
+                    const cleared = await offline.clearDriveAuditState(submittingSession.userId);
+                    if (!cleared) remoteLog('warn', 'La limpieza del estado de auditoría Drive quedó pendiente tras el cambio de rol propio.');
+                } catch (clearError) {
+                    remoteLog('warn', 'No se pudo confirmar la limpieza del estado de auditoría Drive tras el cambio de rol propio.');
+                }
+                if (!isSubmittingSessionCurrent()) return;
+                localStorage.removeItem(SESSION_KEY);
+                currentUser = null;
+                if (window.state && typeof window.state.setState === 'function' && typeof window.state.getState === 'function') {
+                    const stateUser = window.state.getState().currentUser;
+                    if (stateUser && String(stateUser.SessionToken || '') === String(storedSession.SessionToken || '')) {
+                        window.state.setState({ currentUser: null });
+                    }
+                }
+                showConciseAlert_(updateResult.message || 'Tu rol cambió y todas tus sesiones fueron cerradas. Inicia sesión nuevamente.');
+                window.location.replace('../index.html');
+                return;
+            }
+            if(administrativePassword){
+                await postToAction('resetUserPassword',{targetUserId:userId,newPassword:administrativePassword,sessionToken:submittingSession.sessionToken});
+                if (!isSubmittingSessionCurrent()) return;
+                alert('Usuario actualizado y contraseña restablecida. Todas sus sesiones fueron cerradas.');
+            }else alert(updateResult.message || 'Usuario actualizado');
+        } else {
+            await postToAction('createUser', { newUser: userData, sessionToken: submittingSession && submittingSession.sessionToken });
+            if (!isSubmittingSessionCurrent()) return;
+            alert('Usuario creado');
+        }
+        if (window.closeUserModalOverlay) window.closeUserModalOverlay('user-modal');
+        else document.getElementById('user-modal').style.display = 'none';
+        if (!isSubmittingSessionCurrent()) return;
+        await fetchUsers();
+        if (!isSubmittingSessionCurrent()) return;
+    } catch (error) {
+        const sessionSnapshot = submittingSession;
+        if (!isSubmittingSessionCurrent()) return;
+        const isSelfRoleChange = Boolean(userId && sessionSnapshot &&
+            String(userId) === sessionSnapshot.userId &&
+            userData.Privilegios !== currentUser.Privilegios);
+        if (isSelfRoleChange && sessionSnapshot.sessionToken) {
+            let validation;
+            let validationFailed = false;
+            try {
+                validation = await postToAction('validateSession', {
+                    userId: sessionSnapshot.userId,
+                    sessionToken: sessionSnapshot.sessionToken
+                });
+            } catch (validationError) {
+                validationFailed = true;
+            }
+            if (!isSubmittingSessionCurrent()) return;
+            const stillSameSession = currentUser &&
+                String(currentUser.ID || currentUser.id || '') === sessionSnapshot.userId &&
+                String(currentUser.SessionToken || '') === sessionSnapshot.sessionToken;
+            if (!stillSameSession) return;
+            let storedSession = null;
+            try { storedSession = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (storageError) {}
+            if (!storedSession ||
+                String(storedSession.ID || storedSession.id || '') !== sessionSnapshot.userId ||
+                String(storedSession.SessionToken || '') !== sessionSnapshot.sessionToken) return;
+            if (validationFailed) {
+                // Cerrar localmente y solicitar logout remoto de mejor esfuerzo: no conservar controles privilegiados.
+                try { await offline.clearDriveAuditState(sessionSnapshot.userId); } catch (clearError) {}
+                if (!isSubmittingSessionCurrent()) return;
+                try {
+                    const logoutRequest = routeAction('logout', {
+                        userId: sessionSnapshot.userId,
+                        sessionToken: sessionSnapshot.sessionToken
+                    });
+                    if (logoutRequest && typeof logoutRequest.catch === 'function') logoutRequest.catch(() => {});
+                } catch (logoutError) {}
+                try {
+                    const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+                    if (stored && String(stored.ID || stored.id || '') === sessionSnapshot.userId &&
+                        String(stored.SessionToken || '') === sessionSnapshot.sessionToken) localStorage.removeItem(SESSION_KEY);
+                } catch (storageError) {}
+                currentUser = null;
+                if (window.state && typeof window.state.setState === 'function' && typeof window.state.getState === 'function') {
+                    const stateUser = window.state.getState().currentUser;
+                    if (stateUser && String(stateUser.SessionToken || '') === sessionSnapshot.sessionToken) {
+                        window.state.setState({ currentUser: null });
+                    }
+                }
+                showConciseAlert_('No se pudo confirmar el cambio de rol por un fallo de conexión. La sesión se cerró localmente y la revocación remota quedó pendiente; inicia sesión nuevamente cuando se restablezca la conexión.');
+                window.location.replace('../index.html');
+                return;
+            }
+            if (!validation || validation.valid !== true) {
+                try { await offline.clearDriveAuditState(sessionSnapshot.userId); } catch (clearError) {}
+                if (!isSubmittingSessionCurrent()) return;
+                try {
+                    const stored = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+                    if (stored && String(stored.ID || stored.id || '') === sessionSnapshot.userId &&
+                        String(stored.SessionToken || '') === sessionSnapshot.sessionToken) localStorage.removeItem(SESSION_KEY);
+                } catch (storageError) {}
+                currentUser = null;
+                if (window.state && typeof window.state.setState === 'function' && typeof window.state.getState === 'function') {
+                    const stateUser = window.state.getState().currentUser;
+                    if (stateUser && String(stateUser.SessionToken || '') === sessionSnapshot.sessionToken) {
+                        window.state.setState({ currentUser: null });
+                    }
+                }
+                alert('Tu rol cambió y la sesión anterior fue revocada. Inicia sesión nuevamente.');
+                window.location.replace('../index.html');
+                return;
+            }
+        }
+        showConciseAlert_(error && error.message ? error.message : 'No se pudo completar la operación del usuario.');
+    } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+    }
+}
+
+async function deleteUser(userId, username, btnElement) {
+    if (btnElement && btnElement.classList.contains('btn-loading')) return;
+    if (!currentUser || !currentUser.SessionToken || !userId || String(userId) === String(currentUser.ID || currentUser.id || '')) {
+        alert('No se puede eliminar la cuenta activa ni continuar sin una sesión válida.');
+        return;
+    }
+    const actorName = String(currentUser.Nombre_Usuario || currentUser.ID || currentUser.id || 'sesión activa');
+    const targetName = String(username || userId);
+    if (!confirm('Confirmar eliminación de cuenta. Actor: ' + actorName + '. Cuenta objetivo: ' + targetName + '. Se desactivará la cuenta y se revocarán sus sesiones. ¿Continuar?')) return;
+    try {
+        if (btnElement) {
+            btnElement.classList.add('btn-loading');
+            btnElement.disabled = true;
+        }
+        const result = await postToAction('deleteUser', { userId, sessionToken: currentUser.SessionToken });
+        alert(result && result.message ? result.message : 'Cuenta eliminada y sesiones revocadas.');
+        await fetchUsers();
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        if (btnElement) {
+            btnElement.classList.remove('btn-loading');
+            btnElement.disabled = false;
+        }
+    }
+}
+
+async function resetUserSessions(userId, username, btnElement) {
+    if (btnElement && btnElement.classList.contains('btn-loading')) return;
+    if (!confirm(`¿Cerrar todas las sesiones activas de "${username}"? El usuario tendrá que iniciar sesión nuevamente en sus dispositivos.`)) return;
+    try {
+        if (btnElement) {
+            btnElement.classList.add('btn-loading');
+            btnElement.disabled = true;
+        }
+        const result = await postToAction('resetUserSessions', {
+            targetUserId: userId,
+            sessionToken: currentUser.SessionToken
+        });
+        alert(result.message || 'La operación de cierre de sesiones terminó.');
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        if (btnElement) {
+            btnElement.classList.remove('btn-loading');
+            btnElement.disabled = false;
+        }
+    }
+}
+
+async function handleChangePasswordSubmit(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.classList.contains('btn-loading')) return;
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword !== confirmPassword) {
+        alert('Las nuevas contraseñas no coinciden.');
+        return;
+    }
+
+    if (newPassword.trim().length < 8) {
+        alert('La nueva contraseña debe tener al menos 8 caracteres.');
+        return;
+    }
+
+    try {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        const userId = currentUser.ID || currentUser.id;
+        if (!userId) {
+            alert('Error: No se pudo identificar al usuario actual. Por favor reinicie sesión.');
+            return;
+        }
+
+        await postToAction('changePassword', {
+            userId: userId,
+            currentPassword,
+            newPassword,
+            sessionToken: currentUser.SessionToken
+        });
+        localStorage.removeItem(SESSION_KEY);
+        currentUser=null;
+        document.getElementById('password-form').reset();
+        alert('Contraseña actualizada. Todas las sesiones fueron cerradas; inicia sesión nuevamente.');
+        window.location.replace('../index.html');
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+    }
+}
+
+async function handleEditNameSubmit(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.classList.contains('btn-loading')) return;
+
+    const newFullname = document.getElementById('new-fullname').value;
+
+    try {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        const userId = currentUser.ID || currentUser.id;
+        await postToAction('updateProfile', {
+            userId: userId,
+            updates: { Nombre_Completo: newFullname },
+            sessionToken: currentUser.SessionToken
+        });
+
+        currentUser.Nombre_Completo = newFullname;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        displayProfile();
+
+        alert('Nombre actualizado correctamente.');
+        if (window.closeUserModalOverlay) window.closeUserModalOverlay('name-modal');
+        else document.getElementById('name-modal').style.display = 'none';
+    } catch (error) {
+        // Error handled
+    } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+    }
+}
+
+// El navegador conserva menú contextual, inspección y zoom nativos.
+</script>
+<script type="module" src="../JS/Frontend/clientInteractionPolicy.js"></script>
+</body>
+</html>

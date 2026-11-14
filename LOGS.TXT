@@ -1,14 +1,119 @@
-# Registro de Problemas y Observaciones del Proyecto GPSpedia
+# Registro activo de incidencias — GPSpedia
 
-## Entrada: 2024-07-25
+Registro previo: `Olds/Documentacion_Legacy/LOGS_legacy_parte_001.TXT`. Consultar `Olds/Documentacion_Legacy/README.md`.
 
-### 1. Problema de Rendimiento del Catálogo "Cortes"
-*   **Observación:** Se ha identificado un problema de rendimiento significativo al cargar el catálogo de "Cortes". El conjunto de datos completo excede el límite de 100KB por entrada de la `CacheService` de Google Apps Script.
-*   **Impacto:** Esto impide el uso de la caché para acelerar las respuestas del backend. Cada solicitud de búsqueda o carga del catálogo requiere una lectura directa y completa de la hoja de cálculo, lo que puede resultar en tiempos de carga lentos para el usuario final.
-*   **Estado:** Abierto. Se necesita investigar una estrategia de optimización, como la paginación de datos o una caché más granular, para mitigar este cuello de botella.
 
-### 2. Problema del Entorno de Ejecución (Jules)
-*   **Observación:** La herramienta `submit` en el entorno de ejecución actual no está funcionando como se esperaba. Las llamadas a esta herramienta finalizan con éxito aparente, pero no generan nuevos commits ni Pull Requests en el repositorio de código. El enlace "View PR" redirige a commits antiguos.
-*   **Impacto:** Este es un bloqueo crítico que impide el flujo de trabajo de desarrollo y entrega de código estándar. No es posible guardar el progreso de forma versionada y verificable en el repositorio.
-*   **Solución Temporal:** Se ha adoptado un flujo de trabajo alternativo donde el código y la documentación se generan directamente en el chat para que el usuario los copie y aplique manualmente. Esto asegura que el trabajo no se pierda, aunque no es una solución ideal.
-*   **Estado:** Abierto. El problema parece ser a nivel de la plataforma del agente y está fuera del control del código del proyecto.
+**Regla:** no borrar, truncar, sobrescribir ni reordenar entradas; agregar cada entrada al final. Verificar antes que el resultado no supere 180,000 caracteres Unicode. Si excede, rotar según `Plan_auditoría/Normas_Gestion_Documental.md`.
+
+================================================================================
+REGISTRO INICIAL
+No se agregaron incidencias nuevas en DOC-MIG-2026-001.
+================================================================================
+
+
+================================================================================
+2026-11-14 — INCIDENCIAS REPORTADAS: ACCESO DEVELOPER Y HERRAMIENTAS DE INVENTARIO ADMIN
+Estado general: PENDIENTE DE DIAGNÓSTICO Y CORRECCIÓN. Los síntomas se registran tal como fueron observados; la causa técnica aún no está confirmada.
+
+1. ACCESO INICIAL AL PANEL DE DESARROLLADOR
+- Síntoma: al iniciar sesión con el rol Desarrollador, el usuario no consigue acceder al panel de Desarrollador.
+- Resultado esperado: el rol autorizado puede abrir el panel al iniciar la aplicación.
+- Pendiente: reproducir desde un inicio de sesión nuevo, revisar autorización de apertura, restauración de sesión, navegación y respuesta del backend. No asumir todavía si el fallo está en UI, AUTH o coordinación de sesión.
+
+2. ESCÁNER DE IMÁGENES SIN USO — CARGA DE INVENTARIO E HISTORIAL
+- Síntoma: al ejecutar el escáner para detectar imágenes sin uso, aparece: «Error al cargar el inventario e historial: el recurso está ocupado por operaciones activas ADMIN/sessionActivity».
+- Resultado esperado: el escáner puede cargar inventario e historial o informar una condición transitoria recuperable sin quedar inutilizable.
+- Pendiente: identificar qué operación mantiene ocupado el recurso compartido, revisar adquisición/liberación de locks o leases, duración, reintentos y coordinación entre ADMIN y sessionActivity. Comprobar que las lecturas del escáner no compitan innecesariamente con operaciones de sesión y que no se debiliten las protecciones de concurrencia.
+
+3. INICIALIZAR HISTORIAL — ACCIÓN RECHAZADA POR POLÍTICA DEL COORDINADOR
+- Síntoma: al pulsar «Inicializar historial», la acción no se ejecuta y se informa que no está habilitada en la política del coordinador.
+- Resultado esperado: la inicialización autorizada del historial está disponible para el rol y el flujo previstos, o se presenta una explicación clara de la restricción.
+- Pendiente: revisar el registro de acciones permitidas del coordinador, el nombre/contrato de la acción enviado por el cliente, el mapeo de permisos ADMIN y la configuración del deployment. No habilitar acciones de forma general ni ampliar privilegios sin verificar el contrato y el alcance requerido.
+
+Relación posible: las incidencias 2 y 3 afectan el flujo de inventario/historial de ADMIN y podrían compartir una dependencia de coordinación, pero no se declara una causa común hasta reproducirlas y revisar evidencia. La incidencia 1 se mantiene separada hasta determinar si comparte el mismo problema de sesión/coordinación.
+================================================================================
+
+
+================================================================================
+2026-11-14 — HALLAZGOS DE REVISIÓN ESTÁTICA: DEVELOPER Y ADMIN
+Auditoría detallada: `Auditoría.txt` (AUD-2026-11-14-01 a AUD-2026-11-14-03).
+HEAD de inicio revisado: `edac7202791223de890ed6d912cc93f7e1fbfa63`.
+
+1. **Inicializar historial — causa confirmada:** `migrateReplacedImagesSchema` está incluida en `isSharedMutationAction_` y tiene despacho en ADMIN, pero no está declarada en `coordinatorPolicy_()` para el servicio ADMIN. El coordinador rechaza exactamente las operaciones sin política. La acción modifica/verifica el esquema de `Imagenes_Reemplazadas`; la corrección deberá declarar una política específica y mínima para `IMAGE_INVENTORY`, manteniendo sesión Desarrollador y ScriptLock.
+
+2. **Escáner — mecanismo de contención identificado:** `auditDriveImagesInCortes` y `getReplacedImages` no están en la lista de acciones coordinadas específicas de ADMIN. `doPost` las envuelve en `ADMIN/sessionActivity`, cuya lease escribe `ACTIVE_SESSIONS`. El coordinador rechaza leases concurrentes que escriben el mismo recurso. `getAdminSessionContext_` actualiza `ActiveSessions.LastActivityAt`, por lo que no se debe retirar la protección sin diseñar una alternativa segura. El patrón explica el error informado cuando coinciden consultas; falta medir/reproducir la concurrencia en Beta.
+
+3. **Panel Developer — sin causa estática confirmada:** el botón se muestra por rol Desarrollador, el listener llama a `openDevTools`, y AUTH devuelve `ID`, `Privilegios` y `SessionToken`, que coinciden con los campos esperados por la UI. Se requiere reproducir en navegador y observar el contexto de sesión y el estado del modal; no atribuir todavía el fallo a AUTH o navegación.
+
+Validación: inspección estática realizada; no se ejecutaron pruebas de navegador, Apps Script, Coordinator, Spreadsheet ni Drive. No se modificó código, política, endpoint, deployment ni dato productivo.
+================================================================================
+
+================================================================================
+2026-11-14 — AVISO IMPORTANTE BLOQUEADO POR ADMIN/sessionActivity
+Síntoma reportado: la aplicación no avanza del aviso de términos; al aceptar aparece el recurso ocupado por operaciones activas ADMIN/sessionActivity.
+
+Causa confirmada: AUTH/acceptTerms reservaba ACTIVE_SESSIONS como escritura exclusiva, mientras las consultas ADMIN mantenían una lease cooperativa ADMIN/sessionActivity sobre el mismo recurso. Además, la aceptación se estaba registrando por token de sesión, por lo que cada login nuevo volvía a mostrar el aviso.
+
+Corrección local en GPSpedia2.2.5_work:
+- La aceptación se almacena por usuario y dispositivo/perfil de navegador en Users.TermsAcceptance. La aceptación histórica anterior se conserva sin aplicarse a dispositivos nuevos.
+- Un identificador aleatorio persistente en localStorage mantiene la identidad local después de cerrar sesión. La combinación usuario/dispositivo/versión determina si el aviso ya fue aceptado.
+- AUTH/acceptTerms conserva validación de sesión y actividad; coordina ACTIVE_SESSIONS como acceso cooperativo y persiste la aceptación en USERS. No se elimina la validación de token ni el control de revocación.
+- El coordinador permite que AUTH/acceptTerms coincida con ADMIN/sessionActivity, pero mantiene el conflicto con operaciones exclusivas de identidad y sesión.
+
+Validación local: SharedMutationCoordinator 41/41 PASS; TermsModalAccessibility 12/12 PASS; simulación aislada del handler AUTH PASS; sintaxis/parsing de archivos modificados PASS.
+Pendiente: desplegar Services/Auth.js y Services/Coordinator.js en Beta y probar cierre/reinicio de sesión en el mismo navegador, primer login desde otro perfil y concurrencia real. No se modificaron deployments ni datos productivos.
+Nota: borrar los datos del sitio o utilizar otro navegador/perfil crea un identificador local nuevo; no se utiliza fingerprinting físico.
+================================================================================
+
+
+================================================================================
+2026-11-14 — REFINAMIENTO: PREFLIGHT READ-ONLY PARA acceptTerms
+Una comprobación adicional mostró que el preflight común de AUTH todavía actualizaba LastActivityAt antes de registrar la aceptación. Se añadió una excepción limitada a acceptTerms: valida token e identidad mediante validateSessionReadOnly_, sin modificar ActiveSessions. El handler vuelve a comprobar la sesión antes de escribir Users. Las demás mutaciones mantienen la actualización de actividad normal. Prueba aislada del preflight PASS; SharedMutationCoordinator 41/41 y TermsModalAccessibility 12/12 PASS. Deployment y Beta pendientes.
+================================================================================
+
+================================================================================
+2026-11-14 — NUEVAS INCIDENCIAS REPORTADAS: SALUDO, REACCIONES, TARJETAS, INBOX, ROLES Y ACTUALIZACIÓN PWA
+Estado: PENDIENTE DE REVISIÓN Y REPRODUCCIÓN. Los siguientes síntomas fueron comunicados por el usuario. No se ha confirmado todavía su causa técnica ni se afirma que exista una corrección.
+
+1. MENSAJE DE SALUDO
+- Síntoma: el mensaje de saludo no carga correctamente.
+- Esperado: cargar el saludo correspondiente al estado/contexto del usuario y mostrar un estado de error recuperable si falla la carga.
+- Pendiente: revisar origen de datos, inicialización, sesión, llamadas y renderizado.
+
+2. REACCIÓN «ÚTIL» 👍🏿
+- Síntoma: al pulsar el botón aparece «No se pudo registrar tu reacción. Reintentar».
+- Esperado: registrar la reacción y reflejar el resultado en la interfaz.
+- Pendiente: revisar endpoint, payload, identidad/rol, permisos, política del coordinador compartido, persistencia e idempotencia.
+
+3. TARJETA PARA AGREGAR TUTORIAL
+- Síntoma: la tarjeta de agregar tutorial no aparece en la sección Tutorial.
+- Esperado: mostrar la opción cuando corresponda al rol y estado de la sección.
+- Pendiente: revisar renderizado, condiciones de rol, filtros y estado vacío.
+
+4. ALTURA DE TARJETA PARA AGREGAR PROBLEMA
+- Síntoma: en el carrusel de problemas relacionados del modal de detalle, la tarjeta de agregar problema tiene una altura diferente a las tarjetas de problemas.
+- Esperado: altura y composición visual consistentes.
+- Pendiente: revisar estructura y estilos responsive del carrusel y sus tarjetas.
+
+5. INBOX EN MÓVIL Y ACCIONES
+- Síntoma: Inbox continúa desordenado en versión móvil. Las acciones se presentan mediante textos/controles que el usuario considera poco apropiados para una bandeja de entrada.
+- Esperado: diseño móvil ordenado y una barra de herramientas/menú de acciones habituales, incluyendo nuevo mensaje/conversación, borrar y las demás acciones soportadas por los contratos y permisos.
+- Pendiente: revisar UI responsive, navegación lista/detalle, controles táctiles, accesibilidad y capacidades reales del backend. No inventar acciones que el servicio no soporte.
+
+6. INBOX PARA USUARIOS TÉCNICOS
+- Síntoma: el usuario técnico no dispone de funciones; el servicio responde «servicio no autorizado para el coordinador compartido».
+- Esperado: permitir las operaciones Inbox que correspondan al rol técnico.
+- Pendiente: identificar acción y recurso rechazados, revisar coordinatorPolicy, matriz de roles y autorización de cada endpoint. No ampliar permisos generales ni eliminar controles backend.
+
+7. ACTUALIZACIÓN Y RECARGA
+- Síntoma: la plataforma impide actualizarse y no permite recargar la página.
+- Esperado: permitir recarga manual y actualización PWA controlada, sin quedar atrapada en una versión ni perder operaciones locales pendientes.
+- Pendiente: revisar ciclo de vida del Service Worker, caché, mensajes de actualización, pestañas controladas y posibles interceptores/bloqueos de navegación; probar offline/reconexión y actualización interrumpida.
+
+8. CAPTURAS DE PANTALLA EN MÓVILES
+- Síntoma: el usuario indica que no se ha aplicado ninguna estrategia para evitar capturas de pantalla en dispositivos móviles.
+- Esperado: evaluar medidas técnicamente viables para web/PWA en Android, iOS y navegadores, dejando claras sus limitaciones.
+- Pendiente: determinar qué medidas son posibles y cuáles solo dificultan la captura; no prometer bloqueo absoluto ni degradar la lectura normal. Validación en dispositivos reales Beta.
+
+Registro asociado: `Tareas_Activas.md`, IDs GP-UX-02, GP-UX-03, GP-RBAC-02, GP-PWA-01 y ampliación GP-SEC-03. No se realizaron cambios de código, permisos, endpoints, Service Worker ni deployments durante este registro.
+================================================================================

@@ -102,11 +102,11 @@ GPSpedia opera actualmente mediante un App Shell estático (HTML5, Vanilla ES Mo
   * Habilitación de YouTube Data API v3 en el proyecto existente de Apps Script.
   * Creación de credenciales OAuth 2.0 y configuración de scopes (`youtube.upload`, `youtube.readonly`).
 - **Fase 2: Backend Apps Script:**
-  * Implementación de `handleInitYouTubeUpload(payload)` en `Services/feedback.js` o servicio dedicado para inicializar sesiones resumables.
+  * Implementación de `handleInitYouTubeUpload(payload)` en `JS/Services/feedback.js` o servicio dedicado para inicializar sesiones resumables.
   * Implementación de `handleSaveYouTubeUrl(payload)` para actualizar celdas en `Cortes`, `Tutorial` o `pys`.
 - **Fase 3: Frontend GPSpedia:**
   * Componente modal interactivo con selección de archivo, validación de formato (MP4, MOV, WebM), estimación de tiempo y barra de progreso real.
-  * Gestor de reanudación y persistencia local en `offline.js`.
+  * Gestor de reanudación y persistencia local en `JS/Frontend/offline.js`.
 - **Fase 4: Pruebas Funcionales y Despliegue:**
   * Pruebas con archivos pequeños (5 MB) y grandes (150 MB), cortes de red controlados y validación de URLs públicas en YouTube.
 

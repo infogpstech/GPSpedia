@@ -1,0 +1,1065 @@
+GPSpedia — Lista de funcionalidades para la etapa Beta
+Fecha de elaboración: 2026-11-09
+Estado: PLANIFICACIÓN; no autoriza implementación anticipada.
+
+Normativa única: [NORMAS_DESAROLLO.md](NORMAS_DESAROLLO.md). Leerla antes de ejecutar tareas o registrar cambios. Este archivo conserva requisitos, estados y evidencia; no establece normas generales.
+
+## COMPUERTA DE ENTRADA A BETA
+No iniciar estas funcionalidades hasta que:
+- identidad, sesiones, autorización backend y XSS crítico estén corregidos y probados;
+- escrituras, concurrencia, idempotencia, respaldos y restauración tengan pruebas reproducibles;
+- los servicios requeridos tengan deployments identificados y verificados;
+- la suite de pruebas crítica y los procedimientos de rollback estén disponibles;
+- los hallazgos P0 bloqueantes estén cerrados con evidencia y la rama base tenga protección administrativa verificable.
+
+## FUNCIONALIDADES CANDIDATAS
+
+### BETA-01 — Inbox como centro de conversaciones bidireccionales
+Referencias: AUG-152; dependencias AUG-040, AUG-043, AUG-075–081, AUG-113–121 y AUG-147–149.
+- Mensajería individual Desarrollador↔usuario con conversaciones de varios mensajes.
+- Bandejas Recibidos, No leídos, Enviados y Archivados; búsqueda, paginación, lectura y contadores.
+- Plantillas editables de bienvenida; sin difusión masiva por defecto.
+- Participantes y permisos verificados en backend; idempotencia, rate limit, auditoría inmutable y renderizado seguro.
+- Layout adaptable, scroll independiente, teclado, foco, lectores de pantalla y estados offline/error.
+
+### BETA-02 — Historial e inventario integral de imágenes en Drive
+Referencias: AUG-026–038 y tareas legacy de gestión de imágenes.
+- Consultar historial de reemplazos, relaciones con vehículos y archivos; distinguir historial de inventario de imágenes sin uso.
+- Reanudar auditorías, deduplicar referencias, conservar ubicaciones manuales y requerir movimiento/eliminación explícitos.
+- Proteger operaciones concurrentes, snapshots, integridad Drive/Spreadsheet y recuperación ante fallos.
+- Mostrar diagnóstico por archivo y estado verificable; no purgar automáticamente.
+
+### BETA-03 — Registro vehicular y gestión avanzada de VIN
+Referencias: AUG-050, AUG-055–063, AUG-106–112 y AUG-132.
+- Completar el ciclo durable e idempotente del formulario de cortes.
+- Validar VIN y colecciones por versión; conservar posiciones, privacidad y compatibilidad de parsers.
+- Sincronizar disponibilidad de slots, vídeo y datos suplementarios; evitar sobrescrituras concurrentes.
+- Probar fallos de red, reintentos, caché y reconciliación.
+
+### BETA-04 — Catálogo, búsqueda global y experiencia PWA
+Referencias: AUG-048–052, AUG-065–074, AUG-098 y AUG-151.
+- Búsqueda global con clasificación inequívoca, deep links y estado explícito de catálogo.
+- IndexedDB, snapshots por usuario, miniaturas y caché con expiración y recuperación.
+- Instalación PWA multiplataforma y comportamiento offline verificable.
+- Navegación History API y overlays coherentes; sin filtros rápidos cancelados.
+
+### BETA-05 — Problemas y Soluciones, Tutoriales y ciclo multimedia
+Referencias: AUG-082–094, AUG-124, AUG-127, AUG-128 y AUG-131.
+- Integridad referencial de asociaciones PyS↔vehículos y navegación sin ciclos.
+- Esquema, identidad y permisos consistentes para Tutoriales.
+- Aprobación/rechazo de vídeos con validación de tipo, destino y transición de estado.
+- Carga, almacenamiento y recuperación de imágenes y vídeos con idempotencia.
+
+### BETA-06 — Contenido enriquecido seguro
+Referencias: AUG-064, AUG-095–097, AUG-111 y AUG-113–114.
+- Listas y saltos de línea con presentación consistente.
+- Sanitización autoritativa backend y frontend; allowlist explícita y eliminación de stored XSS.
+- Modos de edición estrictos/avanzados con compatibilidad y límites definidos.
+
+### BETA-07 — Ficha técnica imprimible y PDF
+Referencias: AUG-140–145 y tareas legacy de impresión.
+- Paginación basada en altura real, orden y prioridad técnica.
+- Espera de imágenes, QR, logos y recursos obligatorios; fallback ante fallos.
+- Márgenes, encabezado/pie, distribución adaptativa y conservación de proporciones.
+- Protección de enlaces no listados y pruebas reales de navegador, PDF y papel.
+
+### BETA-08 — Accesibilidad, temas y diseño responsive
+Referencias: AUG-100–105, AUG-148 y AUG-149.
+- Tokens de color y contraste en temas claro/oscuro.
+- Zoom, reflujo, teclado, foco, semántica de diálogos y pestañas.
+- Formularios, tablas y modales adaptables a móvil y escritorio.
+
+### BETA-09 — Administración, telemetría y mantenimiento
+Referencias: AUG-018–025, AUG-028–033, AUG-134–139 y AUG-150.
+- Respaldos DB/Drive con manifiestos verificables, Drive por lotes y reanudación segura; restauraciones recuperables con staging/rollback y auditoría persistente de operaciones sensibles.
+- Health checks con estados reales y errores HTTP/red/aplicación diferenciados.
+- Inventario, terminal Drive restringida, telemetría y utilidades compartidas con contratos seguros.
+- Política anti-debugging explícita y documentada; no añadir bloqueos que perjudiquen accesibilidad o diagnóstico autorizado.
+
+### BETA-10 — Gobierno de contenido y políticas de publicación
+Referencias: AUG-045–047, AUG-135 y AUG-139.
+- Versionado de aceptación de términos y revisión legal/privacidad.
+- Política verificable de publicación de fuentes y microservicios.
+- Decisiones de protección de datos, acceso y retención.
+
+## EXCLUSIONES EXPLÍCITAS
+- Barra/filtros rápidos de catálogo: cancelados; no reintroducir.
+- Funcionalidades que dependan de autorización, datos o despliegues no validados: permanecen fuera de ejecución hasta superar la compuerta.
+
+
+## VALIDACIONES FUNCIONALES DIFERIDAS A BETA
+
+### AUG-005 — Eliminación segura de cuentas y sesiones
+- Crear/verificar deployments aislados AUTH y USERS conectados únicamente a la Spreadsheet de prueba.
+- Validar eliminación lógica, conservación de ID/fila, revocación de sesiones múltiples, rechazo de sesiones residuales, autodeleción, RBAC, reintento tras fallo parcial y nuevo login tras desactivación.
+- Probar concurrencia login/delete/resetUserSessions en la misma Spreadsheet aislada y comprobar que no se crean sesiones para cuentas desactivadas.
+- No utilizar endpoints operativos ni datos productivos.
+
+- Verificar que ADMIN, FEEDBACK y WRITE rechazan tokens residuales de cuentas tombstone; cubrir allowedRoles=null en FEEDBACK.
+
+
+ADENDA FINAL POST-REVISIÓN — AUG-005 / H-AUD-059
+Se incorporó JS/Services/feedback.js al alcance: assertFeedbackSession ahora rechaza usuarios tombstone y roles no activos incluso cuando allowedRoles es null. ADMIN ya rechazaba por rol Desarrollador y WRITE por nombre completo vacío; AUTH y USERS validan explícitamente el estado activo. Batería combinada final: 20/20 pruebas lógicas PASS (13 de eliminación/IDs/concurrencia AUTH + 3 del guard FEEDBACK). Sintaxis de JS/Services/feedback.js PASS. No se ejecutaron deployments ni endpoints reales; pruebas funcionales aisladas/concurrentes siguen diferidas a Beta.
+
+
+VERIFICACIÓN FINAL AMPLIADA — 2026-11-09
+Batería lógica consolidada: 20/20 PASS (13 casos AUTH/USERS de eliminación, IDs y login concurrente; 3 casos FEEDBACK; 2 casos ADMIN; 2 casos WRITE). Se comprobaron cuentas activas aceptadas y tombstones rechazados por todos los consumidores de sesión. Sintaxis completa PASS también en JS/Services/admin.js y JS/Services/write.js (sin cambios en esos archivos). Los deployments reales siguen pendientes para Beta.
+
+
+### AUG-006 — Logout con revocación remota
+- Configurar AUTH de prueba contra la Spreadsheet aislada.
+- Probar logout con token vigente, token ya revocado, token duplicado y fallo de red.
+- Confirmar que solo se elimina la sesión invocante; que Users.SessionToken se limpia únicamente si coincide; y que el navegador limpia currentUser aunque la revocación remota quede pendiente.
+- Verificar que una sesión revocada no supera validateSession ni puede ejecutar acciones protegidas.
+
+### AUG-153 — Revocación remota centralizada
+- Ejecutar login/logout/resetUserSessions concurrentes en AUTH aislado sobre la misma Spreadsheet.
+- Probar sesiones objetivo en primera, intermedia y última fila; usuarios iguales/diferentes; sesiones ajenas; tokens duplicados; reintentos y fallos parciales de deleteRow/clearContent.
+- Confirmar que USERS no escribe en ActiveSessions y que todas las mutaciones pasan por AUTH.
+
+### Users.ID — Secuencia permanente
+- Confirmar que una hoja sin cuentas registradas crea `USR-0001` y continúa `USR-0002`, `USR-0003`, etc.
+- Probar con fórmulas prellenadas en filas vacías: el servicio reutiliza la primera fila sin datos y sustituye la fórmula por un valor fijo.
+- Confirmar que IDs existentes y de cuentas desactivadas no se reutilizan; probar duplicados y filas con datos sin ID.
+- No editar manualmente IDs de producción ni ejecutar pruebas contra endpoints operativos.
+
+
+### AUG-007 — Expiración absoluta, inactividad y revocación de contraseñas
+- Crear/verificar AUTH, USERS, ADMIN, FEEDBACK y WRITE aislados contra la misma Spreadsheet de prueba.
+- Probar expiración absoluta a los tres meses calendario y por inactividad al mes calendario; cubrir límites exactos, meses de 28/29/30/31 días y fechas de fin de mes.
+- Migrar una hoja ActiveSessions histórica con cinco columnas: confirmar que AUTH agrega lastActivityAt en F solo si el encabezado/datos están libres; probar F ocupada por encabezado desconocido y F con datos sin encabezado; no sobrescribir.
+- Probar sesiones históricas sin lastActivityAt (fallback a date), timestamps inválidos, token duplicado, usuario inactivo y sesión revocada.
+- Probar touchSession y validateSession concurrentes con login/logout/resetUserSessions; comprobar que AUTH es el único escritor de ActiveSessions y que ADMIN/FEEDBACK/WRITE/USERS rechazan sesiones vencidas.
+- Probar llamadas autenticadas desde JS/Frontend/api-config.js, throttle de cinco minutos, errores de red, expiración y comportamiento offline/local.
+- Cambiar contraseña propia y restablecer contraseña de otra cuenta con Desarrollador; verificar revocación de todas las sesiones, rechazo de otros roles, prohibición de auto-restablecimiento administrativo, limpieza parcial y reintento.
+- No utilizar endpoints operativos ni datos productivos.
+
+
+================================================================================
+AUG-008 — Validación funcional multi-pestaña (solo deployments y datos aislados)
+- Abrir dos o más pestañas del mismo origen HTTPS con la misma sesión; iniciar validación simultánea y comprobar una sola llamada AUTH cuando Web Locks está disponible y la reutilización del marcador exitoso por las pestañas en espera.
+- Simular respuesta lenta, éxito, sesión inválida, error de red y timeout/AbortSignal; confirmar liberación del lock, ausencia de espera indefinida y transición visual de splash/login.
+- Cambiar de token A a token B mientras validateSession(A) está pendiente; resolver A como inválida y confirmar que B permanece en localStorage, no se revoca y no se elimina.
+- Cerrar sesión en una pestaña y comprobar que index.html, HTML/users.html y HTML/add_cortes.html en las demás pestañas reconcilian/abandonan el estado protegido.
+- Cambiar la contraseña propia desde HTML/users.html y comprobar que las otras pestañas abandonan la sesión compartida.
+- Actualizar el perfil manteniendo el mismo token y comprobar que las otras pestañas no expulsan al usuario.
+- Probar navegador sin navigator.locks: validación directa con timeout de petición cuando AbortController exista; puede haber solicitudes redundantes, pero ninguna respuesta obsoleta debe modificar otra sesión.
+- Revocar sesiones desde otro dispositivo/deployment: confirmar que las rutas backend rechazan la siguiente operación protegida; la sincronización local no sustituye esta validación.
+- No utilizar endpoints operativos, deployments de producción ni hojas/datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-009 — Validación directa de createUser en USERS aislado
+- Invocar doPost/action createUser directamente en el deployment USERS de prueba, sin interfaz HTML.
+- Probar Nombre_Usuario ausente/null, número, objeto, cadena vacía y solo espacios; confirmar error y que no se agrega ni modifica ninguna fila.
+- Probar prefijo __deleted__: con distintas mayúsculas y espacios externos; confirmar rechazo.
+- Probar duplicados con espacios externos y diferencias de mayúsculas; confirmar rechazo por la misma normalización trim()+toLowerCase().
+- Probar un string válido con espacios externos; confirmar que se almacena recortado y que el login acepta el mismo identificador.
+- Confirmar que la prueba utiliza la Spreadsheet y deployment USERS aislados; nunca JS/Frontend/api-config.js live, endpoints operativos ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-010 — Concurrencia local USERS y contraseña AUTH en deployments aislados
+- Crear/verificar deployments separados AUTH y USERS que utilicen exclusivamente la Spreadsheet de prueba. No modificar JS/Frontend/api-config.js ni sustituir URLs live.
+- En USERS, ejecutar en paralelo createUser, updateUser y updateProfile; comprobar que las operaciones de escritura de un mismo proyecto no se intercalan dentro de la sección crítica y que IDs/nombres/roles quedan consistentes.
+- Probar contención y timeout de ScriptLock; confirmar que no hay lectura/escritura cuando no se adquiere y que el lock se libera tras errores RBAC, validación y escritura.
+- Probar updateUser con Nombre_Completo válido y Privilegios no permitido; ambos campos deben permanecer intactos.
+- Probar createUser con fallo después de escribir ID y reintento; la fila ID-only debe reutilizarse sin duplicar identificadores.
+- En AUTH, intercalar login legacy con changePassword propio y, por separado, con resetUserPassword administrativo de Desarrollador. La contraseña anterior no debe crear sesión ni sobrescribir el hash nuevo; el cambio/reset debe conservar su hash y revocación de sesiones.
+- Probar login legacy normal y confirmar que la migración de Password ocurre bajo el mismo lock AUTH que serializa changePassword/resetUserPassword.
+- No considerar estos ensayos simulados como prueba real hasta ejecutarlos en Apps Script con la Spreadsheet aislada.
+- Conflictos entre AUTH y USERS (por ejemplo, deleteUser simultáneo a updateUser/updateProfile) permanecen bloqueados hasta el coordinador de AUG-034; no afirmar que los ScriptLock locales se comparten.
+================================================================================
+
+================================================================================
+AUG-154 — Fallos parciales de updateUser
+- Tras implementar la estrategia de compensación/estado parcial, inyectar error en la segunda escritura de updateUser y verificar que no se reporta éxito engañoso ni se pierde el estado previo sin indicación explícita.
+- Probar también fallo de compensación y reintento; confirmar que el resultado informa claramente si requiere revisión manual.
+- Mantener pruebas en deployment USERS aislado; no endpoints live.
+================================================================================
+
+
+Ampliación AUG-010 AUTH: intercalar un cambio de rol antes de que login adquiera el ScriptLock y verificar que el límite aplicado corresponde al rol revalidado dentro del lock. Este ensayo local no sustituye el coordinador compartido AUTH↔USERS de AUG-034.
+
+
+================================================================================
+AUG-012 — Concurrencia real del contador de intentos AUTH
+- Crear/verificar un deployment AUTH aislado que utilice exclusivamente la Spreadsheet de prueba; no modificar JS/Frontend/api-config.js ni sustituir URLs live.
+- Ejecutar solicitudes concurrentes para el mismo usuario: credenciales inválidas, una autenticación válida y errores de infraestructura controlados. Confirmar que cada solicitud finaliza solo su reserva y que un rollback no reduce fallos de otras solicitudes.
+- Ejecutar cinco fallos y verificar el bloqueo nominal de 15 minutos; comprobar expiración y recuperación. Probar también que una reserva de infraestructura revertida no deja un bloqueo falso.
+- Verificar que las solicitudes pendientes se limpian y que el estado de CacheService se comporta según sus límites; no interpretar esta caché como almacenamiento durable.
+- No ejecutar contra deployments/endpoints operativos ni hojas productivas. Las pruebas locales deterministas 22/22 PASS no sustituyen esta validación real.
+================================================================================
+
+
+================================================================================
+AUG-013 — Validación real de purga de Logs coordinada con AUTH
+- Crear/verificar deployment AUTH aislado que use exclusivamente la Spreadsheet de prueba descrita en JS/Tests/README.md. No modificar JS/Frontend/api-config.js para apuntar a endpoints de prueba ni invocar URLs operativas.
+- Usar una cuenta Desarrollador de prueba con sesión válida. Ejecutar clearSensitiveLogs directamente contra AUTH y confirmar que la identidad, token, expiración y rol se validan en backend.
+- Insertar registros AUTH simultáneamente con la purga. Confirmar que las inserciones esperan al ScriptLock de AUTH o se completan después; no debe borrarse ningún registro no sensible por desplazamiento de índices.
+- Preparar fixtures de claves password, sheetPassword, currentPassword, newPassword, fromSheet, fromClient; username en handleLogin started.; Password comparison; y varios registros no sensibles. Verificar que se eliminan todos los sensibles y se conservan todos los seguros.
+- Comprobar sesiones ausentes, tokens inválidos/duplicados/expirados, userId no coincidente y roles distintos de Desarrollador; ningún rechazo debe borrar filas.
+- Medir si una purga prolongada puede hacer que logToSheet agote su espera de lock (10 segundos) y omita un registro; documentar duración, volumen y resultado. Si ocurre, abrir tarea específica de robustez del logger sin debilitar la exclusión.
+- No ejecutar contra hojas productivas. Las pruebas locales 18/18 PASS no sustituyen esta validación real.
+================================================================================
+
+
+ADENDA DE VALIDACIÓN LOCAL AUG-013 — 2026-11-09
+Batería ampliada: 24/25 pruebas funcionales locales PASS. Se añadieron reintento de purga parcial, timeout de lock sin eliminación y rechazo de autorización por doPost en ambas fuentes. Sintaxis 4/4 PASS. No sustituye la prueba real concurrente del deployment AUTH aislado.
+
+
+================================================================================
+AUG-016 — Validación aislada de mutaciones y ciclo de sesión (pendiente de desbloqueo)
+No ejecutar hasta que AUD-T-033/AUG-034 y la política de cambio de Privilegios estén resueltas y la implementación de AUG-016 haya superado su revisión local.
+- Crear/verificar deployments AUTH y USERS aislados que apunten exclusivamente a la Spreadsheet de prueba descrita en JS/Tests/README.md. No modificar JS/Frontend/api-config.js para apuntar a pruebas ni llamar endpoints operativos.
+- Ejecutar login concurrente con resetUserSessions y logout; comprobar el orden serializado por AUTH y que una revocación confirmada no deje válida una sesión incluida en la operación de cierre.
+- Inyectar fallos antes/durante/después de setValue(Users.SessionToken), appendRow(ActiveSessions), clearContent de tokens y deleteRow. Registrar el estado físico de ambas hojas, respuesta devuelta, liberación del lock y resultado de un reintento.
+- Simular pérdida de respuesta después de crear sesión y reintento de la misma solicitud; comprobar idempotencia y ausencia de sesiones duplicadas.
+- Preparar filas residuales con token vacío y comprobar que no se contabilicen como sesiones activas para SESSION_LIMITS; comprobar limpieza reintentable.
+- Probar changePassword y resetUserPassword con fallo en revocación, escritura de hash, limpieza de Users.SessionToken y borrado de filas. Confirmar qué credenciales y tokens siguen vigentes tras cada fallo.
+- Cambiar Privilegios con sesiones abiertas en otros dispositivos; comprobar la política aprobada (invalidación de todas las sesiones o perfil actualizado), estado visual del cliente y rechazo backend de permisos antiguos.
+- Probar tokens duplicados, IDs duplicados, usuario desactivado, sesión expirada, actor no autorizado, sesiones objetivo al inicio/medio/final y preservación de otras cuentas.
+- No usar hojas productivas, cuentas reales ni deployments operativos.
+================================================================================
+
+
+================================================================================
+AUG-016 — Casos Beta adicionales tras implementación local (pendientes de deployment aislado)
+- Login: enviar dos veces el mismo requestId y comprobar que se devuelve el mismo SessionToken sin duplicar filas.
+- Simular appendRow que confirma la fila y luego lanza error; reintentar el mismo requestId y comprobar reconciliación sin duplicado.
+- Simular setValue de Users.SessionToken antes/después de escritura; comprobar reintento con el mismo token.
+- Simular requestId pendiente vencido (>24 h) con fila activa; comprobar que se invalida/elimina antes de retirar el registro.
+- Logout, resetUserSessions, cambio de rol, cambio/restablecimiento de contraseña y deleteUser deben marcar como revocados los requestId asociados. Reintentar un requestId revocado no puede recrear la sesión.
+- Cambio de Privilegios de otro usuario: todos sus tokens se invalidan antes de aplicar el nuevo rol; la sesión del actor se conserva.
+- Auto-cambio de Privilegios: el navegador elimina la sesión local y redirige a index.html; comprobar propagación del evento storage a otras pestañas y rechazo backend de tokens de otros dispositivos.
+- Fallo parcial al invalidar sesiones por cambio de rol: el rol debe permanecer sin cambios, el marcador debe persistir, login/validación debe reintentar y la misma solicitud debe completar; un cambio de rol distinto no debe sobreescribir la operación pendiente.
+- Fallos en resetUserSessions: verificar que no se eliminen filas con token no confirmado vacío; reintentar hasta completar.
+- Fallos en changePassword/resetUserPassword: contraseña no debe cambiar si no se confirma la revocación total; escritura de hash ambigua debe verificarse por lectura posterior; comprobar qué contraseña permite login.
+- Fallos de deleteRow después de token vacío: confirmar que el token no autoriza y que la limpieza física es reintentable.
+- Verificar que tokens vacíos y sesiones expiradas no se cuenten en SESSION_LIMITS; verificar que sesiones de otras cuentas no cambien.
+- Verificar que JS/Frontend/api-config.js enruta updateUser a AUTH y que el deployment USERS rechaza directamente esa acción.
+- Verificar que producción y prueba mantienen Spreadsheet IDs independientes; ejecutar todo exclusivamente con las hojas y deployments de prueba.
+================================================================================
+
+
+================================================================================
+AUG-155 — VALIDACIÓN DIFERIDA A BETA — COORDINADOR INTERPROYECTOS
+- Crear deployment aislado de Coordinator.js y configurar secretos únicos AUTH/USERS/WRITE/ADMIN/FEEDBACK en ScriptProperties; nunca reutilizar secretos ni URL de producción en pruebas.
+- Incluir SharedMutationClient.js en cada proyecto de servicio aislado y configurar GPSpedia_COORDINATOR_URL/GPSpedia_COORDINATOR_SECRET antes de desplegar los routers consumidores.
+- Verificar solicitudes simultáneas reales entre proyectos: WRITE alta de corte/VIN, ADMIN actualización/reemplazo/restauración/movimiento de imagen, FEEDBACK recordLike/suggestYear/approveVideo y cambios de sesión/rol AUTH/USERS.
+- Verificar exclusividad de backupDatabase, restoreDatabase, reorganizeDatabase, createSheet/addColumn y restoreAllTrashedImages; confirmar que no inicia una mutación nueva mientras exista mantenimiento.
+- Verificar llamadas anidadas ADMIN→WRITE para allocateVehicleId y freezeCortesIds, que la lease permanezca activa durante toda la reorganización y que no ocurra deadlock.
+- Forzar expiración, terminación abrupta, pérdida de respuesta de acquire/release, reintentos con el mismo requestId, estado central corrupto y error de UrlFetchApp; comprobar fail-closed y recuperación tras 45 minutos.
+- Probar restauración de Spreadsheet/Drive, backups consistentes, organización de imágenes, reemplazo/recuperación/borrado/movimiento y snapshots de referencias en copias aisladas.
+- No ejecutar contra datos productivos. Esta validación no se considera ejecutada por la suite local 17/17 ni por los dobles de wrappers.
+================================================================================
+
+- AUG-034: en copias aisladas, ejecutar solicitudes reales simultáneas WRITE addOrUpdateCut/addVinToVehicle, ADMIN addOrUpdateCut y ADMIN migrateCortesOperationIds (dry-run y confirmación). Verificar reserva de drenaje, rechazo de nuevas mutaciones, finalización de operaciones previas, diagnóstico de acciones activas, expiración de reserva abandonada (60 s), expiración de mantenimiento activo (45 min) y recuperación tras interrupción parcial de la migración. No usar datos productivos.
+
+- AUG-035: en copia aislada de Spreadsheet, probar encabezados vacíos/incompatibles y columnas con datos; opId duplicados con asociación igual/distinta; campos corruptos; transición pending→completed; escritura parcial, read-back fallido y reintentos; vehicleId duplicado y coincidencias heredadas múltiples. Verificar que el origen nunca se limpia ante una validación fallida y que los duplicados permanecen intactos para reconciliación manual. No usar datos productivos.
+
+- AUG-036: en copia aislada con columnas adicionales después de AV, comprobar que los testigos siguen en AT:AV y que no se desplaza ninguna columna; probar encabezados VIN/testigo duplicados, ubicados fuera de contrato, AT:AV ocupadas, datos sin encabezado, y escrituras WRITE/ADMIN con hoja existente/nueva. Validar colecciones JSON con slots vacíos, cadenas heredadas con coma, /, barra inversa, punto y coma, OP heredados, JSON inválido, tokens no válidos, duplicados y más de tres posiciones. No usar datos productivos.
+
+- AUG-037: en copias aisladas de Apps Script/Spreadsheet/Drive, probar creación del ledger, fallo de persistencia antes de Drive, reutilización por mismo token y mismo contenido, token duplicado, archivo alterado, MIME/tamaño/carpeta distintos, referencias presentes/ausentes, archivo faltante, respuesta perdida entre creación, escritura de URL y markImageUploadLinked, ledger sin fileId, reconstrucción desde metadatos Drive v2, paginación dry-run/confirm y límite 10 MB (justo debajo, igual y encima). Verificar que no se borren archivos sin evidencia y que los estados ledger/Drive se confirmen por lectura posterior. No usar datos productivos.
+
+
+================================================================================
+- AUG-043 — Validación integrada del ciclo de aprobación y subida reanudable de YouTube. En Beta, usar cuentas/credenciales de prueba y copias aisladas, nunca datos productivos. Verificar: (1) flujo completo desde Corte, PyS y Tutorial; (2) modal, selección de archivo, cancelación, recarga y recuperación desde IndexedDB real; (3) XHR resumable con respuestas 308/Range, pérdida de respuesta, expiración y renovación de sesión; (4) OAuth y YouTube API real, creación de vídeo no listado e ID devuelto; (5) Apps Script FEEDBACK y Spreadsheet aislado para solicitud, idempotencia, autorización, aprobación/rechazo y escritura/read-back en los tres destinos; (6) concurrencia/reintentos y ausencia de solicitudes duplicadas o publicación en destino incorrecto. La tarea está cerrada en validación local; esta lista no representa pruebas ya ejecutadas.
+================================================================================
+
+
+================================================================================
+AUG-041 — UTILITIES — VALIDACIÓN DIFERIDA A BETA
+- Obtener la fuente exacta del deployment UTILITIES y compararla con JS/Services/Utilities.js 1.4.0 antes de actualizar el deployment.
+- En deployment y Spreadsheet aislados, probar sesión ausente/inválida/expirada, rol no Desarrollador, revocación pendiente y dos ejecuciones concurrentes.
+- Inyectar timeout/interrupción después de staging y durante promoción; verificar backup, hojas staging y reintento.
+- Probar origen vacío, destino incompatible/protegido, permisos copyTo/rename/delete y limpieza del backup.
+- No llamar endpoints operativos ni usar hojas, Drive o datos productivos.
+================================================================================
+
+
+================================================================================
+PREPARACIÓN OBLIGATORIA DEL REPOSITORIO Y PRUEBAS NODE CLI — AUG-069 / AUG-070
+
+Ejecutar desde la raíz del repositorio. Esta secuencia debe completarse antes de cualquier prueba Beta. Si hay cambios locales (incluidos archivos sin seguimiento), detenerse y guardarlos/confirmarlos antes de continuar; no descartarlos para sincronizar.
+
+1. Comprobar estado y sincronizar exclusivamente la rama de trabajo:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guarda o confirma esos cambios antes de sincronizar."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si `git switch` o `git pull --ff-only` falla, detenerse y revisar el estado; no usar reset, clean ni force-push para resolverlo. Confirmar que el HEAD corresponde a la última versión publicada de `GPSpedia2.2.5_work` antes de seguir.
+
+2. Ejecutar las suites Node CLI desde la raíz. Requiere Node.js instalado. Los archivos temporales `.mjs` se eliminan tanto si la prueba pasa como si falla:
+
+```bash
+for name in NavigationBackHistory OverlayHistoryStack ReplacedImagesLightboxHistory; do
+  cp "JS/Tests/${name}.js" "JS/Tests/${name}.mjs" || exit 1
+  if node "JS/Tests/${name}.mjs"; then
+    rm -f "JS/Tests/${name}.mjs"
+  else
+    result=$?
+    rm -f "JS/Tests/${name}.mjs"
+    echo "FALLO: ${name} (código ${result})"
+    exit "${result}"
+  fi
+done
+```
+
+Cobertura esperada según las suites actuales: NavigationBackHistory (21 escenarios), OverlayHistoryStack (19 escenarios) y ReplacedImagesLightboxHistory (6 escenarios). Registrar el resultado real de cada ejecución; no asumir PASS por el número esperado ni por las ejecuciones V8 adaptadas anteriores. Si una suite falla, conservar la salida completa y no marcar Node CLI como aprobado.
+
+3. Validaciones Beta en navegador/dispositivo real (pendientes; no sustituidas por Node CLI): probar Atrás/Adelante del navegador, botón físico Atrás y gestos nativos; comprobar cierre secuencial de overlays, stacking contexts y conservación de capas inferiores; repetir navegación multinivel, deep links y búsqueda; verificar lightbox sobre ficha y que el reproductor/iframe solo se detenga al cerrar la ficha cuando corresponda. Registrar navegador, dispositivo, versión, pasos y resultado, incluidos fallos reproducibles. No afirmar que estas validaciones se ejecutaron hasta realizarlas en Beta.
+================================================================================
+
+
+================================================================================
+AUG-074 — VALIDACIÓN PWA iOS/iPadOS — PENDIENTE DE BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guárdalos o confírmalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, el remoto no coincide o el fast-forward falla, detenerse; no usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD actualizado antes de iniciar pruebas.
+
+PRUEBAS EN DISPOSITIVOS/NAVEGADORES REALES:
+1. iPhone Safari en navegador normal: botón de instalación visible; abrir instrucciones, seleccionar Compartir > Añadir a la pantalla de inicio y comprobar icono/nombre.
+2. iPhone con GPSpedia instalada: abrir desde el icono; confirmar modo standalone y botón de instalación oculto.
+3. iPadOS Safari con user-agent móvil: comprobar detección y mostrar instrucciones en navegador normal.
+4. iPadOS Safari solicitando sitio de escritorio (UA Macintosh): comprobar que platform MacIntel + capacidad táctil detecta iPadOS y muestra instrucciones.
+5. Instalar en iPad y abrir desde pantalla de inicio: confirmar standalone y botón oculto.
+6. Navegador compatible con beforeinstallprompt (por ejemplo, Chrome Android): comprobar que el evento sigue mostrando el botón, que el prompt se invoca y que appinstalled oculta el botón.
+7. Mac de escritorio con platform MacIntel y maxTouchPoints 0: confirmar que no aparece el flujo manual de iOS.
+8. Navegador estándar sin beforeinstallprompt: confirmar que no aparece el botón manual de iOS.
+
+Registrar dispositivo, versión de sistema, navegador, versión, user-agent/plataforma cuando sea posible, pasos y resultado. No marcar estas pruebas como ejecutadas hasta realizarlas en Beta.
+================================================================================
+
+================================================================================
+AUG-075 — VALIDACIÓN DE SEGURIDAD DE REPORTES Y SUGERENCIAS — PENDIENTE DE BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guárdalos o confírmalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, el remoto no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado.
+
+PRUEBA LOCAL EN NODE.JS:
+Ejecutar desde la raíz. El comando crea dobles locales para LockService y CacheService; no representa concurrencia ni servicios Apps Script reales.
+
+```bash
+node -e 'const fs=require("fs"),vm=require("vm");globalThis.LockService={getScriptLock:()=>({waitLock(){},releaseLock(){}})};globalThis.CacheService={getScriptCache:()=>({get(){return null},put(){},remove(){}})};const source=fs.readFileSync("JS/Services/feedback.js","utf8")+"\n"+fs.readFileSync("JS/Tests/FeedbackWriteSecurity.js","utf8")+"\nrunFeedbackWriteSecurityTests();";const result=vm.runInThisContext(source);console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+```
+
+VALIDACIÓN DE INTEGRACIÓN EN ENTORNO AISLADO:
+1. Usar únicamente el deployment FEEDBACK de pruebas y una copia aislada de Spreadsheet/Drive; no apuntar JS/Frontend/api-config.js a endpoints productivos ni utilizar datos reales.
+2. Iniciar sesión con cuentas de prueba de cada rol activo permitido (Desarrollador, Gefe, Jefe, Supervisor, Técnico y Técnico Exterior). Enviar un reporte y una sugerencia; confirmar que ambos se registran con ID y nombre resueltos desde Users.
+3. Enviar una sesión ausente, token inválido, token de sesión revocada/expirada y combinación userId/token de usuarios distintos. Confirmar rechazo antes de crear registros en Feedbacks, archivos en Drive o entradas en ActividadUsuario.
+4. Alterar userName/userRole en el payload conservando la sesión válida. Confirmar que se registra la identidad real del usuario y nunca la identidad enviada por el navegador.
+5. Repetir desde la interfaz web con reporte de corte y sugerencia de cambio; comprobar envío, respuesta, reintentos y mensajes de error.
+6. Registrar rol, escenario, respuesta, estado de Feedbacks/Drive/ActividadUsuario antes y después, navegador y resultado. No marcar PASS si no se verifican los tres destinos de escritura.
+
+No se ha ejecutado esta validación de deployment ni de navegador; permanece pendiente para Beta.
+================================================================================
+
+================================================================================
+AUG-076 — VALIDACIÓN DE STORED XSS EN INBOX Y FORMULARIOS — PENDIENTE DE BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales; guárdalos o confírmalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, el remoto no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado.
+
+PRUEBA LOCAL EN NODE.JS:
+Ejecutar desde la raíz. Esta suite comprueba contratos de fuentes y sintaxis; no simula un DOM ni sustituye navegador real.
+
+```bash
+node -e 'const fs=require("fs"),vm=require("vm");const ui=fs.readFileSync("JS/Frontend/ui.js","utf8");const test=fs.readFileSync("JS/Tests/InboxStoredXss.js","utf8");const run=vm.runInThisContext(test+"\nrunInboxStoredXssTests;");const result=run({ui});console.log(JSON.stringify(result,null,2));if(!result||result.status!=="PASS")process.exitCode=1;'
+```
+
+VALIDACIÓN EN BETA AISLADA:
+1. Usar deployment FEEDBACK de pruebas y Spreadsheet aislado; sembrar mensajes de prueba con subject, user, vehicleId, reportId, responder, contentType, reportMetadata, suggestionData y proposedValues que incluyan HTML, SVG, atributos onerror/onload, eventos inline, comillas, iframe/srcdoc y enlaces javascript:. No utilizar datos productivos.
+2. Abrir Inbox y cada detalle. Confirmar que el payload se muestra como texto, no ejecuta código, no crea elementos/atributos activos y no altera el DOM fuera del contenedor esperado.
+3. Abrir modal de reporte, modal de sugerencia y confirmación de reporte con vehicleId, reportId, currentCutData y dropdownOptions maliciosos. Confirmar que se muestran como texto/valores y que no se crean nodos ejecutables.
+4. Probar enlaces YouTube válidos e inválidos y enlaces de imagen de Drive; verificar que solo los destinos HTTPS permitidos quedan activos y que los enlaces externos conservan rel=noopener noreferrer.
+5. Confirmar que item.content e item.reply conservan únicamente el formato permitido por sanitizeHtmlContent; probar script, SVG, onerror/onload, iframe y javascript: dentro del contenido enriquecido.
+6. Verificar envío y funcionamiento normal de reporte/sugerencia, botones de Inbox, respuesta y acciones de administración; registrar navegador, versión, payload, paso y resultado.
+
+No marcar PASS si no se verificó que los payloads no se ejecutan en navegador real. La suite local 20/20 no representa prueba de ejecución DOM.
+================================================================================
+
+
+================================================================================
+AUG-077 — VALIDACIÓN BETA DE ADJUNTOS
+
+ANTES DE PROBAR, sincronizar desde la raíz:
+
+```bash
+set -e
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "ERROR: origin incorrecto"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar"; exit 1; }
+git switch GPSpedia2.2.5_work
+git fetch origin
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+PRUEBA NODE:
+
+```bash
+cp JS/Tests/ReportImageAttachment.js JS/Tests/ReportImageAttachment.mjs && node JS/Tests/ReportImageAttachment.mjs; RESULT=$?; rm -f JS/Tests/ReportImageAttachment.mjs; printf "Resultado Node: %s\\n" "$RESULT"; test "$RESULT" -eq 0
+```
+
+BETA AISLADA (nunca producción): 1) reportar sin imagen; 2) cargar JPEG/PNG/WebP y verificar metadata y archivo en `Cortes/Reportes individuales`; 3) abrir Inbox con cuenta revisora y confirmar permisos heredados sin ANYONE_WITH_LINK; 4) probar MIME/firma inválidos, archivo vacío, >3 MB, FileReader error/abort y error Drive; 5) reenviar mismo reportId/hash y verificar no duplicado; mismo reportId/hash distinto debe rechazarse; 6) confirmar compatibilidad histórica; 7) simular fallo de metadata y comprobar rollback/papelera. No declarar PASS hasta comprobar Drive y acceso reales.
+================================================================================
+
+
+================================================================================
+AUG-078 — VALIDACIÓN BETA DE ASOCIACIÓN REPORTE/VEHÍCULO/CORTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz antes de probar:
+
+```bash
+set -e
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "ERROR: origin incorrecto"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar"; exit 1; }
+git switch GPSpedia2.2.5_work
+git fetch origin
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+PRUEBAS EN DEPLOYMENT FEEDBACK Y SPREADSHEET AISLADOS:
+1. Crear un reporte individual real con metadata completa; enviar sugerencia con mismo reportId/vehicleId/corteIndex y verificar registro.
+2. Repetir con reportId vacío, N/A, inventado, inexistente y duplicado; todos deben rechazarse sin escritura ni archivo Drive.
+3. Probar vehicleId distinto del metadata y distinto de Feedbacks.ID_vehiculo; corteIndex distinto; confirmar rechazo.
+4. Probar vehículo inexistente y duplicado en Cortes; slot vacío o sin tipo/ubicación; confirmar rechazo.
+5. Probar reporte histórico sin reportMetadata; confirmar que se sigue leyendo en Inbox sin migración ni modificación y que no puede originar una nueva sugerencia no verificable.
+6. Confirmar que una sugerencia válida queda en Feedbacks como propuesta independiente y que la hoja Cortes permanece sin cambios.
+Registrar IDs de prueba, respuesta, filas antes/después y evidencia. No usar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-079 — VALIDACIÓN BETA DE IMÁGENES EN SUGERENCIAS Y ACL
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz antes de probar:
+
+```bash
+set -e
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si origin no coincide, hay cambios locales o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios.
+
+PRUEBAS NODE CLI — ejecutar desde la raíz con Node.js:
+
+```bash
+set -e
+TEST_TMP=JS/Tests/SuggestionImageSecurity.mjs
+cp JS/Tests/SuggestionImageSecurity.js "$TEST_TMP"
+trap 'rm -f "$TEST_TMP"' EXIT
+node "$TEST_TMP"
+```
+
+La suite cubre 25 escenarios de UI, FileReader, MIME/Base64/firma/tamaño, MIME/extensión de Drive, ACL, compatibilidad Data URL, idempotencia y rollback. Registrar la salida real; los dobles locales no sustituyen Drive/Spreadsheet reales.
+
+BETA AISLADA — no usar cuentas, carpetas ni datos productivos:
+1. Enviar sugerencias sin imagen y con JPEG, PNG y WebP válidos; confirmar registro en Feedbacks, MIME, extensión, hash, tamaño, imageFileId y URL canónica.
+2. Intentar MIME no permitido, MIME discordante, Base64 inválido, firma falsa, archivo vacío y tamaño superior a 3 MB; confirmar rechazo antes de crear archivos o filas.
+3. Simular FileReader error y abort en navegador; comprobar mensaje, botón habilitado y que no se invoque el envío.
+4. Simular error de creación Drive, ACL ANYONE/ANYONE_WITH_LINK y ACL no verificable; confirmar rechazo, ausencia de registro y archivo temporal en papelera cuando haya sido creado.
+5. Forzar fallo de escritura/read-back de Feedbacks después de crear archivo; verificar rollback de fila y archivo en papelera. Revisar el estado de la hoja después de cada escenario.
+6. Verificar que `Cortes/SugerenciasCortes` hereda la ACL restringida de `Cortes`; una cuenta revisora autorizada debe abrir la imagen desde Inbox y una cuenta sin autorización debe recibir acceso denegado. Probar también URL en ventana privada/sesión sin permisos; no debe ser pública.
+7. Repetir la misma solicitud con mismo contenido; confirmar idempotencia y ausencia de archivo/registro duplicado. Mismo reportId con contenido distinto debe rechazarse.
+8. Enviar una solicitud desde un cliente anterior usando `imgBase64` Data URL; confirmar que pasa por la misma validación MIME/firma/tamaño.
+9. Confirmar que reportes/sugerencias históricas siguen mostrándose y que no se modifican ACL ni archivos anteriores automáticamente.
+Registrar navegador, cuenta/rol de prueba, IDs, filas antes/después, permisos efectivos y evidencia. No declarar PASS sin comprobar acceso real del revisor y denegación a usuarios no autorizados.
+================================================================================
+
+
+================================================================================
+AUG-080 — SERIALIZACIÓN E IDEMPOTENCIA DE SUGERENCIAS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado antes de probar.
+
+PRUEBAS EN FEEDBACK / SPREADSHEET / DRIVE AISLADOS (NO PRODUCCIÓN):
+1. Enviar simultáneamente dos solicitudes con el mismo suggestionOperationId y payload. Confirmar una sola fila de sugerencia, una sola imagen (si aplica) y que ambas respuestas identifiquen el mismo registro.
+2. Simular respuesta perdida después de que el servidor confirme la escritura; reenviar exactamente el mismo payload y suggestionOperationId. Confirmar respuesta del registro original sin fila ni archivo duplicado.
+3. Repetir el mismo suggestionOperationId cambiando details, proposedValues, vehículo, corte, usuario o bytes de imagen. Confirmar rechazo y ausencia de nueva fila/archivo.
+4. Repetir el mismo reporte/vehículo/corte/usuario con una nueva clave pero payload idéntico. Confirmar compatibilidad/idempotencia de la solicitud ya registrada y ausencia de carga duplicada.
+5. Repetir la misma clave con payload idéntico desde dos clientes y con payload distinto desde un tercero. Confirmar una sola escritura y rechazo del tercero.
+6. Provocar fallo de Drive antes de crear el archivo, fallo de escritura de Feedbacks después de cargar imagen y fallo de lectura de confirmación. Comprobar rollback; si no puede verificarse que la fila quedó vacía, confirmar que el archivo no se envía a papelera y registrar la operación para reconciliación.
+7. Confirmar que la copia de fórmulas y el append no pisan filas concurrentes, que las columnas históricas mantienen su orden y que el estado inicial sigue siendo pendiente de revisión.
+8. Repetir con cliente anterior sin suggestionOperationId. Confirmar compatibilidad mediante la clave compuesta histórica y huella del contenido, sin duplicar registros.
+9. Reintentar una sugerencia histórica creada antes de AUG-080 con el mismo payload. Confirmar que la huella legacy permite devolver el registro original sin crear una fila ni imagen nueva.
+10. Verificar reintento tras timeout, reintento después de recargar la página y solicitudes para dos reportes distintos del mismo usuario. Registrar operationId, reportId, IDs de fila/archivo, payload fingerprint, tiempos, respuestas y estado antes/después.
+
+No declarar PASS sin verificar la concurrencia real de Apps Script, una sola fila y un solo archivo en Drive/Spreadsheet aislados. No usar endpoints, carpetas, hojas, cuentas ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-081 — ESQUEMA Y LÍMITES DE REPORTES Y PROPUESTAS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o el fast-forward falla, detenerse. No usar reset, clean, force ni comandos que descarten cambios. Confirmar el HEAD sincronizado antes de probar.
+
+EJECUCIÓN EN ENTORNO BETA AISLADO (Apps Script FEEDBACK, Spreadsheet y Drive de prueba; nunca producción):
+
+1. Enviar reportes con descripción ausente, vacía, solo espacios, tipo no string, longitud 2001 y longitud exacta 2000. Confirmar que los inválidos no crean filas, metadata ni archivos; el límite válido se normaliza y persiste íntegro.
+2. Enviar justificación ausente/vacía/espacios, tipo incorrecto, 2001 y 2000 caracteres. Confirmar rechazo previo a cualquier escritura/carga para inválidos.
+3. Probar `proposedValues` con un único campo, varios campos y cada uno de los cinco permitidos. Verificar límites: tipo 80, ubicación 300, colorCable 120, configRelay 120 y activaTestigo true/false/null.
+4. Enviar arrays, string, objetos anidados, valores numéricos/booleanos en campos de texto, strings en activaTestigo, claves desconocidas y alias de escritura `activaCheckEngine`. Confirmar rechazo y ausencia de escritura.
+5. Enviar propuesta idéntica al corte actual, sin campos y con campos vacíos sin cambio. Confirmar rechazo de no-op; después cambiar solo ubicación, solo color, solo tipo y solo testigo y confirmar aceptación cuando cada cambio sea real.
+6. Verificar que el valor de testigo informado en el reporte se conserva al abrir la sugerencia y se utiliza como baseline; probar ambos estados booleanos y null en datos históricos.
+7. Leer registros históricos que usan `activaCheckEngine` y comprobar que siguen presentándose como `activaTestigo` sin migración ni modificación de filas antiguas.
+8. Repetir con clientes antiguos y formularios actuales; comprobar que el esquema nuevo no rompe la lectura de sugerencias históricas ni la idempotencia AUG-080.
+9. Confirmar que los rechazos no disparan actividad de usuario, carga de imagen ni append; registrar payload, respuesta, fila y archivos antes/después.
+
+No declarar PASS sin comprobar filas y archivos en recursos aislados. No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================
+
+================================================================================
+AUG-082 — SEGURIDAD STORED XSS EN PyS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN NAVEGADOR/DOM AISLADO (NO PRODUCCIÓN):
+1. Ejecutar la suite local:
+   ```bash
+   set -e
+   TEST_TMP=JS/Tests/PysStoredXss.mjs
+   cp JS/Tests/PysStoredXss.js "$TEST_TMP"
+   trap 'rm -f "$TEST_TMP"' EXIT
+   node "$TEST_TMP"
+   ```
+2. Sembrar en un entorno aislado Problema y Colaborador con texto HTML, SVG, comillas, etiquetas img y atributos onerror/onload. Abrir tarjetas y modal; confirmar que se muestran literalmente y no ejecutan código.
+3. Probar Video con javascript:, data:, HTTP, youtube.com.evil.test, credenciales, rutas no permitidas, ID corto/largo y parámetros v duplicados. Confirmar que no se crea iframe ni enlace.
+4. Probar URLs HTTPS válidas de youtube.com/watch, youtu.be, /embed, /shorts y /live. Confirmar que el iframe apunta únicamente a https://www.youtube.com/embed/{ID validado}.
+5. Probar una URL de embed manipulada y un ID arbitrario que contenga markup; confirmar que no se crea recurso externo.
+6. Comprobar que descripción, solución y prevención con formato enriquecido permitido siguen renderizando a través de sanitizeHtmlContent.
+7. Verificar reproducción y cierre del iframe en navegador real; confirmar que el modal no ejecuta scripts almacenados ni navega a hosts no autorizados.
+
+No declarar PASS sin inspección del DOM y verificación de ausencia de ejecución. No usar cuentas, videos, carpetas o datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-083 — ALMACENAMIENTO Y RECUPERACIÓN DE IMÁGENES PyS — VALIDACIÓN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar el HEAD sincronizado antes de probar.
+
+EJECUCIÓN EN PROYECTO APPS SCRIPT, SPREADSHEET Y DRIVE AISLADOS (NUNCA PRODUCCIÓN):
+1. Ejecutar la suite local:
+   ```bash
+   set -e
+   TEST_TMP=JS/Tests/PysImageStorageRecovery.mjs
+   cp JS/Tests/PysImageStorageRecovery.js "$TEST_TMP"
+   trap 'rm -f "$TEST_TMP"' EXIT
+   node "$TEST_TMP"
+   ```
+2. Configurar una copia Beta de FEEDBACK con Spreadsheet de prueba y un DRIVE_FOLDER_ID de prueba que apunte a una carpeta «Cortes» hija directa de la raíz de Drive. No usar el ID productivo. Confirmar que getCortesRootFolder rechaza ID incorrecto, nombre distinto o carpeta que no sea hija directa de la raíz.
+3. Probar carpeta «Problemas y Soluciones» ausente, existente y duplicada dentro de Cortes. Confirmar creación/reutilización solo como hija directa; ante duplicados debe fallar sin elegir ni modificar una carpeta homónima externa.
+4. Subir JPEG, PNG y WebP válidos. Comprobar bytes, MIME real, extensión y URL canónica; confirmar que el archivo se crea dentro de Cortes/Problemas y Soluciones y que no se fuerza JPEG.
+5. Probar MIME falso, firma no coincidente, SVG/GIF, Base64 inválido/no canónico, imagen vacía, límite exacto de 3 MB y 3 MB + 1. Los inválidos no deben crear archivo ni fila.
+6. Probar lectura FileReader exitosa, error, abort y excepción de readAsDataURL. Si falla, no debe invocarse addProblem; el botón debe restablecerse y el formulario permitir reintento.
+7. Verificar el acceso heredado del archivo frente a la carpeta. No añadir permisos ANYONE_WITH_LINK ni ampliar ACL; comprobar que los usuarios autorizados pueden visualizar la imagen y los no autorizados siguen sin acceso.
+8. Simular/inducir fallo de createFile, fallo de appendRow, fallo de flush después de append y fallo al leer referencias. Confirmar que un archivo solo se envía a papelera después de comprobar que ninguna fila PyS lo referencia. Si el estado es ambiguo o la compensación falla, conservar el archivo y verificar metadata «RECOVERY_REQUIRED».
+9. Crear un registro que referencia el mismo fileId desde otra fila y provocar un fallo posterior. Confirmar que la compensación no elimina ese archivo.
+10. Consultar getPysData con IDs, URLs Drive canónicas, URLs históricas googleusercontent y referencias históricas válidas. Abrir tarjeta y modal PyS y confirmar carga de imagen; los valores Drive malformados o esquemas inseguros no deben generar una fuente de imagen.
+11. Verificar filas, archivos, MIME, ACL y estado antes/después. No declarar PASS sin inspección real de Drive/Spreadsheet y visualización con las cuentas autorizadas.
+
+No desplegar a producción, no usar carpetas/hojas productivas y no modificar ACL globales.
+================================================================================
+
+
+================================================================================
+AUG-084 — ESQUEMA, UNICIDAD E IDEMPOTENCIA DE ALTAS PyS
+================================================================================
+
+PREPARACIÓN OBLIGATORIA ANTES DE CUALQUIER PRUEBA BETA
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "Working tree no limpio"; exit 1; }
+git remote get-url origin
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short
+git rev-parse HEAD
+```
+
+Ejecutar exclusivamente en una copia aislada del proyecto Apps Script, una copia aislada de la hoja de cálculo y una carpeta Drive de prueba. No conectar datos de producción ni desplegar a producción.
+
+1. Ejecutar `JS/Tests/PysCreationIntegrity.js` y `JS/Tests/PysImageStorageRecovery.js` con los comandos de `JS/Tests/README.md`. Ambos deben terminar sin fallos.
+2. Confirmar que la hoja `pys` conserva exactamente sus diez encabezados actuales, en el mismo orden. Una hoja con encabezados cambiados, columnas adicionales o filas con datos y un ID vacío/malformado debe detener el alta sin sobrescribir datos ni crear archivos.
+3. Probar IDs desordenados y con huecos (por ejemplo `isue-001`, `isue-005` y una fila vacía intermedia). El siguiente ID debe ser `isue-006`, calculado desde el mayor sufijo válido, no desde el número de filas.
+4. Introducir IDs duplicados (incluyendo diferencias de mayúsculas o relleno, por ejemplo `isue-001` y `ISUE-1`). La lectura y el alta deben detenerse sin crear nuevos recursos.
+5. Verificar que `PysOperations` se cree con los ocho encabezados definidos en `Spreadsheet/GPSpedia_DB_columnas.md`. Alterar orden, agregar columnas o duplicar `opId`/`problemId`: el backend debe fallar de forma cerrada y conservar los datos existentes.
+6. Enviar dos veces el mismo payload con el mismo `opId`. Ambas respuestas deben referir el mismo `problemId`; debe existir una sola fila `pys` y un solo archivo de imagen.
+7. Reutilizar el mismo `opId` con un título, descripción, modelo, usuario, solución, prevención o imagen diferente. Debe rechazarse sin crear otra fila ni archivo.
+8. Enviar dos solicitudes simultáneas con el mismo `opId` y payload. Confirmar que ScriptLock serializa las ejecuciones y queda una sola alta. Repetir con dos `opId` diferentes: IDs únicos y consecutivos, sin sobrescrituras.
+9. Simular pérdida de respuesta después de persistir la fila y antes de recibir confirmación. Reintentar el mismo payload y `opId`: debe reconocer la fila existente, completar el ledger como `LINKED` y no duplicar el problema.
+10. Interrumpir una operación después de guardar `UPLOAD_PENDING`. Reintentar con el mismo payload y `opId`: debe verificar y reutilizar el archivo pendiente, no cargar una segunda imagen.
+11. Provocar un estado ambiguo, fallo de lectura de referencias o fallo de compensación. La operación debe quedar `RECOVERY_REQUIRED`, conservar el archivo y rechazar reintentos automáticos.
+12. Verificar que `getPysData` y los demás handlers PyS rechacen esquemas/IDs incompatibles. Confirmar que el formulario conserva `opId` durante un reintento del mismo payload y genera otra clave si cambia el contenido.
+13. Inspeccionar filas, ledger, IDs, archivos, referencias y permisos antes/después. No declarar PASS de integración hasta comprobar el comportamiento con dos ejecuciones reales y cuentas autorizadas.
+
+No desplegar a producción, no alterar la hoja histórica de diez columnas y no modificar ACL globales.
+================================================================================
+
+================================================================================
+AUG-085 — VALIDACIÓN BETA DE CAMPOS Y URL YOUTUBE PyS
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — copia FEEDBACK, Spreadsheet y Drive de prueba; nunca producción:
+1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de JS/Tests/README.md.
+2. Enviar altas con título de 15 y 16 caracteres; descripción de 200 y 201; solución/previsión de 700 y 701. Verificar aceptación/rechazo y que los inválidos no creen filas ni archivos.
+3. Enviar campos con null, número, array, objeto, HTML enriquecido vacío, espacios y entidades de espacio. Confirmar rechazo server-side antes de crear recursos y normalización consistente.
+4. Probar sinSolucion con true, false, null, string "true" y número. Solo booleanos deben admitirse.
+5. Probar addSolution/addPrevention y edición in-modal con límites exactos, límite +1, tipo incorrecto y HTML vacío; revisar que un rechazo no cambie la fila.
+6. Probar URLs HTTPS válidas: youtube.com/watch?v=ID, youtu.be/ID, /embed/ID, /shorts/ID y /live/ID. Probar HTTP, javascript:, hosts falsos, credenciales, puertos, IDs cortos/largos, rutas no permitidas y parámetro v duplicado.
+7. Confirmar que alta PyS no acepta URL directa aunque sea válida y que el vídeo solo se adjunta mediante el flujo de aprobación. Verificar que la edición no cambia el vídeo fuera de ese flujo.
+8. En navegador real, verificar maxlength, rich editor, mensajes de validación y prompt de prevención de 700; revisar títulos/descripciones existentes mayores al nuevo límite antes de guardarlos.
+9. Registrar payloads, respuestas, filas antes/después, IDs de archivos y evidencia del flujo de aprobación. No usar cuentas ni datos productivos.
+
+No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================
+
+================================================================================
+AUG-086 — VALIDACIÓN BETA DE CONCURRENCIA EN SOLUCIÓN Y PREVENCIÓN PyS
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — FEEDBACK y Spreadsheet de prueba; nunca producción:
+1. Ejecutar `PysCreationIntegrity.js` y `PysImageStorageRecovery.js` con los comandos de JS/Tests/README.md.
+2. Abrir el mismo PyS desde dos cuentas/sesiones y enviar soluciones diferentes casi simultáneamente. Confirmar una única solución, columnas Se soluciono/Solucion coherentes y respuesta conflict explícita al segundo contenido.
+3. Repetir con prevención desde dos usuarios y comprobar que el segundo valor no sobrescribe el primero.
+4. Enviar dos veces el mismo contenido; confirmar que el segundo envío se resuelve como replay idempotente sin nueva escritura ni actividad duplicada.
+5. Simular timeout o pérdida de respuesta después del flush y reenviar el mismo contenido; debe devolver éxito recuperado.
+6. Probar llamada directa a addSolution/addPrevention con contenido distinto cuando ya existe valor; debe responder conflict sin mutar la fila.
+7. Sembrar estados históricos incoherentes (Se soluciono marcado sin Solucion y viceversa); la operación debe detenerse sin corregir ni sobrescribir silenciosamente.
+8. Verificar que el lock se libera tras errores de lectura, escritura y flush; comprobar que la envoltura compartida no provoca espera anidada.
+9. Registrar cuentas/roles de prueba, tiempos, payloads, respuestas y filas antes/después. No usar datos productivos.
+
+No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================
+
+================================================================================
+AUG-087 — VALIDACIÓN BETA DE CACHÉ Y FRESCURA PyS
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — nunca producción:
+1. Ejecutar PysDataCache.js, PysCreationIntegrity.js y PysImageStorageRecovery.js con los comandos de JS/Tests/README.md.
+2. Cambiar repetidamente entre PyS, detalle de vehículo, búsqueda y modal de asociación. Verificar que datos frescos dentro de cinco minutos se reutilizan sin nueva consulta.
+3. Abrir simultáneamente sección PyS, acordeón de vehículo y búsqueda mientras getPysData está pendiente. Confirmar una única solicitud de red y render correcto para todos los consumidores.
+4. Probar caché local reciente, vencida, vacía, corrupta, sin timestamp y localStorage bloqueado. Verificar recuperación o error visible sin romper la vista.
+5. Desconectar red con caché disponible: confirmar que se muestran datos guardados con aviso explícito de posible obsolescencia. Desconectar sin caché: confirmar que se muestra error real y no una lista vacía como si fuera actual.
+6. Restaurar red y confirmar que una navegación posterior actualiza la caché; validar backoff de 30 s y que refresh explícito fuerza consulta.
+7. Crear/editar PyS, agregar solución, prevención y asociar a vehículo. Verificar invalidación, actualización de estado y que una respuesta iniciada antes de la mutación no sobrescriba el resultado posterior.
+8. Registrar solicitudes de red, timestamps, cambios de estado, errores y capturas de los avisos stale. No usar datos productivos.
+
+No desplegar a producción ni modificar hojas, carpetas, permisos o registros productivos.
+================================================================================
+
+
+================================================================================
+AUG-088 — VALIDACIÓN BETA DE CONTEXTO ANTI-CICLO PyS–VEHÍCULO
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+PRUEBAS EN BETA AISLADA — cuenta y datos de prueba:
+1. Abrir un detalle PyS, seleccionar un vehículo relacionado y comprobar que el acordeón «Posibles problemas» no aparece.
+2. Desde ese vehículo, asociar un PyS existente mediante la tarjeta «Agregar Problema»; verificar que el acordeón continúa oculto después de guardar.
+3. Repetir con el flujo «Agregar problema» → creación preasociada; verificar que el acordeón no reaparece al completar el registro.
+4. Confirmar que la relación vehículo–PyS se guarda y permanece visible al abrir el vehículo desde la navegación normal, fuera del origen PyS.
+5. Repetir con un PyS y vehículo diferentes; probar vista de tarjeta única y carrusel.
+6. Registrar capturas antes/después y confirmar que no se alteraron asociaciones ajenas.
+
+AUG-089 — PILA MODAL Y POSICIÓN PyS–VEHÍCULO
+7. Desde un vehículo normal, abrir un PyS relacionado y regresar con el botón X; comprobar que vuelve al mismo vehículo.
+8. Repetir el recorrido usando el botón Atrás del navegador/dispositivo; verificar que cada retroceso restaura un solo nivel y no duplica la pila.
+9. Antes de abrir el PyS, desplazar verticalmente el detalle, abrir el acordeón «Posibles problemas» y mover su carrusel; al regresar, comprobar scroll, acordeón activo y posición horizontal.
+10. Repetir con el carrusel de vehículos relacionados del detalle PyS; comprobar su posición horizontal al regresar.
+11. Repetir los recorridos editando, guardando y descartando cambios; confirmar que el contexto se conserva y que el descarte termina antes del retorno.
+
+AUG-090 — INTEGRIDAD Y ATOMICIDAD DE RELACIONES PyS–VEHÍCULOS
+12. En proyectos Apps Script aislados, desplegar Coordinator 1.1.1 y comprobar que `addProblem`, `addVehicleToProblem` y `removeVehicleFromProblem` reservan lectura de `CORTES`.
+13. Probar alta con problemId/vehicleId ausentes, inexistentes y duplicados; confirmar que no se modifica `pys`.
+14. Probar alta preasociada desde creación PyS con IDs válidos, inexistentes y duplicados en `Cortes`; validar que solo se persistan relaciones unívocas.
+15. Sembrar `modelos_asociados` con JSON, comas, barras, punto y coma, espacios y duplicados; probar alta/baja y verificar JSON canónico sin alterar asociaciones ajenas.
+16. Lanzar dos altas simultáneas del mismo vehículo y después dos altas de vehículos distintos; comprobar que no se pierden relaciones ni se duplican.
+17. Ejecutar alta y baja simultáneas sobre la misma relación; comprobar serialización, resultado final persistido y reintento idempotente.
+18. Forzar timeout/flush y reintentar; confirmar que la operación no duplica asociaciones y que la respuesta refleja el valor guardado.
+19. Intentar desvincular como Técnico y como Desarrollador; comprobar rechazo/aceptación. Verificar que IDs huérfanos no generan tarjetas y que IDs repetidos no duplican tarjetas.
+
+AUG-091 — TÍTULO DEL ACORDEÓN PyS
+20. Abrir un detalle de vehículo con problemas relacionados en modo claro y oscuro, y en viewport móvil; confirmar el título exacto «Problemas relacionados a este vehículo», ajuste de línea sin superposición y flecha visible.
+
+No desplegar a producción ni modificar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-092 — INTEGRIDAD DEL MÓDULO TUTORIAL
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+Pruebas en un proyecto Apps Script y una Spreadsheet aislados, nunca en producción:
+21. Confirmar que la hoja canónica se llama `Tutorial` y conserva A:G exactamente: ID, Tema, Imagen, comoIdentificarlo, dondeEncontrarlo, Detalles y Video. Confirmar que H se agrega como Colaborador solo si está vacía; si H contiene datos sin encabezado, verificar que el servicio se detenga sin alterarlos.
+22. Intentar alta como Técnico y como Desarrollador. El primer caso debe rechazarse; el segundo debe guardar userId/nombre derivados de Users y ActiveSessions, ignorando cualquier colaborador enviado por el cliente.
+23. Crear un tutorial completo y comprobar posiciones A:H, ID estable, colaborador y lectura inmediata del catálogo. Reintentar con el mismo operationId; debe devolver el registro original sin duplicarlo.
+24. Intentar crear el mismo tema con otro operationId, incluyendo diferencias de acentos, mayúsculas y espacios; confirmar rechazo sin agregar filas.
+25. Ejecutar dos altas simultáneas con el mismo operationId y con operationId diferentes para el mismo tema; confirmar una sola fila válida y sin sobrescrituras.
+26. Editar por ID Tema, comoIdentificarlo, dondeEncontrarlo y Detalles. Confirmar que ID, Imagen, Video y Colaborador no cambien; verificar edición de registros históricos con ID vacío usando un tema único.
+27. Enviar vídeo para aprobación con ID de tutorial; confirmar que la publicación escribe miniatura en C y enlace aprobado en G. Probar rechazo, reintentos y destino duplicado/inexistente sin alterar otras columnas.
+28. Verificar en el detalle el orden de Cómo identificarlo, Dónde encontrarlo, Detalles y Colaborador al final. Comprobar la miniatura/vídeo, edición y formulario en escritorio/móvil y modo claro/oscuro.
+29. Confirmar que alta, edición, envío de vídeo, aprobación y rechazo se serializan sobre el recurso TUTORIAL del coordinador; repetir operaciones concurrentes para comprobar ausencia de carreras.
+
+No migrar automáticamente datos de una hoja histórica `Tutoriales` ni reordenar filas. No desplegar a producción ni modificar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-093 — VALIDACIÓN DEL TIPO Y ESTADO DE SOLICITUDES DE VÍDEO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+Pruebas en una implementación Apps Script y Spreadsheet aisladas, sin cuentas ni datos productivos:
+30. Sembrar una fila de Feedbacks con JSON válido de tipo distinto de `video_approval`; intentar aprobar y rechazar. Ambas operaciones deben rechazarse y no alterar el destino.
+31. Probar JSON malformado, identidad creadora ausente, IDs de solicitud inexistentes/duplicados y referencia cruzada entre `ID_vehiculo` y `referenceId`; confirmar rechazo sin publicar ni retirar vídeos.
+32. Probar solicitudes con `status` pending, approved y rejected, variando también `Respuesta` y `Se resolvio` de Feedbacks. Solo una solicitud pendiente y coherente puede aprobarse o rechazarse.
+33. Intentar aprobar una solicitud rechazada, rechazar una aprobada y repetir decisiones terminales. Deben rechazarse; un reintento de aprobación ya completada solo puede confirmar el mismo destino y estado sin reescritura.
+34. Lanzar aprobación y rechazo simultáneos para el mismo ID; comprobar que el coordinador serializa las decisiones y que solo una transición termina aplicada.
+35. Verificar que solicitudes válidas de Corte, PyS y Tutorial continúen publicando o retirando exclusivamente el destino y vídeo exactos, con confirmación posterior de Feedbacks.
+36. Revisar Inbox con estados pendiente, aprobado, rechazado y registros JSON malformados; comprobar que solo las solicitudes pendientes ofrecen acciones de decisión y que los mensajes no válidos no se convierten en aprobaciones.
+
+No desplegar a producción ni modificar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-094 — INYECCIÓN HTML EN EL MODAL UNIFICADO DE SUBIDA YOUTUBE
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+```bash
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+cd "$ROOT" || exit 1
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+git fetch origin GPSpedia2.2.5_work || exit 1
+git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+git rev-parse HEAD
+```
+
+Pruebas en navegador y datos aislados, sin subir archivos reales a YouTube:
+37. Abrir el modal desde Corte, PyS y Tutorial con títulos y descripciones que contengan comillas simples/dobles, ampersands, acentos, etiquetas HTML, atributos `onerror`/`onclick` y texto `</textarea><script>...`.
+38. Confirmar que los valores aparecen como texto editable literal, no crean nodos HTML, no ejecutan eventos/scripts y no rompen la estructura del modal.
+39. Verificar que acentos, comillas, ampersands y saltos de línea se conservan al abrir, recuperar una subida interrumpida y descartar una sesión local.
+40. Probar títulos superiores a 100 caracteres y descripciones superiores a 5000; confirmar truncamiento en los límites definidos sin alterar la codificación.
+41. Repetir con el modal abierto desde cada punto de entrada; comprobar que ninguna llamada construye HTML a partir de initialTitle/initialDescription y que el flujo de subida/reanudación no cambia.
+
+No iniciar transferencias reales ni modificar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-095 — SANITIZACIÓN AUTORITATIVA DE CONTENIDO ENRIQUECIDO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas exclusivamente en proyectos Apps Script y Spreadsheet aislados:
+1. Instalar copias de FEEDBACK y WRITE en proyectos de prueba independientes; confirmar que las URLs live no se sustituyen ni modifican.
+2. Invocar directamente las acciones de alta PyS, edición PyS, addSolution, addPrevention y handleAddSupplementaryInfo con payloads que omitan el frontend.
+3. En descripción, solución, prevención, apertura, cables de alimentación y nota importante, enviar etiquetas autorizadas del editor y confirmar que se conservan en formato canónico.
+4. Enviar script, iframe, SVG, eventos onerror/onclick, srcdoc, URL javascript/data/protocol-relative, CSS url()/expression/position y atributos desconocidos; confirmar que no se almacenan ni ejecutan.
+5. Probar URL http(s) segura, mailto/tel en enlaces, imágenes https, target=_blank y rel seguro; comprobar que los esquemas peligrosos se eliminan.
+6. Probar cadenas simples, entidades &nbsp;/&#160;/&#xA0;, etiquetas vacías y saltos BR; rechazar los campos requeridos sin contenido visible y las aportaciones suplementarias sin información válida.
+7. Probar tipos incorrectos y longitudes en el límite y por encima: PyS título 15, descripción 200, solución/prevención 700; suplementarios 5000. Confirmar que UI y backend coinciden.
+8. Repetir la misma operación PyS con el mismo opId y contenido equivalente tras sanitización; comprobar que no se duplican filas ni archivos. Verificar también conflictos con contenido diferente.
+9. Confirmar que solo se modifican las filas objetivo y que los registros históricos no se reescriben ni migran.
+10. Revisar la visualización en detalle, carrusel, impresión/exportación y uso offline; los sinks pendientes de renderizado identificados en AUG-096 se validan y corrigen bajo esa tarea.
+
+No ejecutar migraciones masivas, no usar datos productivos y no desplegar a producción.
+================================================================================
+
+================================================================================
+AUG-096 — VALIDACIÓN DE RUTAS DE RENDERIZADO DESCRIPTIVO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador/dispositivo y catálogo de prueba, sin desplegar a producción:
+1. Cargar un vehículo con varios cables y etiquetas que contengan texto como `<img src=x onerror=alert(1)>`; confirmar que el rótulo se muestra literalmente y no crea elementos ni ejecuta código.
+2. Probar contenido enriquecido autorizado (negrita, listas, enlaces seguros, saltos y estilos permitidos) en cada diapositiva; confirmar que conserva el formato.
+3. Repetir con un solo cable y con contenido descriptivo sin carrusel; comprobar que scripts, iframe, SVG, eventos, URL javascript/data y CSS no permitido se eliminan.
+4. Comprobar flechas, gestos táctiles y cambio de diapositiva después de la separación entre rótulo y contenido.
+5. Abrir detalle PyS e Inbox con contenido enriquecido y payloads hostiles controlados; confirmar renderizado seguro.
+6. Generar la ficha de impresión/exportación y revisar descripción de cortes, alimentación, apertura y nota técnica; confirmar formato autorizado y ausencia de ejecución de contenido activo.
+7. Abrir los datos guardados en modo offline y comprobar que no se crean sinks HTML ni se altera el contenido almacenado.
+8. Repetir en modo claro/oscuro y viewport móvil; revisar saltos de línea, desbordamiento y legibilidad.
+
+No usar datos productivos, no modificar registros históricos y no desplegar a producción.
+================================================================================
+
+================================================================================
+AUG-097 — MODO ESTRICTO/AVANZADO DE TEXTO ENRIQUECIDO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas con cuentas y catálogo aislados:
+1. Iniciar sesión como Desarrollador y comprobar que el selector solo está disponible dentro del panel de Desarrollador; iniciar sesión con Técnico y confirmar que no puede abrir el panel ni cambiar el modo.
+2. Eliminar la clave `gpsepedia_rich_text_mode` del almacenamiento local de la instalación de prueba y confirmar que se aplica modo estricto.
+3. Guardar un valor inválido en la clave y confirmar fallback seguro a estricto.
+4. En modo estricto, comprobar que las barras solo muestran negrita y color; probar saltos naturales, texto plano y estilos de color autorizados.
+5. Cambiar a avanzado; comprobar que aparecen cursiva, subrayado, tachado, fuente, tamaño y listas; probar cada formato permitido.
+6. Cambiar de modo con varias barras ya abiertas; confirmar que se actualizan los controles y que las acciones de formato se corresponden con el modo actual.
+7. En modo estricto, cargar un registro histórico con markup avanzado seguro y comprobar que se conserva el texto visible sin ejecutar ni habilitar etiquetas no permitidas; confirmar que los registros históricos de texto plano no cambian.
+8. En modo avanzado, probar etiquetas/estilos permitidos y payloads con script, iframe, SVG, eventos, javascript:, data: y CSS peligroso; confirmar que ambos modos mantienen el bloqueo de contenido activo.
+9. Recargar la página y abrir otra pestaña del mismo navegador; confirmar persistencia local del modo. Verificar que otro navegador/dispositivo no hereda la preferencia local.
+10. Probar formularios de Cortes, apertura, alimentación, Tutorial, PyS, Solución, Prevención y Contacto; comprobar que el backend continúa sanitizando independientemente del modo cliente.
+11. Confirmar que el App Shell carga la versión `gpsepedia-cache-v18` y que una actualización del service worker no restaura la versión anterior.
+12. Revisar claro/oscuro, escritorio y móvil; confirmar que la barra avanzada no desborda ni tapa los campos.
+
+No modificar datos históricos, no desplegar a producción y no usar servicios o datos productivos.
+================================================================================
+

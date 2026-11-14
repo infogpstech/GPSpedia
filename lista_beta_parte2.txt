@@ -1,0 +1,1836 @@
+================================================================================
+AUG-098 — VALIDACIÓN DE INYECCIÓN HTML EN BÚSQUEDAS
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador con catálogo aislado:
+1. Buscar literalmente `<img src=x onerror=alert(1)>`, `<script>alert(1)</script>`, `<svg onload=alert(1)>`, comillas, atributos de evento, ampersand y caracteres Unicode; confirmar que encabezados y estados vacíos muestran el texto sin crear nodos activos ni ejecutar código.
+2. Probar consulta con resultados y consulta sin resultados; comprobar que el texto se conserva íntegro y no altera el DOM.
+3. Probar búsquedas normales por marca/modelo y por contenido en Cortes, Relay, Tutoriales y PyS; verificar navegación y destinos.
+4. Guardar una consulta en historial, volver a seleccionarla y confirmar que se muestra como texto literal.
+5. Abrir deep links `#search=` y `#vehicle=...&search=` con consultas URL-encoded que contengan etiquetas, comillas, ampersand, slash y Unicode; confirmar que la consulta se restaura en el input y se renderiza sin interpretación HTML.
+6. Probar enlaces mal codificados y secuencias porcentuales inválidas; la inicialización no debe interrumpirse ni insertar HTML.
+7. Revisar mensajes de error/estado de búsqueda, navegación atrás, limpieza del input y blur; no debe aparecer ReferenceError ni contenido activo.
+8. Repetir en escritorio y móvil, con teclado y táctil; revisar texto largo, desbordamiento y legibilidad.
+
+No modificar catálogo productivo ni desplegar a producción.
+================================================================================
+
+================================================================================
+AUG-099 — VALIDACIÓN DE RETIRADA DE FILTROS RÁPIDOS
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador/dispositivo:
+1. Abrir la aplicación y confirmar que la búsqueda funciona directamente, sin barra, botón ni panel de filtros rápidos.
+2. Escribir una consulta y retirar el foco con Enter, clic en otra sección y toque fuera; no debe aparecer ReferenceError ni error en consola.
+3. Repetir con el campo vacío y con el texto borrado mediante el botón X.
+4. Abrir un resultado que despliegue modal y retirar el foco del buscador; la clase search-active debe conservarse mientras el modal esté visible.
+5. Cerrar el modal, limpiar búsqueda y navegar atrás/adelante; confirmar que historial y encabezado se mantienen estables.
+6. Verificar que no existen elementos con IDs catalog-filters-bar o btn-toggle-filters ni controles rápidos equivalentes.
+7. Repetir en viewport móvil con teclado virtual y en escritorio; revisar animación del header y ausencia de saltos visuales.
+
+No reactivar filtros rápidos, no modificar datos productivos y no desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-100 — VALIDACIÓN VISUAL DEL SISTEMA UNIVERSAL DE BOTONES
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas visuales en navegador real:
+1. Revisar botones primarios, secundarios, destructivos, advertencia, icono y compactos en index.html, HTML/users.html y HTML/add_cortes.html.
+2. Repetir con tema claro y oscuro; verificar contraste, foco visible por teclado, hover, active, disabled y loading.
+3. Comprobar formularios, modales, Inbox y panel de Desarrollador, incluidos botones con iconos y textos largos.
+4. Revisar viewports móviles: targets táctiles, wrapping, desbordamiento y separación entre acciones.
+5. Confirmar que controles especializados (carruseles, acordeones, navegación, cierres y validación) conservan su comportamiento y geometría.
+
+No modificar datos productivos ni desplegar a producción.
+================================================================================
+
+================================================================================
+AUG-101 — VALIDACIÓN DE CLASIFICACIÓN DE BÚSQUEDA GLOBAL EN NAVEGADOR
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador real:
+1. Buscar el título exacto «Relay 5 pines», «Instalación de GPS» y «GPS sin señal»; cada resultado debe conservar su sección y mostrarse como tarjeta de registro, nunca como logo de marca.
+2. Buscar «Corolla» y confirmar que abre resultados de modelos; buscar «Toyota» cuando solo existan Cortes de esa marca y confirmar la vista de logos.
+3. Repetir una consulta que produzca resultados mixtos de Cortes, Relay, Tutorial y PyS; todos deben mostrarse como registros de sus secciones, sin convertir el conjunto en marcas.
+4. Buscar una marca con vehículos de varias marcas en los resultados y confirmar que se mantiene la vista de modelos.
+5. Verificar que seleccionar cada resultado abre su detalle o sección correcta y que una coincidencia mixta no dispara la autoapertura de un vehículo.
+
+No modificar datos productivos ni desplegar a producción.
+================================================================================
+
+================================================================================
+AUG-102 — VALIDACIÓN VISUAL DEL TEMA DEL BANNER DE VALIDACIÓN
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador real:
+1. Activar y desactivar el tema oscuro; comprobar que el banner cambia junto con el resto de la aplicación y que el estado persiste al recargar.
+2. Abrir detalles de vehículos que muestren el banner de validación colaborativa; revisar el fondo, borde y texto en ambos temas.
+3. Recorrer los mensajes iniciales, estado de registro, confirmación, error/reintento y cierre; comprobar que todos conservan legibilidad.
+4. Mostrar los botones principales/secundarios y el campo de año; revisar texto, placeholder, borde, foco visible por teclado y estados disabled cuando apliquen.
+5. Repetir en móvil y escritorio; confirmar que mensajes largos y botones se ajustan sin desbordamiento horizontal ni recortes.
+6. Confirmar que el flujo de validación sigue funcionando y que el cambio de tema no modifica el envío ni el almacenamiento de respuestas.
+
+No modificar datos productivos ni desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-103 — VALIDACIÓN VISUAL DE TOKENS COMPARTIDOS ENTRE PÁGINAS
+Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador real:
+1. Abrir index.html, HTML/users.html y HTML/add_cortes.html en tema claro y oscuro.
+2. Revisar fondos, superficies, texto principal/secundario, bordes, enlaces, campos, foco visible y estados deshabilitados.
+3. En HTML/users.html, revisar tabla, encabezados, perfil, gestión de usuarios y modales.
+4. En HTML/add_cortes.html, revisar formularios por etapas, campos, acordeones, coincidencias, mensajes informativos y carga de imágenes.
+5. En index.html, revisar catálogo, menú, tarjetas, modales, estados de conexión y banner de validación.
+6. Repetir en viewports de 320, 768, 1024 y 1440 px; confirmar legibilidad y ausencia de desbordamiento horizontal.
+7. Confirmar que los colores contextuales, iconos, logotipos, imágenes y gráficas mantienen sus significados.
+No modificar datos productivos, ejecutar operaciones backend ni desplegar.
+================================================================================
+
+
+================================================================================
+AUG-104 — VALIDACIÓN DE ZOOM Y REFLUJO EN ADD_CORTES
+Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas en navegador real:
+1. Abrir HTML/add_cortes.html en viewport de 320, 375, 768 y 1280 px; comprobar vertical y horizontal.
+2. Probar zoom del navegador al 200 % y 400 % (incluyendo emulación de 320 CSS px).
+3. Recorrer las etapas del formulario: cuadrícula a una columna, campos, etiquetas, selectores, botones, acordeones y mensajes.
+4. Enfocar y editar cada control con teclado físico y virtual; verificar que el campo enfocado permanezca visible y no quede oculto por el teclado.
+5. Comprobar que no aparezca scroll horizontal en el documento; el contenido largo debe refluír y las acciones deben poder alcanzarse.
+6. Abrir/cerrar el Lightbox repetidamente y comprobar que el zoom de página siga disponible.
+7. Confirmar que imágenes, carrusel y navegación del Lightbox conservan su funcionamiento.
+8. Abrir HTML/users.html e index.html y comprobar que su política de zoom previa no cambió al cerrar el Lightbox.
+No modificar datos productivos, ejecutar operaciones backend ni desplegar.
+================================================================================
+
+
+================================================================================
+AUG-105 — VALIDACIÓN RESPONSIVE DE FORMULARIOS Y GESTIÓN DE USUARIOS
+Antes de ejecutar las pruebas, sincronizar la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+Pruebas visuales en navegador real:
+1. Abrir HTML/add_cortes.html y HTML/users.html en anchos de 320, 375, 420, 600, 760, 768, 1024 y 1440 px.
+2. Probar orientación vertical y horizontal, incluida orientación horizontal de poca altura.
+3. En add_cortes, recorrer etapas, campos, sugerencias, tarjetas de coincidencias, carga/preview de imágenes, acordeones y acciones; confirmar reflujo sin contenido cortado.
+4. En users, revisar perfil, tabla con nombres/roles largos y acciones disponibles según permisos; comprobar que no exista scroll horizontal global.
+5. Abrir los modales de usuario, edición de nombre y cambio de contraseña; revisar límites, scroll interno, cierre, foco y visibilidad con teclado virtual.
+6. Comprobar zoom del navegador, foco visible, temas claro/oscuro y ausencia de overflow horizontal global.
+7. Confirmar que sesión, permisos, creación/edición/eliminación y cambio de contraseña mantienen su comportamiento; no ejecutar mutaciones sobre datos productivos.
+No desplegar ni modificar servicios o datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-106 — VALIDACIÓN DE COLISIÓN ENTRE RANGOS DE GENERACIONES
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En entorno Beta aislado, con catálogo de prueba:
+1. Probar generaciones coincidentes en marca, modelo, categoría, tipo de encendido y versión con rangos disjuntos y huecos entre ellos.
+2. Enviar sugerencias que amplíen el rango actual hacia años anteriores o posteriores a otra generación; confirmar que un rango separado no se rechaza como colisión.
+3. Probar solapamiento parcial y contención; deben requerir revisión manual.
+4. Probar contacto exacto en el límite inicial y final; los extremos son inclusivos y deben detectarse como colisión.
+5. Repetir con generaciones de distinta versión, encendido, categoría o modelo; no deben colisionar entre sí.
+6. Verificar que un rango ajeno inválido produce advertencia/revisión manual y no permite una ampliación insegura.
+7. Confirmar que la UI ofrece validación puntual y que el backend conserva la decisión autoritativa ante datos obsoletos del catálogo local.
+
+Usar únicamente Spreadsheet y servicios Apps Script aislados. No ejecutar endpoints operativos, no modificar catálogo productivo y no desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-107 — VALIDACIÓN REAL DE CONFIRMACIÓN BACKEND Y CACHÉ DE VALIDACIÓN
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En navegador real, con usuario y vehículo de prueba, y FEEDBACK/Spreadsheet aislados:
+1. Enviar una validación y comprobar que la interfaz permanece en estado pendiente mientras suggestYear no responda; solo después de recorded=true debe mostrar confirmación y guardar validationCache.
+2. Simular desconexión antes de enviar y timeout durante la solicitud. Confirmar que se muestra error/reintento y que no se crea la caché local.
+3. Simular pérdida de la respuesta después de que FEEDBACK haya persistido el aporte. Recargar la página y reintentar la misma respuesta; comprobar que no se duplica la fila y que la respuesta de recuperación comunica el estado real antes de permitir la caché.
+4. Probar respuestas info con recorded=false y recorded=true; solo la segunda puede generar caché.
+5. Forzar fallo de IndexedDB después de una confirmación backend: la interfaz debe informar que el aporte sí fue registrado, pero que la caché local no pudo guardarse.
+6. Probar el flujo «Modelo confirmado»: no debe avanzar al siguiente paso hasta recibir confirmación backend.
+7. Repetir con conexión restablecida y recarga real; comprobar que el usuario puede reintentar sin registrar dos veces el mismo aporte.
+
+Usar únicamente deployments y Spreadsheet aislados. No invocar endpoints operativos, modificar catálogo productivo ni desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-108 — AISLAMIENTO DE VALIDATIONCACHE POR USUARIO Y VEHÍCULO
+
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada desde el repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En navegador real, usando un vehículo de prueba y sin datos productivos:
+1. En la misma sesión/perfil, guardar una respuesta para el mismo vehicleId con user-a y user-b; comprobar que ambas entradas coexisten y cada cuenta recupera exclusivamente su respuesta.
+2. Cambiar de cuenta mediante logout/login y comprobar que la caché de la cuenta anterior no suprime la consulta de la nueva.
+3. Abrir sesiones separadas en pestañas/ventanas y repetir el cambio de identidad; verificar que ninguna sesión presenta respuestas de otra cuenta.
+4. Entrar como usuario anónimo: comprobar que no recupera respuestas de cuentas registradas ni guarda una entrada compartida.
+5. Cerrar sesión y volver a iniciar con cada cuenta; confirmar que solo reaparece la caché correspondiente a esa identidad.
+No desplegar, modificar servicios ni alterar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-109 — CONTROL DE CONFIANZA DE APORTACIONES ANÓNIMAS
+
+Antes de cualquier prueba, sincronizar únicamente la rama autorizada:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En un deployment FEEDBACK de pruebas y Spreadsheet aislada:
+1. Enviar el mismo aporte anónimo varias veces y con distintos anonymousReporterId; comprobar que se conserva una sola fila por vehículo/año y que no aumenta el número de votos verificados.
+2. Enviar aportes anónimos desde varios navegadores/dispositivos; comprobar que todos quedan para revisión manual y ninguno cuenta para el umbral automático.
+3. Confirmar que dos cuentas autenticadas distintas sí cuentan como dos aportantes, y que una tercera cuenta autenticada puede alcanzar el umbral cuando corresponda.
+4. Comprobar el límite de 30 solicitudes anónimas por hora con CacheService real, incluyendo solicitudes concurrentes y el reinicio de ventana.
+5. Revisar que los aportes anónimos permanecen pendientes tras una ampliación automática disparada exclusivamente por tres cuentas autenticadas.
+6. Confirmar que una identidad autenticada falsificada o una clave user: enviada sin sesión válida se rechaza.
+
+No ejecutar contra Spreadsheet productiva, no desplegar a producción y no modificar el catálogo real.
+================================================================================
+
+
+================================================================================
+AUG-110 — VALIDACIÓN DEL CICLO DEL BANNER COMUNITARIO
+Antes de ejecutar cualquier prueba, sincronizar únicamente la rama autorizada. Ejecutar desde una terminal abierta dentro del repositorio clonado:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En navegador real, con catálogo y cuentas de prueba:
+1. Abrir vehículos sin imagen principal y comprobar que la validación aparece si el vehículo es elegible.
+2. Abrir vehículos con imágenes ausentes, rotas o que fallen al descargar; confirmar que el banner no depende del evento de imagen.
+3. Abrir vehículos con varios cortes alternativos lazy; comprobar que solo se solicita una validación y el banner aparece sin expandir acordeones.
+4. Navegar rápidamente entre dos vehículos y cerrar el modal mientras se consulta elegibilidad; una respuesta tardía no debe mostrar un banner en el detalle equivocado.
+5. Verificar que los vehículos no elegibles y los que ya tienen respuesta en caché no muestran el banner.
+6. Confirmar la ubicación debajo de la imagen principal cuando existe, o después de la cabecera cuando no existe.
+
+Usar catálogo de prueba y navegador aislado. No modificar datos productivos ni desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-111 — VERIFICACIÓN DEL ESQUEMA AUXILIAR suggestionActorKey
+
+Antes de cualquier prueba, sincronizar únicamente la rama autorizada:
+
+    ROOT="$(git rev-parse --show-toplevel)" || exit 1
+    cd "$ROOT" || exit 1
+    test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+    test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || { echo "Remoto incorrecto"; exit 1; }
+    test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+    if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; fi
+    git fetch origin GPSpedia2.2.5_work || exit 1
+    git pull --ff-only origin GPSpedia2.2.5_work || exit 1
+    git rev-parse HEAD
+
+En una copia aislada de Spreadsheet:
+1. Confirmar que Feedbacks conserva A:I con los nueve encabezados funcionales exactos y que suggestionActorKey se ubica después del último encabezado auxiliar ya utilizado.
+2. Ejecutar suggestYear más de una vez; verificar que solo exista un encabezado suggestionActorKey y que una segunda ejecución reutilice la misma columna.
+3. Confirmar que las filas nuevas autenticadas guardan user:<ID>, los aportes anónimos anon:unverified y que los registros positivos ya aplicados pueden conservar applied:user:<ID>.
+4. Restaurar una copia completa que incluya las columnas auxiliares y verificar que se conservan encabezados y valores sin desplazamiento.
+5. Restaurar una copia histórica de nueve columnas en una hoja de pruebas; verificar que la siguiente escritura vuelve a crear suggestionActorKey y que las filas antiguas permanecen sin atribución artificial.
+6. Confirmar que un encabezado duplicado o ubicado dentro de A:I detiene la escritura sin sobrescribir datos.
+
+No ejecutar contra Spreadsheet productiva ni desplegar servicios.
+================================================================================
+
+
+================================================================================
+AUG-113 — VALIDACIÓN BETA DEL DASHBOARD DE ACTIVIDAD — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+VALIDACIÓN EN NAVEGADOR Y SERVICIOS AISLADOS:
+1. Usar un deployment FEEDBACK de pruebas y una Spreadsheet aislada. No utilizar datos ni endpoints productivos.
+2. Sembrar filas de ActividadUsuario cuyo nombre, tipo y detalle contengan \`<img onerror>\`, \`<svg onload>\`, \`<script>\`, etiquetas de cierre, comillas y atributos de evento.
+3. Abrir el dashboard con una cuenta de prueba autorizada. Confirmar que cada payload aparece literalmente como texto, no crea nodos/atributos activos, no ejecuta código y no modifica el DOM fuera de la tabla.
+4. Enviar recordLike con sesión válida, userId/userName/userRole falsificados y token de una cuenta de prueba. Verificar que el registro de actividad usa ID/nombre/rol de Users, nunca los campos falsificados.
+5. Repetir con token ausente, inválido, expirado, revocado y cruzado; confirmar rechazo sin incrementar el contador ni escribir actividad.
+6. Verificar likes normales, reintento idempotente, carga del historial previo y roles autorizados del dashboard. Registrar payload, fila antes/después, navegador y resultado.
+
+No declarar PASS sin inspección del DOM y confirmación de ausencia de ejecución en navegador real. No desplegar a producción ni modificar hojas productivas.
+================================================================================
+
+
+================================================================================
+AUG-114 — VALIDACIÓN BETA DE SEGURIDAD DEL INBOX — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios. Confirmar HEAD antes de probar.
+
+VALIDACIÓN EN NAVEGADOR Y SERVICIOS AISLADOS:
+1. En Spreadsheet/FEEDBACK aislados, sembrar solicitudes históricas con título, nombre, descripción y metadatos que contengan <img onerror>, <svg onload>, comillas, atributos de evento y etiquetas de cierre.
+2. Abrir Inbox y detalle con una cuenta de prueba autorizada. Confirmar que los valores se muestran como texto, no crean atributos/nodos activos y no ejecutan código. Verificar que las respuestas enriquecidas permitidas siguen presentándose con formato seguro.
+3. Probar URL válidas de YouTube y registros históricos con javascript:, HTTP, host impostor, userinfo, ID distinto y URL malformada. Solo el URL HTTPS canonicalizado del ID coincidente debe producir enlace.
+4. Enviar solicitudes nuevas con título/descripción/nombre válidos, límites excedidos, tipos incorrectos y metadatos con claves/estructuras no admitidas. Confirmar rechazo sin insertar filas inválidas.
+5. Probar metadatos de corte, PyS y tutorial con sus campos válidos y verificar que el flujo de aprobación/publicación conserva referencia, tipo e ID de vídeo.
+
+No declarar PASS sin inspección del DOM y confirmación de ausencia de ejecución en navegador real. No desplegar a producción ni modificar hojas productivas.
+================================================================================
+
+
+================================================================================
+AUG-115 — VALIDACIÓN VISUAL DE ROLES DEL INBOX — PENDIENTE EN BETA
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+Con cuentas de prueba autorizadas, abrir Inbox y revisar la vista de detalle de una solicitud de vídeo:
+1. Desarrollador: muestra aprobar/rechazar.
+2. Gefe: muestra aprobar/rechazar.
+3. Supervisor: muestra aprobar/rechazar.
+4. Jefe, Técnico y Técnico exterior: no muestran controles de aprobación.
+5. Repetir llamadas directas a approveVideo/rejectVideo con sesión de rol no autorizado; backend debe rechazarlas independientemente del rol declarado por el cliente.
+No usar cuentas ni hojas productivas; no desplegar cambios para esta comprobación sin el procedimiento de Beta.
+================================================================================
+
+
+================================================================================
+AUG-116 — CACHÉ Y PAGINACIÓN DEL INBOX — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN ENTORNO BETA AISLADO:
+1. Preparar Spreadsheet/FEEDBACK aislados con más de 40 filas de Feedbacks y varias de Contactanos; nunca usar datos productivos.
+2. Abrir Inbox y comprobar primera página, total, siguiente y anterior. Verificar que la segunda página cruza de Feedbacks a Contactanos sin duplicados ni omisiones y que la última página deshabilita Siguiente.
+3. Repetir apertura dentro de 60 segundos: debe usar la página en caché sin mezclar usuarios. Esperar expiración y comprobar revalidación en red.
+4. Simular pérdida de conexión con caché vencida: solo puede mostrarse la copia temporal perteneciente al mismo userId/rol/token y debe aparecer el aviso de datos temporales.
+5. Ejecutar reply, resolve, delete, approve y reject con registros/cuentas de prueba; confirmar que cada operación invalida las páginas y la vista vuelve a consultar desde el primer cursor.
+6. Cambiar de cuenta, rol o token, y cerrar sesión; confirmar que la caché y los cursores anteriores no reaparecen.
+7. Confirmar en logs del servicio que cada lectura solicita únicamente el rango de la página y que pageSize superior a 100 se limita a 100.
+
+No declarar PASS sin inspección del navegador y FEEDBACK/Spreadsheet aislados. No ejecutar endpoints operativos ni desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-117 — ÚLTIMA CUENTA DESARROLLADOR Y LIMPIEZA DE SESIONES — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN AUTH Y SPREADSHEET AISLADOS:
+1. Crear cuentas sintéticas: una cuenta Desarrollador y cuentas de otros roles, con sesiones de prueba. Nunca usar cuentas productivas.
+2. Aplicar el cambio a los proyectos AUTH operativo y AUTH de pruebas manteniendo el Spreadsheet ID aislado en el segundo. Con un solo Desarrollador, intentar degradar su propio rol a Gefe/Supervisor/Técnico desde la UI. Debe pedir confirmación y AUTH debe rechazarlo sin cambiar nombre, rol, token ni datos.
+3. Intentar el mismo cambio mediante POST directo a updateUser con token válido de prueba. Debe rechazarse igual; el rol del actor se deriva de AUTH, no de un campo enviado por el cliente.
+4. Intentar eliminar la única cuenta Desarrollador. La UI no ofrece auto-borrado; POST directo a deleteUser con el mismo ID como actor/objetivo debe rechazarse.
+5. Crear un segundo Desarrollador de prueba. Comprobar que degradar o eliminar uno está permitido solo si el otro permanece activo; después repetir con el único restante y confirmar el rechazo.
+6. Eliminar una cuenta técnica con varias filas ActiveSessions. Confirmar que la cuenta queda marcada como desactivada, que no queda ninguna fila de sesión con su userId y que AUTH registra actor, objetivo y sesiones cerradas.
+7. Simular un fallo controlado de eliminación de fila en un entorno aislado. La respuesta debe indicar limpieza incompleta y cuenta desactivada; al reintentar como Desarrollador, debe terminar la limpieza.
+8. Ejecutar dos cambios concurrentes que podrían degradar/eliminar cuentas Desarrollador. El ScriptLock debe serializarlos y nunca dejar el sistema sin una cuenta Desarrollador activa.
+9. Revisar Logs y las filas Users/ActiveSessions antes y después. No ejecutar acciones contra el Spreadsheet ni endpoints productivos.
+
+No declarar PASS sin comprobar el estado de Users, ActiveSessions y Logs en el entorno aislado. No desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-118 — REFRESCO DE PERFIL Y ROL DESDE SESIÓN AUTENTICADA — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN AUTH Y SPREADSHEET AISLADOS:
+1. Iniciar sesión con una cuenta sintética y conservar la pestaña abierta.
+2. Desde una segunda sesión de prueba, modificar Nombre_Completo, Telefono y Correo_Electronico del mismo usuario. Volver a enfocar la pestaña original; verificar que validateSession devuelve el perfil actualizado y que localStorage gpsepedia_session y currentUser reflejan los cambios sin modificar el token.
+3. Repetir el cambio remoto y dejar la pestaña activa; verificar actualización tras el siguiente ciclo de revalidación en segundo plano (máximo cinco minutos) o al recuperar foco.
+4. Cambiar el rol desde AUTH con el flujo administrativo. La revocación pendiente debe hacer que validateSession rechace la sesión anterior; comprobar cierre de sesión y volver a autenticar para recibir el rol nuevo. No deben permanecer controles privilegiados con el rol anterior.
+5. Mientras una validación de U1/token-1 está pendiente, cambiar el navegador a U2/token-2. Completar después la respuesta de U1 y verificar que no sobrescribe el perfil ni token de U2.
+6. Inspeccionar la respuesta validateSession: solo debe incluir ID, Nombre_Usuario, Nombre_Completo, Privilegios, Telefono y Correo_Electronico en profile; nunca Password ni SessionToken.
+7. Repetir con sesión revocada, token de otra cuenta e ID duplicado; no debe entregarse ningún perfil.
+8. Revisar localStorage y estado de UI después de cada caso. No usar cuentas, hojas ni endpoints productivos.
+
+No declarar PASS sin verificar perfil visible, localStorage, currentUser y token de sesión en el proyecto aislado. No desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-119 — HISTORIAL INMUTABLE DE OPERACIONES DEL INBOX — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN FEEDBACK Y SPREADSHEET AISLADOS:
+1. Confirmar que la primera operación crea InboxAuditLog con los ocho encabezados contractuales y que un encabezado incompatible detiene la mutación.
+2. Ejecutar reply para problem_report y contact_form; comprobar que el evento contiene actorId/actorName derivados de la sesión, acción reply, tipo, ID y timestamp, y que se escribe antes de la respuesta.
+3. Ejecutar resolve sobre un reporte y confirmar que el evento precede al cambio de Se resolvio.
+4. Ejecutar delete para Feedbacks y Contactanos. Confirmar que el evento persiste aunque se elimine la fila fuente.
+5. Recargar la aplicación y consultar Actividad: los eventos Inbox deben reaparecer ordenados por timestamp y asociados al actor/registro correcto.
+6. Limpiar la actividad ordinaria con la operación administrativa de prueba; comprobar que InboxAuditLog permanece intacto y sigue apareciendo en el historial.
+7. Simular fallo de escritura/confirmación del ledger: la operación reply/resolve/delete debe abortarse sin modificar la fila operativa.
+8. Verificar que ID inexistente o duplicado no produce evento y que no se almacena el texto privado de la respuesta.
+9. Comprobar permisos con cuentas sintéticas Desarrollador, Gefe, Jefe y Supervisor; los roles no autorizados deben seguir siendo rechazados por FEEDBACK.
+
+No declarar PASS sin verificar el contenido persistido de InboxAuditLog y la UI después de recargar. No desplegar ni modificar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-120 — VALIDACIÓN BETA PENDIENTE
+
+PREPARACIÓN OBLIGATORIA:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: árbol local no limpio; conserva cambios."; exit 1; }
+case "$(git remote get-url origin)" in
+ https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+ *) echo "ERROR: origin inesperado."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si existe cualquier cambio local, origin no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN ENTORNO AISLADO:
+1. Preparar ActividadUsuario con 10,000 filas y InboxAuditLog con 500 eventos, incluyendo timestamps repetidos e inválidos.
+2. Comprobar que cada fuente lee como máximo sus últimas 100 filas y el backend devuelve máximo 100 elementos combinados.
+3. Verificar orden descendente, desempate estable y prefijo inbox_.
+4. Comparar el resultado con los 100 eventos más recientes de ambas fuentes y recargar el dashboard.
+5. Medir latencia y documentar discrepancias entre timestamp y orden físico de filas.
+
+No desplegar ni modificar hojas productivas.
+================================================================================
+
+
+================================================================================
+AUG-121 — VALIDACIÓN BETA DE TIPOS AL RESPONDER INBOX — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; consérvalos antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si el árbol no está limpio, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN FEEDBACK Y SPREADSHEET AISLADOS:
+1. Responder un registro problem_report y uno contact_form con sesiones autorizadas; comprobar que se actualizan respuesta y nombre del respondedor y se registra un único evento reply.
+2. Enviar itemType video_approval y un tipo arbitrario mediante solicitud directa con sesión de prueba válida. Ambos deben devolver status error y no modificar hojas ni agregar eventos a InboxAuditLog.
+3. Probar variantes de mayúsculas, espacios internos y valores vacíos; solo los dos identificadores exactos tras el recorte exterior permitido se aceptan.
+4. Abrir una solicitud video_approval y comprobar que sus controles siguen siendo aprobar/rechazar; no debe aparecer el flujo de respuesta textual.
+5. Verificar que errores no autorizados y tipos no admitidos no producen una respuesta exitosa ficticia ni actividad de auditoría.
+
+No usar hojas/endpoints productivos ni desplegar cambios durante esta validación.
+================================================================================
+
+
+================================================================================
+AUG-122 — VALIDACIÓN BETA DE AUTORIZACIÓN DE addSupplementaryInfo — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+\`\`\`bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+\`\`\`
+
+Si existe cualquier cambio local, el remoto no coincide o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN HOJAS AISLADAS:
+1. Probar una operación válida por cada rol permitido: Desarrollador, Gefe/Jefe, Supervisor, Técnico y Técnico_exterior.
+2. Probar solicitud sin userId/sessionToken, token inexistente, cruzado, duplicado, expirado y revocado; todas deben fallar antes de cualquier modificación en Cortes o Drive.
+3. Probar rol no reconocido/no autorizado, perfil duplicado, usuario eliminado y nombre de perfil vacío.
+4. Enviar campos de identidad falsificados desde cliente y confirmar que el log atribuye el actor al nombre de Users.
+5. Confirmar que el ScriptLock se libera en éxito y error, y que una sesión revocada entre validación inicial y adquisición del lock no llega a escribir.
+
+No ejecutar con Spreadsheet, Drive ni endpoints productivos; no desplegar.
+================================================================================
+
+
+================================================================================
+AUG-123 — VALIDACIÓN BETA DE MIGRACIÓN UTILITIES — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si existe cualquier cambio local, el remoto no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+PRUEBAS EN COPIA AISLADA DE SPREADSHEET/UTILITIES:
+1. Comparar el código del deployment UTILITIES con JS/Services/Utilities.js. No desplegar a producción.
+2. Preparar una copia aislada con Cortes, Hoja 1, Users y ActiveSessions; confirmar que solo una sesión Desarrollador activa puede ejecutar migrateTimestamps.
+3. Lanzar dos POST simultáneos desde clientes separados. Confirmar que ScriptLock serializa ambas operaciones y que no procesan snapshots intercalados.
+4. Comparar snapshots de Cortes y Hoja 1, staging y respaldo; promover solo tras validar ambos.
+5. Inyectar fallos de lectura, Drive, staging, renombrado/promoción y rollback. Confirmar que Hoja 1 conserva los valores previos o que los artefactos de recuperación quedan preservados con error explícito.
+6. Interrumpir después de renombrar el destino a backup y antes de promover staging; reintentar y comprobar recuperación sin pérdida ni duplicación de hojas.
+7. Verificar que backup y destino simultáneos detienen la operación para reconciliación manual.
+8. Registrar valores antes/después, resultado HTTP y estado de lock. Nunca usar el Spreadsheet ID del código ni datos productivos.
+
+No declarar PASS sin verificar persistencia y recuperación en la copia aislada. No desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-124 — VALIDACIÓN BETA DEL CONTRATO ÚNICO DE TUTORIALES — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del checkout antes de cualquier prueba:
+
+```bash
+set -e
+test -z "$(git status --porcelain)" || { echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; }
+case "$(git remote get-url origin)" in
+  https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "ERROR: origin no corresponde a infogpstech/GPSpedia."; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "ERROR: rama inesperada."; exit 1; }
+git fetch origin
+git switch GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git status --short --branch
+git rev-parse HEAD
+```
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EN FEEDBACK/CATALOG Y SPREADSHEET AISLADOS:
+1. Confirmar que ambas versiones desplegadas corresponden a los archivos fuente FEEDBACK y CATALOG de la rama; no desplegar durante la prueba.
+2. Crear una copia aislada de la hoja Tutorial con encabezados A:G históricos y registros antiguos, incluyendo filas sin ID. Confirmar que CATALOG los lee sin cambiar el orden ni inventar Colaborador.
+3. Ejecutar una alta desde FEEDBACK con sesión Desarrollador válida. Verificar que se escribe en Tutorial, con ID tut- estable, A:G preservadas y H Colaborador derivado de Users.
+4. Repetir la misma operación con el mismo operationId; debe devolver el registro existente sin duplicar. Reutilizar operationId con otro contenido y duplicar el tema con variaciones de acentos/mayúsculas/espacios; ambas operaciones deben rechazarse sin mutación.
+5. Verificar migración compatible: si H está vacía, se añade el encabezado Colaborador sin alterar A:G ni sus filas. Si H contiene datos sin encabezado o un encabezado distinto, la operación debe detenerse sin reinterpretar ni sobrescribir información.
+6. Editar por ID y confirmar que solo cambian B y D:F; ID, Imagen, Video y Colaborador permanecen intactos. Confirmar compatibilidad de edición histórica por tema único cuando el ID esté vacío.
+7. Recargar CATALOG y comprobar que el nuevo registro aparece con los ocho campos correctos y el mismo ID utilizado por aprobación de vídeo.
+8. Intentar alta/edición con sesión ausente, inválida, rol Técnico y nombre falsificado; deben rechazarse o usar únicamente el nombre derivado del perfil Users. Confirmar que no aparece hoja plural Tutoriales.
+9. Comprobar que solicitudes de vídeo pendientes continúan vinculadas al ID estable y que el renombrado protegido no rompe referencias históricas por tema.
+
+No declarar PASS sin revisar filas persistidas y lectura posterior desde CATALOG en la copia aislada. No usar Spreadsheet ni endpoints productivos; no desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-018 / AUG-125 — VALIDACIÓN BETA DE RESPALDOS Y RESTAURACIONES RECUPERABLES DB/DRIVE — PENDIENTE
+
+PREPARACIÓN OBLIGATORIA — ejecutar desde la raíz del repositorio antes de cualquier prueba:
+
+```bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "ERROR: repositorio remoto incorrecto."; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "ERROR: hay cambios locales sin guardar; conserva los cambios antes de sincronizar."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+```
+
+Si hay cambios locales, origin no coincide, la rama es distinta o falla el fast-forward, detenerse sin descartar cambios.
+
+EJECUCIÓN EXCLUSIVA EN PROYECTO ADMIN Y RECURSOS AISLADOS:
+1. Crear un proyecto ADMIN de prueba separado y una copia de Spreadsheet/Drive; adaptar únicamente los IDs del proyecto aislado. Confirmar que no se usan IDs ni endpoints productivos y que el código corresponde a JS/Services/admin.js del commit probado.
+2. Crear un respaldo DB. Verificar que el archivo es Spreadsheet, su manifiesto coincide en cantidad de hojas, filas/celdas, fórmulas y huella, y que un respaldo incompleto no se registra como válido.
+3. Crear un respaldo Drive con más recursos que el tamaño de lote configurado, estructura anidada, nombres repetidos, archivos de tamaño cero y MIME distintos. Verificar que cada respuesta intermedia es `in_progress`, que el contenedor permanece incompleto y que solo se acepta restauración tras `complete`.
+4. Reanudar varias veces con el mismo `backupId`, incluyendo interrupción después de copiar un recurso. Confirmar que las copias etiquetadas se recuperan sin duplicar archivos/carpetas y que los cursores y las relaciones padre/copia persisten. Verificar el manifiesto final por rutas, IDs de origen/copia, padres, MIME, tamaños, bytes, conteos y huella.
+5. Modificar/agregar/eliminar un recurso de origen entre lotes. Confirmar que el inventario de identidad final detecta el cambio, marca el contenedor como incompleto/no reanudable y nunca permite restaurarlo. Alterar o retirar el manifiesto y confirmar rechazo antes de tocar el destino.
+6. Incluir en el árbol un archivo legítimo llamado `GPSpedia_DRIVE_MANIFEST.json`; comprobar que no se confunde con el manifiesto interno ni se omite durante rollback/restauración.
+7. Probar restauración DB válida, hoja obligatoria ausente, encabezado incorrecto, manifiesto alterado y respaldo histórico sin manifiesto. Este último debe rechazarse; en todos los rechazos previos al staging, confirmar que el Spreadsheet destino no cambia. Probar hojas extra y confirmar que se conservan.
+8. Inyectar fallos controlados en copia a staging, renombrado de hoja, verificación posterior, traslado Drive, promoción y rollback. Confirmar restauración íntegra o conservación de artefactos `__GP_RESTORE_*`, staging/rollback e IDs para recuperación manual.
+9. En la interfaz, verificar progreso por lotes, límite de continuaciones automáticas, conservación del enlace/ID y habilitación del botón de reanudación ante `in_progress` o error reanudable. Recargar el panel e introducir el mismo ID para continuar.
+10. Registrar IDs, manifiestos, conteos, tamaños, resultados y errores. Ejecutar únicamente en proyecto ADMIN y recursos aislados; no desplegar a producción ni usar Spreadsheet/Drive productivos.
+
+No declarar PASS sin comprobar recursos reales y recuperación en el proyecto aislado. No desplegar a producción.
+================================================================================
+
+## AUG-126 — WRITE: payload y compensación de altas de cortes
+
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local `GPSpedia`. La secuencia verifica el repositorio y la rama autorizada, se detiene si hay cambios locales sin guardar, obtiene los cambios remotos, sincroniza únicamente mediante fast-forward y muestra el HEAD final:
+
+```bash
+git -C GPSpedia rev-parse --show-toplevel
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia rev-parse HEAD
+```
+
+Después probar en un proyecto WRITE y Spreadsheet/Drive aislados:
+- POSTs con tipo/categoría/Relay fuera de enum; años inválidos o invertidos; booleanos y longitudes incorrectas; VIN inválido; opId/hash alterados.
+- Imágenes Base64 malformadas, MIME no permitido y archivos mayores de 10 MB.
+- Confirmar que los rechazos no crean filas, reservan IDs, escriben Idempotencia ni crean carpetas/archivos.
+- Inyectar fallos después de reservar fila/ID, después de registrar opId, durante subida de imagen, durante escritura de celdas y durante verificación.
+- Comprobar restauración de fila existente, eliminación de fila nueva, reversión de opId/contador y conciliación de ImageUploadLedger.
+- Verificar que el resultado de la reconciliación no deja archivos no registrados ni recursos huérfanos.
+
+No ejecutar contra endpoints ni datos productivos.
+
+## AUG-127 — Contrato de vídeo suplementario
+
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local `GPSpedia`. Verifica el repositorio y la rama autorizada, se detiene ante cambios locales sin guardar, obtiene los cambios remotos, sincroniza solo mediante fast-forward y muestra el HEAD final:
+
+```bash
+git -C GPSpedia rev-parse --show-toplevel
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia rev-parse HEAD
+```
+
+En un proyecto Beta aislado:
+1. Enviar a addSupplementaryInfo payloads con `videoGuiaDesarmeUrl`, `videoGuiaUrl`, `videoUrl`, `Video`, `field`, `fieldName` y propiedades arbitrarias; repetir combinándolos con apertura/cables válidos. Confirmar rechazo explícito y ausencia de escritura, aunque el resto del payload sea válido.
+2. Probar URLs HTTPS válidas de youtube.com, youtu.be y youtube-nocookie con rutas watch/embed/shorts/live; rechazar HTTP, hosts similares, credenciales, puertos, rutas no permitidas, IDs incorrectos y parámetro v duplicado.
+3. Subir un vídeo de prueba por OAuth como no listado, confirmar que la solicitud FEEDBACK guarda videoId/videoUrl canónicos y que no se publica en Cortes mientras esté pendiente.
+4. Aprobar la solicitud y comprobar que se escribe y verifica únicamente la columna cuyo encabezado es videoGuiaDesarmeUrl; CATALOG debe exponer Video normalizado después de forceRefresh y de recargar la aplicación.
+5. Rechazar una solicitud y confirmar que no aparece vídeo en CATALOG. Verificar sincronización del modal de corte cuando la aprobación ocurre mientras está abierto.
+6. Probar etapa 3 de add_cortes con WRITE y ruta ADMIN: respuesta de error, vehicleId incorrecto, lectura CATALOG fallida, apertura, nota, imagen y cable asignado a cada slot. No repetir una escritura ya confirmada solo porque la lectura CATALOG no esté disponible.
+7. Registrar IDs de solicitud, videoId, referencia, estado de aprobación, URL canónica y resultados de lectura. No ejecutar contra endpoints productivos ni datos reales.
+
+No declarar PASS sin comprobar OAuth/YouTube, FEEDBACK, Spreadsheet y CATALOG en el proyecto aislado. No desplegar a producción.
+
+
+## AUG-128 — Integridad y concurrencia de relaciones PyS–vehículos
+
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local `GPSpedia`. Verifica repositorio/rama, detiene la sincronización si hay cambios locales y usa únicamente fast-forward:
+
+```bash
+git -C GPSpedia rev-parse --show-toplevel
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "Hay cambios locales sin guardar; no se sincroniza"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia rev-parse HEAD
+```
+
+En un proyecto FEEDBACK y Spreadsheet aislados:
+1. Probar alta y baja con vehicleId existente, inexistente, vacío y duplicado en Cortes; comprobar que no se modifica PyS ante referencias ambiguas.
+2. Probar encabezado ID incompatible, problemId inexistente/malformado y IDs PyS duplicados; confirmar rechazo sin escrituras.
+3. Probar listas JSON y formatos heredados con espacios y duplicados; verificar que la colección persistida quede normalizada y sin duplicados.
+4. Ejecutar solicitudes simultáneas de alta/alta, alta/baja sobre el mismo vínculo y altas sobre vehículos distintos. Verificar que el ScriptLock serializa cada mutación, no se pierden cambios y el valor devuelto coincide con la celda persistida.
+5. Comprobar liberación del lock ante errores, timeout y fallo de flush; reintentar sin duplicar asociaciones.
+6. Confirmar que solo Desarrollador puede retirar relaciones y que el rol enviado por el cliente no sustituye la autorización de sesión.
+
+Registrar IDs sintéticos, orden/resultado de cada ejecución y valores antes/después. No usar endpoints ni datos productivos; no desplegar a producción.
+
+
+## AUG-129 — Validación de edición ADMIN y protección del ID
+
+Antes de ejecutar cualquier prueba, comprobar que el repositorio y la rama son los autorizados, que no hay cambios locales y sincronizar únicamente mediante fast-forward:
+
+```bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;;
+  *) echo "El remoto origin no corresponde a $EXPECTED_REPO"; exit 1 ;;
+esac
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Hay cambios locales sin guardar; se detiene la sincronización."
+  exit 1
+fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+```
+
+Prueba local reproducible:
+
+```bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const admin=readFileSync("JS/Services/admin.js","utf8"); const tests=readFileSync("JS/Tests/AdminModalEditIntegrity.js","utf8"); const run=new Function("adminSource",tests+"; return runAdminModalEditIntegrityTests(adminSource);"); const result=run(admin); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+```
+
+En un proyecto ADMIN y Spreadsheet completamente aislados, con filas sintéticas:
+1. Intentar editar `id`, `timestamp`, `contadorBusqueda`, `videoGuiaDesarmeUrl` y campos arbitrarios; verificar rechazo y ausencia de escrituras.
+2. Probar categorías, tipos de encendido, tipos de corte y configuraciones Relay válidos/no registrados; comprobar que los dominios inválidos no alteran la fila.
+3. Probar tipos incorrectos, longitudes máximas y excesivas, años no enteros/fuera de rango y combinaciones anoDesde/anoHasta incoherentes.
+4. Probar IDs inexistentes y duplicados tanto en edición ordinaria como en colección VIN; comprobar que no se modifica ninguna fila ambigua.
+5. Inyectar fallos de setValue/flush y verificar restauración del valor anterior, liberación del lock y respuesta de error.
+6. Confirmar que ID, fórmulas/campos calculados y filas vecinas permanecen intactos; verificar edición permitida para roles autorizados y rechazo de roles no autorizados.
+7. Probar imágenes válidas de Drive y referencias externas/múltiples inválidas; confirmar que las operaciones de carga/reemplazo existentes siguen funcionando.
+
+No utilizar datos productivos ni URLs operativas. No crear ni reemplazar deployments live durante esta validación.
+
+
+## AUG-130 — Mutaciones atómicas de USERS (Beta aislada)
+
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;;
+  *) echo "El remoto origin no corresponde a $EXPECTED_REPO"; exit 1 ;;
+esac
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Hay cambios locales sin guardar; se detiene la sincronización."
+  exit 1
+fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Prueba reproducible local:
+
+~~~bash
+node --input-type=module -e 'import {readFileSync} from "node:fs"; const users=readFileSync("JS/Services/users.js","utf8"); const auth=readFileSync("JS/Services/Auth.js","utf8"); const coordinator=readFileSync("JS/Services/Coordinator.js","utf8"); const tests=readFileSync("JS/Tests/UsersAtomicMutations.js","utf8"); const run=new Function("usersSource","authSource","coordinatorSource",tests+"; return runUsersAtomicMutationTests(usersSource,authSource,coordinatorSource);"); const result=run(users,auth,coordinator); console.log(JSON.stringify(result,null,2)); if(result.failed) process.exitCode=1;'
+~~~
+
+En proyectos USERS y AUTH de Apps Script separados, conectados únicamente a la Spreadsheet aislada:
+1. Ejecutar creación concurrente de dos cuentas distintas y dos cuentas con el mismo username; confirmar IDs únicos, sin filas parciales ni usernames duplicados.
+2. Ejecutar createUser en USERS simultáneamente con deleteUser y resetUserSessions en AUTH sobre usuarios de prueba; confirmar que la lease compartida serializa las mutaciones y no deja cuentas parcialmente creadas o reactivadas.
+3. Ejecutar updateProfile simultáneo con deleteUser/updateUser/resetUserSessions para el mismo ID; comprobar identidad única, orden de operaciones y que no se actualice una cuenta desactivada.
+4. Inyectar fallos en escritura de ID:H, escritura de Nombre_Completo y Spreadsheet.flush(); verificar rollback de valores y fórmulas, liberación de locks y reintento seguro.
+5. Probar IDs vacíos/duplicados, filas con datos sin ID, usernames repetidos, roles inválidos, campos extra, correo/teléfono inválidos y límites de longitud. Confirmar que no hay escrituras antes de completar todas las validaciones.
+6. Verificar que la creación conserva formato/validaciones, reemplaza de forma segura la fórmula de ID de la fila plantilla y no modifica columnas fuera de ID:H.
+7. Confirmar que AUTH sigue siendo autoridad para deleteUser/resetUserSessions y que USERS no escribe en ActiveSessions.
+
+No usar datos productivos, URLs operativas ni deployments live. No reemplazar deployments existentes.
+
+
+================================================================================
+AUG-131 — Aprobación/rechazo de vídeos (Beta aislada)
+Antes de ejecutar cualquier prueba, confirmar repositorio, rama, remoto, árbol limpio y sincronización fast-forward:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Pruebas funcionales en proyecto FEEDBACK y Spreadsheet aislados, con hojas Cortes, pys, Tutorial y Feedbacks de prueba:
+1. Ejecutar aprobación y rechazo concurrentes sobre la misma solicitud; comprobar que solo una transición terminal se confirma y que la otra detecta el estado ya cambiado.
+2. Ejecutar solicitudes distintas dirigidas al mismo registro destino; confirmar que el vídeo existente nunca se sobrescribe y que la lease compartida coordina las escrituras.
+3. Inyectar fallos reales de escritura/flush en destino, miniatura y fila Feedbacks; comprobar estado persistido, reintento idempotente y recuperación sin eliminar contenido previo.
+4. Probar destino inexistente/duplicado, cambio concurrente de ID/esquema, referencia cruzada, URL distinta y filas históricas inconsistentes.
+5. Recargar CATALOG después de aprobar/rechazar y verificar la URL/miniatura visible en el destino correspondiente.
+No usar deployments operativos, hojas productivas ni IDs reales. La suite local 28/28 PASS no sustituye estas pruebas reales.
+================================================================================
+
+
+================================================================================
+AUG-132 — Validación estricta VIN (Beta aislada)
+Preflight obligatorio antes de ejecutar cualquier prueba:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ACTUAL_REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+test "$ACTUAL_REPO" = "$EXPECTED_REPO"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+En formulario y Spreadsheet aislada:
+1. Probar VIN de 5, 6, 18 y 19 caracteres normalizados; 5 y 19 deben rechazarse, 6 y 18 admitirse.
+2. Probar espacios y guiones como separadores permitidos; comprobar que el backend normaliza únicamente esos separadores.
+3. Probar `_`, puntos, barras, signos, caracteres acentuados, letras no ASCII y controles; deben rechazarse sin mutar Cortes.
+4. Probar llamada directa a WRITE y ADMIN con payload manipulado, sin depender de la validación de UI; confirmar rechazo antes de escrituras y consultas de duplicados.
+5. Verificar duplicados, slots de versión, vehículos nuevos/existentes y lectura de registros VIN históricos sin migrar ni alterar datos.
+Usar proyecto Apps Script y Spreadsheet de prueba; nunca producción. La suite local 12/12 PASS no sustituye estas pruebas reales.
+================================================================================
+
+================================================================================
+AUG-133 — Regresión integrada de servicios (Beta aislada)
+Preflight obligatorio antes de cualquier prueba:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/infogpstech/GPSpedia|https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git) ;;
+  *) echo "Repositorio remoto incorrecto"; exit 1 ;;
+esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Después del preflight:
+1. Preparar proyectos Apps Script separados para AUTH, USERS, WRITE, ADMIN, FEEDBACK y UTILITIES cuando corresponda; usar únicamente deployments nuevos y hojas Spreadsheet de prueba. No reemplazar deployments operativos.
+2. AUTH/USERS: comprobar que JS/Tests/Auth.js y JS/Tests/users.js conservan el ID de Spreadsheet aislada; probar roles permitidos/no permitidos, sesiones revocadas, altas/ediciones/eliminaciones y coordinación concurrente.
+3. WRITE/ADMIN: probar payloads válidos e inválidos, VIN límites 5/6/18/19, duplicados, rollback, idempotencia y fallos reales de escritura/flush.
+4. FEEDBACK: probar aprobación/rechazo, ledger Inbox, destino cruzado/duplicado, reintentos y lectura posterior en CATALOG.
+5. UTILITIES: probar migración de timestamps en Spreadsheet aislada, staging, respaldo, rollback y lock concurrente.
+6. Ejecutar concurrencia real entre proyectos sobre recursos compartidos y verificar timeout, lease, liberación, reintento y ausencia de escrituras parciales.
+7. Guardar evidencia sanitizada, SHA exacto probado y resultados por servicio. No registrar tokens, contraseñas, URLs operativas ni datos personales.
+No usar deployments, hojas, carpetas Drive ni datos productivos. Las suites locales 238/238 PASS no sustituyen estas pruebas reales.
+================================================================================
+
+
+### AUG-135 — Verificación externa de permisos y ciclo de sesión YouTube
+- Confirmar ACL de la Spreadsheet de prueba de GPSpedia: cuentas/roles con acceso, acceso externo y permisos heredados. No modificar permisos sin autorización del propietario.
+- Confirmar ACL de la carpeta Drive de prueba: propietarios, editores, lectores, herencia y enlaces compartidos. No cambiar permisos como parte de la comprobación.
+- Inventariar deployments Apps Script por servicio, versión desplegada, propietario y URL configurada; comparar con los endpoints autorizados en JS/Frontend/api-config.js sin invocar ni modificar producción.
+- Validar en entorno de prueba el OAuth de YouTube desde FEEDBACK y la sesión Resumable. Confirmar que el token OAuth nunca llega al navegador; la URL temporal solo se entrega tras validar sesión y destino.
+- Verificar IndexedDB: persistencia necesaria para reanudar, limpieza tras completar/descartar y política de expiración para sesiones abandonadas. Cerrar el modal debe seguir siendo una pausa recuperable; el descarte explícito debe eliminar el registro local. No confundir la eliminación local con la revocación inmediata de una sesión ya creada en YouTube.
+
+
+================================================================================
+AUG-137 — Verificación funcional UI en navegador Beta aislado
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local GPSpedia:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git -C GPSpedia rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git -C GPSpedia branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git -C GPSpedia remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git -C GPSpedia status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git -C GPSpedia fetch origin "$EXPECTED_BRANCH"
+git -C GPSpedia pull --ff-only origin "$EXPECTED_BRANCH"
+git -C GPSpedia status --short
+git -C GPSpedia rev-parse HEAD
+~~~
+
+En navegador y cuentas/recursos Beta aislados:
+1. Probar apertura, navegación hacia atrás, cierre y restauración de modales; confirmar que clearModalNavStack limpia únicamente la pila de navegación.
+2. Abrir Inbox, paginar, seleccionar un elemento, volver a la lista y ejecutar acciones permitidas; confirmar que loadAndRenderInbox conserva su carga y refresco.
+3. Abrir la consola administrativa y confirmar que #dev-console-log recibe y conserva los mensajes, comandos y estados esperados.
+4. Ejecutar las operaciones Drive de diagnóstico/administración previstas para Beta y comprobar que la retirada del contenedor legacy no altera sus controles ni resultados.
+5. Revisar consola del navegador por errores de elementos inexistentes asociados a debug-console/debug-log.
+No utilizar endpoints productivos, datos reales ni ejecutar cambios de permisos/despliegues. Registrar navegador/versión, cuenta/rol de prueba y resultados; no incluir tokens ni datos personales.
+================================================================================
+
+
+================================================================================
+AUG-138 — Verificación de diagnósticos y recuperación en Beta aislada
+Antes de ejecutar cualquiera de estas pruebas, sincronizar únicamente la rama autorizada. Ejecutar desde el directorio que contiene la carpeta local GPSpedia:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git -C GPSpedia rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git -C GPSpedia branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git -C GPSpedia remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git -C GPSpedia status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git -C GPSpedia fetch origin "$EXPECTED_BRANCH"
+git -C GPSpedia pull --ff-only origin "$EXPECTED_BRANCH"
+git -C GPSpedia status --short
+git -C GPSpedia rev-parse HEAD
+~~~
+
+Pruebas en navegador, perfil, cuenta y servicios Beta aislados:
+1. Abrir add_cortes sin `gpDebug=1`: confirmar que no aparecen logs debug/info y que warn/error solo contienen evento, etapa, opId validado, estado y código de error permitido.
+2. Abrir add_cortes con `?gpDebug=1`: confirmar que se habilitan niveles debug/info sin exponer VIN, imágenes, Base64, SessionToken, payloads, respuestas ni objetos de error completos.
+3. Desconectar la red, recargar la PWA y comprobar que el snapshot pendiente permanece en IndexedDB; no debe consultar servicios mientras `navigator.onLine` sea falso. Reconectar y verificar que retoma la reconciliación.
+4. Simular interrupción de red antes del commit: comprobar que se conserva el mismo opId/huella y que el reintento no crea una segunda operación lógica.
+5. Simular pérdida de respuesta después del commit: comprobar que checkOperation reconcilia por opId/huella y no repite addOrUpdateCut.
+6. Verificar manejo de cuota solo con fixture de almacenamiento aislado o fault injection aprobado; no llenar almacenamiento de perfiles reales. El error debe impedir el envío si no se confirmó el snapshot durable y no debe imprimir contenido de imágenes.
+7. Inspeccionar consola y registros para confirmar que no existen etiquetas PING-PONG ni respuestas completas de servicios.
+No usar endpoints productivos, datos personales, tokens reales ni modificar deployments/ACL. Registrar versión de navegador, perfil de prueba y resultados sin incluir datos sensibles.
+================================================================================
+
+
+================================================================================
+AUG-139 — Verificación de controles nativos y autorización en Beta aislada
+Antes de cualquier prueba, ejecutar desde el directorio que contiene la carpeta local GPSpedia:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git -C GPSpedia rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git -C GPSpedia branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git -C GPSpedia remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git -C GPSpedia status --porcelain)" ]; then echo "Hay cambios locales sin guardar; se detiene."; exit 1; fi
+git -C GPSpedia fetch origin "$EXPECTED_BRANCH"
+git -C GPSpedia pull --ff-only origin "$EXPECTED_BRANCH"
+git -C GPSpedia status --short
+git -C GPSpedia rev-parse HEAD
+~~~
+
+En navegador real, perfil aislado y sin datos productivos:
+1. En index.html, HTML/users.html y HTML/add_cortes.html, comprobar menú contextual y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U nativos.
+2. Comprobar zoom con Ctrl+/Ctrl-, rueda con Ctrl y gestos pinch en móvil; confirmar controles de ampliación de Lightbox.
+3. Ejecutar operaciones privilegiadas con sesión válida, expirada/revocada, token cruzado y rol no autorizado. Confirmar rechazo backend aunque el cliente se manipule o invoque directamente la API.
+4. Confirmar que datos no autorizados no se entregan en respuestas públicas y que las lecturas públicas previstas siguen funcionando.
+Registrar navegador/versión, rol y fixture, resultados y errores sin incluir tokens ni datos personales. No usar deployments operativos, cuentas reales ni recursos productivos.
+================================================================================
+
+
+================================================================================
+AUG-140 — Verificación física de márgenes y paginación (Beta aislada)
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;;
+  *) echo "Repositorio remoto incorrecto"; exit 1 ;;
+esac
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Hay cambios locales sin guardar; se detiene."
+  exit 1
+fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+En navegador y dispositivo de impresión de prueba:
+1. Abrir una ficha con contenido breve y guardar como PDF; confirmar papel Carta vertical y una sola página si todo cabe legiblemente.
+2. Abrir fichas con más imágenes y contenido técnico; confirmar que se generan páginas adicionales y no se reduce el margen de 10 mm para forzar una sola hoja.
+3. En el diálogo de impresión seleccionar tamaño Carta y márgenes predeterminados (sin encabezados/pies del navegador); verificar que la regla CSS `@page` se respeta.
+4. Medir con regla los márgenes superior, inferior, izquierdo y derecho en el PDF impreso; registrar la tolerancia/área no imprimible propia del equipo.
+5. Confirmar que encabezado y pie se repiten, los metadatos aparecen solo en la primera página y no hay cortes de tarjetas ni contenido fuera del área imprimible.
+Registrar navegador/versión, impresora, escala, configuración de papel/márgenes y resultado. No utilizar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-142 — Verificación real de recursos de impresión (Beta aislada)
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar"; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Probar fichas con foto principal, QR, logotipos e imágenes técnicas; repetir con URL inválida, error HTTP, offline, carga lenta y recursos que superen el timeout. Confirmar que el botón permanece deshabilitado hasta finalizar la preparación, se muestran fallbacks y la vista previa/PDF no calcula tamaños desconocidos. Registrar navegador/versión y no usar enlaces privados ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-143 — Validación de paginación por altura real (Beta aislada)
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar"; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+Probar tarjetas con textos cortos/largos, imágenes verticales/horizontales, cortes recomendados/no recomendados, tarjetas sin imagen intercaladas y varias páginas. Verificar que ninguna tarjeta se pierde, duplica o cambia de asociación; que el orden se conserva y que cada página no recorta el contenido. Registrar los casos de tarjetas individuales que excedan el área útil. No usar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-144 — Validación real de QR y privacidad (Beta aislada)
+Antes de cualquier prueba, ejecutar desde la raíz del repositorio:
+
+~~~bash
+set -euo pipefail
+EXPECTED_REPO="infogpstech/GPSpedia"
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia"
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) echo "Repositorio remoto incorrecto"; exit 1 ;; esac
+if [ -n "$(git status --porcelain)" ]; then echo "Hay cambios locales sin guardar"; exit 1; fi
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+git status --short
+git rev-parse HEAD
+~~~
+
+En una ficha de prueba, generar QR para vídeo público y unlisted de prueba. Verificar que no se realizan solicitudes a dominios externos al generar el QR, que el ID es correcto y que el escaneo desde PDF/papel abre el vídeo. Probar URLs HTTP, dominios impostores, IDs inválidos y ausencia de URL; confirmar que no se imprime URL visible ni se transmite a terceros. Registrar dispositivo, lector QR, tamaño impreso y resultado. No usar enlaces unlisted reales ni datos productivos.
+================================================================================
+
+
+AUG-145 — Probar selector de distribución en ficha aislada
+Antes de cualquier prueba, comprobar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+En navegador, abrir ficha con una imagen, dos retratos, dos paisajes, tres retratos y mezcla texto/imagen. Comparar Automática, Horizontal, Vertical e Imagen ampliada en preview y PDF; confirmar orden texto-imagen, ausencia de recortes/overflow y paginación correcta. Probar selector repetidamente y cambio de modo durante carga de recursos.
+
+
+================================================================================
+AUG-039 — AUTORIZACIÓN WRITE, RECUPERACIÓN DE OPERACIONES Y ASIGNACIÓN DE IDs
+Antes de cualquier prueba, confirmar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+
+Entorno: proyectos Apps Script WRITE y ADMIN separados, deployments de prueba nuevos y Spreadsheet aislada con Users, ActiveSessions, Cortes e Idempotencia. No cambiar JS/Frontend/api-config.js a endpoints de prueba ni invocar URLs operativas.
+
+Casos:
+1. addSupplementaryInfo con sesión válida para cada rol permitido; confirmar actor derivado de Users y escritura en Cortes/Drive.
+2. Rechazar sin mutaciones ni carga Drive: userId ausente, token ausente, token inválido, token asociado a otro userId, token duplicado, sesión expirada, perfil Users duplicado/inactivo y marcador de revocación pendiente.
+3. Revocar sesión o cambiar el rol entre validación inicial y adquisición del lock; confirmar segunda validación y ausencia de mutación. Inyectar timeout del lock y verificar liberación.
+4. Consumidores: modal Apertura, modal Alimentación y handleStage3Submit; comprobar userId/sessionToken. Ejecutar silentRegister únicamente contra ADMIN de prueba y comprobar assertDeveloperSession antes del dispatch; confirmar que ADMIN transmite la sesión a WRITE.
+5. checkOperation: usuario anónimo rechazado antes de leer Cortes; sesión válida con opId inexistente, pendiente y completado; confirmar respuesta sin rowData y solo metadatos mínimos/operationHash. Probar hash discordante. Verificar el comportamiento documentado de consulta por otro colaborador autenticado que conozca el opId, sin asumir que opId sea una credencial.
+6. allocateVehicleId: rol Desarrollador permitido; técnico/colaborador ordinario rechazado sin incrementar ScriptProperties ni contador; cambiar/revocar rol entre validaciones bajo lock y confirmar que no se reserva ID.
+7. Mantener controles addOrUpdateCut, addVinToVehicle y freezeCortesIds; verificar rutas y roles servidor. Ejecutar reintentos concurrentes y comprobar que no hay IDs duplicados.
+8. Registrar respuestas, filas antes/después, estados de ActiveSessions y valores del contador. No utilizar cuentas, datos, Drive, Spreadsheet ni deployments productivos.
+
+Pruebas locales de referencia: AddSupplementaryInfoIntegrity 53/53; CheckOperationSecurity 12/12; WriteAuthorizationContracts 10/10; WriteAuthorizationMinimization 13/13. Las pruebas reales anteriores son exclusivamente Beta.
+================================================================================
+
+
+================================================================================
+AUG-042 — INVALIDACIÓN DE SESIÓN, ROL Y ESTADO PRIVILEGIADO DEL CLIENTE
+Antes de cualquier prueba, confirmar repositorio/rama/limpieza y sincronizar sin descartar cambios:
+~~~bash
+set -euo pipefail
+EXPECTED_REPO='infogpstech/GPSpedia'; EXPECTED_BRANCH='GPSpedia2.2.5_work'
+ROOT="$(git rev-parse --show-toplevel)"; test "$(basename "$ROOT")" = GPSpedia
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH"
+case "$(git remote get-url origin)" in *infogpstech/GPSpedia.git|*infogpstech/GPSpedia) ;; *) exit 1 ;; esac
+test -z "$(git status --porcelain)" || { echo 'Árbol no limpio'; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"; git pull --ff-only origin "$EXPECTED_BRANCH"; git status --short; git rev-parse HEAD
+~~~
+
+Entorno: navegador de prueba, dos cuentas no productivas (Desarrollador y Técnico/Supervisor/Jefe), deployments AUTH/FEEDBACK/ADMIN de prueba, IndexedDB aislada. No utilizar datos ni endpoints productivos.
+
+Matriz:
+1. Logout con cada modal privilegiado abierto (DevTools, historial de imágenes, Inbox, Dashboard y auditoría Drive): confirmar cierre, borrado de detalles/listas/consola, listeners y caches; comprobar que window.state.currentUser queda null y window.ui no conserva token.
+2. Cuenta A cierra sesión y cuenta B inicia inmediatamente antes de que termine la respuesta logout de A; confirmar que then/catch obsoletos no muestran notificaciones ni mutan la sesión B.
+3. Developer→Técnico y Supervisor→Jefe en la misma instancia; comprobar revocación del servidor, limpieza total y que no reaparecen controles. Repetir ascenso de Técnico→Supervisor y confirmar que los privilegios aparecen solo tras reautenticación válida.
+4. Cambiar Privilegios de A desde otra sesión/dispositivo mientras su pestaña permanece abierta. Recuperar foco, cambiar visibilidad, reconectar y esperar el intervalo; confirmar logout token-aware y bloqueo de nuevas aperturas cuando la red no permite verificar.
+5. Iniciar sesión consecutivamente con dos cuentas en el mismo navegador; verificar aislamiento de Inbox, Dashboard, historial, DevTools, auditoría Drive, IndexedDB y respuestas asíncronas.
+6. Invocar directamente desde consola las funciones globales exportadas para abrir/renderizar vistas privilegiadas con rol Técnico o sesión revocada. Confirmar rechazo sin consultar ni mutar datos. Repetir con sesión vigente y roles autorizados.
+7. Inbox: Desarrollador/Gefe/Supervisor pueden aprobar/rechazar; Jefe puede consultar Inbox pero no aprobar/rechazar ni abrir Dashboard; Técnico no abre Inbox. Verificar autorización backend aunque se fuerce la UI.
+8. Simular demora/fallo de red durante validateActiveSession, updateUser y logout; comprobar estado pendiente, limpieza local fail-closed y que ninguna operación posterior usa credenciales de una cuenta nueva.
+9. IndexedDB: estado DriveAuditState de A no debe aparecer en B; misma cuenta conserva estado tras recarga normal; logout/cambio de rol limpia; fallos de persistencia no recuperan datos de otra cuenta.
+10. Revisar logs del navegador y AUTH/FEEDBACK: no exponer tokens, no dejar sesiones huérfanas ni duplicar listeners/intervalos tras múltiples login/logout.
+
+Criterio de cierre: matriz repetida al menos dos veces por transición; capturas/logs de estado anterior/posterior; evidencia de revocación ActiveSessions; cero controles o datos privilegiados residuales. No ejecutar pruebas con cuentas reales de producción.
+================================================================================
+
+
+================================================================================
+AUG-043 — VALIDACIÓN DE INTEGRACIÓN REAL PENDIENTE
+1. Apps Script/Spreadsheet aislados: ejecutar dos submitVideoForApproval concurrentes con el mismo opVideoId y comprobar una sola fila; repetir con opVideoId distintos y el mismo destino.
+2. LockService real: comprobar contención, timeout, liberación ante excepción y serialización entre submit/approve/reject en ejecuciones separadas.
+3. YouTube Data API real: sesión resumable, expiración, pérdida de respuesta, reanudación, ID real de 11 caracteres, vídeo no listado y ausencia de duplicados huérfanos.
+4. FEEDBACK/Users reales: revocar o cambiar cuenta durante la subida; confirmar que una sesión inválida no puede iniciar ni enviar la aprobación y que la identidad/rol se deriva del servidor.
+5. Spreadsheet aislada: inyectar fallo real después de persistir approved y antes de publicar; comprobar reintento, lectura de destino y recuperación para Cortes, PyS y Tutoriales. Repetir con miniatura de Tutorial.
+6. Navegador real: IndexedDB, recarga, cierre del modal, cancelación, dos pestañas y restauración de operación pendiente; comprobar que opVideoId y videoId real nunca se intercambian.
+No ejecutar contra hojas, credenciales, deployments ni vídeos productivos. La validación CI local no sustituye esta integración.
+================================================================================
+
+
+================================================================================
+AUG-154 — VALIDACIÓN BETA DE RECUPERACIÓN DE PERFIL/ROL EN AUTH
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS (no usar endpoints ni hojas productivas):
+1. En una copia aislada de AUTH y su Spreadsheet de pruebas, crear dos cuentas activas: solicitante Desarrollador y destino Técnico con al menos dos sesiones.
+2. Enviar updateUser con Privilegios y Nombre_Completo nuevos. Inyectar fallo en la escritura de Nombre_Completo después de confirmar el rol. Verificar: respuesta pendiente/error, rol nuevo, nombre anterior, tokens de destino invalidados, marcador compartido en Users.SessionToken y marcador local en ScriptProperties.
+3. Reintentar exactamente el mismo payload. Verificar nombre nuevo, rol nuevo, sesiones revocadas/eliminadas y retirada de ambos marcadores solo después de confirmar escritura y flush.
+4. Repetir con fallo de flush posterior a la escritura del nombre. El marcador debe permanecer y el reintento debe terminar sin reactivar tokens ni aplicar una intención distinta.
+5. Simular setValue que aplica el valor y luego lanza excepción; comprobar que la lectura de verificación detecta el valor persistido y no duplica la operación.
+6. Alterar newFullName entre marcador compartido y local, o enviar un nombre distinto durante una operación pendiente. Debe rechazarse sin limpiar marcadores ni restaurar tokens.
+7. Verificar compatibilidad de un marcador histórico sin newFullName: completar la revocación pendiente y actualizar el nombre en una operación separada.
+8. Ejecutar intercalados con login/logout/updateUser en ejecuciones AUTH separadas y comprobar que no se autorizan tokens residuales ni se borran sesiones ajenas.
+
+Registrar IDs de prueba y resultados sin incluir contraseñas, tokens, nombres reales ni datos sensibles. No desplegar ni ejecutar contra proyectos, endpoints, credenciales o hojas productivas.
+================================================================================
+
+
+================================================================================
+AUG-047 — VALIDACIÓN BETA DE ACCESIBILIDAD, HISTORY API Y OFFLINE LEGAL
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS:
+1. Crear una cuenta de prueba sin aceptación vigente. Abrir el aviso obligatorio con teclado: foco inicial en Aceptar Términos, Tab/Shift+Tab no deben salir del diálogo y Escape no debe cerrarlo ni mostrar el catálogo.
+2. Activar TalkBack en Android y NVDA o VoiceOver en escritorio. Confirmar que el aviso y el acuerdo anuncian rol, título y descripción; que el fondo no se presenta como contenido activo mientras el acuerdo está abierto.
+3. Abrir el acuerdo desde el enlace del aviso. Confirmar foco inicial en el encabezado, ciclo de foco con Tab/Shift+Tab, cierre con Escape y con botón; ambos cierres deben devolver el foco al enlace y dejar visible el aviso obligatorio.
+4. Abrir el acuerdo desde login y footer; cerrar con Escape y botón. Confirmar que el foco retorna al enlace que inició la apertura.
+5. Repetir con viewport móvil estrecho, orientación vertical/horizontal, zoom del navegador y temas claro/oscuro. Verificar que el botón de cierre no se solape con el título y que el contenido conserve scroll.
+6. Actualizar desde el Service Worker anterior a v21. Tras activación, desconectar la red y abrir ambos modales. Confirmar carga local de Images/Logo_TemaOscuro.png y Images/tracklink_logo.png en claro/oscuro; inspeccionar Cache Storage y verificar que el cache activo sea gpsepedia-cache-v21.
+7. Con el aviso visible, abrir el acuerdo y cerrarlo usando Atrás, Escape y botón. Confirmar que el aviso permanece, que la pila __gpOverlayStack queda vacía al cerrar el acuerdo y que no aparecen entradas modalOpen residuales.
+8. Abrir y cerrar desde cada punto de entrada varias veces, recargar y repetir. Confirmar que no se acumulan listeners, el foco no queda en un elemento oculto y el aviso no puede descartarse antes de la aceptación confirmada.
+
+Registrar navegador, dispositivo, lector de pantalla y versión del Service Worker. No aprobar ni modificar contenido jurídico; AUG-046 conserva su proceso de aprobación corporativa. No usar cuentas reales ni desplegar a producción.
+================================================================================
+
+
+================================================================================
+AUG-151 — VALIDACIÓN BETA DEL ARRANQUE, CACHÉ Y RECUPERACIÓN DEL CATÁLOGO
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+PRUEBAS AISLADAS:
+1. Con API y Spreadsheet de pruebas, devolver un snapshot completo no vacío. Confirmar estado ready, categorías ordenadas, persistencia de caché solo después del procesamiento y carga compartida de PyS.
+2. Devolver un snapshot completo con las cuatro colecciones vacías. Debe quedar ready y no presentar error; repetir con red caída y caché vacía válida: debe quedar stale, no error terminal.
+3. Inyectar payload parcial (colección ausente), colecciones no-array, raíz array, null/primitive/array en cada colección y IDs de Cortes duplicados/vacíos. Ninguno debe guardarse ni declararse ready.
+4. Corromper IndexedDB (estructura parcial, elemento nulo, ID duplicado) y cortar la red. Debe descartarse la caché y mostrarse error terminal con estado de colecciones vacío y coherente.
+5. Simular error de normalización, error al actualizar estado y error en renderizado de sincronización silenciosa. Verificar que no se marque ready ni se guarde un snapshot que no terminó de procesarse; si existe caché válida, debe recuperarse como stale.
+6. Interrumpir la lectura de IndexedDB y hacer fallar la red; luego devolver un snapshot válido vacío y otro no vacío en el fallback. Confirmar recuperación stale.
+7. Iniciar una carga y cambiar de sesión/cancelarla antes de que responda la API. Resolver la respuesta después de la cancelación; comprobar que no modifica estado ni IndexedDB de la nueva sesión.
+8. Actualizar catálogo desde caché y red mientras hay una tarjeta/modal abierto; comprobar que un error de actualización silenciosa mantiene estado stale y no elimina la última instantánea válida.
+9. Repetir con navegador sin IndexedDB disponible, almacenamiento lleno, conexión intermitente y recarga durante la carga. Registrar estado, mensajes y contenido visible.
+
+No usar catálogos ni sesiones productivas. No ejecutar deployments. Registrar solo IDs de fixtures y resultados no sensibles.
+================================================================================
+
+
+================================================================================
+AUG-148 — VALIDACIÓN BETA DE ACCESIBILIDAD DEL MODAL DE DESARROLLADOR
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+1. Abrir el panel de desarrollador desde menú y disparador alternativo; confirmar foco inicial en el título.
+2. Recorrer controles con Tab/Shift+Tab y verificar que el foco no escape del panel; cerrar con Escape y botón, verificando retorno al disparador visible.
+3. Abrir un modal administrativo encima del panel y confirmar que solo el diálogo superior recibe Escape y navegación de teclado.
+4. Probar Atrás/Adelante del navegador, reapertura y cierre repetido; verificar pila overlayHistory sin entradas residuales.
+5. Repetir en escritorio y móvil con NVDA/VoiceOver/TalkBack, temas claro/oscuro y zoom 200 %.
+
+No ejecutar operaciones administrativas reales ni usar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-149 — VALIDACIÓN BETA DE RADIOS NATIVOS Y PANELES DEL DESARROLLADOR
+
+PREPARACIÓN OBLIGATORIA — sincronizar sin descartar cambios locales:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\\nRama: %s\\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+1. Con teclado, entrar al grupo y recorrer las cinco opciones con flechas; verificar selección única, foco visible y actualización del panel.
+2. Confirmar que Tab entra/sale del grupo según el comportamiento nativo de radios y que el foco no queda atrapado en controles ocultos.
+3. Con NVDA, VoiceOver y TalkBack, comprobar que se anuncia la leyenda del grupo, nombre/estado de cada radio y relación con el panel seleccionado.
+4. Verificar que los paneles ocultos no reciben foco ni aparecen en el árbol de accesibilidad; el panel activo anuncia su encabezado.
+5. Repetir en navegadores mínimos soportados para confirmar CSS :has(), escritorio/móvil, zoom 200 % y temas claro/oscuro.
+
+No ejecutar acciones administrativas ni usar datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-019 — Validación real de alcance de terminal Drive (solo entorno aislado)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+test "$(git -C GPSpedia rev-parse HEAD)" = "93fd2330976ffb5619ac1544fd51a53a3992413d" || { echo "STOP: HEAD distinto del checkpoint"; exit 1; }
+git -C GPSpedia status --short --branch
+```
+
+1. Crear una copia aislada de la carpeta Cortes y un deployment ADMIN de prueba separado; usar una cuenta Desarrollador dedicada y confirmar que la configuración no apunta a Drive/Spreadsheet productivos.
+2. Verificar que dir/ls/tree solo muestren Cortes y sus descendientes. Preparar una carpeta externa, una carpeta con ascendencia ambigua y un archivo con padre externo; confirmar que no se listan ni se navega a ellos.
+3. Probar currentFolderId externo, cd .. en la raíz, cd / desde un ID inválido, subcarpetas anidadas y nombres duplicados.
+4. Confirmar que mkdir dentro del árbol funciona; mkdir con currentFolderId externo o movido fuera entre validación y escritura debe rechazarse sin crear una carpeta fuera de Cortes.
+5. Confirmar que move funciona entre carpetas internas; debe rechazar origen externo, destino externo, archivo con padre externo adicional y destino con ancestro externo, sin mover recursos.
+6. Durante una operación controlada, cambiar desde otra sesión la ubicación del archivo o destino entre validación y escritura; revisar que no se reporte éxito si la ubicación final no puede verificarse.
+7. Comparar IDs, padres y ubicaciones antes/después; no debe modificarse ningún recurso fuera de la copia Cortes.
+
+No ejecutar contra el Drive operativo, la carpeta Cortes productiva, endpoints productivos ni datos reales de usuarios.
+================================================================================
+
+
+================================================================================
+AUG-020 — Validación real de lectura y purga de ActividadUsuario (solo Spreadsheet aislada)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia log -1 --oneline
+git -C GPSpedia status --short --branch
+```
+
+1. Preparar una Spreadsheet aislada con ActividadUsuario de tamaño representativo y encabezados reales; crear filas con Date, ISO, fecha heredada parseable, exactamente siete días, más de siete días, fecha futura, vacío, texto inválido, valor numérico y Date inválido.
+2. Ejecutar getActivityLogs y confirmar que cada fuente lee como máximo las últimas 100 filas, que el resultado combinado no supera 100 y que el orden cronológico es estable.
+3. Ejecutar la purga keepLastWeek=true; verificar que solo se eliminan fechas válidas con antigüedad estrictamente mayor a siete días.
+4. Confirmar que los registros no clasificables permanecen intactos y que la respuesta y la consola informan unclassifiedCount correcto.
+5. Confirmar que el borrado por bloques descendentes no altera IDs ni filas retenidas y que una ejecución repetida es segura.
+6. Verificar que InboxAuditLog no cambia al purgar ActividadUsuario.
+7. Ejecutar una escritura de actividad concurrente desde otra sesión del deployment aislado; confirmar que espera la lease ACTIVITY y que no se pierde ni se elimina la fila nueva.
+8. Ejecutar el vaciado total explícito en otra copia de prueba y confirmar que elimina todas las filas de ActividadUsuario, incluidas las no clasificables, sin tocar InboxAuditLog.
+
+No ejecutar contra Spreadsheet, endpoints, deployments ni datos productivos.
+================================================================================
+
+
+================================================================================
+AUG-021 — Validación real de auditoría persistente ADMIN (solo deployment aislado)
+
+Preparación obligatoria: ejecutar desde el directorio padre del checkout GPSpedia. Si el checkout tiene cambios locales o la rama no coincide, detenerse; no descartar ni sobrescribir trabajo.
+```bash
+test -z "$(git -C GPSpedia status --porcelain)" || { echo "STOP: checkout con cambios locales"; exit 1; }
+test "$(git -C GPSpedia branch --show-current)" = "GPSpedia2.2.5_work" || { echo "STOP: rama incorrecta"; exit 1; }
+git -C GPSpedia fetch origin GPSpedia2.2.5_work
+git -C GPSpedia pull --ff-only origin GPSpedia2.2.5_work
+git -C GPSpedia log -1 --oneline
+git -C GPSpedia status --short --branch
+```
+
+1. En el proyecto Apps Script aislado, verificar que solo mantenedores autorizados tengan acceso de editor. Los usuarios finales y editores no autorizados no deben poder abrir ni modificar ScriptProperties.
+2. Ejecutar una acción ADMIN sensible con sesión Desarrollador y otra permitida a Gefe; verificar que actorId/actorRole provienen de la sesión validada del servidor.
+3. Verificar que cada operación crea STARTED antes del handler y finaliza con tiempos, acción, recurso, etapa, resultado y resumen parcial; probar success, partial y error.
+4. Inspeccionar ScriptProperties directamente desde el proyecto Apps Script (no desde un endpoint) y confirmar que no contiene tokens, contraseñas, Base64, URLs, payloads, mensajes ni stack traces.
+5. Simular una ejecución interrumpida después de STARTED; confirmar que el evento permanece pendiente, no se purga y que 20 eventos pendientes bloquean nuevas operaciones hasta revisión.
+6. Verificar la retención de 180 días y el límite de 300 eventos finalizados con datos de prueba; confirmar que la poda no elimina eventos pendientes.
+7. Simular fallo de persistencia inicial y timeout de lock: el handler sensible no debe ejecutarse. Simular fallo de finalización después de una operación: la respuesta no debe anunciar éxito y debe incluir eventId.
+8. Confirmar que no existe endpoint ADMIN de lectura/modificación del registro y que la protección efectiva corresponde al ACL del proyecto Apps Script.
+
+No ejecutar contra deployments productivos, cuentas reales de usuarios finales ni recursos productivos.
+================================================================================
+
+
+================================================================================
+AUG-022 — Verificación real de eliminación de caché IndexedDB ADMIN
+1. En navegador y perfil de prueba aislados, crear/abrir GPSpedia_DB y comprobar una limpieza normal: onsuccess, eliminación individual de ambas claves localStorage, notificación de éxito y recarga.
+2. Mantener una conexión abierta a GPSpedia_DB desde otra pestaña; ejecutar la limpieza desde ADMIN y confirmar onblocked, mensaje de limpieza incompleta, reporte separado de localStorage y ausencia de recarga automática.
+3. Cerrar la conexión de la otra pestaña y observar si la solicitud pendiente emite onsuccess; confirmar que la ejecución que ya informó bloqueo no presenta después éxito ni dispara reload. Recargar manualmente y comprobar el estado de la base.
+4. Probar onerror real, API IndexedDB no disponible y errores de acceso a localStorage; confirmar que se reportan por separado y nunca se anuncia limpieza completa.
+5. Confirmar que el botón vuelve a habilitarse en todos los resultados.
+No usar datos productivos, perfiles reales ni deployments operativos.
+================================================================================
+
+
+================================================================================
+AUG-023 — Validación de acciones ADMIN internas createSheet/addColumn
+1. Usar un proyecto ADMIN y Spreadsheet de prueba aislados. Ejecutar createSheet con nombre y encabezados válidos y confirmar respuesta, estructura y fórmula opcional.
+2. Repetir createSheet con nombre duplicado, caracteres reservados, payload inválido, encabezados no textuales y fórmula inválida; confirmar rechazo sin crear hoja.
+3. Ejecutar addColumn en una hoja existente; comprobar que se agrega al final y la respuesta devuelve columnIndex correcto. Probar hoja inexistente y encabezados inválidos sin escrituras.
+4. Probar sesión Desarrollador válida, sesión expirada/inválida y roles Gefe, Supervisor y Técnico; solo Desarrollador debe modificar.
+5. Simular lease ocupada y fallos de escritura; confirmar rechazo, auditoría y ausencia de modificaciones parciales no reportadas.
+6. Antes de cualquier deprecación futura, revisar scripts externos no versionados que consuman las acciones. Esta tarea no las retira.
+No usar Spreadsheet, deployments ni cuentas productivas.
+================================================================================
+
+================================================================================
+AUG-024 — Validación Beta de contratos de salud y deployments
+
+Antes de ejecutar cualquier prueba, sincronizar de forma segura la rama autorizada. Desde el directorio local del repositorio GPSpedia:
+
+```sh
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; conservarlos y detener la sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. En un entorno aislado, consultar AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN con `?debug=true`; comprobar HTTP, MIME JSON, identidad exacta, versión y estado. Comparar cada respuesta con `Services/SERVICE_HEALTH.md` y el código fuente desplegado.
+2. Verificar que cada ID configurado en JS/Frontend/api-config.js corresponde al proyecto/versión esperados y que no se ejecuta una versión anterior. No modificar ni redeplegar desde esta prueba.
+3. Comprobar que las respuestas públicas no contienen spreadsheetId, driveFolderId, cacheKey, nombres de hojas, estructura interna, stack traces, tokens, contraseñas ni secretos. No guardar cuerpos que contengan datos sensibles.
+4. Confirmar que LEGACY permanece unknown hasta obtener identidad y contrato verificables; no inferir identidad por HTTP 2xx ni por el nombre de la URL.
+5. Simular en entorno aislado HTTP 4xx/5xx, timeout, red desconectada, cuerpo vacío, HTML, JSON inválido, objeto/estado/identidad desconocidos y respuesta lenta; confirmar aislamiento entre servicios.
+6. Si existe una fuente de solo lectura aprobada para Sheets/Drive, verificarla por separado del estado HTTP del endpoint. No introducir escrituras ni operaciones de migración/backup como pruebas de salud.
+7. Confirmar que el ping ADMIN puede fallar o agotar timeout sin impedir que el resto del escaneo termine; comprobar que el panel muestra código HTTP, estado, motivo y última respuesta válida.
+
+No usar cuentas de usuarios finales, hojas/archivos productivos ni deployments operativos para pruebas destructivas. No cambiar ACL ni publicar versiones durante esta validación.
+================================================================================
+
+================================================================================
+AUG-025 — Validación Beta de telemetría local
+
+Antes de ejecutar cualquier prueba, sincronizar de forma segura la rama autorizada desde el directorio local del repositorio GPSpedia:
+
+```sh
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales; conservarlos y detener la sincronización"; exit 1; }
+git fetch origin GPSpedia2.2.5_work
+git pull --ff-only origin GPSpedia2.2.5_work
+git rev-parse HEAD
+```
+
+1. Abrir el panel ADMIN en navegador de prueba y observar solicitudes API de duración corta y larga; comprobar que el gráfico las agrupa por hora de inicio y que la duración corresponde al tiempo total.
+2. Dejar el panel sin solicitudes por más de 15 minutos; confirmar que los eventos desaparecen de la ventana móvil y que el gráfico/detalle se actualizan sin requerir una nueva solicitud.
+3. Generar más de 600 eventos dentro de 15 minutos; confirmar advertencia de muestra truncada y que los conteos no se presentan como totales completos.
+4. Generar solicitudes concurrentes que finalicen fuera de orden; comprobar orden por inicio, límites de ventana y distribución en los 15 buckets.
+5. Ocultar el modal ADMIN y cambiar a otra sección; confirmar que la suscripción no reconstruye DOM oculto. Volver al diagnóstico y confirmar que la vista se actualiza.
+6. Cerrar sesión/cambiar de usuario y comprobar que el temporizador se limpia y no queda una suscripción asociada al contexto anterior.
+
+No utilizar cuentas de usuarios finales ni almacenar telemetría en recursos productivos.
+================================================================================
+
+
+================================================================================
+AUG-026 — Historial de imágenes reemplazadas (entorno aislado)
+
+Antes de iniciar cualquier prueba, verificar repositorio/rama y sincronizar de forma segura:
+```bash
+test "$(git remote get-url origin)" = "https://github.com/infogpstech/GPSpedia.git" || exit 1
+test "$(git branch --show-current)" = "GPSpedia2.2.5_work" || exit 1
+test -z "$(git status --porcelain)" || { echo "Árbol sucio; detenerse y preservar cambios."; exit 1; }
+git fetch origin GPSpedia2.2.5_work && git pull --ff-only origin GPSpedia2.2.5_work
+git status --short
+git rev-parse HEAD
+```
+
+1. Usar un proyecto Apps Script y una Spreadsheet de prueba con copia desechable del esquema; comprobar ACL/editores y rechazo de roles no autorizados.
+2. Consultar el historial sin hoja y con esquema antiguo: confirmar que la lectura no crea ni modifica la Spreadsheet; ejecutar la migración explícita y comprobar idempotencia de los doce encabezados.
+3. Probar filas historica, restablecida, en_papelera, requiere_revision y cancelada; verificar que todas se muestran y que solo los estados autorizados habilitan restauración.
+4. Probar IDs duplicados, archivo_drive_id/url_anterior/url_visualizacion mismatched, fila parcial, estado desconocido, MIME no imagen y archivo Drive en papelera; confirmar que se presentan para revisión y no se modifican.
+5. Simular en Spreadsheet aislada fallos de setValue/flush durante restauración/eliminación; confirmar rollback de celda, archivo y estado histórico, o requiere_revision si no puede verificarse la compensación.
+6. Probar permisos y referencias activas antes de acciones mutantes. Confirmar que no se toca ningún archivo fuera de la carpeta autorizada.
+
+No usar cuentas, hojas, archivos Drive ni deployments productivos.
+================================================================================
+
+
+================================================================================
+AUG-155 — VALIDACIÓN BETA DE INCIDENCIAS DE INICIO, TUTORIALES, INBOX Y PWA
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. Esta secuencia no descarta cambios y se detiene si el árbol está sucio:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización y preservarlos"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar únicamente cuentas, perfiles de navegador, proyectos Apps Script, coordinador, Spreadsheet y datos de prueba Beta. No utilizar usuarios finales ni recursos productivos.
+- Antes de cada caso registrar fecha/hora, HEAD, versión frontend/Service Worker, versiones de deployments AUTH/Coordinator/FEEDBACK, rol de cuenta, navegador/SO/dispositivo y resultado PASS/FAIL/NO EJECUTADA.
+- No copiar secretos, tokens ni cuerpos de respuestas sensibles a capturas, logs o este registro. Para comparar secretos, verificar igualdad dentro de ScriptProperties del mismo entorno sin revelarlos.
+- No modificar ScriptProperties ni deployments como parte de una comprobación de solo lectura. Si se detecta una propiedad ausente/incorrecta, documentar el nombre de la propiedad y solicitar autorización para corregir únicamente Beta.
+
+1. AVISO OBLIGATORIO Y SESIÓN
+- En un perfil de navegador Beta nuevo, iniciar sesión y aceptar el aviso. Confirmar que la aplicación continúa, se muestra el saludo y aparecen los controles del rol.
+- Cerrar sesión e iniciar de nuevo con la misma cuenta y perfil; el aviso no debe reaparecer.
+- Abrir la cuenta en otro perfil/navegador Beta; el aviso debe aparecer una vez. Aceptarlo, cerrar sesión y volver a entrar; no debe reaparecer.
+- Repetir la aceptación mientras se ejecuta una consulta ADMIN/sessionActivity. No debe aparecer «recurso ocupado»; no debe debilitarse la validación de token ni la revocación.
+- Probar sesión expirada, token inválido y rol revocado; no deben aceptar términos ni acceder al catálogo.
+
+2. SALUDO Y REACCIÓN ÚTIL
+- Confirmar que el saludo usa el nombre de la cuenta después de iniciar sesión y después de aceptar el aviso por primera vez.
+- Pulsar 👍🏿 en un registro de prueba. Confirmar respuesta satisfactoria y persistencia tras actualizar la vista.
+- Reintentar la misma acción y hacer doble clic rápido; no deben generarse reacciones duplicadas ni mensajes de error falsos. Verificar que la cuenta no puede modificar reacciones ajenas.
+
+3. TARJETA AGREGAR TUTORIAL Y PERMISOS
+- Iniciar sesión como Desarrollador con sesión recién iniciada y con sesión restaurada. Abrir Tutoriales y confirmar que aparece «Agregar Tutorial», incluso si no existen tutoriales.
+- Iniciar sesión como Técnico, Técnico exterior, Supervisor y Jefe; confirmar que la tarjeta no aparece para esos roles.
+- Intentar `addTutorial` desde cada rol no Desarrollador con token de prueba; el backend debe rechazarlo sin escribir en la hoja Tutorial.
+- Si la sesión restaurada contiene el identificador heredado `id` en minúscula, confirmar que el contexto de UI reconoce el rol sin omitir la validación de SessionToken.
+
+4. TARJETA AGREGAR PROBLEMA EN PyS
+- Abrir el modal de detalle de un vehículo con un único problema relacionado y después con varios problemas.
+- Comparar la tarjeta «Agregar Problema» con las tarjetas de problema: altura renderizada, alineación vertical, ancho, margen y separación.
+- Repetir en viewport móvil y escritorio, con tema claro/oscuro y textos largos. Confirmar que el carrusel no corta ni desplaza la tarjeta final.
+
+5. INBOX — CONFIGURACIÓN DE FEEDBACK Y ROLES TÉCNICOS
+- Consultar `GET ?debug=true` del deployment FEEDBACK Beta. Confirmar que `coordinatorConfigured` sea booleano y que la respuesta no contenga URL, secretos, tokens ni ScriptProperties.
+- Interpretación: `false` indica que falta configuración local con formato válido o el cliente coordinador no está incluido. `true` solo confirma presencia/formato local; no demuestra que el secreto coincida con el coordinador remoto.
+- En modo de solo lectura, comprobar que `GPSpedia_COORDINATOR_URL` de FEEDBACK apunta al coordinador Beta y que `GPSpedia_COORDINATOR_SECRET` coincide con `GPSpedia_COORDINATOR_SECRET_FEEDBACK` del mismo coordinador. No revelar ni registrar los valores.
+- Confirmar que el deployment FEEDBACK contiene `SharedMutationClient.js` y que el Coordinator Beta contiene las políticas `FEEDBACK/sessionActivity`, `createInboxConversation`, `sendInboxMessage`, `markInboxRead` y `archiveInboxConversation`.
+- Con Técnico y Técnico exterior, abrir Inbox y comprobar que aparece la opción de consultar al Desarrollador, se listan únicamente destinatarios Desarrollador y se puede crear/enviar/leer/archivar una conversación de prueba.
+- Confirmar que técnicos no ven solicitudes históricas ni controles Aprobar/Rechazar/Borrar de reportes privilegiados. Probar que las operaciones privilegiadas son rechazadas por backend incluso si se invocan manualmente.
+- Con Desarrollador, comprobar el flujo de conversaciones y la vista de solicitudes históricas según sus permisos. Verificar persistencia de mensajes, no leídos, enviados, archivados, auditoría e idempotencia.
+- Si el diagnóstico local da `true` pero el Coordinator rechaza FEEDBACK, registrar las versiones y solicitar revisión de la coincidencia de secretos/deployment; no ampliar RBAC como workaround.
+
+6. INBOX MÓVIL
+- En Android y iOS, abrir Inbox con una cuenta autorizada. Confirmar que la lista y el detalle no quedan apilados: se muestra una sola vista y el botón «Volver a solicitudes» regresa a la lista.
+- Comprobar barra contextual de acciones, tamaño táctil, scroll independiente, teclado, foco, lector de pantalla, tema claro/oscuro y textos largos.
+- Confirmar que responder, resolver y borrar solo aparecen cuando el tipo de registro y el rol admiten la operación. Conversaciones directas permiten archivar/restaurar; no debe aparecer una acción de borrado que el backend no soporte.
+
+7. ACTUALIZACIÓN Y RECARGA PWA
+- Actualizar desde la versión previa con caché `gpsepedia-cache-v26` a `gpsepedia-cache-v27`. Confirmar que se descarga y activa la nueva versión y que el documento puede recargarse.
+- Probar la acción «Recargar aplicación» del menú lateral y F5/Ctrl+R cuando el navegador lo permita. La recarga no debe quedar bloqueada ni dejar un modal/overlay invisible.
+- Abrir dos pestañas de la misma instalación, actualizar el Service Worker y comprobar que ambas recuperan una versión coherente sin bucles de recarga.
+- Probar offline, reconexión y actualización interrumpida. Confirmar que la sesión, borradores y operaciones locales pendientes se conservan o muestran un estado recuperable.
+- Comprobar que pull-to-refresh actualiza únicamente el catálogo y no recarga el documento involuntariamente.
+
+8. CAPTURAS DE PANTALLA Y LÍMITES DE PLATAFORMA
+- Confirmar en Android/iOS que las restricciones actuales de menú contextual, selección y arrastre solo son disuasorias; no deben describirse como bloqueo de capturas.
+- Intentar una captura nativa y documentar el resultado del sistema operativo. Una PWA web no dispone de una API interoperable para impedirla; `FLAG_SECURE` requiere un contenedor Android nativo controlado.
+- No añadir blur, ocultación del contenido ni marcas de agua sin evaluar legibilidad, accesibilidad y aprobación. Si se propone una marca de agua, probar identificación de cuenta, contraste y lectura en móvil/escritorio sin alterar el contenido original.
+
+CRITERIO DE CIERRE
+- Marcar cada subprueba PASS, FAIL o NO EJECUTADA y adjuntar evidencia no sensible.
+- Si FEEDBACK/Coordinator falla por configuración, conservar el resultado como pendiente de integración Beta; no atribuirlo a RBAC sin evidencia.
+- No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
+================================================================================
+
+
+================================================================================
+AUG-156 — ACCESO DEVELOPER, ESCÁNER Y MIGRACIÓN DEL HISTORIAL DE IMÁGENES
+
+PREPARACIÓN OBLIGATORIA — ejecutar antes de cualquier prueba, desde una terminal dentro del repositorio local. Esta secuencia no descarta cambios y se detiene si el árbol está sucio:
+```bash
+set -eu
+EXPECTED_BRANCH="GPSpedia2.2.5_work"
+ROOT="$(git rev-parse --show-toplevel)"
+test "$(basename "$ROOT")" = "GPSpedia" || { echo "Repositorio incorrecto"; exit 1; }
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in *infogpstech/GPSpedia.git) ;; *) echo "Remote incorrecto: $REMOTE_URL"; exit 1 ;; esac
+test "$(git branch --show-current)" = "$EXPECTED_BRANCH" || { echo "Rama incorrecta"; exit 1; }
+test -z "$(git status --porcelain)" || { echo "Hay cambios locales sin guardar; detener sincronización y preservarlos"; exit 1; }
+git fetch origin "$EXPECTED_BRANCH"
+git pull --ff-only origin "$EXPECTED_BRANCH"
+printf 'Repositorio: %s\nRama: %s\nHEAD: ' "$ROOT" "$(git branch --show-current)"
+git rev-parse HEAD
+git status --short --branch
+```
+
+ENTORNO Y REGISTRO
+- Usar exclusivamente cuenta Desarrollador de prueba, cuentas de roles no privilegiados, proyectos Apps Script Beta y una Spreadsheet/Drive desechables. No usar producción.
+- Registrar fecha/hora, HEAD, navegador/SO/dispositivo, rol, versión de ADMIN y Coordinator y resultado PASS/FAIL/NO EJECUTADA.
+- No copiar secretos, tokens, URL privadas ni datos personales a capturas o registros. La comprobación de propiedades debe ser de solo lectura.
+
+1. ACCESO AL PANEL DEVELOPER
+- Iniciar sesión como Desarrollador y abrir el menú lateral. Confirmar que aparece «Desarrollador» y que abre el panel sin pedir una segunda autenticación.
+- Cerrar sesión, volver a iniciar y repetir. Después recargar la aplicación y repetir con la sesión restaurada.
+- Si el botón no aparece o el panel no abre, registrar únicamente presencia/ausencia de ID, SessionToken y rol normalizado; nunca registrar sus valores.
+- Iniciar sesión como Técnico, Técnico exterior, Supervisor y Jefe. Confirmar que no ven ni pueden abrir el panel Developer y que las acciones ADMIN siguen rechazando sus solicitudes.
+
+2. CARGA DE INVENTARIO E HISTORIAL
+- Confirmar que los deployments Beta de Coordinator y ADMIN incluyen las políticas de getReplacedImages, getDriveStorage, getCortesImageFolders y auditDriveImagesInCortes.
+- Abrir el panel Developer y cargar el inventario/historial. Confirmar que las consultas responden sin «recurso ocupado por operaciones activas ADMIN/sessionActivity».
+- Iniciar el escáner de imágenes mientras se consulta el historial. Confirmar que ambas lecturas pueden coexistir y que el progreso/cursor del escáner se conserva.
+- Repetir la carga en dos pestañas. Confirmar que no se pierde el estado de la cuenta ni se mezclan los resultados de auditoría entre sesiones.
+
+3. CONCURRENCIA Y PROTECCIÓN DE ESCRITURAS
+- Intentar iniciar dos escáneres simultáneos en la misma cuenta. El segundo debe esperar o recibir un mensaje controlado; no debe sobrescribir el estado del primero.
+- Mientras el escáner conserva su snapshot, intentar una operación de escritura de inventario/Drive en el entorno desechable. Debe esperar o ser rechazada por conflicto, sin escritura parcial.
+- Al finalizar/liberar el escáner, repetir la operación y confirmar que puede continuar.
+- Probar continuación de cursor, reintento de la misma página y respuesta repetida; confirmar idempotencia y ausencia de progreso duplicado.
+
+4. INICIALIZAR HISTORIAL
+- En una Spreadsheet Beta desechable sin hoja de historial, pulsar «Inicializar historial». Confirmar que Coordinator acepta ADMIN/migrateReplacedImagesSchema y que la acción termina correctamente.
+- Repetir la inicialización. Debe ser idempotente: no duplicar encabezados, no sobrescribir datos y no crear columnas repetidas.
+- Probar una hoja con encabezados antiguos y otra con encabezados incompletos. Confirmar que solo se agregan los campos faltantes y que los datos existentes se conservan.
+- Si aparece «La acción no está habilitada en la política del coordinador», registrar versión de Coordinator y ADMIN y detener la prueba. El deployment Beta del Coordinator debe actualizarse antes que ADMIN si la política no está publicada. No ampliar permisos ni cambiar ScriptProperties fuera del entorno Beta autorizado.
+
+CRITERIO DE CIERRE
+- Marcar cada subprueba PASS, FAIL o NO EJECUTADA y adjuntar evidencia no sensible.
+- La validación local de contratos no sustituye la prueba con Apps Script/Spreadsheet/Drive reales en Beta.
+- No desplegar a producción, no modificar datos productivos y no copiar secretos a los registros.
+================================================================================

@@ -1,0 +1,47 @@
+name: GPSpedia service regression tests
+on:
+  push:
+    branches:
+      - GPSpedia2.2.5_work
+  pull_request:
+    branches:
+      - GPSpedia2.2.5_work
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  service-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout authorized branch
+        uses: actions/checkout@v4
+        with:
+          ref: GPSpedia2.2.5_work
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify branch and repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          REMOTE_URL="$(git remote get-url origin)"
+          case "$REMOTE_URL" in
+            https://github.com/infogpstech/GPSpedia|https://github.com/infogpstech/GPSpedia.git|git@github.com:infogpstech/GPSpedia|git@github.com:infogpstech/GPSpedia.git) ;;
+            *) echo "Repositorio remoto incorrecto"; exit 1 ;;
+          esac
+          test "$(git branch --show-current)" = "GPSpedia2.2.5_work"
+          test -z "$(git status --porcelain)"
+          git rev-parse HEAD
+      - name: Check syntax of modified JavaScript modules
+        run: |
+          node --check JS/Frontend/main.js
+          node --check JS/Frontend/auth.js
+          node --check JS/Frontend/ui.js
+          node --check JS/Frontend/offline.js
+          node --check JS/Frontend/clientInteractionPolicy.js
+          node --check service-worker.js
+          node --check Services/admin.js
+      - name: Run isolated service regression suites
+        run: node --experimental-default-type=module JS/Tests/RunServiceTests.mjs

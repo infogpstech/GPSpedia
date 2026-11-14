@@ -10,20 +10,35 @@ El objetivo principal es optimizar los tiempos de instalación en campo, reducir
 ## 2. Estructura del Repositorio
 El repositorio actual contiene el **App Shell** y la lógica del cliente (Frontend) de la plataforma, organizada bajo una arquitectura modular de JavaScript moderno.
 
+### Organización actual
+
+```text
+GPSpedia/
+├── index.html
+├── HTML/              # páginas secundarias
+├── JS/
+│   ├── Frontend/      # módulos del navegador
+│   └── Tests/         # suites y runner Node.js
+├── Services/          # microservicios Apps Script y auxiliares de backend
+├── Images/            # logos e iconos
+└── service-worker.js  # raíz para conservar el alcance PWA
+```
+
 ### Archivos Principales y Vistas
 - **index.html:** Puerta de entrada principal. Contiene el contenedor maestro, el sistema de modales dinámicos y la estructura base del catálogo, tutoriales y sección de relay.
-- **add_cortes.html:** Interfaz para el registro colaborativo de nuevos vehículos y cortes, con asistente de registro guiado de instalación.
-- **users.html:** Panel de gestión de usuarios y perfiles, que permite la personalización de datos personales y visualización de la red de técnicos.
+- **HTML/add_cortes.html:** Interfaz para el registro colaborativo de nuevos vehículos y cortes, con asistente de registro guiado de instalación.
+- **HTML/users.html:** Panel de gestión de usuarios y perfiles, que permite la personalización de datos personales y visualización de la red de técnicos.
 
 ### Módulos de Lógica (JavaScript ES6)
-- **main.js:** Orquestador principal. Gestiona la inicialización de la app, listeners globales, validación de sesión y el sistema de navegación por historial de navegación del navegador (History API).
-- **ui.js:** Módulo de renderizado. Centraliza toda la manipulación del DOM, creación dinámica de tarjetas, gestión de carruseles y renderizado de detalles técnicos.
-- **auth.js:** Gestiona la autenticación del lado del cliente, persistencia de tokens de sesión y comunicación inicial con los servicios de acceso.
-- **navigation.js:** Controla la lógica de filtrado del catálogo, gestión de la barra de búsqueda y transiciones entre niveles de navegación (Marca -> Modelo -> Versión).
-- **state.js:** Implementa un patrón centralizado de gestión de estado con sistema de suscripción (Pub/Sub) para sincronizar la UI con los datos.
-- **offline.js:** Núcleo de persistencia local. Gestiona la base de datos IndexedDB para el almacenamiento del catálogo, historial de usuario e imágenes optimizadas (thumbnails).
-- **lightbox.js:** Módulo especializado para la visualización y zoom de imágenes técnicas de alta resolución.
-- **api-config.js:** Archivo de configuración que rutea las peticiones del frontend hacia los microservicios operativos.
+- **JS/Frontend/main.js:** Orquestador principal. Gestiona la inicialización de la app, listeners globales, validación de sesión y el sistema de navegación por historial de navegación del navegador (History API).
+- **JS/Frontend/ui.js:** Módulo de renderizado. Centraliza toda la manipulación del DOM, creación dinámica de tarjetas, gestión de carruseles y renderizado de detalles técnicos.
+- **JS/Frontend/auth.js:** Gestiona la autenticación del lado del cliente, persistencia de tokens de sesión y comunicación inicial con los servicios de acceso.
+- **JS/Frontend/share-utils.js:** Construye enlaces compartidos con identidad estable de vehículo, decodifica enlaces históricos y gestiona Web Share/Clipboard con fallback accesible.
+- **JS/Frontend/navigation.js:** Controla la lógica de filtrado del catálogo, gestión de la barra de búsqueda y transiciones entre niveles de navegación (Marca -> Modelo -> Versión).
+- **JS/Frontend/state.js:** Implementa un patrón centralizado de gestión de estado con sistema de suscripción (Pub/Sub) para sincronizar la UI con los datos.
+- **JS/Frontend/offline.js:** Núcleo de persistencia local. Gestiona la base de datos IndexedDB para el almacenamiento del catálogo, historial de usuario e imágenes optimizadas (thumbnails).
+- **JS/Frontend/lightbox.js:** Módulo especializado para la visualización y zoom de imágenes técnicas de alta resolución.
+- **JS/Frontend/api-config.js:** Archivo de configuración que rutea las peticiones del frontend hacia los microservicios operativos.
 
 ---
 
@@ -56,7 +71,7 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Robustecimiento de PWA y Compatibilidad Móvil
 - **Soporte Offline Completo:** Capacidad total de navegación y consulta de fichas técnicas completas en IndexedDB (`GPSpedia_DB`) en zonas con mala o nula cobertura.
-- **Diseño Adaptativo Táctil (Zero-Zoom Layout):** Interfaz móvil bloqueada contra zooms táctiles accidentales en el cuerpo del catálogo, aislando la capacidad de ampliación táctil (pinch-to-zoom) exclusivamente para los diagramas técnicos y diagramas de relay dentro del visor Lightbox de alta resolución.
+- **Zoom y accesibilidad:** Se conserva el zoom nativo del navegador (teclado, rueda y gestos táctiles) en las vistas de la aplicación. El visor Lightbox mantiene además sus controles propios de ampliación de diagramas.
 - **Indicador de Estado de Conexión:** Pequeño indicador LED de red minimalista ubicado al lado del saludo de bienvenida, informando al técnico de forma síncrona sobre su estado de conexión (online/offline).
 
 ### Sistema de Notificaciones Colaborativas
@@ -65,7 +80,13 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Seguridad y Compartición de Información
 - **Botón Compartir Integrado:** Botón interactivo en el modal de detalle que hace uso de la API nativa de compartición del sistema operativo (Web Share API) para enviar la ficha técnica por aplicaciones de mensajería, o copiar un enlace directo optimizado al portapapeles.
-- **Protección de Datos Técnicos:** Bloqueo nativo del menú contextual, desactivación de comandos del sistema que puedan alterar el App Shell y restricciones de selección de texto en áreas no deseadas para prevenir manipulaciones y resguardar el conocimiento técnico de la plataforma.
+- **Restricciones visuales de copia:** En las vistas web se bloquean menú contextual, selección/copia/corte y arrastre de imágenes, excepto en campos editables para conservar pegar y edición. Son medidas disuasorias; no impiden inspeccionar el navegador ni recuperar recursos.
+
+### Política de seguridad del cliente y anti-debugging
+
+GPSpedia aplica una fricción visual limitada sobre medios: bloquea menú contextual, copia/corte, selección y arrastre en imágenes, vídeos y canvas. El texto normal sigue pudiéndose seleccionar/copiar y los campos editables conservan sus controles. No se bloquean F12, Ctrl+Shift+I/J/C/U ni el zoom. El código y los recursos entregados al navegador siguen siendo inspeccionables y recuperables; estas restricciones no son seguridad real.
+
+La confidencialidad y la integridad no dependen de ocultar el frontend: los servicios deben validar en cada operación protegida la sesión vigente, la identidad vinculada al token, el rol autorizado y los datos recibidos antes de leer o modificar recursos. Las restricciones visuales solo añaden fricción y nunca sustituyen la autorización del servidor. Los endpoints y recursos públicos deben tratarse como públicos.
 
 ### Accesibilidad y Mejoras Visuales Recientes
 - **Modo Oscuro Integrado y Persistente:** Intercambio fluido de paletas de colores basado en las preferencias locales. Los logotipos de marcas cuentan con un efecto de sombra sutil (drop-shadow) adaptativa en modo oscuro para un contraste y legibilidad óptimos.
@@ -77,10 +98,11 @@ La plataforma utiliza una arquitectura desacoplada:
 ## 5. Novedades de la Renovación Integral (v2.2.0)
 
 ### Registro, Almacenamiento y Búsqueda por VIN (Número de Chasis)
-- **Identificación por VIN:** Incorporación de la columna `vin` (índice 43) en la estructura de la base de datos para almacenar y consultar el VIN o número de chasis de los vehículos.
+- **Identificación por VIN:** El esquema objetivo reserva la columna 43 liberada en `Cortes` para el campo físico `VIN` (encabezado exacto en mayúsculas), después de trasladar `idOperacion1`, `idOperacion2` e `idOperacion3` a una hoja dedicada de idempotencia. Las columnas 44 y 45 permanecen disponibles para futuras implementaciones. La función de servicio `renameVinColumnHeader` establece el encabezado `VIN` después de verificar la migración.
+- **Migración de idempotencia:** La acción administrativa `migrateCortesOperationIds` realiza una simulación por defecto y solo escribe/limpia las columnas heredadas cuando recibe `confirm: true`. Si `Idempotencia` tiene un esquema incompatible, se conserva sin cambios y se utiliza `Idempotencia_Cortes`; si ambas hojas tienen esquemas incompatibles, la acción se detiene sin modificarlas. La función `renameVinColumnHeader` deja el encabezado de la columna 43 exactamente como `VIN`; también detecta opId escalares heredados aunque esa columna ya esté rotulada VIN y se detiene ante datos mezclados. Los campos de testigo tienen posición fija AT:AV (46–48), aunque existan columnas adicionales después de AV; no se agregan dinámicamente al final. Si las columnas objetivo están ocupadas o los encabezados aparecen duplicados/fuera de posición, WRITE y ADMIN detienen la escritura sin desplazar datos.
 - **Procesamiento de Seguridad:** El sistema solicita el VIN completo de hasta 18 caracteres, pero descarta automáticamente los últimos 5 caracteres para almacenar únicamente el prefijo procesado, resguardando la privacidad de las unidades individuales.
-- **Colecciones de VINs por Equipamiento:** Soporte para guardar múltiples identificadores VIN en una misma celda como un arreglo JSON/colección cuando un vehículo posee 2 o 3 versiones de equipamiento, limitando dinámicamente la cantidad permitida según las versiones detectadas en `versionesAplicables`. La adición de un VIN no modifica la fecha de registro (`timestamp`).
-- **Validación de Duplicados:** Detección de duplicados en tiempo real tanto en el formulario `add_cortes.html` como en el modal de detalle. Muestra el mensaje *"VIN ya está registrado para:"* acompañado de un enlace/botón interactivo para navegar directamente al modelo existente.
+- **Colecciones de VINs por Equipamiento:** Una sola columna física `VIN` almacena en una misma celda una colección JSON con todos los VIN procesados correspondientes a las versiones de equipamiento registradas en esa fila. La propiedad de datos de los consumidores sigue siendo `vin`. La cantidad máxima de VIN corresponde al número de versiones detectadas en `versionesAplicables`; no se crean columnas `vin2`/`vin3` ni columnas automáticas por versión. La adición de un VIN no modifica la fecha de registro (`timestamp`).
+- **Validación de Duplicados:** Detección de duplicados en tiempo real tanto en el formulario `HTML/add_cortes.html` como en el modal de detalle. Muestra el mensaje *"VIN ya está registrado para:"* acompañado de un enlace/botón interactivo para navegar directamente al modelo existente.
 - **Búsqueda Global por VIN:** La barra de búsqueda detecta consultas de VIN de entre 6 y 18 caracteres, extrae el prefijo procesado y filtra el catálogo por coincidencia exacta.
 
 ### Herramientas Avanzadas para el Rol de Desarrollador
@@ -92,16 +114,28 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Mejoras de Experiencia de Usuario (UX) e Inbox
 - **Exportación e Impresión de Fichas Técnicas:** Botón con icono de impresora (`exportVehiclePrintSheet`) en el modal de detalle para generar e imprimir fichas técnicas limpias optimizadas para formato físico/PDF para técnicos instaladores en campo.
-- **Barra de Filtros Rápidos Colapsable:** Desplegable de filtros rápidos por Categoría y Año mediante el botón `#btn-toggle-filters`, activo únicamente cuando la búsqueda está en uso.
+- **Filtros rápidos de catálogo:** Funcionalidad cancelada; no forma parte de la versión vigente de GPSpedia y no debe considerarse disponible.
 - **Navegación Jerárquica Progresiva de Búsqueda:** Búsqueda agrupada por Modelo único -> Versiones de Equipamiento -> Rangos de Años -> Modal de Detalle (auto-abriendo si sólo existe 1 modelo, 1 versión y 1 rango de año).
-- **Gestión Completa del Inbox:** Opción de eliminación permanente de mensajes y reportes (`deleteFeedbackItem`) en el panel del Inbox.
+- **Centro de conversaciones Inbox:** conversaciones directas bidireccionales individuales con destinatario, asunto, categoría, plantillas editables, respuesta multi-mensaje, Recibidos/No leídos/Enviados/Archivados, búsqueda, paginación, contador de no leídos y borradores de sesión recuperables. Las solicitudes históricas de reportes, sugerencias y vídeos conservan sus flujos separados.
+- **Gestión del Inbox histórico:** opción de eliminación permanente de mensajes y reportes (`deleteFeedbackItem`) en el panel del Inbox.
 
 ---
 
-## 5. Seguridad y Exclusión de Microservicios
-Por motivos de seguridad operativa y saneamiento del código antes de producción, los archivos correspondientes a los microservicios del backend (**write.js, auth.js, catalog.js, feedback.js**) han sido retirados de este repositorio público.
+## 5. Visibilidad de fuentes y separación de servicios
 
-La lógica de estos componentes se encuentra resguardada de forma privada bajo la administración del proyecto. El repositorio actual contiene la totalidad de la interfaz de usuario y la lógica de integración necesaria para que la plataforma opere contra los endpoints autorizados definidos en la configuración.
+El repositorio de GitHub `infogpstech/GPSpedia` tiene visibilidad **pública**. Por lo tanto, todos los archivos versionados en la rama publicada, incluidas las fuentes que se encuentren dentro de `Services/`, son accesibles para quienes puedan consultar el repositorio. Las fuentes backend se mantienen aquí para desarrollo, revisión y pruebas; su presencia no demuestra que un deployment o endpoint haya sido creado, actualizado o publicado desde GitHub.
+
+La visibilidad del repositorio y la ejecución de los microservicios son aspectos distintos. Los deployments, endpoints, permisos de Google y datos de Spreadsheet/Drive se administran en sus plataformas respectivas. No se debe inferir su estado ni sus permisos a partir del código versionado.
+
+Los identificadores de la Spreadsheet y de la carpeta de Drive de pruebas se conservan en sus ubicaciones actuales dentro de los servicios, según la decisión del proyecto. Son referencias a recursos de prueba de GPSpedia; no se trasladan ni se sustituyen en esta tarea. Su acceso efectivo depende de los permisos configurados en Google, que deben verificarse en el entorno correspondiente. No se incluyen en el frontend como mecanismo de autorización.
+
+### Integración de subida de vídeos a YouTube
+
+El frontend no necesita ni contiene una API key permanente de YouTube para iniciar la carga. El servicio FEEDBACK obtiene en el servidor el token OAuth de ejecución mediante `ScriptApp.getOAuthToken()`, solicita a YouTube una sesión Resumable y devuelve al navegador la URL de esa sesión. La transferencia binaria se realiza directamente entre el navegador y YouTube; el token OAuth permanece en Apps Script.
+
+La URL Resumable funciona como una capacidad temporal de transferencia y debe tratarse como un dato sensible mientras exista. El cliente la conserva en IndexedDB junto con el registro local de la operación para permitir reanudar una carga interrumpida. Al completar la solicitud de aprobación o descartar explícitamente la operación, el cliente elimina el registro local y su URL. Cerrar el modal durante una carga equivale actualmente a **pausar y conservar** el progreso; no equivale a descartar la sesión. Esta distinción debe mantenerse clara en la interfaz. La limpieza de sesiones locales abandonadas y un vencimiento local explícito deben verificarse antes de Beta.
+
+No se deben trasladar el token OAuth ni la URL Resumable a archivos estáticos, configuración pública, logs o respuestas distintas de la inicialización autorizada. Tampoco se debe crear una API key de frontend como sustituto del flujo OAuth ya implementado.
 
 ---
 ## 6. Novedades y Actualizaciones (v2.2.5)
@@ -120,9 +154,37 @@ La lógica de estos componentes se encuentra resguardada de forma privada bajo l
 - **Estandarización de Imagen:** La imagen del problema adopta exactamente las mismas proporciones y estilos que la imagen del modelo de vehículo (`.img-vehiculo-modal`).
 
 ### Optimización de Ficha Técnica para Impresión y Límites de Contenido
-- **Densidad Visual Adaptativa en Ficha de Impresión:** Ajuste inteligente de densidad (`.card-expanded` y `.card-compact`) para garantizar que la ficha técnica vehicular encaje perfectamente en una sola página Carta vertical con márgenes de 10mm.
+- **Ficha de impresión Carta:** Formato vertical de 215.9 × 279.4 mm con márgenes CSS de 10 mm y área útil de 195.9 × 259.4 mm. Se utiliza una sola página cuando el contenido cabe de forma legible; se generan páginas adicionales cuando la distribución técnica lo requiere, sin reducir los márgenes ni recortar imágenes. El encabezado y pie se repiten; los metadatos del vehículo aparecen en la primera página. La paginación por altura real y el reagrupamiento ante contenido extenso continúan en AUG-143. En el cuadro de impresión debe conservarse el tamaño Carta y la configuración de márgenes predeterminados para respetar `@page`.
 - **Ampliación Sincronizada a 700 Caracteres:** Límites de caracteres extendidos y validados tanto en el frontend como en los microservicios backend para los campos de solución y prevención.
 - **Coordinación de Acordeones:** Exclusión mutua entre el acordeón de posibles problemas y las secciones de cortes/apertura/alimentación en el modal de detalle.
 
 ---
 *GPSpedia v2.2.5 - 2026 todos los derechos reservados.*
+
+
+### Cargas generales de imágenes y reconciliación
+
+WRITE y ADMIN registran cada intento en ImageUploadLedger antes de crear el archivo Drive. Se verifica por lectura posterior la fila del ledger y los metadatos de Drive; al reutilizar archivos se recalcula SHA-256 y se valida operación, carpeta, MIME y tamaño. El límite es 10 MB por imagen. La acción ADMIN reconcilePendingImageUploads trabaja en dry-run por defecto; confirm:true aplica estados, sin eliminar archivos. Si la persistencia de ImageUploadLedger no está disponible, la carga se detiene antes de crear archivos.
+
+
+### Estrategia de lectura del catálogo
+
+La evaluación de `getCatalogData`, `getNavigationData`, `getDropdownData`, caché de servidor/IndexedDB y paginación está documentada en [Catalog_Read_Strategy.md](./Catalog_Read_Strategy.md).
+
+
+## Resolución y caché de imágenes — AUG-065
+
+Drive conserva la URL fuente original (`https://lh3.googleusercontent.com/d/{fileId}`) para todos los tamaños y evita sufijos CDN `=w`/`=s`, que pueden alterar la transparencia PNG. Canvas genera variantes locales PNG de 300, 800 y 1600 px de ancho máximo, manteniendo proporción y sin ampliar imágenes pequeñas. ObjectURL e IndexedDB comparten una clave por ID normalizado/ancho; los registros heredados o incompatibles no se reutilizan. El Lightbox conserva acceso a la fuente original de alta resolución.
+
+
+### QR de vídeos en fichas imprimibles
+Los códigos QR de los vídeos guía se generan localmente en el navegador con el módulo `JS/Frontend/qrcode-generator.mjs`; el enlace no se envía a servicios de terceros. Solo se admiten URLs HTTPS de hosts oficiales de YouTube con ID de vídeo válido. El QR no expone la URL como texto en la ficha.
+
+
+### Capturas de pantalla en navegador y PWA: límites reales
+
+- Una página web/PWA no dispone de un evento interoperable y fiable que notifique cada captura de pantalla realizada por el sistema operativo. `visibilitychange`, `blur` y `pagehide` describen cambios de visibilidad/foco o ciclo de vida; no identifican de forma fiable una captura y no deben tratarse como tal.
+- `getDisplayMedia()` solicita al usuario compartir una pantalla, ventana o pestaña. Es una API de captura/compartición iniciada por el usuario, no un detector ni un bloqueo de capturas nativas.
+- Una PWA ejecutada en el navegador no puede aplicar el mecanismo nativo Android `FLAG_SECURE`. No se bloquean capturas del sistema ni se promete protección absoluta.
+- No se implementa una marca de agua dinámica por defecto: superponer identidad/fecha sobre diagramas y fotografías de cableado puede reducir legibilidad, y la marca no impide la captura. Se puede reevaluar si existe un caso de fuga trazable que justifique ese coste visual.
+- Si un recurso requiere confidencialidad real, debe dejar de servirse como URL pública y pasar a permisos privados y entrega autenticada/temporal desde backend. Ocultar botones o interceptar eventos del navegador no sustituye este control.
