@@ -27,13 +27,20 @@ En el proyecto Apps Script de cada servicio, incluir `Services/SharedMutationCli
 - `GPSpedia_COORDINATOR_URL`: URL /exec del coordinador correspondiente al mismo entorno.
 - `GPSpedia_COORDINATOR_SECRET`: el secreto específico de ese servicio, idéntico al valor configurado para ese servicio en el coordinador.
 
-AUTH coordina login, validateSession, touchSession, cambio/restablecimiento de contraseña, revocaciones, actualización de roles y limpieza de Logs; validateSession/touchSession se coordinan porque pueden actualizar o reconciliar ActiveSessions y Users.
+AUTH coordina login, touchSession, acceptTerms, cambio/restablecimiento de contraseña, revocaciones, actualización de roles y limpieza de Logs. validateSession es una lectura de solo verificación: comprueba token, identidad, estado, expiración y aceptación de términos sin modificar hojas ni adquirir una lease; por eso no depende del coordinador y puede confirmar una sesión aunque el coordinador esté temporalmente indisponible. touchSession sí modifica ActiveSessions y continúa coordinado.
 
 UTILITIES coordina `migrateTimestamps`: reserva lectura de Users, ActiveSessions, Cortes y Drive, y escritura del recurso lógico UTILITIES (Hoja 1 y sus hojas temporales). Adquiere la lease compartida antes del ScriptLock local. Así se serializa con cambios de identidad, mutaciones de Cortes/Drive y las operaciones ADMIN de mantenimiento integral. No hay consumidor de `migrateTimestamps` en la interfaz versionada; la acción permanece en ACTION_TO_SERVICE_MAP para ejecución operativa/manual o clientes externos autorizados.
 
 AUTH/USERS/UTILITIES de prueba deben apuntar a un coordinador de prueba independiente y utilizar secretos distintos de producción. Nunca conectar un servicio de prueba al coordinador productivo ni viceversa.
 
 La acción FEEDBACK `initYouTubeUpload` no adquiere lease: inicia una sesión de carga en YouTube y no modifica los recursos compartidos de Spreadsheet/Drive. El registro y aprobación posteriores sí se coordinan; el contrato de YouTube permanece en AUG-043.
+
+## AUTH: sesión y aceptación de términos
+
+- El endpoint de diagnóstico `GET ?debug=true` devuelve `coordinatorConfigured` como booleano. No expone URL, secretos ni tokens. La tarjeta AUTH del panel Developer muestra si el coordinador está configurado.
+- Si el estado es `false`, revisar en ScriptProperties del proyecto AUTH `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET`, además de la inclusión de `Services/SharedMutationClient.js`. Login, `touchSession`, `acceptTerms` y otras mutaciones siguen fallando de forma segura si falta esta configuración.
+- `ActiveSessions` utiliza la columna G (`SessionTermsAcceptance`) para guardar la aceptación vinculada a cada token de sesión. Al crear una sesión nueva se inicia en estado pendiente; `acceptTerms` registra la aceptación para esa sesión. La columna I de `Users` se conserva como registro histórico de la última aceptación, pero ya no determina si una sesión nueva debe mostrar el aviso.
+- `validateSession` usa una lectura local con espera de lock limitada y no actualiza `LastActivityAt`; la actividad se actualiza mediante `touchSession` cuando se ejecutan operaciones protegidas.
 
 ## Política y recuperación
 
