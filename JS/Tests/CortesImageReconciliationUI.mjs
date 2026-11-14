@@ -98,6 +98,8 @@ testCase("la aplicación requiere aprobación visible, confirmación y endpoint 
  assert.ok(admin.includes("plan.capabilities = { applyApprovedReconciliation: true }"));
  assert.ok(ui.includes("report.applyAvailable === true"));
  assert.ok(ui.includes("response.capabilities && response.capabilities.applyApprovedReconciliation === true"));
+ assert.ok(ui.includes("auditId, files: batch"));
+ assert.ok(ui.includes("confirmed: true, auditId"));
  assert.ok(ui.includes("applyAvailable: false"));
  assert.ok(admin.includes("entry.cell.getValue()"));
 });

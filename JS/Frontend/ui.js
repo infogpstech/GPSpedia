@@ -7912,7 +7912,7 @@ export async function openAuditDriveModal() {
                     fileId: String(file.fileId || ""), fileName: String(file.fileName || "")
                 }));
                 const response = await routeActionWithRetry("previewCortesImageReconciliation", {
-                    ...getDeveloperSessionPayload(), files: batch
+                    ...getDeveloperSessionPayload(), auditId, files: batch
                 }, {
                     timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 500,
                     shouldContinue: isCurrentRequest
@@ -7959,7 +7959,7 @@ export async function openAuditDriveModal() {
                     fileId: String(file.fileId || ""), fileName: String(file.fileName || "")
                 }));
                 const verification = await routeActionWithRetry("previewCortesImageReconciliation", {
-                    ...getDeveloperSessionPayload(), files: verificationBatch
+                    ...getDeveloperSessionPayload(), auditId, files: verificationBatch
                 }, {
                     timeoutMs: 45000, maxAttempts: 3, retryDelayMs: 500, shouldContinue: isCurrentRequest
                 });
@@ -8068,7 +8068,7 @@ export async function openAuditDriveModal() {
         let applied = false;
         try {
             const response = await routeActionWithRetry("applyCortesImageReconciliation", {
-                ...getDeveloperSessionPayload(), confirmed: true,
+                ...getDeveloperSessionPayload(), confirmed: true, auditId,
                 manifestDigest: String(currentReconciliationReport.manifestDigest || ""), approved
             }, {
                 timeoutMs: 90000, maxAttempts: 1, retryDelayMs: 0,

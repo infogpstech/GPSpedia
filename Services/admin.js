@@ -801,7 +801,7 @@ function clearAdminState(action) {
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
-const ADMIN_SERVICE_VERSION = "2.6.1";
+const ADMIN_SERVICE_VERSION = "2.6.2";
 function doGet(e) {
     if (e && e.parameter && e.parameter.debug === 'true') {
         const serviceState = {
@@ -3095,7 +3095,18 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     plan.historicalReferenceCount = historicalDriveIds.size;
     plan.manifestDigest = digest;
     plan.batchDigest = batchDigest;
-    plan.capabilities = { applyApprovedReconciliation: true };
+    let applyCapabilityAvailable = false;
+    const requestedAuditId = String(payload && payload.auditId || "").trim();
+    if (requestedAuditId) {
+        try {
+            const auditState = loadDriveAuditServerState_(requestedAuditId);
+            applyCapabilityAvailable = auditState.ownerId === ownerId && auditState.status === "complete" &&
+                auditState.scanVersion === ADMIN_SERVICE_VERSION && auditState.imageMetadataVersion === 1 &&
+                Number.isFinite(Number(auditState.completedAt)) && Date.now() - Number(auditState.completedAt) <= 21600000 &&
+                getLatestDriveAuditIdForUser_(ownerId) === requestedAuditId;
+        } catch (capabilityError) { applyCapabilityAvailable = false; }
+    }
+    plan.capabilities = { applyApprovedReconciliation: applyCapabilityAvailable };
     plan.writePerformed = false;
     logMessage && logMessage("Conciliación Drive ↔ Cortes",
         "Dry-run: " + plan.counts.matched + " coincidencias exactas, " + plan.counts.orphaned +
@@ -3121,9 +3132,29 @@ function handleApplyCortesImageReconciliation_(payload, logMessage, developerCon
     if (!ownerId) throw new Error("La aplicación requiere una sesión Desarrollador verificada.");
     if (!/^[a-f0-9]{64}$/i.test(String(payload.manifestDigest || ""))) throw new Error("Falta el digest del preview aprobado.");
     if (!approvals.length || approvals.length > 10) throw new Error("La operación debe contener entre 1 y 10 propuestas aprobadas.");
+    const auditId = String(payload.auditId || "").trim();
+    if (!/^[0-9a-f-]{36}$/i.test(auditId)) throw new Error("La aplicación requiere el identificador de la auditoría Drive vigente.");
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch (error) { throw new Error("No se pudo bloquear la aplicación de imágenes. Intenta nuevamente."); }
     try {
+        const auditState = loadDriveAuditServerState_(auditId);
+        if (auditState.ownerId !== ownerId || auditState.status !== "complete" ||
+            auditState.scanVersion !== ADMIN_SERVICE_VERSION || auditState.imageMetadataVersion !== 1 ||
+            !Number.isFinite(Number(auditState.completedAt)) || Date.now() - Number(auditState.completedAt) > 21600000 ||
+            getLatestDriveAuditIdForUser_(ownerId) !== auditId) {
+            throw new Error("La auditoría Drive no está completa, vigente o no corresponde a esta sesión. Ejecuta una auditoría nueva.");
+        }
+        const seenIds = loadDriveAuditSeenIds_(auditId, Number(auditState.pageCount));
+        const metadata = loadDriveAuditFileMetadata_(auditId, Number(auditState.pageCount));
+        const metadataIds = new Set(metadata.map(item => item.fileId));
+        if (metadata.length !== seenIds.fileIds.length || metadata.length !== Number(auditState.totalDiscovered) ||
+            seenIds.fileIds.some(id => !metadataIds.has(id))) {
+            throw new Error("Los metadatos del inventario Drive no coinciden con la auditoría completa.");
+        }
+        const duplicateIds = getCortesCanonicalDuplicateFileIds_(metadata);
+        if (approvals.some(item => duplicateIds.has(String(item && item.fileId || "")))) {
+            throw new Error("Una o más propuestas tienen nombres canónicos duplicados en el inventario Drive completo. No se aplicó ninguna asignación.");
+        }
         const preview = handlePreviewCortesImageReconciliation_({
             files: approvals.map(item => ({ fileId: String(item && item.fileId || "") }))
         }, logMessage, developerContext);
@@ -8851,7 +8882,7 @@ function getDriveAuditResponseCacheKey_(auditId, fingerprint) {
 function getDriveAuditSeenPageCacheKey_(auditId, pageIndex) {
     return getDriveAuditPageResultCacheKey_(auditId, pageIndex);
 }
-function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds) {
+function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds, fileMetadata) {
     const cache = CacheService.getScriptCache(), key = getDriveAuditSeenPageCacheKey_(auditId, pageIndex);
     const raw = cache.get(key);
     let unused = [];
@@ -8864,12 +8895,22 @@ function storeDriveAuditSeenPage_(auditId, pageIndex, fileIds, folderIds) {
             Array.isArray(previous.files) && Array.isArray(previous.folders)) unused = previous.unused;
         else throw new Error("La página de resultados contiene una estructura incompleta; no se sobrescribió.");
     }
-    const payload = { unused: normalizeDriveAuditFileIds_(unused),
-        files: normalizeDriveAuditFileIds_(fileIds), folders: normalizeDriveAuditFileIds_(folderIds) };
+    const metadata = (Array.isArray(fileMetadata) ? fileMetadata : []).map(item => ({
+        fileId: String(item && item.fileId || "").trim(),
+        fileName: String(item && item.fileName || ""),
+        mimeType: String(item && item.mimeType || "").toLowerCase()
+    }));
+    const payload = {
+        unused: normalizeDriveAuditFileIds_(unused),
+        files: normalizeDriveAuditFileIds_(fileIds),
+        folders: normalizeDriveAuditFileIds_(folderIds),
+        metadata
+    };
     const serialized = JSON.stringify(payload);
     cache.put(key, serialized, 21600);
     if (cache.get(key) !== serialized) throw new Error("No se pudo verificar la página combinada de resultados e IDs procesados.");
 }
+
 function loadDriveAuditSeenIds_(auditId, pageCount) {
     if (!Number.isInteger(pageCount) || pageCount < 0) throw new Error("Cantidad de páginas de deduplicación inválida.");
     const cache = CacheService.getScriptCache(), files = new Set(), folders = new Set();
@@ -8887,6 +8928,48 @@ function loadDriveAuditSeenIds_(auditId, pageCount) {
     }
     return { fileIds: Array.from(files).sort(), folderIds: Array.from(folders).sort() };
 }
+function loadDriveAuditFileMetadata_(auditId, pageCount) {
+    if (!Number.isInteger(pageCount) || pageCount < 1) throw new Error("La auditoría no contiene páginas verificables.");
+    const cache = CacheService.getScriptCache(), result = [], seen = new Set();
+    for (let page = 0; page < pageCount; page++) {
+        const key = getDriveAuditSeenPageCacheKey_(auditId, page), raw = cache.get(key);
+        if (raw === null) throw new Error("Falta una página de metadatos del inventario Drive.");
+        let values;
+        try { values = JSON.parse(raw); } catch (error) { throw new Error("Una página de metadatos Drive está corrupta."); }
+        if (!values || typeof values !== "object" || !Array.isArray(values.metadata)) {
+            throw new Error("La auditoría no contiene metadatos completos de imágenes. Ejecuta una auditoría nueva.");
+        }
+        values.metadata.forEach(item => {
+            const fileId = String(item && item.fileId || "").trim();
+            const fileName = String(item && item.fileName || "");
+            const mimeType = String(item && item.mimeType || "").toLowerCase();
+            if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId) || !fileName || !mimeType || seen.has(fileId)) {
+                throw new Error("El inventario Drive contiene metadatos faltantes o duplicados.");
+            }
+            seen.add(fileId);
+            result.push({ fileId, fileName, mimeType });
+        });
+        cache.put(key, raw, 21600);
+        if (cache.get(key) !== raw) throw new Error("No se pudo renovar la retención de los metadatos Drive.");
+    }
+    return result;
+}
+
+function getCortesCanonicalDuplicateFileIds_(fileMetadata) {
+    const groups = new Map();
+    (Array.isArray(fileMetadata) ? fileMetadata : []).forEach(item => {
+        if (!String(item && item.mimeType || "").toLowerCase().startsWith("image/")) return;
+        const fileId = String(item && item.fileId || "");
+        const canonical = String(item && item.fileName || "").replace(/\\.[^.]+$/, "").trim().toLowerCase();
+        if (!fileId || !canonical) return;
+        if (!groups.has(canonical)) groups.set(canonical, []);
+        groups.get(canonical).push(fileId);
+    });
+    const duplicates = new Set();
+    groups.forEach(ids => { if (ids.length > 1) ids.forEach(id => duplicates.add(id)); });
+    return duplicates;
+}
+
 function getDuplicateDriveImageRows_(rows) {
     const groups = new Map();
     (Array.isArray(rows) ? rows.slice(1) : []).forEach((row, index) => {
@@ -10024,7 +10107,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     const nextCursor = complete ? null : { stack, totalAnalyzed, foldersVisited, referenceCacheId: auditId, scanVersion: ADMIN_SERVICE_VERSION };
     const cachePersistenceStartedAt = Date.now();
     storeDriveAuditPageResults_(auditId, pageIndex, auditResults.filter(item => item.classification === "Sin uso detectado").map(item => item.fileId));
-    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds);
+    storeDriveAuditSeenPage_(auditId, pageIndex, pageFileIds, pageFolderIds, auditResults.map(item => ({ fileId: item.fileId, fileName: item.fileName, mimeType: item.mimeType })));
     const cachePersistenceMs = Date.now() - cachePersistenceStartedAt;
     const nextPageCount = pageIndex + 1, serverTimestamp = Date.now();
     const metrics = {
@@ -10066,7 +10149,7 @@ function handleAuditDriveImagesInCortesLocked_(payload, logMessage, developerCon
     state.lastResponseCacheKey = responseCacheKey;
     if (complete) {
         const allUnusedIds = loadDriveAuditUnusedFileIds_(auditId, nextPageCount);
-        state.status = "complete"; state.completedAt = Date.now(); state.expectedUnusedCount = allUnusedIds.length;
+        state.status = "complete"; state.completedAt = Date.now(); state.imageMetadataVersion = 1; state.expectedUnusedCount = allUnusedIds.length;
         state.expectedUnusedDigest = hashDriveAuditFileIds_(allUnusedIds); state.expectedCursorFingerprint = "";
         const latestKey = "GPSpedia_DRIVE_AUDIT_LATEST_" + hashDriveAuditValue_(ownerId).slice(0, 32), properties = PropertiesService.getScriptProperties();
         properties.setProperty(latestKey, auditId);

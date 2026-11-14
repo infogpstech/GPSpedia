@@ -12,53 +12,34 @@ function extract(name) {
 }
 const validatorSource=extract("buildCortesImageReconciliationApprovalManifest_");
 const countSource=extract("countCortesImageCells_");
+const duplicateSource=extract("getCortesCanonicalDuplicateFileIds_");
 const handlerSource=extract("handleApplyCortesImageReconciliation_");
 const digest="a".repeat(64),fileId="drive-file-id-0000000000000001";
+const auditId="11111111-1111-4111-8111-111111111111";
 const url="https://drive.google.com/uc?export=view&id="+fileId;
 const approval={fileId,row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",proposedUrl:url};
 function createHarness(options={}) {
- const values=[Array(16).fill(""),Array(16).fill("")];
- values[1][0]="V-001";
+ const values=[Array(16).fill(""),Array(16).fill("")];values[1][0]="V-001";
  const formulas=new Map();
- const cell=(row,column)=>({
-  getValue:()=>values[row-1][column-1],
-  getFormula:()=>formulas.get(row+":"+column)||"",
-  setValue:value=>{values[row-1][column-1]=value;},
-  clearContent:()=>{values[row-1][column-1]="";}
- });
- const sheet={
-  getLastRow:()=>2,
-  getRange:(row,column,numRows,numColumns)=>{
-   if(numRows!==undefined&&numColumns!==undefined) return {getValues:()=>values.slice(row-1,row-1+numRows).map(line=>line.slice(column-1,column-1+numColumns))};
-   return cell(row,column);
-  }
- };
+ const cell=(row,column)=>({getValue:()=>values[row-1][column-1],getFormula:()=>formulas.get(row+":"+column)||"",setValue:value=>{values[row-1][column-1]=value;},clearContent:()=>{values[row-1][column-1]="";}});
+ const sheet={getLastRow:()=>2,getRange:(row,column,numRows,numColumns)=>numRows!==undefined&&numColumns!==undefined?{getValues:()=>values.slice(row-1,row-1+numRows).map(line=>line.slice(column-1,column-1+numColumns))}:cell(row,column)};
  let released=false,previewCalls=0,activityCalls=[];
- const lock={waitLock:()=>{},releaseLock:()=>{released=true;}};
- const LockService={getScriptLock:()=>lock};
+ const lock={waitLock:()=>{},releaseLock:()=>{released=true;}},LockService={getScriptLock:()=>lock};
  const SHEET_NAMES={CORTES:"Cortes"};
  const COLS_CORTES={id:1,imagenVehiculo:9,imgCorte1:10,imgCorte2:11,imgCorte3:12,imgApertura:13,imgCableAlimen:14,imgCableAlimen2:15,imgCableAlimen3:16};
- const SpreadsheetApp={flush:()=>{}};
- const getSpreadsheet=()=>({getSheetByName:name=>name==="Cortes"?sheet:null});
- const handlePreviewCortesImageReconciliation_=payload=>{
-  previewCalls++;
-  assert.deepEqual(payload.files,[{fileId}]);
-  return {writePerformed:false,manifestDigest:options.previewDigest||digest,results:[{
-   status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url
-  }]};
- };
- const recordImageAdministrationActivity=(context,action,id,details)=>{
-  activityCalls.push({action,id,details});
-  if(options.activityFailure&&action==="cortes_image_reconciliation_applied") {
-   if(options.externalChange) values[1][8]="https://manual.example/changed";
-   return false;
-  }
-  return true;
- };
- const factory=new Function("LockService","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity",
-  validatorSource+"\n"+countSource+"\n"+handlerSource+"\nreturn handleApplyCortesImageReconciliation_;");
- const handler=factory(LockService,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity);
- const payload={confirmed:true,manifestDigest:digest,approved:[approval]};
+ const SpreadsheetApp={flush:()=>{}},getSpreadsheet=()=>({getSheetByName:name=>name==="Cortes"?sheet:null});
+ const metadata=options.metadata||[{fileId,fileName:"same.png",mimeType:"image/png"}];
+ const auditState={ownerId:"DEV-1",status:"complete",scanVersion:"2.6.2",imageMetadataVersion:1,completedAt:Date.now(),pageCount:1,totalDiscovered:metadata.length};
+ const loadDriveAuditServerState_=id=>{assert.equal(id,auditId);return auditState;};
+ const getLatestDriveAuditIdForUser_=owner=>{assert.equal(owner,"DEV-1");return auditId;};
+ const loadDriveAuditSeenIds_=()=>({fileIds:metadata.map(item=>item.fileId)});
+ const loadDriveAuditFileMetadata_=()=>metadata;
+ const handlePreviewCortesImageReconciliation_=payload=>{previewCalls++;assert.deepEqual(payload.files,[{fileId}]);return {writePerformed:false,manifestDigest:options.previewDigest||digest,results:[{status:"matched",fileId,fileName:"same.png",target:{row:2,column:9,vehicleId:"V-001",field:"imagenVehiculo",currentValue:"",hasFormula:false},proposedUrl:url}]};};
+ const recordImageAdministrationActivity=(context,action,id,details)=>{activityCalls.push({action,id,details});if(options.activityFailure&&action==="cortes_image_reconciliation_applied"){if(options.externalChange)values[1][8]="https://manual.example/changed";return false;}return true;};
+ const factory=new Function("LockService","handlePreviewCortesImageReconciliation_","getSpreadsheet","SHEET_NAMES","COLS_CORTES","SpreadsheetApp","recordImageAdministrationActivity","loadDriveAuditServerState_","getLatestDriveAuditIdForUser_","loadDriveAuditSeenIds_","loadDriveAuditFileMetadata_","ADMIN_SERVICE_VERSION",
+  validatorSource+"\\n"+countSource+"\\n"+duplicateSource+"\\n"+handlerSource+"\\nreturn handleApplyCortesImageReconciliation_;");
+ const handler=factory(LockService,handlePreviewCortesImageReconciliation_,getSpreadsheet,SHEET_NAMES,COLS_CORTES,SpreadsheetApp,recordImageAdministrationActivity,loadDriveAuditServerState_,getLatestDriveAuditIdForUser_,loadDriveAuditSeenIds_,loadDriveAuditFileMetadata_,"2.6.2");
+ const payload={confirmed:true,auditId,manifestDigest:digest,approved:[approval]};
  return {handler,payload,values,activityCalls,get released(){return released;},get previewCalls(){return previewCalls;}};
 }
 let passed=0;
@@ -100,4 +81,12 @@ testCase("requiere confirmación y sesión Desarrollador",()=>{
  assert.throws(()=>h.handler(h.payload,()=>{},{}),/sesión Desarrollador/);
  assert.equal(h.previewCalls,0);
 });
-console.log("CortesImageReconciliationApply: "+passed+"/6 PASS");
+testCase("rechaza nombres canónicos duplicados en el inventario Drive completo",()=>{
+ const h=createHarness({metadata:[
+  {fileId,fileName:"same.png",mimeType:"image/png"},
+  {fileId:"drive-file-id-0000000000000002",fileName:"SAME.jpg",mimeType:"image/jpeg"}
+ ]});
+ assert.throws(()=>h.handler(h.payload,()=>{},{userId:"DEV-1"}),/nombres canónicos duplicados/);
+ assert.equal(h.values[1][8],"");assert.equal(h.previewCalls,0);assert.equal(h.released,true);
+});
+console.log("CortesImageReconciliationApply: "+passed+"/7 PASS");
