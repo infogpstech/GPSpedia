@@ -667,3 +667,17 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - GitHub Pages ejecutó su workflow sobre la rama de trabajo; la publicación de Pages está autorizada por el usuario para pruebas en modo producción.
 - No se ejecutó el motor contra Spreadsheet/Drive ni se modificaron datos reales. Antes de Beta: respaldo independiente, reporte de auditoría real, revisión de cada propuesta y prueba de rollback en copia Beta.
 - Commit de implementación/validación: `920ab3e1bd78467bda310e876bfdb6fd72103ab8`.
+
+
+## P1 — Coordinación de actividad y sesiones protegidas (2026-11-14)
+
+- Se verificó y cubrió la actualización de `LastActivityAt` dentro de las operaciones protegidas de WRITE, USERS y ADMIN; FEEDBACK y AUTH conservan su touch integrado previo.
+- WRITE: `getAuthenticatedCollaborator` actualiza actividad después de validar identidad, sesión, expiración, cuenta y rol. `checkOperation` usa lease `sessionActivity`; las mutaciones protegidas usan su lease de acción.
+- USERS: `getVerifiedSession` actualiza actividad; `getUsers` usa lease `sessionActivity` y `createUser`/`updateProfile` usan leases de mutación.
+- ADMIN: cada acción no pública exige sesión Desarrollador (salvo las tres excepciones del modal); las lecturas usan lease `sessionActivity` y las mutaciones su lease específica.
+- FEEDBACK y AUTH mantienen la actualización integrada; la interfaz no ejecuta el preflight separado `ensureSessionTouched_`.
+- Se comprobó el aislamiento de leases anidadas ADMIN→WRITE para asignación de IDs y congelación de IDs; las acciones no declaradas siguen rechazadas.
+- Se añadió política de mantenimiento exclusivo en Coordinator para `migrateIdentifiers` y `rollbackIdentifiers`, evitando escrituras concurrentes durante snapshots/manifiestos/lotes.
+- `SessionActivityCoordination.mjs`: 6/6 PASS. GitHub Actions run 850: 87 suites, 1,292 pruebas aprobadas, 0 fallos.
+- Validación Beta diferida: actualizar los proyectos Apps Script correspondientes (incluido Coordinator) y probar sesiones reales, pestañas simultáneas, revocación, expiración, offline/reconexión y navegación en dispositivos. No se desplegó Apps Script ni se modificaron datos reales.
+- Commit de código: `3531df5e16f0d401c3fba3702422db3e9016a979`.

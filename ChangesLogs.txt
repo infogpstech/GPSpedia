@@ -1649,3 +1649,12 @@ Rama: GPSpedia2.2.5_work
 - IdentifierMigration: 9/9 PASS. CI run 847: 86 suites, 1,285 pruebas aprobadas, 0 fallos.
 - No se ejecutaron migraciones ni escrituras en Spreadsheet/Drive reales.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — P1 COORDINACIÓN DE SESIÓN EN SERVICIOS
+- Verificada actualización LastActivityAt integrada en WRITE, USERS y ADMIN; FEEDBACK/AUTH mantienen sus comprobaciones integradas.
+- Añadida cobertura de leases anidadas ADMIN→WRITE y políticas de mantenimiento exclusivo para migrateIdentifiers/rollbackIdentifiers en Coordinator.
+- SessionActivityCoordination: 6/6 PASS. CI run 850: 87 suites, 1,292 pruebas aprobadas, 0 fallos.
+- Validación de deployments Apps Script y pruebas de sesiones/dispositivos reales permanecen diferidas a Beta; no se desplegó Apps Script.
+================================================================================

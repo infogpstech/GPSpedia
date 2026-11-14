@@ -58,7 +58,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 **Validación diferida a Beta:** no se consultaron ni modificaron hojas Spreadsheet/Drive reales ni deployments. La existencia y contenido efectivo de fórmulas/IDs heredados, encabezados físicos, datos duplicados y referencias huérfanas deben comprobarse mediante un dry-run de solo lectura en una copia/entorno Beta autorizado. Esta limitación no bloquea el cierre del análisis estático local.
 
 ### P1 — Autenticación simplificada
-**Estado: IMPLEMENTADA EN RAMA DE TRABAJO; VALIDACIÓN BETA EXTERNA PENDIENTE.**
+**Estado: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.**
 
 **Diseño derivado de P0:** cada servicio protegido actualiza `LastActivityAt` dentro de su propia operación, tras validar token, identidad, cuenta activa, expiración y rol vigente. La coordinación compartida evita carreras con logout, revocación o eliminación de filas. Se conserva la validación de restauración al iniciar la app; los fallos de red/AUTH no se convierten en logout y el estado local no autoriza operaciones.
 - [x] Eliminar la revalidación redundante al recuperar conexión; conservar la validación de restauración al iniciar la aplicación.
@@ -260,4 +260,6 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - Pruebas locales cubren diseño responsive, selección simple/múltiple, acciones contextuales, permisos, conciliación idempotente y ayudas contextuales. Las pruebas con Drive/Spreadsheet reales se documentan como validación Beta.
 
 - [x] P1 fase 2 parcial: actualizar `LastActivityAt` dentro de operaciones FEEDBACK autenticadas, incluidas lecturas, con lease compartida frente a logout/revocación. Validación CI: 75 suites, 1,159 pruebas, 0 fallos (2026-11-14).
-- [ ] Extender touch integrado y coordinación a WRITE, USERS y ADMIN; contemplar leases anidadas ADMIN→WRITE y todas las acciones protegidas antes de retirar el preflight frontend.
+- [x] Extender touch integrado y coordinación a WRITE, USERS y ADMIN; todas las acciones protegidas actualizan actividad dentro de su operación y usan leases compartidas. Las rutas públicas de catálogo/formulario permanecen explícitamente públicas.
+- [x] Verificar leases anidadas ADMIN→WRITE: `addOrUpdateCut`→`allocateVehicleId` y `reorganizeDatabase`→`freezeCortesIds`; las políticas del coordinador restringen cada acción anidada.
+- [x] Añadir regresión `SessionActivityCoordination.mjs` (6/6 PASS) y pruebas de mantenimiento exclusivo para `migrateIdentifiers`/`rollbackIdentifiers`.
