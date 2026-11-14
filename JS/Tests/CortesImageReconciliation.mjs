@@ -40,12 +40,12 @@ testCase("reconoce el mismo ID ya vinculado al destino",()=>{
  assert.equal(p.results[0].status,"already_linked");
 });
 testCase("no reutiliza archivos referenciados en otras celdas",()=>{
- const refs=new Map([[id(1),[{sheet:"Cortes",row:5,column:16}]]);
+ const refs=new Map([[id(1),[{sheet:"Cortes",row:5,column:16}]]]);
  const p=planner([target("same")],[file(1,"same.png")],refs);
  assert.equal(p.results[0].status,"referenced_elsewhere");
 });
 testCase("separa huérfanos de archivos referenciados fuera de Cortes",()=>{
- const refs=new Map([[id(2),[{sheet:"Tutorial",row:3,column:3}]]);
+ const refs=new Map([[id(2),[{sheet:"Tutorial",row:3,column:3}]]]);
  const p=planner([], [file(1,"orphan.png"),file(2,"other.png")],refs);
  assert.deepEqual(p.results.map(x=>x.status).sort(),["orphaned","referenced_elsewhere"]);
 });
