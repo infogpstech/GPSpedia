@@ -1722,3 +1722,13 @@ Rama: GPSpedia2.2.5_work
 - La escritura del estado local y la actualización visual solo ocurren si la vista sigue vigente.
 - Añadida regresión UI para la liberación de bloqueos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 SIMULACIÓN ENDURECIDA Y LIBERACIÓN DE BLOQUEOS
+- Endpoint ADMIN previewCortesImageReconciliation; lotes de 25, digest estable, validación de pertenencia al árbol Cortes y acceso público existente.
+- Planner exacto, exclusión de todas las referencias del historial (original/anterior/reemplazo), protección de fórmulas/celdas ocupadas y consolidación de nombres duplicados entre lotes como ambiguos.
+- UI con timeout/reintentos acotados, cancelación por cambio de vista/sesión y liberación de indicadores globales en finally. Guardar inventario de imágenes sin uso requiere confirmación explícita.
+- CortesImageReconciliation: 15/15 PASS; CortesImageReconciliationUI: 9/9 PASS. CI run 43613537658: 91 suites, 1,336 pruebas aprobadas, 0 fallos.
+- Solo dry-run; no se modificó Spreadsheet, Drive ni permisos. Pendiente persistencia/reanudación del preview, aprobación/manifiesto de escritura, read-back, rollback y Beta.
+================================================================================
