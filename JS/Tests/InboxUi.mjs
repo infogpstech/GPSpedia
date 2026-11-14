@@ -42,7 +42,7 @@ check("Las solicitudes exponen una barra contextual con responder, resolver y bo
     assert.match(ui, /actionToolbar\.appendChild\(replyButton\)/);
     assert.match(ui, /actionToolbar\.appendChild\(deleteButton\)/);
     assert.match(css, /\.inbox-action-toolbar/);
-    assert.match(css, /#inbox-action-toolbar/);
+    assert.match(css, /#inbox-modal-content \.inbox-action-toolbar/);
 });
 check("Las aprobaciones de vídeo no ofrecen una eliminación genérica no soportada", () => {
     const start = ui.indexOf('if (isVideoItem) {', ui.indexOf('export function renderInboxDetail('));
