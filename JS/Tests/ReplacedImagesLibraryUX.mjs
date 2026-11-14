@@ -41,7 +41,7 @@ testCase("La biblioteca incluye selección individual, selección visible y acci
 testCase("El menú contextual expone las acciones permitidas y conserva confirmaciones",()=>{
  ["getReplacedImageDownloadUrl","moveReplacedImage","recoverReplacedImage","restoreReplacedImageFromTrash","deleteReplacedImage","permanentlyDeleteReplacedImage","markReplacedImageInUse"].forEach(action=>assert.ok(ui.includes('routeAction("'+action+'"'),action));
  assert.match(ui,/aria-haspopup", "menu"/);assert.match(ui,/setAttribute\("role", "menuitem"\)/);
- assert.match(ui,/confirm\("Esta acción es irreversible/);assert.match(ui,/El servidor volverá a validar las referencias/);
+ assert.match(ui,/Esta acción es irreversible/);assert.match(ui,/if \(!confirm\(warning/);assert.match(ui,/El servidor volverá a validar las referencias/);
 });
 testCase("Los menús se cierran al hacer clic fuera, con Escape y al cerrar el modal",()=>{
  assert.match(ui,/closeMenusHandler = event =>/);assert.match(ui,/closeMenusKeyHandler = event => \{ if \(event\.key === "Escape"\)/);

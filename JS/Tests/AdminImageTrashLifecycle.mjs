@@ -345,7 +345,7 @@ check("La auditoría, organización e historial permanecen accesibles desde la m
     assert.match(ui,/function openAuditDriveModal/);
 });
 check("La interfaz del desarrollador ofrece enviar a papelera, restaurar y eliminar definitivamente",()=>{
-    assert.match(ui,/status === 'requiere_revision'/);
+    assert.match(ui,/status === "requiere_revision"/);
     assert.match(ui,/restoreReplacedImageFromTrash/);
     assert.match(ui,/permanentlyDeleteReplacedImage/);
     assert.match(ui,/Eliminar definitivamente/);
