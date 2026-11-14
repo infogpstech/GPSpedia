@@ -94,4 +94,4 @@ assert.equal(fallback.calls[0].operation, "sessionActivity",
 const ping = routerHarness.send("ping");
 assert.equal(ping.calls.length, 0, "ping no debe reservar una lease de escritura.");
 
-console.log("AdminImageScanCoordinatorContract: PASS");
+console.log("AdminImageScanCoordinatorContract: 1/1 PASS");

@@ -25,7 +25,7 @@ testCase("USERS coordina lecturas y mutaciones y actualiza LastActivityAt al ver
  });
 });
 testCase("ADMIN exige sesión y coordina tanto lecturas como mutaciones protegidas",()=>{
- assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{\s*if \(action === "ping"\) return doPostInternal_\(e\);\s*try \{\s*return withSharedMutationLease_\("ADMIN", "sessionActivity"/);
+ assert.match(admin,/if \(!isSharedMutationAction_\(action\)\) \{\s*if \(action === "ping"\) return doPostInternal_\(e\);\s*const operation = isSharedReadAction_\(action\) \? action : "sessionActivity";\s*try \{\s*return withSharedMutationLease_\("ADMIN", operation/);
  assert.match(admin,/return withSharedMutationLease_\("ADMIN", action/);
  assert.match(admin,/sh\.getRange\(sessionMatch\.rowIndex,6\)\.setValue\(new Date\(\)\.toISOString\(\)\)/);
  assert.match(admin,/const developerContext = action === 'ping' \? null : \(ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)\)/);
