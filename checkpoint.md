@@ -1393,3 +1393,16 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 - Riesgo a resolver antes de implementar: restauración de base de datos no debe rebobinar ni borrar el registro de cambios; preservar la hoja interna y emitir un reset posterior. Confirmar los casos de publicación/retiro de vídeo y reemplazo de imágenes.
 - Estado GP-CAT-01A: auditoría de rutas completada; contrato/feed propuesto, no implementado. GP-CAT-01B..01F pendientes.
 - Restricción de interfaz: sincronización invisible, sin botón, panel, indicador ni sección de novedades.
+
+
+## Continuidad — CI integral aprobada y tareas locales cerradas (2026-11-14)
+
+- Rama autorizada: `GPSpedia2.2.5_work`; HEAD verificado `3fd6e776c43ec9a564db88b564a43efdea4bbc17`. Rama base `GPSpedia2.2.5` permanece en `d9acc68d889985c2e2f42fe3a02e502efc86ead1`, sin modificaciones.
+- GitHub Actions `43638448740`: ejecución `service-tests` SUCCESS; 96 suites, 1,414 pruebas aprobadas, 0 fallos. Comprobación sintáctica de módulos modificados: SUCCESS.
+- GitHub Pages `43638448434`: build/deployment SUCCESS para el mismo HEAD.
+- PWA: `SessionStartupNavigation` 14/14 y `PWAStartupScenarios` 14/14 PASS. GP-PWA-02 queda COMPLETADA CON VALIDACIÓN DIFERIDA; la prueba del gesto/actualización nativa en Android/iOS/escritorio real sigue reservada a Beta.
+- Inbox: `InboxConversations` 30/30, `InboxRoleContract` 17/17 e `InboxUi` 19/19 PASS en CI. GP-INBOX-04A queda COMPLETADA CON VALIDACIÓN DIFERIDA; la comprobación por rol en navegador Beta continúa pendiente. GP-INBOX-04B..04D siguen pendientes.
+- Durante la recuperación se corrigieron contratos de prueba obsoletos, no lógica de producción: jerarquía Inbox, contexto de rol UI, router de migración ADMIN, coordinación de lecturas ADMIN y contrato PWA sin recarga manual; también se corrigió el conteo de escenarios PWA (14, no 13). Los commits publicados son secuenciales y no se reescribió historial.
+- Commits de esta recuperación: `9c06910579007fe44fb98a4fa2bd29712c394f56`, `af9a7fd49d678b54dda10490a1a1ace2a671050e`, `6cf77a94e6f1c6a4552f802a0d5d3945501714a9`, `1c11ee702555bcdaf9a9ae1a5c7c0e76265d2814`, `94ef75f3b666162d7d6e08e51ee2908fed565219`, `3fd6e776c43ec9a564db88b564a43efdea4bbc17`.
+- Restricción de interfaz vigente: no añadir botones, paneles, pestañas, secciones ni indicadores visibles nuevos. GP-CAT-01 debe ser silenciosa; GP-INBOX-04B..04C no deben introducir controles nuevos sin autorización.
+- Siguiente trabajo funcional: GP-CAT-01B — concretar e implementar el feed autenticado de cambios con cursor monotónico, retención, paginación y reset seguro; después integrar cliente transaccional y sondeo adaptativo. No crear ni modificar deployments, ScriptProperties o datos productivos.

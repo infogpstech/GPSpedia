@@ -614,7 +614,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ### GP-PWA-02 — Restaurar actualización nativa del navegador/PWA
 **Prioridad: alta.**
-**Estado actual: EN PROGRESO.** Se retiraron del código de trabajo el gesto táctil que desviaba el pull-to-refresh, el enlace visible de recarga y su listener. El documento vuelve a usar el scroll raíz; las pruebas de contrato se ajustaron para impedir que reaparezcan estos controles o interceptores. Pendiente ejecutar las suites locales/CI y validar el gesto en navegadores reales durante Beta.
+**Estado actual: COMPLETADA CON VALIDACIÓN DIFERIDA A BETA.** Se retiraron el interceptor táctil, el enlace visible de recarga y su listener; el documento volvió al scroll raíz nativo. `SessionStartupNavigation`: 14/14 PASS; `PWAStartupScenarios`: 14/14 PASS. GitHub Actions `43638448740`: 96 suites, 1,414 pruebas aprobadas, 0 fallos; compilación/Pages `43638448434`: SUCCESS. Pendiente únicamente reproducir el gesto y el ciclo de actualización en navegadores/PWA reales durante Beta.
 - No debe existir un botón, enlace ni acción de menú «Recargar aplicación» o equivalente. Retirar el control añadido para ese propósito y su listener asociado.
 - La plataforma debe poder actualizarse mediante el mecanismo nativo del navegador, incluido el gesto pull-to-refresh cuando el navegador lo ofrece. No interceptar ni sustituir el gesto por una sincronización parcial del catálogo.
 - Investigar y corregir la causa raíz en el scroll principal, eventos táctiles, CSS de overscroll/touch-action, navegación y ciclo de vida del Service Worker. La solución debe permitir que la navegación vuelva a solicitar el documento y que el Service Worker detecte/active versiones nuevas sin depender de un botón propio.
@@ -625,7 +625,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ### GP-INBOX-04 — Bandeja de entrada con barra de herramientas y jerarquía de comunicación
 **Prioridad: alta.**
-**Estado actual: EN PROGRESO.** **GP-INBOX-04A: COMPLETADA CON VALIDACIÓN DIFERIDA.** La matriz se aplica en backend al listar destinatarios y crear conversaciones; la UI reutiliza «Nuevo mensaje» y retira «Consultar al desarrollador». Pruebas aisladas ejecutadas: InboxConversations 30/30 y contrato de roles 17/17 PASS. No se ha confirmado todavía la ejecución del runner Node/CI ni la validación en navegador Beta. GP-INBOX-04B..04D permanecen pendientes. Rediseñar la bandeja como una bandeja de mensajes recibidos, no como un conjunto de botones dispersos. La primera vista será la lista de mensajes recibidos; el detalle se abrirá al seleccionar un mensaje/conversación.
+**Estado actual: EN PROGRESO.** **GP-INBOX-04A: COMPLETADA CON VALIDACIÓN DIFERIDA.** La matriz se aplica en backend al listar destinatarios y crear conversaciones; la UI reutiliza «Nuevo mensaje» y retira «Consultar al desarrollador». Validación CI confirmada: `InboxConversations` 30/30, `InboxRoleContract` 17/17 e `InboxUi` 19/19 PASS; el runner integral pasó con 96 suites y 1,414 pruebas. La validación visual/funcional por rol en navegador Beta sigue pendiente. GP-INBOX-04B..04D permanecen pendientes; cualquier control o panel nuevo queda diferido por la restricción expresa del usuario. Mantener las mejoras futuras dentro de los controles existentes o en funcionamiento interno.
 
 **Barra superior de herramientas:**
 - Seleccionar mensajes (selección individual y seleccionar todos los visibles).

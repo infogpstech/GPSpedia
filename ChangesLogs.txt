@@ -167,3 +167,13 @@
 - Se identificaron rutas de escritura relevantes en WRITE, FEEDBACK y ADMIN; detalle y clasificación en Tareas_Activas.md.
 - Hallazgo cliente: cache-first existente, pero fetchCatalogData y saveCatalog siguen siendo snapshot completo; PyS usa localStorage TTL 5 min; no hay polling/feed en sesiones abiertas.
 - Diseño propuesto: hoja interna CatalogChanges, revisiones monotónicas, snapshots por registro, paginación por cursor, autenticación y reset en mantenimiento masivo. Sin elementos visibles nuevos.
+
+
+[2026-11-14] Recuperación de regresión CI y contratos de prueba
+- JS/Tests/VehicleModalRolePolicy.mjs: actualiza el contrato de Inbox para comprobar la jerarquía ordinaria vigente en lugar del antiguo flujo directo al Desarrollador.
+- JS/Tests/TermsAcceptance.js: verifica el contexto UI autenticado (ID, token y rol) usado por showApp, en lugar de una lectura directa del rol.
+- JS/Tests/AdminReplacedImagesIntegrity.mjs y SessionActivityCoordination.mjs: ajustan las expectativas a la lista real de mutaciones y a las leases específicas de lectura/migración ADMIN.
+- JS/Tests/AdminImageScanCoordinatorContract.mjs: emite resumen 1/1 PASS para que el runner Node valide el contrato.
+- JS/Tests/SessionStartupNavigation.mjs: elimina expectativas obsoletas de recarga manual/pull-to-refresh interceptado y comprueba la sincronización cache-first sin controles manuales.
+- JS/Tests/PWAStartupScenarios.js: corrige el resumen de 13 a 14 escenarios.
+- CI final en HEAD 3fd6e776c43ec9a564db88b564a43efdea4bbc17: 96 suites / 1,414 pruebas / 0 fallos; Pages SUCCESS. No se modificó lógica de producción en esta recuperación.
