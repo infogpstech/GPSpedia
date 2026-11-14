@@ -99,7 +99,8 @@ test("recordLike publica el snapshot de Cortes después de confirmar la escritur
 });
 test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila e ID", () => {
     assert.match(feedbackSource,/function buildTutorialCatalogChange_\(reference\)[\s\S]*?findTutorialRow_\(sheet, reference, true\)[\s\S]*?collection: "tutoriales"[\s\S]*?operation: "upsert"/);
-    assert.match(feedbackSource,/if \(action === "addTutorial" \|\| action === "updateTutorialItem"\)[\s\S]*?buildTutorialCatalogChange_\(tutorialId\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)/);
+    assert.match(feedbackSource,/if \(action === "addTutorial" \|\| action === "updateTutorialItem"\)[\s\S]*?publishTutorialCatalogChange_\(action, tutorialId\)/);
+    assert.match(feedbackSource,/function publishTutorialCatalogChange_\(action, reference\)[\s\S]*?getScriptLock\(\)[\s\S]*?waitLock\(15000\)[\s\S]*?buildTutorialCatalogChange_\(reference\)[\s\S]*?publishSharedCatalogChange_\("FEEDBACK", action, change\)[\s\S]*?finally[\s\S]*?releaseLock\(\)/);
     assert.match(feedbackSource,/if \(!\/\^tut-/);
     assert.match(feedbackSource,/publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
 });
