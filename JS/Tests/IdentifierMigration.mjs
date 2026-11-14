@@ -41,7 +41,7 @@ function makeUtilities(){
 function makeHarness(initial){
  const ss=makeSpreadsheet(initial);
  const fn=new Function("getSpreadsheet","Utilities","SpreadsheetApp","Date",
-  "const IDENTIFIER_MIGRATION_MANIFEST_SHEET_ = \"__IdentifierMigrationManifest__\";\nconst IDENTIFIER_MIGRATION_MANIFEST_HEADERS_ = [\"migrationId\",\"manifestDigest\",\"entryIndex\",\"entryJson\",\"status\",\"batch\",\"createdAt\",\"updatedAt\",\"lastError\"];\nconst IDENTIFIER_MIGRATION_ENTITIES_ = Object.freeze({\n users:{sheet:\"Users\",idColumn:1,headers:[\"id\"],kind:\"user\",numeric:false},\n vehicle:{sheet:\"Cortes\",idColumn:1,headers:[\"id\"],kind:\"vehicle\",numeric:true},\n tutorial:{sheet:\"Tutorial\",idColumn:1,headers:[\"id\"],kind:\"tutorial\",numeric:false},\n problem:{sheet:\"pys\",idColumn:1,headers:[\"id_problem\"],kind:\"problem\",numeric:false},\n logo:{sheet:\"LogosMarca\",idColumn:1,headers:[\"id\"],kind:\"logo\",numeric:true}\n});\n"+"\n"+
+  "const IDENTIFIER_MIGRATION_MANIFEST_SHEET_ = \"__IdentifierMigrationManifest__\";\nconst IDENTIFIER_MIGRATION_MANIFEST_HEADERS_ = [\"migrationId\",\"manifestDigest\",\"entryIndex\",\"entryJson\",\"status\",\"batch\",\"createdAt\",\"updatedAt\",\"lastError\"];\nconst IDENTIFIER_MIGRATION_ENTITIES_ = Object.freeze({\n users:{sheet:\"Users\",idColumn:1,headers:[\"id\"],kind:\"user\",numeric:false},\n vehicle:{sheet:\"Cortes\",idColumn:1,headers:[\"id\"],kind:\"vehicle\",numeric:true},\n tutorial:{sheet:\"Tutorial\",idColumn:1,headers:[\"id\"],kind:\"tutorial\",numeric:false},\n problem:{sheet:\"pys\",idColumn:1,headers:[\"id_problem\"],kind:\"problem\",numeric:false},\n logo:{sheet:\"LogosMarca\",idColumn:1,headers:[\"id\"],kind:\"logo\",numeric:true},\n relay:{sheet:\"Relay\",idColumn:1,headers:[\"id\"],kind:\"relay\",numeric:false}\n});\n"+"\n"+
   extract("identifierMigrationCanonical_")+extract("identifierMigrationDigest_")+extract("identifierMigrationNormalizeId_")+
   extract("identifierMigrationValidId_")+extract("identifierMigrationReadRow_")+extract("identifierMigrationRowDigest_")+
   extract("identifierMigrationSheetDigest_")+extract("identifierMigrationUniqueKey_")+extract("identifierMigrationIdCount_")+
@@ -57,7 +57,8 @@ const makeBase=()=>({
  Cortes:makeSheet("Cortes",[["id","marca","modelo"],[1,"Toyota","Yaris"]]),
  Tutorial:makeSheet("Tutorial",[["ID","tema"],["tut-op1","Tema"]]),
  pys:makeSheet("pys",[["id_problem","problema"],["isue-001","Problema"]]),
- LogosMarca:makeSheet("LogosMarca",[["id","nombreMarca"],[1,"Toyota"]])
+ LogosMarca:makeSheet("LogosMarca",[["id","nombreMarca"],[1,"Toyota"]]),
+ Relay:makeSheet("Relay",[["ID","configuracion"],[1,"Relay 5 pines"]],[["ID"],["=ROW()-1"]])
 });
 const change={migrationId:"idm-test-0001",changes:[{entity:"users",mode:"fill_missing",row:3,keyColumn:2,keyValue:"beta",oldId:"",newId:"USR-0002"}],dryRun:true};
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
@@ -67,10 +68,10 @@ testCase("dry-run genera digest y no crea manifiesto ni snapshot",()=>{
  assert.equal(result.status,"success");assert.equal(result.dryRun,true);assert.match(result.manifestDigest,/^[a-f0-9]{64}$/);
  assert.equal(h.ss.sheets.length,before);assert.equal(h.ss.getSheetByName("Users").rows[2][0],"");
 });
-testCase("rechaza Relay y formatos de ID desconocidos",()=>{
+testCase("rechaza completar IDs Relay y formatos de ID desconocidos",()=>{
  const h=makeHarness(makeBase());
  assert.throws(()=>h.fn.migrate({...change,changes:[{...change.changes[0],newId:"bad"}]}),/formato vigente/);
- assert.throws(()=>h.fn.migrate({...change,changes:[{...change.changes[0],entity:"relay",mode:"fill_missing",row:2,keyColumn:2,keyValue:"alpha",oldId:"",newId:"legacy-1"}]}),/Relay no admite fill_missing/);
+ assert.throws(()=>h.fn.migrate({...change,changes:[{...change.changes[0],entity:"relay",mode:"fill_missing",row:2,keyColumn:2,keyValue:"Relay 5 pines",oldId:"",newId:"legacy-1"}]}),/Relay no admite fill_missing/);
 });
 testCase("rechaza claves no únicas y cambios de IDs válidos",()=>{
  const data=makeBase();data.Users.rows.push(["","beta","Otro"]);

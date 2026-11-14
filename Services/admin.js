@@ -3513,7 +3513,7 @@ function identifierMigrationValidId_(kind, value) {
     if (kind === "vehicle" || kind === "logo") return /^[1-9][0-9]*$/.test(raw) && Number.isSafeInteger(Number(raw));
     if (kind === "tutorial") return /^tut-[a-z0-9][a-z0-9_-]*$/i.test(raw);
     if (kind === "problem") return /^isue-[0-9]+$/i.test(raw) && Number(raw.slice(5)) > 0;
-    if (kind === "relay") return raw.length > 0 && raw.length <= 128 && !/[\\u0000-\\u001f]/.test(raw);
+    if (kind === "relay") return raw.length > 0 && raw.length <= 128 && !Array.from(raw).some(character => character.charCodeAt(0) < 32);
     return false;
 }
 
