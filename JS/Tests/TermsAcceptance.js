@@ -88,4 +88,4 @@ test('UI conserva el bloqueo ante errores de backend o caché local', () => {
     assert.match(uiSource, /El catálogo permanece bloqueado/);
     assert.match(uiSource, /localStorage\.setItem\('gpsepedia_session'/);
 });
-console.log('TermsAcceptance: ' + passed + '/14 PASS');
+console.log('TermsAcceptance: ' + passed + '/16 PASS');
