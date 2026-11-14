@@ -149,11 +149,12 @@ function handleLoginSuccess(user, persist = true) {
     logoutGeneration_ += 1;
     if (persist) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     setState({ currentUser: user });
-    showApp(user); // Muestra la UI principal inmediatamente
+    const appReady = showApp(user) === true;
     loadUserLocalActivity(user);
+    return appReady;
 }
 
-async function loadInitialData() {
+export async function loadInitialData() {
     cancelCatalogLoad_();
     if (typeof AbortController !== 'function') { setState({ catalogLoadStatus: 'error', catalogLoadError: 'Este navegador no permite cancelar solicitudes del catálogo.' }); showGlobalError('No se puede cargar el catálogo de forma segura porque el navegador no admite cancelación de solicitudes.'); return; }
     const loadController = new AbortController();
@@ -341,8 +342,7 @@ function restoreSessionAfterValidationUnavailable_(user, error = null) {
     if (error) console.warn('La sesión se conserva mientras AUTH recupera disponibilidad:', error && error.message ? error.message : error);
     // La sesión local no se borra. showApp vuelve a aplicar el bloqueo de términos
     // usando la aceptación ya registrada; las operaciones protegidas siguen validándose en servidor.
-    handleLoginSuccess(user, false);
-    loadInitialData();
+    if (handleLoginSuccess(user, false)) loadInitialData();
     showGlobalError('No se pudo confirmar la sesión con AUTH en este momento. Se conservó la sesión local; algunas operaciones protegidas esperarán a que el servicio vuelva a estar disponible.');
     return true;
 }
@@ -390,7 +390,7 @@ export async function checkSession() {
         if (result && result.valid === true) {
             const validatedUser = persistSessionValidation(user, result);
             if (!validatedUser || !sameSession(readStoredSession(), user)) return;
-            handleLoginSuccess(validatedUser, false); loadInitialData(); return;
+            if (handleLoginSuccess(validatedUser, false)) loadInitialData(); return;
         }
         if (result && result.valid === false) {
             logout("Tu sesión ha expirado o fue revocada. Inicia sesión nuevamente.", user);
@@ -407,9 +407,9 @@ export async function login(username, password) {
     try {
         const result = await apiLogin(username, password);
         if (result && result.user) {
-            handleLoginSuccess(result.user);
+            const appReady = handleLoginSuccess(result.user);
             completeLoginRequest(username, result.loginRequestId);
-            loadInitialData(); // Carga en segundo plano sin bloquear
+            if (appReady) loadInitialData(); // Espera la aceptación de términos antes de cargar el catálogo
         } else {
             throw new Error("Respuesta de login inválida.");
         }
