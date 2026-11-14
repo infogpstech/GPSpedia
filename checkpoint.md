@@ -933,3 +933,13 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Workflow previsto: `.github/workflows/service-tests.yml`, ejecuta Node.js 22, `node --check` de módulos principales y runner `JS/Tests/RunServiceTests.mjs`.
 - Resultado CI todavía no confirmado al redactar esta nota. No se declarará aprobado hasta verificar el run asociado al HEAD publicado.
 - No se han desplegado Apps Script ni modificado datos de Drive/Spreadsheet. Las pruebas externas permanecen diferidas a Beta.
+
+
+### Resultados parciales de verificación integral — 2026-11-14
+
+- Parsing V8 de los módulos backend `Services/Auth.js`, `admin.js`, `catalog.js`, `feedback.js`, `write.js`, `users.js`, `Utilities.js` y `Coordinator.js`: 8/8 PASS.
+- Parsing V8 de `SharedMutationClient.js`, `InboxConversations.js` y los módulos frontend `main.js`, `auth.js`, `ui.js`, `offline.js`, `clientInteractionPolicy.js`, `navigation.js`, `state.js`: 9/9 PASS, retirando únicamente envoltorios estáticos ESM para la comprobación en V8.
+- Parsing V8 de `service-worker.js`, `api-config.js`, `RunServiceTests.mjs`, suites de conciliación de imágenes (planner/aplicación/UI), `IdentifierMigration.mjs`, `SessionActivityCoordination.mjs`, `InboxUi.mjs`, `InboxConversations.mjs`, `PasswordHashMigration.mjs`, `PasswordKdfBenchmark.mjs`, `VehicleModalRolePolicy.mjs` y `ClientInteractionPolicy.mjs`: PASS tras retirar import/export estáticos y sustituir `import.meta.url` solo para parsing. Esto no equivale a ejecución de Node CLI ni a ejecución de las suites.
+- El runner integral `JS/Tests/RunServiceTests.mjs` está presente y cubre WRITE, ADMIN, FEEDBACK, CATALOG, UTILITIES, AUTH, USERS e INTEGRATION. El workflow `.github/workflows/service-tests.yml` está configurado para push en esta rama y usa Node.js 22.
+- El conector GitHub disponible no expone una consulta de runs de push/check-runs; `fetch_commit_workflow_runs` filtra a ejecuciones de pull request y el endpoint de status consultado devolvió una lista vacía. Por ello, la ejecución de Actions sobre el HEAD actual no puede confirmarse desde esta interfaz. No se declara CI PASS ni se atribuye el resultado de un HEAD anterior.
+- No hay clon local/Node CLI en este entorno. La ejecución integral real del runner queda pendiente de un entorno con Node.js 22 o de consultar el run de Actions directamente en GitHub. Las validaciones externas de Beta siguen separadas.
