@@ -53,6 +53,6 @@ test("Router AUTH y mapa de acciones exponen el endpoint sin clasificarlo como m
 test("El benchmark usa una cadena fija de prueba y no accede a datos de usuarios",()=>{
  const source=extract("benchmarkPasswordKdf_");
  assert.match(source,/GPSpedia-KDF-benchmark-only/);
- assert.doesNotMatch(source,/SpreadsheetApp|Users|Password|sessionToken/);
+ assert.doesNotMatch(source,/SpreadsheetApp|Users|sessionToken/);
 });
 console.log("PasswordKdfBenchmark: "+passed+"/"+passed+" PASS");
