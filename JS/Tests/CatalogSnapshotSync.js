@@ -228,7 +228,7 @@ async function runCatalogSnapshotSyncTests() {
     test('rechaza upsert de Corte con ID distinto al ID del evento', () => {
         assert.throws(() => applyCatalogChangesToSnapshot(snapshot(), [
             { revision: 1, collection: 'cortes', recordId: 'C-1', operation: 'upsert', snapshot: { id: 'C-2' } }
-        ]), /upsert de Corte inválido/);
+        ]), /upsert inválido en cortes/);
     });
     await testAsync('snapshot y cursor se guardan y leen como estado sincronizado', async () => {
         const current = snapshot();
