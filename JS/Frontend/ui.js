@@ -11171,7 +11171,7 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
             <div class="form-group">
-                <label>Alcance del Problema</label>
+                <label for="pys-alcance">Alcance del Problema</label>
                 <select id="pys-alcance" class="dev-input" style="padding: 6px;">
                     <option value="general" selected>General (Aplica a todos los vehículos)</option>
                     <option value="especifico">Modelo específico</option>
@@ -11179,22 +11179,22 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
             </div>
 
             <div id="pys-models-section" style="display: none; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);">
-                <label>Buscar Vehículos Relacionados</label>
+                <label for="pys-search-vehicle">Buscar Vehículos Relacionados</label>
                 <input type="text" id="pys-search-vehicle" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width: 100%; padding: 6px; margin-top: 4px;">
                 <div id="pys-vehicle-search-results" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;"></div>
                 <div id="pys-selected-models-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
             </div>
 
             <div class="form-group">
-                <label>Título del Problema (Máx 15 caracteres)</label>
+                <label for="pys-titulo">Título del Problema (máx. 15 caracteres)</label>
                 <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
             </div>
             <div class="form-group">
-                <label>Imagen del Problema</label>
+                <label for="pys-img-file">Imagen del Problema</label>
                 <input type="file" id="pys-img-file" accept="image/jpeg,image/png,image/webp" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <label for="pys-detalle">Detalle del Problema (máx. 200 caracteres)</label>
                 <div class="rich-editor-toolbar" data-rich-target="pys-detalle"></div>
                 <textarea id="pys-detalle" maxlength="200" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
@@ -11203,12 +11203,12 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <label>Solución (Máx 700 caracteres)</label>
+                <label for="pys-solucion">Solución (máx. 700 caracteres)</label>
                 <div class="rich-editor-toolbar" data-rich-target="pys-solucion"></div>
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label>Cómo Prevenir (Opcional, Máx 700 caracteres)</label>
+                <label for="pys-prevenir">Cómo Prevenir (opcional, máx. 700 caracteres)</label>
                 <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
 
@@ -11217,6 +11217,16 @@ export function openAddProblemModal(preAssociatedVehicle = null, navOptions = {}
     `;
 
     mountRichTextToolbars(content);
+    [
+        ["pys-alcance", "Indica si el problema aplica a todos los vehículos o solo a modelos seleccionados."],
+        ["pys-search-vehicle", "Busca y selecciona los modelos en los que se reproduce el problema."],
+        ["pys-titulo", "Usa un título corto que permita reconocer la falla."],
+        ["pys-img-file", "Adjunta una imagen clara que muestre el componente o la falla."],
+        ["pys-detalle", "Describe el síntoma, las condiciones en que aparece y el componente afectado."],
+        ["pys-sin-solucion", "Activa esta opción si todavía no existe una solución confirmada."],
+        ["pys-solucion", "Explica los pasos correctivos que ya fueron comprobados."],
+        ["pys-prevenir", "Añade recomendaciones para evitar que la falla vuelva a presentarse."]
+    ].forEach(([fieldId, message]) => attachContextualHelp_(content, fieldId, message));
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -11451,7 +11461,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         <div id="assoc-selected-models-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 28px;"></div>
 
         <div style="margin-top: 6px;">
-            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca, Modelo o Versión..." class="dev-input" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <label for="assoc-search-input">Buscar por Marca, Modelo o Versión</label>
+            <input type="text" id="assoc-search-input" placeholder="Ej. Toyota Corolla" class="dev-input" style="width: 100%; padding: 8px; box-sizing: border-box;">
             <div id="assoc-search-results" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 10px;"></div>
         </div>
 
@@ -11462,6 +11473,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
     `;
 
     mountRichTextToolbars(content);
+    attachContextualHelp_(content, "assoc-search-input", "Busca por marca, modelo o versión y selecciona el vehículo que deseas vincular.");
 
     modal.appendChild(content);
     document.body.appendChild(modal);
