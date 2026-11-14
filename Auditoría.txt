@@ -461,7 +461,7 @@ Estado: CORREGIDO EN RAMA; VALIDACIÓN BETA MULTIUSUARIO PENDIENTE.
 - GP-CAT-01D: polling autenticado 45 s visible/online, backoff hasta 5 min, timeout de 8 s, coordinación multi-pestaña mediante lease/BroadcastChannel.
 - GP-CAT-01E: reconciliación silenciosa de tarjetas, modal activo y vistas de Tutoriales/Relay/Logos; PyS se refresca ante reset.
 - Sin cambios: no se llama fetchCatalogData ni se descarga snapshot completo. Cambios multi-entidad/colecciones auxiliares todavía usan reset y pueden activar snapshot completo.
-- CI Node.js 22: 98 suites / 1,458 pruebas / 0 fallos; Pages SUCCESS (HEAD de código 1bcaecb37d1560cb76a255de38f208df944b8b31).
+- CI Node.js 22: 98 suites / 1,463 pruebas / 0 fallos; Pages SUCCESS (HEAD 6af6d78e2c68d0175566626177ca41fe2496d2d5).
 
 AUD-2026-11-14-13 — ORDEN DE PUBLICACIÓN EN ESCRITURAS ANIDADAS
 Severidad: Alta (consistencia del snapshot durante mantenimiento).
@@ -475,7 +475,7 @@ Severidad: Alta (pérdida o salto de cambios).
 Estado: CORREGIDO Y CUBIERTO POR PRUEBA.
 - Snapshot y cursor se leen desde la misma transacción IndexedDB y se persisten en una sola transacción readwrite.
 - El cursor no se adelanta si falla el guardado del snapshot; errores de delta/reset mantienen snapshot anterior y activan recuperación completa.
-- CatalogSnapshotSync 24/24 y CatalogStartupIntegrity 16/16 PASS.
+- CatalogSnapshotSync 25/25 y CatalogStartupIntegrity 18/18 PASS.
 
 GP-PWA-02 — ACTUALIZACIÓN EN SEGUNDO PLANO
 Estado: CORRECCIÓN LOCAL COMPLETADA; BETA PENDIENTE.
