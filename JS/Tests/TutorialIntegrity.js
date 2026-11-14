@@ -390,5 +390,6 @@ if (process.argv[1] && process.argv[1].endsWith("TutorialIntegrity.js")) {
         catalog: fs.readFileSync("Services/catalog.js", "utf8")
     });
     console.log("TutorialIntegrity: " + result.passed + "/" + (result.passed + result.failed) + " PASS");
+    if (result.failed) console.error(JSON.stringify(result.results.filter(item => item.status === "FAIL")));
     if (result.status !== "PASS") process.exitCode = 1;
 }
