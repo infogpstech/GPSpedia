@@ -1238,6 +1238,9 @@ function doPostInternal_(e) {
             case 'getReplacedImages':
                 response = handleGetReplacedImages(payload, logMessage);
                 break;
+            case 'previewCortesImageReconciliation':
+                response = handlePreviewCortesImageReconciliation_(payload, logMessage, developerContext);
+                break;
             case 'migrateReplacedImagesSchema':
                 response = handleMigrateReplacedImagesSchema(payload, logMessage);
                 break;
@@ -2815,6 +2818,7 @@ function buildCortesImageReconciliationTargets_() {
     if (lastRow < 2) return { targets: [], rowIssues: [], sourceLastRow: lastRow };
     const lastColumn = Math.max(sheet.getLastColumn(), COLS_CORTES.imgCableAlimen3);
     const rows = sheet.getRange(1, 1, lastRow, lastColumn).getValues();
+    const formulas = sheet.getRange(1, 1, lastRow, lastColumn).getFormulas();
     const fields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura",
         "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
     const idCounts = new Map();
@@ -2846,7 +2850,8 @@ function buildCortesImageReconciliationTargets_() {
                 const column = COLS_CORTES[field];
                 targets.push({
                     row: r + 1, vehicleId, field, column, baseName,
-                    currentValue: String(row[column - 1] == null ? "" : row[column - 1]).trim()
+                    currentValue: String(row[column - 1] == null ? "" : row[column - 1]).trim(),
+                    hasFormula: Boolean(formulas[r] && formulas[r][column - 1])
                 });
             } catch (error) {
                 rowIssues.push({ row: r + 1, vehicleId, field, reason: String(error && error.message || error) });
@@ -2860,7 +2865,7 @@ function buildCortesImageReconciliationTargets_() {
  * Clasifica archivos de Drive contra destinos de Cortes por nombre canónico exacto.
  * Un resultado "matched" solo es una propuesta; nunca modifica Spreadsheet ni Drive.
  */
-function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferences) {
+function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferences, referenceScanVerified) {
     if (!Array.isArray(targets) || !Array.isArray(driveFiles)) throw new Error("El plan requiere destinos y archivos en formato de lista.");
     const references = activeReferences instanceof Map ? activeReferences : new Map();
     const targetIndex = new Map();
@@ -2898,8 +2903,9 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
                 return;
             }
             if (candidates.length === 0) {
-                results.push({ status: locations.length ? "referenced_elsewhere" : "orphaned", fileId, fileName: file.fileName,
-                    locations, reason: locations.length ? "El archivo tiene referencias, pero no coincide con un destino canónico de Cortes." : "No existe referencia ni destino canónico exacto en Cortes." });
+                const status = locations.length ? "referenced_elsewhere" : referenceScanVerified === false ? "unverifiable" : "orphaned";
+                results.push({ status, fileId, fileName: file.fileName,
+                    locations, reason: locations.length ? "El archivo tiene referencias, pero no coincide con un destino canónico de Cortes." : referenceScanVerified === false ? "No se puede declarar huérfano mientras existan referencias no verificables." : "No existe referencia ni destino canónico exacto en Cortes." });
                 return;
             }
             const target = candidates[0], targetKey = target.row + ":" + target.column;
@@ -2918,9 +2924,19 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
                     reason: "El archivo ya está referenciado; no se propone reutilizarlo en otra celda." });
                 return;
             }
-            if (target.currentValue) {
+            if (target.currentValue || target.hasFormula) {
                 results.push({ status: "occupied", fileId, fileName: file.fileName, target,
-                    reason: "El destino contiene una referencia o un valor no vacío que no se sobrescribirá." });
+                    reason: target.hasFormula ? "El destino contiene una fórmula; no se sobrescribirá." : "El destino contiene una referencia o un valor no vacío que no se sobrescribirá." });
+                return;
+            }
+            if (referenceScanVerified === false) {
+                results.push({ status: "unverifiable", fileId, fileName: file.fileName, target, locations,
+                    reason: "La búsqueda de referencias del Spreadsheet no pudo verificarse por completo." });
+                return;
+            }
+            if (file.accessPublic !== true) {
+                results.push({ status: "access_restricted", fileId, fileName: file.fileName, target,
+                    reason: "El archivo no tiene acceso público verificado; no se modificaron sus permisos." });
                 return;
             }
             if (locations.length) {
@@ -2939,10 +2955,82 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
             usedTargetKeys.add(targetKey);
         });
     });
-    const counts = { matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0, referenced_elsewhere: 0, invalid: invalidFiles.length };
+    const counts = { matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0, referenced_elsewhere: 0, access_restricted: 0, unverifiable: 0, invalid: invalidFiles.length };
     results.forEach(item => { counts[item.status] = (counts[item.status] || 0) + 1; });
     return { results, invalidFiles, counts, writePerformed: false };
 }
+
+
+/**
+ * Dry-run de conciliación. Lee Cortes y valida cada archivo dentro del árbol Drive.
+ * No cambia celdas, archivos, permisos ni carpetas.
+ */
+function handlePreviewCortesImageReconciliation_(payload, logMessage, developerContext) {
+    const ownerId = String(developerContext && developerContext.userId || "").trim();
+    if (!ownerId) throw new Error("La conciliación requiere una sesión Desarrollador verificada.");
+    const submitted = Array.isArray(payload && payload.files) ? payload.files : [];
+    if (!submitted.length || submitted.length > 25) throw new Error("Envía entre 1 y 25 archivos por lote.");
+    const root = getCortesRootFolder(), membershipCache = new Map([[String(DRIVE_FOLDER_ID), true]]);
+    const files = [], invalid = [];
+    const seen = new Set();
+    submitted.forEach(entry => {
+        const fileId = String(entry && entry.fileId || "").trim();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) {
+            invalid.push({ fileId, fileName: "", reason: "ID de Drive inválido." });
+            return;
+        }
+        if (seen.has(fileId)) return;
+        seen.add(fileId);
+        try {
+            const file = DriveApp.getFileById(fileId);
+            if (file.isTrashed()) throw new Error("El archivo está en papelera.");
+            const mimeType = String(file.getMimeType() || "").toLowerCase();
+            if (!mimeType.startsWith("image/")) throw new Error("El archivo no es una imagen.");
+            const parents = file.getParents();
+            let parentCount = 0, insideCount = 0, outsideCount = 0, folderPath = "";
+            while (parents.hasNext()) {
+                const parent = parents.next();
+                parentCount++;
+                if (isFolderInsideCortes(parent, root.getId(), membershipCache)) {
+                    insideCount++;
+                    if (!folderPath) folderPath = getFolderPathInsideCortes(parent, root.getId());
+                } else outsideCount++;
+            }
+            if (!parentCount || !insideCount || outsideCount) throw new Error("El archivo no pertenece exclusivamente al árbol autorizado «Cortes».");
+            let accessPublic = false;
+            try {
+                const access = file.getSharingAccess();
+                accessPublic = access === DriveApp.Access.ANYONE || access === DriveApp.Access.ANYONE_WITH_LINK;
+            } catch (accessError) { accessPublic = false; }
+            files.push({ fileId, fileName: String(file.getName() || ""), mimeType, folderPath, accessPublic });
+        } catch (error) {
+            invalid.push({ fileId, fileName: String(entry && entry.fileName || ""), reason: String(error && error.message || error) });
+        }
+    });
+    const targetSnapshot = buildCortesImageReconciliationTargets_();
+    const referenceSnapshot = collectActiveDriveReferences(true);
+    const referenceScanVerified = Number(referenceSnapshot.unverifiableReferenceCount || 0) === 0;
+    const plan = buildCortesImageReconciliationPlan_(targetSnapshot.targets, files, referenceSnapshot.references, referenceScanVerified);
+    plan.invalidFiles.push.apply(plan.invalidFiles, invalid);
+    plan.counts.invalid = plan.invalidFiles.length;
+    const digestPayload = JSON.stringify({
+        targets: targetSnapshot.targets.map(target => [target.row, target.vehicleId, target.field, target.currentValue, target.hasFormula, target.baseName]),
+        references: Array.from(referenceSnapshot.references.entries()).map(([id, locations]) => [id, locations]).sort((a,b)=>a[0].localeCompare(b[0])),
+        files: files.map(file => [file.fileId, file.fileName, file.mimeType, file.accessPublic]).sort((a,b)=>a[0].localeCompare(b[0]))
+    });
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, digestPayload)
+        .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
+    plan.referenceCheckStatus = referenceScanVerified ? "verified" : "unverifiable";
+    plan.rowIssues = targetSnapshot.rowIssues;
+    plan.sourceLastRow = targetSnapshot.sourceLastRow;
+    plan.manifestDigest = digest;
+    plan.writePerformed = false;
+    logMessage && logMessage("Conciliación Drive ↔ Cortes",
+        "Dry-run: " + plan.counts.matched + " coincidencias exactas, " + plan.counts.orphaned +
+        " huérfanas, " + plan.counts.ambiguous + " ambiguas; sin escrituras.");
+    return plan;
+}
+
 
 function buildCanonicalImageFilename(vehicleInfo, fieldName, file, extraSuffix) {
     const extension = getCanonicalImageExtension(file);

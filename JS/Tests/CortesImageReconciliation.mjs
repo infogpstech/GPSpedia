@@ -14,6 +14,18 @@ const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
 const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType});
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
+testCase("bloquea destinos con fórmula aunque el valor calculado esté vacío",()=>{
+ const p=planner([target("same",{hasFormula:true})],[file(1,"same.png")],new Map());
+ assert.equal(p.results[0].status,"occupied");
+});
+testCase("no declara huérfanos cuando el escaneo de referencias es incompleto",()=>{
+ const p=planner([], [file(1,"orphan.png")],new Map(),false);
+ assert.equal(p.results[0].status,"unverifiable");
+});
+testCase("no propone URL si el archivo no tiene acceso público verificado",()=>{
+ const p=planner([target("same")],[{...file(1,"same.png"),accessPublic:false}],new Map(),true);
+ assert.equal(p.results[0].status,"access_restricted");
+});
 testCase("propone coincidencia exacta y URL sin realizar escrituras",()=>{
  const p=planner([target("toyota_corolla_key_2020")],[file(1,"toyota_corolla_key_2020.jpg")],new Map());
  assert.equal(p.results[0].status,"matched");assert.equal(p.results[0].target.row,2);
