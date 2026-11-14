@@ -804,6 +804,7 @@ function handleLogin(payload) {
         let sessionCount = 0;
         let sessionToken = '';
         let sessionCreatedAt = '';
+        let sessionTermsAcceptance = { version: '', acceptedAt: '', status: 'pending' };
         let oldestSession = null;
         let sessionCleanupPending = false;
         let sessionOperationError = null;
@@ -854,6 +855,7 @@ function handleLogin(payload) {
             );
             sessionToken = sessionResult.token;
             sessionCreatedAt = sessionResult.createdAt;
+            sessionTermsAcceptance = sessionResult.termsAcceptance || sessionTermsAcceptance;
             sessionCount = sessionResult.sessionCount;
             oldestSession = sessionResult.oldestSession;
             sessionCleanupPending = sessionResult.cleanupPending;
@@ -879,7 +881,7 @@ function handleLogin(payload) {
             SessionToken: sessionToken,
             SessionCreatedAt: sessionCreatedAt,
             SessionLastActivityAt: sessionCreatedAt,
-            TermsAcceptance: sessionResult.termsAcceptance || { version: '', acceptedAt: '', status: 'pending' }
+            TermsAcceptance: sessionTermsAcceptance
         };
 
         return { status: 'success', user: user, sessionCleanupPending };
