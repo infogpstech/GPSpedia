@@ -79,7 +79,7 @@ async function runAddCutOperationRecoveryFlowTests(sources) {
         }
         const dependencies = {
             state, document, window: { location: { replace() {} } }, navigator: { onLine: options.online !== false },
-            console: { log() {}, warn() {}, error() {} }, diagnostics: Object.fromEntries(['debug','info','warn','error'].map(level => [level, (event, context) => logs.push({level,event,context})])), alert(message) { alerts.push(message); },
+            console: { log() {}, warn() {}, error() {} }, showConciseAlert_(message) { alerts.push(message); }, diagnostics: Object.fromEntries(['debug','info','warn','error'].map(level => [level, (event, context) => logs.push({level,event,context})])), alert(message) { alerts.push(message); },
             toggleLoading() {}, toggleNoRecomendado() {}, showPhase() {}, proceedToStage3(id) { stages.push(id); },
             isSubmittingStage1:false, isSubmittingStage2:false, isSubmittingStage3:false, pendingOperationRecoveryPromise:null, pendingOperationRecoveryRequested:false, resumePendingOperationRecovery:async()=>false, refreshSelectedVehicleMatch:async()=>{}, getCurrentSessionForOwner(owner) { return { userId: owner, sessionToken: 'session' }; },
             getOrGenerateOpId: async () => {
