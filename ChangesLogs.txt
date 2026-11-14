@@ -1487,3 +1487,11 @@ Rama: GPSpedia2.2.5_work
 - Pruebas PasswordHashMigration: vectores PBKDF2, formatos, legacy, dry-run, confirmación, lotes e idempotencia.
 - GitHub Actions service-tests: PASS; 76 suites, 1,185 pruebas, 0 fallos. No se ejecutó migración productiva ni deployment AUTH.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2: AUDITORÍA DE IDS Y ASIGNADOR BACKEND LOGOSMARCA
+- ADMIN añade acción auditIdentifiers de solo lectura para Users, Cortes, Tutorial, Relay, pys y LogosMarca; detecta IDs ausentes, malformados, duplicados y fórmulas, y devuelve muestras de Relay para confirmar el formato.
+- LogosMarca deja de usar =ROW()-1 para nuevos IDs; ADMIN asigna enteros con ScriptProperties, ScriptLock y verificación del valor escrito.
+- Inventario: Users USR-####; Cortes numérico; Tutorial tut-<operationId>; PyS isue-###; Relay solo lectura y formato no definido en código.
+- GitHub Actions service-tests: PASS; 78 suites, 1,198 pruebas, 0 fallos. No se ejecutó auditoría ni migración en la Spreadsheet real; no hubo escrituras productivas.
+================================================================================
