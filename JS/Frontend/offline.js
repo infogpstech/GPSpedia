@@ -1267,18 +1267,22 @@ async function storeThumbnailWithQuotaRecovery(entry, key) {
  }
 }
 
-/** Compresión por variante; limita el trabajo costoso y conserva las claves antiguas. */
+const THUMBNAIL_FAILURE_BACKOFF_MS = 5 * 60 * 1000;
+const thumbnailCompressionFailures_ = new Map();
+/** Compresión opcional por variante; nunca condiciona la visualización de la imagen original. */
 export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400){
  if(!rawFileId||(typeof rawFileId==="string"&&rawFileId.includes("placehold.co")))return null;
  const fileId=normalizeId(rawFileId);if(!fileId)return null;
  const width=normalizeThumbnailSize(requestedSize),cacheKey=buildThumbnailCacheKey(fileId,width);
- await purgeExpiredThumbnailEntries();
+ const retryAfter=thumbnailCompressionFailures_.get(cacheKey)||0;
+ if(retryAfter>Date.now())return null;
+ if(retryAfter)thumbnailCompressionFailures_.delete(cacheKey);
  const fetchUrl=fileId.length>20&&!fileId.includes("/")&&!fileId.includes("http")?`https://lh3.googleusercontent.com/d/${fileId}`:url;
  if(!fetchUrl||fetchUrl.includes("placehold.co"))return null;
  try{
+  await purgeExpiredThumbnailEntries();
   const cached=await readFreshThumbnail(cacheKey);if(cached)return cached;
   return await thumbnailCompressionQueue.run(async()=>{
-   // Otra solicitud de la misma variante pudo completar mientras esta esperaba turno.
    const queuedCached=await readFreshThumbnail(cacheKey);if(queuedCached)return queuedCached;
    const response=await fetch(fetchUrl,{mode:"cors"});if(!response.ok)return null;
    const bitmap=await createImageBitmap(await response.blob());
@@ -1292,18 +1296,17 @@ export async function compressAndStoreThumbnail(url,rawFileId,requestedSize=400)
      if(!blob){resolve(null);return;}
      const now=Date.now(),entry={key:cacheKey,fileId,width,blob,cachedAt:now,lastAccessedAt:now};
      storeThumbnailWithQuotaRecovery(entry,cacheKey)
-      .then(async saved=>{
-       if(saved!==null)await evictLeastRecentlyUsedThumbnails();
-       resolve(saved===null?null:blob);
-      })
-      .catch(error=>{
-       console.warn("Thumbnail persistence failed for",fileId,error);
-       resolve(null);
-      });
+      .then(async saved=>{if(saved!==null)await evictLeastRecentlyUsedThumbnails();resolve(saved===null?null:blob);})
+      .catch(error=>{console.debug("Se omitió la persistencia de la miniatura opcional:",fileId,error&&error.message?error.message:error&&error.name||"error");resolve(null);});
     },"image/png"));
    }finally{if(typeof bitmap.close==="function")bitmap.close();}
   });
- }catch(error){console.warn("Thumbnail compression failed for",fileId,error);return null;}
+ }catch(error){
+  thumbnailCompressionFailures_.set(cacheKey,Date.now()+THUMBNAIL_FAILURE_BACKOFF_MS);
+  if(thumbnailCompressionFailures_.size>300)thumbnailCompressionFailures_.delete(thumbnailCompressionFailures_.keys().next().value);
+  console.debug("Se omitió la compresión opcional de miniatura:",fileId,error&&error.message?error.message:error&&error.name||"error");
+  return null;
+ }
 }
 export async function getThumbnail(rawFileId,requestedSize=400){
  const fileId=normalizeId(rawFileId);if(!fileId||typeof fileId!=="string")return null;

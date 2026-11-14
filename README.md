@@ -80,13 +80,13 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ### Seguridad y Compartición de Información
 - **Botón Compartir Integrado:** Botón interactivo en el modal de detalle que hace uso de la API nativa de compartición del sistema operativo (Web Share API) para enviar la ficha técnica por aplicaciones de mensajería, o copiar un enlace directo optimizado al portapapeles.
-- **Seguridad de datos y operaciones:** La interfaz no bloquea el menú contextual ni los atajos de inspección del navegador, porque esas medidas son eludibles y no protegen el código cliente ni los datos. Las operaciones protegidas deben validar sesión, identidad, rol, permisos y contenido en el backend. Las restricciones visuales de selección de texto son únicamente una decisión de presentación y no un control de seguridad.
+- **Restricciones visuales de copia:** En las vistas web se bloquean menú contextual, selección/copia/corte y arrastre de imágenes, excepto en campos editables para conservar pegar y edición. Son medidas disuasorias; no impiden inspeccionar el navegador ni recuperar recursos.
 
 ### Política de seguridad del cliente y anti-debugging
 
-GPSpedia no utiliza bloqueos de F12, Ctrl+Shift+I/J/C/U ni del menú contextual como mecanismo de protección. El código JavaScript y los recursos entregados al navegador pueden inspeccionarse o modificarse; intentar impedirlo desde el cliente solo añade fricción y puede perjudicar la accesibilidad. Por ello, las vistas activas conservan los controles nativos del navegador, incluido el zoom.
+GPSpedia aplica una fricción visual limitada: bloquea menú contextual y eventos de copia/corte/selección/arrastre en contenido no editable. Los campos de entrada conservan su menú para pegar y editar. No se bloquean F12, Ctrl+Shift+I/J/C/U ni el zoom. El código y los recursos entregados al navegador siguen siendo inspeccionables y recuperables; estas restricciones no son seguridad real.
 
-La confidencialidad y la integridad no dependen de ocultar el frontend: los servicios deben validar en cada operación protegida la sesión vigente, la identidad vinculada al token, el rol autorizado y los datos recibidos antes de leer o modificar recursos. Los controles visuales del cliente solo mejoran la experiencia y nunca sustituyen la autorización del servidor. Los endpoints y recursos públicos deben tratarse como públicos; no se debe enviar al navegador información que el usuario no esté autorizado a conocer.
+La confidencialidad y la integridad no dependen de ocultar el frontend: los servicios deben validar en cada operación protegida la sesión vigente, la identidad vinculada al token, el rol autorizado y los datos recibidos antes de leer o modificar recursos. Las restricciones visuales solo añaden fricción y nunca sustituyen la autorización del servidor. Los endpoints y recursos públicos deben tratarse como públicos.
 
 ### Accesibilidad y Mejoras Visuales Recientes
 - **Modo Oscuro Integrado y Persistente:** Intercambio fluido de paletas de colores basado en las preferencias locales. Los logotipos de marcas cuentan con un efecto de sombra sutil (drop-shadow) adaptativa en modo oscuro para un contraste y legibilidad óptimos.

@@ -11,6 +11,7 @@ import * as state from './state.js';
 import * as ui from './ui.js';
 import * as navigation from './navigation.js';
 import './lightbox.js';
+import './clientInteractionPolicy.js';
 import { applyRichTextFormat, applyRichTextColor, createRichTextToolbar } from './rich-text.js';
 import { decodeSharedVehicleHash, resolveSharedVehicleById } from './share-utils.js';
 import { getCatalogStatusView } from './catalogStatus.js';
@@ -22,42 +23,20 @@ let searchBlurTimeout;
 let isBackGestureBlurring = false;
 let sessionRevalidationInstalled_ = false;
 let sessionRevalidationInFlight_ = null;
-let lastSessionValidationWarningAt_ = 0;
 function revalidateSessionOnResume_() {
     if (sessionRevalidationInFlight_) return sessionRevalidationInFlight_;
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
     const currentUser = state.getState().currentUser;
     if (!currentUser || !currentUser.SessionToken || typeof auth.validateActiveSession !== 'function') return null;
-    sessionRevalidationInFlight_ = auth.validateActiveSession(true)
-        .then(result => {
-            if (result === null && Date.now() - lastSessionValidationWarningAt_ > 60000) {
-                lastSessionValidationWarningAt_ = Date.now();
-                ui.showGlobalError('La verificación de sesión está pendiente por falta de conexión. No se abrirán nuevas vistas privilegiadas hasta poder confirmar la sesión.');
-            }
-            return result;
-        })
-        .catch(error => {
-            console.warn('No se pudo revalidar la sesión al recuperar actividad:', error);
-            if (Date.now() - lastSessionValidationWarningAt_ > 60000) {
-                lastSessionValidationWarningAt_ = Date.now();
-                ui.showGlobalError('La verificación de sesión está pendiente por un error de conexión. Las vistas privilegiadas permanecerán bloqueadas.');
-            }
-            return null;
-        })
+    sessionRevalidationInFlight_ = auth.validateActiveSession(false)
+        .catch(error => { console.debug('La revalidación silenciosa de sesión se pospuso:', error && error.message ? error.message : error); return null; })
         .finally(() => { sessionRevalidationInFlight_ = null; });
     return sessionRevalidationInFlight_;
 }
 function installSessionRevalidation_() {
     if (sessionRevalidationInstalled_) return;
     sessionRevalidationInstalled_ = true;
-    window.addEventListener('focus', revalidateSessionOnResume_);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') revalidateSessionOnResume_();
-    });
     window.addEventListener('online', revalidateSessionOnResume_);
-    window.setInterval(() => {
-        if (document.visibilityState !== 'hidden') revalidateSessionOnResume_();
-    }, 5 * 60 * 1000);
 }
 
 function installCatalogStatusBanner_() {
@@ -88,7 +67,7 @@ function installCatalogStatusBanner_() {
     let retryInProgress = false;
     const render = currentState => {
         const view = getCatalogStatusView(currentState.catalogLoadStatus);
-        banner.hidden = !view.visible;
+        banner.hidden = !view.visible || currentState.catalogLoadStatus === 'loading';
         banner.dataset.status = view.status;
         message.textContent = view.message;
         retryButton.hidden = !view.retryable;
@@ -1021,7 +1000,7 @@ async function initializeApp() {
         });
     }
 
-    // El navegador conserva menú contextual, inspección y zoom nativos; la seguridad se aplica en backend.
+    // clientInteractionPolicy aplica restricciones visuales de copia/contexto; inspección y zoom siguen siendo nativos.
 
     // 5. Start the application by checking the user's session
     // Se asegura que todo esté inicializado antes de validar la sesión

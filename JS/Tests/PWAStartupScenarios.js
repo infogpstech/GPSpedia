@@ -121,15 +121,15 @@ await run('primera instalación precarga el App Shell y el grafo de módulos', a
     const event = makeEvent();
     worker.listeners.install(event);
     await Promise.all(event.waits);
-    const assets = worker.cacheData.get('gpsepedia-cache-v24');
+    const assets = worker.cacheData.get('gpsepedia-cache-v25');
     assert.ok(assets, 'debe crear el caché de la versión actual');
-    for (const asset of ['./index.html', './JS/Frontend/main.js', './JS/Frontend/auth.js', './JS/Frontend/offline.js', './JS/Frontend/api-config.js', './JS/Frontend/serviceMetrics.js', './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js', './JS/Frontend/share-utils.js', './Images/Logo_TemaOscuro.png', './Images/tracklink_logo.png']) {
+    for (const asset of ['./index.html', './JS/Frontend/main.js', './JS/Frontend/clientInteractionPolicy.js', './JS/Frontend/auth.js', './JS/Frontend/offline.js', './JS/Frontend/api-config.js', './JS/Frontend/serviceMetrics.js', './JS/Frontend/VinDifferentialEngine.js', './JS/Frontend/catalogRequest.js', './JS/Frontend/share-utils.js', './Images/Logo_TemaOscuro.png', './Images/tracklink_logo.png']) {
         assert.ok(assets.has(asset), 'falta ' + asset);
     }
     assert.equal(worker.skipWaitingCalls, 1);
 });
 
-await run('actualización activa v24, elimina solo el caché anterior de GPSpedia y conserva otros', async () => {
+await run('actualización activa v25, elimina solo el caché anterior de GPSpedia y conserva otros', async () => {
     const worker = createWorkerHarness();
     worker.cacheData.set('gpsepedia-cache-v19', new Map([['./index.html', { old: true }]]));
     worker.cacheData.set('another-app-cache', new Map([['/other', { preserved: true }]]));
@@ -141,7 +141,7 @@ await run('actualización activa v24, elimina solo el caché anterior de GPSpedi
     await Promise.all(activateEvent.waits);
     assert.equal(worker.cacheData.has('gpsepedia-cache-v19'), false);
     assert.equal(worker.cacheData.has('another-app-cache'), true);
-    assert.equal(worker.cacheData.has('gpsepedia-cache-v24'), true);
+    assert.equal(worker.cacheData.has('gpsepedia-cache-v25'), true);
     assert.equal(worker.claimCalls, 1);
 });
 
@@ -158,15 +158,15 @@ await run('fallo de precarga esencial no activa una instalación incompleta ni e
 
 await run('las imágenes usan caché local primero y actualizan en segundo plano', async () => {
     const worker = createWorkerHarness();
-    const cache = worker.cacheData.get('gpsepedia-cache-v24') || new Map();
+    const cache = worker.cacheData.get('gpsepedia-cache-v25') || new Map();
     cache.set('https://images.example/photo.jpg', { cachedImage: true });
-    worker.cacheData.set('gpsepedia-cache-v24', cache);
+    worker.cacheData.set('gpsepedia-cache-v25', cache);
     const event = makeEvent({ method: 'GET', mode: 'no-cors', destination: 'image', url: 'https://images.example/photo.jpg' });
     worker.listeners.fetch(event);
     const response = await event.response;
     await Promise.all(event.waits);
     assert.equal(response.cachedImage, true);
-    assert.ok(worker.cacheData.get('gpsepedia-cache-v24').has('https://images.example/photo.jpg'));
+    assert.ok(worker.cacheData.get('gpsepedia-cache-v25').has('https://images.example/photo.jpg'));
 });
 
 await run('arranque offline desde un deep link recupera index.html precargado', async () => {

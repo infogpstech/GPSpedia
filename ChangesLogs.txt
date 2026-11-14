@@ -1309,3 +1309,14 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - No se ejecutó Node CLI completo ni pruebas reales en navegador Android/escritorio. No se consultó el endpoint externo desde este entorno.
 - Estado: IMPLEMENTADO EN GPSpedia2.2.5_work; despliegue AUTH/Frontend y validación Beta pendientes.
 ================================================================================
+
+================================================================================
+2026-11-13 — CORRECCIÓN — CONTINUIDAD AUTH, NAVEGACIÓN, MODALES, CATÁLOGO Y CONTROLES VISUALES
+- auth.js: la validación cacheada ya no borra TermsAcceptance cuando la respuesta no incluye ese campo. La caché de sesión y la ventana de sincronización de catálogo pasan a 60 segundos.
+- main.js: se eliminan las revalidaciones forzadas por foco/visibilidad y el intervalo periódico; solo queda la revalidación silenciosa al recuperar conexión. El banner superior deja de anunciar loading del catálogo.
+- ui.js: Inbox y Developer abren sin esperar AUTH; el backend sigue autorizando cada operación. closeSideMenuAndRun incorpora fallback de 500 ms si no llega popstate. El saludo usa nombre o ID.
+- offline.js: la compresión opcional de miniaturas aplica backoff ante fallas y no bloquea la imagen original.
+- clientInteractionPolicy.js y vistas web: se bloquean menú contextual, copia/corte/selección y arrastre de imágenes en contenido no editable. Los campos editables conservan pegar/edición; F12, inspección y zoom permanecen nativos.
+- service-worker.js: caché v25. Se agregan pruebas de regresión y comprobaciones de sintaxis al workflow.
+- README.md: documenta el alcance disuasorio y los límites de la política visual.
+================================================================================

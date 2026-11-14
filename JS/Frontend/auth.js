@@ -13,7 +13,12 @@ import { loadPysData } from './pys-data.js';
 const SESSION_KEY = 'gpsepedia_session';
 let logoutGeneration_ = 0;
 const VALIDATION_LOCK_NAME = 'gpsepedia-session-validation';
-const VALIDATION_CACHE_TTL_MS = 10000;
+const VALIDATION_CACHE_TTL_MS = 60000;
+const CATALOG_LAST_SYNC_KEY = 'gpsepedia_catalog_last_sync';
+const CATALOG_REFRESH_TTL_MS = 60000;
+function hasFreshCatalogSync_(){try{const t=Number(localStorage.getItem(CATALOG_LAST_SYNC_KEY));return Number.isFinite(t)&&t>0&&Date.now()-t>=0&&Date.now()-t<CATALOG_REFRESH_TTL_MS;}catch(e){return false;}}
+function markCatalogSync_(){try{localStorage.setItem(CATALOG_LAST_SYNC_KEY,String(Date.now()));}catch(e){}}
+
 const VALIDATION_TIMEOUT_MS = 8000;
 const LOCK_WAIT_TIMEOUT_MS = 5000;
 let catalogLoadController_ = null;
@@ -60,7 +65,7 @@ function persistSessionValidation(user,result){
   });
   updated.SessionCreatedAt=result.createdAt||updated.SessionCreatedAt;
   updated.SessionLastActivityAt=result.lastActivityAt||updated.SessionLastActivityAt;
-  updated.TermsAcceptance=result.termsAcceptance||null;
+  if(Object.prototype.hasOwnProperty.call(result,'termsAcceptance'))updated.TermsAcceptance=result.termsAcceptance||null;
   updated.SessionValidatedAt=Date.now();
   if(!isCurrentSession(user))return;
   localStorage.setItem(SESSION_KEY,JSON.stringify(updated));
@@ -189,6 +194,9 @@ export async function loadInitialData() {
     }
 
     if (!isCurrentLoad()) return;
+    // Evitar otra descarga cuando la instantánea local acaba de sincronizarse.
+    if (catalogLoaded && hasFreshCatalogSync_()) return;
+
     // 2. Cargar desde la red en segundo plano con timeout y reintentos acotados.
     try {
         const apiResponse = await fetchCatalogData({ signal: loadController.signal, timeoutMs: 8000, retries: 2, baseDelayMs: 400 });
@@ -213,6 +221,7 @@ export async function loadInitialData() {
 
         // Guardar solo una instantánea que ya se procesó correctamente.
         offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
+        markCatalogSync_();
         catalogLoaded = true;
         setState({ catalogLoadStatus: 'ready', catalogLoadError: null });
 
@@ -343,7 +352,6 @@ function restoreSessionAfterValidationUnavailable_(user, error = null) {
     // La sesión local no se borra. showApp vuelve a aplicar el bloqueo de términos
     // usando la aceptación ya registrada; las operaciones protegidas siguen validándose en servidor.
     if (handleLoginSuccess(user, false)) loadInitialData();
-    showGlobalError('No se pudo confirmar la sesión con AUTH en este momento. Se conservó la sesión local; algunas operaciones protegidas esperarán a que el servicio vuelva a estar disponible.');
     return true;
 }
 

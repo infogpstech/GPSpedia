@@ -3733,12 +3733,11 @@ async function ensureUiSessionRole_(allowedRoles) {
     if (!expected || !Array.isArray(allowedRoles) || !allowedRoles.includes(expected.role)) return null;
     const authApi = typeof window !== 'undefined' ? window.auth : null;
     if (!authApi || typeof authApi.validateActiveSession !== 'function') {
-        showGlobalError('No se pudo verificar la sesión actual. La vista protegida permanecerá cerrada.');
-        return null;
+        logDeveloperDiagnostic_('El cliente AUTH no está disponible; la interfaz usa el rol local y el servidor mantiene la autorización de cada operación.', 'warning');
+        return expected;
     }
-
-    // Reutilizar una validación reciente y compartir la solicitud concurrente de esta sesión.
-    // La caché solo evita consultas redundantes: cada operación privilegiada sigue validándose en el servidor.
+    // La apertura visual no espera la red. AUTH valida en segundo plano y cada acción protegida
+    // continúa requiriendo autorización del servicio correspondiente.
     const validationKey = expected.userId + '\u0000' + expected.sessionToken;
     let pending = uiRoleValidationInFlight_;
     if (!pending || pending.key !== validationKey) {
@@ -3746,38 +3745,19 @@ async function ensureUiSessionRole_(allowedRoles) {
         pending = { key: validationKey, promise };
         uiRoleValidationInFlight_ = pending;
         promise.then(
-            () => { if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null; },
-            () => { if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null; }
+            valid => {
+                if (valid === null) logDeveloperDiagnostic_('AUTH está temporalmente indisponible; las operaciones protegidas seguirán validándose en el servidor.', 'warning');
+                if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null;
+            },
+            error => {
+                console.debug('No se pudo completar la validación de AUTH en segundo plano:', error && error.message ? error.message : error);
+                logDeveloperDiagnostic_('La validación de AUTH se pospuso por una incidencia de conexión.', 'warning');
+                if (uiRoleValidationInFlight_ === pending) uiRoleValidationInFlight_ = null;
+            }
         );
     }
-
-    let valid = false;
-    try {
-        valid = await pending.promise;
-    } catch (error) {
-        console.warn('No se pudo revalidar la sesión antes de abrir una vista privilegiada:', error);
-        const localContext = getUiSessionContext_();
-        if (localContext && isCurrentUiSessionContext_(expected) && allowedRoles.includes(localContext.role)) {
-            logDeveloperDiagnostic_('Error temporal al validar AUTH antes de abrir una vista; se conserva la interfaz local y el servidor seguirá validando las operaciones.', 'warning');
-            return localContext;
-        }
-        showGlobalError('Conexión temporalmente no disponible.');
-        return null;
-    }
-    if (valid !== true) {
-        if (valid === null) {
-            const localContext = getUiSessionContext_();
-            if (localContext && isCurrentUiSessionContext_(expected) && allowedRoles.includes(localContext.role)) {
-                console.warn('AUTH no respondió; se abre la vista con el rol local. Las operaciones siguen sujetas a validación del servidor.');
-                logDeveloperDiagnostic_('AUTH no disponible al abrir una vista protegida; se conserva el acceso de interfaz y se mantienen las validaciones del servidor.', 'warning');
-                return localContext;
-            }
-        }
-        return null;
-    }
     const current = getUiSessionContext_();
-    if (!current || !isCurrentUiSessionContext_(expected) || !allowedRoles.includes(current.role)) return null;
-    return current;
+    return current && isCurrentUiSessionContext_(expected) && allowedRoles.includes(current.role) ? current : null;
 }
 
 function getSessionPayload_() {
@@ -8926,16 +8906,11 @@ export function showApp(user) {
     // AUTH confirma la aceptación individual; localStorage solo conserva una copia de sesión.
     if (!renderTermsGate_(user)) return;
 
-    if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
-        document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;
-
-        // Mostrar mensaje de bienvenida en el nuevo header si existe
-        const welcomeMsg = document.getElementById('welcome-message');
-        if (welcomeMsg) {
-            welcomeMsg.textContent = `Hola, ${user.Nombre_Completo || user.Nombre_Usuario}`;
-            welcomeMsg.style.display = 'block';
-        }
-    }
+    const displayName = String(user && (user.Nombre_Completo || user.Nombre_Usuario || user.username || user.ID || user.id) || 'Usuario').trim();
+    const menuUsername = document.getElementById('menu-username');
+    if (menuUsername) menuUsername.textContent = displayName;
+    const welcomeMsg = document.getElementById('welcome-message');
+    if (welcomeMsg) { welcomeMsg.textContent = `Hola, ${displayName || 'Usuario'}`; welcomeMsg.style.display = 'block'; }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
     const userRole = normalizeUiRole_(user && user.Privilegios);
@@ -9121,14 +9096,18 @@ export function closeSideMenuAndRun(callback) {
     }
     return new Promise(resolve => {
         let settled = false;
+        let fallbackTimer = null;
         const finish = () => {
             if (settled) return;
             settled = true;
+            if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
             window.removeEventListener('popstate', onPopState);
+            if (menu && menu.classList.contains('open')) closeSideMenu(true);
             runCallback().then(resolve);
         };
         const onPopState = () => { if (!historyManager.has(SIDE_MENU_HISTORY_ID_)) finish(); };
         window.addEventListener('popstate', onPopState);
+        fallbackTimer = window.setTimeout(finish, 500);
         if (!historyManager.close(SIDE_MENU_HISTORY_ID_)) finish();
     });
 }

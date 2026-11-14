@@ -139,3 +139,22 @@ La rama base `GPSpedia2.2.5` permanece intacta.
 5. Ejecutar con Node CLI los archivos de pruebas actualizados, incluida la suite PWA y de accesibilidad.
 
 La rama base `GPSpedia2.2.5` no se modifica. No se realizó deployment productivo.
+
+## Corrección — continuidad de sesión, navegación y modales (2026-11-13)
+
+**Estado:** IMPLEMENTADA EN RAMA DE TRABAJO; CI Y VALIDACIÓN BETA PENDIENTES.
+
+- Se corrigió la pérdida de TermsAcceptance cuando AUTH reutiliza una validación cacheada sin devolver ese campo.
+- La validación local reciente se cachea durante 60 segundos. Se eliminaron revalidaciones forzadas al recuperar foco/visibilidad y el intervalo de cinco minutos; se conserva un disparador silencioso al recuperar conexión.
+- AUTH temporalmente indisponible ya no genera un banner repetitivo al restaurar la sesión local.
+- La sincronización del catálogo reutiliza la instantánea local y evita otra descarga durante 60 segundos después de una sincronización confirmada; la reconciliación continúa usando performSilentSync.
+- Inbox y Developer abren con el rol local vigente sin esperar la red; las operaciones protegidas siguen sujetas a validación backend.
+- El cierre del menú tiene un fallback de 500 ms si el navegador no emite popstate.
+- El saludo utiliza Nombre_Completo, Nombre_Usuario o ID; el banner superior omite loading.
+- La compresión de miniaturas es opcional y aplica backoff; no bloquea la imagen original.
+- Se añadieron restricciones visuales contra menú contextual, copia/corte/selección y arrastre de imágenes en contenido no editable. Los campos editables conservan pegar/edición; F12, atajos de inspección y zoom permanecen nativos.
+
+### Validación pendiente
+Node CLI completo, GitHub Actions y pruebas Beta de navegación entre index.html, users.html y add_cortes.html; sesión expirada/revocada; conexión intermitente; modales Developer/Inbox; imágenes Drive y PWA instalada.
+
+La rama base GPSpedia2.2.5 no se modifica. No se cambian deployments ni endpoints productivos.
