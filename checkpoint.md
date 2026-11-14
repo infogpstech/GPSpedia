@@ -1523,3 +1523,26 @@ Este mecanismo de datos en vivo es independiente de la actualización de recurso
 6. **Inbox:** selección múltiple, nuevas acciones o paneles visibles quedan diferidos hasta que el usuario autorice expresamente esos controles.
 
 No se desplegaron servicios Apps Script, no se modificaron ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos. No se tocó la rama base.
+
+
+## Continuidad — GP-CAT: consumidor de deltas multi-colección (2026-11-14)
+
+**HEAD de código validado:** `9e573f8fb3d5a15f6817405f92f3ffc6d1a98d78`.  
+**Rama:** `GPSpedia2.2.5_work`. La rama base `GPSpedia2.2.5` no se modificó.
+
+### Cambio realizado
+- `JS/Frontend/offline.js`: el consumidor de feed aplica upsert/delete por ID estable a `cortes`, `tutoriales`, `relay` y `logos`.
+- Claves: `id` para Cortes y Logos; `ID` para Tutoriales y Relay, conforme a los mapas de `Services/catalog.js`.
+- No se generan IDs artificiales. Si la colección afectada tiene IDs ausentes/duplicados, o el evento corresponde a una colección no soportada, el consumidor solicita reset completo y conserva el snapshot válido previo.
+- `JS/Tests/CatalogSnapshotSync.js`: 27/27 PASS; pruebas multi-colección y fallback seguro para filas heredadas sin ID.
+
+### Validación
+- GitHub Actions run `43652551434`: SUCCESS; Node.js 22; sintaxis PASS; 98 suites / 1,465 pruebas / 0 fallos.
+- CatalogStartupIntegrity 18/18; SessionStartupNavigation 16/16; PWAStartupScenarios 15/15 PASS.
+- Un primer intento falló por una aserción que esperaba el texto antiguo del error de Cortes; se corrigió la expectativa y la ejecución posterior aprobó.
+- Pages run `43652551224` requiere confirmar su conclusión antes de afirmar despliegue.
+
+### Siguiente trabajo
+- Los productores de backend aún publican reset para cambios multi-entidad. Siguiente paso: inspeccionar cada mutación FEEDBACK/ADMIN y emitir snapshots exactos solo después de verificar la fila final y su ID único; comenzar por Tutoriales y Logos.
+- PyS permanece separado de `getCatalogData`, usa `getPysData` y caché localStorage; no se debe tratar como una colección del snapshot IndexedDB sin diseñar una persistencia/cursor independiente.
+- No se modificaron Apps Script deployments, ScriptProperties, Spreadsheet, Drive, ACL ni datos productivos.
