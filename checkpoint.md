@@ -530,3 +530,9 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Las pruebas de P1/P2 y RBAC validan lógica, contratos, dry-run, lotes, idempotencia, sesiones simuladas y referencias sintéticas. No ejecutan una migración contra Spreadsheet/Drive real.
 - Pendiente de entorno externo: dry-run de contraseñas e IDs en Beta, llamadas HTTP negativas por rol contra deployments, navegación/Inbox en navegador y dispositivos reales, mediciones de KDF, pruebas de rendimiento y conectividad en campo, verificación de permisos reales de URLs/Drive.
 - No se desplegaron servicios ni se modificaron datos productivos. La rama base protegida no se modificó.
+
+## Sincronización documental de continuidad (2026-11-14)
+
+- Se corrigieron referencias históricas que seguían describiendo `Gefe` como conversor temporal pendiente. El usuario ya confirmó la actualización de `Users.Privilegios` y su lista desplegable; el código operativo ya no admite `Gefe`.
+- Se actualizó la sección `Continuidad inmediata` de `Tareas_Activas.md` para reflejar P1–P6 y las validaciones Beta/externas pendientes, evitando que la próxima sesión retome P3 como si siguiera sin implementar.
+- No hubo cambios de código ni datos productivos en esta sincronización.
