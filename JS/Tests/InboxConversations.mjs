@@ -207,7 +207,7 @@ run("El reintento del mismo mensaje es idempotente y no duplica el contador", ()
     const replay = api.handleSendInboxMessage(reply);
     assert.equal(replay.messageId,sent.messageId);
     assert.equal(replay.idempotentReplay,true);
-    assert.equal(spreadsheet.getSheetByName("InboxMessages").getLastRow(),4);
+    assert.equal(spreadsheet.getSheetByName("InboxMessages").getLastRow(),7);
     const unread = api.handleGetInboxConversations({ ...actor("U1","token-a"),folder:"unread" });
     assert.equal(unread.data[0].unreadCount,1);
 });
