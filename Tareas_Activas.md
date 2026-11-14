@@ -709,7 +709,7 @@ No marcar como completadas estas tareas hasta ejecutar las pruebas locales perti
 - `JS/Frontend/api-config.js`: acción enrutable a FEEDBACK; aún no se integra al arranque ni al sondeo del cliente.
 - `JS/Tests/CatalogChangeFeed.mjs`: 13/13 PASS; CI `43640695193`: 97 suites, 1,427 pruebas, 0 fallos.
 - Primer productor conectado: `FEEDBACK/recordLike` publica el snapshot completo de Cortes después de confirmar el contador y liberar el lock. El fallo del feed queda aislado y no invalida la reacción persistida.
-- **Limitación de este hito:** restan las demás rutas WRITE/FEEDBACK/ADMIN y el cliente IndexedDB; el feed no debe considerarse sincronización funcional para usuarios hasta completar esos productores y el consumidor.
+- **Limitación de este hito:** los productores WRITE/FEEDBACK/ADMIN ya están conectados, pero todavía falta el consumidor incremental IndexedDB. Hasta integrar GP-CAT-01C/01D, el feed no reduce las descargas de arranque ni actualiza sesiones abiertas; los eventos `reset` requieren bootstrap/reconciliación completa como fallback seguro.
 - No se añadió botón, panel, indicador ni sección visible.
 
 ### Criterios de aceptación
