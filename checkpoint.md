@@ -757,3 +757,15 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 
 - Auditoría y organización ahora liberan el indicador global en `finally` aunque el modal se cierre o la sesión deje de ser actual. La persistencia final y la actualización de UI permanecen condicionadas a la vista vigente.
 - CI del HEAD previo `78fdb6a3d9d72e70ad412a5d0146d8a1333678e0`: servicio regresión PASS (ver run 43613411742). CI de esta corrección pendiente.
+
+
+## GP-IMG-DATA-01 — Conciliación Drive ↔ Cortes: simulación endurecida (2026-11-14)
+
+- ADMIN expone `previewCortesImageReconciliation`, conectado a la auditoría recursiva de Drive. El frontend envía lotes de hasta 25 imágenes, revalida IDs y compara un digest estable de destinos/referencias/historial entre lotes.
+- Cada archivo se valida contra el árbol «Cortes», tipo MIME imagen, estado no eliminado y acceso público ya existente. No se modifican permisos.
+- Destinos derivados de las ocho columnas de imagen, solo para IDs de vehículo únicos. Coincidencia exacta por nombre canónico; fórmulas y valores existentes quedan protegidos. No se usa similitud aproximada.
+- Se excluyen todas las referencias registradas en `Imagenes_Reemplazadas`, incluyendo archivo original, URL anterior y URL de reemplazo. Los nombres canónicos duplicados entre lotes se consolidan como ambiguos y pierden cualquier URL propuesta.
+- La UI utiliza timeout de 45 s, hasta tres reintentos y cancelación si cambia sesión/vista; los bloques `finally` liberan los indicadores globales aunque se cierre el modal. Guardar el inventario de imágenes sin uso requiere confirmación explícita.
+- Pruebas: `CortesImageReconciliation.mjs` 15/15 PASS; `CortesImageReconciliationUI.mjs` 9/9 PASS. GitHub Actions run 43613537658: 91 suites, 1,336 pruebas aprobadas, 0 fallos.
+- El reporte propone URL `https://drive.google.com/uc?export=view&id=...` solo si el acceso público ya está verificado. No escribe en Spreadsheet/Drive ni modifica permisos.
+- Pendiente: persistir cursor/progreso del preview, manifiesto de escritura con aprobación por fila, aplicar URLs con read-back, validar catálogo/formulario, conteos antes/después, auditoría y rollback; probar en copia Beta. No se ejecutó contra Drive/Spreadsheet reales.
