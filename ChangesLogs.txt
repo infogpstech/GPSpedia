@@ -103,3 +103,15 @@
 - lista_beta_parte2.txt: se agrega AUG-155 con preparación segura obligatoria (verificar repo/rama, detenerse ante árbol sucio, fetch + pull --ff-only y mostrar HEAD) y casos Beta de aviso/sesión, saludo, reacción útil, Tutoriales, PyS, Inbox Técnico, Inbox móvil, PWA y limitaciones de captura de pantalla.
 - Tareas_Activas.md: se referencia AUG-155 como plan de validación externa. No se ejecutaron pruebas Beta ni se modificaron ScriptProperties, deployments o datos externos.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — CORRECCIÓN DE COORDINACIÓN ADMIN Y ACCESO AL PANEL DEVELOPER
+- Services/Coordinator.js: políticas específicas para consultas del inventario, almacenamiento y carpetas Drive; lease propia para auditDriveImagesInCortes; política de migración con escritura cooperativa de ACTIVE_SESSIONS y escritura de IMAGE_INVENTORY.
+- Services/admin.js: las consultas de lectura dejan de usar la operación genérica ADMIN/sessionActivity; el escáner conserva autorización, auditoría y bloqueo local, pero usa su lease específica.
+- JS/Frontend/ui.js: la visibilidad del acceso Developer utiliza el mismo contexto autenticado que la apertura del panel; muestra un motivo seguro cuando falta contexto o rol.
+- JS/Tests/SharedMutationCoordinator.js: pruebas de concurrencia y conflicto del escáner/inventario (42/42 PASS en ejecución aislada).
+- JS/Tests/AdminImageScanCoordinatorContract.mjs y RunServiceTests.mjs: contrato de router, permisos y recursos de coordinación.
+- JS/Tests/SessionUiRoleInvalidation.js: regresión de visibilidad/apertura Developer (15/15 PASS en ejecución aislada).
+- Validación aislada adicional: AdminImageScanCoordinatorContract PASS. Node CLI completo, GitHub Actions y Beta quedan pendientes; no se modificaron servicios externos ni datos.
+================================================================================
