@@ -32,3 +32,18 @@ Estado general: PENDIENTE DE DIAGNÓSTICO Y CORRECCIÓN. Los síntomas se regist
 
 Relación posible: las incidencias 2 y 3 afectan el flujo de inventario/historial de ADMIN y podrían compartir una dependencia de coordinación, pero no se declara una causa común hasta reproducirlas y revisar evidencia. La incidencia 1 se mantiene separada hasta determinar si comparte el mismo problema de sesión/coordinación.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — HALLAZGOS DE REVISIÓN ESTÁTICA: DEVELOPER Y ADMIN
+Auditoría detallada: `Auditoría.txt` (AUD-2026-11-14-01 a AUD-2026-11-14-03).
+HEAD de inicio revisado: `edac7202791223de890ed6d912cc93f7e1fbfa63`.
+
+1. **Inicializar historial — causa confirmada:** `migrateReplacedImagesSchema` está incluida en `isSharedMutationAction_` y tiene despacho en ADMIN, pero no está declarada en `coordinatorPolicy_()` para el servicio ADMIN. El coordinador rechaza exactamente las operaciones sin política. La acción modifica/verifica el esquema de `Imagenes_Reemplazadas`; la corrección deberá declarar una política específica y mínima para `IMAGE_INVENTORY`, manteniendo sesión Desarrollador y ScriptLock.
+
+2. **Escáner — mecanismo de contención identificado:** `auditDriveImagesInCortes` y `getReplacedImages` no están en la lista de acciones coordinadas específicas de ADMIN. `doPost` las envuelve en `ADMIN/sessionActivity`, cuya lease escribe `ACTIVE_SESSIONS`. El coordinador rechaza leases concurrentes que escriben el mismo recurso. `getAdminSessionContext_` actualiza `ActiveSessions.LastActivityAt`, por lo que no se debe retirar la protección sin diseñar una alternativa segura. El patrón explica el error informado cuando coinciden consultas; falta medir/reproducir la concurrencia en Beta.
+
+3. **Panel Developer — sin causa estática confirmada:** el botón se muestra por rol Desarrollador, el listener llama a `openDevTools`, y AUTH devuelve `ID`, `Privilegios` y `SessionToken`, que coinciden con los campos esperados por la UI. Se requiere reproducir en navegador y observar el contexto de sesión y el estado del modal; no atribuir todavía el fallo a AUTH o navegación.
+
+Validación: inspección estática realizada; no se ejecutaron pruebas de navegador, Apps Script, Coordinator, Spreadsheet ni Drive. No se modificó código, política, endpoint, deployment ni dato productivo.
+================================================================================
