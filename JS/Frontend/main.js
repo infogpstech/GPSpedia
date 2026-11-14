@@ -21,8 +21,6 @@ import { pushNavigationState, replaceNavigationState, navigationHistoryStateKey 
 let deferredPrompt;
 let searchBlurTimeout;
 let isBackGestureBlurring = false;
-let lastManualCatalogRefreshAt_ = 0;
-const MANUAL_CATALOG_REFRESH_COOLDOWN_MS = 15000;
 
 function installCatalogStatusBanner_() {
     let banner = document.getElementById('catalog-status-banner');
@@ -729,64 +727,9 @@ async function initializeApp() {
         });
     }
 
-    // --- LÓGICA DE GESTO PULL-TO-REFRESH (Restaurada) ---
-    const container = document.querySelector('.container');
-    let touchStartY = null;
-
-    container.addEventListener('touchstart', (e) => {
-        touchStartY = null;
-        if (container.scrollTop === 0 && e.touches && e.touches[0]) {
-            touchStartY = e.touches[0].pageY;
-        }
-    }, { passive: true });
-
-    container.addEventListener('touchend', (e) => {
-        const startY = touchStartY;
-        const touch = e.changedTouches && e.changedTouches[0];
-        touchStartY = null;
-        if (!touch || startY === null) return;
-        const distance = touch.pageY - startY;
-        // El gesto refresca solo los datos del catálogo; no reinicia la página ni AUTH.
-        const now = Date.now();
-        if (container.scrollTop === 0 && distance > 150 && now - lastManualCatalogRefreshAt_ >= MANUAL_CATALOG_REFRESH_COOLDOWN_MS) {
-            lastManualCatalogRefreshAt_ = now;
-            auth.loadInitialData(true).catch(error => {
-                console.debug('No se pudo completar la actualización manual del catálogo:', error && error.message ? error.message : error);
-            });
-        }
-    }, { passive: true });
     document.getElementById('side-menu-logout-button').addEventListener('click', () => {
         ui.closeSideMenuAndRun(() => auth.logout());
     });
-
-    const refreshAppLink = document.getElementById('side-menu-refresh-link');
-    if (refreshAppLink) {
-        refreshAppLink.addEventListener('click', event => {
-            event.preventDefault();
-            ui.closeSideMenuAndRun(async () => {
-                try {
-                    if ('serviceWorker' in navigator) {
-                        const registration = await navigator.serviceWorker.getRegistration();
-                        if (registration && typeof registration.update === 'function') {
-                            let timeoutId = null;
-                            try {
-                                await Promise.race([
-                                    registration.update(),
-                                    new Promise(resolve => { timeoutId = window.setTimeout(resolve, 3000); })
-                                ]);
-                            } finally {
-                                if (timeoutId !== null) window.clearTimeout(timeoutId);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.warn('No se pudo comprobar si hay una versión nueva de GPSpedia antes de recargar:', error);
-                }
-                // La sesión y los borradores del Inbox están persistidos fuera del documento.
-                window.location.reload();
-            });
-        });
-    }
 
     const changelogLink = document.getElementById('side-menu-changelog-link');
     if (changelogLink) {

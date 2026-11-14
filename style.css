@@ -5,8 +5,11 @@
 }
 
 html {
-    height: var(--app-height, 100%);
-    overflow: hidden; /* Previene el scroll del html */
+    min-height: 100%;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
 }
 body {
     font-family: Arial, sans-serif;
@@ -16,8 +19,9 @@ body {
     color: var(--text-color);
     display: flex;
     flex-direction: column;
-    height: var(--app-height, 100%);
-    overflow: hidden; /* El scroll se maneja en .container */
+    min-height: var(--app-height, 100vh);
+    height: auto;
+    overflow: visible;
     transition: background-color 0.3s, color 0.3s;
     /* Prevención de selección de texto y asistente de Google */
     -webkit-user-select: none;
@@ -92,13 +96,8 @@ h1.app-title {
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
-    flex: 1 1 auto;
-    overflow-y: auto; /* Único elemento con scroll principal */
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox: Ocultar barras de scroll */
-}
-.container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Edge: Ocultar barras de scroll */
+    flex: 1 0 auto;
+    overflow: visible; /* El documento conserva el scroll raíz nativo del navegador */
 }
 .backBtn {
     margin-bottom: 15px;

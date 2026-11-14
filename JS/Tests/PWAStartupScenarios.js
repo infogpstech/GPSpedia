@@ -118,13 +118,24 @@ await run('main.js define la comprobación de visibilidad del lightbox antes de 
     assert.match(mainSource.slice(definition, call), /classList\.contains\('visible'\)/);
 });
 
-await run('el menú permite comprobar el Service Worker y recargar el documento completo', async () => {
+await run('el gesto nativo no se intercepta y no existe recarga manual en la interfaz', async () => {
     const html = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
-    assert.match(html, /id="side-menu-refresh-link"/);
-    assert.match(mainSource, /refreshAppLink\.addEventListener\('click'/);
-    assert.match(mainSource, /registration\.update\(\)/);
-    assert.match(mainSource, /window\.location\.reload\(\)/);
-    assert.match(mainSource, /window\.setTimeout\(resolve, 3000\)/);
+    assert.doesNotMatch(html, /side-menu-refresh-link|Recargar aplicación/);
+    assert.doesNotMatch(mainSource, /container\.addEventListener\(['"]touch(start|end)['"]/);
+    assert.doesNotMatch(mainSource, /auth\.loadInitialData\(true\)/);
+    assert.doesNotMatch(mainSource, /window\.location\.reload\(\)/);
+    assert.doesNotMatch(mainSource, /registration\.update\(\)/);
+});
+await run('el documento raíz recupera el desplazamiento y overscroll nativos', async () => {
+    const css = fs.readFileSync(new URL('../../style.css', import.meta.url), 'utf8');
+    const htmlRule = css.match(/html\s*\{([^}]+)\}/)?.[1] || '';
+    const bodyRule = css.match(/body\s*\{([^}]+)\}/)?.[1] || '';
+    const containerRule = css.match(/\.container\s*\{([^}]+)\}/)?.[1] || '';
+    assert.match(htmlRule, /overflow-y:\s*auto/);
+    assert.match(htmlRule, /overscroll-behavior-y:\s*auto/);
+    assert.match(bodyRule, /overflow:\s*visible/);
+    assert.match(containerRule, /overflow:\s*visible/);
+    assert.doesNotMatch(containerRule, /overflow-y:\s*auto/);
 });
 await run('primera instalación precarga el App Shell y el grafo de módulos', async () => {
     const worker = createWorkerHarness();

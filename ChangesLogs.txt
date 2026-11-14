@@ -139,3 +139,10 @@
 - Se registran subtareas GP-CAT-01A..01F, criterios de aceptación, cobertura de entidades, seguridad, transacciones, coordinación multi-pestaña y pruebas.
 - Solo documentación; no se modificó lógica funcional ni se ejecutaron pruebas.
 ================================================================================
+
+
+[2026-11-14] GP-PWA-02 — Restauración de actualización nativa
+- JS/Frontend/main.js: retirados el interceptor táctil de pull-to-refresh y el listener de recarga manual; se elimina la llamada que forzaba una sincronización parcial al gesto.
+- index.html: retirado del menú el enlace visible «Recargar aplicación».
+- style.css: habilitado el scroll raíz del documento y eliminado el scroll independiente de .container para permitir el overscroll nativo del navegador.
+- JS/Tests/PWAStartupScenarios.js: añadidas comprobaciones para evitar la reintroducción del botón/listener de recarga y del interceptor táctil; añadido contrato de scroll raíz.

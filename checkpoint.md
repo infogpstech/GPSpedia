@@ -1351,3 +1351,14 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 El usuario solicita que la plataforma renderice primero el catálogo de IndexedDB y después sincronice silenciosamente solo altas/modificaciones/bajas; novedades creadas por otro usuario deben aparecer en sesiones abiertas sin recarga, cierre ni reingreso, con animación elegante y fluida. Cobertura: Cortes, problemas, tutoriales y modelos.
 Hallazgo: auth.js ya lee el snapshot local antes de la red, pero después de la ventana de 60 segundos descarga fetchCatalogData como snapshot completo. offline.js reemplaza el snapshot completo; compareCatalogSnapshots compara colecciones, pero no existe feed incremental confiable con cursor para las sesiones abiertas. Debe diseñarse revisión/feed backend, polling adaptativo/coordinación multi-pestaña, aplicación transaccional y actualización de vistas sin perder scroll/filtros/modales/operaciones pendientes. Detalles y criterios de aceptación en Tareas_Activas.md, GP-CAT-01A..01F.
 Este mecanismo de datos en vivo es independiente de la actualización de recursos PWA de GP-PWA-02; no debe depender de reload ni sustituir el gesto nativo.
+
+
+## Continuidad — GP-PWA-02: restauración del gesto nativo (2026-11-14)
+
+- HEAD de partida verificado: `539fc669f6a0eecaf4cc51d66464f2812daef326`, rama `GPSpedia2.2.5_work`.
+- Restricción de interfaz confirmada por el usuario: no añadir botones, paneles, secciones ni acciones manuales nuevas; las mejoras de sincronización y mantenimiento deben ser automáticas e internas.
+- Cambios preparados: eliminado el listener `touchstart/touchend` que consumía el gesto y llamaba `auth.loadInitialData(true)`; eliminado el enlace de menú «Recargar aplicación» y la lógica asociada a `registration.update()` + `window.location.reload()`.
+- CSS raíz ajustado para permitir scroll del documento y overscroll nativo: `html` vuelve a ser desplazable, `body` deja de fijar el overflow y `.container` deja de ser un scroller independiente.
+- `JS/Tests/PWAStartupScenarios.js` ahora comprueba la ausencia de controles/interceptores manuales y el contrato de scroll raíz.
+- No se modificó el Service Worker: su navegación y peticiones de recursos ya son network-first con fallback de caché; la actualización del script SW permanece bajo el ciclo automático del navegador.
+- Estado: implementación y publicación preparadas; pruebas y publicación pendientes. No se afirma aún que el gesto nativo haya sido validado en dispositivos reales. Mantener pendiente Beta Android/iOS/escritorio.

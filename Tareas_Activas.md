@@ -588,6 +588,7 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 ### GP-PWA-02 — Restaurar actualización nativa del navegador/PWA
 **Prioridad: alta.**
+**Estado actual: EN PROGRESO.** Se retiraron del código de trabajo el gesto táctil que desviaba el pull-to-refresh, el enlace visible de recarga y su listener. El documento vuelve a usar el scroll raíz; las pruebas de contrato se ajustaron para impedir que reaparezcan estos controles o interceptores. Pendiente ejecutar las suites locales/CI y validar el gesto en navegadores reales durante Beta.
 - No debe existir un botón, enlace ni acción de menú «Recargar aplicación» o equivalente. Retirar el control añadido para ese propósito y su listener asociado.
 - La plataforma debe poder actualizarse mediante el mecanismo nativo del navegador, incluido el gesto pull-to-refresh cuando el navegador lo ofrece. No interceptar ni sustituir el gesto por una sincronización parcial del catálogo.
 - Investigar y corregir la causa raíz en el scroll principal, eventos táctiles, CSS de overscroll/touch-action, navegación y ciclo de vida del Service Worker. La solución debe permitir que la navegación vuelva a solicitar el documento y que el Service Worker detecte/active versiones nuevas sin depender de un botón propio.

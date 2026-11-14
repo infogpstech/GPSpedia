@@ -407,3 +407,10 @@ Impacto: el inicio online puede descargar todo el catálogo; una novedad creada 
 Corrección requerida: feed autenticado incremental con revisión/cursor, bootstrap completo solo cuando sea necesario, detección adaptativa de novedades, coordinación entre pestañas, aplicación transaccional y reconciliación animada sin recarga.
 No confundir sincronización de datos con actualización de los recursos PWA/Service Worker.
 ================================================================================
+
+
+[2026-11-14] GP-PWA-02 — Causa y corrección del bloqueo del gesto nativo
+- Evidencia: JS/Frontend/main.js interceptaba touchstart/touchend en .container y sustituía el gesto por auth.loadInitialData(true); además el menú ofrecía #side-menu-refresh-link, cuyo listener ejecutaba registration.update() y window.location.reload().
+- Evidencia CSS: style.css fijaba html/body con overflow:hidden y delegaba el desplazamiento a .container mediante overflow-y:auto, evitando que el documento raíz gestionara el overscroll.
+- Impacto: el navegador no podía aplicar consistentemente su comportamiento nativo de pull-to-refresh; la solución manual añadía una acción visible que el usuario no desea.
+- Corrección preparada: retirar interceptor, enlace y listener; restaurar desplazamiento del documento raíz. La prueba automatizada cubre el contrato estático. Validación real del gesto queda pendiente de Beta.
