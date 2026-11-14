@@ -109,11 +109,12 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [x] Pruebas de rol para impedir edición/impresión a Técnico y roles no autorizados; autorización backend validada con sesión real simulada. [ ] Ampliar pruebas negativas a todas las acciones de imágenes y endpoints privilegiados.
 
 ### P5 — Mitigación de capturas
-**Estado: PENDIENTE**
-- [ ] Investigar APIs y capacidades reales de navegadores/PWA/Android.
-- [ ] No asumir que `preventDefault` bloquea capturas del sistema.
-- [ ] Evaluar marca de agua contextual y ocultación de información sensible al cambiar visibilidad, solo si aporta protección sin degradar UX.
-- [ ] Documentar expresamente qué ataques no pueden impedirse en web.
+**Estado: EVALUACIÓN TÉCNICA COMPLETADA; NO EXISTE BLOQUEO FIABLE DE CAPTURAS EN WEB/PWA.**
+- [x] Evaluar capacidades de navegador/PWA y distinguirlas de mecanismos disponibles en aplicaciones Android nativas.
+- [x] Confirmar que `preventDefault`, `visibilitychange`, `blur` y `pagehide` no bloquean ni detectan de forma fiable capturas nativas.
+- [x] Evaluar marca de agua contextual y ocultación al perder visibilidad. No se implementa marca de agua por defecto porque puede tapar diagramas técnicos y no impide capturas; ocultar al perder foco tampoco detecta la captura.
+- [x] Documentar los límites de web/PWA y la alternativa para datos confidenciales: recursos privados y entrega autenticada/temporal desde backend.
+- [ ] Si se requiere control de captura del sistema, evaluar una aplicación Android nativa con `FLAG_SECURE`; queda fuera de la PWA web actual.
 
 ### P6 — Integración y regresión
 **Estado: PENDIENTE**
