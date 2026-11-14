@@ -93,4 +93,82 @@ test("Incluye benchmark de coste para calibración en Apps Script sin datos prod
     assert.ok(auth.includes("GPSpedia-KDF-benchmark-only"));
 });
 
+
+function migrationHarness(actorRole="Desarrollador"){
+    const users=[
+        ["ID","Nombre_Usuario","Password","Privilegios","Telefono","Correo","Nombre_Completo","SessionToken","TermsAcceptance"],
+        ["U1","dev","pbkdf2-sha256$12000$"+"a".repeat(32)+"$"+"b".repeat(64),"Desarrollador","","","Developer","", ""],
+        ["U2","tech1","PlainLegacyA","Tecnico","","","Tech One","", ""],
+        ["U3","inactive","InactiveLegacy","","","","Inactive","", ""],
+        ["U4","tech2","sha256$00112233445566778899aabbccddeeff$"+"a".repeat(64),"Tecnico","","","Tech Two","", ""],
+        ["U5","tech3","PlainLegacyB","Supervisor","","","Tech Three","", ""],
+        ["U6","tech4","pbkdf2-sha256$12000$"+"b".repeat(32)+"$"+"c".repeat(64),"Tecnico","","","Tech Four","", ""]
+    ];
+    const sessions=[
+        ["ID","Usuario","Token","date","Logs","LastActivityAt"],
+        ["U1","dev","token-1",new Date(),"",new Date("2026-11-10T00:00:00Z")]
+    ];
+    let hashCounter=0,waits=0,releases=0;
+    function sheet(rows){
+        return {
+            getDataRange:()=>({getValues:()=>rows.map(row=>row.slice())}),
+            getRange:(row,col)=>({
+                setValue:value=>{rows[row-1][col-1]=value;},
+                getValue:()=>rows[row-1][col-1]
+            }),
+            _rows:rows
+        };
+    }
+    const usersSheet=sheet(users),sessionsSheet=sheet(sessions);
+    const ss={getSheetByName:name=>name==="Users"?usersSheet:name==="ActiveSessions"?sessionsSheet:null};
+    const deps={
+        normalizeUserId:v=>String(v??"").trim(),
+        normalizeRoleName:v=>String(v||"").trim().toLowerCase(),
+        isActiveAuthUserRecord:row=>Boolean(row&&String(row[1]||"").trim()&&!String(row[1]||"").startsWith("__deleted__:")&&["desarrollador","jefe","supervisor","tecnico","tecnico_exterior"].includes(String(row[3]||"").trim().toLowerCase())),
+        findSessionRowsByTokenUnderLock_:(sh,token)=>sh.getDataRange().getValues().slice(1).map((row,index)=>({row,rowIndex:index+2})).filter(item=>item.row[2]===token),
+        getSessionExpirationStatus_:()=>({expired:false}),
+        assertRequesterRoleRevocationClear_:()=>{},
+        ensureActiveSessionsActivityColumn_:()=>{},
+        createPasswordHash:()=>{hashCounter++;return "pbkdf2-sha256$12000$"+String(hashCounter).padStart(32,"0")+"$"+"d".repeat(64);},
+        LockService:{getScriptLock:()=>({waitLock:()=>{waits++;},releaseLock:()=>{releases++;}})},
+        SpreadsheetApp:{openById:()=>ss,flush:()=>{}},
+        SPREADSHEET_ID:"ISOLATED",
+        SHEET_NAMES:{USERS:"Users",ACTIVE_SESSIONS:"ActiveSessions"},
+        COLS_USERS:{ID:1,Nombre_Usuario:2,Password:3,Privilegios:4},
+        COLS_ACTIVE_SESSIONS:{ID_Usuario:1,ActiveSessions:3,LastActivityAt:6},
+        PASSWORD_HASH_PREFIX:"pbkdf2-sha256$",
+        LEGACY_PASSWORD_HASH_PREFIX:"sha256$"
+    };
+    users[1][3]=actorRole;
+    const fn=new Function(...Object.keys(deps),extract("handleMigrateLegacyPasswords")+"\nreturn handleMigrateLegacyPasswords;")(...Object.values(deps));
+    return {run:payload=>fn(payload),users,sessions,stats:()=>({hashCounter,waits,releases})};
+}
+test("La migración batch usa dry-run por defecto y no escribe contraseñas",()=>{
+    const h=migrationHarness(),before=h.users.map(r=>r.slice()),r=h.run({userId:"U1",sessionToken:"token-1",batchSize:1});
+    assert.equal(r.status,"success");assert.equal(r.dryRun,true);assert.equal(r.eligiblePlaintext,2);assert.equal(r.wouldMigrate,1);
+    assert.equal(r.legacyHashedPendingLogin,1);assert.equal(r.alreadyCurrent,2);assert.deepEqual(h.users,before);
+    assert.ok(!JSON.stringify(r).includes("PlainLegacyA")&&!JSON.stringify(r).includes("PlainLegacyB"));
+});
+test("La migración exige confirmación explícita para escribir",()=>{
+    const h=migrationHarness();assert.throws(()=>h.run({userId:"U1",sessionToken:"token-1",dryRun:false}));
+    assert.equal(h.stats().hashCounter,0);
+});
+test("La migración procesa lotes reanudables e idempotentes",()=>{
+    const h=migrationHarness();
+    const first=h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true,batchSize:1});
+    assert.equal(first.migrated,1);assert.equal(first.remainingPlaintext,1);assert.equal(first.complete,false);
+    const second=h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true,batchSize:1});
+    assert.equal(second.migrated,1);assert.equal(second.remainingPlaintext,0);assert.equal(second.complete,true);
+    const third=h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true,batchSize:1});
+    assert.equal(third.migrated,0);assert.equal(third.complete,true);assert.equal(h.stats().hashCounter,2);
+    assert.match(h.users[2][2],/^pbkdf2-sha256\\$/);assert.match(h.users[5][2],/^pbkdf2-sha256\\$/);
+    assert.equal(typeof h.sessions[1][5],"string");
+    assert.equal(h.stats().waits,h.stats().releases);
+});
+test("La migración rechaza roles distintos de Desarrollador",()=>{
+    const h=migrationHarness("Supervisor");
+    assert.throws(()=>h.run({userId:"U1",sessionToken:"token-1",dryRun:false,confirm:true}));
+    assert.equal(h.stats().hashCounter,0);
+});
+
 console.log("PasswordHashMigration: "+passed+"/"+passed+" PASS");
