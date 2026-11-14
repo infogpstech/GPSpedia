@@ -86,6 +86,7 @@ function addLogoHarness(options={}){
  const originalGetRange=sheetValue.getRange;
  sheetValue.getRange=(row,col,nr=1,nc=1)=>{
   const range=originalGetRange(row,col,nr,nc);
+  range.row=row;range.col=col;range.nr=nr;range.nc=nc;
   range.copyTo=destination=>{
    const source=rows.slice(row-1,row-1+nr).map(item=>item.slice());
    while(rows.length<destination.row+destination.nr-1)rows.push(["","","",""]);
