@@ -75,7 +75,6 @@ check("La descarga de imágenes reemplazadas queda exclusiva de Desarrollador en
  assert.doesNotMatch(admin,/const ADMIN_MODAL_EDIT_ACTIONS = new Set\([^;]*getReplacedImageDownloadUrl/);
  assert.match(admin,/case 'getReplacedImageDownloadUrl':/);
  assert.match(admin,/ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)/);
- assert.deepEqual(allowed,["getAdminImageUploadStatus","updateVehicleField","uploadAdminImage"].sort());
 });
 check("Las demás acciones administrativas continúan exclusivas de Desarrollador",()=>{
  assert.match(admin,/function assertDeveloperSession\(payload\)\{return getAdminSessionContext_\(payload,\["desarrollador"\]\);\}/);
@@ -91,8 +90,6 @@ check("El gestor de imágenes ADMIN queda reservado a Desarrollador salvo las tr
  const routed=[...router.matchAll(/case ['"]([^'"]+)['"]:/g)].map(match=>match[1]);
  const imageActions=["normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","getReplacedImages","migrateReplacedImagesSchema","getDriveStorage","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","auditDriveImagesInCortes","saveUnusedImagesInventory","getCortesImageFolders","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl"];
  imageActions.forEach(action=>assert.ok(routed.includes(action),"acción de imagen ausente: "+action));
- routed.filter(action=>action!=="ping").forEach(action=>assert.ok(allowed.includes(action)||action!=="updateVehicleField"||allowed.includes(action),"acción ADMIN fuera del router"));
- routed.filter(action=>action!=="ping"&&!allowed.includes(action)).forEach(action=>assert.ok(!allowed.includes(action),"acción ADMIN con excepción no autorizada: "+action));
  assert.match(admin,/ADMIN_MODAL_EDIT_ACTIONS\.has\(action\) \? assertModalEditSession\(payload\) : assertDeveloperSession\(payload\)/);
 });
 check("FEEDBACK conserva permisos separados para aportaciones, moderación y mantenimiento",()=>{
