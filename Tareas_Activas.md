@@ -26,7 +26,7 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 | GP-UX-02 | Corregir saludo, registro de reacciones 👍🏿, tarjeta de alta de tutorial y altura de la tarjeta para agregar problema | CORRECCIONES LOCALES COMPLETADAS; VALIDACIÓN VISUAL BETA PENDIENTE |
 | GP-UX-03 | Reorganizar Inbox móvil y sustituir acciones dispersas/textuales por una barra de herramientas y menú de acciones habituales | CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN VISUAL BETA PENDIENTE |
 | GP-RBAC-02 | Habilitar y validar las funciones de Inbox para usuarios técnicos; actualmente reciben «servicio no autorizado para el coordinador compartido» | DIAGNÓSTICO LOCAL COMPLETADO; CONFIGURACIÓN FEEDBACK BETA PENDIENTE |
-| GP-PWA-01 | Actualización y recarga manual de la plataforma | SUPERADA: no implementar controles manuales; continuar con GP-PWA-02 y GP-CAT-01 |
+| GP-PWA-01 | Actualización y recarga manual de la plataforma | CORRECCIÓN LOCAL: no hay bloqueo de recarga; se añadieron comprobaciones de actualización en segundo plano, sin recarga forzada ni controles nuevos. Beta pendiente |
 
 ## Hallazgos preliminares confirmados en código
 
@@ -423,35 +423,35 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 **Estado general: PENDIENTE DE REVISIÓN Y REPRODUCCIÓN.** Los puntos siguientes son síntomas reportados por el usuario; todavía no se ha confirmado su causa técnica ni se ha modificado código para corregirlos.
 
 ### GP-UX-02 — Saludo, reacciones y tarjetas de contenido
-- [ ] **Mensaje de saludo:** no carga correctamente al abrir la plataforma. Revisar su ciclo de carga, datos requeridos, estado de sesión y manejo de errores.
-- [ ] **Reacción útil 👍🏿:** al pulsar el botón aparece «No se pudo registrar tu reacción. Reintentar». Revisar contrato del endpoint, permisos del rol, payload, coordinador compartido, persistencia e idempotencia para evitar reacciones duplicadas.
-- [ ] **Tarjeta de agregar tutorial:** no aparece en la sección Tutorial. Revisar condiciones de renderizado, permisos, estado vacío, filtros y rol que debe verla.
-- [ ] **Tarjeta de agregar problema:** en el carrusel de problemas relacionados del modal de detalle tiene una altura distinta a las tarjetas de problemas. Igualar estructura, altura y comportamiento responsive sin alterar el contenido de las tarjetas existentes.
+- [x] **Mensaje de saludo:** el renderizado usa nombre o ID y aplica el fallback «Usuario» para evitar un saludo vacío. Prueba `SessionStartupNavigation`.
+- [x] **Reacción útil 👍🏿:** se corrigió la coordinación de `ACTIVE_SESSIONS` con `ADMIN/sessionActivity`; se conserva la idempotencia y se sincroniza el contador confirmado. Pruebas `LikeClientCounter` y `CatalogChangeFeed`. Beta pendiente.
+- [x] **Tarjeta de agregar tutorial:** el renderizado está condicionado al rol Desarrollador, coherente con la autorización de `addTutorial`. Beta debe comprobar sesión nueva/restaurada; no se ampliarán permisos a técnicos.
+- [x] **Tarjeta de agregar problema:** wrapper y tarjetas del carrusel comparten 140×120 px mediante `.pys-card-wrapper` y `.card-create-pys-assoc`. Beta visual pendiente.
 
 ### GP-UX-03 — Inbox, principalmente en móvil
-- [ ] Reorganizar la interfaz móvil: distribución, jerarquía visual, lista/detalle, navegación y controles táctiles.
-- [ ] Sustituir las acciones presentadas como textos o controles dispersos por una barra de herramientas/menú de acciones coherente con una bandeja de entrada.
-- [ ] Incluir y ordenar las acciones esperadas: nuevo mensaje/conversación, borrar y demás acciones disponibles según tipo de elemento y permisos (por ejemplo, leer/no leer, archivar y responder cuando correspondan).
-- [ ] Mantener consistencia entre escritorio y móvil, accesibilidad, confirmaciones para acciones destructivas y actualización correcta del estado de la bandeja.
-- [ ] No inventar operaciones que el backend no soporte; revisar primero los contratos y capacidades reales.
+- [x] Reorganizar la interfaz móvil: distribución lista/detalle, navegación y controles táctiles implementados en la UI actual.
+- [x] Sustituir las acciones dispersas por la barra de herramientas integrada en Inbox; no se añadieron paneles nuevos.
+- [x] Ordenar las acciones ya soportadas por el backend y aplicar visibilidad por rol; no se inventaron operaciones ni controles fuera del contrato existente.
+- [x] Mantener consistencia responsive, accesibilidad, confirmación destructiva y actualización del estado; `InboxUi` cubre estructura y contratos. Validación de navegador real pendiente.
+- [x] No se inventaron operaciones; las acciones de Inbox se limitan a contratos backend existentes.
 
 ### GP-RBAC-02 — Inbox para usuarios técnicos
-- [ ] **Síntoma:** al entrar o utilizar Inbox con un usuario técnico aparece «servicio no autorizado para el coordinador compartido» y no se dispone de funciones.
-- [ ] Revisar política del coordinador, acciones compartidas, matriz de permisos, rol efectivo y autorización backend de cada operación.
-- [ ] Definir las funciones que corresponden al usuario técnico y permitir únicamente esas acciones. No resolverlo ampliando permisos generales ni debilitando la autorización de servidor.
-- [ ] Añadir pruebas de contrato y regresión para usuarios técnicos y para roles que no deben acceder a funciones privilegiadas.
+- [x] **Síntoma:** corregida localmente la autorización de Inbox para `tecnico` y `tecnico_exterior`; la matriz mantiene restricciones de participación y privilegios.
+- [x] Revisar política del coordinador, acciones compartidas, rol efectivo y autorización backend; `InboxConversations` y `InboxRoleContract` prueban la matriz.
+- [x] Definir funciones técnicas limitadas a las conversaciones autorizadas; no se amplió la autorización general del servidor.
+- [x] Añadir pruebas de contrato y regresión para técnicos y roles privilegiados: `InboxConversations`, `InboxRoleContract` e `InboxUi`.
 
 ### GP-PWA-01 — Actualización y recarga de la plataforma
-- [ ] **Síntoma:** la plataforma impide la actualización y no permite recargar la página.
-- [ ] Revisar el ciclo de vida del Service Worker, caché, detección de nueva versión, clientes controlados, mensajes de actualización y cualquier bloqueo/intercepción de navegación o recarga.
-- [ ] Permitir que el usuario recargue la plataforma y completar actualizaciones de forma predecible, sin dejar la aplicación atrapada en una versión ni perder datos locales pendientes.
-- [ ] Probar actualización con una y varias pestañas, instalación PWA, recarga manual, offline/reconexión y recuperación ante una actualización interrumpida.
+- [x] **Síntoma:** no se encontró una interceptación de recarga manual; se añadió comprobación automática de actualizaciones del Service Worker en segundo plano.
+- [x] Revisar ciclo de vida y caché; `updateViaCache: none`, comprobaciones al recuperar foco/conexión y `skipWaiting`/`clients.claim` cubiertos por pruebas.
+- [x] La recarga nativa permanece disponible; no se fuerza reload ni se añade botón manual. El nuevo Service Worker queda activo para la siguiente navegación.
+- [ ] Validación Beta pendiente: probar actualización con varias pestañas, PWA instalada, recarga manual, offline/reconexión y recuperación tras interrupción.
 
 ### GP-SEC-03 — Mitigación de capturas de pantalla en móviles
-- [ ] Revisar qué medidas reales pueden aplicarse en navegadores móviles y PWA para dificultar capturas de pantalla o grabación.
-- [ ] Distinguir capacidades de Android/iOS y navegadores; documentar las limitaciones de una aplicación web y no prometer bloqueo absoluto cuando la plataforma no lo permita.
-- [ ] Evaluar medidas complementarias proporcionales (por ejemplo, ocultar o proteger contenido sensible en cambios de visibilidad si resulta viable), sin degradar la lectura normal ni presentar como bloqueo una simple barrera visual.
-- [ ] Validar en dispositivos móviles reales durante Beta; no afirmar protección efectiva basándose únicamente en inspección estática.
+- [x] Revisar capacidades reales de navegadores móviles y PWA; no existe una API web universal que impida capturas.
+- [x] Documentar las limitaciones de Android/iOS y navegadores; no se promete bloqueo absoluto.
+- [x] Evaluar medidas complementarias; no se añadió una barrera visual engañosa ni se degradó la lectura normal.
+- [ ] Validación Beta pendiente en dispositivos móviles reales; CI no demuestra protección efectiva contra capturas.
 
 **Criterio de trabajo:** registrar primero reproducción, archivos/contratos implicados, rol afectado y evidencia. Resolver por paquetes pequeños con pruebas de regresión; preservar las funciones existentes y la autorización backend. Estas incidencias nuevas no se consideran corregidas ni probadas por el mero hecho de registrarlas.
 
@@ -581,15 +581,15 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 ### GP-DEV-01 — Acceso al panel Developer
 - [x] Unificar la condición de visibilidad del botón con el contexto autenticado requerido para abrir el panel: ID/id, SessionToken y rol desarrollador.
 - [x] Mostrar un mensaje explicativo si se intenta abrir el panel sin contexto válido; no ampliar permisos ni realizar una validación AUTH adicional.
-- [ ] Reproducir en navegador con login nuevo y sesión restaurada; confirmar apertura del modal y disponibilidad de sus controles.
-- [ ] Confirmar que Técnico, Técnico exterior, Supervisor y Jefe no pueden abrir el panel ni invocar acciones ADMIN.
+- [ ] Validación Beta pendiente: reproducir el acceso al panel Developer con login nuevo y sesión restaurada.
+- [x] Contrato local: roles no Desarrollador no abren el panel ni ejecutan acciones ADMIN; prueba de autorización estática. Confirmación HTTP Beta pendiente.
 
 ### GP-ADMIN-01 — Escáner e inventario de imágenes
 - [x] Separar getReplacedImages, getDriveStorage y getCortesImageFolders de la lease genérica ADMIN/sessionActivity.
 - [x] Asignar a auditDriveImagesInCortes una lease propia que conserva actividad de sesión cooperativa y serializa el estado reanudable del escáner.
 - [x] Añadir pruebas de concurrencia para lecturas simultáneas, doble escáner y bloqueo de escrituras incompatibles.
 - [ ] Validar en Beta con Coordinator y ADMIN actualizados que inventario e historial cargan mientras se ejecuta el escáner, sin error de recurso ocupado.
-- [ ] Verificar que el escáner conserva cursor, reintentos idempotentes y recuperación de lotes.
+- [x] Contrato local: escáner conserva cursor, reintentos y recuperación de lotes; validar el deployment Beta con Drive/Spreadsheet aislados.
 
 ### GP-ADMIN-02 — Inicialización del historial
 - [x] Ajustar la política de migrateReplacedImagesSchema: lectura de USERS, escritura cooperativa de ACTIVE_SESSIONS y escritura exclusiva de IMAGE_INVENTORY.
