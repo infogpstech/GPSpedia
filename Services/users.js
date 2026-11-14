@@ -196,7 +196,8 @@ function getVerifiedSession(sessionToken) {
 function isActiveUserRecord(row) {
     if (!row) return false;
     const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
-    const role = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const rawRole = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const role = rawRole === 'gefe' ? 'jefe' : rawRole;
     return Boolean(username) && !username.startsWith('__deleted__:') &&
         ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
 }
