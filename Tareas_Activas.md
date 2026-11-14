@@ -117,12 +117,12 @@ Simplificar la autenticación sin debilitar autorización; modernizar Inbox; end
 - [ ] Si se requiere control de captura del sistema, evaluar una aplicación Android nativa con `FLAG_SECURE`; queda fuera de la PWA web actual.
 
 ### P6 — Integración y regresión
-**Estado: PENDIENTE**
-- [ ] Pruebas por rol y sesión.
-- [ ] Pruebas de migración/reanudación/reconciliación y referencias.
-- [ ] Pruebas de Inbox en escritorio/móvil.
-- [ ] Pruebas de modal y llamadas directas al backend.
-- [ ] Pruebas de rendimiento, offline, reconexión y regresión de PWA.
+**Estado: EN PROGRESO — REGRESIÓN AUTOMATIZADA CI APROBADA; VALIDACIONES BETA/REALES PENDIENTES.**
+- [x] Pruebas automatizadas por rol y sesión: AUTH, ADMIN modal, Inbox, coordinación de mutaciones y sesiones revocadas/expiradas.
+- [x] Pruebas unitarias de migración/reanudación/reconciliación: PBKDF2 batch, IDs, duplicados, fórmulas y referencias simuladas. La ejecución sobre datos reales sigue bloqueada hasta contar con copia/entorno Beta.
+- [ ] Pruebas de Inbox en escritorio/móvil en navegadores y dispositivos reales; CI verifica estructura, contratos y responsive CSS.
+- [x] Pruebas de contrato de modal y autorización backend con sesiones simuladas, incluyendo Técnico denegado y Supervisor/Jefe/Desarrollador permitidos. [ ] Llamadas HTTP negativas contra deployment Beta.
+- [ ] Pruebas de rendimiento, offline, reconexión y regresión PWA en dispositivos reales; CI cubre escenarios automatizados, no reemplaza medición de campo.
 
 ## Reglas de seguridad y aceptación
 
