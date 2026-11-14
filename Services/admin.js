@@ -819,7 +819,13 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema"].includes(action);
+    return ["backupDatabase","backupDrive","restoreDatabase","restoreDrive","reorganizeDatabase","normalizeImages","organizePrimaryVehicleImages","restoreAllTrashedImages","addLogo","updateVehicleField","uploadAdminImage","migrateCortesOperationIds","migrateIdentifiers","rollbackIdentifiers","reconcilePendingImageUploads","addOrUpdateCut","addSupplementaryInfo","createSheet","addColumn","driveCommand","recoverReplacedImage","deleteReplacedImage","restoreReplacedImageFromTrash","permanentlyDeleteReplacedImage","markReplacedImageInUse","saveUnusedImagesInventory","applyCortesImageReconciliation","createCortesImageFolder","moveReplacedImage","getReplacedImageDownloadUrl","migrateReplacedImagesSchema","auditDriveImagesInCortes"].includes(action);
+}
+
+// Consultas largas de inventario/Drive obtienen una lease propia de lectura.
+// No se registran como mutaciones ni generan eventos administrativos de escritura.
+function isSharedReadAction_(action) {
+    return ["getReplacedImages", "getDriveStorage", "getCortesImageFolders"].includes(action);
 }
 
 function doPost(e) {
@@ -833,8 +839,9 @@ function doPost(e) {
     const action = String(request.action || "");
     if (!isSharedMutationAction_(action)) {
         if (action === "ping") return doPostInternal_(e);
+        const operation = isSharedReadAction_(action) ? action : "sessionActivity";
         try {
-            return withSharedMutationLease_("ADMIN", "sessionActivity", function() {
+            return withSharedMutationLease_("ADMIN", operation, function() {
                 return doPostInternal_(e);
             });
         } catch (error) {
