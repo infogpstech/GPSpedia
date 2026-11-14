@@ -14,6 +14,10 @@ const id=n=>"drive-file-id-000000000000000"+n;
 const target=(baseName,extra={})=>({row:2,vehicleId:"V-001",field:"imagenVehiculo",column:9,baseName,currentValue:"",...extra});
 const file=(n,name,mimeType="image/jpeg")=>({fileId:id(n),fileName:name,mimeType,accessPublic:true});
 let passed=0;function testCase(name,fn){fn();passed++;console.log("PASS "+name);}
+testCase("no reutiliza imágenes que ya están en el historial",()=>{
+ const p=planner([target("same")],[file(1,"same.png")],new Map(),true,new Set([id(1)]));
+ assert.equal(p.results[0].status,"historical");
+});
 testCase("bloquea destinos con fórmula aunque el valor calculado esté vacío",()=>{
  const p=planner([target("same",{hasFormula:true})],[file(1,"same.png")],new Map());
  assert.equal(p.results[0].status,"occupied");
@@ -69,4 +73,5 @@ testCase("deduplica el mismo ID de Drive y devuelve conteos coherentes",()=>{
  const f=file(1,"same.png"),p=planner([target("same")],[f,{...f}],new Map());
  assert.equal(p.results.length,1);assert.equal(p.counts.matched,1);assert.equal(p.counts.invalid,0);
 });
+assert.match(admin,/function collectReplacedImageHistoryIds_\(/);
 console.log("CortesImageReconciliation: "+passed+"/"+passed+" PASS");

@@ -7666,7 +7666,7 @@ export async function openAuditDriveModal() {
         reconciliationCounts.replaceChildren();
         reconciliationResults.replaceChildren();
         const labels = {
-            matched: "Coincidencia exacta", already_linked: "Ya vinculada", orphaned: "Sin correspondencia",
+            matched: "Coincidencia exacta", already_linked: "Ya vinculada", historical: "Ya registrada en historial", orphaned: "Sin correspondencia",
             ambiguous: "Ambigua", occupied: "Destino ocupado", referenced_elsewhere: "Referenciada en otra ubicación",
             access_restricted: "Acceso no público", unverifiable: "No verificable", invalid: "Archivo inválido"
         };
@@ -7743,7 +7743,7 @@ export async function openAuditDriveModal() {
                 referenced_elsewhere: 0, access_restricted: 0, unverifiable: 0, invalid: 0
             }
         };
-        let sourceDigest = "";
+        let sourceDigest = "", referenceCheckStatus = "";
         try {
             const batchSize = 25;
             const totalBatches = Math.ceil(imageFiles.length / batchSize);
@@ -7765,6 +7765,10 @@ export async function openAuditDriveModal() {
                     throw new Error("Los datos de Cortes o sus referencias cambiaron durante la simulación. No se combinaron lotes; vuelve a ejecutar la auditoría.");
                 }
                 sourceDigest = response.manifestDigest;
+                if (referenceCheckStatus && referenceCheckStatus !== response.referenceCheckStatus) {
+                    throw new Error("El estado de verificación de referencias cambió entre lotes.");
+                }
+                referenceCheckStatus = String(response.referenceCheckStatus || "unavailable");
                 aggregate.results.push(...response.results);
                 aggregate.invalidFiles.push(...response.invalidFiles);
                 if (!batchIndex) aggregate.rowIssues = Array.isArray(response.rowIssues) ? response.rowIssues : [];
@@ -7776,10 +7780,10 @@ export async function openAuditDriveModal() {
                     Math.min(offset + batch.length, imageFiles.length) + " de " + imageFiles.length + " imágenes. Sin escrituras.";
             }
             aggregate.manifestDigest = sourceDigest;
-            aggregate.referenceCheckStatus = "verified";
+            aggregate.referenceCheckStatus = referenceCheckStatus;
             renderCortesReconciliationReport_(aggregate);
             if (reconciliationStatus) reconciliationStatus.textContent =
-                "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; no se modificó Spreadsheet, Drive ni permisos.";
+                "Simulación terminada. " + aggregate.counts.matched + " coincidencias exactas propuestas; referencias: " + referenceCheckStatus + ". No se modificó Spreadsheet, Drive ni permisos."
         } catch (error) {
             if (!isCurrentRequest()) return;
             if (reconciliationStatus) reconciliationStatus.textContent =

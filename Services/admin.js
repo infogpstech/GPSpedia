@@ -2865,9 +2865,10 @@ function buildCortesImageReconciliationTargets_() {
  * Clasifica archivos de Drive contra destinos de Cortes por nombre canónico exacto.
  * Un resultado "matched" solo es una propuesta; nunca modifica Spreadsheet ni Drive.
  */
-function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferences, referenceScanVerified) {
+function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferences, referenceScanVerified, historicalDriveIds) {
     if (!Array.isArray(targets) || !Array.isArray(driveFiles)) throw new Error("El plan requiere destinos y archivos en formato de lista.");
     const references = activeReferences instanceof Map ? activeReferences : new Map();
+    const historicalIds = historicalDriveIds instanceof Set ? historicalDriveIds : new Set();
     const targetIndex = new Map();
     targets.forEach(target => {
         const key = String(target && target.baseName || "").trim().toLowerCase();
@@ -2913,6 +2914,11 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
             if (currentIds.includes(fileId)) {
                 results.push({ status: "already_linked", fileId, fileName: file.fileName, target });
                 usedTargetKeys.add(targetKey);
+                return;
+            }
+            if (historicalIds.has(fileId)) {
+                results.push({ status: "historical", fileId, fileName: file.fileName, target,
+                    reason: "El archivo ya figura en el historial de imágenes; no se propone reasignarlo." });
                 return;
             }
             const exactTargetReference = locations.some(location =>
@@ -2965,7 +2971,7 @@ function buildCortesImageReconciliationPlan_(targets, driveFiles, activeReferenc
             usedTargetKeys.add(targetKey);
         });
     });
-    const counts = { matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0, referenced_elsewhere: 0, access_restricted: 0, unverifiable: 0, invalid: invalidFiles.length };
+    const counts = { matched: 0, already_linked: 0, orphaned: 0, ambiguous: 0, occupied: 0, referenced_elsewhere: 0, historical: 0, access_restricted: 0, unverifiable: 0, invalid: invalidFiles.length };
     results.forEach(item => { counts[item.status] = (counts[item.status] || 0) + 1; });
     return { results, invalidFiles, counts, writePerformed: false };
 }
@@ -3019,14 +3025,16 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     });
     const targetSnapshot = buildCortesImageReconciliationTargets_();
     const referenceSnapshot = collectActiveDriveReferences(true);
+    const historicalDriveIds = collectReplacedImageHistoryIds_();
     const referenceScanVerified = Number(referenceSnapshot.unverifiableReferenceCount || 0) === 0;
-    const plan = buildCortesImageReconciliationPlan_(targetSnapshot.targets, files, referenceSnapshot.references, referenceScanVerified);
+    const plan = buildCortesImageReconciliationPlan_(targetSnapshot.targets, files, referenceSnapshot.references, referenceScanVerified, historicalDriveIds);
     plan.invalidFiles.push.apply(plan.invalidFiles, invalid);
     plan.counts.invalid = plan.invalidFiles.length;
     const sourceDigestPayload = JSON.stringify({
         targets: targetSnapshot.targets.map(target => [target.row, target.vehicleId, target.field, target.currentValue, target.hasFormula, target.baseName]),
         references: Array.from(referenceSnapshot.references.entries()).map(([id, locations]) => [id, locations]).sort((a,b)=>a[0].localeCompare(b[0])),
-        unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0)
+        unverifiableReferenceCount: Number(referenceSnapshot.unverifiableReferenceCount || 0),
+        historicalDriveIds: Array.from(historicalDriveIds).sort()
     });
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sourceDigestPayload)
         .map(value => ("0" + ((value + 256) % 256).toString(16)).slice(-2)).join("");
@@ -3036,6 +3044,7 @@ function handlePreviewCortesImageReconciliation_(payload, logMessage, developerC
     plan.referenceCheckStatus = referenceScanVerified ? "verified" : "unverifiable";
     plan.rowIssues = targetSnapshot.rowIssues;
     plan.sourceLastRow = targetSnapshot.sourceLastRow;
+    plan.historicalReferenceCount = historicalDriveIds.size;
     plan.manifestDigest = digest;
     plan.batchDigest = batchDigest;
     plan.writePerformed = false;
