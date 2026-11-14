@@ -28,3 +28,22 @@
 - Pruebas locales: SharedMutationCoordinator 41/41 PASS; TermsModalAccessibility 12/12 PASS; simulación del preflight PASS; parsing/sintaxis PASS.
 - Validación Beta y despliegue Apps Script pendientes.
 ================================================================================
+
+
+## 2026-11-14 — Correcciones de continuidad, coordinación FEEDBACK y pruebas
+
+- `JS/Frontend/ui.js`: después de aceptar el aviso por usuario/dispositivo, se reanuda `showApp(user)` para renderizar el saludo, los controles de navegación y las opciones del rol antes de cargar el catálogo.
+- `Services/Coordinator.js`: la política `FEEDBACK/recordLike` ahora reserva también `ACTIVE_SESSIONS`, porque la validación del actor actualiza `LastActivityAt`.
+- `JS/Tests/TermsAcceptance.js`: se actualiza el contrato de carga del catálogo y se comprueba que el renderizado completo se reanuda después de aceptar el aviso.
+- `JS/Tests/PWAStartupScenarios.js`: las pruebas toman el nombre del caché desde la versión declarada en `service-worker.js`, evitando fijar una versión obsoleta.
+- `JS/Tests/SessionProfileRefresh.js`: se alinea la prueba de actividad con el preflight de solo lectura de `acceptTerms` y la actualización de actividad de las demás mutaciones.
+- `JS/Tests/SharedMutationCoordinator.js`: se comprueba que `recordLike` reserve la actividad de sesión y serialice su escritura frente a `ADMIN/sessionActivity`.
+- `Services/COORDINATOR_SETUP.md`: se sincronizan las instrucciones con la aceptación por dispositivo y las leases reales de Inbox/FEEDBACK; se documenta el diagnóstico de secretos de servicio.
+- `Tareas_Activas.md`: se agrega adenda de diagnóstico, estado y validaciones Beta para los fallos reportados.
+- `Auditoría.txt`: se agregan AUD-2026-11-14-05 a AUD-2026-11-14-08 con evidencia, impacto, correcciones y límites de verificación.
+
+### Validación ejecutada
+- GitHub Actions run `43629775820`: 94 suites, 1,388 pruebas aprobadas, 0 fallos; sintaxis Node.js PASS.
+- `TermsAcceptance`: 19/19 PASS.
+- Coordinador compartido: 41/41 PASS.
+- No se ejecutaron pruebas con navegador/dispositivo real ni deployments Apps Script; la validación de aceptación, configuración FEEDBACK, permisos de Inbox y actualización PWA continúa pendiente en Beta.
