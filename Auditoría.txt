@@ -352,3 +352,8 @@ En la revisión del estado actual de GPSpedia2.2.5_work, migrateReplacedImagesSc
 **Validación**
 - SessionUiRoleInvalidation: 15/15 PASS en ejecución aislada.
 - La prueba en navegador con login y sesión restaurada queda pendiente de Beta.
+
+
+### Adenda de validación — despacho dinámico de leases (2026-11-14)
+- AdminImageScanCoordinatorContract ahora ejecuta doPost con un coordinador simulado y verifica que las tres consultas seleccionadas usen sus nombres de operación, que el escáner y la migración propaguen el token de lease, que las acciones heredadas conserven sessionActivity y que ping no reserve una lease.
+- Resultado de la ejecución aislada: PASS. No se ejecutó Apps Script ni se modificaron datos externos.
