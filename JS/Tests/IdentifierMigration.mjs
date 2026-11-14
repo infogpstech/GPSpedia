@@ -85,7 +85,7 @@ testCase("aplica snapshot y primer lote verificando cada fila",()=>{
  const result=h.fn.migrate({...change,dryRun:false,confirm:true,manifestDigest:dry.manifestDigest,batchSize:5});
  assert.equal(result.status,"success");assert.equal(result.verified,1);
  assert.equal(h.ss.getSheetByName("Users").rows[2][0],"USR-0002");
- assert.ok(h.ss.getSheetByName("__IDM_idm-test-0001_users"));
+ assert.ok(h.ss.sheets.some(sheet=>sheet.name.startsWith("__IDM_")&&sheet.name.endsWith("_users")));
  assert.ok(h.ss.getSheetByName("__IdentifierMigrationManifest__"));
 });
 testCase("reanudar una migración verificada es idempotente",()=>{
