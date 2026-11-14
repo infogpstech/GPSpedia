@@ -10,11 +10,28 @@ import { showLoginScreen, showApp, showGlobalError, performSilentSync } from './
 import * as offline from './offline.js';
 import { loadPysData } from './pys-data.js';
 
+async function requestCatalogFeedPage_(cursor, limit, sessionPayload, parentSignal) {
+    if (typeof AbortController !== "function") throw new Error("AbortController no está disponible para limitar el feed.");
+    const controller = new AbortController();
+    const abortFromParent = () => controller.abort();
+    if (parentSignal) {
+        if (parentSignal.aborted) controller.abort();
+        else parentSignal.addEventListener("abort", abortFromParent, { once: true });
+    }
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+        return await getCatalogChanges(cursor, limit, sessionPayload, { signal: controller.signal });
+    } finally {
+        clearTimeout(timeoutId);
+        if (parentSignal) parentSignal.removeEventListener("abort", abortFromParent);
+    }
+}
+
 async function getCatalogFeedHead_(user, signal) {
     const userId = String(user && (user.ID || user.id) || "").trim();
     const sessionToken = String(user && user.SessionToken || "").trim();
     if (!userId || !sessionToken) throw new Error("La sesión no permite consultar el feed incremental.");
-    const page = await getCatalogChanges(0, 1, { userId, sessionToken }, { signal });
+    const page = await requestCatalogFeedPage_(0, 1, { userId, sessionToken }, signal);
     const revision = Number(page && page.currentRevision);
     if (!page || page.status !== "success" || !Number.isSafeInteger(revision) || revision < 0) {
         throw new Error("El feed no devolvió una revisión inicial válida.");
@@ -32,7 +49,7 @@ async function fetchCatalogDelta_(cursor, user, signal) {
     let currentRevision = cursor;
     const changes = [];
     for (let pageNumber = 0; pageNumber < 5; pageNumber++) {
-        const page = await getCatalogChanges(nextCursor, 50, { userId, sessionToken }, { signal });
+        const page = await requestCatalogFeedPage_(nextCursor, 50, { userId, sessionToken }, signal);
         const pageRevision = Number(page && page.currentRevision);
         if (!page || page.status !== "success" || !Number.isSafeInteger(pageRevision) || pageRevision < nextCursor ||
             !Array.isArray(page.changes) || !Number.isSafeInteger(Number(page.nextCursor)) ||
