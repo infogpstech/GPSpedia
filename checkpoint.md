@@ -790,3 +790,9 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - El cálculo SHA-256 del conjunto de imágenes se movió dentro del `try/finally` de la simulación. Si Web Crypto no está disponible, la UI informa que se requiere un contexto seguro/HTTPS y libera los indicadores globales.
 - No se intenta persistir un progreso parcial si la firma del conjunto no pudo calcularse; se evita enviar un estado inválido a IndexedDB y se conserva el error original.
 - Añadida regresión estática para verificar el alcance del cálculo dentro del bloque protegido y la liberación en `finally`. CI pendiente.
+
+
+## GP-IMG-DATA-01 — Estabilizar aserción de manejo de error (2026-11-14)
+
+- CI run 43614081536 falló en la nueva prueba estática por una expectativa de salto de línea demasiado literal, no por ejecución de lógica; las pruebas anteriores del archivo pasaron.
+- Se reemplazó la comparación textual sensible a espacios por una expresión regular que verifica el bloque de persistencia parcial sin depender del formato.

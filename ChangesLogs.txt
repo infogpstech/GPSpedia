@@ -1756,3 +1756,9 @@ Rama: GPSpedia2.2.5_work
 - La ausencia de Web Crypto se comunica sin bloquear la auditoría; no se persiste un progreso inválido y se liberan los bloqueos globales.
 - Prueba estática anti-regresión añadida.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 ESTABILIZAR REGRESIÓN DE ERROR
+- La prueba de guardado parcial ahora verifica la estructura del bloque con tolerancia a espacios/saltos de línea, evitando depender del formato exacto.
+================================================================================
