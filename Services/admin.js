@@ -93,7 +93,7 @@ function getAdminSessionContext_(payload, allowedRoles){
  const username=String(u[1]||"").trim();if(!username||username.startsWith("__deleted__:"))throw new Error("Acceso denegado: cuenta inactiva.");
  const rawRole=String(u[3]||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(),role=rawRole==="gefe"?"jefe":rawRole;
  if(!Array.isArray(allowedRoles)||!allowedRoles.includes(role))throw new Error("Acceso denegado: sesión no autorizada.");
- const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":"Gefe";
+ const fullName=String(u[6]||"").trim(),displayRole=role==="desarrollador"?"Desarrollador":"Jefe";
  return{userId:id,role:displayRole,fullName,userName:fullName||username};
 }
 function assertDeveloperSession(payload){return getAdminSessionContext_(payload,["desarrollador"]);}
@@ -1009,7 +1009,7 @@ function beginAdminAuditEvent_(action, payload, actor, startedAt) {
         const actorSource = actor && typeof actor === "object" ? actor : {};
         const actorId = safeAdminAuditId_(actorSource.userId, null);
         const role = String(actorSource.role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-        if (!actorId || !["desarrollador", "gefe"].includes(role)) {
+        if (!actorId || !["desarrollador", "jefe"].includes(role)) {
             throw createAdminAuditError_("No se pudo acreditar el actor autenticado para el registro ADMIN.", "ADMIN_AUDIT_ACTOR_INVALID");
         }
 
