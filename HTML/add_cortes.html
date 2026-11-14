@@ -33,6 +33,14 @@
             --bg-color:var(--gp-color-page); --text-color:var(--gp-color-text); --card-bg:var(--gp-color-surface);
             --primary-color:var(--gp-color-accent); --secondary-color:var(--gp-color-text-secondary); --border-color:var(--gp-color-border);
         }
+        /* Ayuda contextual compacta para los campos técnicos. */
+        .gp-help-label { display: flex; align-items: center; gap: 6px; }
+        .gp-help-trigger { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--gp-color-text-disabled); cursor: pointer; }
+        .gp-help-trigger:hover, .gp-help-trigger[aria-expanded="true"] { color: var(--gp-color-accent); background: var(--gp-color-info-bg); }
+        .gp-help-trigger:focus-visible { outline: 2px solid var(--gp-color-focus); outline-offset: 2px; }
+        .gp-help-popover { display: block; margin: -2px 0 8px; padding: 9px 11px; border: 1px solid var(--gp-color-border); border-left: 3px solid var(--gp-color-accent); border-radius: 7px; background: var(--gp-color-info-bg); color: var(--gp-color-info-text); font-size: .82rem; line-height: 1.45; }
+        .gp-help-popover[hidden] { display: none; }
+
         /* General Styles */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -218,10 +226,10 @@
                 <div class="form-grid">
                     <div class="form-group"><label for="marca">Marca</label><input type="text" id="marca" required><div class="suggestion" id="marca-suggestion"></div></div>
                     <div class="form-group"><label for="modelo">Modelo</label><input type="text" id="modelo" required><div class="suggestion" id="modelo-suggestion"></div></div>
-                    <div class="form-group"><label for="anoDesde">Año</label><input type="text" id="anoDesde" required placeholder="Ej: 2023 o 2021-2024"></div>
+                    <div class="form-group"><label class="gp-help-label" for="anoDesde">Año <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre el año" aria-expanded="false" aria-controls="help-ano-desde" title="Ayuda"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button></label><span class="gp-help-popover" id="help-ano-desde" role="tooltip" hidden>Indica un año específico (2023) o un rango continuo separado por guion (2021-2024). Usa los años de aplicación del vehículo.</span><input type="text" id="anoDesde" required placeholder="Ej: 2023 o 2021-2024"></div>
                     <div class="form-group"><label for="tipoEncendido">Tipo de Encendido</label><select id="tipoEncendido" required></select></div>
                     <div class="form-group full-width"><label for="categoria">Categoría</label><select id="categoria" required></select></div>
-                    <div class="form-group full-width"><label for="versionesAplicables">Versión de Equipamiento (Opcional)</label><input type="text" id="versionesAplicables" placeholder="Ej: Frontier, NP300"></div>
+                    <div class="form-group full-width"><label class="gp-help-label" for="versionesAplicables">Versión de Equipamiento (Opcional) <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre la versión de equipamiento" aria-expanded="false" aria-controls="help-versiones" title="Ayuda"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button></label><span class="gp-help-popover" id="help-versiones" role="tooltip" hidden>Especifica el nombre de la versión o nivel de equipamiento al que aplica el registro, por ejemplo Frontier o NP300. Déjalo vacío si aplica a todas las versiones.</span><input type="text" id="versionesAplicables" placeholder="Ej: Frontier, NP300"></div>
                 </div>
                 <div class="btn-container"><button type="submit" class="btn btn-primary">Verificar</button></div>
             </form>
@@ -248,8 +256,8 @@
 
                 </div>
                 <div class="form-grid">
-                    <div class="form-group"><label for="tipoCorte1">Tipo de Corte</label><select id="tipoCorte1" required></select></div>
-                    <div class="form-group"><label for="configRelay1">Configuración de Relay</label><select id="configRelay1" required></select></div>
+                    <div class="form-group"><label class="gp-help-label" for="tipoCorte1">Tipo de Corte <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre el tipo de corte" aria-expanded="false" aria-controls="help-tipo-corte" title="Ayuda"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button></label><span class="gp-help-popover" id="help-tipo-corte" role="tooltip" hidden>Selecciona el circuito o método de corte que corresponde a la instalación documentada. Confirma el punto y la función en el diagrama eléctrico del vehículo.</span><select id="tipoCorte1" required></select></div>
+                    <div class="form-group"><label class="gp-help-label" for="configRelay1">Configuración de Relay <button type="button" class="gp-help-trigger" aria-label="Ayuda sobre la configuración de relay" aria-expanded="false" aria-controls="help-config-relay" title="Ayuda"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button></label><span class="gp-help-popover" id="help-config-relay" role="tooltip" hidden>Selecciona el esquema de conexión del relay utilizado. Verifica que coincida con el tipo de señal y el circuito identificado; no elijas una configuración solo por el color de los cables.</span><select id="configRelay1" required></select></div>
                     <div class="form-group full-width">
                         <label for="ubicacionCorte1">Ubicación del Corte</label>
                         <div class="rich-editor-toolbar" id="ubicacionCorte1-rich-toolbar"></div>
@@ -1555,6 +1563,28 @@
                 }
             });
         }
+
+        // Ayudas contextuales: se abren al pulsar y pueden cerrarse con Escape o fuera del control.
+        const closeContextHelp = (restoreFocus = false) => {
+            document.querySelectorAll('.gp-help-trigger[aria-expanded="true"]').forEach(button => {
+                const panel = document.getElementById(button.getAttribute('aria-controls'));
+                button.setAttribute('aria-expanded', 'false');
+                if (panel) panel.hidden = true;
+                if (restoreFocus) button.focus();
+            });
+        };
+        document.addEventListener('click', event => {
+            const button = event.target instanceof Element ? event.target.closest('.gp-help-trigger') : null;
+            if (!button) { if (!(event.target instanceof Element) || !event.target.closest('.gp-help-popover')) closeContextHelp(); return; }
+            const panel = document.getElementById(button.getAttribute('aria-controls'));
+            if (!panel) return;
+            const shouldOpen = button.getAttribute('aria-expanded') !== 'true';
+            closeContextHelp();
+            if (shouldOpen) { button.setAttribute('aria-expanded', 'true'); panel.hidden = false; }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && document.querySelector('.gp-help-trigger[aria-expanded="true"]')) closeContextHelp(true);
+        });
 
         // El navegador conserva menú contextual, inspección y zoom nativos.
 
