@@ -1298,7 +1298,7 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 
 ## Continuidad — incidencias de acceso Developer e historial/escáner (2026-11-14)
 
-**HEAD funcional antes de los registros documentales:** 93074d7b5da8c99238ee9d86e0de0d68e8a52577 en GPSpedia2.2.5_work. El plan Beta AUG-156 quedó registrado en el commit documental 3b10bc9322b726194b09d3e338876fb40a9a001b. La rama base GPSpedia2.2.5 no se modificó.
+**HEAD de código antes de esta adenda de pruebas:** 5c246f9d060d34c85f6d3f0b7f233008306ee887 en GPSpedia2.2.5_work. El plan Beta AUG-156 quedó registrado en el commit documental 3b10bc9322b726194b09d3e338876fb40a9a001b. La rama base GPSpedia2.2.5 no se modificó.
 
 ### Cambios implementados
 - Services/Coordinator.js: políticas específicas para getReplacedImages, getDriveStorage, getCortesImageFolders y auditDriveImagesInCortes. Las lecturas comparten únicamente la actualización cooperativa de actividad; el escáner serializa su estado lógico y reserva lecturas de los recursos que inspecciona.
@@ -1326,3 +1326,9 @@ Continuar con la revisión integral local de las tareas implementadas y sus regr
 - Se añadió AUG-156 al final de lista_beta_parte2.txt (140,827 caracteres; debajo del umbral de rotación).
 - Incluye comandos de sincronización seguros al inicio, verificación de acceso Developer, carga simultánea de inventario/escáner, exclusión de doble escáner, protección de escrituras y migración idempotente del historial.
 - Requiere Coordinator y ADMIN Beta compatibles. No se ejecutó ninguna prueba externa ni se modificaron propiedades o deployments.
+
+
+### Ampliación de regresión del router ADMIN
+- Commit de prueba: 5c246f9d060d34c85f6d3f0b7f233008306ee887.
+- AdminImageScanCoordinatorContract ejecuta doPost con un coordinador simulado y comprueba los nombres de lease, propagación del token y fallback seguro.
+- Resultado aislado: PASS. El Node CLI completo y GitHub Actions siguen sin estado verificable desde las herramientas disponibles.
