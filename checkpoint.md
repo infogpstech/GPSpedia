@@ -578,3 +578,11 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - FEEDBACK verifica que las imágenes de sugerencias no hereden acceso público y que las imágenes PyS conserven los permisos de su carpeta. No se encontró una comprobación general equivalente en todos los flujos de carga de WRITE/ADMIN.
 - No se verificaron ACL reales de Drive ni se alteraron permisos. Sin deployment/copia Beta no es posible determinar si las carpetas son públicas, de dominio o privadas.
 - Resultado: revisión estática completada; siguiente acción externa es auditar permisos reales por carpeta/archivo y clasificar imágenes que deben seguir siendo públicas para GPSpedia.
+
+## P2 — Plan de migración de IDs y reversión (2026-11-14)
+
+- Se creó `PLAN_MIGRACION_IDS.md` con política de conservar IDs válidos, inventario por entidad (Users, Cortes, Tutorial, PyS, Relay y LogosMarca), snapshot, manifiesto inmutable, dry-run, lotes reanudables, verificación posterior y reversión por huellas.
+- Se especificaron referencias consumidoras que deben inventariarse antes de modificar IDs, condiciones de detención por ambigüedad y la prohibición de asignar IDs por posición de fila o coincidencia parcial.
+- Relay queda bloqueado hasta confirmar su esquema y localizar el escritor de filas. No se inventó un formato.
+- Se actualizó `Tareas_Activas.md`: el diseño de snapshot/manifiesto/rollback está completado; falta implementar el motor y probarlo en copia Beta.
+- No se realizó ninguna migración ni escritura en hojas/Drive. El plan no autoriza ejecución productiva.
