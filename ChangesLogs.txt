@@ -1603,3 +1603,9 @@ Rama: GPSpedia2.2.5_work
 - Respuesta incierta con fila única verificada se recupera como éxito; estado ambiguo se marca RECOVERY_REQUIRED y conserva el archivo.
 - LogoIdIntegrity 10/10 PASS. CI PASS: 84 suites; 1,260 pruebas; 0 fallos.
 ================================================================================
+
+================================================================================
+2026-11-14 — P2 LOGOSMARCA: LIMPIEZA DE COPIA PARCIAL
+- Un fallo en copyTo ahora activa la limpieza de la fila destino y la compensación del archivo.
+- LogoIdIntegrity 11/11 PASS. CI PASS: 84 suites; 1,261 pruebas; 0 fallos.
+================================================================================
