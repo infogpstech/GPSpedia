@@ -125,6 +125,7 @@ runGroup('35','UTILITIES',()=>{
  recordResult('UTILITIES Spreadsheet simulado/RBAC/staging/rollback',new Function(read('Services/SharedMutationClient.js')+'\n'+read('Services/Utilities.js')+'\n'+read('JS/Tests/UtilitiesSecurity.js')+'\nreturn runUtilitiesSecurityTests();')());
 });
 runGroup('36','AUTH',()=>{
+ runCli('AUTH PBKDF2 versionado, compatibilidad legacy y coste','JS/Tests/PasswordHashMigration.mjs');
  const auth=read('Services/Auth.js'),testAuth=read('JS/Tests/Auth.js'),html=read('HTML/users.html');
  const test=loadFunction('JS/Tests/LastDeveloperProtection.js','runLastDeveloperProtectionTests','\n\nimport {');
  const a=test({auth,html}),b=test({auth:testAuth,html});
