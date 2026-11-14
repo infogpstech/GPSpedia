@@ -5,7 +5,7 @@ function runSessionProfileRefreshTests(sources) {
  const run=(name,fn)=>{try{fn();passed++;results.push({name,status:'PASS'});}catch(e){failed++;results.push({name,status:'FAIL',message:String(e.message||e)});}};
  const extract=(s,n,end)=>{const i=s.indexOf('function '+n+'(');assert(i>=0,'No se encontró '+n);const j=end?s.indexOf(end,i+10):s.indexOf('\nfunction ',i+10);assert(!end||j>i,'No se encontró cierre '+n);return s.slice(i,j>i?j:s.length).trim();};
  const uc={ID:1,Nombre_Usuario:2,Password:3,Privilegios:4,Telefono:5,Correo_Electronico:6,Nombre_Completo:7,SessionToken:8,TermsAcceptance:9},sc={ID_Usuario:1,Usuario:2,ActiveSessions:3,date:4,Logs:5,LastActivityAt:6,SessionTermsAcceptance:7};
- const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ const norm=v=>{const role=String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();return role==='gefe'?'jefe':role;};
  const active=r=>Boolean(r&&String(r[1]||'').trim()&&!String(r[1]||'').startsWith('__deleted__:')&&['desarrollador','jefe','supervisor','tecnico','tecnico_exterior'].includes(norm(r[3])));
  function server(source,o={}) {
   const users=[['ID','Usuario','Password','Privilegios','Telefono','Correo','Nombre','Token','Terms'],...(o.users||[['U1','user1','HASH','Tecnico','1111','old@test','Old name','token-1','{"version":"2026-07","acceptedAt":"2026-11-01","status":"accepted"}']]).map(r=>r.slice())];
