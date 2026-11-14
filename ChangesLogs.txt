@@ -1336,3 +1336,7 @@ Commits: dacc854, 8be5281, f0645b5, 0e02d90, 5c58ed8, 024d604, 6bf5732, 9b2e781.
 - 2026-11-14 — El cargador de imágenes ahora inicia la URL original antes de consultar IndexedDB; elimina la sonda duplicada y solo sustituye por miniatura local si esta llega antes de la imagen visible. La compresión queda en segundo plano.
 - 2026-11-14 — Se afinó la aserción de carga de imágenes para comparar con la lectura real de IndexedDB (`getThumbnail`) y no con la obtención previa de la clave (`getThumbnailCacheKey`).
 - 2026-11-14 — La suite AddCortesDiagnostics llegó a la recuperación conductual y reveló que el harness no inyectaba la función global `showConciseAlert_` disponible en la página real. Se añadió el stub equivalente al contexto de prueba.
+================================================================================
+2026-11-14 — VALIDACIÓN FINAL
+GitHub Actions: 75 suites, 1,149 pruebas aprobadas, 0 fallos. Comprobaciones de sintaxis Node.js y compilación GitHub Pages aprobadas. La validación visual con navegador y sesiones reales queda pendiente.
+================================================================================

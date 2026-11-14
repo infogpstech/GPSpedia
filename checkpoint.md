@@ -142,7 +142,7 @@ La rama base `GPSpedia2.2.5` no se modifica. No se realizó deployment productiv
 
 ## Corrección — continuidad de sesión, navegación y modales (2026-11-13)
 
-**Estado:** IMPLEMENTADA EN RAMA DE TRABAJO; CI Y VALIDACIÓN BETA PENDIENTES.
+**Estado:** IMPLEMENTADA EN RAMA DE TRABAJO; CI NODE.JS PASS; validación Beta pendiente.
 
 - Se corrigió la pérdida de TermsAcceptance cuando AUTH reutiliza una validación cacheada sin devolver ese campo.
 - La validación local reciente se cachea durante 60 segundos. Se eliminaron revalidaciones forzadas al recuperar foco/visibilidad y el intervalo de cinco minutos; se conserva un disparador silencioso al recuperar conexión.
@@ -174,3 +174,14 @@ La rama base GPSpedia2.2.5 no se modifica. No se cambian deployments ni endpoint
 - 2026-11-14 — El cargador de imágenes ahora inicia la URL original antes de consultar IndexedDB; elimina la sonda duplicada y solo sustituye por miniatura local si esta llega antes de la imagen visible. La compresión queda en segundo plano.
 - 2026-11-14 — Se afinó la aserción de carga de imágenes para comparar con la lectura real de IndexedDB (`getThumbnail`) y no con la obtención previa de la clave (`getThumbnailCacheKey`).
 - 2026-11-14 — La suite AddCortesDiagnostics llegó a la recuperación conductual y reveló que el harness no inyectaba la función global `showConciseAlert_` disponible en la página real. Se añadió el stub equivalente al contexto de prueba.
+
+## Cierre de tarea — 2026-11-14
+
+- **GitHub Actions — GPSpedia service regression tests:** PASS.
+- **Resultado Node.js CLI:** 75 suites, 1,149 pruebas aprobadas, 0 fallos.
+- **Comprobaciones de sintaxis Node.js:** PASS.
+- **Compilación GitHub Pages:** PASS; no se solicitó ni ejecutó publicación manual a producción.
+- **Cambios funcionales:** continuidad de AUTH, apertura no bloqueante de modales, sincronización diferencial sin reload, carga inmediata de imágenes, compresión opcional con backoff y restricciones visuales de copia/contexto.
+- **Pendiente externo:** validación visual en navegador/dispositivo con sesiones reales, conectividad intermitente y archivos reales de Drive. No se alteró la rama base ni se modificaron endpoints productivos.
+
+Commit de código validado por la ejecución completa: `2566547d19ae86d70cab07a768ba336958480b62`.
