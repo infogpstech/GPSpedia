@@ -494,3 +494,16 @@ Si cualquier comprobación falla, no continuar ni descartar cambios locales. Con
 
 - Una PWA en navegador no puede impedir de forma fiable la captura nativa del sistema operativo. `FLAG_SECURE` solo está disponible en una aplicación Android nativa/controlada por el contenedor.
 - Las restricciones de menú contextual/copia/arrastre siguen siendo disuasorias para medios, no protección contra screenshots. Cualquier marca de agua u otra disuasión visual requiere evaluación de legibilidad y aprobación antes de incorporarse.
+
+
+## Adenda de corrección visual PyS — 2026-11-14
+
+### GP-UX-02 — Igualar tarjeta «Agregar Problema» con tarjetas relacionadas
+**Estado: CORRECCIÓN LOCAL IMPLEMENTADA; VALIDACIÓN VISUAL BETA PENDIENTE.**
+
+- Causa detectada en la estructura: las tarjetas reales de problema se insertaban dentro de un wrapper `.pys-card-wrapper`, mientras la tarjeta de alta se insertaba directamente en el carrusel. Las reglas flex y el dimensionamiento se aplicaban a elementos distintos.
+- Se creó `createPysAssociationAddCard()` y se normalizó el wrapper para ambas tarjetas. En vista individual comparten 140×120 px; en carrusel comparten wrapper de 160 px (140 px de tarjeta + 20 px de separación).
+- Se registró `PysModalNavigation.js` en `RunServiceTests.mjs` y se corrigieron sus rutas de importación para que realmente se ejecute en CI.
+- Prueba `PysModalNavigation`: 9/9 PASS.
+- GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos.
+- Falta comprobar visualmente en el modal real, en viewport móvil y escritorio, que ambas tarjetas tengan la misma altura y que el ancho/espaciado del carrusel no se desplace.
