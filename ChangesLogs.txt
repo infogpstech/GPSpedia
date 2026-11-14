@@ -1714,3 +1714,11 @@ Rama: GPSpedia2.2.5_work
 - La simulación Drive ↔ Cortes permanece de solo lectura. La organización de archivos sigue separada y confirmada.
 - Sin escrituras productivas ejecutadas durante el desarrollo.
 ================================================================================
+
+
+================================================================================
+2026-11-14 — GP-IMG-DATA-01 LIBERAR BLOQUEOS EN CIERRES DE VISTA
+- Auditoría y organización liberan los flags globales en finally incluso si la sesión/modal cambia durante una petición.
+- La escritura del estado local y la actualización visual solo ocurren si la vista sigue vigente.
+- Añadida regresión UI para la liberación de bloqueos.
+================================================================================

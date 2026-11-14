@@ -751,3 +751,9 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - El registro del inventario ahora requiere botón explícito y confirmación que informa que escribe en Spreadsheet; no mueve archivos ni modifica URLs/permisos. La organización/movimiento permanece en una acción distinta con confirmación.
 - La simulación de conciliación continúa siendo de solo lectura. No se invocó ninguna acción de escritura contra servicios productivos.
 - Pruebas CI para este cambio pendientes.
+
+
+## GP-IMG-DATA-01 — Liberación de bloqueos en auditoría y organización (2026-11-14)
+
+- Auditoría y organización ahora liberan el indicador global en `finally` aunque el modal se cierre o la sesión deje de ser actual. La persistencia final y la actualización de UI permanecen condicionadas a la vista vigente.
+- CI del HEAD previo `78fdb6a3d9d72e70ad412a5d0146d8a1333678e0`: servicio regresión PASS (ver run 43613411742). CI de esta corrección pendiente.

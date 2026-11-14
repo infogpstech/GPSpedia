@@ -7404,8 +7404,10 @@ export async function openAuditDriveModal() {
                 try { await persistState('complete'); }
                 catch (storageError) { inventoryMessage += ' No se pudo guardar localmente el resultado: ' + storageError.message; }
                 updateSummary(inventoryMessage);
-                isRunning = false; isDriveAuditRunning = false; updateControls();
             }
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
         }
     };
 
@@ -7681,11 +7683,9 @@ export async function openAuditDriveModal() {
             }
             updateSummary(statusMessage);
         } finally {
-            if (isCurrentRequest()) {
-                isRunning = false;
-                isDriveAuditRunning = false;
-                updateControls();
-            }
+            isRunning = false;
+            isDriveAuditRunning = false;
+            if (isCurrentRequest()) updateControls();
         }
     };
 

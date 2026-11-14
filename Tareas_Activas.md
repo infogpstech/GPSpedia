@@ -271,3 +271,6 @@ La acción del **botón integrado de compartir** en el modal es pública para to
 - [x] Extender touch integrado y coordinación a WRITE, USERS y ADMIN; todas las acciones protegidas actualizan actividad dentro de su operación y usan leases compartidas. Las rutas públicas de catálogo/formulario permanecen explícitamente públicas.
 - [x] Verificar leases anidadas ADMIN→WRITE: `addOrUpdateCut`→`allocateVehicleId` y `reorganizeDatabase`→`freezeCortesIds`; las políticas del coordinador restringen cada acción anidada.
 - [x] Añadir regresión `SessionActivityCoordination.mjs` (6/6 PASS) y pruebas de mantenimiento exclusivo para `migrateIdentifiers`/`rollbackIdentifiers`.
+
+
+- [x] Liberar el bloqueo global al cerrar la vista durante auditoría u organización; conservar persistencia/UI solo cuando la sesión siga vigente.
