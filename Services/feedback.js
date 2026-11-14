@@ -514,6 +514,18 @@ function doPostInternal_(e) {
                 console.error("El like se guardó, pero no se pudo publicar su cambio incremental:",
                     catalogPublishError && catalogPublishError.message ? catalogPublishError.message : catalogPublishError);
             }
+        } else if (response && response.status === "success" &&
+            ["suggestYear", "addProblem", "addSolution", "addPrevention", "addVehicleToProblem",
+             "removeVehicleFromProblem", "updatePysItem", "updateTutorialItem", "addTutorial",
+             "approveVideo", "rejectVideo"].includes(action)) {
+            // Estas acciones pueden modificar varias filas/entidades; reset seguro hasta disponer
+            // de snapshots exactos por operación. Un fallo del feed no revierte la escritura.
+            try {
+                publishSharedCatalogChange_("FEEDBACK", action, { operation: "reset" });
+            } catch (catalogPublishError) {
+                console.error("La operación FEEDBACK se confirmó, pero no se pudo publicar el reset del catálogo:",
+                    catalogPublishError && catalogPublishError.message ? catalogPublishError.message : "CatalogFeedError");
+            }
         }
     } catch (error) {
         response = { status: 'error', message: error.message };
