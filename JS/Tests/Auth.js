@@ -495,7 +495,7 @@ function doGet(e) {
 
 
 function isSharedMutationAction_(action) {
-    return ["login","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout"].includes(action);
+    return ["login","touchSession","acceptTerms","changePassword","resetUserPassword","resetUserSessions","clearSensitiveLogs","deleteUser","updateUser","logout","migrateLegacyPasswords"].includes(action);
 }
 
 function doPost(e) {
@@ -581,6 +581,9 @@ function doPostInternal_(e) {
                 break;
             case 'logout':
                 response = handleLogout(request.payload);
+                break;
+            case 'migrateLegacyPasswords':
+                response = handleMigrateLegacyPasswords(request.payload);
                 break;
             default:
                 throw new Error(`Acción desconocida: ${request.action}`);
@@ -2096,6 +2099,117 @@ function handleAcceptTerms(payload) {
         if (String(sessionCell.getValue() || '') !== serialized) throw new Error('No se pudo confirmar el registro de aceptación. El catálogo permanece bloqueado.');
         return { status: 'success', accepted: true, alreadyAccepted: false, termsAcceptance: parseTermsAcceptance_(sessionCell.getValue()) };
     } finally { if (acquired) lock.releaseLock(); }
+}
+
+function handleMigrateLegacyPasswords(payload) {
+    const actorUserId = normalizeUserId(payload && payload.userId);
+    const sessionToken = payload && payload.sessionToken;
+    const dryRun = !payload || payload.dryRun !== false;
+    const confirmed = Boolean(payload && payload.confirm === true);
+    const requestedBatchSize = Number(payload && payload.batchSize);
+    const batchSize = Number.isInteger(requestedBatchSize) && requestedBatchSize > 0
+        ? Math.min(requestedBatchSize, 50) : 20;
+    if (!actorUserId || typeof sessionToken !== 'string' || !sessionToken) {
+        throw new Error('Se requiere una sesión de Desarrollador para migrar contraseñas.');
+    }
+    if (!dryRun && !confirmed) {
+        throw new Error('La migración con escritura requiere confirm:true después de revisar el dry-run.');
+    }
+
+    const lock = LockService.getScriptLock();
+    let acquired = false;
+    try {
+        lock.waitLock(10000);
+        acquired = true;
+        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+        const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+        if (!usersSheet || !sessionsSheet) throw new Error('No se encontraron Users y ActiveSessions.');
+        ensureActiveSessionsActivityColumn_(sessionsSheet);
+
+        const requester = findSessionRowsByTokenUnderLock_(sessionsSheet, sessionToken);
+        if (requester.length !== 1 ||
+            normalizeUserId(requester[0].row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1]) !== actorUserId) {
+            throw new Error('Acceso denegado: sesión inválida o identidad no coincidente.');
+        }
+        const expiration = getSessionExpirationStatus_(requester[0].row, new Date());
+        if (expiration.expired) throw new Error('Acceso denegado: la sesión expiró por ' + expiration.reason + '.');
+        const actorRows = usersSheet.getDataRange().getValues().slice(1)
+            .filter(row => normalizeUserId(row[COLS_USERS.ID - 1]) === actorUserId);
+        if (actorRows.length !== 1 || !isActiveAuthUserRecord(actorRows[0])) {
+            throw new Error('Acceso denegado: cuenta solicitante inactiva o ambigua.');
+        }
+        assertRequesterRoleRevocationClear_(usersSheet, sessionsSheet, actorUserId);
+        if (normalizeRoleName(actorRows[0][COLS_USERS.Privilegios - 1]) !== 'desarrollador') {
+            throw new Error('Acceso denegado: la migración de contraseñas está reservada a Desarrollador.');
+        }
+        sessionsSheet.getRange(requester[0].rowIndex, COLS_ACTIVE_SESSIONS.LastActivityAt).setValue(new Date().toISOString());
+
+        const readCandidates = () => {
+            const rows = usersSheet.getDataRange().getValues();
+            const candidates = [];
+            let alreadyCurrent = 0, legacyHashedPendingLogin = 0, inactiveSkipped = 0, emptySkipped = 0, unsupportedSkipped = 0;
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!isActiveAuthUserRecord(row)) { inactiveSkipped++; continue; }
+                const stored = String(row[COLS_USERS.Password - 1] === null || row[COLS_USERS.Password - 1] === undefined
+                    ? '' : row[COLS_USERS.Password - 1]);
+                if (!stored) { emptySkipped++; continue; }
+                if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) { alreadyCurrent++; continue; }
+                if (stored.indexOf(LEGACY_PASSWORD_HASH_PREFIX) === 0) {
+                    if (/^sha256\$[0-9a-f]{32}\$[0-9a-f]{64}$/i.test(stored)) legacyHashedPendingLogin++;
+                    else unsupportedSkipped++;
+                    continue;
+                }
+                if (/^(?:pbkdf2-|\$2[aby]\$|\$argon2|scrypt\$)/i.test(stored)) { unsupportedSkipped++; continue; }
+                candidates.push({ rowIndex: i + 1, password: stored });
+            }
+            return { rows, candidates, alreadyCurrent, legacyHashedPendingLogin, inactiveSkipped, emptySkipped, unsupportedSkipped };
+        };
+
+        const snapshot = readCandidates();
+        if (dryRun) {
+            return {
+                status: 'success', dryRun: true, batchSize,
+                eligiblePlaintext: snapshot.candidates.length,
+                wouldMigrate: Math.min(snapshot.candidates.length, batchSize),
+                alreadyCurrent: snapshot.alreadyCurrent,
+                legacyHashedPendingLogin: snapshot.legacyHashedPendingLogin,
+                inactiveSkipped: snapshot.inactiveSkipped,
+                emptySkipped: snapshot.emptySkipped,
+                unsupportedSkipped: snapshot.unsupportedSkipped,
+                complete: snapshot.candidates.length === 0,
+                resumeMode: 'Repetir la acción; las credenciales ya migradas se omiten automáticamente.'
+            };
+        }
+
+        const batch = snapshot.candidates.slice(0, batchSize);
+        let migrated = 0;
+        for (const item of batch) {
+            const hash = createPasswordHash(item.password, false);
+            const cell = usersSheet.getRange(item.rowIndex, COLS_USERS.Password);
+            cell.setValue(hash);
+            if (String(cell.getValue() || '') !== hash) {
+                throw new Error('No se pudo verificar la actualización de una credencial. La migración puede reanudarse sin repetir hashes confirmados.');
+            }
+            migrated++;
+        }
+        SpreadsheetApp.flush();
+        const remaining = readCandidates();
+        return {
+            status: 'success', dryRun: false, batchSize, migrated,
+            remainingPlaintext: remaining.candidates.length,
+            alreadyCurrent: remaining.alreadyCurrent,
+            legacyHashedPendingLogin: remaining.legacyHashedPendingLogin,
+            unsupportedSkipped: remaining.unsupportedSkipped,
+            complete: remaining.candidates.length === 0,
+            resumeMode: remaining.candidates.length
+                ? 'Repetir la acción con confirm:true para continuar; las filas ya migradas se omiten.'
+                : 'Migración de contraseñas plaintext completada.'
+        };
+    } finally {
+        if (acquired) lock.releaseLock();
+    }
 }
 
 function handleLogout(payload) {
