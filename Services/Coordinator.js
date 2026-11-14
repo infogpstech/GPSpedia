@@ -91,7 +91,7 @@ function coordinatorPolicy_(service, operation) {
         },
         FEEDBACK: {
             sessionActivity: { write: ["ACTIVE_SESSIONS"] },
-            recordLike: { read: feedbackRead, write: ["CORTES", "FEEDBACK", "ACTIVITY"] },
+            recordLike: { read: feedbackRead, write: [...feedbackWrite, "CORTES"] },
             reportProblem: { read: feedbackRead, write: feedbackWrite },
             addProblem: { read: [...feedbackRead, "CORTES"], write: [...feedbackWrite, "DRIVE"] },
             addSolution: { read: feedbackRead, write: feedbackWrite },
