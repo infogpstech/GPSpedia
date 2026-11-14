@@ -103,6 +103,11 @@ test("altas y ediciones de Tutoriales publican upsert exacto tras verificar fila
     assert.match(feedbackSource,/if \(!\/\^tut-/);
     assert.match(feedbackSource,/publishSharedCatalogChange_\("FEEDBACK", action, \{ operation: "reset" \}\)/);
 });
+test("alta ADMIN de Logo publica upsert exacto tras verificar la fila persistida", () => {
+    assert.match(adminSource,/function buildLogoCatalogChange_\(logoId, logoUrl, brandName\)[\s\S]*?matches\.length !== 1[\s\S]*?collection: "logos"[\s\S]*?operation: "upsert"/);
+    assert.match(adminSource,/catalogAction === "addLogo"[\s\S]*?buildLogoCatalogChange_\(response\.logoId, response\.logoUrl, payload && payload\.nombreMarca\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, change\)/);
+    assert.match(adminSource,/publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
+});
 test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", () => {
     assert.match(writeSource,/response && response\.status === "success"[\s\S]*?catalogWriters\.includes\(String\(request\.action \|\| ""\)\)[\s\S]*?publishSharedCatalogChange_\("WRITE"/);
     assert.match(writeSource,/\["addOrUpdateCut", "addSupplementaryInfo", "addVinToVehicle", "freezeCortesIds"\]/);
@@ -112,4 +117,4 @@ test("WRITE y FEEDBACK publican reset solo después de mutaciones confirmadas", 
     assert.match(adminSource,/catalogWriters\.includes\(catalogAction\)[\s\S]*?publishSharedCatalogChange_\("ADMIN", catalogAction, \{ operation: "reset" \}\)/);
     assert.match(adminSource,/finalizeAdminAuditEvent_\(auditEvent[\s\S]*?publishSharedCatalogChange_/);
 });
-console.log("CatalogChangeFeed: " + passed + "/15 PASS");
+console.log("CatalogChangeFeed: " + passed + "/16 PASS");
