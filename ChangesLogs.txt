@@ -79,3 +79,12 @@
 - `JS/Tests/RunServiceTests.mjs`: se registra la suite PyS para que CI realmente ejecute la regresión.
 - Validación GitHub Actions run `43630661037`: 95 suites / 1,401 pruebas / 0 fallos; `PysModalNavigation` 9/9 PASS.
 - Pendiente: inspección visual del modal en Android/iOS y escritorio.
+
+================================================================================
+2026-11-14 — COMPATIBILIDAD DE CONTEXTO DE SESIÓN Y TARJETA AGREGAR TUTORIAL
+- JS/Frontend/ui.js: getUiSessionContext_ acepta user.ID y user.id, en concordancia con el contrato de restauración de sesión de AUTH. Se mantiene la exigencia de SessionToken y la normalización de Privilegios.
+- JS/Tests/SessionUiRoleInvalidation.js: se agregan pruebas de contrato y ejecución dinámica para ID/id, normalización de roles con acentos, rechazo de sesión sin token y conservación de la restricción de creación de tutoriales a Desarrollador.
+- No se modificó FEEDBACK ni se amplió el permiso addTutorial; el modal y el backend conservan la autorización de Desarrollador.
+- Validación CI run 43630870843: SUCCESS; 95 suites / 1,404 pruebas / 0 fallos; AUG-042 SessionUiRoleInvalidation 14/14 PASS.
+- Pendiente Beta: verificar visualmente la tarjeta con sesión Desarrollador restaurada y confirmar que roles no privilegiados no la ven ni pueden registrar tutoriales.
+================================================================================
