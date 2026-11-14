@@ -1149,3 +1149,47 @@ Se añadieron a `Tareas_Activas.md` y al final de `LOGS.TXT` los siguientes repo
 **Archivos actualizados:** `Tareas_Activas.md` y `LOGS.TXT`. No se modificó código, permisos, endpoints, Service Worker, deployments ni datos. No se ejecutaron pruebas porque esta intervención fue únicamente de registro.
 
 **Siguiente paso:** continuar primero con las tareas vigentes y sus dependencias según la sección 11 de `NORMAS_DESAROLLO.md`; priorizar cualquier incidencia nueva que bloquee una función actual o comprometa continuidad/seguridad. Para cada reporte, reproducir y revisar contratos/consumidores antes de corregir. No asumir una causa a partir del mensaje visible.
+
+
+## Continuidad de trabajo — diagnóstico y correcciones de incidencias reportadas (2026-11-14)
+
+**HEAD confirmado antes de esta actualización:** `03783b2ee82da4af87c64b7be33843c3424c05c1` en `GPSpedia2.2.5_work`.  
+**Rama base:** `GPSpedia2.2.5`, HEAD `d9acc68d889985c2e2f42fe3a02e502efc86ead1`; sin modificaciones.
+
+### Orientación y estado Git
+- Se leyó íntegramente `NORMAS_DESAROLLO.md`; se consultaron `README.md`, `contexto_personal.md`, este checkpoint, `Tareas_Activas.md`, `Auditoría.txt` y `ChangesLogs.txt`.
+- La rama de trabajo y la rama base se verificaron mediante GitHub API. Los commits de esta sesión se publicaron únicamente en `GPSpedia2.2.5_work`.
+- Las incidencias GP-UX-02, GP-UX-03, GP-RBAC-02, GP-PWA-01 y GP-SEC-03 ya constaban en el registro activo; se agregó una adenda para el síntoma de aceptación del aviso y los hallazgos de esta revisión.
+
+### Correcciones locales realizadas
+1. **Pruebas de términos y PWA:** se alinearon las expectativas de `TermsAcceptance.js` con la firma actual de `loadInitialData(forceRefresh)` y se hizo que `PWAStartupScenarios.js` obtenga el nombre del caché desde `service-worker.js`.
+2. **Prueba de sesión AUTH:** `SessionProfileRefresh.js` ahora valida que `acceptTerms` use preflight de solo lectura y que las demás mutaciones protegidas conserven la actualización de actividad.
+3. **Saludo tras aceptación:** se detectó que el handler del aviso mostraba contenedores y cargaba catálogo, pero no reanudaba `showApp(user)`; por ello no se renderizaban saludo ni controles de rol tras la primera aceptación en un perfil nuevo. Ahora se reanuda el renderizado completo después de confirmar la aceptación local.
+4. **Reacción útil:** `assertFeedbackSession()` actualiza `ActiveSessions.LastActivityAt`, pero la política FEEDBACK/recordLike no reservaba ese recurso. La política ahora reserva `ACTIVE_SESSIONS`, `CORTES`, `FEEDBACK` y `ACTIVITY`, con regresión de concurrencia frente a `ADMIN/sessionActivity`.
+5. **Documentación de coordinador:** `Services/COORDINATOR_SETUP.md` se sincronizó con el flujo actual de aceptación por dispositivo, leases de Inbox y diagnóstico de secretos FEEDBACK.
+
+### Validación local/CI
+- GitHub Actions service-tests run `43629775820`: **SUCCESS**.
+- Node.js 22: **94 suites / 1,388 pruebas aprobadas / 0 fallos**; comprobación sintáctica PASS.
+- `TermsAcceptance`: 19/19 PASS.
+- Coordinador compartido: 41/41 PASS.
+- GitHub Pages run asociado al commit funcional más reciente `be6c9d9010227c255ae43a620979c4fe1e95c4cc` fue cancelado por ejecuciones posteriores; no se atribuye un resultado Pages PASS a ese commit. Verificar el último run asociado al HEAD documental vigente antes de cerrar esta continuidad.
+
+### Diagnósticos y límites externos
+- **Aviso obligatorio:** el código de la rama contiene `AUTH/acceptTerms` con preflight read-only y lease cooperativa sobre `ACTIVE_SESSIONS`; las pruebas locales permiten coexistir con `ADMIN/sessionActivity`. El mensaje de recurso ocupado no se reprodujo localmente. Se requiere verificar versión desplegada de Coordinator/AUTH y probar en Beta.
+- **Aviso por dispositivo:** la aceptación se conserva por usuario, perfil/dispositivo y versión; logout/login en el mismo perfil no debe repetirla. Un perfil nuevo debe verla una vez. Borrar los datos del sitio genera una identidad local nueva.
+- **Inbox Técnico:** el backend admite roles `tecnico` y `tecnico_exterior`. El mensaje de servicio no autorizado procede de la autenticación del servicio en Coordinator cuando falta/no coincide el secreto, no del rechazo RBAC. Verificar `GPSpedia_COORDINATOR_URL` y `GPSpedia_COORDINATOR_SECRET` de FEEDBACK contra `GPSpedia_COORDINATOR_SECRET_FEEDBACK` en el mismo entorno.
+- **Tutoriales:** la tarjeta de alta se renderiza únicamente para Desarrollador y el backend mantiene ese permiso. Si falta con una sesión Desarrollador válida, reproducir el renderizado en navegador antes de modificar la política.
+- **Tarjeta PyS relacionada:** el código declara 120 px para tarjeta de alta; falta comparar dimensiones reales de ambas tarjetas en navegador móvil/escritorio.
+- **Inbox móvil:** el modal actual tiene botones de nuevo mensaje/consulta/actualización, carpetas, búsqueda y paginación. El backend de conversaciones directas soporta crear, enviar, marcar leído y archivar; no existe eliminación de conversación directa. No añadir botón Borrar para ese tipo hasta definir y probar un contrato backend; los reportes históricos conservan su operación de eliminación con RBAC.
+- **PWA:** Service Worker v26 usa `skipWaiting`, `clients.claim` y navegación network-first con fallback. No se encontró listener global que bloquee F5/Ctrl+R; el pull-to-refresh de la aplicación sincroniza catálogo y no recarga documento. Falta un control explícito de actualización/recarga que preserve operaciones pendientes.
+- **Capturas:** navegador/PWA no ofrece API interoperable para bloquear capturas nativas ni acceso a Android `FLAG_SECURE`. Las restricciones existentes son disuasorias para medios y no deben presentarse como bloqueo real.
+
+### Registros actualizados
+- `Tareas_Activas.md`: adenda de diagnóstico para GP-AUTH-03 y actualización de GP-UX-02, GP-RBAC-02, GP-PWA-01 y GP-SEC-03.
+- `Auditoría.txt`: AUD-2026-11-14-05 a AUD-2026-11-14-08.
+- `ChangesLogs.txt`: cambios y validaciones efectivamente realizados.
+- `Services/COORDINATOR_SETUP.md`: configuración y contratos actuales.
+
+### Siguiente acción
+Continuar con GP-UX-03: revisar el diseño móvil de Inbox y sus contratos de servidor, proponer una barra de acciones contextual con solo operaciones existentes y probar permisos/estados. En paralelo, preparar la validación Beta de AUTH/Coordinator y FEEDBACK. No desplegar Apps Script, modificar ScriptProperties ni tocar datos productivos desde esta sesión.
