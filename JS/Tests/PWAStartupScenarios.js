@@ -121,20 +121,21 @@ await run('main.js define la comprobación de visibilidad del lightbox antes de 
 await run('el gesto nativo no se intercepta y no existe recarga manual en la interfaz', async () => {
     const html = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
     assert.doesNotMatch(html, /side-menu-refresh-link|Recargar aplicación/);
-    assert.doesNotMatch(mainSource, /container\\.addEventListener\\(['"]touch(start|end)['"]/);
-    assert.doesNotMatch(mainSource, /auth\\.loadInitialData\\(true\\)/);
-    assert.doesNotMatch(mainSource, /window\\.location\\.reload\\(\\)/);
+    assert.doesNotMatch(mainSource, /container\.addEventListener\(['"]touch(start|end)['"]/);
+    assert.doesNotMatch(mainSource, /auth\.loadInitialData\(true\)/);
+    assert.equal(mainSource.includes('window.location.reload()'), false);
 });
 await run('el Service Worker comprueba actualizaciones en segundo plano sin recargar la página', async () => {
-    assert.match(mainSource, /serviceWorker\\.register\\('\\.\\/service-worker\\.js',\\s*\\{\\s*updateViaCache:\\s*'none'/);
-    assert.match(mainSource, /registration\\.update\\(\\)/);
-    assert.match(mainSource, /addEventListener\\('online', checkForServiceWorkerUpdate\\)/);
-    assert.match(mainSource, /addEventListener\\('focus', checkForServiceWorkerUpdate\\)/);
-    assert.match(mainSource, /document\\.visibilityState === 'visible'/);
-    assert.match(mainSource, /window\\.setInterval\\(checkForServiceWorkerUpdate, 5 \\* 60 \\* 1000\\)/);
-    assert.doesNotMatch(mainSource, /window\\.location\\.reload\\(\\)/);
-    assert.match(serviceWorkerSource, /await self\\.skipWaiting\\(\\)/);
-    assert.match(serviceWorkerSource, /self\\.clients\\.claim\\(\\)/);
+    assert.ok(mainSource.includes("navigator.serviceWorker.register('./service-worker.js', {"));
+    assert.ok(mainSource.includes("updateViaCache: 'none'"));
+    assert.ok(mainSource.includes('registration.update()'));
+    assert.ok(mainSource.includes("window.addEventListener('online', checkForServiceWorkerUpdate)"));
+    assert.ok(mainSource.includes("window.addEventListener('focus', checkForServiceWorkerUpdate)"));
+    assert.ok(mainSource.includes("document.visibilityState === 'visible'"));
+    assert.ok(mainSource.includes('window.setInterval(checkForServiceWorkerUpdate, 5 * 60 * 1000)'));
+    assert.ok(serviceWorkerSource.includes('await self.skipWaiting()'));
+    assert.ok(serviceWorkerSource.includes('self.clients.claim()'));
+    assert.equal(mainSource.includes('window.location.reload()'), false);
 });
 await run('el documento raíz recupera el desplazamiento y overscroll nativos', async () => {
     const css = fs.readFileSync(new URL('../../style.css', import.meta.url), 'utf8');
