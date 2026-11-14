@@ -185,7 +185,9 @@ function getVerifiedSession(sessionToken) {
     const userRows = usersSheet.getDataRange().getValues().slice(1).filter(row => String(row[0] ?? '').trim() === userId);
     if (userRows.length !== 1 || !isActiveUserRecord(userRows[0])) throw new Error("Acceso no autorizado: Usuario inexistente o desactivado.");
     if (hasPendingRoleRevocationForUser_(userRows[0])) throw new Error("Acceso no autorizado: existe una revocación de rol pendiente. Inicia sesión nuevamente cuando finalice.");
-    return { userId, role: userRows[0][3] };
+    const rawRole = String(userRows[0][3] || '').trim();
+    const role = rawRole.toLowerCase() === 'gefe' ? 'Jefe' : rawRole;
+    return { userId, role };
 }
 
 // ============================================================================
@@ -194,16 +196,17 @@ function getVerifiedSession(sessionToken) {
 function isActiveUserRecord(row) {
     if (!row) return false;
     const username = String(row[COLS_USERS.Nombre_Usuario - 1] || '').trim();
-    const role = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const rawRole = String(row[COLS_USERS.Privilegios - 1] || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const role = rawRole === 'gefe' ? 'jefe' : rawRole;
     return Boolean(username) && !username.startsWith('__deleted__:') &&
-        ['desarrollador', 'gefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
+        ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(role);
 }
 
 function handleGetUsers(payload) {
     const { sessionToken } = payload;
     const { role: requesterRole } = getVerifiedSession(sessionToken);
 
-    if (!['Desarrollador', 'Gefe', 'Jefe', 'Supervisor'].includes(requesterRole)) {
+    if (!['Desarrollador', 'Jefe', 'Supervisor'].includes(requesterRole)) {
         throw new Error('Acceso denegado. Permisos insuficientes.');
     }
 
@@ -216,7 +219,7 @@ function handleGetUsers(payload) {
             if (!isActiveUserRecord(row)) return false;
             const role = row[COLS_USERS.Privilegios - 1];
             if (requesterRole === 'Desarrollador') return true;
-            if (requesterRole === 'Gefe' || requesterRole === 'Jefe') return ['Supervisor', 'Tecnico'].includes(role);
+            if (requesterRole === 'Jefe') return ['Supervisor', 'Tecnico'].includes(role);
             if (requesterRole === 'Supervisor') return role === 'Tecnico';
             return false;
         })
@@ -314,7 +317,7 @@ function withUsersMutationLock_(operation) {
     }
 }
 
-const USERS_ALLOWED_ROLES_ = Object.freeze(['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']);
+const USERS_ALLOWED_ROLES_ = Object.freeze(['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior']);
 
 function normalizeNewUserInput_(newUser) {
     if (!newUser || typeof newUser !== 'object' || Array.isArray(newUser)) {
@@ -438,8 +441,7 @@ function handleCreateUser(payload) {
     return withUsersMutationLock_(() => {
         const { role: creatorRole } = getVerifiedSession(sessionToken);
         const allowedRoles = {
-            'Desarrollador': ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
-            'Gefe': ['Supervisor', 'Tecnico'],
+            'Desarrollador': ['Desarrollador', 'Jefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
             'Jefe': ['Supervisor', 'Tecnico'],
             'Supervisor': ['Tecnico']
         };
