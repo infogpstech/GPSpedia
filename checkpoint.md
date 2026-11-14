@@ -569,3 +569,12 @@ La primera ejecución de `service-tests` sobre P1 detectó un fixture de prueba 
 - Se documentó en `Tareas_Activas.md` el procedimiento Beta, precedido por los comandos obligatorios de comprobación de árbol limpio, fetch y fast-forward.
 - Pendiente de Beta: invocar el endpoint desde el deployment actualizado al menos tres veces, registrar las medianas por coste y revisar el margen de ejecución antes de fijar `PASSWORD_KDF_ITERATIONS`. El valor 12,000 sigue provisional. No se modificó el deployment ni se migraron contraseñas.
 - Siguiente subfase P2: definir el plan de migración de IDs por entidad, con snapshot/manifiesto verificable, checkpoint reanudable y reversión probada antes de cualquier escritura; mantener Relay en diagnóstico hasta conocer su formato y referencias reales.
+
+## P4 — Revisión estática de exposición de imágenes y URLs (2026-11-14)
+
+- Se revisaron referencias de imágenes en `Services/write.js`, `Services/feedback.js`, `Services/admin.js`, `JS/Frontend/ui.js` y `JS/Frontend/offline.js`.
+- Las referencias Drive de Cortes, Tutorial, PyS y LogosMarca se guardan en hojas y llegan al cliente como URLs/IDs. `ui.js` transforma IDs Drive a `lh3.googleusercontent.com`; `offline.js` puede descargar imágenes a IndexedDB. Cualquier recurso entregado al navegador debe tratarse como recuperable por el usuario que lo visualiza.
+- El endpoint de descarga explícita de imágenes reemplazadas requiere Desarrollador; eso no vuelve privadas las URLs que ya se entregan para renderizado.
+- FEEDBACK verifica que las imágenes de sugerencias no hereden acceso público y que las imágenes PyS conserven los permisos de su carpeta. No se encontró una comprobación general equivalente en todos los flujos de carga de WRITE/ADMIN.
+- No se verificaron ACL reales de Drive ni se alteraron permisos. Sin deployment/copia Beta no es posible determinar si las carpetas son públicas, de dominio o privadas.
+- Resultado: revisión estática completada; siguiente acción externa es auditar permisos reales por carpeta/archivo y clasificar imágenes que deben seguir siendo públicas para GPSpedia.
