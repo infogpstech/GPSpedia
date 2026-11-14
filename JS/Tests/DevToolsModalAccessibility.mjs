@@ -61,6 +61,17 @@ test('el disparador del menú devuelve el foco a un control visible', () => {
 test('la apertura continúa restringida al rol Desarrollador', () => {
     assert.match(ui, /ensureUiSessionRole_\(\['desarrollador'\]\)/);
 });
+test('los avisos extensos se guardan en la terminal y la interfaz muestra texto breve', () => {
+    assert.match(ui, /const developerDiagnosticQueue_ = \[\]/);
+    assert.match(ui, /window\.gpsepediaDeveloperLog = \(message, level = 'info'\)/);
+    assert.match(ui, /original\.length > 110/);
+    assert.match(ui, /No se pudo completar la operación\./);
+});
+test('el panel diagnostica la configuración del coordinador AUTH', () => {
+    assert.match(ui, /metadata\.coordinatorConfigured === false/);
+    assert.match(ui, /Coordinador pendiente/);
+    assert.match(ui, /Coordinador compartido/);
+});
 test('el cierre del panel elimina su entrada y conserva la sección anterior', () => {
     const history = fakeHistory();
     const manager = createOverlayHistoryManager(history);
