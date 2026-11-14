@@ -147,4 +147,25 @@ test('el éxito de contact-form cierra mediante el gestor compartido', () => {
     assert.match(source, /historyManager\.close\(contactOverlayId\)/);
 });
 
-console.log('OverlayMenuModalHistory:', passed + '/13 PASS');
+test('Inbox y Developer reutilizan la validación reciente y comparten solicitudes concurrentes', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    assert.match(source, /let uiRoleValidationInFlight_ = null/);
+    assert.match(source, /authApi\.validateActiveSession\(false\)/);
+    assert.match(source, /await pending\.promise/);
+    assert.doesNotMatch(source, /authApi\.validateActiveSession\(true\)/);
+});
+
+test('Inbox y Developer registran cierres completos en la pila de overlays', () => {
+    const source = readFileSync(new URL('../Frontend/ui.js', import.meta.url), 'utf8');
+    assert.match(source, /modal\.__gpOverlayClose = closeInboxModal_/);
+    assert.match(source, /modal\.__gpOverlayClose = \(\) => \{/);
+    assert.match(source, /modal\.setAttribute\('aria-hidden', 'false'\)/);
+});
+
+test('Developer conserva los nombres de las secciones en navegación móvil', () => {
+    const source = readFileSync(new URL('../../style.css', import.meta.url), 'utf8');
+    assert.match(source, /#dev-tools-modal \.dev-tab-link span\s*\{\s*position: static/);
+    assert.match(source, /#dev-tools-modal \.dev-tools-sidebar\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+});
+
+console.log('OverlayMenuModalHistory:', passed + '/16 PASS');
