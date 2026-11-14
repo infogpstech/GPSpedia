@@ -4209,7 +4209,7 @@ const openInboxModal_ = setupModal('inbox-modal', async (options = {}) => {
 
 export async function openInbox() {
     const returnFocus = document.activeElement;
-    const context = await ensureUiSessionRole_(['desarrollador', 'jefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
+    const context = await ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior']);
     if (!context) return;
     return openInboxModal_({ returnFocus });
 }
@@ -7799,7 +7799,7 @@ export function renderInboxList(items) {
     const isCurrentInboxView = () => Boolean(context &&
         generation === inboxViewGeneration_ &&
         isCurrentUiSessionContext_(context) &&
-        ['desarrollador', 'jefe', 'jefe', 'supervisor'].includes(context.role));
+        ['desarrollador', 'jefe', 'supervisor'].includes(context.role));
     if (!isCurrentInboxView()) {
         listContainer.replaceChildren();
         const detail = document.getElementById('inbox-detail');
@@ -7879,7 +7879,7 @@ export function renderInboxDetail(item) {
         viewGeneration === inboxViewGeneration_ &&
         detailGeneration === inboxDetailGeneration_ &&
         isCurrentUiSessionContext_(context) &&
-        ['desarrollador', 'jefe', 'jefe', 'supervisor'].includes(context.role));
+        ['desarrollador', 'jefe', 'supervisor'].includes(context.role));
     if (!detailContainer) return;
     if (!isCurrentInboxDetail()) {
         detailContainer.replaceChildren();
@@ -8899,7 +8899,7 @@ export function showApp(user) {
 
     const inboxBtn = document.getElementById('inbox-btn');
     if (inboxBtn) {
-        inboxBtn.style.display = ['desarrollador', 'jefe', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
+        inboxBtn.style.display = ['desarrollador', 'jefe', 'supervisor', 'tecnico', 'tecnico_exterior'].includes(userRole) ? 'flex' : 'none';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');
@@ -13113,7 +13113,7 @@ export function exportVehiclePrintSheet(item) {
 
 export async function loadAndRenderInbox(options = {}) {
     const suppliedContext = options && options.context;
-    const requestContext = suppliedContext || await ensureUiSessionRole_(['desarrollador', 'jefe', 'jefe', 'supervisor']);
+    const requestContext = suppliedContext || await ensureUiSessionRole_(['desarrollador', 'jefe', 'supervisor']);
     if (!requestContext || !isCurrentUiSessionContext_(requestContext)) return;
     if (options.reset === true) {
         inboxPageCursorStack_ = [null];
